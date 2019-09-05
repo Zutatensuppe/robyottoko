@@ -23,13 +23,21 @@ const fnRandom = (values) => () => values[getRandomInt(0, values.length - 1)]
 const cmds = {
   '!hyottoko': '俺はひょっとこ！ https://www.youtube.com/watch?v=DqTL1cU0sK8',
   '!discord': 'join Hyottoko Land! https://discord.gg/Fxy3TYC',
+  '!commands': () => {
+     return 'Commands: ' + Object.keys(cmds).filter(a => a !=='!commands').join(' ')
+  },
 
   '!atesoe': fnRandom([
     '大丈夫だよ〜　It\'s ok!',
     '私の靴下好きですか？ https://www.twitch.tv/atesoe/clip/FlaccidBeautifulPeachPogChamp Kappa',
+    'oh no!',
   ]),
   '!achan': fnRandom([
     'ひ・み・つ'
+  ]),
+  '!sekkachi': fnRandom([
+    'je voudrais un fromage StinkyCheese',
+    'Yes, he is the byte leader ^_^',
   ]),
   '!hiro': fnRandom([
     'いいね〜、いいね〜！',
