@@ -134,12 +134,16 @@ const cmds = {
       const newlvl = parseInt(params[0], 10)
       if (newlvl >= 1 && newlvl <= 5) {
         r.lvl = newlvl
+        return `Righty right! New Lvl: up to JLPT${r.lvl}`
       }
-      return `Righty right! New Lvl: up to JLPT${r.lvl}`
+      return `No no no! Still JLPT${r.lvl}`
     }
   },
 
   '!w': async (params) => {
+    if (r.word !== null) {
+      return 'ナイスアイディア！ but no :P'
+    }
     const phrase = params.join(' ')
     const data = await lookupWord(phrase)
     if (data.length === 0) {
