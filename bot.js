@@ -91,7 +91,7 @@ const r = {
 const cmds = {
   '!hyottoko': '俺はひょっとこ！ https://www.youtube.com/watch?v=DqTL1cU0sK8',
   '!discord': 'join Hyottoko Land! https://discord.gg/Fxy3TYC',
-  '!commands': () => 'Commands: ' + Object.keys(cmds).filter(a => !['!commands'].contains(a)).join(' '),
+  '!commands': () => 'Commands: ' + Object.keys(cmds).filter(a => !['!commands'].includes(a)).join(' '),
 
   '!start': async () => {
     if (r.word === null) {
