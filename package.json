@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "node-fetch": "^2.6.0",
     "tmi.js": "^1.4.5"
   }
 }
