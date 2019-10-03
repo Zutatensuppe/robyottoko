@@ -13,13 +13,15 @@ const core = {
     }
     return cmds
   },
-  cmd: msg => {
+  cmd: (context, msg) => {
     const command = msg.trim().split(' ')
     const name = command[0]
     const c = core.allcmds()[name] || null
-    if (!c) { return c }
+    if (!c) {
+      return c
+    }
     const fn = typeof c === 'function' 
-      ? async () => await c(command.slice(1)) 
+      ? async () => await c(context, command.slice(1))
       : () => c
     return {fn, name}
   },
@@ -27,7 +29,7 @@ const core = {
     '!commands': () => 'Commands: ' + Object.keys(core.allcmds()).filter(a => !['!commands'].includes(a)).join(' '),
   },
   onMsg: async (client, target, context, msg) => {
-    const c = core.cmd(msg)
+    const c = core.cmd(context, msg)
     if (c) {
       const r = await c.fn()
       client.say(target, r).catch(y => {})
