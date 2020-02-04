@@ -9,7 +9,10 @@ const people = {
       'ひ・み・つ'
     ]),
     '!eiseraph': 'Boo! 👻',
-    '!empompom': 'Proud owner of textbooks! Total value: 120Euro Kreygasm',
+    '!empompom': fn.fnRandom([
+       'Proud owner of textbooks! Total value: 120Euro Kreygasm',
+       'My books were reasonably priced and I have nothing bad to say about them.',
+    ]),
     '!mayumi': 'learns all the languages!',
     '!sekkachi': fn.fnRandom([
       'je voudrais un fromage StinkyCheese',
@@ -29,6 +32,8 @@ const people = {
       '私のブレインはましゅっどポテトになりました',
       'bundes! LUL',
     ]),
+    '!fabrice': 'Puta!',
+    '!cammy': '謎の人',
   }
 }
 
