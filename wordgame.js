@@ -1,5 +1,8 @@
 const fn = require('./fn.js')
 
+const word = r => r.word
+const solution = r => r.solutions.join(', ')
+
 const r = {
   word: null,
   solutions: [],
@@ -28,13 +31,11 @@ const r = {
       console.log(r.solutions[i])
       console.log(lc)
       if (r.solutions[i].indexOf(lc) !== -1) {
-        let s = r.solutions
-        let w = r.word
         r.word = null
         r.solutions = []
         r.users[displayName] = r.users[displayName] || 0
         r.users[displayName]+= 1
-        return `Nice! ${w}: (${s.join(', ')})`
+        return `Nice! ${word(r)}: (${solution(r)})`
       }
     }
     return ''
@@ -55,7 +56,7 @@ const r = {
       client.say(target, solved).catch(y => {})
 
       await r.nextWord()
-      await timer(5)
+      await fn.timer(5)
       client.say(target, 'Ok, the next word is: ' + r.word).catch(y => {})
       return true
     }
@@ -73,7 +74,7 @@ const r = {
     '!stop': () => {
       r.word = null
       r.solutions = []
-      return 'stopped the word game biblethump'
+      return 'stopped the word game BibleThump'
     },
     '!score': () => {
       return r.lb()
@@ -83,15 +84,16 @@ const r = {
         return ''
       }
 
-      w = r.word
+      w = word(r)
       if (w) {
+	const s = solution(r)
         r.word = null
-        await r.nextword()
-        return 'ok, i skipped "' + w + '" feelsbadman  the next word is: ' + r.word
+        await r.nextWord()
+        return `Ok, I skipped "${w}" (${s}) NotLikeThis the next word is: ${word(r)}`
       }
     },
 
-    '!lvl': (params) => {
+    '!lvl': (context, params) => {
       if (r.word === null) {
         return ''
       }
