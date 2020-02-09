@@ -9,7 +9,7 @@ const core = {
   allcmds: () => {
     const cmds = {}
     for (let i = 0; i < modules.length; i++) {
-      Object.keys(modules[i].cmds).forEach((key) => { cmds[key] = modules[i].cmds[key] })
+      Object.keys(modules[i].cmds || {}).forEach((key) => { cmds[key] = modules[i].cmds[key] })
     }
     return cmds
   },
@@ -44,17 +44,16 @@ const core = {
 const modules = [
   core,
   require('./general.js'),
-  // require('./wordgame.js'),
+  require('./wordgame.js'),
   require('./people.js'),
+  require('./timer.js'),
 ]
+
+modules.forEach(m => m.init && m.init(client))
 
 async function onMessageHandler (target, context, msg, self) {
   if (self) { return; } // Ignore messages from the bot
-  for (let m of modules) {
-    if (m.onMsg && await m.onMsg(client, target, context, msg)) {
-      return
-    }
-  }
+  modules.forEach(async (m) => m.onMsg && await m.onMsg(client, target, context, msg))
 }
 
 // Called every time the bot connects to Twitch chat
