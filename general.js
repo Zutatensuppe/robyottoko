@@ -18,7 +18,7 @@ const general = {
 // tetris
     '!boom': 'Boom! Tetris for para :P',
     '!whoop': 'Whoop! Tetris for para :D',
-    '!pb': 'PAL: 541456 (9-19)',
+    '!pb': 'PAL: 551.395 (9-19)',
 
 // stream general
     '!hyottoko': '俺はひょっとこ！ youtube.com/watch?v=DqTL1cU0sK8',
