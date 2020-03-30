@@ -256,13 +256,15 @@ h3 { text-align: center; }
 
 function prepareWs() {
   return new Promise((resolve, reject) => {
-    let inited = false
     const s = new WebSocket('ws://robyottoko:1338/')
     s.onmessage = (e) => {
       const d = JSON.parse(e.data)
-      if (!inited && d.playlist) {
-        inited = true
-	resolve({s, playlist: d.playlist, cur: d.cur})
+      if (d.event && d.event === 'init') {
+        resolve({
+          s,
+          playlist: d.data.playlist,
+          cur: d.data.cur,
+        })
       }
     }
   })
