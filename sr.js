@@ -3,7 +3,7 @@ const opts = require('./config.js')
 const fetch = require('node-fetch')
 
 const save = (r) => fn.save('sr', {
-  youtubeData: r.data.youtubeData,
+  youtubeData: r.data.youtubeData || {},
   playlist: r.data.playlist.map(item => ({
     id: item.id,
     yt: item.yt,
@@ -15,7 +15,7 @@ const save = (r) => fn.save('sr', {
     goods: item.goods || 0,
     bads: item.bads || 0,
   })),
-  cur: r.data.cur,
+  cur: r.data.cur || -1,
 })
 
 const fetchYoutubeData = async (youtubeId) => {
