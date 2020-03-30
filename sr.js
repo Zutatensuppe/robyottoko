@@ -373,7 +373,6 @@ function doEverything (s, player, playlist, cur) {
     }
     if (
       player.getPlayerState() === 1
-      && idx === cur
       && !force
     ) {
       updatePlaylistView()
@@ -389,7 +388,7 @@ function doEverything (s, player, playlist, cur) {
 
   const next = () => {
     const idx = (cur + 1) >= playlist.length ? 0 : cur + 1
-    play(idx)
+    play(idx, true)
   }
 
 
