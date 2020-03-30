@@ -7,7 +7,7 @@ const load = (m, def) => {
   try {
     let raw = fs.readFileSync(m + '.data.json')
     let data = JSON.parse(raw)
-    return data || def
+    return data ? Object.assign({}, data, def) : def
   } catch {
     return def
   }
