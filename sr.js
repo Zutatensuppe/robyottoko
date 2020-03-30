@@ -154,8 +154,11 @@ const sr = {
       }
     }
 
-    sr.data.cur = found + 1
-    sr.data.playlist.splice(sr.data.cur, 0, item)
+    sr.data.playlist.splice(found + 1, 0, item)
+
+    if (sr.data.cur === -1) {
+      sr.data.cur = 0
+    }
 
     save(sr)
     sr.updateClients('add')
