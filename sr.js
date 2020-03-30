@@ -15,7 +15,6 @@ const save = (r) => fn.save('sr', {
     goods: item.goods || 0,
     bads: item.bads || 0,
   })),
-  cur: r.data.cur || -1,
 })
 
 const fetchYoutubeData = async (youtubeId) => {
@@ -48,7 +47,6 @@ const sr = {
   data: fn.load('sr', {
     youtubeData: {},
     playlist: [],
-    cur: -1,
   }),
   wss: null,
   onPlay: (id) => {
@@ -56,10 +54,18 @@ const sr = {
     if (idx < 0) {
       return
     }
-    sr.data.cur = idx
+    sr.data.playlist = [].concat(
+      sr.data.playlist.slice(idx),
+      sr.data.playlist.slice(0, idx)
+    )
     sr.incStat('plays')
     save(sr)
     sr.updateClients('onPlay')
+  },
+  onEnded: () => {
+    sr.data.playlist.push(sr.data.playlist.shift())
+    save(sr)
+    sr.updateClients('onEnded')
   },
   resetStats: () => {
     sr.data.playlist = sr.data.playlist.map(item => {
@@ -73,10 +79,9 @@ const sr = {
     sr.updateClients('resetStats')
   },
   incStat: (stat) => {
-    if (sr.data.cur === -1 || sr.data.cur >= sr.data.playlist.length) {
-      return
+    if (sr.data.playlist.length > 0) {
+      sr.data.playlist[0][stat]++
     }
-    sr.data.playlist[sr.data.cur][stat]++
   },
   like: () => {
     sr.incStat('goods')
@@ -95,44 +100,33 @@ const sr = {
 
     sr.incStat('skips')
 
-    if (sr.data.cur + 1 >= sr.data.playlist.length) {
-      // rotate
-      sr.data.playlist.push(sr.data.playlist.shift())
-    } else {
-      sr.data.cur++
-    }
+    sr.data.playlist.push(sr.data.playlist.shift())
+
     save(sr)
     sr.updateClients('skip')
   },
   clear: () => {
     sr.data.playlist = []
-    sr.data.cur = -1
     save(sr)
     sr.updateClients('clear')
   },
   shuffle: () => {
-    if (sr.data.cur === -1) {
-      // just shuffle
-      sr.data.playlist = fn.shuffle(sr.data.playlist)
-    } else {
-      // shuffle and go to same element
-      const id = sr.data.playlist[sr.data.cur].id
-      sr.data.playlist = fn.shuffle(sr.data.playlist)
-      sr.data.cur = sr.data.playlist.findIndex(item => item.id ===id)
+    if (sr.data.playlist.length === 0) {
+      return
     }
+
+    const first = sr.data.playlist.shift()
+    sr.data.playlist = fn.shuffle(sr.data.playlist)
+    sr.data.playlist.unshift(first)
+
     save(sr)
     sr.updateClients('shuffle')
   },
   remove: () => {
-    if (sr.data.cur === -1) {
+    if (sr.data.playlist.length === 0) {
       return
     }
-    sr.data.playlist.splice(sr.data.cur, 1)
-    if (sr.data.playlist.length === 0) {
-      sr.data.cur = -1
-    } else if (sr.data.playlist.length <= sr.data.cur) {
-      sr.data.cur = 0
-    }
+    sr.data.playlist.shift()
     save(sr)
     sr.updateClients('remove')
   },
@@ -146,7 +140,6 @@ const sr = {
       ws.send(JSON.stringify({event: eventName, data: {
         // ommitting youtube cache data
         playlist: sr.data.playlist,
-        cur: sr.data.cur,
       }}))
     }
   },
@@ -182,20 +175,11 @@ const sr = {
         break
       }
     }
-    let curinc = 0
     if (found === -1) {
-      found = sr.data.cur
-    } else if (found < sr.data.cur) {
-      curinc = 1
+      found = 0
     }
 
     sr.data.playlist.splice(found + 1, 0, item)
-
-    if (sr.data.cur === -1) {
-      sr.data.cur = 0
-    }
-
-    sr.data.cur += curinc
 
     save(sr)
     sr.updateClients('add')
@@ -212,6 +196,8 @@ const sr = {
         const d = JSON.parse(data)
         if (d.event && d.event === 'play') {
           sr.onPlay(d.id)
+        } else if (d.event && d.event === 'ended') {
+          sr.onEnded()
         }
       })
       sr.updateClient('init', ws)
@@ -236,7 +222,8 @@ const sr = {
       }
       switch (params[0]) {
         case 'current':
-          return `Currently playing: ${sr.data.playlist[sr.data.cur].yt}`
+          // todo: error handling, title output etc..
+          return `Currently playing: ${sr.data.playlist[0].yt}`
         case 'good':
           sr.like()
           return
@@ -319,7 +306,6 @@ function prepareWs() {
         resolve({
           s,
           playlist: d.data.playlist,
-          cur: d.data.cur,
         })
       }
     }
@@ -346,12 +332,11 @@ function prepareYt() {
   })
 }
 
-function doEverything (s, player, playlist, cur) {
+function doEverything (s, player, playlist) {
   const updatePlaylistView = () => {
-    const l = [].concat(playlist.slice(cur), playlist.slice(0, cur))
     document.getElementById('playlist').innerHTML = '<h3>EXPERIMENTAL SONG REQUEST</h3>' +
 	'<ol>' +
-  l.map((item, idx) => ('' +
+  playlist.map((item, idx) => ('' +
     '<li class="' + (idx === 0 ? 'playing' : 'next') + '">' +
       (item.title || item.yt) +
       '<span>' +
@@ -365,51 +350,42 @@ function doEverything (s, player, playlist, cur) {
 	'</ol>'
   }
 
-  const play = (idx, force) => {
-    if (idx < 0) {
+  const play = (force) => {
+    if (playlist.length === 0) {
       player.stopVideo()
       updatePlaylistView()
       return
     }
-    if (
-      player.getPlayerState() === 1
-      && !force
-    ) {
+    if (player.getPlayerState() === 1 && !force) {
       updatePlaylistView()
       return
     }
-    const item = playlist[idx]
+    const item = playlist[0]
     player.cueVideoById(item.yt)
     player.playVideo()
-    cur = idx
     updatePlaylistView()
     s.send(JSON.stringify({'event': 'play', 'id': item.id}))
   }
 
-  const next = () => {
-    const idx = (cur + 1) >= playlist.length ? 0 : cur + 1
-    play(idx, true)
-  }
-
-
   player.addEventListener('onStateChange', (event) => {
     if (event.data == YT.PlayerState.ENDED) {
-      next()
+      s.send(JSON.stringify({'event': 'ended'}))
     }
   })
 
-  play(cur)
+  play()
   s.onmessage = function (e) {
     const d = JSON.parse(e.data)
     if (!d.event) {
       return
     }
     switch (d.event) {
+      case 'onEnded':
       case 'skip':
       case 'remove':
       case 'clear':
         playlist = d.data.playlist
-        play(d.data.cur, true)
+        play(true)
         break
       case 'dislike':
       case 'like':
@@ -417,22 +393,21 @@ function doEverything (s, player, playlist, cur) {
       case 'resetStats':
       case 'shuffle':
         playlist = d.data.playlist
-        cur = d.data.cur
         updatePlaylistView()
         break
       case 'add':
       case 'init':
         playlist = d.data.playlist
-        play(d.data.cur)
+        play()
         break
     }
   }
 }
 
-prepareWs().then(({s, playlist, cur}) => {
+prepareWs().then(({s, playlist}) => {
   prepareYt().then(p => {
-    console.log(s, playlist, cur)
-    doEverything(s, p, playlist, cur)
+    console.log(s, playlist)
+    doEverything(s, p, playlist)
   })
 })
 </script>
