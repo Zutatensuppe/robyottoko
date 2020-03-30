@@ -1,12 +1,15 @@
 const fn = require('./fn.js')
 
-const save = (r) => fn.save('sr', r.data.map(item => ({
-  id: item.id,
-  yt: item.yt,
-  plays: item.plays || 0,
-  time: item.time || new Date().getTime(),
-  user: item.user || '',
-})))
+const save = (r) => fn.save('sr', {
+  playlist: r.data.playlist.map(item => ({
+    id: item.id,
+    yt: item.yt,
+    plays: item.plays || 0,
+    time: item.time || new Date().getTime(),
+    user: item.user || '',
+  })),
+  cur: r.data.cur,
+})
 
 const extractYoutubeId = (youtubeUrl) => {
   const patterns = [
