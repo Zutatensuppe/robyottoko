@@ -19,6 +19,7 @@ const save = (r) => fn.save('sr', {
 })
 
 const fetchYoutubeData = async (youtubeId) => {
+  console.log('fetchYoutubeData', youtubeId)
   const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${youtubeId}&fields=items(id%2Csnippet)&key=${opts.google.api_key}`
   return fetch(url)
     .then(r => r.json())
@@ -142,7 +143,11 @@ const sr = {
   },
   updateClient: (eventName, ws) => {
     if (ws.isAlive) {
-      ws.send(JSON.stringify({event: eventName, data: sr.data}))
+      ws.send(JSON.stringify({event: eventName, data: {
+        // ommitting youtube cache data
+        playlist: sr.data.playlist,
+        cur: sr.data.cur,
+      }}))
     }
   },
   loadYoutubeData: async (youtubeId) => {
@@ -177,8 +182,11 @@ const sr = {
         break
       }
     }
+    let curinc = 0
     if (found === -1) {
       found = sr.data.cur
+    } else if (found < sr.data.cur) {
+      curinc = 1
     }
 
     sr.data.playlist.splice(found + 1, 0, item)
@@ -186,6 +194,8 @@ const sr = {
     if (sr.data.cur === -1) {
       sr.data.cur = 0
     }
+
+    sr.data.cur += curinc
 
     save(sr)
     sr.updateClients('add')
