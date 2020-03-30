@@ -65,12 +65,12 @@ const sr = {
   like: () => {
     sr.incStat('goods')
     save(sr)
-    sr.updateClients()
+    sr.updateClients('like')
   },
   dislike: () => {
     sr.incStat('bads')
     save(sr)
-    sr.updateClients()
+    sr.updateClients('dislike')
   },
   skip: () => {
     if (sr.data.playlist.length === 0) {
@@ -86,13 +86,13 @@ const sr = {
       sr.data.cur++
     }
     save(sr)
-    sr.updateClients()
+    sr.updateClients('skip')
   },
   clear: () => {
     sr.data.playlist = []
     sr.data.cur = -1
     save(sr)
-    sr.updateClients()
+    sr.updateClients('clear')
   },
   shuffle: () => {
     if (sr.data.cur === -1) {
@@ -105,7 +105,7 @@ const sr = {
       sr.data.cur = sr.data.playlist.findIndex(item => item.id ===id)
     }
     save(sr)
-    sr.updateClients()
+    sr.updateClients('shuffle')
   },
   remove: () => {
     if (sr.data.cur === -1) {
@@ -118,16 +118,16 @@ const sr = {
       sr.data.cur = 0
     }
     save(sr)
-    sr.updateClients()
+    sr.updateClients('remove')
   },
-  updateClients: () => {
+  updateClients: (eventName) => {
     sr.wss.clients.forEach(function each(ws) {
-      sr.updateClient(ws)
+      sr.updateClient(eventName, ws)
     })
   },
-  updateClient: (ws) => {
+  updateClient: (eventName, ws) => {
     if (ws.isAlive) {
-      ws.send(JSON.stringify(sr.data))
+      ws.send(JSON.stringify({event: eventName, data: sr.data}))
     }
   },
   addToPlaylist: (youtubeUrl, userName) => {
@@ -142,7 +142,7 @@ const sr = {
       sr.data.cur = 0
     }
     save(sr)
-    sr.updateClients()
+    sr.updateClients('add')
   },
   init: (client) => {
     const ws = require('ws')
@@ -158,7 +158,7 @@ const sr = {
           sr.onPlay(d.id)
         }
       })
-      sr.updateClient(ws)
+      sr.updateClient('init', ws)
     })
     const interval = setInterval(function ping() {
       sr.wss.clients.forEach(function each(ws) {
@@ -171,8 +171,7 @@ const sr = {
     }, 30000)
     sr.wss.on('close', function close() {
       clearInterval(interval);
-    }
-    );
+    });
   },
   cmds: {
     '!sr': (context, params) => {
@@ -243,9 +242,10 @@ body { margin: 0; background: #333; color: #eec; font: 15px monospace; }
 ol { list-style: inside decimal; padding: 0 }
 ol li { padding: .5em 1em; margin: .5em 0; border: solid 1px #444; }
 ol li span { float: right; }
-.playing { background: #e8ffcc; color: #444; }
+h3 { text-align: center; }
+.playing { background: #e8ffcc; color: #000; }
 .playing:before { display: inline-block; content: "今　" }
-.next { background: #81a694; color: #444; }
+.next { background: #81a694; color: #000; }
 .next:before { display: inline-block; content: "次　" }
 </style>
 </head>
@@ -344,11 +344,27 @@ function doEverything (s, player, playlist, cur) {
   play(cur)
   s.onmessage = function (e) {
     const d = JSON.parse(e.data)
-    if (d.playlist) {
-      // if playlist length is same, song was probably skipped
-      const forceplay = d.playlist.length === playlist.length
-      playlist = d.playlist
-      play(d.cur, forceplay)
+    if (!d.event) {
+      return
+    }
+    switch (d.event) {
+      case 'skip':
+      case 'remove':
+      case 'clear':
+      case 'shuffle':
+        playlist = d.data.playlist
+        play(d.data.cur, true)
+        break
+      case 'like':
+      case 'dislike':
+        playlist = d.data.playlist
+        updatePlaylistView()
+        break
+      case 'add':
+      case 'init':
+        playlist = d.data.playlist
+        play(d.data.cur)
+        break
     }
   }
 }
