@@ -45,6 +45,7 @@ const sr = {
     sr.data.cur = idx
     sr.incStat('plays')
     save(sr)
+    sr.updateClients('onPlay')
   },
   resetStats: () => {
     sr.data.playlist = sr.data.playlist.map(item => {
@@ -358,8 +359,9 @@ function doEverything (s, player, playlist, cur) {
         playlist = d.data.playlist
         play(d.data.cur, true)
         break
-      case 'like':
       case 'dislike':
+      case 'like':
+      case 'onPlay':
       case 'resetStats':
         playlist = d.data.playlist
         updatePlaylistView()
