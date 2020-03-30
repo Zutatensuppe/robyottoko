@@ -38,9 +38,35 @@ const sr = {
     save(sr)
     sr.updateClients()
   },
-  emptyPlaylist: () => {
+  clear: () => {
     sr.data.playlist = []
     sr.data.cur = -1
+    save(sr)
+    sr.updateClients()
+  },
+  shuffle: () => {
+    if (sr.data.cur === -1) {
+      // just shuffle
+      sr.data.playlist = fn.shuffle(sr.data.playlist)
+    } else {
+      // shuffle and go to same element
+      const id = sr.data.playlist[sr.data.cur].id
+      sr.data.playlist = fn.shuffle(sr.data.playlist)
+      sr.data.cur = sr.data.playlist.findIndex(item => item.id ===id)
+    }
+    save(sr)
+    sr.updateClients()
+  },
+  remove: () => {
+    if (sr.data.cur === -1) {
+      return
+    }
+    sr.playlist.splice(sr.data.cur, 1)
+    if (sr.playlist.length === 0) {
+      sr.data.cur = -1
+    } else if (sr.playlist.length <= sr.data.cur) {
+      sr.data.cur = 0
+    }
     save(sr)
     sr.updateClients()
   },
@@ -98,6 +124,34 @@ const sr = {
       if (params.length === 0) {
         return `Usage: !sr YOUTUBE-URL`
       }
+      switch (params[0]) {
+        case 'current':
+          return `Currently playing: ${sr.data.playlist[sr.data.cur].yt}`
+        case 'skip':
+          if (fn.isBroadcaster(context)) {
+            sr.skip()
+            return
+          }
+          break
+        case 'clear':
+          if (fn.isBroadcaster(context)) {
+            sr.clear()
+            return
+          }
+          break
+        case 'rm':
+          if (fn.isBroadcaster(context)) {
+            sr.remove()
+            return
+          }
+          break
+        case 'shuffle':
+          if (fn.isBroadcaster(context)) {
+            sr.shuffle()
+            return
+          }
+          break
+      }
 
       const youtubeUrl = params[0]
       const youtubeId = extractYoutubeId(youtubeUrl)
@@ -106,22 +160,6 @@ const sr = {
       }
       sr.addToPlaylist(youtubeId)
       return `Added ${youtubeId} to the playlist!`
-    },
-    '!currentsong': (context, params) => {
-      return `Currently playing: ${sr.data.playlist[sr.data.cur].yt}`
-    },
-    '!bgm': (context, params) => {
-      return `Currently playing: ${sr.data.playlist[sr.data.cur].yt}`
-    },
-    '!skipsong': (context, params) => {
-      if (fn.isBroadcaster(context)) {
-        sr.skip()
-      }
-    },
-    '!clear': (context, params) => {
-      if (fn.isBroadcaster(context)) {
-        sr.emptyPlaylist()
-      }
     },
   },
   routes: {
