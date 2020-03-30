@@ -244,11 +244,9 @@ ol { list-style: inside decimal; padding: 0 }
 ol li { padding: .5em 1em; margin: .5em 0; border: solid 1px #444; }
 ol li span { float: right; }
 .playing { background: #e8ffcc; color: #444; }
-.playing:before { display: inline-block; content: "現　" }
-.next { background: #71cea2; color: #444; }
+.playing:before { display: inline-block; content: "今　" }
+.next { background: #81a694; color: #444; }
 .next:before { display: inline-block; content: "次　" }
-.played { background: #999; }
-.played:before { display: inline-block; content: "過　" }
 </style>
 </head>
 <body>
@@ -292,25 +290,15 @@ function prepareYt() {
 
 function doEverything (s, player, playlist, cur) {
   const updatePlaylistView = () => {
-    const finished = playlist.slice(0, cur)
-    const upcoming = playlist.slice(cur)
+    const l = [].concat(playlist.slice(0, cur), playlist.slice(cur))
     document.getElementById('playlist').innerHTML = '<h3>EXPERIMENTAL SONG REQUEST</h3>' +
 	'<ol>' +
-  upcoming.map((item, idx) => ('' +
+  l.map((item, idx) => ('' +
     '<li class="' + (idx === 0 ? 'playing' : 'next') + '">' +
       item.yt +
       '<span>' +
         'BY ' + item.user + ' ' +
-        '💖 ' + item.goods + ' ' +
-        '💩 ' + item.bads + ' ' +
-      '</span>' +
-    '</li>'
-  )).join('') +
-  finished.map((item) => ('' +
-    '<li class="played">' +
-      item.yt +
-      '<span>' +
-        'BY ' + item.user + ' ' +
+        '🔁 ' + item.plays + ' ' +
         '💖 ' + item.goods + ' ' +
         '💩 ' + item.bads + ' ' +
       '</span>' +
