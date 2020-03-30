@@ -26,7 +26,7 @@ const general = {
     '!from': 'I\'m from Germany.',
 //    '!bgm': 'KingZNaiver パワー！ youtube.com/watch?v=CP7Jt7nyVM',
     // '!bgm': 'Various Artists!',
-    '!bgm': 'https://www.youtube.com/watch?v=0ckMFFUDVws', // ghibli
+//     '!bgm': 'https://www.youtube.com/watch?v=0ckMFFUDVws', // ghibli
     // '!bgm': 'KOTO パワー！ youtube.com/watch?v=lyieFu7BnHE',
 //    '!bgm': 'Kantele パワー！ youtube.com/watch?v=rkUIGHmnw8E',
     '!topic': 'Random japanese language stuff :D', //'Japanese kikudora! 新美南吉「手袋を買いに」 http://kikudorabungak.main.jp/archives/219',

@@ -32,7 +32,9 @@ const core = {
     const c = core.cmd(context, msg)
     if (c) {
       const r = await c.fn()
-      client.say(target, r).catch(y => {})
+      if (r) {
+        client.say(target, r).catch(y => {})
+      }
       console.log(`* Executed ${c.name} command`)
       console.log(r)
     } else {
@@ -47,6 +49,7 @@ const modules = [
   require('./wordgame.js'),
   require('./people.js'),
   require('./timer.js'),
+  require('./sr.js'),
 ]
 
 modules.forEach(m => m.init && m.init(client))
@@ -61,3 +64,26 @@ function onConnectedHandler (addr, port) {
   console.log(`* Connected to ${addr}:${port}`);
 }
 
+const http = require('http')
+const server = http.createServer((req, res) => {
+  let handled = {
+    code: 200,
+    type: 'text/plain',
+    body: '-'
+  }
+  modules.forEach((m) => {
+    if (!m.routes) {
+      return
+    }
+    if (m.routes[req.url]) {
+      handled = m.routes[req.url](req, res)
+    }
+  })
+  res.statusCode = handled.code
+  res.setHeader('Content-Type', handled.type)
+  res.end(handled.body)
+})
+
+server.listen(opts.http.port, () => {
+  console.log('server running')
+})

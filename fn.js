@@ -1,6 +1,20 @@
 
 const fetch = require('node-fetch')
 
+const fs = require('fs')
+
+const load = (m, def) => {
+  try {
+    let raw = fs.readFileSync(m + '.data.json')
+    let data = JSON.parse(raw)
+    return data || def
+  } catch {
+    return def
+  }
+}
+const save = (m, data) => {
+  fs.writeFileSync(m + '.data.json', JSON.stringify(data))
+}
 
 function getRandomInt(min, max) {
     min = Math.ceil(min);
@@ -26,10 +40,19 @@ const lookupWord = async (w, p = 1) => {
     .then(j => j.data)
 }
 
+const isBroadcaster = (ctx) => ctx['room-id'] === ctx['user-id']
+const isMod = (ctx) => !!ctx.mod
+const isSubscriber = (ctx) => !!ctx.subscriber
+
 module.exports = {
+  load,
+  save,
   getRandomInt,
   getRandom,
   timer,
   fnRandom,
   lookupWord,
+  isBroadcaster,
+  isMod,
+  isSubscriber,
 }

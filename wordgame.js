@@ -1,14 +1,18 @@
 const fn = require('./fn.js')
 
-const word = r => r.word
-const solution = r => r.solutions.join(', ')
+const word = r => r.data.word
+const solution = r => r.data.solutions.join(', ')
+
+const save = (r) => fn.save('wordgame', r.data)
 
 const r = {
-  word: null,
-  solutions: [],
-  lvl: 4,
-  users: {
-  },
+  data: fn.load('wordgame', {
+    word: null,
+    solutions: [],
+    lvl: 4,
+    users: {
+    },
+  }),
   infos: [
     {search: '#jlpt-n1', pages: 173},
     {search: '#jlpt-n2', pages: 91},
@@ -17,24 +21,26 @@ const r = {
     {search: '#jlpt-n5', pages: 33},
   ],
   nextWord: async () => {
-    const info = r.infos[r.lvl - 1] // getRandom(r.infos[lvl])
+    const info = r.infos[r.data.lvl - 1] // getRandom(r.infos[lvl])
     const page = fn.getRandomInt(1, info.pages)
     const data = await fn.lookupWord(info.search, page)
     const e = fn.getRandom(data)
-    r.word = e.slug
-    r.solutions = [].concat(...e.senses.map(x => x.english_definitions)).map(s => s.toLowerCase())
-    console.log(r.solutions)
+    r.data.word = e.slug
+    r.data.solutions = [].concat(...e.senses.map(x => x.english_definitions)).map(s => s.toLowerCase())
+    console.log(r.data.solutions)
+    save(r)
   },
   solve: (msg, displayName) => {
     let lc = msg.toLowerCase()
-    for (let i = 0; i < r.solutions.length; i++) {
-      console.log(r.solutions[i])
+    for (let i = 0; i < r.data.solutions.length; i++) {
+      console.log(r.data.solutions[i])
       console.log(lc)
-      if (r.solutions[i].indexOf(lc) !== -1) {
-        r.word = null
-        r.solutions = []
-        r.users[displayName] = r.users[displayName] || 0
-        r.users[displayName]+= 1
+      if (r.data.solutions[i].indexOf(lc) !== -1) {
+        r.data.word = null
+        r.data.solutions = []
+        r.data.users[displayName] = r.data.users[displayName] || 0
+        r.data.users[displayName]+= 1
+	save(r)
         return `Nice! ${word(r)}: (${solution(r)})`
       }
     }
@@ -42,8 +48,8 @@ const r = {
   },
   lb: () => {
     const u = []
-    Object.keys(r.users).forEach(k => {
-      u.push({name: k, pts: r.users[k]})
+    Object.keys(r.data.users).forEach(k => {
+      u.push({name: k, pts: r.data.users[k]})
     })
 
     return u.sort((e1, e2) => {
@@ -57,56 +63,59 @@ const r = {
 
       await r.nextWord()
       await fn.timer(5)
-      client.say(target, 'Ok, the next word is: ' + r.word).catch(y => {})
+      client.say(target, 'Ok, the next word is: ' + r.data.word).catch(y => {})
       return true
     }
     return false
   },
   cmds: {
     '!start': async () => {
-      if (r.word === null) {
+      if (r.data.word === null) {
         await r.nextWord()
-        return 'ok, the next word is: ' + r.word
+        return 'ok, the next word is: ' + r.data.word
       } else {
-        return 'you still have to solve: ' + r.word + ' (or use !skip to skip it)'
+        return 'you still have to solve: ' + r.data.word + ' (or use !skip to skip it)'
       }
     },
     '!stop': () => {
-      r.word = null
-      r.solutions = []
+      r.data.word = null
+      r.data.solutions = []
+      save(r)
       return 'stopped the word game BibleThump'
     },
     '!score': () => {
       return r.lb()
     },
     '!skip': async () => {
-      if (r.word === null) {
+      if (r.data.word === null) {
         return ''
       }
 
       w = word(r)
       if (w) {
 	const s = solution(r)
-        r.word = null
+        r.data.word = null
         await r.nextWord()
+	save(r)
         return `Ok, I skipped "${w}" (${s}) NotLikeThis the next word is: ${word(r)}`
       }
     },
 
     '!lvl': (context, params) => {
-      if (r.word === null) {
+      if (r.data.word === null) {
         return ''
       }
 
       if (params.length === 0) {
-        return `lvl: up to jlpt${r.lvl} (chose a different level with !lvl [1-5])`
+        return `lvl: up to jlpt${r.data.lvl} (chose a different level with !lvl [1-5])`
       } else {
         const newlvl = parseInt(params[0], 10)
         if (newlvl >= 1 && newlvl <= 5) {
-          r.lvl = newlvl
-          return `righty right! new lvl: up to jlpt${r.lvl}`
+          r.data.lvl = newlvl
+	  save(r)
+          return `righty right! new lvl: up to jlpt${r.data.lvl}`
         }
-        return `no no no! still jlpt${r.lvl}`
+        return `no no no! still jlpt${r.data.lvl}`
       }
     },
   },
