@@ -282,14 +282,13 @@ const sr = {
 <style type="text/css">
 body { margin: 0; background: #333; color: #eec; font: 15px monospace; }
 #playlist { width: 640px; }
-ol { list-style: inside decimal; padding: 0 }
+ol { list-style: none; padding: 0 }
 ol li { padding: .5em 1em; margin: .5em 0; border: solid 1px #444; }
-ol li span { float: right; }
+ol li .title { font-weight: bold }
+ol li .meta { margin-top: .5em }
 h3 { text-align: center; }
 .playing { background: #e8ffcc; color: #000; }
-.playing:before { display: inline-block; content: "今　" }
 .next { background: #81a694; color: #000; }
-.next:before { display: inline-block; content: "次　" }
 </style>
 </head>
 <body>
@@ -338,13 +337,13 @@ function doEverything (s, player, playlist) {
 	'<ol>' +
   playlist.map((item, idx) => ('' +
     '<li class="' + (idx === 0 ? 'playing' : 'next') + '">' +
-      (item.title || item.yt) +
-      '<span>' +
+      '<div class="title">' + (item.title || item.yt) + '</div>' +
+      '<div class="meta">' +
         '' + item.user + ' ' +
         '🔁 ' + item.plays + ' ' +
         '💖 ' + item.goods + ' ' +
         '💩 ' + item.bads + ' ' +
-      '</span>' +
+      '</div>' +
     '</li>'
   )).join('') +
 	'</ol>'
