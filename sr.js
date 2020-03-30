@@ -114,10 +114,10 @@ const sr = {
     if (sr.data.cur === -1) {
       return
     }
-    sr.playlist.splice(sr.data.cur, 1)
-    if (sr.playlist.length === 0) {
+    sr.data.playlist.splice(sr.data.cur, 1)
+    if (sr.data.playlist.length === 0) {
       sr.data.cur = -1
-    } else if (sr.playlist.length <= sr.data.cur) {
+    } else if (sr.data.playlist.length <= sr.data.cur) {
       sr.data.cur = 0
     }
     save(sr)
