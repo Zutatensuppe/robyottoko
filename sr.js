@@ -133,16 +133,30 @@ const sr = {
     }
   },
   addToPlaylist: (youtubeUrl, userName) => {
-    sr.data.playlist.push({
+    const item = {
       id: Math.random(),
       yt: youtubeUrl,
-      plays: 0,
       timestamp: new Date().getTime(),
       user: userName,
-    })
-    if (sr.data.cur < 0) {
-      sr.data.cur = 0
+      plays: 0,
+      skips: 0,
+      goods: 0,
+      bads: 0,
     }
+
+    let found = -1
+    for (let i = 0; i < sr.data.playlist; i++) {
+      let other = sr.data.playlist[i]
+      if (other.plays === item.plays) {
+        found = i
+      } else if (found >= 0) {
+        break
+      }
+    }
+
+    sr.data.cur = found + 1
+    sr.data.playlist.splice(sr.data.cur, 0, item)
+
     save(sr)
     sr.updateClients('add')
   },
@@ -301,7 +315,7 @@ function doEverything (s, player, playlist, cur) {
     '<li class="' + (idx === 0 ? 'playing' : 'next') + '">' +
       item.yt +
       '<span>' +
-        'BY ' + item.user + ' ' +
+        '' + item.user + ' ' +
         '🔁 ' + item.plays + ' ' +
         '💖 ' + item.goods + ' ' +
         '💩 ' + item.bads + ' ' +
