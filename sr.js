@@ -292,7 +292,7 @@ function prepareYt() {
 
 function doEverything (s, player, playlist, cur) {
   const updatePlaylistView = () => {
-    const l = [].concat(playlist.slice(0, cur), playlist.slice(cur))
+    const l = [].concat(playlist.slice(cur), playlist.slice(0, cur))
     document.getElementById('playlist').innerHTML = '<h3>EXPERIMENTAL SONG REQUEST</h3>' +
 	'<ol>' +
   l.map((item, idx) => ('' +
