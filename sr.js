@@ -4,9 +4,10 @@ const save = (r) => fn.save('sr', {
   playlist: r.data.playlist.map(item => ({
     id: item.id,
     yt: item.yt,
-    plays: item.plays || 0,
     time: item.time || new Date().getTime(),
     user: item.user || '',
+    plays: item.plays || 0,
+    skips: item.skips || 0,
   })),
   cur: r.data.cur,
 })
@@ -43,16 +44,26 @@ const sr = {
     sr.data.playlist[sr.data.cur].plays++
     save(sr)
   },
+  resetStats: () => {
+    sr.data.playlist = sr.data.playlist.map(item => {
+      item.plays = 0
+      item.skips = 0
+      return item
+    })
+    save(sr)
+  },
   skip: () => {
     if (sr.data.playlist.length === 0) {
       return
     }
+
+    sr.data.playlist[sr.data.cur].skips++
+
     if (sr.data.cur + 1 >= sr.data.playlist.length) {
       // rotate
       sr.data.playlist.push(sr.data.playlist.shift())
     } else {
       sr.data.cur++
-      sr.data.playlist[sr.data.cur].plays++
     }
     save(sr)
     sr.updateClients()
@@ -154,6 +165,12 @@ const sr = {
         case 'skip':
           if (fn.isBroadcaster(context)) {
             sr.skip()
+            return
+          }
+          break
+        case 'resetStats':
+          if (fn.isBroadcaster(context)) {
+            sr.resetStats()
             return
           }
           break
