@@ -242,12 +242,13 @@ body { margin: 0; background: #333; color: #eec; font: 15px monospace; }
 #playlist { width: 640px; }
 ol { list-style: inside decimal; padding: 0 }
 ol li { padding: .5em 1em; margin: .5em 0; border: solid 1px #444; }
+ol li span { float: right; }
 .playing { background: #e8ffcc; color: #444; }
-.playing:before { display: inline-block; content: "▶️ " }
+.playing:before { display: inline-block; content: "現　" }
 .next { background: #71cea2; color: #444; }
-.next:before { display: inline-block; content: "⏳ " }
+.next:before { display: inline-block; content: "次　" }
 .played { background: #999; }
-.played:before { display: inline-block; content: "📜 " }
+.played:before { display: inline-block; content: "過　" }
 </style>
 </head>
 <body>
@@ -299,7 +300,7 @@ function doEverything (s, player, playlist, cur) {
     '<li class="' + (idx === 0 ? 'playing' : 'next') + '">' +
       item.yt +
       '<span>' +
-        '❔ ' + item.user + ' ' +
+        'BY ' + item.user + ' ' +
         '💖 ' + item.goods + ' ' +
         '💩 ' + item.bads + ' ' +
       '</span>' +
@@ -309,7 +310,7 @@ function doEverything (s, player, playlist, cur) {
     '<li class="played">' +
       item.yt +
       '<span>' +
-        '❔ ' + item.user + ' ' +
+        'BY ' + item.user + ' ' +
         '💖 ' + item.goods + ' ' +
         '💩 ' + item.bads + ' ' +
       '</span>' +
