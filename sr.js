@@ -1,9 +1,13 @@
 const fn = require('./fn.js')
+const opts = require('./config.js')
+const fetch = require('node-fetch')
 
 const save = (r) => fn.save('sr', {
+  youtubeData: r.data.youtubeData,
   playlist: r.data.playlist.map(item => ({
     id: item.id,
     yt: item.yt,
+    title: item.title || '',
     time: item.time || new Date().getTime(),
     user: item.user || '',
     plays: item.plays || 0,
@@ -13,6 +17,13 @@ const save = (r) => fn.save('sr', {
   })),
   cur: r.data.cur,
 })
+
+const fetchYoutubeData = async (youtubeId) => {
+  const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${youtubeId}&fields=items(id%2Csnippet)&key=${opts.google.api_key}`
+  return fetch(url)
+    .then(r => r.json())
+    .then(j => j.items[0] || null)
+}
 
 const extractYoutubeId = (youtubeUrl) => {
   const patterns = [
@@ -34,6 +45,7 @@ const extractYoutubeId = (youtubeUrl) => {
 
 const sr = {
   data: fn.load('sr', {
+    youtubeData: {},
     playlist: [],
     cur: -1,
   }),
@@ -133,10 +145,21 @@ const sr = {
       ws.send(JSON.stringify({event: eventName, data: sr.data}))
     }
   },
-  addToPlaylist: (youtubeUrl, userName) => {
+  loadYoutubeData: async (youtubeId) => {
+    if (typeof sr.data.youtubeData[youtubeId] !== 'undefined') {
+      return sr.data.youtubeData[youtubeId]
+    }
+    sr.data.youtubeData[youtubeId] = await fetchYoutubeData(youtubeId)
+    save(sr)
+    return sr.data.youtubeData[youtubeId]
+  },
+  addToPlaylist: async (youtubeId, userName) => {
+    const yt = await sr.loadYoutubeData(youtubeId)
+
     const item = {
       id: Math.random(),
-      yt: youtubeUrl,
+      yt: youtubeId,
+      title: yt.snippet.title,
       timestamp: new Date().getTime(),
       user: userName,
       plays: 0,
@@ -197,7 +220,7 @@ const sr = {
     });
   },
   cmds: {
-    '!sr': (context, params) => {
+    '!sr': async (context, params) => {
       if (params.length === 0) {
         return `Usage: !sr YOUTUBE-URL`
       }
@@ -247,7 +270,7 @@ const sr = {
       if (!youtubeId) {
         return `Could not process that song request`
       }
-      sr.addToPlaylist(youtubeId, context['display-name'])
+      await sr.addToPlaylist(youtubeId, context['display-name'])
       return `Added ${youtubeId} to the playlist!`
     },
   },
@@ -320,7 +343,7 @@ function doEverything (s, player, playlist, cur) {
 	'<ol>' +
   l.map((item, idx) => ('' +
     '<li class="' + (idx === 0 ? 'playing' : 'next') + '">' +
-      item.yt +
+      (item.title || item.yt) +
       '<span>' +
         '' + item.user + ' ' +
         '🔁 ' + item.plays + ' ' +
