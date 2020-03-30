@@ -238,16 +238,16 @@ const sr = {
 <html>
 <head> <meta charset="utf-8"/>
 <style type="text/css">
-body { margin: 0; background: #333; color: #eec }
+body { margin: 0; background: #333; color: #eec; font: 15px monospace; }
 #playlist { width: 640px; }
 ol { list-style: inside decimal; padding: 0 }
 ol li { padding: .5em 1em; margin: .5em 0; border: solid 1px #444; }
-.playing { background: #b2fb49; color: #444; }
-.playing:before { display: inline-block; content: "[PLAYING] " }
-.next { background: #ffd533; color: #444; }
-.next:before { display: inline-block; content: "[QUEUED] " }
+.playing { background: #e8ffcc; color: #444; }
+.playing:before { display: inline-block; content: "▶️ " }
+.next { background: #71cea2; color: #444; }
+.next:before { display: inline-block; content: "⏳ " }
 .played { background: #999; }
-.played:before { display: inline-block; content: "[already played] " }
+.played:before { display: inline-block; content: "📜 " }
 </style>
 </head>
 <body>
@@ -297,18 +297,22 @@ function doEverything (s, player, playlist, cur) {
 	'<ol>' +
   upcoming.map((item, idx) => ('' +
     '<li class="' + (idx === 0 ? 'playing' : 'next') + '">' +
-    item.yt +
-    ' (added by ' + item.user +')' +
-    ' [💖 ' + item.goods +']' +
-    ' [💩 ' + item.bads + ']' +
+      item.yt +
+      '<span>' +
+        '❔ ' + item.user + ' ' +
+        '💖 ' + item.goods + ' ' +
+        '💩 ' + item.bads + ' ' +
+      '</span>' +
     '</li>'
   )).join('') +
   finished.map((item) => ('' +
     '<li class="played">' +
-    item.yt +
-    ' (added by ' + item.user +')' +
-    ' [💖 ' + item.goods +']' +
-    ' [💩 ' + item.bads + ']' +
+      item.yt +
+      '<span>' +
+        '❔ ' + item.user + ' ' +
+        '💖 ' + item.goods + ' ' +
+        '💩 ' + item.bads + ' ' +
+      '</span>' +
     '</li>'
   )).join('') +
 	'</ol>'
