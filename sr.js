@@ -1,6 +1,12 @@
 const fn = require('./fn.js')
 
-const save = (r) => fn.save('sr', r.data)
+const save = (r) => fn.save('sr', r.data.map(item => ({
+  id: item.id,
+  yt: item.yt,
+  plays: item.plays || 0,
+  time: item.time || new Date().getTime(),
+  user: item.user || '',
+})))
 
 const extractYoutubeId = (youtubeUrl) => {
   const patterns = [
@@ -25,6 +31,13 @@ const sr = {
     cur: -1,
   }),
   wss: null,
+  setPlaying: (idx) => {
+    if (sr.data.cur !== idx) {
+      sr.data.playlist[idx].plays++
+      sr.data.cur = idx
+      save(sr)
+    }
+  },
   skip: () => {
     if (sr.data.playlist.length === 0) {
       return
@@ -80,8 +93,14 @@ const sr = {
       ws.send(JSON.stringify(sr.data))
     }
   },
-  addToPlaylist: (youtubeUrl) => {
-    sr.data.playlist.push({ id: Math.random(), yt: youtubeUrl })
+  addToPlaylist: (youtubeUrl, userName) => {
+    sr.data.playlist.push({
+      id: Math.random(),
+      yt: youtubeUrl,
+      plays: 0,
+      timestamp: new Date().getTime(),
+      user: userName,
+    })
     if (sr.data.cur < 0) {
       sr.data.cur = 0
     }
@@ -99,8 +118,7 @@ const sr = {
         console.log(data)
         const d = JSON.parse(data)
         if (typeof d.cur !== 'undefined') {
-          sr.data.cur = d.cur
-          save(sr)
+          sr.setPlaying(d.cur)
         }
       })
       sr.updateClient(ws)
@@ -158,7 +176,7 @@ const sr = {
       if (!youtubeId) {
         return `Could not process that song request`
       }
-      sr.addToPlaylist(youtubeId)
+      sr.addToPlaylist(youtubeId, context['display-name'])
       return `Added ${youtubeId} to the playlist!`
     },
   },
