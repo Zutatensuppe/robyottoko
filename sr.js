@@ -153,6 +153,9 @@ const sr = {
         break
       }
     }
+    if (found === -1) {
+      found = sr.data.cur
+    }
 
     sr.data.playlist.splice(found + 1, 0, item)
 
