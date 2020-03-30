@@ -14,11 +14,11 @@ const r = {
     },
   }),
   infos: [
-    {search: '#jlpt-n1', pages: 173},
-    {search: '#jlpt-n2', pages: 91},
-    {search: '#jlpt-n3', pages: 89},
-    {search: '#jlpt-n4', pages: 29},
-    {search: '#jlpt-n5', pages: 33},
+    { search: '#jlpt-n1', pages: 173 },
+    { search: '#jlpt-n2', pages: 91 },
+    { search: '#jlpt-n3', pages: 89 },
+    { search: '#jlpt-n4', pages: 29 },
+    { search: '#jlpt-n5', pages: 33 },
   ],
   nextWord: async () => {
     const info = r.infos[r.data.lvl - 1] // getRandom(r.infos[lvl])
@@ -39,8 +39,8 @@ const r = {
         r.data.word = null
         r.data.solutions = []
         r.data.users[displayName] = r.data.users[displayName] || 0
-        r.data.users[displayName]+= 1
-	save(r)
+        r.data.users[displayName] += 1
+        save(r)
         return `Nice! ${word(r)}: (${solution(r)})`
       }
     }
@@ -49,7 +49,7 @@ const r = {
   lb: () => {
     const u = []
     Object.keys(r.data.users).forEach(k => {
-      u.push({name: k, pts: r.data.users[k]})
+      u.push({ name: k, pts: r.data.users[k] })
     })
 
     return u.sort((e1, e2) => {
@@ -57,13 +57,13 @@ const r = {
     }).map(e => `${e.name} (${e.pts}pts)`).join(', ')
   },
   onMsg: async function (client, target, context, msg) {
-    let solved =r.solve(msg, context['display-name'])
+    let solved = r.solve(msg, context['display-name'])
     if (solved !== '') {
-      client.say(target, solved).catch(y => {})
+      client.say(target, solved).catch(y => { })
 
       await r.nextWord()
       await fn.timer(5)
-      client.say(target, 'Ok, the next word is: ' + r.data.word).catch(y => {})
+      client.say(target, 'Ok, the next word is: ' + r.data.word).catch(y => { })
       return true
     }
     return false
@@ -93,10 +93,10 @@ const r = {
 
       w = word(r)
       if (w) {
-	const s = solution(r)
+        const s = solution(r)
         r.data.word = null
         await r.nextWord()
-	save(r)
+        save(r)
         return `Ok, I skipped "${w}" (${s}) NotLikeThis the next word is: ${word(r)}`
       }
     },
@@ -112,7 +112,7 @@ const r = {
         const newlvl = parseInt(params[0], 10)
         if (newlvl >= 1 && newlvl <= 5) {
           r.data.lvl = newlvl
-	  save(r)
+          save(r)
           return `righty right! new lvl: up to jlpt${r.data.lvl}`
         }
         return `no no no! still jlpt${r.data.lvl}`

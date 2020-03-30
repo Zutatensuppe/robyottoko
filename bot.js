@@ -20,10 +20,10 @@ const core = {
     if (!c) {
       return c
     }
-    const fn = typeof c === 'function' 
+    const fn = typeof c === 'function'
       ? async () => await c(context, command.slice(1))
       : () => c
-    return {fn, name}
+    return { fn, name }
   },
   cmds: {
     '!commands': () => 'Commands: ' + Object.keys(core.allcmds()).filter(a => !['!commands'].includes(a)).join(' '),
@@ -33,7 +33,7 @@ const core = {
     if (c) {
       const r = await c.fn()
       if (r) {
-        client.say(target, r).catch(y => {})
+        client.say(target, r).catch(y => { })
       }
       console.log(`* Executed ${c.name} command`)
       console.log(r)
@@ -54,13 +54,13 @@ const modules = [
 
 modules.forEach(m => m.init && m.init(client))
 
-async function onMessageHandler (target, context, msg, self) {
+async function onMessageHandler(target, context, msg, self) {
   if (self) { return; } // Ignore messages from the bot
   modules.forEach(async (m) => m.onMsg && await m.onMsg(client, target, context, msg))
 }
 
 // Called every time the bot connects to Twitch chat
-function onConnectedHandler (addr, port) {
+function onConnectedHandler(addr, port) {
   console.log(`* Connected to ${addr}:${port}`);
 }
 

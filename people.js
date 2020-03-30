@@ -22,8 +22,8 @@ const people = {
     ]),
     '!eiseraph': 'Boo! 👻',
     '!empompom': fn.fnRandom([
-       'Proud owner of textbooks! Total value: 120Euro Kreygasm',
-       'My books were reasonably priced and I have nothing bad to say about them.',
+      'Proud owner of textbooks! Total value: 120Euro Kreygasm',
+      'My books were reasonably priced and I have nothing bad to say about them.',
     ]),
     '!sekkachi': fn.fnRandom([
       'je voudrais un fromage StinkyCheese',

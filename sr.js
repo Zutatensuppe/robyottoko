@@ -30,6 +30,7 @@ const sr = {
       return
     }
     if (sr.data.cur + 1 >= sr.data.playlist.length) {
+      // rotate
       sr.data.playlist.push(sr.data.playlist.shift())
     } else {
       sr.data.cur++
@@ -54,41 +55,42 @@ const sr = {
     }
   },
   addToPlaylist: (youtubeUrl) => {
-      sr.data.playlist.push({id: Math.random(), yt: youtubeUrl})
-      if (sr.data.cur < 0) {
-        sr.data.cur = 0
-      }
-      save(sr)
-      sr.updateClients()
+    sr.data.playlist.push({ id: Math.random(), yt: youtubeUrl })
+    if (sr.data.cur < 0) {
+      sr.data.cur = 0
+    }
+    save(sr)
+    sr.updateClients()
   },
   init: (client) => {
     const ws = require('ws')
-    sr.wss = new ws.Server({port: 1338})
-    function noop() {}
+    sr.wss = new ws.Server({ port: 1338 })
+    function noop() { }
     sr.wss.on('connection', ws => {
       ws.isAlive = true
       ws.on('pong', function () { this.isAlive = true; })
       ws.on('message', function (data) {
-	console.log(data)
-	const d = JSON.parse(data)
-	if (typeof d.cur !== 'undefined') {
-	  sr.data.cur = d.cur
-	  save(sr)
-	}
-      }) 
+        console.log(data)
+        const d = JSON.parse(data)
+        if (typeof d.cur !== 'undefined') {
+          sr.data.cur = d.cur
+          save(sr)
+        }
+      })
       sr.updateClient(ws)
     })
     const interval = setInterval(function ping() {
       sr.wss.clients.forEach(function each(ws) {
         if (ws.isAlive === false) {
-  	  return ws.terminate();
+          return ws.terminate();
         }
         ws.isAlive = false;
         ws.ping(noop);
       });
     }, 30000)
     sr.wss.on('close', function close() {
-      clearInterval(interval);}
+      clearInterval(interval);
+    }
     );
   },
   cmds: {
@@ -96,11 +98,11 @@ const sr = {
       if (params.length === 0) {
         return `Usage: !sr YOUTUBE-URL`
       }
-      
+
       const youtubeUrl = params[0]
       const youtubeId = extractYoutubeId(youtubeUrl)
       if (!youtubeId) {
-	return `Could not process that song request`
+        return `Could not process that song request`
       }
       sr.addToPlaylist(youtubeId)
       return `Added ${youtubeId} to the playlist!`
@@ -113,7 +115,7 @@ const sr = {
     },
     '!skipsong': (context, params) => {
       if (fn.isBroadcaster(context)) {
-	sr.skip()
+        sr.skip()
       }
     },
     '!clear': (context, params) => {
@@ -124,10 +126,10 @@ const sr = {
   },
   routes: {
     '/sr/player/': (req, res) => {
-       return {
-	 code: 200,
-	 type: 'text/html',
-	 body: `
+      return {
+        code: 200,
+        type: 'text/html',
+        body: `
 <html>
 <head> <meta charset="utf-8"/>
 <style type="text/css">
@@ -187,10 +189,10 @@ function doEverything (s, player, playlist, cur) {
     const finished = playlist.slice(0, cur)
     const upcoming = playlist.slice(cur)
     document.getElementById('playlist').innerHTML = '<h3>EXPERIMENTAL SONG REQUEST</h3>' +
-	'<ol>' + 
+	'<ol>' +
 	upcoming.map((item, idx) => '<li class="' + (idx === 0 ? 'playing' : 'next') + '">' + item.yt + '</li>').join('') +
 	finished.map((item) => '<li class="played">' + item.yt + '</li>').join('') +
-	'</ol>'  
+	'</ol>'
   }
 
   const play = (idx, force) => {
@@ -200,7 +202,7 @@ function doEverything (s, player, playlist, cur) {
       return
     }
     if (
-      player.getPlayerState() === 1 
+      player.getPlayerState() === 1
       && idx === cur
       && !force
     ) {
@@ -214,7 +216,7 @@ function doEverything (s, player, playlist, cur) {
     updatePlaylistView()
     s.send(JSON.stringify({'cur': cur}))
   }
-  
+
   const next = () => {
     const idx = (cur + 1) >= playlist.length ? 0 : cur + 1
     play(idx)
@@ -226,7 +228,7 @@ function doEverything (s, player, playlist, cur) {
       next()
     }
   })
-  
+
   play(cur)
   s.onmessage = function (e) {
     const d = JSON.parse(e.data)
@@ -249,7 +251,7 @@ prepareWs().then(({s, playlist, cur}) => {
 </body>
 </html>
 	       `
-       }	
+      }
     },
   },
 }
