@@ -55,6 +55,7 @@ const sr = {
       return item
     })
     save(sr)
+    sr.updateClients('resetStats')
   },
   incStat: (stat) => {
     if (sr.data.cur === -1 || sr.data.cur >= sr.data.playlist.length) {
@@ -359,6 +360,7 @@ function doEverything (s, player, playlist, cur) {
         break
       case 'like':
       case 'dislike':
+      case 'resetStats':
         playlist = d.data.playlist
         updatePlaylistView()
         break
