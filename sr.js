@@ -376,7 +376,6 @@ function doEverything (s, player, playlist, cur) {
       case 'skip':
       case 'remove':
       case 'clear':
-      case 'shuffle':
         playlist = d.data.playlist
         play(d.data.cur, true)
         break
@@ -384,6 +383,7 @@ function doEverything (s, player, playlist, cur) {
       case 'like':
       case 'onPlay':
       case 'resetStats':
+      case 'shuffle':
         playlist = d.data.playlist
         updatePlaylistView()
         break
