@@ -7,7 +7,9 @@ const save = (r) => fn.save('sr', {
     time: item.time || new Date().getTime(),
     user: item.user || '',
     plays: item.plays || 0,
-    skips: item.skips || 0,
+    skips: item.skips || 0, // hard skips
+    goods: item.goods || 0,
+    bads: item.bads || 0,
   })),
   cur: r.data.cur,
 })
@@ -41,23 +43,41 @@ const sr = {
       return
     }
     sr.data.cur = idx
-    sr.data.playlist[sr.data.cur].plays++
+    sr.incStat('plays')
     save(sr)
   },
   resetStats: () => {
     sr.data.playlist = sr.data.playlist.map(item => {
       item.plays = 0
       item.skips = 0
+      item.goods = 0
+      item.bads = 0
       return item
     })
     save(sr)
+  },
+  incStat: (stat) => {
+    if (sr.data.cur === -1 || sr.data.cur >= sr.data.playlist.length) {
+      return
+    }
+    sr.data.playlist[sr.data.cur][stat]++
+  },
+  like: () => {
+    sr.incStat('goods')
+    save(sr)
+    sr.updateClients()
+  },
+  dislike: () => {
+    sr.incStat('bads')
+    save(sr)
+    sr.updateClients()
   },
   skip: () => {
     if (sr.data.playlist.length === 0) {
       return
     }
 
-    sr.data.playlist[sr.data.cur].skips++
+    sr.incStat('skips')
 
     if (sr.data.cur + 1 >= sr.data.playlist.length) {
       // rotate
@@ -162,6 +182,12 @@ const sr = {
       switch (params[0]) {
         case 'current':
           return `Currently playing: ${sr.data.playlist[sr.data.cur].yt}`
+        case 'good':
+          sr.like()
+          return
+        case 'bad':
+          sr.dislike()
+          return
         case 'skip':
           if (fn.isBroadcaster(context)) {
             sr.skip()
@@ -269,8 +295,22 @@ function doEverything (s, player, playlist, cur) {
     const upcoming = playlist.slice(cur)
     document.getElementById('playlist').innerHTML = '<h3>EXPERIMENTAL SONG REQUEST</h3>' +
 	'<ol>' +
-	upcoming.map((item, idx) => '<li class="' + (idx === 0 ? 'playing' : 'next') + '">' + item.yt + '</li>').join('') +
-	finished.map((item) => '<li class="played">' + item.yt + '</li>').join('') +
+  upcoming.map((item, idx) => ('' +
+    '<li class="' + (idx === 0 ? 'playing' : 'next') + '">' +
+    item.yt +
+    ' (added by ' + item.user +')' +
+    ' [💖 ' + item.goods +']' +
+    ' [💩 ' + item.bads + ']' +
+    '</li>'
+  )).join('') +
+  finished.map((item) => ('' +
+    '<li class="played">' +
+    item.yt +
+    ' (added by ' + item.user +')' +
+    ' [💖 ' + item.goods +']' +
+    ' [💩 ' + item.bads + ']' +
+    '</li>'
+  )).join('') +
 	'</ol>'
   }
 
