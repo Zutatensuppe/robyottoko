@@ -385,6 +385,7 @@ function doEverything (s, player, playlist, cur) {
       case 'resetStats':
       case 'shuffle':
         playlist = d.data.playlist
+        cur = d.data.cur
         updatePlaylistView()
         break
       case 'add':
