@@ -145,7 +145,7 @@ const sr = {
     }
 
     let found = -1
-    for (let i = 0; i < sr.data.playlist; i++) {
+    for (let i = 0; i < sr.data.playlist.length; i++) {
       let other = sr.data.playlist[i]
       if (other.plays === item.plays) {
         found = i
