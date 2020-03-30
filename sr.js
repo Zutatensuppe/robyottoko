@@ -34,12 +34,14 @@ const sr = {
     cur: -1,
   }),
   wss: null,
-  setPlaying: (idx) => {
-    if (sr.data.cur !== idx) {
-      sr.data.playlist[idx].plays++
-      sr.data.cur = idx
-      save(sr)
+  onPlay: (id) => {
+    const idx = sr.data.playlist.findIndex(item => item.id === id)
+    if (idx < 0) {
+      return
     }
+    sr.data.cur = idx
+    sr.data.playlist[sr.data.cur].plays++
+    save(sr)
   },
   skip: () => {
     if (sr.data.playlist.length === 0) {
@@ -50,6 +52,7 @@ const sr = {
       sr.data.playlist.push(sr.data.playlist.shift())
     } else {
       sr.data.cur++
+      sr.data.playlist[sr.data.cur].plays++
     }
     save(sr)
     sr.updateClients()
@@ -120,8 +123,8 @@ const sr = {
       ws.on('message', function (data) {
         console.log(data)
         const d = JSON.parse(data)
-        if (typeof d.cur !== 'undefined') {
-          sr.setPlaying(d.cur)
+        if (d.event && d.event === 'play') {
+          sr.onPlay(d.id)
         }
       })
       sr.updateClient(ws)
@@ -273,7 +276,7 @@ function doEverything (s, player, playlist, cur) {
     player.playVideo()
     cur = idx
     updatePlaylistView()
-    s.send(JSON.stringify({'cur': cur}))
+    s.send(JSON.stringify({'event': 'play', 'id': item.id}))
   }
 
   const next = () => {
