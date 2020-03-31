@@ -342,8 +342,8 @@ function doEverything (s, player, playlist) {
       '<div class="lft">' +
         '<div class="title">' + (item.title || item.yt) + '</div>' +
         '<div class="meta">' +
-          '' + item.user + ' ' +
-          '🔁 ' + item.plays + ' ' +
+          'requested by ' + item.user + ', ' +
+          'played ' + item.plays + ' time' + (item.plays === 1 ? '' : 's')+ '' +
         '</div>' +
       '</div>' +
       '<div class="rgt vote">' +
