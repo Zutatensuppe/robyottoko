@@ -287,7 +287,7 @@ ol li { padding: .5em 1em; margin: .5em 0; border: solid 1px #444; display: flex
 ol li .lft { width: 400px; }
 ol li .rgt { width: 200px; }
 ol li .title { font-weight: bold; }
-ol li .vote { font-size: 30px; }
+ol li .vote { font-size: 30px; text-align: right; }
 h3 { text-align: center; }
 .playing { background: #e8ffcc; color: #000; }
 .next { background: #81a694; color: #000; }
