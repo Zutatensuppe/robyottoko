@@ -347,8 +347,8 @@ function doEverything (s, player, playlist) {
         '</div>' +
       '</div>' +
       '<div class="rgt vote">' +
-        '👍 ' + item.goods + ' ' +
-        '👎 ' + item.bads + ' ' +
+        '💖 ' + item.goods + ' ' +
+        '💩 ' + item.bads + ' ' +
       '</div>' +
     '</li>'
   )).join('') +
