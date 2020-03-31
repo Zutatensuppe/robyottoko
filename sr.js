@@ -283,9 +283,11 @@ const sr = {
 body { margin: 0; background: #333; color: #eec; font: 15px monospace; }
 #playlist { width: 640px; }
 ol { list-style: none; padding: 0 }
-ol li { padding: .5em 1em; margin: .5em 0; border: solid 1px #444; }
-ol li .title { font-weight: bold }
-ol li .meta { margin-top: .5em }
+ol li { padding: .5em 1em; margin: .5em 0; border: solid 1px #444; display: flex; }
+ol li .lft { width: 400px; }
+ol li .rgt { width: 200px; }
+ol li .title { font-weight: bold; }
+ol li .vote { font-size: 30px; }
 h3 { text-align: center; }
 .playing { background: #e8ffcc; color: #000; }
 .next { background: #81a694; color: #000; }
@@ -337,10 +339,14 @@ function doEverything (s, player, playlist) {
 	'<ol>' +
   playlist.map((item, idx) => ('' +
     '<li class="' + (idx === 0 ? 'playing' : 'next') + '">' +
-      '<div class="title">' + (item.title || item.yt) + '</div>' +
-      '<div class="meta">' +
-        '' + item.user + ' ' +
-        '🔁 ' + item.plays + ' ' +
+      '<div class="lft">' +
+        '<div class="title">' + (item.title || item.yt) + '</div>' +
+        '<div class="meta">' +
+          '' + item.user + ' ' +
+          '🔁 ' + item.plays + ' ' +
+        '</div>' +
+      '</div>' +
+      '<div class="rgt vote">' +
         '💖 ' + item.goods + ' ' +
         '💩 ' + item.bads + ' ' +
       '</div>' +
