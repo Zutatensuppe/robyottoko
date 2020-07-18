@@ -78,6 +78,22 @@ const sayFn = (client, target) => (msg) => {
   })
 }
 
+const mayExecute = (context, cmd) => {
+  if (!cmd.restrict_to) {
+    return true
+  }
+  if (cmd.restrict_to.includes('mod') && !isMod(context)) {
+    return false
+  }
+  if (cmd.restrict_to.includes('sub') && !isSubscriber(context)) {
+    return false
+  }
+  if (cmd.restrict_to.includes('broadcaster') && !isBroadcaster(context)) {
+    return false
+  }
+  return true
+}
+
 const parseCommand = (msg) => {
   const command = msg.trim().split(' ')
   return {name: command[0], args: command.slice(1)}
@@ -85,6 +101,7 @@ const parseCommand = (msg) => {
 
 module.exports = {
   sayFn,
+  mayExecute,
   parseCommand,
   render,
   load,

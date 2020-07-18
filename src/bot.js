@@ -15,17 +15,19 @@ const core = {
     return cmds
   },
   cmds: {
-    '!commands': () => 'Commands: ' + Object.keys(core.allcmds()).filter(a => !['!commands'].includes(a)).join(' '),
+    '!commands': {
+      fn: () => 'Commands: ' + Object.keys(core.allcmds()).filter(a => !['!commands'].includes(a)).join(' ')
+    },
   },
   onMsg: async (client, target, context, msg) => {
     const command = fn.parseCommand(msg)
     let c = core.allcmds()[command.name] || null
-    if (!c) {
+    if (!c || !fn.mayExecute(context, c)) {
       console.log(msg)
       return
     }
 
-    const r = await c(command, client, target, context, msg)
+    const r = await c.fn(command, client, target, context, msg)
     console.log(r)
     if (r) {
       fn.sayFn(client, target)(r)

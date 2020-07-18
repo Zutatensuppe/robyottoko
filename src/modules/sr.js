@@ -313,7 +313,7 @@ const updateClients = (eventName) => {
 module.exports = {
   init,
   cmds: {
-    '!sr': songrequestCmd,
+    '!sr': {fn: songrequestCmd},
   },
   routes: {
     '/sr/player/': songrequestHandler,

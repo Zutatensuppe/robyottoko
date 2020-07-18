@@ -7,18 +7,18 @@ const _data = fn.load('general', {
   timers: [],
   commands: []
 })
-_data.commands.forEach(({action, command, data}) => {
-  switch (action) {
+_data.commands.forEach((cmd) => {
+  switch (cmd.action) {
     case 'jisho_org_lookup':
-      commands[command] = cmds.jishoOrgLookup();
+      commands[cmd.command] = Object.assign({}, cmd, {fn: cmds.jishoOrgLookup()})
       break;
     case 'text':
-      commands[command] = Array.isArray(data.text)
-        ? cmds.randomText(data.text)
-        : cmds.text(data.text)
+      commands[cmd.command] = Object.assign({}, cmd, {fn: Array.isArray(cmd.data.text)
+        ? cmds.randomText(cmd.data.text)
+        : cmds.text(cmd.data.text)})
       break;
     case 'countdown':
-      commands[command] = cmds.countdown(data)
+      commands[cmd.command] = Object.assign({}, cmd, {fn: cmds.countdown(cmd.data)})
       break;
   }
 })
