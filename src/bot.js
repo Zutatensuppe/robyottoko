@@ -21,13 +21,13 @@ const core = {
   },
   onMsg: async (client, target, context, msg) => {
     const command = fn.parseCommand(msg)
-    let c = core.allcmds()[command.name] || null
-    if (!c || !fn.mayExecute(context, c)) {
+    let cmd = core.allcmds()[command.name] || null
+    if (!cmd || !fn.mayExecute(context, cmd)) {
       console.log(msg)
       return
     }
 
-    const r = await c.fn(command, client, target, context, msg)
+    const r = await cmd.fn(command, client, target, context, msg)
     console.log(r)
     if (r) {
       fn.sayFn(client, target)(r)
