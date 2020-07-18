@@ -21,7 +21,7 @@ const core = {
   },
   onMsg: async (client, target, context, msg) => {
     const command = fn.parseCommand(msg)
-    let cmd = core.allcmds()[command.name] || null
+    const cmd = core.allcmds()[command.name] || null
     if (!cmd || !fn.mayExecute(context, cmd)) {
       console.log(msg)
       return
