@@ -1,0 +1,280 @@
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
+  <meta charset="utf-8"/>
+  <style type="text/css">
+    body {
+      margin: 0;
+      background: #333;
+      font: 15px monospace;
+    }
+    a { color: #000; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    #controls {
+      position: fixed;
+      bottom: 0;
+      height: auto;
+    }
+
+    #controls .btn {
+      display: inline-block;
+      margin: 4px;
+      padding: 4px;
+      border: solid 1px #262523;
+      cursor: pointer;
+      color: #eec;
+      background: #4d4842;
+      user-select: none;
+    }
+
+    #player {
+      position: relative;
+      padding-bottom: 56.25%;
+      overflow: hidden;
+    }
+
+    #player iframe, #player object, #player embed {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    ol {
+      list-style: none;
+      margin: 0;
+      padding: 0
+    }
+
+    ol li {
+      padding: .5em 1em;
+      border: solid 1px #444;
+      display: grid;
+      grid-template-areas: "title title"
+                           "meta vote";
+      grid-template-columns: auto 150px;
+    }
+
+    ol li .title {
+      font-size: 1.2em;
+      font-weight: bold;
+      grid-area: title;
+      margin-bottom: 5px;
+    }
+
+    ol li .meta {
+      grid-area: meta;
+      align-self: end;
+    }
+
+    ol li .vote {
+      font-size: 24px;
+      text-align: right;
+      grid-area: vote;
+    }
+
+    .playing {
+      background: #d0d0d0;
+    }
+
+    .next {
+      background: #7b756e;
+    }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+class Ws {
+  constructor(addr) {
+    this.addr = addr
+    this.handle = null
+    this.timeout = null
+    this.queue = []
+    this.onopen = () => {}
+    this.onclose = () => {}
+    this.onmessage = () => {}
+    this._connect()
+  }
+
+  send (txt) {
+    if (this.handle) {
+      this.handle.send(txt)
+    } else {
+      this.queue.add(txt)
+    }
+  }
+
+  _connect() {
+    let ws = new WebSocket(this.addr)
+    ws.onopen = (e) => {
+      console.log('websocket onopen')
+      if (this.timeout) {
+        clearTimeout(this.timeout)
+      }
+      this.handle = ws
+      // should have a queue worker
+      while (this.queue.length > 0) {
+        this.handle.send(this.queue.shift())
+      }
+      this.onopen(e)
+    }
+    ws.onmessage = (e) => {
+      console.log('websocket onmessage')
+      this.onmessage(e)
+    }
+    ws.onclose = (e) => {
+      console.log('websocket onclose')
+      this.handle = null
+      this.timeout = setTimeout(() => { this._connect() }, 1000)
+      this.onclose(e)
+    }
+  }
+}
+
+function prepareYt() {
+  return new Promise((resolve, reject) => {
+    const tag = document.createElement('script')
+    tag.src = "https://www.youtube.com/iframe_api"
+    document.head.append(tag)
+    window.onYouTubeIframeAPIReady = () => {
+      const player = new YT.Player('youtube-el', {
+        playerVars: {
+          iv_load_policy: 3, // do not load annotations
+          modestbranding: 1, // remove youtube logo
+        },
+        events: {
+          onReady: () => {
+            resolve(player)
+          }
+        },
+      })
+    }
+  })
+}
+
+new Vue({
+  el: '#app',
+{% verbatim %}
+  template: `
+<div>
+  <div id="player"><div id="youtube-el"></div></div>
+  <div id="playlist">
+    <ol>
+      <li v-for="(item, idx) in playlist" :class="idx === 0 ? 'playing' : 'next'">
+        <div class="title"><a :href="'https://www.youtube.com/watch?v=' + item.yt" target="_blank">{{ item.title || item.yt }}</a></div>
+        <div class="meta">
+          requested by {{ item.user }},
+          played {{ item.plays }} time{{ item.plays === 1 ? '' : 's' }}
+        </div>
+        <div class="rgt vote">
+          <i class="fa fa-thumbs-up"/> {{ item.goods }}
+          <i class="fa fa-thumbs-down"/> {{ item.bads }}
+        </div>
+      </li>
+    </ol>
+  </div>
+  <div id="controls">
+    <div class="btn" v-for="ctrl in controls" @click="sendCtrl(ctrl)">!sr {{ctrl}}</div>
+  </div>
+</div>
+`,
+{% endverbatim %}
+  data () {
+    return {
+      playlist: [],
+      player: null,
+      ws: null,
+      controls: [
+        'good',
+        'bad',
+        'skip',
+        'resetStats',
+        'clear',
+        'rm',
+        'shuffle',
+      ],
+    }
+  },
+  watch: {
+    playlist: function (newVal, oldVal) {
+      if (newVal.length === 0) {
+        this.player.stopVideo()
+      }
+    }
+  },
+  computed: {
+    item() {
+      return this.playlist[0]
+    },
+    hasItems() {
+      return this.playlist.length !== 0
+    },
+  },
+  methods: {
+    sendCtrl(ctrl) {
+      this.sendMsg({event: 'ctrl', ctrl})
+    },
+    sendMsg(data) {
+      this.ws.send(JSON.stringify(data))
+    },
+    onMsg(e) {
+      const d = JSON.parse(e.data)
+      if (!d.event) {
+        return
+      }
+      switch (d.event) {
+        case 'onEnded':
+        case 'skip':
+        case 'remove':
+        case 'clear':
+          this.playlist = d.data.playlist
+          this.play()
+          break
+        case 'dislike':
+        case 'like':
+        case 'onPlay':
+        case 'resetStats':
+        case 'shuffle':
+          this.playlist = d.data.playlist
+          break
+        case 'add':
+        case 'init':
+          this.playlist = d.data.playlist
+          if (!this.playing()) {
+            this.play()
+          }
+          break
+      }
+    },
+    playing() {
+      return this.player.getPlayerState() === 1
+    },
+    play() {
+      if (this.hasItems) {
+        this.player.cueVideoById(this.item.yt)
+        this.player.playVideo()
+        this.sendMsg({event: 'play', id: this.item.id})
+      }
+    },
+  },
+  async mounted() {
+    this.player = await prepareYt()
+    this.ws = new Ws('ws://{{ ws.hostname }}:{{ ws.port }}/')
+    this.ws.onmessage = this.onMsg
+
+    this.player.addEventListener('onStateChange', (event) => {
+      if (event.data === YT.PlayerState.ENDED) {
+        this.sendMsg({event: 'ended'})
+      }
+    })
+
+    this.play()
+  },
+})
+</script>
+</body>
+</html>

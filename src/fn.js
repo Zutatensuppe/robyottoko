@@ -1,19 +1,18 @@
-
 const fetch = require('node-fetch')
-
 const fs = require('fs')
 
 const load = (m, def) => {
   try {
-    let raw = fs.readFileSync(m + '.data.json')
+    let raw = fs.readFileSync(__dirname + '/data/' + m + '.data.json')
     let data = JSON.parse(raw)
     return data ? Object.assign({}, def, data) : def
-  } catch {
+  } catch (e) {
+    console.log(e)
     return def
   }
 }
 const save = (m, data) => {
-  fs.writeFileSync(m + '.data.json', JSON.stringify(data))
+  fs.writeFileSync(__dirname + '/data/' + m + '.data.json', JSON.stringify(data))
 }
 
 const shuffle = (array) => {
@@ -46,9 +45,16 @@ function getRandom(array) {
   return array[getRandomInt(0, array.length - 1)]
 }
 
+const render = async (template, data) => {
+  const {TwingEnvironment, TwingLoaderFilesystem} = require('twing');
+  const loader = new TwingLoaderFilesystem(__dirname + '/templates')
+  const twing = new TwingEnvironment(loader)
+  return twing.render(template, data)
+}
+
 const fnRandom = (values) => () => getRandom(values)
 
-const timer = (t) => {
+const sleep = (t) => {
   return new Promise((resolve, reject) => {
     setTimeout(resolve, t * 1000)
   })
@@ -61,16 +67,32 @@ const lookupWord = async (w, p = 1) => {
 }
 
 const isBroadcaster = (ctx) => ctx['room-id'] === ctx['user-id']
-const isMod = (ctx) => !!ctx.mod
-const isSubscriber = (ctx) => !!ctx.subscriber
+const isMod = (ctx) => !!ctx.mod || isBroadcaster(ctx)
+const isSubscriber = (ctx) => !!ctx.subscriber || isBroadcaster(ctx)
+
+const sayFn = (client, target) => (msg) => {
+  const targets = target ? [target] : client.channels
+  targets.forEach(t => {
+    console.log(`saying in ${t}: ${msg}`)
+    client.say(t, msg).catch(_ => {})
+  })
+}
+
+const parseCommand = (msg) => {
+  const command = msg.trim().split(' ')
+  return {name: command[0], args: command.slice(1)}
+}
 
 module.exports = {
+  sayFn,
+  parseCommand,
+  render,
   load,
   save,
   getRandomInt,
   getRandom,
   shuffle,
-  timer,
+  sleep,
   fnRandom,
   lookupWord,
   isBroadcaster,
