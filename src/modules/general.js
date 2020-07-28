@@ -44,8 +44,16 @@ class GeneralModule {
     }, 1000)
   }
 
+  getRoutes () {
+    return null
+  }
+
+  getWsEvents () {
+    return null
+  }
+
   getCommands () {
-    return commands
+    return this.commands
   }
 
   onMsg (client, target, context, msg) {
@@ -55,16 +63,9 @@ class GeneralModule {
   }
 }
 
-let instance
 module.exports = {
   name: 'general',
-  init: (client, storage) => {
-    instance = new GeneralModule(client, storage)
+  create: (client, storage, websocket, modules) => {
+    return new GeneralModule(client, storage)
   },
-  getRoutes: () => false,
-  getWsEvents: () => false,
-  getCommands: () => instance.getCommands(),
-  onMsg: (client, target, context, msg) => {
-    instance.onMsg(client, target, context, msg)
-  }
 }

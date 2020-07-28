@@ -51,6 +51,23 @@ class Songrequest {
     this.websocket = websocket
   }
 
+  onMsg (client, target, context, msg) {
+  }
+
+  getCommands () {
+    return {
+      '!sr': {
+        fn: this.songrequestCmd,
+      },
+    }
+  }
+
+  getRoutes () {
+    return {
+      '/sr/player/': songrequestHandler,
+    }
+  }
+
   save () {
     this.storage.save({
       youtubeData: this.data.youtubeData || {},
@@ -294,17 +311,9 @@ class Songrequest {
 
 }
 
-let instance
 module.exports = {
   name: 'sr',
-  init: (client, storage, websocket) => {
-    instance = new Songrequest(client, storage, websocket)
+  create: (client, storage, websocket, modules) => {
+    return new Songrequest(client, storage, websocket)
   },
-  getCommands: () => ({
-    '!sr': {fn: instance.songrequestCmd},
-  }),
-  getRoutes: () => ({
-    '/sr/player/': songrequestHandler,
-  }),
-  getWsEvents: () => instance.getWsEvents(),
 }
