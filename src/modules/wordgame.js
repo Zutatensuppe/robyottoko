@@ -130,6 +130,7 @@ const wordgameOnMsg = async function (client, target, context, msg) {
 }
 
 module.exports = {
+  name: 'wordgame',
   onMsg: wordgameOnMsg,
   cmds: {
     '!wg': {fn: wordgameCmd},

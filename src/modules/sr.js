@@ -1,93 +1,6 @@
 const fn = require('./../fn.js')
 const config = require('./../config.js')
 const fetch = require('node-fetch')
-const ws = require('ws')
-
-let _wss = null;
-const _data = fn.load('sr', {
-  youtubeData: {},
-  playlist: [],
-})
-
-const save = () => fn.save('sr', {
-  youtubeData: _data.youtubeData || {},
-  playlist: _data.playlist.map(item => ({
-    id: item.id,
-    yt: item.yt,
-    title: item.title || '',
-    time: item.time || new Date().getTime(),
-    user: item.user || '',
-    plays: item.plays || 0,
-    skips: item.skips || 0, // hard skips
-    goods: item.goods || 0,
-    bads: item.bads || 0,
-  })),
-})
-
-const incStat = (stat) => {
-  if (_data.playlist.length > 0) {
-    _data.playlist[0][stat]++
-  }
-}
-
-const sr = {
-  resetStats: () => {
-    _data.playlist = _data.playlist.map(item => {
-      item.plays = 0
-      item.skips = 0
-      item.goods = 0
-      item.bads = 0
-      return item
-    })
-    save()
-    updateClients('resetStats')
-  },
-  like: () => {
-    incStat('goods')
-    save()
-    updateClients('like')
-  },
-  dislike: () => {
-    incStat('bads')
-    save()
-    updateClients('dislike')
-  },
-  skip: () => {
-    if (_data.playlist.length === 0) {
-      return
-    }
-
-    incStat('skips')
-
-    _data.playlist.push(_data.playlist.shift())
-
-    save()
-    updateClients('skip')
-  },
-  clear: () => {
-    _data.playlist = []
-    save()
-    updateClients('clear')
-  },
-  shuffle: () => {
-    if (_data.playlist.length < 3) {
-      return
-    }
-
-    _data.playlist = [_data.playlist[0], ...fn.shuffle(_data.playlist.slice(1))]
-
-    save()
-    updateClients('shuffle')
-  },
-  remove: () => {
-    if (_data.playlist.length === 0) {
-      return
-    }
-    _data.playlist.shift()
-    save()
-    updateClients('remove')
-  }
-}
 
 const fetchYoutubeData = async (youtubeId) => {
   console.log('fetchYoutubeData', youtubeId)
@@ -118,107 +31,6 @@ const extractYoutubeId = async (youtubeUrl) => {
   return resJson.items[0]['id']['videoId'] || null
 }
 
-const songrequestCmd = async (command, client, target, context, msg) => {
-  if (command.args.length === 0) {
-    return `Usage: !sr YOUTUBE-URL`
-  }
-  if (command.args.length === 1) {
-    switch (command.args[0]) {
-      case 'current':
-        // todo: error handling, title output etc..
-        return `Currently playing: ${_data.playlist[0].yt}`
-      case 'good':
-        sr.like()
-        return
-      case 'bad':
-        sr.dislike()
-        return
-      case 'skip':
-        if (fn.isMod(context)) {
-          sr.skip()
-          return
-        }
-        break
-      case 'resetStats':
-        if (fn.isMod(context)) {
-          sr.resetStats()
-          return
-        }
-        break
-      case 'clear':
-        if (fn.isMod(context)) {
-          sr.clear()
-          return
-        }
-        break
-      case 'rm':
-        if (fn.isMod(context)) {
-          sr.remove()
-          return
-        }
-        break
-      case 'shuffle':
-        if (fn.isMod(context)) {
-          sr.shuffle()
-          return
-        }
-        break
-    }
-  }
-
-  const youtubeUrl = command.args.join(' ').trim()
-  const youtubeId = await extractYoutubeId(youtubeUrl)
-  if (!youtubeId) {
-    return `Could not process that song request`
-  }
-  const item = await addToPlaylist(youtubeId, context['display-name'])
-  return `Added "${item.title}" (${item.yt}) to the playlist!`
-}
-
-const loadYoutubeData = async (youtubeId) => {
-  if (typeof _data.youtubeData[youtubeId] !== 'undefined') {
-    return _data.youtubeData[youtubeId]
-  }
-  _data.youtubeData[youtubeId] = await fetchYoutubeData(youtubeId)
-  save()
-  return _data.youtubeData[youtubeId]
-}
-
-const addToPlaylist = async (youtubeId, userName) => {
-  const yt = await loadYoutubeData(youtubeId)
-
-  const item = {
-    id: Math.random(),
-    yt: youtubeId,
-    title: yt.snippet.title,
-    timestamp: new Date().getTime(),
-    user: userName,
-    plays: 0,
-    skips: 0,
-    goods: 0,
-    bads: 0,
-  }
-
-  let found = -1
-  for (let i = 0; i < _data.playlist.length; i++) {
-    let other = _data.playlist[i]
-    if (other.plays === item.plays) {
-      found = i
-    } else if (found >= 0) {
-      break
-    }
-  }
-  if (found === -1) {
-    found = 0
-  }
-
-  _data.playlist.splice(found + 1, 0, item)
-
-  save()
-  updateClients('add')
-  return item
-}
-
 const songrequestHandler = async (req, res) => {
   return {
     code: 200,
@@ -229,93 +41,270 @@ const songrequestHandler = async (req, res) => {
   }
 }
 
-const onMsg = function (data) {
-  console.log(data)
-  const d = JSON.parse(data)
-  if (d.event && d.event === 'play') {
-    onPlay(d.id)
-  } else if (d.event && d.event === 'ended') {
-    onEnded()
-  } else if (d.event && d.event === 'ctrl') {
-    onCtrl(d.ctrl)
+class Songrequest {
+  constructor(client, storage, websocket) {
+    this.storage = storage
+    this.data = storage.load({
+      youtubeData: {},
+      playlist: [],
+    })
+    this.websocket = websocket
   }
-}
 
-const init = (client) => {
-  _wss = new ws.Server(config.modules.sr.ws)
-  _wss.on('connection', ws => {
-    ws.isAlive = true
-    ws.on('pong', function () { this.isAlive = true; })
-    ws.on('message', onMsg)
-    updateClient('init', ws)
-  })
-  const interval = setInterval(function ping() {
-    _wss.clients.forEach(function each(ws) {
-      if (ws.isAlive === false) {
-        return ws.terminate();
+  save () {
+    this.storage.save({
+      youtubeData: this.data.youtubeData || {},
+      playlist: this.data.playlist.map(item => ({
+        id: item.id,
+        yt: item.yt,
+        title: item.title || '',
+        time: item.time || new Date().getTime(),
+        user: item.user || '',
+        plays: item.plays || 0,
+        skips: item.skips || 0, // hard skips
+        goods: item.goods || 0,
+        bads: item.bads || 0,
+      })),
+    })
+  }
+
+  wsdata (eventName) {
+    return {
+      event: eventName,
+      data: {
+        // ommitting youtube cache data
+        playlist: this.data.playlist,
       }
-      ws.isAlive = false;
-      ws.ping(() => {});
-    });
-  }, 30000)
-  _wss.on('close', function close() {
-    clearInterval(interval);
-  });
-}
-
-const onPlay = (id) => {
-  const idx = _data.playlist.findIndex(item => item.id === id)
-  if (idx < 0) {
-    return
+    };
   }
-  _data.playlist = [].concat(
-    _data.playlist.slice(idx),
-    _data.playlist.slice(0, idx)
-  )
-  incStat('plays')
-  save()
-  updateClients('onPlay')
-}
 
-const onEnded = () => {
-  _data.playlist.push(_data.playlist.shift())
-  save()
-  updateClients('onEnded')
-}
-
-const onCtrl = (ctrl) => {
-  switch (ctrl) {
-    case 'good': sr.like(); break;
-    case 'bad': sr.dislike(); break;
-    case 'skip': sr.skip(); break;
-    case 'resetStats': sr.resetStats(); break;
-    case 'clear': sr.clear(); break;
-    case 'rm': sr.remove(); break;
-    case 'shuffle': sr.shuffle(); break;
+  updateClient (eventName, ws) {
+    this.websocket.notifyOne(this.wsdata(eventName), ws)
   }
-}
 
-const updateClient = (eventName, ws) => {
-  if (ws.isAlive) {
-    ws.send(JSON.stringify({event: eventName, data: {
-      // ommitting youtube cache data
-      playlist: _data.playlist,
-    }}))
+  updateClients (eventName) {
+    this.websocket.notifyAll(this.wsdata(eventName))
   }
+
+  getWsEvents () {
+    return {
+      'conn': (ws) => {
+        this.updateClient('init', ws)
+      },
+      'play': ({id}) => {
+        const idx = this.data.playlist.findIndex(item => item.id === id)
+        if (idx < 0) {
+          return
+        }
+        this.data.playlist = [].concat(
+          this.data.playlist.slice(idx),
+          this.data.playlist.slice(0, idx)
+        )
+        this.incStat('plays')
+        this.save()
+        this.updateClients('onPlay')
+      },
+      'ended': () => {
+        this.data.playlist.push(this.data.playlist.shift())
+        this.save()
+        this.updateClients('onEnded')
+      },
+      'ctrl': ({ctrl}) => {
+        switch (ctrl) {
+          case 'good': this.like(); break;
+          case 'bad': this.dislike(); break;
+          case 'skip': this.skip(); break;
+          case 'resetStats': this.resetStats(); break;
+          case 'clear': this.clear(); break;
+          case 'rm': this.remove(); break;
+          case 'shuffle': this.shuffle(); break;
+        }
+      },
+    }
+  }
+
+  incStat (stat) {
+    if (this.data.playlist.length > 0) {
+      this.data.playlist[0][stat]++
+    }
+  }
+
+  resetStats () {
+    this.data.playlist = this.data.playlist.map(item => {
+      item.plays = 0
+      item.skips = 0
+      item.goods = 0
+      item.bads = 0
+      return item
+    })
+    this.save()
+    this.updateClients('resetStats')
+  }
+  like () {
+    this.incStat('goods')
+    this.save()
+    this.updateClients('like')
+  }
+
+  dislike () {
+    this.incStat('bads')
+    this.save()
+    this.updateClients('dislike')
+  }
+
+  skip () {
+    if (this.data.playlist.length === 0) {
+      return
+    }
+
+    this.incStat('skips')
+
+    this.data.playlist.push(this.data.playlist.shift())
+
+    this.save()
+    this.updateClients('skip')
+  }
+
+  clear () {
+    this.data.playlist = []
+    this.save()
+    this.updateClients('clear')
+  }
+
+  shuffle () {
+    if (this.data.playlist.length < 3) {
+      return
+    }
+
+    this.data.playlist = [this.data.playlist[0], ...fn.shuffle(this.data.playlist.slice(1))]
+
+    this.save()
+    this.updateClients('shuffle')
+  }
+
+  remove () {
+    if (this.data.playlist.length === 0) {
+      return
+    }
+    this.data.playlist.shift()
+    this.save()
+    this.updateClients('remove')
+  }
+
+  async songrequestCmd (command, client, target, context, msg) {
+    if (command.args.length === 0) {
+      return `Usage: !sr YOUTUBE-URL`
+    }
+    if (command.args.length === 1) {
+      switch (command.args[0]) {
+        case 'current':
+          // todo: error handling, title output etc..
+          return `Currently playing: ${this.data.playlist[0].yt}`
+        case 'good':
+          this.like()
+          return
+        case 'bad':
+          this.dislike()
+          return
+        case 'skip':
+          if (fn.isMod(context)) {
+            this.skip()
+            return
+          }
+          break
+        case 'resetStats':
+          if (fn.isMod(context)) {
+            this.resetStats()
+            return
+          }
+          break
+        case 'clear':
+          if (fn.isMod(context)) {
+            this.clear()
+            return
+          }
+          break
+        case 'rm':
+          if (fn.isMod(context)) {
+            this.remove()
+            return
+          }
+          break
+        case 'shuffle':
+          if (fn.isMod(context)) {
+            this.shuffle()
+            return
+          }
+          break
+      }
+    }
+
+    const youtubeUrl = command.args.join(' ').trim()
+    const youtubeId = await extractYoutubeId(youtubeUrl)
+    if (!youtubeId) {
+      return `Could not process that song request`
+    }
+    const item = await this.addToPlaylist(youtubeId, context['display-name'])
+    return `Added "${item.title}" (${item.yt}) to the playlist!`
+  }
+
+  async loadYoutubeData (youtubeId) {
+    if (typeof this.data.youtubeData[youtubeId] !== 'undefined') {
+      return this.data.youtubeData[youtubeId]
+    }
+    this.data.youtubeData[youtubeId] = await fetchYoutubeData(youtubeId)
+    this.save()
+    return this.data.youtubeData[youtubeId]
+  }
+
+  async addToPlaylist (youtubeId, userName) {
+    const yt = await this.loadYoutubeData(youtubeId)
+
+    const item = {
+      id: Math.random(),
+      yt: youtubeId,
+      title: yt.snippet.title,
+      timestamp: new Date().getTime(),
+      user: userName,
+      plays: 0,
+      skips: 0,
+      goods: 0,
+      bads: 0,
+    }
+
+    let found = -1
+    for (let i = 0; i < this.data.playlist.length; i++) {
+      let other = this.data.playlist[i]
+      if (other.plays === item.plays) {
+        found = i
+      } else if (found >= 0) {
+        break
+      }
+    }
+    if (found === -1) {
+      found = 0
+    }
+
+    this.data.playlist.splice(found + 1, 0, item)
+
+    this.save()
+    this.updateClients('add')
+    return item
+  }
+
 }
 
-const updateClients = (eventName) => {
-  _wss.clients.forEach(function each(ws) {
-    updateClient(eventName, ws)
-  })
-}
-
+let instance
 module.exports = {
-  init,
-  cmds: {
-    '!sr': {fn: songrequestCmd},
+  name: 'sr',
+  init: (client, storage, websocket) => {
+    instance = new Songrequest(client, storage, websocket)
   },
-  routes: {
+  getCommands: () => ({
+    '!sr': {fn: instance.songrequestCmd},
+  }),
+  getRoutes: () => ({
     '/sr/player/': songrequestHandler,
-  },
+  }),
+  getWsEvents: () => instance.getWsEvents(),
 }
