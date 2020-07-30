@@ -230,7 +230,7 @@
       },
     },
     async mounted() {
-      this.ws = new Ws('ws://{{ ws.hostname }}:{{ ws.port }}/commands')
+      this.ws = new Ws('wss://{{ ws.hostname }}:{{ ws.port }}/commands')
       this.ws.onmessage = this.onMsg
     },
   })

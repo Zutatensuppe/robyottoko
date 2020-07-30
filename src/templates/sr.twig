@@ -207,7 +207,7 @@ new Vue({
   },
   async mounted() {
     this.player = await prepareYt()
-    this.ws = new Ws('ws://{{ ws.hostname }}:{{ ws.port }}/sr')
+    this.ws = new Ws('wss://{{ ws.hostname }}:{{ ws.port }}/sr')
     this.ws.onmessage = this.onMsg
 
     this.player.addEventListener('onStateChange', (event) => {
