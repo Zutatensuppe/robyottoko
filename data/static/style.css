@@ -1,0 +1,53 @@
+body {
+  margin: 0;
+  background: #2b2b2b;
+  color: #5691b5;
+  font: 15px sans-serif;
+}
+
+table { border-collapse: collapse; background: #343434; }
+table th { text-align: left; }
+table th,
+table td { padding: 5px 10px; vertical-align: top; }
+table td textarea  { width: 100%; }
+table tr:nth-child(even) th,
+table tr:nth-child(even) td { background: #414141; }
+
+textarea,
+input {
+  background: #333230;
+  border-radius: 4px;
+  color: #c1b19f;
+  padding: 6px 10px;
+  border: solid 1px black;
+  box-shadow: 0 0 3px rgba(0, 0,0,0.3) inset;
+}
+textarea:focus,
+input:focus {
+  border: solid 1px #686767;
+  background: #262523;
+}
+
+textarea { width: 100%; }
+
+.btn {
+  display: inline-block;
+  background: #262523;
+  border: solid 1px black;
+  padding: 5px 10px;
+  box-shadow: 1px 1px 2px rgba(0,0,0,.5), 0px 0px 1px rgba(150,150,150,.4) inset;
+  text-shadow: 0px 0px 4px rgb(0, 0, 0);
+  border-radius: 4px;
+  user-select: none;
+}
+.btn:hover {
+  background: #2f2e2c;
+  border: solid 1px #111;
+  box-shadow: 0px 0px 1px rgba(150,150,150,.4) inset;
+  cursor: pointer;
+}
+
+.player { display: inline-block; }
+
+.spacerow { margin-bottom: 5px; }
+.spacerow label { display: inline-block; width: 100px; }

@@ -31,16 +31,6 @@ const extractYoutubeId = async (youtubeUrl) => {
   return resJson.items[0]['id']['videoId'] || null
 }
 
-const songrequestHandler = async (req, res) => {
-  return {
-    code: 200,
-    type: 'text/html',
-    body: await fn.render('sr.twig', {
-      ws: config.modules.sr.ws,
-    }),
-  }
-}
-
 class Songrequest {
   constructor(client, storage, websocket) {
     this.storage = storage
@@ -64,7 +54,15 @@ class Songrequest {
 
   getRoutes () {
     return {
-      '/sr/player/': songrequestHandler,
+      '/sr/player/': async (req, res) => {
+        return {
+          code: 200,
+          type: 'text/html',
+          body: await fn.render('sr.twig', {
+            ws: config.modules.sr.ws,
+          }),
+        }
+      },
     }
   }
 

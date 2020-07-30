@@ -1,19 +1,4 @@
 const fetch = require('node-fetch')
-const fs = require('fs')
-
-const load = (m, def) => {
-  try {
-    let raw = fs.readFileSync(__dirname + '/data/' + m + '.data.json')
-    let data = JSON.parse(raw)
-    return data ? Object.assign({}, def, data) : def
-  } catch (e) {
-    console.log(e)
-    return def
-  }
-}
-const save = (m, data) => {
-  fs.writeFileSync(__dirname + '/data/' + m + '.data.json', JSON.stringify(data))
-}
 
 const shuffle = (array) => {
   let counter = array.length;
@@ -104,8 +89,6 @@ module.exports = {
   mayExecute,
   parseCommand,
   render,
-  load,
-  save,
   getRandomInt,
   getRandom,
   shuffle,

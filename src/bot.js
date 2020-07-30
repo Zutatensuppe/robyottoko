@@ -1,8 +1,9 @@
 const tmi = require('tmi.js')
-const fn = require('./fn.js')
-const http = require('http')
 const ws = require('ws')
+const fs = require('fs')
 const config = require('./config.js')
+const multer = require('multer')
+const express = require('express')
 
 class ModuleManager {
   constructor(modules) {
@@ -26,10 +27,17 @@ class Storage {
     this.module = module
   }
   save (data) {
-    return fn.save(this.module, data)
+    return fs.writeFileSync('./data/settings/' + this.module + '.data.json', JSON.stringify(data))
   }
   load (def) {
-    return fn.load(this.module, def)
+    try {
+      let raw = fs.readFileSync('./data/settings/' + this.module + '.data.json')
+      let data = JSON.parse(raw)
+      return data ? Object.assign({}, def, data) : def
+    } catch (e) {
+      console.log(e)
+      return def
+    }
   }
 }
 
@@ -52,7 +60,7 @@ class WebsocketManager {
             continue;
           }
           if (evts[d.event]) {
-            return evts[d.event](d)
+            evts[d.event](d)
           }
         }
       })
@@ -63,7 +71,7 @@ class WebsocketManager {
           continue;
         }
         if (evts['conn']) {
-          return evts['conn'](socket)
+          evts['conn'](socket)
         }
       }
     })
@@ -103,7 +111,7 @@ class ClientManager {
     this.client.on('message', async (target, context, msg, self) => {
       if (self) { return; } // Ignore messages from the bot
       for (const m of await moduleManager.all()) {
-        await m.onMsg(client, target, context, msg);
+        await m.onMsg(this.client, target, context, msg);
       }
     })
 
@@ -121,7 +129,29 @@ class ClientManager {
 
 class WebServerManager {
   constructor(moduleManager, conf) {
-    const server = http.createServer(async (req, res) => {
+    const port = conf.http.port
+    const app = express()
+
+    const storage = multer.diskStorage({
+      destination: './data/uploads',
+      filename: function (req, file, cb) {
+        cb(null , file.originalname);
+      }
+    })
+
+    const upload = multer({storage}).single('file');
+    app.use('/media/sounds', express.static('./data/uploads'))
+    app.use('/static', express.static('./data/static'))
+    app.post('/upload', (req, res) => {
+      upload(req, res, (err) => {
+        if (err) {
+          console.log(err)
+          res.status(400).send("Something went wrong!");
+        }
+        res.send(req.file)
+      })
+    })
+    app.get('*', async function (req, res) {
       const handle = async (req, res) => {
         for (const module of await moduleManager.all()) {
           const routes = module.getRoutes()
@@ -133,7 +163,6 @@ class WebServerManager {
           }
         }
       }
-
       const {code, type, body} = await handle(req, res) || {
         code: 404,
         type: 'text/plain',
@@ -144,10 +173,7 @@ class WebServerManager {
       res.setHeader('Content-Type', type)
       res.end(body)
     })
-
-    server.listen(conf.http.port, () => {
-      console.log('server running')
-    })
+    app.listen(port, () => console.log(`server running on port ${port}`))
   }
 }
 
