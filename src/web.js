@@ -102,6 +102,7 @@ function webserver(moduleManager, config) {
   app.get('/login', async (req, res) => {
     if (req.token) {
       res.redirect(301, '/')
+      return
     }
     res.send(await fn.render('login.twig'))
   })
@@ -115,6 +116,7 @@ function webserver(moduleManager, config) {
   app.get('/', async (req, res) => {
     if (!req.token) {
       res.redirect(301, '/login')
+      return
     }
     res.send(await fn.render('index.twig', {
       user: req.user,
@@ -128,13 +130,14 @@ function webserver(moduleManager, config) {
     const token = auth.checkUserPass(user, pass)
     if (token) {
       res.send({token})
-    } else {
-      res.status(401).send({reason: 'bad credentials'})
+      return
     }
+    res.status(401).send({reason: 'bad credentials'})
   })
   app.post('/upload', (req, res) => {
     if (!req.token) {
       res.status(401).send('not allowed')
+      return
     }
     upload(req, res, (err) => {
       if (err) {
@@ -147,6 +150,7 @@ function webserver(moduleManager, config) {
   app.get('*', async function (req, res) {
     if (!req.token) {
       res.redirect(301, '/login')
+      return
     }
     const handle = async (req, res) => {
       for (const module of await moduleManager.all(req.user)) {
