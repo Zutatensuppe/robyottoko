@@ -83,6 +83,12 @@ class Sockhyottoko extends Ws {
   }
 }
 
+class WidgetSocket extends Ws {
+  constructor(addr) {
+    super(window.WS_BASE + addr, ['x-widget-token', window.WIDGET_TOKEN]);
+  }
+}
+
 Vue.component('navbar', {
   data() {
     return {
@@ -96,9 +102,9 @@ Vue.component('navbar', {
       </div>
       <ul class="items" v-if="user">
         <li>Welcome back, {{ user }}
+        <li><a href="/">Widgets</a>
         <li><a href="/commands/">Commands</a>
         <li><a href="/sr/">SR</a>
-        <li><a href="/sr/player/">SR player</a>
         <li><a href="/logout">Logout</a>
       </ul>
     </div>

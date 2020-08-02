@@ -10,19 +10,19 @@ class Auth
 {
   generateToken(length) {
     //edit the token allowed characters
-    var a = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890".split("");
-    var b = [];
-    for (var i=0; i<length; i++) {
-      var j = (Math.random() * (a.length-1)).toFixed(0);
+    const a = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890".split("");
+    const b = [];
+    for (let i = 0; i < length; i++) {
+      const j = (Math.random() * (a.length - 1)).toFixed(0);
       b[i] = a[j];
     }
     return b.join("");
   }
 
-  generateTokenForUser (user) {
+  generateTokenForUser (user, type) {
     const tokens = tokenStorage.load() || {}
     const token = this.generateToken(32)
-    tokens[token] = {user: user.user}
+    tokens[token] = {user: user, type: type}
     tokenStorage.save(tokens)
     return token
   }
@@ -31,15 +31,28 @@ class Auth
     const users = userStorage.load()
     for (let u of users) {
       if (u.user === user && u.pass === pass) {
-        return this.generateTokenForUser(u)
+        return this.generateTokenForUser(user, 'auth')
       }
     }
-    return null;
+    return null
   }
 
-  checkToken (token) {
+  getUserWidgetToken (user) {
     const tokens = tokenStorage.load()
-    return tokens && !!tokens[token];
+    for (let token in tokens || {}) {
+      if (!tokens.hasOwnProperty(token)) {
+
+      }
+      if (tokens[token].user === user && tokens[token].type === 'widget') {
+        return token
+      }
+    }
+    return this.generateTokenForUser(user, 'widget')
+  }
+
+  checkToken (token, type) {
+    const tokens = tokenStorage.load()
+    return tokens && !!tokens[token] && tokens[token].type === type
   }
 
   destroyToken (token) {
@@ -53,10 +66,11 @@ class Auth
   addAuthInfoMiddleware () {
     return (req, res, next) => {
       const token = req.cookies['x-token'] || null
-      if (auth.checkToken(token)) {
+      if (auth.checkToken(token, 'auth')) {
         req.token = token
         const tokens = tokenStorage.load()
         req.user = tokens[req.token].user
+        req.userWidgetToken = auth.getUserWidgetToken(req.user)
       } else {
         req.token = null
         req.user = null
@@ -70,7 +84,14 @@ class Auth
       if (
         protocol.length === 2
         && protocol[0] === 'x-token'
-        && this.checkToken(protocol[1])
+        && this.checkToken(protocol[1], 'auth')
+      ) {
+        return protocol[1]
+      }
+      if (
+        protocol.length === 2
+        && protocol[0] === 'x-widget-token'
+        && this.checkToken(protocol[1], 'widget')
       ) {
         return protocol[1]
       }
@@ -124,6 +145,9 @@ function webserver(moduleManager, config) {
     res.send(await fn.render('base.twig', {
       title: 'Hyottoko.club',
       page: 'index',
+      data: {
+        userWidgetToken: req.userWidgetToken
+      },
       user: req.user,
       ws: config.ws,
     }))
@@ -152,6 +176,38 @@ function webserver(moduleManager, config) {
       res.send(req.file)
     })
   })
+
+  app.get('/widget/:widget_type/:widget_token/', async (req, res) => {
+    console.log(req.params)
+    if (auth.checkToken(req.params.widget_token, 'widget')) {
+      const tokens = tokenStorage.load()
+      req.user = tokens[req.params.widget_token].user
+    } else {
+      req.user = null
+    }
+
+    const handle = async (req, res) => {
+      for (const module of await moduleManager.all(req.user)) {
+        const widgets = module.widgets()
+        if (!widgets) {
+          continue;
+        }
+        if (widgets[req.params.widget_type]) {
+          return await widgets[req.params.widget_type](req, res)
+        }
+      }
+    }
+    const {code, type, body} = await handle(req, res) || {
+      code: 404,
+      type: 'text/plain',
+      body: '404 Not Found'
+    }
+
+    res.statusCode = code
+    res.setHeader('Content-Type', type)
+    res.end(body)
+  })
+
   app.get('*', async function (req, res) {
     if (!req.token) {
       res.redirect(301, '/login')
@@ -192,6 +248,11 @@ function websocketserver(moduleManager, conf) {
     // user for the connection:
     const tokens = tokenStorage.load()
     const token = socket.protocol
+    if (!tokens[token]) {
+      console.log('not found token: ', token)
+      socket.close()
+      return
+    }
     socket.user = tokens[token].user
 
     socket.isAlive = true
@@ -199,7 +260,7 @@ function websocketserver(moduleManager, conf) {
       this.isAlive = true;
     })
     socket.on('message', (data) => {
-      console.log(data)
+      console.log(`ws|${socket.user}| `, data)
       const d = JSON.parse(data)
       if (!d.event) {
         return

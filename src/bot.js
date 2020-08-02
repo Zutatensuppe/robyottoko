@@ -1,4 +1,5 @@
 const tmi = require('tmi.js')
+const fn = require('./fn.js')
 const config = require('./config.js')
 const web = require('./web.js')
 const { JsonStorage } = require('./storage.js')
@@ -42,8 +43,21 @@ class ClientManager {
     this.client = new tmi.client(user.tmi);
     this.client.on('message', async (target, context, msg, self) => {
       if (self) { return; } // Ignore messages from the bot
-      console.log(target + '| ' + 'message')
+      console.log(target + '| ' + msg)
+      const rawCmd = fn.parseCommand(msg)
+      const say = fn.sayFn(this.client, target)
+
       for (const m of await moduleManager.all(user.user)) {
+        const commands = m.getCommands() || {}
+        const cmdDef = commands[rawCmd.name] || null
+        if (cmdDef && fn.mayExecute(context, cmdDef)) {
+          const r = await cmdDef.fn(rawCmd, this.client, target, context, msg)
+          console.log(target + '|', r)
+          if (r) {
+            say(r)
+          }
+          console.log(target + '| ' + `* Executed ${rawCmd.name} command`)
+        }
         await m.onMsg(this.client, target, context, msg);
       }
     })
@@ -61,7 +75,7 @@ class ClientManager {
 }
 
 const mm = new ModuleManager([
-  require('./modules/core.js'),
+  // require('./modules/core.js'),
   require('./modules/general.js'),
   require('./modules/sr.js'),
 ])

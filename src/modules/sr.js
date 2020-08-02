@@ -53,6 +53,27 @@ class Songrequest {
     }
   }
 
+  widgets () {
+    return {
+      'sr': async (req, res) => {
+        return {
+          code: 200,
+          type: 'text/html',
+          body: await fn.render('widget.twig', {
+            title: 'Song Request',
+            token: req.params.widget_token,
+            data: {
+              mode: 'player',
+            },
+            page: 'sr',
+            user: req.user,
+            ws: config.ws,
+          }),
+        }
+      }
+    }
+  }
+
   getRoutes () {
     return {
       '/sr/player/': async (req, res) => {

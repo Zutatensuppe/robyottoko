@@ -21,6 +21,9 @@ class GeneralModule {
     this.interval = null
 
     this.data.commands.forEach((cmd) => {
+      if (!cmd.command) {
+        return
+      }
       switch (cmd.action) {
         case 'jisho_org_lookup':
           this.commands[cmd.command] = Object.assign({}, cmd, {fn: cmds.jishoOrgLookup()})
@@ -63,6 +66,23 @@ class GeneralModule {
         }
       })
     }, 1000)
+  }
+
+  widgets () {
+    return {
+      'sounds': async (req, res) => {
+        return {
+          code: 200,
+          type: 'text/html',
+          body: await fn.render('widget.twig', {
+            page: 'sounds',
+            token: req.params.widget_token,
+            user: req.user,
+            ws: config.ws,
+          }),
+        }
+      }
+    }
   }
 
   getRoutes () {
@@ -114,7 +134,6 @@ class GeneralModule {
       },
     }
   }
-
   getCommands () {
     return this.commands
   }

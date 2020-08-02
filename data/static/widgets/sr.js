@@ -27,28 +27,10 @@ new Vue({
       playlist: [],
       player: null,
       ws: null,
-      controls: [
-        'good',
-        'bad',
-        'skip',
-        'resetStats',
-        'clear',
-        'rm',
-        'shuffle',
-      ],
     }
   },
   template: `
-<div id="app">
-  <div id="top" ref="top">
-    <navbar />
-    <div id="actionbar">
-      <ul class="items">
-        <li v-for="ctrl in controls"><button class="btn" @click="sendCtrl(ctrl)">!sr {{ctrl}}</button>
-        <li><button class="btn" @click="toggleMode">{{togglePlayerButtonText}}</button>
-      </ul>
-    </div>
-  </div>
+<div id="app" style="overflow: hidden">
   <div id="main" ref="main">
     <div id="player" v-if="mode === 'player'"><div id="youtube-el"></div></div>
     <div id="player" v-else="" style="width: 0;height: 0;padding:0;"><div id="youtube-el"></div></div>
@@ -84,21 +66,8 @@ new Vue({
     hasItems() {
       return this.playlist.length !== 0
     },
-    togglePlayerButtonText() {
-      return this.mode === 'full' ? 'Show Player' : 'Hide Player'
-    }
   },
   methods: {
-    toggleMode() {
-      this.mode = this.mode === 'full' ? 'player' : 'full'
-      if (this.mode === 'player') {
-        if (!this.playing()) {
-          this.play()
-        }
-      } else {
-        this.player.stopVideo()
-      }
-    },
     sendCtrl(ctrl) {
       this.sendMsg({event: 'ctrl', ctrl})
     },
@@ -147,7 +116,7 @@ new Vue({
   },
   async mounted() {
     this.player = await prepareYt()
-    this.ws = new Sockhyottoko('/sr')
+    this.ws = new WidgetSocket('/sr')
     this.ws.onmessage = this.onMsg
     if (this.mode === 'full') {
       this.$refs.main.style.marginTop = 'calc(' + this.$refs.top.clientHeight + 'px + 1em)'
