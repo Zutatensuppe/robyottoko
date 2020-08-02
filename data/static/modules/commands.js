@@ -41,16 +41,28 @@ Vue.component('player', {
 
 new Vue({
   el: '#app',
+  data() {
+    return {
+      commands: [],
+      ws: null,
+    }
+  },
   template: `
-<div>
-    <div id="menu" style="position: fixed; bottom: 0; height: auto; width: 100%;">
-        <span class="btn" @click="add('text')">Add text</span>
-        <span class="btn" @click="add('sound')">Add sound</span>
-        <span class="btn" @click="add('countdown')">Add countdown</span>
-        <span class="btn" @click="add('jisho_org_lookup')">Add jisho_org_lookup</span>
-        <span class="btn" @click="sendSave">Save</span>
+<div id="app">
+  <div id="top" ref="top">
+    <navbar />
+    <div id="actionbar">
+      <ul class="items">
+        <li><span class="btn" @click="add('text')">Add text</span>
+        <li><span class="btn" @click="add('sound')">Add sound</span>
+        <li><span class="btn" @click="add('countdown')">Add countdown</span>
+        <li><span class="btn" @click="add('jisho_org_lookup')">Add jisho_org_lookup</span>
+        <li><span class="btn" @click="sendSave">Save</span>
+      </ul>
     </div>
-    <table>
+  </div>
+  <div id="main" ref="main">
+    <table ref="table">
         <tr>
             <th>Command</th>
             <th>Type</th>
@@ -116,14 +128,9 @@ new Vue({
             </td>
         </tr>
     </table>
+  </div>
 </div>
 `,
-  data() {
-    return {
-      commands: [],
-      ws: null,
-    }
-  },
   methods: {
     async onchange(idx, file) {
       if (!file) return;
@@ -138,17 +145,18 @@ new Vue({
       this.commands[idx].data.file = j.filename
     },
     add(type) {
+      let cmd = null
       if (type === 'text') {
-        this.commands.push({
+        cmd = {
           command: '',
           action: 'text',
           restrict_to: [],
           data: {
             text: [''],
           },
-        })
+        }
       } else if (type === 'sound') {
-        this.commands.push({
+        cmd = {
           command: '',
           action: 'sound',
           restrict_to: [],
@@ -156,9 +164,9 @@ new Vue({
             filename: '',
             file: '',
           },
-        })
+        }
       } else if (type === 'countdown') {
-        this.commands.push({
+        cmd = {
           command: '',
           action: 'countdown',
           restrict_to: [],
@@ -168,13 +176,29 @@ new Vue({
             intro: 'Starting countdown...',
             outro: 'Done!'
           },
-        })
+        }
       } else if (type === 'jisho_org_lookup') {
-        this.commands.push({
+        cmd = {
           command: '',
           action: 'jisho_org_lookup',
           restrict_to: [],
           data: {},
+        }
+      }
+
+      if (cmd) {
+        // add command
+        this.commands.push(cmd)
+
+        // on next update, scroll to the new item and focus first input (command)
+        Vue.nextTick(() => {
+          const el = this.$refs.table.querySelector('table tr:nth-child(' + (this.commands.length + 1) + ')')
+          el.scrollIntoView()
+          el.classList.add('new-item')
+          setTimeout(function () {
+            el.classList.remove('new-item')
+          }, 100)
+          el.querySelector('td input').focus()
         })
       }
     },
@@ -215,5 +239,6 @@ new Vue({
   async mounted() {
     this.ws = new Sockhyottoko('/commands')
     this.ws.onmessage = this.onMsg
+    this.$refs.main.style.marginTop = 'calc(' + this.$refs.top.clientHeight + 'px + 1em)'
   },
 })

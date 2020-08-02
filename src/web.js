@@ -104,7 +104,9 @@ function webserver(moduleManager, config) {
       res.redirect(301, '/')
       return
     }
-    res.send(await fn.render('login.twig'))
+    res.send(await fn.render('login.twig', {
+      title: 'Login',
+    }))
   })
   app.get('/logout', async (req, res) => {
     if (req.token) {
@@ -119,6 +121,7 @@ function webserver(moduleManager, config) {
       return
     }
     res.send(await fn.render('index.twig', {
+      title: 'Hyottoko.club',
       user: req.user,
       ws: config.ws,
     }))

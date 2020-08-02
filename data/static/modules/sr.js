@@ -21,31 +21,9 @@ function prepareYt() {
 
 new Vue({
   el: '#app',
-  template: `
-<div>
-  <div id="player"><div id="youtube-el"></div></div>
-  <div id="playlist">
-    <ol>
-      <li v-for="(item, idx) in playlist" :class="idx === 0 ? 'playing' : 'next'">
-        <div class="title"><a :href="'https://www.youtube.com/watch?v=' + item.yt" target="_blank">{{ item.title || item.yt }}</a></div>
-        <div class="meta">
-          requested by {{ item.user }},
-          played {{ item.plays }} time{{ item.plays === 1 ? '' : 's' }}
-        </div>
-        <div class="rgt vote">
-          <i class="fa fa-thumbs-up"/> {{ item.goods }}
-          <i class="fa fa-thumbs-down"/> {{ item.bads }}
-        </div>
-      </li>
-    </ol>
-  </div>
-  <div id="controls">
-    <div class="btn" v-for="ctrl in controls" @click="sendCtrl(ctrl)">!sr {{ctrl}}</div>
-  </div>
-</div>
-`,
   data() {
     return {
+      mode: window.SR_MODE,
       playlist: [],
       player: null,
       ws: null,
@@ -60,6 +38,37 @@ new Vue({
       ],
     }
   },
+  template: `
+<div id="app">
+  <div v-if="mode === 'full'" id="top" ref="top">
+    <navbar />
+    <div id="actionbar">
+      <ul class="items">
+        <li v-for="ctrl in controls"><span class="btn" @click="sendCtrl(ctrl)">!sr {{ctrl}}</span>
+      </ul>
+    </div>
+  </div>
+  <div id="main" ref="main">
+    <div id="player" v-if="mode === 'player'"><div id="youtube-el"></div></div>
+    <div id="player" v-else="" style="width: 0;height: 0;padding:0;"><div id="youtube-el"></div></div>
+    <div id="playlist">
+      <ol>
+        <li v-for="(item, idx) in playlist" :class="idx === 0 ? 'playing' : 'next'">
+          <div class="title"><a :href="'https://www.youtube.com/watch?v=' + item.yt" target="_blank">{{ item.title || item.yt }}</a></div>
+          <div class="meta">
+            requested by {{ item.user }},
+            played {{ item.plays }} time{{ item.plays === 1 ? '' : 's' }}
+          </div>
+          <div class="rgt vote">
+            <i class="fa fa-thumbs-up"/> {{ item.goods }}
+            <i class="fa fa-thumbs-down"/> {{ item.bads }}
+          </div>
+        </li>
+      </ol>
+    </div>
+  </div>
+</div>
+`,
   watch: {
     playlist: function (newVal, oldVal) {
       if (newVal.length === 0) {
@@ -115,7 +124,7 @@ new Vue({
       return this.player.getPlayerState() === 1
     },
     play() {
-      if (this.hasItems) {
+      if (this.mode === 'player' && this.hasItems) {
         this.player.cueVideoById(this.item.yt)
         this.player.playVideo()
         this.sendMsg({event: 'play', id: this.item.id})
@@ -126,6 +135,9 @@ new Vue({
     this.player = await prepareYt()
     this.ws = new Sockhyottoko('/sr')
     this.ws.onmessage = this.onMsg
+    if (this.mode === 'full') {
+      this.$refs.main.style.marginTop = 'calc(' + this.$refs.top.clientHeight + 'px + 1em)'
+    }
 
     this.player.addEventListener('onStateChange', (event) => {
       if (event.data === YT.PlayerState.ENDED) {

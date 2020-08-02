@@ -78,3 +78,25 @@ class Sockhyottoko extends Ws {
     super(window.WS_BASE + addr, ['x-token', getCookie('x-token')]);
   }
 }
+
+Vue.component('navbar', {
+  data() {
+    return {
+      user: window.USER
+    }
+  },
+  template: `
+    <div id="navbar">
+      <div class="logo">
+        <img src="/static/hyottoko.png" width="32" height="32" alt="hyottoko.club" class="flip-horizontal" />
+      </div>
+      <ul class="items" v-if="user">
+        <li>Welcome back, {{ user }}
+        <li><a href="/commands/">Commands</a>
+        <li><a href="/sr/">SR</a>
+        <li><a href="/sr/player">SR player</a>
+        <li><a href="/logout">Logout</a>
+      </ul>
+    </div>
+`
+})

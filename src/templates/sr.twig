@@ -1,14 +1,17 @@
 {% extends 'base.twig' %}
 {% block page %}
   <style type="text/css">
-    a { color: #000; text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    #playlist a { color: #000; text-decoration: none; }
+    #playlist a:hover { text-decoration: underline; }
 
     #controls {
       position: fixed;
       bottom: 0;
       height: auto;
     }
+    #controls ul.items { list-style: none; margin: 0; padding: 0; }
+    #controls ul.items li { display: inline-block; margin-left: 1em; }
+    #controls ul.items li:first-child { margin-left: 0; }
 
     #controls .btn {
       margin: 4px;
@@ -70,5 +73,6 @@
       background: #7b756e;
     }
   </style>
+  <script>window.SR_MODE = '{{ mode }}'</script>
   <script src="/static/modules/sr.js"></script>
 {% endblock %}

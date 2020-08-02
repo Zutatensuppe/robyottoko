@@ -1,8 +1,15 @@
 {% extends 'base.twig' %}
 {% block page %}
-  <ul>
-    <li><a href="/commands/">Commands</a>
-    <li><a href="/sr/player/">Song requests (player)</a>
-    <li><a href="/logout">Logout</a>
-  </ul>
+<script>
+new Vue({
+  el: '#app',
+  template: `
+<div id="app">
+  <div id="top" ref="top">
+    <navbar />
+  </div>
+</div>
+`
+})
+</script>
 {% endblock %}

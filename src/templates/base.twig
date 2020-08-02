@@ -1,22 +1,20 @@
 <html>
 <head>
+  <link rel="icon" href="/static/hyottoko.png" sizes="72x72" type="image/png"/>
+  <title>{{ title }}</title>
   <script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script>
   <script src="/static/script.js"></script>
   <script>window.WS_BASE = '{{ ws.connectstring }}'</script>
+  <script>window.USER = '{{ user }}'</script>
   <link rel="stylesheet" href="/static/font-awesome-4.7.0/css/font-awesome.min.css"/>
   <link rel="stylesheet" href="/static/style.css"/>
   <meta charset="utf-8"/>
 </head>
 <body>
-{% if user %}
-  <div>
-    <h1>
-      Hyottoko.club - {{ user }}
-    </h1>
-  </div>
-{% endif %}
-<div id="app"></div>
-{% block page %}
-{% endblock %}
+<div id="main">
+  <div id="app"></div>
+  {% block page %}
+  {% endblock %}
+</div>
 </body>
 </html>

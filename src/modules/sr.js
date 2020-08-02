@@ -60,6 +60,20 @@ class Songrequest {
           code: 200,
           type: 'text/html',
           body: await fn.render('sr.twig', {
+            title: 'Song Request',
+            mode: 'player',
+            user: req.user,
+            ws: config.ws,
+          }),
+        }
+      },
+      '/sr/': async (req, res) => {
+        return {
+          code: 200,
+          type: 'text/html',
+          body: await fn.render('sr.twig', {
+            title: 'Song Request',
+            mode: 'full',
             user: req.user,
             ws: config.ws,
           }),

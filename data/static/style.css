@@ -1,9 +1,20 @@
+:root {
+  --main-color: #c1b19f;
+  --link-color: #808db0;
+  --link-hover-color: #c5cfeb;
+  --highlight-color: #dd7e7e;
+  --input-bg-color: #262523;
+}
+
 body {
   margin: 0;
   background: #2b2b2b;
-  color: #5691b5;
+  color: var(--main-color);
   font: 15px sans-serif;
 }
+
+a { color: var(--link-color); text-decoration: none; }
+a:hover { color: var(--link-hover-color); }
 
 table { border-collapse: collapse; background: #343434; }
 table th { text-align: left; }
@@ -17,7 +28,7 @@ textarea,
 input {
   background: #333230;
   border-radius: 4px;
-  color: #c1b19f;
+  color: var(--main-color);
   padding: 6px 10px;
   border: solid 1px black;
   box-shadow: 0 0 3px rgba(0, 0,0,0.3) inset;
@@ -25,7 +36,7 @@ input {
 textarea:focus,
 input:focus {
   border: solid 1px #686767;
-  background: #262523;
+  background: var(--input-bg-color);
 }
 
 textarea { width: 100%; }
@@ -40,16 +51,18 @@ textarea { width: 100%; }
 }
 .btn {
   display: inline-block;
-  background: #262523;
+  background: var(--input-bg-color);
+  color: var(--link-color);
   border: solid 1px black;
   padding: 5px 10px;
-  box-shadow: 1px 1px 2px rgba(0,0,0,.5), 0px 0px 1px rgba(150,150,150,.4) inset;
-  text-shadow: 0px 0px 4px rgb(0, 0, 0);
+  box-shadow: 1px 1px 2px rgba(0,0,0,.5), 0 0 1px rgba(150,150,150,.4) inset;
+  text-shadow: 0 0 4px rgb(0, 0, 0);
   border-radius: 4px;
   user-select: none;
 }
 .btn:hover {
   background: #2f2e2c;
+  color: var(--link-hover-color);
   border: solid 1px #111;
   box-shadow: 0px 0px 1px rgba(150,150,150,.4) inset;
   cursor: pointer;
@@ -59,3 +72,34 @@ textarea { width: 100%; }
 
 .spacerow { margin-bottom: 5px; }
 .spacerow label { display: inline-block; width: 100px; }
+
+img { vertical-align: text-bottom; }
+.flip-horizontal { transform: scaleX(-1); }
+
+#top {
+  box-shadow: 0 0 3px black;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+}
+#top > div {
+  padding: 0 1em 1em 1em;
+  display: flex;
+  background: #242424;
+  color: var(--highlight-color);
+}
+#top > div:first-child {
+  padding: 1em;
+}
+
+#navbar { line-height: 32px; }
+#navbar .logo { margin-right: 1em; }
+#navbar a { border-bottom: solid 3px; }
+
+#top ul.items { list-style: none; margin: 0; padding: 0; }
+#top ul.items li { display: inline-block; margin-left: 1em; }
+#top ul.items li:first-child { margin-left: 0; }
+
+#main { margin-bottom: 5em; }
