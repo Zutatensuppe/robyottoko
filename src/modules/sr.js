@@ -150,7 +150,7 @@ class Songrequest {
         this.updateClient('init', ws)
       },
       'play': (ws, {id}) => {
-        const idx = this.data.playlist.findIndex(item => item.id === ws.id)
+        const idx = this.data.playlist.findIndex(item => item.id === id)
         if (idx < 0) {
           return
         }
