@@ -1,0 +1,22 @@
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script>
+  <script src="/static/script.js"></script>
+  <script>window.WS_BASE = '{{ ws.connectstring }}'</script>
+  <link rel="stylesheet" href="/static/font-awesome-4.7.0/css/font-awesome.min.css"/>
+  <link rel="stylesheet" href="/static/style.css"/>
+  <meta charset="utf-8"/>
+</head>
+<body>
+{% if user %}
+  <div>
+    <h1>
+      Hyottoko.club - {{ user }}
+    </h1>
+  </div>
+{% endif %}
+<div id="app"></div>
+{% block page %}
+{% endblock %}
+</body>
+</html>

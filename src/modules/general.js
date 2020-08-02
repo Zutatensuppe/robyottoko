@@ -1,12 +1,12 @@
 const cmds = require('./../commands.js')
 const config = require('./../config.js')
 const fn = require('./../fn.js')
-const fs = require('fs')
+const web = require('./../web.js')
 
 class GeneralModule {
-  constructor(client, storage, websocket) {
+  constructor(user, client, storage) {
+    this.user = user
     this.client = client
-    this.websocket = websocket
     this.storage = storage
     this.reinit()
   }
@@ -15,9 +15,7 @@ class GeneralModule {
     this.data = this.storage.load({
       timers: [],
       commands: [],
-      availableSounds: [],
     })
-    this.data.availableSounds = fs.readdirSync('./data/uploads/').filter(f => f.match(/\.(mp3|mp4)$/))
     this.commands = {}
     this.timers = []
     this.interval = null
@@ -34,7 +32,7 @@ class GeneralModule {
           break;
         case 'sound':
           this.commands[cmd.command] = Object.assign({}, cmd, {fn: (command, client, target, context, msg) => {
-              this.websocket.notifyAll({
+              web.notifyAll([this.user], {
                 event: 'playsound',
                 data: cmd.data,
               })
@@ -69,20 +67,12 @@ class GeneralModule {
 
   getRoutes () {
     return {
-      '/': async (req, res) => {
-        return {
-          code: 200,
-          type: 'text/html',
-          body: await fn.render('general.twig', {
-            ws: config.ws,
-          }),
-        }
-      },
       '/commands/': async (req, res) => {
         return {
           code: 200,
           type: 'text/html',
           body: await fn.render('commands.twig', {
+            user: req.user,
             ws: config.ws,
           }),
         }
@@ -98,11 +88,11 @@ class GeneralModule {
   }
 
   updateClient (eventName, ws) {
-    this.websocket.notifyOne(this.wsdata(eventName), ws)
+    web.notifyOne([this.user], this.wsdata(eventName), ws)
   }
 
   updateClients (eventName) {
-    this.websocket.notifyAll(this.wsdata(eventName))
+    web.notifyAll([this.user], this.wsdata(eventName))
   }
 
   getWsEvents () {
@@ -110,11 +100,11 @@ class GeneralModule {
       'conn': (ws) => {
         this.updateClient('general/init', ws)
       },
-      'uploaded': () => {
+      'uploaded': (ws) => {
         this.reinit()
         this.updateClients('general/init')
       },
-      'save': ({commands}) => {
+      'save': (ws, {commands}) => {
         this.data.commands = commands
         this.storage.save(this.data)
         this.reinit()
@@ -136,7 +126,7 @@ class GeneralModule {
 
 module.exports = {
   name: 'general',
-  create: (client, storage, websocket, modules) => {
-    return new GeneralModule(client, storage, websocket)
+  create: (user, client, storage) => {
+    return new GeneralModule(user, client, storage)
   },
 }

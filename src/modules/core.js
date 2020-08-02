@@ -2,13 +2,14 @@ const fn = require('./../fn.js')
 
 class CoreModule
 {
-  constructor(client, storage, websocket, modules) {
+  constructor(user, client, storage, modules) {
+    this.user = user
     this.modules = modules
   }
 
   allcmds () {
     const cmds = {}
-    for (let mi of this.modules.all()) {
+    for (let mi of this.modules.all(this.user)) {
       Object.keys(mi.getCommands() || {}).forEach((key) => { cmds[key] = mi.getCommands()[key] })
     }
     return cmds
@@ -33,7 +34,7 @@ class CoreModule
     const command = fn.parseCommand(msg)
     const cmd = this.allcmds()[command.name] || null
     if (!cmd || !fn.mayExecute(context, cmd)) {
-      console.log(msg)
+      console.log(target + '| ' + msg)
       return
     }
 
@@ -42,13 +43,13 @@ class CoreModule
     if (r) {
       fn.sayFn(client, target)(r)
     }
-    console.log(`* Executed ${command.name} command`)
+    console.log(target + '| ' + `* Executed ${command.name} command`)
   }
 }
 
 module.exports = {
   name: 'core',
-  create: (client, storage, websocket, modules) => {
-    return new CoreModule(client, storage, websocket, modules)
+  create: (user, client, storage, modules) => {
+    return new CoreModule(user, client, storage, modules)
   },
 }

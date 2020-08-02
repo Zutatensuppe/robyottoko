@@ -30,6 +30,14 @@ input:focus {
 
 textarea { width: 100%; }
 
+.center-screen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: 40vh;
+}
 .btn {
   display: inline-block;
   background: #262523;

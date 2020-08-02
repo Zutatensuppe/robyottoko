@@ -1,6 +1,7 @@
 const fn = require('./../fn.js')
 const config = require('./../config.js')
 const fetch = require('node-fetch')
+const web = require('./../web.js')
 
 const fetchYoutubeData = async (youtubeId) => {
   console.log('fetchYoutubeData', youtubeId)
@@ -32,13 +33,13 @@ const extractYoutubeId = async (youtubeUrl) => {
 }
 
 class Songrequest {
-  constructor(client, storage, websocket) {
+  constructor(user, client, storage) {
+    this.user = user
     this.storage = storage
     this.data = storage.load({
       youtubeData: {},
       playlist: [],
     })
-    this.websocket = websocket
   }
 
   onMsg (client, target, context, msg) {
@@ -47,7 +48,7 @@ class Songrequest {
   getCommands () {
     return {
       '!sr': {
-        fn: this.songrequestCmd,
+        fn: this.songrequestCmd.bind(this),
       },
     }
   }
@@ -59,7 +60,8 @@ class Songrequest {
           code: 200,
           type: 'text/html',
           body: await fn.render('sr.twig', {
-            ws: config.modules.sr.ws,
+            user: req.user,
+            ws: config.ws,
           }),
         }
       },
@@ -94,11 +96,11 @@ class Songrequest {
   }
 
   updateClient (eventName, ws) {
-    this.websocket.notifyOne(this.wsdata(eventName), ws)
+    web.notifyOne([this.user], this.wsdata(eventName), ws)
   }
 
   updateClients (eventName) {
-    this.websocket.notifyAll(this.wsdata(eventName))
+    web.notifyAll([this.user], this.wsdata(eventName))
   }
 
   getWsEvents () {
@@ -106,8 +108,8 @@ class Songrequest {
       'conn': (ws) => {
         this.updateClient('init', ws)
       },
-      'play': ({id}) => {
-        const idx = this.data.playlist.findIndex(item => item.id === id)
+      'play': (ws, {id}) => {
+        const idx = this.data.playlist.findIndex(item => item.id === ws.id)
         if (idx < 0) {
           return
         }
@@ -119,12 +121,12 @@ class Songrequest {
         this.save()
         this.updateClients('onPlay')
       },
-      'ended': () => {
+      'ended': (ws) => {
         this.data.playlist.push(this.data.playlist.shift())
         this.save()
         this.updateClients('onEnded')
       },
-      'ctrl': ({ctrl}) => {
+      'ctrl': (ws, {ctrl}) => {
         switch (ctrl) {
           case 'good': this.like(); break;
           case 'bad': this.dislike(); break;
@@ -311,7 +313,7 @@ class Songrequest {
 
 module.exports = {
   name: 'sr',
-  create: (client, storage, websocket, modules) => {
-    return new Songrequest(client, storage, websocket)
+  create: (user, client, storage) => {
+    return new Songrequest(user, client, storage)
   },
 }
