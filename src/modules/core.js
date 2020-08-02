@@ -24,11 +24,12 @@ class CoreModule
   }
 
   getCommands () {
-    return {
-      '!commands': {
-        fn: () => 'Commands: ' + Object.keys(this.allcmds()).filter(a => !['!commands'].includes(a)).join(' ')
-      },
-    }
+    return null
+    // {
+    //   '!commands': {
+    //     fn: () => 'Commands: ' + Object.keys(this.allcmds()).filter(a => !['!commands'].includes(a)).join(' ')
+    //   },
+    // }
   }
   async onMsg (client, target, context, msg) {
     const command = fn.parseCommand(msg)
