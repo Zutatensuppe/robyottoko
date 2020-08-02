@@ -6,6 +6,7 @@ function prepareYt() {
     window.onYouTubeIframeAPIReady = () => {
       const player = new YT.Player('youtube-el', {
         playerVars: {
+          controls: 0,
           iv_load_policy: 3, // do not load annotations
           modestbranding: 1, // remove youtube logo
         },
