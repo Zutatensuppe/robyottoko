@@ -23,7 +23,7 @@ new Vue({
   el: '#app',
   data() {
     return {
-      mode: window.SR_MODE,
+      mode: window.DATA.mode,
       playlist: [],
       player: null,
       ws: null,
@@ -44,7 +44,7 @@ new Vue({
     <navbar />
     <div id="actionbar">
       <ul class="items">
-        <li v-for="ctrl in controls"><span class="btn" @click="sendCtrl(ctrl)">!sr {{ctrl}}</span>
+        <li v-for="ctrl in controls"><button class="btn" @click="sendCtrl(ctrl)">!sr {{ctrl}}</button>
       </ul>
     </div>
   </div>

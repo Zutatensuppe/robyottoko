@@ -59,9 +59,12 @@ class Songrequest {
         return {
           code: 200,
           type: 'text/html',
-          body: await fn.render('sr.twig', {
+          body: await fn.render('base.twig', {
             title: 'Song Request',
-            mode: 'player',
+            page: 'sr',
+            data: {
+              mode: 'player',
+            },
             user: req.user,
             ws: config.ws,
           }),
@@ -71,9 +74,12 @@ class Songrequest {
         return {
           code: 200,
           type: 'text/html',
-          body: await fn.render('sr.twig', {
+          body: await fn.render('base.twig', {
             title: 'Song Request',
-            mode: 'full',
+            data: {
+              mode: 'full',
+            },
+            page: 'sr',
             user: req.user,
             ws: config.ws,
           }),

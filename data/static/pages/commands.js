@@ -43,8 +43,23 @@ new Vue({
   el: '#app',
   data() {
     return {
+      unchangedJson: '[]',
+      changedJson: '[]',
       commands: [],
       ws: null,
+    }
+  },
+  watch: {
+    commands: {
+      deep: true,
+      handler(ch) {
+        this.changedJson = JSON.stringify(ch)
+      }
+    }
+  },
+  computed: {
+    changed() {
+      return this.unchangedJson !== this.changedJson
     }
   },
   template: `
@@ -53,11 +68,11 @@ new Vue({
     <navbar />
     <div id="actionbar">
       <ul class="items">
-        <li><span class="btn" @click="add('text')">Add text</span>
-        <li><span class="btn" @click="add('sound')">Add sound</span>
-        <li><span class="btn" @click="add('countdown')">Add countdown</span>
-        <li><span class="btn" @click="add('jisho_org_lookup')">Add jisho_org_lookup</span>
-        <li><span class="btn" @click="sendSave">Save</span>
+        <li><button class="btn" @click="add('text')">Add text</button>
+        <li><button class="btn" @click="add('sound')">Add sound</button>
+        <li><button class="btn" @click="add('countdown')">Add countdown</button>
+        <li><button class="btn" @click="add('jisho_org_lookup')">Add jisho_org_lookup</button>
+        <li><button class="btn btn-primary" :disabled="!changed" @click="sendSave">Save</button>
       </ul>
     </div>
   </div>
@@ -84,15 +99,15 @@ new Vue({
                 <div v-if="item.action === 'text'">
                     <div v-for="(txt, idx2) in item.data.text" :key="idx2" class="spacerow">
                         <input type="text" v-model="item.data.text[idx2]" />
-                        <span class="btn" @click="rmtxt(idx, idx2)"><i class="fa fa-remove" /></span>
+                        <button class="btn" @click="rmtxt(idx, idx2)"><i class="fa fa-remove" /></button>
                     </div>
-                    <span class="btn" @click="addtxt(idx)"><i class="fa fa-plus" /> Add</span>
+                    <button class="btn" @click="addtxt(idx)"><i class="fa fa-plus" /> Add</button>
                 </div>
                 <div v-if="item.action === 'sound'" :class="item.action">
                     <player :src="item.data.file" :nam="item.data.filename" class="btn" />
                     <label>
                         <input type="file" name="file" style="display: none" @change="onchange(idx, $event.target.files[0])" />
-                        <span class="btn"><i class="fa fa-upload" /> Upload File</span>
+                        <button class="btn"><i class="fa fa-upload" /> Upload File</button>
                     </label>
                 </div>
                 <div v-if="item.action === 'countdown'">
@@ -124,7 +139,7 @@ new Vue({
               <input type="checkbox" v-model="item.restrict_to" value="sub" />
             </td>
             <td>
-                <span class="btn" @click="remove(idx)"><i class="fa fa-remove" /> Remove</span>
+                <button class="btn" @click="remove(idx)"><i class="fa fa-remove" /> Remove</button>
             </td>
         </tr>
     </table>
@@ -228,6 +243,7 @@ new Vue({
       switch (d.event) {
         case 'general/init':
           this.commands = d.data.commands
+          this.unchangedJson = JSON.stringify(d.data.commands)
           break
         case 'playsound':
           const audio = new Audio('/media/sounds/' + d.data.file)
@@ -240,5 +256,5 @@ new Vue({
     this.ws = new Sockhyottoko('/commands')
     this.ws.onmessage = this.onMsg
     this.$refs.main.style.marginTop = 'calc(' + this.$refs.top.clientHeight + 'px + 1em)'
-  },
+  }
 })

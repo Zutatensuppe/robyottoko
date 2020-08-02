@@ -1,6 +1,3 @@
-{% extends 'base.twig' %}
-{% block page %}
-<script>
 new Vue({
   el: '#app',
   template: `
@@ -11,5 +8,3 @@ new Vue({
 </div>
 `
 })
-</script>
-{% endblock %}

@@ -71,8 +71,9 @@ class GeneralModule {
         return {
           code: 200,
           type: 'text/html',
-          body: await fn.render('commands.twig', {
+          body: await fn.render('base.twig', {
             title: 'Commands',
+            page: 'commands',
             user: req.user,
             ws: config.ws,
           }),

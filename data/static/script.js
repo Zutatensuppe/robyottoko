@@ -73,6 +73,10 @@ function loginSuccess(token) {
   setCookie('x-token', token)
 }
 
+function equal(objA, objB) {
+  return JSON.stringify(objA) === JSON.stringify(objB)
+}
+
 class Sockhyottoko extends Ws {
   constructor(addr) {
     super(window.WS_BASE + addr, ['x-token', getCookie('x-token')]);

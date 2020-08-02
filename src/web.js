@@ -104,8 +104,9 @@ function webserver(moduleManager, config) {
       res.redirect(301, '/')
       return
     }
-    res.send(await fn.render('login.twig', {
+    res.send(await fn.render('base.twig', {
       title: 'Login',
+      page: 'login',
     }))
   })
   app.get('/logout', async (req, res) => {
@@ -120,8 +121,9 @@ function webserver(moduleManager, config) {
       res.redirect(301, '/login')
       return
     }
-    res.send(await fn.render('index.twig', {
+    res.send(await fn.render('base.twig', {
       title: 'Hyottoko.club',
+      page: 'index',
       user: req.user,
       ws: config.ws,
     }))
