@@ -1,3 +1,5 @@
+@import "font-awesome-4.7.0/css/font-awesome.min.css";
+
 :root {
   --main-color: #c1b19f;
   --link-color: #808db0;
@@ -12,6 +14,8 @@ body {
   color: var(--main-color);
   font: 15px sans-serif;
 }
+
+.btn { white-space: nowrap; }
 
 a { color: var(--link-color); text-decoration: none; }
 a:hover { color: var(--link-hover-color); }
@@ -89,112 +93,16 @@ textarea { width: 100%; }
 img { vertical-align: text-bottom; }
 .flip-horizontal { transform: scaleX(-1); }
 
-#top {
-  box-shadow: 0 0 3px black;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1;
-}
-#top > div {
-  padding: 0 1em 1em 1em;
-  display: flex;
-  background: #242424;
-  color: var(--highlight-color);
-}
-#top > div:first-child {
-  padding: 1em;
-}
-
-#navbar { line-height: 32px; }
-#navbar .logo { margin-right: 1em; }
-#navbar a { border-bottom: solid 3px; }
-
-#top ul.items { list-style: none; margin: 0; padding: 0; }
-#top ul.items li { display: inline-block; margin-left: 1em; }
-#top ul.items li:first-child { margin-left: 0; }
-
-#main { margin-bottom: 5em; }
-
-/* page: commands */
-table tr td {
-  transition: background-color 1000ms ease-in;
-}
-table tr.new-item td {
-  background-color: #3f714b !important;
-  transition: background-color 0ms;
-}
-
-/* page: sr */
-#playlist a { color: #000; text-decoration: none; }
-#playlist a:hover { text-decoration: underline; }
-
-#controls {
-  position: fixed;
-  bottom: 0;
-  height: auto;
-}
-#controls ul.items { list-style: none; margin: 0; padding: 0; }
-#controls ul.items li { display: inline-block; margin-left: 1em; }
-#controls ul.items li:first-child { margin-left: 0; }
-
-#controls .btn {
-  margin: 4px;
-}
-
-#player {
+.video-16-9 {
   position: relative;
   padding-bottom: 56.25%;
   overflow: hidden;
 }
 
-#player iframe, #player object, #player embed {
+.video-16-9 iframe, .video-16-9 object, .video-16-9 embed {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-}
-
-ol {
-  color: #000;
-  list-style: none;
-  margin: 0;
-  padding: 0
-}
-
-ol li {
-  padding: .5em 1em;
-  border: solid 1px #444;
-  display: grid;
-  grid-template-areas: "title title"
-                           "meta vote";
-  grid-template-columns: auto 150px;
-}
-
-ol li .title {
-  font-size: 1.2em;
-  font-weight: bold;
-  grid-area: title;
-  margin-bottom: 5px;
-}
-
-ol li .meta {
-  grid-area: meta;
-  align-self: end;
-}
-
-ol li .vote {
-  font-size: 24px;
-  text-align: right;
-  grid-area: vote;
-}
-
-.playing {
-  background: #d0d0d0;
-}
-
-.next {
-  background: #7b756e;
 }

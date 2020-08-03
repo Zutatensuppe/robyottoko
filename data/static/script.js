@@ -104,7 +104,7 @@ Vue.component('navbar', {
         <li>Welcome back, {{ user }}
         <li><a href="/">Widgets</a>
         <li><a href="/commands/">Commands</a>
-        <li><a href="/sr/">SR</a>
+        <li><a href="/sr/">Song Request</a>
         <li><a href="/logout">Logout</a>
       </ul>
     </div>

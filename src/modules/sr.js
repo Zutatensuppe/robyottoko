@@ -62,9 +62,6 @@ class Songrequest {
           body: await fn.render('widget.twig', {
             title: 'Song Request',
             token: req.params.widget_token,
-            data: {
-              mode: 'player',
-            },
             page: 'sr',
             user: req.user,
             ws: config.ws,
@@ -76,30 +73,12 @@ class Songrequest {
 
   getRoutes () {
     return {
-      '/sr/player/': async (req, res) => {
-        return {
-          code: 200,
-          type: 'text/html',
-          body: await fn.render('base.twig', {
-            title: 'Song Request',
-            page: 'sr',
-            data: {
-              mode: 'player',
-            },
-            user: req.user,
-            ws: config.ws,
-          }),
-        }
-      },
       '/sr/': async (req, res) => {
         return {
           code: 200,
           type: 'text/html',
           body: await fn.render('base.twig', {
             title: 'Song Request',
-            data: {
-              mode: 'full',
-            },
             page: 'sr',
             user: req.user,
             ws: config.ws,
@@ -167,7 +146,7 @@ class Songrequest {
         this.save()
         this.updateClients('onEnded')
       },
-      'ctrl': (ws, {ctrl}) => {
+      'ctrl': (ws, {ctrl, args}) => {
         switch (ctrl) {
           case 'good': this.like(); break;
           case 'bad': this.dislike(); break;
@@ -176,14 +155,18 @@ class Songrequest {
           case 'clear': this.clear(); break;
           case 'rm': this.remove(); break;
           case 'shuffle': this.shuffle(); break;
+          case 'playIdx': this.playIdx(...args); break;
+          case 'rmIdx': this.rmIdx(...args); break;
+          case 'goodIdx': this.goodIdx(...args); break;
+          case 'badIdx': this.badIdx(...args); break;
         }
       },
     }
   }
 
-  incStat (stat) {
-    if (this.data.playlist.length > 0) {
-      this.data.playlist[0][stat]++
+  incStat (stat, idx = 0) {
+    if (this.data.playlist.length > idx) {
+      this.data.playlist[idx][stat]++
     }
   }
 
@@ -198,6 +181,39 @@ class Songrequest {
     this.save()
     this.updateClients('resetStats')
   }
+
+  playIdx(idx) {
+    if (this.data.playlist.length === 0) {
+      return
+    }
+    while (idx-- > 0)
+      this.data.playlist.push(this.data.playlist.shift())
+
+    this.save()
+    this.updateClients('skip')
+  }
+
+  rmIdx(idx) {
+    if (this.data.playlist.length === 0) {
+      return
+    }
+    this.data.playlist.splice(idx, 1)
+    this.save()
+    this.updateClients('init')
+  }
+
+  goodIdx(idx) {
+    this.incStat('goods', idx)
+    this.save()
+    this.updateClients('like')
+  }
+
+  badIdx(idx) {
+    this.incStat('bads', idx)
+    this.save()
+    this.updateClients('dislike')
+  }
+
   like () {
     this.incStat('goods')
     this.save()

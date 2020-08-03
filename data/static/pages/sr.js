@@ -23,7 +23,7 @@ new Vue({
   el: '#app',
   data() {
     return {
-      mode: window.DATA.mode,
+      playerVisible: false,
       playlist: [],
       player: null,
       ws: null,
@@ -44,28 +44,39 @@ new Vue({
     <navbar />
     <div id="actionbar">
       <ul class="items">
-        <li v-for="ctrl in controls"><button class="btn" @click="sendCtrl(ctrl)">!sr {{ctrl}}</button>
-        <li><button class="btn" @click="toggleMode">{{togglePlayerButtonText}}</button>
+        <li v-for="ctrl in controls"><button class="btn" @click="sendCtrl(ctrl, [])">!sr {{ctrl}}</button>
+        <li><button class="btn" @click="togglePlayer">{{togglePlayerButtonText}}</button>
       </ul>
     </div>
   </div>
   <div id="main" ref="main">
-    <div id="player" v-if="mode === 'player'"><div id="youtube-el"></div></div>
-    <div id="player" v-else="" style="width: 0;height: 0;padding:0;"><div id="youtube-el"></div></div>
+    <div id="player" class="video-16-9" :style="playerstyle"><div id="youtube-el"></div></div>
     <div id="playlist">
-      <ol>
-        <li v-for="(item, idx) in playlist" :class="idx === 0 ? 'playing' : 'next'">
-          <div class="title"><a :href="'https://www.youtube.com/watch?v=' + item.yt" target="_blank">{{ item.title || item.yt }}</a></div>
-          <div class="meta">
-            requested by {{ item.user }},
-            played {{ item.plays }} time{{ item.plays === 1 ? '' : 's' }}
-          </div>
-          <div class="rgt vote">
-            <i class="fa fa-thumbs-up"/> {{ item.goods }}
-            <i class="fa fa-thumbs-down"/> {{ item.bads }}
-          </div>
-        </li>
-      </ol>
+      <table>
+        <tr>
+          <th></th>
+          <th></th>
+          <th>Title</th>
+          <th>User</th>
+          <th>Plays</th>
+          <th></th>
+        </tr>
+        <tr v-for="(item, idx) in playlist">
+          <td>{{idx+1}}</td>
+          <td><button v-if="idx !== 0" class="btn" @click="sendCtrl('playIdx', [idx])" title="Play"><i class="fa fa-play"/></button></td>
+          <td>
+            <a :href="'https://www.youtube.com/watch?v=' + item.yt" target="_blank">
+                {{ item.title || item.yt }}
+                <i class="fa fa-external-link"/>
+            </a>
+          </td>
+          <td>{{ item.user }}</td>
+          <td>{{ item.plays }}x</td>
+          <td><button class="btn" @click="sendCtrl('goodIdx', [idx])"><i class="fa fa-thumbs-up"/> {{ item.goods }}</button></td>
+          <td><button class="btn" @click="sendCtrl('badIdx', [idx])"><i class="fa fa-thumbs-down"/> {{ item.bads }}</button></td>
+          <td><button class="btn" @click="sendCtrl('rmIdx', [idx])" title="Remove"><i class="fa fa-trash"/></button></td>
+        </tr>
+      </table>
     </div>
   </div>
 </div>
@@ -84,14 +95,17 @@ new Vue({
     hasItems() {
       return this.playlist.length !== 0
     },
+    playerstyle() {
+      return this.playerVisible ? '' : 'width: 0;height: 0;padding:0;'
+    },
     togglePlayerButtonText() {
-      return this.mode === 'full' ? 'Show Player' : 'Hide Player'
+      return this.playerVisible ? 'Hide Player' : 'Show Player'
     }
   },
   methods: {
-    toggleMode() {
-      this.mode = this.mode === 'full' ? 'player' : 'full'
-      if (this.mode === 'player') {
+    togglePlayer() {
+      this.playerVisible = !this.playerVisible
+      if (this.playerVisible) {
         if (!this.playing()) {
           this.play()
         }
@@ -99,8 +113,8 @@ new Vue({
         this.player.stopVideo()
       }
     },
-    sendCtrl(ctrl) {
-      this.sendMsg({event: 'ctrl', ctrl})
+    sendCtrl(ctrl, args) {
+      this.sendMsg({event: 'ctrl', ctrl, args})
     },
     sendMsg(data) {
       this.ws.send(JSON.stringify(data))
@@ -138,7 +152,7 @@ new Vue({
       return this.player.getPlayerState() === 1
     },
     play() {
-      if (this.mode === 'player' && this.hasItems) {
+      if (this.playerVisible && this.hasItems) {
         this.player.cueVideoById(this.item.yt)
         this.player.playVideo()
         this.sendMsg({event: 'play', id: this.item.id})
@@ -149,9 +163,7 @@ new Vue({
     this.player = await prepareYt()
     this.ws = new Sockhyottoko('/sr')
     this.ws.onmessage = this.onMsg
-    if (this.mode === 'full') {
-      this.$refs.main.style.marginTop = 'calc(' + this.$refs.top.clientHeight + 'px + 1em)'
-    }
+    this.$refs.main.style.marginTop = 'calc(' + this.$refs.top.clientHeight + 'px + 1em)'
 
     this.player.addEventListener('onStateChange', (event) => {
       if (event.data === YT.PlayerState.ENDED) {
