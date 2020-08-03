@@ -23,10 +23,12 @@
 #navbar a { border-bottom: solid 3px; }
 
 #top ul.items { list-style: none; margin: 0; padding: 0; }
-#top ul.items li { display: inline-block; margin-left: 1em; }
-#top ul.items li:first-child { margin-left: 0; }
+#top ul.items li { display: inline-block; margin-right: 1em; }
+#top ul.items li:last-child { margin-right: 0; }
 
-#main { margin-bottom: 5em; }
+#main { margin-bottom: 5em; padding: .5em; }
+
+#player { margin-bottom: .5em; }
 
 /* page: commands */
 table tr td {
@@ -37,16 +39,11 @@ table tr.new-item td {
   transition: background-color 0ms;
 }
 
-/* page: sr */
-#controls {
-  position: fixed;
-  bottom: 0;
-  height: auto;
+@media only screen and (max-width: 920px) {
+  #actionbar .btn .txt {
+    display: none;
+  }
 }
-#controls ul.items { list-style: none; margin: 0; padding: 0; }
-#controls ul.items li { display: inline-block; margin-left: 1em; }
-#controls ul.items li:first-child { margin-left: 0; }
-
-#controls .btn {
-  margin: 4px;
+@media only screen and (max-width: 800px) {
+  #navbar ul.items li.greeting { display: none; }
 }

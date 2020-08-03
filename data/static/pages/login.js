@@ -36,7 +36,7 @@ new Vue({
         const data = await res.json()
         if (data.token) {
           loginSuccess(data.token)
-          location.reload()
+          location.assign('/')
         }
       }
     },

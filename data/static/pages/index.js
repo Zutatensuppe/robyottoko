@@ -30,6 +30,6 @@ new Vue({
     },
   },
   async mounted() {
-    this.$refs.main.style.marginTop = 'calc(' + this.$refs.top.clientHeight + 'px + 1em)'
+    this.$refs.main.style.marginTop = this.$refs.top.clientHeight + 'px'
   }
 })

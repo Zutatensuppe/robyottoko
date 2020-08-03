@@ -255,6 +255,6 @@ new Vue({
   async mounted() {
     this.ws = new Sockhyottoko('/commands')
     this.ws.onmessage = this.onMsg
-    this.$refs.main.style.marginTop = 'calc(' + this.$refs.top.clientHeight + 'px + 1em)'
+    this.$refs.main.style.marginTop = this.$refs.top.clientHeight + 'px'
   }
 })

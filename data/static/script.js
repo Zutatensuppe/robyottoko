@@ -101,7 +101,7 @@ Vue.component('navbar', {
         <img src="/static/hyottoko.png" width="32" height="32" alt="hyottoko.club" class="flip-horizontal" />
       </div>
       <ul class="items" v-if="user">
-        <li>Welcome back, {{ user }}
+        <li class="greeting">Welcome back, {{ user }}
         <li><a href="/">Widgets</a>
         <li><a href="/commands/">Commands</a>
         <li><a href="/sr/">Song Request</a>

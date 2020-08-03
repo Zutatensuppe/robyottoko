@@ -122,7 +122,7 @@ function webserver(moduleManager, config) {
   app.use('/static', express.static('./data/static'))
   app.get('/login', async (req, res) => {
     if (req.token) {
-      res.redirect(301, '/')
+      res.redirect(302, '/')
       return
     }
     res.send(await fn.render('base.twig', {
@@ -134,12 +134,12 @@ function webserver(moduleManager, config) {
     if (req.token) {
       auth.destroyToken(req.token)
     }
-    res.redirect(301, '/login')
+    res.redirect(302, '/login')
   })
 
   app.get('/', async (req, res) => {
     if (!req.token) {
-      res.redirect(301, '/login')
+      res.redirect(302, '/login')
       return
     }
     res.send(await fn.render('base.twig', {
@@ -210,7 +210,7 @@ function webserver(moduleManager, config) {
 
   app.get('*', async function (req, res) {
     if (!req.token) {
-      res.redirect(301, '/login')
+      res.redirect(302, '/login')
       return
     }
     const handle = async (req, res) => {

@@ -36,16 +36,18 @@ new Vue({
     <navbar />
     <div id="actionbar">
       <ul class="items">
-        <li><button class="btn" @click="sendCtrl('resetStats', [])"><i class="fa fa-eraser"/> Reset stats</button>
-        <li><button class="btn" @click="sendCtrl('clear', [])"><i class="fa fa-eject"/> Clear</button>
-        <li><button class="btn" @click="sendCtrl('shuffle', [])"><i class="fa fa-random"/> Shuffle</button>
-        <li><button class="btn" @click="togglePlayer"><i class="fa fa-tv"/> {{togglePlayerButtonText}}</button>
-        <li style="position: relative"><i class="fa fa-search" style="color: #60554a; position: absolute; left: 8px; top: 7px;"/><input style="padding-left: 32px; margin-right: 3px;" type="text" v-model="srinput" @keyup.enter="sr" /><button class="btn" @click="sr"><i class="fa fa-plus"/> Request</input>
+        <li><button class="btn" @click="sendCtrl('resetStats', [])" title="Reset stats"><i class="fa fa-eraser"/><span class="txt"> Reset stats</span></button>
+        <li><button class="btn" @click="sendCtrl('clear', [])" title="Clear"><i class="fa fa-eject"/><span class="txt"> Clear</span></button>
+        <li><button class="btn" @click="sendCtrl('shuffle', [])" title="Shuffle"><i class="fa fa-random"/><span class="txt"> Shuffle</span></button>
+        <li><button class="btn" @click="togglePlayer" :title="togglePlayerButtonText"><i class="fa fa-tv"/><span class="txt"> {{togglePlayerButtonText}}</span></button>
+        <li class="maybebreak" style="position: relative"><i class="fa fa-search" style="color: #60554a; position: absolute; left: 8px; top: 7px;"/><input style="padding-left: 32px; margin-right: 3px;" type="text" v-model="srinput" @keyup.enter="sr" /><button class="btn" @click="sr"><i class="fa fa-plus"/><span class="txt"> Request</span></input>
       </ul>
     </div>
   </div>
   <div id="main" ref="main">
-    <div id="player" class="video-16-9" :style="playerstyle"><div id="youtube-el"></div></div>
+    <div style="width: 640px">
+      <div id="player" class="video-16-9" :style="playerstyle"><div id="youtube-el"></div></div>
+    </div>
     <div id="playlist">
       <table>
         <tr>
@@ -91,7 +93,7 @@ new Vue({
       return this.playlist.length !== 0
     },
     playerstyle() {
-      return this.playerVisible ? '' : 'width: 0;height: 0;padding:0;'
+      return this.playerVisible ? '' : 'width: 0;height: 0;padding:0;margin-bottom:0;'
     },
     togglePlayerButtonText() {
       return this.playerVisible ? 'Hide Player' : 'Show Player'
@@ -163,7 +165,7 @@ new Vue({
     this.player = await prepareYt()
     this.ws = new Sockhyottoko('/sr')
     this.ws.onmessage = this.onMsg
-    this.$refs.main.style.marginTop = 'calc(' + this.$refs.top.clientHeight + 'px + 1em)'
+    this.$refs.main.style.marginTop = this.$refs.top.clientHeight + 'px'
 
     this.player.addEventListener('onStateChange', (event) => {
       if (event.data === YT.PlayerState.ENDED) {
