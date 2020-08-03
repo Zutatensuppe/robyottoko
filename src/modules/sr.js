@@ -159,9 +159,19 @@ class Songrequest {
           case 'rmIdx': this.rmIdx(...args); break;
           case 'goodIdx': this.goodIdx(...args); break;
           case 'badIdx': this.badIdx(...args); break;
+          case 'sr': this.request(...args); break;
         }
       },
     }
+  }
+
+  async add(str) {
+    const youtubeUrl = str.trim()
+    const youtubeId = await extractYoutubeId(youtubeUrl)
+    if (!youtubeId) {
+      return null
+    }
+    return await this.addToPlaylist(youtubeId, this.user)
   }
 
   incStat (stat, idx = 0) {
@@ -212,6 +222,10 @@ class Songrequest {
     this.incStat('bads', idx)
     this.save()
     this.updateClients('dislike')
+  }
+
+  async request (str) {
+    await this.add(str)
   }
 
   like () {
@@ -313,12 +327,11 @@ class Songrequest {
       }
     }
 
-    const youtubeUrl = command.args.join(' ').trim()
-    const youtubeId = await extractYoutubeId(youtubeUrl)
-    if (!youtubeId) {
+    const str = command.args.join(' ')
+    const item = await this.add(str)
+    if (!item) {
       return `Could not process that song request`
     }
-    const item = await this.addToPlaylist(youtubeId, context['display-name'])
     return `Added "${item.title}" (${item.yt}) to the playlist!`
   }
 

@@ -27,15 +27,7 @@ new Vue({
       playlist: [],
       player: null,
       ws: null,
-      controls: [
-        'good',
-        'bad',
-        'skip',
-        'resetStats',
-        'clear',
-        'rm',
-        'shuffle',
-      ],
+      srinput: '',
     }
   },
   template: `
@@ -44,8 +36,11 @@ new Vue({
     <navbar />
     <div id="actionbar">
       <ul class="items">
-        <li v-for="ctrl in controls"><button class="btn" @click="sendCtrl(ctrl, [])">!sr {{ctrl}}</button>
-        <li><button class="btn" @click="togglePlayer">{{togglePlayerButtonText}}</button>
+        <li><button class="btn" @click="sendCtrl('resetStats', [])"><i class="fa fa-eraser"/> Reset stats</button>
+        <li><button class="btn" @click="sendCtrl('clear', [])"><i class="fa fa-eject"/> Clear</button>
+        <li><button class="btn" @click="sendCtrl('shuffle', [])"><i class="fa fa-random"/> Shuffle</button>
+        <li><button class="btn" @click="togglePlayer"><i class="fa fa-tv"/> {{togglePlayerButtonText}}</button>
+        <li style="position: relative"><i class="fa fa-search" style="color: #60554a; position: absolute; left: 8px; top: 7px;"/><input style="padding-left: 32px; margin-right: 3px;" type="text" v-model="srinput" @keyup.enter="sr" /><button class="btn" @click="sr"><i class="fa fa-plus"/> Request</input>
       </ul>
     </div>
   </div>
@@ -111,6 +106,11 @@ new Vue({
         }
       } else {
         this.player.stopVideo()
+      }
+    },
+    sr() {
+      if (this.srinput !== '') {
+        this.sendCtrl('sr', [this.srinput])
       }
     },
     sendCtrl(ctrl, args) {
