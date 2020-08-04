@@ -9,7 +9,8 @@ new Vue({
   methods: {
     async playone(media) {
       return new Promise(async (resolve) => {
-        if (media.image) {
+        const promises = []
+        if (media.image?.file) {
           await this.prepareImage(media.image.file)
           this.imgstyle = {
             backgroundImage: 'url(/uploads/' + media.image.file + ')',
@@ -19,35 +20,53 @@ new Vue({
             height: '100%',
           }
         }
-        if (media.sound.file) {
-          const audio = new Audio(`/uploads/${media.sound.file}`)
-          audio.addEventListener('ended', () => {
-            this.imgstyle = ''
-            resolve()
-          })
-          audio.play();
-        } else {
-          setTimeout(() => {
-            this.imgstyle = ''
-            resolve()
-          }, 5000)
+
+        if (media.minDurationMs) {
+          promises.push(new Promise(res => {
+            setTimeout(res, media.minDurationMs)
+          }))
         }
+
+        if (media.sound?.file) {
+          promises.push(new Promise(res => {
+            const audio = new Audio(`/uploads/${media.sound.file}`)
+            audio.addEventListener('ended', () => {
+              res()
+            })
+            audio.play();
+          }))
+        }
+
+        if (promises.length === 0) {
+          // show images at least 1 sek by default (only if there
+          // are no other conditions)
+          promises.push(new Promise(resolve1 => {
+            setTimeout(resolve1, 1000)
+          }))
+        }
+
+        Promise.all(promises).then(_ => {
+          this.imgstyle = ''
+          resolve()
+        })
       })
     },
     addQueue(media) {
       this.queue.push(media)
-      if (!this.worker) {
-        const next = async () => {
-          if (this.queue.length === 0) {
-            clearInterval(this.worker)
-            this.worker = null
-            return
-          }
-          await this.playone(this.queue.shift())
-          this.worker = setTimeout(next, 1000)
-        }
-        this.worker = setTimeout(next, 1000)
+      if (this.worker) {
+        return
       }
+
+      const next = async () => {
+        if (this.queue.length === 0) {
+          clearInterval(this.worker)
+          this.worker = null
+          return
+        }
+        await this.playone(this.queue.shift())
+        this.worker = setTimeout(next, 500) // this much time in between media
+      }
+      this.worker = setTimeout(next, 500)
     },
     async prepareImage(img) {
       return new Promise((resolve) => {

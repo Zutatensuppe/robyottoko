@@ -88,7 +88,8 @@ textarea { width: 100%; }
 .player { display: inline-block; }
 
 .spacerow { margin-bottom: 5px; }
-.spacerow label { display: inline-block; width: 100px; }
+.spacerow .spacelabel { display: inline-block; width: 120px; }
+.spacerow .spaceinput { display: inline-block; width: 200px; }
 
 img { vertical-align: text-bottom; }
 .flip-horizontal { transform: scaleX(-1); }

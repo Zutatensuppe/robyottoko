@@ -171,27 +171,34 @@ new Vue({
                       <rimg v-if="item.data.image.file" :src="item.data.image.file" :title="item.data.image.filename" width="100%" height="90" style="display:block;" />
                       <player :src="item.data.sound.file" :nam="item.data.sound.filename" class="btn" />
                     </div>
-                    <div>
+                    <div class="spacerow">
                       <upload @uploaded="mediaSndUploaded(idx, $event)" accept="audio/*" label="Upload Audio" />
                       <upload @uploaded="mediaImgUploaded(idx, $event)" accept="image/*" label="Upload Image" />
+                    </div>
+                    <div class="spacerow">
+                      <label class="spacelabel">Min. duration </label>
+                      <span style="position: relative; display: inline-block">
+                        <input type="text" class="spaceinput" v-model="item.data.minDurationMs" />
+                        <span style="position: absolute; right:7px; top: 50%; transform: translateY(-50%);">ms</span>
+                      </span>
                     </div>
                 </div>
                 <div v-if="item.action === 'countdown'">
                     <div class="spacerow">
-                        <label>Steps </label>
-                        <input v-model="item.data.steps" />
+                        <label class="spacelabel">Steps </label>
+                        <input class="spaceinput" v-model="item.data.steps" />
                     </div>
                     <div class="spacerow">
-                        <label>Interval </label>
-                        <input v-model="item.data.interval" />
+                        <label class="spacelabel">Interval </label>
+                        <input class="spaceinput" v-model="item.data.interval" />
                     </div>
                     <div class="spacerow">
-                        <label>Intro </label>
-                        <input v-model="item.data.intro" />
+                        <label class="spacelabel">Intro </label>
+                        <input class="spaceinput" v-model="item.data.intro" />
                     </div>
                     <div class="spacerow">
-                        <label>Outro </label>
-                        <input v-model="item.data.outro" />
+                        <label class="spacelabel">Outro </label>
+                        <input class="spaceinput" v-model="item.data.outro" />
                     </div>
                 </div>
             </td>
@@ -250,6 +257,7 @@ new Vue({
               filename: '',
               file: '',
             },
+            minDurationMs: 1000,
           },
         }
       } else if (type === 'countdown') {
@@ -307,6 +315,18 @@ new Vue({
     sendMsg(data) {
       this.ws.send(JSON.stringify(data))
     },
+    fix (commands) {
+      return (commands || []).map(cmd => {
+        if (cmd.action === 'sound') {
+          cmd.action = 'media'
+          cmd.data = {sound: cmd.data, image: {filename: '', file: ''}}
+        }
+        if (cmd.action === 'media') {
+          cmd.data.minDurationMs = cmd.data.minDurationMs || 0
+        }
+        return cmd
+      })
+    },
     onMsg(e) {
       const d = JSON.parse(e.data)
       if (!d.event) {
@@ -314,7 +334,7 @@ new Vue({
       }
       switch (d.event) {
         case 'general/init':
-          this.commands = d.data.commands
+          this.commands = this.fix(d.data.commands)
           this.unchangedJson = JSON.stringify(d.data.commands)
           break
       }
