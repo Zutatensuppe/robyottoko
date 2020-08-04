@@ -10,7 +10,7 @@ new Vue({
     async playone(media) {
       return new Promise(async (resolve) => {
         const promises = []
-        if (media.image?.file) {
+        if (media.image && media.image.file) {
           await this.prepareImage(media.image.file)
           this.imgstyle = {
             backgroundImage: 'url(/uploads/' + media.image.file + ')',
@@ -27,7 +27,7 @@ new Vue({
           }))
         }
 
-        if (media.sound?.file) {
+        if (media.sound && media.sound.file) {
           promises.push(new Promise(res => {
             const audio = new Audio(`/uploads/${media.sound.file}`)
             audio.addEventListener('ended', () => {

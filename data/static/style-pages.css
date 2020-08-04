@@ -1,5 +1,12 @@
 @import "style.css";
 
+body {
+  margin: 0;
+  background: #2b2b2b;
+  color: var(--main-color);
+  font: 15px sans-serif;
+}
+
 #top {
   box-shadow: 0 0 3px black;
   position: fixed;

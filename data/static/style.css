@@ -8,13 +8,6 @@
   --input-bg-color: #262523;
 }
 
-body {
-  margin: 0;
-  background: #2b2b2b;
-  color: var(--main-color);
-  font: 15px sans-serif;
-}
-
 .btn { white-space: nowrap; }
 
 a { color: var(--link-color); text-decoration: none; }
