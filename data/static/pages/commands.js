@@ -128,7 +128,6 @@ new Vue({
     <div id="actionbar">
       <ul class="items">
         <li><button class="btn" @click="add('text')">Add text</button>
-        <li><button class="btn" @click="add('sound')">Add sound</button>
         <li><button class="btn" @click="add('media')">Add media</button>
         <li><button class="btn" @click="add('countdown')">Add countdown</button>
         <li><button class="btn" @click="add('jisho_org_lookup')">Add jisho_org_lookup</button>
@@ -235,16 +234,6 @@ new Vue({
           restrict_to: [],
           data: {
             text: [''],
-          },
-        }
-      } else if (type === 'sound') {
-        cmd = {
-          command: '',
-          action: 'sound',
-          restrict_to: [],
-          data: {
-            filename: '',
-            file: '',
           },
         }
       } else if (type === 'media') {
