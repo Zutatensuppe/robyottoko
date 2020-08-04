@@ -16,7 +16,7 @@ new Vue({
         song request: <a :href="widgetUrlSongRequest" target="_blank">{{widgetUrlSongRequest}}</a>
     </div>
     <div>
-        sounds: <a :href="widgetUrlSounds" target="_blank">{{widgetUrlSounds}}</a>
+        media: <a :href="widgetUrlMedia" target="_blank">{{widgetUrlMedia}}</a>
     </div>
   </div>
 </div>
@@ -25,8 +25,8 @@ new Vue({
     widgetUrlSongRequest() {
       return `${location.protocol}//${location.host}/widget/sr/${this.userWidgetToken}/`
     },
-    widgetUrlSounds() {
-      return `${location.protocol}//${location.host}/widget/sounds/${this.userWidgetToken}/`
+    widgetUrlMedia() {
+      return `${location.protocol}//${location.host}/widget/media/${this.userWidgetToken}/`
     },
   },
   async mounted() {

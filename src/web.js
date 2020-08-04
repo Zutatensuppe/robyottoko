@@ -118,7 +118,7 @@ function webserver(moduleManager, config) {
 
   app.use(cookieParser())
   app.use(auth.addAuthInfoMiddleware())
-  app.use('/media/sounds', express.static(uploadDir))
+  app.use('/uploads', express.static(uploadDir))
   app.use('/static', express.static('./data/static'))
   app.get('/login', async (req, res) => {
     if (req.token) {

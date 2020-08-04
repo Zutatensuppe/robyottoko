@@ -41,6 +41,14 @@ class GeneralModule {
               })
             }})
           break;
+        case 'media':
+          this.commands[cmd.command] = Object.assign({}, cmd, {fn: (command, client, target, context, msg) => {
+              web.notifyAll([this.user], {
+                event: 'playmedia',
+                data: cmd.data,
+              })
+            }})
+          break;
         case 'countdown':
           this.commands[cmd.command] = Object.assign({}, cmd, {fn: cmds.countdown(cmd.data)})
           break;
@@ -70,12 +78,12 @@ class GeneralModule {
 
   widgets () {
     return {
-      'sounds': async (req, res) => {
+      'media': async (req, res) => {
         return {
           code: 200,
           type: 'text/html',
           body: await fn.render('widget.twig', {
-            page: 'sounds',
+            page: 'media',
             token: req.params.widget_token,
             user: req.user,
             ws: config.ws,

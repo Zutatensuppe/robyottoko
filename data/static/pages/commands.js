@@ -1,3 +1,62 @@
+Vue.component('rimg', {
+  props: {
+    src: String,
+    title: String,
+    height: {
+      type: String,
+      default: '100%'
+    },
+    width: {
+      type: String,
+      default: '100%'
+    },
+  },
+  template: `
+  <div :style="style" :title="title"></div>
+  `,
+  computed: {
+    style() {
+      return {
+        display: 'inline-block',
+        verticalAlign: 'text-bottom',
+        backgroundImage: 'url(/uploads/' + this.src + ')',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: 'contain',
+        backgroundPosition: 'center',
+        width: this.width,
+        height: this.height,
+      }
+    }
+  }
+})
+
+Vue.component('upload', {
+  props: {
+    accept: String,
+    label: String,
+  },
+  template: `
+<label>
+    <input type="file" style="display: none" @change="upload" :accept="accept" />
+    <span class="btn"><i class="fa fa-upload" /> {{label || 'Upload File'}}</span>
+</label>
+`,
+  methods: {
+    async upload(evt) {
+      const file = evt.target.files[0]
+      if (!file) return;
+      const formData = new FormData();
+      formData.append('file', file, file.name);
+      const res = await fetch('/upload', {
+        method: 'post',
+        body: formData,
+      })
+      const j = await res.json()
+      this.$emit('uploaded', j)
+    },
+  }
+});
+
 Vue.component('player', {
   props: ['src', 'nam'],
   data() {
@@ -32,7 +91,7 @@ Vue.component('player', {
         this.audio.pause()
         this.audio = null
       }
-      this.audio = new Audio('/media/sounds/' + this.src)
+      this.audio = new Audio('/uploads/' + this.src)
       this.playing = false
     }
   },
@@ -70,6 +129,7 @@ new Vue({
       <ul class="items">
         <li><button class="btn" @click="add('text')">Add text</button>
         <li><button class="btn" @click="add('sound')">Add sound</button>
+        <li><button class="btn" @click="add('media')">Add media</button>
         <li><button class="btn" @click="add('countdown')">Add countdown</button>
         <li><button class="btn" @click="add('jisho_org_lookup')">Add jisho_org_lookup</button>
         <li><button class="btn btn-primary" :disabled="!changed" @click="sendSave">Save</button>
@@ -105,10 +165,17 @@ new Vue({
                 </div>
                 <div v-if="item.action === 'sound'" :class="item.action">
                     <player :src="item.data.file" :nam="item.data.filename" class="btn" />
-                    <label>
-                        <input type="file" name="file" style="display: none" @change="onchange(idx, $event.target.files[0])" />
-                        <button class="btn"><i class="fa fa-upload" /> Upload File</button>
-                    </label>
+                    <upload @uploaded="sndUploaded(idx, $event)" accept="audio/*" label="Upload Audio" />
+                </div>
+                <div v-if="item.action === 'media'" :class="item.action">
+                    <div class="spacerow media-holder" v-if="item.data.image.file || item.data.sound.file">
+                      <rimg v-if="item.data.image.file" :src="item.data.image.file" :title="item.data.image.filename" width="100%" height="90" style="display:block;" />
+                      <player :src="item.data.sound.file" :nam="item.data.sound.filename" class="btn" />
+                    </div>
+                    <div>
+                      <upload @uploaded="mediaSndUploaded(idx, $event)" accept="audio/*" label="Upload Audio" />
+                      <upload @uploaded="mediaImgUploaded(idx, $event)" accept="image/*" label="Upload Image" />
+                    </div>
                 </div>
                 <div v-if="item.action === 'countdown'">
                     <div class="spacerow">
@@ -147,17 +214,17 @@ new Vue({
 </div>
 `,
   methods: {
-    async onchange(idx, file) {
-      if (!file) return;
-      const formData = new FormData();
-      formData.append('file', file, file.name);
-      const res = await fetch('/upload', {
-        method: 'post',
-        body: formData,
-      })
-      const j = await res.json()
+    sndUploaded(idx, j) {
       this.commands[idx].data.filename = j.originalname
       this.commands[idx].data.file = j.filename
+    },
+    mediaSndUploaded(idx, j) {
+      this.commands[idx].data.sound.filename = j.originalname
+      this.commands[idx].data.sound.file = j.filename
+    },
+    mediaImgUploaded(idx, j) {
+      this.commands[idx].data.image.filename = j.originalname
+      this.commands[idx].data.image.file = j.filename
     },
     add(type) {
       let cmd = null
@@ -178,6 +245,22 @@ new Vue({
           data: {
             filename: '',
             file: '',
+          },
+        }
+      } else if (type === 'media') {
+        cmd = {
+          command: '',
+          action: 'media',
+          restrict_to: [],
+          data: {
+            sound: {
+              filename: '',
+              file: '',
+            },
+            image: {
+              filename: '',
+              file: '',
+            },
           },
         }
       } else if (type === 'countdown') {
@@ -244,10 +327,6 @@ new Vue({
         case 'general/init':
           this.commands = d.data.commands
           this.unchangedJson = JSON.stringify(d.data.commands)
-          break
-        case 'playsound':
-          const audio = new Audio('/media/sounds/' + d.data.file)
-          audio.play();
           break
       }
     },
