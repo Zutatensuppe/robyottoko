@@ -4,18 +4,16 @@
   <title>{{ title }}</title>
   <script>window.WS_BASE = '{{ ws.connectstring }}'</script>
   <script>window.WIDGET_TOKEN = '{{ token }}'</script>
-  <script>window.USER = '{{ user }}'</script>
   <script>window.MODE = 'widget'</script>
   <script>window.DATA = {{ data|json_encode|raw }}</script>
   <script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script>
-  <script src="/static/script.js"></script>
-  <link rel="stylesheet" href="/static/style-widgets.css"/>
+  <link rel="stylesheet" href="/static/widgets/{{ page }}.css"/>
   <meta charset="utf-8"/>
 </head>
 <body>
 <div id="main">
   <div id="app"></div>
-  <script src="/static/widgets/{{ page }}.js"></script>
+  <script type="module" src="/static/widgets/{{ page }}.js"></script>
 </div>
 </body>
 </html>

@@ -1,3 +1,5 @@
+import { WidgetSocket } from "../script.js"
+
 function prepareYt() {
   return new Promise((resolve, reject) => {
     const tag = document.createElement('script')

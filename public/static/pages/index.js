@@ -1,5 +1,10 @@
+import Navbar from "../components/navbar.js"
+
 new Vue({
   el: '#app',
+  components: {
+    Navbar,
+  },
   data() {
     return {
       userWidgetToken: window.DATA.userWidgetToken

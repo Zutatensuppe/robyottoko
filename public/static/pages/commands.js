@@ -1,107 +1,16 @@
-Vue.component('rimg', {
-  props: {
-    src: String,
-    title: String,
-    height: {
-      type: String,
-      default: '100%'
-    },
-    width: {
-      type: String,
-      default: '100%'
-    },
-  },
-  template: `
-  <div :style="style" :title="title"></div>
-  `,
-  computed: {
-    style() {
-      return {
-        display: 'inline-block',
-        verticalAlign: 'text-bottom',
-        backgroundImage: 'url(/uploads/' + this.src + ')',
-        backgroundRepeat: 'no-repeat',
-        backgroundSize: 'contain',
-        backgroundPosition: 'center',
-        width: this.width,
-        height: this.height,
-      }
-    }
-  }
-})
-
-Vue.component('upload', {
-  props: {
-    accept: String,
-    label: String,
-  },
-  template: `
-<label>
-    <input type="file" style="display: none" @change="upload" :accept="accept" />
-    <span class="btn"><i class="fa fa-upload" /> {{label || 'Upload File'}}</span>
-</label>
-`,
-  methods: {
-    async upload(evt) {
-      const file = evt.target.files[0]
-      if (!file) return;
-      const formData = new FormData();
-      formData.append('file', file, file.name);
-      const res = await fetch('/upload', {
-        method: 'post',
-        body: formData,
-      })
-      const j = await res.json()
-      this.$emit('uploaded', j)
-    },
-  }
-});
-
-Vue.component('player', {
-  props: ['src', 'nam'],
-  data() {
-    return {
-      audio: null,
-      playing: false,
-    }
-  },
-  created: function () {
-    this.load()
-    this.$watch('src', () => {
-      this.load()
-    })
-  },
-  computed: {
-    cls() {
-      return this.playing ? 'fa-stop' : 'fa-play'
-    }
-  },
-  methods: {
-    toggle() {
-      if (this.playing) {
-        this.audio.pause()
-        this.audio.currentTime = 0;
-      } else {
-        this.audio.play()
-      }
-      this.playing = !this.playing
-    },
-    load() {
-      if (this.audio) {
-        this.audio.pause()
-        this.audio = null
-      }
-      this.audio = new Audio('/uploads/' + this.src)
-      this.audio.addEventListener('ended', () => {
-        this.playing = false
-      })
-      this.playing = false
-    }
-  },
-  template: `<span class="player" v-if="src" @click="toggle">{{ nam }} <i class="fa" :class="cls"/></span>`
-})
+import Navbar from '../components/navbar.js'
+import Player from '../components/player.js'
+import ResponsiveImage from '../components/responsive-image.js'
+import Upload from '../components/upload.js'
+import { Sockhyottoko } from '../script.js'
 
 new Vue({
+  components: {
+    Navbar,
+    Player,
+    ResponsiveImage,
+    Upload,
+  },
   el: '#app',
   data() {
     return {
@@ -171,7 +80,7 @@ new Vue({
                 </div>
                 <div v-if="item.action === 'media'" :class="item.action">
                     <div class="spacerow media-holder" v-if="item.data.image.file || item.data.sound.file">
-                      <rimg v-if="item.data.image.file" :src="item.data.image.file" :title="item.data.image.filename" width="100%" height="90" style="display:block;" />
+                      <responsive-image v-if="item.data.image.file" :src="item.data.image.file" :title="item.data.image.filename" width="100%" height="90" style="display:block;" />
                       <player :src="item.data.sound.file" :nam="item.data.sound.filename" class="btn" />
                     </div>
                     <div class="spacerow">

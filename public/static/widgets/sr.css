@@ -1,0 +1,4 @@
+@import "../style-widgets.css";
+@import "../style-pages.css";
+
+#main { padding: 0; }

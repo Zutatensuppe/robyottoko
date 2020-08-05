@@ -75,7 +75,6 @@ class ClientManager {
 }
 
 const mm = new ModuleManager([
-  // require('./modules/core.js'),
   require('./modules/general.js'),
   require('./modules/sr.js'),
 ])

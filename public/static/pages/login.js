@@ -1,3 +1,5 @@
+import { setCookie } from "../cookies.js"
+
 new Vue({
   el: '#app',
   template: `
@@ -35,7 +37,7 @@ new Vue({
       if (res.status === 200) {
         const data = await res.json()
         if (data.token) {
-          loginSuccess(data.token)
+          setCookie('x-token', data.token)
           location.assign('/')
         }
       }

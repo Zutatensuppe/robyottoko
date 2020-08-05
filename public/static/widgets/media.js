@@ -1,3 +1,5 @@
+import { WidgetSocket } from "../script.js"
+
 new Vue({
   el: '#app',
   template: `<div id="app"><div v-if="imgstyle" class="fakeimg" :style="imgstyle"></div></div>`,

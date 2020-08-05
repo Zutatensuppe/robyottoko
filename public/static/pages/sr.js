@@ -1,3 +1,6 @@
+import Navbar from "../components/navbar.js"
+import { Sockhyottoko } from '../script.js'
+
 function prepareYt() {
   return new Promise((resolve, reject) => {
     const tag = document.createElement('script')
@@ -21,6 +24,9 @@ function prepareYt() {
 
 new Vue({
   el: '#app',
+  components: {
+    Navbar,
+  },
   data() {
     return {
       playerVisible: false,
@@ -40,7 +46,7 @@ new Vue({
         <li><button class="btn" @click="sendCtrl('clear', [])" title="Clear"><i class="fa fa-eject"/><span class="txt"> Clear</span></button>
         <li><button class="btn" @click="sendCtrl('shuffle', [])" title="Shuffle"><i class="fa fa-random"/><span class="txt"> Shuffle</span></button>
         <li><button class="btn" @click="togglePlayer" :title="togglePlayerButtonText"><i class="fa fa-tv"/><span class="txt"> {{togglePlayerButtonText}}</span></button>
-        <li class="maybebreak" style="position: relative"><i class="fa fa-search" style="color: #60554a; position: absolute; left: 8px; top: 7px;"/><input style="padding-left: 32px; margin-right: 3px;" type="text" v-model="srinput" @keyup.enter="sr" /><button class="btn" @click="sr"><i class="fa fa-plus"/><span class="txt"> Request</span></input>
+        <li class="maybebreak" style="position: relative"><i class="fa fa-search" style="color: #60554a; position: absolute; left: 8px; top: 7px;"/><input style="padding-left: 32px; margin-right: 3px;" type="text" v-model="srinput" @keyup.enter="sr" /><button class="btn" @click="sr"><i class="fa fa-plus"/><span class="txt"> Request</span></button>
       </ul>
     </div>
   </div>
