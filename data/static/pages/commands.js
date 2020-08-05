@@ -92,6 +92,9 @@ Vue.component('player', {
         this.audio = null
       }
       this.audio = new Audio('/uploads/' + this.src)
+      this.audio.addEventListener('ended', () => {
+        this.playing = false
+      })
       this.playing = false
     }
   },
