@@ -119,7 +119,7 @@ function webserver(moduleManager, config) {
   app.use(cookieParser())
   app.use(auth.addAuthInfoMiddleware())
   app.use('/uploads', express.static(uploadDir))
-  app.use('/static', express.static('./data/static'))
+  app.use('/static', express.static('./public/static'))
   app.get('/login', async (req, res) => {
     if (req.token) {
       res.redirect(302, '/')
