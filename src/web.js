@@ -81,8 +81,11 @@ class Auth
 
   wsHandleProtocol () {
     return (protocol) => {
-      if (this.checkToken(protocol, 'auth') || this.checkToken(protocol, 'widget')) {
-        return protocol
+      const proto = Array.isArray(protocol) && protocol.length === 2
+        ? protocol[1]
+        : protocol
+      if (this.checkToken(proto, 'auth') || this.checkToken(proto, 'widget')) {
+        return proto
       }
       return new Date().getTime()
     }
