@@ -2,9 +2,6 @@
 <head>
   <link rel="icon" href="/static/hyottoko.png" sizes="72x72" type="image/png"/>
   <title>{{ title }}</title>
-  <script>window.WS_BASE = '{{ ws.connectstring }}'</script>
-  <script>window.USER = '{{ user }}'</script>
-  <script>window.DATA = {{ data|json_encode|raw }}</script>
   <script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script>
   <link rel="stylesheet" href="/static/pages/{{ page }}.css"/>
   <meta charset="utf-8"/>
@@ -12,7 +9,22 @@
 <body>
 <div id="main">
   <div id="app"></div>
-  <script type="module" src="/static/pages/{{ page }}.js"></script>
+  <script type="module">
+  import Page from "/static/pages/{{ page }}.js"
+  new Vue({
+    el: '#app',
+    render: (h) => h(Page, {
+      props: {
+        conf: {
+          wsBase: {{ ws.connectstring|json_encode|raw }},
+          widgetToken: {{ widget_token|json_encode|raw }},
+          user: {{ user|json_encode|raw }},
+          token: {{ token|json_encode|raw }},
+        }
+      }
+    }),
+  })
+  </script>
 </div>
 </body>
 </html>

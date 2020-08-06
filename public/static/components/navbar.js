@@ -1,8 +1,7 @@
-export default Vue.component('navbar', {
-  data() {
-    return {
-      user: window.USER
-    }
+export default {
+  name: 'navbar',
+  props: {
+    user: String,
   },
   template: `
     <div id="navbar">
@@ -18,4 +17,4 @@ export default Vue.component('navbar', {
       </ul>
     </div>
 `
-})
+}

@@ -1,6 +1,46 @@
-import { prepareYt } from "../yt.js"
+let apiRdy = false
+function createApi() {
+  if (apiRdy) {
+    console.log('ytapi ALREADY ready')
+    return Promise.resolve()
+  }
+  return new Promise((resolve) => {
+    const tag = document.createElement('script')
+    tag.src = "https://www.youtube.com/iframe_api"
+    document.head.append(tag)
+    window.onYouTubeIframeAPIReady = () => {
+      apiRdy = true
+      console.log('ytapi ready')
+      resolve()
+    }
+  })
+}
 
-export default Vue.component('youtube', {
+function createPlayer(id) {
+  return new Promise((resolve) => {
+    console.log('create player on ' + id);
+    const player = new YT.Player(id, {
+      playerVars: {
+        iv_load_policy: 3, // do not load annotations
+        modestbranding: 1, // remove youtube logo
+      },
+      events: {
+        onReady: () => {
+          console.log('player ready')
+          resolve(player)
+        }
+      },
+    })
+  })
+}
+
+async function prepareYt(id) {
+  await createApi()
+  return await createPlayer(id)
+}
+
+export default {
+  name: 'youtube',
   data () {
     return {
       id: '',
@@ -20,7 +60,7 @@ export default Vue.component('youtube', {
     },
     play(yt) {
       if (!this.yt) {
-        this.yt = yt
+        this.toplay = yt
       } else {
         this.yt.cueVideoById(yt)
         this.yt.playVideo()
@@ -32,7 +72,9 @@ export default Vue.component('youtube', {
   },
   async mounted() {
     this.yt = await prepareYt(this.id)
+
     if (this.toplay) {
+      console.log('trying to play..')
       this.play(this.toplay)
     }
     this.yt.addEventListener('onStateChange', (event) => {
@@ -41,4 +83,4 @@ export default Vue.component('youtube', {
       }
     })
   }
-})
+}

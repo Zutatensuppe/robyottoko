@@ -76,8 +76,9 @@ class GeneralModule {
           type: 'text/html',
           body: await fn.render('widget.twig', {
             page: 'media',
-            token: req.params.widget_token,
+            widget_token: req.params.widget_token,
             user: req.user,
+            token: req.cookies['x-token'],
             ws: config.ws,
           }),
         }
@@ -95,6 +96,7 @@ class GeneralModule {
             title: 'Commands',
             page: 'commands',
             user: req.user,
+            token: req.cookies['x-token'],
             ws: config.ws,
           }),
         }

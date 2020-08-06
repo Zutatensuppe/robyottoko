@@ -1,10 +1,12 @@
-import { WidgetSocket } from "../script.js"
 import Youtube from "../components/youtube.js"
+import Ws from "../ws.js"
 
-new Vue({
-  el: '#app',
+export default {
   components: {
     Youtube,
+  },
+  props: {
+    conf: Object,
   },
   data() {
     return {
@@ -96,8 +98,8 @@ new Vue({
     },
   },
   mounted() {
-    this.ws = new WidgetSocket('/sr')
+    this.ws = new Ws(this.conf.wsBase + '/sr', this.conf.widgetToken)
     this.ws.onmessage = this.onMsg
     this.play()
   },
-})
+}

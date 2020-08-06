@@ -81,19 +81,8 @@ class Auth
 
   wsHandleProtocol () {
     return (protocol) => {
-      if (
-        protocol.length === 2
-        && protocol[0] === 'x-token'
-        && this.checkToken(protocol[1], 'auth')
-      ) {
-        return protocol[1]
-      }
-      if (
-        protocol.length === 2
-        && protocol[0] === 'x-widget-token'
-        && this.checkToken(protocol[1], 'widget')
-      ) {
-        return protocol[1]
+      if (this.checkToken(protocol, 'auth') || this.checkToken(protocol, 'widget')) {
+        return protocol
       }
       return new Date().getTime()
     }
@@ -128,11 +117,16 @@ function webserver(moduleManager, config) {
     res.send(await fn.render('base.twig', {
       title: 'Login',
       page: 'login',
+      ws: config.ws,
+      widget_token: null,
+      user: null,
+      token: null,
     }))
   })
   app.get('/logout', async (req, res) => {
     if (req.token) {
       auth.destroyToken(req.token)
+      res.clearCookie("x-token")
     }
     res.redirect(302, '/login')
   })
@@ -145,10 +139,9 @@ function webserver(moduleManager, config) {
     res.send(await fn.render('base.twig', {
       title: 'Hyottoko.club',
       page: 'index',
-      data: {
-        userWidgetToken: req.userWidgetToken
-      },
+      widget_token: req.userWidgetToken,
       user: req.user,
+      token: req.cookies['x-token'],
       ws: config.ws,
     }))
   })
@@ -158,7 +151,8 @@ function webserver(moduleManager, config) {
     const pass = req.body.pass
     const token = auth.checkUserPass(user, pass)
     if (token) {
-      res.send({token})
+      res.cookie('x-token', token, { maxAge: 900000, httpOnly: true })
+      res.send()
       return
     }
     res.status(401).send({reason: 'bad credentials'})

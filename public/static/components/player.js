@@ -1,5 +1,9 @@
-export default Vue.component('player', {
-  props: ['src', 'nam'],
+export default {
+  name: 'player',
+  props: {
+    src: String,
+    name: String,
+  },
   data() {
     return {
       audio: null,
@@ -39,5 +43,5 @@ export default Vue.component('player', {
       this.playing = false
     }
   },
-  template: `<span class="player" v-if="src" @click="toggle">{{ nam }} <i class="fa" :class="cls"/></span>`
-})
+  template: `<span class="player" v-if="src" @click="toggle">{{ name }} <i class="fa" :class="cls"/></span>`
+}

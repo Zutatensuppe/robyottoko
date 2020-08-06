@@ -1,12 +1,16 @@
-import { WidgetSocket } from "../script.js"
+import Ws from "../ws.js"
 
-new Vue({
-  el: '#app',
+export default {
   template: `<div id="app"><div v-if="imgstyle" class="fakeimg" :style="imgstyle"></div></div>`,
-  data: {
-    queue: [],
-    worker: null,
-    imgstyle: '',
+  props: {
+    conf: Object,
+  },
+  data() {
+    return {
+      queue: [],
+      worker: null,
+      imgstyle: '',
+    }
   },
   methods: {
     async playone(media) {
@@ -99,7 +103,7 @@ new Vue({
     },
   },
   async mounted() {
-    this.ws = new WidgetSocket('/commands')
+    this.ws = new Ws(this.conf.wsBase + '/commands', this.conf.widgetToken)
     this.ws.onmessage = this.onMsg
   }
-})
+}

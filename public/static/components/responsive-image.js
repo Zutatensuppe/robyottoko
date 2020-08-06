@@ -1,4 +1,5 @@
-export default Vue.component('responsive-image', {
+export default {
+  name: 'responsive-image',
   props: {
     src: String,
     title: String,
@@ -28,4 +29,4 @@ export default Vue.component('responsive-image', {
       }
     }
   }
-})
+}

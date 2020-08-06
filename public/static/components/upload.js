@@ -1,4 +1,5 @@
-export default Vue.component('upload', {
+export default {
+  name: 'upload',
   props: {
     accept: String,
     label: String,
@@ -23,4 +24,4 @@ export default Vue.component('upload', {
       this.$emit('uploaded', j)
     },
   }
-})
+}

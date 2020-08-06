@@ -1,7 +1,4 @@
-import { setCookie } from "../cookies.js"
-
-new Vue({
-  el: '#app',
+export default {
   template: `
 <div class="center-screen">
     <h1>Hyottoko.club</h1>
@@ -35,12 +32,8 @@ new Vue({
         body: JSON.stringify({user: this.user, pass: this.pass}),
       })
       if (res.status === 200) {
-        const data = await res.json()
-        if (data.token) {
-          setCookie('x-token', data.token)
-          location.assign('/')
-        }
+        location.assign('/')
       }
     },
   },
-})
+}

@@ -2,16 +2,18 @@ import Navbar from '../components/navbar.js'
 import Player from '../components/player.js'
 import ResponsiveImage from '../components/responsive-image.js'
 import Upload from '../components/upload.js'
-import { Sockhyottoko } from '../script.js'
+import Ws from "../ws.js"
 
-new Vue({
+export default {
   components: {
     Navbar,
     Player,
     ResponsiveImage,
     Upload,
   },
-  el: '#app',
+  props: {
+    conf: Object,
+  },
   data() {
     return {
       unchangedJson: '[]',
@@ -36,7 +38,7 @@ new Vue({
   template: `
 <div id="app">
   <div id="top" ref="top">
-    <navbar />
+    <navbar :user="conf.user" />
     <div id="actionbar">
       <ul class="items">
         <li><button class="btn" @click="add('text')">Add text</button>
@@ -77,7 +79,7 @@ new Vue({
                 <div v-if="item.action === 'media'" :class="item.action">
                     <div class="spacerow media-holder" v-if="item.data.image.file || item.data.sound.file">
                       <responsive-image v-if="item.data.image.file" :src="item.data.image.file" :title="item.data.image.filename" width="100%" height="90" style="display:block;" />
-                      <player :src="item.data.sound.file" :nam="item.data.sound.filename" class="btn" />
+                      <player :src="item.data.sound.file" :name="item.data.sound.filename" class="btn" />
                     </div>
                     <div class="spacerow">
                       <upload @uploaded="mediaSndUploaded(idx, $event)" accept="audio/*" label="Upload Audio" />
@@ -241,8 +243,8 @@ new Vue({
     },
   },
   async mounted() {
-    this.ws = new Sockhyottoko('/commands')
+    this.ws = new Ws(this.conf.wsBase + '/commands', this.conf.token)
     this.ws.onmessage = this.onMsg
     this.$refs.main.style.marginTop = this.$refs.top.clientHeight + 'px'
   }
-})
+}

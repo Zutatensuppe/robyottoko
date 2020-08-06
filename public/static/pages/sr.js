@@ -1,12 +1,14 @@
 import Navbar from "../components/navbar.js"
 import Youtube from "../components/youtube.js"
-import { Sockhyottoko } from '../script.js'
+import Ws from "../ws.js"
 
-new Vue({
-  el: '#app',
+export default {
   components: {
     Navbar,
     Youtube,
+  },
+  props: {
+    conf: Object,
   },
   data() {
     return {
@@ -19,7 +21,7 @@ new Vue({
   template: `
 <div id="app">
   <div id="top" ref="top">
-    <navbar />
+    <navbar :user="conf.user" />
     <div id="actionbar">
       <ul class="items">
         <li><button class="btn" @click="sendCtrl('resetStats', [])" title="Reset stats"><i class="fa fa-eraser"/><span class="txt"> Reset stats</span></button>
@@ -150,9 +152,9 @@ new Vue({
     },
   },
   mounted() {
-    this.ws = new Sockhyottoko('/sr')
+    this.ws = new Ws(this.conf.wsBase + '/sr', this.conf.token)
     this.ws.onmessage = this.onMsg
     this.$refs.main.style.marginTop = this.$refs.top.clientHeight + 'px'
     this.play()
   },
-})
+}

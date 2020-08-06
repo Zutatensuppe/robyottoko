@@ -1,19 +1,16 @@
 import Navbar from "../components/navbar.js"
 
-new Vue({
-  el: '#app',
+export default {
   components: {
     Navbar,
   },
-  data() {
-    return {
-      userWidgetToken: window.DATA.userWidgetToken
-    }
+  props: {
+    conf: Object,
   },
   template: `
 <div id="app">
   <div id="top" ref="top">
-    <navbar />
+    <navbar :user="conf.user" />
   </div>
   <div id="main" ref="main">
     Widgets for OBS:
@@ -28,13 +25,13 @@ new Vue({
 `,
   computed: {
     widgetUrlSongRequest() {
-      return `${location.protocol}//${location.host}/widget/sr/${this.userWidgetToken}/`
+      return `${location.protocol}//${location.host}/widget/sr/${this.conf.widgetToken}/`
     },
     widgetUrlMedia() {
-      return `${location.protocol}//${location.host}/widget/media/${this.userWidgetToken}/`
+      return `${location.protocol}//${location.host}/widget/media/${this.conf.widgetToken}/`
     },
   },
   async mounted() {
     this.$refs.main.style.marginTop = this.$refs.top.clientHeight + 'px'
   }
-})
+}
