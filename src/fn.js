@@ -64,19 +64,19 @@ const sayFn = (client, target) => (msg) => {
 }
 
 const mayExecute = (context, cmd) => {
-  if (!cmd.restrict_to) {
+  if (!cmd.restrict_to || cmd.restrict_to.length === 0) {
     return true
   }
-  if (cmd.restrict_to.includes('mod') && !isMod(context)) {
-    return false
+  if (cmd.restrict_to.includes('mod') && isMod(context)) {
+    return true
   }
-  if (cmd.restrict_to.includes('sub') && !isSubscriber(context)) {
-    return false
+  if (cmd.restrict_to.includes('sub') && isSubscriber(context)) {
+    return true
   }
-  if (cmd.restrict_to.includes('broadcaster') && !isBroadcaster(context)) {
-    return false
+  if (cmd.restrict_to.includes('broadcaster') && isBroadcaster(context)) {
+    return true
   }
-  return true
+  return false
 }
 
 const parseCommand = (msg) => {

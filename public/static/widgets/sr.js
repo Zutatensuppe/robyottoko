@@ -1,39 +1,21 @@
 import { WidgetSocket } from "../script.js"
-
-function prepareYt() {
-  return new Promise((resolve, reject) => {
-    const tag = document.createElement('script')
-    tag.src = "https://www.youtube.com/iframe_api"
-    document.head.append(tag)
-    window.onYouTubeIframeAPIReady = () => {
-      const player = new YT.Player('youtube-el', {
-        playerVars: {
-          iv_load_policy: 3, // do not load annotations
-          modestbranding: 1, // remove youtube logo
-        },
-        events: {
-          onReady: () => {
-            resolve(player)
-          }
-        },
-      })
-    }
-  })
-}
+import Youtube from "../components/youtube.js"
 
 new Vue({
   el: '#app',
+  components: {
+    Youtube,
+  },
   data() {
     return {
       playlist: [],
-      player: null,
       ws: null,
     }
   },
   template: `
 <div id="app" style="overflow: hidden">
   <div id="main" ref="main">
-    <div id="player" class="video-16-9"><div id="youtube-el"></div></div>
+    <div id="player" class="video-16-9"><youtube ref="youtube" @ended="ended" /></div>
     <div id="playlist">
       <ol>
         <li v-for="(item, idx) in playlist" :class="idx === 0 ? 'playing' : 'next'">
@@ -55,11 +37,14 @@ new Vue({
   watch: {
     playlist: function (newVal, oldVal) {
       if (newVal.length === 0) {
-        this.player.stopVideo()
+        this.player.stop()
       }
     }
   },
   computed: {
+    player() {
+      return this.$refs.youtube
+    },
     item() {
       return this.playlist[0]
     },
@@ -68,6 +53,9 @@ new Vue({
     },
   },
   methods: {
+    ended () {
+      this.sendMsg({event: 'ended'})
+    },
     sendMsg(data) {
       this.ws.send(JSON.stringify(data))
     },
@@ -94,39 +82,22 @@ new Vue({
         case 'add':
         case 'init':
           this.playlist = d.data.playlist
-          if (!this.playing()) {
+          if (!this.player.playing()) {
             this.play()
           }
           break
       }
     },
-    playing() {
-      return this.player.getPlayerState() === 1
-    },
     play() {
       if (this.hasItems) {
-        this.player.cueVideoById(this.item.yt)
-        this.player.playVideo()
+        this.player.play(this.item.yt)
         this.sendMsg({event: 'play', id: this.item.id})
       }
     },
   },
-  async mounted() {
-    this.player = await prepareYt()
+  mounted() {
     this.ws = new WidgetSocket('/sr')
     this.ws.onmessage = this.onMsg
-
-    this.player.addEventListener('onStateChange', (event) => {
-      if (event.data === YT.PlayerState.ENDED) {
-        this.sendMsg({event: 'ended'})
-      }
-    })
-    this.player.addEventListener('onError', (event) => {
-      // todo: find out what happens when video is not visible in this
-      //  country and if we can skip the video
-      // this.sendMsg({event: 'ended'})
-    })
-
     this.play()
   },
 })

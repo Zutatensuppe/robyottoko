@@ -33,14 +33,6 @@ class GeneralModule {
               ? cmds.randomText(cmd.data.text)
               : cmds.text(cmd.data.text)})
           break;
-        case 'sound':
-          this.commands[cmd.command] = Object.assign({}, cmd, {fn: (command, client, target, context, msg) => {
-              web.notifyAll([this.user], {
-                event: 'playsound',
-                data: cmd.data,
-              })
-            }})
-          break;
         case 'media':
           this.commands[cmd.command] = Object.assign({}, cmd, {fn: (command, client, target, context, msg) => {
               web.notifyAll([this.user], {

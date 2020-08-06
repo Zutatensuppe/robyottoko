@@ -74,10 +74,6 @@ new Vue({
                     </div>
                     <button class="btn" @click="addtxt(idx)"><i class="fa fa-plus" /> Add</button>
                 </div>
-                <div v-if="item.action === 'sound'" :class="item.action">
-                    <player :src="item.data.file" :nam="item.data.filename" class="btn" />
-                    <upload @uploaded="sndUploaded(idx, $event)" accept="audio/*" label="Upload Audio" />
-                </div>
                 <div v-if="item.action === 'media'" :class="item.action">
                     <div class="spacerow media-holder" v-if="item.data.image.file || item.data.sound.file">
                       <responsive-image v-if="item.data.image.file" :src="item.data.image.file" :title="item.data.image.filename" width="100%" height="90" style="display:block;" />
@@ -132,10 +128,6 @@ new Vue({
 </div>
 `,
   methods: {
-    sndUploaded(idx, j) {
-      this.commands[idx].data.filename = j.originalname
-      this.commands[idx].data.file = j.filename
-    },
     mediaSndUploaded(idx, j) {
       this.commands[idx].data.sound.filename = j.originalname
       this.commands[idx].data.sound.file = j.filename
@@ -229,10 +221,6 @@ new Vue({
     },
     fix (commands) {
       return (commands || []).map(cmd => {
-        if (cmd.action === 'sound') {
-          cmd.action = 'media'
-          cmd.data = {sound: cmd.data, image: {filename: '', file: ''}}
-        }
         if (cmd.action === 'media') {
           cmd.data.minDurationMs = cmd.data.minDurationMs || 0
         }

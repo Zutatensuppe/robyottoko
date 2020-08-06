@@ -92,9 +92,6 @@ new Vue({
         return
       }
       switch (d.event) {
-        case 'playsound':
-          this.playmedia({sound: d.data})
-          break
         case 'playmedia':
           this.playmedia(d.data)
           break

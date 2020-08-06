@@ -1,37 +1,17 @@
 import Navbar from "../components/navbar.js"
+import Youtube from "../components/youtube.js"
 import { Sockhyottoko } from '../script.js'
-
-function prepareYt() {
-  return new Promise((resolve, reject) => {
-    const tag = document.createElement('script')
-    tag.src = "https://www.youtube.com/iframe_api"
-    document.head.append(tag)
-    window.onYouTubeIframeAPIReady = () => {
-      const player = new YT.Player('youtube-el', {
-        playerVars: {
-          iv_load_policy: 3, // do not load annotations
-          modestbranding: 1, // remove youtube logo
-        },
-        events: {
-          onReady: () => {
-            resolve(player)
-          }
-        },
-      })
-    }
-  })
-}
 
 new Vue({
   el: '#app',
   components: {
     Navbar,
+    Youtube,
   },
   data() {
     return {
       playerVisible: false,
       playlist: [],
-      player: null,
       ws: null,
       srinput: '',
     }
@@ -52,7 +32,7 @@ new Vue({
   </div>
   <div id="main" ref="main">
     <div style="width: 640px">
-      <div id="player" class="video-16-9" :style="playerstyle"><div id="youtube-el"></div></div>
+      <div id="player" class="video-16-9" :style="playerstyle"><youtube ref="youtube" @ended="ended"/></div>
     </div>
     <div id="playlist">
       <table>
@@ -87,11 +67,14 @@ new Vue({
   watch: {
     playlist: function (newVal, oldVal) {
       if (newVal.length === 0) {
-        this.player.stopVideo()
+        this.player.stop()
       }
     }
   },
   computed: {
+    player() {
+      return this.$refs.youtube
+    },
     item() {
       return this.playlist[0]
     },
@@ -109,11 +92,11 @@ new Vue({
     togglePlayer() {
       this.playerVisible = !this.playerVisible
       if (this.playerVisible) {
-        if (!this.playing()) {
+        if (!this.player.playing()) {
           this.play()
         }
       } else {
-        this.player.stopVideo()
+        this.player.stop()
       }
     },
     sr() {
@@ -123,6 +106,9 @@ new Vue({
     },
     sendCtrl(ctrl, args) {
       this.sendMsg({event: 'ctrl', ctrl, args})
+    },
+    ended() {
+      this.sendMsg({event: 'ended'})
     },
     sendMsg(data) {
       this.ws.send(JSON.stringify(data))
@@ -150,35 +136,23 @@ new Vue({
         case 'add':
         case 'init':
           this.playlist = d.data.playlist
-          if (!this.playing()) {
+          if (!this.player.playing()) {
             this.play()
           }
           break
       }
     },
-    playing() {
-      return this.player.getPlayerState() === 1
-    },
     play() {
       if (this.playerVisible && this.hasItems) {
-        this.player.cueVideoById(this.item.yt)
-        this.player.playVideo()
+        this.player.play(this.item.yt)
         this.sendMsg({event: 'play', id: this.item.id})
       }
     },
   },
-  async mounted() {
-    this.player = await prepareYt()
+  mounted() {
     this.ws = new Sockhyottoko('/sr')
     this.ws.onmessage = this.onMsg
     this.$refs.main.style.marginTop = this.$refs.top.clientHeight + 'px'
-
-    this.player.addEventListener('onStateChange', (event) => {
-      if (event.data === YT.PlayerState.ENDED) {
-        this.sendMsg({event: 'ended'})
-      }
-    })
-
     this.play()
   },
 })
