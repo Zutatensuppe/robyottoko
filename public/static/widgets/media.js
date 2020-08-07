@@ -1,7 +1,7 @@
 import Ws from "../ws.js"
 
 export default {
-  template: `<div id="app"><div v-if="imgstyle" class="fakeimg" :style="imgstyle"></div></div>`,
+  template: `<div id="app"><div v-if="imgstyle" :style="imgstyle"></div></div>`,
   props: {
     conf: Object,
   },
