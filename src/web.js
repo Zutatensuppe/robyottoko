@@ -154,7 +154,7 @@ function webserver(moduleManager, config) {
     const pass = req.body.pass
     const token = auth.checkUserPass(user, pass)
     if (token) {
-      res.cookie('x-token', token, { maxAge: 900000, httpOnly: true })
+      res.cookie('x-token', token, { maxAge: '356d', httpOnly: true })
       res.send()
       return
     }
