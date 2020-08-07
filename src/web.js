@@ -6,6 +6,13 @@ const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
 const { userStorage, tokenStorage } = require('./users.js')
 
+const Millisecond = 1
+const Second = 1000 * Millisecond
+const Minute = 60 * Second
+const Hour = 60 * Minute
+const Day = 24 * Hour
+const Year = 356 * Day
+
 class Auth
 {
   generateToken(length) {
@@ -154,7 +161,7 @@ function webserver(moduleManager, config) {
     const pass = req.body.pass
     const token = auth.checkUserPass(user, pass)
     if (token) {
-      res.cookie('x-token', token, { maxAge: '356d', httpOnly: true })
+      res.cookie('x-token', token, { maxAge: Year, httpOnly: true })
       res.send()
       return
     }
