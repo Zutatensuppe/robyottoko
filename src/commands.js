@@ -38,8 +38,8 @@ const parsed = async (text, command) => {
     },
     {
       regex: /\$urlencode\(([^\)]*)\)/g,
-      replacer: (m0, m1) => {
-        return encodeURIComponent(m1)
+      replacer: async (m0, m1) => {
+        return encodeURIComponent(await parsed(m1, command))
       },
     },
     {
