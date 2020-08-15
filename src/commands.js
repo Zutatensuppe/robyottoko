@@ -31,28 +31,35 @@ const customApi = async (url) => {
 const parsed = async (text, command) => {
   const replaces = [
     {
-      regex: /\$customapi\(([^\)]*)\)/g,
+      regex: /\$([a-z][a-z0-9]*)(?!\()/g,
+      replacer: (m0, m1) => {
+        switch (m1) {
+          case 'args': return command.args.join(' ')
+        }
+        return m0
+      }
+    },
+    {
+      regex: /\$customapi\(([^$\)]*)\)/g,
       replacer: async (m0, m1) => {
         return await customApi(await parsed(m1, command))
       },
     },
     {
-      regex: /\$urlencode\(([^\)]*)\)/g,
+      regex: /\$urlencode\(([^$\)]*)\)/g,
       replacer: async (m0, m1) => {
         return encodeURIComponent(await parsed(m1, command))
       },
     },
-    {
-      regex: /\$args/g,
-      replacer: () => {
-        return command.args.join(' ')
-      }
-    }
   ]
   let replaced = text
-  for (let replace of replaces) {
-    replaced = await replaceAsync(replaced, replace.regex, replace.replacer)
-  }
+  let orig
+  do {
+    orig = replaced
+    for (let replace of replaces) {
+      replaced = await replaceAsync(replaced, replace.regex, replace.replacer)
+    }
+  } while (orig !== replaced)
   return replaced
 }
 
