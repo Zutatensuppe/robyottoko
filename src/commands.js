@@ -1,3 +1,4 @@
+const fetch = require('node-fetch')
 const fn = require('./fn.js')
 
 const jishoOrgLookup = () => async (command, client, target, context, msg) => {
@@ -12,12 +13,55 @@ const jishoOrgLookup = () => async (command, client, target, context, msg) => {
   return `Phrase "${phrase}": ${j.word} (${j.reading}) ${d.join(', ')}`
 };
 
+async function replaceAsync(str, regex, asyncFn) {
+  const promises = [];
+  str.replace(regex, (match, ...args) => {
+    const promise = asyncFn(match, ...args);
+    promises.push(promise);
+  });
+  const data = await Promise.all(promises);
+  return str.replace(regex, () => data.shift());
+}
+
+const customApi = async (url) => {
+  const res = await fetch(url)
+  return await res.text()
+}
+
+const parsed = async (text, command) => {
+  const replaces = [
+    {
+      regex: /\$customapi\(([^\)]*)\)/g,
+      replacer: async (m0, m1) => {
+        return await customApi(await parsed(m1, command))
+      },
+    },
+    {
+      regex: /\$urlencode\(([^\)]*)\)/g,
+      replacer: (m0, m1) => {
+        return encodeURIComponent(m1)
+      },
+    },
+    {
+      regex: /\$args/g,
+      replacer: () => {
+        return command.args.join(' ')
+      }
+    }
+  ]
+  let replaced = text
+  for (let replace of replaces) {
+    replaced = await replaceAsync(replaced, replace.regex, replace.replacer)
+  }
+  return replaced
+}
+
 const text = (text) => async (command, client, target, context, msg) => {
-  return text;
+  return await parsed(text, command);
 }
 
 const randomText = (texts) => async (command, client, target, context, msg) => {
-  return fn.getRandom(texts);
+  return await parsed(fn.getRandom(texts), command);
 }
 
 const countdown = (settings) => async (command, client, target, context, msg) => {
