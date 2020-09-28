@@ -10,6 +10,7 @@ export default {
   },
   data() {
     return {
+      volume: 100,
       playlist: [],
       ws: null,
     }
@@ -67,10 +68,15 @@ export default {
         return
       }
       switch (d.event) {
+        case 'volume':
+          this.volume = d.data.volume
+          this.adjustVolume()
+          break
         case 'onEnded':
         case 'skip':
         case 'remove':
         case 'clear':
+          this.volume = d.data.volume
           this.playlist = d.data.playlist
           this.play()
           break
@@ -79,10 +85,12 @@ export default {
         case 'onPlay':
         case 'resetStats':
         case 'shuffle':
+          this.volume = d.data.volume
           this.playlist = d.data.playlist
           break
         case 'add':
         case 'init':
+          this.volume = d.data.volume
           this.playlist = d.data.playlist
           if (!this.player.playing()) {
             this.play()
@@ -91,11 +99,15 @@ export default {
       }
     },
     play() {
+      this.adjustVolume()
       if (this.hasItems) {
         this.player.play(this.item.yt)
         this.sendMsg({event: 'play', id: this.item.id})
       }
     },
+    adjustVolume() {
+      this.player.setVolume(this.volume)
+    }
   },
   mounted() {
     this.ws = new Ws(this.conf.wsBase + '/sr', this.conf.widgetToken)

@@ -46,6 +46,7 @@ export default {
       id: '',
       yt: null,
       toplay: null,
+      tovolume: null,
     }
   },
   template: `<div :id="id"></div>`,
@@ -66,6 +67,13 @@ export default {
         this.yt.playVideo()
       }
     },
+    setVolume(volume) {
+      if (!this.yt) {
+        this.tovolume = volume
+      } else {
+        this.yt.setVolume(volume)
+      }
+    },
     playing() {
       return this.yt && this.yt.getPlayerState() === 1
     },
@@ -73,7 +81,10 @@ export default {
   async mounted() {
     this.yt = await prepareYt(this.id)
 
-    if (this.toplay) {
+    if (this.tovolume !== null) {
+      this.yt.setVolume(this.tovolume)
+    }
+    if (this.toplay !== null) {
       console.log('trying to play..')
       this.play(this.toplay)
     }

@@ -38,6 +38,7 @@ class Songrequest {
     this.storage = storage
     this.data = storage.load({
       youtubeData: {},
+      volume: 100,
       playlist: [],
     })
   }
@@ -93,6 +94,7 @@ class Songrequest {
   save () {
     this.storage.save({
       youtubeData: this.data.youtubeData || {},
+      volume: this.data.volume,
       playlist: this.data.playlist.map(item => ({
         id: item.id,
         yt: item.yt,
@@ -112,6 +114,7 @@ class Songrequest {
       event: eventName,
       data: {
         // ommitting youtube cache data
+        volume: this.data.volume,
         playlist: this.data.playlist,
       }
     };
@@ -150,6 +153,7 @@ class Songrequest {
       },
       'ctrl': (ws, {ctrl, args}) => {
         switch (ctrl) {
+          case 'volume': this.volume(...args); break;
           case 'good': this.like(); break;
           case 'bad': this.dislike(); break;
           case 'skip': this.skip(); break;
@@ -234,6 +238,18 @@ class Songrequest {
     this.incStat('goods')
     this.save()
     this.updateClients('like')
+  }
+
+  volume (vol) {
+    if (vol < 0) {
+      vol = 0
+    }
+    if (vol > 100) {
+      vol = 100
+    }
+    this.data.volume = vol
+    this.save()
+    this.updateClients('volume')
   }
 
   dislike () {

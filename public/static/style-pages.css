@@ -29,7 +29,7 @@ body {
 #navbar a { border-bottom: solid 3px; }
 
 #top ul.items { list-style: none; margin: 0; padding: 0; }
-#top ul.items li { display: inline-block; margin-right: 1em; }
+#top ul.items li { display: inline-block; margin-right: 1em; float: left; }
 #top ul.items li:last-child { margin-right: 0; }
 
 #main { margin-bottom: 5em; padding: .5em; }

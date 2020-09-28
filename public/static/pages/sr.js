@@ -13,6 +13,7 @@ export default {
   data() {
     return {
       playerVisible: false,
+      volume: 100,
       playlist: [],
       ws: null,
       srinput: '',
@@ -24,6 +25,12 @@ export default {
     <navbar :user="conf.user" />
     <div id="actionbar">
       <ul class="items">
+        <li>
+          <span class="range volume-slider">
+            <i class="fa fa-volume-down"/>
+            <input type="range" min="0" max="100" :value="this.volume" @change="sendCtrl('volume', [parseInt($event.target.value, 10)])" />
+            <i class="fa fa-volume-up"/>
+          </span>
         <li><button class="btn" @click="sendCtrl('resetStats', [])" title="Reset stats"><i class="fa fa-eraser"/><span class="txt"> Reset stats</span></button>
         <li><button class="btn" @click="sendCtrl('clear', [])" title="Clear"><i class="fa fa-eject"/><span class="txt"> Clear</span></button>
         <li><button class="btn" @click="sendCtrl('shuffle', [])" title="Shuffle"><i class="fa fa-random"/><span class="txt"> Shuffle</span></button>
@@ -121,10 +128,15 @@ export default {
         return
       }
       switch (d.event) {
+        case 'volume':
+          this.volume = d.data.volume
+          this.adjustVolume()
+          break
         case 'onEnded':
         case 'skip':
         case 'remove':
         case 'clear':
+          this.volume = d.data.volume
           this.playlist = d.data.playlist
           this.play()
           break
@@ -133,10 +145,12 @@ export default {
         case 'onPlay':
         case 'resetStats':
         case 'shuffle':
+          this.volume = d.data.volume
           this.playlist = d.data.playlist
           break
         case 'add':
         case 'init':
+          this.volume = d.data.volume
           this.playlist = d.data.playlist
           if (!this.player.playing()) {
             this.play()
@@ -145,11 +159,15 @@ export default {
       }
     },
     play() {
+      this.adjustVolume()
       if (this.playerVisible && this.hasItems) {
         this.player.play(this.item.yt)
         this.sendMsg({event: 'play', id: this.item.id})
       }
     },
+    adjustVolume() {
+      this.player.setVolume(this.volume)
+    }
   },
   mounted() {
     this.ws = new Ws(this.conf.wsBase + '/sr', this.conf.token)
