@@ -171,13 +171,13 @@ class Songrequest {
     }
   }
 
-  async add(str) {
+  async add(str, user) {
     const youtubeUrl = str.trim()
     const youtubeId = await extractYoutubeId(youtubeUrl)
     if (!youtubeId) {
       return null
     }
-    return await this.addToPlaylist(youtubeId, this.user)
+    return await this.addToPlaylist(youtubeId, user)
   }
 
   incStat (stat, idx = 0) {
@@ -231,7 +231,7 @@ class Songrequest {
   }
 
   async request (str) {
-    await this.add(str)
+    await this.add(str, this.user)
   }
 
   like () {
@@ -346,7 +346,7 @@ class Songrequest {
     }
 
     const str = command.args.join(' ')
-    const item = await this.add(str)
+    const item = await this.add(str, context['display-name'])
     if (!item) {
       return `Could not process that song request`
     }
