@@ -103,6 +103,7 @@ const auth = new Auth()
 
 function webserver(moduleManager, config) {
   const port = config.http.port
+  const hostname = config.http.hostname
   const app = express()
 
   const uploadDir = './data/uploads'
@@ -238,7 +239,7 @@ function webserver(moduleManager, config) {
     res.setHeader('Content-Type', type)
     res.end(body)
   })
-  app.listen(port, () => console.log(`server running on port ${port}`))
+  app.listen(port, hostname, () => console.log(`server running on ${hostname}:${port}`))
 }
 
 let _websocketserver

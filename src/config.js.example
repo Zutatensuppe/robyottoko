@@ -5,12 +5,6 @@ module.exports = {
     hostname: hostname,
     port: 1337
   },
-  https: {
-    hostname: hostname,
-    port: 1337,
-    key: '',
-    cert: '',
-  },
   ws: {
     hostname: hostname,
     port: 1338,
