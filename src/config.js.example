@@ -1,0 +1,26 @@
+const hostname = 'localhost'
+
+module.exports = {
+  http: {
+    hostname: hostname,
+    port: 1337
+  },
+  https: {
+    hostname: hostname,
+    port: 1337,
+    key: '',
+    cert: '',
+  },
+  ws: {
+    hostname: hostname,
+    port: 1338,
+    connectstring: `ws://${hostname}:1338/ws`
+  },
+  modules: {
+    sr: {
+      google: {
+        api_key: '' // google api key :)
+      },
+    }
+  }
+}
