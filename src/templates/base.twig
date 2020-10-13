@@ -18,7 +18,7 @@
         conf: {
           wsBase: {{ ws.connectstring|json_encode|raw }},
           widgetToken: {{ widget_token|json_encode|raw }},
-          user: {{ user.name|json_encode|raw }},
+          user: {{ (user ? user.name : '')|json_encode|raw }},
           token: {{ token|json_encode|raw }},
         }
       }
