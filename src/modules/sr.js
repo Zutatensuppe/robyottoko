@@ -1,7 +1,6 @@
 const fn = require('./../fn.js')
 const config = require('./../config.js')
 const fetch = require('node-fetch')
-const web = require('./../web.js')
 
 const fetchYoutubeData = async (youtubeId) => {
   console.log('fetchYoutubeData', youtubeId)
@@ -33,11 +32,13 @@ const extractYoutubeId = async (youtubeUrl) => {
 }
 
 class Songrequest {
-  constructor(user, client, storage) {
+  constructor(user, client, storage, cache, ws, wss) {
     this.user = user
+    this.cache = cache
     this.storage = storage
+    this.ws = ws
+    this.wss = wss
     this.data = storage.load({
-      youtubeData: {},
       volume: 100,
       playlist: [],
     })
@@ -93,7 +94,6 @@ class Songrequest {
 
   save () {
     this.storage.save({
-      youtubeData: this.data.youtubeData || {},
       volume: this.data.volume,
       playlist: this.data.playlist.map(item => ({
         id: item.id,
@@ -121,11 +121,11 @@ class Songrequest {
   }
 
   updateClient (eventName, ws) {
-    web.notifyOne([this.user], this.wsdata(eventName), ws)
+    this.wss.notifyOne([this.user.id], this.wsdata(eventName), ws)
   }
 
   updateClients (eventName) {
-    web.notifyAll([this.user], this.wsdata(eventName))
+    this.wss.notifyAll([this.user.id], this.wsdata(eventName))
   }
 
   getWsEvents () {
@@ -231,7 +231,7 @@ class Songrequest {
   }
 
   async request (str) {
-    await this.add(str, this.user)
+    await this.add(str, this.user.name)
   }
 
   like () {
@@ -354,12 +354,13 @@ class Songrequest {
   }
 
   async loadYoutubeData (youtubeId) {
-    if (typeof this.data.youtubeData[youtubeId] !== 'undefined') {
-      return this.data.youtubeData[youtubeId]
+    let key = `youtubeData_${youtubeId}`
+    let d = this.cache.get(key)
+    if (!d) {
+      d = await fetchYoutubeData(youtubeId)
+      this.cache.set(key, d)
     }
-    this.data.youtubeData[youtubeId] = await fetchYoutubeData(youtubeId)
-    this.save()
-    return this.data.youtubeData[youtubeId]
+    return d
   }
 
   async addToPlaylist (youtubeId, userName) {
@@ -401,7 +402,7 @@ class Songrequest {
 
 module.exports = {
   name: 'sr',
-  create: (user, client, storage) => {
-    return new Songrequest(user, client, storage)
+  create: (user, client, storage, cache, ws, wss) => {
+    return new Songrequest(user, client, storage, cache, ws, wss)
   },
 }

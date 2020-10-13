@@ -1,13 +1,15 @@
 const cmds = require('./../commands.js')
 const config = require('./../config.js')
 const fn = require('./../fn.js')
-const web = require('./../web.js')
 
 class GeneralModule {
-  constructor(user, client, storage) {
+  constructor(user, client, storage, cache, ws, wss) {
     this.user = user
     this.client = client
     this.storage = storage
+    this.cache = cache
+    this.ws = ws
+    this.wss = wss
     this.reinit()
   }
 
@@ -35,7 +37,7 @@ class GeneralModule {
           break;
         case 'media':
           this.commands[cmd.command] = Object.assign({}, cmd, {fn: (command, client, target, context, msg) => {
-              web.notifyAll([this.user], {
+              this.wss.notifyAll([this.user.id], {
                 event: 'playmedia',
                 data: cmd.data,
               })
@@ -112,11 +114,11 @@ class GeneralModule {
   }
 
   updateClient (eventName, ws) {
-    web.notifyOne([this.user], this.wsdata(eventName), ws)
+    this.wss.notifyOne([this.user.id], this.wsdata(eventName), ws)
   }
 
   updateClients (eventName) {
-    web.notifyAll([this.user], this.wsdata(eventName))
+    this.wss.notifyAll([this.user.id], this.wsdata(eventName))
   }
 
   getWsEvents () {
@@ -149,7 +151,7 @@ class GeneralModule {
 
 module.exports = {
   name: 'general',
-  create: (user, client, storage) => {
-    return new GeneralModule(user, client, storage)
+  create: (user, client, storage, cache, ws, wss) => {
+    return new GeneralModule(user, client, storage, cache, ws, wss)
   },
 }

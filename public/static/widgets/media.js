@@ -19,7 +19,7 @@ export default {
         if (media.image && media.image.file) {
           await this.prepareImage(media.image.file)
           this.imgstyle = {
-            backgroundImage: 'url(/uploads/' + media.image.file + ')',
+            backgroundImage: `url(/uploads/${encodeURIComponent(media.image.file)})`,
             backgroundRepeat: 'no-repeat',
             backgroundSize: 'contain',
             backgroundPosition: 'center',
@@ -35,7 +35,7 @@ export default {
 
         if (media.sound && media.sound.file) {
           promises.push(new Promise(res => {
-            const audio = new Audio(`/uploads/${media.sound.file}`)
+            const audio = new Audio(`/uploads/${encodeURIComponent(media.sound.file)}`)
             audio.addEventListener('ended', () => {
               res()
             })
@@ -77,7 +77,7 @@ export default {
     async prepareImage(img) {
       return new Promise((resolve) => {
         const imgLoad = new Image();
-        imgLoad.src = '/uploads/' + img;
+        imgLoad.src = '/uploads/' + encodeURIComponent(img);
         Vue.nextTick(() => {
           if (imgLoad.loaded) {
             resolve()

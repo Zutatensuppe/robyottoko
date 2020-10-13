@@ -20,7 +20,7 @@ export default {
       return {
         display: 'inline-block',
         verticalAlign: 'text-bottom',
-        backgroundImage: 'url(/uploads/' + this.src + ')',
+        backgroundImage: `url(/uploads/${encodeURIComponent(this.src)})`,
         backgroundRepeat: 'no-repeat',
         backgroundSize: 'contain',
         backgroundPosition: 'center',

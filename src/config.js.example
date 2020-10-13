@@ -3,18 +3,22 @@ const hostname = 'localhost'
 module.exports = {
   http: {
     hostname: hostname,
-    port: 1337
+    port: 1337,
   },
   ws: {
     hostname: hostname,
     port: 1338,
-    connectstring: `ws://${hostname}:1338/ws`
+    connectstring: `ws://${hostname}:1338/ws`,
+  },
+  db: {
+    file: __dirname + '/../db/database.sqlite',
+    patches_dir: __dirname + '/../db/patches',
   },
   modules: {
     sr: {
       google: {
         api_key: '' // google api key :)
       },
-    }
-  }
+    },
+  },
 }
