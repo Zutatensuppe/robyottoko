@@ -75,15 +75,15 @@ class WebServer {
     })
 
     app.post('/auth', bodyParser.json(), async (req, res) => {
-      const user = req.body.user
-      const pass = req.body.pass
-      const token = this.auth.checkUserPass(user, pass)
-      if (token) {
-        res.cookie('x-token', token, { maxAge: Year, httpOnly: true })
-        res.send()
+      const user = this.auth.getUserForNameAndPass(req.body.user, req.body.pass)
+      if (!user) {
+        res.status(401).send({reason: 'bad credentials'})
         return
       }
-      res.status(401).send({reason: 'bad credentials'})
+
+      const token = this.auth.getUserAuthToken(user.id)
+      res.cookie('x-token', token, { maxAge: Year, httpOnly: true })
+      res.send()
     })
     app.post('/upload', (req, res) => {
       if (!req.token) {

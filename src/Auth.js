@@ -5,44 +5,12 @@ class Auth
     this.tokenRepo = tokenRepo
   }
 
-  generateToken(length) {
-    //edit the token allowed characters
-    const a = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890".split("");
-    const b = [];
-    for (let i = 0; i < length; i++) {
-      const j = (Math.random() * (a.length - 1)).toFixed(0);
-      b[i] = a[j];
-    }
-    return b.join("");
+  getUserForNameAndPass (name, pass) {
+    return this.userRepo.getByNameAndPass(name, pass)
   }
 
-  generateTokenForUser (user_id, type) {
-    const token = this.generateToken(32)
-    this.tokenRepo.insert({
-      user_id: user_id,
-      type: type,
-      token: token,
-    })
-    return token
-  }
-
-  checkUserPass (user, pass) {
-    for (let u of this.userRepo.all()) {
-      if (u.name === user && u.pass === pass) {
-        return this.generateTokenForUser(u.id, 'auth')
-      }
-    }
-    return null
-  }
-
-  getUserWidgetToken (user_id) {
-    const tokens = this.tokenRepo.all()
-    for (const token of tokens) {
-      if (token.user_id === user_id && token.type === 'widget') {
-        return token
-      }
-    }
-    return this.generateTokenForUser(user_id, 'widget')
+  getUserAuthToken (user_id) {
+    return this.tokenRepo.generateAuthTokenForUserId(user_id)
   }
 
   getTokenInfo (token) {
@@ -65,11 +33,11 @@ class Auth
   addAuthInfoMiddleware () {
     return (req, res, next) => {
       const token = req.cookies['x-token'] || null
-      if (this.checkToken(token, 'auth')) {
-        req.token = token
-        const tokenInfo = this.tokenRepo.getByToken(token)
+      const tokenInfo = this.tokenRepo.getByTokenAndType(token, 'auth')
+      if (tokenInfo) {
+        req.token = tokenInfo.token
         req.user = this.userRepo.getById(tokenInfo.user_id)
-        req.userWidgetToken = this.getUserWidgetToken(tokenInfo.user_id).token
+        req.userWidgetToken = this.tokenRepo.getWidgetTokenForUserId(tokenInfo.user_id).token
       } else {
         req.token = null
         req.user = null
@@ -78,19 +46,18 @@ class Auth
     }
   }
 
-  wsHandleProtocol () {
-    return (protocol) => {
-      let proto = Array.isArray(protocol) && protocol.length === 2
-        ? protocol[1]
-        : protocol
-      if (Array.isArray(protocol) && protocol.length === 1) {
-        proto = protocol[0]
-      }
-      if (this.checkToken(proto, 'auth') || this.checkToken(proto, 'widget')) {
-        return proto
-      }
-      return new Date().getTime()
+  wsTokenFromProtocol (protocol) {
+    let proto = Array.isArray(protocol) && protocol.length === 2
+      ? protocol[1]
+      : protocol
+    if (Array.isArray(protocol) && protocol.length === 1) {
+      proto = protocol[0]
     }
+    const tokenInfo = this.getTokenInfo(proto)
+    if (tokenInfo && ['auth', 'widget'].includes(tokenInfo.type)) {
+      return tokenInfo
+    }
+    return null
   }
 }
 

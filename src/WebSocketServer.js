@@ -10,14 +10,10 @@ class WebSocketServer {
   }
 
   listen () {
-    this._websocketserver = new ws.Server(Object.assign({}, this.config, {
-      handleProtocols: this.auth.wsHandleProtocol()
-    }))
+    this._websocketserver = new ws.Server(this.config)
     this._websocketserver.on('connection', socket => {
-
-      // user for the connection:
       const token = socket.protocol
-      const tokenInfo = this.auth.getTokenInfo(token)
+      const tokenInfo = this.auth.wsTokenFromProtocol(token)
       if (!tokenInfo) {
         console.log('not found token: ', token)
         socket.close()
