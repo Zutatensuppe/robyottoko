@@ -31,7 +31,7 @@ const extractYoutubeId = async (youtubeUrl) => {
   return resJson.items[0]['id']['videoId'] || null
 }
 
-class Songrequest {
+class SongrequestModule {
   constructor(user, client, storage, cache, ws, wss) {
     this.user = user
     this.cache = cache
@@ -45,7 +45,7 @@ class Songrequest {
     })
   }
 
-  onMsg (client, target, context, msg) {
+  onChatMsg (client, target, context, msg) {
   }
 
   getCommands () {
@@ -216,7 +216,11 @@ class Songrequest {
     }
     this.data.playlist.splice(idx, 1)
     this.save()
-    this.updateClients('init')
+    if (idx === 0) {
+      this.updateClients('remove')
+    } else {
+      this.updateClients('init')
+    }
   }
 
   goodIdx(idx) {
@@ -401,4 +405,4 @@ class Songrequest {
 
 }
 
-module.exports = Songrequest
+module.exports = SongrequestModule

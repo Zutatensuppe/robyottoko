@@ -32,7 +32,7 @@ class TwitchClientManager {
           }
           console.log(`${this.logprefix}${target}| * Executed ${rawCmd.name} command`)
         }
-        await m.onMsg(this.client, target, context, msg);
+        await m.onChatMsg(this.client, target, context, msg);
       }
     })
 

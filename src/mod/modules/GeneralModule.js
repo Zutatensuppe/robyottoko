@@ -171,7 +171,7 @@ class GeneralModule {
     return this.commands
   }
 
-  onMsg (client, target, context, msg) {
+  onChatMsg (client, target, context, msg) {
     this.timers.forEach(t => {
       t.lines++
     })

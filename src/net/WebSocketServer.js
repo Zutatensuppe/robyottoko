@@ -79,6 +79,7 @@ class WebSocketServer {
 
   notifyOne(user_ids, data, socket) {
     if (socket.isAlive && user_ids.includes(socket.user_id)) {
+      console.log(`notifying ${socket.user_id} (${data.event})`)
       socket.send(JSON.stringify(data))
     }
   }
