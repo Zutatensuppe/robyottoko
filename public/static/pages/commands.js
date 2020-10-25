@@ -123,7 +123,10 @@ export default {
         <tr v-for="(item, idx) in commands" :key="idx">
             <td>
                 <div v-for="(trigger, idx2) in item.triggers" :key="idx2" class="spacerow">
-                    <span v-if="item.action === 'jisho_org_lookup'">Command</span>
+                    <div v-if="item.action === 'jisho_org_lookup'">
+                        <span>Command</span>
+                        <button class="btn" :disabled="item.triggers.length <= 1" @click="rmtrigger(idx, idx2)"><i class="fa fa-remove" /></button>
+                    </div>
                     <template v-else>
                         <div class="select">
                             <i class="fa fa-caret-down" />
