@@ -1,4 +1,4 @@
-const fn = require('./../fn.js')
+const fn = require('../../fn.js')
 
 const _data = fn.load('wordgame', {
   word: null,

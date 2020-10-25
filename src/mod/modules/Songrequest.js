@@ -1,5 +1,5 @@
-const fn = require('./../fn.js')
-const config = require('./../config.js')
+const fn = require('../../fn.js')
+const config = require('../../config.js')
 const fetch = require('node-fetch')
 
 const fetchYoutubeData = async (youtubeId) => {
@@ -39,7 +39,7 @@ class Songrequest {
     this.ws = ws
     this.wss = wss
     this.name = 'sr'
-    this.data = storage.load({
+    this.data = this.storage.load(this.name, {
       volume: 100,
       playlist: [],
     })
@@ -94,7 +94,7 @@ class Songrequest {
   }
 
   save () {
-    this.storage.save({
+    this.storage.save(this.name, {
       volume: this.data.volume,
       playlist: this.data.playlist.map(item => ({
         id: item.id,
@@ -401,9 +401,4 @@ class Songrequest {
 
 }
 
-module.exports = {
-  name: 'sr',
-  create: (user, client, storage, cache, ws, wss) => {
-    return new Songrequest(user, client, storage, cache, ws, wss)
-  },
-}
+module.exports = Songrequest

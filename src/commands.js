@@ -2,15 +2,18 @@ const fetch = require('node-fetch')
 const fn = require('./fn.js')
 
 const jishoOrgLookup = () => async (command, client, target, context, msg) => {
+  const say = fn.sayFn(client, target)
   const phrase = command.args.join(' ')
   const data = await fn.lookupWord(phrase)
   if (data.length === 0) {
-    return `Sorry, I didn't find anything for "${phrase}"`
+    say(`Sorry, I didn't find anything for "${phrase}"`)
+    return
   }
   const e = data[0]
   const j = e.japanese[0]
   const d = e.senses[0].english_definitions
-  return `Phrase "${phrase}": ${j.word} (${j.reading}) ${d.join(', ')}`
+
+  say(`Phrase "${phrase}": ${j.word} (${j.reading}) ${d.join(', ')}`)
 };
 
 async function replaceAsync(str, regex, asyncFn) {

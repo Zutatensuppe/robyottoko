@@ -1,6 +1,6 @@
-const cmds = require('./../commands.js')
-const config = require('./../config.js')
-const fn = require('./../fn.js')
+const cmds = require('../../commands.js')
+const config = require('../../config.js')
+const fn = require('../../fn.js')
 
 class GeneralModule {
   constructor(user, client, storage, cache, ws, wss) {
@@ -33,14 +33,14 @@ class GeneralModule {
   }
 
   reinit () {
-    this.data = this.storage.load({
+    this.data = this.storage.load(this.name, {
       commands: [],
     })
+    this.data.commands = this.fix(this.data.commands)
+
     this.commands = {}
     this.timers = []
     this.interval = null
-
-    this.data.commands = this.fix(this.data.commands)
 
     this.data.commands.forEach((cmd) => {
       if (cmd.triggers.length === 0) {
@@ -159,13 +159,9 @@ class GeneralModule {
       'conn': (ws) => {
         this.updateClient('init', ws)
       },
-      'uploaded': (ws) => {
-        this.reinit()
-        this.updateClients('init')
-      },
       'save': (ws, {commands}) => {
         this.data.commands = this.fix(commands)
-        this.storage.save(this.data)
+        this.storage.save(this.name, this.data)
         this.reinit()
         this.updateClients('init')
       },
@@ -182,9 +178,4 @@ class GeneralModule {
   }
 }
 
-module.exports = {
-  name: 'general',
-  create: (user, client, storage, cache, ws, wss) => {
-    return new GeneralModule(user, client, storage, cache, ws, wss)
-  },
-}
+module.exports = GeneralModule

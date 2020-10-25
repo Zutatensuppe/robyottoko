@@ -1,4 +1,4 @@
-const fn = require('./fn.js')
+const fn = require('../fn.js')
 const multer = require('multer')
 const express = require('express')
 const cookieParser = require('cookie-parser')
@@ -100,12 +100,7 @@ class WebServer {
     })
 
     app.get('/widget/:widget_type/:widget_token/', async (req, res) => {
-      // console.log(req.params)
-      if (this.auth.checkToken(req.params.widget_token, 'widget')) {
-        req.user = this.auth.getUserByToken(req.params.widget_token)
-      } else {
-        req.user = null
-      }
+      req.user = this.auth.userFromWidgetToken(req.params.widget_token)
 
       const handle = async (req, res) => {
         for (const module of this.moduleManager.all(req.user.id)) {
@@ -159,6 +154,4 @@ class WebServer {
   }
 }
 
-module.exports = {
-  WebServer,
-}
+module.exports = WebServer

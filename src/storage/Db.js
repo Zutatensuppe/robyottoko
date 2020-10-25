@@ -53,7 +53,7 @@ class Db {
         }
 
         // TODO: implement rest of mongo like query args ($eq, $lte, $in...)
-        throw new Error('not implemented')
+        throw new Error('not implemented: ' + JSON.stringify(where[k]))
       }
 
       wheres.push(k + ' = ?')
@@ -144,6 +144,4 @@ class Db {
   }
 }
 
-module.exports = {
-  Db,
-}
+module.exports = Db

@@ -5,6 +5,10 @@ class Auth
     this.tokenRepo = tokenRepo
   }
 
+  getUserById (user_id) {
+    return this.userRepo.getById(user_id)
+  }
+
   getUserForNameAndPass (name, pass) {
     return this.userRepo.getByNameAndPass(name, pass)
   }
@@ -17,15 +21,6 @@ class Auth
     return this.tokenRepo.getByToken(token)
   }
 
-  getUserByToken (token) {
-    const tokenInfo = this.getTokenInfo(token)
-    return this.userRepo.getById(tokenInfo.user_id)
-  }
-
-  checkToken (token, type) {
-    return !!this.tokenRepo.getByTokenAndType(token, type)
-  }
-
   destroyToken (token) {
     this.tokenRepo.delete(token)
   }
@@ -33,8 +28,8 @@ class Auth
   addAuthInfoMiddleware () {
     return (req, res, next) => {
       const token = req.cookies['x-token'] || null
-      const tokenInfo = this.tokenRepo.getByTokenAndType(token, 'auth')
-      if (tokenInfo) {
+      const tokenInfo = this.getTokenInfo(token)
+      if (tokenInfo && ['auth'].includes(tokenInfo.type)) {
         req.token = tokenInfo.token
         req.user = this.userRepo.getById(tokenInfo.user_id)
         req.userWidgetToken = this.tokenRepo.getWidgetTokenForUserId(tokenInfo.user_id).token
@@ -44,6 +39,14 @@ class Auth
       }
       next()
     }
+  }
+
+  userFromWidgetToken (token) {
+    const tokenInfo = this.getTokenInfo(token)
+    if (tokenInfo && ['widget'].includes(tokenInfo.type)) {
+      return this.getUserById(tokenInfo.user_id)
+    }
+    return null
   }
 
   wsTokenFromProtocol (protocol) {
@@ -61,6 +64,4 @@ class Auth
   }
 }
 
-module.exports = {
-  Auth,
-}
+module.exports = Auth

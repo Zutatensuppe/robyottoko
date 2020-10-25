@@ -8,10 +8,6 @@ class TokenRepo {
     return this.db.get(this.table, {token})
   }
 
-  getByTokenAndType(token, type) {
-    return this.db.get(this.table, {token, type})
-  }
-
   getByUserIdAndType(user_id, type) {
     return this.db.get(this.table, {user_id, type})
   }
@@ -52,6 +48,4 @@ class TokenRepo {
   }
 }
 
-module.exports = {
-  TokenRepo,
-}
+module.exports = TokenRepo

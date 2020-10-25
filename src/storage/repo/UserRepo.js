@@ -14,6 +14,4 @@ class UserRepo {
   }
 }
 
-module.exports = {
-  UserRepo,
-}
+module.exports = UserRepo

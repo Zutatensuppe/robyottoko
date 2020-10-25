@@ -264,25 +264,10 @@ export default {
       this.commands = this.commands.filter((val, index) => index !== idx)
     },
     sendSave() {
-      this.sendMsg({
-        event: 'save',
-        commands: this.commands
-      })
+      this.sendMsg({event: 'save', commands: this.commands})
     },
     sendMsg(data) {
       this.ws.send(JSON.stringify(data))
-    },
-    fix (commands) {
-      return (commands || []).map(cmd => {
-        if (cmd.command) {
-          cmd.triggers = [{type: 'command', data: {command: cmd.command}}]
-          delete cmd.command
-        }
-        if (cmd.action === 'media') {
-          cmd.data.minDurationMs = cmd.data.minDurationMs || 0
-        }
-        return cmd
-      })
     },
     onMsg(e) {
       const d = JSON.parse(e.data)
@@ -291,7 +276,7 @@ export default {
       }
       switch (d.event) {
         case 'init':
-          this.commands = this.fix(d.data.commands)
+          this.commands = d.data.commands
           this.unchangedJson = JSON.stringify(d.data.commands)
           break
       }
