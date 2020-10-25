@@ -1,7 +1,7 @@
 const config = require('../src/config.js')
-const { Db } = require('../src/storage/Db.js')
+const storage = require('../src/storage')
 
-const db = new Db(config.db.file)
+const db = new storage.Db(config.db.file)
 
 const user = {
   name: '', // username
