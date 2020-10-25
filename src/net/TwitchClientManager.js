@@ -3,6 +3,7 @@ const fn = require('../fn.js')
 
 class TwitchClientManager {
   constructor(user, moduleManager) {
+    this.logprefix = `${user.name}|`
     this.client = new tmi.client({
       identity: {
         username: user.tmi_identity_username,
@@ -17,19 +18,19 @@ class TwitchClientManager {
 
     this.client.on('message', async (target, context, msg, self) => {
       if (self) { return; } // Ignore messages from the bot
-      console.log(`${context.username}@${target}: ${msg}`)
+      console.log(`${this.logprefix}${context.username}@${target}: ${msg}`)
       const rawCmd = fn.parseCommand(msg)
 
       for (const m of moduleManager.all(user.id)) {
         const commands = m.getCommands() || {}
         const cmdDef = commands[rawCmd.name] || null
         if (cmdDef && fn.mayExecute(context, cmdDef)) {
-          console.log(`${target}| * Executing ${rawCmd.name} command`)
+          console.log(`${this.logprefix}${target}| * Executing ${rawCmd.name} command`)
           const r = await cmdDef.fn(rawCmd, this.client, target, context, msg)
           if (r) {
-            console.log(`${target}| * Returned: ${r}`)
+            console.log(`${this.logprefix}${target}| * Returned: ${r}`)
           }
-          console.log(`${target}| * Executed ${rawCmd.name} command`)
+          console.log(`${this.logprefix}${target}| * Executed ${rawCmd.name} command`)
         }
         await m.onMsg(this.client, target, context, msg);
       }
@@ -37,7 +38,7 @@ class TwitchClientManager {
 
     // Called every time the bot connects to Twitch chat
     this.client.on('connected', (addr, port) => {
-      console.log(`${user.id}| * Connected to ${addr}:${port}`)
+      console.log(`${this.logprefix} * Connected to ${addr}:${port}`)
     })
     this.client.connect();
   }
