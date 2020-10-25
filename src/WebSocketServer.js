@@ -1,4 +1,4 @@
-const ws = require('ws')
+const WebSocket = require('ws')
 
 class WebSocketServer {
   constructor(moduleManager, config, auth) {
@@ -10,8 +10,8 @@ class WebSocketServer {
   }
 
   listen () {
-    this._websocketserver = new ws.Server(this.config)
-    this._websocketserver.on('connection', socket => {
+    this._websocketserver = new WebSocket.Server(this.config)
+    this._websocketserver.on('connection', (socket, request, client) => {
       const token = socket.protocol
       const tokenInfo = this.auth.wsTokenFromProtocol(token)
       if (!tokenInfo) {
@@ -19,37 +19,45 @@ class WebSocketServer {
         socket.close()
         return
       }
+
       socket.user_id = tokenInfo.user_id
+
+      const pathname = new URL(this.config.connectstring).pathname
+      if (request.url.indexOf(pathname) !== 0) {
+        console.log('bad request url: ', request.url)
+        socket.close()
+        return
+      }
 
       socket.isAlive = true
       socket.on('pong', function () {
         this.isAlive = true;
       })
-      socket.on('message', (data) => {
-        console.log(`ws|${socket.user_id}| `, data)
-        const d = JSON.parse(data)
-        if (!d.event) {
-          return
-        }
 
-        for (const module of this.moduleManager.all(socket.user_id)) {
-          const evts = module.getWsEvents()
-          if (!evts) {
-            continue;
-          }
-          if (evts[d.event]) {
-            evts[d.event](socket, d)
-          }
-        }
-      })
-
+      const relpath = request.url.substr(pathname.length)
+      // module routing
       for (const module of this.moduleManager.all(socket.user_id)) {
-        const evts = module.getWsEvents()
-        if (!evts) {
-          continue;
+        if ('/' + module.name !== relpath) {
+          continue
         }
-        if (evts['conn']) {
-          evts['conn'](socket)
+
+        const evts = module.getWsEvents()
+        if (evts) {
+          socket.on('message', (data) => {
+            console.log(`ws|${socket.user_id}| `, data)
+            const d = JSON.parse(data)
+            if (!d.event) {
+              return
+            }
+
+            if (evts[d.event]) {
+              evts[d.event](socket, d)
+            }
+          })
+
+          if (evts['conn']) {
+            evts['conn'](socket)
+          }
         }
       }
     })
@@ -60,8 +68,7 @@ class WebSocketServer {
           return socket.terminate()
         }
         socket.isAlive = false
-        socket.ping(() => {
-        })
+        socket.ping(() => {})
       })
     }, 30000)
 

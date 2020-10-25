@@ -15,7 +15,7 @@ export default class Ws {
     if (this.handle) {
       this.handle.send(txt)
     } else {
-      this.queue.add(txt)
+      this.queue.push(txt)
     }
   }
 

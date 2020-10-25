@@ -64,11 +64,13 @@ const parsed = async (text, command) => {
 }
 
 const text = (text) => async (command, client, target, context, msg) => {
-  return await parsed(text, command);
+  const say = fn.sayFn(client, target)
+  say(await parsed(text, command))
 }
 
 const randomText = (texts) => async (command, client, target, context, msg) => {
-  return await parsed(fn.getRandom(texts), command);
+  const say = fn.sayFn(client, target)
+  say(await parsed(fn.getRandom(texts), command))
 }
 
 const countdown = (settings) => async (command, client, target, context, msg) => {

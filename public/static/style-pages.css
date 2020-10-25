@@ -40,7 +40,7 @@ body {
 table tr td {
   transition: background-color 1000ms ease-in;
 }
-table tr.new-item td {
+table tr.gain-attention td {
   background-color: #3f714b !important;
   transition: background-color 0ms;
 }

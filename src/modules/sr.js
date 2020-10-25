@@ -38,6 +38,7 @@ class Songrequest {
     this.storage = storage
     this.ws = ws
     this.wss = wss
+    this.name = 'sr'
     this.data = storage.load({
       volume: 100,
       playlist: [],

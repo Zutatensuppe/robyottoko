@@ -10,33 +10,54 @@ class GeneralModule {
     this.cache = cache
     this.ws = ws
     this.wss = wss
+    this.name = 'general'
     this.reinit()
+  }
+
+  fix (commands) {
+    return (commands || []).map(cmd => {
+      if (cmd.command) {
+        cmd.triggers = [{type: 'command', data: {command: cmd.command}}]
+        delete cmd.command
+      }
+      if (cmd.action === 'media') {
+        cmd.data.minDurationMs = cmd.data.minDurationMs || 0
+      }
+      cmd.triggers = cmd.triggers.map(trigger => {
+        trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0
+        trigger.data.minSeconds = parseInt(trigger.data.minSeconds, 10) || 0
+        return trigger
+      })
+      return cmd
+    })
   }
 
   reinit () {
     this.data = this.storage.load({
-      timers: [],
       commands: [],
     })
     this.commands = {}
     this.timers = []
     this.interval = null
 
+    this.data.commands = this.fix(this.data.commands)
+
     this.data.commands.forEach((cmd) => {
-      if (!cmd.command) {
+      if (cmd.triggers.length === 0) {
         return
       }
+      let cmdObj = null
       switch (cmd.action) {
         case 'jisho_org_lookup':
-          this.commands[cmd.command] = Object.assign({}, cmd, {fn: cmds.jishoOrgLookup()})
+          cmdObj = Object.assign({}, cmd, {fn: cmds.jishoOrgLookup()})
           break;
         case 'text':
-          this.commands[cmd.command] = Object.assign({}, cmd, {fn: Array.isArray(cmd.data.text)
+          cmdObj = Object.assign({}, cmd, {fn: Array.isArray(cmd.data.text)
               ? cmds.randomText(cmd.data.text)
               : cmds.text(cmd.data.text)})
           break;
         case 'media':
-          this.commands[cmd.command] = Object.assign({}, cmd, {fn: (command, client, target, context, msg) => {
+          cmdObj = Object.assign({}, cmd, {fn: (command, client, target, context, msg) => {
               this.wss.notifyAll([this.user.id], {
                 event: 'playmedia',
                 data: cmd.data,
@@ -44,25 +65,37 @@ class GeneralModule {
             }})
           break;
         case 'countdown':
-          this.commands[cmd.command] = Object.assign({}, cmd, {fn: cmds.countdown(cmd.data)})
+          cmdObj = Object.assign({}, cmd, {fn: cmds.countdown(cmd.data)})
           break;
       }
+      for (const trigger of cmd.triggers) {
+        if (trigger.type === 'command') {
+          if (trigger.data.command) {
+            this.commands[trigger.data.command] = cmdObj
+          }
+        } else if (trigger.type === 'timer') {
+          if (trigger.data.minLines || trigger.data.minSeconds) {
+            this.timers.push({
+              lines: 0,
+              minLines: trigger.data.minLines,
+              minSeconds: trigger.data.minSeconds,
+              command: cmdObj,
+              next: new Date().getTime() + (trigger.data.minSeconds * 1000)
+            })
+          }
+        }
+      }
     })
-    this.timers = this.data.timers.map(c => Object.assign({}, c, {
-      lines: 0,
-      say: null,
-      next: new Date().getTime() + (c.minSeconds * 1000)
-    }))
 
-    const say = fn.sayFn(this.client)
     if (this.interval) {
       clearInterval(this.interval)
     }
+
     this.interval = setInterval(() => {
       const now = new Date().getTime()
       this.timers.forEach(t => {
         if (t.lines >= t.minLines && now > t.next) {
-          say(t.message)
+          t.command.fn(t.command, this.client, null, null, null)
           t.lines = 0
           t.next = now + (t.minSeconds * 1000)
         }
@@ -124,17 +157,17 @@ class GeneralModule {
   getWsEvents () {
     return {
       'conn': (ws) => {
-        this.updateClient('general/init', ws)
+        this.updateClient('init', ws)
       },
       'uploaded': (ws) => {
         this.reinit()
-        this.updateClients('general/init')
+        this.updateClients('init')
       },
       'save': (ws, {commands}) => {
-        this.data.commands = commands
+        this.data.commands = this.fix(commands)
         this.storage.save(this.data)
         this.reinit()
-        this.updateClients('general/init')
+        this.updateClients('init')
       },
     }
   }

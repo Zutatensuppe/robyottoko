@@ -1,4 +1,4 @@
-import Ws from "../ws.js"
+import Ws from '../ws.js'
 
 export default {
   template: `<div id="app"><div v-if="imgstyle" :style="imgstyle"></div></div>`,
@@ -103,7 +103,7 @@ export default {
     },
   },
   async mounted() {
-    this.ws = new Ws(this.conf.wsBase + '/commands', this.conf.widgetToken)
+    this.ws = new Ws(this.conf.wsBase + '/general', this.conf.widgetToken)
     this.ws.onmessage = this.onMsg
   }
 }

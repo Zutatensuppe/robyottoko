@@ -24,7 +24,8 @@ table tr:nth-child(even) th,
 table tr:nth-child(even) td { background: #414141; }
 
 textarea,
-input {
+input,
+.select {
   background: #333230;
   border-radius: 4px;
   color: var(--main-color);
@@ -36,6 +37,30 @@ textarea:focus,
 input:focus {
   border: solid 1px #686767;
   background: var(--input-bg-color);
+}
+
+.select {
+  display: inline-block;
+  padding: 0;
+  position: relative;
+}
+
+.select i {
+  position: absolute;
+  z-index: 1;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.select select {
+  position: relative;
+  z-index: 2;
+  padding: 5px 20px 5px 10px;
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--main-color);
 }
 
 textarea { width: 100%; }
@@ -63,7 +88,7 @@ textarea { width: 100%; }
   background: #2f2e2c;
   color: var(--link-hover-color);
   border: solid 1px #111;
-  box-shadow: 0px 0px 1px rgba(150,150,150,.4) inset;
+  box-shadow: 0 0 1px rgba(150,150,150,.4) inset;
   cursor: pointer;
 }
 .btn.btn-primary {
@@ -76,7 +101,7 @@ textarea { width: 100%; }
   background: #2f2e2c;
   color: #8c4747 !important;
   border: solid 1px #111;
-  box-shadow: 0px 0px 1px rgba(150,150,150,.4) inset;
+  box-shadow: 0 0 1px rgba(150,150,150,.4) inset;
   cursor: not-allowed;
 }
 

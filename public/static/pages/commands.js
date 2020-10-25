@@ -2,7 +2,67 @@ import Navbar from '../components/navbar.js'
 import Player from '../components/player.js'
 import ResponsiveImage from '../components/responsive-image.js'
 import Upload from '../components/upload.js'
-import Ws from "../ws.js"
+import Ws from '../ws.js'
+
+const newTrigger = () => ({
+  type: 'command',
+  data: {
+    // for trigger type "command" (todo: should only exist if type is command, not always)
+    command: '',
+    // for trigger type "timer" (todo: should only exist if type is timer, not always)
+    minSeconds: 0,
+    minLines: 0,
+  },
+})
+
+const newText = () => ''
+
+const newCmd = (type) => {
+  switch (type) {
+    case 'text': return {
+      triggers: [newTrigger()],
+      action: 'text',
+      restrict_to: [],
+      data: {
+        text: [newText()],
+      },
+    }
+    case 'media': return {
+      triggers: [newTrigger()],
+      action: 'media',
+      restrict_to: [],
+      data: {
+        sound: {
+          filename: '',
+          file: '',
+        },
+        image: {
+          filename: '',
+          file: '',
+        },
+        minDurationMs: 1000,
+      },
+    }
+    case 'countdown': return {
+      triggers: [newTrigger()],
+      action: 'countdown',
+      restrict_to: [],
+      data: {
+        steps: 3,
+        interval: 1000,
+        intro: 'Starting countdown...',
+        outro: 'Done!'
+      },
+    }
+    case 'jisho_org_lookup': return {
+      triggers: [newTrigger()],
+      action: 'jisho_org_lookup',
+      restrict_to: [],
+      data: {},
+    }
+    default: return null
+  }
+}
 
 export default {
   components: {
@@ -52,8 +112,8 @@ export default {
   <div id="main" ref="main">
     <table ref="table">
         <tr>
-            <th>Command</th>
-            <th>Type</th>
+            <th>Trigger</th>
+            <th>Action</th>
             <th>Settings</th>
             <th>Streamer</th>
             <th>Mod</th>
@@ -62,7 +122,34 @@ export default {
         </tr>
         <tr v-for="(item, idx) in commands" :key="idx">
             <td>
-                <input type="text" v-model="item.command" />
+                <div v-for="(trigger, idx2) in item.triggers" :key="idx2" class="spacerow">
+                    <span v-if="item.action === 'jisho_org_lookup'">Command</span>
+                    <template v-else>
+                        <div class="select">
+                            <i class="fa fa-caret-down" />
+                            <select v-model="item.triggers[idx2].type">
+                                <option value="command">Command</option>
+                                <option value="timer">Timer</option>
+                            </select>
+                        </div>
+                        <button class="btn" :disabled="item.triggers.length <= 1" @click="rmtrigger(idx, idx2)"><i class="fa fa-remove" /></button>
+                    </template>
+                    <input v-if="item.triggers[idx2].type === 'command'" type="text" v-model="item.triggers[idx2].data.command" />
+                    <div v-if="item.triggers[idx2].type === 'timer'">
+                        <div class="spacerow">
+                            <label class="spacelabel">Min. lines</label>
+                            <input class="spaceinput" v-model="item.triggers[idx2].data.minLines" />
+                        </div>
+                        <div class="spacerow">
+                            <label class="spacelabel">Min. interval</label>
+                            <span style="position: relative; display: inline-block">
+                                <input type="text" class="spaceinput" v-model="item.triggers[idx2].data.minSeconds" />
+                                <span style="position: absolute; right:7px; top: 50%; transform: translateY(-50%);">sec</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn" @click="addtrigger(idx)"><i class="fa fa-plus" /> Add</button>
             </td>
             <td>
                 {{item.action}}
@@ -72,7 +159,7 @@ export default {
                 <div v-if="item.action === 'text'">
                     <div v-for="(txt, idx2) in item.data.text" :key="idx2" class="spacerow">
                         <input type="text" v-model="item.data.text[idx2]" />
-                        <button class="btn" @click="rmtxt(idx, idx2)"><i class="fa fa-remove" /></button>
+                        <button class="btn" :disabled="item.data.text.length <= 1" @click="rmtxt(idx, idx2)"><i class="fa fa-remove" /></button>
                     </div>
                     <button class="btn" @click="addtxt(idx)"><i class="fa fa-plus" /> Add</button>
                 </div>
@@ -139,75 +226,36 @@ export default {
       this.commands[idx].data.image.file = j.filename
     },
     add(type) {
-      let cmd = null
-      if (type === 'text') {
-        cmd = {
-          command: '',
-          action: 'text',
-          restrict_to: [],
-          data: {
-            text: [''],
-          },
-        }
-      } else if (type === 'media') {
-        cmd = {
-          command: '',
-          action: 'media',
-          restrict_to: [],
-          data: {
-            sound: {
-              filename: '',
-              file: '',
-            },
-            image: {
-              filename: '',
-              file: '',
-            },
-            minDurationMs: 1000,
-          },
-        }
-      } else if (type === 'countdown') {
-        cmd = {
-          command: '',
-          action: 'countdown',
-          restrict_to: [],
-          data: {
-            steps: 3,
-            interval: 1000,
-            intro: 'Starting countdown...',
-            outro: 'Done!'
-          },
-        }
-      } else if (type === 'jisho_org_lookup') {
-        cmd = {
-          command: '',
-          action: 'jisho_org_lookup',
-          restrict_to: [],
-          data: {},
-        }
+      const cmd = newCmd(type)
+      if (!cmd) {
+        return
       }
 
-      if (cmd) {
-        // add command
-        this.commands.push(cmd)
+      // add command
+      this.commands.push(cmd)
 
-        // on next update, scroll to the new item and focus first input (command)
-        Vue.nextTick(() => {
-          const el = this.$refs.table.querySelector('table tr:nth-child(' + (this.commands.length + 1) + ')')
-          el.scrollIntoView()
-          el.classList.add('new-item')
-          setTimeout(function () {
-            el.classList.remove('new-item')
-          }, 100)
-          el.querySelector('td input').focus()
-        })
-      }
+      // on next update, scroll to the new item and focus first input (command)
+      Vue.nextTick(() => {
+        const el = this.$refs.table.querySelector('table tr:nth-child(' + (this.commands.length + 1) + ')')
+        el.scrollIntoView()
+        el.classList.add('gain-attention')
+        setTimeout(function () {
+          el.classList.remove('gain-attention')
+        }, 100)
+        el.querySelector('td input').focus()
+      })
     },
     rmtxt(idx, idx2) {
       this.commands[idx].data.text = this.commands[idx].data.text.filter((val, index) => index !== idx2)
     },
     addtxt(idx) {
-      this.commands[idx].data.text.push('')
+      this.commands[idx].data.text.push(newText())
+    },
+    rmtrigger(idx, idx2) {
+      this.commands[idx].triggers = this.commands[idx].triggers.filter((val, index) => index !== idx2)
+    },
+    addtrigger(idx) {
+      this.commands[idx].triggers.push(newTrigger())
     },
     remove(idx) {
       this.commands = this.commands.filter((val, index) => index !== idx)
@@ -223,6 +271,10 @@ export default {
     },
     fix (commands) {
       return (commands || []).map(cmd => {
+        if (cmd.command) {
+          cmd.triggers = [{type: 'command', data: {command: cmd.command}}]
+          delete cmd.command
+        }
         if (cmd.action === 'media') {
           cmd.data.minDurationMs = cmd.data.minDurationMs || 0
         }
@@ -235,7 +287,7 @@ export default {
         return
       }
       switch (d.event) {
-        case 'general/init':
+        case 'init':
           this.commands = this.fix(d.data.commands)
           this.unchangedJson = JSON.stringify(d.data.commands)
           break
@@ -243,7 +295,7 @@ export default {
     },
   },
   async mounted() {
-    this.ws = new Ws(this.conf.wsBase + '/commands', this.conf.token)
+    this.ws = new Ws(this.conf.wsBase + '/general', this.conf.token)
     this.ws.onmessage = this.onMsg
     this.$refs.main.style.marginTop = this.$refs.top.clientHeight + 'px'
   }
