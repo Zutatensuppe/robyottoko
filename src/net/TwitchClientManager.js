@@ -37,7 +37,7 @@ class TwitchClientManager {
 
     // Called every time the bot connects to Twitch chat
     this.client.on('connected', (addr, port) => {
-      console.log(`* Connected to ${addr}:${port}`)
+      console.log(`${user.id}| * Connected to ${addr}:${port}`)
     })
     this.client.connect();
   }
