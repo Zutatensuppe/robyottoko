@@ -1,6 +1,6 @@
 import Navbar from "../components/navbar.js"
 import Youtube from "../components/youtube.js"
-import Ws from "../ws.js"
+import WsClient from "../WsClient.js"
 
 export default {
   components: {
@@ -122,42 +122,6 @@ export default {
     sendMsg(data) {
       this.ws.send(JSON.stringify(data))
     },
-    onMsg(e) {
-      const d = JSON.parse(e.data)
-      if (!d.event) {
-        return
-      }
-      switch (d.event) {
-        case 'volume':
-          this.volume = d.data.volume
-          this.adjustVolume()
-          break
-        case 'onEnded':
-        case 'skip':
-        case 'remove':
-        case 'clear':
-          this.volume = d.data.volume
-          this.playlist = d.data.playlist
-          this.play()
-          break
-        case 'dislike':
-        case 'like':
-        case 'onPlay':
-        case 'resetStats':
-        case 'shuffle':
-          this.volume = d.data.volume
-          this.playlist = d.data.playlist
-          break
-        case 'add':
-        case 'init':
-          this.volume = d.data.volume
-          this.playlist = d.data.playlist
-          if (!this.player.playing()) {
-            this.play()
-          }
-          break
-      }
-    },
     play() {
       this.adjustVolume()
       if (this.playerVisible && this.hasItems) {
@@ -170,8 +134,29 @@ export default {
     }
   },
   mounted() {
-    this.ws = new Ws(this.conf.wsBase + '/sr', this.conf.token)
-    this.ws.onmessage = this.onMsg
+    this.ws = new WsClient(this.conf.wsBase + '/sr', this.conf.token)
+    this.ws.onMessage('volume', (data) => {
+      this.volume = data.volume
+      this.adjustVolume()
+    })
+    this.ws.onMessage(['onEnded', 'skip', 'remove', 'clear'], (data) => {
+      this.volume = data.volume
+      this.playlist = data.playlist
+      this.play()
+    })
+    this.ws.onMessage(['dislike', 'like', 'onPlay', 'resetStats', 'shuffle'], (data) => {
+      this.volume = data.volume
+      this.playlist = data.playlist
+    })
+    this.ws.onMessage(['add', 'init'], (data) => {
+      this.volume = data.volume
+      this.playlist = data.playlist
+      if (!this.player.playing()) {
+        this.play()
+      }
+    })
+    this.ws.connect()
+
     this.$refs.main.style.marginTop = this.$refs.top.clientHeight + 'px'
     this.play()
   },

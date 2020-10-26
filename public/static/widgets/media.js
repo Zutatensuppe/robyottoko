@@ -1,4 +1,4 @@
-import Ws from '../ws.js'
+import WsClient from '../WsClient.js'
 
 export default {
   template: `<div id="app"><div v-if="imgstyle" :style="imgstyle"></div></div>`,
@@ -90,20 +90,12 @@ export default {
     playmedia(media) {
       this.addQueue(media)
     },
-    onMsg(e) {
-      const d = JSON.parse(e.data)
-      if (!d.event) {
-        return
-      }
-      switch (d.event) {
-        case 'playmedia':
-          this.playmedia(d.data)
-          break
-      }
-    },
   },
   async mounted() {
-    this.ws = new Ws(this.conf.wsBase + '/general', this.conf.widgetToken)
-    this.ws.onmessage = this.onMsg
+    this.ws = new WsClient(this.conf.wsBase + '/general', this.conf.widgetToken)
+    this.ws.onMessage('playmedia', (data) => {
+      this.playmedia(data)
+    })
+    this.ws.connect()
   }
 }

@@ -2,7 +2,7 @@ import Navbar from '../components/navbar.js'
 import Player from '../components/player.js'
 import ResponsiveImage from '../components/responsive-image.js'
 import Upload from '../components/upload.js'
-import Ws from '../ws.js'
+import WsClient from '../WsClient.js'
 
 const newTrigger = () => ({
   type: 'command',
@@ -269,22 +269,16 @@ export default {
     sendMsg(data) {
       this.ws.send(JSON.stringify(data))
     },
-    onMsg(e) {
-      const d = JSON.parse(e.data)
-      if (!d.event) {
-        return
-      }
-      switch (d.event) {
-        case 'init':
-          this.commands = d.data.commands
-          this.unchangedJson = JSON.stringify(d.data.commands)
-          break
-      }
-    },
   },
   async mounted() {
-    this.ws = new Ws(this.conf.wsBase + '/general', this.conf.token)
-    this.ws.onmessage = this.onMsg
+    this.ws = new WsClient(this.conf.wsBase + '/general', this.conf.token)
+
+    this.ws.onMessage('init', (data) => {
+      this.commands = data.commands
+      this.unchangedJson = JSON.stringify(data.commands)
+    })
+    this.ws.connect()
+
     this.$refs.main.style.marginTop = this.$refs.top.clientHeight + 'px'
   }
 }
