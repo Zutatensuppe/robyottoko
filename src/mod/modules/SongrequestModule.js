@@ -303,14 +303,17 @@ class SongrequestModule {
   }
 
   async songrequestCmd (command, client, target, context, msg) {
+    const say = fn.sayFn(client, target)
     if (command.args.length === 0) {
-      return `Usage: !sr YOUTUBE-URL`
+      say(`Usage: !sr YOUTUBE-URL`)
+      return
     }
     if (command.args.length === 1) {
       switch (command.args[0]) {
         case 'current':
           // todo: error handling, title output etc..
-          return `Currently playing: ${this.data.playlist[0].yt}`
+          say(`Currently playing: ${this.data.playlist[0].yt}`)
+          return
         case 'good':
           this.like()
           return
@@ -353,9 +356,10 @@ class SongrequestModule {
     const str = command.args.join(' ')
     const item = await this.add(str, context['display-name'])
     if (!item) {
-      return `Could not process that song request`
+      say(`Could not process that song request`)
+    } else {
+      say(`Added "${item.title}" (${item.yt}) to the playlist!`)
     }
-    return `Added "${item.title}" (${item.yt}) to the playlist!`
   }
 
   async loadYoutubeData (youtubeId) {
