@@ -71,7 +71,8 @@ class GeneralModule {
       for (const trigger of cmd.triggers) {
         if (trigger.type === 'command') {
           if (trigger.data.command) {
-            this.commands[trigger.data.command] = cmdObj
+            this.commands[trigger.data.command] = this.commands[trigger.data.command] || []
+            this.commands[trigger.data.command].push(cmdObj)
           }
         } else if (trigger.type === 'timer') {
           if (trigger.data.minLines || trigger.data.minSeconds) {

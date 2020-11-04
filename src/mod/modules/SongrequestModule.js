@@ -50,9 +50,9 @@ class SongrequestModule {
 
   getCommands () {
     return {
-      '!sr': {
+      '!sr': [{
         fn: this.songrequestCmd.bind(this),
-      },
+      }],
     }
   }
 
