@@ -2,3 +2,5 @@ config.js
 node_modules
 *.swp
 *.data.json
+data/uploads
+*.sqlite
