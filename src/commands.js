@@ -43,6 +43,13 @@ const parsed = async (text, command) => {
       }
     },
     {
+      regex: /\$customapi\(([^$\)]*)\)\[\'([A-Za-z0-9_ -]+)\'\]/g,
+      replacer: async (m0, m1, m2) => {
+        const txt = await customApi(await parsed(m1, command))
+        return JSON.parse(txt)[m2]
+      },
+    },
+    {
       regex: /\$customapi\(([^$\)]*)\)/g,
       replacer: async (m0, m1) => {
         return await customApi(await parsed(m1, command))
