@@ -31,3 +31,29 @@ for (const user of userRepo.all()) {
     ))
   }
 }
+
+const gracefulShutdown = (signal) => {
+  console.log(`${signal} received...`)
+
+  console.log('shutting down webserver...')
+  webServer.close()
+
+  console.log('shutting down websocketserver...')
+  webSocketServer.close()
+
+  console.log('shutting down...')
+  process.exit()
+}
+
+// used by nodemon
+process.once('SIGUSR2', function () {
+  gracefulShutdown('SIGUSR2')
+});
+
+process.once('SIGINT', function (code) {
+  gracefulShutdown('SIGINT')
+});
+
+process.once('SIGTERM', function (code) {
+  gracefulShutdown('SIGTERM')
+});

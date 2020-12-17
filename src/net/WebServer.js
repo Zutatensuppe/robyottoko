@@ -16,6 +16,7 @@ class WebServer {
     this.moduleManager = moduleManager
     this.config = config
     this.auth = auth
+    this.handle = null
   }
 
   listen() {
@@ -150,7 +151,12 @@ class WebServer {
       res.setHeader('Content-Type', type)
       res.end(body)
     })
-    app.listen(port, hostname, () => console.log(`server running on http://${hostname}:${port}`))
+    this.handle = app.listen(port, hostname, () => console.log(`server running on http://${hostname}:${port}`))
+  }
+  close () {
+    if (this.handle) {
+      this.handle.close()
+    }
   }
 }
 

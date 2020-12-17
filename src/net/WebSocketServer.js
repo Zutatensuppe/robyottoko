@@ -89,6 +89,12 @@ class WebSocketServer {
       this.notifyOne(user_ids, data, socket)
     })
   }
+
+  close () {
+    if (this._websocketserver) {
+      this._websocketserver.close()
+    }
+  }
 }
 
 module.exports = WebSocketServer
