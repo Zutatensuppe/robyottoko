@@ -150,7 +150,7 @@ class WebServer {
       res.setHeader('Content-Type', type)
       res.end(body)
     })
-    app.listen(port, hostname, () => console.log(`server running on ${hostname}:${port}`))
+    app.listen(port, hostname, () => console.log(`server running on http://${hostname}:${port}`))
   }
 }
 
