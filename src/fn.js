@@ -45,12 +45,6 @@ const sleep = (t) => {
   })
 }
 
-const lookupWord = async (w, p = 1) => {
-  return fetch('https://jisho.org/api/v1/search/words?keyword=' + encodeURIComponent(w) + '&page=' + p)
-    .then(r => r.json())
-    .then(j => j.data)
-}
-
 const isBroadcaster = (ctx) => ctx['room-id'] === ctx['user-id']
 const isMod = (ctx) => !!ctx.mod || isBroadcaster(ctx)
 const isSubscriber = (ctx) => !!ctx.subscriber || isBroadcaster(ctx)
@@ -79,23 +73,80 @@ const mayExecute = (context, cmd) => {
   return false
 }
 
-const parseCommand = (msg) => {
+const parseCommandFromMessage = (msg) => {
   const command = msg.trim().split(' ')
   return {name: command[0], args: command.slice(1)}
+}
+
+async function replaceAsync(str, regex, asyncFn) {
+  const promises = [];
+  str.replace(regex, (match, ...args) => {
+    const promise = asyncFn(match, ...args);
+    promises.push(promise);
+  });
+  const data = await Promise.all(promises);
+  return str.replace(regex, () => data.shift());
+}
+
+const customApi = async (url) => {
+  const res = await fetch(url)
+  return await res.text()
+}
+
+const parseResponseText = async (text, command) => {
+  const replaces = [
+    {
+      regex: /\$([a-z][a-z0-9]*)(?!\()/g,
+      replacer: (m0, m1) => {
+        switch (m1) {
+          case 'args': return command.args.join(' ')
+        }
+        return m0
+      }
+    },
+    {
+      regex: /\$customapi\(([^$\)]*)\)\[\'([A-Za-z0-9_ -]+)\'\]/g,
+      replacer: async (m0, m1, m2) => {
+        const txt = await customApi(await parseResponseText(m1, command))
+        return JSON.parse(txt)[m2]
+      },
+    },
+    {
+      regex: /\$customapi\(([^$\)]*)\)/g,
+      replacer: async (m0, m1) => {
+        return await customApi(await parseResponseText(m1, command))
+      },
+    },
+    {
+      regex: /\$urlencode\(([^$\)]*)\)/g,
+      replacer: async (m0, m1) => {
+        return encodeURIComponent(await parseResponseText(m1, command))
+      },
+    },
+  ]
+  let replaced = text
+  let orig
+  do {
+    orig = replaced
+    for (let replace of replaces) {
+      replaced = await replaceAsync(replaced, replace.regex, replace.replacer)
+    }
+  } while (orig !== replaced)
+  return replaced
 }
 
 module.exports = {
   sayFn,
   mayExecute,
-  parseCommand,
+  parseCommandFromMessage,
   render,
   getRandomInt,
   getRandom,
   shuffle,
   sleep,
   fnRandom,
-  lookupWord,
   isBroadcaster,
   isMod,
   isSubscriber,
+  parseResponseText,
 }

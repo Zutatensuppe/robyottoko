@@ -19,7 +19,7 @@ class TwitchClientManager {
     this.client.on('message', async (target, context, msg, self) => {
       if (self) { return; } // Ignore messages from the bot
       console.log(`${this.logprefix}${context.username}@${target}: ${msg}`)
-      const rawCmd = fn.parseCommand(msg)
+      const rawCmd = fn.parseCommandFromMessage(msg)
 
       for (const m of moduleManager.all(user.id)) {
         const commands = m.getCommands() || {}

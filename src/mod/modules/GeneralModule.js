@@ -1,4 +1,8 @@
-const cmds = require('../../commands.js')
+const countdown = require('../../commands/countdown.js')
+const jishoOrgLookup = require('../../commands/jishoOrgLookup.js')
+const text = require('../../commands/text.js')
+const randomText = require('../../commands/randomText.js')
+const playMedia = require('../../commands/playMedia.js')
 const config = require('../../config.js')
 const fn = require('../../fn.js')
 
@@ -49,23 +53,18 @@ class GeneralModule {
       let cmdObj = null
       switch (cmd.action) {
         case 'jisho_org_lookup':
-          cmdObj = Object.assign({}, cmd, {fn: cmds.jishoOrgLookup()})
+          cmdObj = Object.assign({}, cmd, {fn: jishoOrgLookup()})
           break;
         case 'text':
           cmdObj = Object.assign({}, cmd, {fn: Array.isArray(cmd.data.text)
-              ? cmds.randomText(cmd.data.text)
-              : cmds.text(cmd.data.text)})
+              ? randomText(cmd.data.text)
+              : text(cmd.data.text)})
           break;
         case 'media':
-          cmdObj = Object.assign({}, cmd, {fn: (command, client, target, context, msg) => {
-              this.wss.notifyAll([this.user.id], {
-                event: 'playmedia',
-                data: cmd.data,
-              })
-            }})
+          cmdObj = Object.assign({}, cmd, {fn: playMedia(this.wss, this.user.id, cmd.data)})
           break;
         case 'countdown':
-          cmdObj = Object.assign({}, cmd, {fn: cmds.countdown(cmd.data)})
+          cmdObj = Object.assign({}, cmd, {fn: countdown(cmd.data)})
           break;
       }
       for (const trigger of cmd.triggers) {

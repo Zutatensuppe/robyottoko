@@ -1,4 +1,5 @@
 const fn = require('../../fn.js')
+const jishoOrg = require('../../services/jishoOrg.js')
 
 const _data = fn.load('wordgame', {
   word: null,
@@ -41,7 +42,7 @@ const solve = (msg, displayName) => {
 const nextWord = async () => {
   const info = infos[_data.lvl - 1]
   const page = fn.getRandomInt(1, info.pages)
-  const data = await fn.lookupWord(info.search, page)
+  const data = await jishoOrg.searchWord(info.search, page)
   const e = fn.getRandom(data)
   _data.word = e.slug
   _data.solutions = [].concat(...e.senses.map(x => x.english_definitions)).map(s => s.toLowerCase())

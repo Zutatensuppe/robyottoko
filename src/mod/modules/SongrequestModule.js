@@ -1,34 +1,11 @@
 const fn = require('../../fn.js')
 const config = require('../../config.js')
-const fetch = require('node-fetch')
-
-const fetchYoutubeData = async (youtubeId) => {
-  console.log('fetchYoutubeData', youtubeId)
-  const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${youtubeId}&fields=items(id%2Csnippet)&key=${config.modules.sr.google.api_key}`
-  const res = await fetch(url)
-  const resJson = await res.json()
-  return resJson.items[0] || null
-}
+const youtube = require('../../services/youtube.js')
 
 const extractYoutubeId = async (youtubeUrl) => {
-  const patterns = [
-    /youtu\.be\/(.*?)(?:\?|"|$)/i,
-    /\.youtube\.com\/(?:watch\?v=|v\/|embed\/)([^&"'#]*)/i,
-  ]
-  for (const pattern of patterns) {
-    let m = youtubeUrl.match(pattern)
-    if (m) {
-      return m[1]
-    }
-  }
-  // https://stackoverflow.com/questions/6180138/whats-the-maximum-length-of-a-youtube-video-id
-  if (youtubeUrl.match(/^[a-z0-9_-]{11}$/i)) {
-    return youtubeUrl
-  }
-  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(youtubeUrl)}&type=video&key=${config.modules.sr.google.api_key}`
-  const res = await fetch(url)
-  const resJson = await res.json()
-  return resJson.items[0]['id']['videoId'] || null
+  return youtube.extractYoutubeId(youtubeUrl)
+    || await youtube.getYoutubeIdBySearch(youtubeUrl)
+    || null
 }
 
 class SongrequestModule {
@@ -366,7 +343,7 @@ class SongrequestModule {
     let key = `youtubeData_${youtubeId}`
     let d = this.cache.get(key)
     if (!d) {
-      d = await fetchYoutubeData(youtubeId)
+      d = await youtube.fetchDataByYoutubeId(youtubeId)
       this.cache.set(key, d)
     }
     return d
