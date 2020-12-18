@@ -35,37 +35,29 @@ class SongrequestModule {
 
   widgets () {
     return {
-      'sr': async (req, res) => {
-        return {
-          code: 200,
-          type: 'text/html',
-          body: await fn.render('widget.twig', {
-            title: 'Song Request',
-            widget_token: req.params.widget_token,
-            page: 'sr',
-            user: req.user,
-            token: req.cookies['x-token'],
-            ws: config.ws,
-          }),
-        }
-      }
+      'sr': async (req, res, next) => {
+        res.send(await fn.render('widget.twig', {
+          title: 'Song Request',
+          widget_token: req.params.widget_token,
+          page: 'sr',
+          user: req.user,
+          token: req.cookies['x-token'],
+          ws: config.ws,
+        }))
+      },
     }
   }
 
   getRoutes () {
     return {
-      '/sr/': async (req, res) => {
-        return {
-          code: 200,
-          type: 'text/html',
-          body: await fn.render('base.twig', {
-            title: 'Song Request',
-            page: 'sr',
-            user: req.user,
-            token: req.cookies['x-token'],
-            ws: config.ws,
-          }),
-        }
+      '/sr/': async (req, res, next) => {
+        res.send(await fn.render('base.twig', {
+          title: 'Song Request',
+          page: 'sr',
+          user: req.user,
+          token: req.cookies['x-token'],
+          ws: config.ws,
+        }))
       },
     }
   }

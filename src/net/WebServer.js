@@ -34,6 +34,18 @@ class WebServer {
 
     const upload = multer({storage}).single('file');
 
+    const requireLogin = (req, res, next) => {
+      if (!req.token) {
+        if (req.method === 'GET') {
+          res.redirect(302, '/login')
+        } else {
+          res.status(401).send('not allowed')
+        }
+        return
+      }
+      return next()
+    }
+
     app.use(cookieParser())
     app.use(this.auth.addAuthInfoMiddleware())
     app.use('/uploads', express.static(uploadDir))
@@ -60,11 +72,7 @@ class WebServer {
       res.redirect(302, '/login')
     })
 
-    app.get('/', async (req, res) => {
-      if (!req.token) {
-        res.redirect(302, '/login')
-        return
-      }
+    app.get('/', requireLogin, async (req, res) => {
       res.send(await fn.render('base.twig', {
         title: 'Hyottoko.club',
         page: 'index',
@@ -86,11 +94,8 @@ class WebServer {
       res.cookie('x-token', token, { maxAge: Year, httpOnly: true })
       res.send()
     })
-    app.post('/upload', (req, res) => {
-      if (!req.token) {
-        res.status(401).send('not allowed')
-        return
-      }
+
+    app.post('/upload', requireLogin, (req, res) => {
       upload(req, res, (err) => {
         if (err) {
           console.log(err)
@@ -100,58 +105,36 @@ class WebServer {
       })
     })
 
-    app.get('/widget/:widget_type/:widget_token/', async (req, res) => {
+    app.get('/widget/:widget_type/:widget_token/', async (req, res, next) => {
       req.user = this.auth.userFromWidgetToken(req.params.widget_token)
-
-      const handle = async (req, res) => {
-        for (const module of this.moduleManager.all(req.user.id)) {
-          const widgets = module.widgets()
-          if (!widgets) {
-            continue;
-          }
-          if (widgets[req.params.widget_type]) {
-            return await widgets[req.params.widget_type](req, res)
-          }
+      const key = req.params.widget_type
+      for (const m of this.moduleManager.all(req.user.id)) {
+        const map = m.widgets()
+        if (map && map[key]) {
+          await map[key](req, res, next)
+          return
         }
       }
-      const {code, type, body} = await handle(req, res) || {
-        code: 404,
-        type: 'text/plain',
-        body: '404 Not Found'
-      }
-
-      res.statusCode = code
-      res.setHeader('Content-Type', type)
-      res.end(body)
+      res.sendStatus(404)
     })
 
-    app.get('*', async (req, res) => {
-      if (!req.token) {
-        res.redirect(302, '/login')
-        return
-      }
-      const handle = async (req, res) => {
-        for (const module of this.moduleManager.all(req.user.id)) {
-          const routes = module.getRoutes()
-          if (!routes) {
-            continue;
-          }
-          if (routes[req.url]) {
-            return await routes[req.url](req, res)
-          }
+    app.get('*', requireLogin, async (req, res, next) => {
+      const key = req.url
+      for (const m of this.moduleManager.all(req.user.id)) {
+        const map = m.getRoutes()
+        if (map && map[key]) {
+          await map[key](req, res, next)
+          return
         }
       }
-      const {code, type, body} = await handle(req, res) || {
-        code: 404,
-        type: 'text/plain',
-        body: '404 Not Found'
-      }
-
-      res.statusCode = code
-      res.setHeader('Content-Type', type)
-      res.end(body)
+      res.sendStatus(404)
     })
-    this.handle = app.listen(port, hostname, () => console.log(`server running on http://${hostname}:${port}`))
+
+    this.handle = app.listen(
+      port,
+      hostname,
+      () => console.log(`server running on http://${hostname}:${port}`)
+    )
   }
   close () {
     if (this.handle) {

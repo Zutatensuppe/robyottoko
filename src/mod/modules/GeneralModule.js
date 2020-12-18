@@ -105,36 +105,28 @@ class GeneralModule {
 
   widgets () {
     return {
-      'media': async (req, res) => {
-        return {
-          code: 200,
-          type: 'text/html',
-          body: await fn.render('widget.twig', {
-            page: 'media',
-            widget_token: req.params.widget_token,
-            user: req.user,
-            token: req.cookies['x-token'],
-            ws: config.ws,
-          }),
-        }
-      }
+      'media': async (req, res, next) => {
+        res.send(await fn.render('widget.twig', {
+          page: 'media',
+          widget_token: req.params.widget_token,
+          user: req.user,
+          token: req.cookies['x-token'],
+          ws: config.ws,
+        }))
+      },
     }
   }
 
   getRoutes () {
     return {
-      '/commands/': async (req, res) => {
-        return {
-          code: 200,
-          type: 'text/html',
-          body: await fn.render('base.twig', {
-            title: 'Commands',
-            page: 'commands',
-            user: req.user,
-            token: req.cookies['x-token'],
-            ws: config.ws,
-          }),
-        }
+      '/commands/': async (req, res, next) => {
+        res.send(await fn.render('base.twig', {
+          title: 'Commands',
+          page: 'commands',
+          user: req.user,
+          token: req.cookies['x-token'],
+          ws: config.ws,
+        }))
       },
     }
   }
