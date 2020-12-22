@@ -37,6 +37,7 @@ export default {
     return {
       ws: null,
       status: '',
+      textTimeoutMs: 10000,
 
       // prevent doing things twice
       lastUtterance: null,
@@ -51,9 +52,35 @@ export default {
       recognizedText: '',
       translatedText: '',
 
+      // timeout objects to hide text after time
+      recognizedTextTimeout: null,
+      translatedTextTimeout: null,
+
       // settings (overwritten from data ws)
       settings: null,
     }
+  },
+  watch: {
+    recognizedText (newVal, oldVal) {
+      if (newVal) {
+        if (this.recognizedTextTimeout) {
+          clearTimeout(this.recognizedTextTimeout)
+        }
+        this.recognizedTextTimeout = setTimeout(() => {
+          this.recognizedText = ''
+        }, this.textTimeoutMs)
+      }
+    },
+    translatedText (newVal, oldVal) {
+      if (newVal) {
+        if (this.translatedTextTimeout) {
+          clearTimeout(this.translatedTextTimeout)
+        }
+        this.translatedTextTimeout = setTimeout(() => {
+          this.translatedText = ''
+        }, this.textTimeoutMs)
+      }
+    },
   },
   methods: {
     synthesize(text) {
