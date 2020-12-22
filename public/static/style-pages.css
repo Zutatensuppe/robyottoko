@@ -12,7 +12,7 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1;
+  z-index: 3;
 }
 #top > div {
   padding: 0 1em 1em 1em;
