@@ -5,7 +5,7 @@ const playMedia = (
   /** @type String */          userId,
   /** @type Object */          data
 ) => (command, client, target, context, msg) => {
-  wss.notifyAll([userId], {
+  wss.notifyAll([userId], 'general', {
     event: 'playmedia',
     data: data,
   })

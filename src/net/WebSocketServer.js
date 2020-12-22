@@ -40,6 +40,7 @@ class WebSocketServer {
         if ('/' + module.name !== relpath) {
           continue
         }
+        socket.module = module.name
 
         const evts = module.getWsEvents()
         if (evts) {
@@ -77,16 +78,16 @@ class WebSocketServer {
     })
   }
 
-  notifyOne(user_ids, data, socket) {
-    if (socket.isAlive && user_ids.includes(socket.user_id)) {
+  notifyOne(user_ids, module, data, socket) {
+    if (socket.isAlive && user_ids.includes(socket.user_id) && socket.module === module) {
       console.log(`notifying ${socket.user_id} (${data.event})`)
       socket.send(JSON.stringify(data))
     }
   }
 
-  notifyAll (user_ids, data) {
+  notifyAll (user_ids, module, data) {
     this._websocketserver.clients.forEach((socket) => {
-      this.notifyOne(user_ids, data, socket)
+      this.notifyOne(user_ids, module, data, socket)
     })
   }
 

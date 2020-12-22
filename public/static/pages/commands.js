@@ -93,7 +93,10 @@ export default {
   computed: {
     changed() {
       return this.unchangedJson !== this.changedJson
-    }
+    },
+    widgetUrl() {
+      return `${location.protocol}//${location.host}/widget/media/${this.conf.widgetToken}/`
+    },
   },
   template: `
 <div id="app">
@@ -106,6 +109,7 @@ export default {
         <li><button class="btn" @click="add('countdown')">Add countdown</button>
         <li><button class="btn" @click="add('jisho_org_lookup')">Add jisho_org_lookup</button>
         <li><button class="btn btn-primary" :disabled="!changed" @click="sendSave">Save</button>
+        <li><a class="btn" :href="widgetUrl" target="_blank">Open Media widget</a>
       </ul>
     </div>
   </div>
@@ -271,14 +275,16 @@ export default {
     },
   },
   async mounted() {
-    this.ws = new WsClient(this.conf.wsBase + '/general', this.conf.token)
-
+    this.ws = new WsClient(
+      this.conf.wsBase + '/general',
+      this.conf.token
+    )
     this.ws.onMessage('init', (data) => {
       this.commands = data.commands
       this.unchangedJson = JSON.stringify(data.commands)
+
+      this.$refs.main.style.marginTop = this.$refs.top.clientHeight + 'px'
     })
     this.ws.connect()
-
-    this.$refs.main.style.marginTop = this.$refs.top.clientHeight + 'px'
   }
 }

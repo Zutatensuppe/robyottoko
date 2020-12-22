@@ -13,22 +13,41 @@ export default {
     <navbar :user="conf.user" />
   </div>
   <div id="main" ref="main">
-    Widgets for OBS:
-    <div>
-        song request: <a :href="widgetUrlSongRequest" target="_blank">{{widgetUrlSongRequest}}</a>
-    </div>
-    <div>
-        media: <a :href="widgetUrlMedia" target="_blank">{{widgetUrlMedia}}</a>
-    </div>
+    Widgets:
+    <table>
+      <tr>
+        <th>Title</th>
+        <th>URL</th>
+        <th>Hint</th>
+      </tr>
+      <tr v-for="widget in widgets">
+        <td>{{widget.title}}</td>
+        <td><a :href="widget.url">{{widget.url}}</a></td>
+        <td>{{widget.hint}}</td>
+      </tr>
+    </table>
   </div>
 </div>
 `,
   computed: {
-    widgetUrlSongRequest() {
-      return `${location.protocol}//${location.host}/widget/sr/${this.conf.widgetToken}/`
-    },
-    widgetUrlMedia() {
-      return `${location.protocol}//${location.host}/widget/media/${this.conf.widgetToken}/`
+    widgets() {
+      return [
+        {
+          title: 'Song Request',
+          hint: 'Browser source, or open in browser and capture window',
+          url: `${location.protocol}//${location.host}/widget/sr/${this.conf.widgetToken}/`,
+        },
+        {
+          title: 'Media',
+          hint: 'Browser source, or open in browser and capture window',
+          url: `${location.protocol}//${location.host}/widget/media/${this.conf.widgetToken}/`,
+        },
+        {
+          title: 'Speech-to-Text',
+          hint: 'Google Chrome + window capture',
+          url: `${location.protocol}//${location.host}/widget/speech-to-text/${this.conf.widgetToken}/`,
+        },
+      ]
     },
   },
   async mounted() {

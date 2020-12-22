@@ -36,6 +36,7 @@ export default {
         <li><button class="btn" @click="sendCtrl('shuffle', [])" title="Shuffle"><i class="fa fa-random"/><span class="txt"> Shuffle</span></button>
         <li><button class="btn" @click="togglePlayer" :title="togglePlayerButtonText"><i class="fa fa-tv"/><span class="txt"> {{togglePlayerButtonText}}</span></button>
         <li class="maybebreak" style="position: relative"><i class="fa fa-search" style="color: #60554a; position: absolute; left: 8px; top: 7px;"/><input style="padding-left: 32px; margin-right: 3px;" type="text" v-model="srinput" @keyup.enter="sr" /><button class="btn" @click="sr"><i class="fa fa-plus"/><span class="txt"> Request</span></button>
+        <li><a class="btn" :href="widgetUrl" target="_blank">Open SR widget</a>
       </ul>
     </div>
   </div>
@@ -95,7 +96,10 @@ export default {
     },
     togglePlayerButtonText() {
       return this.playerVisible ? 'Hide Player' : 'Show Player'
-    }
+    },
+    widgetUrl() {
+      return `${location.protocol}//${location.host}/widget/sr/${this.conf.widgetToken}/`
+    },
   },
   methods: {
     togglePlayer() {

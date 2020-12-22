@@ -92,7 +92,10 @@ export default {
     },
   },
   async mounted() {
-    this.ws = new WsClient(this.conf.wsBase + '/general', this.conf.widgetToken)
+    this.ws = new WsClient(
+      this.conf.wsBase + '/general',
+      this.conf.widgetToken
+    )
     this.ws.onMessage('playmedia', (data) => {
       this.playmedia(data)
     })

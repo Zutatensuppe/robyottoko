@@ -1,14 +1,12 @@
-const hostname = 'localhost'
-
 module.exports = {
   http: {
-    hostname: hostname,
+    hostname: 'localhost',
     port: 1337,
   },
   ws: {
-    hostname: hostname,
+    hostname: 'localhost',
     port: 1338,
-    connectstring: `ws://${hostname}:1338/ws`,
+    connectstring: `ws://localhost:1338/ws`,
   },
   db: {
     file: __dirname + '/../db/database.sqlite',
@@ -18,6 +16,12 @@ module.exports = {
     sr: {
       google: {
         api_key: '' // google api key :)
+      },
+    },
+    speechToText: {
+      google: {
+        // see https://qiita.com/tanabee/items/c79c5c28ba0537112922
+        scriptId: '',
       },
     },
   },

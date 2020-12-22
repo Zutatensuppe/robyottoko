@@ -13,6 +13,7 @@ export default {
         <li><a href="/">Widgets</a>
         <li><a href="/commands/">Commands</a>
         <li><a href="/sr/">Song Request</a>
+        <li><a href="/speech-to-text/">Speech-To-Text</a>
         <li><a href="/logout">Logout</a>
       </ul>
     </div>

@@ -74,7 +74,10 @@ export default {
     }
   },
   mounted() {
-    this.ws = new WsClient(this.conf.wsBase + '/sr', this.conf.widgetToken)
+    this.ws = new WsClient(
+      this.conf.wsBase + '/sr',
+      this.conf.widgetToken
+    )
     this.ws.onMessage('volume', (data) => {
       this.volume = data.volume
       this.adjustVolume()

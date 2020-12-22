@@ -56,6 +56,7 @@ class SongrequestModule {
           page: 'sr',
           user: req.user,
           token: req.cookies['x-token'],
+          widget_token: req.userWidgetToken,
           ws: config.ws,
         }))
       },
@@ -91,11 +92,11 @@ class SongrequestModule {
   }
 
   updateClient (eventName, ws) {
-    this.wss.notifyOne([this.user.id], this.wsdata(eventName), ws)
+    this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
   }
 
   updateClients (eventName) {
-    this.wss.notifyAll([this.user.id], this.wsdata(eventName))
+    this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName))
   }
 
   getWsEvents () {
