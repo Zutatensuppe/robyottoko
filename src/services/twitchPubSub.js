@@ -5,20 +5,65 @@ const { EventHub } = require('../EventHub.js')
 const heartbeatInterval = 1000 * 60 //ms between PING's
 const reconnectInterval = 1000 * 3 //ms to wait before reconnect
 
+class WsWrapper {
+  // actual ws handle
+  handle = null
+
+  // timeout for automatic reconnect
+  reconnectTimeout = null
+
+  // buffer for 'send'
+  sendBuffer = []
+
+  constructor(addr, protocols) {
+    this.addr = addr
+    this.protocols = protocols
+
+    this.onopen = () => {}
+    this.onclose = () => {}
+    this.onmessage = () => {}
+  }
+
+  send (txt) {
+    if (this.handle) {
+      this.handle.send(txt)
+    } else {
+      this.sendBuffer.push(txt)
+    }
+  }
+
+  connect() {
+    let ws = new WebSocket(this.addr, this.protocols)
+    ws.onopen = (e) => {
+      if (this.reconnectTimeout) {
+        clearTimeout(this.reconnectTimeout)
+      }
+      this.handle = ws
+      // should have a queue worker
+      while (this.sendBuffer.length > 0) {
+        this.handle.send(this.sendBuffer.shift())
+      }
+      this.onopen(e)
+    }
+    ws.onmessage = (e) => {
+      this.onmessage(e)
+    }
+    ws.onclose = (e) => {
+      this.handle = null
+      this.reconnectTimeout = setTimeout(() => { this.connect() }, 1000)
+      this.onclose(e)
+    }
+  }
+}
+
 function client() {
   const evts = EventHub()
 
-  let ws
+  const ws = new WsWrapper('wss://pubsub-edge.twitch.tv')
 
   const send = (message) => {
     const msgStr = JSON.stringify(message)
-    try {
-      ws.send(msgStr)
-      console.log('SENT: ' + msgStr)
-    } catch (e) {
-      console.log('UNABLE TO SEND: ', e)
-      setTimeout(connect, reconnectInterval)
-    }
+    ws.send(msgStr)
   }
 
   const heartbeat = () => {
@@ -36,39 +81,33 @@ function client() {
     })
   }
 
-  const connect = () => {
-    let heartbeatHandle
-    ws = new WebSocket('wss://pubsub-edge.twitch.tv')
-
-    ws.onopen = (event) => {
-      console.log('INFO: Socket Opened')
-      heartbeat()
-      if (heartbeatHandle) {
-        clearInterval(heartbeatHandle)
-      }
-      heartbeatHandle = setInterval(heartbeat, heartbeatInterval)
-      evts.trigger('open', {})
+  let heartbeatHandle
+  ws.onopen = (event) => {
+    console.log('INFO: Socket Opened')
+    heartbeat()
+    if (heartbeatHandle) {
+      clearInterval(heartbeatHandle)
     }
-
-    ws.onerror = (error) => {
-      console.log('ERR:  ' + JSON.stringify(error))
+    heartbeatHandle = setInterval(heartbeat, heartbeatInterval)
+    evts.trigger('open', {})
+  }
+  ws.onclose = () => {
+    if (heartbeatHandle) {
+      clearInterval(heartbeatHandle)
     }
-
-    ws.onmessage = (event) => {
-      const message = JSON.parse(event.data)
-      console.log('RECV: ' + JSON.stringify(message))
-      if (message.type == 'RECONNECT') {
-        console.log('INFO: Reconnecting...')
-        setTimeout(connect, reconnectInterval)
-      }
-      evts.trigger('message', message)
-    }
-
-    ws.onclose = () => {
-      console.log('INFO: Socket Closed')
+  }
+  ws.onmessage = (event) => {
+    const message = JSON.parse(event.data)
+    console.log('RECV: ' + JSON.stringify(message))
+    if (message.type == 'RECONNECT') {
       console.log('INFO: Reconnecting...')
-      setTimeout(connect, reconnectInterval)
+      ws.connect()
     }
+    evts.trigger('message', message)
+  }
+
+  const connect = () => {
+    ws.connect()
   }
 
   return {
