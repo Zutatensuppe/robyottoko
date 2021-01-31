@@ -1,23 +1,33 @@
 const tmi = require('tmi.js')
+const twitchPubSub = require('../services/twitchPubSub.js')
 const fn = require('../fn.js')
 
 class TwitchClientManager {
-  constructor(user, moduleManager) {
+  constructor(db, user, moduleManager) {
     this.logprefix = `${user.name}|`
+
+    const twitchChannels = db.getMany('twitch_channel', {user_id: user.id})
+    if (twitchChannels.length === 0) {
+      console.log(`${this.logprefix}${target}| * No twitch channels configured`)
+      return
+    }
+
+    // connect to chat via tmi (to all channels configured)
     this.client = new tmi.client({
       identity: {
         username: user.tmi_identity_username,
         password: user.tmi_identity_password,
         client_id: user.tmi_identity_client_id,
       },
-      channels: user.twitch_channels.split(','),
+      channels: twitchChannels.map(ch => ch.channel_name),
       connection: {
         reconnect: true,
       }
-    });
+    })
 
     this.client.on('message', async (target, context, msg, self) => {
       if (self) { return; } // Ignore messages from the bot
+      console.log(context)
       console.log(`${this.logprefix}${context.username}@${target}: ${msg}`)
       const rawCmd = fn.parseCommandFromMessage(msg)
 
@@ -43,6 +53,25 @@ class TwitchClientManager {
       console.log(`${this.logprefix} * Connected to ${addr}:${port}`)
     })
     this.client.connect();
+
+    // connect to PubSub websocket
+    // https://dev.twitch.tv/docs/pubsub#topics
+    this.pubSubClient = twitchPubSub.client()
+    this.pubSubClient.connect()
+    this.pubSubClient.on('open', async () => {
+      // listen for evts
+      for (let channel of twitchChannels) {
+        if (channel.access_token && channel.channel_id) {
+          this.pubSubClient.listen(
+            `channel-points-channel-v1.${channel.channel_id}`,
+            channel.access_token
+          )
+        }
+      }
+      this.pubSubClient.on('message', (message) => {
+        console.log(message)
+      })
+    })
   }
 
   getClient() {

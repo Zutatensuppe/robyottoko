@@ -66,11 +66,12 @@ class SpeechToTextModule {
     return {
       'speech-to-text': async (req, res, next) => {
         res.send(await fn.render('widget.twig', {
+          title: 'Speech to Text Widget',
           page: 'speech-to-text',
-          widget_token: req.params.widget_token,
-          user: req.user,
-          token: req.cookies['x-token'],
-          ws: config.ws,
+          page_data: {
+            wsBase: config.ws.connectstring,
+            widgetToken: req.params.widget_token,
+          },
         }))
       },
     }
@@ -82,10 +83,12 @@ class SpeechToTextModule {
         res.send(await fn.render('base.twig', {
           title: 'Speech to text',
           page: 'speech-to-text',
-          user: req.user,
-          token: req.cookies['x-token'],
-          widget_token: req.userWidgetToken,
-          ws: config.ws,
+          page_data: {
+            wsBase: config.ws.connectstring,
+            widgetToken: req.userWidgetToken,
+            user: req.user,
+            token: req.cookies['x-token'],
+          },
         }))
       },
     }

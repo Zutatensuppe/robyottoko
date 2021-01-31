@@ -30,6 +30,15 @@ function getRandom(array) {
   return array[getRandomInt(0, array.length - 1)]
 }
 
+function nonce(length) {
+  let text = "";
+  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+  for (let i = 0; i < length; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length))
+  }
+  return text
+}
+
 const render = async (template, data) => {
   const {TwingEnvironment, TwingLoaderFilesystem} = require('twing');
   const loader = new TwingLoaderFilesystem(__dirname + '/templates')
@@ -149,4 +158,5 @@ module.exports = {
   isMod,
   isSubscriber,
   parseResponseText,
+  nonce,
 }

@@ -1,34 +1,35 @@
+const TABLE = 'token'
+
+function generateToken(length) {
+  // edit the token allowed characters
+  const a = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'.split('');
+  const b = [];
+  for (let i = 0; i < length; i++) {
+    const j = (Math.random() * (a.length - 1)).toFixed(0);
+    b[i] = a[j];
+  }
+  return b.join('');
+}
+
 class TokenRepo {
   constructor(db) {
     this.db = db
-    this.table = 'token'
   }
 
   getByToken(token) {
-    return this.db.get(this.table, {token})
+    return this.db.get(TABLE, {token})
   }
 
   getByUserIdAndType(user_id, type) {
-    return this.db.get(this.table, {user_id, type})
+    return this.db.get(TABLE, {user_id, type})
   }
 
   delete(token) {
-    this.db.delete(this.table, {token})
+    this.db.delete(TABLE, {token})
   }
 
   insert(tokenInfo){
-    this.db.insert(this.table, tokenInfo)
-  }
-
-  generateToken(length) {
-    // edit the token allowed characters
-    const a = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'.split('');
-    const b = [];
-    for (let i = 0; i < length; i++) {
-      const j = (Math.random() * (a.length - 1)).toFixed(0);
-      b[i] = a[j];
-    }
-    return b.join('');
+    this.db.insert(TABLE, tokenInfo)
   }
 
   getWidgetTokenForUserId(user_id) {
@@ -42,7 +43,7 @@ class TokenRepo {
   }
 
   createToken (user_id, type) {
-    const token = this.generateToken(32)
+    const token = generateToken(32)
     this.insert({user_id, type, token})
     return token
   }

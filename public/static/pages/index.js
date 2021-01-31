@@ -10,7 +10,7 @@ export default {
   template: `
 <div id="app">
   <div id="top" ref="top">
-    <navbar :user="conf.user" />
+    <navbar :user="conf.user.name" />
   </div>
   <div id="main" ref="main">
     Widgets:
@@ -50,7 +50,4 @@ export default {
       ]
     },
   },
-  async mounted() {
-    this.$refs.main.style.marginTop = this.$refs.top.clientHeight + 'px'
-  }
 }

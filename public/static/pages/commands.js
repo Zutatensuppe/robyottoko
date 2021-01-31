@@ -101,7 +101,7 @@ export default {
   template: `
 <div id="app">
   <div id="top" ref="top">
-    <navbar :user="conf.user" />
+    <navbar :user="conf.user.name" />
     <div id="actionbar">
       <ul class="items">
         <li><button class="btn" @click="add('text')">Add text</button>
@@ -282,8 +282,6 @@ export default {
     this.ws.onMessage('init', (data) => {
       this.commands = data.commands
       this.unchangedJson = JSON.stringify(data.commands)
-
-      this.$refs.main.style.marginTop = this.$refs.top.clientHeight + 'px'
     })
     this.ws.connect()
   }

@@ -37,12 +37,12 @@ class SongrequestModule {
     return {
       'sr': async (req, res, next) => {
         res.send(await fn.render('widget.twig', {
-          title: 'Song Request',
-          widget_token: req.params.widget_token,
+          title: 'Song Request Widget',
           page: 'sr',
-          user: req.user,
-          token: req.cookies['x-token'],
-          ws: config.ws,
+          page_data: {
+            wsBase: config.ws.connectstring,
+            widgetToken: req.params.widget_token,
+          },
         }))
       },
     }
@@ -54,10 +54,12 @@ class SongrequestModule {
         res.send(await fn.render('base.twig', {
           title: 'Song Request',
           page: 'sr',
-          user: req.user,
-          token: req.cookies['x-token'],
-          widget_token: req.userWidgetToken,
-          ws: config.ws,
+          page_data: {
+            wsBase: config.ws.connectstring,
+            widgetToken: req.userWidgetToken,
+            user: req.user,
+            token: req.cookies['x-token'],
+          },
         }))
       },
     }

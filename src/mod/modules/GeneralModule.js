@@ -107,11 +107,12 @@ class GeneralModule {
     return {
       'media': async (req, res, next) => {
         res.send(await fn.render('widget.twig', {
+          title: 'Media Widget',
           page: 'media',
-          widget_token: req.params.widget_token,
-          user: req.user,
-          token: req.cookies['x-token'],
-          ws: config.ws,
+          page_data: {
+            wsBase: config.ws.connectstring,
+            widgetToken: req.params.widget_token,
+          },
         }))
       },
     }
@@ -123,10 +124,12 @@ class GeneralModule {
         res.send(await fn.render('base.twig', {
           title: 'Commands',
           page: 'commands',
-          user: req.user,
-          token: req.cookies['x-token'],
-          widget_token: req.userWidgetToken,
-          ws: config.ws,
+          page_data: {
+            wsBase: config.ws.connectstring,
+            widgetToken: req.userWidgetToken,
+            user: req.user,
+            token: req.cookies['x-token'],
+          },
         }))
       },
     }

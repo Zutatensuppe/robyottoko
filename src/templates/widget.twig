@@ -7,7 +7,7 @@
   <meta charset="utf-8"/>
 </head>
 <body>
-<div id="main">
+<div id="outer_main">
   <div id="app"></div>
   <script type="module">
   import Page from "/static/widgets/{{ page }}.js"
@@ -15,10 +15,7 @@
     el: '#app',
     render: (h) => h(Page, {
       props: {
-        conf: {
-          wsBase: {{ ws.connectstring|json_encode|raw }},
-          widgetToken: {{ widget_token|json_encode|raw }},
-        }
+        conf: {{ page_data|json_encode|raw }},
       },
     }),
   })

@@ -4,6 +4,8 @@ const express = require('express')
 const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
 
+const twitch = require('../services/twitch')
+
 const Millisecond = 1
 const Second = 1000 * Millisecond
 const Minute = 60 * Second
@@ -12,14 +14,15 @@ const Day = 24 * Hour
 const Year = 356 * Day
 
 class WebServer {
-  constructor(moduleManager, config, auth) {
+  constructor(db, moduleManager, config, auth) {
+    this.db = db
     this.moduleManager = moduleManager
     this.config = config
     this.auth = auth
     this.handle = null
   }
 
-  listen() {
+  async listen() {
     const port = this.config.http.port
     const hostname = this.config.http.hostname
     const app = express()
@@ -50,6 +53,7 @@ class WebServer {
     app.use(this.auth.addAuthInfoMiddleware())
     app.use('/uploads', express.static(uploadDir))
     app.use('/static', express.static('./public/static'))
+
     app.get('/login', async (req, res) => {
       if (req.token) {
         res.redirect(302, '/')
@@ -58,10 +62,12 @@ class WebServer {
       res.send(await fn.render('base.twig', {
         title: 'Login',
         page: 'login',
-        ws: this.config.ws,
-        widget_token: null,
-        user: null,
-        token: null,
+        page_data: {
+          wsBase: this.config.ws.connectstring,
+          widgetToken: null,
+          user: null,
+          token: null,
+        },
       }))
     })
     app.get('/logout', async (req, res) => {
@@ -76,11 +82,54 @@ class WebServer {
       res.send(await fn.render('base.twig', {
         title: 'Hyottoko.club',
         page: 'index',
-        widget_token: req.userWidgetToken,
-        user: req.user,
-        token: req.cookies['x-token'],
-        ws: this.config.ws,
+        page_data: {
+          wsBase: this.config.ws.connectstring,
+          widgetToken: req.userWidgetToken,
+          user: req.user,
+          token: req.cookies['x-token'],
+        },
       }))
+    })
+
+    app.get('/settings/', requireLogin, async (req, res) => {
+      const user = this.db.get('user', {id: req.user.id})
+      const twitch_channels = this.db.getMany('twitch_channel', {user_id: user.id})
+      res.send(await fn.render('base.twig', {
+        title: 'Settings',
+        page: 'settings',
+        page_data: {
+          user,
+          twitch_channels,
+        },
+      }))
+    })
+
+    app.post('/save-settings', requireLogin, bodyParser.json(), async (req, res) => {
+      const user = req.body.user
+      user.id = req.user.id
+      const twitch_channels = req.body.twitch_channels.map(channel => {
+        channel.user_id = req.user.id
+        return channel
+      })
+
+      this.db.upsert('user', user, {id: user.id})
+      for (const twitch_channel of twitch_channels) {
+        this.db.upsert('twitch_channel', twitch_channel, {
+          user_id: twitch_channel.user_id,
+          channel_name: twitch_channel.channel_name,
+        })
+      }
+      res.send()
+    })
+
+    // twitch calls this url after auth
+    // from here we render a js that reads the token and shows it to the user
+    app.get('/twitch/redirect_uri', async (req, res) => {
+      res.send(await fn.render('twitch/redirect_uri.twig'))
+    })
+    app.post('/twitch/user-id-by-name', requireLogin, bodyParser.json(), async (req, res) => {
+      const client = new twitch.HelixClient(req.body.client_id, req.body.client_secret)
+      res.send({id: await client.getUserIdByName(req.body.name)})
     })
 
     app.post('/auth', bodyParser.json(), async (req, res) => {

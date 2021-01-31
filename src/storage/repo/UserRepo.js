@@ -1,16 +1,17 @@
+const TABLE = 'user'
+
 class UserRepo {
   constructor(db) {
     this.db = db
-    this.table = 'user'
   }
   all() {
-    return this.db.getMany(this.table)
+    return this.db.getMany(TABLE)
   }
   getById(id) {
-    return this.db.get(this.table, {id})
+    return this.db.get(TABLE, {id})
   }
   getByNameAndPass(name, pass) {
-    return this.db.get(this.table, {name, pass})
+    return this.db.get(TABLE, {name, pass})
   }
 }
 

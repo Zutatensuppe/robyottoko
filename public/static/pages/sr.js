@@ -22,7 +22,7 @@ export default {
   template: `
 <div id="app">
   <div id="top" ref="top">
-    <navbar :user="conf.user" />
+    <navbar :user="conf.user.name" />
     <div id="actionbar">
       <ul class="items">
         <li>
@@ -160,8 +160,6 @@ export default {
       }
     })
     this.ws.connect()
-
-    this.$refs.main.style.marginTop = this.$refs.top.clientHeight + 'px'
     this.play()
   },
 }

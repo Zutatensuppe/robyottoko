@@ -28,7 +28,7 @@ export default {
   template: `
 <div id="app">
   <div id="top" ref="top">
-    <navbar :user="conf.user" />
+    <navbar :user="conf.user.name" />
     <div id="actionbar">
       <ul class="items">
         <li><button class="btn btn-primary" :disabled="!changed" @click="sendSave">Save</button>
@@ -261,9 +261,6 @@ export default {
       this.settings = data.settings
       this.defaultSettings = data.defaultSettings
       this.unchangedJson = JSON.stringify(data.settings)
-      Vue.nextTick(() => {
-        this.$refs.main.style.marginTop = this.$refs.top.clientHeight + 'px'
-      })
     })
     this.ws.connect()
   }
