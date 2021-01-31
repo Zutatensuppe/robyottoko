@@ -22,20 +22,18 @@ function client() {
   }
 
   const heartbeat = () => {
-    const message = { type: 'PING' }
-    send(message)
+    send({ type: 'PING' })
   }
 
   const listen = (topic, authToken) => {
-    const message = {
+    send({
       type: 'LISTEN',
       nonce: nonce(15),
       data: {
         topics: [topic],
         auth_token: authToken
       }
-    }
-    send(message)
+    })
   }
 
   const connect = () => {
@@ -45,6 +43,9 @@ function client() {
     ws.onopen = (event) => {
       console.log('INFO: Socket Opened')
       heartbeat()
+      if (heartbeatHandle) {
+        clearInterval(heartbeatHandle)
+      }
       heartbeatHandle = setInterval(heartbeat, heartbeatInterval)
       evts.trigger('open', {})
     }
@@ -57,7 +58,6 @@ function client() {
       const message = JSON.parse(event.data)
       console.log('RECV: ' + JSON.stringify(message))
       if (message.type == 'RECONNECT') {
-        clearInterval(heartbeatHandle)
         console.log('INFO: Reconnecting...')
         setTimeout(connect, reconnectInterval)
       }
@@ -66,7 +66,6 @@ function client() {
 
     ws.onclose = () => {
       console.log('INFO: Socket Closed')
-      clearInterval(heartbeatHandle)
       console.log('INFO: Reconnecting...')
       setTimeout(connect, reconnectInterval)
     }
