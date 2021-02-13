@@ -3,4 +3,4 @@
 # make sure to always have an up to date db
 ${RUN_BIN} patch-db --silent
 
-nodemon --delay 2 --max-old-space-size=64 src/bot.js -e js
+nodemon --delay 2 --max-old-space-size=64 src/bot.js -e js --ignore public/static/
