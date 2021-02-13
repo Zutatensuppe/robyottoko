@@ -7,7 +7,8 @@ const config = require('../../config.js')
 const fn = require('../../fn.js')
 
 class GeneralModule {
-  constructor(user, client, storage, cache, ws, wss) {
+  constructor(db, user, client, storage, cache, ws, wss) {
+    this.db = db
     this.user = user
     this.client = client
     this.storage = storage

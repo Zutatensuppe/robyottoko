@@ -22,6 +22,7 @@ for (const user of userRepo.all()) {
   const moduleStorage = new mod.ModuleStorage(db, user.id)
   for (const moduleClass of mod.modules) {
     moduleManager.add(user.id, new moduleClass(
+      db,
       user,
       client,
       moduleStorage,

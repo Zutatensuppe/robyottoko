@@ -9,7 +9,8 @@ const extractYoutubeId = async (youtubeUrl) => {
 }
 
 class SongrequestModule {
-  constructor(user, client, storage, cache, ws, wss) {
+  constructor(db, user, client, storage, cache, ws, wss) {
+    this.db = db
     this.user = user
     this.cache = cache
     this.storage = storage

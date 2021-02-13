@@ -3,7 +3,8 @@ const fetch = require('node-fetch')
 const fn = require('../../fn.js')
 
 class SpeechToTextModule {
-  constructor(user, client, storage, cache, ws, wss) {
+  constructor(db, user, client, storage, cache, ws, wss) {
+    this.db = db
     this.user = user
     this.client = client
     this.storage = storage
