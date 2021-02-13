@@ -26,7 +26,11 @@ class WsWrapper {
 
   send (txt) {
     if (this.handle) {
-      this.handle.send(txt)
+      try {
+        this.handle.send(txt)
+      } catch (e) {
+        this.sendBuffer.push(txt)
+      }
     } else {
       this.sendBuffer.push(txt)
     }
