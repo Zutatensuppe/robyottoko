@@ -8,7 +8,7 @@ class TwitchClientManager {
 
     const twitchChannels = db.getMany('twitch_channel', {user_id: user.id})
     if (twitchChannels.length === 0) {
-      console.log(`${this.logprefix}${target}| * No twitch channels configured`)
+      console.log(`${this.logprefix} * No twitch channels configured`)
       return
     }
 
@@ -27,7 +27,6 @@ class TwitchClientManager {
 
     this.client.on('message', async (target, context, msg, self) => {
       if (self) { return; } // Ignore messages from the bot
-      console.log(context)
       console.log(`${this.logprefix}${context.username}@${target}: ${msg}`)
       const rawCmd = fn.parseCommandFromMessage(msg)
 
@@ -69,7 +68,25 @@ class TwitchClientManager {
         }
       }
       this.pubSubClient.on('message', (message) => {
-        console.log(message)
+        if (message.type !== 'MESSAGE') {
+          return
+        }
+        const messageData = JSON.parse(message.data.message)
+
+        // channel points redeemed with non standard reward
+        // standard rewards are not supported :/
+        if (messageData.type === 'reward-redeemed') {
+          const redemption = messageData.data.redemption
+          // redemption.reward
+          // { id, channel_id, title, prompt, cost, ... }
+          // redemption.user
+          // { id, login, display_name}
+          for (const m of moduleManager.all(user.id)) {
+            if (m.handleRewardRedemption) {
+              m.handleRewardRedemption(redemption)
+            }
+          }
+        }
       })
     })
   }
