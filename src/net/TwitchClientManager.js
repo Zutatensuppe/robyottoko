@@ -1,5 +1,5 @@
 const tmi = require('tmi.js')
-const twitchPubSub = require('../services/twitchPubSub.js')
+const TwitchPubSubClient = require('../services/TwitchPubSubClient.js')
 const fn = require('../fn.js')
 
 class TwitchClientManager {
@@ -13,7 +13,7 @@ class TwitchClientManager {
     }
 
     // connect to chat via tmi (to all channels configured)
-    this.client = new tmi.client({
+    this.chatClient = new tmi.client({
       identity: {
         username: user.tmi_identity_username,
         password: user.tmi_identity_password,
@@ -25,7 +25,7 @@ class TwitchClientManager {
       }
     })
 
-    this.client.on('message', async (target, context, msg, self) => {
+    this.chatClient.on('message', async (target, context, msg, self) => {
       if (self) { return; } // Ignore messages from the bot
       console.log(`${this.logprefix}${context.username}@${target}: ${msg}`)
       const rawCmd = fn.parseCommandFromMessage(msg)
@@ -36,26 +36,26 @@ class TwitchClientManager {
         for (let cmdDef of cmdDefs) {
           if (fn.mayExecute(context, cmdDef)) {
             console.log(`${this.logprefix}${target}| * Executing ${rawCmd.name} command`)
-            const r = await cmdDef.fn(rawCmd, this.client, target, context, msg)
+            const r = await cmdDef.fn(rawCmd, this.chatClient, target, context, msg)
             if (r) {
               console.log(`${this.logprefix}${target}| * Returned: ${r}`)
             }
             console.log(`${this.logprefix}${target}| * Executed ${rawCmd.name} command`)
           }
         }
-        await m.onChatMsg(this.client, target, context, msg);
+        await m.onChatMsg(this.chatClient, target, context, msg);
       }
     })
 
     // Called every time the bot connects to Twitch chat
-    this.client.on('connected', (addr, port) => {
+    this.chatClient.on('connected', (addr, port) => {
       console.log(`${this.logprefix} * Connected to ${addr}:${port}`)
     })
-    this.client.connect();
+    this.chatClient.connect();
 
     // connect to PubSub websocket
     // https://dev.twitch.tv/docs/pubsub#topics
-    this.pubSubClient = twitchPubSub.client()
+    this.pubSubClient = TwitchPubSubClient()
     this.pubSubClient.connect()
     this.pubSubClient.on('open', async () => {
       // listen for evts
@@ -91,8 +91,8 @@ class TwitchClientManager {
     })
   }
 
-  getClient() {
-    return this.client
+  getChatClient() {
+    return this.chatClient
   }
 }
 

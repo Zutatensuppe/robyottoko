@@ -1,6 +1,6 @@
 const { postJson, getJson, delJson, asJson, withHeaders, asQueryArgs } = require('../net/xhr.js')
 
-class HelixClient {
+class TwitchHelixClient {
   constructor(clientId, clientSecret) {
     this.clientId = clientId
     this.clientSecret = clientSecret
@@ -49,6 +49,4 @@ class HelixClient {
   }
 }
 
-module.exports = {
-  HelixClient,
-}
+module.exports = TwitchHelixClient

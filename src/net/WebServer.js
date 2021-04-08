@@ -4,7 +4,7 @@ const express = require('express')
 const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
 
-const twitch = require('../services/twitch')
+const TwitchHelixClient = require('../services/TwitchHelixClient.js')
 
 class WebServer {
   constructor(db, moduleManager, config, auth) {
@@ -121,7 +121,7 @@ class WebServer {
       res.send(await fn.render('twitch/redirect_uri.twig'))
     })
     app.post('/twitch/user-id-by-name', requireLogin, bodyParser.json(), async (req, res) => {
-      const client = new twitch.HelixClient(req.body.client_id, req.body.client_secret)
+      const client = new TwitchHelixClient(req.body.client_id, req.body.client_secret)
       res.send({id: await client.getUserIdByName(req.body.name)})
     })
 

@@ -60,7 +60,7 @@ class WsWrapper {
   }
 }
 
-function client() {
+function TwitchPubSubClient() {
   const evts = EventHub()
 
   const ws = new WsWrapper('wss://pubsub-edge.twitch.tv')
@@ -121,6 +121,4 @@ function client() {
   }
 }
 
-module.exports = {
-  client,
-}
+module.exports = TwitchPubSubClient

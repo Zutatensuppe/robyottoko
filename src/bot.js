@@ -18,13 +18,13 @@ webSocketServer.listen()
 // one for each user
 for (const user of userRepo.all()) {
   const clientManager = new net.TwitchClientManager(db, user, moduleManager)
-  const client = clientManager.getClient()
+  const chatClient = clientManager.getChatClient()
   const moduleStorage = new mod.ModuleStorage(db, user.id)
   for (const moduleClass of mod.modules) {
     moduleManager.add(user.id, new moduleClass(
       db,
       user,
-      client,
+      chatClient,
       moduleStorage,
       cache,
       webServer,

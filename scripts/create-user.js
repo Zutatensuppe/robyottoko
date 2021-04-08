@@ -1,7 +1,7 @@
 const config = require('../src/config.js')
 const storage = require('../src/storage')
 
-const twitch = require('../src/services/twitch.js')
+const HelixClient = require('../src/services/HelixClient.js')
 
 ;(async () => {
   const db = new storage.Db(config.db.file)
@@ -21,7 +21,7 @@ const twitch = require('../src/services/twitch.js')
   const user_id = db.upsert('user', user, {name: user.name}, 'id')
   console.log('user created/updated: ' + user_id)
 
-  const helixClient = new twitch.HelixClient(
+  const helixClient = new HelixClient(
     user.tmi_identity_client_id,
     user.tmi_identity_client_secret
   )
