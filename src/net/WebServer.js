@@ -128,7 +128,7 @@ class WebServer {
     })
 
     app.post('/auth', bodyParser.json(), async (req, res) => {
-      const user = this.auth.getUserForNameAndPass(req.body.user, req.body.pass)
+      const user = this.auth.getUserByNameAndPass(req.body.user, req.body.pass)
       if (!user) {
         res.status(401).send({reason: 'bad credentials'})
         return
