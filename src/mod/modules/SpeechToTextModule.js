@@ -1,6 +1,6 @@
 const config = require('../../config.js')
 const fn = require('../../fn.js')
-const { getText } = require('../../net/xhr.js')
+const { getText, asQueryArgs } = require('../../net/xhr.js')
 
 class SpeechToTextModule {
   constructor(db, user, client, storage, cache, ws, wss) {
@@ -114,10 +114,11 @@ class SpeechToTextModule {
     return {
       'translate': async (ws, {text, src, dst}) => {
         const scriptId = config.modules.speechToText.google.scriptId
-        const query = `https://script.google.com/macros/s/${scriptId}/exec`
-          + '?text=' + encodeURIComponent(text)
-          + '&source=' + src
-          + '&target=' + dst
+        const query = `https://script.google.com/macros/s/${scriptId}/exec` + asQueryArgs({
+          text: text,
+          source: src,
+          target: dst,
+        })
         const respText = await getText(query)
         this.wss.notifyOne([this.user.id], this.name, {event: 'translated', data: {
           in: text,

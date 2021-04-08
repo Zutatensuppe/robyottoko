@@ -14,6 +14,18 @@ export function asJson(data) {
   }
 }
 
+export function asQueryArgs(data) {
+  const q = []
+  for (let k in data) {
+    const pair = [k, data[k]].map(encodeURIComponent)
+    q.push(pair.join('='))
+  }
+  if (q.length === 0) {
+    return ''
+  }
+  return `?${q.join('&')}`
+}
+
 export async function request(method, url, opts = {}) {
   const options = opts || {}
   options.method = method

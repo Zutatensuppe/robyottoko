@@ -1,13 +1,17 @@
 const config = require('../config.js')
-const { getJson } = require('../net/xhr.js')
+const { getJson, asQueryArgs } = require('../net/xhr.js')
+
+const get = async (url, args) => {
+  args.key = config.modules.sr.google.api_key
+  return await getJson(url + asQueryArgs(args))
+}
 
 const fetchDataByYoutubeId = async (youtubeId) => {
-  const url = 'https://www.googleapis.com/youtube/v3/videos'
-    + '?part=snippet'
-    + `&id=${encodeURIComponent(youtubeId)}`
-    + '&fields=items(id%2Csnippet)'
-    + `&key=${config.modules.sr.google.api_key}`
-  const json = await getJson(url)
+  const json = await get('https://www.googleapis.com/youtube/v3/videos', {
+    part: 'snippet',
+    id: youtubeId,
+    fields: 'items(id,snippet)',
+  })
   return json.items[0] || null
 }
 
@@ -31,12 +35,11 @@ const extractYoutubeId = (string) => {
 }
 
 const getYoutubeIdBySearch = async (searchterm) => {
-  const url = 'https://www.googleapis.com/youtube/v3/search'
-    + '?part=snippet'
-    + `&q=${encodeURIComponent(searchterm)}`
-    + '&type=video'
-    + `&key=${config.modules.sr.google.api_key}`
-  const json = await getJson(url)
+  const json = await get('https://www.googleapis.com/youtube/v3/search', {
+    part: 'snippet',
+    q: searchterm,
+    type: 'video',
+  })
   return json.items[0]['id']['videoId'] || null
 }
 
