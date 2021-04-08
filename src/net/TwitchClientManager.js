@@ -3,10 +3,9 @@ const TwitchPubSubClient = require('../services/TwitchPubSubClient.js')
 const fn = require('../fn.js')
 
 class TwitchClientManager {
-  constructor(db, user, moduleManager) {
+  constructor(user, twitchChannels, moduleManager) {
     const log = fn.logger(__filename, `${user.name}|`)
 
-    const twitchChannels = db.getMany('twitch_channel', {user_id: user.id})
     if (twitchChannels.length === 0) {
       log(`* No twitch channels configured`)
       return
@@ -51,12 +50,10 @@ class TwitchClientManager {
     this.chatClient.on('connected', (addr, port) => {
       log(`* Connected to ${addr}:${port}`)
     })
-    this.chatClient.connect();
 
     // connect to PubSub websocket
     // https://dev.twitch.tv/docs/pubsub#topics
     this.pubSubClient = TwitchPubSubClient()
-    this.pubSubClient.connect()
     this.pubSubClient.on('open', async () => {
       // listen for evts
       for (let channel of twitchChannels) {
@@ -89,6 +86,9 @@ class TwitchClientManager {
         }
       })
     })
+
+    this.chatClient.connect();
+    this.pubSubClient.connect()
   }
 
   getChatClient() {

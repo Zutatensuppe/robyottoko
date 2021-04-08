@@ -6,10 +6,12 @@ const Users = require('./services/Users.js')
 const Tokens = require('./services/Tokens.js')
 const Cache = require('./services/Cache.js')
 const Db = require('./Db.js')
+const TwitchChannels = require('./services/TwitchChannels.js')
 
 const db = new Db(config.db.file)
 const userRepo = Users(db)
 const tokenRepo = Tokens(db)
+const twitchChannelRepo = TwitchChannels(db)
 const auth = new net.Auth(userRepo, tokenRepo)
 const cache = new Cache(db)
 
@@ -21,7 +23,8 @@ webSocketServer.listen()
 
 // one for each user
 for (const user of userRepo.all()) {
-  const clientManager = new net.TwitchClientManager(db, user, moduleManager)
+  const twitchChannels = twitchChannelRepo.allByUserId(user.id)
+  const clientManager = new net.TwitchClientManager(user, twitchChannels, moduleManager)
   const chatClient = clientManager.getChatClient()
   const moduleStorage = new mod.ModuleStorage(db, user.id)
   for (const moduleClass of mod.modules) {
