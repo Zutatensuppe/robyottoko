@@ -81,7 +81,7 @@ class GeneralModule {
               minLines: trigger.data.minLines,
               minSeconds: trigger.data.minSeconds,
               command: cmdObj,
-              next: new Date().getTime() + (trigger.data.minSeconds * 1000)
+              next: new Date().getTime() + (trigger.data.minSeconds * fn.SECOND)
             })
           }
         }
@@ -98,10 +98,10 @@ class GeneralModule {
         if (t.lines >= t.minLines && now > t.next) {
           t.command.fn(t.command, this.client, null, null, null)
           t.lines = 0
-          t.next = now + (t.minSeconds * 1000)
+          t.next = now + (t.minSeconds * fn.SECOND)
         }
       })
-    }, 1000)
+    }, 1 * fn.SECOND)
   }
 
   widgets () {

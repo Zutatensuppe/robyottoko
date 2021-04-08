@@ -1,6 +1,6 @@
 const config = require('../../config.js')
-const fetch = require('node-fetch')
 const fn = require('../../fn.js')
+const { getText } = require('../../net/xhr.js')
 
 class SpeechToTextModule {
   constructor(db, user, client, storage, cache, ws, wss) {
@@ -118,10 +118,10 @@ class SpeechToTextModule {
           + '?text=' + encodeURIComponent(text)
           + '&source=' + src
           + '&target=' + dst
-        const res = await fetch(query)
+        const respText = await getText(query)
         this.wss.notifyOne([this.user.id], this.name, {event: 'translated', data: {
           in: text,
-          out: await res.text(),
+          out: respText,
         }}, ws)
       },
       'conn': (ws) => {

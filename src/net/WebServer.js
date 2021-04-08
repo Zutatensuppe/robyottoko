@@ -6,13 +6,6 @@ const bodyParser = require('body-parser')
 
 const twitch = require('../services/twitch')
 
-const Millisecond = 1
-const Second = 1000 * Millisecond
-const Minute = 60 * Second
-const Hour = 60 * Minute
-const Day = 24 * Hour
-const Year = 356 * Day
-
 class WebServer {
   constructor(db, moduleManager, config, auth) {
     this.db = db
@@ -140,7 +133,7 @@ class WebServer {
       }
 
       const token = this.auth.getUserAuthToken(user.id)
-      res.cookie('x-token', token, { maxAge: Year, httpOnly: true })
+      res.cookie('x-token', token, { maxAge: 1 * fn.YEAR, httpOnly: true })
       res.send()
     })
 

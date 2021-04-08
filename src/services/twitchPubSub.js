@@ -1,9 +1,9 @@
 const WebSocket = require('ws')
-const { nonce } = require('../fn.js')
+const { nonce, SECOND } = require('../fn.js')
 const { EventHub } = require('../EventHub.js')
 
-const heartbeatInterval = 1000 * 60 //ms between PING's
-const reconnectInterval = 1000 * 3 //ms to wait before reconnect
+const heartbeatInterval = 60 * SECOND //ms between PING's
+const reconnectInterval = 3 * SECOND //ms to wait before reconnect
 
 class WsWrapper {
   // actual ws handle
@@ -54,7 +54,7 @@ class WsWrapper {
     }
     ws.onclose = (e) => {
       this.handle = null
-      this.reconnectTimeout = setTimeout(() => { this.connect() }, 1000)
+      this.reconnectTimeout = setTimeout(() => { this.connect() }, reconnectInterval)
       this.onclose(e)
     }
   }

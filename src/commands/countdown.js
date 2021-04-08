@@ -5,7 +5,7 @@ const countdown = (
 ) => async (command, client, target, context, msg) => {
   const say = fn.sayFn(client, target)
   const steps = settings.steps
-  const interval = settings.interval || 1000
+  const interval = settings.interval || (1 * fn.SECOND)
   const msgStep = settings.step || "{step}"
   const msgIntro = settings.intro || null
   const msgOutro = settings.outro || null

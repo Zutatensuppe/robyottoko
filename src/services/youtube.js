@@ -1,5 +1,5 @@
 const config = require('../config.js')
-const fetch = require('node-fetch')
+const { getJson } = require('../net/xhr.js')
 
 const fetchDataByYoutubeId = async (youtubeId) => {
   const url = 'https://www.googleapis.com/youtube/v3/videos'
@@ -7,9 +7,8 @@ const fetchDataByYoutubeId = async (youtubeId) => {
     + `&id=${encodeURIComponent(youtubeId)}`
     + '&fields=items(id%2Csnippet)'
     + `&key=${config.modules.sr.google.api_key}`
-  const res = await fetch(url)
-  const resJson = await res.json()
-  return resJson.items[0] || null
+  const json = await getJson(url)
+  return json.items[0] || null
 }
 
 const extractYoutubeId = (string) => {
@@ -37,9 +36,8 @@ const getYoutubeIdBySearch = async (searchterm) => {
     + `&q=${encodeURIComponent(searchterm)}`
     + '&type=video'
     + `&key=${config.modules.sr.google.api_key}`
-  const res = await fetch(url)
-  const resJson = await res.json()
-  return resJson.items[0]['id']['videoId'] || null
+  const json = await getJson(url)
+  return json.items[0]['id']['videoId'] || null
 }
 
 module.exports = {

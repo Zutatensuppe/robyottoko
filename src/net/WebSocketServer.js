@@ -1,4 +1,5 @@
 const WebSocket = require('ws')
+const { SECOND } = require('../fn')
 
 class WebSocketServer {
   constructor(moduleManager, config, auth) {
@@ -71,7 +72,7 @@ class WebSocketServer {
         socket.isAlive = false
         socket.ping(() => {})
       })
-    }, 30000)
+    }, 30 * SECOND)
 
     this._websocketserver.on('close', () => {
       clearInterval(this._interval)

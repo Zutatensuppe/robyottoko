@@ -1,9 +1,18 @@
-const fetch = require('node-fetch')
+const { postJson, getJson, delJson, asJson, withHeaders } = require('../net/xhr.js')
 
 class HelixClient {
   constructor(clientId, clientSecret) {
     this.clientId = clientId
     this.clientSecret = clientSecret
+    this.helixApiBase = 'https://api.twitch.tv/helix'
+  }
+
+  async withAuthHeaders(opts = {}) {
+    const accessToken = await this.getAccessToken()
+    return withHeaders({
+      'Client-ID': this.clientId,
+      'Authorization': `Bearer ${accessToken}`,
+    }, opts)
   }
 
   // https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/
@@ -13,69 +22,29 @@ class HelixClient {
       + `&client_secret=${this.clientSecret}`
       + `&grant_type=client_credentials`
       + `&scope=${scopes.join(',')}`
-    const res = await fetch(url, { method: 'post' })
-    const json = await res.json()
-    const accessToken = json.access_token
-    return accessToken
+    const json = await postJson(url)
+    return json.access_token
   }
 
   async getUserIdByName (userName) {
-    const accessToken = await this.getAccessToken()
-    const url = `https://api.twitch.tv/helix/users?login=${userName}`
-    const res = await fetch(url, {
-      method: 'get',
-      headers: {
-        'Client-ID': this.clientId,
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    })
-    const json = await res.json()
+    const url = `${this.helixApiBase}/users?login=${userName}`
+    const json = await getJson(url, await this.withAuthHeaders())
     return json.data[0].id
   }
 
   async getSubscriptions () {
-    const url = `https://api.twitch.tv/helix/eventsub/subscriptions`
-    const accessToken = await this.getAccessToken()
-    const res = await fetch(url, {
-      method: 'get',
-      headers: {
-        'Client-ID': this.clientId,
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    })
-    const json = await res.json()
-    return json
+    const url = `${this.helixApiBase}/eventsub/subscriptions`
+    return await getJson(url, await this.withAuthHeaders())
   }
 
   async deleteSubscription (id) {
-    const url = `https://api.twitch.tv/helix/eventsub/subscriptions`
-      + `?id=${id}`
-    const accessToken = await this.getAccessToken()
-    const res = await fetch(url, {
-      method: 'delete',
-      headers: {
-        'Client-ID': this.clientId,
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    })
-    const json = await res.json()
-    return json
+    const url = `${this.helixApiBase}/eventsub/subscriptions?id=${id}`
+    return await delJson(url, await this.withAuthHeaders())
   }
 
   async createSubscription (subscription) {
-    const url = `https://api.twitch.tv/helix/eventsub/subscriptions`
-    const accessToken = await this.getAccessToken()
-    const res = await fetch(url, {
-      method: 'post',
-      headers: {
-        'Client-ID': this.clientId,
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(subscription)
-    })
-    const json = await res.json()
-    return json
+    const url = `${this.helixApiBase}/eventsub/subscriptions`
+    return await postJson(url, await this.withAuthHeaders(asJson(subscription)))
   }
 }
 
