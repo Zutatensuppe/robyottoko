@@ -4,8 +4,8 @@ const storage = require('./storage')
 const mod = require('./mod')
 
 const db = new storage.Db(config.db.file)
-const userRepo = new storage.repo.UserRepo(db)
-const tokenRepo = new storage.repo.TokenRepo(db)
+const userRepo = new storage.UserRepo(db)
+const tokenRepo = new storage.TokenRepo(db)
 const auth = new net.Auth(userRepo, tokenRepo)
 const cache = new storage.Cache(db)
 
