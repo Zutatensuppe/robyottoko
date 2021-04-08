@@ -4,7 +4,7 @@ const fn = require('../fn.js')
 
 class TwitchClientManager {
   constructor(db, user, moduleManager) {
-    const log = (...args) => console.log('[TwitchClientManager.js]', `${user.name}|`, ...args)
+    const log = fn.logger(__filename, `${user.name}|`)
 
     const twitchChannels = db.getMany('twitch_channel', {user_id: user.id})
     if (twitchChannels.length === 0) {

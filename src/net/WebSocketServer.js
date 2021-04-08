@@ -1,7 +1,7 @@
 const WebSocket = require('ws')
-const { SECOND } = require('../fn')
+const { SECOND, logger } = require('../fn.js')
 
-const log = (...args) => console.log('[WebSocketServer.js]', ...args)
+const log = logger(__filename)
 
 class WebSocketServer {
   constructor(moduleManager, config, auth) {

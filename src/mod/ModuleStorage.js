@@ -1,4 +1,6 @@
-const log = (...args) => console.log('[ModuleStorage.js]', ...args)
+const { logger } = require('../fn.js')
+
+const log = logger(__filename)
 
 class ModuleStorage {
   constructor(db, userId) {

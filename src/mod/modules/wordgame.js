@@ -1,7 +1,7 @@
 const fn = require('../../fn.js')
 const JishoOrgClient = require('../../services/JishoOrgClient.js')
 
-const log = (...args) => console.log('[wordgame.js]', ...args)
+const log = fn.logger(__filename)
 
 const _data = fn.load('wordgame', {
   word: null,

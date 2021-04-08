@@ -1,9 +1,10 @@
 const config = require('../src/config.js')
 const storage = require('../src/storage')
 
-const HelixClient = require('../src/services/HelixClient.js')
+const HelixClient = require('../src/services/HelixClient.js');
+const { logger } = require('../src/fn.js');
 
-const log = (...args) => console.log('[create-user.js]', ...args)
+const log = logger(__filename)
 
 ;(async () => {
   const db = new storage.Db(config.db.file)

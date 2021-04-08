@@ -1,11 +1,11 @@
 const WebSocket = require('ws')
-const { nonce, SECOND } = require('../fn.js')
+const { nonce, SECOND, logger } = require('../fn.js')
 const { EventHub } = require('../EventHub.js')
 
 const heartbeatInterval = 60 * SECOND //ms between PING's
 const reconnectInterval = 3 * SECOND //ms to wait before reconnect
 
-const log = (...args) => console.log('[TwitchPubSubClient.js]', ...args)
+const log = logger(__filename)
 
 class WsWrapper {
   // actual ws handle

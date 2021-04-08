@@ -2,6 +2,7 @@ const config = require('./config.js')
 const net = require('./net')
 const storage = require('./storage')
 const mod = require('./mod')
+const { logger } = require('./fn.js')
 
 const db = new storage.Db(config.db.file)
 const userRepo = new storage.UserRepo(db)
@@ -33,7 +34,7 @@ for (const user of userRepo.all()) {
   }
 }
 
-const log = (...args) => console.log('[bot.js]', ...args)
+const log = logger(__filename)
 const gracefulShutdown = (signal) => {
   log(`${signal} received...`)
 

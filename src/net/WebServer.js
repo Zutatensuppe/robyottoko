@@ -6,7 +6,7 @@ const bodyParser = require('body-parser')
 
 const TwitchHelixClient = require('../services/TwitchHelixClient.js')
 
-const log = (...args) => console.log('[WebServer.js]', ...args)
+const log = fn.logger(__filename)
 
 class WebServer {
   constructor(db, moduleManager, config, auth) {

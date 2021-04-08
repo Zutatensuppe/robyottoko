@@ -1,6 +1,12 @@
+const path = require('path')
 const { getText } = require('./net/xhr')
 
-const log = (...args) => console.log('[fn.js]', ...args)
+const logger = (filename, ...pre) => {
+  const b = path.basename(filename)
+  return (...args) => console.log(`[${b}]`, ...pre, ...args)
+}
+
+const log = logger(__filename)
 
 const MS = 1
 const SECOND = 1000 * MS
@@ -165,6 +171,7 @@ const split = (str, delimiter = ',', maxparts = -1) => {
 }
 
 module.exports = {
+  logger,
   sayFn,
   mayExecute,
   parseCommandFromMessage,
