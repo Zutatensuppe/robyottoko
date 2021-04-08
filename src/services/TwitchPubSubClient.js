@@ -69,6 +69,7 @@ function TwitchPubSubClient() {
 
   const send = (message) => {
     const msgStr = JSON.stringify(message)
+    log('SEND', msgStr)
     ws.send(msgStr)
   }
 
