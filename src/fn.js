@@ -1,4 +1,6 @@
-const { getText } = require('./net/xhr');
+const { getText } = require('./net/xhr')
+
+const log = (...args) => console.log('[fn.js]', ...args)
 
 const MS = 1
 const SECOND = 1000 * MS
@@ -68,7 +70,7 @@ const isSubscriber = (ctx) => !!ctx.subscriber || isBroadcaster(ctx)
 const sayFn = (client, target) => (msg) => {
   const targets = target ? [target] : client.channels
   targets.forEach(t => {
-    console.log(`saying in ${t}: ${msg}`)
+    log(`saying in ${t}: ${msg}`)
     client.say(t, msg).catch(_ => {})
   })
 }

@@ -4,11 +4,11 @@ const fn = require('../fn.js')
 
 class TwitchClientManager {
   constructor(db, user, moduleManager) {
-    this.logprefix = `${user.name}|`
+    const log = (...args) => console.log('[TwitchClientManager.js]', `${user.name}|`, ...args)
 
     const twitchChannels = db.getMany('twitch_channel', {user_id: user.id})
     if (twitchChannels.length === 0) {
-      console.log(`${this.logprefix} * No twitch channels configured`)
+      log(`* No twitch channels configured`)
       return
     }
 
@@ -27,7 +27,7 @@ class TwitchClientManager {
 
     this.chatClient.on('message', async (target, context, msg, self) => {
       if (self) { return; } // Ignore messages from the bot
-      console.log(`${this.logprefix}${context.username}@${target}: ${msg}`)
+      log(`${context.username}@${target}: ${msg}`)
       const rawCmd = fn.parseCommandFromMessage(msg)
 
       for (const m of moduleManager.all(user.id)) {
@@ -35,12 +35,12 @@ class TwitchClientManager {
         const cmdDefs = commands[rawCmd.name] || []
         for (let cmdDef of cmdDefs) {
           if (fn.mayExecute(context, cmdDef)) {
-            console.log(`${this.logprefix}${target}| * Executing ${rawCmd.name} command`)
+            log(`${target}| * Executing ${rawCmd.name} command`)
             const r = await cmdDef.fn(rawCmd, this.chatClient, target, context, msg)
             if (r) {
-              console.log(`${this.logprefix}${target}| * Returned: ${r}`)
+              log(`${target}| * Returned: ${r}`)
             }
-            console.log(`${this.logprefix}${target}| * Executed ${rawCmd.name} command`)
+            log(`${target}| * Executed ${rawCmd.name} command`)
           }
         }
         await m.onChatMsg(this.chatClient, target, context, msg);
@@ -49,7 +49,7 @@ class TwitchClientManager {
 
     // Called every time the bot connects to Twitch chat
     this.chatClient.on('connected', (addr, port) => {
-      console.log(`${this.logprefix} * Connected to ${addr}:${port}`)
+      log(`* Connected to ${addr}:${port}`)
     })
     this.chatClient.connect();
 

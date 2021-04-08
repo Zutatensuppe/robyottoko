@@ -3,6 +3,8 @@ const storage = require('../src/storage')
 
 const HelixClient = require('../src/services/HelixClient.js')
 
+const log = (...args) => console.log('[create-user.js]', ...args)
+
 ;(async () => {
   const db = new storage.Db(config.db.file)
 
@@ -19,7 +21,7 @@ const HelixClient = require('../src/services/HelixClient.js')
   const twitch_channels = []
 
   const user_id = db.upsert('user', user, {name: user.name}, 'id')
-  console.log('user created/updated: ' + user_id)
+  log('user created/updated: ' + user_id)
 
   const helixClient = new HelixClient(
     user.tmi_identity_client_id,

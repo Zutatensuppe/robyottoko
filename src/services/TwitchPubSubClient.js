@@ -5,6 +5,8 @@ const { EventHub } = require('../EventHub.js')
 const heartbeatInterval = 60 * SECOND //ms between PING's
 const reconnectInterval = 3 * SECOND //ms to wait before reconnect
 
+const log = (...args) => console.log('[TwitchPubSubClient.js]', ...args)
+
 class WsWrapper {
   // actual ws handle
   handle = null
@@ -87,7 +89,7 @@ function TwitchPubSubClient() {
 
   let heartbeatHandle
   ws.onopen = (event) => {
-    console.log('INFO: Socket Opened')
+    log('INFO', 'Socket Opened')
     heartbeat()
     if (heartbeatHandle) {
       clearInterval(heartbeatHandle)
@@ -102,9 +104,9 @@ function TwitchPubSubClient() {
   }
   ws.onmessage = (event) => {
     const message = JSON.parse(event.data)
-    console.log('RECV: ' + JSON.stringify(message))
+    log('RECV', JSON.stringify(message))
     if (message.type == 'RECONNECT') {
-      console.log('INFO: Reconnecting...')
+      log('INFO', 'Reconnecting...')
       ws.connect()
     }
     evts.trigger('message', message)

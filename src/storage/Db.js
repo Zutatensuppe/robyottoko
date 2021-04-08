@@ -1,6 +1,8 @@
 const fs = require('fs')
 const bsqlite = require('better-sqlite3')
 
+const log = (...args) => console.log('[Db.js]', ...args)
+
 class Db {
   constructor(file) {
     this.dbh = bsqlite(file)
@@ -21,7 +23,7 @@ class Db {
     for (const f of files) {
       if (patches.includes(f)) {
         if (verbose) {
-          console.log(`➡ skipping already applied db patch: ${f}`)
+          log(`➡ skipping already applied db patch: ${f}`)
         }
         continue
       }
@@ -29,13 +31,13 @@ class Db {
       const all = contents.split(';').map(s => s.trim()).filter(s => !!s)
       for (const q of all) {
         if (verbose) {
-          console.log(`Running: ${q}`)
+          log(`Running: ${q}`)
         }
         this.run(q)
       }
       this.insert('db_patches', {id: f})
       // this one should always be output for info
-      console.log(`✓ applied db patch: ${f}`)
+      log(`✓ applied db patch: ${f}`)
     }
   }
 

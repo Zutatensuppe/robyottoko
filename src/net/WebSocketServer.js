@@ -1,6 +1,8 @@
 const WebSocket = require('ws')
 const { SECOND } = require('../fn')
 
+const log = (...args) => console.log('[WebSocketServer.js]', ...args)
+
 class WebSocketServer {
   constructor(moduleManager, config, auth) {
     this.moduleManager = moduleManager
@@ -16,7 +18,7 @@ class WebSocketServer {
       const token = socket.protocol
       const tokenInfo = this.auth.wsTokenFromProtocol(token)
       if (!tokenInfo) {
-        console.log('not found token: ', token)
+        log('not found token: ', token)
         socket.close()
         return
       }
@@ -25,7 +27,7 @@ class WebSocketServer {
 
       const pathname = new URL(this.config.connectstring).pathname
       if (request.url.indexOf(pathname) !== 0) {
-        console.log('bad request url: ', request.url)
+        log('bad request url: ', request.url)
         socket.close()
         return
       }
@@ -46,7 +48,7 @@ class WebSocketServer {
         const evts = module.getWsEvents()
         if (evts) {
           socket.on('message', (data) => {
-            console.log(`ws|${socket.user_id}| `, data)
+            log(`ws|${socket.user_id}| `, data)
             const d = JSON.parse(data)
             if (!d.event) {
               return
@@ -81,7 +83,7 @@ class WebSocketServer {
 
   notifyOne(user_ids, module, data, socket) {
     if (socket.isAlive && user_ids.includes(socket.user_id) && socket.module === module) {
-      console.log(`notifying ${socket.user_id} (${data.event})`)
+      log(`notifying ${socket.user_id} (${data.event})`)
       socket.send(JSON.stringify(data))
     }
   }

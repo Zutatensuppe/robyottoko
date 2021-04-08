@@ -33,16 +33,17 @@ for (const user of userRepo.all()) {
   }
 }
 
+const log = (...args) => console.log('[bot.js]', ...args)
 const gracefulShutdown = (signal) => {
-  console.log(`${signal} received...`)
+  log(`${signal} received...`)
 
-  console.log('shutting down webserver...')
+  log('shutting down webserver...')
   webServer.close()
 
-  console.log('shutting down websocketserver...')
+  log('shutting down websocketserver...')
   webSocketServer.close()
 
-  console.log('shutting down...')
+  log('shutting down...')
   process.exit()
 }
 

@@ -1,7 +1,9 @@
+const log = (...args) => console.log('[youtube.js]', ...args)
+
 let apiRdy = false
 function createApi() {
   if (apiRdy) {
-    console.log('ytapi ALREADY ready')
+    log('ytapi ALREADY ready')
     return Promise.resolve()
   }
   return new Promise((resolve) => {
@@ -10,7 +12,7 @@ function createApi() {
     document.head.append(tag)
     window.onYouTubeIframeAPIReady = () => {
       apiRdy = true
-      console.log('ytapi ready')
+      log('ytapi ready')
       resolve()
     }
   })
@@ -18,7 +20,7 @@ function createApi() {
 
 function createPlayer(id) {
   return new Promise((resolve) => {
-    console.log('create player on ' + id);
+    log('create player on ' + id);
     const player = new YT.Player(id, {
       playerVars: {
         iv_load_policy: 3, // do not load annotations
@@ -26,7 +28,7 @@ function createPlayer(id) {
       },
       events: {
         onReady: () => {
-          console.log('player ready')
+          log('player ready')
           resolve(player)
         }
       },
@@ -85,7 +87,7 @@ export default {
       this.yt.setVolume(this.tovolume)
     }
     if (this.toplay !== null) {
-      console.log('trying to play..')
+      log('trying to play..')
       this.play(this.toplay)
     }
     this.yt.addEventListener('onStateChange', (event) => {

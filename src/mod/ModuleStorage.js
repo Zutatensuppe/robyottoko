@@ -1,3 +1,5 @@
+const log = (...args) => console.log('[ModuleStorage.js]', ...args)
+
 class ModuleStorage {
   constructor(db, userId) {
     this.db = db
@@ -11,7 +13,7 @@ class ModuleStorage {
       const data = row ? JSON.parse('' + row.data) : null
       return data ? Object.assign({}, def, data) : def
     } catch (e) {
-      console.log(e)
+      log(e)
       return def
     }
   }

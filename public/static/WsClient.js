@@ -1,3 +1,5 @@
+const log = (...args) => console.log('[WsClient.js]', ...args)
+
 import WsWrapper from './WsWrapper.js'
 
 export default class WsClient extends WsWrapper {
@@ -56,7 +58,7 @@ export default class WsClient extends WsWrapper {
       return
     }
 
-    console.log(`ws dispatch ${type} ${tag}`)
+    log(`ws dispatch ${type} ${tag}`)
     for (const callback of callbacks) {
       callback(...args)
     }
