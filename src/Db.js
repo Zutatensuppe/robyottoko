@@ -1,6 +1,6 @@
 const fs = require('fs')
 const bsqlite = require('better-sqlite3')
-const { logger } = require('../fn.js')
+const { logger } = require('./fn.js')
 
 const log = logger(__filename)
 

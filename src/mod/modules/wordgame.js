@@ -1,5 +1,5 @@
 const fn = require('../../fn.js')
-const JishoOrgClient = require('../../services/JishoOrgClient.js')
+const JishoOrg = require('../../services/JishoOrg.js')
 
 const log = fn.logger(__filename)
 
@@ -44,7 +44,7 @@ const solve = (msg, displayName) => {
 const nextWord = async () => {
   const info = infos[_data.lvl - 1]
   const page = fn.getRandomInt(1, info.pages)
-  const data = await JishoOrgClient.searchWord(info.search, page)
+  const data = await JishoOrg.searchWord(info.search, page)
   const e = fn.getRandom(data)
   _data.word = e.slug
   _data.solutions = [].concat(...e.senses.map(x => x.english_definitions)).map(s => s.toLowerCase())

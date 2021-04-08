@@ -1,10 +1,10 @@
 const fn = require('../../fn.js')
 const config = require('../../config.js')
-const YoutubeClient = require('../../services/YoutubeClient.js')
+const Youtube = require('../../services/Youtube.js')
 
 const extractYoutubeId = async (youtubeUrl) => {
-  return YoutubeClient.extractYoutubeId(youtubeUrl)
-    || await YoutubeClient.getYoutubeIdBySearch(youtubeUrl)
+  return Youtube.extractYoutubeId(youtubeUrl)
+    || await Youtube.getYoutubeIdBySearch(youtubeUrl)
     || null
 }
 
@@ -339,7 +339,7 @@ class SongrequestModule {
     let key = `youtubeData_${youtubeId}`
     let d = this.cache.get(key)
     if (!d) {
-      d = await YoutubeClient.fetchDataByYoutubeId(youtubeId)
+      d = await Youtube.fetchDataByYoutubeId(youtubeId)
       this.cache.set(key, d)
     }
     return d

@@ -1,12 +1,12 @@
 const fn = require('./../fn.js')
-const JishoOrgClient = require('./../services/JishoOrgClient.js')
+const JishoOrg = require('./../services/JishoOrg.js')
 
 const jishoOrgLookup = (
   // no params
 ) => async (command, client, target, context, msg) => {
   const say = fn.sayFn(client, target)
   const phrase = command.args.join(' ')
-  const data = await JishoOrgClient.searchWord(phrase)
+  const data = await JishoOrg.searchWord(phrase)
   if (data.length === 0) {
     say(`Sorry, I didn't find anything for "${phrase}"`)
     return

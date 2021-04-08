@@ -3,8 +3,8 @@
 const verbose = !process.argv.includes('--silent')
 
 const config = require('../src/config.js')
-const storage = require('../src/storage')
+const Db = require('../src/Db.js')
 
-const db = new storage.Db(config.db.file)
+const db = new Db(config.db.file)
 db.patch(config.db.patches_dir, verbose)
 db.close()
