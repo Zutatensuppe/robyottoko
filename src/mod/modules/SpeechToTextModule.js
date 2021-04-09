@@ -70,7 +70,7 @@ class SpeechToTextModule {
           title: 'Speech to Text Widget',
           page: 'speech-to-text',
           page_data: {
-            wsBase: config.ws.connectstring,
+            wsBase: this.wss.connectstring(),
             widgetToken: req.params.widget_token,
           },
         }))
@@ -85,7 +85,7 @@ class SpeechToTextModule {
           title: 'Speech to text',
           page: 'speech-to-text',
           page_data: {
-            wsBase: config.ws.connectstring,
+            wsBase: this.wss.connectstring(),
             widgetToken: req.userWidgetToken,
             user: req.user,
             token: req.cookies['x-token'],

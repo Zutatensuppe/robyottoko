@@ -12,6 +12,10 @@ class WebSocketServer {
     this._interval = null
   }
 
+  connectstring () {
+    return this.config.connectstring
+  }
+
   listen () {
     this._websocketserver = new WebSocket.Server(this.config)
     this._websocketserver.on('connection', (socket, request, client) => {
@@ -25,7 +29,7 @@ class WebSocketServer {
 
       socket.user_id = tokenInfo.user_id
 
-      const pathname = new URL(this.config.connectstring).pathname
+      const pathname = new URL(this.connectstring()).pathname
       if (request.url.indexOf(pathname) !== 0) {
         log('bad request url: ', request.url)
         socket.close()

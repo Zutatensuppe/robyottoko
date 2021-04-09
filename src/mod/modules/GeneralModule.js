@@ -3,7 +3,6 @@ const jishoOrgLookup = require('../../commands/jishoOrgLookup.js')
 const text = require('../../commands/text.js')
 const randomText = require('../../commands/randomText.js')
 const playMedia = require('../../commands/playMedia.js')
-const config = require('../../config.js')
 const fn = require('../../fn.js')
 
 class GeneralModule {
@@ -111,7 +110,7 @@ class GeneralModule {
           title: 'Media Widget',
           page: 'media',
           page_data: {
-            wsBase: config.ws.connectstring,
+            wsBase: this.wss.connectstring(),
             widgetToken: req.params.widget_token,
           },
         }))
@@ -126,7 +125,7 @@ class GeneralModule {
           title: 'Commands',
           page: 'commands',
           page_data: {
-            wsBase: config.ws.connectstring,
+            wsBase: this.wss.connectstring(),
             widgetToken: req.userWidgetToken,
             user: req.user,
             token: req.cookies['x-token'],

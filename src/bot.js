@@ -16,10 +16,10 @@ const cache = new Cache(db)
 const auth = new net.Auth(userRepo, tokenRepo)
 
 const moduleManager = new mod.ModuleManager()
-const webServer = new net.WebServer(userRepo, twitchChannelRepo, moduleManager, config, auth)
-webServer.listen()
 const webSocketServer = new net.WebSocketServer(moduleManager, config.ws, auth)
+const webServer = new net.WebServer(userRepo, twitchChannelRepo, moduleManager, config.http, webSocketServer, auth)
 webSocketServer.listen()
+webServer.listen()
 
 // one for each user
 for (const user of userRepo.all()) {

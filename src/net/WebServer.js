@@ -9,19 +9,21 @@ const TwitchHelixClient = require('../services/TwitchHelixClient.js')
 const log = fn.logger(__filename)
 
 class WebServer {
-  constructor(userRepo, twitchChannelRepo, moduleManager, config, auth) {
+  constructor(userRepo, twitchChannelRepo, moduleManager, config, wss, auth) {
     this.userRepo = userRepo
     this.twitchChannelRepo = twitchChannelRepo
 
     this.moduleManager = moduleManager
-    this.config = config
+    this.port = config.port
+    this.hostname = config.hostname
+    this.wss = wss
     this.auth = auth
     this.handle = null
   }
 
   async listen() {
-    const port = this.config.http.port
-    const hostname = this.config.http.hostname
+    const port = this.port
+    const hostname = this.hostname
     const app = express()
 
     const uploadDir = './data/uploads'
@@ -60,7 +62,7 @@ class WebServer {
         title: 'Login',
         page: 'login',
         page_data: {
-          wsBase: this.config.ws.connectstring,
+          wsBase: this.wss.connectstring(),
           widgetToken: null,
           user: null,
           token: null,
@@ -80,7 +82,7 @@ class WebServer {
         title: 'Hyottoko.club',
         page: 'index',
         page_data: {
-          wsBase: this.config.ws.connectstring,
+          wsBase: this.wss.connectstring(),
           widgetToken: req.userWidgetToken,
           user: req.user,
           token: req.cookies['x-token'],

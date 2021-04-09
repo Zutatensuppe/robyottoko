@@ -1,5 +1,4 @@
 const fn = require('../../fn.js')
-const config = require('../../config.js')
 const Youtube = require('../../services/Youtube.js')
 
 const extractYoutubeId = async (youtubeUrl) => {
@@ -41,7 +40,7 @@ class SongrequestModule {
           title: 'Song Request Widget',
           page: 'sr',
           page_data: {
-            wsBase: config.ws.connectstring,
+            wsBase: this.wss.connectstring(),
             widgetToken: req.params.widget_token,
           },
         }))
@@ -56,7 +55,7 @@ class SongrequestModule {
           title: 'Song Request',
           page: 'sr',
           page_data: {
-            wsBase: config.ws.connectstring,
+            wsBase: this.wss.connectstring(),
             widgetToken: req.userWidgetToken,
             user: req.user,
             token: req.cookies['x-token'],
