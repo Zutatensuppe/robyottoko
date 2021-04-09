@@ -1,15 +1,11 @@
-class ModuleManager {
-  constructor() {
-    this.instances = {}
-  }
-
-  add (user_id, module) {
-    this.instances[user_id] = this.instances[user_id] || []
-    this.instances[user_id].push(module)
-  }
-
-  all (user_id) {
-    return this.instances[user_id] || []
+function ModuleManager() {
+  const instances = {}
+  return {
+    add: (userId, mod) => {
+      instances[userId] = instances[userId] || []
+      instances[userId].push(mod)
+    },
+    all: (userId) => (instances[userId] || []),
   }
 }
 
