@@ -5,8 +5,6 @@ const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
 
 const TwitchHelixClient = require('../services/TwitchHelixClient.js')
-const TwitchChannels = require('../services/TwitchChannels.js')
-const Users = require('../services/Users.js')
 
 const log = fn.logger(__filename)
 
