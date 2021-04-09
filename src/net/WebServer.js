@@ -5,12 +5,16 @@ const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
 
 const TwitchHelixClient = require('../services/TwitchHelixClient.js')
+const TwitchChannels = require('../services/TwitchChannels.js')
+const Users = require('../services/Users.js')
 
 const log = fn.logger(__filename)
 
 class WebServer {
-  constructor(db, moduleManager, config, auth) {
-    this.db = db
+  constructor(userRepo, twitchChannelRepo, moduleManager, config, auth) {
+    this.userRepo = userRepo
+    this.twitchChannelRepo = twitchChannelRepo
+
     this.moduleManager = moduleManager
     this.config = config
     this.auth = auth
@@ -87,8 +91,8 @@ class WebServer {
     })
 
     app.get('/settings/', requireLogin, async (req, res) => {
-      const user = this.db.get('user', {id: req.user.id})
-      const twitch_channels = this.db.getMany('twitch_channel', {user_id: user.id})
+      const user = this.userRepo.getById(req.user.id)
+      const twitch_channels = this.twitchChannelRepo.allByUserId(user.id)
       res.send(await fn.render('base.twig', {
         title: 'Settings',
         page: 'settings',
@@ -107,12 +111,9 @@ class WebServer {
         return channel
       })
 
-      this.db.upsert('user', user, {id: user.id})
+      this.userRepo.save(user)
       for (const twitch_channel of twitch_channels) {
-        this.db.upsert('twitch_channel', twitch_channel, {
-          user_id: twitch_channel.user_id,
-          channel_name: twitch_channel.channel_name,
-        })
+        this.twitchChannelRepo.save(twitch_channel)
       }
       res.send()
     })
