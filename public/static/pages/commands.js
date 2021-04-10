@@ -1,5 +1,6 @@
 import Navbar from '../components/navbar.js'
 import Player from '../components/player.js'
+import VolumeSlider from '../components/volume-slider.js'
 import ResponsiveImage from '../components/responsive-image.js'
 import Upload from '../components/upload.js'
 import WsClient from '../WsClient.js'
@@ -35,6 +36,7 @@ const newCmd = (type) => {
         sound: {
           filename: '',
           file: '',
+          volume: 100,
         },
         image: {
           filename: '',
@@ -68,6 +70,7 @@ export default {
   components: {
     Navbar,
     Player,
+    VolumeSlider,
     ResponsiveImage,
     Upload,
   },
@@ -173,7 +176,8 @@ export default {
                 <div v-if="item.action === 'media'" :class="item.action">
                     <div class="spacerow media-holder" v-if="item.data.image.file || item.data.sound.file">
                       <responsive-image v-if="item.data.image.file" :src="item.data.image.file" :title="item.data.image.filename" width="100%" height="90" style="display:block;" />
-                      <player :src="item.data.sound.file" :name="item.data.sound.filename" class="btn" />
+                      <player :src="item.data.sound.file" :name="item.data.sound.filename" :volume="item.data.sound.volume" class="btn" />
+                      <volume-slider v-model="item.data.sound.volume" />
                     </div>
                     <div class="spacerow">
                       <upload @uploaded="mediaSndUploaded(idx, $event)" accept="audio/*" label="Upload Audio" />

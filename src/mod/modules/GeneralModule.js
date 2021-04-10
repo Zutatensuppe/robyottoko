@@ -26,6 +26,7 @@ class GeneralModule {
       }
       if (cmd.action === 'media') {
         cmd.data.minDurationMs = cmd.data.minDurationMs || 0
+        cmd.data.sound.volume = cmd.data.sound.volume || 100
       }
       cmd.triggers = cmd.triggers.map(trigger => {
         trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0

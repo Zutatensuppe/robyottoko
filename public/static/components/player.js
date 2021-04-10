@@ -3,6 +3,7 @@ export default {
   props: {
     src: String,
     name: String,
+    volume: Number,
   },
   data() {
     return {
@@ -27,6 +28,7 @@ export default {
         this.audio.pause()
         this.audio.currentTime = 0;
       } else {
+        this.audio.volume = this.volume / 100.0
         this.audio.play()
       }
       this.playing = !this.playing

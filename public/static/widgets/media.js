@@ -39,6 +39,7 @@ export default {
             audio.addEventListener('ended', () => {
               res()
             })
+            audio.volume = media.sound.volume / 100.0
             audio.play();
           }))
         }
