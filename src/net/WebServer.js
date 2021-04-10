@@ -124,8 +124,20 @@ class WebServer {
       res.send(await fn.render('twitch/redirect_uri.twig'))
     })
     app.post('/twitch/user-id-by-name', requireLogin, bodyParser.json(), async (req, res) => {
-      const client = new TwitchHelixClient(req.body.client_id, req.body.client_secret)
-      res.send({id: await client.getUserIdByName(req.body.name)})
+      if (!req.body.client_id) {
+        res.status(400).send({reason: 'need client id'});
+        return
+      }
+      if (!req.body.client_secret) {
+        res.status(400).send({reason: 'need client secret'});
+        return
+      }
+      try {
+        const client = new TwitchHelixClient(req.body.client_id, req.body.client_secret)
+        res.send({id: await client.getUserIdByName(req.body.name)})
+      } catch (e) {
+        res.status(500).send("Something went wrong!");
+      }
     })
 
     app.post('/auth', bodyParser.json(), async (req, res) => {
