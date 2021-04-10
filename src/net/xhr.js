@@ -1,3 +1,5 @@
+const fetch = require('node-fetch')
+
 function withHeaders(headers, opts = {}) {
   const options = opts || {}
   options.headers = options.headers || {}
