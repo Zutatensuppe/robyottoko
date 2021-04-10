@@ -1,5 +1,30 @@
 # Robyottoko - Twitch bot
 
+Robyottoko provides an interface for your twitch bots.
+
+Features are:
+- Respond to twitch chat with:
+  - static text
+  - countdown
+  - playing a sound
+  - showing an image
+  - jisho.org word lookup
+  - text returned from custom api
+- Song requests via youtube
+  - up/down vote per song
+  - songs skippable, removable via chat or via interface
+- Speech to text, which can turn your voice into combinations of:
+  - subtitles
+  - translated subtitles
+  - synthesized voice
+  - synthesized translated voice
+
+Note: You will need your own bot account on twitch.tv for using
+robyottoko. Alternatively you can ask in
+the [discord channel](https://discord.gg/jrPSmmHhbE)
+for an account on [hyottoko.club](https://hyottoko.club), which
+would let you use all the features without setting anything up yourself.
+
 ## Getting Started
 
 1. Create a `src/config.js`. The example can be copied, for some
