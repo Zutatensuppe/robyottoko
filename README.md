@@ -1,4 +1,4 @@
-# Robyottoko - Twitch bot
+# Robyottoko - Twitch Bot
 
 Robyottoko provides an interface for your twitch bots.
 
