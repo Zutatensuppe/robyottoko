@@ -6,18 +6,22 @@ module.exports = {
   ws: {
     hostname: 'localhost',
     port: 1338,
+    // if a proxy is used infront of the bot to make it use ssl,
+    // the connect string needs to be adjusted from ws to wss
     connectstring: `ws://localhost:1338/ws`,
   },
   db: {
     file: __dirname + '/../db/database.sqlite',
-    patches_dir: __dirname + '/../db/patches',
+    patchesDir: __dirname + '/../db/patches',
   },
   modules: {
+    // Song request module
     sr: {
       google: {
         api_key: '' // google api key :)
       },
     },
+    // Speech to text module
     speechToText: {
       google: {
         // see https://qiita.com/tanabee/items/c79c5c28ba0537112922

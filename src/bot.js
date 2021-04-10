@@ -8,7 +8,9 @@ const TwitchChannels = require('./services/TwitchChannels.js')
 const Cache = require('./services/Cache.js')
 const Db = require('./Db.js')
 
-const db = new Db(config.db.file)
+const db = new Db(config.db)
+// make sure we are always on latest db version
+db.patch(false)
 const userRepo = new Users(db)
 const tokenRepo = new Tokens(db)
 const twitchChannelRepo = new TwitchChannels(db)

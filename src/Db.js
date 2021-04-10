@@ -5,20 +5,21 @@ const { logger } = require('./fn.js')
 const log = logger(__filename)
 
 class Db {
-  constructor(file) {
-    this.dbh = bsqlite(file)
+  constructor(dbConf) {
+    this.conf = dbConf
+    this.dbh = bsqlite(this.conf.file)
   }
 
   close() {
     this.dbh.close()
   }
 
-  patch (patches_dir, verbose=true) {
+  patch (verbose=true) {
     if (!this.get('sqlite_master', {type: 'table', name: 'db_patches'})) {
       this.run('CREATE TABLE db_patches ( id TEXT PRIMARY KEY);', [])
     }
 
-    const files = fs.readdirSync(patches_dir)
+    const files = fs.readdirSync(this.conf.patchesDir)
     const patches = (this.getMany('db_patches')).map(row => row.id)
 
     for (const f of files) {
@@ -28,7 +29,7 @@ class Db {
         }
         continue
       }
-      const contents = fs.readFileSync(`${patches_dir}/${f}`, 'utf-8')
+      const contents = fs.readFileSync(`${this.conf.patchesDir}/${f}`, 'utf-8')
       const all = contents.split(';').map(s => s.trim()).filter(s => !!s)
       for (const q of all) {
         if (verbose) {

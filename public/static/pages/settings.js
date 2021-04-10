@@ -29,16 +29,17 @@ export default {
     <h1>Hyottoko.club</h1>
     <table>
       <tr>
-        <td>User name</td>
-        <td><input type="text" v-model="user.name" /></td>
+        <td>User name:</td>
+        <td>{{user.name}}</td>
       </tr>
       <tr>
-        <td>User pass</td>
+        <td>User pass:</td>
         <td><input type="password" v-model="user.pass" /></td>
       </tr>
     </table>
 
     <h1>Twitch-Bot</h1>
+    <p>Please refer to <a href="https://dev.twitch.tv/docs/irc/#building-the-bot" target="_blank">building the bot</a>.</p>
     <table>
       <tr>
         <td>Bot name:</td>
@@ -49,11 +50,11 @@ export default {
         <td><input type="text" v-model="user.tmi_identity_password" /></td>
       </tr>
       <tr>
-        <td>Bot client_id</td>
+        <td>Bot client_id:</td>
         <td><input type="text" v-model="user.tmi_identity_client_id" /></td>
       </tr>
       <tr>
-        <td>Bot client_secret</td>
+        <td>Bot client_secret:</td>
         <td><input type="text" v-model="user.tmi_identity_client_secret" /></td>
       </tr>
     </table>
