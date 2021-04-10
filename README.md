@@ -9,14 +9,20 @@ features you have to provide an api key directly in the config atm.
     cp src/config.js.example src/config.js
     ```
 
-2. Create a user. You will be asked for a user name and password.
+2. Install the dependencies
+
+    ```
+    npm install
+    ```
+
+3. Create a user. You will be asked for a user name and password.
 The rest of the settings can be changed via the bot admin ui.
 
     ```
     ./run create-user
     ```
 
-3. Run the bot
+4. Run the bot
 
     ```
     ./run bot
