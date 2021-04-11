@@ -5,7 +5,36 @@
   --link-color: #808db0;
   --link-hover-color: #c5cfeb;
   --highlight-color: #dd7e7e;
-  --input-bg-color: #262523;
+
+  --pos-color: #54a454;
+  --pos-color-hover: #40e340;
+  --neg-color: #8c4747;
+
+  --table-bg-color: #343434;
+  --table-bg-color-even: #414141;
+
+  --border-color: black;
+  --border-radius: 4px;
+
+  --button-bg-color: #262523;
+  --button-border-color: var(--border-color);
+  --button-box-shadow-out: 1px 1px 2px rgba(0,0,0,.5);
+  --button-box-shadow-in: 0 0 1px rgba(150,150,150,.4) inset;
+  --button-box-shadow: var(--button-box-shadow-out), var(--button-box-shadow-in);
+  --button-border-radius: var(--border-radius);
+  --button-hover-bg-color: #2f2e2c;
+  --button-hover-border-color: #111;
+  --button-hover-box-shadow: var(--button-box-shadow-in);
+  --button-disabled-bg-color: var(--button-hover-bg-color);
+  --button-disabled-border-color: var(--button-hover-border-color);
+  --button-disabled-box-shadow: var(--button-hover-box-shadow);
+
+  --input-bg-color: #333230;
+  --input-border-color: var(--border-color);
+  --input-box-shadow: 0 0 3px rgba(0, 0,0,0.3) inset;
+  --input-border-radius: var(--border-radius);
+  --input-focus-bg-color: #262523;
+  --input-focus-border-color: #686767;
 }
 
 body { margin: 0; }
@@ -18,28 +47,29 @@ body { margin: 0; }
 a { color: var(--link-color); text-decoration: none; }
 a:hover { color: var(--link-hover-color); }
 
-table { border-collapse: collapse; background: #343434; }
+table { border-collapse: collapse; background: var(--table-bg-color); }
 table th { text-align: left; }
 table th,
 table td { padding: 5px 10px; vertical-align: top; }
 table td textarea  { width: 100%; }
 table tr:nth-child(even) th,
-table tr:nth-child(even) td { background: #414141; }
+table tr:nth-child(even) td { background: var(--table-bg-color-even); }
 
 textarea,
 input,
 .select {
-  background: #333230;
-  border-radius: 4px;
+  background: var(--input-bg-color);
+  border-radius: var(--input-border-radius);
   color: var(--main-color);
   padding: 6px 10px;
-  border: solid 1px black;
-  box-shadow: 0 0 3px rgba(0, 0,0,0.3) inset;
+  border: solid 1px var(--input-border-color);
+  box-shadow: var(--input-box-shadow);
 }
 textarea:focus,
 input:focus {
-  border: solid 1px #686767;
-  background: var(--input-bg-color);
+  border: solid 1px var(--input-focus-border-color);
+  background: var(--input-focus-bg-color);
+  outline: none;
 }
 
 .select {
@@ -79,32 +109,32 @@ textarea { width: 100%; }
 .btn {
   font: 15px sans-serif;
   display: inline-block;
-  background: var(--input-bg-color);
+  background: var(--button-bg-color);
   color: var(--link-color);
-  border: solid 1px black;
+  border: solid 1px var(--button-border-color);
   padding: 5px 10px;
-  box-shadow: 1px 1px 2px rgba(0,0,0,.5), 0 0 1px rgba(150,150,150,.4) inset;
-  border-radius: 4px;
+  box-shadow: var(--button-box-shadow);
+  border-radius: var(--button-border-radius);
   user-select: none;
 }
 .btn:hover {
-  background: #2f2e2c;
+  background: var(--button-hover-bg-color);
   color: var(--link-hover-color);
-  border: solid 1px #111;
-  box-shadow: 0 0 1px rgba(150,150,150,.4) inset;
+  border: solid 1px var(--button-hover-border-color);
+  box-shadow: var(--button-hover-box-shadow);
   cursor: pointer;
 }
 .btn.btn-primary {
-  color: #54a454;
+  color: var(--pos-color);
 }
 .btn.btn-primary:hover {
-  color: #40e340;
+  color: var(--pos-color-hover);
 }
 .btn:disabled {
-  background: #2f2e2c;
-  color: #8c4747 !important;
-  border: solid 1px #111;
-  box-shadow: 0 0 1px rgba(150,150,150,.4) inset;
+  background: var(--button-disabled-bg-color);
+  color: var(--neg-color) !important;
+  border: solid 1px var(--button-disabled-border-color);
+  box-shadow: var(--button-disabled-box-shadow);
   cursor: not-allowed;
 }
 
@@ -131,11 +161,11 @@ textarea { width: 100%; }
 }
 
 .range {
-  background: #333230;
-  border-radius: 4px;
+  background: var(--input-bg-color);
+  border-radius: var(--input-border-radius);
   color: var(--main-color);
-  border: solid 1px black;
-  box-shadow: 0 0 3px rgba(0, 0,0,0.3) inset;
+  border: solid 1px var(--input-border-color);
+  box-shadow: var(--input-box-shadow);
   height: 30px;
   box-sizing: border-box;
 }
@@ -148,30 +178,27 @@ input[type=range] {
   border: none;
   box-shadow: none;
 }
-.volume-slider input[type=range]::-moz-range-track {background: var(--link-color);}
-.volume-slider input[type=range]::-webkit-slider-runnable-track {background: var(--link-color);}
-.volume-slider input[type=range]::-webkit-slider-runnable-track {background: var(--link-color);}
 
 input[type=range]::-webkit-slider-thumb {
-  background: var(--input-bg-color);
+  background: var(--button-bg-color);
   color: var(--link-color);
-  border: solid 1px black;
-  box-shadow: 1px 1px 2px rgba(0,0,0,.5), 0 0 1px rgba(150,150,150,.4) inset;
-  border-radius: 4px;
+  border: solid 1px var(--button-border-color);
+  box-shadow: var(--button-box-shadow);
+  border-radius: var(--button-border-radius);
 }
 input[type=range]::-moz-range-thumb {
-  background: var(--input-bg-color);
+  background: var(--button-bg-color);
   color: var(--link-color);
-  border: solid 1px black;
-  box-shadow: 1px 1px 2px rgba(0,0,0,.5), 0 0 1px rgba(150,150,150,.4) inset;
-  border-radius: 4px;
+  border: solid 1px var(--button-border-color);
+  box-shadow: var(--button-box-shadow);
+  border-radius: var(--button-border-radius);
 }
 input[type=range]::-ms-thumb {
-  background: var(--input-bg-color);
+  background: var(--button-bg-color);
   color: var(--link-color);
-  border: solid 1px black;
-  box-shadow: 1px 1px 2px rgba(0,0,0,.5), 0 0 1px rgba(150,150,150,.4) inset;
-  border-radius: 4px;
+  border: solid 1px var(--button-border-color);
+  box-shadow: var(--button-box-shadow);
+  border-radius: var(--button-border-radius);
 }
 
 .volume-slider {
@@ -180,19 +207,28 @@ input[type=range]::-ms-thumb {
   display: inline-block;
 }
 
-.volume-slider .fa-volume-down {
+.volume-slider .fa {
   position: absolute;
-  left: 8px;
   top: 7px;
 }
 
+.volume-slider .fa-volume-down {
+  left: 8px;
+}
+
 .volume-slider .fa-volume-up {
-  position: absolute;
   right: 10px;
-  top: 7px;
 }
 
 .volume-slider input[type=range] {
   width: 100px;
   margin: 0 20px;
+}
+
+.volume-slider input[type=range]::-moz-range-track {
+  background: var(--link-color);
+}
+
+.volume-slider input[type=range]::-webkit-slider-runnable-track {
+  background: var(--link-color);
 }
