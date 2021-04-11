@@ -229,8 +229,14 @@ input[type=range]::-ms-thumb {
   margin: 0 20px;
 }
 
+.volume-slider input[type=range]::-ms-track {
+  background: var(--link-color);
+  height: 2px;
+}
+
 .volume-slider input[type=range]::-moz-range-track {
   background: var(--link-color);
+  height: 2px;
 }
 
 .volume-slider input[type=range]::-webkit-slider-runnable-track {
