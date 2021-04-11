@@ -180,6 +180,10 @@ input[type=range] {
 }
 
 input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 16px;
+  width: 16px;
+  margin-top: -7px;
   background: var(--button-bg-color);
   color: var(--link-color);
   border: solid 1px var(--button-border-color);
@@ -231,4 +235,5 @@ input[type=range]::-ms-thumb {
 
 .volume-slider input[type=range]::-webkit-slider-runnable-track {
   background: var(--link-color);
+  height: 2px;
 }
