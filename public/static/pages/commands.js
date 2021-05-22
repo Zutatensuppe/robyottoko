@@ -3,6 +3,7 @@ import Player from '../components/player.js'
 import VolumeSlider from '../components/volume-slider.js'
 import ResponsiveImage from '../components/responsive-image.js'
 import Upload from '../components/upload.js'
+import CountdownEdit from '../components/countdown-edit.js'
 import WsClient from '../WsClient.js'
 
 const newTrigger = () => ({
@@ -73,6 +74,7 @@ export default {
     VolumeSlider,
     ResponsiveImage,
     Upload,
+    CountdownEdit,
   },
   props: {
     conf: Object,
@@ -192,22 +194,7 @@ export default {
                     </div>
                 </div>
                 <div v-if="item.action === 'countdown'">
-                    <div class="spacerow">
-                        <label class="spacelabel">Steps </label>
-                        <input class="spaceinput" v-model="item.data.steps" />
-                    </div>
-                    <div class="spacerow">
-                        <label class="spacelabel">Interval </label>
-                        <input class="spaceinput" v-model="item.data.interval" />
-                    </div>
-                    <div class="spacerow">
-                        <label class="spacelabel">Intro </label>
-                        <input class="spaceinput" v-model="item.data.intro" />
-                    </div>
-                    <div class="spacerow">
-                        <label class="spacelabel">Outro </label>
-                        <input class="spaceinput" v-model="item.data.outro" />
-                    </div>
+                    <countdown-edit v-model="item.data" />
                 </div>
             </td>
             <td>

@@ -127,7 +127,7 @@ const wordgameOnMsg = async function (client, target, context, msg) {
   say(solved)
 
   await nextWord()
-  await fn.sleep(5)
+  await fn.sleep(5 * fn.SECOND)
   say(`Ok, the next word is: ${_data.word}`)
   return true
 }

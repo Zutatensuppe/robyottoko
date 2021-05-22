@@ -83,9 +83,9 @@ const render = async (template, data) => {
 
 const fnRandom = (values) => () => getRandom(values)
 
-const sleep = (t) => {
+const sleep = (ms) => {
   return new Promise((resolve, reject) => {
-    setTimeout(resolve, t * SECOND)
+    setTimeout(resolve, ms)
   })
 }
 
