@@ -12,7 +12,16 @@ function Auth(userRepo, tokenRepo) {
       const tokenInfo = getTokenInfo(token)
       if (tokenInfo && ['auth'].includes(tokenInfo.type)) {
         req.token = tokenInfo.token
-        req.user = userRepo.getById(tokenInfo.user_id)
+
+        const user = userRepo.getById(tokenInfo.user_id)
+        user.groups = userRepo.getGroups(user.id)
+        if (!user.groups.includes('admin')) {
+          delete user.tmi_identity_username
+          delete user.tmi_identity_password
+          delete user.tmi_identity_client_id
+          delete user.tmi_identity_client_secret
+        }
+        req.user = user
         req.userWidgetToken = tokenRepo.getWidgetTokenForUserId(tokenInfo.user_id).token
       } else {
         req.token = null

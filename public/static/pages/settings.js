@@ -38,56 +38,61 @@ export default {
       </tr>
     </table>
 
-    <h1>Twitch-Bot</h1>
-    <p>Please refer to <a href="https://dev.twitch.tv/docs/irc/#building-the-bot" target="_blank">building the bot</a>.</p>
-    <table>
-      <tr>
-        <td>Bot name:</td>
-        <td><input type="text" v-model="user.tmi_identity_username" /></td>
-      </tr>
-      <tr>
-        <td>Bot oauth (pass):</td>
-        <td><input type="password" v-model="user.tmi_identity_password" class="pw" /></td>
-      </tr>
-      <tr>
-        <td>Bot client_id:</td>
-        <td><input type="text" v-model="user.tmi_identity_client_id" /></td>
-      </tr>
-      <tr>
-        <td>Bot client_secret:</td>
-        <td><input type="password" v-model="user.tmi_identity_client_secret" class="pw" /></td>
-      </tr>
-    </table>
+    <div v-if="isAdmin">
+      <h1>Twitch-Bot</h1>
+      <p>Please refer to <a href="https://dev.twitch.tv/docs/irc/#building-the-bot" target="_blank">building the bot</a>.</p>
+      <table>
+        <tr>
+          <td>Bot name:</td>
+          <td><input type="text" v-model="user.tmi_identity_username" /></td>
+        </tr>
+        <tr>
+          <td>Bot oauth (pass):</td>
+          <td><input type="password" v-model="user.tmi_identity_password" class="pw" /></td>
+        </tr>
+        <tr>
+          <td>Bot client_id:</td>
+          <td><input type="text" v-model="user.tmi_identity_client_id" /></td>
+        </tr>
+        <tr>
+          <td>Bot client_secret:</td>
+          <td><input type="password" v-model="user.tmi_identity_client_secret" class="pw" /></td>
+        </tr>
+      </table>
 
-    <h1>Twitch-Channels</h1>
-    <p>Where should the bot connect to?</p>
-    <p>To get an access token:</p>
-    <ol>
-      <li>Login to twitch as the channel owner
-      <li>Click <a :href="accessTokenLink" target="_blank">here</a> to authorize the bot with the channel
-      <li>If authorized, you get redirected back to hyottoko.club, and the access token will display
-    </ol>
-    <table>
-      <tr>
-        <td>Channel name</td>
-        <td>Channel id</td>
-        <td>Access Token</td>
-        <td></td>
-      </tr>
-      <tr v-for="(channel, idx) in twitch_channels" v-key="channel.channel_name">
-        <td><input type="text" v-model="channel.channel_name" /></td>
-        <td>
-          <input type="text" v-model="channel.channel_id" v-if="channel.channel_id" />
-          <button class="btn" @click="loadid(idx)" v-if="!channel.channel_id">Load id</button></td>
-        <td><input type="password" v-model="channel.access_token" class="pw" /></td>
-        <td><button class="btn" @click="rmchannel(idx)"><i class="fa fa-remove" /></button></td>
-      </tr>
-    </table>
-    <button class="btn" @click="addchannel()">Add channel</button>
+      <h1>Twitch-Channels</h1>
+      <p>Where should the bot connect to?</p>
+      <p>To get an access token:</p>
+      <ol>
+        <li>Login to twitch as the channel owner
+        <li>Click <a :href="accessTokenLink" target="_blank">here</a> to authorize the bot with the channel
+        <li>If authorized, you get redirected back to hyottoko.club, and the access token will display
+      </ol>
+      <table>
+        <tr>
+          <td>Channel name</td>
+          <td>Channel id</td>
+          <td>Access Token</td>
+          <td></td>
+        </tr>
+        <tr v-for="(channel, idx) in twitch_channels" v-key="channel.channel_name">
+          <td><input type="text" v-model="channel.channel_name" /></td>
+          <td>
+            <input type="text" v-model="channel.channel_id" v-if="channel.channel_id" />
+            <button class="btn" @click="loadid(idx)" v-if="!channel.channel_id">Load id</button></td>
+          <td><input type="password" v-model="channel.access_token" class="pw" /></td>
+          <td><button class="btn" @click="rmchannel(idx)"><i class="fa fa-remove" /></button></td>
+        </tr>
+      </table>
+      <button class="btn" @click="addchannel()">Add channel</button>
+    </div>
   </div>
 </div>
 `,
   computed: {
+    isAdmin() {
+      return this.user.groups.includes('admin')
+    },
     changed() {
       return this.unchangedJson !== this.changedJson
     },

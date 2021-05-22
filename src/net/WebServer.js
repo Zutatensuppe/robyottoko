@@ -153,23 +153,34 @@ class WebServer {
     })
 
     app.get('/settings/', requireLogin, async (req, res) => {
-      const user = this.userRepo.getById(req.user.id)
-      const twitch_channels = this.twitchChannelRepo.allByUserId(user.id)
+      const twitch_channels = this.twitchChannelRepo.allByUserId(req.user.id)
       res.send(await fn.render('base.twig', {
         title: 'Settings',
         page: 'settings',
         page_data: {
-          user,
+          user: req.user,
           twitch_channels,
         },
       }))
     })
 
     app.post('/save-settings', requireLogin, bodyParser.json(), async (req, res) => {
+      if (!req.user.groups.includes('admin')) {
+        if (req.user.id !== req.body.user.id) {
+          // editing other user than self
+          res.status(401)
+          return
+        }
+        // may only save new password
+        this.userRepo.save({pass: user.pass, id: user.id})
+        res.send()
+        return
+      }
+
+      // user is admin
       const user = req.body.user
-      user.id = req.user.id
       const twitch_channels = req.body.twitch_channels.map(channel => {
-        channel.user_id = req.user.id
+        channel.user_id = user.id
         return channel
       })
 
@@ -223,9 +234,9 @@ class WebServer {
     })
 
     app.get('/widget/:widget_type/:widget_token/', async (req, res, next) => {
-      req.user = this.auth.userFromWidgetToken(req.params.widget_token)
+      const user = this.auth.userFromWidgetToken(req.params.widget_token)
       const key = req.params.widget_type
-      for (const m of this.moduleManager.all(req.user.id)) {
+      for (const m of this.moduleManager.all(user.id)) {
         const map = m.widgets()
         if (map && map[key]) {
           await map[key](req, res, next)
