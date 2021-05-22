@@ -34,7 +34,7 @@ export default {
       </tr>
       <tr>
         <td>User pass:</td>
-        <td><input type="password" v-model="user.pass" /></td>
+        <td><input type="password" v-model="user.pass" class="pw" /></td>
       </tr>
     </table>
 
@@ -47,7 +47,7 @@ export default {
       </tr>
       <tr>
         <td>Bot oauth (pass):</td>
-        <td><input type="text" v-model="user.tmi_identity_password" /></td>
+        <td><input type="password" v-model="user.tmi_identity_password" class="pw" /></td>
       </tr>
       <tr>
         <td>Bot client_id:</td>
@@ -55,7 +55,7 @@ export default {
       </tr>
       <tr>
         <td>Bot client_secret:</td>
-        <td><input type="text" v-model="user.tmi_identity_client_secret" /></td>
+        <td><input type="password" v-model="user.tmi_identity_client_secret" class="pw" /></td>
       </tr>
     </table>
 
@@ -79,7 +79,7 @@ export default {
         <td>
           <input type="text" v-model="channel.channel_id" v-if="channel.channel_id" />
           <button class="btn" @click="loadid(idx)" v-if="!channel.channel_id">Load id</button></td>
-        <td><input type="text" v-model="channel.access_token" /></td>
+        <td><input type="password" v-model="channel.access_token" class="pw" /></td>
         <td><button class="btn" @click="rmchannel(idx)"><i class="fa fa-remove" /></button></td>
       </tr>
     </table>
