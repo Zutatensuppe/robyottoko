@@ -126,7 +126,7 @@ export default {
     </div>
   </div>
   <div id="main" ref="main">
-    <table ref="table">
+    <table ref="table" v-if="commands.length > 0">
         <tr>
             <th>Trigger</th>
             <th>Action</th>
@@ -218,6 +218,7 @@ export default {
             </td>
         </tr>
     </table>
+    <div v-else>No commands set up</div>
   </div>
 </div>
 `,
