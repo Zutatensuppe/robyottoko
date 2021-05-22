@@ -22,7 +22,7 @@ class WebSocketServer {
       const token = socket.protocol
       const tokenInfo = this.auth.wsTokenFromProtocol(token)
       if (!tokenInfo) {
-        log('not found token: ', token)
+        log.info('not found token: ', token)
         socket.close()
         return
       }
@@ -31,7 +31,7 @@ class WebSocketServer {
 
       const pathname = new URL(this.connectstring()).pathname
       if (request.url.indexOf(pathname) !== 0) {
-        log('bad request url: ', request.url)
+        log.info('bad request url: ', request.url)
         socket.close()
         return
       }
@@ -52,7 +52,7 @@ class WebSocketServer {
         const evts = module.getWsEvents()
         if (evts) {
           socket.on('message', (data) => {
-            log(`ws|${socket.user_id}| `, data)
+            log.info(`ws|${socket.user_id}| `, data)
             const d = JSON.parse(data)
             if (!d.event) {
               return
@@ -87,7 +87,7 @@ class WebSocketServer {
 
   notifyOne(user_ids, module, data, socket) {
     if (socket.isAlive && user_ids.includes(socket.user_id) && socket.module === module) {
-      log(`notifying ${socket.user_id} (${data.event})`)
+      log.info(`notifying ${socket.user_id} (${data.event})`)
       socket.send(JSON.stringify(data))
     }
   }

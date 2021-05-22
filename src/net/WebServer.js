@@ -112,9 +112,7 @@ class WebServer {
       })
 
       this.userRepo.save(user)
-      for (const twitch_channel of twitch_channels) {
-        this.twitchChannelRepo.save(twitch_channel)
-      }
+      this.twitchChannelRepo.saveUserChannels(user.id, twitch_channels)
       res.send()
     })
 
@@ -155,7 +153,7 @@ class WebServer {
     app.post('/upload', requireLogin, (req, res) => {
       upload(req, res, (err) => {
         if (err) {
-          log(err)
+          log.error(err)
           res.status(400).send("Something went wrong!");
         }
         res.send(req.file)
@@ -190,7 +188,7 @@ class WebServer {
     this.handle = app.listen(
       port,
       hostname,
-      () => log(`server running on http://${hostname}:${port}`)
+      () => log.info(`server running on http://${hostname}:${port}`)
     )
   }
   close () {

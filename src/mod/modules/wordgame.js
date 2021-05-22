@@ -24,8 +24,8 @@ const save = () => fn.save('wordgame', _data)
 const solve = (msg, displayName) => {
   let lc = msg.toLowerCase()
   for (let i = 0; i < _data.solutions.length; i++) {
-    log(_data.solutions[i])
-    log(lc)
+    log.info(_data.solutions[i])
+    log.info(lc)
     if (_data.solutions[i].indexOf(lc) !== -1) {
       const w = _data.word
       const s = _data.solutions.join(', ')
@@ -48,7 +48,7 @@ const nextWord = async () => {
   const e = fn.getRandom(data)
   _data.word = e.slug
   _data.solutions = [].concat(...e.senses.map(x => x.english_definitions)).map(s => s.toLowerCase())
-  log(_data.solutions)
+  log.info(_data.solutions)
   save()
 }
 

@@ -7,7 +7,7 @@ class TwitchClientManager {
     const log = fn.logger(__filename, `${user.name}|`)
 
     if (twitchChannels.length === 0) {
-      log(`* No twitch channels configured`)
+      log.info(`* No twitch channels configured`)
       return
     }
 
@@ -26,7 +26,7 @@ class TwitchClientManager {
 
     this.chatClient.on('message', async (target, context, msg, self) => {
       if (self) { return; } // Ignore messages from the bot
-      log(`${context.username}@${target}: ${msg}`)
+      log.info(`${context.username}@${target}: ${msg}`)
       const rawCmd = fn.parseCommandFromMessage(msg)
 
       for (const m of moduleManager.all(user.id)) {
@@ -34,12 +34,12 @@ class TwitchClientManager {
         const cmdDefs = commands[rawCmd.name] || []
         for (let cmdDef of cmdDefs) {
           if (fn.mayExecute(context, cmdDef)) {
-            log(`${target}| * Executing ${rawCmd.name} command`)
+            log.info(`${target}| * Executing ${rawCmd.name} command`)
             const r = await cmdDef.fn(rawCmd, this.chatClient, target, context, msg)
             if (r) {
-              log(`${target}| * Returned: ${r}`)
+              log.info(`${target}| * Returned: ${r}`)
             }
-            log(`${target}| * Executed ${rawCmd.name} command`)
+            log.info(`${target}| * Executed ${rawCmd.name} command`)
           }
         }
         await m.onChatMsg(this.chatClient, target, context, msg);
@@ -48,7 +48,7 @@ class TwitchClientManager {
 
     // Called every time the bot connects to Twitch chat
     this.chatClient.on('connected', (addr, port) => {
-      log(`* Connected to ${addr}:${port}`)
+      log.info(`* Connected to ${addr}:${port}`)
     })
 
     // connect to PubSub websocket

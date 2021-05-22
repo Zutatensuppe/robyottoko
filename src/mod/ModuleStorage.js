@@ -16,7 +16,7 @@ class ModuleStorage {
       const data = row ? JSON.parse('' + row.data) : null
       return data ? Object.assign({}, def, data) : def
     } catch (e) {
-      log(e)
+      log.error(e)
       return def
     }
   }

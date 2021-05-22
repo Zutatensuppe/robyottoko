@@ -1,4 +1,7 @@
 module.exports = {
+  log: {
+    level: 'info',
+  },
   http: {
     hostname: 'localhost',
     port: 1337,

@@ -55,7 +55,7 @@ class WsWrapper {
       this.onmessage(e)
     }
     ws.onerror = (e) => {
-      log('ERR', e)
+      log.error('ERR', e)
       this.handle = null
       this.reconnectTimeout = setTimeout(() => { this.connect() }, reconnectInterval)
     }
@@ -74,7 +74,7 @@ function TwitchPubSubClient() {
 
   const send = (message) => {
     const msgStr = JSON.stringify(message)
-    log('SEND', msgStr)
+    log.debug('SEND', msgStr)
     ws.send(msgStr)
   }
 
@@ -95,7 +95,7 @@ function TwitchPubSubClient() {
 
   let heartbeatHandle
   ws.onopen = (event) => {
-    log('INFO', 'Socket Opened')
+    log.info('INFO', 'Socket Opened')
     heartbeat()
     if (heartbeatHandle) {
       clearInterval(heartbeatHandle)
@@ -110,9 +110,9 @@ function TwitchPubSubClient() {
   }
   ws.onmessage = (event) => {
     const message = JSON.parse(event.data)
-    log('RECV', JSON.stringify(message))
+    log.debug('RECV', JSON.stringify(message))
     if (message.type == 'RECONNECT') {
-      log('INFO', 'Reconnecting...')
+      log.info('INFO', 'Reconnecting...')
       ws.connect()
     }
     evts.trigger('message', message)

@@ -44,15 +44,15 @@ for (const user of userRepo.all()) {
 
 const log = logger(__filename)
 const gracefulShutdown = (signal) => {
-  log(`${signal} received...`)
+  log.info(`${signal} received...`)
 
-  log('shutting down webserver...')
+  log.info('shutting down webserver...')
   webServer.close()
 
-  log('shutting down websocketserver...')
+  log.info('shutting down websocketserver...')
   webSocketServer.close()
 
-  log('shutting down...')
+  log.info('shutting down...')
   process.exit()
 }
 

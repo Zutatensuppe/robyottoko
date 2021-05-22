@@ -1,9 +1,29 @@
+const config = require('./config.js')
 const path = require('path')
 const { getText } = require('./net/xhr')
 
+// error | info | log | debug
+const logLevel = config?.log?.level || 'info'
+let logEnabled = [] // always log errors
+switch (logLevel) {
+  case 'error': logEnabled = ['error']; break
+  case 'info': logEnabled = ['error', 'info']; break
+  case 'log': logEnabled = ['error', 'info', 'log']; break
+  case 'debug': logEnabled = ['error', 'info', 'log', 'debug']; break
+}
 const logger = (filename, ...pre) => {
   const b = path.basename(filename)
-  return (...args) => console.log(`[${b}]`, ...pre, ...args)
+  const fn = t => (...args) => {
+    if (logEnabled.includes(t)) {
+      console[t](`[${b}]`, ...pre, ...args)
+    }
+  }
+  return {
+    log: fn('log'),
+    info: fn('info'),
+    debug: fn('debug'),
+    error: fn('error'),
+  }
 }
 
 const log = logger(__filename)
@@ -76,7 +96,7 @@ const isSubscriber = (ctx) => !!ctx.subscriber || isBroadcaster(ctx)
 const sayFn = (client, target) => (msg) => {
   const targets = target ? [target] : client.channels
   targets.forEach(t => {
-    log(`saying in ${t}: ${msg}`)
+    log.info(`saying in ${t}: ${msg}`)
     client.say(t, msg).catch(_ => {})
   })
 }

@@ -25,7 +25,7 @@ class Db {
     for (const f of files) {
       if (patches.includes(f)) {
         if (verbose) {
-          log(`➡ skipping already applied db patch: ${f}`)
+          log.info(`➡ skipping already applied db patch: ${f}`)
         }
         continue
       }
@@ -33,13 +33,13 @@ class Db {
       const all = contents.split(';').map(s => s.trim()).filter(s => !!s)
       for (const q of all) {
         if (verbose) {
-          log(`Running: ${q}`)
+          log.info(`Running: ${q}`)
         }
         this.run(q)
       }
       this.insert('db_patches', {id: f})
       // this one should always be output for info
-      log(`✓ applied db patch: ${f}`)
+      log.info(`✓ applied db patch: ${f}`)
     }
   }
 
