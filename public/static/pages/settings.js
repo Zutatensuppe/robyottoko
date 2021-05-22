@@ -11,7 +11,12 @@ export default {
     return {
       unchangedJson: '[]',
       changedJson: '[]',
-      user: {},
+      user: {
+        id: 0,
+        name: '',
+        pass: '',
+        groups: [],
+      },
       twitch_channels: [],
     }
   },

@@ -153,7 +153,9 @@ class WebServer {
     })
 
     app.get('/settings/', requireLogin, async (req, res) => {
-      const twitch_channels = this.twitchChannelRepo.allByUserId(req.user.id)
+      const twitch_channels = req.user.groups.includes('admin')
+        ? this.twitchChannelRepo.allByUserId(req.user.id)
+        : []
       res.send(await fn.render('base.twig', {
         title: 'Settings',
         page: 'settings',
