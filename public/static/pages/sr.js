@@ -42,7 +42,7 @@ export default {
       <div id="player" class="video-16-9" :style="playerstyle"><youtube ref="youtube" @ended="ended"/></div>
     </div>
     <div id="playlist">
-      <table>
+      <table v-if="playlist.length > 0">
         <tr>
           <th></th>
           <th></th>
@@ -67,6 +67,7 @@ export default {
           <td><button class="btn" @click="sendCtrl('rmIdx', [idx])" title="Remove"><i class="fa fa-trash"/></button></td>
         </tr>
       </table>
+      <div v-else>Playlist is empty</div>
     </div>
   </div>
 </div>
