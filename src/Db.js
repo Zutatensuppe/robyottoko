@@ -31,15 +31,22 @@ class Db {
       }
       const contents = fs.readFileSync(`${this.conf.patchesDir}/${f}`, 'utf-8')
       const all = contents.split(';').map(s => s.trim()).filter(s => !!s)
-      for (const q of all) {
-        if (verbose) {
-          log.info(`Running: ${q}`)
-        }
-        this.run(q)
+      try {
+        this.dbh.transaction((all) => {
+          for (const q of all) {
+            if (verbose) {
+              log.info(`Running: ${q}`)
+            }
+            this.run(q)
+          }
+          this.insert('db_patches', {id: f})
+        })(all)
+
+        log.info(`✓ applied db patch: ${f}`)
+      } catch (e) {
+        log.error(`✖ unable to apply patch: ${f} ${e}`)
+        return
       }
-      this.insert('db_patches', {id: f})
-      // this one should always be output for info
-      log.info(`✓ applied db patch: ${f}`)
     }
   }
 
@@ -53,12 +60,50 @@ class Db {
       }
 
       if (typeof where[k] === 'object') {
-        const prop = '$nin'
+        let prop = '$nin'
         if (where[k][prop]) {
           if (where[k][prop].length > 0) {
             wheres.push(k + ' NOT IN (' + where[k][prop].map(_ => '?') + ')')
             values.push(...where[k][prop])
           }
+          continue
+        }
+        prop = '$in'
+        if (where[k][prop]) {
+          if (where[k][prop].length > 0) {
+            wheres.push(k + ' IN (' + where[k][prop].map(_ => '?') + ')')
+            values.push(...where[k][prop])
+          }
+          continue
+        }
+        prop = '$gte'
+        if (where[k][prop]) {
+          wheres.push(k + ' >= ?')
+          values.push(where[k][prop])
+          continue
+        }
+        prop = '$lte'
+        if (where[k][prop]) {
+          wheres.push(k + ' <= ?')
+          values.push(where[k][prop])
+          continue
+        }
+        prop = '$gt'
+        if (where[k][prop]) {
+          wheres.push(k + ' > ?')
+          values.push(where[k][prop])
+          continue
+        }
+        prop = '$lt'
+        if (where[k][prop]) {
+          wheres.push(k + ' < ?')
+          values.push(where[k][prop])
+          continue
+        }
+        prop = '$ne'
+        if (where[k][prop]) {
+          wheres.push(k + ' != ?')
+          values.push(where[k][prop])
           continue
         }
 

@@ -1,4 +1,7 @@
-const { postJson, getJson, delJson, asJson, withHeaders, asQueryArgs } = require('../net/xhr.js')
+const { logger } = require('../fn.js')
+const { postJson, getJson, delJson, asJson, withHeaders, asQueryArgs, requestText } = require('../net/xhr.js')
+
+const log = logger('TwitchHelixClient.js')
 
 class TwitchHelixClient {
   constructor(clientId, clientSecret) {
@@ -30,7 +33,12 @@ class TwitchHelixClient {
   async getUserIdByName (userName) {
     const url = `${this.helixApiBase}/users${asQueryArgs({login: userName})}`
     const json = await getJson(url, await this.withAuthHeaders())
-    return json.data[0].id
+    try {
+      return json.data[0].id
+    } catch (e) {
+      log.error(json)
+      return ''
+    }
   }
 
   async getSubscriptions () {
@@ -40,7 +48,7 @@ class TwitchHelixClient {
 
   async deleteSubscription (id) {
     const url = `${this.helixApiBase}/eventsub/subscriptions${asQueryArgs({id: id})}`
-    return await delJson(url, await this.withAuthHeaders())
+    return await requestText('delete', url, await this.withAuthHeaders())
   }
 
   async createSubscription (subscription) {

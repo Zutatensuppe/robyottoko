@@ -4,6 +4,7 @@ const text = require('../../commands/text.js')
 const randomText = require('../../commands/randomText.js')
 const playMedia = require('../../commands/playMedia.js')
 const fn = require('../../fn.js')
+const chatters = require('../../commands/chatters.js')
 
 class GeneralModule {
   constructor(db, user, client, storage, cache, ws, wss) {
@@ -66,6 +67,9 @@ class GeneralModule {
           break;
         case 'countdown':
           cmdObj = Object.assign({}, cmd, {fn: countdown(cmd.data)})
+          break;
+        case 'chatters':
+          cmdObj = Object.assign({}, cmd, {fn: chatters(this.db)})
           break;
       }
       for (const trigger of cmd.triggers) {

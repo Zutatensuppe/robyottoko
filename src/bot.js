@@ -19,14 +19,14 @@ const auth = new net.Auth(userRepo, tokenRepo)
 
 const moduleManager = new mod.ModuleManager()
 const webSocketServer = new net.WebSocketServer(moduleManager, config.ws, auth)
-const webServer = new net.WebServer(userRepo, twitchChannelRepo, moduleManager, config.http, webSocketServer, auth)
+const webServer = new net.WebServer(db, userRepo, twitchChannelRepo, moduleManager, config.http, config.twitch, webSocketServer, auth)
 webSocketServer.listen()
 webServer.listen()
 
 // one for each user
 for (const user of userRepo.all()) {
   const twitchChannels = twitchChannelRepo.allByUserId(user.id)
-  const clientManager = new net.TwitchClientManager(user, twitchChannels, moduleManager)
+  const clientManager = new net.TwitchClientManager(config.twitch, db, user, twitchChannels, moduleManager)
   const chatClient = clientManager.getChatClient()
   const moduleStorage = new mod.ModuleStorage(db, user.id)
   for (const moduleClass of mod.modules) {

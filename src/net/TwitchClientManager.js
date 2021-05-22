@@ -1,9 +1,10 @@
 const tmi = require('tmi.js')
 const TwitchPubSubClient = require('../services/TwitchPubSubClient.js')
+const TwitchHelixClient = require('../services/TwitchHelixClient.js')
 const fn = require('../fn.js')
 
 class TwitchClientManager {
-  constructor(user, twitchChannels, moduleManager) {
+  constructor(cfg, db, user, twitchChannels, moduleManager) {
     const log = fn.logger(__filename, `${user.name}|`)
 
     if (twitchChannels.length === 0) {
@@ -26,8 +27,17 @@ class TwitchClientManager {
 
     this.chatClient.on('message', async (target, context, msg, self) => {
       if (self) { return; } // Ignore messages from the bot
+
       log.info(`${context.username}@${target}: ${msg}`)
       const rawCmd = fn.parseCommandFromMessage(msg)
+
+      db.insert('chat_log', {
+        created_at: `${new Date().toJSON()}`,
+        broadcaster_user_id: context['room-id'],
+        user_name: context.username,
+        display_name: context['display-name'],
+        message: msg,
+      })
 
       for (const m of moduleManager.all(user.id)) {
         const commands = m.getCommands() || {}
@@ -87,8 +97,66 @@ class TwitchClientManager {
       })
     })
 
-    this.chatClient.connect();
+    this.chatClient.connect()
     this.pubSubClient.connect()
+
+    // register EventSub
+    // @see https://dev.twitch.tv/docs/eventsub
+    this.helixClient = new TwitchHelixClient(
+      user.tmi_identity_client_id,
+      user.tmi_identity_client_secret
+    )
+
+    ;(async () => {
+      for (let channel of twitchChannels) {
+        if (channel.access_token && channel.channel_id) {
+          const transport = cfg.eventSub.transport
+          const sub = (type) => ({
+            type,
+            version: '1',
+            condition: {
+              broadcaster_user_id: channel.channel_id,
+            },
+            transport,
+          })
+
+          // TODO: dont try to fetch this for each user separately?
+          //       or at least fetch filtered by channel.channel_id
+          const subs = await this.helixClient.getSubscriptions()
+          log.debug(subs.data)
+
+          const enabledSubs = {}
+          for (const s of subs.data) {
+            if (s.transport.callback !== transport.callback) {
+              log.info(`removing subscription (callback outdated): ${s.id}`)
+              await this.helixClient.deleteSubscription(s.id)
+              continue
+            }
+
+            // only care about the current channel
+            if (s.condition.broadcaster_user_id !== channel.channel_id) {
+              continue
+            }
+
+            if (s.status !== 'enabled') {
+              log.info(`removing subscription (not enabled): ${s.id}`)
+              await this.helixClient.deleteSubscription(s.id)
+            } else {
+              enabledSubs[s.type] = s
+            }
+          }
+
+          for (const type of ['stream.online', 'stream.offline']) {
+            if (!enabledSubs[type]) {
+              const res = await this.helixClient.createSubscription(sub(type))
+              log.info(res)
+            } else {
+              log.info(`subscription exists: ${type}`)
+            }
+          }
+        }
+      }
+    })()
   }
 
   getChatClient() {

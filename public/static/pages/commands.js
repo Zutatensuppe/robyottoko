@@ -63,6 +63,12 @@ const newCmd = (type) => {
       restrict_to: [],
       data: {},
     }
+    case 'chatters': return {
+      triggers: [newTrigger()],
+      action: 'chatters',
+      restrict_to: [],
+      data: {},
+    }
     default: return null
   }
 }
@@ -113,6 +119,7 @@ export default {
         <li><button class="btn" @click="add('media')">Add media</button>
         <li><button class="btn" @click="add('countdown')">Add countdown</button>
         <li><button class="btn" @click="add('jisho_org_lookup')">Add jisho_org_lookup</button>
+        <li><button class="btn" @click="add('chatters')">Add chatters</button>
         <li><button class="btn btn-primary" :disabled="!changed" @click="sendSave">Save</button>
         <li><a class="btn" :href="widgetUrl" target="_blank">Open Media widget</a>
       </ul>

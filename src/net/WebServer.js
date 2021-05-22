@@ -1,4 +1,5 @@
 const fn = require('../fn.js')
+const crypto = require('crypto')
 const multer = require('multer')
 const express = require('express')
 const cookieParser = require('cookie-parser')
@@ -9,13 +10,15 @@ const TwitchHelixClient = require('../services/TwitchHelixClient.js')
 const log = fn.logger(__filename)
 
 class WebServer {
-  constructor(userRepo, twitchChannelRepo, moduleManager, config, wss, auth) {
+  constructor(db, userRepo, twitchChannelRepo, moduleManager, configHttp, configTwitch, wss, auth) {
+    this.db = db
     this.userRepo = userRepo
     this.twitchChannelRepo = twitchChannelRepo
 
     this.moduleManager = moduleManager
-    this.port = config.port
-    this.hostname = config.hostname
+    this.port = configHttp.port
+    this.hostname = configHttp.hostname
+    this.twitchWebhookSecret = configTwitch.eventSub.transport.secret
     this.wss = wss
     this.auth = auth
     this.handle = null
@@ -35,6 +38,20 @@ class WebServer {
     })
 
     const upload = multer({storage}).single('file');
+
+    const verifyTwitchSignature = (req, res, next) => {
+      const body = Buffer.from(req.rawBody, 'utf8')
+      const msg = `${req.headers['twitch-eventsub-message-id']}${req.headers['twitch-eventsub-message-timestamp']}${body}`
+      const hmac = crypto.createHmac('sha256', this.twitchWebhookSecret)
+      hmac.update(msg)
+      const expected = `sha256=${hmac.digest('hex')}`
+      if (req.headers['twitch-eventsub-message-signature'] !== expected) {
+        res.status(403)
+        return
+      }
+
+      return next()
+    }
 
     const requireLogin = (req, res, next) => {
       if (!req.token) {
@@ -88,6 +105,51 @@ class WebServer {
           token: req.cookies['x-token'],
         },
       }))
+    })
+
+    app.post(
+      '/twitch-event-sub/',
+      bodyParser.json({ verify: (req,res,buf) => { req.rawBody=buf }}),
+      verifyTwitchSignature,
+      async (req, res) => {
+      if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
+        log.info('got verification request')
+        console.log(req.body)
+        res.write(req.body.challenge)
+        res.send()
+        return
+      }
+
+      if (req.headers['twitch-eventsub-message-type'] === 'notification') {
+        log.info('got notification request')
+
+        if (req.body.subscription.type === 'stream.online') {
+          // insert new stream
+          this.db.insert('streams', {
+            broadcaster_user_id: req.body.event.broadcaster_user_id,
+            started_at: req.body.event.started_at,
+          })
+        } else if (req.body.subscription.type === 'stream.offline') {
+          // get last started stream for broadcaster
+          // if it exists and it didnt end yet set ended_at date
+          const stream = this.db.get('streams', {
+            broadcaster_user_id: req.body.event.broadcaster_user_id,
+          }, [{ started_at: -1 }])
+          if (!stream.ended_at) {
+            this.db.update('streams', {
+              ended_at: `${new Date().toJSON()}`,
+            }, { id: stream.id })
+          }
+        }
+
+        log.info(req.body)
+        res.send()
+        return
+      }
+
+      log.info('got other request')
+      log.info(req.headers)
+      res.status(400)
     })
 
     app.get('/settings/', requireLogin, async (req, res) => {
