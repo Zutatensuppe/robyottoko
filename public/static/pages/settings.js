@@ -64,32 +64,52 @@ export default {
           <td><input type="password" v-model="user.tmi_identity_client_secret" class="pw" /></td>
         </tr>
       </table>
+    </div>
 
-      <h1>Twitch-Channels</h1>
-      <p>Where should the bot connect to?</p>
-      <p>To get an access token:</p>
+    <h1>Twitch-Channels</h1>
+    <p>Where should the bot connect to?</p>
+    <table>
+      <tr>
+        <td>Channel name</td>
+        <td>Channel id</td>
+        <td>Access Token*</td>
+        <td></td>
+      </tr>
+      <tr v-for="(channel, idx) in twitch_channels" v-key="channel.channel_name">
+        <td><input type="text" v-model="channel.channel_name" /></td>
+        <td>
+          <input type="text" v-model="channel.channel_id" v-if="channel.channel_id" />
+          <button class="btn" @click="loadid(idx)" v-if="!channel.channel_id">Load id</button></td>
+        <td><input type="password" v-model="channel.access_token" class="pw" /></td>
+        <td><button class="btn" @click="rmchannel(idx)"><i class="fa fa-remove" /></button></td>
+      </tr>
+    </table>
+    <button class="btn" @click="addchannel()">Add channel</button>
+
+    <p>Access Token*:</p>
+    <div v-if="accessTokenLink">
+      <p>
+        You may not need an access token, depending on your usage of the bot.
+        Access token is currently required only for the following features:
+      </p>
+      <p>
+        Commands:
+        <ul>
+          <li><pre>Chatters</pre>
+        </ul>
+      </p>
+      <p>To get an access token, do the following:</p>
       <ol>
         <li>Login to twitch as the channel owner
         <li>Click <a :href="accessTokenLink" target="_blank">here</a> to authorize the bot with the channel
         <li>If authorized, you get redirected back to hyottoko.club, and the access token will display
       </ol>
-      <table>
-        <tr>
-          <td>Channel name</td>
-          <td>Channel id</td>
-          <td>Access Token</td>
-          <td></td>
-        </tr>
-        <tr v-for="(channel, idx) in twitch_channels" v-key="channel.channel_name">
-          <td><input type="text" v-model="channel.channel_name" /></td>
-          <td>
-            <input type="text" v-model="channel.channel_id" v-if="channel.channel_id" />
-            <button class="btn" @click="loadid(idx)" v-if="!channel.channel_id">Load id</button></td>
-          <td><input type="password" v-model="channel.access_token" class="pw" /></td>
-          <td><button class="btn" @click="rmchannel(idx)"><i class="fa fa-remove" /></button></td>
-        </tr>
-      </table>
-      <button class="btn" @click="addchannel()">Add channel</button>
+    </div>
+    <div v-else-if="isAdmin">
+      Please configure the "Bot client_id" above.
+    </div>
+    <div v-else>
+      Missing Bot "client_id". Please contact an administrator.
     </div>
   </div>
 </div>
@@ -102,6 +122,9 @@ export default {
       return this.unchangedJson !== this.changedJson
     },
     accessTokenLink () {
+      if (!this.user.tmi_identity_client_id) {
+        return
+      }
       // all scopes, see https://dev.twitch.tv/docs/authentication/#scopes
       const scopes = [
         'analytics:read:extensions',
@@ -165,17 +188,18 @@ export default {
       )
     },
     async getUserIdByName (name) {
+      const data = {
+        name,
+        client_id: this.user.tmi_identity_client_id || null,
+        client_secret: this.user.tmi_identity_client_secret || null,
+      }
       const res = await fetch('/twitch/user-id-by-name', {
         method: 'post',
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          name,
-          client_id: this.user.tmi_identity_client_id,
-          client_secret: this.user.tmi_identity_client_secret,
-        })
+        body: JSON.stringify(data)
       })
       const json = await res.json()
       return json.id

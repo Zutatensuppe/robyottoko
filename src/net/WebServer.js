@@ -153,9 +153,7 @@ class WebServer {
     })
 
     app.get('/settings/', requireLogin, async (req, res) => {
-      const twitch_channels = req.user.groups.includes('admin')
-        ? this.twitchChannelRepo.allByUserId(req.user.id)
-        : []
+      const twitch_channels = this.twitchChannelRepo.allByUserId(req.user.id)
       res.send(await fn.render('base.twig', {
         title: 'Settings',
         page: 'settings',
@@ -173,14 +171,15 @@ class WebServer {
           res.status(401)
           return
         }
-        // may only save new password
-        this.userRepo.save({pass: user.pass, id: user.id})
-        res.send()
-        return
       }
 
-      // user is admin
-      const user = req.body.user
+      // non-admin may only save new password
+      let user = !req.user.groups.includes('admin')
+        ? { pass: req.body.user.pass, id: req.body.user.id }
+        : req.body.user
+
+      this.userRepo.save(user)
+
       const twitch_channels = req.body.twitch_channels.map(channel => {
         channel.user_id = user.id
         return channel
@@ -197,16 +196,27 @@ class WebServer {
       res.send(await fn.render('twitch/redirect_uri.twig'))
     })
     app.post('/twitch/user-id-by-name', requireLogin, bodyParser.json(), async (req, res) => {
-      if (!req.body.client_id) {
-        res.status(400).send({reason: 'need client id'});
-        return
+      let clientId
+      let clientSecret
+      if (!req.user.groups.includes('admin')) {
+        const u = this.userRepo.getById(req.user.id)
+        clientId = u.tmi_identity_client_id
+        clientSecret = u.tmi_identity_client_secret
+      } else {
+        if (!req.body.client_id) {
+          res.status(400).send({reason: 'need client id'});
+          return
+        }
+        if (!req.body.client_secret) {
+          res.status(400).send({reason: 'need client secret'});
+          return
+        }
+        clientId = req.body.client_id
+        clientSecret = req.body.client_secret
       }
-      if (!req.body.client_secret) {
-        res.status(400).send({reason: 'need client secret'});
-        return
-      }
+
       try {
-        const client = new TwitchHelixClient(req.body.client_id, req.body.client_secret)
+        const client = new TwitchHelixClient(clientId, clientSecret)
         res.send({id: await client.getUserIdByName(req.body.name)})
       } catch (e) {
         res.status(500).send("Something went wrong!");

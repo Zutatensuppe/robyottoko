@@ -31,7 +31,7 @@ body {
 #top ul.items li { display: inline-block; margin-right: 1em; float: left; }
 #top ul.items li:last-child { margin-right: 0; }
 
-#main { margin-bottom: 5em; padding: .5em; }
+#main { margin-bottom: 10em; padding: .5em; }
 
 #player { margin-bottom: .5em; }
 
