@@ -8,7 +8,7 @@ module.exports = {
         method: 'webhook',
         // launch `ngrok http http://localhost:1337` (according to
         // config of http below) and then fill the address from ngrok:
-        callback: 'https://c45bf59aed34.ngrok.io/twitch-event-sub/',
+        callback: 'https://c45bf59aed34.ngrok.io/twitch/event-sub/',
         secret: 's3cRe7_blabla_superduper',
       },
     },

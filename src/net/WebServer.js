@@ -107,51 +107,6 @@ class WebServer {
       }))
     })
 
-    app.post(
-      '/twitch-event-sub/',
-      bodyParser.json({ verify: (req,res,buf) => { req.rawBody=buf }}),
-      verifyTwitchSignature,
-      async (req, res) => {
-      if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-        log.info('got verification request')
-        console.log(req.body)
-        res.write(req.body.challenge)
-        res.send()
-        return
-      }
-
-      if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-        log.info('got notification request')
-
-        if (req.body.subscription.type === 'stream.online') {
-          // insert new stream
-          this.db.insert('streams', {
-            broadcaster_user_id: req.body.event.broadcaster_user_id,
-            started_at: req.body.event.started_at,
-          })
-        } else if (req.body.subscription.type === 'stream.offline') {
-          // get last started stream for broadcaster
-          // if it exists and it didnt end yet set ended_at date
-          const stream = this.db.get('streams', {
-            broadcaster_user_id: req.body.event.broadcaster_user_id,
-          }, [{ started_at: -1 }])
-          if (!stream.ended_at) {
-            this.db.update('streams', {
-              ended_at: `${new Date().toJSON()}`,
-            }, { id: stream.id })
-          }
-        }
-
-        log.info(req.body)
-        res.send()
-        return
-      }
-
-      log.info('got other request')
-      log.info(req.headers)
-      res.status(400)
-    })
-
     app.get('/settings/', requireLogin, async (req, res) => {
       const twitch_channels = this.twitchChannelRepo.allByUserId(req.user.id)
       res.send(await fn.render('base.twig', {
@@ -227,6 +182,51 @@ class WebServer {
       } catch (e) {
         res.status(500).send("Something went wrong!");
       }
+    })
+
+    app.post(
+      '/twitch/event-sub/',
+      bodyParser.json({ verify: (req,res,buf) => { req.rawBody=buf }}),
+      verifyTwitchSignature,
+      async (req, res) => {
+      if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
+        log.info('got verification request')
+        console.log(req.body)
+        res.write(req.body.challenge)
+        res.send()
+        return
+      }
+
+      if (req.headers['twitch-eventsub-message-type'] === 'notification') {
+        log.info('got notification request')
+
+        if (req.body.subscription.type === 'stream.online') {
+          // insert new stream
+          this.db.insert('streams', {
+            broadcaster_user_id: req.body.event.broadcaster_user_id,
+            started_at: req.body.event.started_at,
+          })
+        } else if (req.body.subscription.type === 'stream.offline') {
+          // get last started stream for broadcaster
+          // if it exists and it didnt end yet set ended_at date
+          const stream = this.db.get('streams', {
+            broadcaster_user_id: req.body.event.broadcaster_user_id,
+          }, [{ started_at: -1 }])
+          if (!stream.ended_at) {
+            this.db.update('streams', {
+              ended_at: `${new Date().toJSON()}`,
+            }, { id: stream.id })
+          }
+        }
+
+        log.info(req.body)
+        res.send()
+        return
+      }
+
+      log.info('got other request')
+      log.info(req.headers)
+      res.status(400)
     })
 
     app.post('/auth', bodyParser.json(), async (req, res) => {
