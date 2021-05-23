@@ -1,9 +1,6 @@
-canvas { border: solid 1px black; margin-bottom: .5em; }
-.colorpick { display: inline-block; padding: 1px; border: solid 2px #ccc; cursor: pointer; }
-.colorpick .color { display: inline-block; width: 20px; height: 20px; margin: 1px; }
-.colorpick.active { border: solid 2px black; }
-
 canvas {
+  border: solid 1px black;
+  margin-bottom: .5em;
   background-image:
   linear-gradient(to right, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)),
   linear-gradient(to right, black 50%, white 50%),
@@ -11,3 +8,7 @@ canvas {
   background-blend-mode: normal, difference, normal;
   background-size: 2em 2em;
 }
+
+.colorpick { display: inline-block; padding: 1px; border: solid 2px #ccc; cursor: pointer; }
+.colorpick .color { display: inline-block; width: 20px; height: 20px; margin: 1px; }
+.colorpick.active { border: solid 2px black; }

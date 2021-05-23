@@ -7,15 +7,18 @@ export default {
     @mousemove="mousemove"
     @mousedown="mousedown"
     @mouseup="mouseup"
+    :style="styles"
   ></canvas>
   <div class="colorpicker">
     <template v-for="(c,idx) in colors" :key="idx">
     <br v-if="idx > 0 && idx%11===0" />
-    <span class="colorpick" :class="{active: colorIdx === idx}" @click="colorIdx = idx">
+    <span class="colorpick" :class="{active: colorIdx === idx}" @click="colorIdx = idx;tool='pen'">
       <span class="color" :style="{backgroundColor: c}"></span>
     </span>
     </template>
   </div>
+  <input type="button" value="Erazer" @click="tool='erazer'" />
+
   <input type="range" min="1" max="100" v-model="size" />
   {{ size }}
   <input type="button" id="clear" value="Clear" @click="clear" />
@@ -40,6 +43,7 @@ export default {
       ],
       images: [],
 
+      tool: 'pen', // 'pen'|'erazer'
       colorIdx: 0,
       size: 2,
       canvas: null,
@@ -55,6 +59,32 @@ export default {
     halfSize () {
       return Math.round(this.size/2)
     },
+    globalCompositeOperation () {
+      return this.tool === 'erazer' ? 'destination-out' : 'source-over'
+    },
+    styles () {
+      return {
+        cursor: `url(${this.cursor}) ${this.halfSize} ${this.halfSize}, default`,
+      }
+    },
+    cursor () {
+      const c = document.createElement('canvas')
+      c.width = parseInt(this.size, 10) + 1
+      c.height = parseInt(this.size, 10) + 1
+      const ctx = c.getContext('2d')
+      ctx.beginPath()
+      ctx.strokeStyle = '#000'
+      if (this.tool === 'erazer') {
+        ctx.fillStyle = '#fff'
+      } else {
+        ctx.fillStyle = this.color
+      }
+      ctx.arc(this.halfSize, this.halfSize, this.halfSize, 0, 2 * Math.PI);
+      ctx.closePath()
+      ctx.fill()
+      ctx.stroke()
+      return c.toDataURL()
+    },
   },
   methods: {
     redraw (...pts) {
@@ -63,6 +93,7 @@ export default {
       }
       if (pts.length === 1) {
         this.ctx.beginPath()
+        this.ctx.globalCompositeOperation = this.globalCompositeOperation
         this.ctx.fillStyle = this.color
         this.ctx.arc(pts[0].x, pts[0].y, this.halfSize, 0, 2 * Math.PI);
         this.ctx.closePath()
@@ -72,6 +103,7 @@ export default {
 
       this.ctx.lineJoin = 'round'
       this.ctx.beginPath()
+      this.ctx.globalCompositeOperation = this.globalCompositeOperation
       this.ctx.strokeStyle = this.color
       this.ctx.lineWidth = this.size
       this.ctx.moveTo(pts[0].x, pts[0].y)
