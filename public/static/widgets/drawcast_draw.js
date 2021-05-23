@@ -18,8 +18,8 @@ export default {
   </div>
   <input type="range" min="1" max="100" v-model="size" />
   {{ size }}
-  <input type="button" id="clear" value="nononoon" @click="clear" />
-  <input type="button" id="submit" value="lets go!" @click="submitImage" />
+  <input type="button" id="clear" value="Clear" @click="clear" />
+  <input type="button" id="submit" value="Submit" @click="submitImage" />
   <div id="gallery">
     <img v-for="(img,idx) in images" :src="img" :key="idx" />
   </div>
@@ -57,32 +57,28 @@ export default {
     },
   },
   methods: {
+    redraw (from, to) {
+      this.ctx.lineJoin = 'round'
+      this.ctx.beginPath()
+      this.ctx.strokeStyle = this.color
+      this.ctx.lineWidth = this.size
+      // TODO: support array if needed
+      this.ctx.moveTo(from.x, from.y)
+      this.ctx.lineTo(to.x, to.y)
+      this.ctx.closePath()
+      this.ctx.stroke()
+    },
     mousemove (e) {
       if (!this.last) {
         return
       }
       const cur = {x: e.offsetX, y: e.offsetY}
-      this.ctx.beginPath()
-      this.ctx.strokeStyle = this.color
-      this.ctx.lineWidth = this.size
-      this.ctx.moveTo(this.last.x, this.last.y)
-      this.ctx.lineTo(cur.x, cur.y)
-      this.ctx.stroke()
-
-      this.ctx.beginPath()
-      this.ctx.fillStyle = this.color
-      this.ctx.arc(cur.x, cur.y, this.halfSize, 0, 2 * Math.PI);
-      this.ctx.fill()
-
+      this.redraw(this.last, cur)
       this.last = cur
     },
     mousedown (e) {
       const cur = {x: e.offsetX, y: e.offsetY}
-      this.ctx.beginPath()
-      this.ctx.fillStyle = this.color
-      this.ctx.arc(cur.x, cur.y, this.halfSize, 0, 2 * Math.PI);
-      this.ctx.fill()
-
+      this.redraw(cur, cur)
       this.last = cur
     },
     mouseup (e) {
