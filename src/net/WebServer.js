@@ -209,16 +209,16 @@ class WebServer {
         clientId = u.tmi_identity_client_id
         clientSecret = u.tmi_identity_client_secret
       } else {
-        if (!req.body.client_id) {
-          res.status(400).send({reason: 'need client id'});
-          return
-        }
-        if (!req.body.client_secret) {
-          res.status(400).send({reason: 'need client secret'});
-          return
-        }
         clientId = req.body.client_id
         clientSecret = req.body.client_secret
+      }
+      if (!clientId) {
+        res.status(400).send({reason: 'need client id'});
+        return
+      }
+      if (!clientSecret) {
+        res.status(400).send({reason: 'need client secret'});
+        return
       }
 
       try {
