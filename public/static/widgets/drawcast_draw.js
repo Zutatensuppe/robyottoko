@@ -8,7 +8,7 @@ export default {
     @mousedown="mousedown"
     @mouseup="mouseup"
   ></canvas>
-  <div>
+  <div class="colorpicker">
     <template v-for="(c,idx) in colors" :key="idx">
     <br v-if="idx > 0 && idx%11===0" />
     <span class="colorpick" :class="{active: colorIdx === idx}" @click="colorIdx = idx">
