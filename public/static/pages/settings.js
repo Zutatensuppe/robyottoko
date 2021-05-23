@@ -71,7 +71,7 @@ export default {
     <table>
       <tr>
         <td>Channel name</td>
-        <td>Channel id</td>
+        <td>Channel id*</td>
         <td>Access Token*</td>
         <td></td>
       </tr>
@@ -86,18 +86,18 @@ export default {
     </table>
     <button class="btn" @click="addchannel()">Add channel</button>
 
-    <p>Access Token*:</p>
+    <p>Channel Id* and Access Token*:</p>
+    <p>
+      You may not need the client id or access token, depending on your usage of the bot.<br />
+      They are currently required only for the following features:
+    </p>
+    <p>
+      Commands:
+      <ul>
+        <li><pre>Chatters</pre>
+      </ul>
+    </p>
     <div v-if="accessTokenLink">
-      <p>
-        You may not need an access token, depending on your usage of the bot.
-        Access token is currently required only for the following features:
-      </p>
-      <p>
-        Commands:
-        <ul>
-          <li><pre>Chatters</pre>
-        </ul>
-      </p>
       <p>To get an access token, do the following:</p>
       <ol>
         <li>Login to twitch as the channel owner
@@ -106,10 +106,10 @@ export default {
       </ol>
     </div>
     <div v-else-if="isAdmin">
-      Please configure the "Bot client_id" above.
+      <p>To configure an access token, please configure the "Bot client_id" above.</p>
     </div>
     <div v-else>
-      Missing Bot "client_id". Please contact an administrator.
+      <p>Missing Bot "client_id". Please contact an administrator.</p>
     </div>
   </div>
 </div>
@@ -201,8 +201,13 @@ export default {
         },
         body: JSON.stringify(data)
       })
-      const json = await res.json()
-      return json.id
+      try {
+        const json = await res.json()
+        return json.id
+      } catch (e) {
+        // TODO: display error message
+        return ''
+      }
     },
     async sendSave() {
       await fetch('/save-settings', {
