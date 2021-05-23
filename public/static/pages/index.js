@@ -47,6 +47,16 @@ export default {
           hint: 'Google Chrome + window capture',
           url: `${location.protocol}//${location.host}/widget/speech-to-text/${this.conf.widgetToken}/`,
         },
+        {
+          title: 'Drawcast (Overlay)',
+          hint: 'Browser source, or open in browser and capture window',
+          url: `${location.protocol}//${location.host}/widget/drawcast_receive/${this.conf.widgetToken}/`,
+        },
+        {
+          title: 'Drawcast (Draw)',
+          hint: 'Open this to draw (or give to viewers to let them draw)',
+          url: `${location.protocol}//${location.host}/widget/drawcast_draw/${this.conf.widgetToken}/`,
+        },
       ]
     },
   },
