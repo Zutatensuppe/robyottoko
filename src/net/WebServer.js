@@ -173,10 +173,16 @@ class WebServer {
         }
       }
 
-      // non-admin may only save new password
-      let user = !req.user.groups.includes('admin')
-        ? { pass: req.body.user.pass, id: req.body.user.id }
-        : req.body.user
+      const user = {
+        id: req.body.user.id,
+        pass: req.body.user.pass,
+      }
+      if (req.user.groups.includes('admin')) {
+        user.tmi_identity_client_id = req.body.user.tmi_identity_client_id
+        user.tmi_identity_client_secret = req.body.user.tmi_identity_client_secret
+        user.tmi_identity_username = req.body.user.tmi_identity_username
+        user.tmi_identity_password = req.body.user.tmi_identity_password
+      }
 
       this.userRepo.save(user)
 
