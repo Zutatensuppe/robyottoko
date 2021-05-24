@@ -127,9 +127,9 @@ class TwitchClientManager {
 
           const enabledSubs = {}
           for (const s of subs.data) {
+            // different callbacks dont matter
+            // it may be a callback from live vs dev, using the same bot
             if (s.transport.callback !== transport.callback) {
-              log.info(`removing subscription (callback outdated): ${s.id}`)
-              await this.helixClient.deleteSubscription(s.id)
               continue
             }
 
@@ -148,10 +148,11 @@ class TwitchClientManager {
 
           for (const type of ['stream.online', 'stream.offline']) {
             if (!enabledSubs[type]) {
+              log.info(`creating subscription: ${channel.channel_name} ${type}`)
               const res = await this.helixClient.createSubscription(sub(type))
-              log.info(res)
+              log.debug(res)
             } else {
-              log.info(`subscription exists: ${type}`)
+              log.info(`subscription exists: ${channel.channel_name} ${type}`)
             }
           }
         }

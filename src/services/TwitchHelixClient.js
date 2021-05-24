@@ -1,5 +1,5 @@
 const { logger } = require('../fn.js')
-const { postJson, getJson, delJson, asJson, withHeaders, asQueryArgs, requestText } = require('../net/xhr.js')
+const { postJson, getJson, delJson, asJson, withHeaders, asQueryArgs, requestText, requestJson } = require('../net/xhr.js')
 
 const log = logger('TwitchHelixClient.js')
 

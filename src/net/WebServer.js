@@ -46,6 +46,7 @@ class WebServer {
       hmac.update(msg)
       const expected = `sha256=${hmac.digest('hex')}`
       if (req.headers['twitch-eventsub-message-signature'] !== expected) {
+        log.error('unexpected message signature', req, expected)
         res.status(403)
         return
       }
@@ -189,16 +190,19 @@ class WebServer {
       bodyParser.json({ verify: (req,res,buf) => { req.rawBody=buf }}),
       verifyTwitchSignature,
       async (req, res) => {
+      log.debug(req.body)
+      log.debug(req.headers)
+
       if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-        log.info('got verification request')
-        console.log(req.body)
+        log.info(`got verification request, challenge: ${req.body.challenge}`)
+
         res.write(req.body.challenge)
         res.send()
         return
       }
 
       if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-        log.info('got notification request')
+        log.info(`got notification request: ${req.body.subscription.type}`)
 
         if (req.body.subscription.type === 'stream.online') {
           // insert new stream
@@ -219,13 +223,10 @@ class WebServer {
           }
         }
 
-        log.info(req.body)
         res.send()
         return
       }
 
-      log.info('got other request')
-      log.info(req.headers)
       res.status(400)
     })
 
