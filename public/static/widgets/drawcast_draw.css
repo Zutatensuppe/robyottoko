@@ -15,4 +15,4 @@ canvas {
 
 #gallery { margin-top: 1em; }
 #gallery div { margin-bottom: 1em; }
-#gallery img { width: 200px; border: solid 1px black; margin: 0 .5em .5em 0; }
+#gallery img { width: 200px; border: solid 1px black; margin: 0 .5em .5em 0; cursor: pointer; }

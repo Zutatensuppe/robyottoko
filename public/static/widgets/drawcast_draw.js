@@ -25,7 +25,10 @@ export default {
   <input type="button" id="submit" :value="submitButtonText" @click="submitImage" />
   <div id="gallery" v-if="images.length > 0">
     <div>Gallery: <input type="button" @click="images=[]" value="Clear gallery"/></div>
-    <img v-for="(img,idx) in images" :src="img" :key="idx" />
+    <div>
+      Click an image to modify it: <br />
+      <img v-for="(img,idx) in images" :src="img" :key="idx" @click="modify" />
+    </div>
   </div>
 </div>`,
   props: {
@@ -93,6 +96,10 @@ export default {
     },
   },
   methods: {
+    modify (ev) {
+      this.clear()
+      this.ctx.drawImage(ev.target, 0, 0)
+    },
     redraw (...pts) {
       if (pts.length === 0) {
         return
