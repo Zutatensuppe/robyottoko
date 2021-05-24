@@ -8,7 +8,7 @@ const extractYoutubeId = async (youtubeUrl) => {
 }
 
 class SongrequestModule {
-  constructor(db, user, client, storage, cache, ws, wss) {
+  constructor(db, user, chatClient, helixClient, storage, cache, ws, wss) {
     this.db = db
     this.user = user
     this.cache = cache

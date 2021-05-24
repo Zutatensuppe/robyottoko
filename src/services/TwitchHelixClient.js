@@ -41,6 +41,11 @@ class TwitchHelixClient {
     }
   }
 
+  async getStreams (userId) {
+    const url = `${this.helixApiBase}/streams${asQueryArgs({user_id: userId})}`
+    return await getJson(url, await this.withAuthHeaders())
+  }
+
   async getSubscriptions () {
     const url = `${this.helixApiBase}/eventsub/subscriptions`
     return await getJson(url, await this.withAuthHeaders())

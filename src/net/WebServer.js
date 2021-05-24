@@ -46,11 +46,11 @@ class WebServer {
       hmac.update(msg)
       const expected = `sha256=${hmac.digest('hex')}`
       if (req.headers['twitch-eventsub-message-signature'] !== expected) {
+        log.debug(req)
         log.error('bad message signature', {
           got: req.headers['twitch-eventsub-message-signature'],
           expected,
         })
-        log.debug(req)
         res.status(403).send({reason: 'bad message signature'})
         return
       }

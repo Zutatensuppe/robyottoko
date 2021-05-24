@@ -30,12 +30,14 @@ const webServer = new net.WebServer(db, userRepo, twitchChannelRepo, moduleManag
     const twitchChannels = twitchChannelRepo.allByUserId(user.id)
     const clientManager = new net.TwitchClientManager(config.twitch, db, user, twitchChannels, moduleManager)
     const chatClient = clientManager.getChatClient()
+    const helixClient = clientManager.getHelixClient()
     const moduleStorage = new mod.ModuleStorage(db, user.id)
     for (const moduleClass of mod.modules) {
       moduleManager.add(user.id, new moduleClass(
         db,
         user,
         chatClient,
+        helixClient,
         moduleStorage,
         cache,
         webServer,

@@ -3,10 +3,10 @@ const fn = require('../../fn.js')
 const { getText, asQueryArgs } = require('../../net/xhr.js')
 
 class SpeechToTextModule {
-  constructor(db, user, client, storage, cache, ws, wss) {
+  constructor(db, user, chatClient, helixClient, storage, cache, ws, wss) {
     this.db = db
     this.user = user
-    this.client = client
+    this.client = chatClient
     this.storage = storage
     this.cache = cache
     this.ws = ws

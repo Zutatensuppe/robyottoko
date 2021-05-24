@@ -107,61 +107,22 @@ class TwitchClientManager {
       user.tmi_identity_client_secret
     )
 
-    ;(async () => {
-      for (let channel of twitchChannels) {
-        if (channel.access_token && channel.channel_id) {
-          const transport = cfg.eventSub.transport
-          const sub = (type) => ({
-            type,
-            version: '1',
-            condition: {
-              broadcaster_user_id: channel.channel_id,
-            },
-            transport,
-          })
-
-          // TODO: dont try to fetch this for each user separately?
-          //       or at least fetch filtered by channel.channel_id
-          const subs = await this.helixClient.getSubscriptions()
-          log.debug(subs.data)
-
-          const enabledSubs = {}
-          for (const s of subs.data) {
-            // different callbacks dont matter
-            // it may be a callback from live vs dev, using the same bot
-            if (s.transport.callback !== transport.callback) {
-              continue
-            }
-
-            // only care about the current channel
-            if (s.condition.broadcaster_user_id !== channel.channel_id) {
-              continue
-            }
-
-            if (s.status !== 'enabled') {
-              log.info(`removing subscription (not enabled): ${s.id}`)
-              await this.helixClient.deleteSubscription(s.id)
-            } else {
-              enabledSubs[s.type] = s
-            }
-          }
-
-          for (const type of ['stream.online', 'stream.offline']) {
-            if (!enabledSubs[type]) {
-              log.info(`creating subscription: ${channel.channel_name} ${type}`)
-              const res = await this.helixClient.createSubscription(sub(type))
-              log.debug(res)
-            } else {
-              log.info(`subscription exists: ${channel.channel_name} ${type}`)
-            }
-          }
-        }
-      }
-    })()
+    // to delete all subscriptions
+    // ;(async () => {
+    //   const subzz = await this.helixClient.getSubscriptions()
+    //   for (const s of subzz.data) {
+    //     console.log(s.id)
+    //     await this.helixClient.deleteSubscription(s.id)
+    //   }
+    // })()
   }
 
   getChatClient() {
     return this.chatClient
+  }
+
+  getHelixClient() {
+    return this.helixClient
   }
 }
 

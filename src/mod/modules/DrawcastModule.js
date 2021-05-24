@@ -1,7 +1,7 @@
 const fn = require('../../fn.js')
 
 class DrawcastModule {
-  constructor(db, user, client, storage, cache, ws, wss) {
+  constructor(db, user, chatClient, helixClient, storage, cache, ws, wss) {
     this.user = user
     this.wss = wss
     this.name = 'drawcast'

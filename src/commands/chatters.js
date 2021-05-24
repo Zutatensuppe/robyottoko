@@ -1,19 +1,17 @@
 const fn = require('./../fn.js')
 
 const chatters = (
-  /** @type Db */     db
+  /** @type Db */                db,
+  /** @type TwitchHelixClient */ helixClient
 ) => async (command, client, target, context, msg) => {
-  console.log('hey')
   const say = fn.sayFn(client, target)
 
-  // get currently running stream
-  const stream = db.get('streams', {
-    broadcaster_user_id: context['room-id'],
-  }, [{ started_at: -1 }])
-  if (!stream) {
+  const streams = await helixClient.getStreams(context['room-id'])
+  if (!streams || streams.data.length === 0) {
     say(`Sorry, I couldn't determine who participated in chat...`)
     return
   }
+  const stream = streams.data[0]
 
   const [whereSql, whereValues] = db._buildWhere({
     broadcaster_user_id: context['room-id'],

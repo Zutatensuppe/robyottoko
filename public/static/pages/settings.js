@@ -88,14 +88,7 @@ export default {
 
     <p>Channel Id* and Access Token*:</p>
     <p>
-      You may not need the client id or access token, depending on your usage of the bot.<br />
-      They are currently required only for the following features:
-    </p>
-    <p>
-      Commands:
-      <ul>
-        <li><pre>Chatters</pre>
-      </ul>
+      You may not need the client id or access token. No public feature currently uses them.
     </p>
     <div v-if="accessTokenLink">
       <p>To get an access token, do the following:</p>

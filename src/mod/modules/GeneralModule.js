@@ -7,10 +7,11 @@ const fn = require('../../fn.js')
 const chatters = require('../../commands/chatters.js')
 
 class GeneralModule {
-  constructor(db, user, client, storage, cache, ws, wss) {
+  constructor(db, user, chatClient, helixClient, storage, cache, ws, wss) {
     this.db = db
     this.user = user
-    this.client = client
+    this.chatClient = chatClient
+    this.helixClient = helixClient
     this.storage = storage
     this.cache = cache
     this.ws = ws
@@ -69,7 +70,7 @@ class GeneralModule {
           cmdObj = Object.assign({}, cmd, {fn: countdown(cmd.data)})
           break;
         case 'chatters':
-          cmdObj = Object.assign({}, cmd, {fn: chatters(this.db)})
+          cmdObj = Object.assign({}, cmd, {fn: chatters(this.db, this.helixClient)})
           break;
       }
       for (const trigger of cmd.triggers) {
@@ -100,7 +101,7 @@ class GeneralModule {
       const now = new Date().getTime()
       this.timers.forEach(t => {
         if (t.lines >= t.minLines && now > t.next) {
-          t.command.fn(t.command, this.client, null, null, null)
+          t.command.fn(t.command, this.chatClient, null, null, null)
           t.lines = 0
           t.next = now + (t.minSeconds * fn.SECOND)
         }
