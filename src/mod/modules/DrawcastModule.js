@@ -1,4 +1,5 @@
 const fn = require('../../fn.js')
+const Tokens = require('../../services/Tokens.js')
 
 class DrawcastModule {
   constructor(db, user, chatClient, helixClient, storage, cache, ws, wss) {
@@ -6,6 +7,9 @@ class DrawcastModule {
     this.wss = wss
     this.storage = storage
     this.name = 'drawcast'
+
+    this.ws = ws
+    this.tokens = new Tokens(db)
     this.defaultSettings = {
       submitButtonText: 'Submit',
       submitConfirm: '', // leave empty to not require confirm
@@ -63,10 +67,18 @@ class DrawcastModule {
     }
   }
 
+  drawUrl () {
+    const pubToken = this.tokens.getPubTokenForUserId(this.user.id).token
+    return this.ws.pubUrl(this.ws.widgetUrl('drawcast_draw', pubToken))
+  }
+
   wsdata (eventName) {
     return {
       event: eventName,
-      data: Object.assign({}, this.data, {defaultSettings: this.defaultSettings}),
+      data: Object.assign({}, this.data, {
+        defaultSettings: this.defaultSettings,
+        drawUrl: this.drawUrl(),
+      }),
     };
   }
 

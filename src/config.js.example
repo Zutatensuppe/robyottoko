@@ -16,6 +16,7 @@ module.exports = {
   http: {
     hostname: 'localhost',
     port: 1337,
+    url: `http://localhost:1337`,
   },
   ws: {
     hostname: 'localhost',

@@ -16,18 +16,20 @@ function Tokens(db) {
   const insert = (tokenInfo) => db.insert(TABLE, tokenInfo)
   const createToken = (user_id, type) => {
     const token = generateToken(32)
-    insert({user_id, type, token})
-    return token
+    const tokenObj = {user_id, type, token}
+    insert(tokenObj)
+    return tokenObj
+  }
+
+  const getOrCreateToken = (user_id, type) => {
+    return getByUserIdAndType(user_id, type) || createToken(user_id, type)
   }
 
   return {
     getByToken: (token) => db.get(TABLE, {token}),
     delete: (token) => db.delete(TABLE, {token}),
-    getWidgetTokenForUserId: (user_id) => {
-      const type = 'widget'
-      return getByUserIdAndType(user_id, type)
-        || createToken(user_id, type)
-    },
+    getWidgetTokenForUserId: (user_id) => getOrCreateToken(user_id, 'token'),
+    getPubTokenForUserId: (user_id) => getOrCreateToken(user_id, 'pub'),
     generateAuthTokenForUserId: (user_id) => createToken(user_id, 'auth'),
   }
 }

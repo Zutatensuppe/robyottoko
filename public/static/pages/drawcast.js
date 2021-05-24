@@ -15,6 +15,8 @@ export default {
       settings: null,
       defaultSettings: null,
       ws: null,
+
+      drawUrl: '',
     }
   },
   watch: {
@@ -79,9 +81,6 @@ export default {
     receiveUrl() {
       return `${location.protocol}//${location.host}/widget/drawcast_receive/${this.conf.widgetToken}/`
     },
-    drawUrl() {
-      return `${location.protocol}//${location.host}/widget/drawcast_draw/${this.conf.widgetToken}/`
-    },
   },
   methods: {
     sendSave() {
@@ -106,6 +105,7 @@ export default {
       this.settings = data.settings
       this.defaultSettings = data.defaultSettings
       this.unchangedJson = JSON.stringify(data.settings)
+      this.drawUrl = data.drawUrl
     })
     this.ws.connect()
   }

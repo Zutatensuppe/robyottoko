@@ -5,7 +5,7 @@ function Auth(userRepo, tokenRepo) {
   return {
     getUserById,
     getUserByNameAndPass: (name, pass) => userRepo.getByNameAndPass(name, pass),
-    getUserAuthToken: (user_id) => tokenRepo.generateAuthTokenForUserId(user_id),
+    getUserAuthToken: (user_id) => tokenRepo.generateAuthTokenForUserId(user_id).token,
     destroyToken: (token) => tokenRepo.delete(token),
     addAuthInfoMiddleware: () => (req, res, next) => {
       const token = req.cookies['x-token'] || null
@@ -23,6 +23,7 @@ function Auth(userRepo, tokenRepo) {
         }
         req.user = user
         req.userWidgetToken = tokenRepo.getWidgetTokenForUserId(tokenInfo.user_id).token
+        req.userPubToken = tokenRepo.getPubTokenForUserId(tokenInfo.user_id).token
       } else {
         req.token = null
         req.user = null
@@ -36,6 +37,13 @@ function Auth(userRepo, tokenRepo) {
       }
       return null
     },
+    userFromPubToken: (token) => {
+      const tokenInfo = getTokenInfo(token)
+      if (tokenInfo && ['pub'].includes(tokenInfo.type)) {
+        return getUserById(tokenInfo.user_id)
+      }
+      return null
+    },
     wsTokenFromProtocol: (protocol) => {
       let proto = Array.isArray(protocol) && protocol.length === 2
         ? protocol[1]
@@ -44,7 +52,7 @@ function Auth(userRepo, tokenRepo) {
         proto = protocol[0]
       }
       const tokenInfo = getTokenInfo(proto)
-      if (tokenInfo && ['auth', 'widget'].includes(tokenInfo.type)) {
+      if (tokenInfo && ['auth', 'widget', 'pub'].includes(tokenInfo.type)) {
         return tokenInfo
       }
       return null

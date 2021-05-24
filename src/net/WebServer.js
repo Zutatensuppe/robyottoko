@@ -17,16 +17,48 @@ class WebServer {
     this.moduleManager = moduleManager
     this.port = configHttp.port
     this.hostname = configHttp.hostname
+    this.url = configHttp.url
     this.twitchWebhookSecret = configTwitch.eventSub.transport.secret
     this.wss = wss
     this.auth = auth
     this.handle = null
   }
 
+  pubUrl (/** @type string */ target) {
+    const row = this.db.get('pub', { target })
+    let id
+    if (!row) {
+      do {
+        id = fn.nonce(6)
+      } while (this.db.get('pub', { id }))
+      this.db.insert('pub', { id, target })
+    } else {
+      id = row.id
+    }
+    return `${this.url}/pub/${id}`
+  }
+
+  widgetUrl (/** @type string */ type, /** @type string */ token) {
+    return `${this.url}/widget/${type}/${token}/`
+  }
+
   async listen() {
     const port = this.port
     const hostname = this.hostname
     const app = express()
+
+
+    app.get('/pub/:id', (req, res, next) => {
+      const row = this.db.get('pub', {
+        id: req.params.id,
+      })
+      if (row && row.target) {
+        req.url = row.target
+        req.app.handle(req, res)
+        return
+      }
+      res.status(404).send()
+    })
 
     const uploadDir = './data/uploads'
     const storage = multer.diskStorage({
@@ -99,6 +131,33 @@ class WebServer {
     })
 
     app.get('/', requireLogin, async (req, res) => {
+      const widgets = [
+        {
+          title: 'Song Request',
+          hint: 'Browser source, or open in browser and capture window',
+          url: this.widgetUrl('sr', req.userWidgetToken),
+        },
+        {
+          title: 'Media',
+          hint: 'Browser source, or open in browser and capture window',
+          url: this.widgetUrl('media', req.userWidgetToken),
+        },
+        {
+          title: 'Speech-to-Text',
+          hint: 'Google Chrome + window capture',
+          url: this.widgetUrl('speech-to-text', req.userWidgetToken),
+        },
+        {
+          title: 'Drawcast (Overlay)',
+          hint: 'Browser source, or open in browser and capture window',
+          url: this.widgetUrl('drawcast_receive', req.userWidgetToken),
+        },
+        {
+          title: 'Drawcast (Draw)',
+          hint: 'Open this to draw (or give to viewers to let them draw)',
+          url: this.pubUrl(this.widgetUrl('drawcast_draw', req.userPubToken)),
+        },
+      ];
       res.send(await fn.render('base.twig', {
         title: 'Hyottoko.club',
         page: 'index',
@@ -107,6 +166,7 @@ class WebServer {
           widgetToken: req.userWidgetToken,
           user: req.user,
           token: req.cookies['x-token'],
+          widgets,
         },
       }))
     })
@@ -257,6 +317,7 @@ class WebServer {
 
     app.get('/widget/:widget_type/:widget_token/', async (req, res, next) => {
       const user = this.auth.userFromWidgetToken(req.params.widget_token)
+        || this.auth.userFromPubToken(req.params.widget_token)
       if (!user) {
         res.status(404).send()
         return
