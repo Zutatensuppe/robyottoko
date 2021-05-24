@@ -3,7 +3,6 @@ const crypto = require('crypto')
 const multer = require('multer')
 const express = require('express')
 const cookieParser = require('cookie-parser')
-const bodyParser = require('body-parser')
 
 const TwitchHelixClient = require('../services/TwitchHelixClient.js')
 
@@ -124,7 +123,7 @@ class WebServer {
       }))
     })
 
-    app.post('/save-settings', requireLogin, bodyParser.json(), async (req, res) => {
+    app.post('/save-settings', requireLogin, express.json(), async (req, res) => {
       if (!req.user.groups.includes('admin')) {
         if (req.user.id !== req.body.user.id) {
           // editing other user than self
@@ -161,7 +160,7 @@ class WebServer {
     app.get('/twitch/redirect_uri', async (req, res) => {
       res.send(await fn.render('twitch/redirect_uri.twig'))
     })
-    app.post('/twitch/user-id-by-name', requireLogin, bodyParser.json(), async (req, res) => {
+    app.post('/twitch/user-id-by-name', requireLogin, express.json(), async (req, res) => {
       let clientId
       let clientSecret
       if (!req.user.groups.includes('admin')) {
@@ -191,7 +190,7 @@ class WebServer {
 
     app.post(
       '/twitch/event-sub/',
-      bodyParser.json({ verify: (req,res,buf) => { req.rawBody=buf }}),
+      express.json({ verify: (req,res,buf) => { req.rawBody=buf }}),
       verifyTwitchSignature,
       async (req, res) => {
       log.debug(req.body)
@@ -234,7 +233,7 @@ class WebServer {
       res.status(400).send({reason: 'unhandled sub type'})
     })
 
-    app.post('/auth', bodyParser.json(), async (req, res) => {
+    app.post('/auth', express.json(), async (req, res) => {
       const user = this.auth.getUserByNameAndPass(req.body.user, req.body.pass)
       if (!user) {
         res.status(401).send({reason: 'bad credentials'})
