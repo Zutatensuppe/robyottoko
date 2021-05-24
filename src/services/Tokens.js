@@ -28,7 +28,7 @@ function Tokens(db) {
   return {
     getByToken: (token) => db.get(TABLE, {token}),
     delete: (token) => db.delete(TABLE, {token}),
-    getWidgetTokenForUserId: (user_id) => getOrCreateToken(user_id, 'token'),
+    getWidgetTokenForUserId: (user_id) => getOrCreateToken(user_id, 'widget'),
     getPubTokenForUserId: (user_id) => getOrCreateToken(user_id, 'pub'),
     generateAuthTokenForUserId: (user_id) => createToken(user_id, 'auth'),
   }
