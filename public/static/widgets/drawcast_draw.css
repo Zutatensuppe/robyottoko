@@ -12,3 +12,7 @@ canvas {
 .colorpick { display: inline-block; padding: 1px; border: solid 2px #ccc; cursor: pointer; }
 .colorpick .color { display: inline-block; width: 20px; height: 20px; margin: 1px; }
 .colorpick.active { border: solid 2px black; }
+
+#gallery { margin-top: 1em; }
+#gallery div { margin-bottom: 1em; }
+#gallery img { width: 200px; border: solid 1px black; margin: 0 .5em .5em 0; }

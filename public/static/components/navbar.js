@@ -14,6 +14,7 @@ export default {
         <li><a href="/commands/">Commands</a>
         <li><a href="/sr/">Song Request</a>
         <li><a href="/speech-to-text/">Speech-To-Text</a>
+        <li><a href="/drawcast/">Drawcast</a>
         <li><a href="/settings/">Settings</a>
         <li><a href="/logout">Logout</a>
       </ul>

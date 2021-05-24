@@ -3,7 +3,7 @@ import WsClient from '../WsClient.js'
 export default {
   template: `
 <div>
-  <canvas ref="canvas" width="720" height="405"
+  <canvas ref="canvas" :width="canvasWidth" :height="canvasHeight"
     @mousemove="mousemove"
     @mousedown="mousedown"
     @mouseup="mouseup"
@@ -21,9 +21,10 @@ export default {
 
   <input type="range" min="1" max="100" v-model="size" />
   {{ size }}
-  <input type="button" id="clear" value="Clear" @click="clear" />
-  <input type="button" id="submit" value="Submit" @click="submitImage" />
-  <div id="gallery">
+  <input type="button" id="clear" value="Clear image" @click="clear" />
+  <input type="button" id="submit" :value="submitButtonText" @click="submitImage" />
+  <div id="gallery" v-if="images.length > 0">
+    <div>Gallery: <input type="button" @click="images=[]" value="Clear gallery"/></div>
     <img v-for="(img,idx) in images" :src="img" :key="idx" />
   </div>
 </div>`,
@@ -45,11 +46,16 @@ export default {
 
       tool: 'pen', // 'pen'|'erazer'
       colorIdx: 0,
-      size: 2,
+      size: 6,
       canvas: null,
       ctx: null,
 
       last: null,
+
+      canvasWidth: 720,
+      canvasHeight: 405,
+      submitButtonText: 'Submit',
+      submitConfirm: '',
     }
   },
   computed: {
@@ -131,13 +137,13 @@ export default {
     },
     clear () {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-      this.images = []
     },
     submitImage () {
-      const imgSrc = this.canvas.toDataURL()
-      this.images.push(imgSrc)
+      if (this.submitConfirm && !confirm(this.submitConfirm)) {
+        return
+      }
       this.ws.send(JSON.stringify({event: 'post', data: {
-        img: imgSrc
+        img: this.canvas.toDataURL(),
       }}))
     },
   },
@@ -146,6 +152,16 @@ export default {
       this.conf.wsBase + '/drawcast',
       this.conf.widgetToken
     )
+    this.ws.onMessage('init', (data) => {
+      this.submitButtonText = data.settings.submitButtonText
+      this.submitConfirm = data.settings.submitConfirm
+      this.canvasWidth = data.settings.canvasWidth
+      this.canvasHeight = data.settings.canvasHeight
+    })
+    this.ws.onMessage('post', (data) => {
+      this.images.unshift(data.img)
+      this.images = this.images.slice(0, 20)
+    })
     this.ws.connect()
 
     this.canvas = this.$refs.canvas
