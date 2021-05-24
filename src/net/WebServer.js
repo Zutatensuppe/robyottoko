@@ -46,8 +46,8 @@ class WebServer {
       hmac.update(msg)
       const expected = `sha256=${hmac.digest('hex')}`
       if (req.headers['twitch-eventsub-message-signature'] !== expected) {
-        log.error('unexpected message signature', req, expected)
-        res.status(403)
+        log.error('bad message signature', req, expected)
+        res.status(403).send({reason: 'bad message signature'})
         return
       }
 
@@ -124,7 +124,7 @@ class WebServer {
       if (!req.user.groups.includes('admin')) {
         if (req.user.id !== req.body.user.id) {
           // editing other user than self
-          res.status(401)
+          res.status(401).send({reason: 'not_allowed_to_edit_other_users'})
           return
         }
       }
@@ -227,7 +227,7 @@ class WebServer {
         return
       }
 
-      res.status(400)
+      res.status(400).send({reason: 'unhandled sub type'})
     })
 
     app.post('/auth', bodyParser.json(), async (req, res) => {
