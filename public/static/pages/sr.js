@@ -15,6 +15,7 @@ export default {
   data() {
     return {
       playerVisible: false,
+      helpVisible: false,
       volume: 100,
       playlist: [],
       ws: null,
@@ -32,6 +33,7 @@ export default {
         <li><button class="btn" @click="sendCtrl('clear', [])" title="Clear"><i class="fa fa-eject"/><span class="txt"> Clear</span></button>
         <li><button class="btn" @click="sendCtrl('shuffle', [])" title="Shuffle"><i class="fa fa-random"/><span class="txt"> Shuffle</span></button>
         <li><button class="btn" @click="togglePlayer" :title="togglePlayerButtonText"><i class="fa fa-tv"/><span class="txt"> {{togglePlayerButtonText}}</span></button>
+        <li><button class="btn" @click="toggleHelp" :title="toggleHelpButtonText"><i class="fa fa-info"/><span class="txt"> {{toggleHelpButtonText}}</span></button>
         <li class="maybebreak" style="position: relative"><i class="fa fa-search" style="color: #60554a; position: absolute; left: 8px; top: 7px;"/><input style="padding-left: 32px; margin-right: 3px;" type="text" v-model="srinput" @keyup.enter="sr" /><button class="btn" @click="sr"><i class="fa fa-plus"/><span class="txt"> Request</span></button>
         <li><a class="btn" :href="widgetUrl" target="_blank">Open SR widget</a>
       </ul>
@@ -41,7 +43,77 @@ export default {
     <div style="width: 640px">
       <div id="player" class="video-16-9" :style="playerstyle"><youtube ref="youtube" @ended="ended"/></div>
     </div>
-    <div id="playlist">
+    <div id="help" v-if="helpVisible">
+      <table>
+        <tr>
+          <th>Chat command</th>
+          <th>Viewer</th>
+          <th>Mod</th>
+          <th>Explanation</th>
+        </tr>
+        <tr>
+          <td><code>!sr &lt;SEARCH&gt;</code></td>
+          <td class="positive">✔</td>
+          <td class="positive">✔</td>
+          <td>
+            Search for <code>&lt;SEARCH&gt;</code> at youtube (by id or by title) and queue the
+            first result in the playlist (after the first found batch of
+            unplayed songs).<br />
+            This only executes if <code>&lt;SEARCH&gt;</code> does not match one of the commands
+            below.
+          </td>
+        </tr>
+        <tr>
+          <td><code>!sr current</code></td>
+          <td class="positive">✔</td>
+          <td class="positive">✔</td>
+          <td>Show what song is currently playing</td>
+        </tr>
+        <tr>
+          <td><code>!sr good</code></td>
+          <td class="positive">✔</td>
+          <td class="positive">✔</td>
+          <td>Vote the current song up</td>
+        </tr>
+        <tr>
+          <td><code>!sr bad</code></td>
+          <td class="positive">✔</td>
+          <td class="positive">✔</td>
+          <td>Vote the current song down</td>
+        </tr>
+        <tr>
+          <td><code>!sr rm</code></td>
+          <td class="negative">✖</td>
+          <td class="positive">✔</td>
+          <td>Remove the current song from the playlist</td>
+        </tr>
+        <tr>
+          <td><code>!sr skip</code></td>
+          <td class="negative">✖</td>
+          <td class="positive">✔</td>
+          <td>Skip to the next song</td>
+        </tr>
+        <tr>
+          <td><code>!sr shuffle</code></td>
+          <td class="negative">✖</td>
+          <td class="positive">✔</td>
+          <td>Shuffle the playlist (current song unaffected)</td>
+        </tr>
+        <tr>
+          <td><code>!sr resetStats</code></td>
+          <td class="negative">✖</td>
+          <td class="positive">✔</td>
+          <td>Reset all statistics of all songs</td>
+        </tr>
+        <tr>
+          <td><code>!sr clear</code></td>
+          <td class="negative">✖</td>
+          <td class="positive">✔</td>
+          <td>Clear the playlist</td>
+        </tr>
+      </table>
+    </div>
+    <div id="playlist" v-if="!helpVisible">
       <table v-if="playlist.length > 0">
         <tr>
           <th></th>
@@ -95,6 +167,9 @@ export default {
     togglePlayerButtonText() {
       return this.playerVisible ? 'Hide Player' : 'Show Player'
     },
+    toggleHelpButtonText() {
+      return this.helpVisible ? 'Hide Help' : 'Show Help'
+    },
     widgetUrl() {
       return `${location.protocol}//${location.host}/widget/sr/${this.conf.widgetToken}/`
     },
@@ -109,6 +184,9 @@ export default {
       } else {
         this.player.stop()
       }
+    },
+    toggleHelp() {
+      this.helpVisible = !this.helpVisible
     },
     sr() {
       if (this.srinput !== '') {
