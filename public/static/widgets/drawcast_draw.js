@@ -26,7 +26,7 @@ export default {
   <div id="gallery" v-if="images.length > 0">
     <div>Gallery: <input type="button" @click="images=[]" value="Clear gallery"/></div>
     <div>
-      Click an image to modify it: <br />
+      Click a drawing to start a new one from it: <br />
       <img v-for="(img,idx) in images" :src="img" :key="idx" @click="modify" />
     </div>
   </div>
