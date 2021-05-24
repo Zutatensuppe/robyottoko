@@ -17,7 +17,7 @@ export default {
     </span>
     </template>
   </div>
-  <input type="button" value="Erazer" @click="tool='erazer'" />
+  <input type="button" value="Eraser" @click="tool='eraser'" />
 
   <input type="range" min="1" max="100" v-model="size" />
   {{ size }}
@@ -47,7 +47,7 @@ export default {
       ],
       images: [],
 
-      tool: 'pen', // 'pen'|'erazer'
+      tool: 'pen', // 'pen'|'eraser'
       colorIdx: 0,
       size: 6,
       canvas: null,
@@ -69,7 +69,7 @@ export default {
       return Math.round(this.size/2)
     },
     globalCompositeOperation () {
-      return this.tool === 'erazer' ? 'destination-out' : 'source-over'
+      return this.tool === 'eraser' ? 'destination-out' : 'source-over'
     },
     styles () {
       return {
@@ -83,7 +83,7 @@ export default {
       const ctx = c.getContext('2d')
       ctx.beginPath()
       ctx.strokeStyle = '#000'
-      if (this.tool === 'erazer') {
+      if (this.tool === 'eraser') {
         ctx.fillStyle = '#fff'
       } else {
         ctx.fillStyle = this.color
