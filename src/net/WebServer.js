@@ -257,6 +257,10 @@ class WebServer {
 
     app.get('/widget/:widget_type/:widget_token/', async (req, res, next) => {
       const user = this.auth.userFromWidgetToken(req.params.widget_token)
+      if (!user) {
+        res.status(404).send()
+        return
+      }
       const key = req.params.widget_type
       for (const m of this.moduleManager.all(user.id)) {
         const map = m.widgets()
@@ -265,7 +269,7 @@ class WebServer {
           return
         }
       }
-      res.sendStatus(404)
+      res.status(404).send()
     })
 
     app.get('*', requireLogin, async (req, res, next) => {
