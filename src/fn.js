@@ -190,6 +190,26 @@ const split = (str, delimiter = ',', maxparts = -1) => {
   ]
 }
 
+const joinIntoChunks = (
+  /** @type Array */ strings,
+  /** @type string */ glue,
+  /** @type number */ maxChunkLen,
+) => {
+  const chunks = []
+  let chunk = []
+  for (let i = 0; i < strings.length; i++) {
+    chunk.push(strings[i])
+    if (chunk.join(glue).length > maxChunkLen) {
+      chunk.pop()
+      chunks.push(chunk.join(glue))
+      chunk = []
+      chunk.push(strings[i])
+    }
+  }
+  chunks.push(chunk.join(glue))
+  return chunks
+}
+
 module.exports = {
   logger,
   sayFn,
@@ -207,6 +227,7 @@ module.exports = {
   parseResponseText,
   nonce,
   split,
+  joinIntoChunks,
   MS,
   SECOND,
   MINUTE,

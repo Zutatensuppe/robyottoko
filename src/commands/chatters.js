@@ -8,7 +8,7 @@ const chatters = (
 
   const streams = await helixClient.getStreams(context['room-id'])
   if (!streams || streams.data.length === 0) {
-    say(`Sorry, I couldn't determine who participated in chat...`)
+    say(`It seems this channel is not live at the moment...`)
     return
   }
   const stream = streams.data[0]
@@ -21,9 +21,15 @@ const chatters = (
     `select display_name from chat_log ${whereSql} group by user_name`,
     whereValues
   ).map(r => r.display_name)
+  if (userNames.length === 0) {
+    say(`It seems nobody chatted? :(`)
+    return
+  }
 
-  // TODO: accomodate for max message length (maybe better in say fn)
-  say(`Chatters: ${userNames.join(', ')}`)
+  say(`Thank you for chatting!`)
+  fn.joinIntoChunks(userNames, ', ', 500).forEach(msg => {
+    say(msg)
+  })
 }
 
 module.exports = chatters
