@@ -18,6 +18,7 @@ Features are:
   - translated subtitles
   - synthesized voice
   - synthesized translated voice
+- Let viewers draw on stream (requires a public url)
 
 Note: You will need your own bot account on twitch.tv for using
 robyottoko. Alternatively you can ask in
@@ -64,3 +65,23 @@ The rest of the settings can be changed via the bot admin ui.
     Note: It is recommended that the bot you set there is also made a
     moderator in the twitch channels, so that it can chat without
     restrictions (for example for countdown commands).
+
+# Features
+
+Some more information about different features:
+
+## Song Request
+
+Song request provides its own chat commands and defines who can use them:
+
+Chat command     | Viewer | Mod | Explanation
+-----------------|--------|-----|---------------------------------------
+`!sr <SEARCH>`   | ✔      | ✔   | Search for `<SEARCH>` at youtube (by id or by title) and queue the first result in the playlist (after the first found batch of unplayed songs). <br /> This only executes if `<SEARCH>` does not match one of the commands below.
+`!sr current`    | ✔      | ✔   | Show what song is currently playing
+`!sr good`       | ✔      | ✔   | Vote the current song up
+`!sr bad`        | ✔      | ✔   | Vote the current song down
+`!sr rm`         | ✖      | ✔   | Remove the current song from the playlist
+`!sr skip`       | ✖      | ✔   | Skip to the next song
+`!sr shuffle`    | ✖      | ✔   | Shuffle the playlist (current song unaffected)
+`!sr resetStats` | ✖      | ✔   | Reset all statistics of all songs
+`!sr clear`      | ✖      | ✔   | Clear the playlist
