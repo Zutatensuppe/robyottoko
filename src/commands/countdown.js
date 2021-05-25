@@ -2,7 +2,13 @@ const fn = require('./../fn.js')
 
 const countdown = (
   /** @type Object */ settings
-) => async (command, client, target, context, msg) => {
+) => async (
+  command,
+  client,
+  /** @type string */ target,
+  context,
+  /** @type string */ msg,
+) => {
   const say = fn.sayFn(client, target)
 
   const actions = []

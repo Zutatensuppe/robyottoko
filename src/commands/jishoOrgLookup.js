@@ -3,7 +3,13 @@ const JishoOrg = require('./../services/JishoOrg.js')
 
 const jishoOrgLookup = (
   // no params
-) => async (command, client, target, context, msg) => {
+) => async (
+  command,
+  client,
+  /** @type string */ target,
+  context,
+  /** @type string */ msg,
+) => {
   const say = fn.sayFn(client, target)
   const phrase = command.args.join(' ')
   const data = await JishoOrg.searchWord(phrase)

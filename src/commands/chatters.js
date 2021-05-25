@@ -3,7 +3,13 @@ const fn = require('./../fn.js')
 const chatters = (
   /** @type Db */                db,
   /** @type TwitchHelixClient */ helixClient
-) => async (command, client, target, context, msg) => {
+) => async (
+  command,
+  client,
+  /** @type string */ target,
+  context,
+  /** @type string */ msg,
+) => {
   const say = fn.sayFn(client, target)
 
   const streams = await helixClient.getStreams(context['room-id'])

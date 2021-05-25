@@ -1,3 +1,4 @@
+const Db = require('../Db.js')
 const { logger } = require('../fn.js')
 
 const log = logger(__filename)
@@ -5,7 +6,10 @@ const log = logger(__filename)
 const TABLE = 'module'
 
 class ModuleStorage {
-  constructor(db, userId) {
+  constructor(
+    /** @type Db */ db,
+    userId,
+  ) {
     this.db = db
     this.userId = userId
   }

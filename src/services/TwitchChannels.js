@@ -1,6 +1,8 @@
+const Db = require("../Db")
+
 const TABLE = 'twitch_channel'
 
-function TwitchChannels(db) {
+function TwitchChannels(/** @type Db */ db) {
   const save = (channel) => db.upsert(TABLE, channel, {
     user_id: channel.user_id,
     channel_name: channel.channel_name,

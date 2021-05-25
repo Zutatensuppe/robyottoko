@@ -4,7 +4,10 @@ const { postJson, getJson, delJson, asJson, withHeaders, asQueryArgs, requestTex
 const log = logger('TwitchHelixClient.js')
 
 class TwitchHelixClient {
-  constructor(clientId, clientSecret) {
+  constructor(
+    /** @type string */ clientId,
+    /** @type string */ clientSecret
+  ) {
     this.clientId = clientId
     this.clientSecret = clientSecret
     this.helixApiBase = 'https://api.twitch.tv/helix'

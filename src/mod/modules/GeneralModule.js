@@ -5,9 +5,22 @@ const randomText = require('../../commands/randomText.js')
 const playMedia = require('../../commands/playMedia.js')
 const fn = require('../../fn.js')
 const chatters = require('../../commands/chatters.js')
+const Db = require('../../Db.js')
+const TwitchHelixClient = require('../../services/TwitchHelixClient.js')
+const WebServer = require('../../net/WebServer.js')
+const WebSocketServer = require('../../net/WebSocketServer.js')
 
 class GeneralModule {
-  constructor(db, user, chatClient, helixClient, storage, cache, ws, wss) {
+  constructor(
+    /** @type Db */ db,
+    user,
+    chatClient,
+    /** @type TwitchHelixClient */ helixClient,
+    storage,
+    cache,
+    /** @type WebServer */ ws,
+    /** @type WebSocketServer */ wss
+  ) {
     this.db = db
     this.user = user
     this.chatClient = chatClient
@@ -173,7 +186,12 @@ class GeneralModule {
     return this.commands
   }
 
-  onChatMsg (client, target, context, msg) {
+  onChatMsg (
+    client,
+    /** @type string */ target,
+    context,
+    /** @type string */ msg
+  ) {
     this.timers.forEach(t => {
       t.lines++
     })

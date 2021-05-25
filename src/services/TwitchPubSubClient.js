@@ -17,7 +17,10 @@ class WsWrapper {
   // buffer for 'send'
   sendBuffer = []
 
-  constructor(addr, protocols) {
+  constructor(
+    addr,
+    protocols,
+  ) {
     this.addr = addr
     this.protocols = protocols
 

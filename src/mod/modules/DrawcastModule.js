@@ -1,8 +1,21 @@
+const Db = require('../../Db.js')
 const fn = require('../../fn.js')
+const WebServer = require('../../net/WebServer.js')
+const WebSocketServer = require('../../net/WebSocketServer.js')
 const Tokens = require('../../services/Tokens.js')
+const TwitchHelixClient = require('../../services/TwitchHelixClient.js')
 
 class DrawcastModule {
-  constructor(db, user, chatClient, helixClient, storage, cache, ws, wss) {
+  constructor(
+    /** @type Db */ db,
+    user,
+    chatClient,
+    /** @type TwitchHelixClient */ helixClient,
+    storage,
+    cache,
+    /** @type WebServer */ ws,
+    /** @type WebSocketServer */ wss,
+  ) {
     this.user = user
     this.wss = wss
     this.storage = storage

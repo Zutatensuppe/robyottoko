@@ -1,6 +1,8 @@
+const Db = require("../Db")
+
 const TABLE = 'cache'
 
-function Cache(db) {
+function Cache(/** @type Db */ db) {
   return {
     set: (key, value) => {
       db.upsert(TABLE, {key, value: JSON.stringify(value)}, {key})

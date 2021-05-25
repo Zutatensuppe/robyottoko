@@ -3,7 +3,10 @@ const log = (...args) => console.log('[WsClient.js]', ...args)
 import WsWrapper from './WsWrapper.js'
 
 export default class WsClient extends WsWrapper {
-  constructor(addr, protocols) {
+  constructor(
+    addr,
+    protocols,
+  ) {
     super(addr, protocols)
     this._on = {}
     this.onopen = (e) => {

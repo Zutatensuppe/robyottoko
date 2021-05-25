@@ -1,6 +1,9 @@
 const { getJson, asQueryArgs } = require('../net/xhr')
 
-const searchWord = async (keyword, page = 1) => {
+const searchWord = async (
+  /** @type string */ keyword,
+  /** @type number */ page = 1,
+) => {
   const url = 'https://jisho.org/api/v1/search/words' + asQueryArgs({
     keyword: keyword,
     page: page,

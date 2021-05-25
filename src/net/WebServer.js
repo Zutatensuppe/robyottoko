@@ -5,11 +5,22 @@ const express = require('express')
 const cookieParser = require('cookie-parser')
 
 const TwitchHelixClient = require('../services/TwitchHelixClient.js')
+const Db = require('../Db.js')
+const WebSocketServer = require('./WebSocketServer.js')
 
 const log = fn.logger(__filename)
 
 class WebServer {
-  constructor(db, userRepo, twitchChannelRepo, moduleManager, configHttp, configTwitch, wss, auth) {
+  constructor(
+    /** @type Db */ db,
+    userRepo,
+    twitchChannelRepo,
+    moduleManager,
+    configHttp,
+    configTwitch,
+    /** @type WebSocketServer */ wss,
+    auth
+  ) {
     this.db = db
     this.userRepo = userRepo
     this.twitchChannelRepo = twitchChannelRepo

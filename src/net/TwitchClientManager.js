@@ -2,9 +2,16 @@ const tmi = require('tmi.js')
 const TwitchPubSubClient = require('../services/TwitchPubSubClient.js')
 const TwitchHelixClient = require('../services/TwitchHelixClient.js')
 const fn = require('../fn.js')
+const Db = require('../Db.js')
 
 class TwitchClientManager {
-  constructor(cfg, db, user, twitchChannels, moduleManager) {
+  constructor(
+    cfg,
+    /** @type Db */ db,
+    user,
+    twitchChannels,
+    moduleManager,
+  ) {
     const log = fn.logger(__filename, `${user.name}|`)
 
     if (twitchChannels.length === 0) {

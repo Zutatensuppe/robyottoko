@@ -1,14 +1,27 @@
+const Db = require('../../Db.js')
 const fn = require('../../fn.js')
+const WebServer = require('../../net/WebServer.js')
+const WebSocketServer = require('../../net/WebSocketServer.js')
+const TwitchHelixClient = require('../../services/TwitchHelixClient.js')
 const Youtube = require('../../services/Youtube.js')
 
-const extractYoutubeId = async (youtubeUrl) => {
+const extractYoutubeId = async (/** @type string */ youtubeUrl) => {
   return Youtube.extractYoutubeId(youtubeUrl)
     || await Youtube.getYoutubeIdBySearch(youtubeUrl)
     || null
 }
 
 class SongrequestModule {
-  constructor(db, user, chatClient, helixClient, storage, cache, ws, wss) {
+  constructor(
+    /** @type Db */ db,
+    user,
+    chatClient,
+    /** @type TwitchHelixClient */ helixClient,
+    storage,
+    cache,
+    /** @type WebServer */ ws,
+    /** @type WebSocketServer */ wss
+  ) {
     this.db = db
     this.user = user
     this.cache = cache
@@ -93,11 +106,11 @@ class SongrequestModule {
     };
   }
 
-  updateClient (eventName, ws) {
+  updateClient (/** @type string */ eventName, /** @type WebSocket */ ws) {
     this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
   }
 
-  updateClients (eventName) {
+  updateClients (/** @type string */ eventName) {
     this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName))
   }
 
@@ -144,7 +157,7 @@ class SongrequestModule {
     }
   }
 
-  async add(str, user) {
+  async add(/** @type string */ str, user) {
     const youtubeUrl = str.trim()
     const youtubeId = await extractYoutubeId(youtubeUrl)
     if (!youtubeId) {

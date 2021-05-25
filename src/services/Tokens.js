@@ -1,3 +1,5 @@
+const Db = require("../Db");
+
 const TABLE = 'token'
 
 function generateToken(length) {
@@ -11,7 +13,7 @@ function generateToken(length) {
   return b.join('');
 }
 
-function Tokens(db) {
+function Tokens(/** @type Db */ db) {
   const getByUserIdAndType = (user_id, type) => db.get(TABLE, {user_id, type})
   const insert = (tokenInfo) => db.insert(TABLE, tokenInfo)
   const createToken = (user_id, type) => {

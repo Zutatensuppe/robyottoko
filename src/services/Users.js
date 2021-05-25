@@ -1,6 +1,8 @@
+const Db = require("../Db")
+
 const TABLE = 'user'
 
-function Users(db) {
+function Users(/** @type Db */ db) {
   return {
     all: () => db.getMany(TABLE),
     getById: (id) => db.get(TABLE, {id}),

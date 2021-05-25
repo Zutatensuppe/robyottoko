@@ -55,7 +55,7 @@ const shuffle = (array) => {
   return array;
 }
 
-function getRandomInt(min, max) {
+function getRandomInt(/** @type number */ min, /** @type number */ max) {
   min = Math.ceil(min);
   max = Math.floor(max);
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -65,7 +65,7 @@ function getRandom(array) {
   return array[getRandomInt(0, array.length - 1)]
 }
 
-function nonce(length) {
+function nonce(/** @type number */ length) {
   let text = "";
   const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
   for (let i = 0; i < length; i++) {
@@ -83,7 +83,7 @@ const render = async (template, data) => {
 
 const fnRandom = (values) => () => getRandom(values)
 
-const sleep = (ms) => {
+const sleep = (/** @type number */ ms) => {
   return new Promise((resolve, reject) => {
     setTimeout(resolve, ms)
   })
@@ -93,7 +93,12 @@ const isBroadcaster = (ctx) => ctx['room-id'] === ctx['user-id']
 const isMod = (ctx) => !!ctx.mod || isBroadcaster(ctx)
 const isSubscriber = (ctx) => !!ctx.subscriber || isBroadcaster(ctx)
 
-const sayFn = (client, target) => (msg) => {
+const sayFn = (
+  client,
+  /** @type string */ target,
+) => (
+  /** @type string */ msg
+) => {
   const targets = target ? [target] : client.channels
   targets.forEach(t => {
     log.info(`saying in ${t}: ${msg}`)
@@ -117,12 +122,16 @@ const mayExecute = (context, cmd) => {
   return false
 }
 
-const parseCommandFromMessage = (msg) => {
+const parseCommandFromMessage = (/** @type string */ msg) => {
   const command = msg.trim().split(' ')
   return {name: command[0], args: command.slice(1)}
 }
 
-async function replaceAsync(str, regex, asyncFn) {
+async function replaceAsync(
+  /** @type string */ str,
+  /** @type RegExp */ regex,
+  /** @type (...string) => Promise<any> */ asyncFn,
+) {
   const promises = [];
   str.replace(regex, (match, ...args) => {
     const promise = asyncFn(match, ...args);
@@ -132,7 +141,10 @@ async function replaceAsync(str, regex, asyncFn) {
   return str.replace(regex, () => data.shift());
 }
 
-const parseResponseText = async (text, command) => {
+const parseResponseText = async (
+  /** @type string */ text,
+  command,
+) => {
   const replaces = [
     {
       regex: /\$([a-z][a-z0-9]*)(?!\()/g,
@@ -174,7 +186,11 @@ const parseResponseText = async (text, command) => {
   return replaced
 }
 
-const split = (str, delimiter = ',', maxparts = -1) => {
+const split = (
+  /** @type string */ str,
+  /** @type string */ delimiter = ',',
+  /** @type number */ maxparts = -1,
+) => {
   const split = str.split(delimiter)
   if (maxparts === -1) {
     return split

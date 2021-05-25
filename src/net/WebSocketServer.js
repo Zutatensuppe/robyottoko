@@ -4,7 +4,11 @@ const { SECOND, logger } = require('../fn.js')
 const log = logger(__filename)
 
 class WebSocketServer {
-  constructor(moduleManager, config, auth) {
+  constructor(
+    moduleManager,
+    config,
+    auth,
+  ) {
     this.moduleManager = moduleManager
     this.config = config
     this.auth = auth
@@ -85,7 +89,7 @@ class WebSocketServer {
     })
   }
 
-  notifyOne(user_ids, module, data, socket) {
+  notifyOne(user_ids, module, data, /** @type WebSocket */ socket) {
     if (socket.isAlive && user_ids.includes(socket.user_id) && socket.module === module) {
       log.info(`notifying ${socket.user_id} (${data.event})`)
       socket.send(JSON.stringify(data))
