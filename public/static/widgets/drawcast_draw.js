@@ -38,8 +38,8 @@ export default {
       <td>
         <label id="current-color">
           <input type="color" v-model="color" />
-          <span class="square square-big">
-            <span class="square-inner" :style="{backgroundColor: color}"></span>
+          <span class="square square-big" :class="{active: tool==='pen'}">
+            <span class="square-inner" :style="{backgroundColor: tool==='color-sampler' ? sampleColor : color}"></span>
           </span>
         </label>
       </td>
@@ -48,15 +48,18 @@ export default {
           <div>
             <template v-for="(c,idx) in colors" :key="idx">
             <br v-if="idx > 0 && idx%11===0" />
-            <span class="square colorpick" :class="{active: color === c && tool === 'pen'}" @click="color = c;tool='pen'">
+            <span class="square colorpick" @click="color = c;tool='pen'">
               <span class="square-inner color" :style="{backgroundColor: c}"></span>
             </span>
             </template>
           </div>
         </div>
         <div class="tools">
+          <span class="square" :class="{active: tool === 'color-sampler'}" title="Color Sampler">
+            <span class="square-inner color-sampler" @click="tool='color-sampler'"></span>
+          </span>
           <span class="square" :class="{active: tool === 'eraser'}" title="Eraser">
-            <span class="square-inner eraser" value="Eraser" @click="tool='eraser'"></span>
+            <span class="square-inner eraser" @click="tool='eraser'"></span>
           </span>
 
           <input type="range" min="1" max="100" v-model="size" />
@@ -96,8 +99,9 @@ export default {
       images: [],
 
       color: '#000000',
+      sampleColor: '',
 
-      tool: 'pen', // 'pen'|'eraser'
+      tool: 'pen', // 'pen'|'eraser'|'color-sampler'
       size: 6,
       canvas: null,
       ctx: null,
@@ -119,14 +123,39 @@ export default {
     },
     styles () {
       return {
-        cursor: `url(${this.cursor}) ${this.halfSize} ${this.halfSize}, default`,
+        cursor: `url(${this.cursor.url}) ${this.cursor.offX} ${this.cursor.offY}, default`,
       }
     },
     cursor () {
       const c = document.createElement('canvas')
+      const ctx = c.getContext('2d')
+      if (this.tool === 'color-sampler') {
+        c.width = 17
+        c.height = 17
+        ctx.beginPath()
+        ctx.strokeStyle = '#000'
+
+        ctx.moveTo(0, 8)
+        ctx.lineTo(8, 8)
+        ctx.moveTo(9, 8)
+        ctx.lineTo(16, 8)
+
+        ctx.moveTo(8, 0)
+        ctx.lineTo(8, 8)
+        ctx.moveTo(8, 9)
+        ctx.lineTo(8, 16)
+
+        ctx.closePath()
+        ctx.stroke()
+        return {
+          url: c.toDataURL(),
+          offX: 8,
+          offY: 8,
+        }
+      }
+
       c.width = parseInt(this.size, 10) + 1
       c.height = parseInt(this.size, 10) + 1
-      const ctx = c.getContext('2d')
       ctx.beginPath()
       ctx.strokeStyle = '#000'
       if (this.tool === 'eraser') {
@@ -138,7 +167,11 @@ export default {
       ctx.closePath()
       ctx.fill()
       ctx.stroke()
-      return c.toDataURL()
+      return {
+        url: c.toDataURL(),
+        offX: this.halfSize,
+        offY: this.halfSize,
+      }
     },
   },
   methods: {
@@ -178,12 +211,19 @@ export default {
     },
 
     startDraw (pt) {
+      if (this.tool === 'color-sampler') {
+        this.color = this.getColor(pt)
+        return
+      }
       const cur = pt
       this.redraw(cur)
       this.last = cur
     },
 
     continueDraw (pt) {
+      if (this.tool === 'color-sampler') {
+        this.sampleColor = this.getColor(pt)
+      }
       if (!this.last) {
         return
       }
@@ -222,6 +262,11 @@ export default {
         img: this.canvas.toDataURL(),
       }}))
     },
+    getColor (pt) {
+      // data also contains alpha, but we dont support alpha now
+      const [r, g, b] = this.ctx.getImageData(pt.x, pt.y, 1, 1).data
+      return `rgb(${r},${g},${b})`
+    },
   },
   async mounted() {
     this.ws = new WsClient(
@@ -246,6 +291,10 @@ export default {
     // on window, in case left canvas and mouse up outside
     window.addEventListener('mouseup', () => {
       this.last = null
+    })
+
+    this.$watch('color', () => {
+      this.tool = 'pen'
     })
   }
 }

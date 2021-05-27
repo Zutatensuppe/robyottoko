@@ -19,6 +19,7 @@ canvas {
 .square-big .square-inner { width: 49px; height: 49px; }
 
 .eraser { background-image: url('../eraser.png'); }
+.color-sampler { background-image: url('../pipette.png'); }
 
 #gallery { margin-top: 1em; }
 #gallery div { margin-bottom: 1em; }
