@@ -1,7 +1,4 @@
-body {
-  font-family: monospace;
-}
-input {
+body, input, button {
   font-family: monospace;
 }
 canvas {
@@ -27,3 +24,18 @@ canvas {
 
 .controls td { vertical-align: top; }
 .controls .buttons { margin-left: 1em; }
+
+#submit,
+#clear { min-height: 4em; cursor: pointer; }
+#clear { color: red; }
+#clear span { font-size: 3em; display: block; }
+
+#drawcast {
+  display: grid;
+  grid-template-areas: "draw rightctrl"
+    "ctrl ctrl";
+  justify-content: start;
+}
+canvas { grid-area: draw; justify-self: start; }
+.right-controls { grid-area: rightctrl; margin-left: 2em; }
+.controls { grid-area: ctrl; justify-self: start; }

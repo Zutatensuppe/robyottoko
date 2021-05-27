@@ -13,7 +13,7 @@ const mousePoint = (/** @type MouseEvent */ evt) => {
 
 export default {
   template: `
-<div>
+<div id="drawcast">
   <canvas ref="canvas" :width="canvasWidth" :height="canvasHeight"
     @touchstart.prevent="touchstart"
     @touchmove.prevent="touchmove"
@@ -25,6 +25,13 @@ export default {
     @touchcancel.prevent="cancelDraw"
     :style="styles"
   ></canvas>
+
+  <div class="right-controls">
+    <button id="clear" @click="clearClick">
+      <span>❌</span>
+      Clear image
+    </button>
+  </div>
 
   <table class="controls">
     <tr>
@@ -49,9 +56,6 @@ export default {
       <td>
         <div class="buttons">
           <input type="button" id="submit" :value="submitButtonText" @click="submitImage" />
-          <br />
-          <br />
-          <input type="button" id="clear" value="Clear image" @click="clearClick" />
         </div>
       </td>
     </tr>
@@ -93,7 +97,6 @@ export default {
       canvasHeight: 405,
       submitButtonText: 'Submit',
       submitConfirm: '',
-      clearConfirm: '',
     }
   },
   computed: {
@@ -201,9 +204,6 @@ export default {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     },
     clearClick () {
-      if (this.clearConfirm && !confirm(this.clearConfirm)) {
-        return
-      }
       this.clear()
     },
     submitImage () {
