@@ -55,11 +55,11 @@ export default {
           </div>
         </div>
         <div class="tools">
-          <span class="square" :class="{active: tool === 'color-sampler'}" title="Color Sampler">
-            <span class="square-inner color-sampler" @click="tool='color-sampler'"></span>
+          <span class="square" :class="{active: tool === 'color-sampler'}" title="Color Sampler" @click="tool='color-sampler'">
+            <span class="square-inner color-sampler"></span>
           </span>
-          <span class="square" :class="{active: tool === 'eraser'}" title="Eraser">
-            <span class="square-inner eraser" @click="tool='eraser'"></span>
+          <span class="square" :class="{active: tool === 'eraser'}" title="Eraser"@click="tool='eraser'">
+            <span class="square-inner eraser"></span>
           </span>
 
           <input type="range" min="1" max="100" v-model="size" />
@@ -118,40 +118,16 @@ export default {
     halfSize () {
       return Math.round(this.size/2)
     },
-    globalCompositeOperation () {
-      return this.tool === 'eraser' ? 'destination-out' : 'source-over'
-    },
     styles () {
       return {
-        cursor: `url(${this.cursor.url}) ${this.cursor.offX} ${this.cursor.offY}, default`,
+        cursor: this.cursor,
       }
     },
     cursor () {
       const c = document.createElement('canvas')
       const ctx = c.getContext('2d')
       if (this.tool === 'color-sampler') {
-        c.width = 17
-        c.height = 17
-        ctx.beginPath()
-        ctx.strokeStyle = '#000'
-
-        ctx.moveTo(0, 8)
-        ctx.lineTo(8, 8)
-        ctx.moveTo(9, 8)
-        ctx.lineTo(16, 8)
-
-        ctx.moveTo(8, 0)
-        ctx.lineTo(8, 8)
-        ctx.moveTo(8, 9)
-        ctx.lineTo(8, 16)
-
-        ctx.closePath()
-        ctx.stroke()
-        return {
-          url: c.toDataURL(),
-          offX: 8,
-          offY: 8,
-        }
+        return 'crosshair'
       }
 
       c.width = parseInt(this.size, 10) + 1
@@ -167,17 +143,16 @@ export default {
       ctx.closePath()
       ctx.fill()
       ctx.stroke()
-      return {
-        url: c.toDataURL(),
-        offX: this.halfSize,
-        offY: this.halfSize,
-      }
+      return `url(${c.toDataURL()}) ${this.halfSize} ${this.halfSize}, default`
     },
   },
   methods: {
     modify (ev) {
       this.clear()
+      const tmp = this.ctx.globalCompositeOperation
+      this.ctx.globalCompositeOperation = 'source-over'
       this.ctx.drawImage(ev.target, 0, 0)
+      this.ctx.globalCompositeOperation = tmp
     },
     redraw (...pts) {
       if (pts.length === 0) {
@@ -185,7 +160,6 @@ export default {
       }
       if (pts.length === 1) {
         this.ctx.beginPath()
-        this.ctx.globalCompositeOperation = this.globalCompositeOperation
         this.ctx.fillStyle = this.color
         this.ctx.arc(pts[0].x, pts[0].y, this.halfSize, 0, 2 * Math.PI);
         this.ctx.closePath()
@@ -195,7 +169,6 @@ export default {
 
       this.ctx.lineJoin = 'round'
       this.ctx.beginPath()
-      this.ctx.globalCompositeOperation = this.globalCompositeOperation
       this.ctx.strokeStyle = this.color
       this.ctx.lineWidth = this.size
       this.ctx.moveTo(pts[0].x, pts[0].y)
@@ -295,6 +268,11 @@ export default {
 
     this.$watch('color', () => {
       this.tool = 'pen'
+    })
+    this.$watch('tool', () => {
+      this.ctx.globalCompositeOperation = this.tool === 'eraser'
+        ? 'destination-out'
+        : 'source-over'
     })
   }
 }
