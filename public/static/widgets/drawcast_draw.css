@@ -16,6 +16,8 @@ canvas {
 .square .square-inner { display: inline-block; width: 20px; height: 20px; margin: 1px; }
 .square.active { border: solid 2px black; }
 
+.square-big .square-inner { width: 49px; height: 49px; }
+
 .eraser { background-image: url('../eraser.png'); }
 
 #gallery { margin-top: 1em; }
@@ -29,6 +31,7 @@ canvas {
 #clear { min-height: 4em; cursor: pointer; }
 #clear { color: red; }
 #clear span { font-size: 3em; display: block; }
+#current-color input { display: none; }
 
 #drawcast {
   display: grid;

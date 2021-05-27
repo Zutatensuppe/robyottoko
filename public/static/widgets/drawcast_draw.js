@@ -36,13 +36,23 @@ export default {
   <table class="controls">
     <tr>
       <td>
-        <div class="colorpicker">
-          <template v-for="(c,idx) in colors" :key="idx">
-          <br v-if="idx > 0 && idx%11===0" />
-          <span class="square colorpick" :class="{active: colorIdx === idx && tool === 'pen'}" @click="colorIdx = idx;tool='pen'">
-            <span class="square-inner color" :style="{backgroundColor: c}"></span>
+        <label id="current-color">
+          <input type="color" v-model="color" />
+          <span class="square square-big">
+            <span class="square-inner" :style="{backgroundColor: color}"></span>
           </span>
-          </template>
+        </label>
+      </td>
+      <td>
+        <div class="preset-colors">
+          <div>
+            <template v-for="(c,idx) in colors" :key="idx">
+            <br v-if="idx > 0 && idx%11===0" />
+            <span class="square colorpick" :class="{active: color === c && tool === 'pen'}" @click="color = c;tool='pen'">
+              <span class="square-inner color" :style="{backgroundColor: c}"></span>
+            </span>
+            </template>
+          </div>
         </div>
         <div class="tools">
           <span class="square" :class="{active: tool === 'eraser'}" title="Eraser">
@@ -85,8 +95,9 @@ export default {
       ],
       images: [],
 
+      color: '#000000',
+
       tool: 'pen', // 'pen'|'eraser'
-      colorIdx: 0,
       size: 6,
       canvas: null,
       ctx: null,
@@ -100,9 +111,6 @@ export default {
     }
   },
   computed: {
-    color () {
-      return this.colors[this.colorIdx]
-    },
     halfSize () {
       return Math.round(this.size/2)
     },
