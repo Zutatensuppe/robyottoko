@@ -1,28 +1,62 @@
 import WsClient from '../WsClient.js'
 
+const touchPoint = (/** @type TouchEvent */ evt) => {
+  var bcr = evt.target.getBoundingClientRect();
+  return {
+    x: evt.targetTouches[0].clientX - bcr.x,
+    y: evt.targetTouches[0].clientY - bcr.y,
+  }
+}
+const mousePoint = (/** @type MouseEvent */ evt) => {
+  return { x: evt.offsetX, y: evt.offsetY }
+}
+
 export default {
   template: `
 <div>
   <canvas ref="canvas" :width="canvasWidth" :height="canvasHeight"
+    @touchstart.prevent="touchstart"
+    @touchmove.prevent="touchmove"
     @mousemove="mousemove"
     @mousedown="mousedown"
-    @mouseup="mouseup"
+
+    @mouseup="cancelDraw"
+    @touchend.prevent="cancelDraw"
+    @touchcancel.prevent="cancelDraw"
     :style="styles"
   ></canvas>
-  <div class="colorpicker">
-    <template v-for="(c,idx) in colors" :key="idx">
-    <br v-if="idx > 0 && idx%11===0" />
-    <span class="colorpick" :class="{active: colorIdx === idx}" @click="colorIdx = idx;tool='pen'">
-      <span class="color" :style="{backgroundColor: c}"></span>
-    </span>
-    </template>
-  </div>
-  <input type="button" value="Eraser" @click="tool='eraser'" />
 
-  <input type="range" min="1" max="100" v-model="size" />
-  {{ size }}
-  <input type="button" id="clear" value="Clear image" @click="clear" />
-  <input type="button" id="submit" :value="submitButtonText" @click="submitImage" />
+  <table class="controls">
+    <tr>
+      <td>
+        <div class="colorpicker">
+          <template v-for="(c,idx) in colors" :key="idx">
+          <br v-if="idx > 0 && idx%11===0" />
+          <span class="square colorpick" :class="{active: colorIdx === idx && tool === 'pen'}" @click="colorIdx = idx;tool='pen'">
+            <span class="square-inner color" :style="{backgroundColor: c}"></span>
+          </span>
+          </template>
+        </div>
+        <div class="tools">
+          <span class="square" :class="{active: tool === 'eraser'}" title="Eraser">
+            <span class="square-inner eraser" value="Eraser" @click="tool='eraser'"></span>
+          </span>
+
+          <input type="range" min="1" max="100" v-model="size" />
+          {{ size }}
+        </div>
+      </td>
+      <td>
+        <div class="buttons">
+          <input type="button" id="submit" :value="submitButtonText" @click="submitImage" />
+          <br />
+          <br />
+          <input type="button" id="clear" value="Clear image" @click="clearClick" />
+        </div>
+      </td>
+    </tr>
+  </table>
+
   <div id="gallery" v-if="images.length > 0">
     <div>Gallery: <input type="button" @click="images=[]" value="Clear gallery"/></div>
     <div>
@@ -59,6 +93,7 @@ export default {
       canvasHeight: 405,
       submitButtonText: 'Submit',
       submitConfirm: '',
+      clearConfirm: '',
     }
   },
   computed: {
@@ -126,24 +161,50 @@ export default {
       this.ctx.closePath()
       this.ctx.stroke()
     },
-    mousemove (e) {
-      if (!this.last) {
-        return
-      }
-      const cur = {x: e.offsetX, y: e.offsetY}
-      this.redraw(this.last, cur)
-      this.last = cur
+
+    cancelDraw (e) {
+      this.last = null
     },
-    mousedown (e) {
-      const cur = {x: e.offsetX, y: e.offsetY}
+
+    startDraw (pt) {
+      const cur = pt
       this.redraw(cur)
       this.last = cur
     },
-    mouseup (e) {
-      this.last = null
+
+    continueDraw (pt) {
+      if (!this.last) {
+        return
+      }
+      const cur = pt
+      this.redraw(this.last, cur)
+      this.last = cur
     },
+
+    touchstart (e) {
+      e.preventDefault()
+      this.startDraw(touchPoint(e))
+    },
+    mousedown (e) {
+      this.startDraw(mousePoint(e))
+    },
+
+    touchmove (e) {
+      e.preventDefault()
+      this.continueDraw(touchPoint(e))
+    },
+    mousemove (e) {
+      this.continueDraw(mousePoint(e))
+    },
+
     clear () {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+    },
+    clearClick () {
+      if (this.clearConfirm && !confirm(this.clearConfirm)) {
+        return
+      }
+      this.clear()
     },
     submitImage () {
       if (this.submitConfirm && !confirm(this.submitConfirm)) {

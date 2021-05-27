@@ -1,3 +1,9 @@
+body {
+  font-family: monospace;
+}
+input {
+  font-family: monospace;
+}
 canvas {
   border: solid 1px black;
   margin-bottom: .5em;
@@ -9,10 +15,15 @@ canvas {
   background-size: 2em 2em;
 }
 
-.colorpick { display: inline-block; padding: 1px; border: solid 2px #ccc; cursor: pointer; }
-.colorpick .color { display: inline-block; width: 20px; height: 20px; margin: 1px; }
-.colorpick.active { border: solid 2px black; }
+.square { display: inline-block; padding: 1px; border: solid 2px #ccc; cursor: pointer; }
+.square .square-inner { display: inline-block; width: 20px; height: 20px; margin: 1px; }
+.square.active { border: solid 2px black; }
+
+.eraser { background-image: url('../eraser.png'); }
 
 #gallery { margin-top: 1em; }
 #gallery div { margin-bottom: 1em; }
 #gallery img { width: 200px; border: solid 1px black; margin: 0 .5em .5em 0; cursor: pointer; }
+
+.controls td { vertical-align: top; }
+.controls .buttons { margin-left: 1em; }
