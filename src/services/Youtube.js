@@ -43,6 +43,10 @@ const getYoutubeIdBySearch = async (searchterm) => {
   return json.items[0]['id']['videoId'] || null
 }
 
+const getUrlById = async (id) => {
+  return `https://youtu.be/${id}`
+}
+
 module.exports = {
   fetchDataByYoutubeId,
   extractYoutubeId,

@@ -296,8 +296,13 @@ class SongrequestModule {
     if (command.args.length === 1) {
       switch (command.args[0]) {
         case 'current':
+          if (this.data.playlist.length === 0) {
+            say(`Playlist is empty`)
+            return
+          }
+          const item = this.data.playlist[0]
           // todo: error handling, title output etc..
-          say(`Currently playing: ${this.data.playlist[0].yt}`)
+          say(`Currently playing: ${item.title} (${Youtube.getUrlById(item.yt)})`)
           return
         case 'good':
           this.like()
