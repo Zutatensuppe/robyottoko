@@ -51,4 +51,5 @@ module.exports = {
   fetchDataByYoutubeId,
   extractYoutubeId,
   getYoutubeIdBySearch,
+  getUrlById,
 }
