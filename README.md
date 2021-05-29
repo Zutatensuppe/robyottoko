@@ -82,6 +82,7 @@ Chat command     | Viewer | Mod | Explanation
 `!sr bad`        | ✔      | ✔   | Vote the current song down
 `!sr rm`         | ✖      | ✔   | Remove the current song from the playlist
 `!sr skip`       | ✖      | ✔   | Skip to the next song
+`!sr next`       | ✖      | ✔   | Alias for skip
 `!sr shuffle`    | ✖      | ✔   | Shuffle the playlist (current song unaffected)
 `!sr resetStats` | ✖      | ✔   | Reset all statistics of all songs
 `!sr clear`      | ✖      | ✔   | Clear the playlist

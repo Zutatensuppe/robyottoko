@@ -310,6 +310,7 @@ class SongrequestModule {
         case 'bad':
           this.dislike()
           return
+        case 'next':
         case 'skip':
           if (fn.isMod(context)) {
             this.skip()

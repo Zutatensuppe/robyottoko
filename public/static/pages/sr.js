@@ -94,6 +94,12 @@ export default {
           <td>Skip to the next song</td>
         </tr>
         <tr>
+          <td><code>!sr next</code></td>
+          <td class="negative">✖</td>
+          <td class="positive">✔</td>
+          <td>Alias for skip</td>
+        </tr>
+        <tr>
           <td><code>!sr shuffle</code></td>
           <td class="negative">✖</td>
           <td class="positive">✔</td>
