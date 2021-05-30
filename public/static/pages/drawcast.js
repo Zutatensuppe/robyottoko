@@ -61,6 +61,16 @@ export default {
         </td>
       </tr>
       <tr>
+        <td><code>settings.displayDuration</code></td>
+        <td><input type="text" v-model="settings.displayDuration" /></td>
+        <td>The duration in Milliseconds that each drawing will be shown</td>
+      </tr>
+      <tr>
+        <td><code>settings.displayLatestForever</code></td>
+        <td><input type="checkbox" v-model="settings.displayLatestForever" /></td>
+        <td>If checked, the latest drawing will be shown indefinately.</td>
+      </tr>
+      <tr>
         <td><code>settings.submitButtonText</code></td>
         <td><input type="text" v-model="settings.submitButtonText" /></td>
         <td></td>
@@ -110,6 +120,8 @@ export default {
         submitConfirm: this.settings.submitConfirm,
         customDescription: this.settings.customDescription,
         palette: this.settings.palette,
+        displayDuration: parseInt(this.settings.displayDuration, 10) || 5000,
+        displayLatestForever: this.settings.displayLatestForever,
       }})
     },
     sendMsg(data) {

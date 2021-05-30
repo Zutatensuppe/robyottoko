@@ -10,11 +10,16 @@ export default {
       queue: [],
       worker: null,
       imgstyle: '',
+      displayDuration: 5000,
+      displayLatestForever: false,
+
+      latestResolved: true,
     }
   },
   methods: {
     async playone(media) {
       return new Promise(async (resolve) => {
+        this.latestResolved = false
         const promises = []
         let imageUrl = null
         if (media.image && media.image.url) {
@@ -60,7 +65,10 @@ export default {
         }
 
         Promise.all(promises).then(_ => {
-          this.imgstyle = ''
+          if (!this.displayLatestForever) {
+            this.imgstyle = ''
+          }
+          this.latestResolved = true
           resolve()
         })
       })
@@ -104,12 +112,24 @@ export default {
       this.conf.wsBase + '/drawcast',
       this.conf.widgetToken
     )
+    this.ws.onMessage('init', (data) => {
+      // submit button may not be empty
+      this.displayDuration = data.settings.displayDuration
+      this.displayLatestForever = data.settings.displayLatestForever
+
+      // if previously set to 'display forever' and something is
+      // currently displaying because of that, hide it
+      if (!this.displayLatestForever && this.latestResolved) {
+        this.imgstyle = ''
+      }
+    })
     this.ws.onMessage('post', (data) => {
       console.log('on', 'post', data)
       this.playmedia({
         // TODO:
         image: {url: data.img},
-        minDurationMs: 5000,
+        minDurationMs: this.displayDuration,
+        displayLatestForever: this.displayLatestForever
       })
     })
     this.ws.connect()

@@ -29,7 +29,6 @@ class DrawcastModule {
       canvasWidth: 720,
       canvasHeight: 405,
       customDescription: '',
-
       palette: [
         // row 1
         '#000000', '#808080', '#ff0000', '#ff8000', '#ffff00', '#00ff00',
@@ -39,6 +38,8 @@ class DrawcastModule {
         '#ffffff', '#c0c0c0', '#800000', '#804000', '#808000', '#008000',
         '#008080', '#000080', '#800080', '#8080ff', '#ffff80',
       ],
+      displayDuration: 5000,
+      displayLatestForever: false,
     }
     this.reinit()
   }
@@ -49,6 +50,9 @@ class DrawcastModule {
     })
     if (!data.settings.palette) {
       data.settings.palette = this.defaultSettings.palette
+    }
+    if (!data.settings.displayDuration) {
+      data.settings.displayDuration = this.defaultSettings.displayDuration
     }
     this.data = data
   }
