@@ -32,6 +32,7 @@ class SongrequestModule {
     this.data = this.storage.load(this.name, {
       volume: 100,
       playlist: [],
+      stacks: {},
     })
   }
 
@@ -92,6 +93,7 @@ class SongrequestModule {
         goods: item.goods || 0,
         bads: item.bads || 0,
       })),
+      stacks: this.data.stacks,
     })
   }
 
@@ -99,7 +101,7 @@ class SongrequestModule {
     return {
       event: eventName,
       data: {
-        // ommitting youtube cache data
+        // ommitting youtube cache data and stacks
         volume: this.data.volume,
         playlist: this.data.playlist,
       }
@@ -163,6 +165,8 @@ class SongrequestModule {
     if (!youtubeId) {
       return null
     }
+    this.data.stacks[user] = this.data.stacks[user] || []
+    this.data.stacks[user].push(youtubeId)
     return await this.addToPlaylist(youtubeId, user)
   }
 
@@ -287,6 +291,24 @@ class SongrequestModule {
     this.updateClients('remove')
   }
 
+  undo (username) {
+    if (this.data.playlist.length === 0) {
+      return false
+    }
+    if ((this.data.stacks[username] || []).length === 0) {
+      return false
+    }
+    const youtubeId = this.data.stacks[username].pop()
+    const idx = this.data.playlist
+      .findIndex(item => item.yt === youtubeId && item.user === username)
+    if (!idx) {
+      return false
+    }
+    const item = this.data.playlist[idx]
+    this.rmIdx(idx)
+    return item
+  }
+
   async songrequestCmd (command, client, target, context, msg) {
     const say = fn.sayFn(client, target)
     if (command.args.length === 0) {
@@ -300,9 +322,9 @@ class SongrequestModule {
             say(`Playlist is empty`)
             return
           }
-          const item = this.data.playlist[0]
+          const cur = this.data.playlist[0]
           // todo: error handling, title output etc..
-          say(`Currently playing: ${item.title} (${Youtube.getUrlById(item.yt)})`)
+          say(`Currently playing: ${cur.title} (${Youtube.getUrlById(cur.yt)})`)
           return
         case 'good':
           this.like()
@@ -341,6 +363,14 @@ class SongrequestModule {
             return
           }
           break
+        case 'undo':
+          const undid = this.undo(context['display-name'])
+          if (!undid) {
+            say(`Could not undo anything`)
+          } else {
+            say(`Removed "${undid.title}" from the playlist!`)
+          }
+          return
       }
     }
 
@@ -349,7 +379,7 @@ class SongrequestModule {
     if (!item) {
       say(`Could not process that song request`)
     } else {
-      say(`Added "${item.title}" (${item.yt}) to the playlist!`)
+      say(`Added "${item.title}" (${Youtube.getUrlById(cur.yt)}) to the playlist!`)
     }
   }
 

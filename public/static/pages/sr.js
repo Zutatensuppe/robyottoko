@@ -64,6 +64,12 @@ export default {
           </td>
         </tr>
         <tr>
+          <td><code>!sr undo</code></td>
+          <td class="positive">✔</td>
+          <td class="positive">✔</td>
+          <td>Remove the song that was last added by oneself.</td>
+        </tr>
+        <tr>
           <td><code>!sr current</code></td>
           <td class="positive">✔</td>
           <td class="positive">✔</td>
@@ -85,7 +91,7 @@ export default {
           <td><code>!sr rm</code></td>
           <td class="negative">✖</td>
           <td class="positive">✔</td>
-          <td>Remove the current song from the playlist</td>
+          <td>Remove the curre (${undid.yt})nt song from the playlist</td>
         </tr>
         <tr>
           <td><code>!sr skip</code></td>
