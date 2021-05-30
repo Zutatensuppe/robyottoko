@@ -379,7 +379,7 @@ class SongrequestModule {
     if (!item) {
       say(`Could not process that song request`)
     } else {
-      say(`Added "${item.title}" (${Youtube.getUrlById(cur.yt)}) to the playlist!`)
+      say(`Added "${item.title}" (${Youtube.getUrlById(item.yt)}) to the playlist!`)
     }
   }
 
