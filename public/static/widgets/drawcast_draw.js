@@ -59,12 +59,16 @@ export default {
             <span class="square" :class="{active: tool === 'color-sampler'}" title="Color Sampler" @click="tool='color-sampler'">
               <span class="square-inner color-sampler"></span>
             </span>
-            <span class="square" :class="{active: tool === 'eraser'}" title="Eraser"@click="tool='eraser'">
+            <span class="square" :class="{active: tool === 'eraser'}" title="Eraser" @click="tool='eraser'">
               <span class="square-inner eraser"></span>
             </span>
 
-            <input type="range" min="1" max="100" v-model="size" />
-            {{ size }}
+            <template v-for="(s,idx) in sizes" :key="idx">
+              <span class="square sizes" :class="{active: size === s, ['size-' + s]: true}" @click="size=s">
+                <span class="square-inner"><span></span></span>
+              </span>
+              <span v-if="false"></span>
+            </template>
           </div>
         </td>
         <td>
@@ -101,7 +105,8 @@ export default {
       sampleColor: '',
 
       tool: 'pen', // 'pen'|'eraser'|'color-sampler'
-      size: 6,
+      sizes: [1,2,5,10,30,60,100],
+      size: 5,
       canvas: null,
       ctx: null,
 

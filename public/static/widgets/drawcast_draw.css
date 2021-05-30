@@ -43,3 +43,20 @@ canvas {
 canvas { grid-area: draw; justify-self: start; }
 .right-controls { grid-area: rightctrl; margin-left: 2em; }
 .controls { grid-area: ctrl; justify-self: start; }
+
+
+.sizes .square-inner { position: relative; }
+.sizes .square-inner span {
+  border-radius: 100%;
+  background: black;
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+}
+.size-1 .square-inner span { height: 1px; width: 1px; }
+.size-2 .square-inner span { height: 2px; width: 2px; }
+.size-5 .square-inner span { height: 4px; width: 4px; }
+.size-10 .square-inner span { height: 7px; width: 7px; }
+.size-30 .square-inner span { height: 10px; width: 10px; }
+.size-60 .square-inner span { height: 15px; width: 15px; }
+.size-100 .square-inner span { height: 20px; width: 20px; }
