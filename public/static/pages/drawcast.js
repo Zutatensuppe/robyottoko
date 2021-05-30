@@ -98,6 +98,11 @@ export default {
             <input type="color" v-model="settings.palette[idx]" />
             <span class="square-inner" :style="{backgroundColor: c}"></span>
           </label>
+          <br />
+          <br />
+          <button class="btn" @click="settings.palette = defaultSettings.palette">
+            Reset to default palette
+          </button>
         </td>
         <td>
           Default colors appearing on the draw page.<br/>
