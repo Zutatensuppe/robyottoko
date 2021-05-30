@@ -1,9 +1,15 @@
 import Navbar from '../components/navbar.js'
+import Upload from '../components/upload.js'
+import Player from '../components/player.js'
+import VolumeSlider from '../components/volume-slider.js'
 import WsClient from '../WsClient.js'
 
 export default {
   components: {
     Navbar,
+    Upload,
+    Player,
+    VolumeSlider,
   },
   props: {
     conf: Object,
@@ -99,6 +105,25 @@ export default {
           currenty connected users.
         </td>
       </tr>
+      <tr>
+        <td><code>settings.notificationSound</code></td>
+        <td>
+          <div class="spacerow media-holder" v-if="settings.notificationSound">
+            <player
+              :src="settings.notificationSound.file"
+              :name="settings.notificationSound.filename"
+              :volume="settings.notificationSound.volume"
+              class="btn" />
+            <volume-slider v-model="settings.notificationSound.volume" />
+            <button class="btn" @click="settings.notificationSound = null"><i class="fa fa-remove" /></button>
+          </div>
+          <upload @uploaded="soundUploaded" accept="audio/*" label="Upload Audio" />
+        </td>
+        <td>
+          Add a sound here that plays when new drawings arrive. <br />
+          Note: Not played in drawing window, only in widget.
+        </td>
+      </tr>
     </table>
   </div>
 </div>
@@ -112,6 +137,13 @@ export default {
     },
   },
   methods: {
+    soundUploaded(file) {
+      this.settings.notificationSound = {
+        filename: file.originalname,
+        file: file.filename,
+        volume: 100,
+      }
+    },
     sendSave() {
       this.sendMsg({event: 'save', settings: {
         canvasWidth: parseInt(this.settings.canvasWidth, 10) || 720,
@@ -122,6 +154,7 @@ export default {
         palette: this.settings.palette,
         displayDuration: parseInt(this.settings.displayDuration, 10) || 5000,
         displayLatestForever: this.settings.displayLatestForever,
+        notificationSound: this.settings.notificationSound,
       }})
     },
     sendMsg(data) {

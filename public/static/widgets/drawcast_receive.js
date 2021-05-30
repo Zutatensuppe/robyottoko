@@ -13,6 +13,8 @@ export default {
       displayDuration: 5000,
       displayLatestForever: false,
 
+      notificationSound: null,
+      notificationSoundAudio: null,
       latestResolved: true,
     }
   },
@@ -20,57 +22,25 @@ export default {
     async playone(media) {
       return new Promise(async (resolve) => {
         this.latestResolved = false
-        const promises = []
-        let imageUrl = null
-        if (media.image && media.image.url) {
-          imageUrl = media.image.url
-        } else if (media.image && media.image.file) {
-          await this.prepareImage(media.image.file)
-          imageUrl = '/uploads/' + encodeURIComponent(img)
+        this.imgstyle = {
+          backgroundImage: `url(${media.image.url})`,
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: 'contain',
+          backgroundPosition: 'center',
+          height: '100%',
         }
 
-        if (imageUrl) {
-          this.imgstyle = {
-            backgroundImage: `url(${imageUrl})`,
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: 'contain',
-            backgroundPosition: 'center',
-            height: '100%',
-          }
+        if (this.notificationSoundAudio) {
+          this.notificationSoundAudio.play()
         }
 
-        if (media.minDurationMs) {
-          promises.push(new Promise(res => {
-            setTimeout(res, media.minDurationMs)
-          }))
-        }
-
-        if (media.sound && media.sound.file) {
-          promises.push(new Promise(res => {
-            const audio = new Audio(`/uploads/${encodeURIComponent(media.sound.file)}`)
-            audio.addEventListener('ended', () => {
-              res()
-            })
-            audio.volume = media.sound.volume / 100.0
-            audio.play();
-          }))
-        }
-
-        if (promises.length === 0) {
-          // show images at least 1 sek by default (only if there
-          // are no other conditions)
-          promises.push(new Promise(resolve1 => {
-            setTimeout(resolve1, 1000)
-          }))
-        }
-
-        Promise.all(promises).then(_ => {
+        setTimeout(() => {
           if (!this.displayLatestForever) {
             this.imgstyle = ''
           }
           this.latestResolved = true
           resolve()
-        })
+        }, this.displayDuration)
       })
     },
     addQueue(media) {
@@ -116,11 +86,16 @@ export default {
       // submit button may not be empty
       this.displayDuration = data.settings.displayDuration
       this.displayLatestForever = data.settings.displayLatestForever
+      this.notificationSound = data.settings.notificationSound
 
       // if previously set to 'display forever' and something is
       // currently displaying because of that, hide it
       if (!this.displayLatestForever && this.latestResolved) {
         this.imgstyle = ''
+      }
+      if (this.notificationSound) {
+        this.notificationSoundAudio = new Audio(`/uploads/${encodeURIComponent(this.notificationSound.file)}`)
+        this.notificationSoundAudio.volume = this.notificationSound.volume / 100.0
       }
     })
     this.ws.onMessage('post', (data) => {
@@ -128,8 +103,6 @@ export default {
       this.playmedia({
         // TODO:
         image: {url: data.img},
-        minDurationMs: this.displayDuration,
-        displayLatestForever: this.displayLatestForever
       })
     })
     this.ws.connect()
