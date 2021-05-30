@@ -69,6 +69,10 @@ export default {
               </span>
               <span v-if="false"></span>
             </template>
+
+            <span class="square" title="Undo" @click="undo">
+              <span class="square-inner undo"></span>
+            </span>
           </div>
         </td>
         <td>
@@ -117,6 +121,9 @@ export default {
       submitButtonText: 'Submit',
       submitConfirm: '',
       customDescription: '',
+
+      stack: [],
+      currentPath: [],
     }
   },
   computed: {
@@ -153,20 +160,55 @@ export default {
   },
   methods: {
     modify (ev) {
+      this.img(ev.target)
+      this.stack = []
+      this.currentPath = []
+      this.stack.push({type: 'image', data: ev.target})
+    },
+    undo () {
+      this.stack.pop()
+      this.clear()
+      const stack = this.stack.slice()
+      this.stack = []
+      this.currentPath = []
+      stack.forEach((item) => {
+        if (item.type === 'path') {
+          item.data.forEach((obj) => {
+            this.redraw2(obj)
+          })
+        } else if (item.type === 'image') {
+          this.img(item.data)
+        } else {
+          // unknown item.
+        }
+        this.stack.push(item)
+        this.currentPath = []
+      })
+    },
+    img (obj) {
       this.clear()
       const tmp = this.ctx.globalCompositeOperation
       this.ctx.globalCompositeOperation = 'source-over'
-      this.ctx.drawImage(ev.target, 0, 0)
+      this.ctx.drawImage(obj, 0, 0)
       this.ctx.globalCompositeOperation = tmp
     },
-    redraw (...pts) {
+    redraw2 (obj) {
+      this.currentPath.push(obj)
+      const { pts, color, tool, size, halfSize } = obj
       if (pts.length === 0) {
         return
       }
+
+      if (tool === 'eraser') {
+        this.ctx.globalCompositeOperation = 'destination-out'
+      } else {
+        this.ctx.globalCompositeOperation = 'source-over'
+      }
+
       if (pts.length === 1) {
         this.ctx.beginPath()
-        this.ctx.fillStyle = this.color
-        this.ctx.arc(pts[0].x, pts[0].y, this.halfSize, 0, 2 * Math.PI);
+        this.ctx.fillStyle = color
+        this.ctx.arc(pts[0].x, pts[0].y, halfSize, 0, 2 * Math.PI);
         this.ctx.closePath()
         this.ctx.fill()
         return
@@ -174,8 +216,8 @@ export default {
 
       this.ctx.lineJoin = 'round'
       this.ctx.beginPath()
-      this.ctx.strokeStyle = this.color
-      this.ctx.lineWidth = this.size
+      this.ctx.strokeStyle = color
+      this.ctx.lineWidth = size
       this.ctx.moveTo(pts[0].x, pts[0].y)
       for (let i = 1; i < pts.length; i++) {
         this.ctx.lineTo(pts[i].x, pts[i].y)
@@ -183,8 +225,19 @@ export default {
       this.ctx.closePath()
       this.ctx.stroke()
     },
+    redraw (...pts) {
+      this.redraw2({
+        pts,
+        tool: this.tool,
+        color: this.color,
+        size: this.size,
+        halfSize: this.halfSize,
+      })
+    },
 
     cancelDraw (e) {
+      this.stack.push({type: 'path', data: this.currentPath})
+      this.currentPath = []
       this.last = null
     },
 
@@ -231,6 +284,8 @@ export default {
     },
     clearClick () {
       this.clear()
+      this.stack = []
+      this.currentPath = []
     },
     submitImage () {
       if (this.submitConfirm && !confirm(this.submitConfirm)) {
@@ -277,11 +332,6 @@ export default {
 
     this.$watch('color', () => {
       this.tool = 'pen'
-    })
-    this.$watch('tool', () => {
-      this.ctx.globalCompositeOperation = this.tool === 'eraser'
-        ? 'destination-out'
-        : 'source-over'
     })
   }
 }
