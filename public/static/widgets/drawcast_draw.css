@@ -34,7 +34,7 @@ canvas {
 #clear span { font-size: 3em; display: block; }
 #current-color input { display: none; }
 
-#drawcast {
+#draw {
   display: grid;
   grid-template-areas: "draw rightctrl"
     "ctrl ctrl";

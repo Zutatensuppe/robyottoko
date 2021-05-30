@@ -14,65 +14,71 @@ const mousePoint = (/** @type MouseEvent */ evt) => {
 export default {
   template: `
 <div id="drawcast">
-  <canvas ref="canvas" :width="canvasWidth" :height="canvasHeight"
-    @touchstart.prevent="touchstart"
-    @touchmove.prevent="touchmove"
-    @mousemove="mousemove"
-    @mousedown="mousedown"
+  <div id="draw">
+    <canvas ref="canvas" :width="canvasWidth" :height="canvasHeight"
+      @touchstart.prevent="touchstart"
+      @touchmove.prevent="touchmove"
+      @mousemove="mousemove"
+      @mousedown="mousedown"
 
-    @mouseup="cancelDraw"
-    @touchend.prevent="cancelDraw"
-    @touchcancel.prevent="cancelDraw"
-    :style="styles"
-  ></canvas>
+      @mouseup="cancelDraw"
+      @touchend.prevent="cancelDraw"
+      @touchcancel.prevent="cancelDraw"
+      :style="styles"
+    ></canvas>
 
-  <div class="right-controls">
-    <button id="clear" @click="clearClick">
-      <span>❌</span>
-      Clear image
-    </button>
+    <div class="right-controls">
+      <button id="clear" @click="clearClick">
+        <span>❌</span>
+        Clear image
+      </button>
+    </div>
+
+    <table class="controls">
+      <tr>
+        <td>
+          <label id="current-color">
+            <input type="color" v-model="color" />
+            <span class="square square-big" :class="{active: tool==='pen'}">
+              <span class="square-inner" :style="{backgroundColor: tool==='color-sampler' ? sampleColor : color}"></span>
+            </span>
+          </label>
+        </td>
+        <td>
+          <div class="preset-colors">
+            <div>
+              <template v-for="(c,idx) in colors" :key="idx">
+              <br v-if="idx > 0 && idx%11===0" />
+              <span class="square colorpick" @click="color = c;tool='pen'">
+                <span class="square-inner color" :style="{backgroundColor: c}"></span>
+              </span>
+              </template>
+            </div>
+          </div>
+          <div class="tools">
+            <span class="square" :class="{active: tool === 'color-sampler'}" title="Color Sampler" @click="tool='color-sampler'">
+              <span class="square-inner color-sampler"></span>
+            </span>
+            <span class="square" :class="{active: tool === 'eraser'}" title="Eraser"@click="tool='eraser'">
+              <span class="square-inner eraser"></span>
+            </span>
+
+            <input type="range" min="1" max="100" v-model="size" />
+            {{ size }}
+          </div>
+        </td>
+        <td>
+          <div class="buttons">
+            <input type="button" id="submit" :value="submitButtonText" @click="submitImage" />
+          </div>
+        </td>
+      </tr>
+    </table>
   </div>
 
-  <table class="controls">
-    <tr>
-      <td>
-        <label id="current-color">
-          <input type="color" v-model="color" />
-          <span class="square square-big" :class="{active: tool==='pen'}">
-            <span class="square-inner" :style="{backgroundColor: tool==='color-sampler' ? sampleColor : color}"></span>
-          </span>
-        </label>
-      </td>
-      <td>
-        <div class="preset-colors">
-          <div>
-            <template v-for="(c,idx) in colors" :key="idx">
-            <br v-if="idx > 0 && idx%11===0" />
-            <span class="square colorpick" @click="color = c;tool='pen'">
-              <span class="square-inner color" :style="{backgroundColor: c}"></span>
-            </span>
-            </template>
-          </div>
-        </div>
-        <div class="tools">
-          <span class="square" :class="{active: tool === 'color-sampler'}" title="Color Sampler" @click="tool='color-sampler'">
-            <span class="square-inner color-sampler"></span>
-          </span>
-          <span class="square" :class="{active: tool === 'eraser'}" title="Eraser"@click="tool='eraser'">
-            <span class="square-inner eraser"></span>
-          </span>
-
-          <input type="range" min="1" max="100" v-model="size" />
-          {{ size }}
-        </div>
-      </td>
-      <td>
-        <div class="buttons">
-          <input type="button" id="submit" :value="submitButtonText" @click="submitImage" />
-        </div>
-      </td>
-    </tr>
-  </table>
+  <div id="customDescription" v-if="customDescription">
+    {{customDescription}}
+  </div>
 
   <div id="gallery" v-if="images.length > 0">
     <div>Gallery: <input type="button" @click="images=[]" value="Clear gallery"/></div>
@@ -112,6 +118,7 @@ export default {
       canvasHeight: 405,
       submitButtonText: 'Submit',
       submitConfirm: '',
+      customDescription: '',
     }
   },
   computed: {
@@ -247,10 +254,12 @@ export default {
       this.conf.widgetToken
     )
     this.ws.onMessage('init', (data) => {
-      this.submitButtonText = data.settings.submitButtonText
+      // submit button may not be empty
+      this.submitButtonText = data.settings.submitButtonText || 'Submit'
       this.submitConfirm = data.settings.submitConfirm
       this.canvasWidth = data.settings.canvasWidth
       this.canvasHeight = data.settings.canvasHeight
+      this.customDescription = data.settings.customDescription || ''
     })
     this.ws.onMessage('post', (data) => {
       this.images.unshift(data.img)

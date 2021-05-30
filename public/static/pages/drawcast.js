@@ -70,6 +70,11 @@ export default {
         <td><input type="text" v-model="settings.submitConfirm" /></td>
         <td>Leave empty if no confirm is required by user before sending.</td>
       </tr>
+      <tr>
+        <td><code>settings.customDescription</code></td>
+        <td><textarea v-model="settings.customDescription"></textarea></td>
+        <td>Description text below the drawing panel.</td>
+      </tr>
     </table>
   </div>
 </div>
@@ -89,6 +94,7 @@ export default {
         canvasHeight: parseInt(this.settings.canvasHeight, 10) || 405,
         submitButtonText: this.settings.submitButtonText,
         submitConfirm: this.settings.submitConfirm,
+        customDescription: this.settings.customDescription,
       }})
     },
     sendMsg(data) {
