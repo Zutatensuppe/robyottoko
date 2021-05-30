@@ -28,14 +28,29 @@ class DrawcastModule {
       submitConfirm: '', // leave empty to not require confirm
       canvasWidth: 720,
       canvasHeight: 405,
+      customDescription: '',
+
+      palette: [
+        // row 1
+        '#000000', '#808080', '#ff0000', '#ff8000', '#ffff00', '#00ff00',
+        '#00ffff', '#0000ff', '#ff00ff', '#ff8080', '#80ff80',
+
+        // row 2
+        '#ffffff', '#c0c0c0', '#800000', '#804000', '#808000', '#008000',
+        '#008080', '#000080', '#800080', '#8080ff', '#ffff80',
+      ],
     }
     this.reinit()
   }
 
   reinit () {
-    this.data = this.storage.load(this.name, {
+    const data = this.storage.load(this.name, {
       settings: this.defaultSettings
     })
+    if (!data.settings.palette) {
+      data.settings.palette = this.defaultSettings.palette
+    }
+    this.data = data
   }
 
   widgets () {

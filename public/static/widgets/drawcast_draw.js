@@ -47,7 +47,7 @@ export default {
         <td>
           <div class="preset-colors">
             <div>
-              <template v-for="(c,idx) in colors" :key="idx">
+              <template v-for="(c,idx) in palette" :key="idx">
               <br v-if="idx > 0 && idx%11===0" />
               <span class="square colorpick" @click="color = c;tool='pen'">
                 <span class="square-inner color" :style="{backgroundColor: c}"></span>
@@ -93,15 +93,8 @@ export default {
   },
   data() {
     return {
-      colors: [
-        // row 1
-        '#000000', '#808080', '#ff0000', '#ff8000', '#ffff00', '#00ff00',
-        '#00ffff', '#0000ff', '#ff00ff', '#ff8080', '#80ff80',
+      palette: ['#000000'],
 
-        // row 2
-        '#ffffff', '#c0c0c0', '#800000', '#804000', '#808000', '#008000',
-        '#008080', '#000080', '#800080', '#8080ff', '#ffff80',
-      ],
       images: [],
 
       color: '#000000',
@@ -243,9 +236,9 @@ export default {
       }}))
     },
     getColor (pt) {
-      // data also contains alpha, but we dont support alpha now
-      const [r, g, b] = this.ctx.getImageData(pt.x, pt.y, 1, 1).data
-      return `rgb(${r},${g},${b})`
+      const [r, g, b, a] = this.ctx.getImageData(pt.x, pt.y, 1, 1).data
+      // when selecting transparent color, instead use first color in palette
+      return a ? `rgb(${r},${g},${b})` : this.palette[0]
     },
   },
   async mounted() {
@@ -260,6 +253,8 @@ export default {
       this.canvasWidth = data.settings.canvasWidth
       this.canvasHeight = data.settings.canvasHeight
       this.customDescription = data.settings.customDescription || ''
+      this.palette = data.settings.palette || this.palette
+      this.color = this.palette[0]
     })
     this.ws.onMessage('post', (data) => {
       this.images.unshift(data.img)

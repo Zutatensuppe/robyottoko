@@ -75,6 +75,20 @@ export default {
         <td><textarea v-model="settings.customDescription"></textarea></td>
         <td>Description text below the drawing panel.</td>
       </tr>
+      <tr>
+        <td><code>settings.palette</code></td>
+        <td>
+          <label class="square" v-for="(c,idx) in settings.palette" :key="idx">
+            <input type="color" v-model="settings.palette[idx]" />
+            <span class="square-inner" :style="{backgroundColor: c}"></span>
+          </label>
+        </td>
+        <td>
+          Default colors appearing on the draw page.<br/>
+          Caution: Changing this will change selected color for
+          currenty connected users.
+        </td>
+      </tr>
     </table>
   </div>
 </div>
@@ -95,6 +109,7 @@ export default {
         submitButtonText: this.settings.submitButtonText,
         submitConfirm: this.settings.submitConfirm,
         customDescription: this.settings.customDescription,
+        palette: this.settings.palette,
       }})
     },
     sendMsg(data) {
