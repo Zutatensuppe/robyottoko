@@ -91,7 +91,7 @@ export default {
           <td><code>!sr rm</code></td>
           <td class="negative">✖</td>
           <td class="positive">✔</td>
-          <td>Remove the curre (${undid.yt})nt song from the playlist</td>
+          <td>Remove the current song from the playlist</td>
         </tr>
         <tr>
           <td><code>!sr skip</code></td>
