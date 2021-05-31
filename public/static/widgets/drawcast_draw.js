@@ -159,11 +159,14 @@ export default {
     },
   },
   methods: {
-    modify (ev) {
+    async modify (ev) {
       this.img(ev.target)
       this.stack = []
       this.currentPath = []
-      this.stack.push({type: 'image', data: ev.target})
+      this.stack.push({
+        type: 'image',
+        data: await createImageBitmap(ev.target),
+      })
     },
     undo () {
       this.stack.pop()
@@ -174,7 +177,7 @@ export default {
       stack.forEach((item) => {
         if (item.type === 'path') {
           item.data.forEach((obj) => {
-            this.redraw2(obj)
+            this.drawPathPart(obj)
           })
         } else if (item.type === 'image') {
           this.img(item.data)
@@ -185,14 +188,14 @@ export default {
         this.currentPath = []
       })
     },
-    img (obj) {
+    img (imageObject) {
       this.clear()
       const tmp = this.ctx.globalCompositeOperation
       this.ctx.globalCompositeOperation = 'source-over'
-      this.ctx.drawImage(obj, 0, 0)
+      this.ctx.drawImage(imageObject, 0, 0)
       this.ctx.globalCompositeOperation = tmp
     },
-    redraw2 (obj) {
+    drawPathPart (obj) {
       this.currentPath.push(obj)
       const { pts, color, tool, size, halfSize } = obj
       if (pts.length === 0) {
@@ -226,7 +229,7 @@ export default {
       this.ctx.stroke()
     },
     redraw (...pts) {
-      this.redraw2({
+      this.drawPathPart({
         pts,
         tool: this.tool,
         color: this.color,
