@@ -75,7 +75,7 @@ class WebServer {
     const storage = multer.diskStorage({
       destination: uploadDir,
       filename: function (req, file, cb) {
-        cb(null , file.originalname);
+        cb(null , `${fn.nonce(6)}-${file.originalname}`);
       }
     })
 
