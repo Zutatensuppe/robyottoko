@@ -1,5 +1,6 @@
 const Db = require('../../Db.js')
 const fn = require('../../fn.js')
+const fs = require('fs')
 const WebServer = require('../../net/WebServer.js')
 const WebSocketServer = require('../../net/WebSocketServer.js')
 const Tokens = require('../../services/Tokens.js')
@@ -132,7 +133,19 @@ class DrawcastModule {
         this.updateClient('init', ws)
       },
       'post': (ws, data) => {
-        this.wss.notifyAll([this.user.id], this.name, data)
+        const rel = `/uploads/drawcast/${this.user.id}`
+        const img = fn.decodeBase64Image(data.data.img)
+        const name = `${(new Date()).toJSON()}-${fn.nonce(6)}.${fn.mimeToExt(img.type)}`
+        const path = `./data${rel}`
+        const imgpath = `${path}/${name}`
+        const imgurl = `${rel}/${name}`
+        fs.mkdirSync(path, {recursive: true})
+        fs.writeFileSync(imgpath, img.data)
+
+        this.wss.notifyAll([this.user.id], this.name, {
+          event: data.event,
+          data: { img: imgurl },
+        })
       },
       'save': (ws, {settings}) => {
         this.data.settings = settings

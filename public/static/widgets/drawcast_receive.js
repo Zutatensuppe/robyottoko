@@ -22,6 +22,8 @@ export default {
     async playone(media) {
       return new Promise(async (resolve) => {
         this.latestResolved = false
+        await this.prepareImage(media.image.url)
+
         this.imgstyle = {
           backgroundImage: `url(${media.image.url})`,
           backgroundRepeat: 'no-repeat',
@@ -63,7 +65,7 @@ export default {
     async prepareImage(img) {
       return new Promise((resolve) => {
         const imgLoad = new Image();
-        imgLoad.src = '/uploads/' + encodeURIComponent(img);
+        imgLoad.src = img
         Vue.nextTick(() => {
           if (imgLoad.loaded) {
             resolve()
@@ -101,7 +103,6 @@ export default {
     this.ws.onMessage('post', (data) => {
       console.log('on', 'post', data)
       this.playmedia({
-        // TODO:
         image: {url: data.img},
       })
     })

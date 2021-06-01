@@ -35,6 +35,24 @@ const HOUR = 60 * MINUTE
 const DAY = 24 * HOUR
 const YEAR = 356 * DAY
 
+function mimeToExt (/** @type string */ mime) {
+  if (/image\//.test(mime)) {
+    return mime.replace('image/', '')
+  }
+  return ''
+}
+
+function decodeBase64Image(/** @type string */ base64Str) {
+    const matches = base64Str.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/)
+    if (!matches || matches.length !== 3) {
+        throw new Error('Invalid base64 string')
+    }
+    return {
+      type: matches[1],
+      data: Buffer.from(matches[2], 'base64'),
+    }
+}
+
 const shuffle = (array) => {
   let counter = array.length;
 
@@ -228,6 +246,8 @@ const joinIntoChunks = (
 
 module.exports = {
   logger,
+  mimeToExt,
+  decodeBase64Image,
   sayFn,
   mayExecute,
   parseCommandFromMessage,
