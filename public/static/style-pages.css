@@ -3,10 +3,12 @@
 body {
   background: #2b2b2b;
   color: var(--main-color);
-  font: 15px sans-serif;
+  font-size: 15px;
+  font-family: Verdana, Arial, Helvetica, sans-serif;
 }
 
 #top {
+  position: sticky;
   box-shadow: 0 0 3px black;
   top: 0;
   left: 0;

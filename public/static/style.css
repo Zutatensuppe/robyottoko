@@ -107,7 +107,8 @@ textarea { width: 100%; }
   min-height: 40vh;
 }
 .btn {
-  font: 15px sans-serif;
+  font-size: 15px;
+  font-family: Verdana, Arial, Helvetica, sans-serif;
   display: inline-block;
   background: var(--button-bg-color);
   color: var(--link-color);
