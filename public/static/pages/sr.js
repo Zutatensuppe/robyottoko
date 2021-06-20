@@ -40,7 +40,7 @@ export default {
     </div>
   </div>
   <div id="main" ref="main">
-    <div style="width: 640px">
+    <div style="width: 640px; max-width: 100%;">
       <div id="player" class="video-16-9" :style="playerstyle"><youtube ref="youtube" @ended="ended"/></div>
     </div>
     <div id="help" v-if="helpVisible">
