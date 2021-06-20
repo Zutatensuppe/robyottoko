@@ -154,6 +154,7 @@ class SongrequestModule {
           case 'goodIdx': this.goodIdx(...args); break;
           case 'badIdx': this.badIdx(...args); break;
           case 'sr': this.request(...args); break;
+          case 'move': this.move(...args); break;
         }
       },
     }
@@ -280,6 +281,22 @@ class SongrequestModule {
 
     this.save()
     this.updateClients('shuffle')
+  }
+
+  move (oldIndex, newIndex) {
+    if (oldIndex >= this.data.playlist.length) {
+      return
+    }
+    if (newIndex >= this.data.playlist.length) {
+      return
+    }
+
+    var tmp = this.data.playlist[oldIndex]
+    this.data.playlist[oldIndex] = this.data.playlist[newIndex]
+    this.data.playlist[newIndex] = tmp
+
+    this.save()
+    this.updateClients('move')
   }
 
   remove () {

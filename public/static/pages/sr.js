@@ -127,29 +127,31 @@ export default {
     </div>
     <div id="playlist" v-if="!helpVisible">
       <table v-if="playlist.length > 0">
-        <tr>
-          <th></th>
-          <th></th>
-          <th>Title</th>
-          <th>User</th>
-          <th>Plays</th>
-          <th></th>
-        </tr>
-        <tr v-for="(item, idx) in playlist">
-          <td>{{idx+1}}</td>
-          <td><button v-if="idx !== 0" class="btn" @click="sendCtrl('playIdx', [idx])" title="Play"><i class="fa fa-play"/></button></td>
-          <td>
-            <a :href="'https://www.youtube.com/watch?v=' + item.yt" target="_blank">
-                {{ item.title || item.yt }}
-                <i class="fa fa-external-link"/>
-            </a>
-          </td>
-          <td>{{ item.user }}</td>
-          <td>{{ item.plays }}x</td>
-          <td><button class="btn" @click="sendCtrl('goodIdx', [idx])"><i class="fa fa-thumbs-up"/> {{ item.goods }}</button></td>
-          <td><button class="btn" @click="sendCtrl('badIdx', [idx])"><i class="fa fa-thumbs-down"/> {{ item.bads }}</button></td>
-          <td><button class="btn" @click="sendCtrl('rmIdx', [idx])" title="Remove"><i class="fa fa-trash"/></button></td>
-        </tr>
+        <draggable :value="playlist" @end="dragEnd">
+          <tr v-for="(item, idx) in playlist">
+            <td>{{idx+1}}</td>
+            <td><button v-if="idx !== 0" class="btn" @click="sendCtrl('playIdx', [idx])" title="Play"><i class="fa fa-play"/></button></td>
+            <td>
+              <a :href="'https://www.youtube.com/watch?v=' + item.yt" target="_blank">
+                  {{ item.title || item.yt }}
+                  <i class="fa fa-external-link"/>
+              </a>
+            </td>
+            <td>{{ item.user }}</td>
+            <td>{{ item.plays }}x</td>
+            <td><button class="btn" @click="sendCtrl('goodIdx', [idx])"><i class="fa fa-thumbs-up"/> {{ item.goods }}</button></td>
+            <td><button class="btn" @click="sendCtrl('badIdx', [idx])"><i class="fa fa-thumbs-down"/> {{ item.bads }}</button></td>
+            <td><button class="btn" @click="sendCtrl('rmIdx', [idx])" title="Remove"><i class="fa fa-trash"/></button></td>
+          </tr>
+          <tr slot="header">
+            <th></th>
+            <th></th>
+            <th>Title</th>
+            <th>User</th>
+            <th>Plays</th>
+            <th></th>
+          </tr>
+        </draggable>
       </table>
       <div v-else>Playlist is empty</div>
     </div>
@@ -174,7 +176,7 @@ export default {
       return this.playlist.length !== 0
     },
     playerstyle() {
-      return this.playerVisible ? '' : 'width: 0;height: 0;padding:0;margin-bottom:0;'
+      return this.playerVisible ? '' : 'width:0;height:0;padding:0;margin-bottom:0;'
     },
     togglePlayerButtonText() {
       return this.playerVisible ? 'Hide Player' : 'Show Player'
@@ -205,6 +207,10 @@ export default {
         this.sendCtrl('sr', [this.srinput])
       }
     },
+    dragEnd(evt) {
+      // console.log(evt.oldIndex - 1, evt.newIndex - 1)
+      this.sendCtrl('move', [evt.oldIndex - 1, evt.newIndex - 1])
+    },
     sendCtrl(ctrl, args) {
       this.sendMsg({event: 'ctrl', ctrl, args})
     },
@@ -234,10 +240,14 @@ export default {
       this.volume = data.volume
       this.adjustVolume()
     })
-    this.ws.onMessage(['onEnded', 'skip', 'remove', 'clear'], (data) => {
+    this.ws.onMessage(['onEnded', 'skip', 'remove', 'clear', 'move'], (data) => {
       this.volume = data.volume
+      const oldId = this.playlist.length > 0 ? this.playlist[0].id : null
+      const newId = data.playlist.length > 0 ? data.playlist[0].id : null
       this.playlist = data.playlist
-      this.play()
+      if (oldId !== newId) {
+        this.play()
+      }
     })
     this.ws.onMessage(['dislike', 'like', 'onPlay', 'resetStats', 'shuffle'], (data) => {
       this.volume = data.volume

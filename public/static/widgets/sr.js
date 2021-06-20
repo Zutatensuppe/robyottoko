@@ -82,10 +82,14 @@ export default {
       this.volume = data.volume
       this.adjustVolume()
     })
-    this.ws.onMessage(['onEnded','skip', 'remove', 'clear'], (data) => {
+    this.ws.onMessage(['onEnded','skip', 'remove', 'clear', 'move'], (data) => {
       this.volume = data.volume
+      const oldId = this.playlist.length > 0 ? this.playlist[0].id : null
+      const newId = data.playlist.length > 0 ? data.playlist[0].id : null
       this.playlist = data.playlist
-      this.play()
+      if (oldId !== newId) {
+        this.play()
+      }
     })
     this.ws.onMessage(['dislike', 'like', 'onPlay', 'resetStats', 'shuffle'], (data) => {
       this.volume = data.volume
