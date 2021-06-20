@@ -74,12 +74,12 @@ class DrawcastModule {
 
   async playCmd (command, client, target, context, msg) {
     const say = fn.sayFn(client, target)
-    if (command.args.length !== 1) {
+    if (command.args.length === 0) {
       say(`Usage: !play THING`)
       return
     }
 
-    const [thing] = command.args
+    const thing = command.args.join(' ')
     const type = 'play'
     this.vote(type, thing, client, target, context)
   }
@@ -93,7 +93,7 @@ class DrawcastModule {
       say('Not allowed to execute !vote command')
     }
 
-    if (command.args.length !== 2) {
+    if (command.args.length < 2) {
       say(`Usage: !vote TYPE THING`)
       return
     }
@@ -136,7 +136,8 @@ class DrawcastModule {
       return
     }
 
-    const [type, thing] = command.args
+    const type = command.args[0]
+    const thing = command.args.slice(1).join(' ')
     this.vote(type, thing, client, target, context)
   }
 
