@@ -301,7 +301,7 @@ class SongrequestModule {
     const youtubeId = this.data.stacks[username].pop()
     const idx = this.data.playlist
       .findIndex(item => item.yt === youtubeId && item.user === username)
-    if (!idx) {
+    if (idx === -1) {
       return false
     }
     const item = this.data.playlist[idx]
