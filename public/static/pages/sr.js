@@ -109,7 +109,13 @@ export default {
           <td><code>!sr shuffle</code></td>
           <td class="negative">✖</td>
           <td class="positive">✔</td>
-          <td>Shuffle the playlist (current song unaffected)</td>
+          <td>
+            Shuffle the playlist (current song unaffected).
+            <br />
+            Non-played and played songs will be shuffled separately
+            and non-played songs will be put after currently playing
+            song.
+          </td>
         </tr>
         <tr>
           <td><code>!sr resetStats</code></td>
