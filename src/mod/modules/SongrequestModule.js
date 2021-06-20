@@ -11,6 +11,13 @@ const extractYoutubeId = async (/** @type string */ youtubeUrl) => {
     || null
 }
 
+const ADD_TYPE = {
+  NOT_ADDED: 0,
+  ADDED: 1,
+  REQUEUED: 2,
+  EXISTED: 3,
+}
+
 class SongrequestModule {
   constructor(
     /** @type Db */ db,
@@ -164,11 +171,15 @@ class SongrequestModule {
     const youtubeUrl = str.trim()
     const youtubeId = await extractYoutubeId(youtubeUrl)
     if (!youtubeId) {
-      return null
+      return { item: null, addType: ADD_TYPE.NOT_ADDED }
     }
-    this.data.stacks[user] = this.data.stacks[user] || []
-    this.data.stacks[user].push(youtubeId)
-    return await this.addToPlaylist(youtubeId, user)
+
+    const { item, addType } = await this.addToPlaylist(youtubeId, user)
+    if (addType === ADD_TYPE.ADDED) {
+      this.data.stacks[user] = this.data.stacks[user] || []
+      this.data.stacks[user].push(youtubeId)
+    }
+    return { item, addType }
   }
 
   incStat (stat, idx = 0) {
@@ -392,11 +403,15 @@ class SongrequestModule {
     }
 
     const str = command.args.join(' ')
-    const item = await this.add(str, context['display-name'])
-    if (!item) {
-      say(`Could not process that song request`)
-    } else {
+    const { item, addType } = await this.add(str, context['display-name'])
+    if (addType === ADD_TYPE.ADDED) {
       say(`Added "${item.title}" (${Youtube.getUrlById(item.yt)}) to the playlist!`)
+    } else if (addType === ADD_TYPE.REQUEUED) {
+      say(`"${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist and only moved up.`)
+    } else if (addType === ADD_TYPE.EXISTED) {
+      say(`"${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist.`)
+    } else {
+      say(`Could not process that song request`)
     }
   }
 
@@ -410,9 +425,36 @@ class SongrequestModule {
     return d
   }
 
-  async addToPlaylist (youtubeId, userName) {
-    const yt = await this.loadYoutubeData(youtubeId)
+  findInsertIndex () {
+    let found = -1
+    for (let i = 0; i < this.data.playlist.length; i++) {
+      if (this.data.playlist[i].plays === 0) {
+        found = i
+      } else if (found >= 0) {
+        break
+      }
+    }
+    return (found === -1 ? 0 : found) + 1
+  }
 
+  async addToPlaylist (youtubeId, userName) {
+    const idx = this.data.playlist.findIndex(other => other.yt === youtubeId)
+    if (idx >= 0) {
+      const item =  this.data.playlist[idx]
+      const insertIndex = this.findInsertIndex()
+      if (insertIndex < idx) {
+        this.data.playlist.splice(idx, 1)
+        this.data.playlist.splice(insertIndex, 0, item)
+        this.save()
+        this.updateClients('add')
+        return { item, addType: ADD_TYPE.REQUEUED }
+      } else {
+        // nothing to do
+        return { item, addType: ADD_TYPE.EXISTED }
+      }
+    }
+
+    const yt = await this.loadYoutubeData(youtubeId)
     const item = {
       id: Math.random(),
       yt: youtubeId,
@@ -425,24 +467,12 @@ class SongrequestModule {
       bads: 0,
     }
 
-    let found = -1
-    for (let i = 0; i < this.data.playlist.length; i++) {
-      let other = this.data.playlist[i]
-      if (other.plays === item.plays) {
-        found = i
-      } else if (found >= 0) {
-        break
-      }
-    }
-    if (found === -1) {
-      found = 0
-    }
-
-    this.data.playlist.splice(found + 1, 0, item)
+    const insertIndex = this.findInsertIndex()
+    this.data.playlist.splice(insertIndex, 0, item)
 
     this.save()
     this.updateClients('add')
-    return item
+    return { item, addType: ADD_TYPE.ADDED }
   }
 
 }
