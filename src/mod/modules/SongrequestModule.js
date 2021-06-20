@@ -288,7 +288,12 @@ class SongrequestModule {
       return
     }
 
-    this.data.playlist = [this.data.playlist[0], ...fn.shuffle(this.data.playlist.slice(1))]
+    const rest = this.data.playlist.slice(1)
+    this.data.playlist = [
+      this.data.playlist[0],
+      ...fn.shuffle(rest.filter(item => item.plays === 0)),
+      ...fn.shuffle(rest.filter(item => item.plays > 0)),
+    ]
 
     this.save()
     this.updateClients('shuffle')
