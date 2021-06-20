@@ -243,3 +243,18 @@ input[type=range]::-ms-thumb {
   background: var(--link-color);
   height: 2px;
 }
+
+
+.upload {
+  position: relative;
+  display: inline-block;
+}
+.upload .progress {
+  height: 2px;
+  position: absolute;
+  bottom: 1px;
+  left: 1px;
+  right: 1px;
+  display: block;
+  border-radius: 0 0 var(--button-border-radius) var(--button-border-radius);
+}
