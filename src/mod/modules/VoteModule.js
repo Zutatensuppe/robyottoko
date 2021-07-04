@@ -127,6 +127,9 @@ class DrawcastModule {
     }
 
     if (command.args[0] === 'clear') {
+      if (!fn.isBroadcaster(context)) {
+        say('Not allowed to execute !vote clear')
+      }
       const type = command.args[1]
       if (this.data.votes[type]) {
         delete this.data.votes[type]
