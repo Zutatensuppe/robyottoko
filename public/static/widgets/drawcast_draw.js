@@ -15,7 +15,11 @@ export default {
   template: `
 <div id="drawcast">
   <div id="draw">
-    <canvas ref="canvas" :width="canvasWidth" :height="canvasHeight"
+    <canvas
+      ref="canvas"
+      :class="canvasClasses"
+      :width="canvasWidth"
+      :height="canvasHeight"
       @touchstart.prevent="touchstart"
       @touchmove.prevent="touchmove"
       @mousemove="mousemove"
@@ -28,10 +32,28 @@ export default {
     ></canvas>
 
     <div class="right-controls">
-      <button id="clear" @click="clearClick">
-        <span>❌</span>
-        Clear image
-      </button>
+      <div>
+        <button id="clear" @click="clearClick">
+          <span>❌</span>
+          Clear image
+        </button>
+      </div>
+      <br />
+      <div>
+        Options
+        <hr />
+      </div>
+      <div>
+        Visual Background
+        <div>
+          <span class="square square-big" @click="opt('canvasBg', 'transparent')">
+            <span class="square-inner bg-transparent"></span>
+          </span>
+          <span class="square square-big" @click="opt('canvasBg', 'white')">
+            <span class="square-inner"></span>
+          </span>
+        </div>
+      </div>
     </div>
 
     <table class="controls">
@@ -101,6 +123,7 @@ export default {
   },
   data() {
     return {
+      opts: {},
       palette: ['#000000'],
 
       images: [],
@@ -127,6 +150,13 @@ export default {
     }
   },
   computed: {
+    canvasClasses () {
+      const canvasBg = this.opts.canvasBg || 'transparent'
+      if (canvasBg === 'white') {
+        return ['bg-white']
+      }
+      return ['bg-transparent']
+    },
     halfSize () {
       return Math.round(this.size/2)
     },
@@ -159,6 +189,10 @@ export default {
     },
   },
   methods: {
+    opt (option, value) {
+      this.opts[option] = value
+      window.localStorage.setItem('drawcastOpts', JSON.stringify(this.opts))
+    },
     async modify (ev) {
       this.img(ev.target)
       this.stack = []
@@ -305,6 +339,9 @@ export default {
     },
   },
   async mounted() {
+    const opts = window.localStorage.getItem('drawcastOpts')
+    this.opts = opts ? JSON.parse(opts) : { canvasBg: 'transparent' }
+
     this.ws = new WsClient(
       this.conf.wsBase + '/drawcast',
       this.conf.widgetToken

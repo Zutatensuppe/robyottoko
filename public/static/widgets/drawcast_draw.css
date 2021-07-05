@@ -4,6 +4,28 @@ body, input, button {
 canvas {
   border: solid 1px black;
   margin-bottom: .5em;
+}
+.bg-white {
+  background: white;
+}
+
+hr {
+  border: solid 1px #ccc;
+}
+
+input[type="button"],
+button {
+  border: solid 2px;
+  border-color: #ccc #888 #888 #ccc;
+}
+
+input[type="button"]:active,
+button:active {
+  border: solid 2px;
+  border-color: #888 #ccc #ccc #888;
+}
+
+.bg-transparent {
   background-image:
   linear-gradient(to right, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)),
   linear-gradient(to right, black 50%, white 50%),
@@ -30,7 +52,7 @@ canvas {
 .controls .buttons { margin-left: 1em; }
 
 #submit,
-#clear { min-height: 4em; cursor: pointer; }
+#clear { min-height: 4em; cursor: pointer; width: 100%; }
 #clear { color: red; }
 #clear span { font-size: 3em; display: block; }
 #current-color input { display: none; }
