@@ -580,6 +580,8 @@ export default {
       this.customDescription = data.settings.customDescription || ''
       this.palette = data.settings.palette || this.palette
       this.color = this.palette[0]
+
+      this.images = data.images
     })
     this.ws.onMessage('post', (data) => {
       this.images.unshift(data.img)

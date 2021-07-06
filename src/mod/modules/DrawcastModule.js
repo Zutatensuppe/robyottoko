@@ -44,9 +44,24 @@ class DrawcastModule {
       notificationSound: null,
     }
     this.reinit()
+
+    try {
+      // todo: probably better to store latest x images in db
+      const rel = `/uploads/drawcast/${this.user.id}`
+      const path = `./data${rel}`
+      this.images = fs.readdirSync(path)
+        .map((name) => ({
+          name: name,
+          time: fs.statSync(path + '/' + name).mtime.getTime()
+        }))
+        .sort((a, b) => b.time - a.time)
+        .map((v) => `${rel}/${v.name}`)
+    } catch (e) {
+      this.images = []
+    }
   }
 
-  reinit () {
+  reinit() {
     const data = this.storage.load(this.name, {
       settings: this.defaultSettings
     })
@@ -62,7 +77,7 @@ class DrawcastModule {
     this.data = data
   }
 
-  widgets () {
+  widgets() {
     return {
       'drawcast_receive': async (req, res, next) => {
         res.send(await fn.render('widget.twig', {
@@ -87,7 +102,7 @@ class DrawcastModule {
     }
   }
 
-  getRoutes () {
+  getRoutes() {
     return {
       '/drawcast/': async (req, res, next) => {
         res.send(await fn.render('base.twig', {
@@ -104,30 +119,31 @@ class DrawcastModule {
     }
   }
 
-  drawUrl () {
+  drawUrl() {
     const pubToken = this.tokens.getPubTokenForUserId(this.user.id).token
     return this.ws.pubUrl(this.ws.widgetUrl('drawcast_draw', pubToken))
   }
 
-  wsdata (eventName) {
+  wsdata(eventName) {
     return {
       event: eventName,
       data: Object.assign({}, this.data, {
         defaultSettings: this.defaultSettings,
         drawUrl: this.drawUrl(),
+        images: this.images
       }),
     };
   }
 
-  updateClient (eventName, ws) {
+  updateClient(eventName, ws) {
     this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
   }
 
-  updateClients (eventName) {
+  updateClients(eventName) {
     this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName))
   }
 
-  getWsEvents () {
+  getWsEvents() {
     return {
       'conn': (ws) => {
         this.updateClient('init', ws)
@@ -139,15 +155,16 @@ class DrawcastModule {
         const path = `./data${rel}`
         const imgpath = `${path}/${name}`
         const imgurl = `${rel}/${name}`
-        fs.mkdirSync(path, {recursive: true})
+        fs.mkdirSync(path, { recursive: true })
         fs.writeFileSync(imgpath, img.data)
+        this.images.unshift(imgurl)
 
         this.wss.notifyAll([this.user.id], this.name, {
           event: data.event,
           data: { img: imgurl },
         })
       },
-      'save': (ws, {settings}) => {
+      'save': (ws, { settings }) => {
         this.data.settings = settings
         this.storage.save(this.name, this.data)
         this.reinit()
@@ -156,11 +173,11 @@ class DrawcastModule {
     }
   }
 
-  getCommands () {
+  getCommands() {
     return {}
   }
 
-  onChatMsg (client, target, context, msg) {
+  onChatMsg(client, target, context, msg) {
   }
 }
 
