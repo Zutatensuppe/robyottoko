@@ -159,6 +159,7 @@ class DrawcastModule {
         fs.mkdirSync(path, { recursive: true })
         fs.writeFileSync(imgpath, img.data)
         this.images.unshift(imgurl)
+        this.images = this.images.slice(0, 20)
 
         this.wss.notifyAll([this.user.id], this.name, {
           event: data.event,
