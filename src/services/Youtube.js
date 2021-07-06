@@ -40,7 +40,11 @@ const getYoutubeIdBySearch = async (searchterm) => {
     q: searchterm,
     type: 'video',
   })
-  return json.items[0]['id']['videoId'] || null
+  try {
+    return json.items[0]['id']['videoId'] || null
+  } catch (e) {
+    return null
+  }
 }
 
 const getUrlById = (id) => `https://youtu.be/${id}`
