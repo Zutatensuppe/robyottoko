@@ -56,6 +56,7 @@ class DrawcastModule {
         }))
         .sort((a, b) => b.time - a.time)
         .map((v) => `${rel}/${v.name}`)
+        .slice(0, 20)
     } catch (e) {
       this.images = []
     }
