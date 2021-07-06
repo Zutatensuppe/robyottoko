@@ -5,12 +5,6 @@ const WebSocketServer = require('../../net/WebSocketServer.js')
 const TwitchHelixClient = require('../../services/TwitchHelixClient.js')
 const Youtube = require('../../services/Youtube.js')
 
-const extractYoutubeId = async (/** @type string */ youtubeUrl) => {
-  return Youtube.extractYoutubeId(youtubeUrl)
-    || await Youtube.getYoutubeIdBySearch(youtubeUrl)
-    || null
-}
-
 const ADD_TYPE = {
   NOT_ADDED: 0,
   ADDED: 1,
@@ -169,12 +163,26 @@ class SongrequestModule {
 
   async add(/** @type string */ str, user) {
     const youtubeUrl = str.trim()
-    const youtubeId = await extractYoutubeId(youtubeUrl)
-    if (!youtubeId) {
+    let youtubeId = Youtube.extractYoutubeId(youtubeUrl)
+    let youtubeData = null
+    if (youtubeId) {
+      youtubeData = await this.loadYoutubeData(youtubeId)
+    }
+    if (!youtubeData) {
+      youtubeId = await Youtube.getYoutubeIdBySearch(youtubeUrl)
+      if (youtubeId) {
+        youtubeData = await this.loadYoutubeData(youtubeId)
+      }
+    }
+    if (!youtubeId || !youtubeData) {
       return { item: null, addType: ADD_TYPE.NOT_ADDED }
     }
 
-    const { item, addType } = await this.addToPlaylist(youtubeId, user)
+    const { item, addType } = await this.addToPlaylist(
+      youtubeId,
+      youtubeData,
+      user
+    )
     if (addType === ADD_TYPE.ADDED) {
       this.data.stacks[user] = this.data.stacks[user] || []
       this.data.stacks[user].push(youtubeId)
@@ -442,7 +450,7 @@ class SongrequestModule {
     return (found === -1 ? 0 : found) + 1
   }
 
-  async addToPlaylist (youtubeId, userName) {
+  async addToPlaylist (youtubeId, youtubeData, userName) {
     const idx = this.data.playlist.findIndex(other => other.yt === youtubeId)
     if (idx >= 0) {
       const item =  this.data.playlist[idx]
@@ -459,11 +467,10 @@ class SongrequestModule {
       }
     }
 
-    const yt = await this.loadYoutubeData(youtubeId)
     const item = {
       id: Math.random(),
       yt: youtubeId,
-      title: yt.snippet.title,
+      title: youtubeData.snippet.title,
       timestamp: new Date().getTime(),
       user: userName,
       plays: 0,

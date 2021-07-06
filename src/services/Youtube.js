@@ -28,6 +28,7 @@ const extractYoutubeId = (string) => {
   }
   // https://stackoverflow.com/questions/6180138/whats-the-maximum-length-of-a-youtube-video-id
   if (string.match(/^[a-z0-9_-]{11}$/i)) {
+    // the string may still not be a youtube id
     return string
   }
 
