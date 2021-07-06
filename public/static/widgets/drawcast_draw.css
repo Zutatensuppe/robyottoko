@@ -43,6 +43,7 @@ button:active {
 .eraser { background-image: url('../eraser.png'); }
 .color-sampler { background-image: url('../pipette.png'); }
 .undo { background-image: url('../undo.png'); }
+.fill { background-image: url('../fill.png'); }
 
 #gallery { margin-top: 1em; }
 #gallery div { margin-bottom: 1em; }
