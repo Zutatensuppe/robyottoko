@@ -15,6 +15,9 @@ export default {
   },
   created () {
     this.volume = this.value
+    this.$watch('value', () => {
+      this.volume = this.value
+    })
     this.$watch('volume', () => {
       this.$emit('input', this.volume)
     })

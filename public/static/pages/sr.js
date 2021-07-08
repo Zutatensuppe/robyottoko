@@ -20,6 +20,19 @@ export default {
       playlist: [],
       ws: null,
       srinput: '',
+
+      // hacky: list of volumeChanges initialized by self
+      // volume change is a ctrl sent to server without directly
+      // changing anything. only when the response from server
+      // arrives will the volume change be made. when that change is
+      // made, the volume slider would jump (if many volume changes
+      // are made in quick succession, this looks and feels choppy)
+      // so we store our local volume changes, and if a volume change
+      // arrives from server which corresponds to our local one, we
+      // do not change the VISUAL volume level, as it should already
+      // be changed... should be solved smarter (send maybe send some
+      // id with each request and see if WE sent the request or another)
+      volumeChanges: [],
     }
   },
   template: `
@@ -28,7 +41,7 @@ export default {
     <navbar :user="conf.user.name" />
     <div id="actionbar">
       <ul class="items">
-        <li><volume-slider :value="this.volume" @input="onVolumeChange" />
+        <li><volume-slider :value="volume" @input="onVolumeChange" />
         <li><button class="btn" @click="sendCtrl('resetStats', [])" title="Reset stats"><i class="fa fa-eraser"/><span class="txt"> Reset stats</span></button>
         <li><button class="btn" @click="sendCtrl('clear', [])" title="Clear"><i class="fa fa-eject"/><span class="txt"> Clear</span></button>
         <li><button class="btn" @click="sendCtrl('shuffle', [])" title="Shuffle"><i class="fa fa-random"/><span class="txt"> Shuffle</span></button>
@@ -227,24 +240,34 @@ export default {
       this.ws.send(JSON.stringify(data))
     },
     play() {
-      this.adjustVolume()
+      this.adjustVolume(this.volume)
       if (this.playerVisible && this.hasItems) {
         this.player.play(this.item.yt)
         this.sendMsg({event: 'play', id: this.item.id})
       }
     },
-    adjustVolume() {
-      this.player.setVolume(this.volume)
+    adjustVolume(volume) {
+      this.player.setVolume(volume)
     },
     onVolumeChange(volume) {
+      this.volumeChanges.push(volume)
       this.sendCtrl('volume', [volume])
     },
   },
   mounted() {
     this.ws = new WsClient(this.conf.wsBase + '/sr', this.conf.token)
     this.ws.onMessage('volume', (data) => {
+      // this assumes that all volume changes are done by us
+      // otherwise this would probably fail ;C
+      if (this.volumeChanges.length > 0) {
+          const firstChange = this.volumeChanges.shift()
+          if (firstChange === data.volume) {
+            this.adjustVolume(data.volume)
+            return
+          }
+      }
       this.volume = data.volume
-      this.adjustVolume()
+      this.adjustVolume(this.volume)
     })
     this.ws.onMessage(['onEnded', 'skip', 'remove', 'clear', 'move'], (data) => {
       this.volume = data.volume
