@@ -65,8 +65,28 @@ const colorStrToColor = (/** @type string*/ colorStr) => {
 }
 
 const CanvasAdapter = (canvas) => {
-  const ctx = canvas.getContext('2d')
+  let ctx = canvas.getContext('2d')
   let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+  const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (
+        mutation.type === 'attributes'
+        && ['height', 'width'].includes(mutation.attributeName)
+      ) {
+        ctx = canvas.getContext('2d')
+        imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      }
+    })
+  })
+  observer.observe(canvas, {
+    attributes: true
+  })
+
+  canvas.addEventListener('resize', () => {
+    console.log('resized')
+    ctx = canvas.getContext('2d')
+    imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+  })
 
   const idxByCoord = (x, y) => y * (canvas.width * 4) + x * 4
   const colorAtIdx = (idx) => {
