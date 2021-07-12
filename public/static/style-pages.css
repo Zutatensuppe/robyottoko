@@ -52,6 +52,7 @@ table tr.gain-attention td {
   }
 }
 @media only screen and (max-width: 800px) {
+  #navbar .logo { display: none; }
   #navbar ul.items li.greeting { display: none; }
 }
 

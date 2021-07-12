@@ -115,12 +115,35 @@ export default {
     <navbar :user="conf.user.name" />
     <div id="actionbar">
       <ul class="items">
-        <li><button class="btn" @click="add('text')">Add text</button>
-        <li><button class="btn" @click="add('media')">Add media</button>
-        <li><button class="btn" @click="add('countdown')">Add countdown</button>
-        <li><button class="btn" @click="add('jisho_org_lookup')">Add jisho_org_lookup</button>
-        <li><button class="btn" @click="add('chatters')">Add chatters</button>
-        <li><button class="btn btn-primary" :disabled="!changed" @click="sendSave">Save</button>
+        <li><button
+          class="btn"
+          @click="add('text')"
+          title="Send a message to chat"
+        >Add text</button>
+        <li><button
+          class="btn"
+          @click="add('media')"
+          title="Display an image and/or play a sound"
+        >Add media</button>
+        <li><button
+          class="btn"
+          @click="add('countdown')"
+          title="Add a countdown or messages spaced by time intervals"
+        >Add countdown</button>
+        <li><button
+          class="btn"
+          @click="add('jisho_org_lookup')"
+          title="Lookup a word via jisho.org"
+        >Add jisho_org_lookup</button>
+        <li><button
+          class="btn"
+          @click="add('chatters')"
+          title="Displays users who chatted during the stream"
+        >Add chatters</button>
+        <li><button
+          class="btn btn-primary"
+          :disabled="!changed"
+          @click="sendSave">Save</button>
         <li><a class="btn" :href="widgetUrl" target="_blank">Open Media widget</a>
       </ul>
     </div>
