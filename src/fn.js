@@ -162,8 +162,15 @@ async function replaceAsync(
 const parseResponseText = async (
   /** @type string */ text,
   command,
+  context,
 ) => {
   const replaces = [
+    {
+      regex: /\$user\.name/g,
+      replacer: () => {
+        return context['display-name']
+      },
+    },
     {
       regex: /\$([a-z][a-z0-9]*)(?!\()/g,
       replacer: (m0, m1) => {

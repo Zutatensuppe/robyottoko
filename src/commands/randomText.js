@@ -10,7 +10,7 @@ const randomText = (
   /** @type string */ msg,
 ) => {
   const say = fn.sayFn(client, target)
-  say(await fn.parseResponseText(fn.getRandom(texts), command))
+  say(await fn.parseResponseText(fn.getRandom(texts), command, context))
 }
 
 module.exports = randomText
