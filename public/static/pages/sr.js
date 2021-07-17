@@ -252,8 +252,9 @@ export default {
       })
       if (res.status === 200) {
         this.importVisible = false
+        this.$toasted.success('Import successful')
       } else {
-        alert('Import failed')
+        this.$toasted.error('Import failed')
       }
     },
     togglePlayer() {
