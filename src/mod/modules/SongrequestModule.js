@@ -146,7 +146,8 @@ class SongrequestModule {
           case 'volume': this.volume(...args); break;
           case 'good': this.like(); break;
           case 'bad': this.dislike(); break;
-          case 'skip': this.skip(); break;
+          case 'prev': this.prev(); break;
+          case 'skip': this.next(); break;
           case 'resetStats': this.resetStats(); break;
           case 'clear': this.clear(); break;
           case 'rm': this.remove(); break;
@@ -293,7 +294,18 @@ class SongrequestModule {
     this.updateClients('dislike')
   }
 
-  skip () {
+  prev () {
+    if (this.data.playlist.length === 0) {
+      return
+    }
+
+    this.data.playlist.unshift(this.data.playlist.pop())
+
+    this.save()
+    this.updateClients('prev')
+  }
+
+  next () {
     if (this.data.playlist.length === 0) {
       return
     }
@@ -394,10 +406,16 @@ class SongrequestModule {
         case 'bad':
           this.dislike()
           return
+        case 'prev':
+          if (fn.isMod(context)) {
+            this.prev()
+            return
+          }
+          break
         case 'next':
         case 'skip':
           if (fn.isMod(context)) {
-            this.skip()
+            this.next()
             return
           }
           break

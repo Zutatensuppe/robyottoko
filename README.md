@@ -84,8 +84,9 @@ Chat command     | Viewer | Mod | Explanation
 `!sr stats`      | ✔      | ✔   | Show stats about the playlist
 `!sr stat`       | ✔      | ✔   | Alias for stats
 `!sr rm`         | ✖      | ✔   | Remove the current song from the playlist
-`!sr skip`       | ✖      | ✔   | Skip to the next song
-`!sr next`       | ✖      | ✔   | Alias for skip
+`!sr next`       | ✖      | ✔   | Skip to the next song
+`!sr prev`       | ✖      | ✔   | Skip to the previous song
+`!sr skip`       | ✖      | ✔   | Alias for next
 `!sr shuffle`    | ✖      | ✔   | Shuffle the playlist (current song unaffected). <br /> Non-played and played songs will be shuffled separately and non-played songs will be put after currently playing song.
 `!sr resetStats` | ✖      | ✔   | Reset all statistics of all songs
 `!sr clear`      | ✖      | ✔   | Clear the playlist

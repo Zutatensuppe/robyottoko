@@ -119,16 +119,22 @@ export default {
           <td>Remove the current song from the playlist</td>
         </tr>
         <tr>
-          <td><code>!sr skip</code></td>
+          <td><code>!sr next</code></td>
           <td class="negative">✖</td>
           <td class="positive">✔</td>
           <td>Skip to the next song</td>
         </tr>
         <tr>
-          <td><code>!sr next</code></td>
+          <td><code>!sr prev</code></td>
           <td class="negative">✖</td>
           <td class="positive">✔</td>
-          <td>Alias for skip</td>
+          <td>Skip to the previous song</td>
+        </tr>
+        <tr>
+          <td><code>!sr skip</code></td>
+          <td class="negative">✖</td>
+          <td class="positive">✔</td>
+          <td>Alias for next</td>
         </tr>
         <tr>
           <td><code>!sr shuffle</code></td>
@@ -281,7 +287,7 @@ export default {
       this.volume = data.volume
       this.adjustVolume(this.volume)
     })
-    this.ws.onMessage(['onEnded', 'skip', 'remove', 'clear', 'move'], (data) => {
+    this.ws.onMessage(['onEnded', 'prev', 'skip', 'remove', 'clear', 'move'], (data) => {
       this.volume = data.volume
       const oldId = this.playlist.length > 0 ? this.playlist[0].id : null
       const newId = data.playlist.length > 0 ? data.playlist[0].id : null
