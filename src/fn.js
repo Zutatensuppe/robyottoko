@@ -251,6 +251,17 @@ const joinIntoChunks = (
   return chunks
 }
 
+const pad = (
+  /** @type number */ x,
+  /** @type string */ pad
+) => {
+  const str = `${x}`
+  if (str.length >= pad.length) {
+    return str
+  }
+  return pad.substr(0, pad.length - str.length) + str
+}
+
 module.exports = {
   logger,
   mimeToExt,
@@ -264,6 +275,7 @@ module.exports = {
   shuffle,
   sleep,
   fnRandom,
+  pad,
   isBroadcaster,
   isMod,
   isSubscriber,

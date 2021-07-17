@@ -1,3 +1,4 @@
+const moment = require('moment')
 const Db = require('../../Db.js')
 const fn = require('../../fn.js')
 const WebServer = require('../../net/WebServer.js')
@@ -196,6 +197,30 @@ class SongrequestModule {
     }
   }
 
+  async stats (userName) {
+    const totalDuration = moment.duration(0)
+    const totalSeconds = 0
+    for (const item of this.data.playlist) {
+      const d = await this.loadYoutubeData(item.yt)
+      totalDuration.add(d.contentDetails.duration)
+    }
+    const hh = fn.pad(totalDuration.hours(), '00')
+    const mm = fn.pad(totalDuration.minutes(), '00')
+    const ss = fn.pad(totalDuration.seconds(), '00')
+    const human = `${hh}:${mm}:${ss}h`
+
+    return {
+      count: {
+        byUser: this.data.playlist.filter(item => item.user === userName).length,
+        total: this.data.playlist.length,
+      },
+      duration: {
+        seconds: totalSeconds,
+        human: human,
+      },
+    }
+  }
+
   resetStats () {
     this.data.playlist = this.data.playlist.map(item => {
       item.plays = 0
@@ -380,6 +405,21 @@ class SongrequestModule {
             return
           }
           break
+        case 'stat':
+        case 'stats':
+          const stats = await this.stats(context['display-name'])
+          let number = stats.count.byUser
+          const verb = stats.count.byUser === 1 ? 'was' : 'were'
+          if (stats.count.byUser === 1) {
+            number = 'one'
+          } else if (stats.count.byUser === 0) {
+            number = 'none'
+          }
+          const countStr = `There are ${stats.count.total} songs in the playlist, `
+            + `${number} of which ${verb} requested by ${context['display-name']}.`
+          const durationStr = `The total duration of the playlist is ${stats.duration.human}.`
+          say([countStr, durationStr].join(' '))
+          return
         case 'resetStats':
           if (fn.isMod(context)) {
             this.resetStats()
@@ -429,7 +469,7 @@ class SongrequestModule {
   }
 
   async loadYoutubeData (youtubeId) {
-    let key = `youtubeData_${youtubeId}`
+    let key = `youtubeData_${youtubeId}_20210717_2`
     let d = this.cache.get(key)
     if (!d) {
       d = await Youtube.fetchDataByYoutubeId(youtubeId)
