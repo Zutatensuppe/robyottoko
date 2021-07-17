@@ -263,7 +263,7 @@ const pad = (
 }
 
 const humanDuration = (
-  /** @type number */ duration
+  /** @type number */ durationMs
 ) => {
   const d = Math.floor(duration / DAY)
   duration = duration % DAY

@@ -199,14 +199,12 @@ class SongrequestModule {
 
   async stats (userName) {
     const countTotal = this.data.playlist.length
-    let durationSeconds = 0
+    const durationTotal = moment.duration(0)
     if (countTotal > 0) {
-      const durationTotal = moment.duration(0)
       for (const item of this.data.playlist) {
         const d = await this.loadYoutubeData(item.yt)
         durationTotal.add(d.contentDetails.duration)
       }
-      durationSeconds = durationTotal.asSeconds()
     }
     return {
       count: {
@@ -214,8 +212,7 @@ class SongrequestModule {
         total: countTotal,
       },
       duration: {
-        seconds: durationSeconds,
-        human: fn.humanDuration(durationSeconds),
+        human: fn.humanDuration(durationTotal.asMilliseconds()),
       },
     }
   }
