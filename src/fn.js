@@ -2,12 +2,6 @@ const config = require('./config.js')
 const path = require('path')
 const { getText } = require('./net/xhr')
 
-const MS = 1
-const SEC = MS * 1000
-const MIN = SEC * 60
-const HOUR = MIN * 60
-const DAY = HOUR * 24
-
 // error | info | log | debug
 const logLevel = config?.log?.level || 'info'
 let logEnabled = [] // always log errors
@@ -277,10 +271,10 @@ const humanDuration = (
   const h = Math.floor(duration / HOUR)
   duration = duration % HOUR
 
-  const m = Math.floor(duration / MIN)
-  duration = duration % MIN
+  const m = Math.floor(duration / MINUTE)
+  duration = duration % MINUTE
 
-  const s = Math.floor(duration / SEC)
+  const s = Math.floor(duration / SECOND)
 
   const parts = []
   if (d > 0) {
