@@ -10,6 +10,8 @@ const TwitchHelixClient = require('../../services/TwitchHelixClient.js')
 const WebServer = require('../../net/WebServer.js')
 const WebSocketServer = require('../../net/WebSocketServer.js')
 
+const log = fn.logger('GeneralModule.js')
+
 class GeneralModule {
   constructor(
     /** @type Db */ db,
@@ -183,15 +185,30 @@ class GeneralModule {
     }
   }
   getCommands () {
-    return this.commands
+    return {}
   }
 
-  onChatMsg (
+  async onChatMsg (
     client,
     /** @type string */ target,
     context,
     /** @type string */ msg
   ) {
+    let keys = Object.keys(this.commands)
+    // make sure longest commands are found first
+    // so that in case commands `!draw` and `!draw bad` are set up
+    // and `!draw bad` is written in chat, that command only will be
+    // executed and not also `!draw`
+    keys = keys.sort((a, b) => b.length - a.length)
+    for (const key of keys) {
+      const rawCmd = fn.parseKnownCommandFromMessage(msg, key)
+      if (!rawCmd) {
+        continue
+      }
+      const cmdDefs = this.commands[key] || []
+      await fn.tryExecuteCommand(rawCmd, cmdDefs, client, target, context, msg)
+      break
+    }
     this.timers.forEach(t => {
       t.lines++
     })

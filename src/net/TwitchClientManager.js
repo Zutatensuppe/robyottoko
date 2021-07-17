@@ -49,16 +49,7 @@ class TwitchClientManager {
       for (const m of moduleManager.all(user.id)) {
         const commands = m.getCommands() || {}
         const cmdDefs = commands[rawCmd.name] || []
-        for (let cmdDef of cmdDefs) {
-          if (fn.mayExecute(context, cmdDef)) {
-            log.info(`${target}| * Executing ${rawCmd.name} command`)
-            const r = await cmdDef.fn(rawCmd, this.chatClient, target, context, msg)
-            if (r) {
-              log.info(`${target}| * Returned: ${r}`)
-            }
-            log.info(`${target}| * Executed ${rawCmd.name} command`)
-          }
-        }
+        await fn.tryExecuteCommand(rawCmd, cmdDefs, this.chatClient, target, context, msg)
         await m.onChatMsg(this.chatClient, target, context, msg);
       }
     })

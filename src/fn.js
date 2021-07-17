@@ -140,9 +140,42 @@ const mayExecute = (context, cmd) => {
   return false
 }
 
+const parseKnownCommandFromMessage = (
+  /** @type string */ msg,
+  /** @type string */ cmd
+) => {
+  if (msg.startsWith(cmd + ' ') || msg === cmd) {
+    const name = msg.substr(0, cmd.length).trim()
+    const args = msg.substr(cmd.length - 1).trim().split(' ').filter(s => !!s)
+    return { name, args }
+  }
+  return null
+}
+
 const parseCommandFromMessage = (/** @type string */ msg) => {
   const command = msg.trim().split(' ')
   return {name: command[0], args: command.slice(1)}
+}
+
+const tryExecuteCommand = async (
+  /** @type {name: string, args: string[]} */ rawCmd,
+  /** @type any[] */ cmdDefs,
+  client,
+  /** @type string */ target,
+  context,
+  /** @type string */ msg
+) => {
+  for (const cmdDef of cmdDefs) {
+    if (!mayExecute(context, cmdDef)) {
+      continue
+    }
+    log.info(`${target}| * Executing ${rawCmd.name} command`)
+    const r = await cmdDef.fn(rawCmd, client, target, context, msg)
+    if (r) {
+      log.info(`${target}| * Returned: ${r}`)
+    }
+    log.info(`${target}| * Executed ${rawCmd.name} command`)
+  }
 }
 
 async function replaceAsync(
@@ -304,6 +337,8 @@ module.exports = {
   sayFn,
   mayExecute,
   parseCommandFromMessage,
+  parseKnownCommandFromMessage,
+  tryExecuteCommand,
   render,
   getRandomInt,
   getRandom,
