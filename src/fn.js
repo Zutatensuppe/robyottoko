@@ -2,6 +2,12 @@ const config = require('./config.js')
 const path = require('path')
 const { getText } = require('./net/xhr')
 
+const MS = 1
+const SEC = MS * 1000
+const MIN = SEC * 60
+const HOUR = MIN * 60
+const DAY = HOUR * 24
+
 // error | info | log | debug
 const logLevel = config?.log?.level || 'info'
 let logEnabled = [] // always log errors
