@@ -198,25 +198,24 @@ class SongrequestModule {
   }
 
   async stats (userName) {
-    const totalDuration = moment.duration(0)
-    const totalSeconds = 0
-    for (const item of this.data.playlist) {
-      const d = await this.loadYoutubeData(item.yt)
-      totalDuration.add(d.contentDetails.duration)
+    const countTotal = this.data.playlist.length
+    let durationSeconds = 0
+    if (countTotal > 0) {
+      const durationTotal = moment.duration(0)
+      for (const item of this.data.playlist) {
+        const d = await this.loadYoutubeData(item.yt)
+        durationTotal.add(d.contentDetails.duration)
+      }
+      durationSeconds = durationTotal.asSeconds()
     }
-    const hh = fn.pad(totalDuration.hours(), '00')
-    const mm = fn.pad(totalDuration.minutes(), '00')
-    const ss = fn.pad(totalDuration.seconds(), '00')
-    const human = `${hh}:${mm}:${ss}h`
-
     return {
       count: {
         byUser: this.data.playlist.filter(item => item.user === userName).length,
-        total: this.data.playlist.length,
+        total: countTotal,
       },
       duration: {
-        seconds: totalSeconds,
-        human: human,
+        seconds: durationSeconds,
+        human: fn.humanDuration(durationSeconds),
       },
     }
   }

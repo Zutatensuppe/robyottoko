@@ -262,6 +262,39 @@ const pad = (
   return pad.substr(0, pad.length - str.length) + str
 }
 
+const humanDuration = (
+  /** @type number */ duration
+) => {
+  const d = Math.floor(duration / DAY)
+  duration = duration % DAY
+
+  const h = Math.floor(duration / HOUR)
+  duration = duration % HOUR
+
+  const m = Math.floor(duration / MIN)
+  duration = duration % MIN
+
+  const s = Math.floor(duration / SEC)
+
+  const parts = []
+  if (d > 0) {
+    parts.push(`${d}d`)
+    parts.push(`${h}h`)
+    parts.push(`${m}m`)
+    parts.push(`${s}s`)
+  } else if (h > 0) {
+    parts.push(`${h}h`)
+    parts.push(`${m}m`)
+    parts.push(`${s}s`)
+  } else if (m > 0) {
+    parts.push(`${m}m`)
+    parts.push(`${s}s`)
+  } else if (s > 0) {
+    parts.push(`${s}s`)
+  }
+  return parts.join(' ')
+}
+
 module.exports = {
   logger,
   mimeToExt,
@@ -276,6 +309,7 @@ module.exports = {
   sleep,
   fnRandom,
   pad,
+  humanDuration,
   isBroadcaster,
   isMod,
   isSubscriber,
