@@ -81,6 +81,8 @@ Chat command     | Viewer | Mod | Explanation
 `!sr current`    | ✔      | ✔   | Show what song is currently playing
 `!sr good`       | ✔      | ✔   | Vote the current song up
 `!sr bad`        | ✔      | ✔   | Vote the current song down
+`!sr stats`      | ✔      | ✔   | Show stats about the playlist
+`!sr stat`       | ✔      | ✔   | Alias for stats
 `!sr rm`         | ✖      | ✔   | Remove the current song from the playlist
 `!sr skip`       | ✖      | ✔   | Skip to the next song
 `!sr next`       | ✖      | ✔   | Alias for skip

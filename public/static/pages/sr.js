@@ -101,6 +101,18 @@ export default {
           <td>Vote the current song down</td>
         </tr>
         <tr>
+          <td><code>!sr stats</code></td>
+          <td class="positive">✔</td>
+          <td class="positive">✔</td>
+          <td>Show stats about the playlist</td>
+        </tr>
+        <tr>
+          <td><code>!sr stat</code></td>
+          <td class="positive">✔</td>
+          <td class="positive">✔</td>
+          <td>Alias for stats</td>
+        </tr>
+        <tr>
           <td><code>!sr rm</code></td>
           <td class="negative">✖</td>
           <td class="positive">✔</td>
