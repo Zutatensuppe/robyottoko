@@ -80,17 +80,19 @@ class SpeechToTextModule {
 
   getRoutes () {
     return {
-      '/speech-to-text/': async (req, res, next) => {
-        res.send(await fn.render('base.twig', {
-          title: 'Speech to text',
-          page: 'speech-to-text',
-          page_data: {
-            wsBase: this.wss.connectstring(),
-            widgetToken: req.userWidgetToken,
-            user: req.user,
-            token: req.cookies['x-token'],
-          },
-        }))
+      get: {
+        '/speech-to-text/': async (req, res, next) => {
+          res.send(await fn.render('base.twig', {
+            title: 'Speech to text',
+            page: 'speech-to-text',
+            page_data: {
+              wsBase: this.wss.connectstring(),
+              widgetToken: req.userWidgetToken,
+              user: req.user,
+              token: req.cookies['x-token'],
+            },
+          }))
+        },
       },
     }
   }

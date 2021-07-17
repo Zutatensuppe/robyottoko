@@ -66,17 +66,38 @@ class SongrequestModule {
 
   getRoutes () {
     return {
-      '/sr/': async (req, res, next) => {
-        res.send(await fn.render('base.twig', {
-          title: 'Song Request',
-          page: 'sr',
-          page_data: {
-            wsBase: this.wss.connectstring(),
-            widgetToken: req.userWidgetToken,
-            user: req.user,
-            token: req.cookies['x-token'],
-          },
-        }))
+      post: {
+        '/sr/import': async (req, res, next) => {
+          try {
+            this.data.volume = req.body.volume
+            this.data.playlist = req.body.playlist
+            this.save()
+            this.updateClients('init')
+            res.send({ error: false })
+          } catch (e) {
+            res.status(400).send({ error: true })
+          }
+        },
+      },
+      get: {
+        '/sr/export': async (req, res, next) => {
+          res.send({
+            volume: this.data.volume,
+            playlist: this.data.playlist,
+          })
+        },
+        '/sr/': async (req, res, next) => {
+          res.send(await fn.render('base.twig', {
+            title: 'Song Request',
+            page: 'sr',
+            page_data: {
+              wsBase: this.wss.connectstring(),
+              widgetToken: req.userWidgetToken,
+              user: req.user,
+              token: req.cookies['x-token'],
+            },
+          }))
+        },
       },
     }
   }

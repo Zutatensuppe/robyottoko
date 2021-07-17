@@ -141,17 +141,19 @@ class GeneralModule {
 
   getRoutes () {
     return {
-      '/commands/': async (req, res, next) => {
-        res.send(await fn.render('base.twig', {
-          title: 'Commands',
-          page: 'commands',
-          page_data: {
-            wsBase: this.wss.connectstring(),
-            widgetToken: req.userWidgetToken,
-            user: req.user,
-            token: req.cookies['x-token'],
-          },
-        }))
+      get: {
+        '/commands/': async (req, res, next) => {
+          res.send(await fn.render('base.twig', {
+            title: 'Commands',
+            page: 'commands',
+            page_data: {
+              wsBase: this.wss.connectstring(),
+              widgetToken: req.userWidgetToken,
+              user: req.user,
+              token: req.cookies['x-token'],
+            },
+          }))
+        },
       },
     }
   }

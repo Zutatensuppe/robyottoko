@@ -344,12 +344,13 @@ class WebServer {
       res.status(404).send()
     })
 
-    app.get('*', requireLogin, async (req, res, next) => {
+    app.all('*', requireLogin, express.json(), async (req, res, next) => {
+      const method = req.method.toLowerCase()
       const key = req.url
       for (const m of this.moduleManager.all(req.user.id)) {
         const map = m.getRoutes()
-        if (map && map[key]) {
-          await map[key](req, res, next)
+        if (map && map[method] && map[method][key]) {
+          await map[method][key](req, res, next)
           return
         }
       }

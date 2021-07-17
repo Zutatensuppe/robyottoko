@@ -105,17 +105,19 @@ class DrawcastModule {
 
   getRoutes() {
     return {
-      '/drawcast/': async (req, res, next) => {
-        res.send(await fn.render('base.twig', {
-          title: 'Drawcast',
-          page: 'drawcast',
-          page_data: {
-            wsBase: this.wss.connectstring(),
-            widgetToken: req.userWidgetToken,
-            user: req.user,
-            token: req.cookies['x-token'],
-          },
-        }))
+      get: {
+        '/drawcast/': async (req, res, next) => {
+          res.send(await fn.render('base.twig', {
+            title: 'Drawcast',
+            page: 'drawcast',
+            page_data: {
+              wsBase: this.wss.connectstring(),
+              widgetToken: req.userWidgetToken,
+              user: req.user,
+              token: req.cookies['x-token'],
+            },
+          }))
+        },
       },
     }
   }

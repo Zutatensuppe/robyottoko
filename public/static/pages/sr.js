@@ -2,6 +2,7 @@ import Navbar from "../components/navbar.js"
 import Youtube from "../components/youtube.js"
 import VolumeSlider from "../components/volume-slider.js"
 import WsClient from "../WsClient.js"
+import xhr from "../xhr.js"
 
 export default {
   components: {
@@ -33,6 +34,9 @@ export default {
       // be changed... should be solved smarter (send maybe send some
       // id with each request and see if WE sent the request or another)
       volumeChanges: [],
+
+      importVisible: false,
+      importPlaylist: '',
     }
   },
   template: `
@@ -49,10 +53,16 @@ export default {
         <li><button class="btn" @click="toggleHelp" :title="toggleHelpButtonText"><i class="fa fa-info"/><span class="txt"> {{toggleHelpButtonText}}</span></button>
         <li class="maybebreak" style="position: relative"><i class="fa fa-search" style="color: #60554a; position: absolute; left: 8px; top: 7px;"/><input style="padding-left: 32px; margin-right: 3px;" type="text" v-model="srinput" @keyup.enter="sr" /><button class="btn" @click="sr"><i class="fa fa-plus"/><span class="txt"> Request</span></button>
         <li><a class="btn" :href="widgetUrl" target="_blank">Open SR widget</a>
+        <li><a class="btn" :href="exportPlaylistUrl" target="_blank"><i class="fa fa-download"/><span class="txt"> Export playlist</span></a>
+        <li><button class="btn" @click="toggleImport"><i class="fa fa-upload"/><span class="txt"> Import playlist</span></button>
       </ul>
     </div>
   </div>
   <div id="main" ref="main">
+    <div v-if="importVisible">
+      <textarea v-model="importPlaylist"></textarea>
+      <button class="btn" @click="doImportPlaylist">Import now</button>
+    </div>
     <div style="width: 640px; max-width: 100%;">
       <div id="player" class="video-16-9" :style="playerstyle"><youtube ref="youtube" @ended="ended"/></div>
     </div>
@@ -221,11 +231,31 @@ export default {
     toggleHelpButtonText() {
       return this.helpVisible ? 'Hide Help' : 'Show Help'
     },
+    importPlaylistUrl() {
+      return `${location.protocol}//${location.host}/sr/import`
+    },
+    exportPlaylistUrl() {
+      return `${location.protocol}//${location.host}/sr/export`
+    },
     widgetUrl() {
       return `${location.protocol}//${location.host}/widget/sr/${this.conf.widgetToken}/`
     },
   },
   methods: {
+    async doImportPlaylist() {
+      const res = await xhr.post(this.importPlaylistUrl, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: this.importPlaylist,
+      })
+      if (res.status === 200) {
+        this.importVisible = false
+      } else {
+        alert('Import failed')
+      }
+    },
     togglePlayer() {
       this.playerVisible = !this.playerVisible
       if (this.playerVisible) {
@@ -235,6 +265,9 @@ export default {
       } else {
         this.player.stop()
       }
+    },
+    toggleImport() {
+      this.importVisible = !this.importVisible
     },
     toggleHelp() {
       this.helpVisible = !this.helpVisible
