@@ -182,6 +182,18 @@ export default {
           <td class="positive">✔</td>
           <td>Unpause currently paused song</td>
         </tr>
+        <tr>
+          <td><code>!sr loop</code></td>
+          <td class="negative">✖</td>
+          <td class="positive">✔</td>
+          <td>Loop the current song</td>
+        </tr>
+        <tr>
+          <td><code>!sr noloop</code></td>
+          <td class="negative">✖</td>
+          <td class="positive">✔</td>
+          <td>Stop looping the current song</td>
+        </tr>
       </table>
     </div>
     <div id="playlist" v-if="!helpVisible">
@@ -354,6 +366,12 @@ export default {
       if (!this.player.playing()) {
         this.unpause()
       }
+    })
+    this.ws.onMessage(['loop'], (data) => {
+      this.player.setLoop(true)
+    })
+    this.ws.onMessage(['noloop'], (data) => {
+      this.player.setLoop(false)
     })
     this.ws.onMessage(['onEnded', 'prev', 'skip', 'remove', 'clear', 'move'], (data) => {
       this.volume = data.volume

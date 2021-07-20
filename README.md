@@ -92,3 +92,5 @@ Chat command     | Viewer | Mod | Explanation
 `!sr clear`      | ✖      | ✔   | Clear the playlist
 `!sr pause`      | ✖      | ✔   | Pause currently playing song
 `!sr unpause`    | ✖      | ✔   | Unpause currently paused song
+`!sr loop`       | ✖      | ✔   | Loop the current song
+`!sr noloop`     | ✖      | ✔   | Stop looping the current song

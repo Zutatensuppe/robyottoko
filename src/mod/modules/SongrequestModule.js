@@ -167,6 +167,8 @@ class SongrequestModule {
           case 'volume': this.volume(...args); break;
           case 'pause': this.pause(); break;
           case 'unpause': this.unpause(); break;
+          case 'loop': this.loop(); break;
+          case 'noloop': this.noloop(); break;
           case 'good': this.like(); break;
           case 'bad': this.dislike(); break;
           case 'prev': this.prev(); break;
@@ -319,6 +321,14 @@ class SongrequestModule {
     this.updateClients('unpause')
   }
 
+  loop () {
+    this.updateClients('loop')
+  }
+
+  noloop () {
+    this.updateClients('noloop')
+  }
+
   dislike () {
     this.incStat('bads')
     this.save()
@@ -459,6 +469,18 @@ class SongrequestModule {
         case 'unpause':
           if (fn.isMod(context)) {
             this.unpause()
+            return
+          }
+          break;
+        case 'loop':
+          if (fn.isMod(context)) {
+            this.loop()
+            return
+          }
+          break;
+        case 'noloop':
+          if (fn.isMod(context)) {
+            this.noloop()
             return
           }
           break;

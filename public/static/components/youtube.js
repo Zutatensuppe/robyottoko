@@ -86,6 +86,9 @@ export default {
         this.yt.setVolume(volume)
       }
     },
+    setLoop(loop) {
+      this.loop = loop
+    },
     playing() {
       return this.yt && this.yt.getPlayerState() === 1
     },
@@ -102,7 +105,11 @@ export default {
     }
     this.yt.addEventListener('onStateChange', (event) => {
       if (event.data === YT.PlayerState.ENDED) {
-        this.$emit('ended')
+        if (this.loop) {
+          this.yt.playVideo()
+        } else {
+          this.$emit('ended')
+        }
       }
     })
   }

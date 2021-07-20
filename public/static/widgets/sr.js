@@ -113,6 +113,12 @@ export default {
         this.unpause()
       }
     })
+    this.ws.onMessage(['loop'], (data) => {
+      this.player.setLoop(true)
+    })
+    this.ws.onMessage(['noloop'], (data) => {
+      this.player.setLoop(false)
+    })
     this.ws.onMessage(['dislike', 'like', 'playIdx', 'resetStats', 'shuffle'], (data) => {
       this.volume = data.volume
       this.playlist = data.playlist
@@ -126,6 +132,5 @@ export default {
     })
     this.ws.connect()
     this.play()
-    window.ppppp = this.player
   },
 }
