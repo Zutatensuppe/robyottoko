@@ -69,6 +69,16 @@ export default {
         this.yt.playVideo()
       }
     },
+    pause() {
+      if (this.yt) {
+        this.yt.pauseVideo()
+      }
+    },
+    unpause() {
+      if (this.yt) {
+        this.yt.playVideo()
+      }
+    },
     setVolume(volume) {
       if (!this.yt) {
         this.tovolume = volume

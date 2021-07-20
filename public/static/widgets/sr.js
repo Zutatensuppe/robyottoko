@@ -69,6 +69,18 @@ export default {
         this.sendMsg({event: 'play', id: this.item.id})
       }
     },
+    unpause() {
+      if (this.hasItems) {
+        this.player.unpause()
+        this.sendMsg({event: 'unpause', id: this.item.id})
+      }
+    },
+    pause() {
+      if (this.hasItems) {
+        this.player.pause()
+        this.sendMsg({event: 'pause'})
+      }
+    },
     adjustVolume() {
       this.player.setVolume(this.volume)
     }
@@ -91,7 +103,17 @@ export default {
         this.play()
       }
     })
-    this.ws.onMessage(['dislike', 'like', 'onPlay', 'resetStats', 'shuffle'], (data) => {
+    this.ws.onMessage(['pause'], (data) => {
+      if (this.player.playing()) {
+        this.pause()
+      }
+    })
+    this.ws.onMessage(['unpause'], (data) => {
+      if (!this.player.playing()) {
+        this.unpause()
+      }
+    })
+    this.ws.onMessage(['dislike', 'like', 'playIdx', 'resetStats', 'shuffle'], (data) => {
       this.volume = data.volume
       this.playlist = data.playlist
     })
@@ -104,5 +126,6 @@ export default {
     })
     this.ws.connect()
     this.play()
+    window.ppppp = this.player
   },
 }

@@ -155,7 +155,7 @@ class SongrequestModule {
         )
         this.incStat('plays')
         this.save()
-        this.updateClients('onPlay')
+        this.updateClients('playIdx')
       },
       'ended': (ws) => {
         this.data.playlist.push(this.data.playlist.shift())
@@ -165,6 +165,8 @@ class SongrequestModule {
       'ctrl': (ws, {ctrl, args}) => {
         switch (ctrl) {
           case 'volume': this.volume(...args); break;
+          case 'pause': this.pause(); break;
+          case 'unpause': this.unpause(); break;
           case 'good': this.like(); break;
           case 'bad': this.dislike(); break;
           case 'prev': this.prev(); break;
@@ -309,6 +311,14 @@ class SongrequestModule {
     this.updateClients('volume')
   }
 
+  pause () {
+    this.updateClients('pause')
+  }
+
+  unpause () {
+    this.updateClients('unpause')
+  }
+
   dislike () {
     this.incStat('bads')
     this.save()
@@ -440,6 +450,18 @@ class SongrequestModule {
             return
           }
           break
+        case 'pause':
+          if (fn.isMod(context)) {
+            this.pause()
+            return
+          }
+          break;
+        case 'unpause':
+          if (fn.isMod(context)) {
+            this.unpause()
+            return
+          }
+          break;
         case 'stat':
         case 'stats':
           const stats = await this.stats(context['display-name'])

@@ -170,6 +170,18 @@ export default {
           <td class="positive">✔</td>
           <td>Clear the playlist</td>
         </tr>
+        <tr>
+          <td><code>!sr pause</code></td>
+          <td class="negative">✖</td>
+          <td class="positive">✔</td>
+          <td>Pause currently playing song</td>
+        </tr>
+        <tr>
+          <td><code>!sr unpause</code></td>
+          <td class="negative">✖</td>
+          <td class="positive">✔</td>
+          <td>Unpause currently paused song</td>
+        </tr>
       </table>
     </div>
     <div id="playlist" v-if="!helpVisible">
@@ -298,6 +310,18 @@ export default {
         this.sendMsg({event: 'play', id: this.item.id})
       }
     },
+    unpause() {
+      if (this.hasItems) {
+        this.player.unpause()
+        this.sendMsg({event: 'unpause', id: this.item.id})
+      }
+    },
+    pause() {
+      if (this.playerVisible && this.hasItems) {
+        this.player.pause()
+        this.sendMsg({event: 'pause'})
+      }
+    },
     adjustVolume(volume) {
       this.player.setVolume(volume)
     },
@@ -321,6 +345,16 @@ export default {
       this.volume = data.volume
       this.adjustVolume(this.volume)
     })
+    this.ws.onMessage(['pause'], (data) => {
+      if (this.player.playing()) {
+        this.pause()
+      }
+    })
+    this.ws.onMessage(['unpause'], (data) => {
+      if (!this.player.playing()) {
+        this.unpause()
+      }
+    })
     this.ws.onMessage(['onEnded', 'prev', 'skip', 'remove', 'clear', 'move'], (data) => {
       this.volume = data.volume
       const oldId = this.playlist.length > 0 ? this.playlist[0].id : null
@@ -330,7 +364,7 @@ export default {
         this.play()
       }
     })
-    this.ws.onMessage(['dislike', 'like', 'onPlay', 'resetStats', 'shuffle'], (data) => {
+    this.ws.onMessage(['dislike', 'like', 'playIdx', 'resetStats', 'shuffle'], (data) => {
       this.volume = data.volume
       this.playlist = data.playlist
     })
