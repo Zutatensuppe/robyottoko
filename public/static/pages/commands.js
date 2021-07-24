@@ -1,4 +1,5 @@
 import Navbar from '../components/navbar.js'
+import Duration from '../components/duration.js'
 import Player from '../components/player.js'
 import VolumeSlider from '../components/volume-slider.js'
 import ResponsiveImage from '../components/responsive-image.js'
@@ -79,6 +80,7 @@ export default {
     Navbar,
     Player,
     VolumeSlider,
+    Duration,
     ResponsiveImage,
     Upload,
     CountdownEdit,
@@ -184,8 +186,8 @@ export default {
                   <responsive-image v-if="item.data.image.file" :src="item.data.image.file" :title="item.data.image.filename" width="100px" height="50px" style="display:inline-block;" />
                   <i class="fa fa-plus is-justify-content-center mr-2 ml-2" v-if="item.data.image.file && item.data.sound.file" />
                   <player :src="item.data.sound.file" :name="item.data.sound.filename" :volume="item.data.sound.volume" class="button is-small is-justify-content-center" />
-                  <span class="ml-2" v-if="item.data.image.file && item.data.sound.file">for at least {{item.data.minDurationMs}}ms</span>
-                  <span class="ml-2" v-else-if="item.data.image.file">for {{item.data.minDurationMs}}ms</span>
+                  <span class="ml-2" v-if="item.data.image.file && item.data.sound.file">for at least <duration :value="item.data.minDurationMs" /></span>
+                  <span class="ml-2" v-else-if="item.data.image.file">for <duration :value="item.data.minDurationMs" /></span>
                 </div>
               </div>
               <div v-if="item.action === 'countdown'">
@@ -193,7 +195,7 @@ export default {
                   <code>{{item.data.intro}}</code>
                   <span>→</span>
                   <template v-for="i in item.data.steps">
-                    <span>{{item.data.interval}}ms</span>
+                    <duration :value="item.data.interval" />
                     <span>→</span>
                     <code>{{item.data.steps - i + 1}}</code>
                     <span>→</span>
@@ -202,7 +204,7 @@ export default {
                 </div>
                 <div v-else>
                   <template v-for="(a,idx) in item.data.actions" :key="idx">
-                    <span v-if="a.type==='delay'">{{a.value}}ms</span>
+                    <duration v-if="a.type==='delay'" :value="a.value" />
                     <code v-if="a.type==='text'">{{a.value}}</code>
                     <span v-if="idx < item.data.actions.length - 1">→</span>
                   </template>

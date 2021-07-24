@@ -339,22 +339,26 @@ const humanDuration = (
   duration = duration % MINUTE
 
   const s = Math.floor(duration / SECOND)
+  duration = duration % SECOND
+
+  const ms = duration
+
+  const units = ['ms', 's', 'm', 'h', 'd']
+  const rawparts = [ms, s, m, h, d]
+
+  // remove leading and trailing empty values
+  let start = 0
+  while (start < rawparts.length && rawparts[start] === 0) {
+    start++
+  }
+  let end = rawparts.length - 1
+  while (end >= 0 && rawparts[end] === 0) {
+    end--
+  }
 
   const parts = []
-  if (d > 0) {
-    parts.push(`${d}d`)
-    parts.push(`${h}h`)
-    parts.push(`${m}m`)
-    parts.push(`${s}s`)
-  } else if (h > 0) {
-    parts.push(`${h}h`)
-    parts.push(`${m}m`)
-    parts.push(`${s}s`)
-  } else if (m > 0) {
-    parts.push(`${m}m`)
-    parts.push(`${s}s`)
-  } else if (s > 0) {
-    parts.push(`${s}s`)
+  for (let i = start; i <= end; i++) {
+    parts.unshift(`${rawparts[i]}${units[i]}`)
   }
   return parts.join(' ')
 }

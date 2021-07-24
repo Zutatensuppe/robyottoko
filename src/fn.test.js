@@ -1,4 +1,4 @@
-const { joinIntoChunks, humanDuration, parseISO8601Duration, DAY } = require('./fn.js')
+const { joinIntoChunks, humanDuration, parseISO8601Duration, DAY, HOUR, MINUTE, SECOND, MS } = require('./fn.js')
 
 test('joinIntoChunks', () => {
   let actual = joinIntoChunks(['hyottoko', 'van', 'megaport'], ', ', 12)
@@ -38,34 +38,16 @@ ${'PT4M3S'}         | ${243000}
   expect(actual).toStrictEqual(expected)
 })
 
-test('humanDuration', () => {
-  let d, actual, expected
-
-  d = 1000
-  actual = humanDuration(d)
-  expected = '1s'
-  expect(actual).toStrictEqual(expected)
-
-  d = 1000 * 60
-  actual = humanDuration(d)
-  expected = '1m 0s'
-  expect(actual).toStrictEqual(expected)
-
-  d = 1000 * 60 * 60
-  actual = humanDuration(d)
-  expected = '1h 0m 0s'
-  expect(actual).toStrictEqual(expected)
-
-  d = 1000 * 60 * 60 * 24
-  actual = humanDuration(d)
-  expected = '1d 0h 0m 0s'
-  expect(actual).toStrictEqual(expected)
-
-  d = 1000 * 60 * 60 * 24
-    + 1000 * 60 * 60 * 5
-    + 1000 * 60 * 40
-    + 1000 * 34
-  actual = humanDuration(d)
-  expected = '1d 5h 40m 34s'
+test.each`
+duration   | expected
+${SECOND}  | ${'1s'}
+${MINUTE}  | ${'1m'}
+${HOUR}    | ${'1h'}
+${HOUR + 34 * SECOND}  | ${'1h 0m 34s'}
+${DAY}     | ${'1d'}
+${45 * MS} | ${'45ms'}
+${DAY + 5 * HOUR + 40 * MINUTE + 34 * SECOND} | ${'1d 5h 40m 34s'}
+`('humanDuration $expected', ({ duration, expected }) => {
+  const actual = humanDuration(duration)
   expect(actual).toStrictEqual(expected)
 })
