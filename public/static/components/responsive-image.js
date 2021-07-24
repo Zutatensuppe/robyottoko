@@ -13,7 +13,7 @@ export default {
     },
   },
   template: `
-  <div :style="style" :title="title"></div>
+  <div class="responsive-image" :style="style" :title="title"></div>
   `,
   computed: {
     style() {

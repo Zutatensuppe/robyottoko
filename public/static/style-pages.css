@@ -61,6 +61,17 @@ table tr.gain-attention td {
   border-color: #dbdbdb;
 }
 
+.media-holder-inline {
+  display: flex;
+  align-items:center;
+  padding: 0;
+  border: 0;
+}
+
+.media-holder-inline .responsive-image {
+  border: solid 1px #dbdbdb;
+}
+
 .positive {
   color: var(--pos-color);
 }
@@ -72,15 +83,51 @@ table tr.gain-attention td {
 .timer-trigger {
   border-radius: 4px;
   color: var(--main-color);
-  padding: 6px 10px;
+  padding: 6px 14px;
   background-color: #fff;
   border-style: solid;
   border-width: 1px;
   border-color: #dbdbdb;
   position: relative;
 }
+.timer-trigger label {
+  line-height: 2;
+}
 .timer-trigger > .control:first-child {
   position: absolute;
   top: -1px;
   right: -1px;
+  z-index: 10;
+}
+.timer-trigger .columns {
+  margin-top: -.25rem;
+  margin-right: -.25rem;
+  margin-top: -.25rem;
+  margin-bottom: -.25rem;
+}
+.timer-trigger .column {
+  padding: .25rem;
+}
+
+.modal .table {
+  width: 100%;
+}
+
+.textarea-holder {
+  position: relative;
+  padding-right: 2em;
+}
+.textarea-holder .button {
+  position: absolute;
+  right: -2px;
+  top: 0;
+}
+
+.col-triggers {
+  max-width: 200px;
+}
+.col-triggers > div:not(:last-child) {
+  border-bottom: 1px solid #dbdbdb;
+  padding-bottom: .25em;
+  margin-bottom: .25em;
 }
