@@ -138,6 +138,7 @@ export default {
     <command-edit
       v-if="editCommand"
       :modelValue="editCommand"
+      :mode="editIdx >= commands.length ? 'create' : 'edit'"
       @update:modelValue="editedCommand"
       @cancel="editCommand=null"
       />
@@ -151,6 +152,7 @@ export default {
             <th>Response</th>
             <th>Type</th>
             <th>Permissions</th>
+            <th></th>
             <th></th>
           </tr>
         </thead>
@@ -214,7 +216,8 @@ export default {
               {{permissionsStr(item)}}
             </td>
             <td class="pl-0 pr-0">
-              <button class="button is-small" @click="remove(idx)"><i class="fa fa-trash" /></button>
+              <button class="button is-small mr-1" @click="remove(idx)"><i class="fa fa-trash" /></button>
+              <button class="button is-small" @click="duplicate(idx)"><i class="fa fa-copy" /></button>
             </td>
           </tr>
         </tbody>
@@ -251,10 +254,15 @@ export default {
     },
     remove(idx) {
       this.commands = this.commands.filter((val, index) => index !== idx)
+      this.sendSave()
     },
     edit(idx) {
       this.editIdx = idx
       this.editCommand = this.commands[idx]
+    },
+    duplicate(idx) {
+      this.editIdx = this.commands.length
+      this.editCommand = JSON.parse(JSON.stringify(this.commands[idx]))
     },
     editedCommand(command) {
       this.commands[this.editIdx] = command

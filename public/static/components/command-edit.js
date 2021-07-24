@@ -27,8 +27,12 @@ export default {
     Upload,
   },
   props: {
-    'modelValue': {
+    modelValue: {
       type: Object,
+      required: true,
+    },
+    mode: {
+      type: String,
       required: true,
     },
   },
@@ -271,14 +275,18 @@ export default {
   },
   computed: {
     title() {
-      const map = {
-        jisho_org_lookup: 'Edit jisho.org lookup',
-        chatters: 'Edit chatters command',
-        media: 'Edit media command',
-        countdown: 'Edit countdown',
-        text: 'Edit command',
+      const verb = {
+        create: 'Create new ',
+        edit: 'Edit ',
       }
-      return map[this.item.action] || 'Edit command'
+      const map = {
+        jisho_org_lookup: 'jisho.org lookup',
+        chatters: 'chatters command',
+        media: 'media command',
+        countdown: 'countdown',
+        text: 'command',
+      }
+      return `${verb[this.mode]}${map[this.item.action]}`
     },
   },
 }
