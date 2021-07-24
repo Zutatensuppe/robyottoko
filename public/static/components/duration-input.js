@@ -34,11 +34,10 @@ export default {
         try {
           fn.mustParseHumanDuration(v)
           this.valid = true
-          this.$emit('update:modelValue', v)
         } catch (e) {
-          console.log(e)
           this.valid = false
         }
+        this.$emit('update:modelValue', v)
       }
     },
     modelValue: {

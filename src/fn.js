@@ -363,15 +363,15 @@ const humanDuration = (
   return parts.join(' ')
 }
 
-const parseHumanDuration = (
+const mustParseHumanDuration = (
   /** @type string|number */ duration
 ) => {
-  if (!duration) {
-    return 0
+  if (duration === '') {
+    throw new Error("unable to parse duration")
   }
   const d = `${duration}`.trim()
   if (!d) {
-    return 0
+    throw new Error("unable to parse duration")
   }
   if (d.match(/^\d+$/)) {
     return parseInt(d, 10)
@@ -379,7 +379,7 @@ const parseHumanDuration = (
 
   const m = d.match(/^(?:(\d+)d)?\s?(?:(\d+)h)?\s?(?:(\d+)m)?\s?(?:(\d+)s)?\s?(?:(\d+)ms)?$/)
   if (!m) {
-    return 0
+    throw new Error("unable to parse duration")
   }
 
   const D = m[1] ? parseInt(m[1], 10) : 0
@@ -395,6 +395,16 @@ const parseHumanDuration = (
     + (D * DAY)
     + (MS)
   )
+}
+
+const parseHumanDuration = (
+  /** @type string|number */ duration
+) => {
+  try {
+    return mustParseHumanDuration(duration)
+  } catch (e) {
+    return 0
+  }
 }
 
 module.exports = {

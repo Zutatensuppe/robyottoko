@@ -109,7 +109,7 @@ export default {
         actions: this.countdown.actions,
 
         steps: parseInt(this.countdown.steps, 10) || 0,
-        interval: parseInt(this.countdown.interval, 10) || 0,
+        interval: this.countdown.interval,
         intro: this.countdown.intro,
         outro: this.countdown.outro,
       })

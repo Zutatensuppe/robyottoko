@@ -1,3 +1,4 @@
+import fn from '../fn.js'
 import Player from '../components/player.js'
 import VolumeSlider from '../components/volume-slider.js'
 import ResponsiveImage from '../components/responsive-image.js'
@@ -84,6 +85,7 @@ export default {
                     <div class="control has-icons-left">
                       <input
                         class="input is-small"
+                        :class="{'has-background-danger-light': !item.triggers[idx2].data.command, 'has-text-danger-dark': !item.triggers[idx2].data.command}"
                         type="text"
                         v-model="item.triggers[idx2].data.command"
                         />
@@ -166,7 +168,12 @@ export default {
               <td>Response:</td>
               <td>
                 <div v-for="(txt, idx2) in item.data.text" :key="idx2" class="field textarea-holder">
-                  <textarea class="textarea" type="text" v-model="item.data.text[idx2]" />
+                  <textarea
+                    class="textarea"
+                    type="text"
+                    v-model="item.data.text[idx2]"
+                    :class="{'has-background-danger-light': !item.data.text[idx2], 'has-text-danger-dark': !item.data.text[idx2]}"
+                    />
                   <button class="button is-small" :disabled="item.data.text.length <= 1" @click="rmtxt(idx2)"><i class="fa fa-remove" /></button>
                 </div>
                 <div class="field"><button class="button is-small" @click="addtxt"><i class="fa fa-plus mr-1" /> Add response</button></div>
@@ -238,7 +245,7 @@ export default {
         </table>
       </section>
       <footer class="modal-card-foot">
-        <button class="button is-small is-primary" @click="onSaveClick">Save changes</button>
+        <button class="button is-small is-primary" :disabled="!valid" @click="onSaveClick">Save changes</button>
         <button class="button is-small" @click="onCancelClick">Cancel</button>
       </footer>
     </div>
@@ -279,6 +286,37 @@ export default {
     },
   },
   computed: {
+    valid() {
+      // check if all triggers are correct
+      for (const trigger of this.item.triggers) {
+        if (trigger.type === 'command') {
+          if (!trigger.data.command) {
+            return false
+          }
+        } else if (trigger.type === 'timer') {
+          try {
+            fn.mustParseHumanDuration(trigger.data.minInterval)
+          } catch (e) {
+            return false
+          }
+          const l = parseInt(trigger.data.minLines, 10)
+          if (isNaN(l)) {
+            return false
+          }
+        }
+      }
+
+      // check if settings are correct
+      if (this.item.action === 'text') {
+        for (const t of this.item.data.text) {
+          if (t === '') {
+            return false
+          }
+        }
+      }
+
+      return true
+    },
     title() {
       const verb = {
         create: 'Create new ',

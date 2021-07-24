@@ -9,12 +9,12 @@ const DAY = 24 * HOUR
 const mustParseHumanDuration = (
   /** @type string|number */ duration
 ) => {
-  if (!duration) {
-    return 0
+  if (duration === '') {
+    throw new Error("unable to parse duration")
   }
   const d = `${duration}`.trim()
   if (!d) {
-    return 0
+    throw new Error("unable to parse duration")
   }
   if (d.match(/^\d+$/)) {
     return parseInt(d, 10)
