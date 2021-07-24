@@ -76,6 +76,11 @@ export default {
           <td>If checked, the latest drawing will be shown indefinately.</td>
         </tr>
         <tr>
+          <td><code>settings.displayLatestAutomatically</code></td>
+          <td><input type="checkbox" v-model="settings.displayLatestAutomatically" /></td>
+          <td>If checked, the latest drawing will be shown in widget automatically.</td>
+        </tr>
+        <tr>
           <td><code>settings.submitButtonText</code></td>
           <td><input class="input is-small" type="text" v-model="settings.submitButtonText" /></td>
           <td></td>
@@ -160,6 +165,7 @@ export default {
           palette: this.settings.palette,
           displayDuration: parseInt(this.settings.displayDuration, 10) || 5000,
           displayLatestForever: this.settings.displayLatestForever,
+          displayLatestAutomatically: this.settings.displayLatestAutomatically,
           notificationSound: this.settings.notificationSound,
         }
       })

@@ -16,10 +16,12 @@ export default {
       notificationSound: null,
       notificationSoundAudio: null,
       latestResolved: true,
+
+      images: [],
     }
   },
   methods: {
-    async playone(media) {
+    async playone(media, playsound) {
       return new Promise(async (resolve) => {
         this.latestResolved = false
         await this.prepareImage(media.image.url)
@@ -32,7 +34,7 @@ export default {
           height: '100%',
         }
 
-        if (this.notificationSoundAudio) {
+        if (playsound && this.notificationSoundAudio) {
           this.notificationSoundAudio.play()
         }
 
@@ -89,6 +91,7 @@ export default {
       this.displayDuration = data.settings.displayDuration
       this.displayLatestForever = data.settings.displayLatestForever
       this.notificationSound = data.settings.notificationSound
+      this.displayLatestAutomatically = data.settings.displayLatestAutomatically
 
       // if previously set to 'display forever' and something is
       // currently displaying because of that, hide it
@@ -99,12 +102,20 @@ export default {
         this.notificationSoundAudio = new Audio(`/uploads/${encodeURIComponent(this.notificationSound.file)}`)
         this.notificationSoundAudio.volume = this.notificationSound.volume / 100.0
       }
+      this.images = data.images
+
+      if (this.displayLatestAutomatically && this.images.length > 0) {
+        this.playmedia({
+          image: { url: this.images[0] }
+        }, false)
+      }
     })
     this.ws.onMessage('post', (data) => {
-      console.log('on', 'post', data)
+      this.images.unshift(data.img)
+      this.images = this.images.slice(0, 20)
       this.playmedia({
-        image: {url: data.img},
-      })
+        image: { url: data.img }
+      }, true)
     })
     this.ws.connect()
   }

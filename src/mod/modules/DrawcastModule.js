@@ -41,6 +41,7 @@ class DrawcastModule {
       ],
       displayDuration: 5000,
       displayLatestForever: false,
+      displayLatestAutomatically: false,
       notificationSound: null,
     }
     this.reinit()
@@ -74,6 +75,12 @@ class DrawcastModule {
     }
     if (!data.settings.notificationSound) {
       data.settings.notificationSound = this.defaultSettings.notificationSound
+    }
+    if (!data.settings.displayLatestForever) {
+      data.settings.displayLatestForever = this.defaultSettings.displayLatestForever
+    }
+    if (!data.settings.displayLatestAutomatically) {
+      data.settings.displayLatestAutomatically = this.defaultSettings.displayLatestAutomatically
     }
     this.data = data
   }
