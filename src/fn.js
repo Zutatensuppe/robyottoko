@@ -363,6 +363,40 @@ const humanDuration = (
   return parts.join(' ')
 }
 
+const parseHumanDuration = (
+  /** @type string|number */ duration
+) => {
+  if (!duration) {
+    return 0
+  }
+  const d = `${duration}`.trim()
+  if (!d) {
+    return 0
+  }
+  if (d.match(/^\d+$/)) {
+    return parseInt(d, 10)
+  }
+
+  const m = d.match(/^(?:(\d+)d)?\s?(?:(\d+)h)?\s?(?:(\d+)m)?\s?(?:(\d+)s)?\s?(?:(\d+)ms)?$/)
+  if (!m) {
+    return 0
+  }
+
+  const D = m[1] ? parseInt(m[1], 10) : 0
+  const H = m[2] ? parseInt(m[2], 10) : 0
+  const M = m[3] ? parseInt(m[3], 10) : 0
+  const S = m[4] ? parseInt(m[4], 10) : 0
+  const MS = m[5] ? parseInt(m[5], 10) : 0
+
+  return (
+    (S * SECOND)
+    + (M * MINUTE)
+    + (H * HOUR)
+    + (D * DAY)
+    + (MS)
+  )
+}
+
 module.exports = {
   logger,
   mimeToExt,
@@ -380,6 +414,7 @@ module.exports = {
   fnRandom,
   pad,
   parseISO8601Duration,
+  parseHumanDuration,
   humanDuration,
   isBroadcaster,
   isMod,

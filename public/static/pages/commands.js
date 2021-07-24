@@ -14,7 +14,7 @@ const newTrigger = (type) => ({
     // for trigger type "command" (todo: should only exist if type is command, not always)
     command: '',
     // for trigger type "timer" (todo: should only exist if type is timer, not always)
-    minSeconds: 0,
+    minInterval: 0, // duration in ms or something parsable (eg 1s, 10m, ....)
     minLines: 0,
   },
 })
@@ -168,7 +168,7 @@ export default {
                 <div><code v-if="item.triggers[idx2].type === 'command'">{{item.triggers[idx2].data.command}}</code></div>
                 <div v-if="item.triggers[idx2].type === 'timer'">
                   <span class="is-small">Timer: </span>
-                  <code>lines: {{item.triggers[idx2].data.minLines}}, seconds: {{item.triggers[idx2].data.minSeconds}}</code>
+                  <code>{{item.triggers[idx2].data.minLines}} lines, <duration :value="item.triggers[idx2].data.minInterval" /></code>
                 </div>
               </div>
             </td>

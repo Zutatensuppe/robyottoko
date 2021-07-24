@@ -1,5 +1,10 @@
+import DurationInput from '../components/duration-input.js'
+
 export default {
   name: 'countdown-edit',
+  components: {
+    DurationInput,
+  },
   template: `
   <div>
     <div class="control">
@@ -20,7 +25,10 @@ export default {
       </div>
       <div class="spacerow">
           <label class="spacelabel">Interval </label>
-          <input class="input is-small spaceinput" v-model="countdown.interval" />
+          <duration-input
+            :modelValue="countdown.interval"
+            @update:modelValue="countdown.interval = $event"
+            />
       </div>
       <div class="spacerow">
           <label class="spacelabel">Intro </label>
@@ -33,17 +41,26 @@ export default {
     </div>
     <div v-else>
       <div class="field has-addons mr-1" v-for="(a,idx) in countdown.actions" :key="idx">
-        <div class="control has-icons-left">
+        <div class="control has-icons-left" v-if="a.type==='delay'">
+          <duration-input
+            :modelValue="a.value"
+            @update:modelValue="a.value = $event"
+            />
+          <span class="icon is-small is-left">
+            <i class="fa fa-hourglass"></i>
+          </span>
+        </div>
+        <div class="control has-icons-left" v-else>
           <input class="input is-small" type="text" v-model="a.value" />
           <span class="icon is-small is-left">
-            <i class="fa" :class="{'fa-hourglass': a.type==='delay', 'fa-comments-o': a.type==='text'}"></i>
+            <i class="fa fa-comments-o"></i>
           </span>
         </div>
         <div class="control">
           <button class="button is-small" @click="rmaction(idx)"><i class="fa fa-remove" /></button>
         </div>
       </div>
-      <button class="button is-small" @click="countdown.actions.push({type:'delay', value: 1000})"><i class="fa fa-hourglass mr-1" /> Add Delay</button>
+      <button class="button is-small" @click="countdown.actions.push({type:'delay', value: '1s'})"><i class="fa fa-hourglass mr-1" /> Add Delay</button>
       <button class="button is-small" @click="countdown.actions.push({type:'text', value: ''})"><i class="fa fa-comments-o mr-1" /> Add Chat</button>
     </div>
   </div>`,

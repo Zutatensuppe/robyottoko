@@ -1,4 +1,5 @@
 import WsClient from '../WsClient.js'
+import fn from '../fn.js'
 
 export default {
   template: `<div id="app"><div v-if="imgstyle" :style="imgstyle"></div></div>`,
@@ -29,7 +30,7 @@ export default {
 
         if (media.minDurationMs) {
           promises.push(new Promise(res => {
-            setTimeout(res, media.minDurationMs)
+            setTimeout(res, fn.parseHumanDuration(media.minDurationMs))
           }))
         }
 

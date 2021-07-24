@@ -35,10 +35,10 @@ class GeneralModule {
     this.reinit()
   }
 
-  fix (commands) {
+  fix(commands) {
     return (commands || []).map(cmd => {
       if (cmd.command) {
-        cmd.triggers = [{type: 'command', data: {command: cmd.command}}]
+        cmd.triggers = [{ type: 'command', data: { command: cmd.command } }]
         delete cmd.command
       }
       if (cmd.action === 'media') {
@@ -47,14 +47,13 @@ class GeneralModule {
       }
       cmd.triggers = cmd.triggers.map(trigger => {
         trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0
-        trigger.data.minSeconds = parseInt(trigger.data.minSeconds, 10) || 0
         return trigger
       })
       return cmd
     })
   }
 
-  reinit () {
+  reinit() {
     this.data = this.storage.load(this.name, {
       commands: [],
     })
@@ -71,21 +70,23 @@ class GeneralModule {
       let cmdObj = null
       switch (cmd.action) {
         case 'jisho_org_lookup':
-          cmdObj = Object.assign({}, cmd, {fn: jishoOrgLookup()})
+          cmdObj = Object.assign({}, cmd, { fn: jishoOrgLookup() })
           break;
         case 'text':
-          cmdObj = Object.assign({}, cmd, {fn: Array.isArray(cmd.data.text)
+          cmdObj = Object.assign({}, cmd, {
+            fn: Array.isArray(cmd.data.text)
               ? randomText(cmd.data.text)
-              : text(cmd.data.text)})
+              : text(cmd.data.text)
+          })
           break;
         case 'media':
-          cmdObj = Object.assign({}, cmd, {fn: playMedia(this.wss, this.user.id, cmd.data)})
+          cmdObj = Object.assign({}, cmd, { fn: playMedia(this.wss, this.user.id, cmd.data) })
           break;
         case 'countdown':
-          cmdObj = Object.assign({}, cmd, {fn: countdown(cmd.data)})
+          cmdObj = Object.assign({}, cmd, { fn: countdown(cmd.data) })
           break;
         case 'chatters':
-          cmdObj = Object.assign({}, cmd, {fn: chatters(this.db, this.helixClient)})
+          cmdObj = Object.assign({}, cmd, { fn: chatters(this.db, this.helixClient) })
           break;
       }
       for (const trigger of cmd.triggers) {
@@ -95,13 +96,18 @@ class GeneralModule {
             this.commands[trigger.data.command].push(cmdObj)
           }
         } else if (trigger.type === 'timer') {
-          if (trigger.data.minLines || trigger.data.minSeconds) {
+          // fix for legacy data
+          if (trigger.data.minSeconds) {
+            trigger.data.minInterval = trigger.data.minSeconds * 1000
+          }
+          const interval = fn.parseHumanDuration(trigger.data.minInterval)
+          if (trigger.data.minLines || interval) {
             this.timers.push({
               lines: 0,
               minLines: trigger.data.minLines,
-              minSeconds: trigger.data.minSeconds,
+              minInterval: interval,
               command: cmdObj,
-              next: new Date().getTime() + (trigger.data.minSeconds * fn.SECOND)
+              next: new Date().getTime() + interval,
             })
           }
         }
@@ -118,13 +124,13 @@ class GeneralModule {
         if (t.lines >= t.minLines && now > t.next) {
           t.command.fn(t.command, this.chatClient, null, null, null)
           t.lines = 0
-          t.next = now + (t.minSeconds * fn.SECOND)
+          t.next = now + t.minInterval
         }
       })
     }, 1 * fn.SECOND)
   }
 
-  widgets () {
+  widgets() {
     return {
       'media': async (req, res, next) => {
         res.send(await fn.render('widget.twig', {
@@ -139,7 +145,7 @@ class GeneralModule {
     }
   }
 
-  getRoutes () {
+  getRoutes() {
     return {
       get: {
         '/commands/': async (req, res, next) => {
@@ -158,27 +164,27 @@ class GeneralModule {
     }
   }
 
-  wsdata (eventName) {
+  wsdata(eventName) {
     return {
       event: eventName,
       data: this.data
     };
   }
 
-  updateClient (eventName, ws) {
+  updateClient(eventName, ws) {
     this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
   }
 
-  updateClients (eventName) {
+  updateClients(eventName) {
     this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName))
   }
 
-  getWsEvents () {
+  getWsEvents() {
     return {
       'conn': (ws) => {
         this.updateClient('init', ws)
       },
-      'save': (ws, {commands}) => {
+      'save': (ws, { commands }) => {
         this.data.commands = this.fix(commands)
         this.storage.save(this.name, this.data)
         this.reinit()
@@ -186,11 +192,11 @@ class GeneralModule {
       },
     }
   }
-  getCommands () {
+  getCommands() {
     return {}
   }
 
-  async onChatMsg (
+  async onChatMsg(
     client,
     /** @type string */ target,
     context,

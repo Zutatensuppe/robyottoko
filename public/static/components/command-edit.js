@@ -1,6 +1,7 @@
 import Player from '../components/player.js'
 import VolumeSlider from '../components/volume-slider.js'
 import ResponsiveImage from '../components/responsive-image.js'
+import DurationInput from '../components/duration-input.js'
 import CountdownEdit from '../components/countdown-edit.js'
 import Upload from '../components/upload.js'
 
@@ -11,7 +12,7 @@ const newTrigger = (type) => ({
     // for trigger type "command" (todo: should only exist if type is command, not always)
     command: '',
     // for trigger type "timer" (todo: should only exist if type is timer, not always)
-    minSeconds: 0,
+    minInterval: 0, // duration in ms or something parsable (eg 1s, 10m, ....)
     minLines: 0,
   },
 })
@@ -24,6 +25,7 @@ export default {
     Player,
     VolumeSlider,
     ResponsiveImage,
+    DurationInput,
     Upload,
   },
   props: {
@@ -100,7 +102,7 @@ export default {
                     </div>
                     <div class="columns">
                       <div class="column is-one-third">
-                        <label>Min. lines</label>
+                        <label>Min. Lines</label>
                       </div>
                       <div class="column is-two-third">
                         <div class="control has-icons-left">
@@ -113,11 +115,14 @@ export default {
                     </div>
                     <div class="columns">
                       <div class="column is-one-third">
-                        <label>Min. seconds</label>
+                        <label>Min. Interval</label>
                       </div>
                       <div class="column is-two-third">
                         <div class="control has-icons-left has-icons-right">
-                          <input class="input is-small spaceinput" v-model="item.triggers[idx2].data.minSeconds" />
+                          <duration-input
+                            :modelValue="item.triggers[idx2].data.minInterval"
+                            @update:modelValue="item.triggers[idx2].data.minInterval = $event"
+                            />
                           <span class="icon is-small is-left">
                             <i class="fa fa-hourglass"></i>
                           </span>
@@ -126,7 +131,7 @@ export default {
                     </div>
                     <p class="help">
                       Command will be triggered when at least min. lines chat
-                      messages arrived AND min. seconds have passed.
+                      messages arrived AND time interval have passed.
                     </p>
                   </div>
                 </div>
@@ -198,10 +203,10 @@ export default {
             <tr v-if="item.action === 'media'">
               <td>Duration:</td>
               <td>
-                <span style="position: relative; display: inline-block">
-                  <input type="text" class="input is-small spaceinput" v-model="item.data.minDurationMs" />
-                  <span style="position: absolute; right:7px; top: 50%; transform: translateY(-50%);">ms</span>
-                </span>
+                <duration-input
+                  :modelValue="item.data.minDurationMs"
+                  @update:modelValue="item.data.minDurationMs = $event"
+                  />
               </td>
             </tr>
             <tr v-if="item.action === 'countdown'">
