@@ -146,16 +146,19 @@ export default {
       <table class="table is-striped" ref="table">
         <thead>
           <tr>
-              <th>Trigger</th>
-              <th>Action</th>
-              <th>Response</th>
-              <th>Permissions</th>
-              <th></th>
-              <th></th>
+            <th></th>
+            <th>Trigger</th>
+            <th>Response</th>
+            <th>Type</th>
+            <th>Permissions</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(item, idx) in commands" :key="idx">
+            <td class="pl-0 pr-0">
+              <button class="button is-small" @click="edit(idx)"><i class="fa fa-pencil" /></button>
+            </td>
             <td class="col-triggers">
               <div v-for="(trigger, idx2) in item.triggers" :key="idx2" class="spacerow">
                 <div><code v-if="item.triggers[idx2].type === 'command'">{{item.triggers[idx2].data.command}}</code></div>
@@ -164,9 +167,6 @@ export default {
                   <code>lines: {{item.triggers[idx2].data.minLines}}, seconds: {{item.triggers[idx2].data.minSeconds}}</code>
                 </div>
               </div>
-            </td>
-            <td>
-              {{item.action}}
             </td>
             <td>
               <div v-if="item.action === 'jisho_org_lookup'">Outputs the translation for the searched word.</div>
@@ -208,13 +208,13 @@ export default {
               </div>
             </td>
             <td>
+              {{item.action}}
+            </td>
+            <td>
               {{permissionsStr(item)}}
             </td>
-            <td>
+            <td class="pl-0 pr-0">
               <button class="button is-small" @click="remove(idx)"><i class="fa fa-trash" /></button>
-            </td>
-            <td>
-              <button class="button is-small" @click="edit(idx)"><i class="fa fa-pencil" /></button>
             </td>
           </tr>
         </tbody>
