@@ -1,7 +1,8 @@
 @import "style.css";
 
+html {
+}
 body {
-  background: #2b2b2b;
   color: var(--main-color);
   font-size: 15px;
   font-family: Verdana, Arial, Helvetica, sans-serif;
@@ -13,16 +14,10 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 3;
+  z-index: 10;
 }
 #top > div {
-  padding: 0 1em 1em 1em;
   display: flex;
-  background: #242424;
-  color: var(--highlight-color);
-}
-#top > div:first-child {
-  padding: 1em;
 }
 
 #navbar { line-height: 32px; }
@@ -57,12 +52,13 @@ table tr.gain-attention td {
 }
 
 .media-holder {
-  background: #77746e;
   border-radius: 4px;
   color: var(--main-color);
   padding: 6px 10px;
-  border: solid 1px black;
-  box-shadow: 0 0 3px rgba(0, 0,0,0.3) inset;
+  background-color: #fff;
+  border-style: solid;
+  border-width: 1px;
+  border-color: #dbdbdb;
 }
 
 .positive {
@@ -71,4 +67,20 @@ table tr.gain-attention td {
 
 .negative {
   color: var(--neg-color);
+}
+
+.timer-trigger {
+  border-radius: 4px;
+  color: var(--main-color);
+  padding: 6px 10px;
+  background-color: #fff;
+  border-style: solid;
+  border-width: 1px;
+  border-color: #dbdbdb;
+  position: relative;
+}
+.timer-trigger > .control:first-child {
+  position: absolute;
+  top: -1px;
+  right: -1px;
 }

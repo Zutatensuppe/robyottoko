@@ -1,23 +1,31 @@
 export default {
   template: `
 <div class="center-screen">
-    <h1>Hyottoko.club</h1>
-    <div style="text-align: left;">
-      <div class="spacerow">
-          <label>User: </label>
-          <input type="text" v-model="user" @keyup="error=''" />
-      </div>
-      <div class="spacerow">
-          <label>Pass: </label>
-          <input type="password" v-model="pass" @keyup="error=''" @keyup.enter="submit"/>
-      </div>
-      <div class="spacerow">
-          <label></label><span class="btn" @click="submit">Login</span>
-      </div>
-      <div v-if="error">
-        {{error}}
+  <h1 class="title is-6">Hyottoko.club</h1>
+  <form>
+    <div class="field has-background-danger-light has-text-danger-dark" v-if="error">
+      {{error}}
+    </div>
+    <div class="field">
+      <div class="control has-icons-left">
+        <input class="input is-small" type="text" placeholder="User" v-model="user" @keyup="error=''" />
+        <span class="icon is-small is-left">
+          <i class="fa fa-user"></i>
+        </span>
       </div>
     </div>
+    <div class="field">
+      <div class="control has-icons-left">
+        <input class="input is-small" type="password" placeholder="Password" v-model="pass" @keyup="error=''" @keyup.enter="submit"/>
+        <span class="icon is-small is-left">
+          <i class="fa fa-lock"></i>
+        </span>
+      </div>
+    </div>
+    <div class="field">
+      <span class="button is-small is-primary" @click="submit">Login</span>
+    </div>
+  </form>
 </div>
 `,
   data() {
@@ -35,7 +43,7 @@ export default {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({user: this.user, pass: this.pass}),
+        body: JSON.stringify({ user: this.user, pass: this.pass }),
       })
       if (res.status === 200) {
         location.assign('/')

@@ -3,9 +3,9 @@ export default {
   props: {
     user: String,
   },
-  data () {
+  data() {
     return {
-      links: [
+      linksStart: [
         {
           href: '/',
           text: 'Widgets',
@@ -30,29 +30,57 @@ export default {
           href: '/settings/',
           text: 'Settings',
         },
+      ],
+      linksEnd: [
         {
           href: '/logout',
           text: 'Logout',
         },
       ],
+      burgerActive: false,
     }
   },
   template: `
-    <div id="navbar">
-      <div class="logo">
-        <img
-          src="/static/hyottoko.png"
-          width="32"
-          height="32"
-          alt="hyottoko.club"
-          class="flip-horizontal" />
+    <nav class="navbar" role="navigation" aria-label="main navigation">
+      <div class="navbar-brand">
+        <a class="navbar-item" href="/">
+          <img
+            src="/static/hyottoko.png"
+            width="32"
+            height="32"
+            alt="hyottoko.club"
+            class="flip-horizontal mr-1" />
+            <span class="greeting">Welcome back, {{ user }}</span>
+        </a>
+
+        <a role="button"
+          class="navbar-burger"
+          :class="{'is-active': burgerActive}"
+          aria-label="menu"
+          aria-expanded="false"
+          data-target="navbarBasicExample"
+          @click="toggleBurgerMenu">
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+        </a>
       </div>
-      <ul class="items" v-if="user">
-        <li class="greeting">Welcome back, {{ user }}</li>
-        <li v-for="(l,idx) in links" :key="idx">
-          <a :href="l.href">{{l.text}}</a>
-        </li>
-      </ul>
-    </div>
+      <div
+        id="navbarBasicExample"
+        class="navbar-menu"
+        :class="{'is-active': burgerActive}">
+        <div class="navbar-start">
+          <a class="navbar-item" v-for="(l,idx) in linksStart" :key="idx" :href="l.href">{{l.text}}</a>
+        </div>
+        <div class="navbar-end">
+          <a class="navbar-item" v-for="(l,idx) in linksEnd" :key="idx" :href="l.href">{{l.text}}</a>
+        </div>
+      </div>
+    </nav>
 `,
+  methods: {
+    toggleBurgerMenu() {
+      this.burgerActive = !this.burgerActive
+    }
+  },
 }

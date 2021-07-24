@@ -43,165 +43,191 @@ export default {
 <div id="app">
   <div id="top" ref="top">
     <navbar :user="conf.user.name" />
-    <div id="actionbar">
-      <ul class="items">
-        <li><volume-slider :value="volume" @input="onVolumeChange" />
-        <li><button class="btn" @click="sendCtrl('resetStats', [])" title="Reset stats"><i class="fa fa-eraser"/><span class="txt"> Reset stats</span></button>
-        <li><button class="btn" @click="sendCtrl('clear', [])" title="Clear"><i class="fa fa-eject"/><span class="txt"> Clear</span></button>
-        <li><button class="btn" @click="sendCtrl('shuffle', [])" title="Shuffle"><i class="fa fa-random"/><span class="txt"> Shuffle</span></button>
-        <li><button class="btn" @click="togglePlayer" :title="togglePlayerButtonText"><i class="fa fa-tv"/><span class="txt"> {{togglePlayerButtonText}}</span></button>
-        <li><button class="btn" @click="toggleHelp" :title="toggleHelpButtonText"><i class="fa fa-info"/><span class="txt"> {{toggleHelpButtonText}}</span></button>
-        <li class="maybebreak" style="position: relative"><i class="fa fa-search" style="color: #60554a; position: absolute; left: 8px; top: 7px;"/><input style="padding-left: 32px; margin-right: 3px;" type="text" v-model="srinput" @keyup.enter="sr" /><button class="btn" @click="sr"><i class="fa fa-plus"/><span class="txt"> Request</span></button>
-        <li><a class="btn" :href="widgetUrl" target="_blank">Open SR widget</a>
-        <li><a class="btn" :href="exportPlaylistUrl" target="_blank"><i class="fa fa-download"/><span class="txt"> Export playlist</span></a>
-        <li><button class="btn" @click="toggleImport"><i class="fa fa-upload"/><span class="txt"> Import playlist</span></button>
-      </ul>
+    <div id="actionbar" class="p-1">
+      <volume-slider class="mr-1" :value="volume" @input="onVolumeChange" />
+
+      <button class="button is-small mr-1" @click="sendCtrl('resetStats', [])" title="Reset stats"><i class="fa fa-eraser mr-1"/><span class="txt"> Reset stats</span></button>
+      <button class="button is-small mr-1" @click="sendCtrl('clear', [])" title="Clear"><i class="fa fa-eject mr-1"/><span class="txt"> Clear</span></button>
+      <button class="button is-small mr-1" @click="sendCtrl('shuffle', [])" title="Shuffle"><i class="fa fa-random mr-1"/><span class="txt"> Shuffle</span></button>
+      <button class="button is-small mr-1" @click="togglePlayer" :title="togglePlayerButtonText"><i class="fa fa-tv mr-1"/><span class="txt"> {{togglePlayerButtonText}}</span></button>
+      <button class="button is-small mr-1" @click="toggleHelp" :title="toggleHelpButtonText"><i class="fa fa-info mr-1"/><span class="txt"> {{toggleHelpButtonText}}</span></button>
+
+      <div class="field has-addons mr-1">
+        <div class="control has-icons-left">
+          <input class="input is-small" v-model="srinput" @keyup.enter="sr">
+          <span class="icon is-small is-left">
+            <i class="fa fa-search"></i>
+          </span>
+        </div>
+        <div class="control">
+          <button class="button is-small" @click="sr">Request</button>
+        </div>
+      </div>
+      <a class="button is-small mr-1" :href="widgetUrl" target="_blank">Open SR widget</a>
+      <a class="button is-small mr-1" :href="exportPlaylistUrl" target="_blank"><i class="fa fa-download mr-1"/> <span class="txt"> Export playlist</span></a>
+      <button class="button is-small" @click="toggleImport"><i class="fa fa-upload mr-1"/> <span class="txt"> Import playlist</span></button>
     </div>
   </div>
   <div id="main" ref="main">
     <div v-if="importVisible">
-      <textarea v-model="importPlaylist"></textarea>
-      <button class="btn" @click="doImportPlaylist">Import now</button>
+      <textarea class="textarea" v-model="importPlaylist"></textarea>
+      <button class="button is-small" @click="doImportPlaylist">Import now</button>
     </div>
     <div style="width: 640px; max-width: 100%;">
       <div id="player" class="video-16-9" :style="playerstyle"><youtube ref="youtube" @ended="ended"/></div>
     </div>
     <div id="help" v-if="helpVisible">
-      <table>
-        <tr>
-          <th>Chat command</th>
-          <th>Viewer</th>
-          <th>Mod</th>
-          <th>Explanation</th>
-        </tr>
-        <tr>
-          <td><code>!sr &lt;SEARCH&gt;</code></td>
-          <td class="positive">✔</td>
-          <td class="positive">✔</td>
-          <td>
-            Search for <code>&lt;SEARCH&gt;</code> at youtube (by id or by title) and queue the
-            first result in the playlist (after the first found batch of
-            unplayed songs).<br />
-            This only executes if <code>&lt;SEARCH&gt;</code> does not match one of the commands
-            below.
-          </td>
-        </tr>
-        <tr>
-          <td><code>!sr undo</code></td>
-          <td class="positive">✔</td>
-          <td class="positive">✔</td>
-          <td>Remove the song that was last added by oneself.</td>
-        </tr>
-        <tr>
-          <td><code>!sr current</code></td>
-          <td class="positive">✔</td>
-          <td class="positive">✔</td>
-          <td>Show what song is currently playing</td>
-        </tr>
-        <tr>
-          <td><code>!sr good</code></td>
-          <td class="positive">✔</td>
-          <td class="positive">✔</td>
-          <td>Vote the current song up</td>
-        </tr>
-        <tr>
-          <td><code>!sr bad</code></td>
-          <td class="positive">✔</td>
-          <td class="positive">✔</td>
-          <td>Vote the current song down</td>
-        </tr>
-        <tr>
-          <td><code>!sr stats</code></td>
-          <td class="positive">✔</td>
-          <td class="positive">✔</td>
-          <td>Show stats about the playlist</td>
-        </tr>
-        <tr>
-          <td><code>!sr stat</code></td>
-          <td class="positive">✔</td>
-          <td class="positive">✔</td>
-          <td>Alias for stats</td>
-        </tr>
-        <tr>
-          <td><code>!sr rm</code></td>
-          <td class="negative">✖</td>
-          <td class="positive">✔</td>
-          <td>Remove the current song from the playlist</td>
-        </tr>
-        <tr>
-          <td><code>!sr next</code></td>
-          <td class="negative">✖</td>
-          <td class="positive">✔</td>
-          <td>Skip to the next song</td>
-        </tr>
-        <tr>
-          <td><code>!sr prev</code></td>
-          <td class="negative">✖</td>
-          <td class="positive">✔</td>
-          <td>Skip to the previous song</td>
-        </tr>
-        <tr>
-          <td><code>!sr skip</code></td>
-          <td class="negative">✖</td>
-          <td class="positive">✔</td>
-          <td>Alias for next</td>
-        </tr>
-        <tr>
-          <td><code>!sr shuffle</code></td>
-          <td class="negative">✖</td>
-          <td class="positive">✔</td>
-          <td>
-            Shuffle the playlist (current song unaffected).
-            <br />
-            Non-played and played songs will be shuffled separately
-            and non-played songs will be put after currently playing
-            song.
-          </td>
-        </tr>
-        <tr>
-          <td><code>!sr resetStats</code></td>
-          <td class="negative">✖</td>
-          <td class="positive">✔</td>
-          <td>Reset all statistics of all songs</td>
-        </tr>
-        <tr>
-          <td><code>!sr clear</code></td>
-          <td class="negative">✖</td>
-          <td class="positive">✔</td>
-          <td>Clear the playlist</td>
-        </tr>
-        <tr>
-          <td><code>!sr pause</code></td>
-          <td class="negative">✖</td>
-          <td class="positive">✔</td>
-          <td>Pause currently playing song</td>
-        </tr>
-        <tr>
-          <td><code>!sr unpause</code></td>
-          <td class="negative">✖</td>
-          <td class="positive">✔</td>
-          <td>Unpause currently paused song</td>
-        </tr>
-        <tr>
-          <td><code>!sr loop</code></td>
-          <td class="negative">✖</td>
-          <td class="positive">✔</td>
-          <td>Loop the current song</td>
-        </tr>
-        <tr>
-          <td><code>!sr noloop</code></td>
-          <td class="negative">✖</td>
-          <td class="positive">✔</td>
-          <td>Stop looping the current song</td>
-        </tr>
+      <table class="table is-striped">
+        <thead>
+          <tr>
+            <th>Chat command</th>
+            <th>Viewer</th>
+            <th>Mod</th>
+            <th>Explanation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>!sr &lt;SEARCH&gt;</code></td>
+            <td class="positive">✔</td>
+            <td class="positive">✔</td>
+            <td>
+              Search for <code>&lt;SEARCH&gt;</code> at youtube (by id or by title) and queue the
+              first result in the playlist (after the first found batch of
+              unplayed songs).<br />
+              This only executes if <code>&lt;SEARCH&gt;</code> does not match one of the commands
+              below.
+            </td>
+          </tr>
+          <tr>
+            <td><code>!sr undo</code></td>
+            <td class="positive">✔</td>
+            <td class="positive">✔</td>
+            <td>Remove the song that was last added by oneself.</td>
+          </tr>
+          <tr>
+            <td><code>!sr current</code></td>
+            <td class="positive">✔</td>
+            <td class="positive">✔</td>
+            <td>Show what song is currently playing</td>
+          </tr>
+          <tr>
+            <td><code>!sr good</code></td>
+            <td class="positive">✔</td>
+            <td class="positive">✔</td>
+            <td>Vote the current song up</td>
+          </tr>
+          <tr>
+            <td><code>!sr bad</code></td>
+            <td class="positive">✔</td>
+            <td class="positive">✔</td>
+            <td>Vote the current song down</td>
+          </tr>
+          <tr>
+            <td><code>!sr stats</code></td>
+            <td class="positive">✔</td>
+            <td class="positive">✔</td>
+            <td>Show stats about the playlist</td>
+          </tr>
+          <tr>
+            <td><code>!sr stat</code></td>
+            <td class="positive">✔</td>
+            <td class="positive">✔</td>
+            <td>Alias for stats</td>
+          </tr>
+          <tr>
+            <td><code>!sr rm</code></td>
+            <td class="negative">✖</td>
+            <td class="positive">✔</td>
+            <td>Remove the current song from the playlist</td>
+          </tr>
+          <tr>
+            <td><code>!sr next</code></td>
+            <td class="negative">✖</td>
+            <td class="positive">✔</td>
+            <td>Skip to the next song</td>
+          </tr>
+          <tr>
+            <td><code>!sr prev</code></td>
+            <td class="negative">✖</td>
+            <td class="positive">✔</td>
+            <td>Skip to the previous song</td>
+          </tr>
+          <tr>
+            <td><code>!sr skip</code></td>
+            <td class="negative">✖</td>
+            <td class="positive">✔</td>
+            <td>Alias for next</td>
+          </tr>
+          <tr>
+            <td><code>!sr shuffle</code></td>
+            <td class="negative">✖</td>
+            <td class="positive">✔</td>
+            <td>
+              Shuffle the playlist (current song unaffected).
+              <br />
+              Non-played and played songs will be shuffled separately
+              and non-played songs will be put after currently playing
+              song.
+            </td>
+          </tr>
+          <tr>
+            <td><code>!sr resetStats</code></td>
+            <td class="negative">✖</td>
+            <td class="positive">✔</td>
+            <td>Reset all statistics of all songs</td>
+          </tr>
+          <tr>
+            <td><code>!sr clear</code></td>
+            <td class="negative">✖</td>
+            <td class="positive">✔</td>
+            <td>Clear the playlist</td>
+          </tr>
+          <tr>
+            <td><code>!sr pause</code></td>
+            <td class="negative">✖</td>
+            <td class="positive">✔</td>
+            <td>Pause currently playing song</td>
+          </tr>
+          <tr>
+            <td><code>!sr unpause</code></td>
+            <td class="negative">✖</td>
+            <td class="positive">✔</td>
+            <td>Unpause currently paused song</td>
+          </tr>
+          <tr>
+            <td><code>!sr loop</code></td>
+            <td class="negative">✖</td>
+            <td class="positive">✔</td>
+            <td>Loop the current song</td>
+          </tr>
+          <tr>
+            <td><code>!sr noloop</code></td>
+            <td class="negative">✖</td>
+            <td class="positive">✔</td>
+            <td>Stop looping the current song</td>
+          </tr>
+        </tbody>
       </table>
     </div>
     <div id="playlist" v-if="!helpVisible">
-      <table v-if="playlist.length > 0">
-        <draggable :value="playlist" @end="dragEnd">
+      <table class="table is-striped" v-if="playlist.length > 0">
+        <thead>
+          <tr>
+            <th></th>
+            <th></th>
+            <th>Title</th>
+            <th>User</th>
+            <th>Plays</th>
+            <th></th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        <draggable :value="playlist" @end="dragEnd" tag="tbody">
           <tr v-for="(item, idx) in playlist">
             <td>{{idx+1}}</td>
-            <td><button v-if="idx !== 0" class="btn" @click="sendCtrl('playIdx', [idx])" title="Play"><i class="fa fa-play"/></button></td>
+            <td><button v-if="idx !== 0" class="button is-small" @click="sendCtrl('playIdx', [idx])" title="Play"><i class="fa fa-play"/></button></td>
             <td>
               <a :href="'https://www.youtube.com/watch?v=' + item.yt" target="_blank">
                   {{ item.title || item.yt }}
@@ -210,17 +236,9 @@ export default {
             </td>
             <td>{{ item.user }}</td>
             <td>{{ item.plays }}x</td>
-            <td><button class="btn" @click="sendCtrl('goodIdx', [idx])"><i class="fa fa-thumbs-up"/> {{ item.goods }}</button></td>
-            <td><button class="btn" @click="sendCtrl('badIdx', [idx])"><i class="fa fa-thumbs-down"/> {{ item.bads }}</button></td>
-            <td><button class="btn" @click="sendCtrl('rmIdx', [idx])" title="Remove"><i class="fa fa-trash"/></button></td>
-          </tr>
-          <tr slot="header">
-            <th></th>
-            <th></th>
-            <th>Title</th>
-            <th>User</th>
-            <th>Plays</th>
-            <th></th>
+            <td><button class="button is-small" @click="sendCtrl('goodIdx', [idx])"><i class="fa fa-thumbs-up mr-1"/> {{ item.goods }}</button></td>
+            <td><button class="button is-small" @click="sendCtrl('badIdx', [idx])"><i class="fa fa-thumbs-down mr-1"/> {{ item.bads }}</button></td>
+            <td><button class="button is-small" @click="sendCtrl('rmIdx', [idx])" title="Remove"><i class="fa fa-trash"/></button></td>
           </tr>
         </draggable>
       </table>
@@ -303,14 +321,13 @@ export default {
       }
     },
     dragEnd(evt) {
-      // console.log(evt.oldIndex - 1, evt.newIndex - 1)
-      this.sendCtrl('move', [evt.oldIndex - 1, evt.newIndex - 1])
+      this.sendCtrl('move', [evt.oldIndex, evt.newIndex])
     },
     sendCtrl(ctrl, args) {
-      this.sendMsg({event: 'ctrl', ctrl, args})
+      this.sendMsg({ event: 'ctrl', ctrl, args })
     },
     ended() {
-      this.sendMsg({event: 'ended'})
+      this.sendMsg({ event: 'ended' })
     },
     sendMsg(data) {
       this.ws.send(JSON.stringify(data))
@@ -319,19 +336,19 @@ export default {
       this.adjustVolume(this.volume)
       if (this.playerVisible && this.hasItems) {
         this.player.play(this.item.yt)
-        this.sendMsg({event: 'play', id: this.item.id})
+        this.sendMsg({ event: 'play', id: this.item.id })
       }
     },
     unpause() {
       if (this.hasItems) {
         this.player.unpause()
-        this.sendMsg({event: 'unpause', id: this.item.id})
+        this.sendMsg({ event: 'unpause', id: this.item.id })
       }
     },
     pause() {
       if (this.playerVisible && this.hasItems) {
         this.player.pause()
-        this.sendMsg({event: 'pause'})
+        this.sendMsg({ event: 'pause' })
       }
     },
     adjustVolume(volume) {
@@ -348,11 +365,11 @@ export default {
       // this assumes that all volume changes are done by us
       // otherwise this would probably fail ;C
       if (this.volumeChanges.length > 0) {
-          const firstChange = this.volumeChanges.shift()
-          if (firstChange === data.volume) {
-            this.adjustVolume(data.volume)
-            return
-          }
+        const firstChange = this.volumeChanges.shift()
+        if (firstChange === data.volume) {
+          this.adjustVolume(data.volume)
+          return
+        }
       }
       this.volume = data.volume
       this.adjustVolume(this.volume)

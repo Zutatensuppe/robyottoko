@@ -45,5 +45,5 @@ export default {
       this.playing = false
     }
   },
-  template: `<span class="player" v-if="src" @click="toggle">{{ name }} <i class="fa" :class="cls"/></span>`
+  template: `<span class="player" v-if="src" @click="toggle">{{ name }} <i class="fa ml-1" :class="cls"/></span>`
 }

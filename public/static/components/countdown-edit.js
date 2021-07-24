@@ -2,37 +2,49 @@ export default {
   name: 'countdown-edit',
   template: `
   <div>
-    <label><input type="radio" value="manual" v-model="countdown.type"/> Manual</label>
-    <label><input type="radio" value="auto" v-model="countdown.type"/> Auto</label>
+    <div class="control">
+      <label class="radio">
+        <input type="radio" value="manual" v-model="countdown.type"/>
+        Manual
+      </label>
+      <label class="radio">
+        <input type="radio" value="auto" v-model="countdown.type"/>
+        Auto
+      </label>
+    </div>
 
     <div v-if="countdown.type === 'auto'">
       <div class="spacerow">
           <label class="spacelabel">Steps </label>
-          <input class="spaceinput" v-model="countdown.steps" />
+          <input class="input is-small spaceinput" v-model="countdown.steps" />
       </div>
       <div class="spacerow">
           <label class="spacelabel">Interval </label>
-          <input class="spaceinput" v-model="countdown.interval" />
+          <input class="input is-small spaceinput" v-model="countdown.interval" />
       </div>
       <div class="spacerow">
           <label class="spacelabel">Intro </label>
-          <input class="spaceinput" v-model="countdown.intro" />
+          <input class="input is-small spaceinput" v-model="countdown.intro" />
       </div>
       <div class="spacerow">
           <label class="spacelabel">Outro </label>
-          <input class="spaceinput" v-model="countdown.outro" />
+          <input class="input is-small spaceinput" v-model="countdown.outro" />
       </div>
     </div>
     <div v-else>
-      <div v-for="(a,idx) in countdown.actions" :key="idx">
-        <label>
-          <i class="fa" :class="{'fa-hourglass': a.type==='delay', 'fa-comments-o': a.type==='text'}" />:
-          <input type="text" v-model="a.value" />
-        </label>
-        <button class="btn" @click="rmaction(idx)"><i class="fa fa-remove" /></button>
+      <div class="field has-addons mr-1" v-for="(a,idx) in countdown.actions" :key="idx">
+        <div class="control has-icons-left">
+          <input class="input is-small" type="text" v-model="a.value" />
+          <span class="icon is-small is-left">
+            <i class="fa" :class="{'fa-hourglass': a.type==='delay', 'fa-comments-o': a.type==='text'}"></i>
+          </span>
+        </div>
+        <div class="control">
+          <button class="button is-small" @click="rmaction(idx)"><i class="fa fa-remove" /></button>
+        </div>
       </div>
-      <button class="btn" @click="countdown.actions.push({type:'delay', value: 1000})"><i class="fa fa-hourglass" /> Add Delay</button>
-      <button class="btn" @click="countdown.actions.push({type:'text', value: ''})"><i class="fa fa-comments-o" /> Add Chat</button>
+      <button class="button is-small" @click="countdown.actions.push({type:'delay', value: 1000})"><i class="fa fa-hourglass mr-1" /> Add Delay</button>
+      <button class="button is-small" @click="countdown.actions.push({type:'text', value: ''})"><i class="fa fa-comments-o mr-1" /> Add Chat</button>
     </div>
   </div>`,
   props: {
@@ -41,7 +53,7 @@ export default {
       required: true,
     },
   },
-  data () {
+  data() {
     return {
       countdown: {
         type: 'manual',
@@ -62,7 +74,7 @@ export default {
       this.countdown.actions = this.countdown.actions.filter((val, index) => index !== idx)
     },
   },
-  created () {
+  created() {
     // old countdowns are automatic
     this.countdown.type = this.value.type || 'auto'
 

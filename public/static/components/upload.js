@@ -6,7 +6,7 @@ export default {
     accept: String,
     label: String,
   },
-  data () {
+  data() {
     return {
       uploading: false,
       progress: 0,
@@ -15,21 +15,21 @@ export default {
   template: `
 <label class="upload">
     <input type="file" :disabled="uploading" style="display: none" @change="upload" :accept="accept" />
-    <span class="btn"><i class="fa fa-upload" /> {{buttonText}}</span>
+    <span class="button is-small"><i class="fa fa-upload mr-1" /> {{buttonText}}</span>
     <span class="progress" :style="progressStyle"></span>
 </label>
 `,
   computed: {
-    uploadPercent () {
+    uploadPercent() {
       return Math.round(this.progress * 100);
     },
-    buttonText () {
+    buttonText() {
       if (!this.uploading) {
         return this.label || 'Upload File'
       }
       return `Uploading (${this.uploadPercent}%)`
     },
-    progressStyle () {
+    progressStyle() {
       if (!this.uploading) {
         return {}
       }

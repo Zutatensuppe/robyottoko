@@ -6,8 +6,8 @@ import Upload from '../components/upload.js'
 import CountdownEdit from '../components/countdown-edit.js'
 import WsClient from '../WsClient.js'
 
-const newTrigger = () => ({
-  type: 'command',
+const newTrigger = (type) => ({
+  type,
   data: {
     // for trigger type "command" (todo: should only exist if type is command, not always)
     command: '',
@@ -22,7 +22,7 @@ const newText = () => ''
 const newCmd = (type) => {
   switch (type) {
     case 'text': return {
-      triggers: [newTrigger()],
+      triggers: [newTrigger('command')],
       action: 'text',
       restrict_to: [],
       data: {
@@ -30,7 +30,7 @@ const newCmd = (type) => {
       },
     }
     case 'media': return {
-      triggers: [newTrigger()],
+      triggers: [newTrigger('command')],
       action: 'media',
       restrict_to: [],
       data: {
@@ -47,7 +47,7 @@ const newCmd = (type) => {
       },
     }
     case 'countdown': return {
-      triggers: [newTrigger()],
+      triggers: [newTrigger('command')],
       action: 'countdown',
       restrict_to: [],
       data: {
@@ -58,13 +58,13 @@ const newCmd = (type) => {
       },
     }
     case 'jisho_org_lookup': return {
-      triggers: [newTrigger()],
+      triggers: [newTrigger('command')],
       action: 'jisho_org_lookup',
       restrict_to: [],
       data: {},
     }
     case 'chatters': return {
-      triggers: [newTrigger()],
+      triggers: [newTrigger('command')],
       action: 'chatters',
       restrict_to: [],
       data: {},
@@ -91,6 +91,7 @@ export default {
       changedJson: '[]',
       commands: [],
       ws: null,
+      newtriggers: [],
     }
   },
   watch: {
@@ -113,43 +114,42 @@ export default {
 <div id="app">
   <div id="top" ref="top">
     <navbar :user="conf.user.name" />
-    <div id="actionbar">
-      <ul class="items">
-        <li><button
-          class="btn"
-          @click="add('text')"
-          title="Send a message to chat"
-        >Add text</button>
-        <li><button
-          class="btn"
-          @click="add('media')"
-          title="Display an image and/or play a sound"
-        >Add media</button>
-        <li><button
-          class="btn"
-          @click="add('countdown')"
-          title="Add a countdown or messages spaced by time intervals"
-        >Add countdown</button>
-        <li><button
-          class="btn"
-          @click="add('jisho_org_lookup')"
-          title="Lookup a word via jisho.org"
-        >Add jisho_org_lookup</button>
-        <li><button
-          class="btn"
-          @click="add('chatters')"
-          title="Displays users who chatted during the stream"
-        >Add chatters</button>
-        <li><button
-          class="btn btn-primary"
-          :disabled="!changed"
-          @click="sendSave">Save</button>
-        <li><a class="btn" :href="widgetUrl" target="_blank">Open Media widget</a>
-      </ul>
+    <div id="actionbar" class="p-1">
+      <button
+        class="button is-small mr-1"
+        @click="add('text')"
+        title="Send a message to chat"
+      >Add text</button>
+      <button
+        class="button is-small mr-1"
+        @click="add('media')"
+        title="Display an image and/or play a sound"
+      >Add media</button>
+      <button
+        class="button is-small mr-1"
+        @click="add('countdown')"
+        title="Add a countdown or messages spaced by time intervals"
+      >Add countdown</button>
+      <button
+        class="button is-small mr-1"
+        @click="add('jisho_org_lookup')"
+        title="Lookup a word via jisho.org"
+      >Add jisho_org_lookup</button>
+      <button
+        class="button is-small mr-1"
+        @click="add('chatters')"
+        title="Displays users who chatted during the stream"
+      >Add chatters</button>
+      <button
+        class="button is-small mr-1 is-primary"
+        :disabled="!changed"
+        @click="sendSave">Save</button>
+      <a class="button is-small" :href="widgetUrl" target="_blank">Open Media widget</a>
     </div>
   </div>
   <div id="main" ref="main">
-    <table ref="table" v-if="commands.length > 0">
+    <table class="table is-striped" ref="table" v-if="commands.length > 0">
+      <thead>
         <tr>
             <th>Trigger</th>
             <th>Action</th>
@@ -159,39 +159,63 @@ export default {
             <th>Sub</th>
             <th></th>
         </tr>
+      </thead>
+      <tbody>
         <tr v-for="(item, idx) in commands" :key="idx">
             <td>
                 <div v-for="(trigger, idx2) in item.triggers" :key="idx2" class="spacerow">
-                    <div v-if="item.action === 'jisho_org_lookup'" style="display: inline-block">
-                        <span>Command</span>
-                        <button class="btn" :disabled="item.triggers.length <= 1" @click="rmtrigger(idx, idx2)"><i class="fa fa-remove" /></button>
+                    <div class="field has-addons" v-if="item.triggers[idx2].type === 'command'">
+                      <div class="control has-icons-left">
+                        <input class="input is-small" type="text" v-model="item.triggers[idx2].data.command" />
+                        <span class="icon is-small is-left">
+                          <i class="fa fa-comments-o"></i>
+                        </span>
+                      </div>
+                      <div class="control">
+                        <button class="button is-small" :disabled="item.triggers.length <= 1" @click="rmtrigger(idx, idx2)"><i class="fa fa-remove" /></button>
+                      </div>
                     </div>
-                    <template v-else>
-                        <div class="select">
-                            <i class="fa fa-caret-down" />
-                            <select v-model="item.triggers[idx2].type">
-                                <option value="command">Command</option>
-                                <option value="timer">Timer</option>
-                            </select>
+
+                    <div v-if="item.triggers[idx2].type === 'timer'" class="timer-trigger">
+                      <div class="control">
+                        <button class="button is-small" :disabled="item.triggers.length <= 1" @click="rmtrigger(idx, idx2)"><i class="fa fa-remove" /></button>
+                      </div>
+                      <div class="field has-addons">
+                        <div class="control has-icons-left">
+                          <input class="input is-small spaceinput" v-model="item.triggers[idx2].data.minLines" />
+                          <span class="icon is-small is-left">
+                            <i class="fa fa-comments-o"></i>
+                          </span>
                         </div>
-                        <button class="btn" :disabled="item.triggers.length <= 1" @click="rmtrigger(idx, idx2)"><i class="fa fa-remove" /></button>
-                    </template>
-                    <input v-if="item.triggers[idx2].type === 'command'" type="text" v-model="item.triggers[idx2].data.command" />
-                    <div v-if="item.triggers[idx2].type === 'timer'">
-                        <div class="spacerow">
-                            <label class="spacelabel">Min. lines</label>
-                            <input class="spaceinput" v-model="item.triggers[idx2].data.minLines" />
+                      </div>
+                      <div class="field has-addons">
+                        <div class="control has-icons-left has-icons-right">
+                          <input class="input is-small spaceinput" v-model="item.triggers[idx2].data.minSeconds" />
+                          <span class="icon is-small is-left">
+                            <i class="fa fa-hourglass"></i>
+                          </span>
+                          <span class="icon is-small is-right">
+                            sec
+                          </span>
                         </div>
-                        <div class="spacerow">
-                            <label class="spacelabel">Min. interval</label>
-                            <span style="position: relative; display: inline-block">
-                                <input type="text" class="spaceinput" v-model="item.triggers[idx2].data.minSeconds" />
-                                <span style="position: absolute; right:7px; top: 50%; transform: translateY(-50%);">sec</span>
-                            </span>
-                        </div>
+                      </div>
                     </div>
+
                 </div>
-                <button class="btn" @click="addtrigger(idx)"><i class="fa fa-plus" /> Add</button>
+
+                <div class="field has-addons mr-1">
+                  <div class="control has-icons-left">
+                    <div v-if="item.action !== 'jisho_org_lookup'" class="select is-small">
+                        <select :value="newtriggers[idx] || 'command'" @change="newtriggers[idx] = $event.target.value">
+                            <option value="command">Command</option>
+                            <option value="timer">Timer</option>
+                        </select>
+                    </div>
+                  </div>
+                  <button
+                    class="button is-small"
+                    @click="addtrigger(idx)"><i class="fa fa-plus mr-1" /> Add</button>
+                </div>
             </td>
             <td>
                 {{item.action}}
@@ -199,16 +223,20 @@ export default {
             <td>
                 <div v-if="item.action === 'jisho_org_lookup'"></div>
                 <div v-if="item.action === 'text'">
-                    <div v-for="(txt, idx2) in item.data.text" :key="idx2" class="spacerow">
-                        <input type="text" v-model="item.data.text[idx2]" />
-                        <button class="btn" :disabled="item.data.text.length <= 1" @click="rmtxt(idx, idx2)"><i class="fa fa-remove" /></button>
+                    <div v-for="(txt, idx2) in item.data.text" :key="idx2" class="field has-addons">
+                      <div class="control">
+                        <input class="input is-small" type="text" v-model="item.data.text[idx2]" />
+                      </div>
+                      <div class="control">
+                      <button class="button is-small" :disabled="item.data.text.length <= 1" @click="rmtxt(idx, idx2)"><i class="fa fa-remove" /></button>
+                      </div>
                     </div>
-                    <button class="btn" @click="addtxt(idx)"><i class="fa fa-plus" /> Add</button>
+                    <button class="button is-small" @click="addtxt(idx)"><i class="fa fa-plus mr-1" /> Add</button>
                 </div>
                 <div v-if="item.action === 'media'" :class="item.action">
                     <div class="spacerow media-holder" v-if="item.data.image.file || item.data.sound.file">
                       <responsive-image v-if="item.data.image.file" :src="item.data.image.file" :title="item.data.image.filename" width="100%" height="90" style="display:block;" />
-                      <player :src="item.data.sound.file" :name="item.data.sound.filename" :volume="item.data.sound.volume" class="btn" />
+                      <player :src="item.data.sound.file" :name="item.data.sound.filename" :volume="item.data.sound.volume" class="button is-small" />
                       <volume-slider v-model="item.data.sound.volume" />
                     </div>
                     <div class="spacerow">
@@ -218,7 +246,7 @@ export default {
                     <div class="spacerow">
                       <label class="spacelabel">Min. duration </label>
                       <span style="position: relative; display: inline-block">
-                        <input type="text" class="spaceinput" v-model="item.data.minDurationMs" />
+                        <input type="text" class="input is-small spaceinput" v-model="item.data.minDurationMs" />
                         <span style="position: absolute; right:7px; top: 50%; transform: translateY(-50%);">ms</span>
                       </span>
                     </div>
@@ -237,9 +265,10 @@ export default {
               <input type="checkbox" v-model="item.restrict_to" value="sub" />
             </td>
             <td>
-                <button class="btn" @click="remove(idx)"><i class="fa fa-remove" /> Remove</button>
+              <button class="button is-small" @click="remove(idx)"><i class="fa fa-remove mr-1" /> Remove</button>
             </td>
         </tr>
+      </tbody>
     </table>
     <div v-else>No commands set up</div>
   </div>
@@ -284,13 +313,13 @@ export default {
       this.commands[idx].triggers = this.commands[idx].triggers.filter((val, index) => index !== idx2)
     },
     addtrigger(idx) {
-      this.commands[idx].triggers.push(newTrigger())
+      this.commands[idx].triggers.push(newTrigger(this.newtriggers[idx] || 'command'))
     },
     remove(idx) {
       this.commands = this.commands.filter((val, index) => index !== idx)
     },
     sendSave() {
-      this.sendMsg({event: 'save', commands: this.commands})
+      this.sendMsg({ event: 'save', commands: this.commands })
     },
     sendMsg(data) {
       this.ws.send(JSON.stringify(data))
