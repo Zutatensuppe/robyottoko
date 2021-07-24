@@ -217,7 +217,7 @@ export default {
             </td>
             <td class="pl-0 pr-0">
               <button class="button is-small mr-1" @click="remove(idx)"><i class="fa fa-trash" /></button>
-              <button class="button is-small" @click="duplicate(idx)"><i class="fa fa-copy" /></button>
+              <button class="button is-small" @click="duplicate(idx)"><i class="fa fa-clone" /></button>
             </td>
           </tr>
         </tbody>
