@@ -1,4 +1,3 @@
-const moment = require('moment')
 const Db = require('../../Db.js')
 const fn = require('../../fn.js')
 const WebServer = require('../../net/WebServer.js')
@@ -38,10 +37,10 @@ class SongrequestModule {
     })
   }
 
-  onChatMsg (client, target, context, msg) {
+  onChatMsg(client, target, context, msg) {
   }
 
-  getCommands () {
+  getCommands() {
     return {
       '!sr': [{
         fn: this.songrequestCmd.bind(this),
@@ -49,7 +48,7 @@ class SongrequestModule {
     }
   }
 
-  widgets () {
+  widgets() {
     return {
       'sr': async (req, res, next) => {
         res.send(await fn.render('widget.twig', {
@@ -64,7 +63,7 @@ class SongrequestModule {
     }
   }
 
-  getRoutes () {
+  getRoutes() {
     return {
       post: {
         '/sr/import': async (req, res, next) => {
@@ -102,7 +101,7 @@ class SongrequestModule {
     }
   }
 
-  save () {
+  save() {
     this.storage.save(this.name, {
       volume: this.data.volume,
       playlist: this.data.playlist.map(item => ({
@@ -120,7 +119,7 @@ class SongrequestModule {
     })
   }
 
-  wsdata (eventName) {
+  wsdata(eventName) {
     return {
       event: eventName,
       data: {
@@ -131,20 +130,20 @@ class SongrequestModule {
     };
   }
 
-  updateClient (/** @type string */ eventName, /** @type WebSocket */ ws) {
+  updateClient(/** @type string */ eventName, /** @type WebSocket */ ws) {
     this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
   }
 
-  updateClients (/** @type string */ eventName) {
+  updateClients(/** @type string */ eventName) {
     this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName))
   }
 
-  getWsEvents () {
+  getWsEvents() {
     return {
       'conn': (ws) => {
         this.updateClient('init', ws)
       },
-      'play': (ws, {id}) => {
+      'play': (ws, { id }) => {
         const idx = this.data.playlist.findIndex(item => item.id === id)
         if (idx < 0) {
           return
@@ -162,7 +161,7 @@ class SongrequestModule {
         this.save()
         this.updateClients('onEnded')
       },
-      'ctrl': (ws, {ctrl, args}) => {
+      'ctrl': (ws, { ctrl, args }) => {
         switch (ctrl) {
           case 'volume': this.volume(...args); break;
           case 'pause': this.pause(); break;
@@ -217,19 +216,19 @@ class SongrequestModule {
     return { item, addType }
   }
 
-  incStat (stat, idx = 0) {
+  incStat(stat, idx = 0) {
     if (this.data.playlist.length > idx) {
       this.data.playlist[idx][stat]++
     }
   }
 
-  async stats (userName) {
+  async stats(userName) {
     const countTotal = this.data.playlist.length
-    const durationTotal = moment.duration(0)
+    let durationTotal = 0
     if (countTotal > 0) {
       for (const item of this.data.playlist) {
         const d = await this.loadYoutubeData(item.yt)
-        durationTotal.add(d.contentDetails.duration)
+        durationTotal += fn.parseISO8601Duration(d.contentDetails.duration)
       }
     }
     return {
@@ -238,12 +237,12 @@ class SongrequestModule {
         total: countTotal,
       },
       duration: {
-        human: fn.humanDuration(durationTotal.asMilliseconds()),
+        human: fn.humanDuration(durationTotal),
       },
     }
   }
 
-  resetStats () {
+  resetStats() {
     this.data.playlist = this.data.playlist.map(item => {
       item.plays = 0
       item.skips = 0
@@ -291,17 +290,17 @@ class SongrequestModule {
     this.updateClients('dislike')
   }
 
-  async request (str) {
+  async request(str) {
     await this.add(str, this.user.name)
   }
 
-  like () {
+  like() {
     this.incStat('goods')
     this.save()
     this.updateClients('like')
   }
 
-  volume (vol) {
+  volume(vol) {
     if (vol < 0) {
       vol = 0
     }
@@ -313,29 +312,29 @@ class SongrequestModule {
     this.updateClients('volume')
   }
 
-  pause () {
+  pause() {
     this.updateClients('pause')
   }
 
-  unpause () {
+  unpause() {
     this.updateClients('unpause')
   }
 
-  loop () {
+  loop() {
     this.updateClients('loop')
   }
 
-  noloop () {
+  noloop() {
     this.updateClients('noloop')
   }
 
-  dislike () {
+  dislike() {
     this.incStat('bads')
     this.save()
     this.updateClients('dislike')
   }
 
-  prev () {
+  prev() {
     if (this.data.playlist.length === 0) {
       return
     }
@@ -346,7 +345,7 @@ class SongrequestModule {
     this.updateClients('prev')
   }
 
-  next () {
+  next() {
     if (this.data.playlist.length === 0) {
       return
     }
@@ -359,13 +358,13 @@ class SongrequestModule {
     this.updateClients('skip')
   }
 
-  clear () {
+  clear() {
     this.data.playlist = []
     this.save()
     this.updateClients('clear')
   }
 
-  shuffle () {
+  shuffle() {
     if (this.data.playlist.length < 3) {
       return
     }
@@ -381,7 +380,7 @@ class SongrequestModule {
     this.updateClients('shuffle')
   }
 
-  move (oldIndex, newIndex) {
+  move(oldIndex, newIndex) {
     if (oldIndex >= this.data.playlist.length) {
       return
     }
@@ -397,7 +396,7 @@ class SongrequestModule {
     this.updateClients('move')
   }
 
-  remove () {
+  remove() {
     if (this.data.playlist.length === 0) {
       return
     }
@@ -406,7 +405,7 @@ class SongrequestModule {
     this.updateClients('remove')
   }
 
-  undo (username) {
+  undo(username) {
     if (this.data.playlist.length === 0) {
       return false
     }
@@ -424,7 +423,7 @@ class SongrequestModule {
     return item
   }
 
-  async songrequestCmd (command, client, target, context, msg) {
+  async songrequestCmd(command, client, target, context, msg) {
     const say = fn.sayFn(client, target)
     if (command.args.length === 0) {
       say(`Usage: !sr YOUTUBE-URL`)
@@ -547,7 +546,7 @@ class SongrequestModule {
     }
   }
 
-  async loadYoutubeData (youtubeId) {
+  async loadYoutubeData(youtubeId) {
     let key = `youtubeData_${youtubeId}_20210717_2`
     let d = this.cache.get(key)
     if (!d) {
@@ -557,7 +556,7 @@ class SongrequestModule {
     return d
   }
 
-  findInsertIndex () {
+  findInsertIndex() {
     let found = -1
     for (let i = 0; i < this.data.playlist.length; i++) {
       if (this.data.playlist[i].plays === 0) {
@@ -569,10 +568,10 @@ class SongrequestModule {
     return (found === -1 ? 0 : found) + 1
   }
 
-  async addToPlaylist (youtubeId, youtubeData, userName) {
+  async addToPlaylist(youtubeId, youtubeData, userName) {
     const idx = this.data.playlist.findIndex(other => other.yt === youtubeId)
     if (idx >= 0) {
-      const item =  this.data.playlist[idx]
+      const item = this.data.playlist[idx]
       const insertIndex = this.findInsertIndex()
       if (insertIndex < idx) {
         this.data.playlist.splice(idx, 1)

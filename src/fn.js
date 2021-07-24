@@ -33,9 +33,10 @@ const SECOND = 1000 * MS
 const MINUTE = 60 * SECOND
 const HOUR = 60 * MINUTE
 const DAY = 24 * HOUR
-const YEAR = 356 * DAY
+const MONTH = 30 * DAY
+const YEAR = 365 * DAY
 
-function mimeToExt (/** @type string */ mime) {
+function mimeToExt(/** @type string */ mime) {
   if (/image\//.test(mime)) {
     return mime.replace('image/', '')
   }
@@ -43,14 +44,14 @@ function mimeToExt (/** @type string */ mime) {
 }
 
 function decodeBase64Image(/** @type string */ base64Str) {
-    const matches = base64Str.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/)
-    if (!matches || matches.length !== 3) {
-        throw new Error('Invalid base64 string')
-    }
-    return {
-      type: matches[1],
-      data: Buffer.from(matches[2], 'base64'),
-    }
+  const matches = base64Str.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/)
+  if (!matches || matches.length !== 3) {
+    throw new Error('Invalid base64 string')
+  }
+  return {
+    type: matches[1],
+    data: Buffer.from(matches[2], 'base64'),
+  }
 }
 
 const shuffle = (array) => {
@@ -58,16 +59,16 @@ const shuffle = (array) => {
 
   // While there are elements in the array
   while (counter > 0) {
-      // Pick a random index
-      let index = Math.floor(Math.random() * counter);
+    // Pick a random index
+    let index = Math.floor(Math.random() * counter);
 
-      // Decrease counter by 1
-      counter--;
+    // Decrease counter by 1
+    counter--;
 
-      // And swap the last element with it
-      let temp = array[counter];
-      array[counter] = array[index];
-      array[index] = temp;
+    // And swap the last element with it
+    let temp = array[counter];
+    array[counter] = array[index];
+    array[index] = temp;
   }
 
   return array;
@@ -93,7 +94,7 @@ function nonce(/** @type number */ length) {
 }
 
 const render = async (template, data) => {
-  const {TwingEnvironment, TwingLoaderFilesystem} = require('twing');
+  const { TwingEnvironment, TwingLoaderFilesystem } = require('twing');
   const loader = new TwingLoaderFilesystem(__dirname + '/templates')
   const twing = new TwingEnvironment(loader)
   return twing.render(template, data)
@@ -117,12 +118,12 @@ const sayFn = (
 ) => (
   /** @type string */ msg
 ) => {
-  const targets = target ? [target] : client.channels
-  targets.forEach(t => {
-    log.info(`saying in ${t}: ${msg}`)
-    client.say(t, msg).catch(_ => {})
-  })
-}
+    const targets = target ? [target] : client.channels
+    targets.forEach(t => {
+      log.info(`saying in ${t}: ${msg}`)
+      client.say(t, msg).catch(_ => { })
+    })
+  }
 
 const mayExecute = (context, cmd) => {
   if (!cmd.restrict_to || cmd.restrict_to.length === 0) {
@@ -154,7 +155,7 @@ const parseKnownCommandFromMessage = (
 
 const parseCommandFromMessage = (/** @type string */ msg) => {
   const command = msg.trim().split(' ')
-  return {name: command[0], args: command.slice(1)}
+  return { name: command[0], args: command.slice(1) }
 }
 
 const tryExecuteCommand = async (
@@ -295,6 +296,34 @@ const pad = (
   return pad.substr(0, pad.length - str.length) + str
 }
 
+const parseISO8601Duration = (
+  /** @type string */ duration
+) => {
+  // P(n)Y(n)M(n)DT(n)H(n)M(n)S
+  const m = duration.match(/^P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/)
+  if (!m) {
+    return 0
+  }
+
+  const Y = m[1] ? parseInt(m[1], 10) : 0
+  const Mo = m[2] ? parseInt(m[2], 10) : 0
+  const D = m[3] ? parseInt(m[3], 10) : 0
+  const H = m[4] ? parseInt(m[4], 10) : 0
+  const M = m[5] ? parseInt(m[5], 10) : 0
+  const S = m[6] ? parseInt(m[6], 10) : 0
+
+  // note: we just calculate month as having 30 days,
+  // because knowledge about what exact year it is is missing
+  return (
+    (S * SECOND)
+    + (M * MINUTE)
+    + (H * HOUR)
+    + (D * DAY)
+    + (Mo * MONTH)
+    + (Y * YEAR)
+  )
+}
+
 const humanDuration = (
   /** @type number */ durationMs
 ) => {
@@ -346,6 +375,7 @@ module.exports = {
   sleep,
   fnRandom,
   pad,
+  parseISO8601Duration,
   humanDuration,
   isBroadcaster,
   isMod,
