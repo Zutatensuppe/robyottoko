@@ -83,7 +83,7 @@ class GeneralModule {
           cmdObj = Object.assign({}, cmd, { fn: playMedia(this.wss, this.user.id, cmd.data) })
           break;
         case 'countdown':
-          cmdObj = Object.assign({}, cmd, { fn: countdown(cmd.data) })
+          cmdObj = Object.assign({}, cmd, { fn: countdown(this.wss, this.user.id, cmd.data) })
           break;
         case 'chatters':
           cmdObj = Object.assign({}, cmd, { fn: chatters(this.db, this.helixClient) })

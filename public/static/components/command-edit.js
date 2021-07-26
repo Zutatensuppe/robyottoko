@@ -5,20 +5,7 @@ import ResponsiveImage from '../components/responsive-image.js'
 import DurationInput from '../components/duration-input.js'
 import CountdownEdit from '../components/countdown-edit.js'
 import Upload from '../components/upload.js'
-
-// TODO:
-const newTrigger = (type) => ({
-  type,
-  data: {
-    // for trigger type "command" (todo: should only exist if type is command, not always)
-    command: '',
-    // for trigger type "timer" (todo: should only exist if type is timer, not always)
-    minInterval: 0, // duration in ms or something parsable (eg 1s, 10m, ....)
-    minLines: 0,
-  },
-})
-
-const newText = () => ''
+import commands from '../commands.js'
 
 export default {
   components: {
@@ -210,10 +197,15 @@ export default {
             <tr v-if="item.action === 'media'">
               <td>Duration:</td>
               <td>
-                <duration-input
-                  :modelValue="item.data.minDurationMs"
-                  @update:modelValue="item.data.minDurationMs = $event"
-                  />
+                <div class="control has-icons-left">
+                  <duration-input
+                    :modelValue="item.data.minDurationMs"
+                    @update:modelValue="item.data.minDurationMs = $event"
+                    />
+                  <span class="icon is-small is-left">
+                    <i class="fa fa-hourglass"></i>
+                  </span>
+                </div>
               </td>
             </tr>
             <tr v-if="item.action === 'countdown'">
@@ -253,10 +245,10 @@ export default {
   `,
   methods: {
     addtxt() {
-      this.item.data.text.push(newText())
+      this.item.data.text.push(commands.newText())
     },
     addtrigger() {
-      this.item.triggers.push(newTrigger(this.newtrigger))
+      this.item.triggers.push(commands.newTrigger(this.newtrigger))
     },
     onSaveClick() {
       this.$emit('update:modelValue', this.item)

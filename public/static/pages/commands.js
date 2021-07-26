@@ -8,73 +8,7 @@ import CountdownEdit from '../components/countdown-edit.js'
 import CommandEdit from '../components/command-edit.js'
 import DoubleclickButton from '../components/doubleclick-button.js'
 import WsClient from '../WsClient.js'
-
-const newTrigger = (type) => ({
-  type,
-  data: {
-    // for trigger type "command" (todo: should only exist if type is command, not always)
-    command: '',
-    // for trigger type "timer" (todo: should only exist if type is timer, not always)
-    minInterval: 0, // duration in ms or something parsable (eg 1s, 10m, ....)
-    minLines: 0,
-  },
-})
-
-const newText = () => ''
-
-const newCmd = (type) => {
-  switch (type) {
-    case 'text': return {
-      triggers: [newTrigger('command')],
-      action: 'text',
-      restrict_to: [],
-      data: {
-        text: [newText()],
-      },
-    }
-    case 'media': return {
-      triggers: [newTrigger('command')],
-      action: 'media',
-      restrict_to: [],
-      data: {
-        sound: {
-          filename: '',
-          file: '',
-          volume: 100,
-        },
-        image: {
-          filename: '',
-          file: '',
-        },
-        minDurationMs: 1000,
-      },
-    }
-    case 'countdown': return {
-      triggers: [newTrigger('command')],
-      action: 'countdown',
-      restrict_to: [],
-      data: {
-        steps: 3,
-        interval: 1000,
-        intro: 'Starting countdown...',
-        outro: 'Done!'
-      },
-    }
-    case 'jisho_org_lookup': return {
-      triggers: [newTrigger('command')],
-      action: 'jisho_org_lookup',
-      restrict_to: [],
-      data: {},
-    }
-    case 'chatters': return {
-      triggers: [newTrigger('command')],
-      action: 'chatters',
-      restrict_to: [],
-      data: {},
-    }
-    default: return null
-  }
-}
+import commands from '../commands.js'
 
 export default {
   components: {
@@ -208,6 +142,11 @@ export default {
                   <template v-for="(a,idx) in item.data.actions" :key="idx">
                     <duration v-if="a.type==='delay'" :value="a.value" />
                     <code v-if="a.type==='text'">{{a.value}}</code>
+                    <code v-if="a.type==='media'">
+                      Media(<span v-if="a.value.image.filename">{{a.value.image.filename}}</span>
+                      +
+                      <span v-if="a.value.sound.filename">{{a.value.sound.filename}}</span>)
+                    </code>
                     <span v-if="idx < item.data.actions.length - 1">→</span>
                   </template>
                 </div>
@@ -253,7 +192,7 @@ export default {
       return parts.join(', ')
     },
     add(type) {
-      const cmd = newCmd(type)
+      const cmd = commands.newCmd(type)
       if (!cmd) {
         return
       }

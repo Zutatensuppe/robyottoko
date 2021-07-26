@@ -1,6 +1,8 @@
 const fn = require('./../fn.js')
 
 const countdown = (
+  /** @type WebSocketServer */ wss,
+  /** @type String */          userId,
   /** @type Object */ settings
 ) => async (
   command,
@@ -43,6 +45,13 @@ const countdown = (
       for (const a of settings.actions) {
         if (a.type === 'text') {
           actions.push(async () => say(a.value))
+        } else if (a.type === 'media') {
+          actions.push(async () => {
+            wss.notifyAll([userId], 'general', {
+              event: 'playmedia',
+              data: a.value,
+            })
+          })
         } else if (a.type === 'delay') {
           const duration = fn.parseHumanDuration(a.value)
           actions.push(async () => await fn.sleep(duration || 0))
