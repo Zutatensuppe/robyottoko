@@ -1,6 +1,7 @@
 import WsClient from '../WsClient.js'
 import fn from '../fn.js'
 
+const TIME_BETWEEN_MEDIA = 100
 export default {
   template: `<div id="app"><div v-if="imgstyle" :style="imgstyle"></div></div>`,
   props: {
@@ -72,9 +73,9 @@ export default {
           return
         }
         await this.playone(this.queue.shift())
-        this.worker = setTimeout(next, 500) // this much time in between media
+        this.worker = setTimeout(next, TIME_BETWEEN_MEDIA) // this much time in between media
       }
-      this.worker = setTimeout(next, 500)
+      this.worker = setTimeout(next, TIME_BETWEEN_MEDIA)
     },
     async prepareImage(img) {
       return new Promise((resolve) => {
