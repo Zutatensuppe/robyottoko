@@ -216,6 +216,7 @@ export default {
           <tr>
             <th></th>
             <th></th>
+            <th></th>
             <th>Title</th>
             <th>User</th>
             <th>Plays</th>
@@ -224,8 +225,11 @@ export default {
             <th></th>
           </tr>
         </thead>
-        <draggable :value="playlist" @end="dragEnd" tag="tbody">
+        <draggable :value="playlist" @end="dragEnd" tag="tbody" handle=".handle">
           <tr v-for="(item, idx) in playlist">
+            <td class="pt-4 handle">
+              <i class="fa fa-arrows"></i>
+            </td>
             <td>{{idx+1}}</td>
             <td><button v-if="idx !== 0" class="button is-small" @click="sendCtrl('playIdx', [idx])" title="Play"><i class="fa fa-play"/></button></td>
             <td>

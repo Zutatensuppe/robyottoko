@@ -50,8 +50,10 @@ export default {
       </div>
     </div>
     <div v-else>
-      <draggable :value="countdown.actions" @end="dragEnd">
+      <draggable :value="countdown.actions" @end="dragEnd" handle=".handle">
         <div class="field has-addons mr-1" v-for="(a,idx) in countdown.actions" :key="idx">
+          <span class="handle p-2"><i class="fa fa-arrows"></i></span>
+
           <div class="control has-icons-left" v-if="a.type==='delay'">
             <duration-input
               :modelValue="a.value"

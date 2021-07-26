@@ -87,6 +87,7 @@ export default {
         <thead>
           <tr>
             <th></th>
+            <th></th>
             <th>Trigger</th>
             <th>Response</th>
             <th>Type</th>
@@ -95,8 +96,11 @@ export default {
             <th></th>
           </tr>
         </thead>
-        <draggable :value="commands" @end="dragEnd" tag="tbody">
+        <draggable :value="commands" @end="dragEnd" tag="tbody" handle=".handle">
           <tr v-for="(item, idx) in commands" :key="idx">
+            <td class="pt-4 handle">
+              <i class="fa fa-arrows"></i>
+            </td>
             <td class="pl-0 pr-0">
               <button class="button is-small" @click="edit(idx)"><i class="fa fa-pencil" /></button>
             </td>
@@ -144,9 +148,9 @@ export default {
                     <duration v-if="a.type==='delay'" :value="a.value" />
                     <code v-if="a.type==='text'">{{a.value}}</code>
                     <code v-if="a.type==='media'">
-                      Media(<span v-if="a.value.image.filename">{{a.value.image.filename}}</span>
-                      +
-                      <span v-if="a.value.sound.filename">{{a.value.sound.filename}}</span>)
+                      Media(<span v-if="a.value.image.file">{{a.value.image.filename}}</span>
+                      <span v-if="a.value.image.file && a.value.sound.file">+</span>
+                      <span v-if="a.value.sound.file">{{a.value.sound.filename}}</span>)
                     </code>
                     <span v-if="idx < item.data.actions.length - 1">→</span>
                   </template>
