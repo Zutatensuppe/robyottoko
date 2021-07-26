@@ -187,7 +187,7 @@ export default {
                 <button v-if="item.data.image.file" class="button is-small" @click="item.data.image.file = null"><i class="fa fa-remove mr-1" /> Remove</button>
                 <br v-if="item.data.image.file" />
                 <upload
-                  @uploaded="mediaImgUploaded(idx, $event)"
+                  @uploaded="mediaImgUploaded"
                   accept="image/*"
                   label="Upload Image"
                   :class="{'mt-1': item.data.image.file}" />
@@ -201,7 +201,7 @@ export default {
                 <button v-if="item.data.sound.file" class="button is-small" @click="item.data.sound.file = null"><i class="fa fa-remove mr-1" /> Remove</button>
                 <br v-if="item.data.sound.file" />
                 <upload
-                  @uploaded="mediaSndUploaded(idx, $event)"
+                  @uploaded="mediaSndUploaded"
                   accept="audio/*"
                   label="Upload Sound"
                   :class="{'mt-1': item.data.sound.file}" />
