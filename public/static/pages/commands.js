@@ -6,6 +6,7 @@ import ResponsiveImage from '../components/responsive-image.js'
 import Upload from '../components/upload.js'
 import CountdownEdit from '../components/countdown-edit.js'
 import CommandEdit from '../components/command-edit.js'
+import DoubleclickButton from '../components/doubleclick-button.js'
 import WsClient from '../WsClient.js'
 
 const newTrigger = (type) => ({
@@ -85,6 +86,7 @@ export default {
     Upload,
     CountdownEdit,
     CommandEdit,
+    DoubleclickButton,
   },
   props: {
     conf: Object,
@@ -218,7 +220,11 @@ export default {
               {{permissionsStr(item)}}
             </td>
             <td class="pl-0 pr-0">
-              <button class="button is-small mr-1" @click="remove(idx)"><i class="fa fa-trash" /></button>
+              <doubleclick-button
+                class="button is-small mr-1"
+                message="Are you sure?"
+                timeout="1000"
+                @doubleclick="remove(idx)"><i class="fa fa-trash" /></doubleclick-button>
               <button class="button is-small" @click="duplicate(idx)"><i class="fa fa-clone" /></button>
             </td>
           </tr>
