@@ -148,9 +148,9 @@ export default {
                     <duration v-if="a.type==='delay'" :value="a.value" />
                     <code v-if="a.type==='text'">{{a.value}}</code>
                     <code v-if="a.type==='media'">
-                      Media(<span v-if="a.value.image.file">{{a.value.image.filename}}</span>
-                      <span v-if="a.value.image.file && a.value.sound.file">+</span>
-                      <span v-if="a.value.sound.file">{{a.value.sound.filename}}</span>)
+                      Media(<span v-if="a.value.image.file">{{a.value.image.filename}}</span><span
+                      v-if="a.value.image.file && a.value.sound.file">+</span><span
+                      v-if="a.value.sound.file">{{a.value.sound.filename}}</span>)
                     </code>
                     <span v-if="idx < item.data.actions.length - 1">→</span>
                   </template>
