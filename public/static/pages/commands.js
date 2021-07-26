@@ -9,6 +9,7 @@ import CommandEdit from '../components/command-edit.js'
 import DoubleclickButton from '../components/doubleclick-button.js'
 import WsClient from '../WsClient.js'
 import commands from '../commands.js'
+import fn from '../fn.js'
 
 export default {
   components: {
@@ -224,9 +225,11 @@ export default {
       this.ws.send(JSON.stringify(data))
     },
     dragEnd(evt) {
-      const tmp = this.commands[evt.oldIndex]
-      this.commands[evt.oldIndex] = this.commands[evt.newIndex]
-      this.commands[evt.newIndex] = tmp
+      this.commands = fn.arrayMove(
+        this.commands,
+        evt.oldIndex,
+        evt.newIndex
+      )
       this.sendSave()
     },
   },

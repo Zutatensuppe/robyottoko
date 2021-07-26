@@ -388,9 +388,11 @@ class SongrequestModule {
       return
     }
 
-    var tmp = this.data.playlist[oldIndex]
-    this.data.playlist[oldIndex] = this.data.playlist[newIndex]
-    this.data.playlist[newIndex] = tmp
+    this.data.playlist = fn.arrayMove(
+      this.data.playlist,
+      oldIndex,
+      newIndex
+    )
 
     this.save()
     this.updateClients('move')
