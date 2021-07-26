@@ -210,7 +210,7 @@ export default {
         </tbody>
       </table>
     </div>
-    <div id="playlist" v-if="!helpVisible">
+    <div id="playlist" class="table-container" v-if="!helpVisible">
       <table class="table is-striped" v-if="playlist.length > 0">
         <thead>
           <tr>
