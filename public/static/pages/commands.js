@@ -158,7 +158,7 @@ export default {
             <th></th>
           </tr>
         </thead>
-        <tbody>
+        <draggable :value="commands" @end="dragEnd" tag="tbody">
           <tr v-for="(item, idx) in commands" :key="idx">
             <td class="pl-0 pr-0">
               <button class="button is-small" @click="edit(idx)"><i class="fa fa-pencil" /></button>
@@ -222,7 +222,7 @@ export default {
               <button class="button is-small" @click="duplicate(idx)"><i class="fa fa-clone" /></button>
             </td>
           </tr>
-        </tbody>
+        </draggable>
       </table>
     </div>
     <div v-else>No commands set up</div>
@@ -277,6 +277,12 @@ export default {
     },
     sendMsg(data) {
       this.ws.send(JSON.stringify(data))
+    },
+    dragEnd(evt) {
+      const tmp = this.commands[evt.oldIndex]
+      this.commands[evt.oldIndex] = this.commands[evt.newIndex]
+      this.commands[evt.newIndex] = tmp
+      this.sendSave()
     },
   },
   async mounted() {
