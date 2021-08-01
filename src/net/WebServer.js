@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser')
 const TwitchHelixClient = require('../services/TwitchHelixClient.js')
 const Db = require('../Db.js')
 const WebSocketServer = require('./WebSocketServer.js')
+const Variables = require('../services/Variables.js')
 
 const log = fn.logger(__filename)
 
@@ -35,7 +36,7 @@ class WebServer {
     this.handle = null
   }
 
-  pubUrl (/** @type string */ target) {
+  pubUrl(/** @type string */ target) {
     const row = this.db.get('pub', { target })
     let id
     if (!row) {
@@ -49,7 +50,7 @@ class WebServer {
     return `${this.url}/pub/${id}`
   }
 
-  widgetUrl (/** @type string */ type, /** @type string */ token) {
+  widgetUrl(/** @type string */ type, /** @type string */ token) {
     return `${this.url}/widget/${type}/${token}/`
   }
 
@@ -75,11 +76,11 @@ class WebServer {
     const storage = multer.diskStorage({
       destination: uploadDir,
       filename: function (req, file, cb) {
-        cb(null , `${fn.nonce(6)}-${file.originalname}`);
+        cb(null, `${fn.nonce(6)}-${file.originalname}`);
       }
     })
 
-    const upload = multer({storage}).single('file');
+    const upload = multer({ storage }).single('file');
 
     const verifyTwitchSignature = (req, res, next) => {
       const body = Buffer.from(req.rawBody, 'utf8')
@@ -93,7 +94,7 @@ class WebServer {
           got: req.headers['twitch-eventsub-message-signature'],
           expected,
         })
-        res.status(403).send({reason: 'bad message signature'})
+        res.status(403).send({ reason: 'bad message signature' })
         return
       }
 
@@ -182,6 +183,26 @@ class WebServer {
       }))
     })
 
+    app.get('/variables/', requireLogin, async (req, res) => {
+      console.log('muh')
+      const variables = new Variables(this.db, req.user.id)
+      console.log('muh2')
+      res.send(await fn.render('base.twig', {
+        title: 'Variables',
+        page: 'variables',
+        page_data: {
+          user: req.user,
+          variables: variables.all(),
+        },
+      }))
+    })
+
+    app.post('/save-variables', requireLogin, express.json(), async (req, res) => {
+      const variables = new Variables(this.db, req.user.id)
+      variables.replace(req.body.variables || [])
+      res.send()
+    })
+
     app.get('/settings/', requireLogin, async (req, res) => {
       const twitch_channels = this.twitchChannelRepo.allByUserId(req.user.id)
       res.send(await fn.render('base.twig', {
@@ -198,7 +219,7 @@ class WebServer {
       if (!req.user.groups.includes('admin')) {
         if (req.user.id !== req.body.user.id) {
           // editing other user than self
-          res.status(401).send({reason: 'not_allowed_to_edit_other_users'})
+          res.status(401).send({ reason: 'not_allowed_to_edit_other_users' })
           return
         }
       }
@@ -243,17 +264,17 @@ class WebServer {
         clientSecret = req.body.client_secret
       }
       if (!clientId) {
-        res.status(400).send({reason: 'need client id'});
+        res.status(400).send({ reason: 'need client id' });
         return
       }
       if (!clientSecret) {
-        res.status(400).send({reason: 'need client secret'});
+        res.status(400).send({ reason: 'need client secret' });
         return
       }
 
       try {
         const client = new TwitchHelixClient(clientId, clientSecret)
-        res.send({id: await client.getUserIdByName(req.body.name)})
+        res.send({ id: await client.getUserIdByName(req.body.name) })
       } catch (e) {
         res.status(500).send("Something went wrong!");
       }
@@ -261,53 +282,53 @@ class WebServer {
 
     app.post(
       '/twitch/event-sub/',
-      express.json({ verify: (req,res,buf) => { req.rawBody=buf }}),
+      express.json({ verify: (req, res, buf) => { req.rawBody = buf } }),
       verifyTwitchSignature,
       async (req, res) => {
-      log.debug(req.body)
-      log.debug(req.headers)
+        log.debug(req.body)
+        log.debug(req.headers)
 
-      if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-        log.info(`got verification request, challenge: ${req.body.challenge}`)
+        if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
+          log.info(`got verification request, challenge: ${req.body.challenge}`)
 
-        res.write(req.body.challenge)
-        res.send()
-        return
-      }
-
-      if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-        log.info(`got notification request: ${req.body.subscription.type}`)
-
-        if (req.body.subscription.type === 'stream.online') {
-          // insert new stream
-          this.db.insert('streams', {
-            broadcaster_user_id: req.body.event.broadcaster_user_id,
-            started_at: req.body.event.started_at,
-          })
-        } else if (req.body.subscription.type === 'stream.offline') {
-          // get last started stream for broadcaster
-          // if it exists and it didnt end yet set ended_at date
-          const stream = this.db.get('streams', {
-            broadcaster_user_id: req.body.event.broadcaster_user_id,
-          }, [{ started_at: -1 }])
-          if (!stream.ended_at) {
-            this.db.update('streams', {
-              ended_at: `${new Date().toJSON()}`,
-            }, { id: stream.id })
-          }
+          res.write(req.body.challenge)
+          res.send()
+          return
         }
 
-        res.send()
-        return
-      }
+        if (req.headers['twitch-eventsub-message-type'] === 'notification') {
+          log.info(`got notification request: ${req.body.subscription.type}`)
 
-      res.status(400).send({reason: 'unhandled sub type'})
-    })
+          if (req.body.subscription.type === 'stream.online') {
+            // insert new stream
+            this.db.insert('streams', {
+              broadcaster_user_id: req.body.event.broadcaster_user_id,
+              started_at: req.body.event.started_at,
+            })
+          } else if (req.body.subscription.type === 'stream.offline') {
+            // get last started stream for broadcaster
+            // if it exists and it didnt end yet set ended_at date
+            const stream = this.db.get('streams', {
+              broadcaster_user_id: req.body.event.broadcaster_user_id,
+            }, [{ started_at: -1 }])
+            if (!stream.ended_at) {
+              this.db.update('streams', {
+                ended_at: `${new Date().toJSON()}`,
+              }, { id: stream.id })
+            }
+          }
+
+          res.send()
+          return
+        }
+
+        res.status(400).send({ reason: 'unhandled sub type' })
+      })
 
     app.post('/auth', express.json(), async (req, res) => {
       const user = this.auth.getUserByNameAndPass(req.body.user, req.body.pass)
       if (!user) {
-        res.status(401).send({reason: 'bad credentials'})
+        res.status(401).send({ reason: 'bad credentials' })
         return
       }
 
@@ -363,7 +384,7 @@ class WebServer {
       () => log.info(`server running on http://${hostname}:${port}`)
     )
   }
-  close () {
+  close() {
     if (this.handle) {
       this.handle.close()
     }

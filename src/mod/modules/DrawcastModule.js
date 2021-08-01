@@ -5,11 +5,13 @@ const WebServer = require('../../net/WebServer.js')
 const WebSocketServer = require('../../net/WebSocketServer.js')
 const Tokens = require('../../services/Tokens.js')
 const TwitchHelixClient = require('../../services/TwitchHelixClient.js')
+const Variables = require('../../services/Variables.js')
 
 class DrawcastModule {
   constructor(
     /** @type Db */ db,
     user,
+    /** @type Variables */ variables,
     chatClient,
     /** @type TwitchHelixClient */ helixClient,
     storage,
@@ -18,6 +20,7 @@ class DrawcastModule {
     /** @type WebSocketServer */ wss,
   ) {
     this.user = user
+    this.variables = variables
     this.wss = wss
     this.storage = storage
     this.name = 'drawcast'
@@ -61,6 +64,10 @@ class DrawcastModule {
     } catch (e) {
       this.images = []
     }
+  }
+
+  saveCommands(commands) {
+    // pass
   }
 
   reinit() {

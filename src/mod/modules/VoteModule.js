@@ -3,11 +3,13 @@ const fn = require('../../fn.js')
 const WebServer = require('../../net/WebServer.js')
 const WebSocketServer = require('../../net/WebSocketServer.js')
 const TwitchHelixClient = require('../../services/TwitchHelixClient.js')
+const Variables = require('../../services/Variables.js')
 
 class DrawcastModule {
   constructor(
     /** @type Db */ db,
     user,
+    /** @type Variables */ variables,
     chatClient,
     /** @type TwitchHelixClient */ helixClient,
     storage,
@@ -16,6 +18,7 @@ class DrawcastModule {
     /** @type WebSocketServer */ wss,
   ) {
     this.user = user
+    this.variables = variables
     this.wss = wss
     this.storage = storage
     this.name = 'vote'
@@ -24,47 +27,51 @@ class DrawcastModule {
     this.reinit()
   }
 
-  reinit () {
+  reinit() {
     const data = this.storage.load(this.name, {
       votes: {},
     })
     this.data = data
   }
 
-  save () {
+  save() {
     this.storage.save(this.name, {
       votes: this.data.votes,
     })
   }
 
-  widgets () {
+  widgets() {
     return {}
   }
 
-  getRoutes () {
+  getRoutes() {
     return {}
   }
 
-  wsdata (eventName) {
+  saveCommands(commands) {
+    // pass
+  }
+
+  wsdata(eventName) {
     return {
       event: eventName,
       data: Object.assign({}, this.data),
     };
   }
 
-  updateClient (eventName, ws) {
+  updateClient(eventName, ws) {
     this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
   }
 
-  updateClients (eventName) {
+  updateClients(eventName) {
     this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName))
   }
 
-  getWsEvents () {
+  getWsEvents() {
     return {}
   }
 
-  vote (type, thing, client, target, context) {
+  vote(type, thing, client, target, context) {
     const say = fn.sayFn(client, target)
     this.data.votes[type] = this.data.votes[type] || {}
     this.data.votes[type][context.username] = thing
@@ -72,7 +79,7 @@ class DrawcastModule {
     this.save()
   }
 
-  async playCmd (command, client, target, context, msg) {
+  async playCmd(command, client, target, context, msg) {
     const say = fn.sayFn(client, target)
     if (command.args.length === 0) {
       say(`Usage: !play THING`)
@@ -84,7 +91,7 @@ class DrawcastModule {
     this.vote(type, thing, client, target, context)
   }
 
-  async voteCmd (command, client, target, context, msg) {
+  async voteCmd(command, client, target, context, msg) {
     const say = fn.sayFn(client, target)
 
     // maybe open up for everyone, but for now use dedicated
@@ -111,7 +118,7 @@ class DrawcastModule {
       }
       const list = []
       for (const val of Object.keys(usersByValues)) {
-        list.push({value: val, users: usersByValues[val]})
+        list.push({ value: val, users: usersByValues[val] })
       }
       list.sort((a, b) => {
         return b.users.length - a.users.length
@@ -144,7 +151,7 @@ class DrawcastModule {
     this.vote(type, thing, client, target, context)
   }
 
-  getCommands () {
+  getCommands() {
     return {
       '!vote': [{
         fn: this.voteCmd.bind(this),
@@ -157,7 +164,7 @@ class DrawcastModule {
     }
   }
 
-  onChatMsg (client, target, context, msg) {
+  onChatMsg(client, target, context, msg) {
   }
 }
 

@@ -159,6 +159,7 @@ const parseCommandFromMessage = (/** @type string */ msg) => {
 }
 
 const tryExecuteCommand = async (
+  contextModule,
   /** @type {name: string, args: string[]} */ rawCmd,
   /** @type any[] */ cmdDefs,
   client,
@@ -171,6 +172,48 @@ const tryExecuteCommand = async (
       continue
     }
     log.info(`${target}| * Executing ${rawCmd.name} command`)
+    cmdDef.variableChanges.forEach(variableChange => {
+      // check if there is a local variable for the change
+      let idx = cmdDef.variables.findIndex(v => (v.name === variableChange.name))
+      if (idx !== -1) {
+        if (variableChange.change === 'set') {
+          cmdDef.variables[idx].value = variableChange.value
+        } else if (variableChange.change === 'increase_by') {
+          cmdDef.variables[idx].value = (
+            parseInt(cmdDef.variables[idx].value, 10)
+            + parseInt(variableChange.value, 10)
+          )
+        } else if (variableChange.change === 'decrease_by') {
+          cmdDef.variables[idx].value = (
+            parseInt(cmdDef.variables[idx].value, 10)
+            - parseInt(variableChange.value, 10)
+          )
+        }
+        //
+        return
+      }
+
+      const globalVars = contextModule.variables.all()
+      idx = globalVars.findIndex(v => (v.name === variableChange.name))
+      if (idx !== -1) {
+        if (variableChange.change === 'set') {
+          contextModule.variables.set(variableChange.name, variableChange.value)
+        } else if (variableChange.change === 'increase_by') {
+          contextModule.variables.set(variableChange.name, (
+            parseInt(globalVars[idx].value, 10)
+            + parseInt(variableChange.value, 10)
+          ))
+        } else if (variableChange.change === 'decrease_by') {
+          contextModule.variables.set(variableChange.name, (
+            parseInt(globalVars[idx].value, 10)
+            - parseInt(variableChange.value, 10)
+          ))
+        }
+        //
+        return
+      }
+    })
+    contextModule.saveCommands()
     const r = await cmdDef.fn(rawCmd, client, target, context, msg)
     if (r) {
       log.info(`${target}| * Returned: ${r}`)
@@ -197,8 +240,20 @@ const parseResponseText = async (
   /** @type string */ text,
   command,
   context,
+  /** @type Variables */ variables,
+  originalCmd,
 ) => {
   const replaces = [
+    {
+      regex: /\$var\(([^)]+)\)/g,
+      replacer: (m0, m1) => {
+        const v = originalCmd.variables.find(v => v.name === m1)
+        if (v) {
+          return v.value
+        }
+        return variables.get(m1)
+      },
+    },
     {
       regex: /\$user\.name/g,
       replacer: () => {

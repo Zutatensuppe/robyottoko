@@ -11,6 +11,7 @@ const TwitchHelixClient = require('../../services/TwitchHelixClient.js')
 const WebServer = require('../../net/WebServer.js')
 const WebSocketServer = require('../../net/WebSocketServer.js')
 const Madochan = require('../../services/Madochan.js')
+const Variables = require('../../services/Variables.js')
 
 const log = fn.logger('GeneralModule.js')
 
@@ -18,6 +19,7 @@ class GeneralModule {
   constructor(
     /** @type Db */ db,
     user,
+    /** @type Variables */ variables,
     chatClient,
     /** @type TwitchHelixClient */ helixClient,
     storage,
@@ -27,6 +29,7 @@ class GeneralModule {
   ) {
     this.db = db
     this.user = user
+    this.variables = variables
     this.chatClient = chatClient
     this.helixClient = helixClient
     this.storage = storage
@@ -43,6 +46,8 @@ class GeneralModule {
         cmd.triggers = [{ type: 'command', data: { command: cmd.command } }]
         delete cmd.command
       }
+      cmd.variables = cmd.variables || []
+      cmd.variableChanges = cmd.variableChanges || []
       if (cmd.action === 'media') {
         cmd.data.minDurationMs = cmd.data.minDurationMs || 0
         cmd.data.sound.volume = cmd.data.sound.volume || 100
@@ -85,15 +90,15 @@ class GeneralModule {
         case 'text':
           cmdObj = Object.assign({}, cmd, {
             fn: Array.isArray(cmd.data.text)
-              ? randomText(cmd.data.text)
-              : text(cmd.data.text)
+              ? randomText(this.variables, cmd)
+              : text(this.variables, cmd)
           })
           break;
         case 'media':
-          cmdObj = Object.assign({}, cmd, { fn: playMedia(this.wss, this.user.id, cmd.data) })
+          cmdObj = Object.assign({}, cmd, { fn: playMedia(this.wss, this.user.id, cmd) })
           break;
         case 'countdown':
-          cmdObj = Object.assign({}, cmd, { fn: countdown(this.wss, this.user.id, cmd.data) })
+          cmdObj = Object.assign({}, cmd, { fn: countdown(this.variables, this.wss, this.user.id, cmd) })
           break;
         case 'chatters':
           cmdObj = Object.assign({}, cmd, { fn: chatters(this.db, this.helixClient) })
@@ -189,6 +194,12 @@ class GeneralModule {
     this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName))
   }
 
+  saveCommands() {
+    this.storage.save(this.name, this.data)
+    this.reinit()
+    this.updateClients('init')
+  }
+
   getWsEvents() {
     return {
       'conn': (ws) => {
@@ -224,7 +235,7 @@ class GeneralModule {
         continue
       }
       const cmdDefs = this.commands[key] || []
-      await fn.tryExecuteCommand(rawCmd, cmdDefs, client, target, context, msg)
+      await fn.tryExecuteCommand(this, rawCmd, cmdDefs, client, target, context, msg)
       break
     }
     this.timers.forEach(t => {

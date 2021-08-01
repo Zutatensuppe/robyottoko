@@ -238,6 +238,83 @@ export default {
             </tr>
             <tr>
               <td>
+                Variables:
+              </td>
+              <td>
+                <table v-if="item.variables.length > 0">
+                  <thead>
+                    <tr>
+                      <td>Name</td>
+                      <td>Value</td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(v,idx) in item.variables">
+                      <td>
+                        <input type="text" class="input is-small" v-model="v.name" />
+                      </td>
+                      <td>
+                        <input type="text" class="input is-small" v-model="v.value" />
+                      </td>
+                      <td>
+                        <button class="button is-small" @click="rmVariable(idx)"><i class="fa fa-remove" /></button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <span class="button is-small" @click="onAddVariable">Add Variable</span>
+                <div class="help">
+                  Variables can be used from the command with <code>$var(variable_name)</code>.
+                  If the referenced variable is not defined here,
+                  <a href="/variables/" target="_blank">global variables</a> are used.
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                Variable changes:
+              </td>
+              <td>
+                <table v-if="item.variableChanges.length > 0">
+                  <thead>
+                    <tr>
+                      <td>Name</td>
+                      <td>Change</td>
+                      <td>Value</td>
+                      <td></td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(v,idx) in item.variableChanges">
+                      <td>
+                        <input type="text" class="input is-small" v-model="v.name" />
+                      </td>
+                      <td>
+                        <div class="select is-small">
+                          <select v-model="v.change">
+                            <option value="set">set</option>
+                            <option value="increase_by">increase by</option>
+                            <option value="decrease_by">decrease by</option>
+                          </select>
+                        </div>
+                      </td>
+                      <td>
+                        <input type="text" class="input is-small" v-model="v.value" />
+                      </td>
+                      <td>
+                        <button class="button is-small" @click="rmVariableChange(idx)"><i class="fa fa-remove" /></button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <span class="button is-small" @click="onAddVariableChange">Add Variable Change</span>
+                <div class="help">
+                  Variable changes are performed when the command is executed, before anything else.
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
                 Permissions:
               </td>
               <td>
@@ -271,6 +348,25 @@ export default {
     },
     addtrigger() {
       this.item.triggers.push(commands.newTrigger(this.newtrigger))
+    },
+    onAddVariableChange() {
+      this.item.variableChanges.push({
+        name: '',
+        change: 'set',
+        value: '',
+      })
+    },
+    rmVariableChange(idx) {
+      this.item.variableChanges = this.item.variableChanges.filter((val, index) => index !== idx)
+    },
+    onAddVariable() {
+      this.item.variables.push({
+        name: '',
+        value: '',
+      })
+    },
+    rmVariable(idx) {
+      this.item.variables = this.item.variables.filter((val, index) => index !== idx)
     },
     onSaveClick() {
       this.$emit('update:modelValue', this.item)

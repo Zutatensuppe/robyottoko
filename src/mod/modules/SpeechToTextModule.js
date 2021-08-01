@@ -1,11 +1,13 @@
 const config = require('../../config.js')
 const fn = require('../../fn.js')
 const { getText, asQueryArgs } = require('../../net/xhr.js')
+const Variables = require('../../services/Variables.js')
 
 class SpeechToTextModule {
-  constructor(db, user, chatClient, helixClient, storage, cache, ws, wss) {
+  constructor(db, user, variables, chatClient, helixClient, storage, cache, ws, wss) {
     this.db = db
     this.user = user
+    this.variables = variables
     this.client = chatClient
     this.storage = storage
     this.cache = cache
@@ -57,13 +59,17 @@ class SpeechToTextModule {
     this.reinit()
   }
 
-  reinit () {
+  reinit() {
     this.data = this.storage.load(this.name, {
       settings: this.defaultSettings
     })
   }
 
-  widgets () {
+  saveCommands(commands) {
+    // pass
+  }
+
+  widgets() {
     return {
       'speech-to-text': async (req, res, next) => {
         res.send(await fn.render('widget.twig', {
@@ -78,7 +84,7 @@ class SpeechToTextModule {
     }
   }
 
-  getRoutes () {
+  getRoutes() {
     return {
       get: {
         '/speech-to-text/': async (req, res, next) => {
@@ -97,24 +103,24 @@ class SpeechToTextModule {
     }
   }
 
-  wsdata (eventName) {
+  wsdata(eventName) {
     return {
       event: eventName,
-      data: Object.assign({}, this.data, {defaultSettings: this.defaultSettings}),
+      data: Object.assign({}, this.data, { defaultSettings: this.defaultSettings }),
     };
   }
 
-  updateClient (eventName, ws) {
+  updateClient(eventName, ws) {
     this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
   }
 
-  updateClients (eventName) {
+  updateClients(eventName) {
     this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName))
   }
 
-  getWsEvents () {
+  getWsEvents() {
     return {
-      'translate': async (ws, {text, src, dst}) => {
+      'translate': async (ws, { text, src, dst }) => {
         const scriptId = config.modules.speechToText.google.scriptId
         const query = `https://script.google.com/macros/s/${scriptId}/exec` + asQueryArgs({
           text: text,
@@ -122,15 +128,17 @@ class SpeechToTextModule {
           target: dst,
         })
         const respText = await getText(query)
-        this.wss.notifyOne([this.user.id], this.name, {event: 'translated', data: {
-          in: text,
-          out: respText,
-        }}, ws)
+        this.wss.notifyOne([this.user.id], this.name, {
+          event: 'translated', data: {
+            in: text,
+            out: respText,
+          }
+        }, ws)
       },
       'conn': (ws) => {
         this.updateClient('init', ws)
       },
-      'save': (ws, {settings}) => {
+      'save': (ws, { settings }) => {
         this.data.settings = settings
         this.storage.save(this.name, this.data)
         this.reinit()
@@ -138,11 +146,11 @@ class SpeechToTextModule {
       },
     }
   }
-  getCommands () {
+  getCommands() {
     return {}
   }
 
-  onChatMsg (client, target, context, msg) {
+  onChatMsg(client, target, context, msg) {
   }
 }
 

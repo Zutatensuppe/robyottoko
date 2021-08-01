@@ -4,6 +4,7 @@ const WebServer = require('../../net/WebServer.js')
 const WebSocketServer = require('../../net/WebSocketServer.js')
 const TwitchHelixClient = require('../../services/TwitchHelixClient.js')
 const Youtube = require('../../services/Youtube.js')
+const Variables = require('../../services/Variables.js')
 
 const ADD_TYPE = {
   NOT_ADDED: 0,
@@ -16,6 +17,7 @@ class SongrequestModule {
   constructor(
     /** @type Db */ db,
     user,
+    /** @type Variables */ variables,
     chatClient,
     /** @type TwitchHelixClient */ helixClient,
     storage,
@@ -25,6 +27,7 @@ class SongrequestModule {
   ) {
     this.db = db
     this.user = user
+    this.variables = variables
     this.cache = cache
     this.storage = storage
     this.ws = ws
@@ -38,6 +41,10 @@ class SongrequestModule {
   }
 
   onChatMsg(client, target, context, msg) {
+  }
+
+  saveCommands(commands) {
+    // pass
   }
 
   getCommands() {

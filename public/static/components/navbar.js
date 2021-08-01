@@ -15,6 +15,10 @@ export default {
           text: 'Commands',
         },
         {
+          href: '/variables/',
+          text: 'Variables',
+        },
+        {
           href: '/sr/',
           text: 'Song Request',
         },

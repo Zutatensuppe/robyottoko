@@ -7,6 +7,7 @@ const Tokens = require('./services/Tokens.js')
 const TwitchChannels = require('./services/TwitchChannels.js')
 const Cache = require('./services/Cache.js')
 const Db = require('./Db.js')
+const Variables = require('./services/Variables.js')
 
 const db = new Db(config.db)
 // make sure we are always on latest db version
@@ -21,31 +22,33 @@ const moduleManager = new mod.ModuleManager()
 const webSocketServer = new net.WebSocketServer(moduleManager, config.ws, auth)
 const webServer = new net.WebServer(db, userRepo, twitchChannelRepo, moduleManager, config.http, config.twitch, webSocketServer, auth)
 
-;(async () => {
-  webSocketServer.listen()
-  await webServer.listen()
+  ; (async () => {
+    webSocketServer.listen()
+    await webServer.listen()
 
-  // one for each user
-  for (const user of userRepo.all()) {
-    const twitchChannels = twitchChannelRepo.allByUserId(user.id)
-    const clientManager = new net.TwitchClientManager(config.twitch, db, user, twitchChannels, moduleManager)
-    const chatClient = clientManager.getChatClient()
-    const helixClient = clientManager.getHelixClient()
-    const moduleStorage = new mod.ModuleStorage(db, user.id)
-    for (const moduleClass of mod.modules) {
-      moduleManager.add(user.id, new moduleClass(
-        db,
-        user,
-        chatClient,
-        helixClient,
-        moduleStorage,
-        cache,
-        webServer,
-        webSocketServer
-      ))
+    // one for each user
+    for (const user of userRepo.all()) {
+      const twitchChannels = twitchChannelRepo.allByUserId(user.id)
+      const clientManager = new net.TwitchClientManager(config.twitch, db, user, twitchChannels, moduleManager)
+      const chatClient = clientManager.getChatClient()
+      const helixClient = clientManager.getHelixClient()
+      const moduleStorage = new mod.ModuleStorage(db, user.id)
+      const variables = new Variables(db, user.id)
+      for (const moduleClass of mod.modules) {
+        moduleManager.add(user.id, new moduleClass(
+          db,
+          user,
+          variables,
+          chatClient,
+          helixClient,
+          moduleStorage,
+          cache,
+          webServer,
+          webSocketServer
+        ))
+      }
     }
-  }
-})()
+  })()
 
 const log = logger(__filename)
 const gracefulShutdown = (signal) => {

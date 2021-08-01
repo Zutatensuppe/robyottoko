@@ -37,6 +37,8 @@ const newCmd = (type) => {
       triggers: [newTrigger('command')],
       action: 'text',
       restrict_to: [],
+      variables: [],
+      variableChanges: [],
       data: {
         text: [newText()],
       },
@@ -45,24 +47,32 @@ const newCmd = (type) => {
       triggers: [newTrigger('command')],
       action: 'media',
       restrict_to: [],
+      variables: [],
+      variableChanges: [],
       data: newMedia(1000),
     }
     case 'countdown': return {
       triggers: [newTrigger('command')],
       action: 'countdown',
       restrict_to: [],
+      variables: [],
+      variableChanges: [],
       data: newCountdown(),
     }
     case 'jisho_org_lookup': return {
       triggers: [newTrigger('command')],
       action: 'jisho_org_lookup',
       restrict_to: [],
+      variables: [],
+      variableChanges: [],
       data: {},
     }
     case 'madochan_createword': return {
       triggers: [newTrigger('command')],
       action: 'madochan_createword',
       restrict_to: [],
+      variables: [],
+      variableChanges: [],
       data: {
         // TODO: use from same resource as server
         model: '100epochs800lenhashingbidirectional.h5',
@@ -73,6 +83,8 @@ const newCmd = (type) => {
       triggers: [newTrigger('command')],
       action: 'chatters',
       restrict_to: [],
+      variables: [],
+      variableChanges: [],
       data: {},
     }
     default: return null

@@ -1,16 +1,18 @@
 const fn = require('./../fn.js')
 
 const randomText = (
-  /** @type string[] */ texts
+  /** @type Variables */ variables,
+  originalCmd,
 ) => async (
   command,
   client,
   /** @type string */ target,
   context,
   /** @type string */ msg,
-) => {
-  const say = fn.sayFn(client, target)
-  say(await fn.parseResponseText(fn.getRandom(texts), command, context))
-}
+  ) => {
+    const texts = originalCmd.data.text
+    const say = fn.sayFn(client, target)
+    say(await fn.parseResponseText(fn.getRandom(texts), command, context, variables, originalCmd))
+  }
 
 module.exports = randomText

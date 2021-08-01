@@ -1,9 +1,10 @@
 const fn = require('./../fn.js')
 
 const countdown = (
+  /** @type Variables */ variables,
   /** @type WebSocketServer */ wss,
   /** @type String */          userId,
-  /** @type Object */ settings
+  /** @type Object */ originalCmd
 ) => async (
   command,
   client,
@@ -13,8 +14,10 @@ const countdown = (
   ) => {
     const sayFn = fn.sayFn(client, target)
     const say = async (text) => {
-      return sayFn(await fn.parseResponseText(text, command, context))
+      return sayFn(await fn.parseResponseText(text, command, context, variables, originalCmd))
     }
+
+    const settings = originalCmd.data
 
     const actions = []
     const t = (settings.type || 'auto')
