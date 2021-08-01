@@ -247,6 +247,12 @@ const doReplacements = async (
 ) => {
   const replaces = [
     {
+      regex: /\$args\(\)/g,
+      replacer: (m0, m1) => {
+        return command.args.join(' ')
+      },
+    },
+    {
       regex: /\$args\((\d+)\)/g,
       replacer: (m0, m1) => {
         const index = parseInt(m1, 10)

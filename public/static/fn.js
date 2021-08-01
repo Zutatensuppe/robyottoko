@@ -103,6 +103,12 @@ function arrayMove(arr, old_index, new_index) {
 const doDummyReplacements = (text, str) => {
   const replaces = [
     {
+      regex: /\$args\(\)/g,
+      replacer: (m0, m1) => {
+        return str
+      },
+    },
+    {
       regex: /\$args\((\d+)\)/g,
       replacer: (m0, m1) => {
         return str
