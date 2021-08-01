@@ -1,4 +1,4 @@
-import Madochan from "../../src/services/Madochan"
+import Madochan from "../../src/services/Madochan.js"
 
 const newTrigger = (type) => ({
   type,
