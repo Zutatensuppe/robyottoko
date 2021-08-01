@@ -13,8 +13,14 @@ const countdown = (
   /** @type string */ msg,
   ) => {
     const sayFn = fn.sayFn(client, target)
+    const doReplacements = async (text) => {
+      return await fn.doReplacements(text, command, context, variables, originalCmd)
+    }
     const say = async (text) => {
-      return sayFn(await fn.parseResponseText(text, command, context, variables, originalCmd))
+      return sayFn(await doReplacements(text))
+    }
+    const parseDuration = async (str) => {
+      return fn.parseHumanDuration(await doReplacements(str))
     }
 
     const settings = originalCmd.data
@@ -23,11 +29,12 @@ const countdown = (
     const t = (settings.type || 'auto')
 
     if (t === 'auto') {
-      const steps = settings.steps
-      const interval = fn.parseHumanDuration(settings.interval) || (1 * fn.SECOND)
+      const steps = await doReplacements(settings.steps)
+      const interval = (await parseDuration(settings.interval)) || (1 * fn.SECOND)
       const msgStep = settings.step || "{step}"
       const msgIntro = settings.intro || null
       const msgOutro = settings.outro || null
+      console.log(steps, settings)
       if (msgIntro) {
         actions.push(async () => await say(msgIntro.replace(/\{steps\}/g, steps)))
         actions.push(async () => await fn.sleep(interval))
@@ -56,8 +63,8 @@ const countdown = (
             })
           })
         } else if (a.type === 'delay') {
-          const duration = fn.parseHumanDuration(a.value)
-          actions.push(async () => await fn.sleep(duration || 0))
+          const duration = (await parseDuration(a.value)) || 0
+          actions.push(async () => await fn.sleep(duration))
         }
       }
     }

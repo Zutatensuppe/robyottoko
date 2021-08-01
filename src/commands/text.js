@@ -12,7 +12,7 @@ const text = (
   ) => {
     const text = originalCmd.data.text
     const say = fn.sayFn(client, target)
-    say(await fn.parseResponseText(text, command, context, variables, originalCmd))
+    say(await fn.doReplacements(text, command, context, variables, originalCmd))
   }
 
 module.exports = text

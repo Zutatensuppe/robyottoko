@@ -238,7 +238,7 @@ async function replaceAsync(
   return str.replace(regex, () => data.shift());
 }
 
-const parseResponseText = async (
+const doReplacements = async (
   /** @type string */ text,
   command,
   context,
@@ -247,13 +247,21 @@ const parseResponseText = async (
 ) => {
   const replaces = [
     {
+      regex: /\$args\((\d+)\)/g,
+      replacer: (m0, m1) => {
+        const index = parseInt(m1, 10)
+        if (index < command.args.length) {
+          return command.args[index]
+        }
+        return ''
+      },
+    },
+    {
       regex: /\$var\(([^)]+)\)/g,
       replacer: (m0, m1) => {
         const v = originalCmd.variables.find(v => v.name === m1)
-        if (v) {
-          return v.value
-        }
-        return variables.get(m1)
+        const val = v ? v.value : variables.get(m1)
+        return val === null ? '' : val
       },
     },
     {
@@ -274,20 +282,20 @@ const parseResponseText = async (
     {
       regex: /\$customapi\(([^$\)]*)\)\[\'([A-Za-z0-9_ -]+)\'\]/g,
       replacer: async (m0, m1, m2) => {
-        const txt = await getText(await parseResponseText(m1, command))
+        const txt = await getText(await doReplacements(m1, command))
         return JSON.parse(txt)[m2]
       },
     },
     {
       regex: /\$customapi\(([^$\)]*)\)/g,
       replacer: async (m0, m1) => {
-        return await getText(await parseResponseText(m1, command))
+        return await getText(await doReplacements(m1, command))
       },
     },
     {
       regex: /\$urlencode\(([^$\)]*)\)/g,
       replacer: async (m0, m1) => {
-        return encodeURIComponent(await parseResponseText(m1, command))
+        return encodeURIComponent(await doReplacements(m1, command))
       },
     },
   ]
@@ -497,7 +505,7 @@ module.exports = {
   isBroadcaster,
   isMod,
   isSubscriber,
-  parseResponseText,
+  doReplacements,
   nonce,
   split,
   joinIntoChunks,

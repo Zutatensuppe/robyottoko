@@ -141,12 +141,8 @@ export default {
                 <div v-if="(item.data.type || 'auto') === 'auto'">
                   <code>{{item.data.intro}}</code>
                   <span>→</span>
-                  <template v-for="i in item.data.steps">
-                    <duration :value="item.data.interval" />
-                    <span>→</span>
-                    <code>{{item.data.steps - i + 1}}</code>
-                    <span>→</span>
-                  </template>
+                  <code>{{item.data.steps}}</code> ✕ <duration :value="item.data.interval" />
+                  <span>→</span>
                   <code>{{item.data.outro}}</code>
                 </div>
                 <div v-else>

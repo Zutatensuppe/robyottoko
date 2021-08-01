@@ -100,9 +100,62 @@ function arrayMove(arr, old_index, new_index) {
   return arr // return, but array is also modified in place
 }
 
+const doDummyReplacements = (text, str) => {
+  const replaces = [
+    {
+      regex: /\$args\((\d+)\)/g,
+      replacer: (m0, m1) => {
+        return str
+      },
+    },
+    {
+      regex: /\$var\(([^)]+)\)/g,
+      replacer: (m0, m1) => {
+        return str
+      },
+    },
+    {
+      regex: /\$user\.name/g,
+      replacer: () => {
+        return str
+      },
+    },
+    {
+      regex: /\$([a-z][a-z0-9]*)(?!\()/g,
+      replacer: (m0, m1) => {
+        return str
+      }
+    },
+    {
+      regex: /\$customapi\(([^$\)]*)\)\[\'([A-Za-z0-9_ -]+)\'\]/g,
+      replacer: (m0, m1, m2) => {
+        return str
+      },
+    },
+    {
+      regex: /\$customapi\(([^$\)]*)\)/g,
+      replacer: (m0, m1) => {
+        return str
+      },
+    },
+    {
+      regex: /\$urlencode\(([^$\)]*)\)/g,
+      replacer: (m0, m1) => {
+        return str
+      },
+    },
+  ]
+  let replaced = text
+  for (let replace of replaces) {
+    replaced = replaced.replace(replace.regex, replace.replacer)
+  }
+  return replaced
+}
+
 export default {
   arrayMove,
   humanDuration,
   parseHumanDuration,
   mustParseHumanDuration,
+  doDummyReplacements,
 }

@@ -32,7 +32,8 @@ export default {
     v: {
       handler(v) {
         try {
-          fn.mustParseHumanDuration(v)
+          const r = fn.doDummyReplacements(v, '0')
+          fn.mustParseHumanDuration(r)
           this.valid = true
         } catch (e) {
           this.valid = false
