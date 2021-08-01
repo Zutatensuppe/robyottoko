@@ -1,5 +1,3 @@
-import Madochan from "../../src/services/Madochan.js"
-
 const newTrigger = (type) => ({
   type,
   data: {
@@ -66,8 +64,9 @@ const newCmd = (type) => {
       action: 'madochan_createword',
       restrict_to: [],
       data: {
-        model: Madochan.defaultModel,
-        weirdness: Madochan.defaultWeirdness,
+        // TODO: use from same resource as server
+        model: '100epochs800lenhashingbidirectional.h5',
+        weirdness: 1,
       },
     }
     case 'chatters': return {
