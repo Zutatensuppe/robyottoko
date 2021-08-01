@@ -67,6 +67,11 @@ export default {
       >Add jisho_org_lookup</button>
       <button
         class="button is-small mr-1"
+        @click="add('madochan_createword')"
+        title="Create a word with madochan"
+      >Add madochan</button>
+      <button
+        class="button is-small mr-1"
         @click="add('chatters')"
         title="Displays users who chatted during the stream"
       >Add chatters</button>
@@ -115,6 +120,7 @@ export default {
             </td>
             <td>
               <div v-if="item.action === 'jisho_org_lookup'">Outputs the translation for the searched word.</div>
+              <div v-if="item.action === 'madochan_createword'">Creates a word for a definition.</div>
               <div v-if="item.action === 'chatters'">Outputs the people who chatted during the stream.</div>
               <div v-if="item.action === 'text'">
                 <template v-for="(txt, idx2) in item.data.text" :key="idx2" class="field has-addons">

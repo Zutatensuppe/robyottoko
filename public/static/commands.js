@@ -1,3 +1,5 @@
+import Madochan from "../../src/services/Madochan"
+
 const newTrigger = (type) => ({
   type,
   data: {
@@ -58,6 +60,15 @@ const newCmd = (type) => {
       action: 'jisho_org_lookup',
       restrict_to: [],
       data: {},
+    }
+    case 'madochan_createword': return {
+      triggers: [newTrigger('command')],
+      action: 'madochan_createword',
+      restrict_to: [],
+      data: {
+        model: Madochan.defaultModel,
+        weirdness: Madochan.defaultWeirdness,
+      },
     }
     case 'chatters': return {
       triggers: [newTrigger('command')],

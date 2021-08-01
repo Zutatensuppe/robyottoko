@@ -147,7 +147,7 @@ const parseKnownCommandFromMessage = (
 ) => {
   if (msg.startsWith(cmd + ' ') || msg === cmd) {
     const name = msg.substr(0, cmd.length).trim()
-    const args = msg.substr(cmd.length - 1).trim().split(' ').filter(s => !!s)
+    const args = msg.substr(cmd.length).trim().split(' ').filter(s => !!s)
     return { name, args }
   }
   return null

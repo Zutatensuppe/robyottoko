@@ -145,6 +145,28 @@ export default {
                 Outputs the translation for the searched word.
               </td>
             </tr>
+            <tr v-if="item.action === 'madochan_createword'">
+              <td>Response:</td>
+              <td>Creates a word for a definition.</td>
+            </tr>
+            <tr v-if="item.action === 'madochan_createword'">
+              <td>Model:</td>
+              <td>
+                <div class="control">
+                  <input class="input is-small spaceinput" v-model="item.data.model" />
+                </div>
+                <div class="help">For possible values refer to <a href="https://madochan.hyottoko.club/" target="_blank">madochan</a></div>
+              </td>
+            </tr>
+            <tr v-if="item.action === 'madochan_createword'">
+              <td>Weirdness:</td>
+              <td>
+                <div class="control">
+                  <input class="input is-small spaceinput" v-model="item.data.weirdness" />
+                </div>
+                <div class="help">For possible values refer to <a href="https://madochan.hyottoko.club/" target="_blank">madochan</a></div>
+              </td>
+            </tr>
             <tr v-if="item.action === 'chatters'">
               <td>Response:</td>
               <td>
@@ -316,6 +338,7 @@ export default {
       }
       const map = {
         jisho_org_lookup: 'jisho.org lookup',
+        madochan_createword: 'madochan',
         chatters: 'chatters command',
         media: 'media command',
         countdown: 'countdown',

@@ -1,5 +1,6 @@
 const countdown = require('../../commands/countdown.js')
 const jishoOrgLookup = require('../../commands/jishoOrgLookup.js')
+const madochanCreateWord = require('../../commands/madochanCreateWord.js')
 const text = require('../../commands/text.js')
 const randomText = require('../../commands/randomText.js')
 const playMedia = require('../../commands/playMedia.js')
@@ -9,6 +10,7 @@ const Db = require('../../Db.js')
 const TwitchHelixClient = require('../../services/TwitchHelixClient.js')
 const WebServer = require('../../net/WebServer.js')
 const WebSocketServer = require('../../net/WebSocketServer.js')
+const Madochan = require('../../services/Madochan.js')
 
 const log = fn.logger('GeneralModule.js')
 
@@ -69,6 +71,14 @@ class GeneralModule {
       }
       let cmdObj = null
       switch (cmd.action) {
+        case 'madochan_createword':
+          cmdObj = Object.assign({}, cmd, {
+            fn: madochanCreateWord(
+              `${cmd.data.model}` || Madochan.defaultModel,
+              parseInt(cmd.data.weirdness, 10) || Madochan.defaultWeirdness,
+            )
+          })
+          break;
         case 'jisho_org_lookup':
           cmdObj = Object.assign({}, cmd, { fn: jishoOrgLookup() })
           break;
