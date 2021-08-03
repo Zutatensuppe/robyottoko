@@ -21,7 +21,7 @@ export default {
     }
   },
   methods: {
-    async playone(media, playsound) {
+    async playone({ media, playsound }) {
       return new Promise(async (resolve) => {
         this.latestResolved = false
         await this.prepareImage(media.image.url)
@@ -34,6 +34,7 @@ export default {
           height: '100%',
         }
 
+        console.log(playsound, this.notificationSoundAudio)
         if (playsound && this.notificationSoundAudio) {
           this.notificationSoundAudio.play()
         }
@@ -47,8 +48,8 @@ export default {
         }, this.displayDuration)
       })
     },
-    addQueue(media) {
-      this.queue.push(media)
+    addQueue(media, playsound) {
+      this.queue.push({ media, playsound })
       if (this.worker) {
         return
       }
@@ -77,8 +78,8 @@ export default {
         })
       })
     },
-    playmedia(media) {
-      this.addQueue(media)
+    playmedia(media, playsound) {
+      this.addQueue(media, playsound)
     },
   },
   async mounted() {
