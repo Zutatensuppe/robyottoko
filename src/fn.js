@@ -167,6 +167,7 @@ const tryExecuteCommand = async (
   context,
   /** @type string */ msg
 ) => {
+  const promises = []
   for (const cmdDef of cmdDefs) {
     if (!mayExecute(context, cmdDef)) {
       continue
@@ -216,12 +217,17 @@ const tryExecuteCommand = async (
       })
       contextModule.saveCommands()
     }
-    const r = await cmdDef.fn(rawCmd, client, target, context, msg)
-    if (r) {
-      log.info(`${target}| * Returned: ${r}`)
-    }
-    log.info(`${target}| * Executed ${rawCmd.name} command`)
+    const p = new Promise(async (resolve) => {
+      const r = await cmdDef.fn(rawCmd, client, target, context, msg)
+      if (r) {
+        log.info(`${target}| * Returned: ${r}`)
+      }
+      log.info(`${target}| * Executed ${rawCmd.name} command`)
+      resolve()
+    })
+    promises.push(p)
   }
+  await Promise.all(promises)
 }
 
 async function replaceAsync(
