@@ -3,3 +3,6 @@
 .square { display: inline-block; padding: 1px; border: solid 2px #ccc; cursor: pointer; }
 .square .square-inner { display: inline-block; width: 20px; height: 20px; margin: 1px; }
 .square input { display: none; }
+
+.preview { width: 250px; }
+.preview img { width: 100%; }

@@ -25,6 +25,7 @@ export default {
 
       drawUrl: '',
       allImages: [],
+      hoverFavorite: '',
     }
   },
   watch: {
@@ -136,7 +137,12 @@ export default {
           </td>
         </tr>
         <tr>
-          <td><code>settings.favorites</code></td>
+          <td>
+            <code>settings.favorites</code>
+            <div class="preview">
+              <img v-if="hoverFavorite" :src="hoverFavorite" />
+            </div>
+          </td>
           <td>
             <img
               :src="url"
@@ -145,7 +151,10 @@ export default {
               width="50"
               height="50"
               :style="{'border': settings.favorites.includes(url) ? 'solid 2px black' : 'solid 2px transparent'}"
-              @click="toggleFavorite(idx)" />
+              @click="toggleFavorite(idx)"
+              @mouseover="hoverFavorite=url"
+              @mouseleave="hoverFavorite=''"
+              class="thumbnail" />
           </td>
           <td>
             The favorite images will always be displayed in the gallery in the draw widget.
