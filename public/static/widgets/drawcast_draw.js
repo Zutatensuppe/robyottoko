@@ -117,8 +117,7 @@ export default {
       <span class="image favorite" v-for="(img,idx) in favorites" :key="idx" @click="modify" title="This drawing was favorited by the streamer. ⭐">
         <img :src="img" />
         <i class="fa fa-star"></i>
-      </span>
-      <span class="image" v-for="(img,idx) in nonfavorites" :key="idx" @click="modify">
+      </span><span class="image" v-for="(img,idx) in nonfavorites" :key="idx" @click="modify">
         <img :src="img" />
       </span>
     </div>
