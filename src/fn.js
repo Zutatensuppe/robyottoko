@@ -310,6 +310,24 @@ const doReplacements = async (
         return encodeURIComponent(await doReplacements(m1, command))
       },
     },
+    {
+      regex: /\$calc\((\d+)([*/+-])(\d+)\)/g,
+      replacer: (m0, arg1, op, arg2) => {
+        arg1 = parseInt(arg1, 10)
+        arg2 = parseInt(arg2, 10)
+        switch (op) {
+          case '+':
+            return arg1 + arg2
+          case '-':
+            return arg1 - arg2
+          case '/':
+            return arg1 / arg2
+          case '*':
+            return arg1 * arg2
+        }
+        return ''
+      },
+    },
   ]
   let replaced = text
   let orig

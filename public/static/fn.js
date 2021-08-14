@@ -129,7 +129,10 @@ const doDummyReplacements = (text, str) => {
     {
       regex: /\$([a-z][a-z0-9]*)(?!\()/g,
       replacer: (m0, m1) => {
-        return str
+        switch (m1) {
+          case 'args': str
+        }
+        return m0
       }
     },
     {
@@ -150,11 +153,21 @@ const doDummyReplacements = (text, str) => {
         return str
       },
     },
+    {
+      regex: /\$calc\((\d+)([*/+-])(\d+)\)/g,
+      replacer: (m0, arg1, op, arg2) => {
+        return str
+      }
+    }
   ]
   let replaced = text
-  for (let replace of replaces) {
-    replaced = replaced.replace(replace.regex, replace.replacer)
-  }
+  let orig
+  do {
+    orig = replaced
+    for (let replace of replaces) {
+      replaced = replaced.replace(replace.regex, replace.replacer)
+    }
+  } while (orig !== replaced)
   return replaced
 }
 
