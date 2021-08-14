@@ -110,11 +110,17 @@ export default {
     {{customDescription}}
   </div>
 
-  <div id="gallery" v-if="images.length > 0">
+  <div id="gallery" v-if="favorites.length || nonfavorites.length">
     <div>Gallery: <input type="button" @click="images=[]" value="Clear gallery"/></div>
     <div>
       Click a drawing to start a new one from it: <br />
-      <img v-for="(img,idx) in images" :src="img" :key="idx" @click="modify" />
+      <span class="image favorite" v-for="(img,idx) in favorites" :key="idx" @click="modify" title="This drawing was favorited by the streamer. ⭐">
+        <img :src="img" />
+        <i class="fa fa-star"></i>
+      </span>
+      <span class="image" v-for="(img,idx) in nonfavorites" :key="idx" @click="modify">
+        <img :src="img" />
+      </span>
     </div>
   </div>
 </div>`,
@@ -127,12 +133,13 @@ export default {
       palette: ['#000000'],
 
       images: [],
+      favorites: [],
 
       color: '#000000',
       sampleColor: '',
 
       tool: 'pen', // 'pen'|'eraser'|'color-sampler'
-      sizes: [1,2,5,10,30,60,100],
+      sizes: [1, 2, 5, 10, 30, 60, 100],
       size: 5,
       canvas: null,
       ctx: null,
@@ -150,22 +157,25 @@ export default {
     }
   },
   computed: {
-    canvasClasses () {
+    nonfavorites() {
+      return this.images.filter(url => !this.favorites.includes(url))
+    },
+    canvasClasses() {
       const canvasBg = this.opts.canvasBg || 'transparent'
       if (canvasBg === 'white') {
         return ['bg-white']
       }
       return ['bg-transparent']
     },
-    halfSize () {
-      return Math.round(this.size/2)
+    halfSize() {
+      return Math.round(this.size / 2)
     },
-    styles () {
+    styles() {
       return {
         cursor: this.cursor,
       }
     },
-    cursor () {
+    cursor() {
       const c = document.createElement('canvas')
       const ctx = c.getContext('2d')
       if (this.tool === 'color-sampler') {
@@ -189,11 +199,11 @@ export default {
     },
   },
   methods: {
-    opt (option, value) {
+    opt(option, value) {
       this.opts[option] = value
       window.localStorage.setItem('drawcastOpts', JSON.stringify(this.opts))
     },
-    async modify (ev) {
+    async modify(ev) {
       this.img(ev.target)
       this.stack = []
       this.currentPath = []
@@ -202,7 +212,7 @@ export default {
         data: await createImageBitmap(ev.target),
       })
     },
-    undo () {
+    undo() {
       this.stack.pop()
       this.clear()
       const stack = this.stack.slice()
@@ -222,14 +232,14 @@ export default {
         this.currentPath = []
       })
     },
-    img (imageObject) {
+    img(imageObject) {
       this.clear()
       const tmp = this.ctx.globalCompositeOperation
       this.ctx.globalCompositeOperation = 'source-over'
       this.ctx.drawImage(imageObject, 0, 0)
       this.ctx.globalCompositeOperation = tmp
     },
-    drawPathPart (obj) {
+    drawPathPart(obj) {
       this.currentPath.push(obj)
       const { pts, color, tool, size, halfSize } = obj
       if (pts.length === 0) {
@@ -262,7 +272,7 @@ export default {
       this.ctx.closePath()
       this.ctx.stroke()
     },
-    redraw (...pts) {
+    redraw(...pts) {
       this.drawPathPart({
         pts,
         tool: this.tool,
@@ -272,13 +282,13 @@ export default {
       })
     },
 
-    cancelDraw (e) {
-      this.stack.push({type: 'path', data: this.currentPath})
+    cancelDraw(e) {
+      this.stack.push({ type: 'path', data: this.currentPath })
       this.currentPath = []
       this.last = null
     },
 
-    startDraw (pt) {
+    startDraw(pt) {
       if (this.tool === 'color-sampler') {
         this.color = this.getColor(pt)
         return
@@ -288,7 +298,7 @@ export default {
       this.last = cur
     },
 
-    continueDraw (pt) {
+    continueDraw(pt) {
       if (this.tool === 'color-sampler') {
         this.sampleColor = this.getColor(pt)
       }
@@ -300,39 +310,41 @@ export default {
       this.last = cur
     },
 
-    touchstart (e) {
+    touchstart(e) {
       e.preventDefault()
       this.startDraw(touchPoint(e))
     },
-    mousedown (e) {
+    mousedown(e) {
       this.startDraw(mousePoint(e))
     },
 
-    touchmove (e) {
+    touchmove(e) {
       e.preventDefault()
       this.continueDraw(touchPoint(e))
     },
-    mousemove (e) {
+    mousemove(e) {
       this.continueDraw(mousePoint(e))
     },
 
-    clear () {
+    clear() {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     },
-    clearClick () {
+    clearClick() {
       this.clear()
       this.stack = []
       this.currentPath = []
     },
-    submitImage () {
+    submitImage() {
       if (this.submitConfirm && !confirm(this.submitConfirm)) {
         return
       }
-      this.ws.send(JSON.stringify({event: 'post', data: {
-        img: this.canvas.toDataURL(),
-      }}))
+      this.ws.send(JSON.stringify({
+        event: 'post', data: {
+          img: this.canvas.toDataURL(),
+        }
+      }))
     },
-    getColor (pt) {
+    getColor(pt) {
       const [r, g, b, a] = this.ctx.getImageData(pt.x, pt.y, 1, 1).data
       // when selecting transparent color, instead use first color in palette
       return a ? `rgb(${r},${g},${b})` : this.palette[0]
@@ -354,6 +366,7 @@ export default {
       this.canvasHeight = data.settings.canvasHeight
       this.customDescription = data.settings.customDescription || ''
       this.palette = data.settings.palette || this.palette
+      this.favorites = data.settings.favorites
       this.color = this.palette[0]
       this.images = data.images
     })

@@ -3,6 +3,7 @@ import Upload from '../components/upload.js'
 import Player from '../components/player.js'
 import VolumeSlider from '../components/volume-slider.js'
 import WsClient from '../WsClient.js'
+import xhr from '../xhr.js'
 
 export default {
   components: {
@@ -23,6 +24,7 @@ export default {
       ws: null,
 
       drawUrl: '',
+      allImages: [],
     }
   },
   watch: {
@@ -133,6 +135,22 @@ export default {
             Note: Not played in drawing window, only in widget.
           </td>
         </tr>
+        <tr>
+          <td><code>settings.favorites</code></td>
+          <td>
+            <img
+              :src="url"
+              v-for="(url,idx) in allImages"
+              :key="idx"
+              width="50"
+              height="50"
+              :style="{'border': settings.favorites.includes(url) ? 'solid 2px black' : 'solid 2px transparent'}"
+              @click="toggleFavorite(idx)" />
+          </td>
+          <td>
+            The favorite images will always be displayed in the gallery in the draw widget.
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -147,6 +165,14 @@ export default {
     },
   },
   methods: {
+    toggleFavorite(idx) {
+      const url = this.allImages[idx]
+      if (this.settings.favorites.includes(url)) {
+        this.settings.favorites = this.settings.favorites.filter(u => u !== url)
+      } else {
+        this.settings.favorites.push(url)
+      }
+    },
     soundUploaded(file) {
       this.settings.notificationSound = {
         filename: file.originalname,
@@ -167,6 +193,7 @@ export default {
           displayLatestForever: this.settings.displayLatestForever,
           displayLatestAutomatically: this.settings.displayLatestAutomatically,
           notificationSound: this.settings.notificationSound,
+          favorites: this.settings.favorites,
         }
       })
     },
@@ -180,11 +207,14 @@ export default {
       this.conf.token
     )
 
-    this.ws.onMessage('init', (data) => {
+    this.ws.onMessage('init', async (data) => {
       this.settings = data.settings
       this.defaultSettings = data.defaultSettings
       this.unchangedJson = JSON.stringify(data.settings)
       this.drawUrl = data.drawUrl
+
+      const res = await xhr.get('/drawcast/all-images/', {})
+      this.allImages = await res.json()
     })
     this.ws.connect()
   }

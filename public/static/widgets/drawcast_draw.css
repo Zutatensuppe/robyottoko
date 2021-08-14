@@ -1,3 +1,5 @@
+@import "../font-awesome-4.7.0/css/font-awesome.min.css";
+
 body, input, button {
   font-family: monospace;
 }
@@ -47,7 +49,26 @@ button:active {
 
 #gallery { margin-top: 1em; }
 #gallery div { margin-bottom: 1em; }
-#gallery img { width: 200px; border: solid 1px black; margin: 0 .5em .5em 0; cursor: pointer; }
+#gallery .image {
+  width: 200px;
+  border: solid 1px black;
+  margin: 0 .5em .5em 0;
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+}
+#gallery .image.favorite {
+  border: solid 1px gold;
+}
+#gallery .image.favorite i {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: gold;
+}
+#gallery .image img {
+  width: 100%;
+}
 
 .controls td { vertical-align: top; }
 .controls .buttons { margin-left: 1em; }

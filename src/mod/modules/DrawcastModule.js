@@ -46,23 +46,27 @@ class DrawcastModule {
       displayLatestForever: false,
       displayLatestAutomatically: false,
       notificationSound: null,
+      favorites: [],
     }
     this.reinit()
 
+    this.images = this.loadAllImages().slice(0, 20)
+  }
+
+  loadAllImages() {
     try {
       // todo: probably better to store latest x images in db
       const rel = `/uploads/drawcast/${this.user.id}`
       const path = `./data${rel}`
-      this.images = fs.readdirSync(path)
+      return fs.readdirSync(path)
         .map((name) => ({
           name: name,
           time: fs.statSync(path + '/' + name).mtime.getTime()
         }))
         .sort((a, b) => b.time - a.time)
         .map((v) => `${rel}/${v.name}`)
-        .slice(0, 20)
     } catch (e) {
-      this.images = []
+      return []
     }
   }
 
@@ -88,6 +92,9 @@ class DrawcastModule {
     }
     if (!data.settings.displayLatestAutomatically) {
       data.settings.displayLatestAutomatically = this.defaultSettings.displayLatestAutomatically
+    }
+    if (!data.settings.favorites) {
+      data.settings.favorites = []
     }
     this.data = data
   }
@@ -131,6 +138,10 @@ class DrawcastModule {
               token: req.cookies['x-token'],
             },
           }))
+        },
+        '/drawcast/all-images/': async (req, res, next) => {
+          const images = this.loadAllImages()
+          res.send(images)
         },
       },
     }
