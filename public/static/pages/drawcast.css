@@ -6,3 +6,11 @@
 
 .preview { width: 250px; }
 .preview img { width: 100%; }
+
+.favorites-select img {
+  border: solid 1px transparent;
+}
+.is-favorited,
+.favorites-select img.is-favorited {
+  border: solid 1px black;
+}

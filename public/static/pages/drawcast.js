@@ -24,8 +24,14 @@ export default {
       ws: null,
 
       drawUrl: '',
-      allImages: [],
-      hoverFavorite: '',
+      favoriteSelection: {
+        hovered: '',
+        items: [],
+        pagination: {
+          page: 1,
+          perPage: 20,
+        },
+      },
     }
   },
   watch: {
@@ -140,24 +146,52 @@ export default {
           <td>
             <code>settings.favorites</code>
             <div class="preview">
-              <img v-if="hoverFavorite" :src="hoverFavorite" />
+              <img v-if="favoriteSelection.hovered" :src="favoriteSelection.hovered" />
             </div>
           </td>
           <td>
-            <img
-              :src="url"
-              v-for="(url,idx) in allImages"
-              :key="idx"
-              width="50"
-              height="50"
-              :style="{'border': settings.favorites.includes(url) ? 'solid 2px black' : 'solid 2px transparent'}"
-              @click="toggleFavorite(idx)"
-              @mouseover="hoverFavorite=url"
-              @mouseleave="hoverFavorite=''"
-              class="thumbnail" />
+            <div>Currently selected favorites:</div>
+            <div class="favorites">
+              <img
+                :src="url"
+                v-for="(url,idx) in settings.favorites"
+                :key="idx"
+                width="50"
+                height="50"
+                @click="toggleFavorite(url)"
+                @mouseover="favoriteSelection.hovered=url"
+                @mouseleave="favoriteSelection.hovered=''"
+                class="thumbnail is-favorited mr-1" />
+            </div>
+
+            <div class="mt-2">Select favorites:</div>
+            <div class="favorites-select">
+              <img
+                :src="url"
+                v-for="(url,idx) in currentFavoriteSelectionItems"
+                :key="idx"
+                width="50"
+                height="50"
+                @click="toggleFavorite(url)"
+                @mouseover="favoriteSelection.hovered=url"
+                @mouseleave="favoriteSelection.hovered=''"
+                class="thumbnail mr-1"
+                :class="{'is-favorited': settings.favorites.includes(url)}"
+                />
+            </div>
+            <span
+              class="button is-small"
+              @click="favoriteSelection.pagination.page = favoriteSelection.pagination.page - 1"
+              :disabled="favoriteSelection.pagination.page > 1 ? null : true"
+            >Prev</span>
+            <span
+              class="button is-small"
+              @click="favoriteSelection.pagination.page = favoriteSelection.pagination.page + 1"
+              :disabled="favoriteSelection.pagination.page < favoriteSelectionTotalPages ? null : true"
+            >Next</span>
           </td>
           <td>
-            The favorite images will always be displayed in the gallery in the draw widget.
+            The favorites will always be displayed at the beginning of the gallery in the draw widget.
           </td>
         </tr>
       </tbody>
@@ -172,10 +206,20 @@ export default {
     receiveUrl() {
       return `${location.protocol}//${location.host}/widget/drawcast_receive/${this.conf.widgetToken}/`
     },
+    favoriteSelectionTotalPages() {
+      return Math.floor(this.favoriteSelection.items.length / this.favoriteSelection.pagination.perPage)
+        + (this.favoriteSelection.items.length % this.favoriteSelection.pagination.perPage === 0 ? 0 : 1)
+    },
+    currentFavoriteSelectionItems() {
+      const start = (this.favoriteSelection.pagination.page - 1) * this.favoriteSelection.pagination.perPage
+      return this.favoriteSelection.items.slice(
+        start,
+        start + this.favoriteSelection.pagination.perPage,
+      )
+    },
   },
   methods: {
-    toggleFavorite(idx) {
-      const url = this.allImages[idx]
+    toggleFavorite(url) {
       if (this.settings.favorites.includes(url)) {
         this.settings.favorites = this.settings.favorites.filter(u => u !== url)
       } else {
@@ -223,7 +267,7 @@ export default {
       this.drawUrl = data.drawUrl
 
       const res = await xhr.get('/drawcast/all-images/', {})
-      this.allImages = await res.json()
+      this.favoriteSelection.items = await res.json()
     })
     this.ws.connect()
   }
