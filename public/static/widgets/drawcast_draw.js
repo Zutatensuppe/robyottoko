@@ -59,7 +59,6 @@ export default {
     <table class="controls">
       <tr>
         <td>
-          {{color}}
           <label id="current-color">
             <input type="color" v-model="color" />
             <span class="square square-big" :class="{active: tool==='pen'}">
