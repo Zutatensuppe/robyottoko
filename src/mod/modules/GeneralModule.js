@@ -182,7 +182,10 @@ class GeneralModule {
   wsdata(eventName) {
     return {
       event: eventName,
-      data: this.data
+      data: {
+        commands: this.data.commands,
+        globalVariables: this.variables.all(),
+      },
     };
   }
 

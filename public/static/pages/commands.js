@@ -29,6 +29,7 @@ export default {
   data() {
     return {
       commands: [],
+      globalVariables: [],
       ws: null,
 
       editIdx: null,
@@ -81,6 +82,7 @@ export default {
   <div id="main" ref="main">
     <command-edit
       v-if="editCommand"
+      :globalVariables="globalVariables"
       :modelValue="editCommand"
       :mode="editIdx >= commands.length ? 'create' : 'edit'"
       @update:modelValue="editedCommand"
@@ -246,6 +248,7 @@ export default {
     )
     this.ws.onMessage('init', (data) => {
       this.commands = data.commands
+      this.globalVariables = data.globalVariables
     })
     this.ws.connect()
   }

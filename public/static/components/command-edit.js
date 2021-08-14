@@ -25,6 +25,10 @@ export default {
       type: String,
       required: true,
     },
+    globalVariables: {
+      type: Array,
+      required: true,
+    },
   },
   emits: [
     'update:modelValue',
@@ -34,6 +38,7 @@ export default {
     return {
       item: null,
       newtrigger: 'command',
+      variableChangeFocusIdx: -1,
     }
   },
   mounted() {
@@ -287,7 +292,27 @@ export default {
                   <tbody>
                     <tr v-for="(v,idx) in item.variableChanges">
                       <td>
-                        <input type="text" class="input is-small" v-model="v.name" />
+                        <div class="dropdown is-active is-up">
+                          <div class="dropdown-trigger">
+                            <input
+                              type="text"
+                              class="input is-small"
+                              v-model="v.name"
+                              @focus="variableChangeFocusIdx = idx"
+                              @blur="onVarChangeInputBlur" />
+                          </div>
+                          <div class="dropdown-menu" id="dropdown-menu" role="menu" v-if="variableChangeFocusIdx === idx">
+                            <div class="dropdown-content">
+                              <a
+                                class="dropdown-item"
+                                v-for="autocompleteVar in autocompletableVariables(v.name)"
+                                @click="v.name = autocompleteVar.var.name"
+                              >
+                                {{autocompleteVar.var.name}} ({{autocompleteVar.type}}, <code>{{autocompleteVar.var.value}}</code>)
+                              </a>
+                            </div>
+                          </div>
+                        </div>
                       </td>
                       <td>
                         <div class="select is-small">
@@ -393,6 +418,28 @@ export default {
     },
     rmtrigger(idx) {
       this.item.triggers = this.item.triggers.filter((val, index) => index !== idx)
+    },
+    autocompletableVariables(/** @type string */ start) {
+      const variables = this.item.variables.slice().map(localVar => {
+        return {
+          var: localVar,
+          type: 'local',
+        }
+      })
+      this.globalVariables.forEach(globalVar => {
+        if (!variables.find(localVar => localVar.var.name === globalVar.name)) {
+          variables.push({
+            var: globalVar,
+            type: 'global',
+          })
+        }
+      })
+      return variables.filter(v => v.var.name.startsWith(start)).slice(0, 10)
+    },
+    onVarChangeInputBlur() {
+      setTimeout(() => {
+        this.variableChangeFocusIdx = -1
+      }, 50)
     },
   },
   computed: {
