@@ -59,6 +59,7 @@ export default {
     <table class="controls">
       <tr>
         <td>
+          {{color}}
           <label id="current-color">
             <input type="color" v-model="color" />
             <span class="square square-big" :class="{active: tool==='pen'}">
@@ -345,8 +346,10 @@ export default {
     },
     getColor(pt) {
       const [r, g, b, a] = this.ctx.getImageData(pt.x, pt.y, 1, 1).data
+      const pad = (v, p) => p.substr(0, p.length - v.length) + v
+      const hex = (v) => pad((v).toString(16), '00')
       // when selecting transparent color, instead use first color in palette
-      return a ? `rgb(${r},${g},${b})` : this.palette[0]
+      return a ? `#${hex(r)}${hex(g)}${hex(b)}` : this.palette[0]
     },
   },
   async mounted() {
