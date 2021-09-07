@@ -1,1 +1,3 @@
 @import "../style-pages.css";
+
+.table .tag { cursor: pointer; }

@@ -35,8 +35,19 @@ class SongrequestModule {
     this.name = 'sr'
     this.data = this.storage.load(this.name, {
       volume: 100,
+      filter: {
+        tag: '',
+      },
       playlist: [],
       stacks: {},
+    })
+
+    // make sure items have correct structure
+    // needed by rest of the code
+    // TODO: maybe use same code as in save function
+    this.data.playlist = this.data.playlist.map(item => {
+      item.tags = item.tags || []
+      return item
     })
   }
 
@@ -109,8 +120,10 @@ class SongrequestModule {
   }
 
   save() {
+    console.log(this.data.filter)
     this.storage.save(this.name, {
       volume: this.data.volume,
+      filter: this.data.filter,
       playlist: this.data.playlist.map(item => ({
         id: item.id,
         yt: item.yt,
@@ -121,6 +134,7 @@ class SongrequestModule {
         skips: item.skips || 0, // hard skips
         goods: item.goods || 0,
         bads: item.bads || 0,
+        tags: item.tags || [],
       })),
       stacks: this.data.stacks,
     })
@@ -132,6 +146,7 @@ class SongrequestModule {
       data: {
         // ommitting youtube cache data and stacks
         volume: this.data.volume,
+        filter: this.data.filter,
         playlist: this.data.playlist,
       }
     };
@@ -189,6 +204,7 @@ class SongrequestModule {
           case 'badIdx': this.badIdx(...args); break;
           case 'sr': this.request(...args); break;
           case 'move': this.move(...args); break;
+          case 'rmtag': this.rmTag(...args); break;
         }
       },
     }
@@ -223,7 +239,17 @@ class SongrequestModule {
     return { item, addType }
   }
 
-  incStat(stat, idx = 0) {
+  determineFirstIndex() {
+    return this.data.playlist.findIndex(item => this.data.filter.tag === '' || item.tags.includes(this.data.filter.tag))
+  }
+
+  incStat(stat, idx = -1) {
+    if (idx === -1) {
+      idx = this.determineFirstIndex()
+    }
+    if (idx === -1) {
+      return
+    }
     if (this.data.playlist.length > idx) {
       this.data.playlist[idx][stat]++
     }
@@ -305,6 +331,44 @@ class SongrequestModule {
     this.incStat('goods')
     this.save()
     this.updateClients('like')
+  }
+
+  filter(filter) {
+    this.data.filter = filter
+    this.save()
+    this.updateClients('filter')
+  }
+
+  addTag(tag, idx = -1) {
+    if (idx === -1) {
+      idx = this.determineFirstIndex()
+    }
+    if (idx === -1) {
+      return
+    }
+    if (this.data.playlist.length > idx) {
+      if (!this.data.playlist[idx].tags.includes(tag)) {
+        this.data.playlist[idx].tags.push(tag)
+        this.save()
+        this.updateClients('addTag')
+      }
+    }
+  }
+
+  rmTag(tag, idx = -1) {
+    if (idx === -1) {
+      idx = this.determineFirstIndex()
+    }
+    if (idx === -1) {
+      return
+    }
+    if (this.data.playlist.length > idx) {
+      if (this.data.playlist[idx].tags.includes(tag)) {
+        this.data.playlist[idx].tags = this.data.playlist[idx].tags.filter(t => t !== tag)
+        this.save()
+        this.updateClients('rmTag')
+      }
+    }
   }
 
   volume(vol) {
@@ -541,6 +605,34 @@ class SongrequestModule {
           return
       }
     }
+    if (command.args[0] === 'tag' || command.args[0] === 'addtag') {
+      if (fn.isMod(context)) {
+        const tag = command.args.slice(1).join(' ')
+        this.addTag(tag)
+        say(`Added tag "${tag}"`)
+      }
+      return
+    }
+    if (command.args[0] === 'rmtag') {
+      if (fn.isMod(context)) {
+        const tag = command.args.slice(1).join(' ')
+        this.rmTag(tag)
+        say(`Removed tag "${tag}"`)
+      }
+      return
+    }
+    if (command.args[0] === 'filter') {
+      if (fn.isMod(context)) {
+        const tag = command.args.slice(1).join(' ')
+        this.filter({ tag })
+        if (tag !== '') {
+          say(`Playing only songs tagged with "${tag}"`)
+        } else {
+          say(`Playing all songs`)
+        }
+      }
+      return
+    }
 
     const str = command.args.join(' ')
     const { item, addType } = await this.add(str, context['display-name'])
@@ -604,6 +696,7 @@ class SongrequestModule {
       skips: 0,
       goods: 0,
       bads: 0,
+      tags: [],
     }
 
     const insertIndex = this.findInsertIndex()

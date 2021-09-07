@@ -18,6 +18,7 @@ export default {
       playerVisible: false,
       helpVisible: false,
       volume: 100,
+      filter: { tag: '' },
       playlist: [],
       ws: null,
       srinput: '',
@@ -35,6 +36,7 @@ export default {
       // id with each request and see if WE sent the request or another)
       volumeChanges: [],
 
+      hideFilteredOut: false,
       importVisible: false,
       importPlaylist: '',
     }
@@ -211,6 +213,10 @@ export default {
       </table>
     </div>
     <div id="playlist" class="table-container" v-if="!helpVisible">
+      <div>
+        <label><input class="checkbox" type="checkbox" v-model="hideFilteredOut" /> Hide filtered out</label>
+      </div>
+      <div>Filter: <span class="tag" v-if="filter.tag">{{ filter.tag }}</span><span v-else>-</span></div>
       <table class="table is-striped" v-if="playlist.length > 0">
         <thead>
           <tr>
@@ -226,17 +232,32 @@ export default {
           </tr>
         </thead>
         <draggable :value="playlist" @end="dragEnd" tag="tbody" handle=".handle">
-          <tr v-for="(item, idx) in playlist">
+          <tr v-for="(item, idx) in playlist" v-if="!hideFilteredOut || !isFilteredOut(item)">
             <td class="pt-4 handle">
               <i class="fa fa-arrows"></i>
             </td>
             <td>{{idx+1}}</td>
-            <td><button v-if="idx !== 0" class="button is-small" @click="sendCtrl('playIdx', [idx])" title="Play"><i class="fa fa-play"/></button></td>
+            <td><button
+              v-if="idx !== firstIndex"
+              class="button is-small"
+              :disabled="isFilteredOut(item) ? true : null"
+              @click="sendCtrl('playIdx', [idx])"
+              title="Play"><i class="fa fa-play"/></button></td>
             <td>
               <a :href="'https://www.youtube.com/watch?v=' + item.yt" target="_blank">
                   {{ item.title || item.yt }}
                   <i class="fa fa-external-link"/>
               </a>
+              <div v-if="item.tags.length > 0">
+                <span
+                  v-for="(tag, idx2) in item.tags"
+                  :key="idx"
+                  class="tag"
+                  @click="sendCtrl('rmtag', [tag, idx])"
+                >
+                  {{ tag }} <i class="fa fa-remove ml-1" />
+                </span>
+              </div>
             </td>
             <td>{{ item.user }}</td>
             <td>{{ item.plays }}x</td>
@@ -253,20 +274,37 @@ export default {
 `,
   watch: {
     playlist: function (newVal, oldVal) {
-      if (newVal.length === 0) {
+      if (!newVal.find(item => !this.isFilteredOut(item))) {
         this.player.stop()
       }
-    }
+    },
+    filter: function (newVal, oldVal) {
+      if (!this.playlist.find(item => !this.isFilteredOut(item))) {
+        this.player.stop()
+      }
+    },
   },
   computed: {
     player() {
       return this.$refs.youtube
     },
+    filteredPlaylist() {
+      if (this.filter.tag === '') {
+        return this.playlist
+      }
+      return this.playlist.filter(item => item.tags.includes(this.filter.tag))
+    },
+    firstIndex() {
+      if (this.filter.tag === '') {
+        return 0
+      }
+      return this.playlist.findIndex(item => item.tags.includes(this.filter.tag))
+    },
     item() {
-      return this.playlist[0]
+      return this.filteredPlaylist[0]
     },
     hasItems() {
-      return this.playlist.length !== 0
+      return this.filteredPlaylist.length !== 0
     },
     playerstyle() {
       return this.playerVisible ? '' : 'width:0;height:0;padding:0;margin-bottom:0;'
@@ -288,6 +326,9 @@ export default {
     },
   },
   methods: {
+    isFilteredOut(item) {
+      return this.filter.tag !== '' && !item.tags.includes(this.filter.tag)
+    },
     async doImportPlaylist() {
       const res = await xhr.post(this.importPlaylistUrl, {
         headers: {
@@ -396,19 +437,40 @@ export default {
     })
     this.ws.onMessage(['onEnded', 'prev', 'skip', 'remove', 'clear', 'move'], (data) => {
       this.volume = data.volume
-      const oldId = this.playlist.length > 0 ? this.playlist[0].id : null
-      const newId = data.playlist.length > 0 ? data.playlist[0].id : null
+      const oldId = this.filteredPlaylist.length > 0 ? this.filteredPlaylist[0].id : null
+      this.filter = data.filter
       this.playlist = data.playlist
+      const newId = this.filteredPlaylist.length > 0 ? this.filteredPlaylist[0].id : null
       if (oldId !== newId) {
         this.play()
       }
     })
-    this.ws.onMessage(['dislike', 'like', 'playIdx', 'resetStats', 'shuffle'], (data) => {
+    this.ws.onMessage(['filter'], (data) => {
       this.volume = data.volume
+      const oldId = this.filteredPlaylist.length > 0 ? this.filteredPlaylist[0].id : null
+      this.filter = data.filter
+      this.playlist = data.playlist
+      // play only if old id is not in new playlist
+      if (!this.filteredPlaylist.find(item => item.id === oldId)) {
+        this.play()
+      }
+    })
+    this.ws.onMessage([
+      'dislike',
+      'like',
+      'playIdx',
+      'resetStats',
+      'shuffle',
+      'addTag',
+      'rmTag',
+    ], (data) => {
+      this.volume = data.volume
+      this.filter = data.filter
       this.playlist = data.playlist
     })
     this.ws.onMessage(['add', 'init'], (data) => {
       this.volume = data.volume
+      this.filter = data.filter
       this.playlist = data.playlist
       if (!this.player.playing()) {
         this.play()
