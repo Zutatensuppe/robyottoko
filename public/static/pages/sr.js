@@ -36,7 +36,9 @@ export default {
       // id with each request and see if WE sent the request or another)
       volumeChanges: [],
 
-      hideFilteredOut: false,
+      filterTagInput: '',
+      tagInput: [],
+      hideFilteredOut: true,
       importVisible: false,
       importPlaylist: '',
     }
@@ -234,10 +236,17 @@ export default {
       </table>
     </div>
     <div id="playlist" class="table-container" v-if="!helpVisible">
-      <div>
-        <label><input class="checkbox" type="checkbox" v-model="hideFilteredOut" /> Hide filtered out</label>
+      <div class="filters">
+        <div class="currentfilter">
+          <div class="mr-1 pt-1">Filter: </div>
+          <span class="tag mr-1" v-if="filter.tag" @click="applyFilter('')">{{ filter.tag }} <i class="fa fa-remove ml-1" /></span>
+          <div v-else class="field has-addons mr-1">
+            <div class="control"><input class="input is-small filter-tag-input" type="text" v-model="filterTagInput" @keyup.enter="applyFilter(filterTagInput)" /></div>
+            <div class="control"><span class="button is-small" @click="applyFilter(filterTagInput)">Apply filter</span></span></div>
+          </div>
+          <label class="pt-1"><input class="checkbox" type="checkbox" v-model="hideFilteredOut" /> Hide filtered out</label>
+        </div>
       </div>
-      <div>Filter: <span class="tag" v-if="filter.tag">{{ filter.tag }}</span><span v-else>-</span></div>
       <table class="table is-striped" v-if="playlist.length > 0">
         <thead>
           <tr>
@@ -278,6 +287,10 @@ export default {
                 >
                   {{ tag }} <i class="fa fa-remove ml-1" />
                 </span>
+              </div>
+              <div class="field has-addons">
+                <div class="control"><input class="input is-small filter-tag-input" type="text" v-model="tagInput[idx]" @keyup.enter="sendCtrl('addtag', [tagInput[idx], idx]);tagInput[idx] = '';" /></div>
+                <div class="control"><span class="button is-small" :disabled="tagInput[idx] ? null : true" @click="sendCtrl('addtag', [tagInput[idx], idx]);tagInput[idx] = '';">Add tag</span></span></div>
               </div>
             </td>
             <td>{{ item.user }}</td>
@@ -347,6 +360,9 @@ export default {
     },
   },
   methods: {
+    applyFilter(tag) {
+      this.sendCtrl('filter', [{ tag }])
+    },
     isFilteredOut(item) {
       return this.filter.tag !== '' && !item.tags.includes(this.filter.tag)
     },

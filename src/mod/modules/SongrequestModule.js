@@ -205,6 +205,8 @@ class SongrequestModule {
           case 'sr': this.request(...args); break;
           case 'move': this.move(...args); break;
           case 'rmtag': this.rmTag(...args); break;
+          case 'addtag': this.addTag(...args); break;
+          case 'filter': this.filter(...args); break;
         }
       },
     }
