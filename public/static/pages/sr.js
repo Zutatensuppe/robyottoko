@@ -209,6 +209,27 @@ export default {
             <td class="positive">✔</td>
             <td>Stop looping the current song</td>
           </tr>
+          <tr>
+            <td><code>!sr tag &lt;TAG&gt;</code></td>
+            <td class="negative">✖</td>
+            <td class="positive">✔</td>
+            <td>Add tag <code>&lt;TAG&gt;</code> to the current song</td>
+          </tr>
+          <tr>
+            <td><code>!sr rmtag &lt;TAG&gt;</code></td>
+            <td class="negative">✖</td>
+            <td class="positive">✔</td>
+            <td>Remove tag <code>&lt;TAG&gt;</code> from the current song</td>
+          </tr>
+          <tr>
+            <td><code>!sr filter [&lt;TAG&gt;]</code></td>
+            <td class="negative">✖</td>
+            <td class="positive">✔</td>
+            <td>
+              Play only songs with the given tag <code>&lt;TAG&gt;</code>.
+              If no tag is given, play all songs.
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
