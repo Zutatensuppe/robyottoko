@@ -37,7 +37,8 @@ export default {
       volumeChanges: [],
 
       filterTagInput: '',
-      tagInput: [],
+      tagInput: '',
+      tagInputIdx: -1,
       hideFilteredOut: true,
       importVisible: false,
       importPlaylist: '',
@@ -278,7 +279,7 @@ export default {
                   {{ item.title || item.yt }}
                   <i class="fa fa-external-link"/>
               </a>
-              <div v-if="item.tags.length > 0">
+              <div>
                 <span
                   v-for="(tag, idx2) in item.tags"
                   :key="idx"
@@ -287,10 +288,11 @@ export default {
                 >
                   {{ tag }} <i class="fa fa-remove ml-1" />
                 </span>
+                <span class="button is-small" @click="tagInputIdx = idx"><i class="fa fa-plus" /></span>
               </div>
-              <div class="field has-addons">
-                <div class="control"><input class="input is-small filter-tag-input" type="text" v-model="tagInput[idx]" @keyup.enter="sendCtrl('addtag', [tagInput[idx], idx]);tagInput[idx] = '';" /></div>
-                <div class="control"><span class="button is-small" :disabled="tagInput[idx] ? null : true" @click="sendCtrl('addtag', [tagInput[idx], idx]);tagInput[idx] = '';">Add tag</span></span></div>
+              <div class="field has-addons" v-if="tagInputIdx === idx">
+                <div class="control"><input class="input is-small filter-tag-input" type="text" v-model="tagInput" @keyup.enter="sendCtrl('addtag', [tagInput, idx]);tagInput = '';" /></div>
+                <div class="control"><span class="button is-small" :disabled="tagInput ? null : true" @click="sendCtrl('addtag', [tagInput, idx]);tagInput = '';">Add tag</span></span></div>
               </div>
             </td>
             <td>{{ item.user }}</td>
