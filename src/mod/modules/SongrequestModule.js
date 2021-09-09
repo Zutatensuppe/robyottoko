@@ -206,6 +206,7 @@ class SongrequestModule {
           case 'move': this.move(...args); break;
           case 'rmtag': this.rmTag(...args); break;
           case 'addtag': this.addTag(...args); break;
+          case 'updatetag': this.updateTag(...args); break;
           case 'filter': this.filter(...args); break;
         }
       },
@@ -352,9 +353,20 @@ class SongrequestModule {
       if (!this.data.playlist[idx].tags.includes(tag)) {
         this.data.playlist[idx].tags.push(tag)
         this.save()
-        this.updateClients('addTag')
+        this.updateClients('tags')
       }
     }
+  }
+
+  updateTag(oldTag, newTag) {
+    this.data.playlist = this.data.playlist.map(item => {
+      item.tags = [...new Set(item.tags.map(tag => {
+        return tag === oldTag ? newTag : tag
+      }))]
+      return item
+    })
+    this.save()
+    this.updateClients('tags')
   }
 
   rmTag(tag, idx = -1) {
@@ -368,7 +380,7 @@ class SongrequestModule {
       if (this.data.playlist[idx].tags.includes(tag)) {
         this.data.playlist[idx].tags = this.data.playlist[idx].tags.filter(t => t !== tag)
         this.save()
-        this.updateClients('rmTag')
+        this.updateClients('tags')
       }
     }
   }

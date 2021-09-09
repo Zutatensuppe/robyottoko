@@ -155,8 +155,7 @@ export default {
       'playIdx',
       'resetStats',
       'shuffle',
-      'addTag',
-      'rmTag',
+      'tags',
     ], (data) => {
       this.volume = data.volume
       this.filter = data.filter

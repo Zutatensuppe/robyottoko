@@ -16,12 +16,13 @@ export default {
   data() {
     return {
       playerVisible: false,
-      helpVisible: false,
       volume: 100,
       filter: { tag: '' },
       playlist: [],
       ws: null,
       srinput: '',
+
+      tab: 'playlist', // playlist|help|import|tags
 
       // hacky: list of volumeChanges initialized by self
       // volume change is a ctrl sent to server without directly
@@ -39,8 +40,11 @@ export default {
       filterTagInput: '',
       tagInput: '',
       tagInputIdx: -1,
+
+      editTag: '',
+      tagEditIdx: -1,
+
       hideFilteredOut: true,
-      importVisible: false,
       importPlaylist: '',
     }
   },
@@ -55,7 +59,6 @@ export default {
       <button class="button is-small mr-1" @click="sendCtrl('clear', [])" title="Clear"><i class="fa fa-eject mr-1"/><span class="txt"> Clear</span></button>
       <button class="button is-small mr-1" @click="sendCtrl('shuffle', [])" title="Shuffle"><i class="fa fa-random mr-1"/><span class="txt"> Shuffle</span></button>
       <button class="button is-small mr-1" @click="togglePlayer" :title="togglePlayerButtonText"><i class="fa fa-tv mr-1"/><span class="txt"> {{togglePlayerButtonText}}</span></button>
-      <button class="button is-small mr-1" @click="toggleHelp" :title="toggleHelpButtonText"><i class="fa fa-info mr-1"/><span class="txt"> {{toggleHelpButtonText}}</span></button>
 
       <div class="field has-addons mr-1">
         <div class="control has-icons-left">
@@ -70,18 +73,25 @@ export default {
       </div>
       <a class="button is-small mr-1" :href="widgetUrl" target="_blank">Open SR widget</a>
       <a class="button is-small mr-1" :href="exportPlaylistUrl" target="_blank"><i class="fa fa-download mr-1"/> <span class="txt"> Export playlist</span></a>
-      <button class="button is-small" @click="toggleImport"><i class="fa fa-upload mr-1"/> <span class="txt"> Import playlist</span></button>
     </div>
   </div>
   <div id="main" ref="main">
-    <div v-if="importVisible">
-      <textarea class="textarea" v-model="importPlaylist"></textarea>
-      <button class="button is-small" @click="doImportPlaylist">Import now</button>
-    </div>
     <div style="width: 640px; max-width: 100%;">
       <div id="player" class="video-16-9" :style="playerstyle"><youtube ref="youtube" @ended="ended"/></div>
     </div>
-    <div id="help" v-if="helpVisible">
+    <div class="tabs">
+      <ul>
+        <li :class="{'is-active': tab === 'playlist'}" @click="tab='playlist'"><a>Playlist</a></li>
+        <li :class="{'is-active': tab === 'help'}" @click="tab='help'"><a>Help</a></li>
+        <li :class="{'is-active': tab === 'tags'}" @click="tab='tags'"><a>Tags</a></li>
+        <li :class="{'is-active': tab === 'import'}" @click="tab='import'"><a>Import</a></li>
+      </ul>
+    </div>
+    <div v-if="tab === 'import'">
+      <textarea class="textarea" v-model="importPlaylist"></textarea>
+      <button class="button is-small" @click="doImportPlaylist">Import now</button>
+    </div>
+    <div id="help" v-if="tab==='help'">
       <table class="table is-striped">
         <thead>
           <tr>
@@ -236,7 +246,28 @@ export default {
         </tbody>
       </table>
     </div>
-    <div id="playlist" class="table-container" v-if="!helpVisible">
+    <div id="tags" v-if="tab==='tags'">
+      <table class="table is-striped">
+        <tr>
+          <th>Tag</th>
+          <th></th>
+          <th></th>
+        </tr>
+        <tr v-for="(tag, idx) in tags">
+          <td>
+            <input type="text" class="input is-small" v-model="editTag" @blur="tagEditIdx = -1" v-if="tagEditIdx === idx" @keyup.enter="updateTag(tag.value, editTag)" />
+            <input type="text" class="input is-small" :value="tag.value" @focus="editTag = tag.value; tagEditIdx = idx" v-else />
+          </td>
+          <td>
+            <span class="button is-small" v-if="tagEditIdx === idx" :disabled="tag.value === editTag ? true : null" @click="updateTag(tag.value, editTag)">Save</span>
+          </td>
+          <td>
+            {{tag.count}}x
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div id="playlist" class="table-container" v-if="tab === 'playlist'">
       <div class="filters">
         <div class="currentfilter">
           <div class="mr-1 pt-1">Filter: </div>
@@ -288,7 +319,7 @@ export default {
                 >
                   {{ tag }} <i class="fa fa-remove ml-1" />
                 </span>
-                <span class="button is-small" @click="tagInputIdx = idx"><i class="fa fa-plus" /></span>
+                <span class="button is-small" @click="startAddTag(idx)"><i class="fa fa-plus" /></span>
               </div>
               <div class="field has-addons" v-if="tagInputIdx === idx">
                 <div class="control"><input class="input is-small filter-tag-input" type="text" v-model="tagInput" @keyup.enter="sendCtrl('addtag', [tagInput, idx]);tagInput = '';" /></div>
@@ -321,6 +352,20 @@ export default {
     },
   },
   computed: {
+    tags() {
+      const tags = []
+      this.playlist.forEach(item => {
+        item.tags.forEach(tag => {
+          const index = tags.findIndex(t => t.value === tag)
+          if (index === -1) {
+            tags.push({ value: tag, count: 1 })
+          } else {
+            tags[index].count++
+          }
+        })
+      })
+      return tags
+    },
     player() {
       return this.$refs.youtube
     },
@@ -348,9 +393,6 @@ export default {
     togglePlayerButtonText() {
       return this.playerVisible ? 'Hide Player' : 'Show Player'
     },
-    toggleHelpButtonText() {
-      return this.helpVisible ? 'Hide Help' : 'Show Help'
-    },
     importPlaylistUrl() {
       return `${location.protocol}//${location.host}/sr/import`
     },
@@ -377,7 +419,7 @@ export default {
         body: this.importPlaylist,
       })
       if (res.status === 200) {
-        this.importVisible = false
+        this.tab = 'playlist'
         this.$toasted.success('Import successful')
       } else {
         this.$toasted.error('Import failed')
@@ -392,12 +434,6 @@ export default {
       } else {
         this.player.stop()
       }
-    },
-    toggleImport() {
-      this.importVisible = !this.importVisible
-    },
-    toggleHelp() {
-      this.helpVisible = !this.helpVisible
     },
     sr() {
       if (this.srinput !== '') {
@@ -441,6 +477,19 @@ export default {
     onVolumeChange(volume) {
       this.volumeChanges.push(volume)
       this.sendCtrl('volume', [volume])
+    },
+    startAddTag(idx) {
+      this.tagInputIdx = idx
+      this.$nextTick(() => {
+        this.$el.querySelector('#playlist table .filter-tag-input').focus()
+      })
+    },
+    updateTag(oldTag, newTag) {
+      if (oldTag === newTag) {
+        return
+      }
+      this.sendCtrl('updatetag', [oldTag, newTag])
+      this.tagEditIdx = -1
     },
   },
   mounted() {
@@ -500,8 +549,7 @@ export default {
       'playIdx',
       'resetStats',
       'shuffle',
-      'addTag',
-      'rmTag',
+      'tags',
     ], (data) => {
       this.volume = data.volume
       this.filter = data.filter
