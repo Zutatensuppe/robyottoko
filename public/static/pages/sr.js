@@ -4,11 +4,357 @@ import VolumeSlider from "../components/volume-slider.js"
 import WsClient from "../WsClient.js"
 import xhr from "../xhr.js"
 
+const Help = {
+  template: `
+  <table class="table is-striped">
+    <thead>
+      <tr>
+        <th>Chat command</th>
+        <th>Viewer</th>
+        <th>Mod</th>
+        <th>Explanation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>!sr &lt;SEARCH&gt;</code></td>
+        <td class="positive">✔</td>
+        <td class="positive">✔</td>
+        <td>
+          Search for <code>&lt;SEARCH&gt;</code> at youtube (by id or by title) and queue the
+          first result in the playlist (after the first found batch of
+          unplayed songs).<br />
+          This only executes if <code>&lt;SEARCH&gt;</code> does not match one of the commands
+          below.
+        </td>
+      </tr>
+      <tr>
+        <td><code>!sr undo</code></td>
+        <td class="positive">✔</td>
+        <td class="positive">✔</td>
+        <td>Remove the song that was last added by oneself.</td>
+      </tr>
+      <tr>
+        <td><code>!sr current</code></td>
+        <td class="positive">✔</td>
+        <td class="positive">✔</td>
+        <td>Show what song is currently playing</td>
+      </tr>
+      <tr>
+        <td><code>!sr good</code></td>
+        <td class="positive">✔</td>
+        <td class="positive">✔</td>
+        <td>Vote the current song up</td>
+      </tr>
+      <tr>
+        <td><code>!sr bad</code></td>
+        <td class="positive">✔</td>
+        <td class="positive">✔</td>
+        <td>Vote the current song down</td>
+      </tr>
+      <tr>
+        <td><code>!sr stats</code></td>
+        <td class="positive">✔</td>
+        <td class="positive">✔</td>
+        <td>Show stats about the playlist</td>
+      </tr>
+      <tr>
+        <td><code>!sr stat</code></td>
+        <td class="positive">✔</td>
+        <td class="positive">✔</td>
+        <td>Alias for stats</td>
+      </tr>
+      <tr>
+        <td><code>!sr rm</code></td>
+        <td class="negative">✖</td>
+        <td class="positive">✔</td>
+        <td>Remove the current song from the playlist</td>
+      </tr>
+      <tr>
+        <td><code>!sr next</code></td>
+        <td class="negative">✖</td>
+        <td class="positive">✔</td>
+        <td>Skip to the next song</td>
+      </tr>
+      <tr>
+        <td><code>!sr prev</code></td>
+        <td class="negative">✖</td>
+        <td class="positive">✔</td>
+        <td>Skip to the previous song</td>
+      </tr>
+      <tr>
+        <td><code>!sr skip</code></td>
+        <td class="negative">✖</td>
+        <td class="positive">✔</td>
+        <td>Alias for next</td>
+      </tr>
+      <tr>
+        <td><code>!sr shuffle</code></td>
+        <td class="negative">✖</td>
+        <td class="positive">✔</td>
+        <td>
+          Shuffle the playlist (current song unaffected).
+          <br />
+          Non-played and played songs will be shuffled separately
+          and non-played songs will be put after currently playing
+          song.
+        </td>
+      </tr>
+      <tr>
+        <td><code>!sr resetStats</code></td>
+        <td class="negative">✖</td>
+        <td class="positive">✔</td>
+        <td>Reset all statistics of all songs</td>
+      </tr>
+      <tr>
+        <td><code>!sr clear</code></td>
+        <td class="negative">✖</td>
+        <td class="positive">✔</td>
+        <td>Clear the playlist</td>
+      </tr>
+      <tr>
+        <td><code>!sr pause</code></td>
+        <td class="negative">✖</td>
+        <td class="positive">✔</td>
+        <td>Pause currently playing song</td>
+      </tr>
+      <tr>
+        <td><code>!sr unpause</code></td>
+        <td class="negative">✖</td>
+        <td class="positive">✔</td>
+        <td>Unpause currently paused song</td>
+      </tr>
+      <tr>
+        <td><code>!sr loop</code></td>
+        <td class="negative">✖</td>
+        <td class="positive">✔</td>
+        <td>Loop the current song</td>
+      </tr>
+      <tr>
+        <td><code>!sr noloop</code></td>
+        <td class="negative">✖</td>
+        <td class="positive">✔</td>
+        <td>Stop looping the current song</td>
+      </tr>
+      <tr>
+        <td><code>!sr tag &lt;TAG&gt;</code></td>
+        <td class="negative">✖</td>
+        <td class="positive">✔</td>
+        <td>Add tag <code>&lt;TAG&gt;</code> to the current song</td>
+      </tr>
+      <tr>
+        <td><code>!sr rmtag &lt;TAG&gt;</code></td>
+        <td class="negative">✖</td>
+        <td class="positive">✔</td>
+        <td>Remove tag <code>&lt;TAG&gt;</code> from the current song</td>
+      </tr>
+      <tr>
+        <td><code>!sr filter [&lt;TAG&gt;]</code></td>
+        <td class="negative">✖</td>
+        <td class="positive">✔</td>
+        <td>
+          Play only songs with the given tag <code>&lt;TAG&gt;</code>.
+          If no tag is given, play all songs.
+        </td>
+      </tr>
+    </tbody>
+  </table>`
+}
+
+const PlaylistEditor = {
+  props: {
+    playlist: Array,
+  },
+  data() {
+    return {
+      hideFilteredOut: true,
+      filter: { tag: '' },
+      filterTagInput: '',
+      tagInput: '',
+      tagInputIdx: -1,
+    }
+  },
+  methods: {
+    dragEnd(evt) {
+      this.sendCtrl('move', [evt.oldIndex, evt.newIndex])
+    },
+    applyFilter(tag) {
+      this.$emit('filterChange', tag)
+    },
+    sendCtrl(ctrl, args) {
+      this.$emit('ctrl', [ctrl, args])
+    },
+    isFilteredOut(item) {
+      return this.filter.tag !== '' && !item.tags.includes(this.filter.tag)
+    },
+    startAddTag(idx) {
+      this.tagInputIdx = idx
+      this.$nextTick(() => {
+        this.$el.querySelector('table .filter-tag-input').focus()
+      })
+    },
+  },
+  computed: {
+    enhancedPlaylist() {
+      return this.playlist.map(item => {
+        item.filteredOut = this.isFilteredOut(item)
+        return item
+      })
+    },
+    firstIndex() {
+      if (this.filter.tag === '') {
+        return 0
+      }
+      return this.playlist.findIndex(item => item.tags.includes(this.filter.tag))
+    },
+  },
+  watch: {
+    playlist: function (newVal, oldVal) {
+      if (!newVal.find(item => !this.isFilteredOut(item))) {
+        this.$emit('stopPlayer')
+      }
+    },
+    filter: function (newVal, oldVal) {
+      if (!this.playlist.find(item => !this.isFilteredOut(item))) {
+        this.$emit('stopPlayer')
+      }
+    },
+  },
+  template: `
+  <div>
+    <div class="filters">
+      <div class="currentfilter">
+        <div class="mr-1 pt-1">Filter: </div>
+        <span class="tag mr-1" v-if="filter.tag" @click="applyFilter('')">{{ filter.tag }} <i class="fa fa-remove ml-1" /></span>
+        <div v-else class="field has-addons mr-1">
+          <div class="control"><input class="input is-small filter-tag-input" type="text" v-model="filterTagInput" @keyup.enter="applyFilter(filterTagInput)" /></div>
+          <div class="control"><span class="button is-small" @click="applyFilter(filterTagInput)">Apply filter</span></span></div>
+        </div>
+        <label class="pt-1"><input class="checkbox" type="checkbox" v-model="hideFilteredOut" /> Hide filtered out</label>
+      </div>
+    </div>
+    <table class="table is-striped" v-if="playlist.length > 0">
+      <thead>
+        <tr>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th>Title</th>
+          <th>User</th>
+          <th>Plays</th>
+          <th></th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <draggable :value="playlist" @end="dragEnd" tag="tbody" handle=".handle">
+        <tr v-for="(item, idx) in enhancedPlaylist" v-show="!hideFilteredOut || !item.filteredOut" :key="idx">
+          <td class="pt-4 handle">
+            <i class="fa fa-arrows"></i>
+          </td>
+          <td>{{idx+1}}</td>
+          <td><button
+            v-if="idx !== firstIndex"
+            class="button is-small"
+            :disabled="item.filteredOut ? true : null"
+            @click="sendCtrl('playIdx', [idx])"
+            title="Play"><i class="fa fa-play"/></button></td>
+          <td>
+            <a :href="'https://www.youtube.com/watch?v=' + item.yt" target="_blank">
+                {{ item.title || item.yt }}
+                <i class="fa fa-external-link"/>
+            </a>
+            <div>
+              <span
+                v-for="(tag, idx2) in item.tags"
+                :key="idx2"
+                class="tag"
+                @click="sendCtrl('rmtag', [tag, idx])"
+              >
+                {{ tag }} <i class="fa fa-remove ml-1" />
+              </span>
+              <span class="button is-small" @click="startAddTag(idx)"><i class="fa fa-plus" /></span>
+            </div>
+            <div class="field has-addons" v-if="tagInputIdx === idx">
+              <div class="control"><input class="input is-small filter-tag-input" type="text" v-model="tagInput" @keyup.enter="sendCtrl('addtag', [tagInput, idx]);tagInput = '';" /></div>
+              <div class="control"><span class="button is-small" :disabled="tagInput ? null : true" @click="sendCtrl('addtag', [tagInput, idx]);tagInput = '';">Add tag</span></span></div>
+            </div>
+          </td>
+          <td>{{ item.user }}</td>
+          <td>{{ item.plays }}x</td>
+          <td><button class="button is-small" @click="sendCtrl('goodIdx', [idx])"><i class="fa fa-thumbs-up mr-1"/> {{ item.goods }}</button></td>
+          <td><button class="button is-small" @click="sendCtrl('badIdx', [idx])"><i class="fa fa-thumbs-down mr-1"/> {{ item.bads }}</button></td>
+          <td><button class="button is-small" @click="sendCtrl('rmIdx', [idx])" title="Remove"><i class="fa fa-trash"/></button></td>
+        </tr>
+      </draggable>
+    </table>
+    <div v-else>Playlist is empty</div>
+  </div>`
+}
+
+const TagsEditor = {
+  props: {
+    tags: Array,
+  },
+  data() {
+    return {
+      editTag: '',
+      tagEditIdx: -1,
+    }
+  },
+  methods: {
+    updateTag(oldTag, newTag) {
+      this.$emit('updateTag', [oldTag, newTag])
+    },
+  },
+  template: `
+  <table class="table is-striped">
+    <tr>
+      <th>Tag</th>
+      <th></th>
+      <th></th>
+    </tr>
+    <tr v-for="(tag, idx) in tags" :key="idx">
+      <td>
+        <input
+          v-if="tagEditIdx === idx"
+          type="text"
+          class="input is-small"
+          v-model="editTag"
+          @blur="tagEditIdx = -1"
+          @keyup.enter="updateTag(tag.value, editTag)"
+          />
+        <input
+          v-else
+          type="text"
+          class="input is-small"
+          :value="tag.value"
+          @focus="editTag = tag.value; tagEditIdx = idx"
+          />
+      </td>
+      <td>
+        <span
+          class="button is-small"
+          v-if="tagEditIdx === idx"
+          :disabled="tag.value === editTag ? true : null"
+          @click="updateTag(tag.value, editTag)"
+        >Save</span>
+      </td>
+      <td>
+        {{tag.count}}x
+      </td>
+    </tr>
+  </table>`
+}
+
 export default {
   components: {
     Navbar,
     Youtube,
     VolumeSlider,
+    Help,
+    PlaylistEditor,
+    TagsEditor,
   },
   props: {
     conf: Object,
@@ -17,7 +363,6 @@ export default {
     return {
       playerVisible: false,
       volume: 100,
-      filter: { tag: '' },
       playlist: [],
       ws: null,
       srinput: '',
@@ -37,14 +382,6 @@ export default {
       // id with each request and see if WE sent the request or another)
       volumeChanges: [],
 
-      filterTagInput: '',
-      tagInput: '',
-      tagInputIdx: -1,
-
-      editTag: '',
-      tagEditIdx: -1,
-
-      hideFilteredOut: true,
       importPlaylist: '',
     }
   },
@@ -92,265 +429,21 @@ export default {
       <button class="button is-small" @click="doImportPlaylist">Import now</button>
     </div>
     <div id="help" v-if="tab==='help'">
-      <table class="table is-striped">
-        <thead>
-          <tr>
-            <th>Chat command</th>
-            <th>Viewer</th>
-            <th>Mod</th>
-            <th>Explanation</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>!sr &lt;SEARCH&gt;</code></td>
-            <td class="positive">✔</td>
-            <td class="positive">✔</td>
-            <td>
-              Search for <code>&lt;SEARCH&gt;</code> at youtube (by id or by title) and queue the
-              first result in the playlist (after the first found batch of
-              unplayed songs).<br />
-              This only executes if <code>&lt;SEARCH&gt;</code> does not match one of the commands
-              below.
-            </td>
-          </tr>
-          <tr>
-            <td><code>!sr undo</code></td>
-            <td class="positive">✔</td>
-            <td class="positive">✔</td>
-            <td>Remove the song that was last added by oneself.</td>
-          </tr>
-          <tr>
-            <td><code>!sr current</code></td>
-            <td class="positive">✔</td>
-            <td class="positive">✔</td>
-            <td>Show what song is currently playing</td>
-          </tr>
-          <tr>
-            <td><code>!sr good</code></td>
-            <td class="positive">✔</td>
-            <td class="positive">✔</td>
-            <td>Vote the current song up</td>
-          </tr>
-          <tr>
-            <td><code>!sr bad</code></td>
-            <td class="positive">✔</td>
-            <td class="positive">✔</td>
-            <td>Vote the current song down</td>
-          </tr>
-          <tr>
-            <td><code>!sr stats</code></td>
-            <td class="positive">✔</td>
-            <td class="positive">✔</td>
-            <td>Show stats about the playlist</td>
-          </tr>
-          <tr>
-            <td><code>!sr stat</code></td>
-            <td class="positive">✔</td>
-            <td class="positive">✔</td>
-            <td>Alias for stats</td>
-          </tr>
-          <tr>
-            <td><code>!sr rm</code></td>
-            <td class="negative">✖</td>
-            <td class="positive">✔</td>
-            <td>Remove the current song from the playlist</td>
-          </tr>
-          <tr>
-            <td><code>!sr next</code></td>
-            <td class="negative">✖</td>
-            <td class="positive">✔</td>
-            <td>Skip to the next song</td>
-          </tr>
-          <tr>
-            <td><code>!sr prev</code></td>
-            <td class="negative">✖</td>
-            <td class="positive">✔</td>
-            <td>Skip to the previous song</td>
-          </tr>
-          <tr>
-            <td><code>!sr skip</code></td>
-            <td class="negative">✖</td>
-            <td class="positive">✔</td>
-            <td>Alias for next</td>
-          </tr>
-          <tr>
-            <td><code>!sr shuffle</code></td>
-            <td class="negative">✖</td>
-            <td class="positive">✔</td>
-            <td>
-              Shuffle the playlist (current song unaffected).
-              <br />
-              Non-played and played songs will be shuffled separately
-              and non-played songs will be put after currently playing
-              song.
-            </td>
-          </tr>
-          <tr>
-            <td><code>!sr resetStats</code></td>
-            <td class="negative">✖</td>
-            <td class="positive">✔</td>
-            <td>Reset all statistics of all songs</td>
-          </tr>
-          <tr>
-            <td><code>!sr clear</code></td>
-            <td class="negative">✖</td>
-            <td class="positive">✔</td>
-            <td>Clear the playlist</td>
-          </tr>
-          <tr>
-            <td><code>!sr pause</code></td>
-            <td class="negative">✖</td>
-            <td class="positive">✔</td>
-            <td>Pause currently playing song</td>
-          </tr>
-          <tr>
-            <td><code>!sr unpause</code></td>
-            <td class="negative">✖</td>
-            <td class="positive">✔</td>
-            <td>Unpause currently paused song</td>
-          </tr>
-          <tr>
-            <td><code>!sr loop</code></td>
-            <td class="negative">✖</td>
-            <td class="positive">✔</td>
-            <td>Loop the current song</td>
-          </tr>
-          <tr>
-            <td><code>!sr noloop</code></td>
-            <td class="negative">✖</td>
-            <td class="positive">✔</td>
-            <td>Stop looping the current song</td>
-          </tr>
-          <tr>
-            <td><code>!sr tag &lt;TAG&gt;</code></td>
-            <td class="negative">✖</td>
-            <td class="positive">✔</td>
-            <td>Add tag <code>&lt;TAG&gt;</code> to the current song</td>
-          </tr>
-          <tr>
-            <td><code>!sr rmtag &lt;TAG&gt;</code></td>
-            <td class="negative">✖</td>
-            <td class="positive">✔</td>
-            <td>Remove tag <code>&lt;TAG&gt;</code> from the current song</td>
-          </tr>
-          <tr>
-            <td><code>!sr filter [&lt;TAG&gt;]</code></td>
-            <td class="negative">✖</td>
-            <td class="positive">✔</td>
-            <td>
-              Play only songs with the given tag <code>&lt;TAG&gt;</code>.
-              If no tag is given, play all songs.
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <help />
     </div>
     <div id="tags" v-if="tab==='tags'">
-      <table class="table is-striped">
-        <tr>
-          <th>Tag</th>
-          <th></th>
-          <th></th>
-        </tr>
-        <tr v-for="(tag, idx) in tags">
-          <td>
-            <input type="text" class="input is-small" v-model="editTag" @blur="tagEditIdx = -1" v-if="tagEditIdx === idx" @keyup.enter="updateTag(tag.value, editTag)" />
-            <input type="text" class="input is-small" :value="tag.value" @focus="editTag = tag.value; tagEditIdx = idx" v-else />
-          </td>
-          <td>
-            <span class="button is-small" v-if="tagEditIdx === idx" :disabled="tag.value === editTag ? true : null" @click="updateTag(tag.value, editTag)">Save</span>
-          </td>
-          <td>
-            {{tag.count}}x
-          </td>
-        </tr>
-      </table>
+      <tags-editor :tags="tags" @updateTag="onTagUpdated" />
     </div>
     <div id="playlist" class="table-container" v-if="tab === 'playlist'">
-      <div class="filters">
-        <div class="currentfilter">
-          <div class="mr-1 pt-1">Filter: </div>
-          <span class="tag mr-1" v-if="filter.tag" @click="applyFilter('')">{{ filter.tag }} <i class="fa fa-remove ml-1" /></span>
-          <div v-else class="field has-addons mr-1">
-            <div class="control"><input class="input is-small filter-tag-input" type="text" v-model="filterTagInput" @keyup.enter="applyFilter(filterTagInput)" /></div>
-            <div class="control"><span class="button is-small" @click="applyFilter(filterTagInput)">Apply filter</span></span></div>
-          </div>
-          <label class="pt-1"><input class="checkbox" type="checkbox" v-model="hideFilteredOut" /> Hide filtered out</label>
-        </div>
-      </div>
-      <table class="table is-striped" v-if="playlist.length > 0">
-        <thead>
-          <tr>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th>Title</th>
-            <th>User</th>
-            <th>Plays</th>
-            <th></th>
-            <th></th>
-            <th></th>
-          </tr>
-        </thead>
-        <draggable :value="playlist" @end="dragEnd" tag="tbody" handle=".handle">
-          <tr v-for="(item, idx) in playlist" v-show="!hideFilteredOut || !isFilteredOut(item)">
-            <td class="pt-4 handle">
-              <i class="fa fa-arrows"></i>
-            </td>
-            <td>{{idx+1}}</td>
-            <td><button
-              v-if="idx !== firstIndex"
-              class="button is-small"
-              :disabled="isFilteredOut(item) ? true : null"
-              @click="sendCtrl('playIdx', [idx])"
-              title="Play"><i class="fa fa-play"/></button></td>
-            <td>
-              <a :href="'https://www.youtube.com/watch?v=' + item.yt" target="_blank">
-                  {{ item.title || item.yt }}
-                  <i class="fa fa-external-link"/>
-              </a>
-              <div>
-                <span
-                  v-for="(tag, idx2) in item.tags"
-                  :key="idx"
-                  class="tag"
-                  @click="sendCtrl('rmtag', [tag, idx])"
-                >
-                  {{ tag }} <i class="fa fa-remove ml-1" />
-                </span>
-                <span class="button is-small" @click="startAddTag(idx)"><i class="fa fa-plus" /></span>
-              </div>
-              <div class="field has-addons" v-if="tagInputIdx === idx">
-                <div class="control"><input class="input is-small filter-tag-input" type="text" v-model="tagInput" @keyup.enter="sendCtrl('addtag', [tagInput, idx]);tagInput = '';" /></div>
-                <div class="control"><span class="button is-small" :disabled="tagInput ? null : true" @click="sendCtrl('addtag', [tagInput, idx]);tagInput = '';">Add tag</span></span></div>
-              </div>
-            </td>
-            <td>{{ item.user }}</td>
-            <td>{{ item.plays }}x</td>
-            <td><button class="button is-small" @click="sendCtrl('goodIdx', [idx])"><i class="fa fa-thumbs-up mr-1"/> {{ item.goods }}</button></td>
-            <td><button class="button is-small" @click="sendCtrl('badIdx', [idx])"><i class="fa fa-thumbs-down mr-1"/> {{ item.bads }}</button></td>
-            <td><button class="button is-small" @click="sendCtrl('rmIdx', [idx])" title="Remove"><i class="fa fa-trash"/></button></td>
-          </tr>
-        </draggable>
-      </table>
-      <div v-else>Playlist is empty</div>
+      <playlist-editor
+        :playlist="playlist"
+        @stopPlayer="player.stop()"
+        @filterChange="applyFilter"
+        @ctrl="onPlaylistCtrl" />
     </div>
   </div>
 </div>
 `,
-  watch: {
-    playlist: function (newVal, oldVal) {
-      if (!newVal.find(item => !this.isFilteredOut(item))) {
-        this.player.stop()
-      }
-    },
-    filter: function (newVal, oldVal) {
-      if (!this.playlist.find(item => !this.isFilteredOut(item))) {
-        this.player.stop()
-      }
-    },
-  },
   computed: {
     tags() {
       const tags = []
@@ -375,12 +468,6 @@ export default {
       }
       return this.playlist.filter(item => item.tags.includes(this.filter.tag))
     },
-    firstIndex() {
-      if (this.filter.tag === '') {
-        return 0
-      }
-      return this.playlist.findIndex(item => item.tags.includes(this.filter.tag))
-    },
     item() {
       return this.filteredPlaylist[0]
     },
@@ -404,11 +491,14 @@ export default {
     },
   },
   methods: {
+    onTagUpdated(evt) {
+      this.updateTag(evt[0], evt[1])
+    },
+    onPlaylistCtrl(evt) {
+      this.sendCtrl(evt[0], evt[1])
+    },
     applyFilter(tag) {
       this.sendCtrl('filter', [{ tag }])
-    },
-    isFilteredOut(item) {
-      return this.filter.tag !== '' && !item.tags.includes(this.filter.tag)
     },
     async doImportPlaylist() {
       const res = await xhr.post(this.importPlaylistUrl, {
@@ -439,9 +529,6 @@ export default {
       if (this.srinput !== '') {
         this.sendCtrl('sr', [this.srinput])
       }
-    },
-    dragEnd(evt) {
-      this.sendCtrl('move', [evt.oldIndex, evt.newIndex])
     },
     sendCtrl(ctrl, args) {
       this.sendMsg({ event: 'ctrl', ctrl, args })
@@ -478,12 +565,6 @@ export default {
       this.volumeChanges.push(volume)
       this.sendCtrl('volume', [volume])
     },
-    startAddTag(idx) {
-      this.tagInputIdx = idx
-      this.$nextTick(() => {
-        this.$el.querySelector('#playlist table .filter-tag-input').focus()
-      })
-    },
     updateTag(oldTag, newTag) {
       if (oldTag === newTag) {
         return
@@ -504,7 +585,7 @@ export default {
           return
         }
       }
-      this.volume = data.volume
+      this.volume = parseInt(`${data.volume}`, 10)
       this.adjustVolume(this.volume)
     })
     this.ws.onMessage(['pause'], (data) => {
@@ -524,7 +605,7 @@ export default {
       this.player.setLoop(false)
     })
     this.ws.onMessage(['onEnded', 'prev', 'skip', 'remove', 'clear', 'move'], (data) => {
-      this.volume = data.volume
+      this.volume = parseInt(`${data.volume}`, 10)
       const oldId = this.filteredPlaylist.length > 0 ? this.filteredPlaylist[0].id : null
       this.filter = data.filter
       this.playlist = data.playlist
@@ -534,7 +615,7 @@ export default {
       }
     })
     this.ws.onMessage(['filter'], (data) => {
-      this.volume = data.volume
+      this.volume = parseInt(`${data.volume}`, 10)
       const oldId = this.filteredPlaylist.length > 0 ? this.filteredPlaylist[0].id : null
       this.filter = data.filter
       this.playlist = data.playlist
@@ -551,12 +632,12 @@ export default {
       'shuffle',
       'tags',
     ], (data) => {
-      this.volume = data.volume
+      this.volume = parseInt(`${data.volume}`, 10)
       this.filter = data.filter
       this.playlist = data.playlist
     })
     this.ws.onMessage(['add', 'init'], (data) => {
-      this.volume = data.volume
+      this.volume = parseInt(`${data.volume}`, 10)
       this.filter = data.filter
       this.playlist = data.playlist
       if (!this.player.playing()) {
