@@ -294,7 +294,7 @@ export default {
           </tr>
         </thead>
         <draggable :value="playlist" @end="dragEnd" tag="tbody" handle=".handle">
-          <tr v-for="(item, idx) in playlist" v-if="!hideFilteredOut || !isFilteredOut(item)">
+          <tr v-for="(item, idx) in playlist" v-show="!hideFilteredOut || !isFilteredOut(item)">
             <td class="pt-4 handle">
               <i class="fa fa-arrows"></i>
             </td>

@@ -120,7 +120,6 @@ class SongrequestModule {
   }
 
   save() {
-    console.log(this.data.filter)
     this.storage.save(this.name, {
       volume: this.data.volume,
       filter: this.data.filter,
