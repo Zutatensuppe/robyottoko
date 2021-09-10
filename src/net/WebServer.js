@@ -184,9 +184,7 @@ class WebServer {
     })
 
     app.get('/variables/', requireLogin, async (req, res) => {
-      console.log('muh')
       const variables = new Variables(this.db, req.user.id)
-      console.log('muh2')
       res.send(await fn.render('base.twig', {
         title: 'Variables',
         page: 'variables',
@@ -365,7 +363,7 @@ class WebServer {
       res.status(404).send()
     })
 
-    app.all('*', requireLogin, express.json(), async (req, res, next) => {
+    app.all('*', requireLogin, express.json({ limit: '50mb' }), async (req, res, next) => {
       const method = req.method.toLowerCase()
       const key = req.url
       for (const m of this.moduleManager.all(req.user.id)) {
