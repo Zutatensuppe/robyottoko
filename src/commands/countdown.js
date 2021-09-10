@@ -1,4 +1,5 @@
 const fn = require('./../fn.js')
+const log = fn.logger('countdown.js')
 
 const countdown = (
   /** @type Variables */ variables,
@@ -20,7 +21,7 @@ const countdown = (
       return sayFn(await doReplacements(text))
     }
     const parseDuration = async (str) => {
-      return fn.parseHumanDuration(await doReplacements(str))
+      return fn.mustParseHumanDuration(await doReplacements(str))
     }
 
     const settings = originalCmd.data
@@ -30,7 +31,13 @@ const countdown = (
 
     if (t === 'auto') {
       const steps = await doReplacements(settings.steps)
-      const interval = (await parseDuration(settings.interval)) || (1 * fn.SECOND)
+      let interval
+      try {
+        interval = (await parseDuration(settings.interval)) || (1 * fn.SECOND)
+      } catch (e) {
+        log.error(e.message, settings.interval)
+        return
+      }
       const msgStep = settings.step || "{step}"
       const msgIntro = settings.intro || null
       const msgOutro = settings.outro || null
@@ -63,7 +70,13 @@ const countdown = (
             })
           })
         } else if (a.type === 'delay') {
-          const duration = (await parseDuration(a.value)) || 0
+          let duration
+          try {
+            duration = (await parseDuration(a.value)) || 0
+          } catch (e) {
+            log.error(e.message, a.value)
+            return
+          }
           actions.push(async () => await fn.sleep(duration))
         }
       }

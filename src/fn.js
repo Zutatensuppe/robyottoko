@@ -462,11 +462,11 @@ const mustParseHumanDuration = (
   /** @type string|number */ duration
 ) => {
   if (duration === '') {
-    throw new Error("unable to parse duration")
+    throw new Error(`unable to parse duration: ${duration}`)
   }
   const d = `${duration}`.trim()
   if (!d) {
-    throw new Error("unable to parse duration")
+    throw new Error(`unable to parse duration: ${duration}`)
   }
   if (d.match(/^\d+$/)) {
     return parseInt(d, 10)
@@ -474,7 +474,7 @@ const mustParseHumanDuration = (
 
   const m = d.match(/^(?:(\d+)d)?\s?(?:(\d+)h)?\s?(?:(\d+)m)?\s?(?:(\d+)s)?\s?(?:(\d+)ms)?$/)
   if (!m) {
-    throw new Error("unable to parse duration")
+    throw new Error(`unable to parse duration: ${duration}`)
   }
 
   const D = m[1] ? parseInt(m[1], 10) : 0
@@ -531,6 +531,7 @@ module.exports = {
   pad,
   parseISO8601Duration,
   parseHumanDuration,
+  mustParseHumanDuration,
   humanDuration,
   isBroadcaster,
   isMod,
