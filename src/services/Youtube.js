@@ -8,9 +8,9 @@ const get = async (url, args) => {
 
 const fetchDataByYoutubeId = async (youtubeId) => {
   const json = await get('https://www.googleapis.com/youtube/v3/videos', {
-    part: 'snippet,contentDetails',
+    part: 'snippet,status,contentDetails',
     id: youtubeId,
-    fields: 'items(id,snippet,contentDetails)',
+    fields: 'items(id,snippet,status,contentDetails)',
   })
   return json.items[0] || null
 }
@@ -40,6 +40,7 @@ const getYoutubeIdBySearch = async (searchterm) => {
     part: 'snippet',
     q: searchterm,
     type: 'video',
+    videoEmbeddable: 'true',
   })
   try {
     return json.items[0]['id']['videoId'] || null
