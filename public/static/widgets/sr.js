@@ -1,25 +1,37 @@
 import Youtube from '../components/youtube.js'
+import ResponsiveImage from '../components/responsive-image.js'
 import WsClient from '../WsClient.js'
 
 export default {
   components: {
     Youtube,
+    ResponsiveImage,
   },
   props: {
     conf: Object,
   },
   data() {
     return {
-      volume: 100,
       filter: { tag: '' },
       playlist: [],
+      settings: {
+        volume: 100,
+        hideVideoImage: {
+          file: '',
+          filename: '',
+        },
+      },
       ws: null,
     }
   },
   template: `
 <div id="app" style="overflow: hidden">
   <div id="main" ref="main">
-    <div id="player" class="video-16-9"><youtube ref="youtube" @ended="ended" /></div>
+    <div id="player" class="video-16-9">
+      <responsive-image class="hidevideo" v-if="hidevideo && settings.hideVideoImage.file" :src="settings.hideVideoImage.file" />
+      <div class="hidevideo" v-else-if="hidevideo"></div>
+      <youtube ref="youtube" @ended="ended" />
+    </div>
     <div id="playlist">
       <ol>
         <li
@@ -64,6 +76,9 @@ export default {
       }
       return this.playlist.filter(item => item.tags.includes(this.filter.tag))
     },
+    hidevideo() {
+      return this.item ? this.item.hidevideo : false
+    },
     item() {
       return this.filteredPlaylist[0]
     },
@@ -101,7 +116,7 @@ export default {
       }
     },
     adjustVolume() {
-      this.player.setVolume(this.volume)
+      this.player.setVolume(this.settings.volume)
     }
   },
   mounted() {
@@ -109,12 +124,15 @@ export default {
       this.conf.wsBase + '/sr',
       this.conf.widgetToken
     )
+    this.ws.onMessage('settings', (data) => {
+      this.settings = data.settings
+    })
     this.ws.onMessage('volume', (data) => {
-      this.volume = data.volume
+      this.settings.volume = data.settings.volume
       this.adjustVolume()
     })
     this.ws.onMessage(['onEnded', 'prev', 'skip', 'remove', 'clear', 'move'], (data) => {
-      this.volume = data.volume
+      this.settings = data.settings
       const oldId = this.filteredPlaylist.length > 0 ? this.filteredPlaylist[0].id : null
       this.filter = data.filter
       this.playlist = data.playlist
@@ -124,7 +142,7 @@ export default {
       }
     })
     this.ws.onMessage(['filter'], (data) => {
-      this.volume = data.volume
+      this.settings = data.settings
       const oldId = this.filteredPlaylist.length > 0 ? this.filteredPlaylist[0].id : null
       this.filter = data.filter
       this.playlist = data.playlist
@@ -152,17 +170,18 @@ export default {
     this.ws.onMessage([
       'dislike',
       'like',
+      'video',
       'playIdx',
       'resetStats',
       'shuffle',
       'tags',
     ], (data) => {
-      this.volume = data.volume
+      this.settings = data.settings
       this.filter = data.filter
       this.playlist = data.playlist
     })
     this.ws.onMessage(['add', 'init'], (data) => {
-      this.volume = data.volume
+      this.settings = data.settings
       this.filter = data.filter
       this.playlist = data.playlist
       if (!this.player.playing()) {

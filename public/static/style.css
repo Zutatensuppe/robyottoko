@@ -77,6 +77,16 @@ a:hover { color: var(--link-hover-color); }
   height: 100%;
 }
 
+.video-16-9 .hidevideo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: black;
+  z-index: 2;
+}
+
 input[type=range]::-webkit-slider-thumb {
   height: 16px;
   width: 16px;

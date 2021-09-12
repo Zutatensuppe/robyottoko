@@ -34,9 +34,15 @@ class SongrequestModule {
     this.wss = wss
     this.name = 'sr'
     this.data = this.storage.load(this.name, {
-      volume: 100,
       filter: {
         tag: '',
+      },
+      settings: {
+        volume: 100,
+        hideVideoImage: {
+          file: '',
+          filename: '',
+        },
       },
       playlist: [],
       stacks: {},
@@ -47,8 +53,16 @@ class SongrequestModule {
     // TODO: maybe use same code as in save function
     this.data.playlist = this.data.playlist.map(item => {
       item.tags = item.tags || []
+      item.hidevideo = typeof item.hidevideo === 'undefined' ? false : item.hidevideo
       return item
     })
+    this.data.settings = this.data.settings || {
+      volume: 100,
+      hideVideoImage: {
+        file: '',
+        filename: '',
+      },
+    }
   }
 
   onChatMsg(client, target, context, msg) {
@@ -86,7 +100,7 @@ class SongrequestModule {
       post: {
         '/sr/import': async (req, res, next) => {
           try {
-            this.data.volume = req.body.volume
+            this.data.settings = req.body.settings
             this.data.playlist = req.body.playlist
             this.save()
             this.updateClients('init')
@@ -99,7 +113,7 @@ class SongrequestModule {
       get: {
         '/sr/export': async (req, res, next) => {
           res.send({
-            volume: this.data.volume,
+            settings: this.data.settings,
             playlist: this.data.playlist,
           })
         },
@@ -121,7 +135,6 @@ class SongrequestModule {
 
   save() {
     this.storage.save(this.name, {
-      volume: this.data.volume,
       filter: this.data.filter,
       playlist: this.data.playlist.map(item => ({
         id: item.id,
@@ -135,6 +148,7 @@ class SongrequestModule {
         bads: item.bads || 0,
         tags: item.tags || [],
       })),
+      settings: this.data.settings,
       stacks: this.data.stacks,
     })
   }
@@ -144,9 +158,9 @@ class SongrequestModule {
       event: eventName,
       data: {
         // ommitting youtube cache data and stacks
-        volume: this.data.volume,
         filter: this.data.filter,
         playlist: this.data.playlist,
+        settings: this.data.settings,
       }
     };
   }
@@ -207,6 +221,9 @@ class SongrequestModule {
           case 'addtag': this.addTag(...args); break;
           case 'updatetag': this.updateTag(...args); break;
           case 'filter': this.filter(...args); break;
+          case 'showvideo': this.showvideo(...args); break;
+          case 'hidevideo': this.hidevideo(...args); break;
+          case 'settings': this.settings(...args); break;
         }
       },
     }
@@ -254,6 +271,18 @@ class SongrequestModule {
     }
     if (this.data.playlist.length > idx) {
       this.data.playlist[idx][stat]++
+    }
+  }
+
+  videoVisibility(visible, idx = -1) {
+    if (idx === -1) {
+      idx = this.determineFirstIndex()
+    }
+    if (idx === -1) {
+      return
+    }
+    if (this.data.playlist.length > idx) {
+      this.data.playlist[idx].hidevideo = visible ? false : true
     }
   }
 
@@ -391,7 +420,7 @@ class SongrequestModule {
     if (vol > 100) {
       vol = 100
     }
-    this.data.volume = vol
+    this.data.settings.volume = parseInt(`${vol}`, 10)
     this.save()
     this.updateClients('volume')
   }
@@ -416,6 +445,24 @@ class SongrequestModule {
     this.incStat('bads')
     this.save()
     this.updateClients('dislike')
+  }
+
+  hidevideo(idx = -1) {
+    this.videoVisibility(false, idx)
+    this.save()
+    this.updateClients('video')
+  }
+
+  showvideo(idx = -1) {
+    this.videoVisibility(true, idx)
+    this.save()
+    this.updateClients('video')
+  }
+
+  settings(settings) {
+    this.data.settings = settings
+    this.save()
+    this.updateClients('settings')
   }
 
   prev() {
@@ -535,6 +582,18 @@ class SongrequestModule {
         case 'prev':
           if (fn.isMod(context)) {
             this.prev()
+            return
+          }
+          break
+        case 'hidevideo':
+          if (fn.isMod(context)) {
+            this.hidevideo()
+            return
+          }
+          break
+        case 'showvideo':
+          if (fn.isMod(context)) {
+            this.showvideo()
             return
           }
           break

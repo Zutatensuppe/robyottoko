@@ -1,6 +1,8 @@
 import Navbar from "../components/navbar.js"
+import Upload from '../components/upload.js'
 import Youtube from "../components/youtube.js"
 import VolumeSlider from "../components/volume-slider.js"
+import ResponsiveImage from '../components/responsive-image.js'
 import WsClient from "../WsClient.js"
 import xhr from "../xhr.js"
 import PlaylistEditor from './sr/playlist-editor.js'
@@ -15,6 +17,8 @@ export default {
     Help,
     PlaylistEditor,
     TagsEditor,
+    Upload,
+    ResponsiveImage,
   },
   props: {
     conf: Object,
@@ -22,8 +26,14 @@ export default {
   data() {
     return {
       playerVisible: false,
-      volume: 100,
       playlist: [],
+      settings: {
+        volume: 100,
+        hideVideoImage: {
+          file: '',
+          filename: '',
+        },
+      },
       filter: { tag: '' },
       ws: null,
       srinput: '',
@@ -51,7 +61,7 @@ export default {
   <div id="top" ref="top">
     <navbar :user="conf.user.name" />
     <div id="actionbar" class="p-1">
-      <volume-slider class="mr-1" :value="volume" @input="onVolumeChange" />
+      <volume-slider class="mr-1" :value="settings.volume" @input="onVolumeChange" />
 
       <button class="button is-small mr-1" @click="sendCtrl('resetStats', [])" title="Reset stats"><i class="fa fa-eraser mr-1"/><span class="txt"> Reset stats</span></button>
       <button class="button is-small mr-1" @click="sendCtrl('clear', [])" title="Clear"><i class="fa fa-eject mr-1"/><span class="txt"> Clear</span></button>
@@ -79,6 +89,7 @@ export default {
     <div class="tabs">
       <ul>
         <li :class="{'is-active': tab === 'playlist'}" @click="tab='playlist'"><a>Playlist</a></li>
+        <li :class="{'is-active': tab === 'settings'}" @click="tab='settings'"><a>Settings</a></li>
         <li :class="{'is-active': tab === 'help'}" @click="tab='help'"><a>Help</a></li>
         <li :class="{'is-active': tab === 'tags'}" @click="tab='tags'"><a>Tags</a></li>
         <li :class="{'is-active': tab === 'import'}" @click="tab='import'"><a>Import/Export</a></li>
@@ -96,6 +107,29 @@ export default {
     </div>
     <div id="tags" v-if="tab==='tags'">
       <tags-editor :tags="tags" @updateTag="onTagUpdated" />
+    </div>
+    <div id="settings" v-if="tab==='settings'">
+      <table class="table is-striped" ref="table" v-if="settings">
+        <tbody>
+          <tr>
+            <td><code>settings.volume</code></td>
+            <td><input type="text" v-model="settings.volume" /></td>
+            <td>Volume (0-100)</td>
+          </tr>
+          <tr>
+            <td><code>settings.hideVideoImage</code></td>
+            <td>
+              <div v-if="settings.hideVideoImage.file" class="mb-1">
+                <responsive-image :src="settings.hideVideoImage.file" :title="settings.hideVideoImage.filename" width="100px" height="50px" style="display:inline-block;" />
+                <br />
+                <button class="button is-small" @click="hideVideoImageRemoved"><i class="fa fa-remove mr-1" /> Remove Image</button>
+              </div>
+              <upload @uploaded="hideVideoImageUploaded" accept="image/*" label="Upload Image" />
+            </td>
+            <td>Image to display when a video is hidden.</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
     <div id="playlist" class="table-container" v-if="tab === 'playlist'">
       <playlist-editor
@@ -155,6 +189,24 @@ export default {
     },
   },
   methods: {
+    hideVideoImageRemoved() {
+      this.sendCtrl('settings', [{
+        volume: this.settings.volume,
+        hideVideoImage: {
+          filename: '',
+          file: '',
+        },
+      }])
+    },
+    hideVideoImageUploaded(file) {
+      this.sendCtrl('settings', [{
+        volume: this.settings.volume,
+        hideVideoImage: {
+          filename: file.originalname,
+          file: file.filename,
+        },
+      }])
+    },
     onTagUpdated(evt) {
       this.updateTag(evt[0], evt[1])
     },
@@ -204,7 +256,7 @@ export default {
       this.ws.send(JSON.stringify(data))
     },
     play() {
-      this.adjustVolume(this.volume)
+      this.adjustVolume(this.settings.volume)
       if (this.playerVisible && this.hasItems) {
         this.player.play(this.item.yt)
         this.sendMsg({ event: 'play', id: this.item.id })
@@ -239,18 +291,21 @@ export default {
   },
   mounted() {
     this.ws = new WsClient(this.conf.wsBase + '/sr', this.conf.token)
+    this.ws.onMessage('settings', (data) => {
+      this.settings = data.settings
+    })
     this.ws.onMessage('volume', (data) => {
       // this assumes that all volume changes are done by us
       // otherwise this would probably fail ;C
       if (this.volumeChanges.length > 0) {
         const firstChange = this.volumeChanges.shift()
-        if (firstChange === data.volume) {
-          this.adjustVolume(data.volume)
+        if (firstChange === data.settings.volume) {
+          this.adjustVolume(data.settings.volume)
           return
         }
       }
-      this.volume = parseInt(`${data.volume}`, 10)
-      this.adjustVolume(this.volume)
+      this.settings.volume = parseInt(`${data.settings.volume}`, 10)
+      this.adjustVolume(this.settings.volume)
     })
     this.ws.onMessage(['pause'], (data) => {
       if (this.player.playing()) {
@@ -269,7 +324,7 @@ export default {
       this.player.setLoop(false)
     })
     this.ws.onMessage(['onEnded', 'prev', 'skip', 'remove', 'clear', 'move'], (data) => {
-      this.volume = parseInt(`${data.volume}`, 10)
+      this.settings = data.settings
       const oldId = this.filteredPlaylist.length > 0 ? this.filteredPlaylist[0].id : null
       this.filter = data.filter
       this.playlist = data.playlist
@@ -279,7 +334,7 @@ export default {
       }
     })
     this.ws.onMessage(['filter'], (data) => {
-      this.volume = parseInt(`${data.volume}`, 10)
+      this.settings = data.settings
       const oldId = this.filteredPlaylist.length > 0 ? this.filteredPlaylist[0].id : null
       this.filter = data.filter
       this.playlist = data.playlist
@@ -291,17 +346,18 @@ export default {
     this.ws.onMessage([
       'dislike',
       'like',
+      'video',
       'playIdx',
       'resetStats',
       'shuffle',
       'tags',
     ], (data) => {
-      this.volume = parseInt(`${data.volume}`, 10)
+      this.settings = data.settings
       this.filter = data.filter
       this.playlist = data.playlist
     })
     this.ws.onMessage(['add', 'init'], (data) => {
-      this.volume = parseInt(`${data.volume}`, 10)
+      this.settings = data.settings
       this.filter = data.filter
       this.playlist = data.playlist
       if (!this.player.playing()) {

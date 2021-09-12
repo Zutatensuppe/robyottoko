@@ -12,6 +12,13 @@ export default {
     }
   },
   methods: {
+    toggleVisibility(item, idx) {
+      if (item.hidevideo) {
+        this.sendCtrl('showvideo', [idx])
+      } else {
+        this.sendCtrl('hidevideo', [idx])
+      }
+    },
     dragEnd(evt) {
       this.sendCtrl('move', [evt.oldIndex, evt.newIndex])
     },
@@ -82,6 +89,7 @@ export default {
           <th></th>
           <th></th>
           <th></th>
+          <th></th>
         </tr>
       </thead>
       <draggable :value="playlist" @end="dragEnd" tag="tbody" handle=".handle">
@@ -119,6 +127,7 @@ export default {
           </td>
           <td>{{ item.user }}</td>
           <td>{{ item.plays }}x</td>
+          <td><button class="button is-small" @click="toggleVisibility(item, idx)" :title="item.hidevideo ? 'Video hidden' : 'Video visible'"><i class="fa mr-1" :class="{'fa-eye': !item.hidevideo, 'fa-eye-slash': item.hidevideo}"/></button></td>
           <td><button class="button is-small" @click="sendCtrl('goodIdx', [idx])"><i class="fa fa-thumbs-up mr-1"/> {{ item.goods }}</button></td>
           <td><button class="button is-small" @click="sendCtrl('badIdx', [idx])"><i class="fa fa-thumbs-down mr-1"/> {{ item.bads }}</button></td>
           <td><button class="button is-small" @click="sendCtrl('rmIdx', [idx])" title="Remove"><i class="fa fa-trash"/></button></td>
