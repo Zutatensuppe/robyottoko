@@ -754,11 +754,11 @@ class SongrequestModule {
       info = `[Position ${idx + 1}, will play in ~${fn.humanDuration(await this.durationUntilIndex(idx))}]`
     }
     if (addType === ADD_TYPE.ADDED) {
-      say(`Added "${item.title}" (${Youtube.getUrlById(item.yt)}) to the playlist! ${info}`)
+      say(`🎵 Added "${item.title}" (${Youtube.getUrlById(item.yt)}) to the playlist! ${info}`)
     } else if (addType === ADD_TYPE.REQUEUED) {
-      say(`"${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist and only moved up. ${info}`)
+      say(`🎵 "${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist and only moved up. ${info}`)
     } else if (addType === ADD_TYPE.EXISTED) {
-      say(`"${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist. ${info}`)
+      say(`🎵 "${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist. ${info}`)
     } else {
       say(`Could not process that song request`)
     }
