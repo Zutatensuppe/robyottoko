@@ -243,10 +243,10 @@ class SongrequestModule {
       }
     }
     if (!youtubeId || !youtubeData) {
-      return { item: null, addType: ADD_TYPE.NOT_ADDED }
+      return { item: null, addType: ADD_TYPE.NOT_ADDED, idx: -1 }
     }
 
-    const { item, addType } = await this.addToPlaylist(
+    const { item, addType, idx } = await this.addToPlaylist(
       youtubeId,
       youtubeData,
       user
@@ -255,7 +255,7 @@ class SongrequestModule {
       this.data.stacks[user] = this.data.stacks[user] || []
       this.data.stacks[user].push(youtubeId)
     }
-    return { item, addType }
+    return { item, addType, idx }
   }
 
   determineFirstIndex() {
@@ -284,6 +284,19 @@ class SongrequestModule {
     if (this.data.playlist.length > idx) {
       this.data.playlist[idx].hidevideo = visible ? false : true
     }
+  }
+
+  async durationUntilIndex(idx) {
+    if (idx <= 0) {
+      return 0
+    }
+
+    let durationTotal = 0
+    for (const item of this.data.playlist.slice(0, idx)) {
+      const d = await this.loadYoutubeData(item.yt)
+      durationTotal += fn.parseISO8601Duration(d.contentDetails.duration)
+    }
+    return durationTotal
   }
 
   async stats(userName) {
@@ -730,13 +743,22 @@ class SongrequestModule {
     }
 
     const str = command.args.join(' ')
-    const { item, addType } = await this.add(str, context['display-name'])
+    const { item, addType, idx } = await this.add(str, context['display-name'])
+
+    let info
+    if (idx < 0) {
+      info = ``
+    } else if (idx === 0) {
+      info = `[Position ${idx + 1}, playing now]`
+    } else {
+      info = `[Position ${idx + 1}, will play in ~${fn.humanDuration(await this.durationUntilIndex(idx))}]`
+    }
     if (addType === ADD_TYPE.ADDED) {
-      say(`Added "${item.title}" (${Youtube.getUrlById(item.yt)}) to the playlist!`)
+      say(`Added "${item.title}" (${Youtube.getUrlById(item.yt)}) to the playlist! ${info}`)
     } else if (addType === ADD_TYPE.REQUEUED) {
-      say(`"${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist and only moved up.`)
+      say(`"${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist and only moved up. ${info}`)
     } else if (addType === ADD_TYPE.EXISTED) {
-      say(`"${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist.`)
+      say(`"${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist. ${info}`)
     } else {
       say(`Could not process that song request`)
     }
@@ -774,10 +796,10 @@ class SongrequestModule {
         this.data.playlist.splice(insertIndex, 0, item)
         this.save()
         this.updateClients('add')
-        return { item, addType: ADD_TYPE.REQUEUED }
+        return { item, addType: ADD_TYPE.REQUEUED, idx: insertIndex }
       } else {
         // nothing to do
-        return { item, addType: ADD_TYPE.EXISTED }
+        return { item, addType: ADD_TYPE.EXISTED, idx: idx }
       }
     }
 
@@ -799,7 +821,7 @@ class SongrequestModule {
 
     this.save()
     this.updateClients('add')
-    return { item, addType: ADD_TYPE.ADDED }
+    return { item, addType: ADD_TYPE.ADDED, idx: insertIndex }
   }
 
 }
