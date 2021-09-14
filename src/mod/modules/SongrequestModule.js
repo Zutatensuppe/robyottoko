@@ -489,6 +489,23 @@ class SongrequestModule {
     this.updateClients('skip')
   }
 
+  jumptonew() {
+    if (this.data.playlist.length === 0) {
+      return
+    }
+    const index = this.data.playlist.findIndex(item => item.plays === 0)
+    if (index === -1) {
+      // no unplayed songs left
+      return
+    }
+    for (let i = 0; i < index; i++) {
+      this.data.playlist.push(this.data.playlist.shift())
+    }
+
+    this.save()
+    this.updateClients('skip')
+  }
+
   clear() {
     this.data.playlist = []
     this.save()
@@ -601,6 +618,12 @@ class SongrequestModule {
         case 'skip':
           if (fn.isMod(context)) {
             this.next()
+            return
+          }
+          break
+        case 'jumptonew':
+          if (fn.isMod(context)) {
+            this.jumptonew()
             return
           }
           break
