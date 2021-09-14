@@ -15,7 +15,7 @@ const logger = (filename, ...pre) => {
   const b = path.basename(filename)
   const fn = t => (...args) => {
     if (logEnabled.includes(t)) {
-      console[t](`[${b}]`, ...pre, ...args)
+      console[t](dateformat('hh:mm:ss', new Date()), `[${b}]`, ...pre, ...args)
     }
   }
   return {
@@ -378,6 +378,20 @@ const joinIntoChunks = (
   }
   chunks.push(chunk.join(glue))
   return chunks
+}
+
+const dateformat = (
+  /** @type string */ format,
+  /** @type Date */ date,
+) => {
+  return format.replace(/(hh|mm|ss)/g, (m0, m1) => {
+    switch (m1) {
+      case 'hh': return pad(date.getHours(), '00')
+      case 'mm': return pad(date.getMinutes(), '00')
+      case 'ss': return pad(date.getSeconds(), '00')
+      default: return m0
+    }
+  })
 }
 
 const pad = (
