@@ -14,9 +14,9 @@ export default {
   methods: {
     toggleVisibility(item, idx) {
       if (item.hidevideo) {
-        this.sendCtrl('showvideo', [idx])
+        this.sendCtrl('videoVisibility', [true, idx])
       } else {
-        this.sendCtrl('hidevideo', [idx])
+        this.sendCtrl('videoVisibility', [false, idx])
       }
     },
     dragEnd(evt) {

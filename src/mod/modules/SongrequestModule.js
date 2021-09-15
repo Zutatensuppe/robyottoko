@@ -221,8 +221,7 @@ class SongrequestModule {
           case 'addtag': this.addTag(...args); break;
           case 'updatetag': this.updateTag(...args); break;
           case 'filter': this.filter(...args); break;
-          case 'showvideo': this.showvideo(...args); break;
-          case 'hidevideo': this.hidevideo(...args); break;
+          case 'videoVisibility': this.videoVisibility(...args); break;
           case 'settings': this.settings(...args); break;
         }
       },
@@ -284,6 +283,8 @@ class SongrequestModule {
     if (this.data.playlist.length > idx) {
       this.data.playlist[idx].hidevideo = visible ? false : true
     }
+    this.save()
+    this.updateClients('video')
   }
 
   async durationUntilIndex(idx) {
@@ -460,18 +461,6 @@ class SongrequestModule {
     this.updateClients('dislike')
   }
 
-  hidevideo(idx = -1) {
-    this.videoVisibility(false, idx)
-    this.save()
-    this.updateClients('video')
-  }
-
-  showvideo(idx = -1) {
-    this.videoVisibility(true, idx)
-    this.save()
-    this.updateClients('video')
-  }
-
   settings(settings) {
     this.data.settings = settings
     this.save()
@@ -617,13 +606,13 @@ class SongrequestModule {
           break
         case 'hidevideo':
           if (fn.isMod(context)) {
-            this.hidevideo()
+            this.videoVisibility(false)
             return
           }
           break
         case 'showvideo':
           if (fn.isMod(context)) {
-            this.showvideo()
+            this.videoVisibility(true)
             return
           }
           break
