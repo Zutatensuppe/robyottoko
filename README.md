@@ -87,6 +87,7 @@ Chat command     | Viewer | Mod | Explanation
 `!sr next`           | ✖  | ✔   | Skip to the next song
 `!sr prev`           | ✖  | ✔   | Skip to the previous song
 `!sr skip`           | ✖  | ✔   | Alias for next
+`!sr jumptonew`      | ✖  | ✔   | Jump to the next unplayed song
 `!sr shuffle`        | ✖  | ✔   | Shuffle the playlist (current song unaffected). <br /> Non-played and played songs will be shuffled separately and non-played songs will be put after currently playing song.
 `!sr resetStats`     | ✖  | ✔   | Reset all statistics of all songs
 `!sr clear`          | ✖  | ✔   | Clear the playlist
@@ -94,6 +95,8 @@ Chat command     | Viewer | Mod | Explanation
 `!sr unpause`        | ✖  | ✔   | Unpause currently paused song
 `!sr loop`           | ✖  | ✔   | Loop the current song
 `!sr noloop`         | ✖  | ✔   | Stop looping the current song
+`!sr hidevideo`      | ✖  | ✔   | Hide video for current song
+`!sr showvideo`      | ✖  | ✔   | Show video for current song
 `!sr tag <TAG>`      | ✖  | ✔   | Add tag `<TAG>` to the current song
 `!sr rmtag <TAG>`    | ✖  | ✔   | Remove tag `<TAG>` from the current song
 `!sr filter [<TAG>]` | ✖  | ✔   | Play only songs with the given tag `<TAG>`. If no tag is given, play all songs.

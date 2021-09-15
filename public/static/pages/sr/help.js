@@ -1,5 +1,5 @@
 export default {
-    template: `
+  template: `
   <table class="table is-striped">
     <thead>
       <tr>
@@ -83,6 +83,12 @@ export default {
         <td>Alias for next</td>
       </tr>
       <tr>
+        <td><code>!sr jumptonew</code></td>
+        <td class="negative">✖</td>
+        <td class="positive">✔</td>
+        <td>Jump to the next unplayed song</td>
+      </tr>
+      <tr>
         <td><code>!sr shuffle</code></td>
         <td class="negative">✖</td>
         <td class="positive">✔</td>
@@ -129,6 +135,18 @@ export default {
         <td class="negative">✖</td>
         <td class="positive">✔</td>
         <td>Stop looping the current song</td>
+      </tr>
+      <tr>
+        <td><code>!sr hidevideo</code></td>
+        <td class="negative">✖</td>
+        <td class="positive">✔</td>
+        <td>Hide video for current song</td>
+      </tr>
+      <tr>
+        <td><code>!sr showvideo</code></td>
+        <td class="negative">✖</td>
+        <td class="positive">✔</td>
+        <td>Show video for current song</td>
       </tr>
       <tr>
         <td><code>!sr tag &lt;TAG&gt;</code></td>
