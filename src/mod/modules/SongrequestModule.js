@@ -590,7 +590,7 @@ class SongrequestModule {
           }
           const cur = this.data.playlist[0]
           // todo: error handling, title output etc..
-          say(`Currently playing: ${cur.title} (${Youtube.getUrlById(cur.yt)}) (${cur.plays}x plays, requested by ${cur.user})`)
+          say(`Currently playing: ${cur.title} (${Youtube.getUrlById(cur.yt)}, ${cur.plays}x plays, requested by ${cur.user})`)
           return
         case 'good':
           this.like()
