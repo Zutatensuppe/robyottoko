@@ -137,6 +137,12 @@ export default {
         <td>Stop looping the current song</td>
       </tr>
       <tr>
+        <td><code>!sr unloop</code></td>
+        <td class="negative">✖</td>
+        <td class="positive">✔</td>
+        <td>Alias for noloop</td>
+      </tr>
+      <tr>
         <td><code>!sr hidevideo</code></td>
         <td class="negative">✖</td>
         <td class="positive">✔</td>

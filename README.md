@@ -95,6 +95,7 @@ Chat command     | Viewer | Mod | Explanation
 `!sr unpause`        | ✖  | ✔   | Unpause currently paused song
 `!sr loop`           | ✖  | ✔   | Loop the current song
 `!sr noloop`         | ✖  | ✔   | Stop looping the current song
+`!sr unloop`         | ✖  | ✔   | Alias for noloop
 `!sr hidevideo`      | ✖  | ✔   | Hide video for current song
 `!sr showvideo`      | ✖  | ✔   | Show video for current song
 `!sr tag <TAG>`      | ✖  | ✔   | Add tag `<TAG>` to the current song

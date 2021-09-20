@@ -648,6 +648,7 @@ class SongrequestModule {
           }
           break;
         case 'noloop':
+        case 'unloop':
           if (fn.isMod(context)) {
             this.noloop()
             return
