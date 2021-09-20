@@ -77,6 +77,9 @@ class SongrequestModule {
       '!sr': [{
         fn: this.songrequestCmd.bind(this),
       }],
+      '!resr': [{
+        fn: this.songrequestCmd.bind(this),
+      }],
     }
   }
 
@@ -594,6 +597,55 @@ class SongrequestModule {
 
   async songrequestCmd(command, client, target, context, msg) {
     const say = fn.sayFn(client, target)
+    const answerAddRequest = async (item, addType, idx) => {
+      let info
+      if (idx < 0) {
+        info = ``
+      } else if (idx === 0) {
+        info = `[Position ${idx + 1}, playing now]`
+      } else {
+        const last_play = this.data.playlist[0].last_play || 0
+        const diffMs = last_play ? (new Date().getTime() - last_play) : 0
+        const diff = Math.round(diffMs / 1000) * 1000
+        const durationMs = await this.durationUntilIndex(idx) - diff
+        info = `[Position ${idx + 1}, will play in ~${fn.humanDuration(durationMs)}]`
+      }
+      if (addType === ADD_TYPE.ADDED) {
+        return `🎵 Added "${item.title}" (${Youtube.getUrlById(item.yt)}) to the playlist! ${info}`
+      } else if (addType === ADD_TYPE.REQUEUED) {
+        return `🎵 "${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist and only moved up. ${info}`
+      } else if (addType === ADD_TYPE.EXISTED) {
+        return `🎵 "${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist. ${info}`
+      } else {
+        return `Could not process that song request`
+      }
+    }
+
+    if (command.name === '!resr') {
+      if (command.args.length === 0) {
+        say(`Usage: !resr SEARCH`)
+        return
+      }
+      const regex = new RegExp(command.args.join('.*'), 'i')
+      const idx = this.data.playlist.findIndex(item => item.title.match(regex))
+      if (idx >= 0) {
+        const insertIndex = this.findInsertIndex()
+        const item = this.data.playlist[idx]
+        if (insertIndex < idx) {
+          this.data.playlist.splice(idx, 1)
+          this.data.playlist.splice(insertIndex, 0, item)
+          this.save()
+          this.updateClients('add')
+          say(await answerAddRequest(item, ADD_TYPE.REQUEUED, insertIndex))
+        } else {
+          say(await answerAddRequest(item, ADD_TYPE.EXISTED, idx))
+        }
+      } else {
+        say(`Song not found in playlist.`)
+      }
+      return
+    }
+
     if (command.args.length === 0) {
       say(`Usage: !sr YOUTUBE-URL`)
       return
@@ -749,56 +801,9 @@ class SongrequestModule {
       return
     }
 
-    const answerAddRequest = async (item, addType, idx) => {
-
-      let info
-      if (idx < 0) {
-        info = ``
-      } else if (idx === 0) {
-        info = `[Position ${idx + 1}, playing now]`
-      } else {
-        const last_play = this.data.playlist[0].last_play || 0
-        const diffMs = last_play ? (new Date().getTime() - last_play) : 0
-        const diff = Math.round(diffMs / 1000) * 1000
-        const durationMs = await this.durationUntilIndex(idx) - diff
-        info = `[Position ${idx + 1}, will play in ~${fn.humanDuration(durationMs)}]`
-      }
-      if (addType === ADD_TYPE.ADDED) {
-        return `🎵 Added "${item.title}" (${Youtube.getUrlById(item.yt)}) to the playlist! ${info}`
-      } else if (addType === ADD_TYPE.REQUEUED) {
-        return `🎵 "${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist and only moved up. ${info}`
-      } else if (addType === ADD_TYPE.EXISTED) {
-        return `🎵 "${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist. ${info}`
-      } else {
-        return `Could not process that song request`
-      }
-    }
-
-    let answer = ''
-    if (command.args[0] === '.') {
-      const regex = new RegExp(command.args.slice(1).join('.*'), 'i')
-      const idx = this.data.playlist.findIndex(item => item.title.match(regex))
-      if (idx >= 0) {
-        const insertIndex = this.findInsertIndex()
-        const item = this.data.playlist[idx]
-        if (insertIndex < idx) {
-          this.data.playlist.splice(idx, 1)
-          this.data.playlist.splice(insertIndex, 0, item)
-          this.save()
-          this.updateClients('add')
-          answer = await answerAddRequest(item, ADD_TYPE.REQUEUED, insertIndex)
-        } else {
-          answer = await answerAddRequest(item, ADD_TYPE.EXISTED, idx)
-        }
-      } else {
-        answer = `Song not found in playlist.`
-      }
-    } else {
-      const str = command.args.join(' ')
-      const { item, addType, idx } = await this.add(str, context['display-name'])
-      answer = await answerAddRequest(item, addType, idx)
-    }
-    say(answer)
+    const str = command.args.join(' ')
+    const { item, addType, idx } = await this.add(str, context['display-name'])
+    say(await answerAddRequest(item, addType, idx))
   }
 
   async loadYoutubeData(youtubeId) {
