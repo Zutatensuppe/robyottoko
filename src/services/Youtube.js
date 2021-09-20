@@ -36,17 +36,26 @@ const extractYoutubeId = (string) => {
 }
 
 const getYoutubeIdBySearch = async (searchterm) => {
-  const json = await get('https://www.googleapis.com/youtube/v3/search', {
-    part: 'snippet',
-    q: searchterm,
-    type: 'video',
-    videoEmbeddable: 'true',
-  })
-  try {
-    return json.items[0]['id']['videoId'] || null
-  } catch (e) {
-    return null
+  const searches = [
+    `"${searchterm}"`,
+    searchterm,
+  ]
+  for (const q of searches) {
+    const json = await get('https://www.googleapis.com/youtube/v3/search', {
+      part: 'snippet',
+      q: q,
+      type: 'video',
+      videoEmbeddable: 'true',
+    })
+    try {
+      const res = json.items[0]['id']['videoId'] || null
+      if (res) {
+        return res
+      }
+    } catch (e) {
+    }
   }
+  return null
 }
 
 const getUrlById = (id) => `https://youtu.be/${id}`
