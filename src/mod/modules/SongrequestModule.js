@@ -626,7 +626,9 @@ class SongrequestModule {
         say(`Usage: !resr SEARCH`)
         return
       }
-      const regex = new RegExp(command.args.join('.*'), 'i')
+
+      const regexArgs = command.args.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      const regex = new RegExp(regexArgs.join('.*'), 'i')
       const idx = this.data.playlist.findIndex(item => item.title.match(regex))
       if (idx >= 0) {
         const insertIndex = this.findInsertIndex()
