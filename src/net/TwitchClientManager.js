@@ -57,6 +57,10 @@ class TwitchClientManager {
     // Called every time the bot connects to Twitch chat
     this.chatClient.on('connected', (addr, port) => {
       log.info(`* Connected to ${addr}:${port}`)
+      for (let channel of twitchChannels) {
+        const say = fn.sayFn(this.chatClient, channel.channel_name)
+        say('⚠️ Bot restarted ⚠️')
+      }
     })
 
     // connect to PubSub websocket
