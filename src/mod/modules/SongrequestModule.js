@@ -257,6 +257,30 @@ class SongrequestModule {
     return { item, addType, idx }
   }
 
+  determinePrevIndex() {
+    let index = -1
+    for (let i in this.data.playlist) {
+      const item = this.data.playlist[i]
+      if (this.data.filter.tag === '' || item.tags.includes(this.data.filter.tag)) {
+        index = i
+      }
+    }
+    return index
+  }
+
+  determineNextIndex() {
+    for (let i in this.data.playlist) {
+      if (i == 0) { // i can be string ;_;
+        continue
+      }
+      const item = this.data.playlist[i]
+      if (this.data.filter.tag === '' || item.tags.includes(this.data.filter.tag)) {
+        return i
+      }
+    }
+    return -1
+  }
+
   determineFirstIndex() {
     return this.data.playlist.findIndex(item => this.data.filter.tag === '' || item.tags.includes(this.data.filter.tag))
   }
@@ -468,27 +492,17 @@ class SongrequestModule {
   }
 
   prev() {
-    if (this.data.playlist.length === 0) {
-      return
+    const index = this.determinePrevIndex()
+    if (index >= 0) {
+      this.playIdx(index)
     }
-
-    this.data.playlist.unshift(this.data.playlist.pop())
-
-    this.save()
-    this.updateClients('prev')
   }
 
   next() {
-    if (this.data.playlist.length === 0) {
-      return
+    const index = this.determineNextIndex()
+    if (index >= 0) {
+      this.playIdx(index)
     }
-
-    this.incStat('skips')
-
-    this.data.playlist.push(this.data.playlist.shift())
-
-    this.save()
-    this.updateClients('skip')
   }
 
   jumptonew() {
