@@ -141,6 +141,7 @@ class SongrequestModule {
         yt: item.yt,
         title: item.title || '',
         time: item.time || new Date().getTime(),
+        last_play: item.last_play || 0,
         user: item.user || '',
         plays: item.plays || 0,
         skips: item.skips || 0, // hard skips
@@ -188,6 +189,8 @@ class SongrequestModule {
           this.data.playlist.slice(0, idx)
         )
         this.incStat('plays')
+        this.data.playlist[idx].last_play = new Date().getTime()
+
         this.save()
         this.updateClients('playIdx')
       },
@@ -316,12 +319,12 @@ class SongrequestModule {
       return 0
     }
 
-    let durationTotal = 0
+    let durationTotalMs = 0
     for (const item of this.data.playlist.slice(0, idx)) {
       const d = await this.loadYoutubeData(item.yt)
-      durationTotal += fn.parseISO8601Duration(d.contentDetails.duration)
+      durationTotalMs += fn.parseISO8601Duration(d.contentDetails.duration)
     }
-    return durationTotal
+    return durationTotalMs
   }
 
   async stats(userName) {
@@ -747,13 +750,18 @@ class SongrequestModule {
     }
 
     const answerAddRequest = async (item, addType, idx) => {
+
       let info
       if (idx < 0) {
         info = ``
       } else if (idx === 0) {
         info = `[Position ${idx + 1}, playing now]`
       } else {
-        info = `[Position ${idx + 1}, will play in ~${fn.humanDuration(await this.durationUntilIndex(idx))}]`
+        const last_play = this.data.playlist[0].last_play || 0
+        const diffMs = last_play ? (new Date().getTime() - last_play) : 0
+        const diff = Math.round(diffMs / 1000) * 1000
+        const durationMs = await this.durationUntilIndex(idx) - diff
+        info = `[Position ${idx + 1}, will play in ~${fn.humanDuration(durationMs)}]`
       }
       if (addType === ADD_TYPE.ADDED) {
         return `🎵 Added "${item.title}" (${Youtube.getUrlById(item.yt)}) to the playlist! ${info}`
