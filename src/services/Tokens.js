@@ -14,11 +14,11 @@ function generateToken(length) {
 }
 
 function Tokens(/** @type Db */ db) {
-  const getByUserIdAndType = (user_id, type) => db.get(TABLE, {user_id, type})
+  const getByUserIdAndType = (user_id, type) => db.get(TABLE, { user_id, type })
   const insert = (tokenInfo) => db.insert(TABLE, tokenInfo)
   const createToken = (user_id, type) => {
     const token = generateToken(32)
-    const tokenObj = {user_id, type, token}
+    const tokenObj = { user_id, type, token }
     insert(tokenObj)
     return tokenObj
   }
@@ -28,8 +28,9 @@ function Tokens(/** @type Db */ db) {
   }
 
   return {
-    getByToken: (token) => db.get(TABLE, {token}),
-    delete: (token) => db.delete(TABLE, {token}),
+    createToken,
+    getByToken: (token) => db.get(TABLE, { token }),
+    delete: (token) => db.delete(TABLE, { token }),
     getWidgetTokenForUserId: (user_id) => getOrCreateToken(user_id, 'widget'),
     getPubTokenForUserId: (user_id) => getOrCreateToken(user_id, 'pub'),
     generateAuthTokenForUserId: (user_id) => createToken(user_id, 'auth'),

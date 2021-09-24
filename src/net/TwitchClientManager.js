@@ -19,12 +19,28 @@ class TwitchClientManager {
       return
     }
 
+    this.identity = (
+      user.tmi_identity_username
+      && user.tmi_identity_password
+      && user.tmi_identity_client_id
+    ) ? {
+      username: user.tmi_identity_username,
+      password: user.tmi_identity_password,
+      client_id: user.tmi_identity_client_id,
+      client_secret: user.tmi_identity_client_secret,
+    } : {
+      username: cfg.tmi.identity.username,
+      password: cfg.tmi.identity.password,
+      client_id: cfg.tmi.identity.client_id,
+      client_secret: user.tmi.identity.client_secret,
+    }
+
     // connect to chat via tmi (to all channels configured)
     this.chatClient = new tmi.client({
       identity: {
-        username: user.tmi_identity_username,
-        password: user.tmi_identity_password,
-        client_id: user.tmi_identity_client_id,
+        username: this.identity.username,
+        password: this.identity.password,
+        client_id: this.identity.client_id,
       },
       channels: twitchChannels.map(ch => ch.channel_name),
       connection: {
@@ -105,8 +121,8 @@ class TwitchClientManager {
     // register EventSub
     // @see https://dev.twitch.tv/docs/eventsub
     this.helixClient = new TwitchHelixClient(
-      user.tmi_identity_client_id,
-      user.tmi_identity_client_secret
+      this.identity.client_id,
+      this.identity.client_secret
     )
 
     // to delete all subscriptions
@@ -125,6 +141,10 @@ class TwitchClientManager {
 
   getHelixClient() {
     return this.helixClient
+  }
+
+  getIdentity() {
+    return this.identity
   }
 }
 

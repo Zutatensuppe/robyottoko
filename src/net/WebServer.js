@@ -6,6 +6,9 @@ const cookieParser = require('cookie-parser')
 
 const TwitchHelixClient = require('../services/TwitchHelixClient.js')
 const Db = require('../Db.js')
+const Users = require('../services/Users.js')
+const Tokens = require('../services/Tokens.js')
+const Mail = require('../net/Mail.js')
 const WebSocketServer = require('./WebSocketServer.js')
 const Variables = require('../services/Variables.js')
 
@@ -14,7 +17,9 @@ const log = fn.logger(__filename)
 class WebServer {
   constructor(
     /** @type Db */ db,
-    userRepo,
+    /** @type Users */ userRepo,
+    /** @type Tokens */ tokenRepo,
+    /** @type Mail */ mail,
     twitchChannelRepo,
     moduleManager,
     configHttp,
@@ -24,6 +29,8 @@ class WebServer {
   ) {
     this.db = db
     this.userRepo = userRepo
+    this.tokenRepo = tokenRepo
+    this.mail = mail
     this.twitchChannelRepo = twitchChannelRepo
 
     this.moduleManager = moduleManager
@@ -134,6 +141,54 @@ class WebServer {
         },
       }))
     })
+    app.get('/register', async (req, res) => {
+      if (req.token) {
+        res.redirect(302, '/')
+        return
+      }
+      res.send(await fn.render('base.twig', {
+        title: 'Register',
+        page: 'register',
+        page_data: {
+          wsBase: this.wss.connectstring(),
+          widgetToken: null,
+          user: null,
+          token: null,
+        },
+      }))
+    })
+    app.get('/password-reset', async (req, res) => {
+      if (req.token) {
+        res.redirect(302, '/')
+        return
+      }
+      res.send(await fn.render('base.twig', {
+        title: 'Password Reset',
+        page: 'password-reset',
+        page_data: {
+          wsBase: this.wss.connectstring(),
+          widgetToken: null,
+          user: null,
+          token: null,
+        },
+      }))
+    })
+    app.get('/forgot-password', async (req, res) => {
+      if (req.token) {
+        res.redirect(302, '/')
+        return
+      }
+      res.send(await fn.render('base.twig', {
+        title: 'Forgot Password',
+        page: 'forgot-password',
+        page_data: {
+          wsBase: this.wss.connectstring(),
+          widgetToken: null,
+          user: null,
+          token: null,
+        },
+      }))
+    })
     app.get('/logout', async (req, res) => {
       if (req.token) {
         this.auth.destroyToken(req.token)
@@ -182,6 +237,134 @@ class WebServer {
         },
       }))
     })
+
+    app.post('/api/user/_reset_password', express.json(), async (req, res) => {
+      const pass = req.body.pass || null
+      const token = req.body.token || null
+      if (!pass || !token) {
+        res.status(400).send({ reason: 'bad request' })
+        return
+      }
+
+      const tokenObj = this.tokenRepo.getByToken(token)
+      if (!tokenObj) {
+        res.status(400).send({ reason: 'bad request' })
+        return
+      }
+
+      this.db.upsert('user', { pass }, { id: tokenObj.user_id })
+      this.tokenRepo.delete(tokenObj.token)
+      res.send({ success: true })
+    })
+
+    app.post('/api/user/_request_password_reset', express.json(), async (req, res) => {
+      const email = req.body.email || null
+      if (!email) {
+        res.status(400).send({ reason: 'bad request' })
+        return
+      }
+
+      const user = this.db.get('user', { email })
+      if (!user) {
+        res.status(404).send({ reason: 'email not found' })
+        return
+      }
+
+      const token = this.tokenRepo.createToken(user.id, 'password_reset')
+      this.mail.sendPasswordResetMail({
+        user: user,
+        token: token,
+      })
+      res.send({ success: true })
+    })
+
+    app.post('/api/user/_resend_verification_mail', express.json(), async (req, res) => {
+      const email = req.body.email || null
+      if (!email) {
+        res.status(400).send({ reason: 'bad request' })
+        return
+      }
+
+      const user = this.db.get('user', { email })
+      if (!user) {
+        res.status(404).send({ reason: 'email not found' })
+        return
+      }
+
+      if (user.status !== 'verification_pending') {
+        res.status(400).send({ reason: 'already verified' })
+        return
+      }
+
+      if (user.status !== 'verification_pending') {
+        res.status(400).send({ reason: 'already verified' })
+        return
+      }
+
+      const token = this.tokenRepo.createToken(user.id, 'registration')
+      this.mail.sendRegistrationMail({
+        user: user,
+        token: token,
+      })
+      res.send({ success: true })
+    })
+
+    app.post('/api/user/_register', express.json(), async (req, res) => {
+      const user = {
+        name: req.body.user,
+        pass: req.body.pass,
+        email: req.body.email,
+
+        status: 'verification_pending',
+
+        tmi_identity_username: '',
+        tmi_identity_password: '',
+        tmi_identity_client_id: '',
+        tmi_identity_client_secret: '',
+      }
+      if (this.db.get('user', { name: user.name })) {
+        res.status(400).send({ reason: 'user_already_exists' })
+        return
+      }
+      if (this.db.get('user', { email: user.email })) {
+        res.status(400).send({ reason: 'user_already_exists' })
+        return
+      }
+      const userId = this.userRepo.createUser(user)
+      if (!userId) {
+        res.status(400).send({ reason: 'unable to create user' })
+        return
+      }
+      const token = this.tokenRepo.createToken(userId, 'registration')
+      this.mail.sendRegistrationMail({
+        user: user,
+        token: token,
+      })
+      res.send({ success: true })
+    })
+
+    app.post('/api/_handle-token', express.json(), async (req, res) => {
+      const token = req.body.token || null
+      if (!token) {
+        res.status(400).send({ reason: 'invalid_token' })
+        return
+      }
+      const tokenObj = this.tokenRepo.getByToken(token)
+      if (!tokenObj) {
+        res.status(400).send({ reason: 'invalid_token' })
+        return
+      }
+      if (tokenObj.type === 'registration') {
+        this.db.upsert('user', { status: 'verified' }, { id: tokenObj.user_id })
+        this.tokenRepo.delete(tokenObj.token)
+        res.send({ type: 'registration-verified' })
+        return
+      }
+
+      res.status(400).send({ reason: 'invalid_token' })
+      return
+    })
+
 
     app.get('/variables/', requireLogin, async (req, res) => {
       const variables = new Variables(this.db, req.user.id)
@@ -255,8 +438,8 @@ class WebServer {
       let clientSecret
       if (!req.user.groups.includes('admin')) {
         const u = this.userRepo.getById(req.user.id)
-        clientId = u.tmi_identity_client_id
-        clientSecret = u.tmi_identity_client_secret
+        clientId = u.tmi_identity_client_id || configTwitch.tmi.identity.client_id
+        clientSecret = u.tmi_identity_client_secret || configTwitch.tmi.identity.client_secret
       } else {
         clientId = req.body.client_id
         clientSecret = req.body.client_secret

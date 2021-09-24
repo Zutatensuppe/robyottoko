@@ -14,8 +14,8 @@ class Db {
     this.dbh.close()
   }
 
-  patch (verbose=true) {
-    if (!this.get('sqlite_master', {type: 'table', name: 'db_patches'})) {
+  patch(verbose = true) {
+    if (!this.get('sqlite_master', { type: 'table', name: 'db_patches' })) {
       this.run('CREATE TABLE db_patches ( id TEXT PRIMARY KEY);', [])
     }
 
@@ -39,7 +39,7 @@ class Db {
             }
             this.run(q)
           }
-          this.insert('db_patches', {id: f})
+          this.insert('db_patches', { id: f })
         })(all)
 
         log.info(`✓ applied db patch: ${f}`)
@@ -50,7 +50,7 @@ class Db {
     }
   }
 
-  _buildWhere (where) {
+  _buildWhere(where) {
     const wheres = []
     const values = []
     for (const k of Object.keys(where)) {
@@ -121,7 +121,7 @@ class Db {
     ]
   }
 
-  _buildOrderBy (orderBy) {
+  _buildOrderBy(orderBy) {
     const sorts = []
     for (const s of orderBy) {
       const k = Object.keys(s)[0]
@@ -130,43 +130,43 @@ class Db {
     return sorts.length > 0 ? ' ORDER BY ' + sorts.join(', ') : ''
   }
 
-  _get (query, params = []) {
+  _get(query, params = []) {
     return this.dbh.prepare(query).get(...params)
   }
 
-  run (query, params = []) {
+  run(query, params = []) {
     return this.dbh.prepare(query).run(...params)
   }
 
-  _getMany (query, params = []) {
+  _getMany(query, params = []) {
     return this.dbh.prepare(query).all(...params)
   }
 
-  get (table, where = {}, orderBy = []) {
+  get(table, where = {}, orderBy = []) {
     const [whereSql, values] = this._buildWhere(where)
     const orderBySql = this._buildOrderBy(orderBy)
     const sql = 'SELECT * FROM ' + table + whereSql + orderBySql
     return this._get(sql, values)
   }
 
-  getMany (table, where = {}, orderBy = []) {
+  getMany(table, where = {}, orderBy = []) {
     const [whereSql, values] = this._buildWhere(where)
     const orderBySql = this._buildOrderBy(orderBy)
     const sql = 'SELECT * FROM ' + table + whereSql + orderBySql
     return this._getMany(sql, values)
   }
 
-  delete (table, where = {}) {
+  delete(table, where = {}) {
     const [whereSql, values] = this._buildWhere(where)
     const sql = 'DELETE FROM ' + table + whereSql
     return this.run(sql, values)
   }
 
-  exists (table, where) {
+  exists(table, where) {
     return !!this.get(table, where)
   }
 
-  upsert (table, data, check, idcol = null) {
+  upsert(table, data, check, idcol = null) {
     if (!this.exists(table, check)) {
       return this.insert(table, data)
     }
@@ -178,14 +178,14 @@ class Db {
     return this.get(table, check)[idcol] // get id manually
   }
 
-  insert (table, data) {
+  insert(table, data) {
     const keys = Object.keys(data)
     const values = keys.map(k => data[k])
     const sql = 'INSERT INTO ' + table + ' (' + keys.join(',') + ') VALUES (' + keys.map(k => '?').join(',') + ')'
     return this.run(sql, values).lastInsertRowid
   }
 
-  update (table, data, where = {}) {
+  update(table, data, where = {}) {
     const keys = Object.keys(data)
     if (keys.length === 0) {
       return

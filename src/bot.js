@@ -1,4 +1,5 @@
 const config = require('./config.js')
+
 const net = require('./net')
 const mod = require('./mod')
 const { logger } = require('./fn.js')
@@ -8,6 +9,7 @@ const TwitchChannels = require('./services/TwitchChannels.js')
 const Cache = require('./services/Cache.js')
 const Db = require('./Db.js')
 const Variables = require('./services/Variables.js')
+const Mail = require('./net/Mail.js')
 
 const db = new Db(config.db)
 // make sure we are always on latest db version
@@ -17,38 +19,41 @@ const tokenRepo = new Tokens(db)
 const twitchChannelRepo = new TwitchChannels(db)
 const cache = new Cache(db)
 const auth = new net.Auth(userRepo, tokenRepo)
+const mail = new Mail(config.mail)
 
 const moduleManager = new mod.ModuleManager()
 const webSocketServer = new net.WebSocketServer(moduleManager, config.ws, auth)
-const webServer = new net.WebServer(db, userRepo, twitchChannelRepo, moduleManager, config.http, config.twitch, webSocketServer, auth)
+const webServer = new net.WebServer(db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, config.http, config.twitch, webSocketServer, auth)
 
-  ; (async () => {
-    webSocketServer.listen()
-    await webServer.listen()
+const run = async () => {
+  webSocketServer.listen()
+  await webServer.listen()
 
-    // one for each user
-    for (const user of userRepo.all()) {
-      const twitchChannels = twitchChannelRepo.allByUserId(user.id)
-      const clientManager = new net.TwitchClientManager(config.twitch, db, user, twitchChannels, moduleManager)
-      const chatClient = clientManager.getChatClient()
-      const helixClient = clientManager.getHelixClient()
-      const moduleStorage = new mod.ModuleStorage(db, user.id)
-      const variables = new Variables(db, user.id)
-      for (const moduleClass of mod.modules) {
-        moduleManager.add(user.id, new moduleClass(
-          db,
-          user,
-          variables,
-          chatClient,
-          helixClient,
-          moduleStorage,
-          cache,
-          webServer,
-          webSocketServer
-        ))
-      }
+  // one for each user
+  for (const user of userRepo.all()) {
+    const twitchChannels = twitchChannelRepo.allByUserId(user.id)
+    const clientManager = new net.TwitchClientManager(config.twitch, db, user, twitchChannels, moduleManager)
+    const chatClient = clientManager.getChatClient()
+    const helixClient = clientManager.getHelixClient()
+    const moduleStorage = new mod.ModuleStorage(db, user.id)
+    const variables = new Variables(db, user.id)
+    for (const moduleClass of mod.modules) {
+      moduleManager.add(user.id, new moduleClass(
+        db,
+        user,
+        variables,
+        chatClient,
+        helixClient,
+        moduleStorage,
+        cache,
+        webServer,
+        webSocketServer
+      ))
     }
-  })()
+  }
+}
+
+run()
 
 const log = logger(__filename)
 const gracefulShutdown = (signal) => {
