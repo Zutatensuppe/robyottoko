@@ -4,6 +4,10 @@ export default {
     src: String,
     name: String,
     volume: Number,
+    baseVolume: {
+      type: Number,
+      default: 100,
+    },
   },
   data() {
     return {
@@ -28,7 +32,9 @@ export default {
         this.audio.pause()
         this.audio.currentTime = 0;
       } else {
-        this.audio.volume = this.volume / 100.0
+        const maxVolume = this.baseVolume / 100.0
+        const soundVolume = this.volume / 100.0
+        this.audio.volume = maxVolume * soundVolume
         this.audio.play()
       }
       this.playing = !this.playing

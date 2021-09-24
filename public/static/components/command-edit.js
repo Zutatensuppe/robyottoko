@@ -29,6 +29,10 @@ export default {
       type: Array,
       required: true,
     },
+    baseVolume: {
+      type: Number,
+      default: 100,
+    },
   },
   emits: [
     'update:modelValue',
@@ -210,7 +214,14 @@ export default {
             <tr v-if="item.action === 'media'">
               <td>Sound:</td>
               <td>
-                <player v-if="item.data.sound.file" :src="item.data.sound.file" :name="item.data.sound.filename" :volume="item.data.sound.volume" class="button is-small" />
+                <player
+                  v-if="item.data.sound.file"
+                  :src="item.data.sound.file"
+                  :name="item.data.sound.filename"
+                  :volume="item.data.sound.volume"
+                  :baseVolume="baseVolume"
+                  class="button is-small"
+                  />
                 <volume-slider v-if="item.data.sound.file" v-model="item.data.sound.volume" />
                 <button v-if="item.data.sound.file" class="button is-small" @click="item.data.sound.file = null"><i class="fa fa-remove mr-1" /> Remove</button>
                 <br v-if="item.data.sound.file" />
@@ -238,7 +249,7 @@ export default {
             <tr v-if="item.action === 'countdown'">
               <td>Settings</td>
               <td>
-                <countdown-edit v-model="item.data" />
+                <countdown-edit v-model="item.data" :baseVolume="baseVolume" />
               </td>
             </tr>
             <tr>

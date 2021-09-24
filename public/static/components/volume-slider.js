@@ -1,14 +1,11 @@
+import Slider from '../components/slider.js'
+
 export default {
   name: 'volume-slider',
-  template: `<div class="control has-icons-left has-icons-right range volume-slider">
-    <input type="range" class="input is-small" min="0" max="100" v-model="volume" />
-    <span class="icon is-small is-left">
-      <i class="fa fa-volume-down"/>
-    </span>
-    <span class="icon is-small is-right">
-      <i class="fa fa-volume-up"/>
-    </span>
-  </div>`,
+  components: {
+    Slider,
+  },
+  template: `<slider class="volume-slider" iconLeft="fa-volume-down" iconRight="fa-volume-up" min="0" max="100" v-model="volume" @input="valChange" />`,
   props: {
     value: Number,
   },
@@ -17,13 +14,12 @@ export default {
       volume: 100,
     }
   },
+  methods: {
+    valChange() {
+      this.$emit('input', this.volume)
+    },
+  },
   created() {
     this.volume = this.value
-    this.$watch('value', () => {
-      this.volume = this.value
-    })
-    this.$watch('volume', () => {
-      this.$emit('input', this.volume)
-    })
   },
 }

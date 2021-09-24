@@ -63,6 +63,9 @@ class GeneralModule {
   reinit() {
     this.data = this.storage.load(this.name, {
       commands: [],
+      settings: {
+        volume: 100,
+      },
     })
     this.data.commands = this.fix(this.data.commands)
 
@@ -184,6 +187,7 @@ class GeneralModule {
       event: eventName,
       data: {
         commands: this.data.commands,
+        settings: this.data.settings,
         globalVariables: this.variables.all(),
       },
     };
@@ -208,8 +212,9 @@ class GeneralModule {
       'conn': (ws) => {
         this.updateClient('init', ws)
       },
-      'save': (ws, { commands }) => {
+      'save': (ws, { commands, settings }) => {
         this.data.commands = this.fix(commands)
+        this.data.settings = settings
         this.storage.save(this.name, this.data)
         this.reinit()
         this.updateClients('init')
