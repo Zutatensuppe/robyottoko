@@ -608,7 +608,8 @@ class SongrequestModule {
         const diffMs = last_play ? (new Date().getTime() - last_play) : 0
         const diff = Math.round(diffMs / 1000) * 1000
         const durationMs = await this.durationUntilIndex(idx) - diff
-        info = `[Position ${idx + 1}, will play in ~${fn.humanDuration(durationMs)}]`
+        const timePrediction = durationMs <= 0 ? '' : `, will play in ~${fn.humanDuration(durationMs)}`
+        info = `[Position ${idx + 1}${timePrediction}]`
       }
       if (addType === ADD_TYPE.ADDED) {
         return `🎵 Added "${item.title}" (${Youtube.getUrlById(item.yt)}) to the playlist! ${info}`
