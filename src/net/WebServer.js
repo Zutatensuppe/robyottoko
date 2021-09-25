@@ -6,6 +6,10 @@ const cookieParser = require('cookie-parser')
 
 const TwitchHelixClient = require('../services/TwitchHelixClient.js')
 const Db = require('../Db.js')
+const EventHub = require('../EventHub.js')
+const Users = require('../services/Users.js')
+const Tokens = require('../services/Tokens.js')
+const Mail = require('../net/Mail.js')
 const WebSocketServer = require('./WebSocketServer.js')
 const Variables = require('../services/Variables.js')
 
@@ -13,8 +17,11 @@ const log = fn.logger(__filename)
 
 class WebServer {
   constructor(
+    /** @type EventHub */ eventHub,
     /** @type Db */ db,
-    userRepo,
+    /** @type Users */ userRepo,
+    /** @type Tokens */ tokenRepo,
+    /** @type Mail */ mail,
     twitchChannelRepo,
     moduleManager,
     configHttp,
@@ -22,8 +29,11 @@ class WebServer {
     /** @type WebSocketServer */ wss,
     auth
   ) {
+    this.eventHub = eventHub
     this.db = db
     this.userRepo = userRepo
+    this.tokenRepo = tokenRepo
+    this.mail = mail
     this.twitchChannelRepo = twitchChannelRepo
 
     this.moduleManager = moduleManager
@@ -134,6 +144,54 @@ class WebServer {
         },
       }))
     })
+    app.get('/register', async (req, res) => {
+      if (req.token) {
+        res.redirect(302, '/')
+        return
+      }
+      res.send(await fn.render('base.twig', {
+        title: 'Register',
+        page: 'register',
+        page_data: {
+          wsBase: this.wss.connectstring(),
+          widgetToken: null,
+          user: null,
+          token: null,
+        },
+      }))
+    })
+    app.get('/password-reset', async (req, res) => {
+      if (req.token) {
+        res.redirect(302, '/')
+        return
+      }
+      res.send(await fn.render('base.twig', {
+        title: 'Password Reset',
+        page: 'password-reset',
+        page_data: {
+          wsBase: this.wss.connectstring(),
+          widgetToken: null,
+          user: null,
+          token: null,
+        },
+      }))
+    })
+    app.get('/forgot-password', async (req, res) => {
+      if (req.token) {
+        res.redirect(302, '/')
+        return
+      }
+      res.send(await fn.render('base.twig', {
+        title: 'Forgot Password',
+        page: 'forgot-password',
+        page_data: {
+          wsBase: this.wss.connectstring(),
+          widgetToken: null,
+          user: null,
+          token: null,
+        },
+      }))
+    })
     app.get('/logout', async (req, res) => {
       if (req.token) {
         this.auth.destroyToken(req.token)
@@ -183,6 +241,160 @@ class WebServer {
       }))
     })
 
+    app.post('/api/user/_reset_password', express.json(), async (req, res) => {
+      const plainPass = req.body.pass || null
+      const token = req.body.token || null
+      if (!plainPass || !token) {
+        res.status(400).send({ reason: 'bad request' })
+        return
+      }
+
+      const tokenObj = this.tokenRepo.getByToken(token)
+      if (!tokenObj) {
+        res.status(400).send({ reason: 'bad request' })
+        return
+      }
+
+      const originalUser = this.userRepo.getById(tokenObj.user_id)
+      if (!originalUser) {
+        res.status(404).send({ reason: 'user_does_not_exist' })
+        return
+      }
+
+      const pass = fn.passwordHash(plainPass, originalUser.salt)
+      const user = { id: originalUser.id, pass }
+      this.userRepo.save(user)
+      this.tokenRepo.delete(tokenObj.token)
+      res.send({ success: true })
+    })
+
+    app.post('/api/user/_request_password_reset', express.json(), async (req, res) => {
+      const email = req.body.email || null
+      if (!email) {
+        res.status(400).send({ reason: 'bad request' })
+        return
+      }
+
+      const user = this.userRepo.get({ email, status: 'verified' })
+      if (!user) {
+        res.status(404).send({ reason: 'user not found' })
+        return
+      }
+
+      const token = this.tokenRepo.createToken(user.id, 'password_reset')
+      this.mail.sendPasswordResetMail({
+        user: user,
+        token: token,
+      })
+      res.send({ success: true })
+    })
+
+    app.post('/api/user/_resend_verification_mail', express.json(), async (req, res) => {
+      const email = req.body.email || null
+      if (!email) {
+        res.status(400).send({ reason: 'bad request' })
+        return
+      }
+
+      const user = this.db.get('user', { email })
+      if (!user) {
+        res.status(404).send({ reason: 'email not found' })
+        return
+      }
+
+      if (user.status !== 'verification_pending') {
+        res.status(400).send({ reason: 'already verified' })
+        return
+      }
+
+      const token = this.tokenRepo.createToken(user.id, 'registration')
+      this.mail.sendRegistrationMail({
+        user: user,
+        token: token,
+      })
+      res.send({ success: true })
+    })
+
+    app.post('/api/user/_register', express.json(), async (req, res) => {
+      const salt = fn.passwordSalt()
+      const user = {
+        name: req.body.user,
+        pass: fn.passwordHash(req.body.pass, salt),
+        salt: salt,
+        email: req.body.email,
+
+        status: 'verification_pending',
+
+        tmi_identity_username: '',
+        tmi_identity_password: '',
+        tmi_identity_client_id: '',
+        tmi_identity_client_secret: '',
+      }
+      let tmpUser
+      tmpUser = this.db.get('user', { email: user.email })
+      if (tmpUser) {
+        if (tmpUser.status === 'verified') {
+          // user should use password reset function
+          res.status(400).send({ reason: 'verified_mail_already_exists' })
+        } else {
+          // user should use resend registration mail function
+          res.status(400).send({ reason: 'unverified_mail_already_exists' })
+        }
+        return
+      }
+      tmpUser = this.db.get('user', { name: user.name })
+      if (tmpUser) {
+        if (tmpUser.status === 'verified') {
+          // user should use password reset function
+          res.status(400).send({ reason: 'verified_name_already_exists' })
+        } else {
+          // user should use resend registration mail function
+          res.status(400).send({ reason: 'unverified_name_already_exists' })
+        }
+        return
+      }
+
+      const userId = this.userRepo.createUser(user)
+      if (!userId) {
+        res.status(400).send({ reason: 'unable to create user' })
+        return
+      }
+      const token = this.tokenRepo.createToken(userId, 'registration')
+      this.mail.sendRegistrationMail({
+        user: user,
+        token: token,
+      })
+      res.send({ success: true })
+    })
+
+    app.post('/api/_handle-token', express.json(), async (req, res) => {
+      const token = req.body.token || null
+      if (!token) {
+        res.status(400).send({ reason: 'invalid_token' })
+        return
+      }
+      const tokenObj = this.tokenRepo.getByToken(token)
+      if (!tokenObj) {
+        res.status(400).send({ reason: 'invalid_token' })
+        return
+      }
+      if (tokenObj.type === 'registration') {
+        this.userRepo.save({ status: 'verified', id: tokenObj.user_id })
+        this.tokenRepo.delete(tokenObj.token)
+        res.send({ type: 'registration-verified' })
+
+        // new user was registered. module manager should be notified about this
+        // so that bot doesnt need to be restarted :O
+        const user = this.userRepo.getById(tokenObj.user_id)
+        this.eventHub.trigger('user_registration_complete', user)
+        return
+      }
+
+      res.status(400).send({ reason: 'invalid_token' })
+      return
+    })
+
+
     app.get('/variables/', requireLogin, async (req, res) => {
       const variables = new Variables(this.db, req.user.id)
       res.send(await fn.render('base.twig', {
@@ -222,9 +434,20 @@ class WebServer {
         }
       }
 
+      const originalUser = this.userRepo.getById(req.body.user.id)
+      if (!originalUser) {
+        res.status(404).send({ reason: 'user_does_not_exist' })
+        return
+      }
+
       const user = {
         id: req.body.user.id,
-        pass: req.body.user.pass,
+      }
+      if (req.body.user.pass) {
+        user.pass = fn.passwordHash(req.body.user.pass, originalUser.salt)
+      }
+      if (req.body.user.email) {
+        user.email = req.body.user.email
       }
       if (req.user.groups.includes('admin')) {
         user.tmi_identity_client_id = req.body.user.tmi_identity_client_id
@@ -233,8 +456,6 @@ class WebServer {
         user.tmi_identity_password = req.body.user.tmi_identity_password
       }
 
-      this.userRepo.save(user)
-
       const twitch_channels = req.body.twitch_channels.map(channel => {
         channel.user_id = user.id
         return channel
@@ -242,6 +463,8 @@ class WebServer {
 
       this.userRepo.save(user)
       this.twitchChannelRepo.saveUserChannels(user.id, twitch_channels)
+
+      this.eventHub.trigger('user_changed', this.userRepo.getById(user.id))
       res.send()
     })
 
@@ -255,8 +478,8 @@ class WebServer {
       let clientSecret
       if (!req.user.groups.includes('admin')) {
         const u = this.userRepo.getById(req.user.id)
-        clientId = u.tmi_identity_client_id
-        clientSecret = u.tmi_identity_client_secret
+        clientId = u.tmi_identity_client_id || configTwitch.tmi.identity.client_id
+        clientSecret = u.tmi_identity_client_secret || configTwitch.tmi.identity.client_secret
       } else {
         clientId = req.body.client_id
         clientSecret = req.body.client_secret

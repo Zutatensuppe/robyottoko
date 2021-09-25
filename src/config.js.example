@@ -1,4 +1,5 @@
 module.exports = {
+  secret: 'HLBD^@gL*wvoEn02yJ7h+%',
   log: {
     level: 'info',
   },
@@ -12,6 +13,18 @@ module.exports = {
         secret: 's3cRe7_blabla_superduper',
       },
     },
+    // default chat bot identity for users that dont have their own bot
+    tmi: {
+      identity: {
+        client_id: '',
+        client_secret: '',
+        username: '',
+        password: '',
+      },
+    },
+  },
+  mail: {
+    sendinblue_api_key: 'some_api_key',
   },
   http: {
     hostname: 'localhost',

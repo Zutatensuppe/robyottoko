@@ -3,6 +3,9 @@ export default {
 <div class="center-screen">
   <h1 class="title is-6">Hyottoko.club</h1>
   <form>
+    <div class="field has-background-success-light has-text-success-dark" v-if="success">
+      {{success}}
+    </div>
     <div class="field has-background-danger-light has-text-danger-dark" v-if="error">
       {{error}}
     </div>
@@ -25,6 +28,10 @@ export default {
     <div class="field">
       <span class="button is-small is-primary" @click="submit">Login</span>
     </div>
+    <div class="field">
+      <a href="/register">Register an account</a> |
+      <a href="/forgot-password">Forgot password?</a>
+    </div>
   </form>
 </div>
 `,
@@ -33,10 +40,38 @@ export default {
       user: '',
       pass: '',
       error: '',
+      success: '',
+    }
+  },
+  // TODO: move token handling to general place
+  async mounted() {
+    const params = new URLSearchParams(window.location.search)
+    const token = params.get('t')
+    if (token) {
+      this.success = ''
+      this.error = ''
+      const res = await fetch('/api/_handle-token', {
+        method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ token: token }),
+      })
+      if (res.status === 200) {
+        const json = await res.json()
+        if (json.type === 'registration-verified') {
+          this.success = 'Registration complete'
+        }
+      } else {
+        this.error = 'Unknown error'
+      }
     }
   },
   methods: {
     async submit() {
+      this.success = ''
+      this.error = ''
       const res = await fetch('/auth', {
         method: 'post',
         headers: {

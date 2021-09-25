@@ -2,6 +2,9 @@ const WebSocket = require('ws')
 const { nonce, SECOND, logger } = require('../fn.js')
 const { EventHub } = require('../EventHub.js')
 
+const CODE_GOING_AWAY = 1001
+const CODE_CUSTOM_DISCONNECT = 4000
+
 const heartbeatInterval = 60 * SECOND //ms between PING's
 const reconnectInterval = 3 * SECOND //ms to wait before reconnect
 
@@ -24,12 +27,12 @@ class WsWrapper {
     this.addr = addr
     this.protocols = protocols
 
-    this.onopen = () => {}
-    this.onclose = () => {}
-    this.onmessage = () => {}
+    this.onopen = () => { }
+    this.onclose = () => { }
+    this.onmessage = () => { }
   }
 
-  send (txt) {
+  send(txt) {
     if (this.handle) {
       try {
         this.handle.send(txt)
@@ -64,8 +67,18 @@ class WsWrapper {
     }
     ws.onclose = (e) => {
       this.handle = null
-      this.reconnectTimeout = setTimeout(() => { this.connect() }, reconnectInterval)
+      if (e.code === CODE_CUSTOM_DISCONNECT || e.code === CODE_GOING_AWAY) {
+        // no need to reconnect on custom disconnect or going away
+      } else {
+        this.reconnectTimeout = setTimeout(() => { this.connect() }, reconnectInterval)
+      }
       this.onclose(e)
+    }
+  }
+
+  disconnect() {
+    if (this.handle) {
+      this.handle.close(CODE_CUSTOM_DISCONNECT)
     }
   }
 }
@@ -124,10 +137,14 @@ function TwitchPubSubClient() {
   const connect = () => {
     ws.connect()
   }
+  const disconnect = () => {
+    ws.disconnect()
+  }
 
   return {
     listen,
     connect,
+    disconnect,
     on: evts.on,
   }
 }

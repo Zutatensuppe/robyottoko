@@ -1,10 +1,17 @@
+const { passwordHash } = require("../fn")
+
 function Auth(userRepo, tokenRepo) {
   const getTokenInfo = (token) => tokenRepo.getByToken(token)
-  const getUserById = (user_id) => userRepo.getById(user_id)
+  const getUserById = (id) => userRepo.get({ id, status: 'verified' })
 
   return {
-    getUserById,
-    getUserByNameAndPass: (name, pass) => userRepo.getByNameAndPass(name, pass),
+    getUserByNameAndPass: (name, plainPass) => {
+      const user = userRepo.get({ name, status: 'verified' })
+      if (!user || user.pass !== passwordHash(plainPass, user.salt)) {
+        return null
+      }
+      return user
+    },
     getUserAuthToken: (user_id) => tokenRepo.generateAuthTokenForUserId(user_id).token,
     destroyToken: (token) => tokenRepo.delete(token),
     addAuthInfoMiddleware: () => (req, res, next) => {
@@ -21,6 +28,8 @@ function Auth(userRepo, tokenRepo) {
           delete user.tmi_identity_password
           delete user.tmi_identity_client_secret
         }
+        delete user.pass
+        delete user.salt
         req.user = user
         req.userWidgetToken = tokenRepo.getWidgetTokenForUserId(tokenInfo.user_id).token
         req.userPubToken = tokenRepo.getPubTokenForUserId(tokenInfo.user_id).token
