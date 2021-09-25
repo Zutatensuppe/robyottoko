@@ -8,6 +8,12 @@ import fn from '../fn.js'
 
 export default {
   name: 'countdown-edit',
+  props: {
+    baseVolume: {
+      type: Number,
+      default: 100,
+    },
+  },
   components: {
     Upload,
     DurationInput,
@@ -87,7 +93,13 @@ export default {
               <tr>
                 <td>Sound:</td>
                 <td>
-                  <player v-if="a.value.sound.file" :src="a.value.sound.file" :name="a.value.sound.filename" :volume="a.value.sound.volume" class="button is-small" />
+                  <player
+                    v-if="a.value.sound.file"
+                    :src="a.value.sound.file"
+                    :name="a.value.sound.filename"
+                    :volume="a.value.sound.volume"
+                    :baseVolume="baseVolume"
+                    class="button is-small" />
                   <volume-slider v-if="a.value.sound.file" v-model="a.value.sound.volume" />
                   <button v-if="a.value.sound.file" class="button is-small" @click="a.value.sound.file = null"><i class="fa fa-remove mr-1" /> Remove</button>
                   <br v-if="a.value.sound.file" />

@@ -12,6 +12,9 @@ export default {
       queue: [],
       worker: null,
       imgstyle: '',
+      settings: {
+        volume: 100,
+      },
     }
   },
   methods: {
@@ -41,7 +44,9 @@ export default {
             audio.addEventListener('ended', () => {
               res()
             })
-            audio.volume = media.sound.volume / 100.0
+            const maxVolume = this.settings.volume / 100.0
+            const soundVolume = media.sound.volume / 100.0
+            audio.volume = maxVolume * soundVolume
             audio.play();
           }))
         }
@@ -99,6 +104,9 @@ export default {
       this.conf.wsBase + '/general',
       this.conf.widgetToken
     )
+    this.ws.onMessage('init', (data) => {
+      this.settings = data.settings
+    })
     this.ws.onMessage('playmedia', (data) => {
       this.playmedia(data)
     })

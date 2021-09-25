@@ -36,7 +36,10 @@ export default {
       },
       filter: { tag: '' },
       ws: null,
+      resrinput: '',
       srinput: '',
+
+      inited: false,
 
       tab: 'playlist', // playlist|help|import|tags
 
@@ -61,25 +64,54 @@ export default {
   <div id="top" ref="top">
     <navbar :user="conf.user.name" />
     <div id="actionbar" class="p-1">
-      <volume-slider class="mr-1" :value="settings.volume" @input="onVolumeChange" />
-
-      <button class="button is-small mr-1" @click="sendCtrl('resetStats', [])" title="Reset stats"><i class="fa fa-eraser mr-1"/><span class="txt"> Reset stats</span></button>
-      <button class="button is-small mr-1" @click="sendCtrl('clear', [])" title="Clear"><i class="fa fa-eject mr-1"/><span class="txt"> Clear</span></button>
-      <button class="button is-small mr-1" @click="sendCtrl('shuffle', [])" title="Shuffle"><i class="fa fa-random mr-1"/><span class="txt"> Shuffle</span></button>
-      <button class="button is-small mr-1" @click="togglePlayer" :title="togglePlayerButtonText"><i class="fa fa-tv mr-1"/><span class="txt"> {{togglePlayerButtonText}}</span></button>
+      <button class="button is-small mr-1"
+        :disabled="inited ? null : true"
+        @click="sendCtrl('resetStats', [])"
+        title="Reset stats"><i class="fa fa-eraser mr-1"/><span class="txt"> Reset stats</span></button>
+      <button class="button is-small mr-1"
+        :disabled="inited ? null : true"
+        @click="sendCtrl('clear', [])"
+        title="Clear"><i class="fa fa-eject mr-1"/><span class="txt"> Clear</span></button>
+      <button class="button is-small mr-1"
+        :disabled="inited ? null : true"
+        @click="sendCtrl('shuffle', [])"
+        title="Shuffle"><i class="fa fa-random mr-1"/><span class="txt"> Shuffle</span></button>
+      <button class="button is-small mr-1"
+        :disabled="inited ? null : true"
+        @click="togglePlayer"
+        :title="togglePlayerButtonText"><i class="fa fa-tv mr-1"/><span class="txt"> {{togglePlayerButtonText}}</span></button>
 
       <div class="field has-addons mr-1">
-        <div class="control has-icons-left">
-          <input class="input is-small" v-model="srinput" @keyup.enter="sr">
-          <span class="icon is-small is-left">
-            <i class="fa fa-search"></i>
-          </span>
+        <div class="control">
+          <input class="input is-small"
+            :disabled="inited ? null : true"
+            v-model="resrinput"
+            @keyup.enter="resr">
         </div>
         <div class="control">
-          <button class="button is-small" @click="sr">Request</button>
+          <button class="button is-small"
+            :disabled="inited ? null : true"
+            @click="resr"><i class="fa fa-search mr-1"></i> from playlist</button>
         </div>
       </div>
-      <a class="button is-small mr-1" :href="widgetUrl" target="_blank">Open SR widget</a>
+
+      <div class="field has-addons mr-1">
+        <div class="control">
+          <input class="input is-small"
+            :disabled="inited ? null : true"
+            v-model="srinput"
+            @keyup.enter="sr">
+        </div>
+        <div class="control">
+          <button class="button is-small"
+            :disabled="inited ? null : true"
+            @click="sr"><i class="fa fa-plus mr-1"></i> from YouTube</button>
+        </div>
+      </div>
+      <a class="button is-small mr-1"
+        :disabled="inited ? null : true"
+        :href="widgetUrl"
+        target="_blank">Open SR widget</a>
     </div>
   </div>
   <div id="main" ref="main">
@@ -95,26 +127,28 @@ export default {
         <li :class="{'is-active': tab === 'import'}" @click="tab='import'"><a>Import/Export</a></li>
       </ul>
     </div>
-    <div v-if="tab === 'import'">
+    <div v-if="inited && tab === 'import'">
       <div class="mb-1">
         <a class="button is-small mr-1" :href="exportPlaylistUrl" target="_blank"><i class="fa fa-download mr-1"/> Export playlist</a>
         <button class="button is-small" @click="doImportPlaylist"><i class="fa fa-upload mr-1"/> Import playlist</button>
       </div>
       <textarea class="textarea mb-1" v-model="importPlaylist"></textarea>
     </div>
-    <div id="help" v-if="tab==='help'">
+    <div id="help" v-if="inited && tab==='help'">
       <help />
     </div>
-    <div id="tags" v-if="tab==='tags'">
+    <div id="tags" v-if="inited && tab==='tags'">
       <tags-editor :tags="tags" @updateTag="onTagUpdated" />
     </div>
-    <div id="settings" v-if="tab==='settings'">
+    <div id="settings" v-if="inited && tab==='settings'">
       <table class="table is-striped" ref="table" v-if="settings">
         <tbody>
           <tr>
             <td><code>settings.volume</code></td>
-            <td><input type="text" v-model="settings.volume" /></td>
-            <td>Volume (0-100)</td>
+            <td>
+              <volume-slider v-model="settings.volume" @input="onVolumeChange" />
+            </td>
+            <td>Base volume for all songs played</td>
           </tr>
           <tr>
             <td><code>settings.hideVideoImage</code></td>
@@ -131,7 +165,7 @@ export default {
         </tbody>
       </table>
     </div>
-    <div id="playlist" class="table-container" v-if="tab === 'playlist'">
+    <div id="playlist" class="table-container" v-if="inited && tab === 'playlist'">
       <playlist-editor
         :playlist="playlist"
         :filter="filter"
@@ -239,6 +273,11 @@ export default {
         }
       } else {
         this.player.stop()
+      }
+    },
+    resr() {
+      if (this.resrinput !== '') {
+        this.sendCtrl('resr', [this.resrinput])
       }
     },
     sr() {
@@ -363,6 +402,7 @@ export default {
       if (!this.player.playing()) {
         this.play()
       }
+      this.inited = true
     })
     this.ws.connect()
     this.play()
