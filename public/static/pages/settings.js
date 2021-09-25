@@ -40,7 +40,7 @@ export default {
           </tr>
           <tr>
             <td>Email:</td>
-            <td>{{user.email}}</td>
+            <td><input type="email" v-model="user.email" /></td>
           </tr>
           <tr>
             <td>Password:</td>

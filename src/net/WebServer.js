@@ -239,9 +239,9 @@ class WebServer {
     })
 
     app.post('/api/user/_reset_password', express.json(), async (req, res) => {
-      const pass = req.body.pass || null
+      const plainPass = req.body.pass || null
       const token = req.body.token || null
-      if (!pass || !token) {
+      if (!plainPass || !token) {
         res.status(400).send({ reason: 'bad request' })
         return
       }
@@ -252,7 +252,15 @@ class WebServer {
         return
       }
 
-      this.db.upsert('user', { pass }, { id: tokenObj.user_id })
+      const originalUser = this.userRepo.getById(tokenObj.user_id)
+      if (!originalUser) {
+        res.status(404).send({ reason: 'user_does_not_exist' })
+        return
+      }
+
+      const pass = fn.passwordHash(plainPass, originalUser.salt)
+      const user = { id: originalUser.id, pass }
+      this.userRepo.save(user)
       this.tokenRepo.delete(tokenObj.token)
       res.send({ success: true })
     })
@@ -264,9 +272,9 @@ class WebServer {
         return
       }
 
-      const user = this.db.get('user', { email })
+      const user = this.userRepo.get({ email, status: 'verified' })
       if (!user) {
-        res.status(404).send({ reason: 'email not found' })
+        res.status(404).send({ reason: 'user not found' })
         return
       }
 
@@ -296,11 +304,6 @@ class WebServer {
         return
       }
 
-      if (user.status !== 'verification_pending') {
-        res.status(400).send({ reason: 'already verified' })
-        return
-      }
-
       const token = this.tokenRepo.createToken(user.id, 'registration')
       this.mail.sendRegistrationMail({
         user: user,
@@ -322,14 +325,30 @@ class WebServer {
         tmi_identity_client_id: '',
         tmi_identity_client_secret: '',
       }
-      if (this.db.get('user', { name: user.name })) {
-        res.status(400).send({ reason: 'user_already_exists' })
+      let tmpUser
+      tmpUser = this.db.get('user', { email: user.email })
+      if (tmpUser) {
+        if (tmpUser.status === 'verified') {
+          // user should use password reset function
+          res.status(400).send({ reason: 'verified_mail_already_exists' })
+        } else {
+          // user should use resend registration mail function
+          res.status(400).send({ reason: 'unverified_mail_already_exists' })
+        }
         return
       }
-      if (this.db.get('user', { email: user.email })) {
-        res.status(400).send({ reason: 'user_already_exists' })
+      tmpUser = this.db.get('user', { name: user.name })
+      if (tmpUser) {
+        if (tmpUser.status === 'verified') {
+          // user should use password reset function
+          res.status(400).send({ reason: 'verified_name_already_exists' })
+        } else {
+          // user should use resend registration mail function
+          res.status(400).send({ reason: 'unverified_name_already_exists' })
+        }
         return
       }
+
       const userId = this.userRepo.createUser(user)
       if (!userId) {
         res.status(400).send({ reason: 'unable to create user' })
@@ -416,6 +435,9 @@ class WebServer {
       }
       if (req.body.user.pass) {
         user.pass = fn.passwordHash(req.body.user.pass, originalUser.salt)
+      }
+      if (req.body.user.email) {
+        user.email = req.body.user.email
       }
       if (req.user.groups.includes('admin')) {
         user.tmi_identity_client_id = req.body.user.tmi_identity_client_id
