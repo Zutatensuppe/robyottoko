@@ -1,4 +1,4 @@
--- this patch adds email to user table
+-- this patch adds salt, email, status to user table
 CREATE TABLE _tmp_user (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT UNIQUE,
