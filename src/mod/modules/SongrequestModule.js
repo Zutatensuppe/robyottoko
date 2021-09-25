@@ -408,7 +408,7 @@ class SongrequestModule {
     const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     const regex = new RegExp(regexArgs.join('.*'), 'i')
     const idx = this.data.playlist.findIndex(item => item.title.match(regex))
-    if (idx < 0) {
+    if (idx >= 0) {
       const insertIndex = this.findInsertIndex()
       const item = this.data.playlist[idx]
       if (insertIndex < idx) {
@@ -651,6 +651,7 @@ class SongrequestModule {
       }
       const searchterm = command.args.join(' ')
       const { item, addType, idx } = await this.resr(searchterm)
+      console.log(item, addType, idx)
       if (addType !== ADD_TYPE.NOT_ADDED) {
         say(await answerAddRequest(item, addType, idx))
       } else {
