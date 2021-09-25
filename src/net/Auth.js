@@ -2,12 +2,11 @@ const { passwordHash } = require("../fn")
 
 function Auth(userRepo, tokenRepo) {
   const getTokenInfo = (token) => tokenRepo.getByToken(token)
-  const getUserById = (user_id) => userRepo.getById(user_id)
+  const getUserById = (id) => userRepo.get({ id, status: 'verified' })
 
   return {
-    getUserById,
     getUserByNameAndPass: (name, plainPass) => {
-      const user = userRepo.getByName(name)
+      const user = userRepo.get({ name, status: 'verified' })
       if (!user || user.pass !== passwordHash(plainPass, user.salt)) {
         return null
       }

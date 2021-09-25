@@ -3,10 +3,11 @@ const Db = require("../Db")
 const TABLE = 'user'
 
 function Users(/** @type Db */ db) {
+  const get = (by) => db.get(TABLE, by)
   return {
     all: () => db.getMany(TABLE),
-    getById: (id) => db.get(TABLE, { id }),
-    getByName: (name) => db.get(TABLE, { name }),
+    get,
+    getById: (id) => get({ id }),
     save: (user) => db.upsert(TABLE, user, { id: user.id }),
     getGroups: (id) => {
       const rows = db._getMany(`
