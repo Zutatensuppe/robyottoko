@@ -715,7 +715,6 @@ class SongrequestModule {
         case 'pause':
           if (fn.isMod(context)) {
             this.pause()
-            say('⏯✅ Paused playback')
             return
           }
           break;
@@ -723,14 +722,13 @@ class SongrequestModule {
         case 'unpause':
           if (fn.isMod(context)) {
             this.unpause()
-            say('⏯⛔ Unpaused playback')
             return
           }
           break;
         case 'loop':
           if (fn.isMod(context)) {
             this.loop()
-            say('🔁✅ Now looping the current song')
+            say('Now looping the current song')
             return
           }
           break;
@@ -738,7 +736,7 @@ class SongrequestModule {
         case 'unloop':
           if (fn.isMod(context)) {
             this.noloop()
-            say('🔁⛔ Stopped looping the current song')
+            say('Stopped looping the current song')
             return
           }
           break;
