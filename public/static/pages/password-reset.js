@@ -7,7 +7,7 @@ export default {
     Password successfully set.
     Click <a href="/login">here</a> to login.
   </div>
-  <form v-else>
+  <div v-else>
     <div class="field has-background-danger-light has-text-danger-dark" v-if="error">
       {{error}}
     </div>
@@ -25,9 +25,9 @@ export default {
       </div>
     </div>
     <div class="field">
-      <span class="button is-small is-primary" @click="submit">Save Password</span>
+      <button class="button is-small is-primary" :disabled="canSubmit ? null : true" @click="submit">Save Password</button>
     </div>
-  </form>
+  </div>
 </div>
 `,
   data() {
@@ -36,6 +36,11 @@ export default {
       error: '',
       success: false,
     }
+  },
+  computed: {
+    canSubmit() {
+      return this.pass && !this.error
+    },
   },
   methods: {
     async submit() {
