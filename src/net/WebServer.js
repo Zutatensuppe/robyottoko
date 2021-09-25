@@ -405,9 +405,17 @@ class WebServer {
         }
       }
 
+      const originalUser = this.userRepo.getById(req.body.user.id)
+      if (!originalUser) {
+        res.status(404).send({ reason: 'user_does_not_exist' })
+        return
+      }
+
       const user = {
         id: req.body.user.id,
-        pass: req.body.user.pass,
+      }
+      if (req.body.user.pass) {
+        user.pass = fn.passwordHash(req.body.user.pass, originalUser.salt)
       }
       if (req.user.groups.includes('admin')) {
         user.tmi_identity_client_id = req.body.user.tmi_identity_client_id
@@ -415,8 +423,6 @@ class WebServer {
         user.tmi_identity_username = req.body.user.tmi_identity_username
         user.tmi_identity_password = req.body.user.tmi_identity_password
       }
-
-      this.userRepo.save(user)
 
       const twitch_channels = req.body.twitch_channels.map(channel => {
         channel.user_id = user.id

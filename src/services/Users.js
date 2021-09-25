@@ -6,7 +6,7 @@ function Users(/** @type Db */ db) {
   return {
     all: () => db.getMany(TABLE),
     getById: (id) => db.get(TABLE, { id }),
-    getByNameAndPass: (name, pass) => db.get(TABLE, { name, pass }),
+    getByName: (name) => db.get(TABLE, { name }),
     save: (user) => db.upsert(TABLE, user, { id: user.id }),
     getGroups: (id) => {
       const rows = db._getMany(`

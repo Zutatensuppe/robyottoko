@@ -13,7 +13,12 @@ export default {
     </div>
     <div class="field">
       <div class="control has-icons-left">
-        <input class="input is-small" type="password" placeholder="New Password" v-model="pass" @keyup="error=''" @keyup.enter="submit"/>
+        <input class="input is-small"
+          type="password"
+          placeholder="New Password"
+          v-model="pass"
+          @keyup="error=''"
+          @keyup.enter="submit"/>
         <span class="icon is-small is-left">
           <i class="fa fa-lock"></i>
         </span>

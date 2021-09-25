@@ -1,4 +1,5 @@
 const config = require('./config.js')
+const crypto = require('crypto')
 const path = require('path')
 const { getText } = require('./net/xhr')
 
@@ -527,6 +528,12 @@ function arrayMove(arr, old_index, new_index) {
   return arr // return, but array is also modified in place
 }
 
+const passwordHash = (/** @type string */ plainPass, /** @type string */ salt) => {
+  const hash = crypto.createHmac('sha512', config.secret)
+  hash.update(`${salt}${plainPass}`)
+  return hash.digest('hex')
+}
+
 module.exports = {
   logger,
   mimeToExt,
@@ -535,6 +542,7 @@ module.exports = {
   mayExecute,
   parseCommandFromMessage,
   parseKnownCommandFromMessage,
+  passwordHash,
   tryExecuteCommand,
   render,
   getRandomInt,

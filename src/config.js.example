@@ -1,4 +1,5 @@
 module.exports = {
+  secret: 'HLBD^@gL*wvoEn02yJ7h+%',
   log: {
     level: 'info',
   },

@@ -14,6 +14,7 @@ export default {
       user: {
         id: 0,
         name: '',
+        email: '',
         pass: '',
         groups: [],
       },
@@ -30,15 +31,19 @@ export default {
   </div>
   <div id="main">
     <div class="mb-4">
-      <h1 class="title mb-2">Hyottoko.club</h1>
+      <h1 class="title mb-2">User</h1>
       <table class="table is-striped">
         <tbody>
           <tr>
-            <td>User name:</td>
+            <td>Name:</td>
             <td>{{user.name}}</td>
           </tr>
           <tr>
-            <td>User pass:</td>
+            <td>Email:</td>
+            <td>{{user.email}}</td>
+          </tr>
+          <tr>
+            <td>Password:</td>
             <td><input type="password" v-model="user.pass" /></td>
           </tr>
         </tbody>
@@ -105,7 +110,6 @@ export default {
         <li class="list-item">If authorized, you get redirected back to hyottoko.club, and the access token will display
       </ol>
       <p v-else-if="isAdmin">To configure an access token, please configure the "Bot client_id" above.</p>
-      <p v v-else>Missing Bot "client_id". Please contact an administrator.</p>
     </div>
   </div>
 </div>
