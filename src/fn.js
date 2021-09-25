@@ -528,6 +528,10 @@ function arrayMove(arr, old_index, new_index) {
   return arr // return, but array is also modified in place
 }
 
+const passwordSalt = () => {
+  return nonce(10)
+}
+
 const passwordHash = (/** @type string */ plainPass, /** @type string */ salt) => {
   const hash = crypto.createHmac('sha512', config.secret)
   hash.update(`${salt}${plainPass}`)
@@ -542,6 +546,7 @@ module.exports = {
   mayExecute,
   parseCommandFromMessage,
   parseKnownCommandFromMessage,
+  passwordSalt,
   passwordHash,
   tryExecuteCommand,
   render,

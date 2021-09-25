@@ -316,7 +316,7 @@ class WebServer {
     })
 
     app.post('/api/user/_register', express.json(), async (req, res) => {
-      const salt = fn.nonce(10)
+      const salt = fn.passwordSalt()
       const user = {
         name: req.body.user,
         pass: fn.passwordHash(req.body.pass, salt),

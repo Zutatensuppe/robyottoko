@@ -9,7 +9,7 @@ users.forEach(user => {
     // if user doesnt have salt set yet, it means in this case that there
     // is still a plain pw in db >< with introduction of salt, we also
     // only store pw hashes
-    const salt = fn.nonce(10)
+    const salt = fn.passwordSalt()
     const plainPass = user.pass
     const pass = fn.passwordHash(plainPass, salt)
     db.update('user', { salt, pass }, { id: user.id })
