@@ -222,6 +222,7 @@ class SongrequestModule {
           case 'goodIdx': this.goodIdx(...args); break;
           case 'badIdx': this.badIdx(...args); break;
           case 'sr': this.request(...args); break;
+          case 'resr': this.resr(...args); break;
           case 'move': this.move(...args); break;
           case 'rmtag': this.rmTag(...args); break;
           case 'addtag': this.addTag(...args); break;
@@ -400,6 +401,27 @@ class SongrequestModule {
 
   async request(str) {
     await this.add(str, this.user.name)
+  }
+
+  async resr(str) {
+    const split = str.split(/\s+/)
+    const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    const regex = new RegExp(regexArgs.join('.*'), 'i')
+    const idx = this.data.playlist.findIndex(item => item.title.match(regex))
+    if (idx < 0) {
+      const insertIndex = this.findInsertIndex()
+      const item = this.data.playlist[idx]
+      if (insertIndex < idx) {
+        this.data.playlist.splice(idx, 1)
+        this.data.playlist.splice(insertIndex, 0, item)
+        this.save()
+        this.updateClients('add')
+        return { item, addType: ADD_TYPE.REQUEUED, idx: insertIndex }
+      } else {
+        return { item, addType: ADD_TYPE.EXISTED, idx: insertIndex }
+      }
+    }
+    return { item: null, addType: ADD_TYPE.NOT_ADDED, insertIndex: -1 }
   }
 
   like() {
@@ -627,24 +649,12 @@ class SongrequestModule {
         say(`Usage: !resr SEARCH`)
         return
       }
-
-      const regexArgs = command.args.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-      const regex = new RegExp(regexArgs.join('.*'), 'i')
-      const idx = this.data.playlist.findIndex(item => item.title.match(regex))
-      if (idx >= 0) {
-        const insertIndex = this.findInsertIndex()
-        const item = this.data.playlist[idx]
-        if (insertIndex < idx) {
-          this.data.playlist.splice(idx, 1)
-          this.data.playlist.splice(insertIndex, 0, item)
-          this.save()
-          this.updateClients('add')
-          say(await answerAddRequest(item, ADD_TYPE.REQUEUED, insertIndex))
-        } else {
-          say(await answerAddRequest(item, ADD_TYPE.EXISTED, idx))
-        }
+      const searchterm = command.args.join(' ')
+      const { item, addType, idx } = await this.resr(searchterm)
+      if (addType !== ADD_TYPE.NOT_ADDED) {
+        say(await answerAddRequest(item, addType, idx))
       } else {
-        say(`Song not found in playlist.`)
+        say(`Song not found in playlist`)
       }
       return
     }

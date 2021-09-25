@@ -36,6 +36,7 @@ export default {
       },
       filter: { tag: '' },
       ws: null,
+      resrinput: '',
       srinput: '',
 
       inited: false,
@@ -81,19 +82,30 @@ export default {
         :title="togglePlayerButtonText"><i class="fa fa-tv mr-1"/><span class="txt"> {{togglePlayerButtonText}}</span></button>
 
       <div class="field has-addons mr-1">
-        <div class="control has-icons-left">
+        <div class="control">
           <input class="input is-small"
             :disabled="inited ? null : true"
-            v-model="srinput"
-            @keyup.enter="sr">
-          <span class="icon is-small is-left">
-            <i class="fa fa-search"></i>
-          </span>
+            v-model="resrinput"
+            @keyup.enter="resr">
         </div>
         <div class="control">
           <button class="button is-small"
             :disabled="inited ? null : true"
-            @click="sr">Request</button>
+            @click="resr"><i class="fa fa-search mr-1"></i> from playlist</button>
+        </div>
+      </div>
+
+      <div class="field has-addons mr-1">
+        <div class="control">
+          <input class="input is-small"
+            :disabled="inited ? null : true"
+            v-model="srinput"
+            @keyup.enter="sr">
+        </div>
+        <div class="control">
+          <button class="button is-small"
+            :disabled="inited ? null : true"
+            @click="sr"><i class="fa fa-plus mr-1"></i> from YouTube</button>
         </div>
       </div>
       <a class="button is-small mr-1"
@@ -261,6 +273,11 @@ export default {
         }
       } else {
         this.player.stop()
+      }
+    },
+    resr() {
+      if (this.resrinput !== '') {
+        this.sendCtrl('resr', [this.resrinput])
       }
     },
     sr() {
