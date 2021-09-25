@@ -3,17 +3,56 @@ const TwitchPubSubClient = require('../services/TwitchPubSubClient.js')
 const TwitchHelixClient = require('../services/TwitchHelixClient.js')
 const fn = require('../fn.js')
 const Db = require('../Db.js')
+const TwitchChannels = require('../services/TwitchChannels.js')
+const EventHub = require('../EventHub.js')
 
 class TwitchClientManager {
   constructor(
+    /** @type EventHub */ eventHub,
     cfg,
     /** @type Db */ db,
     user,
-    twitchChannels,
+    /** @type TwitchChannels */ twitchChannelRepo,
     moduleManager,
   ) {
+    this.eventHub = eventHub
+    this.cfg = cfg
+    this.db = db
+    this.user = user
+    this.twitchChannelRepo = twitchChannelRepo
+    this.moduleManager = moduleManager
+
+    this.init('init')
+
+    eventHub.on('user_changed', (tmpUser) => {
+      if (tmpUser.id === user.id) {
+        this.user = tmpUser
+        this.init('user_change')
+      }
+    })
+  }
+
+  async init(reason) {
+    const cfg = this.cfg
+    const db = this.db
+    const user = this.user
+    const twitchChannelRepo = this.twitchChannelRepo
+    const moduleManager = this.moduleManager
+
     const log = fn.logger(__filename, `${user.name}|`)
 
+    if (this.chatClient) {
+      try {
+        await this.chatClient.disconnect()
+      } catch (e) { }
+    }
+    if (this.pubSubClient) {
+      try {
+        this.pubSubClient.disconnect()
+      } catch (e) { }
+    }
+
+    const twitchChannels = twitchChannelRepo.allByUserId(user.id)
     if (twitchChannels.length === 0) {
       log.info(`* No twitch channels configured`)
       return
@@ -32,7 +71,7 @@ class TwitchClientManager {
       username: cfg.tmi.identity.username,
       password: cfg.tmi.identity.password,
       client_id: cfg.tmi.identity.client_id,
-      client_secret: user.tmi.identity.client_secret,
+      client_secret: cfg.tmi.identity.client_secret,
     }
 
     // connect to chat via tmi (to all channels configured)
@@ -74,8 +113,16 @@ class TwitchClientManager {
     this.chatClient.on('connected', (addr, port) => {
       log.info(`* Connected to ${addr}:${port}`)
       for (let channel of twitchChannels) {
+        // note: this can lead to multiple messages if multiple users
+        //       have the same channels set up
         const say = fn.sayFn(this.chatClient, channel.channel_name)
-        say('⚠️ Bot restarted ⚠️')
+        if (reason === 'init') {
+          say('⚠️ Bot connected (init) ⚠️')
+        } else if (reason === 'user_change') {
+          say('⚠️ Bot connected (user_change) ⚠️')
+        } else {
+          say('⚠️ Bot connected (???) ⚠️')
+        }
       }
     })
 
@@ -104,7 +151,7 @@ class TwitchClientManager {
           const redemption = messageData.data.redemption
           // redemption.reward
           // { id, channel_id, title, prompt, cost, ... }
-          // redemption.user
+          // redemption.userchatClient
           // { id, login, display_name}
           for (const m of moduleManager.all(user.id)) {
             if (m.handleRewardRedemption) {

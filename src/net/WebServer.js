@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser')
 
 const TwitchHelixClient = require('../services/TwitchHelixClient.js')
 const Db = require('../Db.js')
+const EventHub = require('../EventHub.js')
 const Users = require('../services/Users.js')
 const Tokens = require('../services/Tokens.js')
 const Mail = require('../net/Mail.js')
@@ -16,6 +17,7 @@ const log = fn.logger(__filename)
 
 class WebServer {
   constructor(
+    /** @type EventHub */ eventHub,
     /** @type Db */ db,
     /** @type Users */ userRepo,
     /** @type Tokens */ tokenRepo,
@@ -27,6 +29,7 @@ class WebServer {
     /** @type WebSocketServer */ wss,
     auth
   ) {
+    this.eventHub = eventHub
     this.db = db
     this.userRepo = userRepo
     this.tokenRepo = tokenRepo
@@ -313,9 +316,11 @@ class WebServer {
     })
 
     app.post('/api/user/_register', express.json(), async (req, res) => {
+      const salt = fn.nonce(10)
       const user = {
         name: req.body.user,
-        pass: req.body.pass,
+        pass: fn.passwordHash(req.body.pass, salt),
+        salt: salt,
         email: req.body.email,
 
         status: 'verification_pending',
@@ -374,9 +379,14 @@ class WebServer {
         return
       }
       if (tokenObj.type === 'registration') {
-        this.db.upsert('user', { status: 'verified' }, { id: tokenObj.user_id })
+        this.userRepo.save({ status: 'verified', id: tokenObj.user_id })
         this.tokenRepo.delete(tokenObj.token)
         res.send({ type: 'registration-verified' })
+
+        // new user was registered. module manager should be notified about this
+        // so that bot doesnt need to be restarted :O
+        const user = this.userRepo.getById(tokenObj.user_id)
+        this.eventHub.trigger('user_registration_complete', user)
         return
       }
 
@@ -453,6 +463,8 @@ class WebServer {
 
       this.userRepo.save(user)
       this.twitchChannelRepo.saveUserChannels(user.id, twitch_channels)
+
+      this.eventHub.trigger('user_changed', this.userRepo.getById(user.id))
       res.send()
     })
 

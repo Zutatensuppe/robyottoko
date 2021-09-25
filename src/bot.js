@@ -10,6 +10,7 @@ const Cache = require('./services/Cache.js')
 const Db = require('./Db.js')
 const Variables = require('./services/Variables.js')
 const Mail = require('./net/Mail.js')
+const { EventHub } = require('./EventHub.js')
 
 const db = new Db(config.db)
 // make sure we are always on latest db version
@@ -21,18 +22,33 @@ const cache = new Cache(db)
 const auth = new net.Auth(userRepo, tokenRepo)
 const mail = new Mail(config.mail)
 
+const eventHub = EventHub()
 const moduleManager = new mod.ModuleManager()
 const webSocketServer = new net.WebSocketServer(moduleManager, config.ws, auth)
-const webServer = new net.WebServer(db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, config.http, config.twitch, webSocketServer, auth)
+const webServer = new net.WebServer(
+  eventHub,
+  db,
+  userRepo,
+  tokenRepo,
+  mail,
+  twitchChannelRepo,
+  moduleManager,
+  config.http,
+  config.twitch,
+  webSocketServer,
+  auth
+)
 
 const run = async () => {
-  webSocketServer.listen()
-  await webServer.listen()
-
-  // one for each user
-  for (const user of userRepo.all()) {
-    const twitchChannels = twitchChannelRepo.allByUserId(user.id)
-    const clientManager = new net.TwitchClientManager(config.twitch, db, user, twitchChannels, moduleManager)
+  const initForUser = (user) => {
+    const clientManager = new net.TwitchClientManager(
+      eventHub,
+      config.twitch,
+      db,
+      user,
+      twitchChannelRepo,
+      moduleManager
+    )
     const chatClient = clientManager.getChatClient()
     const helixClient = clientManager.getHelixClient()
     const moduleStorage = new mod.ModuleStorage(db, user.id)
@@ -51,6 +67,18 @@ const run = async () => {
       ))
     }
   }
+
+  webSocketServer.listen()
+  await webServer.listen()
+
+  // one for each user
+  for (const user of userRepo.all()) {
+    initForUser(user)
+  }
+
+  events.on('user_registration_complete', (user) => {
+    initForUser(user)
+  })
 }
 
 run()

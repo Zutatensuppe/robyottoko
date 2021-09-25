@@ -76,9 +76,14 @@ export default {
     </div>
 
     <div class="mb-4">
-      <h1 class="title mb-2">Twitch-Channels</h1>
-      <p>Where should the bot connect to?</p>
-      <table class="table is-striped">
+      <h1 class="title mb-2">Twitch Channels</h1>
+      <p>
+        List of twitch channels where the bot will connect to.
+        <span v-if="twitch_channels.length === 0">
+          Currently no channels are configured.
+        </span>
+      </p>
+      <table class="table is-striped" v-if="twitch_channels.length > 0">
         <thead>
           <tr>
             <td>Channel name</td>
@@ -101,7 +106,7 @@ export default {
       <button class="button is-small" @click="addchannel()">Add channel</button>
     </div>
 
-    <div class="content">
+    <div class="content" v-if="twitch_channels.length > 0">
       <p>Channel Id* and Access Token*: You may not need the client id or access token. No public feature currently uses them.</p>
       <p v-if="accessTokenLink">To get an access token, do the following:</p>
       <ol v-if="accessTokenLink" class="list">
