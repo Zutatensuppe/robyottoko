@@ -76,7 +76,7 @@ const run = async () => {
     initForUser(user)
   }
 
-  events.on('user_registration_complete', (user) => {
+  eventHub.on('user_registration_complete', (user) => {
     initForUser(user)
   })
 }
