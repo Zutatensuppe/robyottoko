@@ -719,6 +719,7 @@ class SongrequestModule {
             return
           }
           break;
+        case 'nopause':
         case 'unpause':
           if (fn.isMod(context)) {
             this.unpause()
