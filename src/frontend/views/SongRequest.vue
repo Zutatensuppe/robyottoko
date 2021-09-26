@@ -1,7 +1,7 @@
 <template>
-  <div id="app" v-if="conf">
+  <div id="app">
     <div id="top" ref="top">
-      <navbar :user="conf.page_data.user.name" />
+      <navbar />
       <div id="actionbar" class="p-1">
         <button
           class="button is-small mr-1"
@@ -259,8 +259,6 @@ export default defineComponent({
       volumeChanges: [],
 
       importPlaylist: "",
-
-      conf: null,
     };
   },
   computed: {
@@ -320,7 +318,7 @@ export default defineComponent({
       return `${location.protocol}//${location.host}/sr/export`;
     },
     widgetUrl() {
-      return `${location.protocol}//${location.host}/widget/sr/${this.conf.page_data.widgetToken}/`;
+      return `${location.protocol}//${location.host}/widget/sr/${this.$me.widgetToken}/`;
     },
   },
   methods: {
@@ -434,19 +432,8 @@ export default defineComponent({
     },
   },
   async mounted() {
-    const res = await fetch("/api/page/sr");
-    if (res.status !== 200) {
-      this.$router.push({ name: "login" });
-      return;
-    }
-
-    this.conf = await res.json();
-
     this.$nextTick(() => {
-      this.ws = new WsClient(
-        this.conf.page_data.wsBase + "/sr",
-        this.conf.page_data.token
-      );
+      this.ws = new WsClient(this.$conf.wsBase + "/sr", this.$me.token);
       this.ws.onMessage("settings", (data) => {
         this.settings = data.settings;
       });

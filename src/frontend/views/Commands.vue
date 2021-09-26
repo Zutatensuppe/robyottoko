@@ -1,7 +1,7 @@
 <template>
-  <div id="app" v-if="conf">
+  <div id="app">
     <div id="top" ref="top">
-      <navbar :user="conf.page_data.user.name" />
+      <navbar />
       <div id="actionbar" class="p-1">
         <button
           class="button is-small mr-1"
@@ -332,8 +332,6 @@ export default defineComponent({
       inited: false,
 
       tab: "commands", // commands|settings
-
-      conf: null,
     };
   },
   computed: {
@@ -341,7 +339,7 @@ export default defineComponent({
       return this.settings.volume;
     },
     widgetUrl() {
-      return `${location.protocol}//${location.host}/widget/media/${this.conf.page_data.widgetToken}/`;
+      return `${location.protocol}//${location.host}/widget/media/${this.$me.widgetToken}/`;
     },
   },
   methods: {
@@ -406,17 +404,7 @@ export default defineComponent({
     },
   },
   async mounted() {
-    const res = await fetch("/api/page/commands");
-    if (res.status !== 200) {
-      this.$router.push({ name: "login" });
-      return;
-    }
-
-    this.conf = await res.json();
-    this.ws = new WsClient(
-      this.conf.page_data.wsBase + "/general",
-      this.conf.page_data.token
-    );
+    this.ws = new WsClient(this.$conf.wsBase + "/general", this.$me.token);
     this.ws.onMessage("init", (data) => {
       this.commands = data.commands;
       this.settings = data.settings;

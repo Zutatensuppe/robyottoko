@@ -125,23 +125,8 @@ class DrawcastModule {
   }
 
   getRoutes() {
-    const drawcastData = (req, res) => {
-      return {
-        title: 'Drawcast',
-        page: 'drawcast',
-        page_data: {
-          wsBase: this.wss.connectstring(),
-          widgetToken: req.userWidgetToken,
-          user: req.user,
-          token: req.cookies['x-token'],
-        },
-      }
-    }
     return {
       get: {
-        '/api/page/drawcast': async (req, res, next) => {
-          res.send(drawcastData(req, res))
-        },
         '/api/drawcast/all-images/': async (req, res, next) => {
           const images = this.loadAllImages()
           res.send(images)

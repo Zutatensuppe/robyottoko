@@ -138,68 +138,19 @@ class WebServer {
     app.use('/', express.static('./build/public'))
     app.use('/static', express.static('./public/static'))
 
-    app.get('/api/page/login', async (req, res) => {
-      if (req.token) {
-        res.status(401).send({ reason: 'already_logged_in' })
-        return
-      }
+
+    app.get('/api/conf', async (req, res) => {
       res.send({
-        title: 'Login',
-        page: 'login',
-        page_data: {
-          wsBase: this.wss.connectstring(),
-          widgetToken: null,
-          user: null,
-          token: null,
-        },
+        wsBase: this.wss.connectstring(),
       })
     })
-    app.get('/api/page/register', async (req, res) => {
-      if (req.token) {
-        res.status(401).send({ reason: 'already_logged_in' })
-        return
-      }
+
+    app.get('/api/user/me', requireLoginApi, async (req, res) => {
       res.send({
-        title: 'Register',
-        page: 'register',
-        page_data: {
-          wsBase: this.wss.connectstring(),
-          widgetToken: null,
-          user: null,
-          token: null,
-        },
-      })
-    })
-    app.get('/api/page/password-reset', async (req, res) => {
-      if (req.token) {
-        res.status(401).send({ reason: 'already_logged_in' })
-        return
-      }
-      res.send({
-        title: 'Password Reset',
-        page: 'password-reset',
-        page_data: {
-          wsBase: this.wss.connectstring(),
-          widgetToken: null,
-          user: null,
-          token: null,
-        },
-      })
-    })
-    app.get('/api/page/forgot-password', async (req, res) => {
-      if (req.token) {
-        res.status(401).send({ reason: 'already_logged_in' })
-        return
-      }
-      res.send({
-        title: 'Forgot Password',
-        page: 'forgot-password',
-        page_data: {
-          wsBase: this.wss.connectstring(),
-          widgetToken: null,
-          user: null,
-          token: null,
-        },
+        user: req.user,
+        widgetToken: req.userWidgetToken,
+        pubToken: req.userPubToken,
+        token: req.cookies['x-token'],
       })
     })
 
@@ -211,7 +162,7 @@ class WebServer {
       res.send({ success: true })
     })
 
-    const indexData = (req, res) => {
+    app.get('/api/page/index', requireLoginApi, async (req, res) => {
       const widgets = [
         {
           title: 'Song Request',
@@ -239,7 +190,7 @@ class WebServer {
           url: this.pubUrl(this.widgetUrl('drawcast_draw', req.userPubToken)),
         },
       ];
-      return {
+      res.send({
         title: 'Hyottoko.club',
         page: 'index',
         page_data: {
@@ -249,10 +200,7 @@ class WebServer {
           token: req.cookies['x-token'],
           widgets,
         },
-      }
-    }
-    app.get('/api/page/index', requireLoginApi, async (req, res) => {
-      res.send(indexData(req, res))
+      })
     })
 
     app.post('/api/user/_reset_password', express.json(), async (req, res) => {

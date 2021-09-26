@@ -1,7 +1,7 @@
 <template>
-  <div id="app" v-if="conf">
+  <div id="app">
     <div id="top" ref="top">
-      <navbar :user="conf.page_data.user.name" />
+      <navbar />
       <div id="actionbar" class="p-1">
         <button class="button is-small" @click="onAdd">Add</button>
         <button
@@ -71,8 +71,6 @@ export default defineComponent({
       unchangedJson: "[]",
       changedJson: "[]",
       variables: [],
-
-      conf: null,
     };
   },
   computed: {
@@ -127,8 +125,8 @@ export default defineComponent({
       return;
     }
 
-    this.conf = await res.json();
-    this.variables = this.conf.page_data.variables;
+    const data = await res.json();
+    this.variables = data.page_data.variables;
     this.setUnchanged();
   },
 });

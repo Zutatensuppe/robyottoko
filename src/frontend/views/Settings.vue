@@ -1,7 +1,7 @@
 <template>
-  <div id="app" v-if="conf">
+  <div id="app">
     <div id="top" ref="top">
-      <navbar :user="conf.page_data.user.name" />
+      <navbar />
       <div id="actionbar" class="p-1">
         <button
           class="button is-small is-primary"
@@ -200,8 +200,6 @@ export default defineComponent({
         groups: [],
       },
       twitch_channels: [],
-
-      conf: null,
     };
   },
   computed: {
@@ -339,9 +337,9 @@ export default defineComponent({
       return;
     }
 
-    this.conf = await res.json();
-    this.user = this.conf.page_data.user;
-    this.twitch_channels = this.conf.page_data.twitch_channels;
+    const data = await res.json();
+    this.user = data.page_data.user;
+    this.twitch_channels = data.page_data.twitch_channels;
     this.setUnchanged();
   },
 });

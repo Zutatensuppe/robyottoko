@@ -1,7 +1,7 @@
 <template>
-  <div id="app" v-if="conf">
+  <div id="app">
     <div id="top" ref="top">
-      <navbar :user="conf.page_data.user.name" />
+      <navbar />
       <div id="actionbar" class="p-1">
         <button
           class="button is-small is-primary mr-1"
@@ -591,8 +591,6 @@ export default defineComponent({
       settings: null,
       defaultSettings: null,
       ws: null,
-
-      conf: null,
     };
   },
   watch: {
@@ -608,7 +606,7 @@ export default defineComponent({
       return this.unchangedJson !== this.changedJson;
     },
     widgetUrl() {
-      return `${location.protocol}//${location.host}/widget/speech-to-text/${this.conf.page_data.widgetToken}/`;
+      return `${location.protocol}//${location.host}/widget/speech-to-text/${this.$conf.widgetToken}/`;
     },
   },
   methods: {
@@ -620,16 +618,9 @@ export default defineComponent({
     },
   },
   async mounted() {
-    const res = await fetch("/api/page/speech-to-text");
-    if (res.status !== 200) {
-      this.$router.push({ name: "login" });
-      return;
-    }
-
-    this.conf = await res.json();
     this.ws = new WsClient(
-      this.conf.page_data.wsBase + "/speech-to-text",
-      this.conf.page_data.token
+      this.$conf.wsBase + "/speech-to-text",
+      this.$me.token
     );
 
     this.ws.onMessage("init", (data) => {

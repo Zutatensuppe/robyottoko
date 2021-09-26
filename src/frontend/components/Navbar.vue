@@ -51,8 +51,10 @@ import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "navbar",
-  props: {
-    user: String,
+  computed: {
+    user() {
+      return this.$me?.user?.name || "";
+    },
   },
   data() {
     return {

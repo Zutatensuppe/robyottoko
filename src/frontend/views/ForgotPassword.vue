@@ -1,5 +1,5 @@
 <template>
-  <div class="center-screen" v-if="conf">
+  <div class="center-screen">
     <h1 class="title is-6">Hyottoko.club</h1>
 
     <div
@@ -48,17 +48,7 @@ export default defineComponent({
       email: "",
       error: "",
       success: false,
-
-      conf: null,
     };
-  },
-  async created() {
-    const res = await fetch("/api/page/forgot-password");
-    if (res.status !== 200) {
-      this.$router.push({ name: "index" });
-    } else {
-      this.conf = await res.json();
-    }
   },
   methods: {
     async submit() {

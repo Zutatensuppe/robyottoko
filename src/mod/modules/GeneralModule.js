@@ -164,25 +164,7 @@ class GeneralModule {
   }
 
   getRoutes() {
-
-    const data = (req, res) => {
-      return {
-        title: 'Commands',
-        page: 'commands',
-        page_data: {
-          wsBase: this.wss.connectstring(),
-          widgetToken: req.userWidgetToken,
-          user: req.user,
-          token: req.cookies['x-token'],
-        },
-      }
-    }
     return {
-      get: {
-        '/api/page/commands': async (req, res, next) => {
-          res.send(data(req, res))
-        },
-      },
     }
   }
 

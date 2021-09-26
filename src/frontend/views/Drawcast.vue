@@ -1,7 +1,7 @@
 <template>
-  <div id="app" v-if="conf">
+  <div id="app">
     <div id="top" ref="top">
-      <navbar :user="conf.page_data.user.name" />
+      <navbar />
       <div id="actionbar" class="p-1">
         <button
           class="button is-small is-primary mr-1"
@@ -273,7 +273,6 @@ export default defineComponent({
   },
   data() {
     return {
-      conf: null,
       unchangedJson: "{}",
       changedJson: "{}",
       settings: null,
@@ -292,27 +291,18 @@ export default defineComponent({
     };
   },
   async created() {
-    const res = await fetch("/api/page/drawcast");
-    if (res.status !== 200) {
-      this.$router.push({ name: "login" });
-    } else {
-      this.conf = await res.json();
-      this.ws = new WsClient(
-        this.conf.page_data.wsBase + "/drawcast",
-        this.conf.page_data.token
-      );
+    this.ws = new WsClient(this.$conf.wsBase + "/drawcast", this.$me.token);
 
-      this.ws.onMessage("init", async (data) => {
-        this.settings = data.settings;
-        this.defaultSettings = data.defaultSettings;
-        this.unchangedJson = JSON.stringify(data.settings);
-        this.drawUrl = data.drawUrl;
+    this.ws.onMessage("init", async (data) => {
+      this.settings = data.settings;
+      this.defaultSettings = data.defaultSettings;
+      this.unchangedJson = JSON.stringify(data.settings);
+      this.drawUrl = data.drawUrl;
 
-        const res = await xhr.get("/api/drawcast/all-images/", {});
-        this.favoriteSelection.items = await res.json();
-      });
-      this.ws.connect();
-    }
+      const res = await xhr.get("/api/drawcast/all-images/", {});
+      this.favoriteSelection.items = await res.json();
+    });
+    this.ws.connect();
   },
   watch: {
     settings: {
@@ -327,7 +317,7 @@ export default defineComponent({
       return this.unchangedJson !== this.changedJson;
     },
     receiveUrl() {
-      return `${location.protocol}//${location.host}/widget/drawcast_receive/${this.conf.page_data.widgetToken}/`;
+      return `${location.protocol}//${location.host}/widget/drawcast_receive/${this.$conf.widgetToken}/`;
     },
     favoriteSelectionTotalPages() {
       return (

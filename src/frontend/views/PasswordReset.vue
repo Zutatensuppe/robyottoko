@@ -1,5 +1,5 @@
 <template>
-  <div class="center-screen" v-if="conf">
+  <div class="center-screen">
     <h1 class="title is-6">Hyottoko.club</h1>
 
     <div
@@ -53,17 +53,7 @@ export default defineComponent({
       pass: "",
       error: "",
       success: false,
-
-      conf: null,
     };
-  },
-  async created() {
-    const res = await fetch("/api/page/password-reset");
-    if (res.status !== 200) {
-      this.$router.push({ name: "index" });
-    } else {
-      this.conf = await res.json();
-    }
   },
   computed: {
     canSubmit() {
