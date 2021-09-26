@@ -299,7 +299,11 @@ export default {
     )
     this.ws.onMessage('init', (data) => {
       this.commands = data.commands
-      this.settings = data.settings
+      const settings = data.settings
+      if (typeof settings.volume === 'undefined') {
+        settings.volume = 100
+      }
+      this.settings = settings
       this.globalVariables = data.globalVariables
       this.inited = true
     })
