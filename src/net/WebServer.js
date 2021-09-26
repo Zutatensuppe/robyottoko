@@ -163,43 +163,34 @@ class WebServer {
     })
 
     app.get('/api/page/index', requireLoginApi, async (req, res) => {
-      const widgets = [
-        {
-          title: 'Song Request',
-          hint: 'Browser source, or open in browser and capture window',
-          url: this.widgetUrl('sr', req.userWidgetToken),
-        },
-        {
-          title: 'Media',
-          hint: 'Browser source, or open in browser and capture window',
-          url: this.widgetUrl('media', req.userWidgetToken),
-        },
-        {
-          title: 'Speech-to-Text',
-          hint: 'Google Chrome + window capture',
-          url: this.widgetUrl('speech-to-text', req.userWidgetToken),
-        },
-        {
-          title: 'Drawcast (Overlay)',
-          hint: 'Browser source, or open in browser and capture window',
-          url: this.widgetUrl('drawcast_receive', req.userWidgetToken),
-        },
-        {
-          title: 'Drawcast (Draw)',
-          hint: 'Open this to draw (or give to viewers to let them draw)',
-          url: this.pubUrl(this.widgetUrl('drawcast_draw', req.userPubToken)),
-        },
-      ];
       res.send({
-        title: 'Hyottoko.club',
-        page: 'index',
-        page_data: {
-          wsBase: this.wss.connectstring(),
-          widgetToken: req.userWidgetToken,
-          user: req.user,
-          token: req.cookies['x-token'],
-          widgets,
-        },
+        widgets: [
+          {
+            title: 'Song Request',
+            hint: 'Browser source, or open in browser and capture window',
+            url: this.widgetUrl('sr', req.userWidgetToken),
+          },
+          {
+            title: 'Media',
+            hint: 'Browser source, or open in browser and capture window',
+            url: this.widgetUrl('media', req.userWidgetToken),
+          },
+          {
+            title: 'Speech-to-Text',
+            hint: 'Google Chrome + window capture',
+            url: this.widgetUrl('speech-to-text', req.userWidgetToken),
+          },
+          {
+            title: 'Drawcast (Overlay)',
+            hint: 'Browser source, or open in browser and capture window',
+            url: this.widgetUrl('drawcast_receive', req.userWidgetToken),
+          },
+          {
+            title: 'Drawcast (Draw)',
+            hint: 'Open this to draw (or give to viewers to let them draw)',
+            url: this.pubUrl(this.widgetUrl('drawcast_draw', req.userPubToken)),
+          },
+        ]
       })
     })
 
@@ -356,20 +347,13 @@ class WebServer {
       return
     })
 
-    const variablesData = (req, res) => {
-      const variables = new Variables(this.db, req.user.id)
-      return {
-        title: 'Variables',
-        page: 'variables',
-        page_data: {
-          user: req.user,
-          variables: variables.all(),
-        },
-      }
-    }
-
     app.get('/api/page/variables/', requireLoginApi, async (req, res) => {
-      res.send(variablesData(req, res))
+      res.send((req, res) => {
+        const variables = new Variables(this.db, req.user.id)
+        return {
+          variables: variables.all(),
+        }
+      })
     })
 
     app.post('/save-variables', requireLoginApi, express.json(), async (req, res) => {
@@ -378,19 +362,14 @@ class WebServer {
       res.send()
     })
 
-    const settingsData = (req, res) => {
-      const twitch_channels = this.twitchChannelRepo.allByUserId(req.user.id)
-      return {
-        title: 'Settings',
-        page: 'settings',
-        page_data: {
-          user: req.user,
-          twitch_channels,
-        },
-      }
-    }
     app.get('/api/page/settings/', requireLoginApi, async (req, res) => {
-      res.send(settingsData(req, res))
+      const user = this.userRepo.getById(req.user.id)
+      user.groups = this.userRepo.getGroups(user.id)
+      delete user.pass
+      res.send({
+        user,
+        twitchChannels: this.twitchChannelRepo.allByUserId(req.user.id),
+      })
     })
 
     app.post('/api/save-settings', requireLoginApi, express.json(), async (req, res) => {

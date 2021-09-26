@@ -46,7 +46,7 @@ export default defineComponent({
     }
 
     const data = await res.json();
-    this.widgets = data.page_data.widgets;
+    this.widgets = data.widgets;
   },
 });
 </script>

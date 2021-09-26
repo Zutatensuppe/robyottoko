@@ -126,7 +126,7 @@ export default defineComponent({
     }
 
     const data = await res.json();
-    this.variables = data.page_data.variables;
+    this.variables = data.variables;
     this.setUnchanged();
   },
 });

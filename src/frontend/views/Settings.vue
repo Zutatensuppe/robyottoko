@@ -338,8 +338,8 @@ export default defineComponent({
     }
 
     const data = await res.json();
-    this.user = data.page_data.user;
-    this.twitch_channels = data.page_data.twitch_channels;
+    this.user = data.user;
+    this.twitch_channels = data.twitchChannels;
     this.setUnchanged();
   },
 });
