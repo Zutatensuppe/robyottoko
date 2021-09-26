@@ -12,6 +12,10 @@ export default {
     baseVolume: {
       default: 100,
     },
+    value: {
+      type: Object,
+      required: true,
+    },
   },
   components: {
     Upload,
@@ -135,12 +139,6 @@ export default {
       <button class="button is-small" @click="onAddMedia"><i class="fa fa-picture-o mr-1" /> Add Media</button>
     </div>
   </div>`,
-  props: {
-    value: {
-      type: Object,
-      required: true,
-    },
-  },
   data() {
     return {
       countdown: {
