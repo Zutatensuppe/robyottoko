@@ -1,3 +1,4 @@
+const path = require('path')
 const fn = require('../fn.js')
 const crypto = require('crypto')
 const multer = require('multer')
@@ -111,6 +112,14 @@ class WebServer {
       return next()
     }
 
+    const requireLoginApi = (req, res, next) => {
+      if (!req.token) {
+        res.status(401).send({})
+        return
+      }
+      return next()
+    }
+
     const requireLogin = (req, res, next) => {
       if (!req.token) {
         if (req.method === 'GET') {
@@ -126,14 +135,15 @@ class WebServer {
     app.use(cookieParser())
     app.use(this.auth.addAuthInfoMiddleware())
     app.use('/uploads', express.static(uploadDir))
+    app.use('/', express.static('./build/public'))
     app.use('/static', express.static('./public/static'))
 
-    app.get('/login', async (req, res) => {
+    app.get('/api/page/login', async (req, res) => {
       if (req.token) {
-        res.redirect(302, '/')
+        res.status(401).send({ reason: 'already_logged_in' })
         return
       }
-      res.send(await fn.render('base.twig', {
+      res.send({
         title: 'Login',
         page: 'login',
         page_data: {
@@ -142,14 +152,14 @@ class WebServer {
           user: null,
           token: null,
         },
-      }))
+      })
     })
-    app.get('/register', async (req, res) => {
+    app.get('/api/page/register', async (req, res) => {
       if (req.token) {
-        res.redirect(302, '/')
+        res.status(401).send({ reason: 'already_logged_in' })
         return
       }
-      res.send(await fn.render('base.twig', {
+      res.send({
         title: 'Register',
         page: 'register',
         page_data: {
@@ -158,14 +168,14 @@ class WebServer {
           user: null,
           token: null,
         },
-      }))
+      })
     })
-    app.get('/password-reset', async (req, res) => {
+    app.get('/api/page/password-reset', async (req, res) => {
       if (req.token) {
-        res.redirect(302, '/')
+        res.status(401).send({ reason: 'already_logged_in' })
         return
       }
-      res.send(await fn.render('base.twig', {
+      res.send({
         title: 'Password Reset',
         page: 'password-reset',
         page_data: {
@@ -174,14 +184,14 @@ class WebServer {
           user: null,
           token: null,
         },
-      }))
+      })
     })
-    app.get('/forgot-password', async (req, res) => {
+    app.get('/api/page/forgot-password', async (req, res) => {
       if (req.token) {
-        res.redirect(302, '/')
+        res.status(401).send({ reason: 'already_logged_in' })
         return
       }
-      res.send(await fn.render('base.twig', {
+      res.send({
         title: 'Forgot Password',
         page: 'forgot-password',
         page_data: {
@@ -190,17 +200,18 @@ class WebServer {
           user: null,
           token: null,
         },
-      }))
+      })
     })
-    app.get('/logout', async (req, res) => {
+
+    app.post('/api/logout', async (req, res) => {
       if (req.token) {
         this.auth.destroyToken(req.token)
         res.clearCookie("x-token")
       }
-      res.redirect(302, '/login')
+      res.send({ success: true })
     })
 
-    app.get('/', requireLogin, async (req, res) => {
+    const indexData = (req, res) => {
       const widgets = [
         {
           title: 'Song Request',
@@ -228,7 +239,7 @@ class WebServer {
           url: this.pubUrl(this.widgetUrl('drawcast_draw', req.userPubToken)),
         },
       ];
-      res.send(await fn.render('base.twig', {
+      return {
         title: 'Hyottoko.club',
         page: 'index',
         page_data: {
@@ -238,7 +249,10 @@ class WebServer {
           token: req.cookies['x-token'],
           widgets,
         },
-      }))
+      }
+    }
+    app.get('/api/page/index', requireLoginApi, async (req, res) => {
+      res.send(indexData(req, res))
     })
 
     app.post('/api/user/_reset_password', express.json(), async (req, res) => {
@@ -394,38 +408,44 @@ class WebServer {
       return
     })
 
-
-    app.get('/variables/', requireLogin, async (req, res) => {
+    const variablesData = (req, res) => {
       const variables = new Variables(this.db, req.user.id)
-      res.send(await fn.render('base.twig', {
+      return {
         title: 'Variables',
         page: 'variables',
         page_data: {
           user: req.user,
           variables: variables.all(),
         },
-      }))
+      }
+    }
+
+    app.get('/api/page/variables/', requireLoginApi, async (req, res) => {
+      res.send(variablesData(req, res))
     })
 
-    app.post('/save-variables', requireLogin, express.json(), async (req, res) => {
+    app.post('/save-variables', requireLoginApi, express.json(), async (req, res) => {
       const variables = new Variables(this.db, req.user.id)
       variables.replace(req.body.variables || [])
       res.send()
     })
 
-    app.get('/settings/', requireLogin, async (req, res) => {
+    const settingsData = (req, res) => {
       const twitch_channels = this.twitchChannelRepo.allByUserId(req.user.id)
-      res.send(await fn.render('base.twig', {
+      return {
         title: 'Settings',
         page: 'settings',
         page_data: {
           user: req.user,
           twitch_channels,
         },
-      }))
+      }
+    }
+    app.get('/api/page/settings/', requireLoginApi, async (req, res) => {
+      res.send(settingsData(req, res))
     })
 
-    app.post('/save-settings', requireLogin, express.json(), async (req, res) => {
+    app.post('/api/save-settings', requireLoginApi, express.json(), async (req, res) => {
       if (!req.user.groups.includes('admin')) {
         if (req.user.id !== req.body.user.id) {
           // editing other user than self
@@ -473,7 +493,7 @@ class WebServer {
     app.get('/twitch/redirect_uri', async (req, res) => {
       res.send(await fn.render('twitch/redirect_uri.twig'))
     })
-    app.post('/twitch/user-id-by-name', requireLogin, express.json(), async (req, res) => {
+    app.post('/twitch/user-id-by-name', requireLoginApi, express.json(), async (req, res) => {
       let clientId
       let clientSecret
       if (!req.user.groups.includes('admin')) {
@@ -546,7 +566,7 @@ class WebServer {
         res.status(400).send({ reason: 'unhandled sub type' })
       })
 
-    app.post('/auth', express.json(), async (req, res) => {
+    app.post('/api/auth', express.json(), async (req, res) => {
       const user = this.auth.getUserByNameAndPass(req.body.user, req.body.pass)
       if (!user) {
         res.status(401).send({ reason: 'bad credentials' })
@@ -558,7 +578,7 @@ class WebServer {
       res.send()
     })
 
-    app.post('/upload', requireLogin, (req, res) => {
+    app.post('/api/upload', requireLoginApi, (req, res) => {
       upload(req, res, (err) => {
         if (err) {
           log.error(err)
@@ -596,7 +616,9 @@ class WebServer {
           return
         }
       }
-      res.sendStatus(404)
+
+      const indexFile = `${__dirname}/../../build/public/index.html`
+      res.sendFile(path.resolve(indexFile));
     })
 
     this.handle = app.listen(
