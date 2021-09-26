@@ -10,7 +10,6 @@ export default {
   name: 'countdown-edit',
   props: {
     baseVolume: {
-      type: Number,
       default: 100,
     },
   },

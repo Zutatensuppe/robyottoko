@@ -30,7 +30,6 @@ export default {
       required: true,
     },
     baseVolume: {
-      type: Number,
       default: 100,
     },
   },
