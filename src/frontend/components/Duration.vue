@@ -5,8 +5,8 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import fn from "../../common/fn.ts";
 
-import fn from "../fn.js";
 export default defineComponent({
   props: {
     value: {

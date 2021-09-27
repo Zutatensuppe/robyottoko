@@ -42,12 +42,10 @@ export default defineComponent({
   props: {
     tags: Array,
   },
-  data() {
-    return {
-      editTag: "",
-      tagEditIdx: -1,
-    };
-  },
+  data: () => ({
+    editTag: "",
+    tagEditIdx: -1,
+  }),
   methods: {
     onInputFocus(tag, idx) {
       this.editTag = tag.value;

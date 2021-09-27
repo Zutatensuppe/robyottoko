@@ -1,4 +1,4 @@
-const Db = require("../Db");
+import Db from "../Db"
 
 const TABLE = 'token'
 
@@ -37,4 +37,4 @@ function Tokens(/** @type Db */ db) {
   }
 }
 
-module.exports = Tokens
+export default Tokens

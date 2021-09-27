@@ -1,4 +1,4 @@
-const { passwordHash } = require("../fn")
+import { passwordHash } from "../fn"
 
 function Auth(userRepo, tokenRepo) {
   const getTokenInfo = (token) => tokenRepo.getByToken(token)
@@ -67,4 +67,4 @@ function Auth(userRepo, tokenRepo) {
   }
 }
 
-module.exports = Auth
+export default Auth

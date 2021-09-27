@@ -1,0 +1,15 @@
+{
+  "preset": "ts-jest",
+  "verbose": true,
+  "globals": {},
+  "testEnvironment": "jsdom",
+  "moduleFileExtensions": [
+    "vue",
+    "js",
+    "json",
+    "jsx",
+    "ts",
+    "tsx",
+    "node"
+  ]
+}

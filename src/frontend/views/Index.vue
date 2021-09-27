@@ -27,17 +27,11 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import Navbar from "../components/Navbar.vue";
 
 export default defineComponent({
-  components: {
-    Navbar,
-  },
-  data() {
-    return {
-      widgets: null,
-    };
-  },
+  data: () => ({
+    widgets: null,
+  }),
   async created() {
     const res = await fetch("/api/page/index");
     if (res.status !== 200) {

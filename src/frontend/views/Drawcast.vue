@@ -257,39 +257,27 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import Navbar from "../components/Navbar.vue";
-import Upload from "../components/Upload.vue";
-import Player from "../components/Player.vue";
-import VolumeSlider from "../components/VolumeSlider.vue";
 import WsClient from "../WsClient.js";
 import xhr from "../xhr.js";
 
 export default defineComponent({
-  components: {
-    Navbar,
-    Upload,
-    Player,
-    VolumeSlider,
-  },
-  data() {
-    return {
-      unchangedJson: "{}",
-      changedJson: "{}",
-      settings: null,
-      defaultSettings: null,
-      ws: null,
+  data: () => ({
+    unchangedJson: "{}",
+    changedJson: "{}",
+    settings: null,
+    defaultSettings: null,
+    ws: null,
 
-      drawUrl: "",
-      favoriteSelection: {
-        hovered: "",
-        items: [],
-        pagination: {
-          page: 1,
-          perPage: 20,
-        },
+    drawUrl: "",
+    favoriteSelection: {
+      hovered: "",
+      items: [],
+      pagination: {
+        page: 1,
+        perPage: 20,
       },
-    };
-  },
+    },
+  }),
   async created() {
     this.ws = new WsClient(this.$conf.wsBase + "/drawcast", this.$me.token);
 

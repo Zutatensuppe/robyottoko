@@ -169,14 +169,8 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import Upload from "../../components/Upload.vue";
-import DurationInput from "../../components/DurationInput.vue";
-import Player from "../../components/Player.vue";
-import VolumeSlider from "../../components/VolumeSlider.vue";
-import ResponsiveImage from "../../components/ResponsiveImage.vue";
 import commands from "../../commands.js";
-import draggable from "vuedraggable";
-import fn from "../../fn.js";
+import fn from "../../../common/fn.ts";
 
 export default defineComponent({
   name: "countdown-edit",
@@ -189,30 +183,20 @@ export default defineComponent({
       required: true,
     },
   },
-  components: {
-    draggable,
-    Upload,
-    DurationInput,
-    Player,
-    VolumeSlider,
-    ResponsiveImage,
-  },
-  data() {
-    return {
-      countdown: {
-        type: "manual",
+  data: () => ({
+    countdown: {
+      type: "manual",
 
-        // settings for manual
-        actions: [],
+      // settings for manual
+      actions: [],
 
-        // settings for auto (old style)
-        steps: 3,
-        interval: 1000,
-        intro: "",
-        outro: "",
-      },
-    };
-  },
+      // settings for auto (old style)
+      steps: 3,
+      interval: 1000,
+      intro: "",
+      outro: "",
+    },
+  }),
   methods: {
     dragEnd(evt) {
       this.countdown.actions = fn.arrayMove(

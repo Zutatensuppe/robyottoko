@@ -1,4 +1,5 @@
-const fn = require('./../fn.js')
+import fn from './../fn.js'
+
 const log = fn.logger('countdown.js')
 
 const countdown = (
@@ -87,4 +88,4 @@ const countdown = (
     }
   }
 
-module.exports = countdown
+export default countdown

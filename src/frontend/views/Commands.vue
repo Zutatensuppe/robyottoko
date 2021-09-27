@@ -290,50 +290,26 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 
-import draggable from "vuedraggable";
-import Navbar from "../components/Navbar.vue";
-import Duration from "../components/Duration.vue";
-import Player from "../components/Player.vue";
-import VolumeSlider from "../components/VolumeSlider.vue";
-import ResponsiveImage from "../components/ResponsiveImage.vue";
-import Upload from "../components/Upload.vue";
-import CountdownEdit from "../components/Commands/CountdownEdit.vue";
-import CommandEdit from "../components/Commands/CommandEdit.vue";
-import DoubleclickButton from "../components/DoubleclickButton.vue";
 import WsClient from "../WsClient.js";
 import commands from "../commands.js";
-import fn from "../fn.js";
+import fn from "../../common/fn.ts";
 
 export default defineComponent({
-  components: {
-    draggable,
-    Navbar,
-    Player,
-    VolumeSlider,
-    Duration,
-    ResponsiveImage,
-    Upload,
-    CountdownEdit,
-    CommandEdit,
-    DoubleclickButton,
-  },
-  data() {
-    return {
-      commands: [],
-      settings: {
-        volume: 100,
-      },
-      globalVariables: [],
-      ws: null,
+  data: () => ({
+    commands: [],
+    settings: {
+      volume: 100,
+    },
+    globalVariables: [],
+    ws: null,
 
-      editIdx: null,
-      editCommand: null,
+    editIdx: null,
+    editCommand: null,
 
-      inited: false,
+    inited: false,
 
-      tab: "commands", // commands|settings
-    };
-  },
+    tab: "commands", // commands|settings
+  }),
   computed: {
     baseVolume() {
       return this.settings.volume;

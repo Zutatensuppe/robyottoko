@@ -1,5 +1,5 @@
-const ModuleManager = require('./ModuleManager.js')
-const ModuleStorage = require('./ModuleStorage.js')
-const modules = require('./modules')
+import ModuleManager from './ModuleManager.js'
+import ModuleStorage from './ModuleStorage.js'
+import modules from './modules'
 
-module.exports = {ModuleManager, ModuleStorage, modules}
+export default { ModuleManager, ModuleStorage, modules }

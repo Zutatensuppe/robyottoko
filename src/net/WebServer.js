@@ -1,18 +1,23 @@
-const path = require('path')
-const fn = require('../fn.js')
-const crypto = require('crypto')
-const multer = require('multer')
-const express = require('express')
-const cookieParser = require('cookie-parser')
+import path from 'path'
+import fn from '../fn.js'
+import crypto from 'crypto'
+import multer from 'multer'
+import express from 'express'
+import cookieParser from 'cookie-parser'
 
-const TwitchHelixClient = require('../services/TwitchHelixClient.js')
-const Db = require('../Db.js')
-const EventHub = require('../EventHub.js')
-const Users = require('../services/Users.js')
-const Tokens = require('../services/Tokens.js')
-const Mail = require('../net/Mail.js')
-const WebSocketServer = require('./WebSocketServer.js')
-const Variables = require('../services/Variables.js')
+import TwitchHelixClient from '../services/TwitchHelixClient.js'
+import Db from '../Db.js'
+import EventHub from '../EventHub.js'
+import Users from '../services/Users.js'
+import Tokens from '../services/Tokens.js'
+import Mail from '../net/Mail.js'
+import WebSocketServer from './WebSocketServer.js'
+import Variables from '../services/Variables.js'
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 const log = fn.logger(__filename)
 
@@ -561,4 +566,4 @@ class WebServer {
   }
 }
 
-module.exports = WebServer
+export default WebServer

@@ -468,24 +468,10 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 
-import fn from "../../fn.js";
-import Player from "../../components/Player.vue";
-import VolumeSlider from "../../components/VolumeSlider.vue";
-import ResponsiveImage from "../../components/ResponsiveImage.vue";
-import DurationInput from "../../components/DurationInput.vue";
-import CountdownEdit from "./CountdownEdit.vue";
-import Upload from "../../components/Upload.vue";
+import fn from "../../../common/fn.ts";
 import commands from "../../commands.js";
 
 export default defineComponent({
-  components: {
-    CountdownEdit,
-    Player,
-    VolumeSlider,
-    ResponsiveImage,
-    DurationInput,
-    Upload,
-  },
   props: {
     modelValue: {
       type: Object,
@@ -504,13 +490,11 @@ export default defineComponent({
     },
   },
   emits: ["update:modelValue", "cancel"],
-  data() {
-    return {
-      item: null,
-      newtrigger: "command",
-      variableChangeFocusIdx: -1,
-    };
-  },
+  data: () => ({
+    item: null,
+    newtrigger: "command",
+    variableChangeFocusIdx: -1,
+  }),
   mounted() {
     this.item = JSON.parse(JSON.stringify(this.modelValue));
     this.$nextTick(() => {

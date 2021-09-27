@@ -56,41 +56,39 @@ export default defineComponent({
       return this.$me?.user?.name || "";
     },
   },
-  data() {
-    return {
-      linksStart: [
-        {
-          to: { name: "index" },
-          text: "Widgets",
-        },
-        {
-          to: { name: "commands" },
-          text: "Commands",
-        },
-        {
-          to: { name: "variables" },
-          text: "Variables",
-        },
-        {
-          to: { name: "sr" },
-          text: "Song Request",
-        },
-        {
-          to: { name: "speech-to-text" },
-          text: "Speech-To-Text",
-        },
-        {
-          to: { name: "drawcast" },
-          text: "Drawcast",
-        },
-        {
-          to: { name: "settings" },
-          text: "Settings",
-        },
-      ],
-      burgerActive: false,
-    };
-  },
+  data: () => ({
+    linksStart: [
+      {
+        to: { name: "index" },
+        text: "Widgets",
+      },
+      {
+        to: { name: "commands" },
+        text: "Commands",
+      },
+      {
+        to: { name: "variables" },
+        text: "Variables",
+      },
+      {
+        to: { name: "sr" },
+        text: "Song Request",
+      },
+      {
+        to: { name: "speech-to-text" },
+        text: "Speech-To-Text",
+      },
+      {
+        to: { name: "drawcast" },
+        text: "Drawcast",
+      },
+      {
+        to: { name: "settings" },
+        text: "Settings",
+      },
+    ],
+    burgerActive: false,
+  }),
   methods: {
     toggleBurgerMenu() {
       this.burgerActive = !this.burgerActive;

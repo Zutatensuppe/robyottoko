@@ -1,4 +1,4 @@
-const Db = require("../Db")
+import Db from "../Db"
 
 const TABLE = 'variables'
 
@@ -40,4 +40,4 @@ function Variables(
   }
 }
 
-module.exports = Variables
+export default Variables

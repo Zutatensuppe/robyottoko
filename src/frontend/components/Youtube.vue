@@ -50,14 +50,12 @@ async function prepareYt(id) {
 
 export default defineComponent({
   name: "youtube",
-  data() {
-    return {
-      id: "",
-      yt: null,
-      toplay: null,
-      tovolume: null,
-    };
-  },
+  data: () => ({
+    id: "",
+    yt: null,
+    toplay: null,
+    tovolume: null,
+  }),
   created() {
     this.id = `yt-${Math.floor(
       Math.random() * 99 + 1

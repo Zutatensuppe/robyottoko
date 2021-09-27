@@ -58,21 +58,12 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 
-import Navbar from "../components/Navbar.vue";
-import DoubleclickButton from "../components/DoubleclickButton.vue";
-
 export default defineComponent({
-  components: {
-    Navbar,
-    DoubleclickButton,
-  },
-  data() {
-    return {
-      unchangedJson: "[]",
-      changedJson: "[]",
-      variables: [],
-    };
-  },
+  data: () => ({
+    unchangedJson: "[]",
+    changedJson: "[]",
+    variables: [],
+  }),
   computed: {
     changed() {
       return this.unchangedJson !== this.changedJson;

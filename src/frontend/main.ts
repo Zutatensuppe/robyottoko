@@ -14,6 +14,26 @@ import SpeechToText from './views/SpeechToText.vue'
 import PasswordReset from './views/PasswordReset.vue'
 import ForgotPassword from './views/ForgotPassword.vue'
 
+
+import draggable from "vuedraggable";
+import Upload from "./components/Upload.vue";
+import DurationInput from "./components/DurationInput.vue";
+import Player from "./components/Player.vue";
+import Slider from "./components/Slider.vue";
+import VolumeSlider from "./components/VolumeSlider.vue";
+import ResponsiveImage from "./components/ResponsiveImage.vue";
+import Navbar from "./components/Navbar.vue";
+import Duration from "./components/Duration.vue";
+import DoubleclickButton from "./components/DoubleclickButton.vue";
+import Youtube from "./components/Youtube.vue";
+
+import CommandsCommandEdit from "./components/Commands/CommandEdit.vue";
+import CommandsCountdownEdit from "./components/Commands/CountdownEdit.vue";
+
+import SongRequestPlaylistEditor from "./components/SongRequest/PlaylistEditor.vue";
+import SongRequestTagsEditor from "./components/SongRequest/TagsEditor.vue";
+import SongRequestHelp from "./components/SongRequest/Help.vue";
+
 const run = async () => {
   const router = VueRouter.createRouter({
     history: VueRouter.createWebHistory(),
@@ -118,6 +138,24 @@ const run = async () => {
   app.config.globalProperties.$conf = conf
   app.config.globalProperties.$me = me
   app.use(router)
+  app.component('doubleclick-button', DoubleclickButton)
+  app.component('draggable', draggable)
+  app.component('duration-input', DurationInput)
+  app.component('duration', Duration)
+  app.component('navbar', Navbar)
+  app.component('player', Player)
+  app.component('responsive-image', ResponsiveImage)
+  app.component('slider', Slider)
+  app.component('upload', Upload)
+  app.component('volume-slider', VolumeSlider)
+  app.component('youtube', Youtube)
+  // commands - maybe dont register these globally?
+  app.component('command-edit', CommandsCommandEdit)
+  app.component('countdown-edit', CommandsCountdownEdit)
+  // songrequest - maybe dont register these globally?
+  app.component('playlist-editor', SongRequestPlaylistEditor)
+  app.component('tags-editor', SongRequestTagsEditor)
+  app.component('help', SongRequestHelp)
   app.mount('#app')
 }
 

@@ -9,4 +9,4 @@ function ModuleManager() {
   }
 }
 
-module.exports = ModuleManager
+export default ModuleManager

@@ -1,5 +1,5 @@
-const config = require('../config.js')
-const { getJson, asQueryArgs } = require('../net/xhr.js')
+import config from '../config.js'
+import { getJson, asQueryArgs } from '../net/xhr.js'
 
 const get = async (url, args) => {
   args.key = config.modules.sr.google.api_key
@@ -60,7 +60,7 @@ const getYoutubeIdBySearch = async (searchterm) => {
 
 const getUrlById = (id) => `https://youtu.be/${id}`
 
-module.exports = {
+export default {
   fetchDataByYoutubeId,
   extractYoutubeId,
   getYoutubeIdBySearch,

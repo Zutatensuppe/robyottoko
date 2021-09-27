@@ -165,24 +165,17 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 
-import draggable from "vuedraggable";
-
 export default defineComponent({
-  components: {
-    draggable,
-  },
   props: {
     playlist: Array,
     filter: Object,
   },
-  data() {
-    return {
-      hideFilteredOut: true,
-      filterTagInput: "",
-      tagInput: "",
-      tagInputIdx: -1,
-    };
-  },
+  data: () => ({
+    hideFilteredOut: true,
+    filterTagInput: "",
+    tagInput: "",
+    tagInputIdx: -1,
+  }),
   methods: {
     toggleVisibility(item, idx) {
       if (item.hidevideo) {

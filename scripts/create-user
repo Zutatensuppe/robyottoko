@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
-const config = require('../src/config.js')
-const Db = require('../src/Db.js')
-const readline = require('readline')
+import config from '../src/config.js'
+import Db from '../src/Db.js'
+import readline from 'readline'
 
 const question = (q) => new Promise((resolve, reject) => {
-  const cl = readline.createInterface( process.stdin, process.stdout )
+  const cl = readline.createInterface(process.stdin, process.stdout)
   cl.question(q, answer => {
     cl.close()
     resolve(answer)
@@ -14,29 +14,29 @@ const question = (q) => new Promise((resolve, reject) => {
 
 const log = console.log
 
-;(async () => {
-  const db = new Db(config.db)
-  db.patch(false)
+  ; (async () => {
+    const db = new Db(config.db)
+    db.patch(false)
 
-  log('Please enter credentials for the new user.')
+    log('Please enter credentials for the new user.')
 
-  const username = await question('Username: ')
-  const password = await question('Password: ')
+    const username = await question('Username: ')
+    const password = await question('Password: ')
 
-  const user = {
-    name: username,
-    pass: password,
+    const user = {
+      name: username,
+      pass: password,
 
-    // for tmi in general, see: https://dev.twitch.tv/docs/irc/#building-the-bot
-    // this data is editable in the backend after logging in, so
-    // no need to ask for it now
-    tmi_identity_username: '', // bot name
-    tmi_identity_password: '', // bot oauth token
-    tmi_identity_client_id: '', // bot app client id
-    tmi_identity_client_secret: '', // bot app client secret
-  }
+      // for tmi in general, see: https://dev.twitch.tv/docs/irc/#building-the-bot
+      // this data is editable in the backend after logging in, so
+      // no need to ask for it now
+      tmi_identity_username: '', // bot name
+      tmi_identity_password: '', // bot oauth token
+      tmi_identity_client_id: '', // bot app client id
+      tmi_identity_client_secret: '', // bot app client secret
+    }
 
-  const user_id = db.upsert('user', user, {name: user.name}, 'id')
-  log('user created/updated: ' + user_id)
-  db.close()
-})()
+    const user_id = db.upsert('user', user, { name: user.name }, 'id')
+    log('user created/updated: ' + user_id)
+    db.close()
+  })()

@@ -48,13 +48,11 @@
 import { defineComponent } from "vue";
 
 export default defineComponent({
-  data() {
-    return {
-      pass: "",
-      error: "",
-      success: false,
-    };
-  },
+  data: () => ({
+    pass: "",
+    error: "",
+    success: false,
+  }),
   computed: {
     canSubmit() {
       return this.pass && !this.error;

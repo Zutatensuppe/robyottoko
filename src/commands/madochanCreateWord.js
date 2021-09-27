@@ -1,5 +1,5 @@
-const fn = require('./../fn.js')
-const Madochan = require('./../services/Madochan.js')
+import fn from './../fn.js'
+import Madochan from './../services/Madochan.js'
 
 const madochanCreateWord = (
   /** @type string */ model,
@@ -26,4 +26,4 @@ const madochanCreateWord = (
     }
   }
 
-module.exports = madochanCreateWord
+export default madochanCreateWord

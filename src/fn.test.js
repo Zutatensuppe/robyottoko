@@ -1,4 +1,4 @@
-const { joinIntoChunks, humanDuration, parseISO8601Duration, DAY, HOUR, MINUTE, SECOND, MS, parseHumanDuration } = require('./fn.js')
+import { joinIntoChunks, humanDuration, parseISO8601Duration, DAY, HOUR, MINUTE, SECOND, MS, parseHumanDuration } from './fn.js'
 
 test('joinIntoChunks', () => {
   let actual = joinIntoChunks(['hyottoko', 'van', 'megaport'], ', ', 12)

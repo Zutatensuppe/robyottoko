@@ -202,65 +202,44 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-
-import Navbar from "../components/Navbar.vue";
-import Upload from "../components/Upload.vue";
-import Youtube from "../components/Youtube.vue";
-import VolumeSlider from "../components/VolumeSlider.vue";
-import ResponsiveImage from "../components/ResponsiveImage.vue";
 import WsClient from "../WsClient.js";
 import xhr from "../xhr.js";
-import PlaylistEditor from "../components/SongRequest/PlaylistEditor.vue";
-import TagsEditor from "../components/SongRequest/TagsEditor.vue";
-import Help from "../components/SongRequest/Help.vue";
 
 export default defineComponent({
-  components: {
-    Navbar,
-    Youtube,
-    VolumeSlider,
-    Help,
-    PlaylistEditor,
-    TagsEditor,
-    Upload,
-    ResponsiveImage,
-  },
-  data() {
-    return {
-      playerVisible: false,
-      playlist: [],
-      settings: {
-        volume: 100,
-        hideVideoImage: {
-          file: "",
-          filename: "",
-        },
+  data: () => ({
+    playerVisible: false,
+    playlist: [],
+    settings: {
+      volume: 100,
+      hideVideoImage: {
+        file: "",
+        filename: "",
       },
-      filter: { tag: "" },
-      ws: null,
-      resrinput: "",
-      srinput: "",
+    },
+    filter: { tag: "" },
+    ws: null,
+    resrinput: "",
+    srinput: "",
 
-      inited: false,
+    inited: false,
 
-      tab: "playlist", // playlist|help|import|tags
+    tab: "playlist", // playlist|help|import|tags
 
-      // hacky: list of volumeChanges initialized by self
-      // volume change is a ctrl sent to server without directly
-      // changing anything. only when the response from server
-      // arrives will the volume change be made. when that change is
-      // made, the volume slider would jump (if many volume changes
-      // are made in quick succession, this looks and feels choppy)
-      // so we store our local volume changes, and if a volume change
-      // arrives from server which corresponds to our local one, we
-      // do not change the VISUAL volume level, as it should already
-      // be changed... should be solved smarter (send maybe send some
-      // id with each request and see if WE sent the request or another)
-      volumeChanges: [],
+    // hacky: list of volumeChanges initialized by self
+    // volume change is a ctrl sent to server without directly
+    // changing anything. only when the response from server
+    // arrives will the volume change be made. when that change is
+    // made, the volume slider would jump (if many volume changes
+    // are made in quick succession, this looks and feels choppy)
+    // so we store our local volume changes, and if a volume change
+    // arrives from server which corresponds to our local one, we
+    // do not change the VISUAL volume level, as it should already
+    // be changed... should be solved smarter (send maybe send some
+    // id with each request and see if WE sent the request or another)
+    volumeChanges: [],
 
-      importPlaylist: "",
-    };
-  },
+    importPlaylist: "",
+  }),
   computed: {
     tags() {
       const tags = [];

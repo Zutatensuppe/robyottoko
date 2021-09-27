@@ -29,12 +29,10 @@ export default defineComponent({
       required: true,
     },
   },
-  data() {
-    return {
-      time: null,
-      timer: null,
-    };
-  },
+  data: () => ({
+    time: null,
+    timer: null,
+  }),
   computed: {
     indicatorStyle() {
       if (this.timer === null) {

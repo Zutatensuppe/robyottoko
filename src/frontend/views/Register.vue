@@ -94,15 +94,13 @@
 import { defineComponent } from "vue";
 
 export default defineComponent({
-  data() {
-    return {
-      user: "",
-      pass: "",
-      email: "",
-      error: "",
-      success: false,
-    };
-  },
+  data: () => ({
+    user: "",
+    pass: "",
+    email: "",
+    error: "",
+    success: false,
+  }),
   computed: {
     canRegister() {
       return this.user && this.pass && this.email && !this.error;

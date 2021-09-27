@@ -577,22 +577,16 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 
-import Navbar from "../components/Navbar.vue";
 import WsClient from "../WsClient.js";
 
 export default defineComponent({
-  components: {
-    Navbar,
-  },
-  data() {
-    return {
-      unchangedJson: "{}",
-      changedJson: "{}",
-      settings: null,
-      defaultSettings: null,
-      ws: null,
-    };
-  },
+  data: () => ({
+    unchangedJson: "{}",
+    changedJson: "{}",
+    settings: null,
+    defaultSettings: null,
+    ws: null,
+  }),
   watch: {
     settings: {
       deep: true,

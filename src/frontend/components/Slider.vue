@@ -46,11 +46,9 @@ export default defineComponent({
       default: 100,
     },
   },
-  data() {
-    return {
-      curVal: 100,
-    };
-  },
+  data: () => ({
+    curVal: 100,
+  }),
   methods: {
     valChange() {
       this.$emit("update:modelValue", parseInt(`${this.curVal}`, 10));

@@ -1,9 +1,7 @@
-#!/usr/bin/env node
-
 const verbose = !process.argv.includes('--silent')
 
-const config = require('../src/config.js')
-const Db = require('../src/Db.js')
+import config from '../src/config.js'
+import Db from '../src/Db.js'
 
 const db = new Db(config.db)
 db.patch(verbose)

@@ -1,6 +1,10 @@
-const fs = require('fs')
-const bsqlite = require('better-sqlite3')
-const { logger } = require('./fn.js')
+import fs from 'fs'
+import bsqlite from 'better-sqlite3'
+import { logger } from './fn.js'
+
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
 
 const log = logger(__filename)
 
@@ -199,4 +203,4 @@ class Db {
   }
 }
 
-module.exports = Db
+export default Db

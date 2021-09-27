@@ -1,5 +1,5 @@
-const fn = require('../../fn.js')
-const JishoOrg = require('../../services/JishoOrg.js')
+import fn from '../../fn.js'
+import JishoOrg from '../../services/JishoOrg.js'
 
 const log = fn.logger(__filename)
 
@@ -132,10 +132,10 @@ const wordgameOnMsg = async function (client, target, context, msg) {
   return true
 }
 
-module.exports = {
+export default {
   name: 'wordgame',
   onMsg: wordgameOnMsg,
   cmds: {
-    '!wg': {fn: wordgameCmd},
+    '!wg': { fn: wordgameCmd },
   },
 }

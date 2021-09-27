@@ -18,12 +18,10 @@ export default defineComponent({
       default: 100,
     },
   },
-  data() {
-    return {
-      audio: null,
-      playing: false,
-    };
-  },
+  data: () => ({
+    audio: null,
+    playing: false,
+  }),
   created: function () {
     this.load();
     this.$watch("src", () => {

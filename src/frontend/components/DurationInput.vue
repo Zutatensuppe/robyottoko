@@ -3,7 +3,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import fn from "../fn.js";
+import fn from "../../common/fn.ts";
 
 export default defineComponent({
   props: {
@@ -12,12 +12,10 @@ export default defineComponent({
     },
   },
   emits: ["update:modelValue"],
-  data() {
-    return {
-      v: "",
-      valid: true,
-    };
-  },
+  data: () => ({
+    v: "",
+    valid: true,
+  }),
   computed: {
     classes() {
       if (this.valid) {

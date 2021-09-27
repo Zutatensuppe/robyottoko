@@ -43,13 +43,11 @@
 import { defineComponent } from "vue";
 
 export default defineComponent({
-  data() {
-    return {
-      email: "",
-      error: "",
-      success: false,
-    };
-  },
+  data: () => ({
+    email: "",
+    error: "",
+    success: false,
+  }),
   methods: {
     async submit() {
       this.success = false;

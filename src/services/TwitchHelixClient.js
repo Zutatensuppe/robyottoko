@@ -1,5 +1,5 @@
-const { logger } = require('../fn.js')
-const { postJson, getJson, delJson, asJson, withHeaders, asQueryArgs, requestText, requestJson } = require('../net/xhr.js')
+import { logger } from '../fn.js'
+import { postJson, getJson, asJson, withHeaders, asQueryArgs, requestText, requestJson } from '../net/xhr.js'
 
 const log = logger('TwitchHelixClient.js')
 
@@ -22,7 +22,7 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/
-  async getAccessToken (scopes=[]) {
+  async getAccessToken(scopes = []) {
     const url = `https://id.twitch.tv/oauth2/token` + asQueryArgs({
       client_id: this.clientId,
       client_secret: this.clientSecret,
@@ -33,8 +33,8 @@ class TwitchHelixClient {
     return json.access_token
   }
 
-  async getUserIdByName (userName) {
-    const url = `${this.helixApiBase}/users${asQueryArgs({login: userName})}`
+  async getUserIdByName(userName) {
+    const url = `${this.helixApiBase}/users${asQueryArgs({ login: userName })}`
     const json = await getJson(url, await this.withAuthHeaders())
     try {
       return json.data[0].id
@@ -44,25 +44,25 @@ class TwitchHelixClient {
     }
   }
 
-  async getStreams (userId) {
-    const url = `${this.helixApiBase}/streams${asQueryArgs({user_id: userId})}`
+  async getStreams(userId) {
+    const url = `${this.helixApiBase}/streams${asQueryArgs({ user_id: userId })}`
     return await getJson(url, await this.withAuthHeaders())
   }
 
-  async getSubscriptions () {
+  async getSubscriptions() {
     const url = `${this.helixApiBase}/eventsub/subscriptions`
     return await getJson(url, await this.withAuthHeaders())
   }
 
-  async deleteSubscription (id) {
-    const url = `${this.helixApiBase}/eventsub/subscriptions${asQueryArgs({id: id})}`
+  async deleteSubscription(id) {
+    const url = `${this.helixApiBase}/eventsub/subscriptions${asQueryArgs({ id: id })}`
     return await requestText('delete', url, await this.withAuthHeaders())
   }
 
-  async createSubscription (subscription) {
+  async createSubscription(subscription) {
     const url = `${this.helixApiBase}/eventsub/subscriptions`
     return await postJson(url, await this.withAuthHeaders(asJson(subscription)))
   }
 }
 
-module.exports = TwitchHelixClient
+export default TwitchHelixClient

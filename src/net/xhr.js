@@ -1,6 +1,6 @@
-const fetch = require('node-fetch')
+import fetch from 'node-fetch'
 
-function withHeaders(headers, opts = {}) {
+export function withHeaders(headers, opts = {}) {
   const options = opts || {}
   options.headers = options.headers || {}
   for (let k in headers) {
@@ -9,14 +9,14 @@ function withHeaders(headers, opts = {}) {
   return options
 }
 
-function asJson(data) {
+export function asJson(data) {
   return {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   }
 }
 
-function asQueryArgs(data) {
+export function asQueryArgs(data) {
   const q = []
   for (let k in data) {
     const pair = [k, data[k]].map(encodeURIComponent)
@@ -34,33 +34,33 @@ async function request(method, url, opts = {}) {
   return await fetch(url, options)
 }
 
-async function requestJson(method, url, opts = {}) {
+export async function requestJson(method, url, opts = {}) {
   const resp = await request(method, url, opts)
   return await resp.json()
 }
 
-async function requestText(method, url, opts = {}) {
+export async function requestText(method, url, opts = {}) {
   const resp = await request(method, url, opts)
   return await resp.text()
 }
 
-async function getText(url, opts = {}) {
+export async function getText(url, opts = {}) {
   return await requestText('get', url, opts)
 }
 
-async function postJson(url, opts = {}) {
+export async function postJson(url, opts = {}) {
   return await requestJson('post', url, opts)
 }
 
-async function getJson(url, opts = {}) {
+export async function getJson(url, opts = {}) {
   return await requestJson('get', url, opts)
 }
 
-async function delJson(url, opts = {}) {
+export async function delJson(url, opts = {}) {
   return await requestJson('delete', url, opts)
 }
 
-module.exports = {
+export default {
   withHeaders,
   asJson,
   asQueryArgs,

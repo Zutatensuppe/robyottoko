@@ -1,9 +1,9 @@
-const Db = require('../../Db.js')
-const fn = require('../../fn.js')
-const WebServer = require('../../net/WebServer.js')
-const WebSocketServer = require('../../net/WebSocketServer.js')
-const TwitchHelixClient = require('../../services/TwitchHelixClient.js')
-const Variables = require('../../services/Variables.js')
+import Db from '../../Db.js'
+import fn from '../../fn.js'
+import WebServer from '../../net/WebServer.js'
+import WebSocketServer from '../../net/WebSocketServer.js'
+import TwitchHelixClient from '../../services/TwitchHelixClient.js'
+import Variables from '../../services/Variables.js'
 
 class DrawcastModule {
   constructor(
@@ -168,4 +168,4 @@ class DrawcastModule {
   }
 }
 
-module.exports = DrawcastModule
+export default DrawcastModule

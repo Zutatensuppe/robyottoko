@@ -24,14 +24,10 @@ export default defineComponent({
     accept: String,
     label: String,
   },
-  data() {
-    return {
-      uploading: false,
-      progress: 0,
-    };
-  },
-  template: `
-`,
+  data: () => ({
+    uploading: false,
+    progress: 0,
+  }),
   computed: {
     uploadPercent() {
       return Math.round(this.progress * 100);

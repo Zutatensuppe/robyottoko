@@ -1,5 +1,5 @@
-const fn = require('./../fn.js')
-const JishoOrg = require('./../services/JishoOrg.js')
+import fn from './../fn.js'
+import JishoOrg from './../services/JishoOrg.js'
 
 const jishoOrgLookup = (
   // no params
@@ -9,19 +9,19 @@ const jishoOrgLookup = (
   /** @type string */ target,
   context,
   /** @type string */ msg,
-) => {
-  const say = fn.sayFn(client, target)
-  const phrase = command.args.join(' ')
-  const data = await JishoOrg.searchWord(phrase)
-  if (data.length === 0) {
-    say(`Sorry, I didn't find anything for "${phrase}"`)
-    return
+  ) => {
+    const say = fn.sayFn(client, target)
+    const phrase = command.args.join(' ')
+    const data = await JishoOrg.searchWord(phrase)
+    if (data.length === 0) {
+      say(`Sorry, I didn't find anything for "${phrase}"`)
+      return
+    }
+    const e = data[0]
+    const j = e.japanese[0]
+    const d = e.senses[0].english_definitions
+
+    say(`Phrase "${phrase}": ${j.word} (${j.reading}) ${d.join(', ')}`)
   }
-  const e = data[0]
-  const j = e.japanese[0]
-  const d = e.senses[0].english_definitions
 
-  say(`Phrase "${phrase}": ${j.word} (${j.reading}) ${d.join(', ')}`)
-}
-
-module.exports = jishoOrgLookup
+export default jishoOrgLookup

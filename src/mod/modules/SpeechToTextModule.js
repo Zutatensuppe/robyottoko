@@ -1,7 +1,7 @@
-const config = require('../../config.js')
-const fn = require('../../fn.js')
-const { getText, asQueryArgs } = require('../../net/xhr.js')
-const Variables = require('../../services/Variables.js')
+import config from '../../config.js'
+import fn from '../../fn.js'
+import { getText, asQueryArgs } from '../../net/xhr.js'
+import Variables from '../../services/Variables.js'
 
 class SpeechToTextModule {
   constructor(db, user, variables, chatClient, helixClient, storage, cache, ws, wss) {
@@ -139,4 +139,4 @@ class SpeechToTextModule {
   }
 }
 
-module.exports = SpeechToTextModule
+export default SpeechToTextModule

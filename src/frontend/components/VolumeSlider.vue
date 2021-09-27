@@ -12,24 +12,17 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 
-import Slider from "./Slider.vue";
-
 export default defineComponent({
   name: "volume-slider",
-  components: {
-    Slider,
-  },
   template: ``,
   props: {
     modelValue: {
       required: true,
     },
   },
-  data() {
-    return {
-      volume: 100,
-    };
-  },
+  data: () => ({
+    volume: 100,
+  }),
   methods: {
     valChange() {
       this.$emit("update:modelValue", this.volume);

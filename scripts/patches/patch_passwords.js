@@ -1,6 +1,6 @@
-const config = require('./../../src/config.js')
-const Db = require('./../../src/Db.js')
-const fn = require('./../../src/fn.js')
+import config from './../../src/config.js'
+import Db from './../../src/Db.js'
+import fn from './../../src/fn.js'
 
 const db = new Db(config.db)
 const users = db.getMany('user')

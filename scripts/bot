@@ -1,6 +1,17 @@
 #!/bin/sh
 
 # make sure to always have an up to date db
-${RUN_BIN} patch-db --silent
+# TODO: always patch db when starting bot, not by extra script
+node \
+  --experimental-specifier-resolution=node \
+  --loader ts-node/esm \
+  "$RUN_DIR"/scripts/patch-db.js \
+  --silent
 
-nodemon --delay 2 --max-old-space-size=64 src/bot.js -e js --ignore public/static/
+nodemon \
+  --delay 2 \
+  -x "node --experimental-specifier-resolution=node --loader ts-node/esm" \
+  --max-old-space-size=128 \
+  src/bot.js \
+  -e js,ts \
+  --ignore public/static/

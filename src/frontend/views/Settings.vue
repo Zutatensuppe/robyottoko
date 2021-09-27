@@ -182,26 +182,20 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import Navbar from "../components/Navbar.vue";
 
 export default defineComponent({
-  components: {
-    Navbar,
-  },
-  data() {
-    return {
-      unchangedJson: "[]",
-      changedJson: "[]",
-      user: {
-        id: 0,
-        name: "",
-        email: "",
-        pass: "",
-        groups: [],
-      },
-      twitch_channels: [],
-    };
-  },
+  data: () => ({
+    unchangedJson: "[]",
+    changedJson: "[]",
+    user: {
+      id: 0,
+      name: "",
+      email: "",
+      pass: "",
+      groups: [],
+    },
+    twitch_channels: [],
+  }),
   computed: {
     isAdmin() {
       return this.user.groups.includes("admin");

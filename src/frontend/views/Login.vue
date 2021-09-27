@@ -62,14 +62,12 @@
 import { defineComponent } from "vue";
 
 export default defineComponent({
-  data() {
-    return {
-      user: "",
-      pass: "",
-      error: "",
-      success: "",
-    };
-  },
+  data: () => ({
+    user: "",
+    pass: "",
+    error: "",
+    success: "",
+  }),
   // TODO: move token handling to general place
   async mounted() {
     const params = new URLSearchParams(window.location.search);
