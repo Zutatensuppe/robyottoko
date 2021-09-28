@@ -97,7 +97,7 @@
             <td><code>settings.recognition.synthesize</code></td>
             <td>
               <input
-                class="input is-small"
+                class="is-small"
                 type="checkbox"
                 v-model="settings.recognition.synthesize"
               />
@@ -122,7 +122,7 @@
             <td><code>settings.recognition.display</code></td>
             <td>
               <input
-                class="input is-small"
+                class="is-small"
                 type="checkbox"
                 v-model="settings.recognition.display"
               />
@@ -298,7 +298,7 @@
             <td><code>settings.translation.enabled</code></td>
             <td>
               <input
-                class="input is-small"
+                class="is-small"
                 type="checkbox"
                 v-model="settings.translation.enabled"
               />
@@ -323,7 +323,7 @@
             <td><code>settings.translation.synthesize</code></td>
             <td>
               <input
-                class="input is-small"
+                class="is-small"
                 type="checkbox"
                 v-model="settings.translation.synthesize"
               />
@@ -549,7 +549,7 @@
             <td><code>settings.status.enabled</code></td>
             <td>
               <input
-                class="input is-small"
+                class="is-small"
                 type="checkbox"
                 v-model="settings.status.enabled"
               />
