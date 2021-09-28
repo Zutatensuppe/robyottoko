@@ -55,6 +55,7 @@ export default defineComponent({
     yt: null,
     toplay: null,
     tovolume: null,
+    tryPlayInterval: null,
   }),
   created() {
     this.id = `yt-${Math.floor(
@@ -67,12 +68,34 @@ export default defineComponent({
         this.yt.stopVideo();
       }
     },
+    stopTryPlayInterval() {
+      if (this.tryPlayInterval) {
+        clearInterval(this.tryPlayInterval);
+        this.tryPlayInterval = null;
+      }
+    },
+    tryPlay() {
+      this.stopTryPlayInterval();
+
+      this.yt.playVideo();
+
+      let triesRemaining = 30;
+      this.tryPlayInterval = setInterval(() => {
+        console.log(triesRemaining);
+        --triesRemaining;
+        if (this.playing() || triesRemaining < 0) {
+          this.stopTryPlayInterval();
+          return;
+        }
+        this.yt.playVideo();
+      }, 250);
+    },
     play(yt) {
       if (!this.yt) {
         this.toplay = yt;
       } else {
         this.yt.cueVideoById(yt);
-        this.yt.playVideo();
+        this.tryPlay();
       }
     },
     pause() {
@@ -82,7 +105,7 @@ export default defineComponent({
     },
     unpause() {
       if (this.yt) {
-        this.yt.playVideo();
+        this.tryPlay();
       }
     },
     setVolume(volume) {
@@ -112,7 +135,7 @@ export default defineComponent({
     this.yt.addEventListener("onStateChange", (event) => {
       if (event.data === YT.PlayerState.ENDED) {
         if (this.loop) {
-          this.yt.playVideo();
+          this.tryPlay();
         } else {
           this.$emit("ended");
         }

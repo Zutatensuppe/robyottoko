@@ -43,16 +43,17 @@ async function prepareYt(id) {
 
 export default {
   name: 'youtube',
-  data () {
+  data() {
     return {
       id: '',
       yt: null,
       toplay: null,
       tovolume: null,
+      tryPlayInterval: null,
     }
   },
   template: `<div :id="id"></div>`,
-  created () {
+  created() {
     this.id = `yt-${Math.floor(Math.random() * 99 + 1)}-${new Date().getTime()}`
   },
   methods: {
@@ -61,12 +62,34 @@ export default {
         this.yt.stopVideo()
       }
     },
+    stopTryPlayInterval() {
+      if (this.tryPlayInterval) {
+        clearInterval(this.tryPlayInterval)
+        this.tryPlayInterval = null
+      }
+    },
+    tryPlay() {
+      this.stopTryPlayInterval()
+
+      this.yt.playVideo()
+
+      let triesRemaining = 30
+      this.tryPlayInterval = setInterval(() => {
+        console.log(triesRemaining)
+        --triesRemaining
+        if (this.playing() || triesRemaining < 0) {
+          this.stopTryPlayInterval()
+          return
+        }
+        this.yt.playVideo()
+      }, 250)
+    },
     play(yt) {
       if (!this.yt) {
         this.toplay = yt
       } else {
         this.yt.cueVideoById(yt)
-        this.yt.playVideo()
+        this.tryPlay()
       }
     },
     pause() {
@@ -76,7 +99,7 @@ export default {
     },
     unpause() {
       if (this.yt) {
-        this.yt.playVideo()
+        this.tryPlay()
       }
     },
     setVolume(volume) {
@@ -106,7 +129,7 @@ export default {
     this.yt.addEventListener('onStateChange', (event) => {
       if (event.data === YT.PlayerState.ENDED) {
         if (this.loop) {
-          this.yt.playVideo()
+          this.tryPlay()
         } else {
           this.$emit('ended')
         }
