@@ -73,11 +73,12 @@ export default {
 
       this.yt.playVideo()
 
-      let triesRemaining = 30
+      let triesRemaining = 20
       this.tryPlayInterval = setInterval(() => {
-        console.log(triesRemaining)
+        log('playing', this.playing(), 'triesRemaining', triesRemaining)
         --triesRemaining
         if (this.playing() || triesRemaining < 0) {
+          log('stopping interval')
           this.stopTryPlayInterval()
           return
         }
@@ -127,7 +128,9 @@ export default {
       this.play(this.toplay)
     }
     this.yt.addEventListener('onStateChange', (event) => {
-      if (event.data === YT.PlayerState.ENDED) {
+      if (event.data === YT.PlayerState.CUED) {
+        this.tryPlay()
+      } else if (event.data === YT.PlayerState.ENDED) {
         if (this.loop) {
           this.tryPlay()
         } else {
