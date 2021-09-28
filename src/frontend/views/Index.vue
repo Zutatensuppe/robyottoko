@@ -4,19 +4,17 @@
       <navbar />
     </div>
     <div id="main" ref="main">
-      <table class="table is-striped">
+      <table class="table is-striped is-fullwidth">
         <thead>
           <tr>
-            <th>Title</th>
-            <th>URL</th>
+            <th>Widget</th>
             <th>Hint</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(widget, idx) in widgets" :key="idx">
-            <td>{{ widget.title }}</td>
             <td>
-              <a :href="widget.url">{{ widget.url }}</a>
+              <a :href="widget.url" target="blank">{{ widget.title }}</a>
             </td>
             <td>{{ widget.hint }}</td>
           </tr>
