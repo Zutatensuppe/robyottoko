@@ -49,6 +49,7 @@ export default {
       yt: null,
       toplay: null,
       tovolume: null,
+      tryPlayInterval: null,
     }
   },
   template: `<div :id="id"></div>`,
@@ -61,39 +62,34 @@ export default {
         this.yt.stopVideo()
       }
     },
+    stopTryPlayInterval() {
+      if (this.tryPlayInterval) {
+        clearInterval(this.tryPlayInterval)
+        this.tryPlayInterval = null
+      }
+    },
+    tryPlay() {
+      this.stopTryPlayInterval()
+
+      this.yt.playVideo()
+
+      let triesRemaining = 30
+      this.tryPlayInterval = setInterval(() => {
+        console.log(triesRemaining)
+        --triesRemaining
+        if (this.playing() || triesRemaining < 0) {
+          this.stopTryPlayInterval()
+          return
+        }
+        this.yt.playVideo()
+      }, 250)
+    },
     play(yt) {
       if (!this.yt) {
         this.toplay = yt
       } else {
         this.yt.cueVideoById(yt)
-        this.yt.playVideo()
-
-        let triesRemaining = 10
-        // try to play the video
-        const i = setInterval(() => {
-          if (this.playing()) {
-            clearInterval(i)
-            return
-          }
-
-          if (this.yt.getPlayerState() === YT.PlayerState.CUED) {
-            // still cued
-            const data = this.yt.getVideoData()
-            if ((data.title || '') === '') {
-              // video unavailable
-              clearInterval(i)
-              return
-            }
-          }
-
-          --triesRemaining
-          if (triesRemaining < 0) {
-            clearInterval(i)
-            return
-          }
-
-          this.yt.playVideo()
-        }, 500)
+        this.tryPlay()
       }
     },
     pause() {
@@ -103,7 +99,7 @@ export default {
     },
     unpause() {
       if (this.yt) {
-        this.yt.playVideo()
+        this.tryPlay()
       }
     },
     setVolume(volume) {
@@ -133,7 +129,7 @@ export default {
     this.yt.addEventListener('onStateChange', (event) => {
       if (event.data === YT.PlayerState.ENDED) {
         if (this.loop) {
-          this.yt.playVideo()
+          this.tryPlay()
         } else {
           this.$emit('ended')
         }
