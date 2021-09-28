@@ -43,7 +43,7 @@ async function prepareYt(id) {
 
 export default {
   name: 'youtube',
-  data () {
+  data() {
     return {
       id: '',
       yt: null,
@@ -52,7 +52,7 @@ export default {
     }
   },
   template: `<div :id="id"></div>`,
-  created () {
+  created() {
     this.id = `yt-${Math.floor(Math.random() * 99 + 1)}-${new Date().getTime()}`
   },
   methods: {
@@ -67,6 +67,33 @@ export default {
       } else {
         this.yt.cueVideoById(yt)
         this.yt.playVideo()
+
+        let triesRemaining = 10
+        // try to play the video
+        const i = setInterval(() => {
+          if (this.playing()) {
+            clearInterval(i)
+            return
+          }
+
+          if (this.yt.getPlayerState() === YT.PlayerState.CUED) {
+            // still cued
+            const data = this.yt.getVideoData()
+            if ((data.title || '') === '') {
+              // video unavailable
+              clearInterval(i)
+              return
+            }
+          }
+
+          --triesRemaining
+          if (triesRemaining < 0) {
+            clearInterval(i)
+            return
+          }
+
+          this.yt.playVideo()
+        }, 500)
       }
     },
     pause() {
