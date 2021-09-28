@@ -1,4 +1,4 @@
-const { postJson, asJson } = require('../net/xhr')
+import { postJson, asJson } from '../net/xhr'
 
 /*
 interface createWordRequestData {
@@ -13,7 +13,7 @@ const createWord = async (createWordRequestData) => {
   return json
 }
 
-module.exports = {
+export default {
   createWord,
   defaultModel: '100epochs800lenhashingbidirectional.h5',
   defaultWeirdness: 1,

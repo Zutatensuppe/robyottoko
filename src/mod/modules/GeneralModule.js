@@ -1,17 +1,17 @@
-const countdown = require('../../commands/countdown.js')
-const jishoOrgLookup = require('../../commands/jishoOrgLookup.js')
-const madochanCreateWord = require('../../commands/madochanCreateWord.js')
-const text = require('../../commands/text.js')
-const randomText = require('../../commands/randomText.js')
-const playMedia = require('../../commands/playMedia.js')
-const fn = require('../../fn.js')
-const chatters = require('../../commands/chatters.js')
-const Db = require('../../Db.js')
-const TwitchHelixClient = require('../../services/TwitchHelixClient.js')
-const WebServer = require('../../net/WebServer.js')
-const WebSocketServer = require('../../net/WebSocketServer.js')
-const Madochan = require('../../services/Madochan.js')
-const Variables = require('../../services/Variables.js')
+import countdown from '../../commands/countdown.js'
+import jishoOrgLookup from '../../commands/jishoOrgLookup.js'
+import madochanCreateWord from '../../commands/madochanCreateWord.js'
+import text from '../../commands/text.js'
+import randomText from '../../commands/randomText.js'
+import playMedia from '../../commands/playMedia.js'
+import fn from '../../fn.js'
+import chatters from '../../commands/chatters.js'
+import Db from '../../Db.js'
+import TwitchHelixClient from '../../services/TwitchHelixClient.js'
+import WebServer from '../../net/WebServer.js'
+import WebSocketServer from '../../net/WebSocketServer.js'
+import Madochan from '../../services/Madochan.js'
+import Variables from '../../services/Variables.js'
 
 const log = fn.logger('GeneralModule.js')
 
@@ -118,6 +118,7 @@ class GeneralModule {
           if (trigger.data.minSeconds) {
             trigger.data.minInterval = trigger.data.minSeconds * 1000
           }
+
           const interval = fn.parseHumanDuration(trigger.data.minInterval)
           if (trigger.data.minLines || interval) {
             this.timers.push({
@@ -165,20 +166,6 @@ class GeneralModule {
 
   getRoutes() {
     return {
-      get: {
-        '/commands/': async (req, res, next) => {
-          res.send(await fn.render('base.twig', {
-            title: 'Commands',
-            page: 'commands',
-            page_data: {
-              wsBase: this.wss.connectstring(),
-              widgetToken: req.userWidgetToken,
-              user: req.user,
-              token: req.cookies['x-token'],
-            },
-          }))
-        },
-      },
     }
   }
 
@@ -252,4 +239,4 @@ class GeneralModule {
   }
 }
 
-module.exports = GeneralModule
+export default GeneralModule

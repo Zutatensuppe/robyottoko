@@ -1,4 +1,4 @@
-const fn = require('./../fn.js')
+import fn from './../fn.js'
 
 const randomText = (
   /** @type Variables */ variables,
@@ -15,4 +15,4 @@ const randomText = (
     say(await fn.doReplacements(fn.getRandom(texts), command, context, variables, originalCmd))
   }
 
-module.exports = randomText
+export default randomText

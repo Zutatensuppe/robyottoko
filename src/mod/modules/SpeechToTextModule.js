@@ -1,7 +1,7 @@
-const config = require('../../config.js')
-const fn = require('../../fn.js')
-const { getText, asQueryArgs } = require('../../net/xhr.js')
-const Variables = require('../../services/Variables.js')
+import config from '../../config.js'
+import fn from '../../fn.js'
+import { getText, asQueryArgs } from '../../net/xhr.js'
+import Variables from '../../services/Variables.js'
 
 class SpeechToTextModule {
   constructor(db, user, variables, chatClient, helixClient, storage, cache, ws, wss) {
@@ -85,22 +85,7 @@ class SpeechToTextModule {
   }
 
   getRoutes() {
-    return {
-      get: {
-        '/speech-to-text/': async (req, res, next) => {
-          res.send(await fn.render('base.twig', {
-            title: 'Speech to text',
-            page: 'speech-to-text',
-            page_data: {
-              wsBase: this.wss.connectstring(),
-              widgetToken: req.userWidgetToken,
-              user: req.user,
-              token: req.cookies['x-token'],
-            },
-          }))
-        },
-      },
-    }
+    return {}
   }
 
   wsdata(eventName) {
@@ -154,4 +139,4 @@ class SpeechToTextModule {
   }
 }
 
-module.exports = SpeechToTextModule
+export default SpeechToTextModule

@@ -1,4 +1,4 @@
-const Db = require("../Db")
+import Db from "../Db"
 
 const TABLE = 'user'
 
@@ -19,4 +19,4 @@ where x.user_id = ?`, [id])
   }
 }
 
-module.exports = Users
+export default Users

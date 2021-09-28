@@ -1,4 +1,4 @@
-const fn = require('./../fn.js')
+import fn from './../fn.js'
 
 const text = (
   /** @type Variables */ variables,
@@ -15,4 +15,4 @@ const text = (
     say(await fn.doReplacements(text, command, context, variables, originalCmd))
   }
 
-module.exports = text
+export default text

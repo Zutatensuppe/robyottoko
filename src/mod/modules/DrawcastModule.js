@@ -1,11 +1,11 @@
-const Db = require('../../Db.js')
-const fn = require('../../fn.js')
-const fs = require('fs')
-const WebServer = require('../../net/WebServer.js')
-const WebSocketServer = require('../../net/WebSocketServer.js')
-const Tokens = require('../../services/Tokens.js')
-const TwitchHelixClient = require('../../services/TwitchHelixClient.js')
-const Variables = require('../../services/Variables.js')
+import Db from '../../Db.js'
+import fn from '../../fn.js'
+import fs from 'fs'
+import WebServer from '../../net/WebServer.js'
+import WebSocketServer from '../../net/WebSocketServer.js'
+import Tokens from '../../services/Tokens.js'
+import TwitchHelixClient from '../../services/TwitchHelixClient.js'
+import Variables from '../../services/Variables.js'
 
 class DrawcastModule {
   constructor(
@@ -127,19 +127,7 @@ class DrawcastModule {
   getRoutes() {
     return {
       get: {
-        '/drawcast/': async (req, res, next) => {
-          res.send(await fn.render('base.twig', {
-            title: 'Drawcast',
-            page: 'drawcast',
-            page_data: {
-              wsBase: this.wss.connectstring(),
-              widgetToken: req.userWidgetToken,
-              user: req.user,
-              token: req.cookies['x-token'],
-            },
-          }))
-        },
-        '/drawcast/all-images/': async (req, res, next) => {
+        '/api/drawcast/all-images/': async (req, res, next) => {
           const images = this.loadAllImages()
           res.send(images)
         },
@@ -210,4 +198,4 @@ class DrawcastModule {
   }
 }
 
-module.exports = DrawcastModule
+export default DrawcastModule

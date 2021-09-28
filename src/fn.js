@@ -1,7 +1,16 @@
-const config = require('./config.js')
-const crypto = require('crypto')
-const path = require('path')
-const { getText } = require('./net/xhr')
+import config from './config.js'
+import crypto from 'crypto'
+import path from 'path'
+import { getText } from './net/xhr'
+import { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle } from './common/fn'
+import { TwingEnvironment, TwingLoaderFilesystem } from 'twing'
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
+
+export { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle }
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 // error | info | log | debug
 const logLevel = config?.log?.level || 'info'
@@ -12,7 +21,7 @@ switch (logLevel) {
   case 'log': logEnabled = ['error', 'info', 'log']; break
   case 'debug': logEnabled = ['error', 'info', 'log', 'debug']; break
 }
-const logger = (filename, ...pre) => {
+export const logger = (filename, ...pre) => {
   const b = path.basename(filename)
   const fn = t => (...args) => {
     if (logEnabled.includes(t)) {
@@ -28,14 +37,6 @@ const logger = (filename, ...pre) => {
 }
 
 const log = logger(__filename)
-
-const MS = 1
-const SECOND = 1000 * MS
-const MINUTE = 60 * SECOND
-const HOUR = 60 * MINUTE
-const DAY = 24 * HOUR
-const MONTH = 30 * DAY
-const YEAR = 365 * DAY
 
 function mimeToExt(/** @type string */ mime) {
   if (/image\//.test(mime)) {
@@ -55,26 +56,6 @@ function decodeBase64Image(/** @type string */ base64Str) {
   }
 }
 
-const shuffle = (array) => {
-  let counter = array.length;
-
-  // While there are elements in the array
-  while (counter > 0) {
-    // Pick a random index
-    let index = Math.floor(Math.random() * counter);
-
-    // Decrease counter by 1
-    counter--;
-
-    // And swap the last element with it
-    let temp = array[counter];
-    array[counter] = array[index];
-    array[index] = temp;
-  }
-
-  return array;
-}
-
 function getRandomInt(/** @type number */ min, /** @type number */ max) {
   min = Math.ceil(min);
   max = Math.floor(max);
@@ -85,7 +66,7 @@ function getRandom(array) {
   return array[getRandomInt(0, array.length - 1)]
 }
 
-function nonce(/** @type number */ length) {
+export function nonce(/** @type number */ length) {
   let text = "";
   const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
   for (let i = 0; i < length; i++) {
@@ -95,7 +76,6 @@ function nonce(/** @type number */ length) {
 }
 
 const render = async (template, data) => {
-  const { TwingEnvironment, TwingLoaderFilesystem } = require('twing');
   const loader = new TwingLoaderFilesystem(__dirname + '/templates')
   const twing = new TwingEnvironment(loader)
   return twing.render(template, data)
@@ -341,27 +321,7 @@ const doReplacements = async (
   return replaced
 }
 
-const split = (
-  /** @type string */ str,
-  /** @type string */ delimiter = ',',
-  /** @type number */ maxparts = -1,
-) => {
-  const split = str.split(delimiter)
-  if (maxparts === -1) {
-    return split
-  }
-
-  if (split.length <= maxparts) {
-    return split
-  }
-
-  return [
-    ...split.slice(0, maxparts - 1),
-    split.slice(maxparts - 1).join(delimiter),
-  ]
-}
-
-const joinIntoChunks = (
+export const joinIntoChunks = (
   /** @type Array */ strings,
   /** @type string */ glue,
   /** @type number */ maxChunkLen,
@@ -406,7 +366,7 @@ const pad = (
   return pad.substr(0, pad.length - str.length) + str
 }
 
-const parseISO8601Duration = (
+export const parseISO8601Duration = (
   /** @type string */ duration
 ) => {
   // P(n)Y(n)M(n)DT(n)H(n)M(n)S
@@ -434,7 +394,7 @@ const parseISO8601Duration = (
   )
 }
 
-const humanDuration = (
+export const humanDuration = (
   /** @type number */ durationMs
 ) => {
   let duration = durationMs
@@ -473,50 +433,6 @@ const humanDuration = (
   return parts.join(' ')
 }
 
-const mustParseHumanDuration = (
-  /** @type string|number */ duration
-) => {
-  if (duration === '') {
-    throw new Error(`unable to parse duration: ${duration}`)
-  }
-  const d = `${duration}`.trim()
-  if (!d) {
-    throw new Error(`unable to parse duration: ${duration}`)
-  }
-  if (d.match(/^\d+$/)) {
-    return parseInt(d, 10)
-  }
-
-  const m = d.match(/^(?:(\d+)d)?\s?(?:(\d+)h)?\s?(?:(\d+)m)?\s?(?:(\d+)s)?\s?(?:(\d+)ms)?$/)
-  if (!m) {
-    throw new Error(`unable to parse duration: ${duration}`)
-  }
-
-  const D = m[1] ? parseInt(m[1], 10) : 0
-  const H = m[2] ? parseInt(m[2], 10) : 0
-  const M = m[3] ? parseInt(m[3], 10) : 0
-  const S = m[4] ? parseInt(m[4], 10) : 0
-  const MS = m[5] ? parseInt(m[5], 10) : 0
-
-  return (
-    (S * SECOND)
-    + (M * MINUTE)
-    + (H * HOUR)
-    + (D * DAY)
-    + (MS)
-  )
-}
-
-const parseHumanDuration = (
-  /** @type string|number */ duration
-) => {
-  try {
-    return mustParseHumanDuration(duration)
-  } catch (e) {
-    return 0
-  }
-}
-
 function arrayMove(arr, old_index, new_index) {
   if (new_index >= arr.length) {
     var k = new_index - arr.length + 1
@@ -528,17 +444,17 @@ function arrayMove(arr, old_index, new_index) {
   return arr // return, but array is also modified in place
 }
 
-const passwordSalt = () => {
+export const passwordSalt = () => {
   return nonce(10)
 }
 
-const passwordHash = (/** @type string */ plainPass, /** @type string */ salt) => {
+export const passwordHash = (/** @type string */ plainPass, /** @type string */ salt) => {
   const hash = crypto.createHmac('sha512', config.secret)
   hash.update(`${salt}${plainPass}`)
   return hash.digest('hex')
 }
 
-module.exports = {
+export default {
   logger,
   mimeToExt,
   decodeBase64Image,

@@ -1,4 +1,4 @@
-function EventHub() {
+export function EventHub() {
   const cbs = {}
   return {
     on: (what, cb) => {
@@ -16,6 +16,6 @@ function EventHub() {
   }
 }
 
-module.exports = {
+export default {
   EventHub,
 }

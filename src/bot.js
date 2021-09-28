@@ -1,16 +1,37 @@
-const config = require('./config.js')
+import config from './config.js'
 
-const net = require('./net')
-const mod = require('./mod')
-const { logger } = require('./fn.js')
-const Users = require('./services/Users.js')
-const Tokens = require('./services/Tokens.js')
-const TwitchChannels = require('./services/TwitchChannels.js')
-const Cache = require('./services/Cache.js')
-const Db = require('./Db.js')
-const Variables = require('./services/Variables.js')
-const Mail = require('./net/Mail.js')
-const { EventHub } = require('./EventHub.js')
+import Auth from './net/Auth'
+import ModuleManager from './mod/ModuleManager'
+import WebSocketServer from './net/WebSocketServer'
+import WebServer from './net/WebServer'
+import TwitchClientManager from './net/TwitchClientManager'
+import ModuleStorage from './mod/ModuleStorage'
+import { logger } from './fn.js'
+import Users from './services/Users.js'
+import Tokens from './services/Tokens.js'
+import TwitchChannels from './services/TwitchChannels.js'
+import Cache from './services/Cache.js'
+import Db from './Db.js'
+import Variables from './services/Variables.js'
+import Mail from './net/Mail.js'
+import { EventHub } from './EventHub.js'
+import GeneralModule from './mod/modules/GeneralModule'
+import SongrequestModule from './mod/modules/SongrequestModule'
+import VoteModule from './mod/modules/VoteModule'
+import SpeechToTextModule from './mod/modules/SpeechToTextModule'
+import DrawcastModule from './mod/modules/DrawcastModule'
+
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+
+const modules = [
+  GeneralModule,
+  SongrequestModule,
+  VoteModule,
+  SpeechToTextModule,
+  DrawcastModule,
+]
 
 const db = new Db(config.db)
 // make sure we are always on latest db version
@@ -19,13 +40,13 @@ const userRepo = new Users(db)
 const tokenRepo = new Tokens(db)
 const twitchChannelRepo = new TwitchChannels(db)
 const cache = new Cache(db)
-const auth = new net.Auth(userRepo, tokenRepo)
+const auth = new Auth(userRepo, tokenRepo)
 const mail = new Mail(config.mail)
 
 const eventHub = EventHub()
-const moduleManager = new mod.ModuleManager()
-const webSocketServer = new net.WebSocketServer(moduleManager, config.ws, auth)
-const webServer = new net.WebServer(
+const moduleManager = new ModuleManager()
+const webSocketServer = new WebSocketServer(moduleManager, config.ws, auth)
+const webServer = new WebServer(
   eventHub,
   db,
   userRepo,
@@ -41,7 +62,7 @@ const webServer = new net.WebServer(
 
 const run = async () => {
   const initForUser = (user) => {
-    const clientManager = new net.TwitchClientManager(
+    const clientManager = new TwitchClientManager(
       eventHub,
       config.twitch,
       db,
@@ -51,9 +72,9 @@ const run = async () => {
     )
     const chatClient = clientManager.getChatClient()
     const helixClient = clientManager.getHelixClient()
-    const moduleStorage = new mod.ModuleStorage(db, user.id)
+    const moduleStorage = new ModuleStorage(db, user.id)
     const variables = new Variables(db, user.id)
-    for (const moduleClass of mod.modules) {
+    for (const moduleClass of modules) {
       moduleManager.add(user.id, new moduleClass(
         db,
         user,

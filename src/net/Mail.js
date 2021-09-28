@@ -1,4 +1,5 @@
-const SibApiV3Sdk = require('sib-api-v3-sdk')
+import SibApiV3Sdk from 'sib-api-v3-sdk'
+
 class Mail {
   constructor(cfg) {
     const defaultClient = SibApiV3Sdk.ApiClient.instance
@@ -60,4 +61,4 @@ class Mail {
   }
 }
 
-module.exports = Mail
+export default Mail

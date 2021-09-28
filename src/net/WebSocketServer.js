@@ -1,5 +1,8 @@
-const WebSocket = require('ws')
-const { SECOND, logger } = require('../fn.js')
+import WebSocket from 'ws'
+import { SECOND, logger } from '../fn.js'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
 
 const log = logger(__filename)
 
@@ -16,11 +19,11 @@ class WebSocketServer {
     this._interval = null
   }
 
-  connectstring () {
+  connectstring() {
     return this.config.connectstring
   }
 
-  listen () {
+  listen() {
     this._websocketserver = new WebSocket.Server(this.config)
     this._websocketserver.on('connection', (socket, request, client) => {
       const token = socket.protocol
@@ -80,7 +83,7 @@ class WebSocketServer {
           return socket.terminate()
         }
         socket.isAlive = false
-        socket.ping(() => {})
+        socket.ping(() => { })
       })
     }, 30 * SECOND)
 
@@ -96,17 +99,17 @@ class WebSocketServer {
     }
   }
 
-  notifyAll (user_ids, module, data) {
+  notifyAll(user_ids, module, data) {
     this._websocketserver.clients.forEach((socket) => {
       this.notifyOne(user_ids, module, data, socket)
     })
   }
 
-  close () {
+  close() {
     if (this._websocketserver) {
       this._websocketserver.close()
     }
   }
 }
 
-module.exports = WebSocketServer
+export default WebSocketServer

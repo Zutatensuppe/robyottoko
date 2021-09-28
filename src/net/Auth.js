@@ -1,4 +1,4 @@
-const { passwordHash } = require("../fn")
+import { passwordHash } from "../fn"
 
 function Auth(userRepo, tokenRepo) {
   const getTokenInfo = (token) => tokenRepo.getByToken(token)
@@ -22,14 +22,12 @@ function Auth(userRepo, tokenRepo) {
 
         const user = userRepo.getById(tokenInfo.user_id)
         user.groups = userRepo.getGroups(user.id)
-        if (!user.groups.includes('admin')) {
-          // delete user.tmi_identity_username
-          // delete user.tmi_identity_client_id
-          delete user.tmi_identity_password
-          delete user.tmi_identity_client_secret
-        }
         delete user.pass
         delete user.salt
+        delete user.tmi_identity_username
+        delete user.tmi_identity_client_id
+        delete user.tmi_identity_password
+        delete user.tmi_identity_client_secret
         req.user = user
         req.userWidgetToken = tokenRepo.getWidgetTokenForUserId(tokenInfo.user_id).token
         req.userPubToken = tokenRepo.getPubTokenForUserId(tokenInfo.user_id).token
@@ -69,4 +67,4 @@ function Auth(userRepo, tokenRepo) {
   }
 }
 
-module.exports = Auth
+export default Auth

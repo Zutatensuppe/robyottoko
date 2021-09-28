@@ -1,17 +1,23 @@
-const fn = require('../fn.js')
-const crypto = require('crypto')
-const multer = require('multer')
-const express = require('express')
-const cookieParser = require('cookie-parser')
+import path from 'path'
+import fn from '../fn.js'
+import crypto from 'crypto'
+import multer from 'multer'
+import express from 'express'
+import cookieParser from 'cookie-parser'
 
-const TwitchHelixClient = require('../services/TwitchHelixClient.js')
-const Db = require('../Db.js')
-const EventHub = require('../EventHub.js')
-const Users = require('../services/Users.js')
-const Tokens = require('../services/Tokens.js')
-const Mail = require('../net/Mail.js')
-const WebSocketServer = require('./WebSocketServer.js')
-const Variables = require('../services/Variables.js')
+import TwitchHelixClient from '../services/TwitchHelixClient.js'
+import Db from '../Db.js'
+import EventHub from '../EventHub.js'
+import Users from '../services/Users.js'
+import Tokens from '../services/Tokens.js'
+import Mail from '../net/Mail.js'
+import WebSocketServer from './WebSocketServer.js'
+import Variables from '../services/Variables.js'
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 const log = fn.logger(__filename)
 
@@ -111,6 +117,14 @@ class WebServer {
       return next()
     }
 
+    const requireLoginApi = (req, res, next) => {
+      if (!req.token) {
+        res.status(401).send({})
+        return
+      }
+      return next()
+    }
+
     const requireLogin = (req, res, next) => {
       if (!req.token) {
         if (req.method === 'GET') {
@@ -126,119 +140,63 @@ class WebServer {
     app.use(cookieParser())
     app.use(this.auth.addAuthInfoMiddleware())
     app.use('/uploads', express.static(uploadDir))
+    app.use('/', express.static('./build/public'))
     app.use('/static', express.static('./public/static'))
 
-    app.get('/login', async (req, res) => {
-      if (req.token) {
-        res.redirect(302, '/')
-        return
-      }
-      res.send(await fn.render('base.twig', {
-        title: 'Login',
-        page: 'login',
-        page_data: {
-          wsBase: this.wss.connectstring(),
-          widgetToken: null,
-          user: null,
-          token: null,
-        },
-      }))
+
+    app.get('/api/conf', async (req, res) => {
+      res.send({
+        wsBase: this.wss.connectstring(),
+      })
     })
-    app.get('/register', async (req, res) => {
-      if (req.token) {
-        res.redirect(302, '/')
-        return
-      }
-      res.send(await fn.render('base.twig', {
-        title: 'Register',
-        page: 'register',
-        page_data: {
-          wsBase: this.wss.connectstring(),
-          widgetToken: null,
-          user: null,
-          token: null,
-        },
-      }))
+
+    app.get('/api/user/me', requireLoginApi, async (req, res) => {
+      res.send({
+        user: req.user,
+        widgetToken: req.userWidgetToken,
+        pubToken: req.userPubToken,
+        token: req.cookies['x-token'],
+      })
     })
-    app.get('/password-reset', async (req, res) => {
-      if (req.token) {
-        res.redirect(302, '/')
-        return
-      }
-      res.send(await fn.render('base.twig', {
-        title: 'Password Reset',
-        page: 'password-reset',
-        page_data: {
-          wsBase: this.wss.connectstring(),
-          widgetToken: null,
-          user: null,
-          token: null,
-        },
-      }))
-    })
-    app.get('/forgot-password', async (req, res) => {
-      if (req.token) {
-        res.redirect(302, '/')
-        return
-      }
-      res.send(await fn.render('base.twig', {
-        title: 'Forgot Password',
-        page: 'forgot-password',
-        page_data: {
-          wsBase: this.wss.connectstring(),
-          widgetToken: null,
-          user: null,
-          token: null,
-        },
-      }))
-    })
-    app.get('/logout', async (req, res) => {
+
+    app.post('/api/logout', async (req, res) => {
       if (req.token) {
         this.auth.destroyToken(req.token)
         res.clearCookie("x-token")
       }
-      res.redirect(302, '/login')
+      res.send({ success: true })
     })
 
-    app.get('/', requireLogin, async (req, res) => {
-      const widgets = [
-        {
-          title: 'Song Request',
-          hint: 'Browser source, or open in browser and capture window',
-          url: this.widgetUrl('sr', req.userWidgetToken),
-        },
-        {
-          title: 'Media',
-          hint: 'Browser source, or open in browser and capture window',
-          url: this.widgetUrl('media', req.userWidgetToken),
-        },
-        {
-          title: 'Speech-to-Text',
-          hint: 'Google Chrome + window capture',
-          url: this.widgetUrl('speech-to-text', req.userWidgetToken),
-        },
-        {
-          title: 'Drawcast (Overlay)',
-          hint: 'Browser source, or open in browser and capture window',
-          url: this.widgetUrl('drawcast_receive', req.userWidgetToken),
-        },
-        {
-          title: 'Drawcast (Draw)',
-          hint: 'Open this to draw (or give to viewers to let them draw)',
-          url: this.pubUrl(this.widgetUrl('drawcast_draw', req.userPubToken)),
-        },
-      ];
-      res.send(await fn.render('base.twig', {
-        title: 'Hyottoko.club',
-        page: 'index',
-        page_data: {
-          wsBase: this.wss.connectstring(),
-          widgetToken: req.userWidgetToken,
-          user: req.user,
-          token: req.cookies['x-token'],
-          widgets,
-        },
-      }))
+    app.get('/api/page/index', requireLoginApi, async (req, res) => {
+      res.send({
+        widgets: [
+          {
+            title: 'Song Request',
+            hint: 'Browser source, or open in browser and capture window',
+            url: this.widgetUrl('sr', req.userWidgetToken),
+          },
+          {
+            title: 'Media',
+            hint: 'Browser source, or open in browser and capture window',
+            url: this.widgetUrl('media', req.userWidgetToken),
+          },
+          {
+            title: 'Speech-to-Text',
+            hint: 'Google Chrome + window capture',
+            url: this.widgetUrl('speech-to-text', req.userWidgetToken),
+          },
+          {
+            title: 'Drawcast (Overlay)',
+            hint: 'Browser source, or open in browser and capture window',
+            url: this.widgetUrl('drawcast_receive', req.userWidgetToken),
+          },
+          {
+            title: 'Drawcast (Draw)',
+            hint: 'Open this to draw (or give to viewers to let them draw)',
+            url: this.pubUrl(this.widgetUrl('drawcast_draw', req.userPubToken)),
+          },
+        ]
+      })
     })
 
     app.post('/api/user/_reset_password', express.json(), async (req, res) => {
@@ -394,38 +352,28 @@ class WebServer {
       return
     })
 
-
-    app.get('/variables/', requireLogin, async (req, res) => {
+    app.get('/api/page/variables', requireLoginApi, async (req, res) => {
       const variables = new Variables(this.db, req.user.id)
-      res.send(await fn.render('base.twig', {
-        title: 'Variables',
-        page: 'variables',
-        page_data: {
-          user: req.user,
-          variables: variables.all(),
-        },
-      }))
+      res.send({ variables: variables.all() })
     })
 
-    app.post('/save-variables', requireLogin, express.json(), async (req, res) => {
+    app.post('/save-variables', requireLoginApi, express.json(), async (req, res) => {
       const variables = new Variables(this.db, req.user.id)
       variables.replace(req.body.variables || [])
       res.send()
     })
 
-    app.get('/settings/', requireLogin, async (req, res) => {
-      const twitch_channels = this.twitchChannelRepo.allByUserId(req.user.id)
-      res.send(await fn.render('base.twig', {
-        title: 'Settings',
-        page: 'settings',
-        page_data: {
-          user: req.user,
-          twitch_channels,
-        },
-      }))
+    app.get('/api/page/settings', requireLoginApi, async (req, res) => {
+      const user = this.userRepo.getById(req.user.id)
+      user.groups = this.userRepo.getGroups(user.id)
+      delete user.pass
+      res.send({
+        user,
+        twitchChannels: this.twitchChannelRepo.allByUserId(req.user.id),
+      })
     })
 
-    app.post('/save-settings', requireLogin, express.json(), async (req, res) => {
+    app.post('/api/save-settings', requireLoginApi, express.json(), async (req, res) => {
       if (!req.user.groups.includes('admin')) {
         if (req.user.id !== req.body.user.id) {
           // editing other user than self
@@ -473,7 +421,7 @@ class WebServer {
     app.get('/twitch/redirect_uri', async (req, res) => {
       res.send(await fn.render('twitch/redirect_uri.twig'))
     })
-    app.post('/twitch/user-id-by-name', requireLogin, express.json(), async (req, res) => {
+    app.post('/twitch/user-id-by-name', requireLoginApi, express.json(), async (req, res) => {
       let clientId
       let clientSecret
       if (!req.user.groups.includes('admin')) {
@@ -546,7 +494,7 @@ class WebServer {
         res.status(400).send({ reason: 'unhandled sub type' })
       })
 
-    app.post('/auth', express.json(), async (req, res) => {
+    app.post('/api/auth', express.json(), async (req, res) => {
       const user = this.auth.getUserByNameAndPass(req.body.user, req.body.pass)
       if (!user) {
         res.status(401).send({ reason: 'bad credentials' })
@@ -558,7 +506,7 @@ class WebServer {
       res.send()
     })
 
-    app.post('/upload', requireLogin, (req, res) => {
+    app.post('/api/upload', requireLoginApi, (req, res) => {
       upload(req, res, (err) => {
         if (err) {
           log.error(err)
@@ -596,7 +544,9 @@ class WebServer {
           return
         }
       }
-      res.sendStatus(404)
+
+      const indexFile = `${__dirname}/../../build/public/index.html`
+      res.sendFile(path.resolve(indexFile));
     })
 
     this.handle = app.listen(
@@ -612,4 +562,4 @@ class WebServer {
   }
 }
 
-module.exports = WebServer
+export default WebServer

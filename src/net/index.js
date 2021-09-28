@@ -1,6 +1,6 @@
-const WebServer = require('./WebServer.js')
-const WebSocketServer = require('./WebSocketServer.js')
-const Auth = require('./Auth.js')
-const TwitchClientManager = require('./TwitchClientManager.js')
+import WebServer from './WebServer.js'
+import WebSocketServer from './WebSocketServer.js'
+import Auth from './Auth.js'
+import TwitchClientManager from './TwitchClientManager.js'
 
-module.exports = { WebServer, WebSocketServer, Auth, TwitchClientManager }
+export default { WebServer, WebSocketServer, Auth, TwitchClientManager }

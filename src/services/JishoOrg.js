@@ -1,4 +1,4 @@
-const { getJson, asQueryArgs } = require('../net/xhr')
+import { getJson, asQueryArgs } from '../net/xhr'
 
 const searchWord = async (
   /** @type string */ keyword,
@@ -12,6 +12,6 @@ const searchWord = async (
   return json.data
 }
 
-module.exports = {
+export default {
   searchWord,
 }

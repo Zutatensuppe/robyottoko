@@ -1,6 +1,9 @@
-const WebSocket = require('ws')
-const { nonce, SECOND, logger } = require('../fn.js')
-const { EventHub } = require('../EventHub.js')
+import WebSocket from 'ws'
+import { nonce, SECOND, logger } from '../fn.js'
+import { EventHub } from '../EventHub.js'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
 
 const CODE_GOING_AWAY = 1001
 const CODE_CUSTOM_DISCONNECT = 4000
@@ -149,4 +152,4 @@ function TwitchPubSubClient() {
   }
 }
 
-module.exports = TwitchPubSubClient
+export default TwitchPubSubClient

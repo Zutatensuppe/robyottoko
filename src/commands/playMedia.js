@@ -1,4 +1,4 @@
-const { WebSocketServer } = require("../net")
+import WebSocketServer from "../net/WebSocketServer"
 
 const playMedia = (
   /** @type WebSocketServer */ wss,
@@ -18,4 +18,4 @@ const playMedia = (
     })
   }
 
-module.exports = playMedia
+export default playMedia

@@ -1,4 +1,4 @@
-const Db = require("../Db")
+import Db from "../Db"
 
 const TABLE = 'twitch_channel'
 
@@ -8,7 +8,7 @@ function TwitchChannels(/** @type Db */ db) {
     channel_name: channel.channel_name,
   })
   return {
-    allByUserId: (user_id) => db.getMany(TABLE, {user_id}),
+    allByUserId: (user_id) => db.getMany(TABLE, { user_id }),
     save,
     saveUserChannels: (user_id, channels) => {
       for (const channel of channels) {
@@ -16,10 +16,10 @@ function TwitchChannels(/** @type Db */ db) {
       }
       db.delete(TABLE, {
         user_id: user_id,
-        channel_name: {'$nin': channels.map(c => c.channel_name)}
+        channel_name: { '$nin': channels.map(c => c.channel_name) }
       })
     },
   }
 }
 
-module.exports = TwitchChannels
+export default TwitchChannels

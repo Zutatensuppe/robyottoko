@@ -1,10 +1,10 @@
-const Db = require('../../Db.js')
-const fn = require('../../fn.js')
-const WebServer = require('../../net/WebServer.js')
-const WebSocketServer = require('../../net/WebSocketServer.js')
-const TwitchHelixClient = require('../../services/TwitchHelixClient.js')
-const Youtube = require('../../services/Youtube.js')
-const Variables = require('../../services/Variables.js')
+import Db from '../../Db.js'
+import fn from '../../fn.js'
+import WebServer from '../../net/WebServer.js'
+import WebSocketServer from '../../net/WebSocketServer.js'
+import TwitchHelixClient from '../../services/TwitchHelixClient.js'
+import Youtube from '../../services/Youtube.js'
+import Variables from '../../services/Variables.js'
 
 const ADD_TYPE = {
   NOT_ADDED: 0,
@@ -119,18 +119,6 @@ class SongrequestModule {
             settings: this.data.settings,
             playlist: this.data.playlist,
           })
-        },
-        '/sr/': async (req, res, next) => {
-          res.send(await fn.render('base.twig', {
-            title: 'Song Request',
-            page: 'sr',
-            page_data: {
-              wsBase: this.wss.connectstring(),
-              widgetToken: req.userWidgetToken,
-              user: req.user,
-              token: req.cookies['x-token'],
-            },
-          }))
         },
       },
     }
@@ -885,4 +873,4 @@ class SongrequestModule {
 
 }
 
-module.exports = SongrequestModule
+export default SongrequestModule

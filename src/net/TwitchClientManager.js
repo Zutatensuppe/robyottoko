@@ -1,10 +1,13 @@
-const tmi = require('tmi.js')
-const TwitchPubSubClient = require('../services/TwitchPubSubClient.js')
-const TwitchHelixClient = require('../services/TwitchHelixClient.js')
-const fn = require('../fn.js')
-const Db = require('../Db.js')
-const TwitchChannels = require('../services/TwitchChannels.js')
-const EventHub = require('../EventHub.js')
+import tmi from 'tmi.js'
+import TwitchPubSubClient from '../services/TwitchPubSubClient.js'
+import TwitchHelixClient from '../services/TwitchHelixClient.js'
+import fn from '../fn.js'
+import Db from '../Db.js'
+import TwitchChannels from '../services/TwitchChannels.js'
+import EventHub from '../EventHub.js'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
 
 class TwitchClientManager {
   constructor(
@@ -195,4 +198,4 @@ class TwitchClientManager {
   }
 }
 
-module.exports = TwitchClientManager
+export default TwitchClientManager
