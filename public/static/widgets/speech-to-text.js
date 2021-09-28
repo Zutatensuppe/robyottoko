@@ -61,7 +61,7 @@ export default {
     }
   },
   watch: {
-    recognizedText (newVal, oldVal) {
+    recognizedText(newVal, oldVal) {
       if (newVal) {
         if (this.recognizedTextTimeout) {
           clearTimeout(this.recognizedTextTimeout)
@@ -71,7 +71,7 @@ export default {
         }, this.textTimeoutMs)
       }
     },
-    translatedText (newVal, oldVal) {
+    translatedText(newVal, oldVal) {
       if (newVal) {
         if (this.translatedTextTimeout) {
           clearTimeout(this.translatedTextTimeout)
@@ -83,23 +83,26 @@ export default {
     },
   },
   methods: {
-    synthesize(text) {
+    synthesize(text, lang) {
       if (this.lastUtterance !== text) {
         this.lastUtterance = text
         let utterance = new SpeechSynthesisUtterance(this.lastUtterance)
+        if (lang) {
+          utterance.lang = lang
+        }
         speechSynthesis.speak(utterance)
       }
     },
     applyStyles() {
       const styles = this.settings.styles
 
-      if (styles.bgColor != null){
+      if (styles.bgColor != null) {
         document.bgColor = styles.bgColor
       }
 
-      if (styles.vAlign === "top"){
+      if (styles.vAlign === "top") {
         this.$refs['text_table'].style.bottom = null;
-      } else if(styles.vAlign === "bottom") {
+      } else if (styles.vAlign === "bottom") {
         this.$refs['text_table'].style.bottom = 0;
       }
 
@@ -108,29 +111,29 @@ export default {
           fg.style.color = styles.color
         }
 
-        if (bgColor != null){
+        if (bgColor != null) {
           imb.style.webkitTextStrokeColor = bgColor
         }
-        if (styles.strokeWidth != null){
+        if (styles.strokeWidth != null) {
           imb.style.webkitTextStrokeWidth = styles.strokeWidth + 'pt'
           bg.style.webkitTextStrokeWidth = styles.strokeWidth + 'pt'
         }
 
-        if (styles.strokeColor != null){
+        if (styles.strokeColor != null) {
           bg.style.webkitTextStrokeColor = styles.strokeColor
         }
 
-        if (styles.fontFamily != null){
+        if (styles.fontFamily != null) {
           imb.style.fontFamily = styles.fontFamily
           fg.style.fontFamily = styles.fontFamily
           bg.style.fontFamily = styles.fontFamily
         }
-        if (styles.fontSize != null){
+        if (styles.fontSize != null) {
           imb.style.fontSize = styles.fontSize + 'pt'
           fg.style.fontSize = styles.fontSize + 'pt'
           bg.style.fontSize = styles.fontSize + 'pt'
         }
-        if (styles.fontWeight != null){
+        if (styles.fontWeight != null) {
           imb.style.fontWeight = styles.fontWeight
           fg.style.fontWeight = styles.fontWeight
           bg.style.fontWeight = styles.fontWeight
@@ -173,7 +176,7 @@ export default {
       srObj.onnomatch = () => {
         this.status = "No match"
       }
-      srObj.onerror= () => {
+      srObj.onerror = () => {
         this.status = "Error"
         srObj.stop()
         this.initVoiceRecognition()
@@ -212,11 +215,14 @@ export default {
         this.lastRecognizedText = recognizedText
 
         if (this.settings.recognition.synthesize) {
-          this.synthesize(recognizedText)
+          this.synthesize(
+            recognizedText,
+            this.settings.recognition.synthesizeLang
+          )
         }
 
         this.recognizedText = this.lastRecognizedText
-        if (!this.settings.translation.enabled){
+        if (!this.settings.translation.enabled) {
           this.translatedText = "..."
           continue
         }
@@ -241,7 +247,10 @@ export default {
       this.recognizedText = data.in
       this.translatedText = data.out
       if (this.settings.translation.synthesize) {
-        this.synthesize(this.translatedText)
+        this.synthesize(
+          this.translatedText,
+          this.settings.translation.synthesizeLang
+        )
       }
     })
     this.ws.onMessage('init', (data) => {

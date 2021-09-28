@@ -48,12 +48,14 @@ class SpeechToTextModule {
         display: true,
         lang: 'ja',
         synthesize: false,
+        synthesizeLang: '',
       },
       translation: {
         enabled: true,
         langSrc: 'ja',
         langDst: 'en',
         synthesize: false,
+        synthesizeLang: '',
       },
     }
     this.reinit()

@@ -119,6 +119,31 @@
             </td>
           </tr>
           <tr>
+            <td><code>settings.recognition.synthesizeLang</code></td>
+            <td>
+              <input
+                class="input is-small"
+                type="text"
+                v-model="settings.recognition.synthesizeLang"
+              />
+            </td>
+            <td>
+              <button
+                class="button is-small"
+                :disabled="
+                  settings.recognition.synthesizeLang ===
+                  defaultSettings.recognition.synthesizeLang
+                "
+                @click="
+                  settings.recognition.synthesizeLang =
+                    defaultSettings.recognition.synthesizeLang
+                "
+              >
+                <i class="fa fa-remove"></i>
+              </button>
+            </td>
+          </tr>
+          <tr>
             <td><code>settings.recognition.display</code></td>
             <td>
               <input
@@ -338,6 +363,31 @@
                 @click="
                   settings.translation.synthesize =
                     defaultSettings.translation.synthesize
+                "
+              >
+                <i class="fa fa-remove"></i>
+              </button>
+            </td>
+          </tr>
+          <tr>
+            <td><code>settings.translation.synthesizeLang</code></td>
+            <td>
+              <input
+                class="input is-small"
+                type="text"
+                v-model="settings.translation.synthesizeLang"
+              />
+            </td>
+            <td>
+              <button
+                class="button is-small"
+                :disabled="
+                  settings.translation.synthesizeLang ===
+                  defaultSettings.translation.synthesizeLang
+                "
+                @click="
+                  settings.translation.synthesizeLang =
+                    defaultSettings.translation.synthesizeLang
                 "
               >
                 <i class="fa fa-remove"></i>
@@ -600,7 +650,7 @@ export default defineComponent({
       return this.unchangedJson !== this.changedJson;
     },
     widgetUrl() {
-      return `${location.protocol}//${location.host}/widget/speech-to-text/${this.$conf.widgetToken}/`;
+      return `${location.protocol}//${location.host}/widget/speech-to-text/${this.$me.widgetToken}/`;
     },
   },
   methods: {

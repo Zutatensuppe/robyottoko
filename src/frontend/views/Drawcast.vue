@@ -305,7 +305,7 @@ export default defineComponent({
       return this.unchangedJson !== this.changedJson;
     },
     receiveUrl() {
-      return `${location.protocol}//${location.host}/widget/drawcast_receive/${this.$conf.widgetToken}/`;
+      return `${location.protocol}//${location.host}/widget/drawcast_receive/${this.$me.widgetToken}/`;
     },
     favoriteSelectionTotalPages() {
       return (
