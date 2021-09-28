@@ -352,13 +352,9 @@ class WebServer {
       return
     })
 
-    app.get('/api/page/variables/', requireLoginApi, async (req, res) => {
-      res.send((req, res) => {
-        const variables = new Variables(this.db, req.user.id)
-        return {
-          variables: variables.all(),
-        }
-      })
+    app.get('/api/page/variables', requireLoginApi, async (req, res) => {
+      const variables = new Variables(this.db, req.user.id)
+      res.send({ variables: variables.all() })
     })
 
     app.post('/save-variables', requireLoginApi, express.json(), async (req, res) => {
@@ -367,7 +363,7 @@ class WebServer {
       res.send()
     })
 
-    app.get('/api/page/settings/', requireLoginApi, async (req, res) => {
+    app.get('/api/page/settings', requireLoginApi, async (req, res) => {
       const user = this.userRepo.getById(req.user.id)
       user.groups = this.userRepo.getGroups(user.id)
       delete user.pass
