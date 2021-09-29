@@ -58,7 +58,7 @@ export default defineComponent({
       this.uploading = true;
       const formData = new FormData();
       formData.append("file", file, file.name);
-      const res = await xhr.post("/upload", {
+      const res = await xhr.post("/api/upload", {
         body: formData,
         onUploadProgress: (evt) => {
           this.progress = evt.loaded / evt.total;
