@@ -12,8 +12,6 @@ import bsqlite from 'better-sqlite3';
 import SibApiV3Sdk from 'sib-api-v3-sdk';
 import tmi from 'tmi.js';
 
-let config$1;
-
 const init = () => {
   let configFile = '';
   let last = '';
@@ -27,12 +25,9 @@ const init = () => {
   if (configFile === '') {
     process.exit(2);
   }
-
-  config$1 = JSON.parse(String(fs.readFileSync(configFile)));
-  return config$1
+  return JSON.parse(String(fs.readFileSync(configFile)))
 };
-
-var config$2 = config$1;
+const config = init();
 
 function withHeaders(headers, opts = {}) {
   const options = opts || {};
@@ -174,7 +169,7 @@ const __filename$7 = fileURLToPath(import.meta.url);
 const __dirname$1 = dirname(__filename$7);
 
 // error | info | log | debug
-const logLevel = config$2?.log?.level || 'info';
+const logLevel = config?.log?.level || 'info';
 let logEnabled = []; // always log errors
 switch (logLevel) {
   case 'error': logEnabled = ['error']; break
@@ -599,7 +594,7 @@ const passwordSalt = () => {
 };
 
 const passwordHash = (/** @type string */ plainPass, /** @type string */ salt) => {
-  const hash = crypto.createHmac('sha512', config$2.secret);
+  const hash = crypto.createHmac('sha512', config.secret);
   hash.update(`${salt}${plainPass}`);
   return hash.digest('hex')
 };
@@ -2705,7 +2700,7 @@ class GeneralModule {
 }
 
 const get = async (url, args) => {
-  args.key = config$2.modules.sr.google.api_key;
+  args.key = config.modules.sr.google.api_key;
   return await getJson(url + asQueryArgs(args))
 };
 
@@ -3944,7 +3939,7 @@ class SpeechToTextModule {
   getWsEvents() {
     return {
       'translate': async (ws, { text, src, dst }) => {
-        const scriptId = config$2.modules.speechToText.google.scriptId;
+        const scriptId = config.modules.speechToText.google.scriptId;
         const query = `https://script.google.com/macros/s/${scriptId}/exec` + asQueryArgs({
           text: text,
           source: src,
@@ -4169,8 +4164,6 @@ class DrawcastModule {
 }
 
 const __filename = fileURLToPath(import.meta.url);
-
-const config = init();
 
 const modules = [
   GeneralModule,

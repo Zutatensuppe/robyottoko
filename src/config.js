@@ -1,8 +1,6 @@
 import fs from 'fs'
 
-let config
-
-export const init = () => {
+const init = () => {
   let configFile = ''
   let last = ''
   for (const val of process.argv) {
@@ -15,9 +13,8 @@ export const init = () => {
   if (configFile === '') {
     process.exit(2)
   }
-
-  config = JSON.parse(String(fs.readFileSync(configFile)))
-  return config
+  return JSON.parse(String(fs.readFileSync(configFile)))
 }
+const config = init()
 
 export default config
