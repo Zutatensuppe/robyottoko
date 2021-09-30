@@ -155,47 +155,52 @@ const tryExecuteCommand = async (
     }
     log.info(`${target}| * Executing ${rawCmd.name} command`)
     if (cmdDef.variableChanges) {
-      cmdDef.variableChanges.forEach(variableChange => {
+      for (const variableChange of cmdDef.variableChanges) {
+        const op = variableChange.change
+        const name = await doReplacements(variableChange.name, rawCmd, context)
+        const value = await doReplacements(variableChange.value, rawCmd, context)
+
         // check if there is a local variable for the change
-        let idx = cmdDef.variables.findIndex(v => (v.name === variableChange.name))
+        let idx = cmdDef.variables.findIndex(v => (v.name === name))
         if (idx !== -1) {
-          if (variableChange.change === 'set') {
-            cmdDef.variables[idx].value = variableChange.value
-          } else if (variableChange.change === 'increase_by') {
+          if (op === 'set') {
+            cmdDef.variables[idx].value = value
+          } else if (op === 'increase_by') {
             cmdDef.variables[idx].value = (
               parseInt(cmdDef.variables[idx].value, 10)
-              + parseInt(variableChange.value, 10)
+              + parseInt(value, 10)
             )
-          } else if (variableChange.change === 'decrease_by') {
+          } else if (op === 'decrease_by') {
             cmdDef.variables[idx].value = (
               parseInt(cmdDef.variables[idx].value, 10)
-              - parseInt(variableChange.value, 10)
+              - parseInt(value, 10)
             )
           }
+          console.log(cmdDef.variables[idx].value)
           //
-          return
+          continue
         }
 
         const globalVars = contextModule.variables.all()
-        idx = globalVars.findIndex(v => (v.name === variableChange.name))
+        idx = globalVars.findIndex(v => (v.name === name))
         if (idx !== -1) {
-          if (variableChange.change === 'set') {
-            contextModule.variables.set(variableChange.name, variableChange.value)
-          } else if (variableChange.change === 'increase_by') {
-            contextModule.variables.set(variableChange.name, (
+          if (op === 'set') {
+            contextModule.variables.set(name, value)
+          } else if (op === 'increase_by') {
+            contextModule.variables.set(name, (
               parseInt(globalVars[idx].value, 10)
-              + parseInt(variableChange.value, 10)
+              + parseInt(value, 10)
             ))
-          } else if (variableChange.change === 'decrease_by') {
-            contextModule.variables.set(variableChange.name, (
+          } else if (op === 'decrease_by') {
+            contextModule.variables.set(name, (
               parseInt(globalVars[idx].value, 10)
-              - parseInt(variableChange.value, 10)
+              - parseInt(value, 10)
             ))
           }
           //
-          return
+          continue
         }
-      })
+      }
       contextModule.saveCommands()
     }
     const p = new Promise(async (resolve) => {
@@ -275,20 +280,20 @@ const doReplacements = async (
     {
       regex: /\$customapi\(([^$\)]*)\)\[\'([A-Za-z0-9_ -]+)\'\]/g,
       replacer: async (m0, m1, m2) => {
-        const txt = await getText(await doReplacements(m1, command))
+        const txt = await getText(await doReplacements(m1, command, context, variables, originalCmd))
         return JSON.parse(txt)[m2]
       },
     },
     {
       regex: /\$customapi\(([^$\)]*)\)/g,
       replacer: async (m0, m1) => {
-        return await getText(await doReplacements(m1, command))
+        return await getText(await doReplacements(m1, command, context, variables, originalCmd))
       },
     },
     {
       regex: /\$urlencode\(([^$\)]*)\)/g,
       replacer: async (m0, m1) => {
-        return encodeURIComponent(await doReplacements(m1, command))
+        return encodeURIComponent(await doReplacements(m1, command, context, variables, originalCmd))
       },
     },
     {
