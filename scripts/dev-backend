@@ -1,0 +1,11 @@
+#!/bin/sh
+
+nodemon \
+  --delay 2 \
+  -x "node --experimental-specifier-resolution=node --loader ts-node/esm" \
+  --max-old-space-size=128 \
+  src/bot.js \
+  -e js,ts \
+  --trace-warnings \
+  --ignore public/static/ \
+  -- -c config.json

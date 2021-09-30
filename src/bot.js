@@ -1,5 +1,4 @@
-import config from './config.js'
-
+import { init as initConfig } from './config'
 import Auth from './net/Auth'
 import ModuleManager from './mod/ModuleManager'
 import WebSocketServer from './net/WebSocketServer'
@@ -24,6 +23,8 @@ import DrawcastModule from './mod/modules/DrawcastModule'
 import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
+
+const config = initConfig()
 
 const modules = [
   GeneralModule,
