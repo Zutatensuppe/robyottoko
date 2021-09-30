@@ -90,14 +90,14 @@ const humanDuration = (
   return parts.join(' ')
 }
 
-function arrayMove(arr: any[], old_index: number, new_index: number) {
-  if (new_index >= arr.length) {
-    var k = new_index - arr.length + 1
+export function arrayMove(arr: any[], oldIndex: number, newIndex: number) {
+  if (newIndex >= arr.length) {
+    var k = newIndex - arr.length + 1
     while (k--) {
       arr.push(undefined)
     }
   }
-  arr.splice(new_index, 0, arr.splice(old_index, 1)[0])
+  arr.splice(newIndex, 0, arr.splice(oldIndex, 1)[0])
   return arr // return, but array is also modified in place
 }
 

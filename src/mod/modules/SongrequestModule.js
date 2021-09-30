@@ -237,19 +237,16 @@ class SongrequestModule {
       }
     }
     if (!youtubeId || !youtubeData) {
-      return { item: null, addType: ADD_TYPE.NOT_ADDED, idx: -1 }
+      return { addType: ADD_TYPE.NOT_ADDED, idx: -1 }
     }
 
-    const { item, addType, idx } = await this.addToPlaylist(
-      youtubeId,
-      youtubeData,
-      user
-    )
+    const tmpItem = this.createItem(youtubeId, youtubeData, user)
+    const { addType, idx } = await this.addToPlaylist(tmpItem)
     if (addType === ADD_TYPE.ADDED) {
       this.data.stacks[user] = this.data.stacks[user] || []
       this.data.stacks[user].push(youtubeId)
     }
-    return { item, addType, idx }
+    return { addType, idx }
   }
 
   determinePrevIndex() {
@@ -391,6 +388,10 @@ class SongrequestModule {
     await this.add(str, this.user.name)
   }
 
+  findSongIdxByYoutubeId(youtubeId) {
+    return this.data.playlist.findIndex(item => item.yt === youtubeId)
+  }
+
   findSongIdxBySearchInOrder(str) {
     const split = str.split(/\s+/)
     const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
@@ -410,29 +411,6 @@ class SongrequestModule {
       }
       return true
     })
-  }
-
-  async resr(str) {
-    let idx = this.findSongIdxBySearchInOrder(str)
-    if (idx < 0) {
-      idx = this.findSongIdxBySearch(str)
-    }
-
-    if (idx < 0) {
-      return { item: null, addType: ADD_TYPE.NOT_ADDED, insertIndex: -1 }
-    }
-
-    const insertIndex = this.findInsertIndex()
-    const item = this.data.playlist[idx]
-    if (insertIndex >= idx) {
-      return { item, addType: ADD_TYPE.EXISTED, idx: insertIndex }
-    }
-
-    this.data.playlist.splice(idx, 1)
-    this.data.playlist.splice(insertIndex, 0, item)
-    this.save()
-    this.updateClients('add')
-    return { item, addType: ADD_TYPE.REQUEUED, idx: insertIndex }
   }
 
   like() {
@@ -630,7 +608,8 @@ class SongrequestModule {
 
   async songrequestCmd(command, client, target, context, msg) {
     const say = fn.sayFn(client, target)
-    const answerAddRequest = async (item, addType, idx) => {
+    const answerAddRequest = async (addType, idx) => {
+      const item = idx >= 0 ? this.data.playlist[idx] : null
       let info
       if (idx < 0) {
         info = ``
@@ -644,6 +623,7 @@ class SongrequestModule {
         const timePrediction = durationMs <= 0 ? '' : `, will play in ~${fn.humanDuration(durationMs)}`
         info = `[Position ${idx + 1}${timePrediction}]`
       }
+
       if (addType === ADD_TYPE.ADDED) {
         return `🎵 Added "${item.title}" (${Youtube.getUrlById(item.yt)}) to the playlist! ${info}`
       } else if (addType === ADD_TYPE.REQUEUED) {
@@ -661,10 +641,9 @@ class SongrequestModule {
         return
       }
       const searchterm = command.args.join(' ')
-      const { item, addType, idx } = await this.resr(searchterm)
-      console.log(item, addType, idx)
-      if (addType !== ADD_TYPE.NOT_ADDED) {
-        say(await answerAddRequest(item, addType, idx))
+      const { addType, idx } = await this.resr(searchterm)
+      if (idx >= 0) {
+        say(await answerAddRequest(addType, idx))
       } else {
         say(`Song not found in playlist`)
       }
@@ -830,8 +809,8 @@ class SongrequestModule {
     }
 
     const str = command.args.join(' ')
-    const { item, addType, idx } = await this.add(str, context['display-name'])
-    say(await answerAddRequest(item, addType, idx))
+    const { addType, idx } = await this.add(str, context['display-name'])
+    say(await answerAddRequest(addType, idx))
   }
 
   async loadYoutubeData(youtubeId) {
@@ -856,24 +835,8 @@ class SongrequestModule {
     return (found === -1 ? 0 : found) + 1
   }
 
-  async addToPlaylist(youtubeId, youtubeData, userName) {
-    const idx = this.data.playlist.findIndex(other => other.yt === youtubeId)
-    if (idx >= 0) {
-      const item = this.data.playlist[idx]
-      const insertIndex = this.findInsertIndex()
-      if (insertIndex < idx) {
-        this.data.playlist.splice(idx, 1)
-        this.data.playlist.splice(insertIndex, 0, item)
-        this.save()
-        this.updateClients('add')
-        return { item, addType: ADD_TYPE.REQUEUED, idx: insertIndex }
-      } else {
-        // nothing to do
-        return { item, addType: ADD_TYPE.EXISTED, idx: idx }
-      }
-    }
-
-    const item = {
+  createItem(youtubeId, youtubeData, userName) {
+    return {
       id: Math.random(),
       yt: youtubeId,
       title: youtubeData.snippet.title,
@@ -885,15 +848,68 @@ class SongrequestModule {
       bads: 0,
       tags: [],
     }
-
-    const insertIndex = this.findInsertIndex()
-    this.data.playlist.splice(insertIndex, 0, item)
-
-    this.save()
-    this.updateClients('add')
-    return { item, addType: ADD_TYPE.ADDED, idx: insertIndex }
   }
 
+  async addToPlaylist(tmpItem) {
+    const idx = this.findSongIdxByYoutubeId(tmpItem.yt)
+    const insertIndex = this.findInsertIndex()
+
+    if (idx < 0) {
+      this.data.playlist.splice(insertIndex, 0, tmpItem)
+      this.save()
+      this.updateClients('add')
+      return {
+        addType: ADD_TYPE.ADDED,
+        idx: insertIndex,
+      }
+    }
+
+    if (insertIndex >= idx) {
+      return {
+        addType: ADD_TYPE.EXISTED,
+        idx: idx,
+      }
+    }
+
+    this.data.playlist = fn.arrayMove(this.data.playlist, idx, insertIndex)
+    this.save()
+    this.updateClients('add')
+    return {
+      addType: ADD_TYPE.REQUEUED,
+      idx: insertIndex,
+    }
+  }
+
+  async resr(str) {
+    let idx = this.findSongIdxBySearchInOrder(str)
+    if (idx < 0) {
+      idx = this.findSongIdxBySearch(str)
+    }
+
+    if (idx < 0) {
+      return {
+        addType: ADD_TYPE.NOT_ADDED,
+        insertIndex: -1,
+      }
+    }
+
+    const insertIndex = this.findInsertIndex()
+
+    if (insertIndex >= idx) {
+      return {
+        addType: ADD_TYPE.EXISTED,
+        idx: insertIndex,
+      }
+    }
+
+    this.data.playlist = fn.arrayMove(this.data.playlist, idx, insertIndex)
+    this.save()
+    this.updateClients('add')
+    return {
+      addType: ADD_TYPE.REQUEUED,
+      idx: insertIndex,
+    }
+  }
 }
 
 export default SongrequestModule

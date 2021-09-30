@@ -2,7 +2,7 @@ import config from './config.js'
 import crypto from 'crypto'
 import path from 'path'
 import { getText } from './net/xhr'
-import { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle } from './common/fn'
+import { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove } from './common/fn'
 import { TwingEnvironment, TwingLoaderFilesystem } from 'twing'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
@@ -431,17 +431,6 @@ export const humanDuration = (
     parts.unshift(`${rawparts[i]}${units[i]}`)
   }
   return parts.join(' ')
-}
-
-function arrayMove(arr, old_index, new_index) {
-  if (new_index >= arr.length) {
-    var k = new_index - arr.length + 1
-    while (k--) {
-      arr.push(undefined)
-    }
-  }
-  arr.splice(new_index, 0, arr.splice(old_index, 1)[0])
-  return arr // return, but array is also modified in place
 }
 
 export const passwordSalt = () => {
