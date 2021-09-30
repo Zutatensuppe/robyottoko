@@ -1,0 +1,25 @@
+<html>
+<head>
+  <link rel="icon" href="/static/hyottoko.png" sizes="72x72" type="image/png"/>
+  <title>{{ title }}</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script>
+  <link rel="stylesheet" href="/static/widgets/{{ page }}.css"/>
+  <meta charset="utf-8"/>
+</head>
+<body>
+<div id="outer_main">
+  <div id="app"></div>
+  <script type="module">
+  import Page from "/static/widgets/{{ page }}.js"
+  new Vue({
+    el: '#app',
+    render: (h) => h(Page, {
+      props: {
+        conf: {{ page_data|json_encode|raw }},
+      },
+    }),
+  })
+  </script>
+</div>
+</body>
+</html>

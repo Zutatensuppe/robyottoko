@@ -2,6 +2,7 @@
 
 # server build
 npm run rollup -- -c rollup.server.config.js
+cp -r src/templates build/server/templates
 
 # frontend build
 npm run vite -- build
