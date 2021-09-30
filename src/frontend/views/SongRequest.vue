@@ -89,7 +89,7 @@
     <div id="main" ref="main">
       <div style="width: 640px; max-width: 100%">
         <div id="player" class="video-16-9" :style="playerstyle">
-          <youtube ref="youtube" @ended="ended" />
+          <youtube ref="youtube" @ended="ended" :visible="playerVisible" />
         </div>
       </div>
       <div class="tabs">
@@ -204,6 +204,9 @@
 import { defineComponent } from "vue";
 import WsClient from "../WsClient.js";
 import xhr from "../xhr.js";
+import { UploadedFile, PlaylistItem } from "../../types.ts";
+
+type TagInfo = { value: string; count: number };
 
 export default defineComponent({
   data: () => ({
@@ -242,8 +245,8 @@ export default defineComponent({
   }),
   computed: {
     tags() {
-      const tags = [];
-      this.playlist.forEach((item) => {
+      const tags: TagInfo[] = [];
+      this.playlist.forEach((item: PlaylistItem) => {
         item.tags.forEach((tag) => {
           const index = tags.findIndex((t) => t.value === tag);
           if (index === -1) {
@@ -268,11 +271,11 @@ export default defineComponent({
         }
       );
     },
-    filteredPlaylist() {
+    filteredPlaylist(): PlaylistItem[] {
       if (this.filter.tag === "") {
         return this.playlist;
       }
-      return this.playlist.filter((item) =>
+      return this.playlist.filter((item: PlaylistItem) =>
         item.tags.includes(this.filter.tag)
       );
     },
@@ -312,7 +315,7 @@ export default defineComponent({
         },
       ]);
     },
-    hideVideoImageUploaded(file) {
+    hideVideoImageUploaded(file: UploadedFile) {
       this.sendCtrl("settings", [
         {
           volume: this.settings.volume,
@@ -367,7 +370,7 @@ export default defineComponent({
         this.sendCtrl("sr", [this.srinput]);
       }
     },
-    sendCtrl(ctrl, args) {
+    sendCtrl(ctrl: string, args) {
       this.sendMsg({ event: "ctrl", ctrl, args });
     },
     ended() {

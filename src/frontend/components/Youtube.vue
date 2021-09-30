@@ -50,6 +50,12 @@ async function prepareYt(id) {
 
 export default defineComponent({
   name: "youtube",
+  props: {
+    visible: {
+      type: Boolean,
+      default: true,
+    },
+  },
   data: () => ({
     id: "",
     yt: null,
@@ -76,6 +82,9 @@ export default defineComponent({
     },
     tryPlay() {
       this.stopTryPlayInterval();
+      if (!this.visible) {
+        return;
+      }
 
       this.yt.playVideo();
 

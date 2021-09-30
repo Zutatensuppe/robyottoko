@@ -257,6 +257,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
+import { DrawcastData, UploadedFile } from "../../types.ts";
 import WsClient from "../WsClient.js";
 import xhr from "../xhr.js";
 
@@ -264,7 +265,7 @@ export default defineComponent({
   data: () => ({
     unchangedJson: "{}",
     changedJson: "{}",
-    settings: null,
+    settings: null as DrawcastData | null,
     defaultSettings: null,
     ws: null,
 
@@ -281,7 +282,7 @@ export default defineComponent({
   async created() {
     this.ws = new WsClient(this.$conf.wsBase + "/drawcast", this.$me.token);
 
-    this.ws.onMessage("init", async (data) => {
+    this.ws.onMessage("init", async (data: DrawcastData) => {
       this.settings = data.settings;
       this.defaultSettings = data.defaultSettings;
       this.unchangedJson = JSON.stringify(data.settings);
@@ -331,16 +332,16 @@ export default defineComponent({
     },
   },
   methods: {
-    toggleFavorite(url) {
+    toggleFavorite(url: string) {
       if (this.settings.favorites.includes(url)) {
         this.settings.favorites = this.settings.favorites.filter(
-          (u) => u !== url
+          (u: string) => u !== url
         );
       } else {
         this.settings.favorites.push(url);
       }
     },
-    soundUploaded(file) {
+    soundUploaded(file: UploadedFile) {
       this.settings.notificationSound = {
         filename: file.originalname,
         file: file.filename,

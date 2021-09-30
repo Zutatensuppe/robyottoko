@@ -469,6 +469,7 @@
 import { defineComponent } from "vue";
 
 import fn from "../../../common/fn.ts";
+import { UploadedFile } from "../../../types.ts";
 import commands from "../../commands.js";
 
 export default defineComponent({
@@ -551,11 +552,11 @@ export default defineComponent({
     onOverlayClick() {
       this.$emit("cancel");
     },
-    mediaSndUploaded(data) {
+    mediaSndUploaded(data: UploadedFile) {
       this.item.data.sound.filename = data.originalname;
       this.item.data.sound.file = data.filename;
     },
-    mediaImgUploaded(data) {
+    mediaImgUploaded(data: UploadedFile) {
       this.item.data.image.filename = data.originalname;
       this.item.data.image.file = data.filename;
     },
