@@ -391,25 +391,48 @@ class SongrequestModule {
     await this.add(str, this.user.name)
   }
 
-  async resr(str) {
+  findSongIdxBySearchInOrder(str) {
     const split = str.split(/\s+/)
     const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     const regex = new RegExp(regexArgs.join('.*'), 'i')
-    const idx = this.data.playlist.findIndex(item => item.title.match(regex))
-    if (idx >= 0) {
-      const insertIndex = this.findInsertIndex()
-      const item = this.data.playlist[idx]
-      if (insertIndex < idx) {
-        this.data.playlist.splice(idx, 1)
-        this.data.playlist.splice(insertIndex, 0, item)
-        this.save()
-        this.updateClients('add')
-        return { item, addType: ADD_TYPE.REQUEUED, idx: insertIndex }
-      } else {
-        return { item, addType: ADD_TYPE.EXISTED, idx: insertIndex }
+    return this.data.playlist.findIndex(item => item.title.match(regex))
+  }
+
+  findSongIdxBySearch(str) {
+    const split = str.split(/\s+/)
+    const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    const regexes = regexArgs.map(arg => new RegExp(arg, 'i'))
+    return this.data.playlist.findIndex(item => {
+      for (const regex of regexes) {
+        if (!item.title.match(regex)) {
+          return false
+        }
       }
+      return true
+    })
+  }
+
+  async resr(str) {
+    let idx = this.findSongIdxBySearchInOrder(str)
+    if (idx < 0) {
+      idx = this.findSongIdxBySearch(str)
     }
-    return { item: null, addType: ADD_TYPE.NOT_ADDED, insertIndex: -1 }
+
+    if (idx < 0) {
+      return { item: null, addType: ADD_TYPE.NOT_ADDED, insertIndex: -1 }
+    }
+
+    const insertIndex = this.findInsertIndex()
+    const item = this.data.playlist[idx]
+    if (insertIndex >= idx) {
+      return { item, addType: ADD_TYPE.EXISTED, idx: insertIndex }
+    }
+
+    this.data.playlist.splice(idx, 1)
+    this.data.playlist.splice(insertIndex, 0, item)
+    this.save()
+    this.updateClients('add')
+    return { item, addType: ADD_TYPE.REQUEUED, idx: insertIndex }
   }
 
   like() {
