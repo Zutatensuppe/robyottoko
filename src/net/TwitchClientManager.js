@@ -93,7 +93,7 @@ class TwitchClientManager {
     this.chatClient.on('message', async (target, context, msg, self) => {
       if (self) { return; } // Ignore messages from the bot
 
-      // log.info(context)
+      // log.debug(context)
       const roles = []
       if (fn.isMod(context)) {
         roles.push('M')

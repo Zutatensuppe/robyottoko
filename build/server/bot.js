@@ -1926,7 +1926,7 @@ class TwitchClientManager {
     this.chatClient.on('message', async (target, context, msg, self) => {
       if (self) { return; } // Ignore messages from the bot
 
-      // log.info(context)
+      // log.debug(context)
       const roles = [];
       if (fn.isMod(context)) {
         roles.push('M');
@@ -3239,6 +3239,8 @@ class SongrequestModule {
   }
 
   async songrequestCmd(command, client, target, context, msg) {
+    const modOrUp = () => fn.isMod(context) || fn.isBroadcaster(context);
+
     const say = fn.sayFn(client, target);
     const answerAddRequest = async (addType, idx) => {
       const item = idx >= 0 ? this.data.playlist[idx] : null;
@@ -3304,51 +3306,53 @@ class SongrequestModule {
           this.dislike();
           return
         case 'prev':
-          if (fn.isMod(context)) {
+          if (modOrUp()) {
             this.prev();
             return
           }
           break
         case 'hidevideo':
-          if (fn.isMod(context)) {
+          if (modOrUp()) {
             this.videoVisibility(false);
+            say(`Video is now hidden.`);
             return
           }
           break
         case 'showvideo':
-          if (fn.isMod(context)) {
+          if (modOrUp()) {
             this.videoVisibility(true);
+            say(`Video is now shown.`);
             return
           }
           break
         case 'next':
         case 'skip':
-          if (fn.isMod(context)) {
+          if (modOrUp()) {
             this.next();
             return
           }
           break
         case 'jumptonew':
-          if (fn.isMod(context)) {
+          if (modOrUp()) {
             this.jumptonew();
             return
           }
           break
         case 'pause':
-          if (fn.isMod(context)) {
+          if (modOrUp()) {
             this.pause();
             return
           }
           break;
         case 'nopause':
         case 'unpause':
-          if (fn.isMod(context)) {
+          if (modOrUp()) {
             this.unpause();
             return
           }
           break;
         case 'loop':
-          if (fn.isMod(context)) {
+          if (modOrUp()) {
             this.loop();
             say('Now looping the current song');
             return
@@ -3356,7 +3360,7 @@ class SongrequestModule {
           break;
         case 'noloop':
         case 'unloop':
-          if (fn.isMod(context)) {
+          if (modOrUp()) {
             this.noloop();
             say('Stopped looping the current song');
             return
@@ -3378,25 +3382,25 @@ class SongrequestModule {
           say([countStr, durationStr].join(' '));
           return
         case 'resetStats':
-          if (fn.isMod(context)) {
+          if (modOrUp()) {
             this.resetStats();
             return
           }
           break
         case 'clear':
-          if (fn.isMod(context)) {
+          if (modOrUp()) {
             this.clear();
             return
           }
           break
         case 'rm':
-          if (fn.isMod(context)) {
+          if (modOrUp()) {
             this.remove();
             return
           }
           break
         case 'shuffle':
-          if (fn.isMod(context)) {
+          if (modOrUp()) {
             this.shuffle();
             return
           }
@@ -3412,7 +3416,7 @@ class SongrequestModule {
       }
     }
     if (command.args[0] === 'tag' || command.args[0] === 'addtag') {
-      if (fn.isMod(context)) {
+      if (modOrUp()) {
         const tag = command.args.slice(1).join(' ');
         this.addTag(tag);
         say(`Added tag "${tag}"`);
@@ -3420,7 +3424,7 @@ class SongrequestModule {
       return
     }
     if (command.args[0] === 'rmtag') {
-      if (fn.isMod(context)) {
+      if (modOrUp()) {
         const tag = command.args.slice(1).join(' ');
         this.rmTag(tag);
         say(`Removed tag "${tag}"`);
@@ -3428,7 +3432,7 @@ class SongrequestModule {
       return
     }
     if (command.args[0] === 'filter') {
-      if (fn.isMod(context)) {
+      if (modOrUp()) {
         const tag = command.args.slice(1).join(' ');
         this.filter({ tag });
         if (tag !== '') {
@@ -3635,7 +3639,7 @@ class DrawcastModule$1 {
 
     // maybe open up for everyone, but for now use dedicated
     // commands like !play THING
-    if (!fn.isMod(context)) {
+    if (!fn.isMod(context) && !fn.isBroadcaster()) {
       say('Not allowed to execute !vote command');
     }
 

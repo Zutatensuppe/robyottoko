@@ -96,7 +96,7 @@ class DrawcastModule {
 
     // maybe open up for everyone, but for now use dedicated
     // commands like !play THING
-    if (!fn.isMod(context)) {
+    if (!fn.isMod(context) && !fn.isBroadcaster()) {
       say('Not allowed to execute !vote command')
     }
 
