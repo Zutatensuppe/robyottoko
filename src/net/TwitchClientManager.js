@@ -93,7 +93,17 @@ class TwitchClientManager {
     this.chatClient.on('message', async (target, context, msg, self) => {
       if (self) { return; } // Ignore messages from the bot
 
-      log.info(`${context.username}@${target}: ${msg}`)
+      const roles = []
+      if (fn.isMod(context)) {
+        roles.push('M')
+      }
+      if (fn.isSubscriber(context)) {
+        roles.push('S')
+      }
+      if (fn.isBroadcaster(context)) {
+        roles.push('B')
+      }
+      log.info(`${context.username}[${roles.join('')}]@${target}: ${msg}`)
       const rawCmd = fn.parseCommandFromMessage(msg)
 
       db.insert('chat_log', {
