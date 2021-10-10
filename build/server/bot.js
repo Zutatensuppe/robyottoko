@@ -192,7 +192,7 @@ const logger = (filename, ...pre) => {
   }
 };
 
-const log$8 = logger(__filename$7);
+const log$7 = logger(__filename$7);
 
 function mimeToExt(/** @type string */ mime) {
   if (/image\//.test(mime)) {
@@ -257,7 +257,7 @@ const sayFn = (
 ) => {
     const targets = target ? [target] : client.channels;
     targets.forEach(t => {
-      log$8.info(`saying in ${t}: ${msg}`);
+      log$7.info(`saying in ${t}: ${msg}`);
       client.say(t, msg).catch(_ => { });
     });
   };
@@ -309,7 +309,7 @@ const tryExecuteCommand = async (
     if (!mayExecute(context, cmdDef)) {
       continue
     }
-    log$8.info(`${target}| * Executing ${rawCmd.name} command`);
+    log$7.info(`${target}| * Executing ${rawCmd.name} command`);
     if (cmdDef.variableChanges) {
       for (const variableChange of cmdDef.variableChanges) {
         const op = variableChange.change;
@@ -362,9 +362,9 @@ const tryExecuteCommand = async (
     const p = new Promise(async (resolve) => {
       const r = await cmdDef.fn(rawCmd, client, target, context, msg);
       if (r) {
-        log$8.info(`${target}| * Returned: ${r}`);
+        log$7.info(`${target}| * Returned: ${r}`);
       }
-      log$8.info(`${target}| * Executed ${rawCmd.name} command`);
+      log$7.info(`${target}| * Executed ${rawCmd.name} command`);
       resolve();
     });
     promises.push(p);
@@ -722,7 +722,7 @@ function ModuleManager() {
 
 const __filename$6 = fileURLToPath(import.meta.url);
 
-const log$7 = logger(__filename$6);
+const log$6 = logger(__filename$6);
 
 class WebSocketServer {
   constructor(
@@ -747,7 +747,7 @@ class WebSocketServer {
       const token = socket.protocol;
       const tokenInfo = this.auth.wsTokenFromProtocol(token);
       if (!tokenInfo) {
-        log$7.info('not found token: ', token);
+        log$6.info('not found token: ', token);
         socket.close();
         return
       }
@@ -756,7 +756,7 @@ class WebSocketServer {
 
       const pathname = new URL(this.connectstring()).pathname;
       if (request.url.indexOf(pathname) !== 0) {
-        log$7.info('bad request url: ', request.url);
+        log$6.info('bad request url: ', request.url);
         socket.close();
         return
       }
@@ -777,7 +777,7 @@ class WebSocketServer {
         const evts = module.getWsEvents();
         if (evts) {
           socket.on('message', (data) => {
-            log$7.info(`ws|${socket.user_id}| `, data);
+            log$6.info(`ws|${socket.user_id}| `, data);
             const d = JSON.parse(data);
             if (!d.event) {
               return
@@ -812,7 +812,7 @@ class WebSocketServer {
 
   notifyOne(user_ids, module, data, /** @type WebSocket */ socket) {
     if (socket.isAlive && user_ids.includes(socket.user_id) && socket.module === module) {
-      log$7.info(`notifying ${socket.user_id} (${data.event})`);
+      log$6.info(`notifying ${socket.user_id} (${data.event})`);
       socket.send(JSON.stringify(data));
     }
   }
@@ -830,7 +830,7 @@ class WebSocketServer {
   }
 }
 
-const log$6 = logger('TwitchHelixClient.js');
+const log$5 = logger('TwitchHelixClient.js');
 
 class TwitchHelixClient {
   constructor(
@@ -868,7 +868,7 @@ class TwitchHelixClient {
     try {
       return json.data[0].id
     } catch (e) {
-      log$6.error(json);
+      log$5.error(json);
       return ''
     }
   }
@@ -896,7 +896,7 @@ class TwitchHelixClient {
 
 const __filename$5 = fileURLToPath(import.meta.url);
 
-const log$5 = logger(__filename$5);
+const log$4 = logger(__filename$5);
 
 class Db {
   constructor(dbConf) {
@@ -919,7 +919,7 @@ class Db {
     for (const f of files) {
       if (patches.includes(f)) {
         if (verbose) {
-          log$5.info(`➡ skipping already applied db patch: ${f}`);
+          log$4.info(`➡ skipping already applied db patch: ${f}`);
         }
         continue
       }
@@ -929,16 +929,16 @@ class Db {
         this.dbh.transaction((all) => {
           for (const q of all) {
             if (verbose) {
-              log$5.info(`Running: ${q}`);
+              log$4.info(`Running: ${q}`);
             }
             this.run(q);
           }
           this.insert('db_patches', { id: f });
         })(all);
 
-        log$5.info(`✓ applied db patch: ${f}`);
+        log$4.info(`✓ applied db patch: ${f}`);
       } catch (e) {
-        log$5.error(`✖ unable to apply patch: ${f} ${e}`);
+        log$4.error(`✖ unable to apply patch: ${f} ${e}`);
         return
       }
     }
@@ -1271,7 +1271,7 @@ function Variables(
 const __filename$4 = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename$4);
 
-const log$4 = fn.logger(__filename$4);
+const log$3 = fn.logger(__filename$4);
 
 class WebServer {
   constructor(
@@ -1357,8 +1357,8 @@ class WebServer {
       hmac.update(msg);
       const expected = `sha256=${hmac.digest('hex')}`;
       if (req.headers['twitch-eventsub-message-signature'] !== expected) {
-        log$4.debug(req);
-        log$4.error('bad message signature', {
+        log$3.debug(req);
+        log$3.error('bad message signature', {
           got: req.headers['twitch-eventsub-message-signature'],
           expected,
         });
@@ -1706,11 +1706,11 @@ class WebServer {
       express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }),
       verifyTwitchSignature,
       async (req, res) => {
-        log$4.debug(req.body);
-        log$4.debug(req.headers);
+        log$3.debug(req.body);
+        log$3.debug(req.headers);
 
         if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-          log$4.info(`got verification request, challenge: ${req.body.challenge}`);
+          log$3.info(`got verification request, challenge: ${req.body.challenge}`);
 
           res.write(req.body.challenge);
           res.send();
@@ -1718,7 +1718,7 @@ class WebServer {
         }
 
         if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-          log$4.info(`got notification request: ${req.body.subscription.type}`);
+          log$3.info(`got notification request: ${req.body.subscription.type}`);
 
           if (req.body.subscription.type === 'stream.online') {
             // insert new stream
@@ -1761,7 +1761,7 @@ class WebServer {
     app.post('/api/upload', requireLoginApi, (req, res) => {
       upload(req, res, (err) => {
         if (err) {
-          log$4.error(err);
+          log$3.error(err);
           res.status(400).send("Something went wrong!");
         }
         res.send(req.file);
@@ -1804,7 +1804,7 @@ class WebServer {
     this.handle = app.listen(
       port,
       hostname,
-      () => log$4.info(`server running on http://${hostname}:${port}`)
+      () => log$3.info(`server running on http://${hostname}:${port}`)
     );
   }
   close() {
@@ -1816,150 +1816,7 @@ class WebServer {
 
 const __filename$3 = fileURLToPath(import.meta.url);
 
-const CODE_GOING_AWAY = 1001;
-const CODE_CUSTOM_DISCONNECT = 4000;
-
-const heartbeatInterval = 60 * SECOND; //ms between PING's
-const reconnectInterval = 3 * SECOND; //ms to wait before reconnect
-
-const log$3 = logger(__filename$3);
-
-class WsWrapper {
-  // actual ws handle
-  handle = null
-
-  // timeout for automatic reconnect
-  reconnectTimeout = null
-
-  // buffer for 'send'
-  sendBuffer = []
-
-  constructor(
-    addr,
-    protocols,
-  ) {
-    this.addr = addr;
-    this.protocols = protocols;
-
-    this.onopen = () => { };
-    this.onclose = () => { };
-    this.onmessage = () => { };
-  }
-
-  send(txt) {
-    if (this.handle) {
-      try {
-        this.handle.send(txt);
-      } catch (e) {
-        this.sendBuffer.push(txt);
-      }
-    } else {
-      this.sendBuffer.push(txt);
-    }
-  }
-
-  connect() {
-    let ws = new WebSocket(this.addr, this.protocols);
-    ws.onopen = (e) => {
-      if (this.reconnectTimeout) {
-        clearTimeout(this.reconnectTimeout);
-      }
-      this.handle = ws;
-      // should have a queue worker
-      while (this.sendBuffer.length > 0) {
-        this.handle.send(this.sendBuffer.shift());
-      }
-      this.onopen(e);
-    };
-    ws.onmessage = (e) => {
-      this.onmessage(e);
-    };
-    ws.onerror = (e) => {
-      log$3.error('ERR', e);
-      this.handle = null;
-      this.reconnectTimeout = setTimeout(() => { this.connect(); }, reconnectInterval);
-    };
-    ws.onclose = (e) => {
-      this.handle = null;
-      if (e.code === CODE_CUSTOM_DISCONNECT || e.code === CODE_GOING_AWAY) ; else {
-        this.reconnectTimeout = setTimeout(() => { this.connect(); }, reconnectInterval);
-      }
-      this.onclose(e);
-    };
-  }
-
-  disconnect() {
-    if (this.handle) {
-      this.handle.close(CODE_CUSTOM_DISCONNECT);
-    }
-  }
-}
-
-function TwitchPubSubClient() {
-  const evts = EventHub();
-
-  const ws = new WsWrapper('wss://pubsub-edge.twitch.tv');
-
-  const send = (message) => {
-    const msgStr = JSON.stringify(message);
-    log$3.debug('SEND', msgStr);
-    ws.send(msgStr);
-  };
-
-  const heartbeat = () => {
-    send({ type: 'PING' });
-  };
-
-  const listen = (topic, authToken) => {
-    send({
-      type: 'LISTEN',
-      nonce: nonce(15),
-      data: {
-        topics: [topic],
-        auth_token: authToken
-      }
-    });
-  };
-
-  let heartbeatHandle;
-  ws.onopen = (event) => {
-    log$3.info('INFO', 'Socket Opened');
-    heartbeat();
-    if (heartbeatHandle) {
-      clearInterval(heartbeatHandle);
-    }
-    heartbeatHandle = setInterval(heartbeat, heartbeatInterval);
-    evts.trigger('open', {});
-  };
-  ws.onclose = () => {
-    if (heartbeatHandle) {
-      clearInterval(heartbeatHandle);
-    }
-  };
-  ws.onmessage = (event) => {
-    const message = JSON.parse(event.data);
-    log$3.debug('RECV', JSON.stringify(message));
-    if (message.type == 'RECONNECT') {
-      log$3.info('INFO', 'Reconnecting...');
-      ws.connect();
-    }
-    evts.trigger('message', message);
-  };
-
-  const connect = () => {
-    ws.connect();
-  };
-  const disconnect = () => {
-    ws.disconnect();
-  };
-
-  return {
-    listen,
-    connect,
-    disconnect,
-    on: evts.on,
-  }
-}
+logger(__filename$3);
 
 const TABLE$2 = 'twitch_channel';
 
@@ -2117,42 +1974,42 @@ class TwitchClientManager {
 
     // connect to PubSub websocket
     // https://dev.twitch.tv/docs/pubsub#topics
-    this.pubSubClient = TwitchPubSubClient();
-    this.pubSubClient.on('open', async () => {
-      // listen for evts
-      for (let channel of twitchChannels) {
-        if (channel.access_token && channel.channel_id) {
-          this.pubSubClient.listen(
-            `channel-points-channel-v1.${channel.channel_id}`,
-            channel.access_token
-          );
-        }
-      }
-      this.pubSubClient.on('message', (message) => {
-        if (message.type !== 'MESSAGE') {
-          return
-        }
-        const messageData = JSON.parse(message.data.message);
+    // this.pubSubClient = TwitchPubSubClient()
+    // this.pubSubClient.on('open', async () => {
+    //   // listen for evts
+    //   for (let channel of twitchChannels) {
+    //     if (channel.access_token && channel.channel_id) {
+    //       this.pubSubClient.listen(
+    //         `channel-points-channel-v1.${channel.channel_id}`,
+    //         channel.access_token
+    //       )
+    //     }
+    //   }
+    //   this.pubSubClient.on('message', (message) => {
+    //     if (message.type !== 'MESSAGE') {
+    //       return
+    //     }
+    //     const messageData = JSON.parse(message.data.message)
 
-        // channel points redeemed with non standard reward
-        // standard rewards are not supported :/
-        if (messageData.type === 'reward-redeemed') {
-          const redemption = messageData.data.redemption;
-          // redemption.reward
-          // { id, channel_id, title, prompt, cost, ... }
-          // redemption.userchatClient
-          // { id, login, display_name}
-          for (const m of moduleManager.all(user.id)) {
-            if (m.handleRewardRedemption) {
-              m.handleRewardRedemption(redemption);
-            }
-          }
-        }
-      });
-    });
+    //     // channel points redeemed with non standard reward
+    //     // standard rewards are not supported :/
+    //     if (messageData.type === 'reward-redeemed') {
+    //       const redemption = messageData.data.redemption
+    //       // redemption.reward
+    //       // { id, channel_id, title, prompt, cost, ... }
+    //       // redemption.userchatClient
+    //       // { id, login, display_name}
+    //       for (const m of moduleManager.all(user.id)) {
+    //         if (m.handleRewardRedemption) {
+    //           m.handleRewardRedemption(redemption)
+    //         }
+    //       }
+    //     }
+    //   })
+    // })
 
     this.chatClient.connect();
-    this.pubSubClient.connect();
+    // this.pubSubClient.connect()
 
     // register EventSub
     // @see https://dev.twitch.tv/docs/eventsub

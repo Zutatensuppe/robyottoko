@@ -141,42 +141,42 @@ class TwitchClientManager {
 
     // connect to PubSub websocket
     // https://dev.twitch.tv/docs/pubsub#topics
-    this.pubSubClient = TwitchPubSubClient()
-    this.pubSubClient.on('open', async () => {
-      // listen for evts
-      for (let channel of twitchChannels) {
-        if (channel.access_token && channel.channel_id) {
-          this.pubSubClient.listen(
-            `channel-points-channel-v1.${channel.channel_id}`,
-            channel.access_token
-          )
-        }
-      }
-      this.pubSubClient.on('message', (message) => {
-        if (message.type !== 'MESSAGE') {
-          return
-        }
-        const messageData = JSON.parse(message.data.message)
+    // this.pubSubClient = TwitchPubSubClient()
+    // this.pubSubClient.on('open', async () => {
+    //   // listen for evts
+    //   for (let channel of twitchChannels) {
+    //     if (channel.access_token && channel.channel_id) {
+    //       this.pubSubClient.listen(
+    //         `channel-points-channel-v1.${channel.channel_id}`,
+    //         channel.access_token
+    //       )
+    //     }
+    //   }
+    //   this.pubSubClient.on('message', (message) => {
+    //     if (message.type !== 'MESSAGE') {
+    //       return
+    //     }
+    //     const messageData = JSON.parse(message.data.message)
 
-        // channel points redeemed with non standard reward
-        // standard rewards are not supported :/
-        if (messageData.type === 'reward-redeemed') {
-          const redemption = messageData.data.redemption
-          // redemption.reward
-          // { id, channel_id, title, prompt, cost, ... }
-          // redemption.userchatClient
-          // { id, login, display_name}
-          for (const m of moduleManager.all(user.id)) {
-            if (m.handleRewardRedemption) {
-              m.handleRewardRedemption(redemption)
-            }
-          }
-        }
-      })
-    })
+    //     // channel points redeemed with non standard reward
+    //     // standard rewards are not supported :/
+    //     if (messageData.type === 'reward-redeemed') {
+    //       const redemption = messageData.data.redemption
+    //       // redemption.reward
+    //       // { id, channel_id, title, prompt, cost, ... }
+    //       // redemption.userchatClient
+    //       // { id, login, display_name}
+    //       for (const m of moduleManager.all(user.id)) {
+    //         if (m.handleRewardRedemption) {
+    //           m.handleRewardRedemption(redemption)
+    //         }
+    //       }
+    //     }
+    //   })
+    // })
 
     this.chatClient.connect()
-    this.pubSubClient.connect()
+    // this.pubSubClient.connect()
 
     // register EventSub
     // @see https://dev.twitch.tv/docs/eventsub
