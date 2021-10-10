@@ -90,8 +90,8 @@ const sleep = (/** @type number */ ms) => {
 }
 
 const isBroadcaster = (ctx) => ctx['room-id'] === ctx['user-id']
-const isMod = (ctx) => !!ctx.mod || isBroadcaster(ctx)
-const isSubscriber = (ctx) => !!ctx.subscriber || isBroadcaster(ctx)
+const isMod = (ctx) => !!ctx.isMod
+const isSubscriber = (ctx) => !!ctx.subscriber
 
 const sayFn = (
   client,
