@@ -53,6 +53,15 @@ export default {
             <span class="square-inner"></span>
           </span>
         </div>
+        <hr />
+      </div>
+      <div>
+        Hotkeys
+        <div><kbd>E</kbd> Eraser</div>
+        <div><kbd>P</kbd> Pencil</div>
+        <div><kbd>S</kbd> Color sampler</div>
+        <div><kbd>1-7<kbd> Adjust size</div>
+        <div><kbd>Ctrl+Z<kbd> Undo</div>
       </div>
     </div>
 
@@ -379,6 +388,37 @@ export default {
 
     this.canvas = this.$refs.canvas
     this.ctx = this.canvas.getContext('2d')
+
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'Digit1') {
+        this.size = this.sizes[0]
+      } else if (e.code === 'Digit2') {
+        this.size = this.sizes[1]
+      } else if (e.code === 'Digit3') {
+        this.size = this.sizes[2]
+      } else if (e.code === 'Digit4') {
+        this.size = this.sizes[3]
+      } else if (e.code === 'Digit5') {
+        this.size = this.sizes[4]
+      } else if (e.code === 'Digit6') {
+        this.size = this.sizes[5]
+      } else if (e.code === 'Digit7') {
+        this.size = this.sizes[6]
+      } else if (e.code === 'KeyP') {
+        // pencil
+        this.tool = 'pen'
+      } else if (e.code === 'KeyS') {
+        // color Sampler
+        this.tool = 'color-sampler'
+      } else if (e.code === 'KeyE') {
+        // eraser
+        this.tool = 'eraser'
+      } else if (e.code === 'KeyZ' && e.ctrlKey) {
+        this.undo()
+      } else {
+        console.log(e)
+      }
+    })
 
     // on window, in case left canvas and mouse up outside
     window.addEventListener('mouseup', () => {
