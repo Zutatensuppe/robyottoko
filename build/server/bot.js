@@ -5,9 +5,9 @@ import fetch from 'node-fetch';
 import { TwingLoaderFilesystem, TwingEnvironment } from 'twing';
 import { fileURLToPath } from 'url';
 import WebSocket from 'ws';
-import multer from 'multer';
-import express from 'express';
 import cookieParser from 'cookie-parser';
+import express from 'express';
+import multer from 'multer';
 import bsqlite from 'better-sqlite3';
 import SibApiV3Sdk from 'sib-api-v3-sdk';
 import tmi from 'tmi.js';
@@ -830,73 +830,9 @@ class WebSocketServer {
   }
 }
 
-const log$5 = logger('TwitchHelixClient.js');
-
-class TwitchHelixClient {
-  constructor(
-    /** @type string */ clientId,
-    /** @type string */ clientSecret
-  ) {
-    this.clientId = clientId;
-    this.clientSecret = clientSecret;
-    this.helixApiBase = 'https://api.twitch.tv/helix';
-  }
-
-  async withAuthHeaders(opts = {}) {
-    const accessToken = await this.getAccessToken();
-    return withHeaders({
-      'Client-ID': this.clientId,
-      'Authorization': `Bearer ${accessToken}`,
-    }, opts)
-  }
-
-  // https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/
-  async getAccessToken(scopes = []) {
-    const url = `https://id.twitch.tv/oauth2/token` + asQueryArgs({
-      client_id: this.clientId,
-      client_secret: this.clientSecret,
-      grant_type: 'client_credentials',
-      scope: scopes.join(' '),
-    });
-    const json = await postJson(url);
-    return json.access_token
-  }
-
-  async getUserIdByName(userName) {
-    const url = `${this.helixApiBase}/users${asQueryArgs({ login: userName })}`;
-    const json = await getJson(url, await this.withAuthHeaders());
-    try {
-      return json.data[0].id
-    } catch (e) {
-      log$5.error(json);
-      return ''
-    }
-  }
-
-  async getStreams(userId) {
-    const url = `${this.helixApiBase}/streams${asQueryArgs({ user_id: userId })}`;
-    return await getJson(url, await this.withAuthHeaders())
-  }
-
-  async getSubscriptions() {
-    const url = `${this.helixApiBase}/eventsub/subscriptions`;
-    return await getJson(url, await this.withAuthHeaders())
-  }
-
-  async deleteSubscription(id) {
-    const url = `${this.helixApiBase}/eventsub/subscriptions${asQueryArgs({ id: id })}`;
-    return await requestText('delete', url, await this.withAuthHeaders())
-  }
-
-  async createSubscription(subscription) {
-    const url = `${this.helixApiBase}/eventsub/subscriptions`;
-    return await postJson(url, await this.withAuthHeaders(asJson(subscription)))
-  }
-}
-
 const __filename$5 = fileURLToPath(import.meta.url);
 
-const log$4 = logger(__filename$5);
+const log$5 = logger(__filename$5);
 
 class Db {
   constructor(dbConf) {
@@ -919,7 +855,7 @@ class Db {
     for (const f of files) {
       if (patches.includes(f)) {
         if (verbose) {
-          log$4.info(`➡ skipping already applied db patch: ${f}`);
+          log$5.info(`➡ skipping already applied db patch: ${f}`);
         }
         continue
       }
@@ -929,16 +865,16 @@ class Db {
         this.dbh.transaction((all) => {
           for (const q of all) {
             if (verbose) {
-              log$4.info(`Running: ${q}`);
+              log$5.info(`Running: ${q}`);
             }
             this.run(q);
           }
           this.insert('db_patches', { id: f });
         })(all);
 
-        log$4.info(`✓ applied db patch: ${f}`);
+        log$5.info(`✓ applied db patch: ${f}`);
       } catch (e) {
-        log$4.error(`✖ unable to apply patch: ${f} ${e}`);
+        log$5.error(`✖ unable to apply patch: ${f} ${e}`);
         return
       }
     }
@@ -1111,62 +1047,6 @@ function EventHub() {
   }
 }
 
-const TABLE$5 = 'user';
-
-function Users(/** @type Db */ db) {
-  const get = (by) => db.get(TABLE$5, by);
-  return {
-    all: () => db.getMany(TABLE$5),
-    get,
-    getById: (id) => get({ id }),
-    save: (user) => db.upsert(TABLE$5, user, { id: user.id }),
-    getGroups: (id) => {
-      const rows = db._getMany(`
-select g.name from user_group g inner join user_x_user_group x
-where x.user_id = ?`, [id]);
-      return rows.map(r => r.name)
-    },
-    createUser: (user) => db.insert(TABLE$5, user),
-  }
-}
-
-const TABLE$4 = 'token';
-
-function generateToken(length) {
-  // edit the token allowed characters
-  const a = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'.split('');
-  const b = [];
-  for (let i = 0; i < length; i++) {
-    const j = (Math.random() * (a.length - 1)).toFixed(0);
-    b[i] = a[j];
-  }
-  return b.join('');
-}
-
-function Tokens(/** @type Db */ db) {
-  const getByUserIdAndType = (user_id, type) => db.get(TABLE$4, { user_id, type });
-  const insert = (tokenInfo) => db.insert(TABLE$4, tokenInfo);
-  const createToken = (user_id, type) => {
-    const token = generateToken(32);
-    const tokenObj = { user_id, type, token };
-    insert(tokenObj);
-    return tokenObj
-  };
-
-  const getOrCreateToken = (user_id, type) => {
-    return getByUserIdAndType(user_id, type) || createToken(user_id, type)
-  };
-
-  return {
-    createToken,
-    getByToken: (token) => db.get(TABLE$4, { token }),
-    delete: (token) => db.delete(TABLE$4, { token }),
-    getWidgetTokenForUserId: (user_id) => getOrCreateToken(user_id, 'widget'),
-    getPubTokenForUserId: (user_id) => getOrCreateToken(user_id, 'pub'),
-    generateAuthTokenForUserId: (user_id) => createToken(user_id, 'auth'),
-  }
-}
-
 class Mail {
   constructor(cfg) {
     const defaultClient = SibApiV3Sdk.ApiClient.instance;
@@ -1225,6 +1105,126 @@ class Mail {
     }, function (error) {
       console.error(error);
     });
+  }
+}
+
+const TABLE$5 = 'token';
+
+function generateToken(length) {
+  // edit the token allowed characters
+  const a = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'.split('');
+  const b = [];
+  for (let i = 0; i < length; i++) {
+    const j = (Math.random() * (a.length - 1)).toFixed(0);
+    b[i] = a[j];
+  }
+  return b.join('');
+}
+
+function Tokens(/** @type Db */ db) {
+  const getByUserIdAndType = (user_id, type) => db.get(TABLE$5, { user_id, type });
+  const insert = (tokenInfo) => db.insert(TABLE$5, tokenInfo);
+  const createToken = (user_id, type) => {
+    const token = generateToken(32);
+    const tokenObj = { user_id, type, token };
+    insert(tokenObj);
+    return tokenObj
+  };
+
+  const getOrCreateToken = (user_id, type) => {
+    return getByUserIdAndType(user_id, type) || createToken(user_id, type)
+  };
+
+  return {
+    createToken,
+    getByToken: (token) => db.get(TABLE$5, { token }),
+    delete: (token) => db.delete(TABLE$5, { token }),
+    getWidgetTokenForUserId: (user_id) => getOrCreateToken(user_id, 'widget'),
+    getPubTokenForUserId: (user_id) => getOrCreateToken(user_id, 'pub'),
+    generateAuthTokenForUserId: (user_id) => createToken(user_id, 'auth'),
+  }
+}
+
+const log$4 = logger('TwitchHelixClient.js');
+
+class TwitchHelixClient {
+  constructor(
+    /** @type string */ clientId,
+    /** @type string */ clientSecret
+  ) {
+    this.clientId = clientId;
+    this.clientSecret = clientSecret;
+    this.helixApiBase = 'https://api.twitch.tv/helix';
+  }
+
+  async withAuthHeaders(opts = {}) {
+    const accessToken = await this.getAccessToken();
+    return withHeaders({
+      'Client-ID': this.clientId,
+      'Authorization': `Bearer ${accessToken}`,
+    }, opts)
+  }
+
+  // https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/
+  async getAccessToken(scopes = []) {
+    const url = `https://id.twitch.tv/oauth2/token` + asQueryArgs({
+      client_id: this.clientId,
+      client_secret: this.clientSecret,
+      grant_type: 'client_credentials',
+      scope: scopes.join(' '),
+    });
+    const json = await postJson(url);
+    return json.access_token
+  }
+
+  async getUserIdByName(userName) {
+    const url = `${this.helixApiBase}/users${asQueryArgs({ login: userName })}`;
+    const json = await getJson(url, await this.withAuthHeaders());
+    try {
+      return json.data[0].id
+    } catch (e) {
+      log$4.error(json);
+      return ''
+    }
+  }
+
+  async getStreams(userId) {
+    const url = `${this.helixApiBase}/streams${asQueryArgs({ user_id: userId })}`;
+    return await getJson(url, await this.withAuthHeaders())
+  }
+
+  async getSubscriptions() {
+    const url = `${this.helixApiBase}/eventsub/subscriptions`;
+    return await getJson(url, await this.withAuthHeaders())
+  }
+
+  async deleteSubscription(id) {
+    const url = `${this.helixApiBase}/eventsub/subscriptions${asQueryArgs({ id: id })}`;
+    return await requestText('delete', url, await this.withAuthHeaders())
+  }
+
+  async createSubscription(subscription) {
+    const url = `${this.helixApiBase}/eventsub/subscriptions`;
+    return await postJson(url, await this.withAuthHeaders(asJson(subscription)))
+  }
+}
+
+const TABLE$4 = 'user';
+
+function Users(/** @type Db */ db) {
+  const get = (by) => db.get(TABLE$4, by);
+  return {
+    all: () => db.getMany(TABLE$4),
+    get,
+    getById: (id) => get({ id }),
+    save: (user) => db.upsert(TABLE$4, user, { id: user.id }),
+    getGroups: (id) => {
+      const rows = db._getMany(`
+select g.name from user_group g inner join user_x_user_group x
+where x.user_id = ?`, [id]);
+      return rows.map(r => r.name)
+    },
+    createUser: (user) => db.insert(TABLE$4, user),
   }
 }
 
