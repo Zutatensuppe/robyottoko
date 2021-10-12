@@ -1,5 +1,76 @@
 @import "bulma/css/bulma.css";
-@import "style.css";
+@import "font-awesome/css/font-awesome.min.css";
+
+:root {
+  --main-color: #363636;
+  --main-background-color: #fff;
+
+  --link-color: #808db0;
+  --link-hover-color: #c5cfeb;
+  --highlight-color: #dd7e7e;
+
+  --border-color: black;
+  --border-radius: 4px;
+
+  --button-border-radius: var(--border-radius);
+}
+
+body { margin: 0; }
+
+/* * { vertical-align: text-bottom; } */
+.fa { vertical-align: middle; }
+
+a { color: var(--link-color); text-decoration: none; }
+a:hover { color: var(--link-hover-color); }
+
+.center-screen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: 40vh;
+}
+
+.player { display: inline-block; }
+
+.spacerow { margin-bottom: 5px; }
+.spacerow .spacelabel { display: inline-block; width: 120px; }
+.spacerow .spaceinput { display: inline-block; width: 200px; }
+
+.flip-horizontal { transform: scaleX(-1); }
+
+.video-16-9 {
+  position: relative;
+  padding-bottom: 56.25%;
+  overflow: hidden;
+}
+
+.video-16-9 iframe, .video-16-9 object, .video-16-9 embed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.video-16-9 .hidevideo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: black;
+  z-index: 2;
+}
+
+#actionbar {
+  background: var(--main-background-color);
+  flex-wrap: wrap;
+}
+#actionbar > *:not(:last-child) {
+  margin-bottom: 0;
+}
 
 body {
   color: var(--main-color);
@@ -19,36 +90,9 @@ body {
   display: flex;
 }
 
-#navbar { line-height: 32px; }
-#navbar .logo { margin-right: 1em; }
-#navbar a { border-bottom: solid 3px; }
-
-#top ul.items { list-style: none; margin: 0; padding: 0; }
-#top ul.items li { display: inline-block; margin-right: 1em; float: left; }
-#top ul.items li:last-child { margin-right: 0; }
-
 #main { margin-bottom: 10em; padding: .5em; }
 
 #player { margin-bottom: .5em; }
-
-/* page: commands */
-table tr td {
-  transition: background-color 1000ms ease-in;
-}
-table tr.gain-attention td {
-  background-color: #3f714b !important;
-  transition: background-color 0ms;
-}
-
-@media only screen and (max-width: 920px) {
-  #actionbar .btn .txt {
-    display: none;
-  }
-}
-@media only screen and (max-width: 800px) {
-  #navbar .logo { display: none; }
-  #navbar ul.items li.greeting { display: none; }
-}
 
 .media-holder {
   border-radius: 4px;
@@ -71,62 +115,6 @@ table tr.gain-attention td {
   border: solid 1px #dbdbdb;
 }
 
-.positive {
-  color: var(--pos-color);
-}
-
-.negative {
-  color: var(--neg-color);
-}
-
-.timer-trigger {
-  border-radius: 4px;
-  color: var(--main-color);
-  padding: 6px 14px;
-  background-color: #fff;
-  border-style: solid;
-  border-width: 1px;
-  border-color: #dbdbdb;
-  position: relative;
-}
-.timer-trigger label {
-  line-height: 2;
-}
-.timer-trigger > .control:first-child {
-  position: absolute;
-  top: -1px;
-  right: -1px;
-  z-index: 10;
-}
-.timer-trigger .columns {
-  margin-top: -.25rem;
-  margin-right: -.25rem;
-  margin-top: -.25rem;
-  margin-bottom: -.25rem;
-}
-.timer-trigger .column {
-  padding: .25rem;
-}
-
 .modal .table {
   width: 100%;
-}
-
-.textarea-holder {
-  position: relative;
-  padding-right: 2em;
-}
-.textarea-holder .button {
-  position: absolute;
-  right: -2px;
-  top: 0;
-}
-
-.col-triggers {
-  max-width: 200px;
-}
-.col-triggers > div:not(:last-child) {
-  border-bottom: 1px solid #dbdbdb;
-  padding-bottom: .25em;
-  margin-bottom: .25em;
 }

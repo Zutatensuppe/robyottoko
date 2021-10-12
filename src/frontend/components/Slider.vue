@@ -34,7 +34,10 @@ import { defineComponent } from "vue";
 export default defineComponent({
   name: "slider",
   props: {
-    modelValue: Number,
+    modelValue: {
+      type: Number,
+      required: true,
+    },
     iconLeft: String,
     iconRight: String,
     min: {
@@ -59,3 +62,38 @@ export default defineComponent({
   },
 });
 </script>
+<style scoped>
+input[type="range"]::-webkit-slider-thumb {
+  height: 16px;
+  width: 16px;
+  margin-top: -7px;
+}
+
+.slider {
+  clear: none;
+  /* display: inline-block; */
+  /* width: 140px; */
+  min-width: 100px;
+  vertical-align: text-bottom;
+}
+
+.slider.control.has-icons-left .icon,
+.slider.control.has-icons-right .icon {
+  color: var(--main-color);
+}
+
+.slider input[type="range"]::-ms-track {
+  background: var(--link-color);
+  height: 2px;
+}
+
+.slider input[type="range"]::-moz-range-track {
+  background: var(--link-color);
+  height: 2px;
+}
+
+.slider input[type="range"]::-webkit-slider-runnable-track {
+  background: var(--link-color);
+  height: 2px;
+}
+</style>

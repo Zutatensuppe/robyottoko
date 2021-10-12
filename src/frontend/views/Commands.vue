@@ -401,3 +401,13 @@ export default defineComponent({
 <style>
 @import "../style-pages.scss";
 </style>
+<style scoped>
+.col-triggers {
+  max-width: 200px;
+}
+.col-triggers > div:not(:last-child) {
+  border-bottom: 1px solid #dbdbdb;
+  padding-bottom: 0.25em;
+  margin-bottom: 0.25em;
+}
+</style>

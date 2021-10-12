@@ -645,4 +645,42 @@ export default defineComponent({
   },
 });
 </script>
-
+<style scoped>
+.textarea-holder {
+  position: relative;
+  padding-right: 2em;
+}
+.textarea-holder .button {
+  position: absolute;
+  right: -2px;
+  top: 0;
+}
+.timer-trigger {
+  border-radius: 4px;
+  color: var(--main-color);
+  padding: 6px 14px;
+  background-color: #fff;
+  border-style: solid;
+  border-width: 1px;
+  border-color: #dbdbdb;
+  position: relative;
+}
+.timer-trigger label {
+  line-height: 2;
+}
+.timer-trigger > .control:first-child {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  z-index: 10;
+}
+.timer-trigger .columns {
+  margin-top: -0.25rem;
+  margin-right: -0.25rem;
+  margin-top: -0.25rem;
+  margin-bottom: -0.25rem;
+}
+.timer-trigger .column {
+  padding: 0.25rem;
+}
+</style>

@@ -68,3 +68,29 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scoped>
+.doubleclick-button {
+  position: relative;
+}
+
+.doubleclick-button-message {
+  position: absolute;
+  right: 100%;
+  margin-right: 1em;
+  background: var(--main-background-color);
+  border-style: solid;
+  border-color: #dbdbdb;
+  border-width: 1px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+}
+
+.doubleclick-button-timout-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  display: block;
+  height: 0;
+  border-top: 2px solid;
+}
+</style>

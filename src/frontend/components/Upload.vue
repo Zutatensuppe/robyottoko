@@ -72,3 +72,19 @@ export default defineComponent({
 });
 </script>
 
+<style scoped>
+.upload {
+  position: relative;
+  display: inline-block;
+  vertical-align: text-bottom;
+}
+.upload .progress {
+  height: 2px;
+  position: absolute;
+  bottom: 1px;
+  left: 1px;
+  right: 1px;
+  display: block;
+  border-radius: 0 0 var(--button-border-radius) var(--button-border-radius);
+}
+</style>
