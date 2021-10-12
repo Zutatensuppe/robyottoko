@@ -1,4 +1,46 @@
-@import "../style-widgets.css";
 @import "../style-pages.css";
 
 #main { padding: 0; }
+
+/* widget: sr */
+ol {
+  color: #000;
+  list-style: none;
+  margin: 0;
+  padding: 0
+}
+
+ol li {
+  padding: .5em 1em;
+  border: solid 1px #444;
+  display: grid;
+  grid-template-areas: "title title"
+                           "meta vote";
+  grid-template-columns: auto 150px;
+}
+
+ol li .title {
+  font-size: 1.2em;
+  font-weight: bold;
+  grid-area: title;
+  margin-bottom: 5px;
+}
+
+ol li .meta {
+  grid-area: meta;
+  align-self: end;
+}
+
+ol li .vote {
+  font-size: 24px;
+  text-align: right;
+  grid-area: vote;
+}
+
+.playing {
+  background: #d0d0d0;
+}
+
+.next {
+  background: #7b756e;
+}
