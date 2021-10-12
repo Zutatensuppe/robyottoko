@@ -379,8 +379,6 @@ export default defineComponent({
 </script>
 
 <style>
-@import "../style-pages.scss";
-
 .square {
   display: inline-block;
   padding: 1px;

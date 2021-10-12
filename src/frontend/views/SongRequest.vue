@@ -515,9 +515,7 @@ export default defineComponent({
 });
 </script>
 
-<style>
-@import "../style-pages.scss";
-
+<style scoped>
 .table .tag {
   cursor: pointer;
 }

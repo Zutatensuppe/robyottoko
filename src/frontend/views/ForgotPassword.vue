@@ -73,7 +73,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style>
-@import "../style-pages.scss";
-</style>

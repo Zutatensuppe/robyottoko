@@ -34,6 +34,8 @@ import SongRequestPlaylistEditor from "./components/SongRequest/PlaylistEditor.v
 import SongRequestTagsEditor from "./components/SongRequest/TagsEditor.vue";
 import SongRequestHelp from "./components/SongRequest/Help.vue";
 
+import "./style.css"
+
 const run = async () => {
   const router = VueRouter.createRouter({
     history: VueRouter.createWebHistory(),

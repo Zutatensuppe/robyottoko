@@ -398,9 +398,6 @@ export default defineComponent({
 </script>
 
 
-<style>
-@import "../style-pages.scss";
-</style>
 <style scoped>
 .col-triggers {
   max-width: 200px;
