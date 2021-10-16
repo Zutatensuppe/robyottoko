@@ -1,5 +1,3 @@
-import WsClient from '../WsClient.js'
-
 export default {
   template: `
     <div class="big" ref="result_text" v-if="settings">
@@ -31,11 +29,10 @@ export default {
       </table>
     </div>`,
   props: {
-    conf: Object,
+    ws: Object,
   },
   data() {
     return {
-      ws: null,
       status: '',
       textTimeoutMs: 10000,
 
@@ -238,11 +235,6 @@ export default {
     },
   },
   async mounted() {
-    this.ws = new WsClient(
-      this.conf.wsBase + '/speech-to-text',
-      this.conf.widgetToken
-    )
-
     this.ws.onMessage('translated', (data) => {
       this.recognizedText = data.in
       this.translatedText = data.out

@@ -155,10 +155,8 @@ class GeneralModule {
         res.send(await fn.render('widget.twig', {
           title: 'Media Widget',
           page: 'media',
-          page_data: {
-            wsBase: this.wss.connectstring(),
-            widgetToken: req.params.widget_token,
-          },
+          wsUrl: `${this.wss.connectstring()}/${this.name}`,
+          widgetToken: req.params.widget_token,
         }))
       },
     }

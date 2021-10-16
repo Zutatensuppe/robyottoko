@@ -17,12 +17,12 @@ export default class WsWrapper {
     this.addr = addr
     this.protocols = protocols
 
-    this.onopen = () => {}
-    this.onclose = () => {}
-    this.onmessage = () => {}
+    this.onopen = () => { }
+    this.onclose = () => { }
+    this.onmessage = () => { }
   }
 
-  send (txt) {
+  send(txt) {
     if (this.handle) {
       this.handle.send(txt)
     } else {

@@ -1,5 +1,3 @@
-import WsClient from '../WsClient.js'
-
 const touchPoint = (/** @type TouchEvent */ evt) => {
   var bcr = evt.target.getBoundingClientRect();
   return {
@@ -133,7 +131,7 @@ export default {
   </div>
 </div>`,
   props: {
-    conf: Object,
+    ws: Object,
   },
   data() {
     return {
@@ -364,10 +362,6 @@ export default {
     const opts = window.localStorage.getItem('drawcastOpts')
     this.opts = opts ? JSON.parse(opts) : { canvasBg: 'transparent' }
 
-    this.ws = new WsClient(
-      this.conf.wsBase + '/drawcast',
-      this.conf.widgetToken
-    )
     this.ws.onMessage('init', (data) => {
       // submit button may not be empty
       this.submitButtonText = data.settings.submitButtonText || 'Submit'

@@ -11,14 +11,13 @@
   <div id="app"></div>
   <script type="module">
   import Page from "/static/widgets/{{ page }}.js"
-  new Vue({
-    el: '#app',
-    render: (h) => h(Page, {
-      props: {
-        conf: {{ page_data|json_encode|raw }},
-      },
-    }),
-  })
+  import WsClient from "/static/WsClient.js"
+
+  const ws = new WsClient(
+    {{ wsUrl|json_encode|raw }},
+    {{ widgetToken|json_encode|raw }},
+  )
+  new Vue({ el: '#app', render: (h) => h(Page, { props: { ws: ws } }) })
   </script>
 </div>
 </body>

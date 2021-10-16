@@ -47,11 +47,11 @@ export default class WsClient extends WsWrapper {
     try {
       const d = JSON.parse(data)
       if (d.event) {
-        return {event: d.event, data: d.data || null}
+        return { event: d.event, data: d.data || null }
       }
     } catch {
     }
-    return {event: null, data: null}
+    return { event: null, data: null }
   }
 
   _dispatch(type, tag, ...args) {

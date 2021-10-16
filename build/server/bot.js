@@ -2488,10 +2488,8 @@ class GeneralModule {
         res.send(await fn.render('widget.twig', {
           title: 'Media Widget',
           page: 'media',
-          page_data: {
-            wsBase: this.wss.connectstring(),
-            widgetToken: req.params.widget_token,
-          },
+          wsUrl: `${this.wss.connectstring()}/${this.name}`,
+          widgetToken: req.params.widget_token,
         }));
       },
     }
@@ -2721,10 +2719,8 @@ class SongrequestModule {
         res.send(await fn.render('widget.twig', {
           title: 'Song Request Widget',
           page: 'sr',
-          page_data: {
-            wsBase: this.wss.connectstring(),
-            widgetToken: req.params.widget_token,
-          },
+          wsUrl: `${this.wss.connectstring()}/${this.name}`,
+          widgetToken: req.params.widget_token,
         }));
       },
     }
@@ -3785,10 +3781,8 @@ class SpeechToTextModule {
         res.send(await fn.render('widget.twig', {
           title: 'Speech to Text Widget',
           page: 'speech-to-text',
-          page_data: {
-            wsBase: this.wss.connectstring(),
-            widgetToken: req.params.widget_token,
-          },
+          wsUrl: `${this.wss.connectstring()}/${this.name}`,
+          widgetToken: req.params.widget_token,
         }));
       },
     }
@@ -3947,20 +3941,16 @@ class DrawcastModule {
         res.send(await fn.render('widget.twig', {
           title: 'Drawcast Widget',
           page: 'drawcast_receive',
-          page_data: {
-            wsBase: this.wss.connectstring(),
-            widgetToken: req.params.widget_token,
-          },
+          wsUrl: `${this.wss.connectstring()}/${this.name}`,
+          widgetToken: req.params.widget_token,
         }));
       },
       'drawcast_draw': async (req, res, next) => {
         res.send(await fn.render('widget.twig', {
           title: 'Drawcast Widget',
           page: 'drawcast_draw',
-          page_data: {
-            wsBase: this.wss.connectstring(),
-            widgetToken: req.params.widget_token,
-          },
+          wsUrl: `${this.wss.connectstring()}/${this.name}`,
+          widgetToken: req.params.widget_token,
         }));
       },
     }

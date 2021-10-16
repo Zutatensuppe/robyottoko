@@ -1,9 +1,7 @@
-import WsClient from '../WsClient.js'
-
 export default {
   template: `<div id="app"><div v-if="imgstyle" :style="imgstyle"></div></div>`,
   props: {
-    conf: Object,
+    ws: Object,
   },
   data() {
     return {
@@ -83,10 +81,6 @@ export default {
     },
   },
   async mounted() {
-    this.ws = new WsClient(
-      this.conf.wsBase + '/drawcast',
-      this.conf.widgetToken
-    )
     this.ws.onMessage('init', (data) => {
       // submit button may not be empty
       this.displayDuration = data.settings.displayDuration

@@ -1,6 +1,5 @@
 import Youtube from '../components/youtube.js'
 import ResponsiveImage from '../components/responsive-image.js'
-import WsClient from '../WsClient.js'
 
 export default {
   components: {
@@ -8,7 +7,7 @@ export default {
     ResponsiveImage,
   },
   props: {
-    conf: Object,
+    ws: Object,
   },
   data() {
     return {
@@ -21,7 +20,6 @@ export default {
           filename: '',
         },
       },
-      ws: null,
     }
   },
   template: `
@@ -120,10 +118,6 @@ export default {
     }
   },
   mounted() {
-    this.ws = new WsClient(
-      this.conf.wsBase + '/sr',
-      this.conf.widgetToken
-    )
     this.ws.onMessage('settings', (data) => {
       this.settings = data.settings
     })

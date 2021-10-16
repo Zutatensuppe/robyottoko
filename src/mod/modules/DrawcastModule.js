@@ -105,20 +105,16 @@ class DrawcastModule {
         res.send(await fn.render('widget.twig', {
           title: 'Drawcast Widget',
           page: 'drawcast_receive',
-          page_data: {
-            wsBase: this.wss.connectstring(),
-            widgetToken: req.params.widget_token,
-          },
+          wsUrl: `${this.wss.connectstring()}/${this.name}`,
+          widgetToken: req.params.widget_token,
         }))
       },
       'drawcast_draw': async (req, res, next) => {
         res.send(await fn.render('widget.twig', {
           title: 'Drawcast Widget',
           page: 'drawcast_draw',
-          page_data: {
-            wsBase: this.wss.connectstring(),
-            widgetToken: req.params.widget_token,
-          },
+          wsUrl: `${this.wss.connectstring()}/${this.name}`,
+          widgetToken: req.params.widget_token,
         }))
       },
     }

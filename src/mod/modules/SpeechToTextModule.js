@@ -77,10 +77,8 @@ class SpeechToTextModule {
         res.send(await fn.render('widget.twig', {
           title: 'Speech to Text Widget',
           page: 'speech-to-text',
-          page_data: {
-            wsBase: this.wss.connectstring(),
-            widgetToken: req.params.widget_token,
-          },
+          wsUrl: `${this.wss.connectstring()}/${this.name}`,
+          widgetToken: req.params.widget_token,
         }))
       },
     }

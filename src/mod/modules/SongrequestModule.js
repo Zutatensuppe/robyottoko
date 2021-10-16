@@ -89,10 +89,8 @@ class SongrequestModule {
         res.send(await fn.render('widget.twig', {
           title: 'Song Request Widget',
           page: 'sr',
-          page_data: {
-            wsBase: this.wss.connectstring(),
-            widgetToken: req.params.widget_token,
-          },
+          wsUrl: `${this.wss.connectstring()}/${this.name}`,
+          widgetToken: req.params.widget_token,
         }))
       },
     }

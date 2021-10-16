@@ -1,11 +1,10 @@
-import WsClient from '../WsClient.js'
 import fn from '../fn.js'
 
 const TIME_BETWEEN_MEDIA = 100
 export default {
   template: `<div id="app"><div v-if="imgstyle" :style="imgstyle"></div></div>`,
   props: {
-    conf: Object,
+    ws: Object,
   },
   data() {
     return {
@@ -100,10 +99,6 @@ export default {
     },
   },
   async mounted() {
-    this.ws = new WsClient(
-      this.conf.wsBase + '/general',
-      this.conf.widgetToken
-    )
     this.ws.onMessage('init', (data) => {
       this.settings = data.settings
     })
