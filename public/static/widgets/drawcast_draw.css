@@ -1,14 +1,20 @@
 @import "../font-awesome-4.7.0/css/font-awesome.min.css";
 
+:root {
+  /* --bg-white: #f5f2ed; */
+  --bg-white: white;
+}
+
 body, input, button {
   font-family: monospace;
+  background: var(--bg-white);
 }
 canvas {
   border: solid 1px black;
   margin-bottom: .5em;
 }
 .bg-white {
-  background: white;
+  background: var(--bg-white);
 }
 
 hr {
