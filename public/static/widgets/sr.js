@@ -31,7 +31,9 @@ export default {
     <div class="player video-16-9">
       <responsive-image class="hide-video" v-if="hidevideo && settings.hideVideoImage.file" :src="settings.hideVideoImage.file" />
       <div class="hide-video" v-else-if="hidevideo"></div>
-      <progress max="1" :value="progress" class="progress" v-if="settings.showProgressBar"></progress>
+      <div class="progress" v-if="settings.showProgressBar">
+        <div class="progress-value" :style="progressValueStyle"></div>
+      </div>
       <youtube ref="youtube" @ended="ended" />
     </div>
     <ol class="list">
@@ -69,6 +71,11 @@ export default {
   computed: {
     player() {
       return this.$refs.youtube
+    },
+    progressValueStyle() {
+      return {
+        width: `${(this.progress * 100)}%`,
+      }
     },
     filteredPlaylist() {
       if (this.filter.tag === '') {
