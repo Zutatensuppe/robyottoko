@@ -19,38 +19,36 @@ export default {
           file: '',
           filename: '',
         },
+        customCss: '',
       },
     }
   },
   template: `
-<div id="app" style="overflow: hidden">
-  <div id="main" ref="main">
-    <div id="player" class="video-16-9">
-      <responsive-image class="hidevideo" v-if="hidevideo && settings.hideVideoImage.file" :src="settings.hideVideoImage.file" />
-      <div class="hidevideo" v-else-if="hidevideo"></div>
+  <div class="wrapper">
+    <div class="player video-16-9">
+      <responsive-image class="hide-video" v-if="hidevideo && settings.hideVideoImage.file" :src="settings.hideVideoImage.file" />
+      <div class="hide-video" v-else-if="hidevideo"></div>
       <youtube ref="youtube" @ended="ended" />
     </div>
-    <div id="playlist">
-      <ol>
-        <li
-          v-for="(item, idx) in playlist"
-          :class="idx === 0 ? 'playing' : 'next'"
-          v-if="!isFilteredOut(item)"
-        >
-          <div class="title">{{ item.title || item.yt }}</div>
-          <div class="meta">
-            requested by {{ item.user }},
-            played {{ item.plays }} time{{ item.plays === 1 ? '' : 's' }}
-          </div>
-          <div class="rgt vote">
-            <i class="fa fa-thumbs-up"/> {{ item.goods }}
-            <i class="fa fa-thumbs-down"/> {{ item.bads }}
-          </div>
-        </li>
-      </ol>
-    </div>
+    <ol class="list">
+      <li
+        v-for="(item, idx) in playlist"
+        class="item"
+        :class="idx === 0 ? 'playing' : 'not-playing'"
+        v-if="!isFilteredOut(item)"
+      >
+        <div class="title">{{ item.title || item.yt }}</div>
+        <div class="meta">
+          <span class="meta-user">requested by {{ item.user }}</span>
+          <span class="meta-plays">played {{ item.plays }} time{{ item.plays === 1 ? '' : 's' }}</span>
+        </div>
+        <div class="vote">
+          <span class="vote-up"><i class="fa fa-thumbs-up"/> {{ item.goods }}</span>
+          <span class="vote-down"><i class="fa fa-thumbs-down"/> {{ item.bads }}</span>
+        </div>
+      </li>
+    </ol>
   </div>
-</div>
 `,
   watch: {
     playlist: function (newVal, oldVal) {
@@ -115,18 +113,31 @@ export default {
     },
     adjustVolume() {
       this.player.setVolume(this.settings.volume)
+    },
+    applySettings(settings) {
+      if (this.settings.customCss !== settings.customCss) {
+        let el = document.getElementById('customCss')
+        if (el) {
+          el.parentElement.removeChild(el)
+        }
+        el = document.createElement("style")
+        el.id = 'customCss'
+        el.textContent = settings.customCss
+        document.head.appendChild(el)
+      }
+      this.settings = settings
     }
   },
   mounted() {
     this.ws.onMessage('settings', (data) => {
-      this.settings = data.settings
+      this.applySettings(data.settings)
     })
     this.ws.onMessage('volume', (data) => {
       this.settings.volume = data.settings.volume
       this.adjustVolume()
     })
     this.ws.onMessage(['onEnded', 'prev', 'skip', 'remove', 'clear', 'move'], (data) => {
-      this.settings = data.settings
+      this.applySettings(data.settings)
       const oldId = this.filteredPlaylist.length > 0 ? this.filteredPlaylist[0].id : null
       this.filter = data.filter
       this.playlist = data.playlist
@@ -136,7 +147,7 @@ export default {
       }
     })
     this.ws.onMessage(['filter'], (data) => {
-      this.settings = data.settings
+      this.applySettings(data.settings)
       const oldId = this.filteredPlaylist.length > 0 ? this.filteredPlaylist[0].id : null
       this.filter = data.filter
       this.playlist = data.playlist
@@ -170,12 +181,12 @@ export default {
       'shuffle',
       'tags',
     ], (data) => {
-      this.settings = data.settings
+      this.applySettings(data.settings)
       this.filter = data.filter
       this.playlist = data.playlist
     })
     this.ws.onMessage(['add', 'init'], (data) => {
-      this.settings = data.settings
+      this.applySettings(data.settings)
       this.filter = data.filter
       this.playlist = data.playlist
       if (!this.player.playing()) {

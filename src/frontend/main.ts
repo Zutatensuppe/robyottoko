@@ -14,9 +14,9 @@ import SpeechToText from './views/SpeechToText.vue'
 import PasswordReset from './views/PasswordReset.vue'
 import ForgotPassword from './views/ForgotPassword.vue'
 
-
 import draggable from "vuedraggable";
 import Upload from "./components/Upload.vue";
+import Codearea from "./components/Codearea.vue";
 import DurationInput from "./components/DurationInput.vue";
 import Player from "./components/Player.vue";
 import Slider from "./components/Slider.vue";
@@ -135,11 +135,11 @@ const run = async () => {
     document.title = `${to.meta.title}`
     next()
   })
-
   const app = Vue.createApp(App)
   app.config.globalProperties.$conf = conf
   app.config.globalProperties.$me = me
   app.use(router)
+  app.component('codearea', Codearea)
   app.component('doubleclick-button', DoubleclickButton)
   app.component('draggable', draggable)
   app.component('duration-input', DurationInput)

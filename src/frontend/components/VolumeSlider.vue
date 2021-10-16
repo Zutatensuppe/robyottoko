@@ -14,7 +14,6 @@ import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "volume-slider",
-  template: ``,
   props: {
     modelValue: {
       required: true,

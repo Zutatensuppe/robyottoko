@@ -1,5 +1,5 @@
 export default {
-  template: `<div id="app"><div v-if="imgstyle" :style="imgstyle"></div></div>`,
+  template: `<div v-if="imgstyle" :style="imgstyle"></div>`,
   props: {
     ws: Object,
   },

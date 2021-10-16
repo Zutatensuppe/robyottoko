@@ -43,6 +43,7 @@ class SongrequestModule {
           file: '',
           filename: '',
         },
+        customCss: '',
       },
       playlist: [],
       stacks: {},
@@ -62,6 +63,10 @@ class SongrequestModule {
         file: '',
         filename: '',
       },
+      customCss: '',
+    }
+    if (!this.data.settings.customCss) {
+      this.data.settings.customCss = ''
     }
   }
 
@@ -191,6 +196,7 @@ class SongrequestModule {
       'ctrl': (ws, { ctrl, args }) => {
         switch (ctrl) {
           case 'volume': this.volume(...args); break;
+          case 'customCss': this.customCss(...args); break;
           case 'pause': this.pause(); break;
           case 'unpause': this.unpause(); break;
           case 'loop': this.loop(); break;
@@ -476,6 +482,12 @@ class SongrequestModule {
     this.data.settings.volume = parseInt(`${vol}`, 10)
     this.save()
     this.updateClients('volume')
+  }
+
+  customCss(customCss) {
+    this.data.settings.customCss = customCss
+    this.save()
+    this.updateClients('settings')
   }
 
   pause() {
