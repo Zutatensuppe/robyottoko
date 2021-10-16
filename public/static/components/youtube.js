@@ -57,6 +57,23 @@ export default {
     this.id = `yt-${Math.floor(Math.random() * 99 + 1)}-${new Date().getTime()}`
   },
   methods: {
+    getDuration() {
+      if (this.yt) {
+        return this.yt.getDuration()
+      }
+      return 0
+    },
+    getCurrentTime() {
+      if (this.yt) {
+        return this.yt.getCurrentTime()
+      }
+      return 0
+    },
+    getProgress() {
+      const d = this.getDuration()
+      const c = this.getCurrentTime()
+      return d ? c / d : 0
+    },
     stop() {
       if (this.yt) {
         this.yt.stopVideo()

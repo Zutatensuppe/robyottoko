@@ -20,7 +20,10 @@ export default {
           filename: '',
         },
         customCss: '',
+        showProgressBar: false,
       },
+      progress: 0,
+      progressInterval: null,
     }
   },
   template: `
@@ -28,6 +31,7 @@ export default {
     <div class="player video-16-9">
       <responsive-image class="hide-video" v-if="hidevideo && settings.hideVideoImage.file" :src="settings.hideVideoImage.file" />
       <div class="hide-video" v-else-if="hidevideo"></div>
+      <progress max="1" :value="progress" class="progress" v-if="settings.showProgressBar"></progress>
       <youtube ref="youtube" @ended="ended" />
     </div>
     <ol class="list">
@@ -112,7 +116,9 @@ export default {
       }
     },
     adjustVolume() {
-      this.player.setVolume(this.settings.volume)
+      if (this.player) {
+        this.player.setVolume(this.settings.volume)
+      }
     },
     applySettings(settings) {
       if (this.settings.customCss !== settings.customCss) {
@@ -125,16 +131,25 @@ export default {
         el.textContent = settings.customCss
         document.head.appendChild(el)
       }
+      if (this.settings.showProgressBar !== settings.showProgressBar) {
+        if (this.progressInterval) {
+          window.clearInterval(this.progressInterval)
+        }
+        if (settings.showProgressBar) {
+          this.progressInterval = window.setInterval(() => {
+            if (this.player) {
+              this.progress = this.player.getProgress()
+            }
+          }, 500);
+        }
+      }
       this.settings = settings
+      this.adjustVolume()
     }
   },
   mounted() {
     this.ws.onMessage('settings', (data) => {
       this.applySettings(data.settings)
-    })
-    this.ws.onMessage('volume', (data) => {
-      this.settings.volume = data.settings.volume
-      this.adjustVolume()
     })
     this.ws.onMessage(['onEnded', 'prev', 'skip', 'remove', 'clear', 'move'], (data) => {
       this.applySettings(data.settings)

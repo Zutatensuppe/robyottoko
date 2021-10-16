@@ -146,10 +146,7 @@
             <tr>
               <td><code>settings.volume</code></td>
               <td>
-                <volume-slider
-                  v-model="settings.volume"
-                  @update:modelValue="onVolumeChange"
-                />
+                <volume-slider v-model="settings.volume" @update:modelValue="sendSettings" />
               </td>
               <td>Base volume for all songs played</td>
             </tr>
@@ -181,12 +178,16 @@
               <td>Image to display when a video is hidden.</td>
             </tr>
             <tr>
+              <td><code>settings.showProgressBar</code></td>
+              <td>
+                <input type="checkbox" v-model="settings.showProgressBar" @update:modelValue="sendSettings" />
+              </td>
+              <td>Show a progress bar in the bottom part of the video in the widget.</td>
+            </tr>
+            <tr>
               <td><code>settings.customCss</code></td>
               <td>
-                <codearea
-                  v-model="settings.customCss"
-                  @update:modelValue="onCustomCssChange"
-                ></codearea>
+                <codearea v-model="settings.customCss" @update:modelValue="sendSettings"></codearea>
               </td>
               <td>
                 <p>Classes that can be used for styling:</p>
@@ -315,20 +316,6 @@ body { font-family: 'Shadows into Light'; font-size: 30px; }`
     inited: false,
 
     tab: "playlist", // playlist|help|import|tags
-
-    // hacky: list of volumeChanges initialized by self
-    // volume change is a ctrl sent to server without directly
-    // changing anything. only when the response from server
-    // arrives will the volume change be made. when that change is
-    // made, the volume slider would jump (if many volume changes
-    // are made in quick succession, this looks and feels choppy)
-    // so we store our local volume changes, and if a volume change
-    // arrives from server which corresponds to our local one, we
-    // do not change the VISUAL volume level, as it should already
-    // be changed... should be solved smarter (send maybe send some
-    // id with each request and see if WE sent the request or another)
-    volumeChanges: [],
-
     importPlaylist: "",
   }),
   computed: {
@@ -392,27 +379,22 @@ body { font-family: 'Shadows into Light'; font-size: 30px; }`
     },
   },
   methods: {
+    sendSettings() {
+      this.sendCtrl("settings", [ this.settings ]);
+    },
     hideVideoImageRemoved() {
-      this.sendCtrl("settings", [
-        {
-          volume: this.settings.volume,
-          hideVideoImage: {
-            filename: "",
-            file: "",
-          },
-        },
-      ]);
+      this.settings.hideVideoImage = {
+        filename: '',
+        file: '',
+      }
+      this.sendSettings()
     },
     hideVideoImageUploaded(file: UploadedFile) {
-      this.sendCtrl("settings", [
-        {
-          volume: this.settings.volume,
-          hideVideoImage: {
-            filename: file.originalname,
-            file: file.filename,
-          },
-        },
-      ]);
+      this.settings.hideVideoImage = {
+        filename: file.originalname,
+        file: file.filename,
+      }
+      this.sendSettings()
     },
     onTagUpdated(evt) {
       this.updateTag(evt[0], evt[1]);
@@ -489,13 +471,6 @@ body { font-family: 'Shadows into Light'; font-size: 30px; }`
     adjustVolume(volume) {
       this.player.setVolume(volume);
     },
-    onVolumeChange(volume) {
-      this.volumeChanges.push(volume);
-      this.sendCtrl("volume", [volume]);
-    },
-    onCustomCssChange(customCss) {
-      this.sendCtrl("customCss", [customCss]);
-    },
     updateTag(oldTag, newTag) {
       if (oldTag === newTag) {
         return;
@@ -509,19 +484,6 @@ body { font-family: 'Shadows into Light'; font-size: 30px; }`
       this.ws = new WsClient(this.$conf.wsBase + "/sr", this.$me.token);
       this.ws.onMessage("settings", (data) => {
         this.settings = data.settings;
-      });
-      this.ws.onMessage("volume", (data) => {
-        // this assumes that all volume changes are done by us
-        // otherwise this would probably fail ;C
-        if (this.volumeChanges.length > 0) {
-          const firstChange = this.volumeChanges.shift();
-          if (firstChange === data.settings.volume) {
-            this.adjustVolume(data.settings.volume);
-            return;
-          }
-        }
-        this.settings.volume = parseInt(`${data.settings.volume}`, 10);
-        this.adjustVolume(this.settings.volume);
       });
       this.ws.onMessage(["pause"], (data) => {
         if (this.player.playing()) {
