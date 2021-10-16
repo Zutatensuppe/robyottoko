@@ -4,6 +4,7 @@ nodemon \
   --delay 2 \
   -x "node --experimental-specifier-resolution=node --loader ts-node/esm" \
   --max-old-space-size=128 \
+  -w src \
   src/bot.js \
   -e js,ts \
   --trace-warnings \
