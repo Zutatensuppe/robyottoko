@@ -1,13 +1,10 @@
 @import "../font-awesome-4.7.0/css/font-awesome.min.css";
 
 body {
+  overflow: hidden;
   margin: 0;
   font-size: 15px;
   font-family: Verdana, Arial, Helvetica, sans-serif;
-}
-
-.wrapper {
-  overflow: hidden;
 }
 
 .video-16-9 {
@@ -97,3 +94,7 @@ body {
 .not-playing {
   background: #747474;
 }
+
+
+.title-orig { }
+.title-dupl { display: none; }

@@ -43,7 +43,10 @@ export default {
         :class="idx === 0 ? 'playing' : 'not-playing'"
         v-if="!isFilteredOut(item)"
       >
-        <div class="title">{{ item.title || item.yt }}</div>
+        <div class="title">
+          <span class="title-content title-orig">{{ item.title || item.yt }}</span>
+          <span class="title-content title-dupl">{{ item.title || item.yt }}</span>
+        </div>
         <div class="meta">
           <span class="meta-user">requested by {{ item.user }}</span>
           <span class="meta-plays">played {{ item.plays }} time{{ item.plays === 1 ? '' : 's' }}</span>
