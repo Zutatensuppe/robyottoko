@@ -30,9 +30,10 @@ import Youtube from "./components/Youtube.vue";
 import CommandsCommandEdit from "./components/Commands/CommandEdit.vue";
 import CommandsCountdownEdit from "./components/Commands/CountdownEdit.vue";
 
-import SongRequestPlaylistEditor from "./components/SongRequest/PlaylistEditor.vue";
-import SongRequestTagsEditor from "./components/SongRequest/TagsEditor.vue";
 import SongRequestHelp from "./components/SongRequest/Help.vue";
+import SongRequestPlaylistEditor from "./components/SongRequest/PlaylistEditor.vue";
+import SongRequestSettings from "./components/SongRequest/Settings.vue";
+import SongRequestTagsEditor from "./components/SongRequest/TagsEditor.vue";
 
 import "./style.css"
 
@@ -157,6 +158,7 @@ const run = async () => {
   // songrequest - maybe dont register these globally?
   app.component('playlist-editor', SongRequestPlaylistEditor)
   app.component('tags-editor', SongRequestTagsEditor)
+  app.component('song-request-settings', SongRequestSettings)
   app.component('help', SongRequestHelp)
   app.mount('#app')
 }
