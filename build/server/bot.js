@@ -165,8 +165,8 @@ const shuffle = (array) => {
     return array;
 };
 
-const __filename$7 = fileURLToPath(import.meta.url);
-const __dirname$1 = dirname(__filename$7);
+const __filename$6 = fileURLToPath(import.meta.url);
+const __dirname$1 = dirname(__filename$6);
 
 // error | info | log | debug
 const logLevel = config?.log?.level || 'info';
@@ -192,7 +192,7 @@ const logger = (filename, ...pre) => {
   }
 };
 
-const log$7 = logger(__filename$7);
+const log$7 = logger(__filename$6);
 
 function mimeToExt(/** @type string */ mime) {
   if (/image\//.test(mime)) {
@@ -720,9 +720,9 @@ function ModuleManager() {
   }
 }
 
-const __filename$6 = fileURLToPath(import.meta.url);
+const __filename$5 = fileURLToPath(import.meta.url);
 
-const log$6 = logger(__filename$6);
+const log$6 = logger(__filename$5);
 
 class WebSocketServer {
   constructor(
@@ -830,9 +830,9 @@ class WebSocketServer {
   }
 }
 
-const __filename$5 = fileURLToPath(import.meta.url);
+const __filename$4 = fileURLToPath(import.meta.url);
 
-const log$5 = logger(__filename$5);
+const log$5 = logger(__filename$4);
 
 class Db {
   constructor(dbConf) {
@@ -1268,10 +1268,10 @@ function Variables(
   }
 }
 
-const __filename$4 = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename$4);
+const __filename$3 = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename$3);
 
-const log$3 = fn.logger(__filename$4);
+const log$3 = fn.logger(__filename$3);
 
 class WebServer {
   constructor(
@@ -1814,10 +1814,6 @@ class WebServer {
   }
 }
 
-const __filename$3 = fileURLToPath(import.meta.url);
-
-logger(__filename$3);
-
 const TABLE$2 = 'twitch_channel';
 
 function TwitchChannels(/** @type Db */ db) {
@@ -1869,6 +1865,7 @@ class TwitchClientManager {
   }
 
   async init(reason) {
+    let connectReason = reason;
     const cfg = this.cfg;
     const db = this.db;
     const user = this.user;
@@ -1963,14 +1960,18 @@ class TwitchClientManager {
         // note: this can lead to multiple messages if multiple users
         //       have the same channels set up
         const say = fn.sayFn(this.chatClient, channel.channel_name);
-        if (reason === 'init') {
-          say('⚠️ Bot connected (init) ⚠️');
-        } else if (reason === 'user_change') {
-          say('⚠️ Bot connected (user_change) ⚠️');
+        if (connectReason === 'init') {
+          say('⚠️ Bot rebooted - please restart timers...');
+        } else if (connectReason === 'user_change') {
+          say('✅ User settings updated...');
         } else {
-          say('⚠️ Bot connected (???) ⚠️');
+          say('✅ Reconnected...');
         }
       }
+
+      // set connectReason to empty, everything from now is just a reconnect
+      // due to disconnect from twitch
+      connectReason = '';
     });
 
     // connect to PubSub websocket

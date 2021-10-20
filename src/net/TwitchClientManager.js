@@ -1,5 +1,4 @@
 import tmi from 'tmi.js'
-import TwitchPubSubClient from '../services/TwitchPubSubClient.js'
 import TwitchHelixClient from '../services/TwitchHelixClient.js'
 import fn from '../fn.js'
 import Db from '../Db.js'
@@ -36,6 +35,7 @@ class TwitchClientManager {
   }
 
   async init(reason) {
+    let connectReason = reason
     const cfg = this.cfg
     const db = this.db
     const user = this.user
@@ -130,14 +130,18 @@ class TwitchClientManager {
         // note: this can lead to multiple messages if multiple users
         //       have the same channels set up
         const say = fn.sayFn(this.chatClient, channel.channel_name)
-        if (reason === 'init') {
-          say('⚠️ Bot connected (init) ⚠️')
-        } else if (reason === 'user_change') {
-          say('⚠️ Bot connected (user_change) ⚠️')
+        if (connectReason === 'init') {
+          say('⚠️ Bot rebooted - please restart timers...')
+        } else if (connectReason === 'user_change') {
+          say('✅ User settings updated...')
         } else {
-          say('⚠️ Bot connected (???) ⚠️')
+          say('✅ Reconnected...')
         }
       }
+
+      // set connectReason to empty, everything from now is just a reconnect
+      // due to disconnect from twitch
+      connectReason = ''
     })
 
     // connect to PubSub websocket
