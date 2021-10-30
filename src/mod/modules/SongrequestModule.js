@@ -864,7 +864,7 @@ class SongrequestModule {
 
   async addToPlaylist(tmpItem) {
     const idx = this.findSongIdxByYoutubeId(tmpItem.yt)
-    const insertIndex = this.findInsertIndex()
+    let insertIndex = this.findInsertIndex()
 
     if (idx < 0) {
       this.data.playlist.splice(insertIndex, 0, tmpItem)
@@ -876,10 +876,14 @@ class SongrequestModule {
       }
     }
 
-    if (insertIndex >= idx) {
+    if (insertIndex > idx) {
+      insertIndex = insertIndex - 1
+    }
+
+    if (insertIndex === idx) {
       return {
         addType: ADD_TYPE.EXISTED,
-        idx: idx,
+        idx: insertIndex,
       }
     }
 
