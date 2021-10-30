@@ -905,9 +905,13 @@ class SongrequestModule {
       }
     }
 
-    const insertIndex = this.findInsertIndex()
+    let insertIndex = this.findInsertIndex()
 
-    if (insertIndex >= idx) {
+    if (insertIndex > idx) {
+      insertIndex = insertIndex - 1
+    }
+
+    if (insertIndex === idx) {
       return {
         addType: ADD_TYPE.EXISTED,
         idx: insertIndex,
