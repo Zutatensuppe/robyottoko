@@ -1,14 +1,11 @@
 import WebSocket from 'ws'
 import { IncomingMessage } from 'http'
 import { SECOND, logger } from '../fn'
-import { fileURLToPath } from 'url'
 import ModuleManager from '../mod/ModuleManager'
-import { Module, WsConfig } from '../types'
+import { WsConfig } from '../types'
 import Auth from './Auth'
 
-const __filename = fileURLToPath(import.meta.url)
-
-const log = logger(__filename)
+const log = logger("WebSocketServer.ts")
 
 export interface Socket extends WebSocket.WebSocket {
   user_id?: number

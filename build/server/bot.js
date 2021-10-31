@@ -641,8 +641,7 @@ class ModuleManager {
     }
 }
 
-const __filename$4 = fileURLToPath(import.meta.url);
-const log$6 = logger(__filename$4);
+const log$6 = logger("WebSocketServer.ts");
 class WebSocketServer {
     constructor(moduleManager, config, auth) {
         this.moduleManager = moduleManager;
