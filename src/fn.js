@@ -7,7 +7,7 @@ import { TwingEnvironment, TwingLoaderFilesystem } from 'twing'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 
-export { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle }
+export { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove }
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)

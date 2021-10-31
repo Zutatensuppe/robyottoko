@@ -1,5 +1,6 @@
 #!/bin/sh
 
+export APP_CONFIG=config.json
 nodemon \
   --delay 2 \
   -x "node --experimental-specifier-resolution=node --loader ts-node/esm" \
@@ -8,5 +9,4 @@ nodemon \
   src/bot.js \
   -e js,ts \
   --trace-warnings \
-  --ignore public/static/ \
-  -- -c config.json
+  --ignore public/static/

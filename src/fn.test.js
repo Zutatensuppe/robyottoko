@@ -1,4 +1,4 @@
-import { joinIntoChunks, humanDuration, parseISO8601Duration, DAY, HOUR, MINUTE, SECOND, MS, parseHumanDuration } from './fn.js'
+import { arrayMove, joinIntoChunks, humanDuration, parseISO8601Duration, DAY, HOUR, MINUTE, SECOND, MS, parseHumanDuration } from './fn.js'
 
 test('joinIntoChunks', () => {
   let actual = joinIntoChunks(['hyottoko', 'van', 'megaport'], ', ', 12)
@@ -68,5 +68,15 @@ ${DAY + 5 * HOUR + 40 * MINUTE + 34 * SECOND} | ${'1d 5h 40m 34s'}
 ${2163000} | ${'36m 3s'}
 `('humanDuration $expected', ({ duration, expected }) => {
   const actual = humanDuration(duration)
+  expect(actual).toStrictEqual(expected)
+})
+
+
+test.each`
+arr                     | from | to   | expected
+${['a', 'b', 'c', 'd']} | ${2} | ${0} | ${['c', 'a', 'b', 'd']}
+${['a', 'b', 'c', 'd']} | ${0} | ${2} | ${['b', 'c', 'a', 'd']}
+`('arrayMove', ({ arr, from, to, expected }) => {
+  const actual = arrayMove(arr, from, to)
   expect(actual).toStrictEqual(expected)
 })

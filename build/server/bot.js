@@ -13,15 +13,7 @@ import SibApiV3Sdk from 'sib-api-v3-sdk';
 import tmi from 'tmi.js';
 
 const init = () => {
-  let configFile = '';
-  let last = '';
-  for (const val of process.argv) {
-    if (last === '-c') {
-      configFile = val;
-    }
-    last = val;
-  }
-
+  const configFile = process.env.APP_CONFIG || '';
   if (configFile === '') {
     process.exit(2);
   }
