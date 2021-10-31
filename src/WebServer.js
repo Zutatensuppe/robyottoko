@@ -13,7 +13,7 @@ import fn from './fn.ts'
 import Mail from './net/Mail.js'
 import Tokens from './services/Tokens.js'
 import TwitchHelixClient from './services/TwitchHelixClient.js'
-import Users from './services/Users.js'
+import Users from './services/Users.ts'
 import Variables from './services/Variables.js'
 import WebSocketServer from './net/WebSocketServer.js'
 

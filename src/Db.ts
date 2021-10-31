@@ -5,9 +5,9 @@ import { DbConfig } from './types'
 
 const log = logger('Db.ts')
 
-type Data = Record<string, any>
-type Where = Record<string, any>
-type OrderBy = Record<string, -1 | 1>[]
+export type Data = Record<string, any>
+export type Where = Record<string, any>
+export type OrderBy = Record<string, -1 | 1>[]
 
 class Db {
   private conf: DbConfig

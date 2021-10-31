@@ -1149,22 +1149,21 @@ class TwitchHelixClient {
 }
 
 const TABLE$4 = 'user';
-
-function Users(/** @type Db */ db) {
-  const get = (by) => db.get(TABLE$4, by);
-  return {
-    all: () => db.getMany(TABLE$4),
-    get,
-    getById: (id) => get({ id }),
-    save: (user) => db.upsert(TABLE$4, user, { id: user.id }),
-    getGroups: (id) => {
-      const rows = db._getMany(`
+function Users(db) {
+    const get = (by) => db.get(TABLE$4, by);
+    return {
+        all: () => db.getMany(TABLE$4),
+        get,
+        getById: (id) => get({ id }),
+        save: (user) => db.upsert(TABLE$4, user, { id: user.id }),
+        getGroups: (id) => {
+            const rows = db._getMany(`
 select g.name from user_group g inner join user_x_user_group x
 where x.user_id = ?`, [id]);
-      return rows.map(r => r.name)
-    },
-    createUser: (user) => db.insert(TABLE$4, user),
-  }
+            return rows.map(r => r.name);
+        },
+        createUser: (user) => db.insert(TABLE$4, user),
+    };
 }
 
 const TABLE$3 = 'variables';
