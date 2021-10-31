@@ -1,14 +1,15 @@
-import fn from './../fn.ts'
-import JishoOrg from './../services/JishoOrg.ts'
+import { RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import fn from './../fn'
+import JishoOrg from './../services/JishoOrg'
 
 const jishoOrgLookup = (
   // no params
 ) => async (
-  command,
-  client,
-  /** @type string */ target,
-  context,
-  /** @type string */ msg,
+  command: RawCommand,
+  client: TwitchChatClient,
+  target: string,
+  context: TwitchChatContext,
+  msg: string,
   ) => {
     const say = fn.sayFn(client, target)
     const phrase = command.args.join(' ')

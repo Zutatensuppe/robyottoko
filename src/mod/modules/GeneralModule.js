@@ -1,5 +1,5 @@
 import countdown from '../../commands/countdown.js'
-import jishoOrgLookup from '../../commands/jishoOrgLookup.js'
+import jishoOrgLookup from '../../commands/jishoOrgLookup.ts'
 import madochanCreateWord from '../../commands/madochanCreateWord.js'
 import text from '../../commands/text.js'
 import randomText from '../../commands/randomText.js'
