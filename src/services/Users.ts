@@ -2,7 +2,7 @@ import Db, { Where } from "../Db"
 
 const TABLE = 'user'
 
-interface User {
+export interface User {
   id: number
   name: string
   pass: string

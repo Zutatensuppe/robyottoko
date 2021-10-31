@@ -8,8 +8,8 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 import multer from 'multer';
 import bsqlite from 'better-sqlite3';
-import SibApiV3Sdk from 'sib-api-v3-sdk';
 import tmi from 'tmi.js';
+import SibApiV3Sdk from 'sib-api-v3-sdk';
 
 const init = () => {
     const configFile = process.env.APP_CONFIG || '';
@@ -744,62 +744,63 @@ class WebSocketServer {
     }
 }
 
+const regexp = /<<(.*?)>>|\{\{(.*?)\}\}/;
 class Sprightly {
-  async parse(file) {
-    file = file.split('\n');
-    this.fileContent = file; // register the current file content. Used in specifiying errors location
-    for (let i = 0; i < file.length; i++) {
-      this.level = i; // register the current level in file. Used in specifiying errors location
-      for (let match = file[i].match(this.regexp), result; match;) {
-        if (match[0][0] === '<') {
-          this.directory = `${match[1].trim()}.${this.options.settings['view engine']}`; // register the current file. Used in specifiying errors location
-          result = await this.read(path.join(this.options.settings.views, this.directory));
-        } else {
-          result = this.options[match[2].trim()];
-        }
-        file[i] = file[i].replace(match[0], result ? result : '');
-        match = file[i].match(this.regexp);
-      }
+    constructor() {
+        this.fileContent = [];
+        this.options = null;
+        this.level = 0;
+        this.directory = '';
     }
-    return file.join('');
-  }
-  async read(path) {
-    const file = (await promises.readFile(path)).toString();
-    return await this.parse(file);
-  }
-}Sprightly.prototype.regexp = /<<(.*?)>>|\{\{(.*?)\}\}/; // to match Sprightly syntax
-
+    async parse(pFile) {
+        const file = pFile.split('\n');
+        this.fileContent = file; // register the current file content. Used in specifiying errors location
+        for (let i = 0; i < file.length; i++) {
+            this.level = i; // register the current level in file. Used in specifiying errors location
+            for (let match = file[i].match(regexp), result; match;) {
+                if (match[0][0] === '<') {
+                    this.directory = `${match[1].trim()}.${this.options.settings['view engine']}`; // register the current file. Used in specifiying errors location
+                    result = await this.read(path.join(this.options.settings.views, this.directory));
+                }
+                else {
+                    result = this.options[match[2].trim()];
+                }
+                file[i] = file[i].replace(match[0], result ? result : '');
+                match = file[i].match(regexp);
+            }
+        }
+        return file.join('');
+    }
+    async read(path) {
+        const file = (await promises.readFile(path)).toString();
+        return await this.parse(file);
+    }
+}
 const sprightly = new Sprightly();
-
 var sprightly$1 = async (path, options, callback) => {
-  try {
-    sprightly.options = options;
-    callback(undefined, await sprightly.read(path));
-  } catch (e) {
-    console.log(e);
-    const message = `Cannot find file or directory "${sprightly.directory}" inside the views directory
+    try {
+        sprightly.options = options;
+        callback(undefined, await sprightly.read(path));
+    }
+    catch (e) {
+        console.log(e);
+        const message = `Cannot find file or directory "${sprightly.directory}" inside the views directory
         ${sprightly.level - 1 >= 0 ? `${String(sprightly.level).padStart(4, '0')}| ${sprightly.fileContent[sprightly.level - 1]}` : ''}
     >>  ${String(sprightly.level + 1).padStart(4, '0')}| ${sprightly.fileContent[sprightly.level]}
         ${sprightly.level + 1 < sprightly.fileContent.length ? `${String(sprightly.level + 2).padStart(4, '0')}| ${sprightly.fileContent[sprightly.level + 1]}` : ''}`;
-    callback(message);
-  }
+        callback(message);
+    }
 };
-
-
 // MIT License
-
 // Copyright (c) 2020 Obada Khalili
-
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-
 // The above copyright notice and this permission notice shall be included in all
 // copies or substantial portions of the Software.
-
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -1000,67 +1001,6 @@ function EventHub() {
     };
 }
 
-class Mail {
-  constructor(cfg) {
-    const defaultClient = SibApiV3Sdk.ApiClient.instance;
-    const apiKey = defaultClient.authentications['api-key'];
-    apiKey.apiKey = cfg.sendinblue_api_key;
-    this.apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-  }
-
-  sendPasswordResetMail(passwordReset) {
-    const mail = new SibApiV3Sdk.SendSmtpEmail();
-    mail.subject = "{{params.subject}}";
-    mail.htmlContent = `<html><body>
-      <h1>Hello {{params.username}}</h1>
-      <p>To reset your password for <a href="https://hyottoko.club">hyottoko.club</a>
-      click the following link:</p>
-      <p><a href="{{params.link}}">{{params.link}}</a></p>
-      </body></html>`;
-    mail.sender = { name: "Hyottoko.club", email: "noreply@hyottoko.club" };
-    mail.to = [{
-      email: passwordReset.user.email,
-      name: passwordReset.user.name,
-    }];
-    mail.params = {
-      username: passwordReset.user.name,
-      subject: "Password Reset for Hyottoko.club",
-      link: `https://hyottoko.club/password-reset?t=${passwordReset.token.token}`
-    };
-    this.send(mail);
-  }
-
-  sendRegistrationMail(registration) {
-    const mail = new SibApiV3Sdk.SendSmtpEmail();
-    mail.subject = "{{params.subject}}";
-    mail.htmlContent = `<html><body>
-      <h1>Hello {{params.username}}</h1>
-      <p>Thank you for registering an account at <a href="https://hyottoko.club">hyottoko.club</a>.</p>
-      <p>Please confirm your registration by clicking the following link:</p>
-      <p><a href="{{params.link}}">{{params.link}}</a></p>
-      </body></html>`;
-    mail.sender = { name: "Hyottoko.club", email: "noreply@hyottoko.club" };
-    mail.to = [{
-      email: registration.user.email,
-      name: registration.user.name,
-    }];
-    mail.params = {
-      username: registration.user.name,
-      subject: "User Registration on Hyottoko.club",
-      link: `https://hyottoko.club/login?t=${registration.token.token}`
-    };
-    this.send(mail);
-  }
-
-  send(mail) {
-    this.apiInstance.sendTransacEmail(mail).then(function (data) {
-      console.log('API called successfully. Returned data: ' + JSON.stringify(data));
-    }, function (error) {
-      console.error(error);
-    });
-  }
-}
-
 const TABLE$5 = 'token';
 function generateToken(length) {
     // edit the token allowed characters
@@ -1240,7 +1180,7 @@ class WebServer {
     /** @type Db */ db,
     /** @type Users */ userRepo,
     /** @type Tokens */ tokenRepo,
-    /** @type Mail */ mail,
+    mail,
     twitchChannelRepo,
     moduleManager,
     configHttp,
@@ -2049,6 +1989,67 @@ function Cache(db) {
             return row ? JSON.parse(row.value) : null;
         },
     };
+}
+
+class Mail {
+  constructor(cfg) {
+    const defaultClient = SibApiV3Sdk.ApiClient.instance;
+    const apiKey = defaultClient.authentications['api-key'];
+    apiKey.apiKey = cfg.sendinblue_api_key;
+    this.apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+  }
+
+  sendPasswordResetMail(passwordReset) {
+    const mail = new SibApiV3Sdk.SendSmtpEmail();
+    mail.subject = "{{params.subject}}";
+    mail.htmlContent = `<html><body>
+      <h1>Hello {{params.username}}</h1>
+      <p>To reset your password for <a href="https://hyottoko.club">hyottoko.club</a>
+      click the following link:</p>
+      <p><a href="{{params.link}}">{{params.link}}</a></p>
+      </body></html>`;
+    mail.sender = { name: "Hyottoko.club", email: "noreply@hyottoko.club" };
+    mail.to = [{
+      email: passwordReset.user.email,
+      name: passwordReset.user.name,
+    }];
+    mail.params = {
+      username: passwordReset.user.name,
+      subject: "Password Reset for Hyottoko.club",
+      link: `https://hyottoko.club/password-reset?t=${passwordReset.token.token}`
+    };
+    this.send(mail);
+  }
+
+  sendRegistrationMail(registration) {
+    const mail = new SibApiV3Sdk.SendSmtpEmail();
+    mail.subject = "{{params.subject}}";
+    mail.htmlContent = `<html><body>
+      <h1>Hello {{params.username}}</h1>
+      <p>Thank you for registering an account at <a href="https://hyottoko.club">hyottoko.club</a>.</p>
+      <p>Please confirm your registration by clicking the following link:</p>
+      <p><a href="{{params.link}}">{{params.link}}</a></p>
+      </body></html>`;
+    mail.sender = { name: "Hyottoko.club", email: "noreply@hyottoko.club" };
+    mail.to = [{
+      email: registration.user.email,
+      name: registration.user.name,
+    }];
+    mail.params = {
+      username: registration.user.name,
+      subject: "User Registration on Hyottoko.club",
+      link: `https://hyottoko.club/login?t=${registration.token.token}`
+    };
+    this.send(mail);
+  }
+
+  send(mail) {
+    this.apiInstance.sendTransacEmail(mail).then(function (data) {
+      console.log('API called successfully. Returned data: ' + JSON.stringify(data));
+    }, function (error) {
+      console.error(error);
+    });
+  }
 }
 
 const log$1 = fn.logger('countdown.ts');

@@ -2,7 +2,7 @@ import Db from "../Db"
 
 const TABLE = 'token'
 
-interface Token {
+export interface Token {
   user_id: number
   type: string
   token: string

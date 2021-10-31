@@ -1,5 +1,7 @@
 import { Client } from 'tmi.js'
 import { Socket } from './net/WebSocketServer'
+import { Token } from './services/Tokens'
+import { User } from './services/Users'
 import Variables from './services/Variables'
 
 type int = number
@@ -190,4 +192,19 @@ export interface BotModule {
 export interface Module {
   name: string
   getWsEvents: () => Record<string, (ws: Socket, data?: any) => any>
+}
+
+interface MailServicePasswordResetData {
+  user: User
+  token: Token
+}
+
+interface MailServiceRegistrationData {
+  user: User
+  token: Token
+}
+
+export interface MailService {
+  sendPasswordResetMail: (data: MailServicePasswordResetData) => any
+  sendRegistrationMail: (data: MailServiceRegistrationData) => any
 }

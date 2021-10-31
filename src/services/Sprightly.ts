@@ -1,13 +1,19 @@
 import path from 'path'
 import { promises as fs } from 'fs'
 
+const regexp = /<<(.*?)>>|\{\{(.*?)\}\}/
 class Sprightly {
-  async parse(file) {
-    file = file.split('\n');
+  public fileContent: string[] = []
+  public options: any = null
+  public level: number = 0
+  public directory: string = ''
+
+  async parse(pFile: string) {
+    const file = pFile.split('\n');
     this.fileContent = file; // register the current file content. Used in specifiying errors location
     for (let i = 0; i < file.length; i++) {
       this.level = i; // register the current level in file. Used in specifiying errors location
-      for (let match = file[i].match(this.regexp), result; match;) {
+      for (let match = file[i].match(regexp), result; match;) {
         if (match[0][0] === '<') {
           this.directory = `${match[1].trim()}.${this.options.settings['view engine']}`; // register the current file. Used in specifiying errors location
           result = await this.read(path.join(this.options.settings.views, this.directory));
@@ -15,21 +21,20 @@ class Sprightly {
           result = this.options[match[2].trim()];
         }
         file[i] = file[i].replace(match[0], result ? result : '');
-        match = file[i].match(this.regexp);
+        match = file[i].match(regexp);
       }
     }
     return file.join('');
   }
-  async read(path) {
+  async read(path: string) {
     const file = (await fs.readFile(path)).toString();
     return await this.parse(file);
   }
 };
-Sprightly.prototype.regexp = /<<(.*?)>>|\{\{(.*?)\}\}/; // to match Sprightly syntax
 
 const sprightly = new Sprightly();
 
-export default async (path, options, callback) => {
+export default async (path: string, options: any, callback: Function) => {
   try {
     sprightly.options = options;
     callback(undefined, await sprightly.read(path));
