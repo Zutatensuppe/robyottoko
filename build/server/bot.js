@@ -3093,6 +3093,7 @@ class SongrequestModule {
     if (this.data.playlist.length > idx) {
       if (this.data.playlist[idx].tags.includes(tag)) {
         this.data.playlist[idx].tags = this.data.playlist[idx].tags.filter(t => t !== tag);
+        console.log(this.data.playlist[idx].hidevideo);
         this.save();
         this.updateClients('tags');
       }

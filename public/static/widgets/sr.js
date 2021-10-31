@@ -161,7 +161,7 @@ export default {
     this.ws.onMessage('settings', (data) => {
       this.applySettings(data.settings)
     })
-    this.ws.onMessage(['onEnded', 'prev', 'skip', 'remove', 'clear', 'move'], (data) => {
+    this.ws.onMessage(['onEnded', 'prev', 'skip', 'remove', 'clear', 'move', 'tags'], (data) => {
       this.applySettings(data.settings)
       const oldId = this.filteredPlaylist.length > 0 ? this.filteredPlaylist[0].id : null
       this.filter = data.filter
@@ -204,7 +204,6 @@ export default {
       'playIdx',
       'resetStats',
       'shuffle',
-      'tags',
     ], (data) => {
       this.applySettings(data.settings)
       this.filter = data.filter

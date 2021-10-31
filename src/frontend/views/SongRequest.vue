@@ -364,7 +364,7 @@ export default defineComponent({
         this.player.setLoop(false);
       });
       this.ws.onMessage(
-        ["onEnded", "prev", "skip", "remove", "clear", "move"],
+        ["onEnded", "prev", "skip", "remove", "clear", "move", "tags"],
         (data) => {
           this.settings = data.settings;
           const oldId =
@@ -401,7 +401,6 @@ export default defineComponent({
           "playIdx",
           "resetStats",
           "shuffle",
-          "tags",
         ],
         (data) => {
           this.settings = data.settings;
