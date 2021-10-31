@@ -1,5 +1,5 @@
 import config from './config.ts'
-import Auth from './net/Auth'
+import Auth from './net/Auth.ts'
 import ModuleManager from './mod/ModuleManager.ts'
 import WebSocketServer from './net/WebSocketServer'
 import WebServer from './WebServer'

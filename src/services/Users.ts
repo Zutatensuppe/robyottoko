@@ -2,10 +2,8 @@ import Db, { Where } from "../Db"
 
 const TABLE = 'user'
 
-type Id = string | number
-
 interface User {
-  id: Id
+  id: number
   name: string
   pass: string
   salt: string
@@ -18,7 +16,7 @@ interface User {
 }
 
 interface UpdateUser {
-  id?: Id
+  id?: number
   name?: string
   pass?: string
   salt?: string
@@ -44,7 +42,7 @@ class Users {
     return this.db.getMany(TABLE)
   }
 
-  getById(id: Id): User | null {
+  getById(id: number): User | null {
     return this.get({ id })
   }
 
@@ -52,7 +50,7 @@ class Users {
     return this.db.upsert(TABLE, user, { id: user.id })
   }
 
-  getGroups(id: Id): string[] {
+  getGroups(id: number): string[] {
     const rows = this.db._getMany(`
 select g.name from user_group g inner join user_x_user_group x
 where x.user_id = ?`, [id])
