@@ -2,6 +2,8 @@ import fetch, { RequestInit } from 'node-fetch'
 
 type RequestMethod = 'get' | 'post' | 'get' | 'delete'
 
+export type QueryArgsData = Record<string, string | number>
+
 export function withHeaders(headers: Record<string, string>, opts: RequestInit = {}) {
   const options = opts || {}
   options.headers = (options.headers || {}) as Record<string, string>
@@ -18,7 +20,7 @@ export function asJson(data: any): RequestInit {
   }
 }
 
-export function asQueryArgs(data: Record<string, string | number>) {
+export function asQueryArgs(data: QueryArgsData) {
   const q = []
   for (let k in data) {
     const pair = [k, data[k]].map(encodeURIComponent)

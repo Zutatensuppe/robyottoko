@@ -3,7 +3,7 @@ import fn from '../../fn.ts'
 import WebServer from '../../WebServer.js'
 import WebSocketServer from '../../net/WebSocketServer.js'
 import TwitchHelixClient from '../../services/TwitchHelixClient.ts'
-import Youtube from '../../services/Youtube.js'
+import Youtube from '../../services/Youtube.ts'
 import Variables from '../../services/Variables.ts'
 
 const ADD_TYPE = {
