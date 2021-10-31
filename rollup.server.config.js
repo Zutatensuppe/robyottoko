@@ -1,5 +1,6 @@
 // rollup.config.js
 import typescript from 'rollup-plugin-typescript2';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
 
 export default {
   input: 'src/bot.js',
@@ -8,19 +9,15 @@ export default {
     format: 'es',
   },
   external: [
-    "url",
-    "path",
     "ws",
-    "crypto",
     "multer",
     "express",
     "cookie-parser",
     "tmi.js",
     "twing",
-    "fs",
     "better-sqlite3",
     "sib-api-v3-sdk",
     "node-fetch",
   ],
-  plugins: [typescript()],
+  plugins: [typescript(), nodeResolve()],
 };
