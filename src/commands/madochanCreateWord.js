@@ -1,5 +1,5 @@
 import fn from './../fn.ts'
-import Madochan from './../services/Madochan.js'
+import Madochan from './../services/Madochan.ts'
 
 const madochanCreateWord = (
   /** @type string */ model,

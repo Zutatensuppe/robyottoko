@@ -10,7 +10,7 @@ import Db from '../../Db.ts'
 import TwitchHelixClient from '../../services/TwitchHelixClient.ts'
 import WebServer from '../../WebServer.js'
 import WebSocketServer from '../../net/WebSocketServer.js'
-import Madochan from '../../services/Madochan.js'
+import Madochan from '../../services/Madochan.ts'
 import Variables from '../../services/Variables.js'
 
 const log = fn.logger('GeneralModule.js')
