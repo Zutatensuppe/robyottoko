@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# server for built files
+export APP_CONFIG=config.json
+nodemon --watch build --max-old-space-size=64 -e js build/server/bot.js
