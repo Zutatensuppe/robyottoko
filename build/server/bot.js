@@ -1060,26 +1060,40 @@ function generateToken(length) {
     }
     return b.join('');
 }
-function Tokens(db) {
-    const getByUserIdAndType = (user_id, type) => db.get(TABLE$5, { user_id, type });
-    const insert = (tokenInfo) => db.insert(TABLE$5, tokenInfo);
-    const createToken = (user_id, type) => {
+class Tokens {
+    constructor(db) {
+        this.db = db;
+    }
+    getByUserIdAndType(user_id, type) {
+        return this.db.get(TABLE$5, { user_id, type });
+    }
+    insert(tokenInfo) {
+        return this.db.insert(TABLE$5, tokenInfo);
+    }
+    createToken(user_id, type) {
         const token = generateToken(32);
         const tokenObj = { user_id, type, token };
-        insert(tokenObj);
+        this.insert(tokenObj);
         return tokenObj;
-    };
-    const getOrCreateToken = (user_id, type) => {
-        return getByUserIdAndType(user_id, type) || createToken(user_id, type);
-    };
-    return {
-        createToken,
-        getByToken: (token) => db.get(TABLE$5, { token }) || null,
-        delete: (token) => db.delete(TABLE$5, { token }),
-        getWidgetTokenForUserId: (user_id) => getOrCreateToken(user_id, 'widget'),
-        getPubTokenForUserId: (user_id) => getOrCreateToken(user_id, 'pub'),
-        generateAuthTokenForUserId: (user_id) => createToken(user_id, 'auth'),
-    };
+    }
+    getOrCreateToken(user_id, type) {
+        return this.getByUserIdAndType(user_id, type) || this.createToken(user_id, type);
+    }
+    getByToken(token) {
+        return this.db.get(TABLE$5, { token }) || null;
+    }
+    delete(token) {
+        return this.db.delete(TABLE$5, { token });
+    }
+    getWidgetTokenForUserId(user_id) {
+        return this.getOrCreateToken(user_id, 'widget');
+    }
+    getPubTokenForUserId(user_id) {
+        return this.getOrCreateToken(user_id, 'pub');
+    }
+    generateAuthTokenForUserId(user_id) {
+        return this.createToken(user_id, 'auth');
+    }
 }
 
 const log$4 = logger('TwitchHelixClient.ts');
@@ -1140,21 +1154,31 @@ class TwitchHelixClient {
 }
 
 const TABLE$4 = 'user';
-function Users(db) {
-    const get = (by) => db.get(TABLE$4, by);
-    return {
-        all: () => db.getMany(TABLE$4),
-        get,
-        getById: (id) => get({ id }),
-        save: (user) => db.upsert(TABLE$4, user, { id: user.id }),
-        getGroups: (id) => {
-            const rows = db._getMany(`
+class Users {
+    constructor(db) {
+        this.db = db;
+    }
+    get(by) {
+        return this.db.get(TABLE$4, by) || null;
+    }
+    all() {
+        return this.db.getMany(TABLE$4);
+    }
+    getById(id) {
+        return this.get({ id });
+    }
+    save(user) {
+        return this.db.upsert(TABLE$4, user, { id: user.id });
+    }
+    getGroups(id) {
+        const rows = this.db._getMany(`
 select g.name from user_group g inner join user_x_user_group x
 where x.user_id = ?`, [id]);
-            return rows.map(r => r.name);
-        },
-        createUser: (user) => db.insert(TABLE$4, user),
-    };
+        return rows.map(r => r.name);
+    }
+    createUser(user) {
+        return this.db.insert(TABLE$4, user);
+    }
 }
 
 const TABLE$3 = 'variables';

@@ -25,27 +25,50 @@ function generateToken(length: number): string {
   return b.join('')
 }
 
-function Tokens(db: Db) {
-  const getByUserIdAndType = (user_id: number, type: string): Token => db.get(TABLE, { user_id, type })
-  const insert = (tokenInfo: UpdateToken) => db.insert(TABLE, tokenInfo)
-  const createToken = (user_id: number, type: string): Token => {
+class Tokens {
+  private db: Db
+
+  constructor(db: Db) {
+    this.db = db
+  }
+
+  getByUserIdAndType(user_id: number, type: string): Token {
+    return this.db.get(TABLE, { user_id, type })
+  }
+
+  insert(tokenInfo: UpdateToken) {
+    return this.db.insert(TABLE, tokenInfo)
+  }
+
+  createToken(user_id: number, type: string): Token {
     const token = generateToken(32)
     const tokenObj: Token = { user_id, type, token }
-    insert(tokenObj)
+    this.insert(tokenObj)
     return tokenObj
   }
 
-  const getOrCreateToken = (user_id: number, type: string): Token => {
-    return getByUserIdAndType(user_id, type) || createToken(user_id, type)
+  getOrCreateToken(user_id: number, type: string): Token {
+    return this.getByUserIdAndType(user_id, type) || this.createToken(user_id, type)
   }
 
-  return {
-    createToken,
-    getByToken: (token: string): Token | null => db.get(TABLE, { token }) || null,
-    delete: (token: string) => db.delete(TABLE, { token }),
-    getWidgetTokenForUserId: (user_id: number): Token => getOrCreateToken(user_id, 'widget'),
-    getPubTokenForUserId: (user_id: number): Token => getOrCreateToken(user_id, 'pub'),
-    generateAuthTokenForUserId: (user_id: number): Token => createToken(user_id, 'auth'),
+  getByToken(token: string): Token | null {
+    return this.db.get(TABLE, { token }) || null
+  }
+
+  delete(token: string) {
+    return this.db.delete(TABLE, { token })
+  }
+
+  getWidgetTokenForUserId(user_id: number): Token {
+    return this.getOrCreateToken(user_id, 'widget')
+  }
+
+  getPubTokenForUserId(user_id: number): Token {
+    return this.getOrCreateToken(user_id, 'pub')
+  }
+
+  generateAuthTokenForUserId(user_id: number): Token {
+    return this.createToken(user_id, 'auth')
   }
 }
 

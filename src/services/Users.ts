@@ -30,20 +30,37 @@ interface UpdateUser {
   tmi_identity_client_secret?: string
 }
 
-function Users(db: Db) {
-  const get = (by: Where) => db.get(TABLE, by)
-  return {
-    all: () => db.getMany(TABLE),
-    get,
-    getById: (id: Id) => get({ id }),
-    save: (user: UpdateUser) => db.upsert(TABLE, user, { id: user.id }),
-    getGroups: (id: Id) => {
-      const rows = db._getMany(`
+class Users {
+  private db: Db
+  constructor(db: Db) {
+    this.db = db
+  }
+
+  get(by: Where): User | null {
+    return this.db.get(TABLE, by) || null
+  }
+
+  all(): User[] {
+    return this.db.getMany(TABLE)
+  }
+
+  getById(id: Id): User | null {
+    return this.get({ id })
+  }
+
+  save(user: UpdateUser) {
+    return this.db.upsert(TABLE, user, { id: user.id })
+  }
+
+  getGroups(id: Id): string[] {
+    const rows = this.db._getMany(`
 select g.name from user_group g inner join user_x_user_group x
 where x.user_id = ?`, [id])
-      return rows.map(r => r.name)
-    },
-    createUser: (user: UpdateUser) => db.insert(TABLE, user),
+    return rows.map(r => r.name)
+  }
+
+  createUser(user: UpdateUser) {
+    return this.db.insert(TABLE, user)
   }
 }
 
