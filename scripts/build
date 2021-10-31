@@ -8,11 +8,3 @@ cp -r src/templates build/server/
 
 # frontend build
 npm run vite -- build
-
-# move required files for running the bot
-mkdir build/scripts
-cp scripts/bot build/scripts/bot
-cp run build/run
-
-mkdir -p dist
-tar -czvf dist/dist.tar.gz build
