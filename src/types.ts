@@ -166,3 +166,7 @@ export interface BotModule {
   variables: Variables
   saveCommands: () => void
 }
+
+export interface Module {
+
+}

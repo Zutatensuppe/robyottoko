@@ -609,15 +609,17 @@ function Auth(userRepo, tokenRepo) {
   }
 }
 
-function ModuleManager() {
-  const instances = {};
-  return {
-    add: (userId, mod) => {
-      instances[userId] = instances[userId] || [];
-      instances[userId].push(mod);
-    },
-    all: (userId) => (instances[userId] || []),
-  }
+class ModuleManager {
+    constructor() {
+        this.instances = {};
+    }
+    add(userId, mod) {
+        this.instances[userId] = this.instances[userId] || [];
+        this.instances[userId].push(mod);
+    }
+    all(userId) {
+        return this.instances[userId] || [];
+    }
 }
 
 const __filename$4 = fileURLToPath(import.meta.url);

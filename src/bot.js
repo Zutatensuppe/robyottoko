@@ -1,6 +1,6 @@
 import config from './config.ts'
 import Auth from './net/Auth'
-import ModuleManager from './mod/ModuleManager'
+import ModuleManager from './mod/ModuleManager.ts'
 import WebSocketServer from './net/WebSocketServer'
 import WebServer from './WebServer'
 import TwitchClientManager from './net/TwitchClientManager'
