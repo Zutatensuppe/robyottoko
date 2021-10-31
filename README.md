@@ -1,5 +1,7 @@
 # Robyottoko - Twitch Bot
 
+![ci](https://github.com/Zutatensuppe/robyottoko/actions/workflows/ci.yaml/badge.svg)
+
 Robyottoko provides an interface for your twitch bots.
 
 Features are:
