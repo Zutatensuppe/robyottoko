@@ -23,3 +23,13 @@ jobs:
 
       - name: Run tests
         run: ./run tests
+
+      - name: Run build
+        run: ./run build
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: all-build-files
+          path: |
+            build
