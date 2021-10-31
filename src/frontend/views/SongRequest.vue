@@ -394,14 +394,7 @@ export default defineComponent({
         }
       });
       this.ws.onMessage(
-        [
-          "dislike",
-          "like",
-          "video",
-          "playIdx",
-          "resetStats",
-          "shuffle",
-        ],
+        ["dislike", "like", "video", "playIdx", "resetStats", "shuffle"],
         (data) => {
           this.settings = data.settings;
           this.filter = data.filter;
@@ -412,7 +405,7 @@ export default defineComponent({
         this.settings = data.settings;
         this.filter = data.filter;
         this.playlist = data.playlist;
-        if (!this.player.playing()) {
+        if (!this.inited && !this.player.playing()) {
           this.play();
         }
         this.inited = true;

@@ -24,6 +24,8 @@ export default {
       },
       progress: 0,
       progressInterval: null,
+
+      inited: false,
     }
   },
   template: `
@@ -213,9 +215,10 @@ export default {
       this.applySettings(data.settings)
       this.filter = data.filter
       this.playlist = data.playlist
-      if (!this.player.playing()) {
+      if (!this.inited && !this.player.playing()) {
         this.play()
       }
+      this.inited = true
     })
     this.ws.connect()
     this.play()
