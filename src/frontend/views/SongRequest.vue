@@ -166,8 +166,8 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import WsClient from "../WsClient.js";
-import xhr from "../xhr.js";
-import { UploadedFile, PlaylistItem } from "../../types.ts";
+import xhr from "../xhr";
+import { PlaylistItem } from "../../types";
 
 type TagInfo = { value: string; count: number };
 

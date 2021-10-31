@@ -1,5 +1,5 @@
-import config from '../config'
-import { getJson, asQueryArgs } from '../net/xhr.js'
+import config from '../config.ts'
+import { getJson, asQueryArgs } from '../net/xhr.ts'
 
 const get = async (url, args) => {
   args.key = config.modules.sr.google.api_key

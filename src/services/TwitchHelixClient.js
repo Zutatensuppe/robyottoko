@@ -1,5 +1,5 @@
 import { logger } from '../fn.js'
-import { postJson, getJson, asJson, withHeaders, asQueryArgs, requestText, requestJson } from '../net/xhr.js'
+import { postJson, getJson, asJson, withHeaders, asQueryArgs, requestText } from '../net/xhr.ts'
 
 const log = logger('TwitchHelixClient.js')
 

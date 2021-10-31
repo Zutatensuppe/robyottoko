@@ -16,7 +16,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import xhr from "../xhr.js";
+import xhr from "../xhr";
 
 export default defineComponent({
   name: "upload",

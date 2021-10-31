@@ -1,4 +1,4 @@
-import { getJson, asQueryArgs } from '../net/xhr'
+import { getJson, asQueryArgs } from '../net/xhr.ts'
 
 const searchWord = async (
   /** @type string */ keyword,

@@ -259,7 +259,7 @@
 import { defineComponent } from "vue";
 import { DrawcastData, UploadedFile } from "../../types.ts";
 import WsClient from "../WsClient.js";
-import xhr from "../xhr.js";
+import xhr from "../xhr";
 
 export default defineComponent({
   data: () => ({

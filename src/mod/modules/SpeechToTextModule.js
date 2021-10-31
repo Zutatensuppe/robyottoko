@@ -1,7 +1,6 @@
-import config from '../../config'
+import config from '../../config.ts'
 import fn from '../../fn.js'
-import { getText, asQueryArgs } from '../../net/xhr.js'
-import Variables from '../../services/Variables.js'
+import { getText, asQueryArgs } from '../../net/xhr.ts'
 
 class SpeechToTextModule {
   constructor(db, user, variables, chatClient, helixClient, storage, cache, ws, wss) {

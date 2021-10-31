@@ -1,4 +1,4 @@
-import { postJson, asJson } from '../net/xhr'
+import { postJson, asJson } from '../net/xhr.ts'
 
 /*
 interface createWordRequestData {

@@ -1,4 +1,4 @@
-import config from './config'
+import config from './config.ts'
 import Auth from './net/Auth'
 import ModuleManager from './mod/ModuleManager'
 import WebSocketServer from './net/WebSocketServer'
