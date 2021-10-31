@@ -33,4 +33,4 @@ jobs:
           automatic_release_tag: "latest"
           prerelease: false
           files: |
-            build
+            dist/dist.tar.gz

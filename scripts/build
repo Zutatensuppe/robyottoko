@@ -13,3 +13,6 @@ npm run vite -- build
 mkdir build/scripts
 cp scripts/bot build/scripts/bot
 cp run build/run
+
+mkdir -p dist
+tar -czvf dist/dist.tar.gz build
