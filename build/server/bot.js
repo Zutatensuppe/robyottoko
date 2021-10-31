@@ -2758,19 +2758,17 @@ class SongrequestModule {
   save() {
     this.storage.save(this.name, {
       filter: this.data.filter,
-      playlist: this.data.playlist.map(item => ({
-        id: item.id,
-        yt: item.yt,
-        title: item.title || '',
-        time: item.time || new Date().getTime(),
-        last_play: item.last_play || 0,
-        user: item.user || '',
-        plays: item.plays || 0,
-        skips: item.skips || 0, // hard skips
-        goods: item.goods || 0,
-        bads: item.bads || 0,
-        tags: item.tags || [],
-      })),
+      playlist: this.data.playlist.map(item => {
+        item.title = item.title || '';
+        item.time = item.time || new Date().getTime();
+        item.last_play = item.last_play || 0;
+        item.user = item.user || '';
+        item.plays = item.plays || 0;
+        item.goods = item.goods || 0;
+        item.bads = item.bads || 0;
+        item.tags = item.tags || [];
+        return item
+      }),
       settings: this.data.settings,
       stacks: this.data.stacks,
     });
@@ -2970,7 +2968,6 @@ class SongrequestModule {
   resetStats() {
     this.data.playlist = this.data.playlist.map(item => {
       item.plays = 0;
-      item.skips = 0;
       item.goods = 0;
       item.bads = 0;
       return item
@@ -3093,7 +3090,6 @@ class SongrequestModule {
     if (this.data.playlist.length > idx) {
       if (this.data.playlist[idx].tags.includes(tag)) {
         this.data.playlist[idx].tags = this.data.playlist[idx].tags.filter(t => t !== tag);
-        console.log(this.data.playlist[idx].hidevideo);
         this.save();
         this.updateClients('tags');
       }
@@ -3479,7 +3475,6 @@ class SongrequestModule {
       timestamp: new Date().getTime(),
       user: userName,
       plays: 0,
-      skips: 0,
       goods: 0,
       bads: 0,
       tags: [],
