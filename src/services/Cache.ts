@@ -1,13 +1,13 @@
-import Db from "../Db.ts"
+import Db from "../Db"
 
 const TABLE = 'cache'
 
-function Cache(/** @type Db */ db) {
+function Cache(db: Db) {
   return {
-    set: (key, value) => {
+    set: (key: string, value: any) => {
       db.upsert(TABLE, { key, value: JSON.stringify(value) }, { key })
     },
-    get: (key) => {
+    get: (key: string): any => {
       const row = db.get(TABLE, { key })
       return row ? JSON.parse(row.value) : null
     },
