@@ -2,7 +2,7 @@ import tmi from 'tmi.js'
 import TwitchHelixClient from '../services/TwitchHelixClient.ts'
 import fn from '../fn.ts'
 import Db from '../Db.ts'
-import TwitchChannels from '../services/TwitchChannels.js'
+import TwitchChannels from '../services/TwitchChannels.ts'
 import EventHub from '../EventHub.ts'
 import { fileURLToPath } from 'url'
 

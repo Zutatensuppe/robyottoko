@@ -1785,25 +1785,28 @@ class WebServer {
 }
 
 const TABLE$2 = 'twitch_channel';
-
-function TwitchChannels(/** @type Db */ db) {
-  const save = (channel) => db.upsert(TABLE$2, channel, {
-    user_id: channel.user_id,
-    channel_name: channel.channel_name,
-  });
-  return {
-    allByUserId: (user_id) => db.getMany(TABLE$2, { user_id }),
-    save,
-    saveUserChannels: (user_id, channels) => {
-      for (const channel of channels) {
-        save(channel);
-      }
-      db.delete(TABLE$2, {
-        user_id: user_id,
-        channel_name: { '$nin': channels.map(c => c.channel_name) }
-      });
-    },
-  }
+class TwitchChannels {
+    constructor(db) {
+        this.db = db;
+    }
+    save(channel) {
+        return this.db.upsert(TABLE$2, channel, {
+            user_id: channel.user_id,
+            channel_name: channel.channel_name,
+        });
+    }
+    allByUserId(user_id) {
+        return this.db.getMany(TABLE$2, { user_id });
+    }
+    saveUserChannels(user_id, channels) {
+        for (const channel of channels) {
+            this.save(channel);
+        }
+        this.db.delete(TABLE$2, {
+            user_id: user_id,
+            channel_name: { '$nin': channels.map(c => c.channel_name) }
+        });
+    }
 }
 
 const __filename$2 = fileURLToPath(import.meta.url);
