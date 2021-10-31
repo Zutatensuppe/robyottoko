@@ -1,0 +1,25 @@
+name: "ci"
+on: push
+
+jobs:
+  ci-js:
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        operating-system: [ ubuntu-latest ]
+        node-version: [ '16.x' ]
+    name: ci js ${{ matrix.go-version }} ${{ matrix.operating-system }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies (npm)
+        run: npm install
+
+      - name: Run tests
+        run: ./run tests
