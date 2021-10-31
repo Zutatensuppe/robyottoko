@@ -1080,68 +1080,58 @@ function Tokens(db) {
     };
 }
 
-const log$4 = logger('TwitchHelixClient.js');
-
+const log$4 = logger('TwitchHelixClient.ts');
+const API_BASE = 'https://api.twitch.tv/helix';
 class TwitchHelixClient {
-  constructor(
-    /** @type string */ clientId,
-    /** @type string */ clientSecret
-  ) {
-    this.clientId = clientId;
-    this.clientSecret = clientSecret;
-    this.helixApiBase = 'https://api.twitch.tv/helix';
-  }
-
-  async withAuthHeaders(opts = {}) {
-    const accessToken = await this.getAccessToken();
-    return withHeaders({
-      'Client-ID': this.clientId,
-      'Authorization': `Bearer ${accessToken}`,
-    }, opts)
-  }
-
-  // https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/
-  async getAccessToken(scopes = []) {
-    const url = `https://id.twitch.tv/oauth2/token` + asQueryArgs({
-      client_id: this.clientId,
-      client_secret: this.clientSecret,
-      grant_type: 'client_credentials',
-      scope: scopes.join(' '),
-    });
-    const json = await postJson(url);
-    return json.access_token
-  }
-
-  async getUserIdByName(userName) {
-    const url = `${this.helixApiBase}/users${asQueryArgs({ login: userName })}`;
-    const json = await getJson(url, await this.withAuthHeaders());
-    try {
-      return json.data[0].id
-    } catch (e) {
-      log$4.error(json);
-      return ''
+    constructor(clientId, clientSecret) {
+        this.clientId = clientId;
+        this.clientSecret = clientSecret;
     }
-  }
-
-  async getStreams(userId) {
-    const url = `${this.helixApiBase}/streams${asQueryArgs({ user_id: userId })}`;
-    return await getJson(url, await this.withAuthHeaders())
-  }
-
-  async getSubscriptions() {
-    const url = `${this.helixApiBase}/eventsub/subscriptions`;
-    return await getJson(url, await this.withAuthHeaders())
-  }
-
-  async deleteSubscription(id) {
-    const url = `${this.helixApiBase}/eventsub/subscriptions${asQueryArgs({ id: id })}`;
-    return await requestText('delete', url, await this.withAuthHeaders())
-  }
-
-  async createSubscription(subscription) {
-    const url = `${this.helixApiBase}/eventsub/subscriptions`;
-    return await postJson(url, await this.withAuthHeaders(asJson(subscription)))
-  }
+    async withAuthHeaders(opts = {}) {
+        const accessToken = await this.getAccessToken();
+        return withHeaders({
+            'Client-ID': this.clientId,
+            'Authorization': `Bearer ${accessToken}`,
+        }, opts);
+    }
+    // https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/
+    async getAccessToken(scopes = []) {
+        const url = `https://id.twitch.tv/oauth2/token` + asQueryArgs({
+            client_id: this.clientId,
+            client_secret: this.clientSecret,
+            grant_type: 'client_credentials',
+            scope: scopes.join(' '),
+        });
+        const json = (await postJson(url));
+        return json.access_token;
+    }
+    async getUserIdByName(userName) {
+        const url = `${API_BASE}/users${asQueryArgs({ login: userName })}`;
+        const json = await getJson(url, await this.withAuthHeaders());
+        try {
+            return json.data[0].id;
+        }
+        catch (e) {
+            log$4.error(json);
+            return '';
+        }
+    }
+    async getStreams(userId) {
+        const url = `${API_BASE}/streams${asQueryArgs({ user_id: userId })}`;
+        return await getJson(url, await this.withAuthHeaders());
+    }
+    async getSubscriptions() {
+        const url = `${API_BASE}/eventsub/subscriptions`;
+        return await getJson(url, await this.withAuthHeaders());
+    }
+    async deleteSubscription(id) {
+        const url = `${API_BASE}/eventsub/subscriptions${asQueryArgs({ id: id })}`;
+        return await requestText('delete', url, await this.withAuthHeaders());
+    }
+    async createSubscription(subscription) {
+        const url = `${API_BASE}/eventsub/subscriptions`;
+        return await postJson(url, await this.withAuthHeaders(asJson(subscription)));
+    }
 }
 
 const TABLE$4 = 'user';

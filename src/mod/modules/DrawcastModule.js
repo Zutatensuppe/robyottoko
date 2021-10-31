@@ -4,7 +4,7 @@ import fs from 'fs'
 import WebServer from '../../WebServer.js'
 import WebSocketServer from '../../net/WebSocketServer.js'
 import Tokens from '../../services/Tokens.ts'
-import TwitchHelixClient from '../../services/TwitchHelixClient.js'
+import TwitchHelixClient from '../../services/TwitchHelixClient.ts'
 import Variables from '../../services/Variables.js'
 
 class DrawcastModule {

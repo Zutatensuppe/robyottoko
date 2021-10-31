@@ -1,5 +1,5 @@
 import tmi from 'tmi.js'
-import TwitchHelixClient from '../services/TwitchHelixClient.js'
+import TwitchHelixClient from '../services/TwitchHelixClient.ts'
 import fn from '../fn.ts'
 import Db from '../Db.ts'
 import TwitchChannels from '../services/TwitchChannels.js'
