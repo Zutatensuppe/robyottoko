@@ -1156,43 +1156,38 @@ where x.user_id = ?`, [id]);
 }
 
 const TABLE$3 = 'variables';
-
-function Variables(
-  /** @type Db */ db,
-  /** @type number */ userId,
-) {
-  const set = (name, value) => {
-    db.upsert(TABLE$3, {
-      name,
-      user_id: userId,
-      value: JSON.stringify(value),
-    }, {
-      name,
-      user_id: userId,
-    });
-  };
-
-  return {
-    set,
-    get: (name) => {
-      const row = db.get(TABLE$3, { name, user_id: userId });
-      return row ? JSON.parse(row.value) : null
-    },
-    all: () => {
-      const rows = db.getMany(TABLE$3, { user_id: userId });
-      return rows.map(row => ({
-        name: row.name,
-        value: JSON.parse(row.value),
-      }))
-    },
-    replace: (/** @type array */ variables) => {
-      const names = variables.map(v => v.name);
-      db.delete(TABLE$3, { user_id: userId, name: { '$nin': names } });
-      variables.forEach(({ name, value }) => {
-        set(name, value);
-      });
-    },
-  }
+function Variables(db, userId) {
+    const set = (name, value) => {
+        db.upsert(TABLE$3, {
+            name,
+            user_id: userId,
+            value: JSON.stringify(value),
+        }, {
+            name,
+            user_id: userId,
+        });
+    };
+    return {
+        set,
+        get: (name) => {
+            const row = db.get(TABLE$3, { name, user_id: userId });
+            return row ? JSON.parse(row.value) : null;
+        },
+        all: () => {
+            const rows = db.getMany(TABLE$3, { user_id: userId });
+            return rows.map(row => ({
+                name: row.name,
+                value: JSON.parse(row.value),
+            }));
+        },
+        replace: (variables) => {
+            const names = variables.map(v => v.name);
+            db.delete(TABLE$3, { user_id: userId, name: { '$nin': names } });
+            variables.forEach(({ name, value }) => {
+                set(name, value);
+            });
+        },
+    };
 }
 
 const __filename$3 = fileURLToPath(import.meta.url);
