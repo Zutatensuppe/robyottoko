@@ -1,15 +1,16 @@
-import fn from './../fn.ts'
-import Madochan from './../services/Madochan.ts'
+import { RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import fn from './../fn'
+import Madochan from './../services/Madochan'
 
 const madochanCreateWord = (
-  /** @type string */ model,
-  /** @type number */ weirdness,
+  model: string,
+  weirdness: number,
 ) => async (
-  command,
-  client,
-  /** @type string */ target,
-  context,
-  /** @type string */ msg,
+  command: RawCommand,
+  client: TwitchChatClient,
+  target: string,
+  context: TwitchChatContext,
+  msg: string,
   ) => {
     const say = fn.sayFn(client, target)
     const definition = command.args.join(' ')

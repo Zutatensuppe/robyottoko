@@ -1,6 +1,6 @@
 import countdown from '../../commands/countdown.js'
 import jishoOrgLookup from '../../commands/jishoOrgLookup.ts'
-import madochanCreateWord from '../../commands/madochanCreateWord.js'
+import madochanCreateWord from '../../commands/madochanCreateWord.ts'
 import text from '../../commands/text.js'
 import randomText from '../../commands/randomText.js'
 import playMedia from '../../commands/playMedia.js'

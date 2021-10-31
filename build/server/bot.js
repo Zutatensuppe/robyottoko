@@ -2147,30 +2147,22 @@ var Madochan = {
     defaultWeirdness: 1,
 };
 
-const madochanCreateWord = (
-  /** @type string */ model,
-  /** @type number */ weirdness,
-) => async (
-  command,
-  client,
-  /** @type string */ target,
-  context,
-  /** @type string */ msg,
-  ) => {
+const madochanCreateWord = (model, weirdness) => async (command, client, target, context, msg) => {
     const say = fn.sayFn(client, target);
     const definition = command.args.join(' ');
     say(`Generating word for "${definition}"...`);
     const data = await Madochan.createWord({
-      model: model,
-      weirdness: weirdness,
-      definition: definition,
+        model: model,
+        weirdness: weirdness,
+        definition: definition,
     });
     if (data.word === '') {
-      say(`Sorry, I could not generate a word :("`);
-    } else {
-      say(`"${definition}": ${data.word}`);
+        say(`Sorry, I could not generate a word :("`);
     }
-  };
+    else {
+        say(`"${definition}": ${data.word}`);
+    }
+};
 
 const text = (
   /** @type Variables */ variables,
