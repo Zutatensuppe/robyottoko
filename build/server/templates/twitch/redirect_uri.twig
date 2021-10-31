@@ -1,0 +1,13 @@
+<html>
+<body>
+Please copy this access token and paste it where required.
+<input id="access_token" />
+<script>
+// TODO: improve
+const match = document.location.hash.match(/access_token=(\w+)/)
+const accessToken = match ? match[1] : null
+const el = document.getElementById('access_token')
+el.value = accessToken || 'No access token found'
+</script>
+</body>
+</html>
