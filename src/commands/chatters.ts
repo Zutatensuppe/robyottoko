@@ -1,14 +1,17 @@
-import fn from './../fn.ts'
+import Db from '../Db'
+import TwitchHelixClient from '../services/TwitchHelixClient'
+import { RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import fn from './../fn'
 
 const chatters = (
-  /** @type Db */                db,
-  /** @type TwitchHelixClient */ helixClient
+  db: Db,
+  helixClient: TwitchHelixClient
 ) => async (
-  command,
-  client,
-  /** @type string */ target,
-  context,
-  /** @type string */ msg,
+  command: RawCommand,
+  client: TwitchChatClient,
+  target: string,
+  context: TwitchChatContext,
+  msg: string,
   ) => {
     const say = fn.sayFn(client, target)
 

@@ -18,10 +18,44 @@ interface TwitchHelixOauthTokenResponseData {
 
 interface TwitchHelixUserSearchResponseDataEntry {
   id: string
+  login: string
+  display_name: string
+  type: string
+  broadcaster_type: string
+  description: string
+  profile_image_url: string
+  offline_image_url: string
+  view_count: number
+  email: string
+  created_at: string
 }
 
 interface TwitchHelixUserSearchResponseData {
   data: TwitchHelixUserSearchResponseDataEntry[]
+}
+
+interface TwitchHelixStreamSearchResponseDataEntry {
+  id: string
+  user_id: string
+  user_login: string
+  user_name: string
+  game_id: string
+  game_name: string
+  type: string
+  title: string
+  viewer_count: number
+  started_at: string
+  language: string
+  thumbnail_url: string
+  tag_ids: string[]
+  is_mature: boolean
+}
+
+interface TwitchHelixStreamSearchResponseData {
+  data: TwitchHelixStreamSearchResponseDataEntry[]
+  pagination: {
+    cursor: string
+  }
 }
 
 class TwitchHelixClient {
@@ -56,6 +90,7 @@ class TwitchHelixClient {
     return json.access_token
   }
 
+  // https://dev.twitch.tv/docs/api/reference#get-users
   async getUserIdByName(userName: string): Promise<string> {
     const url = `${API_BASE}/users${asQueryArgs({ login: userName })}`
     const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixUserSearchResponseData
@@ -67,9 +102,11 @@ class TwitchHelixClient {
     }
   }
 
-  async getStreams(userId: string) {
+  // https://dev.twitch.tv/docs/api/reference#get-streams
+  async getStreams(userId: string): Promise<TwitchHelixStreamSearchResponseData> {
     const url = `${API_BASE}/streams${asQueryArgs({ user_id: userId })}`
-    return await getJson(url, await this.withAuthHeaders())
+    const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixStreamSearchResponseData
+    return json
   }
 
   async getSubscriptions() {

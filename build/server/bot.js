@@ -1105,6 +1105,7 @@ class TwitchHelixClient {
         const json = (await postJson(url));
         return json.access_token;
     }
+    // https://dev.twitch.tv/docs/api/reference#get-users
     async getUserIdByName(userName) {
         const url = `${API_BASE}/users${asQueryArgs({ login: userName })}`;
         const json = await getJson(url, await this.withAuthHeaders());
@@ -1116,9 +1117,11 @@ class TwitchHelixClient {
             return '';
         }
     }
+    // https://dev.twitch.tv/docs/api/reference#get-streams
     async getStreams(userId) {
         const url = `${API_BASE}/streams${asQueryArgs({ user_id: userId })}`;
-        return await getJson(url, await this.withAuthHeaders());
+        const json = await getJson(url, await this.withAuthHeaders());
+        return json;
     }
     async getSubscriptions() {
         const url = `${API_BASE}/eventsub/subscriptions`;
@@ -2225,43 +2228,28 @@ const playMedia = (
     });
   };
 
-const chatters = (
-  /** @type Db */                db,
-  /** @type TwitchHelixClient */ helixClient
-) => async (
-  command,
-  client,
-  /** @type string */ target,
-  context,
-  /** @type string */ msg,
-  ) => {
+const chatters = (db, helixClient) => async (command, client, target, context, msg) => {
     const say = fn.sayFn(client, target);
-
     const streams = await helixClient.getStreams(context['room-id']);
     if (!streams || streams.data.length === 0) {
-      say(`It seems this channel is not live at the moment...`);
-      return
+        say(`It seems this channel is not live at the moment...`);
+        return;
     }
     const stream = streams.data[0];
-
     const [whereSql, whereValues] = db._buildWhere({
-      broadcaster_user_id: context['room-id'],
-      created_at: { '$gte': stream.started_at },
+        broadcaster_user_id: context['room-id'],
+        created_at: { '$gte': stream.started_at },
     });
-    const userNames = db._getMany(
-      `select display_name from chat_log ${whereSql} group by user_name`,
-      whereValues
-    ).map(r => r.display_name);
+    const userNames = db._getMany(`select display_name from chat_log ${whereSql} group by user_name`, whereValues).map(r => r.display_name);
     if (userNames.length === 0) {
-      say(`It seems nobody chatted? :(`);
-      return
+        say(`It seems nobody chatted? :(`);
+        return;
     }
-
     say(`Thank you for chatting!`);
     fn.joinIntoChunks(userNames, ', ', 500).forEach(msg => {
-      say(msg);
+        say(msg);
     });
-  };
+};
 
 fn.logger('GeneralModule.js');
 
