@@ -1,4 +1,4 @@
-import fn from './../fn.js'
+import fn from './../fn.ts'
 
 const log = fn.logger('countdown.js')
 

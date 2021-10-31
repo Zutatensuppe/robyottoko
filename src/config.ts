@@ -1,4 +1,4 @@
-import fs from 'fs'
+import { readFileSync } from 'fs'
 import { Config } from './types'
 
 const init = (): Config => {
@@ -6,7 +6,7 @@ const init = (): Config => {
   if (configFile === '') {
     process.exit(2)
   }
-  return JSON.parse(String(fs.readFileSync(configFile)))
+  return JSON.parse(String(readFileSync(configFile)))
 }
 const config: Config = init()
 

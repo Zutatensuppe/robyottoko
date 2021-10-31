@@ -1,4 +1,4 @@
-import { passwordHash } from "../fn"
+import { passwordHash } from "../fn.ts"
 
 function Auth(userRepo, tokenRepo) {
   const getTokenInfo = (token) => tokenRepo.getByToken(token)

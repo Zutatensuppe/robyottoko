@@ -1,29 +1,26 @@
-import config from './config.ts'
+import config from './config'
 import crypto from 'crypto'
 import path from 'path'
-import { getText } from './net/xhr.ts'
-import { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove } from './common/fn.ts'
-import { TwingEnvironment, TwingLoaderFilesystem } from 'twing'
-import { fileURLToPath } from 'url'
-import { dirname } from 'path'
+import { getText } from './net/xhr'
+import { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove } from './common/fn'
+
+import { Command, GlobalVariable, LogLevel, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, BotModule, VariablesService } from './types'
 
 export { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove }
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
 
 // error | info | log | debug
-const logLevel = config?.log?.level || 'info'
-let logEnabled = [] // always log errors
+const logLevel: LogLevel = config?.log?.level || 'info'
+let logEnabled: LogLevel[] = [] // always log errors
 switch (logLevel) {
   case 'error': logEnabled = ['error']; break
   case 'info': logEnabled = ['error', 'info']; break
   case 'log': logEnabled = ['error', 'info', 'log']; break
   case 'debug': logEnabled = ['error', 'info', 'log', 'debug']; break
 }
-export const logger = (filename, ...pre) => {
+export const logger = (filename: string, ...pre: string[]) => {
   const b = path.basename(filename)
-  const fn = t => (...args) => {
+  const fn = (t: LogLevel) => (...args: any[]) => {
     if (logEnabled.includes(t)) {
       console[t](dateformat('hh:mm:ss', new Date()), `[${b}]`, ...pre, ...args)
     }
@@ -36,16 +33,16 @@ export const logger = (filename, ...pre) => {
   }
 }
 
-const log = logger(__filename)
+const log = logger('fn.ts')
 
-function mimeToExt(/** @type string */ mime) {
+function mimeToExt(mime: string) {
   if (/image\//.test(mime)) {
     return mime.replace('image/', '')
   }
   return ''
 }
 
-function decodeBase64Image(/** @type string */ base64Str) {
+function decodeBase64Image(base64Str: string) {
   const matches = base64Str.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/)
   if (!matches || matches.length !== 3) {
     throw new Error('Invalid base64 string')
@@ -56,17 +53,17 @@ function decodeBase64Image(/** @type string */ base64Str) {
   }
 }
 
-function getRandomInt(/** @type number */ min, /** @type number */ max) {
+function getRandomInt(min: number, max: number) {
   min = Math.ceil(min);
   max = Math.floor(max);
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function getRandom(array) {
+function getRandom(array: any[]) {
   return array[getRandomInt(0, array.length - 1)]
 }
 
-export function nonce(/** @type number */ length) {
+export function nonce(length: number) {
   let text = "";
   const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
   for (let i = 0; i < length; i++) {
@@ -75,38 +72,32 @@ export function nonce(/** @type number */ length) {
   return text
 }
 
-const render = async (template, data) => {
-  const loader = new TwingLoaderFilesystem(__dirname + '/templates')
-  const twing = new TwingEnvironment(loader)
-  return twing.render(template, data)
-}
+const fnRandom = (values: any[]) => () => getRandom(values)
 
-const fnRandom = (values) => () => getRandom(values)
-
-const sleep = (/** @type number */ ms) => {
+const sleep = (ms: number) => {
   return new Promise((resolve, reject) => {
     setTimeout(resolve, ms)
   })
 }
 
-const isBroadcaster = (ctx) => ctx['room-id'] === ctx['user-id']
-const isMod = (ctx) => !!ctx.mod
-const isSubscriber = (ctx) => !!ctx.subscriber
+const isBroadcaster = (ctx: TwitchChatContext) => ctx['room-id'] === ctx['user-id']
+const isMod = (ctx: TwitchChatContext) => !!ctx.mod
+const isSubscriber = (ctx: TwitchChatContext) => !!ctx.subscriber
 
 const sayFn = (
-  client,
-  /** @type string */ target,
+  client: TwitchChatClient,
+  target: string,
 ) => (
-  /** @type string */ msg
+  msg: string
 ) => {
     const targets = target ? [target] : client.channels
     targets.forEach(t => {
       log.info(`saying in ${t}: ${msg}`)
-      client.say(t, msg).catch(_ => { })
+      client.say(t, msg).catch((e: any) => { })
     })
   }
 
-const mayExecute = (context, cmd) => {
+const mayExecute = (context: TwitchChatContext, cmd: Command) => {
   if (!cmd.restrict_to || cmd.restrict_to.length === 0) {
     return true
   }
@@ -123,9 +114,9 @@ const mayExecute = (context, cmd) => {
 }
 
 const parseKnownCommandFromMessage = (
-  /** @type string */ msg,
-  /** @type string */ cmd
-) => {
+  msg: string,
+  cmd: string,
+): RawCommand | null => {
   if (msg.startsWith(cmd + ' ') || msg === cmd) {
     const name = msg.substr(0, cmd.length).trim()
     const args = msg.substr(cmd.length).trim().split(' ').filter(s => !!s)
@@ -134,19 +125,20 @@ const parseKnownCommandFromMessage = (
   return null
 }
 
-const parseCommandFromMessage = (/** @type string */ msg) => {
+const parseCommandFromMessage = (msg: string) => {
   const command = msg.trim().split(' ')
   return { name: command[0], args: command.slice(1) }
 }
 
 const tryExecuteCommand = async (
-  contextModule,
-  /** @type {name: string, args: string[]} */ rawCmd,
-  /** @type any[] */ cmdDefs,
-  client,
-  /** @type string */ target,
-  context,
-  /** @type string */ msg
+  contextModule: BotModule,
+  rawCmd: RawCommand,
+  cmdDefs: FunctionCommand[],
+  client: TwitchChatClient,
+  target: string,
+  context: TwitchChatContext,
+  msg: string,
+  variables: VariablesService
 ) => {
   const promises = []
   for (const cmdDef of cmdDefs) {
@@ -157,8 +149,8 @@ const tryExecuteCommand = async (
     if (cmdDef.variableChanges) {
       for (const variableChange of cmdDef.variableChanges) {
         const op = variableChange.change
-        const name = await doReplacements(variableChange.name, rawCmd, context)
-        const value = await doReplacements(variableChange.value, rawCmd, context)
+        const name = await doReplacements(variableChange.name, rawCmd, context, variables, cmdDef)
+        const value = await doReplacements(variableChange.value, rawCmd, context, variables, cmdDef)
 
         // check if there is a local variable for the change
         let idx = cmdDef.variables.findIndex(v => (v.name === name))
@@ -181,7 +173,7 @@ const tryExecuteCommand = async (
           continue
         }
 
-        const globalVars = contextModule.variables.all()
+        const globalVars: GlobalVariable[] = contextModule.variables.all()
         idx = globalVars.findIndex(v => (v.name === name))
         if (idx !== -1) {
           if (op === 'set') {
@@ -209,7 +201,7 @@ const tryExecuteCommand = async (
         log.info(`${target}| * Returned: ${r}`)
       }
       log.info(`${target}| * Executed ${rawCmd.name} command`)
-      resolve()
+      resolve(true)
     })
     promises.push(p)
   }
@@ -217,36 +209,37 @@ const tryExecuteCommand = async (
 }
 
 async function replaceAsync(
-  /** @type string */ str,
-  /** @type RegExp */ regex,
-  /** @type (...string) => Promise<any> */ asyncFn,
-) {
-  const promises = [];
-  str.replace(regex, (match, ...args) => {
+  str: string,
+  regex: RegExp,
+  asyncFn: (...args: string[]) => Promise<any>,
+): Promise<string> {
+  const promises: Promise<any>[] = [];
+  str.replace(regex, (match: string, ...args: string[]): string => {
     const promise = asyncFn(match, ...args);
     promises.push(promise);
+    return match
   });
   const data = await Promise.all(promises);
   return str.replace(regex, () => data.shift());
 }
 
 const doReplacements = async (
-  /** @type string */ text,
-  command,
-  context,
-  /** @type Variables */ variables,
-  originalCmd,
+  text: string,
+  command: RawCommand,
+  context: TwitchChatContext,
+  variables: VariablesService,
+  originalCmd: Command,
 ) => {
-  const replaces = [
+  const replaces: { regex: RegExp, replacer: (...args: string[]) => Promise<any> }[] = [
     {
       regex: /\$args\(\)/g,
-      replacer: (m0, m1) => {
+      replacer: async (m0: string, m1: string) => {
         return command.args.join(' ')
       },
     },
     {
       regex: /\$args\((\d+)\)/g,
-      replacer: (m0, m1) => {
+      replacer: async (m0: string, m1: string) => {
         const index = parseInt(m1, 10)
         if (index < command.args.length) {
           return command.args[index]
@@ -256,7 +249,7 @@ const doReplacements = async (
     },
     {
       regex: /\$var\(([^)]+)\)/g,
-      replacer: (m0, m1) => {
+      replacer: async (m0: string, m1: string) => {
         const v = originalCmd.variables.find(v => v.name === m1)
         const val = v ? v.value : variables.get(m1)
         return val === null ? '' : val
@@ -264,13 +257,13 @@ const doReplacements = async (
     },
     {
       regex: /\$user\.name/g,
-      replacer: () => {
+      replacer: async () => {
         return context['display-name']
       },
     },
     {
       regex: /\$([a-z][a-z0-9]*)(?!\()/g,
-      replacer: (m0, m1) => {
+      replacer: async (m0: string, m1: string) => {
         switch (m1) {
           case 'args': return command.args.join(' ')
         }
@@ -279,37 +272,37 @@ const doReplacements = async (
     },
     {
       regex: /\$customapi\(([^$\)]*)\)\[\'([A-Za-z0-9_ -]+)\'\]/g,
-      replacer: async (m0, m1, m2) => {
+      replacer: async (m0: string, m1: string, m2: string) => {
         const txt = await getText(await doReplacements(m1, command, context, variables, originalCmd))
         return JSON.parse(txt)[m2]
       },
     },
     {
       regex: /\$customapi\(([^$\)]*)\)/g,
-      replacer: async (m0, m1) => {
+      replacer: async (m0: string, m1: string) => {
         return await getText(await doReplacements(m1, command, context, variables, originalCmd))
       },
     },
     {
       regex: /\$urlencode\(([^$\)]*)\)/g,
-      replacer: async (m0, m1) => {
+      replacer: async (m0: string, m1: string) => {
         return encodeURIComponent(await doReplacements(m1, command, context, variables, originalCmd))
       },
     },
     {
       regex: /\$calc\((\d+)([*/+-])(\d+)\)/g,
-      replacer: (m0, arg1, op, arg2) => {
-        arg1 = parseInt(arg1, 10)
-        arg2 = parseInt(arg2, 10)
+      replacer: async (m0: string, arg1: string, op: string, arg2: string) => {
+        const arg1Int = parseInt(arg1, 10)
+        const arg2Int = parseInt(arg2, 10)
         switch (op) {
           case '+':
-            return arg1 + arg2
+            return arg1Int + arg2Int
           case '-':
-            return arg1 - arg2
+            return arg1Int - arg2Int
           case '/':
-            return arg1 / arg2
+            return arg1Int / arg2Int
           case '*':
-            return arg1 * arg2
+            return arg1Int * arg2Int
         }
         return ''
       },
@@ -327,9 +320,9 @@ const doReplacements = async (
 }
 
 export const joinIntoChunks = (
-  /** @type Array */ strings,
-  /** @type string */ glue,
-  /** @type number */ maxChunkLen,
+  strings: string[],
+  glue: string,
+  maxChunkLen: number,
 ) => {
   const chunks = []
   let chunk = []
@@ -347,10 +340,10 @@ export const joinIntoChunks = (
 }
 
 const dateformat = (
-  /** @type string */ format,
-  /** @type Date */ date,
-) => {
-  return format.replace(/(hh|mm|ss)/g, (m0, m1) => {
+  format: string,
+  date: Date,
+): string => {
+  return format.replace(/(hh|mm|ss)/g, (m0: string, m1: string) => {
     switch (m1) {
       case 'hh': return pad(date.getHours(), '00')
       case 'mm': return pad(date.getMinutes(), '00')
@@ -361,9 +354,9 @@ const dateformat = (
 }
 
 const pad = (
-  /** @type number */ x,
-  /** @type string */ pad
-) => {
+  x: number,
+  pad: string
+): string => {
   const str = `${x}`
   if (str.length >= pad.length) {
     return str
@@ -372,8 +365,8 @@ const pad = (
 }
 
 export const parseISO8601Duration = (
-  /** @type string */ duration
-) => {
+  duration: string
+): number => {
   // P(n)Y(n)M(n)DT(n)H(n)M(n)S
   const m = duration.match(/^P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/)
   if (!m) {
@@ -400,8 +393,8 @@ export const parseISO8601Duration = (
 }
 
 export const humanDuration = (
-  /** @type number */ durationMs
-) => {
+  durationMs: number
+): string => {
   let duration = durationMs
 
   const d = Math.floor(duration / DAY)
@@ -442,7 +435,10 @@ export const passwordSalt = () => {
   return nonce(10)
 }
 
-export const passwordHash = (/** @type string */ plainPass, /** @type string */ salt) => {
+export const passwordHash = (
+  plainPass: string,
+  salt: string,
+): string => {
   const hash = crypto.createHmac('sha512', config.secret)
   hash.update(`${salt}${plainPass}`)
   return hash.digest('hex')
@@ -459,7 +455,6 @@ export default {
   passwordSalt,
   passwordHash,
   tryExecuteCommand,
-  render,
   getRandomInt,
   getRandom,
   shuffle,

@@ -1,14 +1,14 @@
-import fs from 'fs';
+import fs, { readFileSync } from 'fs';
 import crypto from 'crypto';
 import path, { dirname } from 'path';
 import fetch from 'node-fetch';
-import { TwingLoaderFilesystem, TwingEnvironment } from 'twing';
-import { fileURLToPath } from 'url';
 import WebSocket from 'ws';
+import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import multer from 'multer';
 import bsqlite from 'better-sqlite3';
+import { TwingLoaderFilesystem, TwingEnvironment } from 'twing';
 import SibApiV3Sdk from 'sib-api-v3-sdk';
 import tmi from 'tmi.js';
 
@@ -17,7 +17,7 @@ const init = () => {
     if (configFile === '') {
         process.exit(2);
     }
-    return JSON.parse(String(fs.readFileSync(configFile)));
+    return JSON.parse(String(readFileSync(configFile)));
 };
 const config = init();
 
@@ -149,481 +149,398 @@ const shuffle = (array) => {
     return array;
 };
 
-const __filename$6 = fileURLToPath(import.meta.url);
-const __dirname$1 = dirname(__filename$6);
-
 // error | info | log | debug
 const logLevel = config?.log?.level || 'info';
 let logEnabled = []; // always log errors
 switch (logLevel) {
-  case 'error': logEnabled = ['error']; break
-  case 'info': logEnabled = ['error', 'info']; break
-  case 'log': logEnabled = ['error', 'info', 'log']; break
-  case 'debug': logEnabled = ['error', 'info', 'log', 'debug']; break
+    case 'error':
+        logEnabled = ['error'];
+        break;
+    case 'info':
+        logEnabled = ['error', 'info'];
+        break;
+    case 'log':
+        logEnabled = ['error', 'info', 'log'];
+        break;
+    case 'debug':
+        logEnabled = ['error', 'info', 'log', 'debug'];
+        break;
 }
 const logger = (filename, ...pre) => {
-  const b = path.basename(filename);
-  const fn = t => (...args) => {
-    if (logEnabled.includes(t)) {
-      console[t](dateformat('hh:mm:ss', new Date()), `[${b}]`, ...pre, ...args);
+    const b = path.basename(filename);
+    const fn = (t) => (...args) => {
+        if (logEnabled.includes(t)) {
+            console[t](dateformat('hh:mm:ss', new Date()), `[${b}]`, ...pre, ...args);
+        }
+    };
+    return {
+        log: fn('log'),
+        info: fn('info'),
+        debug: fn('debug'),
+        error: fn('error'),
+    };
+};
+const log$7 = logger('fn.ts');
+function mimeToExt(mime) {
+    if (/image\//.test(mime)) {
+        return mime.replace('image/', '');
     }
-  };
-  return {
-    log: fn('log'),
-    info: fn('info'),
-    debug: fn('debug'),
-    error: fn('error'),
-  }
-};
-
-const log$7 = logger(__filename$6);
-
-function mimeToExt(/** @type string */ mime) {
-  if (/image\//.test(mime)) {
-    return mime.replace('image/', '')
-  }
-  return ''
+    return '';
 }
-
-function decodeBase64Image(/** @type string */ base64Str) {
-  const matches = base64Str.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-  if (!matches || matches.length !== 3) {
-    throw new Error('Invalid base64 string')
-  }
-  return {
-    type: matches[1],
-    data: Buffer.from(matches[2], 'base64'),
-  }
+function decodeBase64Image(base64Str) {
+    const matches = base64Str.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) {
+        throw new Error('Invalid base64 string');
+    }
+    return {
+        type: matches[1],
+        data: Buffer.from(matches[2], 'base64'),
+    };
 }
-
-function getRandomInt(/** @type number */ min, /** @type number */ max) {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
-
 function getRandom(array) {
-  return array[getRandomInt(0, array.length - 1)]
+    return array[getRandomInt(0, array.length - 1)];
 }
-
-function nonce(/** @type number */ length) {
-  let text = "";
-  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < length; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return text
+function nonce(length) {
+    let text = "";
+    const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    for (let i = 0; i < length; i++) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
 }
-
-const render = async (template, data) => {
-  const loader = new TwingLoaderFilesystem(__dirname$1 + '/templates');
-  const twing = new TwingEnvironment(loader);
-  return twing.render(template, data)
-};
-
 const fnRandom = (values) => () => getRandom(values);
-
-const sleep = (/** @type number */ ms) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(resolve, ms);
-  })
+const sleep = (ms) => {
+    return new Promise((resolve, reject) => {
+        setTimeout(resolve, ms);
+    });
 };
-
 const isBroadcaster = (ctx) => ctx['room-id'] === ctx['user-id'];
 const isMod = (ctx) => !!ctx.mod;
 const isSubscriber = (ctx) => !!ctx.subscriber;
-
-const sayFn = (
-  client,
-  /** @type string */ target,
-) => (
-  /** @type string */ msg
-) => {
+const sayFn = (client, target) => (msg) => {
     const targets = target ? [target] : client.channels;
     targets.forEach(t => {
-      log$7.info(`saying in ${t}: ${msg}`);
-      client.say(t, msg).catch(_ => { });
+        log$7.info(`saying in ${t}: ${msg}`);
+        client.say(t, msg).catch((e) => { });
     });
-  };
-
+};
 const mayExecute = (context, cmd) => {
-  if (!cmd.restrict_to || cmd.restrict_to.length === 0) {
-    return true
-  }
-  if (cmd.restrict_to.includes('mod') && isMod(context)) {
-    return true
-  }
-  if (cmd.restrict_to.includes('sub') && isSubscriber(context)) {
-    return true
-  }
-  if (cmd.restrict_to.includes('broadcaster') && isBroadcaster(context)) {
-    return true
-  }
-  return false
-};
-
-const parseKnownCommandFromMessage = (
-  /** @type string */ msg,
-  /** @type string */ cmd
-) => {
-  if (msg.startsWith(cmd + ' ') || msg === cmd) {
-    const name = msg.substr(0, cmd.length).trim();
-    const args = msg.substr(cmd.length).trim().split(' ').filter(s => !!s);
-    return { name, args }
-  }
-  return null
-};
-
-const parseCommandFromMessage = (/** @type string */ msg) => {
-  const command = msg.trim().split(' ');
-  return { name: command[0], args: command.slice(1) }
-};
-
-const tryExecuteCommand = async (
-  contextModule,
-  /** @type {name: string, args: string[]} */ rawCmd,
-  /** @type any[] */ cmdDefs,
-  client,
-  /** @type string */ target,
-  context,
-  /** @type string */ msg
-) => {
-  const promises = [];
-  for (const cmdDef of cmdDefs) {
-    if (!mayExecute(context, cmdDef)) {
-      continue
+    if (!cmd.restrict_to || cmd.restrict_to.length === 0) {
+        return true;
     }
-    log$7.info(`${target}| * Executing ${rawCmd.name} command`);
-    if (cmdDef.variableChanges) {
-      for (const variableChange of cmdDef.variableChanges) {
-        const op = variableChange.change;
-        const name = await doReplacements(variableChange.name, rawCmd, context);
-        const value = await doReplacements(variableChange.value, rawCmd, context);
-
-        // check if there is a local variable for the change
-        let idx = cmdDef.variables.findIndex(v => (v.name === name));
-        if (idx !== -1) {
-          if (op === 'set') {
-            cmdDef.variables[idx].value = value;
-          } else if (op === 'increase_by') {
-            cmdDef.variables[idx].value = (
-              parseInt(cmdDef.variables[idx].value, 10)
-              + parseInt(value, 10)
-            );
-          } else if (op === 'decrease_by') {
-            cmdDef.variables[idx].value = (
-              parseInt(cmdDef.variables[idx].value, 10)
-              - parseInt(value, 10)
-            );
-          }
-          console.log(cmdDef.variables[idx].value);
-          //
-          continue
-        }
-
-        const globalVars = contextModule.variables.all();
-        idx = globalVars.findIndex(v => (v.name === name));
-        if (idx !== -1) {
-          if (op === 'set') {
-            contextModule.variables.set(name, value);
-          } else if (op === 'increase_by') {
-            contextModule.variables.set(name, (
-              parseInt(globalVars[idx].value, 10)
-              + parseInt(value, 10)
-            ));
-          } else if (op === 'decrease_by') {
-            contextModule.variables.set(name, (
-              parseInt(globalVars[idx].value, 10)
-              - parseInt(value, 10)
-            ));
-          }
-          //
-          continue
-        }
-      }
-      contextModule.saveCommands();
+    if (cmd.restrict_to.includes('mod') && isMod(context)) {
+        return true;
     }
-    const p = new Promise(async (resolve) => {
-      const r = await cmdDef.fn(rawCmd, client, target, context, msg);
-      if (r) {
-        log$7.info(`${target}| * Returned: ${r}`);
-      }
-      log$7.info(`${target}| * Executed ${rawCmd.name} command`);
-      resolve();
+    if (cmd.restrict_to.includes('sub') && isSubscriber(context)) {
+        return true;
+    }
+    if (cmd.restrict_to.includes('broadcaster') && isBroadcaster(context)) {
+        return true;
+    }
+    return false;
+};
+const parseKnownCommandFromMessage = (msg, cmd) => {
+    if (msg.startsWith(cmd + ' ') || msg === cmd) {
+        const name = msg.substr(0, cmd.length).trim();
+        const args = msg.substr(cmd.length).trim().split(' ').filter(s => !!s);
+        return { name, args };
+    }
+    return null;
+};
+const parseCommandFromMessage = (msg) => {
+    const command = msg.trim().split(' ');
+    return { name: command[0], args: command.slice(1) };
+};
+const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, client, target, context, msg, variables) => {
+    const promises = [];
+    for (const cmdDef of cmdDefs) {
+        if (!mayExecute(context, cmdDef)) {
+            continue;
+        }
+        log$7.info(`${target}| * Executing ${rawCmd.name} command`);
+        if (cmdDef.variableChanges) {
+            for (const variableChange of cmdDef.variableChanges) {
+                const op = variableChange.change;
+                const name = await doReplacements(variableChange.name, rawCmd, context, variables, cmdDef);
+                const value = await doReplacements(variableChange.value, rawCmd, context, variables, cmdDef);
+                // check if there is a local variable for the change
+                let idx = cmdDef.variables.findIndex(v => (v.name === name));
+                if (idx !== -1) {
+                    if (op === 'set') {
+                        cmdDef.variables[idx].value = value;
+                    }
+                    else if (op === 'increase_by') {
+                        cmdDef.variables[idx].value = (parseInt(cmdDef.variables[idx].value, 10)
+                            + parseInt(value, 10));
+                    }
+                    else if (op === 'decrease_by') {
+                        cmdDef.variables[idx].value = (parseInt(cmdDef.variables[idx].value, 10)
+                            - parseInt(value, 10));
+                    }
+                    console.log(cmdDef.variables[idx].value);
+                    //
+                    continue;
+                }
+                const globalVars = contextModule.variables.all();
+                idx = globalVars.findIndex(v => (v.name === name));
+                if (idx !== -1) {
+                    if (op === 'set') {
+                        contextModule.variables.set(name, value);
+                    }
+                    else if (op === 'increase_by') {
+                        contextModule.variables.set(name, (parseInt(globalVars[idx].value, 10)
+                            + parseInt(value, 10)));
+                    }
+                    else if (op === 'decrease_by') {
+                        contextModule.variables.set(name, (parseInt(globalVars[idx].value, 10)
+                            - parseInt(value, 10)));
+                    }
+                    //
+                    continue;
+                }
+            }
+            contextModule.saveCommands();
+        }
+        const p = new Promise(async (resolve) => {
+            const r = await cmdDef.fn(rawCmd, client, target, context, msg);
+            if (r) {
+                log$7.info(`${target}| * Returned: ${r}`);
+            }
+            log$7.info(`${target}| * Executed ${rawCmd.name} command`);
+            resolve(true);
+        });
+        promises.push(p);
+    }
+    await Promise.all(promises);
+};
+async function replaceAsync(str, regex, asyncFn) {
+    const promises = [];
+    str.replace(regex, (match, ...args) => {
+        const promise = asyncFn(match, ...args);
+        promises.push(promise);
+        return match;
     });
-    promises.push(p);
-  }
-  await Promise.all(promises);
-};
-
-async function replaceAsync(
-  /** @type string */ str,
-  /** @type RegExp */ regex,
-  /** @type (...string) => Promise<any> */ asyncFn,
-) {
-  const promises = [];
-  str.replace(regex, (match, ...args) => {
-    const promise = asyncFn(match, ...args);
-    promises.push(promise);
-  });
-  const data = await Promise.all(promises);
-  return str.replace(regex, () => data.shift());
+    const data = await Promise.all(promises);
+    return str.replace(regex, () => data.shift());
 }
-
-const doReplacements = async (
-  /** @type string */ text,
-  command,
-  context,
-  /** @type Variables */ variables,
-  originalCmd,
-) => {
-  const replaces = [
-    {
-      regex: /\$args\(\)/g,
-      replacer: (m0, m1) => {
-        return command.args.join(' ')
-      },
-    },
-    {
-      regex: /\$args\((\d+)\)/g,
-      replacer: (m0, m1) => {
-        const index = parseInt(m1, 10);
-        if (index < command.args.length) {
-          return command.args[index]
+const doReplacements = async (text, command, context, variables, originalCmd) => {
+    const replaces = [
+        {
+            regex: /\$args\(\)/g,
+            replacer: async (m0, m1) => {
+                return command.args.join(' ');
+            },
+        },
+        {
+            regex: /\$args\((\d+)\)/g,
+            replacer: async (m0, m1) => {
+                const index = parseInt(m1, 10);
+                if (index < command.args.length) {
+                    return command.args[index];
+                }
+                return '';
+            },
+        },
+        {
+            regex: /\$var\(([^)]+)\)/g,
+            replacer: async (m0, m1) => {
+                const v = originalCmd.variables.find(v => v.name === m1);
+                const val = v ? v.value : variables.get(m1);
+                return val === null ? '' : val;
+            },
+        },
+        {
+            regex: /\$user\.name/g,
+            replacer: async () => {
+                return context['display-name'];
+            },
+        },
+        {
+            regex: /\$([a-z][a-z0-9]*)(?!\()/g,
+            replacer: async (m0, m1) => {
+                switch (m1) {
+                    case 'args': return command.args.join(' ');
+                }
+                return m0;
+            }
+        },
+        {
+            regex: /\$customapi\(([^$\)]*)\)\[\'([A-Za-z0-9_ -]+)\'\]/g,
+            replacer: async (m0, m1, m2) => {
+                const txt = await getText(await doReplacements(m1, command, context, variables, originalCmd));
+                return JSON.parse(txt)[m2];
+            },
+        },
+        {
+            regex: /\$customapi\(([^$\)]*)\)/g,
+            replacer: async (m0, m1) => {
+                return await getText(await doReplacements(m1, command, context, variables, originalCmd));
+            },
+        },
+        {
+            regex: /\$urlencode\(([^$\)]*)\)/g,
+            replacer: async (m0, m1) => {
+                return encodeURIComponent(await doReplacements(m1, command, context, variables, originalCmd));
+            },
+        },
+        {
+            regex: /\$calc\((\d+)([*/+-])(\d+)\)/g,
+            replacer: async (m0, arg1, op, arg2) => {
+                const arg1Int = parseInt(arg1, 10);
+                const arg2Int = parseInt(arg2, 10);
+                switch (op) {
+                    case '+':
+                        return arg1Int + arg2Int;
+                    case '-':
+                        return arg1Int - arg2Int;
+                    case '/':
+                        return arg1Int / arg2Int;
+                    case '*':
+                        return arg1Int * arg2Int;
+                }
+                return '';
+            },
+        },
+    ];
+    let replaced = text;
+    let orig;
+    do {
+        orig = replaced;
+        for (let replace of replaces) {
+            replaced = await replaceAsync(replaced, replace.regex, replace.replacer);
         }
-        return ''
-      },
-    },
-    {
-      regex: /\$var\(([^)]+)\)/g,
-      replacer: (m0, m1) => {
-        const v = originalCmd.variables.find(v => v.name === m1);
-        const val = v ? v.value : variables.get(m1);
-        return val === null ? '' : val
-      },
-    },
-    {
-      regex: /\$user\.name/g,
-      replacer: () => {
-        return context['display-name']
-      },
-    },
-    {
-      regex: /\$([a-z][a-z0-9]*)(?!\()/g,
-      replacer: (m0, m1) => {
+    } while (orig !== replaced);
+    return replaced;
+};
+const joinIntoChunks = (strings, glue, maxChunkLen) => {
+    const chunks = [];
+    let chunk = [];
+    for (let i = 0; i < strings.length; i++) {
+        chunk.push(strings[i]);
+        if (chunk.join(glue).length > maxChunkLen) {
+            chunk.pop();
+            chunks.push(chunk.join(glue));
+            chunk = [];
+            chunk.push(strings[i]);
+        }
+    }
+    chunks.push(chunk.join(glue));
+    return chunks;
+};
+const dateformat = (format, date) => {
+    return format.replace(/(hh|mm|ss)/g, (m0, m1) => {
         switch (m1) {
-          case 'args': return command.args.join(' ')
+            case 'hh': return pad(date.getHours(), '00');
+            case 'mm': return pad(date.getMinutes(), '00');
+            case 'ss': return pad(date.getSeconds(), '00');
+            default: return m0;
         }
-        return m0
-      }
-    },
-    {
-      regex: /\$customapi\(([^$\)]*)\)\[\'([A-Za-z0-9_ -]+)\'\]/g,
-      replacer: async (m0, m1, m2) => {
-        const txt = await getText(await doReplacements(m1, command, context, variables, originalCmd));
-        return JSON.parse(txt)[m2]
-      },
-    },
-    {
-      regex: /\$customapi\(([^$\)]*)\)/g,
-      replacer: async (m0, m1) => {
-        return await getText(await doReplacements(m1, command, context, variables, originalCmd))
-      },
-    },
-    {
-      regex: /\$urlencode\(([^$\)]*)\)/g,
-      replacer: async (m0, m1) => {
-        return encodeURIComponent(await doReplacements(m1, command, context, variables, originalCmd))
-      },
-    },
-    {
-      regex: /\$calc\((\d+)([*/+-])(\d+)\)/g,
-      replacer: (m0, arg1, op, arg2) => {
-        arg1 = parseInt(arg1, 10);
-        arg2 = parseInt(arg2, 10);
-        switch (op) {
-          case '+':
-            return arg1 + arg2
-          case '-':
-            return arg1 - arg2
-          case '/':
-            return arg1 / arg2
-          case '*':
-            return arg1 * arg2
-        }
-        return ''
-      },
-    },
-  ];
-  let replaced = text;
-  let orig;
-  do {
-    orig = replaced;
-    for (let replace of replaces) {
-      replaced = await replaceAsync(replaced, replace.regex, replace.replacer);
+    });
+};
+const pad = (x, pad) => {
+    const str = `${x}`;
+    if (str.length >= pad.length) {
+        return str;
     }
-  } while (orig !== replaced)
-  return replaced
+    return pad.substr(0, pad.length - str.length) + str;
 };
-
-const joinIntoChunks = (
-  /** @type Array */ strings,
-  /** @type string */ glue,
-  /** @type number */ maxChunkLen,
-) => {
-  const chunks = [];
-  let chunk = [];
-  for (let i = 0; i < strings.length; i++) {
-    chunk.push(strings[i]);
-    if (chunk.join(glue).length > maxChunkLen) {
-      chunk.pop();
-      chunks.push(chunk.join(glue));
-      chunk = [];
-      chunk.push(strings[i]);
+const parseISO8601Duration = (duration) => {
+    // P(n)Y(n)M(n)DT(n)H(n)M(n)S
+    const m = duration.match(/^P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/);
+    if (!m) {
+        return 0;
     }
-  }
-  chunks.push(chunk.join(glue));
-  return chunks
+    const Y = m[1] ? parseInt(m[1], 10) : 0;
+    const Mo = m[2] ? parseInt(m[2], 10) : 0;
+    const D = m[3] ? parseInt(m[3], 10) : 0;
+    const H = m[4] ? parseInt(m[4], 10) : 0;
+    const M = m[5] ? parseInt(m[5], 10) : 0;
+    const S = m[6] ? parseInt(m[6], 10) : 0;
+    // note: we just calculate month as having 30 days,
+    // because knowledge about what exact year it is is missing
+    return ((S * SECOND)
+        + (M * MINUTE)
+        + (H * HOUR)
+        + (D * DAY)
+        + (Mo * MONTH)
+        + (Y * YEAR));
 };
-
-const dateformat = (
-  /** @type string */ format,
-  /** @type Date */ date,
-) => {
-  return format.replace(/(hh|mm|ss)/g, (m0, m1) => {
-    switch (m1) {
-      case 'hh': return pad(date.getHours(), '00')
-      case 'mm': return pad(date.getMinutes(), '00')
-      case 'ss': return pad(date.getSeconds(), '00')
-      default: return m0
+const humanDuration = (durationMs) => {
+    let duration = durationMs;
+    const d = Math.floor(duration / DAY);
+    duration = duration % DAY;
+    const h = Math.floor(duration / HOUR);
+    duration = duration % HOUR;
+    const m = Math.floor(duration / MINUTE);
+    duration = duration % MINUTE;
+    const s = Math.floor(duration / SECOND);
+    duration = duration % SECOND;
+    const ms = duration;
+    const units = ['ms', 's', 'm', 'h', 'd'];
+    const rawparts = [ms, s, m, h, d];
+    // remove leading and trailing empty values
+    let start = 0;
+    while (start < rawparts.length && rawparts[start] === 0) {
+        start++;
     }
-  })
+    let end = rawparts.length - 1;
+    while (end >= 0 && rawparts[end] === 0) {
+        end--;
+    }
+    const parts = [];
+    for (let i = start; i <= end; i++) {
+        parts.unshift(`${rawparts[i]}${units[i]}`);
+    }
+    return parts.join(' ');
 };
-
-const pad = (
-  /** @type number */ x,
-  /** @type string */ pad
-) => {
-  const str = `${x}`;
-  if (str.length >= pad.length) {
-    return str
-  }
-  return pad.substr(0, pad.length - str.length) + str
-};
-
-const parseISO8601Duration = (
-  /** @type string */ duration
-) => {
-  // P(n)Y(n)M(n)DT(n)H(n)M(n)S
-  const m = duration.match(/^P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/);
-  if (!m) {
-    return 0
-  }
-
-  const Y = m[1] ? parseInt(m[1], 10) : 0;
-  const Mo = m[2] ? parseInt(m[2], 10) : 0;
-  const D = m[3] ? parseInt(m[3], 10) : 0;
-  const H = m[4] ? parseInt(m[4], 10) : 0;
-  const M = m[5] ? parseInt(m[5], 10) : 0;
-  const S = m[6] ? parseInt(m[6], 10) : 0;
-
-  // note: we just calculate month as having 30 days,
-  // because knowledge about what exact year it is is missing
-  return (
-    (S * SECOND)
-    + (M * MINUTE)
-    + (H * HOUR)
-    + (D * DAY)
-    + (Mo * MONTH)
-    + (Y * YEAR)
-  )
-};
-
-const humanDuration = (
-  /** @type number */ durationMs
-) => {
-  let duration = durationMs;
-
-  const d = Math.floor(duration / DAY);
-  duration = duration % DAY;
-
-  const h = Math.floor(duration / HOUR);
-  duration = duration % HOUR;
-
-  const m = Math.floor(duration / MINUTE);
-  duration = duration % MINUTE;
-
-  const s = Math.floor(duration / SECOND);
-  duration = duration % SECOND;
-
-  const ms = duration;
-
-  const units = ['ms', 's', 'm', 'h', 'd'];
-  const rawparts = [ms, s, m, h, d];
-
-  // remove leading and trailing empty values
-  let start = 0;
-  while (start < rawparts.length && rawparts[start] === 0) {
-    start++;
-  }
-  let end = rawparts.length - 1;
-  while (end >= 0 && rawparts[end] === 0) {
-    end--;
-  }
-
-  const parts = [];
-  for (let i = start; i <= end; i++) {
-    parts.unshift(`${rawparts[i]}${units[i]}`);
-  }
-  return parts.join(' ')
-};
-
 const passwordSalt = () => {
-  return nonce(10)
+    return nonce(10);
 };
-
-const passwordHash = (/** @type string */ plainPass, /** @type string */ salt) => {
-  const hash = crypto.createHmac('sha512', config.secret);
-  hash.update(`${salt}${plainPass}`);
-  return hash.digest('hex')
+const passwordHash = (plainPass, salt) => {
+    const hash = crypto.createHmac('sha512', config.secret);
+    hash.update(`${salt}${plainPass}`);
+    return hash.digest('hex');
 };
-
 var fn = {
-  logger,
-  mimeToExt,
-  decodeBase64Image,
-  sayFn,
-  mayExecute,
-  parseCommandFromMessage,
-  parseKnownCommandFromMessage,
-  passwordSalt,
-  passwordHash,
-  tryExecuteCommand,
-  render,
-  getRandomInt,
-  getRandom,
-  shuffle,
-  sleep,
-  fnRandom,
-  pad,
-  parseISO8601Duration,
-  parseHumanDuration,
-  mustParseHumanDuration,
-  humanDuration,
-  isBroadcaster,
-  isMod,
-  isSubscriber,
-  doReplacements,
-  nonce,
-  split,
-  joinIntoChunks,
-  arrayMove,
-  MS,
-  SECOND,
-  MINUTE,
-  HOUR,
-  DAY,
-  YEAR,
+    logger,
+    mimeToExt,
+    decodeBase64Image,
+    sayFn,
+    mayExecute,
+    parseCommandFromMessage,
+    parseKnownCommandFromMessage,
+    passwordSalt,
+    passwordHash,
+    tryExecuteCommand,
+    getRandomInt,
+    getRandom,
+    shuffle,
+    sleep,
+    fnRandom,
+    pad,
+    parseISO8601Duration,
+    parseHumanDuration,
+    mustParseHumanDuration,
+    humanDuration,
+    isBroadcaster,
+    isMod,
+    isSubscriber,
+    doReplacements,
+    nonce,
+    split,
+    joinIntoChunks,
+    arrayMove,
+    MS,
+    SECOND,
+    MINUTE,
+    HOUR,
+    DAY,
+    YEAR,
 };
 
 function Auth(userRepo, tokenRepo) {
@@ -704,9 +621,9 @@ function ModuleManager() {
   }
 }
 
-const __filename$5 = fileURLToPath(import.meta.url);
+const __filename$6 = fileURLToPath(import.meta.url);
 
-const log$6 = logger(__filename$5);
+const log$6 = logger(__filename$6);
 
 class WebSocketServer {
   constructor(
@@ -814,9 +731,9 @@ class WebSocketServer {
   }
 }
 
-const __filename$4 = fileURLToPath(import.meta.url);
+const __filename$5 = fileURLToPath(import.meta.url);
 
-const log$5 = logger(__filename$4);
+const log$5 = logger(__filename$5);
 
 class Db {
   constructor(dbConf) {
@@ -1030,6 +947,14 @@ function EventHub() {
     },
   }
 }
+
+const __filename$4 = fileURLToPath(import.meta.url);
+const __dirname$1 = dirname(__filename$4);
+const render = async (template, data) => {
+    const loader = new TwingLoaderFilesystem(__dirname$1 + '/templates');
+    const twing = new TwingEnvironment(loader);
+    return twing.render(template, data);
+};
 
 class Mail {
   constructor(cfg) {
@@ -1655,7 +1580,7 @@ class WebServer {
     // twitch calls this url after auth
     // from here we render a js that reads the token and shows it to the user
     app.get('/twitch/redirect_uri', async (req, res) => {
-      res.send(await fn.render('twitch/redirect_uri.twig'));
+      res.send(await render('twitch/redirect_uri.twig'));
     });
     app.post('/twitch/user-id-by-name', requireLoginApi, express.json(), async (req, res) => {
       let clientId;
@@ -1830,6 +1755,7 @@ class TwitchClientManager {
     user,
     /** @type TwitchChannels */ twitchChannelRepo,
     moduleManager,
+    variables,
   ) {
     this.eventHub = eventHub;
     this.cfg = cfg;
@@ -1837,6 +1763,7 @@ class TwitchClientManager {
     this.user = user;
     this.twitchChannelRepo = twitchChannelRepo;
     this.moduleManager = moduleManager;
+    this.variables = variables;
 
     this.init('init');
 
@@ -1932,7 +1859,7 @@ class TwitchClientManager {
       for (const m of moduleManager.all(user.id)) {
         const commands = m.getCommands() || {};
         const cmdDefs = commands[rawCmd.name] || [];
-        await fn.tryExecuteCommand(m, rawCmd, cmdDefs, this.chatClient, target, context, msg);
+        await fn.tryExecuteCommand(m, rawCmd, cmdDefs, this.chatClient, target, context, msg, this.variables);
         await m.onChatMsg(this.chatClient, target, context, msg);
       }
     });
@@ -2470,7 +2397,7 @@ class GeneralModule {
   widgets() {
     return {
       'media': async (req, res, next) => {
-        res.send(await fn.render('widget.twig', {
+        res.send(await render('widget.twig', {
           title: 'Media Widget',
           page: 'media',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
@@ -2546,7 +2473,7 @@ class GeneralModule {
         continue
       }
       const cmdDefs = this.commands[key] || [];
-      await fn.tryExecuteCommand(this, rawCmd, cmdDefs, client, target, context, msg);
+      await fn.tryExecuteCommand(this, rawCmd, cmdDefs, client, target, context, msg, this.variables);
       break
     }
     this.timers.forEach(t => {
@@ -2711,7 +2638,7 @@ class SongrequestModule {
   widgets() {
     return {
       'sr': async (req, res, next) => {
-        res.send(await fn.render('widget.twig', {
+        res.send(await render('widget.twig', {
           title: 'Song Request Widget',
           page: 'sr',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
@@ -3777,7 +3704,7 @@ class SpeechToTextModule {
   widgets() {
     return {
       'speech-to-text': async (req, res, next) => {
-        res.send(await fn.render('widget.twig', {
+        res.send(await render('widget.twig', {
           title: 'Speech to Text Widget',
           page: 'speech-to-text',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
@@ -3937,7 +3864,7 @@ class DrawcastModule {
   widgets() {
     return {
       'drawcast_receive': async (req, res, next) => {
-        res.send(await fn.render('widget.twig', {
+        res.send(await render('widget.twig', {
           title: 'Drawcast Widget',
           page: 'drawcast_receive',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
@@ -3945,7 +3872,7 @@ class DrawcastModule {
         }));
       },
       'drawcast_draw': async (req, res, next) => {
-        res.send(await fn.render('widget.twig', {
+        res.send(await render('widget.twig', {
           title: 'Drawcast Widget',
           page: 'drawcast_draw',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
@@ -4068,18 +3995,19 @@ const webServer = new WebServer(
 
 const run = async () => {
   const initForUser = (user) => {
+    const variables = new Variables(db, user.id);
     const clientManager = new TwitchClientManager(
       eventHub,
       config.twitch,
       db,
       user,
       twitchChannelRepo,
-      moduleManager
+      moduleManager,
+      variables
     );
     const chatClient = clientManager.getChatClient();
     const helixClient = clientManager.getHelixClient();
     const moduleStorage = new ModuleStorage(db, user.id);
-    const variables = new Variables(db, user.id);
     for (const moduleClass of modules) {
       moduleManager.add(user.id, new moduleClass(
         db,

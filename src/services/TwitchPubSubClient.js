@@ -1,5 +1,5 @@
 import WebSocket from 'ws'
-import { nonce, SECOND, logger } from '../fn.js'
+import { nonce, SECOND, logger } from '../fn.ts'
 import { EventHub } from '../EventHub.js'
 import { fileURLToPath } from 'url'
 

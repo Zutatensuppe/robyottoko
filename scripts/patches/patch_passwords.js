@@ -1,6 +1,6 @@
 import config from './../../src/config'
 import Db from './../../src/Db.js'
-import fn from './../../src/fn.js'
+import fn from './../../src/fn'
 
 const db = new Db(config.db)
 const users = db.getMany('user')

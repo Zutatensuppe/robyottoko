@@ -1,5 +1,5 @@
 import Db from '../Db.js'
-import { logger } from '../fn.js'
+import { logger } from '../fn.ts'
 import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)

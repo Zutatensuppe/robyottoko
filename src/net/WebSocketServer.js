@@ -1,5 +1,5 @@
 import WebSocket from 'ws'
-import { SECOND, logger } from '../fn.js'
+import { SECOND, logger } from '../fn.ts'
 import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)

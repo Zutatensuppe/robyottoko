@@ -1,4 +1,4 @@
-import fn from './../fn.js'
+import fn from './../fn.ts'
 
 const randomText = (
   /** @type Variables */ variables,

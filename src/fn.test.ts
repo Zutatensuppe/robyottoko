@@ -1,4 +1,4 @@
-import { arrayMove, joinIntoChunks, humanDuration, parseISO8601Duration, DAY, HOUR, MINUTE, SECOND, MS, parseHumanDuration } from './fn.js'
+import { arrayMove, joinIntoChunks, humanDuration, parseISO8601Duration, DAY, HOUR, MINUTE, SECOND, MS, parseHumanDuration } from './fn'
 
 test('joinIntoChunks', () => {
   let actual = joinIntoChunks(['hyottoko', 'van', 'megaport'], ', ', 12)

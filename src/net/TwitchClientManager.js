@@ -1,6 +1,6 @@
 import tmi from 'tmi.js'
 import TwitchHelixClient from '../services/TwitchHelixClient.js'
-import fn from '../fn.js'
+import fn from '../fn.ts'
 import Db from '../Db.js'
 import TwitchChannels from '../services/TwitchChannels.js'
 import EventHub from '../EventHub.js'
@@ -16,6 +16,7 @@ class TwitchClientManager {
     user,
     /** @type TwitchChannels */ twitchChannelRepo,
     moduleManager,
+    variables,
   ) {
     this.eventHub = eventHub
     this.cfg = cfg
@@ -23,6 +24,7 @@ class TwitchClientManager {
     this.user = user
     this.twitchChannelRepo = twitchChannelRepo
     this.moduleManager = moduleManager
+    this.variables = variables
 
     this.init('init')
 
@@ -118,7 +120,7 @@ class TwitchClientManager {
       for (const m of moduleManager.all(user.id)) {
         const commands = m.getCommands() || {}
         const cmdDefs = commands[rawCmd.name] || []
-        await fn.tryExecuteCommand(m, rawCmd, cmdDefs, this.chatClient, target, context, msg)
+        await fn.tryExecuteCommand(m, rawCmd, cmdDefs, this.chatClient, target, context, msg, this.variables)
         await m.onChatMsg(this.chatClient, target, context, msg);
       }
     })

@@ -4,7 +4,8 @@ import madochanCreateWord from '../../commands/madochanCreateWord.js'
 import text from '../../commands/text.js'
 import randomText from '../../commands/randomText.js'
 import playMedia from '../../commands/playMedia.js'
-import fn from '../../fn.js'
+import fn from '../../fn.ts'
+import { render } from './../../twing.ts'
 import chatters from '../../commands/chatters.js'
 import Db from '../../Db.js'
 import TwitchHelixClient from '../../services/TwitchHelixClient.js'
@@ -152,7 +153,7 @@ class GeneralModule {
   widgets() {
     return {
       'media': async (req, res, next) => {
-        res.send(await fn.render('widget.twig', {
+        res.send(await render('widget.twig', {
           title: 'Media Widget',
           page: 'media',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
@@ -228,7 +229,7 @@ class GeneralModule {
         continue
       }
       const cmdDefs = this.commands[key] || []
-      await fn.tryExecuteCommand(this, rawCmd, cmdDefs, client, target, context, msg)
+      await fn.tryExecuteCommand(this, rawCmd, cmdDefs, client, target, context, msg, this.variables)
       break
     }
     this.timers.forEach(t => {

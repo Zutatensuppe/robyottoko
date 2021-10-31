@@ -5,7 +5,7 @@ import WebSocketServer from './net/WebSocketServer'
 import WebServer from './WebServer'
 import TwitchClientManager from './net/TwitchClientManager'
 import ModuleStorage from './mod/ModuleStorage'
-import { logger } from './fn.js'
+import { logger } from './fn.ts'
 import Users from './services/Users.js'
 import Tokens from './services/Tokens.js'
 import TwitchChannels from './services/TwitchChannels.js'
@@ -61,18 +61,19 @@ const webServer = new WebServer(
 
 const run = async () => {
   const initForUser = (user) => {
+    const variables = new Variables(db, user.id)
     const clientManager = new TwitchClientManager(
       eventHub,
       config.twitch,
       db,
       user,
       twitchChannelRepo,
-      moduleManager
+      moduleManager,
+      variables
     )
     const chatClient = clientManager.getChatClient()
     const helixClient = clientManager.getHelixClient()
     const moduleStorage = new ModuleStorage(db, user.id)
-    const variables = new Variables(db, user.id)
     for (const moduleClass of modules) {
       moduleManager.add(user.id, new moduleClass(
         db,

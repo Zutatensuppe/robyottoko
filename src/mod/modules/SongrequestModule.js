@@ -1,5 +1,6 @@
 import Db from '../../Db.js'
-import fn from '../../fn.js'
+import fn from '../../fn.ts'
+import { render } from './../../twing.ts'
 import WebServer from '../../WebServer.js'
 import WebSocketServer from '../../net/WebSocketServer.js'
 import TwitchHelixClient from '../../services/TwitchHelixClient.js'
@@ -96,7 +97,7 @@ class SongrequestModule {
   widgets() {
     return {
       'sr': async (req, res, next) => {
-        res.send(await fn.render('widget.twig', {
+        res.send(await render('widget.twig', {
           title: 'Song Request Widget',
           page: 'sr',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,

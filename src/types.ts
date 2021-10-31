@@ -1,9 +1,13 @@
+import { Client } from 'tmi.js'
+
 type int = number
+
+export type LogLevel = 'info' | 'debug' | 'error' | 'log'
 
 export interface Config {
   secret: string
   log: {
-    level: 'info' | 'debug'
+    level: LogLevel
   }
   twitch: {
     eventSub: {
@@ -86,4 +90,68 @@ export interface DrawcastData {
   defaultSettings: any
   drawUrl: string
   images: any[]
+}
+
+export interface GlobalVariable {
+  name: string
+  value: any
+}
+
+// TODO: use type definitions for tmi.js
+export interface TwitchChatClient extends Client {
+  channels: string[]
+  say: (target: string, msg: string) => Promise<any>
+}
+
+export interface TwitchChatContext {
+  "room-id": any
+  "user-id": any
+  "display-name": any
+  mod: any
+  subscriber: any
+}
+
+export interface RawCommand {
+  name: string
+  args: string[]
+}
+
+export interface CommandTrigger { }
+export interface CommandVariable {
+  name: string
+  value: any
+}
+export interface CommandVariableChange {
+  change: string // 'set' | ...
+  name: string
+  value: string
+}
+export interface CommandData { }
+
+export type CommandAction = 'text' | 'media' | 'countdown' | 'jisho_org_lookup' | 'madochan_createword' | 'chatters'
+export type CommandRestrict = 'mod' | 'sub' | 'broadcaster'
+
+export interface Command {
+  triggers: CommandTrigger[]
+  action: CommandAction
+  restrict_to: CommandRestrict[]
+  variables: CommandVariable[]
+  variableChanges: CommandVariableChange[]
+  data: CommandData
+}
+
+export interface FunctionCommand extends Command {
+  fn: (rawCmd: RawCommand, client: Client, target: string, context: TwitchChatContext, msg: string) => any
+}
+
+
+export interface VariablesService {
+  all: () => GlobalVariable[]
+  set: (name: string, value: any) => void
+  get: (name: string) => any
+}
+
+export interface BotModule {
+  variables: VariablesService
+  saveCommands: () => void
 }

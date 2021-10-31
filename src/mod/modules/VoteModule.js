@@ -1,5 +1,5 @@
 import Db from '../../Db.js'
-import fn from '../../fn.js'
+import fn from '../../fn.ts'
 import WebServer from '../../WebServer.js'
 import WebSocketServer from '../../net/WebSocketServer.js'
 import TwitchHelixClient from '../../services/TwitchHelixClient.js'

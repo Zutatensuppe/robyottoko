@@ -1,4 +1,4 @@
-import fn from '../fn.js'
+import fn from '../fn.ts'
 
 const TIME_BETWEEN_MEDIA = 100
 export default {

@@ -8,7 +8,8 @@ import path from 'path'
 
 import Db from './Db.js'
 import EventHub from './EventHub.js'
-import fn from './fn.js'
+import fn from './fn.ts'
+import { render } from './twing.ts'
 import Mail from './net/Mail.js'
 import Tokens from './services/Tokens.js'
 import TwitchHelixClient from './services/TwitchHelixClient.js'
@@ -419,7 +420,7 @@ class WebServer {
     // twitch calls this url after auth
     // from here we render a js that reads the token and shows it to the user
     app.get('/twitch/redirect_uri', async (req, res) => {
-      res.send(await fn.render('twitch/redirect_uri.twig'))
+      res.send(await render('twitch/redirect_uri.twig'))
     })
     app.post('/twitch/user-id-by-name', requireLoginApi, express.json(), async (req, res) => {
       let clientId

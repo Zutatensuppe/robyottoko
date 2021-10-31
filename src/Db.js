@@ -1,6 +1,6 @@
 import fs from 'fs'
 import bsqlite from 'better-sqlite3'
-import { logger } from './fn.js'
+import { logger } from './fn.ts'
 
 import { fileURLToPath } from 'url'
 
