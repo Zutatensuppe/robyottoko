@@ -1,4 +1,4 @@
-import countdown from '../../commands/countdown.js'
+import countdown from '../../commands/countdown.ts'
 import jishoOrgLookup from '../../commands/jishoOrgLookup.ts'
 import madochanCreateWord from '../../commands/madochanCreateWord.ts'
 import text from '../../commands/text.ts'

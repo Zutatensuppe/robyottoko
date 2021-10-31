@@ -1,27 +1,30 @@
-import fn from './../fn.ts'
+import WebSocketServer from '../net/WebSocketServer'
+import Variables from '../services/Variables'
+import { CountdownCommand, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import fn from './../fn'
 
-const log = fn.logger('countdown.js')
+const log = fn.logger('countdown.ts')
 
 const countdown = (
-  /** @type Variables */ variables,
-  /** @type WebSocketServer */ wss,
-  /** @type String */          userId,
-  /** @type Object */ originalCmd
+  variables: Variables,
+  wss: WebSocketServer,
+  userId: number,
+  originalCmd: CountdownCommand,
 ) => async (
-  command,
-  client,
-  /** @type string */ target,
-  context,
-  /** @type string */ msg,
+  command: RawCommand,
+  client: TwitchChatClient,
+  target: string,
+  context: TwitchChatContext,
+  msg: string,
   ) => {
     const sayFn = fn.sayFn(client, target)
-    const doReplacements = async (text) => {
+    const doReplacements = async (text: string) => {
       return await fn.doReplacements(text, command, context, variables, originalCmd)
     }
-    const say = async (text) => {
+    const say = async (text: string) => {
       return sayFn(await doReplacements(text))
     }
-    const parseDuration = async (str) => {
+    const parseDuration = async (str: string) => {
       return fn.mustParseHumanDuration(await doReplacements(str))
     }
 
@@ -31,11 +34,11 @@ const countdown = (
     const t = (settings.type || 'auto')
 
     if (t === 'auto') {
-      const steps = await doReplacements(settings.steps)
-      let interval
+      const steps = parseInt(await doReplacements(settings.steps), 10)
+      let interval: number
       try {
         interval = (await parseDuration(settings.interval)) || (1 * fn.SECOND)
-      } catch (e) {
+      } catch (e: any) {
         log.error(e.message, settings.interval)
         return
       }
@@ -44,20 +47,20 @@ const countdown = (
       const msgOutro = settings.outro || null
       console.log(steps, settings)
       if (msgIntro) {
-        actions.push(async () => await say(msgIntro.replace(/\{steps\}/g, steps)))
+        actions.push(async () => await say(msgIntro.replace(/\{steps\}/g, `${steps}`)))
         actions.push(async () => await fn.sleep(interval))
       }
 
       for (let step = steps; step > 0; step--) {
         actions.push(async () => say(msgStep
-          .replace(/\{steps\}/g, steps)
-          .replace(/\{step\}/g, step)
+          .replace(/\{steps\}/g, `${steps}`)
+          .replace(/\{step\}/g, `${step}`)
         ))
         actions.push(async () => await fn.sleep(interval))
       }
 
       if (msgOutro) {
-        actions.push(async () => await say(msgOutro.replace(/\{steps\}/g, steps)))
+        actions.push(async () => await say(msgOutro.replace(/\{steps\}/g, `${steps}`)))
       }
     } else if (t === 'manual') {
       for (const a of settings.actions) {
@@ -71,10 +74,10 @@ const countdown = (
             })
           })
         } else if (a.type === 'delay') {
-          let duration
+          let duration: number
           try {
             duration = (await parseDuration(a.value)) || 0
-          } catch (e) {
+          } catch (e: any) {
             log.error(e.message, a.value)
             return
           }

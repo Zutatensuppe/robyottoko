@@ -165,6 +165,19 @@ export interface MediaCommand extends Command {
   action: "media"
 }
 
+export interface CountdownCommand extends Command {
+  action: "countdown"
+  data: {
+    type: string
+    step: string
+    steps: string
+    interval: string
+    intro: string
+    outro: string
+    actions: { type: string, value: string }[]
+  }
+}
+
 export interface FunctionCommand extends Command {
   fn: (rawCmd: RawCommand, client: Client, target: string, context: TwitchChatContext, msg: string) => any
 }
