@@ -15,7 +15,7 @@ import Tokens from './services/Tokens.ts'
 import TwitchHelixClient from './services/TwitchHelixClient.ts'
 import Users from './services/Users.ts'
 import Variables from './services/Variables.ts'
-import WebSocketServer from './net/WebSocketServer.js'
+import WebSocketServer from './net/WebSocketServer.ts'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)

@@ -9,7 +9,7 @@ import chatters from '../../commands/chatters.ts'
 import Db from '../../Db.ts'
 import TwitchHelixClient from '../../services/TwitchHelixClient.ts'
 import WebServer from '../../WebServer.js'
-import WebSocketServer from '../../net/WebSocketServer.js'
+import WebSocketServer from '../../net/WebSocketServer.ts'
 import Madochan from '../../services/Madochan.ts'
 import Variables from '../../services/Variables.ts'
 

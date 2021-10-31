@@ -1,16 +1,33 @@
 import WebSocket from 'ws'
-import { SECOND, logger } from '../fn.ts'
+import { IncomingMessage } from 'http'
+import { SECOND, logger } from '../fn'
 import { fileURLToPath } from 'url'
+import ModuleManager from '../mod/ModuleManager'
+import { Module, WsConfig } from '../types'
+import Auth from './Auth'
 
 const __filename = fileURLToPath(import.meta.url)
 
 const log = logger(__filename)
 
+export interface Socket extends WebSocket.WebSocket {
+  user_id?: number
+  isAlive?: boolean
+  module?: string
+}
+
 class WebSocketServer {
+  private moduleManager: ModuleManager
+  private config: WsConfig
+  private auth: Auth
+
+  private _websocketserver: WebSocket.Server | null
+  private _interval: NodeJS.Timer | null
+
   constructor(
-    moduleManager,
-    config,
-    auth,
+    moduleManager: ModuleManager,
+    config: WsConfig,
+    auth: Auth,
   ) {
     this.moduleManager = moduleManager
     this.config = config
@@ -25,7 +42,7 @@ class WebSocketServer {
 
   listen() {
     this._websocketserver = new WebSocket.Server(this.config)
-    this._websocketserver.on('connection', (socket, request, client) => {
+    this._websocketserver.on('connection', (socket: Socket, request: IncomingMessage) => {
       const token = socket.protocol
       const tokenInfo = this.auth.wsTokenFromProtocol(token)
       if (!tokenInfo) {
@@ -37,7 +54,7 @@ class WebSocketServer {
       socket.user_id = tokenInfo.user_id
 
       const pathname = new URL(this.connectstring()).pathname
-      if (request.url.indexOf(pathname) !== 0) {
+      if (request.url?.indexOf(pathname) !== 0) {
         log.info('bad request url: ', request.url)
         socket.close()
         return
@@ -45,7 +62,7 @@ class WebSocketServer {
 
       socket.isAlive = true
       socket.on('pong', function () {
-        this.isAlive = true;
+        socket.isAlive = true;
       })
 
       const relpath = request.url.substr(pathname.length)
@@ -60,7 +77,8 @@ class WebSocketServer {
         if (evts) {
           socket.on('message', (data) => {
             log.info(`ws|${socket.user_id}| `, data)
-            const d = JSON.parse(data)
+            const unknownData = data as unknown
+            const d = JSON.parse(unknownData as string)
             if (!d.event) {
               return
             }
@@ -78,7 +96,10 @@ class WebSocketServer {
     })
 
     this._interval = setInterval(() => {
-      this._websocketserver.clients.forEach((socket) => {
+      if (this._websocketserver === null) {
+        return
+      }
+      this._websocketserver.clients.forEach((socket: Socket) => {
         if (socket.isAlive === false) {
           return socket.terminate()
         }
@@ -88,20 +109,32 @@ class WebSocketServer {
     }, 30 * SECOND)
 
     this._websocketserver.on('close', () => {
+      if (this._interval === null) {
+        return
+      }
       clearInterval(this._interval)
     })
   }
 
-  notifyOne(user_ids, module, data, /** @type WebSocket */ socket) {
-    if (socket.isAlive && user_ids.includes(socket.user_id) && socket.module === module) {
+  notifyOne(user_ids: number[], moduleName: string, data: any, socket: Socket) {
+    if (
+      socket.isAlive
+      && socket.user_id
+      && user_ids.includes(socket.user_id)
+      && socket.module === moduleName
+    ) {
       log.info(`notifying ${socket.user_id} (${data.event})`)
       socket.send(JSON.stringify(data))
     }
   }
 
-  notifyAll(user_ids, module, data) {
+  notifyAll(user_ids: number[], moduleName: string, data: any) {
+    if (!this._websocketserver) {
+      log.error(`tried to notifyAll, but _websocketserver is null`)
+      return
+    }
     this._websocketserver.clients.forEach((socket) => {
-      this.notifyOne(user_ids, module, data, socket)
+      this.notifyOne(user_ids, moduleName, data, socket)
     })
   }
 

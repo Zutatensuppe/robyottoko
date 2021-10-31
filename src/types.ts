@@ -1,4 +1,5 @@
 import { Client } from 'tmi.js'
+import { Socket } from './net/WebSocketServer'
 import Variables from './services/Variables'
 
 type int = number
@@ -8,6 +9,12 @@ export type LogLevel = 'info' | 'debug' | 'error' | 'log'
 export interface DbConfig {
   file: string
   patchesDir: string
+}
+
+export interface WsConfig {
+  hostname: string
+  port: int
+  connectstring: string
 }
 
 export interface Config {
@@ -40,11 +47,7 @@ export interface Config {
     port: int
     url: string
   }
-  ws: {
-    hostname: string
-    port: int
-    connectstring: string
-  }
+  ws: WsConfig
   db: DbConfig
   modules: {
     sr: {
@@ -168,5 +171,6 @@ export interface BotModule {
 }
 
 export interface Module {
-
+  name: string
+  getWsEvents: () => Record<string, (ws: Socket, data?: any) => any>
 }

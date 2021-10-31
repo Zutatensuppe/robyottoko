@@ -1,4 +1,4 @@
-import WebSocketServer from "../net/WebSocketServer"
+import WebSocketServer from "../net/WebSocketServer.ts"
 
 const playMedia = (
   /** @type WebSocketServer */ wss,
