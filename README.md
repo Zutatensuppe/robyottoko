@@ -30,11 +30,11 @@ would let you use all the features without setting anything up yourself.
 
 ## Getting Started
 
-1. Create a `src/config.js`. The example can be copied, for some
+1. Create a `config.json`. The example can be copied, for some
 features you have to provide an api key directly in the config atm.
 
     ```
-    cp src/config.js.example src/config.js
+    cp config.json.example config.json
     ```
 
 2. Install the dependencies
