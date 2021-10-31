@@ -1,4 +1,4 @@
-import config from './../../src/config.js'
+import config from './../../src/config'
 import Db from './../../src/Db.js'
 import fn from './../../src/fn.js'
 

@@ -1,4 +1,4 @@
-import config from '../../config.js'
+import config from '../../config'
 import fn from '../../fn.js'
 import { getText, asQueryArgs } from '../../net/xhr.js'
 import Variables from '../../services/Variables.js'

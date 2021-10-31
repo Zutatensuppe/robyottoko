@@ -1,4 +1,4 @@
-import config from './config.js'
+import config from './config'
 import crypto from 'crypto'
 import path from 'path'
 import { getText } from './net/xhr'

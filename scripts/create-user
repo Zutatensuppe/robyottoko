@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import config from '../src/config.js'
+import config from '../src/config'
 import Db from '../src/Db.js'
 import readline from 'readline'
 
