@@ -1,5 +1,4 @@
 import config from '../../config.ts'
-import { render } from './../../twing.ts'
 import { getText, asQueryArgs } from '../../net/xhr.ts'
 
 class SpeechToTextModule {
@@ -73,12 +72,12 @@ class SpeechToTextModule {
   widgets() {
     return {
       'speech-to-text': async (req, res, next) => {
-        res.send(await render('widget.twig', {
+        res.render('widget.spy', {
           title: 'Speech to Text Widget',
           page: 'speech-to-text',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
           widgetToken: req.params.widget_token,
-        }))
+        })
       },
     }
   }

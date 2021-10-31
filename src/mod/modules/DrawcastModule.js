@@ -1,6 +1,5 @@
 import Db from '../../Db.js'
 import fn from '../../fn.ts'
-import { render } from './../../twing.ts'
 import fs from 'fs'
 import WebServer from '../../WebServer.js'
 import WebSocketServer from '../../net/WebSocketServer.js'
@@ -103,20 +102,20 @@ class DrawcastModule {
   widgets() {
     return {
       'drawcast_receive': async (req, res, next) => {
-        res.send(await render('widget.twig', {
+        res.render('widget.spy', {
           title: 'Drawcast Widget',
           page: 'drawcast_receive',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
           widgetToken: req.params.widget_token,
-        }))
+        })
       },
       'drawcast_draw': async (req, res, next) => {
-        res.send(await render('widget.twig', {
+        res.render('widget.spy', {
           title: 'Drawcast Widget',
           page: 'drawcast_draw',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
           widgetToken: req.params.widget_token,
-        }))
+        })
       },
     }
   }

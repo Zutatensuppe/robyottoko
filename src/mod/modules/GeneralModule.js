@@ -5,7 +5,6 @@ import text from '../../commands/text.js'
 import randomText from '../../commands/randomText.js'
 import playMedia from '../../commands/playMedia.js'
 import fn from '../../fn.ts'
-import { render } from './../../twing.ts'
 import chatters from '../../commands/chatters.js'
 import Db from '../../Db.js'
 import TwitchHelixClient from '../../services/TwitchHelixClient.js'
@@ -153,12 +152,12 @@ class GeneralModule {
   widgets() {
     return {
       'media': async (req, res, next) => {
-        res.send(await render('widget.twig', {
+        res.render('widget.spy', {
           title: 'Media Widget',
           page: 'media',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
           widgetToken: req.params.widget_token,
-        }))
+        })
       },
     }
   }
