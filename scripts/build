@@ -1,5 +1,7 @@
 #!/bin/sh -ex
 
+rm build/* -rf
+
 # server build
 npm run rollup -- -c rollup.server.config.js
 cp -r src/templates build/server/
