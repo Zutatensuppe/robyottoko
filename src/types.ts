@@ -4,6 +4,11 @@ type int = number
 
 export type LogLevel = 'info' | 'debug' | 'error' | 'log'
 
+export interface DbConfig {
+  file: string
+  patchesDir: string
+}
+
 export interface Config {
   secret: string
   log: {
@@ -38,11 +43,8 @@ export interface Config {
     hostname: string
     port: int
     connectstring: string
-  },
-  db: {
-    file: string
-    patchesDir: string
-  },
+  }
+  db: DbConfig
   modules: {
     sr: {
       google: {

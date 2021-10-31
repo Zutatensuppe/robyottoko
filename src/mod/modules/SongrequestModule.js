@@ -1,4 +1,4 @@
-import Db from '../../Db.js'
+import Db from '../../Db.ts'
 import fn from '../../fn.ts'
 import WebServer from '../../WebServer.js'
 import WebSocketServer from '../../net/WebSocketServer.js'

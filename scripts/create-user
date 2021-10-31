@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import config from '../src/config'
-import Db from '../src/Db.js'
+import Db from '../src/Db'
 import readline from 'readline'
 
 const question = (q) => new Promise((resolve, reject) => {

@@ -1,4 +1,4 @@
-import Db from '../Db.js'
+import Db from '../Db.ts'
 import { logger } from '../fn.ts'
 import { fileURLToPath } from 'url'
 

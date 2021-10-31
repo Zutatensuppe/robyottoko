@@ -1,5 +1,5 @@
 import config from './../../src/config'
-import Db from './../../src/Db.js'
+import Db from './../../src/Db'
 import fn from './../../src/fn'
 
 const db = new Db(config.db)

@@ -1,4 +1,4 @@
-import Db from "../Db"
+import Db from "../Db.ts"
 
 const TABLE = 'twitch_channel'
 

@@ -7,7 +7,7 @@ import multer from 'multer'
 import path from 'path'
 import sprightly from './services/Sprightly.js'
 
-import Db from './Db.js'
+import Db from './Db.ts'
 import EventHub from './EventHub.js'
 import fn from './fn.ts'
 import Mail from './net/Mail.js'

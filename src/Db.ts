@@ -1,15 +1,19 @@
 import fs from 'fs'
-import bsqlite from 'better-sqlite3'
-import { logger } from './fn.ts'
+import bsqlite, { Database } from 'better-sqlite3'
+import { logger } from './fn'
+import { DbConfig } from './types'
 
-import { fileURLToPath } from 'url'
+const log = logger('Db.ts')
 
-const __filename = fileURLToPath(import.meta.url)
-
-const log = logger(__filename)
+type Data = Record<string, any>
+type Where = Record<string, any>
+type OrderBy = Record<string, -1 | 1>[]
 
 class Db {
-  constructor(dbConf) {
+  private conf: DbConfig
+  private dbh: Database
+
+  constructor(dbConf: DbConfig) {
     this.conf = dbConf
     this.dbh = bsqlite(this.conf.file)
   }
@@ -54,7 +58,7 @@ class Db {
     }
   }
 
-  _buildWhere(where) {
+  _buildWhere(where: Where): [string, any[]] {
     const wheres = []
     const values = []
     for (const k of Object.keys(where)) {
@@ -67,7 +71,7 @@ class Db {
         let prop = '$nin'
         if (where[k][prop]) {
           if (where[k][prop].length > 0) {
-            wheres.push(k + ' NOT IN (' + where[k][prop].map(_ => '?') + ')')
+            wheres.push(k + ' NOT IN (' + where[k][prop].map((_: any) => '?') + ')')
             values.push(...where[k][prop])
           }
           continue
@@ -75,7 +79,7 @@ class Db {
         prop = '$in'
         if (where[k][prop]) {
           if (where[k][prop].length > 0) {
-            wheres.push(k + ' IN (' + where[k][prop].map(_ => '?') + ')')
+            wheres.push(k + ' IN (' + where[k][prop].map((_: any) => '?') + ')')
             values.push(...where[k][prop])
           }
           continue
@@ -125,7 +129,7 @@ class Db {
     ]
   }
 
-  _buildOrderBy(orderBy) {
+  _buildOrderBy(orderBy: OrderBy) {
     const sorts = []
     for (const s of orderBy) {
       const k = Object.keys(s)[0]
@@ -134,43 +138,43 @@ class Db {
     return sorts.length > 0 ? ' ORDER BY ' + sorts.join(', ') : ''
   }
 
-  _get(query, params = []) {
+  _get(query: string, params: any[] = []) {
     return this.dbh.prepare(query).get(...params)
   }
 
-  run(query, params = []) {
+  run(query: string, params: any[] = []) {
     return this.dbh.prepare(query).run(...params)
   }
 
-  _getMany(query, params = []) {
+  _getMany(query: string, params: any[] = []) {
     return this.dbh.prepare(query).all(...params)
   }
 
-  get(table, where = {}, orderBy = []) {
+  get(table: string, where: Where = {}, orderBy: OrderBy = []) {
     const [whereSql, values] = this._buildWhere(where)
     const orderBySql = this._buildOrderBy(orderBy)
     const sql = 'SELECT * FROM ' + table + whereSql + orderBySql
     return this._get(sql, values)
   }
 
-  getMany(table, where = {}, orderBy = []) {
+  getMany(table: string, where: Where = {}, orderBy: OrderBy = []) {
     const [whereSql, values] = this._buildWhere(where)
     const orderBySql = this._buildOrderBy(orderBy)
     const sql = 'SELECT * FROM ' + table + whereSql + orderBySql
     return this._getMany(sql, values)
   }
 
-  delete(table, where = {}) {
+  delete(table: string, where: Where = {}) {
     const [whereSql, values] = this._buildWhere(where)
     const sql = 'DELETE FROM ' + table + whereSql
     return this.run(sql, values)
   }
 
-  exists(table, where) {
+  exists(table: string, where: Where) {
     return !!this.get(table, where)
   }
 
-  upsert(table, data, check, idcol = null) {
+  upsert(table: string, data: Data, check: Where, idcol = null) {
     if (!this.exists(table, check)) {
       return this.insert(table, data)
     }
@@ -182,14 +186,14 @@ class Db {
     return this.get(table, check)[idcol] // get id manually
   }
 
-  insert(table, data) {
+  insert(table: string, data: Data) {
     const keys = Object.keys(data)
     const values = keys.map(k => data[k])
     const sql = 'INSERT INTO ' + table + ' (' + keys.join(',') + ') VALUES (' + keys.map(k => '?').join(',') + ')'
     return this.run(sql, values).lastInsertRowid
   }
 
-  update(table, data, where = {}) {
+  update(table: string, data: Data, where: Where = {}) {
     const keys = Object.keys(data)
     if (keys.length === 0) {
       return
