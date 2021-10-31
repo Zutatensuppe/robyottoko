@@ -1,5 +1,5 @@
 import fn from '../../fn.ts'
-import JishoOrg from '../../services/JishoOrg.js'
+import JishoOrg from '../../services/JishoOrg.ts'
 
 const log = fn.logger(__filename)
 
