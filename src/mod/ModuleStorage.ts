@@ -1,22 +1,20 @@
-import Db from '../Db.ts'
-import { logger } from '../fn.ts'
-import { fileURLToPath } from 'url'
+import Db from '../Db'
+import { logger } from '../fn'
 
-const __filename = fileURLToPath(import.meta.url)
-
-const log = logger(__filename)
+const log = logger('ModuleStorage.ts')
 
 const TABLE = 'module'
 
 class ModuleStorage {
-  constructor(
-    /** @type Db */ db,
-    userId,
-  ) {
+  private db: Db
+  private userId: number
+
+  constructor(db: Db, userId: number) {
     this.db = db
     this.userId = userId
   }
-  load(key, def) {
+
+  load(key: string, def: Record<string, any>): Record<string, any> {
     try {
       const where = { user_id: this.userId, key }
       const row = this.db.get(TABLE, where)
@@ -27,7 +25,8 @@ class ModuleStorage {
       return def
     }
   }
-  save(key, rawData) {
+
+  save(key: string, rawData: Record<string, any>) {
     const where = { user_id: this.userId, key }
     const data = JSON.stringify(rawData)
     const dbData = Object.assign({}, where, { data })

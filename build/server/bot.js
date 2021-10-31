@@ -1229,10 +1229,10 @@ class Variables {
     }
 }
 
-const __filename$3 = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename$3);
+const __filename$2 = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename$2);
 
-const log$3 = fn.logger(__filename$3);
+const log$3 = fn.logger(__filename$2);
 
 class WebServer {
   constructor(
@@ -1802,7 +1802,7 @@ class TwitchChannels {
     }
 }
 
-const __filename$2 = fileURLToPath(import.meta.url);
+const __filename$1 = fileURLToPath(import.meta.url);
 
 class TwitchClientManager {
   constructor(
@@ -1840,7 +1840,7 @@ class TwitchClientManager {
     const twitchChannelRepo = this.twitchChannelRepo;
     const moduleManager = this.moduleManager;
 
-    const log = fn.logger(__filename$2, `${user.name}|`);
+    const log = fn.logger(__filename$1, `${user.name}|`);
 
     if (this.chatClient) {
       try {
@@ -2011,37 +2011,31 @@ class TwitchClientManager {
   }
 }
 
-const __filename$1 = fileURLToPath(import.meta.url);
-
-const log$2 = logger(__filename$1);
-
+const log$2 = logger('ModuleStorage.ts');
 const TABLE$1 = 'module';
-
 class ModuleStorage {
-  constructor(
-    /** @type Db */ db,
-    userId,
-  ) {
-    this.db = db;
-    this.userId = userId;
-  }
-  load(key, def) {
-    try {
-      const where = { user_id: this.userId, key };
-      const row = this.db.get(TABLE$1, where);
-      const data = row ? JSON.parse('' + row.data) : null;
-      return data ? Object.assign({}, def, data) : def
-    } catch (e) {
-      log$2.error(e);
-      return def
+    constructor(db, userId) {
+        this.db = db;
+        this.userId = userId;
     }
-  }
-  save(key, rawData) {
-    const where = { user_id: this.userId, key };
-    const data = JSON.stringify(rawData);
-    const dbData = Object.assign({}, where, { data });
-    this.db.upsert(TABLE$1, dbData, where);
-  }
+    load(key, def) {
+        try {
+            const where = { user_id: this.userId, key };
+            const row = this.db.get(TABLE$1, where);
+            const data = row ? JSON.parse('' + row.data) : null;
+            return data ? Object.assign({}, def, data) : def;
+        }
+        catch (e) {
+            log$2.error(e);
+            return def;
+        }
+    }
+    save(key, rawData) {
+        const where = { user_id: this.userId, key };
+        const data = JSON.stringify(rawData);
+        const dbData = Object.assign({}, where, { data });
+        this.db.upsert(TABLE$1, dbData, where);
+    }
 }
 
 const TABLE = 'cache';
