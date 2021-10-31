@@ -4,7 +4,8 @@ import path from 'path'
 import { getText } from './net/xhr'
 import { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove } from './common/fn'
 
-import { Command, GlobalVariable, LogLevel, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, BotModule, VariablesService } from './types'
+import { Command, GlobalVariable, LogLevel, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, BotModule } from './types'
+import Variables from './services/Variables'
 
 export { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove }
 
@@ -138,7 +139,7 @@ const tryExecuteCommand = async (
   target: string,
   context: TwitchChatContext,
   msg: string,
-  variables: VariablesService
+  variables: Variables
 ) => {
   const promises = []
   for (const cmdDef of cmdDefs) {
@@ -227,7 +228,7 @@ const doReplacements = async (
   text: string,
   command: RawCommand,
   context: TwitchChatContext,
-  variables: VariablesService,
+  variables: Variables,
   originalCmd: Command,
 ) => {
   const replaces: { regex: RegExp, replacer: (...args: string[]) => Promise<any> }[] = [

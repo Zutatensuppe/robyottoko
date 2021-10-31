@@ -1,4 +1,5 @@
 import { Client } from 'tmi.js'
+import Variables from './services/Variables'
 
 type int = number
 
@@ -142,18 +143,26 @@ export interface Command {
   data: CommandData
 }
 
+// should not exist
+export interface TextCommand extends Command {
+  action: "text"
+  data: {
+    text: string
+  }
+}
+
+export interface RandomTextCommand extends Command {
+  action: "text"
+  data: {
+    text: string[]
+  }
+}
+
 export interface FunctionCommand extends Command {
   fn: (rawCmd: RawCommand, client: Client, target: string, context: TwitchChatContext, msg: string) => any
 }
 
-
-export interface VariablesService {
-  all: () => GlobalVariable[]
-  set: (name: string, value: any) => void
-  get: (name: string) => any
-}
-
 export interface BotModule {
-  variables: VariablesService
+  variables: Variables
   saveCommands: () => void
 }

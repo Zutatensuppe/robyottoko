@@ -1156,38 +1156,39 @@ where x.user_id = ?`, [id]);
 }
 
 const TABLE$3 = 'variables';
-function Variables(db, userId) {
-    const set = (name, value) => {
-        db.upsert(TABLE$3, {
+class Variables {
+    constructor(db, userId) {
+        this.db = db;
+        this.userId = userId;
+    }
+    set(name, value) {
+        this.db.upsert(TABLE$3, {
             name,
-            user_id: userId,
+            user_id: this.userId,
             value: JSON.stringify(value),
         }, {
             name,
-            user_id: userId,
+            user_id: this.userId,
         });
-    };
-    return {
-        set,
-        get: (name) => {
-            const row = db.get(TABLE$3, { name, user_id: userId });
-            return row ? JSON.parse(row.value) : null;
-        },
-        all: () => {
-            const rows = db.getMany(TABLE$3, { user_id: userId });
-            return rows.map(row => ({
-                name: row.name,
-                value: JSON.parse(row.value),
-            }));
-        },
-        replace: (variables) => {
-            const names = variables.map(v => v.name);
-            db.delete(TABLE$3, { user_id: userId, name: { '$nin': names } });
-            variables.forEach(({ name, value }) => {
-                set(name, value);
-            });
-        },
-    };
+    }
+    get(name) {
+        const row = this.db.get(TABLE$3, { name, user_id: this.userId });
+        return row ? JSON.parse(row.value) : null;
+    }
+    all() {
+        const rows = this.db.getMany(TABLE$3, { user_id: this.userId });
+        return rows.map(row => ({
+            name: row.name,
+            value: JSON.parse(row.value),
+        }));
+    }
+    replace(variables) {
+        const names = variables.map(v => v.name);
+        this.db.delete(TABLE$3, { user_id: this.userId, name: { '$nin': names } });
+        variables.forEach(({ name, value }) => {
+            this.set(name, value);
+        });
+    }
 }
 
 const __filename$3 = fileURLToPath(import.meta.url);
@@ -2159,35 +2160,17 @@ const madochanCreateWord = (model, weirdness) => async (command, client, target,
     }
 };
 
-const text = (
-  /** @type Variables */ variables,
-  originalCmd,
-) => async (
-  command,
-  client,
-  /** @type string */ target,
-  context,
-  /** @type string */ msg,
-  ) => {
+const text = (variables, originalCmd) => async (command, client, target, context, msg) => {
     const text = originalCmd.data.text;
     const say = fn.sayFn(client, target);
     say(await fn.doReplacements(text, command, context, variables, originalCmd));
-  };
+};
 
-const randomText = (
-  /** @type Variables */ variables,
-  originalCmd,
-) => async (
-  command,
-  client,
-  /** @type string */ target,
-  context,
-  /** @type string */ msg,
-  ) => {
+const randomText = (variables, originalCmd) => async (command, client, target, context, msg) => {
     const texts = originalCmd.data.text;
     const say = fn.sayFn(client, target);
     say(await fn.doReplacements(fn.getRandom(texts), command, context, variables, originalCmd));
-  };
+};
 
 const playMedia = (
   /** @type WebSocketServer */ wss,
