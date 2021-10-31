@@ -3,7 +3,7 @@ import fn from '../../fn.ts'
 import fs from 'fs'
 import WebServer from '../../WebServer.js'
 import WebSocketServer from '../../net/WebSocketServer.js'
-import Tokens from '../../services/Tokens.js'
+import Tokens from '../../services/Tokens.ts'
 import TwitchHelixClient from '../../services/TwitchHelixClient.js'
 import Variables from '../../services/Variables.js'
 
