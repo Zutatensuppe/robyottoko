@@ -5,7 +5,7 @@ import crypto from 'crypto'
 import express from 'express'
 import multer from 'multer'
 import path from 'path'
-import sprightly from 'sprightly'
+import sprightly from './services/Sprightly.js'
 
 import Db from './Db.js'
 import EventHub from './EventHub.js'

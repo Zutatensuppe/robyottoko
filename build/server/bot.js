@@ -1,4 +1,4 @@
-import fs, { readFileSync } from 'fs';
+import fs, { readFileSync, promises } from 'fs';
 import crypto from 'crypto';
 import path, { dirname } from 'path';
 import fetch from 'node-fetch';
@@ -8,7 +8,6 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 import multer from 'multer';
 import bsqlite from 'better-sqlite3';
-import { TwingLoaderFilesystem, TwingEnvironment } from 'twing';
 import SibApiV3Sdk from 'sib-api-v3-sdk';
 import tmi from 'tmi.js';
 
@@ -621,9 +620,9 @@ function ModuleManager() {
   }
 }
 
-const __filename$6 = fileURLToPath(import.meta.url);
+const __filename$5 = fileURLToPath(import.meta.url);
 
-const log$6 = logger(__filename$6);
+const log$6 = logger(__filename$5);
 
 class WebSocketServer {
   constructor(
@@ -731,9 +730,73 @@ class WebSocketServer {
   }
 }
 
-const __filename$5 = fileURLToPath(import.meta.url);
+class Sprightly {
+  async parse(file) {
+    file = file.split('\n');
+    this.fileContent = file; // register the current file content. Used in specifiying errors location
+    for (let i = 0; i < file.length; i++) {
+      this.level = i; // register the current level in file. Used in specifiying errors location
+      for (let match = file[i].match(this.regexp), result; match;) {
+        if (match[0][0] === '<') {
+          this.directory = `${match[1].trim()}.${this.options.settings['view engine']}`; // register the current file. Used in specifiying errors location
+          result = await this.read(path.join(this.options.settings.views, this.directory));
+        } else {
+          result = this.options[match[2].trim()];
+        }
+        file[i] = file[i].replace(match[0], result ? result : '');
+        match = file[i].match(this.regexp);
+      }
+    }
+    return file.join('');
+  }
+  async read(path) {
+    const file = (await promises.readFile(path)).toString();
+    return await this.parse(file);
+  }
+}Sprightly.prototype.regexp = /<<(.*?)>>|\{\{(.*?)\}\}/; // to match Sprightly syntax
 
-const log$5 = logger(__filename$5);
+const sprightly = new Sprightly();
+
+var sprightly$1 = async (path, options, callback) => {
+  try {
+    sprightly.options = options;
+    callback(undefined, await sprightly.read(path));
+  } catch (e) {
+    console.log(e);
+    const message = `Cannot find file or directory "${sprightly.directory}" inside the views directory
+        ${sprightly.level - 1 >= 0 ? `${String(sprightly.level).padStart(4, '0')}| ${sprightly.fileContent[sprightly.level - 1]}` : ''}
+    >>  ${String(sprightly.level + 1).padStart(4, '0')}| ${sprightly.fileContent[sprightly.level]}
+        ${sprightly.level + 1 < sprightly.fileContent.length ? `${String(sprightly.level + 2).padStart(4, '0')}| ${sprightly.fileContent[sprightly.level + 1]}` : ''}`;
+    callback(message);
+  }
+};
+
+
+// MIT License
+
+// Copyright (c) 2020 Obada Khalili
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+const __filename$4 = fileURLToPath(import.meta.url);
+
+const log$5 = logger(__filename$4);
 
 class Db {
   constructor(dbConf) {
@@ -947,14 +1010,6 @@ function EventHub() {
     },
   }
 }
-
-const __filename$4 = fileURLToPath(import.meta.url);
-const __dirname$1 = dirname(__filename$4);
-const render = async (template, data) => {
-    const loader = new TwingLoaderFilesystem(__dirname$1 + '/templates');
-    const twing = new TwingEnvironment(loader);
-    return twing.render(template, data);
-};
 
 class Mail {
   constructor(cfg) {
@@ -1236,6 +1291,8 @@ class WebServer {
     const hostname = this.hostname;
     const app = express();
 
+    app.engine('spy', sprightly$1);
+    app.set('views', path.join(__dirname, 'templates'));
 
     app.get('/pub/:id', (req, res, next) => {
       const row = this.db.get('pub', {
@@ -1580,7 +1637,7 @@ class WebServer {
     // twitch calls this url after auth
     // from here we render a js that reads the token and shows it to the user
     app.get('/twitch/redirect_uri', async (req, res) => {
-      res.send(await render('twitch/redirect_uri.twig'));
+      res.render('twitch/redirect_uri.spy', {});
     });
     app.post('/twitch/user-id-by-name', requireLoginApi, express.json(), async (req, res) => {
       let clientId;
@@ -2397,12 +2454,12 @@ class GeneralModule {
   widgets() {
     return {
       'media': async (req, res, next) => {
-        res.send(await render('widget.twig', {
+        res.render('widget.spy', {
           title: 'Media Widget',
           page: 'media',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
           widgetToken: req.params.widget_token,
-        }));
+        });
       },
     }
   }
@@ -2638,12 +2695,12 @@ class SongrequestModule {
   widgets() {
     return {
       'sr': async (req, res, next) => {
-        res.send(await render('widget.twig', {
+        res.render('widget.spy', {
           title: 'Song Request Widget',
           page: 'sr',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
           widgetToken: req.params.widget_token,
-        }));
+        });
       },
     }
   }
@@ -3704,12 +3761,12 @@ class SpeechToTextModule {
   widgets() {
     return {
       'speech-to-text': async (req, res, next) => {
-        res.send(await render('widget.twig', {
+        res.render('widget.spy', {
           title: 'Speech to Text Widget',
           page: 'speech-to-text',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
           widgetToken: req.params.widget_token,
-        }));
+        });
       },
     }
   }
@@ -3864,20 +3921,20 @@ class DrawcastModule {
   widgets() {
     return {
       'drawcast_receive': async (req, res, next) => {
-        res.send(await render('widget.twig', {
+        res.render('widget.spy', {
           title: 'Drawcast Widget',
           page: 'drawcast_receive',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
           widgetToken: req.params.widget_token,
-        }));
+        });
       },
       'drawcast_draw': async (req, res, next) => {
-        res.send(await render('widget.twig', {
+        res.render('widget.spy', {
           title: 'Drawcast Widget',
           page: 'drawcast_draw',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
           widgetToken: req.params.widget_token,
-        }));
+        });
       },
     }
   }
