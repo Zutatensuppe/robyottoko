@@ -2213,23 +2213,13 @@ const randomText = (variables, originalCmd) => async (command, client, target, c
     say(await fn.doReplacements(fn.getRandom(texts), command, context, variables, originalCmd));
 };
 
-const playMedia = (
-  /** @type WebSocketServer */ wss,
-  /** @type String */          userId,
-  originalCmd,
-) => (
-  command,
-  client,
-  /** @type string */ target,
-  context,
-  /** @type string */ msg,
-  ) => {
+const playMedia = (wss, userId, originalCmd) => (command, client, target, context, msg) => {
     const data = originalCmd.data;
     wss.notifyAll([userId], 'general', {
-      event: 'playmedia',
-      data: data,
+        event: 'playmedia',
+        data: data,
     });
-  };
+};
 
 const chatters = (db, helixClient) => async (command, client, target, context, msg) => {
     const say = fn.sayFn(client, target);

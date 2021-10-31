@@ -161,6 +161,10 @@ export interface RandomTextCommand extends Command {
   }
 }
 
+export interface MediaCommand extends Command {
+  action: "media"
+}
+
 export interface FunctionCommand extends Command {
   fn: (rawCmd: RawCommand, client: Client, target: string, context: TwitchChatContext, msg: string) => any
 }
