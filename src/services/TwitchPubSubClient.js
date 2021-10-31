@@ -1,6 +1,6 @@
 import WebSocket from 'ws'
 import { nonce, SECOND, logger } from '../fn.ts'
-import { EventHub } from '../EventHub.js'
+import { EventHub } from '../EventHub.ts'
 import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)

@@ -1,11 +1,11 @@
 export function EventHub() {
-  const cbs = {}
+  const cbs: Record<string, Function[]> = {}
   return {
-    on: (what, cb) => {
+    on: (what: string, cb: Function): void => {
       cbs[what] = cbs[what] || []
       cbs[what].push(cb)
     },
-    trigger: (what, data) => {
+    trigger: (what: string, data: any): void => {
       if (!cbs[what]) {
         return
       }

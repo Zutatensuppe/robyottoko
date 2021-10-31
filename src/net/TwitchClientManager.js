@@ -3,7 +3,7 @@ import TwitchHelixClient from '../services/TwitchHelixClient.js'
 import fn from '../fn.ts'
 import Db from '../Db.ts'
 import TwitchChannels from '../services/TwitchChannels.js'
-import EventHub from '../EventHub.js'
+import EventHub from '../EventHub.ts'
 import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)

@@ -8,7 +8,7 @@ import path from 'path'
 import sprightly from './services/Sprightly.js'
 
 import Db from './Db.ts'
-import EventHub from './EventHub.js'
+import EventHub from './EventHub.ts'
 import fn from './fn.ts'
 import Mail from './net/Mail.js'
 import Tokens from './services/Tokens.js'
