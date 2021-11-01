@@ -18,7 +18,7 @@ import GeneralModule from './mod/modules/GeneralModule'
 import SongrequestModule from './mod/modules/SongrequestModule'
 import VoteModule from './mod/modules/VoteModule'
 import SpeechToTextModule from './mod/modules/SpeechToTextModule'
-import DrawcastModule from './mod/modules/DrawcastModule'
+import DrawcastModule from './mod/modules/DrawcastModule.ts'
 
 import { fileURLToPath } from 'url'
 

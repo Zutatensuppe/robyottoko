@@ -78,7 +78,7 @@ class SongrequestModule {
   onChatMsg(client, target, context, msg) {
   }
 
-  saveCommands(commands) {
+  saveCommands() {
     // pass
   }
 

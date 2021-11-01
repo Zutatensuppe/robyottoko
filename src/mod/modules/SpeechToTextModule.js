@@ -65,7 +65,7 @@ class SpeechToTextModule {
     })
   }
 
-  saveCommands(commands) {
+  saveCommands() {
     // pass
   }
 

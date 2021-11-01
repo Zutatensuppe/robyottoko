@@ -1,54 +1,73 @@
-import Db from '../../Db.ts'
-import fn from '../../fn.ts'
+import Db from '../../Db'
+import fn from '../../fn'
 import fs from 'fs'
-import WebServer from '../../WebServer.ts'
-import WebSocketServer from '../../net/WebSocketServer.ts'
-import Tokens from '../../services/Tokens.ts'
-import TwitchHelixClient from '../../services/TwitchHelixClient.ts'
-import Variables from '../../services/Variables.ts'
+import WebServer from '../../WebServer'
+import WebSocketServer, { Socket } from '../../net/WebSocketServer'
+import Tokens from '../../services/Tokens'
+import TwitchHelixClient from '../../services/TwitchHelixClient'
+import Variables from '../../services/Variables'
+import { DrawcastSettings, TwitchChatClient, TwitchChatContext } from '../../types'
+import ModuleStorage from '../ModuleStorage'
+import { User } from '../../services/Users'
+import Cache from '../../services/Cache'
+
+interface PostEventData {
+  event: 'post'
+  data: {
+    img: string
+  }
+}
 
 class DrawcastModule {
+  private user: User
+  private wss: WebSocketServer
+  private storage: ModuleStorage
+  private ws: WebServer
+  private tokens: Tokens
+
+  public name = 'drawcast'
+  private defaultSettings = {
+    submitButtonText: 'Submit',
+    submitConfirm: '', // leave empty to not require confirm
+    canvasWidth: 720,
+    canvasHeight: 405,
+    customDescription: '',
+    palette: [
+      // row 1
+      '#000000', '#808080', '#ff0000', '#ff8000', '#ffff00', '#00ff00',
+      '#00ffff', '#0000ff', '#ff00ff', '#ff8080', '#80ff80',
+
+      // row 2
+      '#ffffff', '#c0c0c0', '#800000', '#804000', '#808000', '#008000',
+      '#008080', '#000080', '#800080', '#8080ff', '#ffff80',
+    ],
+    displayDuration: 5000,
+    displayLatestForever: false,
+    displayLatestAutomatically: false,
+    notificationSound: null,
+    favorites: [],
+  }
+  private data: { settings: DrawcastSettings }
+  private images: string[]
+
   constructor(
-    /** @type Db */ db,
-    user,
-    /** @type Variables */ variables,
-    chatClient,
-    /** @type TwitchHelixClient */ helixClient,
-    storage,
-    cache,
-    /** @type WebServer */ ws,
-    /** @type WebSocketServer */ wss,
+    db: Db,
+    user: User,
+    variables: Variables,
+    chatClient: TwitchChatClient,
+    helixClient: TwitchHelixClient,
+    storage: ModuleStorage,
+    cache: Cache,
+    ws: WebServer,
+    wss: WebSocketServer,
   ) {
     this.user = user
-    this.variables = variables
     this.wss = wss
     this.storage = storage
-    this.name = 'drawcast'
 
     this.ws = ws
     this.tokens = new Tokens(db)
-    this.defaultSettings = {
-      submitButtonText: 'Submit',
-      submitConfirm: '', // leave empty to not require confirm
-      canvasWidth: 720,
-      canvasHeight: 405,
-      customDescription: '',
-      palette: [
-        // row 1
-        '#000000', '#808080', '#ff0000', '#ff8000', '#ffff00', '#00ff00',
-        '#00ffff', '#0000ff', '#ff00ff', '#ff8080', '#80ff80',
-
-        // row 2
-        '#ffffff', '#c0c0c0', '#800000', '#804000', '#808000', '#008000',
-        '#008080', '#000080', '#800080', '#8080ff', '#ffff80',
-      ],
-      displayDuration: 5000,
-      displayLatestForever: false,
-      displayLatestAutomatically: false,
-      notificationSound: null,
-      favorites: [],
-    }
-    this.reinit()
+    this.data = this.reinit()
 
     this.images = this.loadAllImages().slice(0, 20)
   }
@@ -70,7 +89,7 @@ class DrawcastModule {
     }
   }
 
-  saveCommands(commands) {
+  saveCommands() {
     // pass
   }
 
@@ -96,12 +115,14 @@ class DrawcastModule {
     if (!data.settings.favorites) {
       data.settings.favorites = []
     }
-    this.data = data
+    return {
+      settings: data.settings
+    }
   }
 
   widgets() {
     return {
-      'drawcast_receive': async (req, res, next) => {
+      'drawcast_receive': async (req: any, res: any, next: Function) => {
         res.render('widget.spy', {
           title: 'Drawcast Widget',
           page: 'drawcast_receive',
@@ -109,7 +130,7 @@ class DrawcastModule {
           widgetToken: req.params.widget_token,
         })
       },
-      'drawcast_draw': async (req, res, next) => {
+      'drawcast_draw': async (req: any, res: any, next: Function) => {
         res.render('widget.spy', {
           title: 'Drawcast Widget',
           page: 'drawcast_draw',
@@ -123,7 +144,7 @@ class DrawcastModule {
   getRoutes() {
     return {
       get: {
-        '/api/drawcast/all-images/': async (req, res, next) => {
+        '/api/drawcast/all-images/': async (req: any, res: any, next: Function) => {
           const images = this.loadAllImages()
           res.send(images)
         },
@@ -136,7 +157,7 @@ class DrawcastModule {
     return this.ws.pubUrl(this.ws.widgetUrl('drawcast_draw', pubToken))
   }
 
-  wsdata(eventName) {
+  wsdata(eventName: string) {
     return {
       event: eventName,
       data: Object.assign({}, this.data, {
@@ -147,20 +168,20 @@ class DrawcastModule {
     };
   }
 
-  updateClient(eventName, ws) {
+  updateClient(eventName: string, ws: Socket) {
     this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
   }
 
-  updateClients(eventName) {
+  updateClients(eventName: string) {
     this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName))
   }
 
   getWsEvents() {
     return {
-      'conn': (ws) => {
+      'conn': (ws: Socket) => {
         this.updateClient('init', ws)
       },
-      'post': (ws, data) => {
+      'post': (ws: Socket, data: PostEventData) => {
         const rel = `/uploads/drawcast/${this.user.id}`
         const img = fn.decodeBase64Image(data.data.img)
         const name = `${(new Date()).toJSON()}-${fn.nonce(6)}.${fn.mimeToExt(img.type)}`
@@ -177,10 +198,10 @@ class DrawcastModule {
           data: { img: imgurl },
         })
       },
-      'save': (ws, { settings }) => {
+      'save': (ws: Socket, { settings }: { settings: DrawcastSettings }) => {
         this.data.settings = settings
         this.storage.save(this.name, this.data)
-        this.reinit()
+        this.data = this.reinit()
         this.updateClients('init')
       },
     }
@@ -190,7 +211,12 @@ class DrawcastModule {
     return {}
   }
 
-  onChatMsg(client, target, context, msg) {
+  onChatMsg(
+    client: TwitchChatClient,
+    target: string,
+    context: TwitchChatContext,
+    msg: string,
+  ) {
   }
 }
 

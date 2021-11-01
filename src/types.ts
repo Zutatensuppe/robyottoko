@@ -85,20 +85,22 @@ export interface PlaylistItem {
   tags: string[]
 }
 
+export interface DrawcastSettings {
+  canvasWidth: int
+  canvasHeight: int
+  submitButtonText: string
+  submitConfirm: string
+  customDescription: string
+  palette: string
+  displayDuration: int
+  displayLatestForever: string
+  displayLatestAutomatically: string
+  notificationSound: string
+  favorites: string[]
+}
+
 export interface DrawcastData {
-  settings: {
-    canvasWidth: int
-    canvasHeight: int
-    submitButtonText: string
-    submitConfirm: string
-    customDescription: string
-    palette: string
-    displayDuration: int
-    displayLatestForever: string
-    displayLatestAutomatically: string
-    notificationSound: string
-    favorites: string[]
-  }
+  settings: DrawcastSettings
   defaultSettings: any
   drawUrl: string
   images: any[]

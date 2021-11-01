@@ -48,7 +48,7 @@ class DrawcastModule {
     return {}
   }
 
-  saveCommands(commands) {
+  saveCommands() {
     // pass
   }
 
