@@ -58,7 +58,7 @@ The rest of the settings can be changed via the bot admin ui.
 
     This should output the url of the server, like this:
     ```
-    [WebServer.js] server running on http://localhost:1337
+    [WebServer.ts] server running on http://localhost:1337
     ```
 
     Open the url and login as the user that was created in step 2.

@@ -5,16 +5,21 @@ import crypto from 'crypto'
 import express from 'express'
 import multer from 'multer'
 import path from 'path'
-import sprightly from './services/Sprightly.ts'
-
-import Db from './Db.ts'
-import EventHub from './EventHub.ts'
-import fn from './fn.ts'
-import Tokens from './services/Tokens.ts'
-import TwitchHelixClient from './services/TwitchHelixClient.ts'
-import Users from './services/Users.ts'
-import Variables from './services/Variables.ts'
-import WebSocketServer from './net/WebSocketServer.ts'
+import sprightly from './services/Sprightly'
+import http from 'http'
+import Db from './Db'
+import fn from './fn'
+import Tokens from './services/Tokens'
+import TwitchHelixClient from './services/TwitchHelixClient'
+import Users, { CreateUser, User } from './services/Users'
+import Variables from './services/Variables'
+import WebSocketServer from './net/WebSocketServer'
+import { HttpConfig, MailService, TwitchConfig } from './types'
+import TwitchChannels, { TwitchChannel } from './services/TwitchChannels'
+import ModuleManager from './mod/ModuleManager'
+import Auth from './net/Auth'
+import { UpdateUser } from './services/Users'
+import EventHub from './EventHub'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -22,18 +27,33 @@ const __dirname = dirname(__filename)
 const log = fn.logger(__filename)
 
 class WebServer {
+  private handle: http.Server | null
+  private eventHub: EventHub
+  private db: Db
+  private userRepo: Users
+  private tokenRepo: Tokens
+  private mail: MailService
+  private twitchChannelRepo: TwitchChannels
+  private moduleManager: ModuleManager
+  private port: number
+  private hostname: string
+  private url: string
+  private configTwitch: TwitchConfig
+  private wss: WebSocketServer
+  private auth: Auth
+
   constructor(
-    /** @type EventHub */ eventHub,
-    /** @type Db */ db,
-    /** @type Users */ userRepo,
-    /** @type Tokens */ tokenRepo,
-    mail,
-    twitchChannelRepo,
-    moduleManager,
-    configHttp,
-    configTwitch,
-    /** @type WebSocketServer */ wss,
-    auth
+    eventHub: EventHub,
+    db: Db,
+    userRepo: Users,
+    tokenRepo: Tokens,
+    mail: MailService,
+    twitchChannelRepo: TwitchChannels,
+    moduleManager: ModuleManager,
+    configHttp: HttpConfig,
+    configTwitch: TwitchConfig,
+    wss: WebSocketServer,
+    auth: Auth,
   ) {
     this.eventHub = eventHub
     this.db = db
@@ -41,18 +61,17 @@ class WebServer {
     this.tokenRepo = tokenRepo
     this.mail = mail
     this.twitchChannelRepo = twitchChannelRepo
-
     this.moduleManager = moduleManager
     this.port = configHttp.port
     this.hostname = configHttp.hostname
     this.url = configHttp.url
-    this.twitchWebhookSecret = configTwitch.eventSub.transport.secret
+    this.configTwitch = configTwitch
     this.wss = wss
     this.auth = auth
     this.handle = null
   }
 
-  pubUrl(/** @type string */ target) {
+  pubUrl(target: string) {
     const row = this.db.get('pub', { target })
     let id
     if (!row) {
@@ -66,7 +85,7 @@ class WebServer {
     return `${this.url}/pub/${id}`
   }
 
-  widgetUrl(/** @type string */ type, /** @type string */ token) {
+  widgetUrl(type: string, token: string) {
     return `${this.url}/widget/${type}/${token}/`
   }
 
@@ -84,6 +103,7 @@ class WebServer {
       })
       if (row && row.target) {
         req.url = row.target
+        // @ts-ignore
         req.app.handle(req, res)
         return
       }
@@ -100,10 +120,10 @@ class WebServer {
 
     const upload = multer({ storage }).single('file');
 
-    const verifyTwitchSignature = (req, res, next) => {
+    const verifyTwitchSignature = (req: any, res: any, next: Function) => {
       const body = Buffer.from(req.rawBody, 'utf8')
       const msg = `${req.headers['twitch-eventsub-message-id']}${req.headers['twitch-eventsub-message-timestamp']}${body}`
-      const hmac = crypto.createHmac('sha256', this.twitchWebhookSecret)
+      const hmac = crypto.createHmac('sha256', this.configTwitch.eventSub.transport.secret)
       hmac.update(msg)
       const expected = `sha256=${hmac.digest('hex')}`
       if (req.headers['twitch-eventsub-message-signature'] !== expected) {
@@ -119,7 +139,7 @@ class WebServer {
       return next()
     }
 
-    const requireLoginApi = (req, res, next) => {
+    const requireLoginApi = (req: any, res: any, next: Function) => {
       if (!req.token) {
         res.status(401).send({})
         return
@@ -127,7 +147,7 @@ class WebServer {
       return next()
     }
 
-    const requireLogin = (req, res, next) => {
+    const requireLogin = (req: any, res: any, next: Function) => {
       if (!req.token) {
         if (req.method === 'GET') {
           res.redirect(302, '/login')
@@ -152,7 +172,7 @@ class WebServer {
       })
     })
 
-    app.get('/api/user/me', requireLoginApi, async (req, res) => {
+    app.get('/api/user/me', requireLoginApi, async (req: any, res) => {
       res.send({
         user: req.user,
         widgetToken: req.userWidgetToken,
@@ -161,7 +181,7 @@ class WebServer {
       })
     })
 
-    app.post('/api/logout', async (req, res) => {
+    app.post('/api/logout', requireLoginApi, async (req: any, res) => {
       if (req.token) {
         this.auth.destroyToken(req.token)
         res.clearCookie("x-token")
@@ -169,7 +189,7 @@ class WebServer {
       res.send({ success: true })
     })
 
-    app.get('/api/page/index', requireLoginApi, async (req, res) => {
+    app.get('/api/page/index', requireLoginApi, async (req: any, res) => {
       res.send({
         widgets: [
           {
@@ -277,14 +297,12 @@ class WebServer {
 
     app.post('/api/user/_register', express.json(), async (req, res) => {
       const salt = fn.passwordSalt()
-      const user = {
+      const user: CreateUser = {
         name: req.body.user,
         pass: fn.passwordHash(req.body.pass, salt),
         salt: salt,
         email: req.body.email,
-
         status: 'verification_pending',
-
         tmi_identity_username: '',
         tmi_identity_password: '',
         tmi_identity_client_id: '',
@@ -354,28 +372,37 @@ class WebServer {
       return
     })
 
-    app.get('/api/page/variables', requireLoginApi, async (req, res) => {
+    app.get('/api/page/variables', requireLoginApi, async (req: any, res) => {
       const variables = new Variables(this.db, req.user.id)
       res.send({ variables: variables.all() })
     })
 
-    app.post('/save-variables', requireLoginApi, express.json(), async (req, res) => {
+    app.post('/save-variables', requireLoginApi, express.json(), async (req: any, res) => {
       const variables = new Variables(this.db, req.user.id)
       variables.replace(req.body.variables || [])
       res.send()
     })
 
-    app.get('/api/page/settings', requireLoginApi, async (req, res) => {
-      const user = this.userRepo.getById(req.user.id)
-      user.groups = this.userRepo.getGroups(user.id)
-      delete user.pass
+    app.get('/api/page/settings', requireLoginApi, async (req: any, res) => {
+      const user = this.userRepo.getById(req.user.id) as User
       res.send({
-        user,
+        user: {
+          id: user.id,
+          name: user.name,
+          salt: user.salt,
+          email: user.email,
+          status: user.status,
+          tmi_identity_username: user.tmi_identity_username,
+          tmi_identity_password: user.tmi_identity_password,
+          tmi_identity_client_id: user.tmi_identity_client_id,
+          tmi_identity_client_secret: user.tmi_identity_client_secret,
+          groups: this.userRepo.getGroups(user.id)
+        },
         twitchChannels: this.twitchChannelRepo.allByUserId(req.user.id),
       })
     })
 
-    app.post('/api/save-settings', requireLoginApi, express.json(), async (req, res) => {
+    app.post('/api/save-settings', requireLoginApi, express.json(), async (req: any, res) => {
       if (!req.user.groups.includes('admin')) {
         if (req.user.id !== req.body.user.id) {
           // editing other user than self
@@ -390,7 +417,7 @@ class WebServer {
         return
       }
 
-      const user = {
+      const user: UpdateUser = {
         id: req.body.user.id,
       }
       if (req.body.user.pass) {
@@ -406,7 +433,7 @@ class WebServer {
         user.tmi_identity_password = req.body.user.tmi_identity_password
       }
 
-      const twitch_channels = req.body.twitch_channels.map(channel => {
+      const twitch_channels = req.body.twitch_channels.map((channel: TwitchChannel) => {
         channel.user_id = user.id
         return channel
       })
@@ -423,13 +450,13 @@ class WebServer {
     app.get('/twitch/redirect_uri', async (req, res) => {
       res.render('twitch/redirect_uri.spy', {})
     })
-    app.post('/twitch/user-id-by-name', requireLoginApi, express.json(), async (req, res) => {
+    app.post('/twitch/user-id-by-name', requireLoginApi, express.json(), async (req: any, res) => {
       let clientId
       let clientSecret
       if (!req.user.groups.includes('admin')) {
-        const u = this.userRepo.getById(req.user.id)
-        clientId = u.tmi_identity_client_id || configTwitch.tmi.identity.client_id
-        clientSecret = u.tmi_identity_client_secret || configTwitch.tmi.identity.client_secret
+        const u = this.userRepo.getById(req.user.id) as User
+        clientId = u.tmi_identity_client_id || this.configTwitch.tmi.identity.client_id
+        clientSecret = u.tmi_identity_client_secret || this.configTwitch.tmi.identity.client_secret
       } else {
         clientId = req.body.client_id
         clientSecret = req.body.client_secret
@@ -453,7 +480,7 @@ class WebServer {
 
     app.post(
       '/twitch/event-sub/',
-      express.json({ verify: (req, res, buf) => { req.rawBody = buf } }),
+      express.json({ verify: (req: any, res, buf) => { req.rawBody = buf } }),
       verifyTwitchSignature,
       async (req, res) => {
         log.debug(req.body)
@@ -536,7 +563,7 @@ class WebServer {
       res.status(404).send()
     })
 
-    app.all('*', requireLogin, express.json({ limit: '50mb' }), async (req, res, next) => {
+    app.all('*', requireLogin, express.json({ limit: '50mb' }), async (req: any, res, next) => {
       const method = req.method.toLowerCase()
       const key = req.url
       for (const m of this.moduleManager.all(req.user.id)) {

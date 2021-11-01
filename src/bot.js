@@ -2,7 +2,7 @@ import config from './config.ts'
 import Auth from './net/Auth.ts'
 import ModuleManager from './mod/ModuleManager.ts'
 import WebSocketServer from './net/WebSocketServer.ts'
-import WebServer from './WebServer'
+import WebServer from './WebServer.ts'
 import TwitchClientManager from './net/TwitchClientManager'
 import ModuleStorage from './mod/ModuleStorage.ts'
 import { logger } from './fn.ts'
@@ -13,7 +13,7 @@ import Cache from './services/Cache.ts'
 import Db from './Db.ts'
 import Variables from './services/Variables.ts'
 import Mail from './net/Mail.js'
-import { EventHub } from './EventHub.ts'
+import EventHub from './EventHub.ts'
 import GeneralModule from './mod/modules/GeneralModule'
 import SongrequestModule from './mod/modules/SongrequestModule'
 import VoteModule from './mod/modules/VoteModule'
@@ -42,7 +42,7 @@ const cache = new Cache(db)
 const auth = new Auth(userRepo, tokenRepo)
 const mail = new Mail(config.mail)
 
-const eventHub = EventHub()
+const eventHub = new EventHub()
 const moduleManager = new ModuleManager()
 const webSocketServer = new WebSocketServer(moduleManager, config.ws, auth)
 const webServer = new WebServer(

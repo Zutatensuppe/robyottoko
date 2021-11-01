@@ -1,6 +1,6 @@
 import Db from '../../Db.ts'
 import fn from '../../fn.ts'
-import WebServer from '../../WebServer.js'
+import WebServer from '../../WebServer.ts'
 import WebSocketServer from '../../net/WebSocketServer.ts'
 import TwitchHelixClient from '../../services/TwitchHelixClient.ts'
 import Youtube from '../../services/Youtube.ts'

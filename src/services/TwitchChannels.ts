@@ -2,7 +2,7 @@ import Db from "../Db"
 
 const TABLE = 'twitch_channel'
 
-interface TwitchChannel {
+export interface TwitchChannel {
   user_id: number
   channel_name: string
   channel_id: string

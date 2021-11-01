@@ -1,6 +1,6 @@
 import WebSocket from 'ws'
 import { nonce, SECOND, logger } from '../fn.ts'
-import { EventHub } from '../EventHub.ts'
+import EventHub from '../EventHub.ts'
 import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -87,7 +87,7 @@ class WsWrapper {
 }
 
 function TwitchPubSubClient() {
-  const evts = EventHub()
+  const evts = new EventHub()
 
   const ws = new WsWrapper('wss://pubsub-edge.twitch.tv')
 

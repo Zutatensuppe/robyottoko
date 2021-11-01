@@ -19,36 +19,40 @@ export interface WsConfig {
   connectstring: string
 }
 
+export interface HttpConfig {
+  hostname: string
+  port: int
+  url: string
+}
+
+export interface TwitchConfig {
+  eventSub: {
+    transport: {
+      method: string // 'webhook'
+      callback: string
+      secret: string
+    }
+  }
+  tmi: {
+    identity: {
+      client_id: string
+      client_secret: string
+      username: string
+      password: string
+    }
+  }
+}
+
 export interface Config {
   secret: string
   log: {
     level: LogLevel
   }
-  twitch: {
-    eventSub: {
-      transport: {
-        method: string // 'webhook'
-        callback: string
-        secret: string
-      }
-    }
-    tmi: {
-      identity: {
-        client_id: string
-        client_secret: string
-        username: string
-        password: string
-      }
-    }
-  }
+  twitch: TwitchConfig
   mail: {
     sendinblue_api_key: string
   }
-  http: {
-    hostname: string
-    port: int
-    url: string
-  }
+  http: HttpConfig
   ws: WsConfig
   db: DbConfig
   modules: {
@@ -192,15 +196,22 @@ export interface BotModule {
 export interface Module {
   name: string
   getWsEvents: () => Record<string, (ws: Socket, data?: any) => any>
+  widgets: () => Record<string, (req: any, res: any, next: Function) => Promise<any>>
+  getRoutes: () => Record<string, Record<string, (req: any, res: any, next: Function) => Promise<any>>>
+}
+
+interface MailServiceUser {
+  email: string
+  name: string
 }
 
 interface MailServicePasswordResetData {
-  user: User
+  user: MailServiceUser
   token: Token
 }
 
 interface MailServiceRegistrationData {
-  user: User
+  user: MailServiceUser
   token: Token
 }
 

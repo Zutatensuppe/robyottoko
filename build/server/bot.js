@@ -7,8 +7,8 @@ import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import multer from 'multer';
-import bsqlite from 'better-sqlite3';
 import tmi from 'tmi.js';
+import bsqlite from 'better-sqlite3';
 import SibApiV3Sdk from 'sib-api-v3-sdk';
 
 const init = () => {
@@ -809,7 +809,582 @@ var sprightly$1 = async (path, options, callback) => {
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-const log$5 = logger('Db.ts');
+const log$5 = logger('TwitchHelixClient.ts');
+const API_BASE = 'https://api.twitch.tv/helix';
+class TwitchHelixClient {
+    constructor(clientId, clientSecret) {
+        this.clientId = clientId;
+        this.clientSecret = clientSecret;
+    }
+    async withAuthHeaders(opts = {}) {
+        const accessToken = await this.getAccessToken();
+        return withHeaders({
+            'Client-ID': this.clientId,
+            'Authorization': `Bearer ${accessToken}`,
+        }, opts);
+    }
+    // https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/
+    async getAccessToken(scopes = []) {
+        const url = `https://id.twitch.tv/oauth2/token` + asQueryArgs({
+            client_id: this.clientId,
+            client_secret: this.clientSecret,
+            grant_type: 'client_credentials',
+            scope: scopes.join(' '),
+        });
+        const json = (await postJson(url));
+        return json.access_token;
+    }
+    // https://dev.twitch.tv/docs/api/reference#get-users
+    async getUserIdByName(userName) {
+        const url = `${API_BASE}/users${asQueryArgs({ login: userName })}`;
+        const json = await getJson(url, await this.withAuthHeaders());
+        try {
+            return json.data[0].id;
+        }
+        catch (e) {
+            log$5.error(json);
+            return '';
+        }
+    }
+    // https://dev.twitch.tv/docs/api/reference#get-streams
+    async getStreams(userId) {
+        const url = `${API_BASE}/streams${asQueryArgs({ user_id: userId })}`;
+        const json = await getJson(url, await this.withAuthHeaders());
+        return json;
+    }
+    async getSubscriptions() {
+        const url = `${API_BASE}/eventsub/subscriptions`;
+        return await getJson(url, await this.withAuthHeaders());
+    }
+    async deleteSubscription(id) {
+        const url = `${API_BASE}/eventsub/subscriptions${asQueryArgs({ id: id })}`;
+        return await requestText('delete', url, await this.withAuthHeaders());
+    }
+    async createSubscription(subscription) {
+        const url = `${API_BASE}/eventsub/subscriptions`;
+        return await postJson(url, await this.withAuthHeaders(asJson(subscription)));
+    }
+}
+
+const TABLE$5 = 'variables';
+class Variables {
+    constructor(db, userId) {
+        this.db = db;
+        this.userId = userId;
+    }
+    set(name, value) {
+        this.db.upsert(TABLE$5, {
+            name,
+            user_id: this.userId,
+            value: JSON.stringify(value),
+        }, {
+            name,
+            user_id: this.userId,
+        });
+    }
+    get(name) {
+        const row = this.db.get(TABLE$5, { name, user_id: this.userId });
+        return row ? JSON.parse(row.value) : null;
+    }
+    all() {
+        const rows = this.db.getMany(TABLE$5, { user_id: this.userId });
+        return rows.map(row => ({
+            name: row.name,
+            value: JSON.parse(row.value),
+        }));
+    }
+    replace(variables) {
+        const names = variables.map(v => v.name);
+        this.db.delete(TABLE$5, { user_id: this.userId, name: { '$nin': names } });
+        variables.forEach(({ name, value }) => {
+            this.set(name, value);
+        });
+    }
+}
+
+const __filename$2 = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename$2);
+const log$4 = fn.logger(__filename$2);
+class WebServer {
+    constructor(eventHub, db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, configHttp, configTwitch, wss, auth) {
+        this.eventHub = eventHub;
+        this.db = db;
+        this.userRepo = userRepo;
+        this.tokenRepo = tokenRepo;
+        this.mail = mail;
+        this.twitchChannelRepo = twitchChannelRepo;
+        this.moduleManager = moduleManager;
+        this.port = configHttp.port;
+        this.hostname = configHttp.hostname;
+        this.url = configHttp.url;
+        this.configTwitch = configTwitch;
+        this.wss = wss;
+        this.auth = auth;
+        this.handle = null;
+    }
+    pubUrl(target) {
+        const row = this.db.get('pub', { target });
+        let id;
+        if (!row) {
+            do {
+                id = fn.nonce(6);
+            } while (this.db.get('pub', { id }));
+            this.db.insert('pub', { id, target });
+        }
+        else {
+            id = row.id;
+        }
+        return `${this.url}/pub/${id}`;
+    }
+    widgetUrl(type, token) {
+        return `${this.url}/widget/${type}/${token}/`;
+    }
+    async listen() {
+        const port = this.port;
+        const hostname = this.hostname;
+        const app = express();
+        app.engine('spy', sprightly$1);
+        app.set('views', path.join(__dirname, 'templates'));
+        app.get('/pub/:id', (req, res, next) => {
+            const row = this.db.get('pub', {
+                id: req.params.id,
+            });
+            if (row && row.target) {
+                req.url = row.target;
+                // @ts-ignore
+                req.app.handle(req, res);
+                return;
+            }
+            res.status(404).send();
+        });
+        const uploadDir = './data/uploads';
+        const storage = multer.diskStorage({
+            destination: uploadDir,
+            filename: function (req, file, cb) {
+                cb(null, `${fn.nonce(6)}-${file.originalname}`);
+            }
+        });
+        const upload = multer({ storage }).single('file');
+        const verifyTwitchSignature = (req, res, next) => {
+            const body = Buffer.from(req.rawBody, 'utf8');
+            const msg = `${req.headers['twitch-eventsub-message-id']}${req.headers['twitch-eventsub-message-timestamp']}${body}`;
+            const hmac = crypto.createHmac('sha256', this.configTwitch.eventSub.transport.secret);
+            hmac.update(msg);
+            const expected = `sha256=${hmac.digest('hex')}`;
+            if (req.headers['twitch-eventsub-message-signature'] !== expected) {
+                log$4.debug(req);
+                log$4.error('bad message signature', {
+                    got: req.headers['twitch-eventsub-message-signature'],
+                    expected,
+                });
+                res.status(403).send({ reason: 'bad message signature' });
+                return;
+            }
+            return next();
+        };
+        const requireLoginApi = (req, res, next) => {
+            if (!req.token) {
+                res.status(401).send({});
+                return;
+            }
+            return next();
+        };
+        const requireLogin = (req, res, next) => {
+            if (!req.token) {
+                if (req.method === 'GET') {
+                    res.redirect(302, '/login');
+                }
+                else {
+                    res.status(401).send('not allowed');
+                }
+                return;
+            }
+            return next();
+        };
+        app.use(cookieParser());
+        app.use(this.auth.addAuthInfoMiddleware());
+        app.use('/uploads', express.static(uploadDir));
+        app.use('/', express.static('./build/public'));
+        app.use('/static', express.static('./public/static'));
+        app.get('/api/conf', async (req, res) => {
+            res.send({
+                wsBase: this.wss.connectstring(),
+            });
+        });
+        app.get('/api/user/me', requireLoginApi, async (req, res) => {
+            res.send({
+                user: req.user,
+                widgetToken: req.userWidgetToken,
+                pubToken: req.userPubToken,
+                token: req.cookies['x-token'],
+            });
+        });
+        app.post('/api/logout', requireLoginApi, async (req, res) => {
+            if (req.token) {
+                this.auth.destroyToken(req.token);
+                res.clearCookie("x-token");
+            }
+            res.send({ success: true });
+        });
+        app.get('/api/page/index', requireLoginApi, async (req, res) => {
+            res.send({
+                widgets: [
+                    {
+                        title: 'Song Request',
+                        hint: 'Browser source, or open in browser and capture window',
+                        url: this.widgetUrl('sr', req.userWidgetToken),
+                    },
+                    {
+                        title: 'Media',
+                        hint: 'Browser source, or open in browser and capture window',
+                        url: this.widgetUrl('media', req.userWidgetToken),
+                    },
+                    {
+                        title: 'Speech-to-Text',
+                        hint: 'Google Chrome + window capture',
+                        url: this.widgetUrl('speech-to-text', req.userWidgetToken),
+                    },
+                    {
+                        title: 'Drawcast (Overlay)',
+                        hint: 'Browser source, or open in browser and capture window',
+                        url: this.widgetUrl('drawcast_receive', req.userWidgetToken),
+                    },
+                    {
+                        title: 'Drawcast (Draw)',
+                        hint: 'Open this to draw (or give to viewers to let them draw)',
+                        url: this.pubUrl(this.widgetUrl('drawcast_draw', req.userPubToken)),
+                    },
+                ]
+            });
+        });
+        app.post('/api/user/_reset_password', express.json(), async (req, res) => {
+            const plainPass = req.body.pass || null;
+            const token = req.body.token || null;
+            if (!plainPass || !token) {
+                res.status(400).send({ reason: 'bad request' });
+                return;
+            }
+            const tokenObj = this.tokenRepo.getByToken(token);
+            if (!tokenObj) {
+                res.status(400).send({ reason: 'bad request' });
+                return;
+            }
+            const originalUser = this.userRepo.getById(tokenObj.user_id);
+            if (!originalUser) {
+                res.status(404).send({ reason: 'user_does_not_exist' });
+                return;
+            }
+            const pass = fn.passwordHash(plainPass, originalUser.salt);
+            const user = { id: originalUser.id, pass };
+            this.userRepo.save(user);
+            this.tokenRepo.delete(tokenObj.token);
+            res.send({ success: true });
+        });
+        app.post('/api/user/_request_password_reset', express.json(), async (req, res) => {
+            const email = req.body.email || null;
+            if (!email) {
+                res.status(400).send({ reason: 'bad request' });
+                return;
+            }
+            const user = this.userRepo.get({ email, status: 'verified' });
+            if (!user) {
+                res.status(404).send({ reason: 'user not found' });
+                return;
+            }
+            const token = this.tokenRepo.createToken(user.id, 'password_reset');
+            this.mail.sendPasswordResetMail({
+                user: user,
+                token: token,
+            });
+            res.send({ success: true });
+        });
+        app.post('/api/user/_resend_verification_mail', express.json(), async (req, res) => {
+            const email = req.body.email || null;
+            if (!email) {
+                res.status(400).send({ reason: 'bad request' });
+                return;
+            }
+            const user = this.db.get('user', { email });
+            if (!user) {
+                res.status(404).send({ reason: 'email not found' });
+                return;
+            }
+            if (user.status !== 'verification_pending') {
+                res.status(400).send({ reason: 'already verified' });
+                return;
+            }
+            const token = this.tokenRepo.createToken(user.id, 'registration');
+            this.mail.sendRegistrationMail({
+                user: user,
+                token: token,
+            });
+            res.send({ success: true });
+        });
+        app.post('/api/user/_register', express.json(), async (req, res) => {
+            const salt = fn.passwordSalt();
+            const user = {
+                name: req.body.user,
+                pass: fn.passwordHash(req.body.pass, salt),
+                salt: salt,
+                email: req.body.email,
+                status: 'verification_pending',
+                tmi_identity_username: '',
+                tmi_identity_password: '',
+                tmi_identity_client_id: '',
+                tmi_identity_client_secret: '',
+            };
+            let tmpUser;
+            tmpUser = this.db.get('user', { email: user.email });
+            if (tmpUser) {
+                if (tmpUser.status === 'verified') {
+                    // user should use password reset function
+                    res.status(400).send({ reason: 'verified_mail_already_exists' });
+                }
+                else {
+                    // user should use resend registration mail function
+                    res.status(400).send({ reason: 'unverified_mail_already_exists' });
+                }
+                return;
+            }
+            tmpUser = this.db.get('user', { name: user.name });
+            if (tmpUser) {
+                if (tmpUser.status === 'verified') {
+                    // user should use password reset function
+                    res.status(400).send({ reason: 'verified_name_already_exists' });
+                }
+                else {
+                    // user should use resend registration mail function
+                    res.status(400).send({ reason: 'unverified_name_already_exists' });
+                }
+                return;
+            }
+            const userId = this.userRepo.createUser(user);
+            if (!userId) {
+                res.status(400).send({ reason: 'unable to create user' });
+                return;
+            }
+            const token = this.tokenRepo.createToken(userId, 'registration');
+            this.mail.sendRegistrationMail({
+                user: user,
+                token: token,
+            });
+            res.send({ success: true });
+        });
+        app.post('/api/_handle-token', express.json(), async (req, res) => {
+            const token = req.body.token || null;
+            if (!token) {
+                res.status(400).send({ reason: 'invalid_token' });
+                return;
+            }
+            const tokenObj = this.tokenRepo.getByToken(token);
+            if (!tokenObj) {
+                res.status(400).send({ reason: 'invalid_token' });
+                return;
+            }
+            if (tokenObj.type === 'registration') {
+                this.userRepo.save({ status: 'verified', id: tokenObj.user_id });
+                this.tokenRepo.delete(tokenObj.token);
+                res.send({ type: 'registration-verified' });
+                // new user was registered. module manager should be notified about this
+                // so that bot doesnt need to be restarted :O
+                const user = this.userRepo.getById(tokenObj.user_id);
+                this.eventHub.trigger('user_registration_complete', user);
+                return;
+            }
+            res.status(400).send({ reason: 'invalid_token' });
+            return;
+        });
+        app.get('/api/page/variables', requireLoginApi, async (req, res) => {
+            const variables = new Variables(this.db, req.user.id);
+            res.send({ variables: variables.all() });
+        });
+        app.post('/save-variables', requireLoginApi, express.json(), async (req, res) => {
+            const variables = new Variables(this.db, req.user.id);
+            variables.replace(req.body.variables || []);
+            res.send();
+        });
+        app.get('/api/page/settings', requireLoginApi, async (req, res) => {
+            const user = this.userRepo.getById(req.user.id);
+            res.send({
+                user: {
+                    id: user.id,
+                    name: user.name,
+                    salt: user.salt,
+                    email: user.email,
+                    status: user.status,
+                    tmi_identity_username: user.tmi_identity_username,
+                    tmi_identity_password: user.tmi_identity_password,
+                    tmi_identity_client_id: user.tmi_identity_client_id,
+                    tmi_identity_client_secret: user.tmi_identity_client_secret,
+                    groups: this.userRepo.getGroups(user.id)
+                },
+                twitchChannels: this.twitchChannelRepo.allByUserId(req.user.id),
+            });
+        });
+        app.post('/api/save-settings', requireLoginApi, express.json(), async (req, res) => {
+            if (!req.user.groups.includes('admin')) {
+                if (req.user.id !== req.body.user.id) {
+                    // editing other user than self
+                    res.status(401).send({ reason: 'not_allowed_to_edit_other_users' });
+                    return;
+                }
+            }
+            const originalUser = this.userRepo.getById(req.body.user.id);
+            if (!originalUser) {
+                res.status(404).send({ reason: 'user_does_not_exist' });
+                return;
+            }
+            const user = {
+                id: req.body.user.id,
+            };
+            if (req.body.user.pass) {
+                user.pass = fn.passwordHash(req.body.user.pass, originalUser.salt);
+            }
+            if (req.body.user.email) {
+                user.email = req.body.user.email;
+            }
+            if (req.user.groups.includes('admin')) {
+                user.tmi_identity_client_id = req.body.user.tmi_identity_client_id;
+                user.tmi_identity_client_secret = req.body.user.tmi_identity_client_secret;
+                user.tmi_identity_username = req.body.user.tmi_identity_username;
+                user.tmi_identity_password = req.body.user.tmi_identity_password;
+            }
+            const twitch_channels = req.body.twitch_channels.map((channel) => {
+                channel.user_id = user.id;
+                return channel;
+            });
+            this.userRepo.save(user);
+            this.twitchChannelRepo.saveUserChannels(user.id, twitch_channels);
+            this.eventHub.trigger('user_changed', this.userRepo.getById(user.id));
+            res.send();
+        });
+        // twitch calls this url after auth
+        // from here we render a js that reads the token and shows it to the user
+        app.get('/twitch/redirect_uri', async (req, res) => {
+            res.render('twitch/redirect_uri.spy', {});
+        });
+        app.post('/twitch/user-id-by-name', requireLoginApi, express.json(), async (req, res) => {
+            let clientId;
+            let clientSecret;
+            if (!req.user.groups.includes('admin')) {
+                const u = this.userRepo.getById(req.user.id);
+                clientId = u.tmi_identity_client_id || this.configTwitch.tmi.identity.client_id;
+                clientSecret = u.tmi_identity_client_secret || this.configTwitch.tmi.identity.client_secret;
+            }
+            else {
+                clientId = req.body.client_id;
+                clientSecret = req.body.client_secret;
+            }
+            if (!clientId) {
+                res.status(400).send({ reason: 'need client id' });
+                return;
+            }
+            if (!clientSecret) {
+                res.status(400).send({ reason: 'need client secret' });
+                return;
+            }
+            try {
+                const client = new TwitchHelixClient(clientId, clientSecret);
+                res.send({ id: await client.getUserIdByName(req.body.name) });
+            }
+            catch (e) {
+                res.status(500).send("Something went wrong!");
+            }
+        });
+        app.post('/twitch/event-sub/', express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
+            log$4.debug(req.body);
+            log$4.debug(req.headers);
+            if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
+                log$4.info(`got verification request, challenge: ${req.body.challenge}`);
+                res.write(req.body.challenge);
+                res.send();
+                return;
+            }
+            if (req.headers['twitch-eventsub-message-type'] === 'notification') {
+                log$4.info(`got notification request: ${req.body.subscription.type}`);
+                if (req.body.subscription.type === 'stream.online') {
+                    // insert new stream
+                    this.db.insert('streams', {
+                        broadcaster_user_id: req.body.event.broadcaster_user_id,
+                        started_at: req.body.event.started_at,
+                    });
+                }
+                else if (req.body.subscription.type === 'stream.offline') {
+                    // get last started stream for broadcaster
+                    // if it exists and it didnt end yet set ended_at date
+                    const stream = this.db.get('streams', {
+                        broadcaster_user_id: req.body.event.broadcaster_user_id,
+                    }, [{ started_at: -1 }]);
+                    if (!stream.ended_at) {
+                        this.db.update('streams', {
+                            ended_at: `${new Date().toJSON()}`,
+                        }, { id: stream.id });
+                    }
+                }
+                res.send();
+                return;
+            }
+            res.status(400).send({ reason: 'unhandled sub type' });
+        });
+        app.post('/api/auth', express.json(), async (req, res) => {
+            const user = this.auth.getUserByNameAndPass(req.body.user, req.body.pass);
+            if (!user) {
+                res.status(401).send({ reason: 'bad credentials' });
+                return;
+            }
+            const token = this.auth.getUserAuthToken(user.id);
+            res.cookie('x-token', token, { maxAge: 1 * fn.YEAR, httpOnly: true });
+            res.send();
+        });
+        app.post('/api/upload', requireLoginApi, (req, res) => {
+            upload(req, res, (err) => {
+                if (err) {
+                    log$4.error(err);
+                    res.status(400).send("Something went wrong!");
+                }
+                res.send(req.file);
+            });
+        });
+        app.get('/widget/:widget_type/:widget_token/', async (req, res, next) => {
+            const user = this.auth.userFromWidgetToken(req.params.widget_token)
+                || this.auth.userFromPubToken(req.params.widget_token);
+            if (!user) {
+                res.status(404).send();
+                return;
+            }
+            const key = req.params.widget_type;
+            for (const m of this.moduleManager.all(user.id)) {
+                const map = m.widgets();
+                if (map && map[key]) {
+                    await map[key](req, res, next);
+                    return;
+                }
+            }
+            res.status(404).send();
+        });
+        app.all('*', requireLogin, express.json({ limit: '50mb' }), async (req, res, next) => {
+            const method = req.method.toLowerCase();
+            const key = req.url;
+            for (const m of this.moduleManager.all(req.user.id)) {
+                const map = m.getRoutes();
+                if (map && map[method] && map[method][key]) {
+                    await map[method][key](req, res, next);
+                    return;
+                }
+            }
+            const indexFile = `${__dirname}/../../build/public/index.html`;
+            res.sendFile(path.resolve(indexFile));
+        });
+        this.handle = app.listen(port, hostname, () => log$4.info(`server running on http://${hostname}:${port}`));
+    }
+    close() {
+        if (this.handle) {
+            this.handle.close();
+        }
+    }
+}
+
+const log$3 = logger('Db.ts');
 class Db {
     constructor(dbConf) {
         this.conf = dbConf;
@@ -827,7 +1402,7 @@ class Db {
         for (const f of files) {
             if (patches.includes(f)) {
                 if (verbose) {
-                    log$5.info(`➡ skipping already applied db patch: ${f}`);
+                    log$3.info(`➡ skipping already applied db patch: ${f}`);
                 }
                 continue;
             }
@@ -837,16 +1412,16 @@ class Db {
                 this.dbh.transaction((all) => {
                     for (const q of all) {
                         if (verbose) {
-                            log$5.info(`Running: ${q}`);
+                            log$3.info(`Running: ${q}`);
                         }
                         this.run(q);
                     }
                     this.insert('db_patches', { id: f });
                 })(all);
-                log$5.info(`✓ applied db patch: ${f}`);
+                log$3.info(`✓ applied db patch: ${f}`);
             }
             catch (e) {
-                log$5.error(`✖ unable to apply patch: ${f} ${e}`);
+                log$3.error(`✖ unable to apply patch: ${f} ${e}`);
                 return;
             }
         }
@@ -983,762 +1558,46 @@ class Db {
     }
 }
 
-function EventHub() {
-    const cbs = {};
-    return {
-        on: (what, cb) => {
-            cbs[what] = cbs[what] || [];
-            cbs[what].push(cb);
-        },
-        trigger: (what, data) => {
-            if (!cbs[what]) {
-                return;
-            }
-            for (const cb of cbs[what]) {
-                cb(data);
-            }
-        },
-    };
-}
-
-const TABLE$5 = 'token';
-function generateToken(length) {
-    // edit the token allowed characters
-    const a = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'.split('');
-    const b = [];
-    for (let i = 0; i < length; i++) {
-        const j = parseInt((Math.random() * (a.length - 1)).toFixed(0), 10);
-        b[i] = a[j];
-    }
-    return b.join('');
-}
-class Tokens {
-    constructor(db) {
-        this.db = db;
-    }
-    getByUserIdAndType(user_id, type) {
-        return this.db.get(TABLE$5, { user_id, type });
-    }
-    insert(tokenInfo) {
-        return this.db.insert(TABLE$5, tokenInfo);
-    }
-    createToken(user_id, type) {
-        const token = generateToken(32);
-        const tokenObj = { user_id, type, token };
-        this.insert(tokenObj);
-        return tokenObj;
-    }
-    getOrCreateToken(user_id, type) {
-        return this.getByUserIdAndType(user_id, type) || this.createToken(user_id, type);
-    }
-    getByToken(token) {
-        return this.db.get(TABLE$5, { token }) || null;
-    }
-    delete(token) {
-        return this.db.delete(TABLE$5, { token });
-    }
-    getWidgetTokenForUserId(user_id) {
-        return this.getOrCreateToken(user_id, 'widget');
-    }
-    getPubTokenForUserId(user_id) {
-        return this.getOrCreateToken(user_id, 'pub');
-    }
-    generateAuthTokenForUserId(user_id) {
-        return this.createToken(user_id, 'auth');
-    }
-}
-
-const log$4 = logger('TwitchHelixClient.ts');
-const API_BASE = 'https://api.twitch.tv/helix';
-class TwitchHelixClient {
-    constructor(clientId, clientSecret) {
-        this.clientId = clientId;
-        this.clientSecret = clientSecret;
-    }
-    async withAuthHeaders(opts = {}) {
-        const accessToken = await this.getAccessToken();
-        return withHeaders({
-            'Client-ID': this.clientId,
-            'Authorization': `Bearer ${accessToken}`,
-        }, opts);
-    }
-    // https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/
-    async getAccessToken(scopes = []) {
-        const url = `https://id.twitch.tv/oauth2/token` + asQueryArgs({
-            client_id: this.clientId,
-            client_secret: this.clientSecret,
-            grant_type: 'client_credentials',
-            scope: scopes.join(' '),
-        });
-        const json = (await postJson(url));
-        return json.access_token;
-    }
-    // https://dev.twitch.tv/docs/api/reference#get-users
-    async getUserIdByName(userName) {
-        const url = `${API_BASE}/users${asQueryArgs({ login: userName })}`;
-        const json = await getJson(url, await this.withAuthHeaders());
-        try {
-            return json.data[0].id;
-        }
-        catch (e) {
-            log$4.error(json);
-            return '';
-        }
-    }
-    // https://dev.twitch.tv/docs/api/reference#get-streams
-    async getStreams(userId) {
-        const url = `${API_BASE}/streams${asQueryArgs({ user_id: userId })}`;
-        const json = await getJson(url, await this.withAuthHeaders());
-        return json;
-    }
-    async getSubscriptions() {
-        const url = `${API_BASE}/eventsub/subscriptions`;
-        return await getJson(url, await this.withAuthHeaders());
-    }
-    async deleteSubscription(id) {
-        const url = `${API_BASE}/eventsub/subscriptions${asQueryArgs({ id: id })}`;
-        return await requestText('delete', url, await this.withAuthHeaders());
-    }
-    async createSubscription(subscription) {
-        const url = `${API_BASE}/eventsub/subscriptions`;
-        return await postJson(url, await this.withAuthHeaders(asJson(subscription)));
-    }
-}
-
-const TABLE$4 = 'user';
-class Users {
-    constructor(db) {
-        this.db = db;
-    }
-    get(by) {
-        return this.db.get(TABLE$4, by) || null;
-    }
-    all() {
-        return this.db.getMany(TABLE$4);
-    }
-    getById(id) {
-        return this.get({ id });
-    }
-    save(user) {
-        return this.db.upsert(TABLE$4, user, { id: user.id });
-    }
-    getGroups(id) {
-        const rows = this.db._getMany(`
-select g.name from user_group g inner join user_x_user_group x
-where x.user_id = ?`, [id]);
-        return rows.map(r => r.name);
-    }
-    createUser(user) {
-        return this.db.insert(TABLE$4, user);
-    }
-}
-
-const TABLE$3 = 'variables';
-class Variables {
-    constructor(db, userId) {
-        this.db = db;
-        this.userId = userId;
-    }
-    set(name, value) {
-        this.db.upsert(TABLE$3, {
-            name,
-            user_id: this.userId,
-            value: JSON.stringify(value),
-        }, {
-            name,
-            user_id: this.userId,
-        });
-    }
-    get(name) {
-        const row = this.db.get(TABLE$3, { name, user_id: this.userId });
-        return row ? JSON.parse(row.value) : null;
-    }
-    all() {
-        const rows = this.db.getMany(TABLE$3, { user_id: this.userId });
-        return rows.map(row => ({
-            name: row.name,
-            value: JSON.parse(row.value),
-        }));
-    }
-    replace(variables) {
-        const names = variables.map(v => v.name);
-        this.db.delete(TABLE$3, { user_id: this.userId, name: { '$nin': names } });
-        variables.forEach(({ name, value }) => {
-            this.set(name, value);
-        });
-    }
-}
-
-const __filename$2 = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename$2);
-
-const log$3 = fn.logger(__filename$2);
-
-class WebServer {
-  constructor(
-    /** @type EventHub */ eventHub,
-    /** @type Db */ db,
-    /** @type Users */ userRepo,
-    /** @type Tokens */ tokenRepo,
-    mail,
-    twitchChannelRepo,
-    moduleManager,
-    configHttp,
-    configTwitch,
-    /** @type WebSocketServer */ wss,
-    auth
-  ) {
-    this.eventHub = eventHub;
-    this.db = db;
-    this.userRepo = userRepo;
-    this.tokenRepo = tokenRepo;
-    this.mail = mail;
-    this.twitchChannelRepo = twitchChannelRepo;
-
-    this.moduleManager = moduleManager;
-    this.port = configHttp.port;
-    this.hostname = configHttp.hostname;
-    this.url = configHttp.url;
-    this.twitchWebhookSecret = configTwitch.eventSub.transport.secret;
-    this.wss = wss;
-    this.auth = auth;
-    this.handle = null;
-  }
-
-  pubUrl(/** @type string */ target) {
-    const row = this.db.get('pub', { target });
-    let id;
-    if (!row) {
-      do {
-        id = fn.nonce(6);
-      } while (this.db.get('pub', { id }))
-      this.db.insert('pub', { id, target });
-    } else {
-      id = row.id;
-    }
-    return `${this.url}/pub/${id}`
-  }
-
-  widgetUrl(/** @type string */ type, /** @type string */ token) {
-    return `${this.url}/widget/${type}/${token}/`
-  }
-
-  async listen() {
-    const port = this.port;
-    const hostname = this.hostname;
-    const app = express();
-
-    app.engine('spy', sprightly$1);
-    app.set('views', path.join(__dirname, 'templates'));
-
-    app.get('/pub/:id', (req, res, next) => {
-      const row = this.db.get('pub', {
-        id: req.params.id,
-      });
-      if (row && row.target) {
-        req.url = row.target;
-        req.app.handle(req, res);
-        return
-      }
-      res.status(404).send();
-    });
-
-    const uploadDir = './data/uploads';
-    const storage = multer.diskStorage({
-      destination: uploadDir,
-      filename: function (req, file, cb) {
-        cb(null, `${fn.nonce(6)}-${file.originalname}`);
-      }
-    });
-
-    const upload = multer({ storage }).single('file');
-
-    const verifyTwitchSignature = (req, res, next) => {
-      const body = Buffer.from(req.rawBody, 'utf8');
-      const msg = `${req.headers['twitch-eventsub-message-id']}${req.headers['twitch-eventsub-message-timestamp']}${body}`;
-      const hmac = crypto.createHmac('sha256', this.twitchWebhookSecret);
-      hmac.update(msg);
-      const expected = `sha256=${hmac.digest('hex')}`;
-      if (req.headers['twitch-eventsub-message-signature'] !== expected) {
-        log$3.debug(req);
-        log$3.error('bad message signature', {
-          got: req.headers['twitch-eventsub-message-signature'],
-          expected,
-        });
-        res.status(403).send({ reason: 'bad message signature' });
-        return
-      }
-
-      return next()
-    };
-
-    const requireLoginApi = (req, res, next) => {
-      if (!req.token) {
-        res.status(401).send({});
-        return
-      }
-      return next()
-    };
-
-    const requireLogin = (req, res, next) => {
-      if (!req.token) {
-        if (req.method === 'GET') {
-          res.redirect(302, '/login');
-        } else {
-          res.status(401).send('not allowed');
-        }
-        return
-      }
-      return next()
-    };
-
-    app.use(cookieParser());
-    app.use(this.auth.addAuthInfoMiddleware());
-    app.use('/uploads', express.static(uploadDir));
-    app.use('/', express.static('./build/public'));
-    app.use('/static', express.static('./public/static'));
-
-
-    app.get('/api/conf', async (req, res) => {
-      res.send({
-        wsBase: this.wss.connectstring(),
-      });
-    });
-
-    app.get('/api/user/me', requireLoginApi, async (req, res) => {
-      res.send({
-        user: req.user,
-        widgetToken: req.userWidgetToken,
-        pubToken: req.userPubToken,
-        token: req.cookies['x-token'],
-      });
-    });
-
-    app.post('/api/logout', async (req, res) => {
-      if (req.token) {
-        this.auth.destroyToken(req.token);
-        res.clearCookie("x-token");
-      }
-      res.send({ success: true });
-    });
-
-    app.get('/api/page/index', requireLoginApi, async (req, res) => {
-      res.send({
-        widgets: [
-          {
-            title: 'Song Request',
-            hint: 'Browser source, or open in browser and capture window',
-            url: this.widgetUrl('sr', req.userWidgetToken),
-          },
-          {
-            title: 'Media',
-            hint: 'Browser source, or open in browser and capture window',
-            url: this.widgetUrl('media', req.userWidgetToken),
-          },
-          {
-            title: 'Speech-to-Text',
-            hint: 'Google Chrome + window capture',
-            url: this.widgetUrl('speech-to-text', req.userWidgetToken),
-          },
-          {
-            title: 'Drawcast (Overlay)',
-            hint: 'Browser source, or open in browser and capture window',
-            url: this.widgetUrl('drawcast_receive', req.userWidgetToken),
-          },
-          {
-            title: 'Drawcast (Draw)',
-            hint: 'Open this to draw (or give to viewers to let them draw)',
-            url: this.pubUrl(this.widgetUrl('drawcast_draw', req.userPubToken)),
-          },
-        ]
-      });
-    });
-
-    app.post('/api/user/_reset_password', express.json(), async (req, res) => {
-      const plainPass = req.body.pass || null;
-      const token = req.body.token || null;
-      if (!plainPass || !token) {
-        res.status(400).send({ reason: 'bad request' });
-        return
-      }
-
-      const tokenObj = this.tokenRepo.getByToken(token);
-      if (!tokenObj) {
-        res.status(400).send({ reason: 'bad request' });
-        return
-      }
-
-      const originalUser = this.userRepo.getById(tokenObj.user_id);
-      if (!originalUser) {
-        res.status(404).send({ reason: 'user_does_not_exist' });
-        return
-      }
-
-      const pass = fn.passwordHash(plainPass, originalUser.salt);
-      const user = { id: originalUser.id, pass };
-      this.userRepo.save(user);
-      this.tokenRepo.delete(tokenObj.token);
-      res.send({ success: true });
-    });
-
-    app.post('/api/user/_request_password_reset', express.json(), async (req, res) => {
-      const email = req.body.email || null;
-      if (!email) {
-        res.status(400).send({ reason: 'bad request' });
-        return
-      }
-
-      const user = this.userRepo.get({ email, status: 'verified' });
-      if (!user) {
-        res.status(404).send({ reason: 'user not found' });
-        return
-      }
-
-      const token = this.tokenRepo.createToken(user.id, 'password_reset');
-      this.mail.sendPasswordResetMail({
-        user: user,
-        token: token,
-      });
-      res.send({ success: true });
-    });
-
-    app.post('/api/user/_resend_verification_mail', express.json(), async (req, res) => {
-      const email = req.body.email || null;
-      if (!email) {
-        res.status(400).send({ reason: 'bad request' });
-        return
-      }
-
-      const user = this.db.get('user', { email });
-      if (!user) {
-        res.status(404).send({ reason: 'email not found' });
-        return
-      }
-
-      if (user.status !== 'verification_pending') {
-        res.status(400).send({ reason: 'already verified' });
-        return
-      }
-
-      const token = this.tokenRepo.createToken(user.id, 'registration');
-      this.mail.sendRegistrationMail({
-        user: user,
-        token: token,
-      });
-      res.send({ success: true });
-    });
-
-    app.post('/api/user/_register', express.json(), async (req, res) => {
-      const salt = fn.passwordSalt();
-      const user = {
-        name: req.body.user,
-        pass: fn.passwordHash(req.body.pass, salt),
-        salt: salt,
-        email: req.body.email,
-
-        status: 'verification_pending',
-
-        tmi_identity_username: '',
-        tmi_identity_password: '',
-        tmi_identity_client_id: '',
-        tmi_identity_client_secret: '',
-      };
-      let tmpUser;
-      tmpUser = this.db.get('user', { email: user.email });
-      if (tmpUser) {
-        if (tmpUser.status === 'verified') {
-          // user should use password reset function
-          res.status(400).send({ reason: 'verified_mail_already_exists' });
-        } else {
-          // user should use resend registration mail function
-          res.status(400).send({ reason: 'unverified_mail_already_exists' });
-        }
-        return
-      }
-      tmpUser = this.db.get('user', { name: user.name });
-      if (tmpUser) {
-        if (tmpUser.status === 'verified') {
-          // user should use password reset function
-          res.status(400).send({ reason: 'verified_name_already_exists' });
-        } else {
-          // user should use resend registration mail function
-          res.status(400).send({ reason: 'unverified_name_already_exists' });
-        }
-        return
-      }
-
-      const userId = this.userRepo.createUser(user);
-      if (!userId) {
-        res.status(400).send({ reason: 'unable to create user' });
-        return
-      }
-      const token = this.tokenRepo.createToken(userId, 'registration');
-      this.mail.sendRegistrationMail({
-        user: user,
-        token: token,
-      });
-      res.send({ success: true });
-    });
-
-    app.post('/api/_handle-token', express.json(), async (req, res) => {
-      const token = req.body.token || null;
-      if (!token) {
-        res.status(400).send({ reason: 'invalid_token' });
-        return
-      }
-      const tokenObj = this.tokenRepo.getByToken(token);
-      if (!tokenObj) {
-        res.status(400).send({ reason: 'invalid_token' });
-        return
-      }
-      if (tokenObj.type === 'registration') {
-        this.userRepo.save({ status: 'verified', id: tokenObj.user_id });
-        this.tokenRepo.delete(tokenObj.token);
-        res.send({ type: 'registration-verified' });
-
-        // new user was registered. module manager should be notified about this
-        // so that bot doesnt need to be restarted :O
-        const user = this.userRepo.getById(tokenObj.user_id);
-        this.eventHub.trigger('user_registration_complete', user);
-        return
-      }
-
-      res.status(400).send({ reason: 'invalid_token' });
-      return
-    });
-
-    app.get('/api/page/variables', requireLoginApi, async (req, res) => {
-      const variables = new Variables(this.db, req.user.id);
-      res.send({ variables: variables.all() });
-    });
-
-    app.post('/save-variables', requireLoginApi, express.json(), async (req, res) => {
-      const variables = new Variables(this.db, req.user.id);
-      variables.replace(req.body.variables || []);
-      res.send();
-    });
-
-    app.get('/api/page/settings', requireLoginApi, async (req, res) => {
-      const user = this.userRepo.getById(req.user.id);
-      user.groups = this.userRepo.getGroups(user.id);
-      delete user.pass;
-      res.send({
-        user,
-        twitchChannels: this.twitchChannelRepo.allByUserId(req.user.id),
-      });
-    });
-
-    app.post('/api/save-settings', requireLoginApi, express.json(), async (req, res) => {
-      if (!req.user.groups.includes('admin')) {
-        if (req.user.id !== req.body.user.id) {
-          // editing other user than self
-          res.status(401).send({ reason: 'not_allowed_to_edit_other_users' });
-          return
-        }
-      }
-
-      const originalUser = this.userRepo.getById(req.body.user.id);
-      if (!originalUser) {
-        res.status(404).send({ reason: 'user_does_not_exist' });
-        return
-      }
-
-      const user = {
-        id: req.body.user.id,
-      };
-      if (req.body.user.pass) {
-        user.pass = fn.passwordHash(req.body.user.pass, originalUser.salt);
-      }
-      if (req.body.user.email) {
-        user.email = req.body.user.email;
-      }
-      if (req.user.groups.includes('admin')) {
-        user.tmi_identity_client_id = req.body.user.tmi_identity_client_id;
-        user.tmi_identity_client_secret = req.body.user.tmi_identity_client_secret;
-        user.tmi_identity_username = req.body.user.tmi_identity_username;
-        user.tmi_identity_password = req.body.user.tmi_identity_password;
-      }
-
-      const twitch_channels = req.body.twitch_channels.map(channel => {
-        channel.user_id = user.id;
-        return channel
-      });
-
-      this.userRepo.save(user);
-      this.twitchChannelRepo.saveUserChannels(user.id, twitch_channels);
-
-      this.eventHub.trigger('user_changed', this.userRepo.getById(user.id));
-      res.send();
-    });
-
-    // twitch calls this url after auth
-    // from here we render a js that reads the token and shows it to the user
-    app.get('/twitch/redirect_uri', async (req, res) => {
-      res.render('twitch/redirect_uri.spy', {});
-    });
-    app.post('/twitch/user-id-by-name', requireLoginApi, express.json(), async (req, res) => {
-      let clientId;
-      let clientSecret;
-      if (!req.user.groups.includes('admin')) {
-        const u = this.userRepo.getById(req.user.id);
-        clientId = u.tmi_identity_client_id || configTwitch.tmi.identity.client_id;
-        clientSecret = u.tmi_identity_client_secret || configTwitch.tmi.identity.client_secret;
-      } else {
-        clientId = req.body.client_id;
-        clientSecret = req.body.client_secret;
-      }
-      if (!clientId) {
-        res.status(400).send({ reason: 'need client id' });
-        return
-      }
-      if (!clientSecret) {
-        res.status(400).send({ reason: 'need client secret' });
-        return
-      }
-
-      try {
-        const client = new TwitchHelixClient(clientId, clientSecret);
-        res.send({ id: await client.getUserIdByName(req.body.name) });
-      } catch (e) {
-        res.status(500).send("Something went wrong!");
-      }
-    });
-
-    app.post(
-      '/twitch/event-sub/',
-      express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }),
-      verifyTwitchSignature,
-      async (req, res) => {
-        log$3.debug(req.body);
-        log$3.debug(req.headers);
-
-        if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-          log$3.info(`got verification request, challenge: ${req.body.challenge}`);
-
-          res.write(req.body.challenge);
-          res.send();
-          return
-        }
-
-        if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-          log$3.info(`got notification request: ${req.body.subscription.type}`);
-
-          if (req.body.subscription.type === 'stream.online') {
-            // insert new stream
-            this.db.insert('streams', {
-              broadcaster_user_id: req.body.event.broadcaster_user_id,
-              started_at: req.body.event.started_at,
-            });
-          } else if (req.body.subscription.type === 'stream.offline') {
-            // get last started stream for broadcaster
-            // if it exists and it didnt end yet set ended_at date
-            const stream = this.db.get('streams', {
-              broadcaster_user_id: req.body.event.broadcaster_user_id,
-            }, [{ started_at: -1 }]);
-            if (!stream.ended_at) {
-              this.db.update('streams', {
-                ended_at: `${new Date().toJSON()}`,
-              }, { id: stream.id });
-            }
-          }
-
-          res.send();
-          return
-        }
-
-        res.status(400).send({ reason: 'unhandled sub type' });
-      });
-
-    app.post('/api/auth', express.json(), async (req, res) => {
-      const user = this.auth.getUserByNameAndPass(req.body.user, req.body.pass);
-      if (!user) {
-        res.status(401).send({ reason: 'bad credentials' });
-        return
-      }
-
-      const token = this.auth.getUserAuthToken(user.id);
-      res.cookie('x-token', token, { maxAge: 1 * fn.YEAR, httpOnly: true });
-      res.send();
-    });
-
-    app.post('/api/upload', requireLoginApi, (req, res) => {
-      upload(req, res, (err) => {
-        if (err) {
-          log$3.error(err);
-          res.status(400).send("Something went wrong!");
-        }
-        res.send(req.file);
-      });
-    });
-
-    app.get('/widget/:widget_type/:widget_token/', async (req, res, next) => {
-      const user = this.auth.userFromWidgetToken(req.params.widget_token)
-        || this.auth.userFromPubToken(req.params.widget_token);
-      if (!user) {
-        res.status(404).send();
-        return
-      }
-      const key = req.params.widget_type;
-      for (const m of this.moduleManager.all(user.id)) {
-        const map = m.widgets();
-        if (map && map[key]) {
-          await map[key](req, res, next);
-          return
-        }
-      }
-      res.status(404).send();
-    });
-
-    app.all('*', requireLogin, express.json({ limit: '50mb' }), async (req, res, next) => {
-      const method = req.method.toLowerCase();
-      const key = req.url;
-      for (const m of this.moduleManager.all(req.user.id)) {
-        const map = m.getRoutes();
-        if (map && map[method] && map[method][key]) {
-          await map[method][key](req, res, next);
-          return
-        }
-      }
-
-      const indexFile = `${__dirname}/../../build/public/index.html`;
-      res.sendFile(path.resolve(indexFile));
-    });
-
-    this.handle = app.listen(
-      port,
-      hostname,
-      () => log$3.info(`server running on http://${hostname}:${port}`)
-    );
-  }
-  close() {
-    if (this.handle) {
-      this.handle.close();
-    }
-  }
-}
-
-const TABLE$2 = 'twitch_channel';
+const TABLE$4 = 'twitch_channel';
 class TwitchChannels {
     constructor(db) {
         this.db = db;
     }
     save(channel) {
-        return this.db.upsert(TABLE$2, channel, {
+        return this.db.upsert(TABLE$4, channel, {
             user_id: channel.user_id,
             channel_name: channel.channel_name,
         });
     }
     allByUserId(user_id) {
-        return this.db.getMany(TABLE$2, { user_id });
+        return this.db.getMany(TABLE$4, { user_id });
     }
     saveUserChannels(user_id, channels) {
         for (const channel of channels) {
             this.save(channel);
         }
-        this.db.delete(TABLE$2, {
+        this.db.delete(TABLE$4, {
             user_id: user_id,
             channel_name: { '$nin': channels.map(c => c.channel_name) }
         });
+    }
+}
+
+class EventHub {
+    constructor() {
+        this.cbs = {};
+    }
+    on(what, cb) {
+        this.cbs[what] = this.cbs[what] || [];
+        this.cbs[what].push(cb);
+    }
+    trigger(what, data) {
+        if (!this.cbs[what]) {
+            return;
+        }
+        for (const cb of this.cbs[what]) {
+            cb(data);
+        }
     }
 }
 
@@ -1952,7 +1811,7 @@ class TwitchClientManager {
 }
 
 const log$2 = logger('ModuleStorage.ts');
-const TABLE$1 = 'module';
+const TABLE$3 = 'module';
 class ModuleStorage {
     constructor(db, userId) {
         this.db = db;
@@ -1961,7 +1820,7 @@ class ModuleStorage {
     load(key, def) {
         try {
             const where = { user_id: this.userId, key };
-            const row = this.db.get(TABLE$1, where);
+            const row = this.db.get(TABLE$3, where);
             const data = row ? JSON.parse('' + row.data) : null;
             return data ? Object.assign({}, def, data) : def;
         }
@@ -1974,7 +1833,82 @@ class ModuleStorage {
         const where = { user_id: this.userId, key };
         const data = JSON.stringify(rawData);
         const dbData = Object.assign({}, where, { data });
-        this.db.upsert(TABLE$1, dbData, where);
+        this.db.upsert(TABLE$3, dbData, where);
+    }
+}
+
+const TABLE$2 = 'user';
+class Users {
+    constructor(db) {
+        this.db = db;
+    }
+    get(by) {
+        return this.db.get(TABLE$2, by) || null;
+    }
+    all() {
+        return this.db.getMany(TABLE$2);
+    }
+    getById(id) {
+        return this.get({ id });
+    }
+    save(user) {
+        return this.db.upsert(TABLE$2, user, { id: user.id });
+    }
+    getGroups(id) {
+        const rows = this.db._getMany(`
+select g.name from user_group g inner join user_x_user_group x
+where x.user_id = ?`, [id]);
+        return rows.map(r => r.name);
+    }
+    createUser(user) {
+        return this.db.insert(TABLE$2, user);
+    }
+}
+
+const TABLE$1 = 'token';
+function generateToken(length) {
+    // edit the token allowed characters
+    const a = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'.split('');
+    const b = [];
+    for (let i = 0; i < length; i++) {
+        const j = parseInt((Math.random() * (a.length - 1)).toFixed(0), 10);
+        b[i] = a[j];
+    }
+    return b.join('');
+}
+class Tokens {
+    constructor(db) {
+        this.db = db;
+    }
+    getByUserIdAndType(user_id, type) {
+        return this.db.get(TABLE$1, { user_id, type });
+    }
+    insert(tokenInfo) {
+        return this.db.insert(TABLE$1, tokenInfo);
+    }
+    createToken(user_id, type) {
+        const token = generateToken(32);
+        const tokenObj = { user_id, type, token };
+        this.insert(tokenObj);
+        return tokenObj;
+    }
+    getOrCreateToken(user_id, type) {
+        return this.getByUserIdAndType(user_id, type) || this.createToken(user_id, type);
+    }
+    getByToken(token) {
+        return this.db.get(TABLE$1, { token }) || null;
+    }
+    delete(token) {
+        return this.db.delete(TABLE$1, { token });
+    }
+    getWidgetTokenForUserId(user_id) {
+        return this.getOrCreateToken(user_id, 'widget');
+    }
+    getPubTokenForUserId(user_id) {
+        return this.getOrCreateToken(user_id, 'pub');
+    }
+    generateAuthTokenForUserId(user_id) {
+        return this.createToken(user_id, 'auth');
     }
 }
 
@@ -3938,7 +3872,7 @@ const cache = new Cache(db);
 const auth = new Auth(userRepo, tokenRepo);
 const mail = new Mail(config.mail);
 
-const eventHub = EventHub();
+const eventHub = new EventHub();
 const moduleManager = new ModuleManager();
 const webSocketServer = new WebSocketServer(moduleManager, config.ws, auth);
 const webServer = new WebServer(

@@ -1,21 +1,19 @@
-export function EventHub() {
-  const cbs: Record<string, Function[]> = {}
-  return {
-    on: (what: string, cb: Function): void => {
-      cbs[what] = cbs[what] || []
-      cbs[what].push(cb)
-    },
-    trigger: (what: string, data: any): void => {
-      if (!cbs[what]) {
-        return
-      }
-      for (const cb of cbs[what]) {
-        cb(data)
-      }
-    },
+class EventHub {
+  private cbs: Record<string, Function[]> = {}
+
+  on(what: string, cb: Function): void {
+    this.cbs[what] = this.cbs[what] || []
+    this.cbs[what].push(cb)
+  }
+
+  trigger(what: string, data: any): void {
+    if (!this.cbs[what]) {
+      return
+    }
+    for (const cb of this.cbs[what]) {
+      cb(data)
+    }
   }
 }
 
-export default {
-  EventHub,
-}
+export default EventHub

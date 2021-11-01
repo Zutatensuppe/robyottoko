@@ -15,8 +15,8 @@ export interface User {
   tmi_identity_client_secret: string
 }
 
-interface UpdateUser {
-  id?: number
+export interface UpdateUser {
+  id: number
   name?: string
   pass?: string
   salt?: string
@@ -26,6 +26,18 @@ interface UpdateUser {
   tmi_identity_password?: string
   tmi_identity_client_id?: string
   tmi_identity_client_secret?: string
+}
+
+export interface CreateUser {
+  name: string
+  pass: string
+  salt: string
+  email: string
+  status: string // 'verification_pending' |
+  tmi_identity_username: string
+  tmi_identity_password: string
+  tmi_identity_client_id: string
+  tmi_identity_client_secret: string
 }
 
 class Users {
@@ -57,8 +69,8 @@ where x.user_id = ?`, [id])
     return rows.map(r => r.name)
   }
 
-  createUser(user: UpdateUser) {
-    return this.db.insert(TABLE, user)
+  createUser(user: CreateUser) {
+    return this.db.insert(TABLE, user) as number
   }
 }
 
