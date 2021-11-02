@@ -27,6 +27,7 @@
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^13.0.6",
     "@types/better-sqlite3": "^7.4.1",
+    "@types/cookie-parser": "^1.4.2",
     "@types/jest": "^27.0.2",
     "@types/ws": "^8.2.0",
     "@vitejs/plugin-vue": "^1.9.2",
