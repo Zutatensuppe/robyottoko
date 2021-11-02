@@ -11,7 +11,13 @@ interface YoutubeSearchResponseData {
   items: YoutubeSearchResponseDataEntry[]
 }
 
-interface YoutubeVideosResponseDataEntry {
+export interface YoutubeVideosResponseDataEntry {
+  snippet: {
+    title: string
+  }
+  contentDetails: {
+    duration: string
+  }
 }
 
 interface YoutubeVideosResponseData {

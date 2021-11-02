@@ -1,10 +1,14 @@
-import Db from '../../Db.ts'
-import fn from '../../fn.ts'
-import WebServer from '../../WebServer.ts'
-import WebSocketServer from '../../net/WebSocketServer.ts'
-import TwitchHelixClient from '../../services/TwitchHelixClient.ts'
-import Youtube from '../../services/Youtube.ts'
-import Variables from '../../services/Variables.ts'
+import Db from '../../Db'
+import fn from '../../fn'
+import WebServer from '../../WebServer'
+import WebSocketServer, { Socket } from '../../net/WebSocketServer'
+import TwitchHelixClient from '../../services/TwitchHelixClient'
+import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
+import Variables from '../../services/Variables'
+import { User } from '../../services/Users'
+import { PlaylistItem, RawCommand, TwitchChatClient, TwitchChatContext } from '../../types'
+import ModuleStorage from '../ModuleStorage'
+import Cache from '../../services/Cache'
 
 const ADD_TYPE = {
   NOT_ADDED: 0,
@@ -13,17 +17,46 @@ const ADD_TYPE = {
   EXISTED: 3,
 }
 
+
+interface SongrequestModuleSettings {
+  volume: number
+  hideVideoImage: {
+    file: string
+    filename: string
+  }
+  customCss: string
+  showProgressBar: boolean
+}
+
+interface SongrequestModuleData {
+  filter: {
+    tag: string
+  }
+  settings: SongrequestModuleSettings
+  playlist: PlaylistItem[]
+  stacks: Record<string, string[]>
+}
+
 class SongrequestModule {
+  public name = 'sr'
+  private db: Db
+  private user: User
+  private variables: Variables
+  private cache: Cache
+  private storage: ModuleStorage
+  private ws: WebServer
+  private wss: WebSocketServer
+  private data: SongrequestModuleData
   constructor(
-    /** @type Db */ db,
-    user,
-    /** @type Variables */ variables,
-    chatClient,
-    /** @type TwitchHelixClient */ helixClient,
-    storage,
-    cache,
-    /** @type WebServer */ ws,
-    /** @type WebSocketServer */ wss
+    db: Db,
+    user: User,
+    variables: Variables,
+    chatClient: TwitchChatClient,
+    helixClient: TwitchHelixClient,
+    storage: ModuleStorage,
+    cache: Cache,
+    ws: WebServer,
+    wss: WebSocketServer
   ) {
     this.db = db
     this.user = user
@@ -32,8 +65,7 @@ class SongrequestModule {
     this.storage = storage
     this.ws = ws
     this.wss = wss
-    this.name = 'sr'
-    this.data = this.storage.load(this.name, {
+    const data = this.storage.load(this.name, {
       filter: {
         tag: '',
       },
@@ -53,12 +85,12 @@ class SongrequestModule {
     // make sure items have correct structure
     // needed by rest of the code
     // TODO: maybe use same code as in save function
-    this.data.playlist = this.data.playlist.map(item => {
+    data.playlist = data.playlist.map((item: PlaylistItem) => {
       item.tags = item.tags || []
       item.hidevideo = typeof item.hidevideo === 'undefined' ? false : item.hidevideo
       return item
     })
-    this.data.settings = this.data.settings || {
+    data.settings = data.settings || {
       volume: 100,
       hideVideoImage: {
         file: '',
@@ -67,15 +99,27 @@ class SongrequestModule {
       customCss: '',
       showProgressBar: false,
     }
-    if (!this.data.settings.customCss) {
-      this.data.settings.customCss = ''
+    if (!data.settings.customCss) {
+      data.settings.customCss = ''
     }
-    if (!this.data.settings.showProgressBar) {
-      this.data.settings.showProgressBar = false
+    if (!data.settings.showProgressBar) {
+      data.settings.showProgressBar = false
+    }
+
+    this.data = {
+      filter: data.filter,
+      playlist: data.playlist,
+      settings: data.settings,
+      stacks: data.stacks,
     }
   }
 
-  onChatMsg(client, target, context, msg) {
+  onChatMsg(
+    client: TwitchChatClient,
+    target: string,
+    context: TwitchChatContext,
+    msg: string,
+  ) {
   }
 
   saveCommands() {
@@ -95,7 +139,7 @@ class SongrequestModule {
 
   widgets() {
     return {
-      'sr': async (req, res, next) => {
+      'sr': async (req: any, res: any, next: Function) => {
         res.render('widget.spy', {
           title: 'Song Request Widget',
           page: 'sr',
@@ -109,7 +153,7 @@ class SongrequestModule {
   getRoutes() {
     return {
       post: {
-        '/sr/import': async (req, res, next) => {
+        '/sr/import': async (req: any, res: any, next: Function) => {
           try {
             this.data.settings = req.body.settings
             this.data.playlist = req.body.playlist
@@ -122,7 +166,7 @@ class SongrequestModule {
         },
       },
       get: {
-        '/sr/export': async (req, res, next) => {
+        '/sr/export': async (req: any, res: any, next: Function) => {
           res.send({
             settings: this.data.settings,
             playlist: this.data.playlist,
@@ -137,7 +181,7 @@ class SongrequestModule {
       filter: this.data.filter,
       playlist: this.data.playlist.map(item => {
         item.title = item.title || ''
-        item.time = item.time || new Date().getTime()
+        item.timestamp = item.timestamp || new Date().getTime()
         item.last_play = item.last_play || 0
         item.user = item.user || ''
         item.plays = item.plays || 0
@@ -151,7 +195,7 @@ class SongrequestModule {
     })
   }
 
-  wsdata(eventName) {
+  wsdata(eventName: string) {
     return {
       event: eventName,
       data: {
@@ -163,25 +207,25 @@ class SongrequestModule {
     };
   }
 
-  updateClient(/** @type string */ eventName, /** @type WebSocket */ ws) {
+  updateClient(eventName: string, ws: Socket) {
     this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
   }
 
-  updateClients(/** @type string */ eventName) {
+  updateClients(eventName: string) {
     this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName))
   }
 
   getWsEvents() {
     return {
-      'conn': (ws) => {
+      'conn': (ws: Socket) => {
         this.updateClient('init', ws)
       },
-      'play': (ws, { id }) => {
+      'play': (ws: Socket, { id }: { id: number }) => {
         const idx = this.data.playlist.findIndex(item => item.id === id)
         if (idx < 0) {
           return
         }
-        this.data.playlist = [].concat(
+        this.data.playlist = ([] as PlaylistItem[]).concat(
           this.data.playlist.slice(idx),
           this.data.playlist.slice(0, idx)
         )
@@ -191,14 +235,17 @@ class SongrequestModule {
         this.save()
         this.updateClients('playIdx')
       },
-      'ended': (ws) => {
-        this.data.playlist.push(this.data.playlist.shift())
+      'ended': (ws: Socket) => {
+        const item = this.data.playlist.shift()
+        if (item) {
+          this.data.playlist.push(item)
+        }
         this.save()
         this.updateClients('onEnded')
       },
-      'ctrl': (ws, { ctrl, args }) => {
+      'ctrl': (ws: Socket, { ctrl, args }: { ctrl: string, args: any[] }) => {
         switch (ctrl) {
-          case 'volume': this.volume(...args); break;
+          case 'volume': this.volume(...args as [number]); break;
           case 'pause': this.pause(); break;
           case 'unpause': this.unpause(); break;
           case 'loop': this.loop(); break;
@@ -211,25 +258,25 @@ class SongrequestModule {
           case 'clear': this.clear(); break;
           case 'rm': this.remove(); break;
           case 'shuffle': this.shuffle(); break;
-          case 'playIdx': this.playIdx(...args); break;
-          case 'rmIdx': this.rmIdx(...args); break;
-          case 'goodIdx': this.goodIdx(...args); break;
-          case 'badIdx': this.badIdx(...args); break;
-          case 'sr': this.request(...args); break;
-          case 'resr': this.resr(...args); break;
-          case 'move': this.move(...args); break;
-          case 'rmtag': this.rmTag(...args); break;
-          case 'addtag': this.addTag(...args); break;
-          case 'updatetag': this.updateTag(...args); break;
-          case 'filter': this.filter(...args); break;
-          case 'videoVisibility': this.videoVisibility(...args); break;
-          case 'settings': this.settings(...args); break;
+          case 'playIdx': this.playIdx(...args as [number]); break;
+          case 'rmIdx': this.rmIdx(...args as [number]); break;
+          case 'goodIdx': this.goodIdx(...args as [number]); break;
+          case 'badIdx': this.badIdx(...args as [number]); break;
+          case 'sr': this.request(...args as [string]); break;
+          case 'resr': this.resr(...args as [string]); break;
+          case 'move': this.move(...args as [number, number]); break;
+          case 'rmtag': this.rmTag(...args as [string, number]); break;
+          case 'addtag': this.addTag(...args as [string, number]); break;
+          case 'updatetag': this.updateTag(...args as [string, string]); break;
+          case 'filter': this.filter(...args as [{ tag: string }]); break;
+          case 'videoVisibility': this.videoVisibility(...args as [boolean, number]); break;
+          case 'settings': this.settings(...args as [SongrequestModuleSettings]); break;
         }
       },
     }
   }
 
-  async add(/** @type string */ str, user) {
+  async add(str: string, userName: string) {
     const youtubeUrl = str.trim()
     let youtubeId = Youtube.extractYoutubeId(youtubeUrl)
     let youtubeData = null
@@ -246,18 +293,18 @@ class SongrequestModule {
       return { addType: ADD_TYPE.NOT_ADDED, idx: -1 }
     }
 
-    const tmpItem = this.createItem(youtubeId, youtubeData, user)
+    const tmpItem = this.createItem(youtubeId, youtubeData, userName)
     const { addType, idx } = await this.addToPlaylist(tmpItem)
     if (addType === ADD_TYPE.ADDED) {
-      this.data.stacks[user] = this.data.stacks[user] || []
-      this.data.stacks[user].push(youtubeId)
+      this.data.stacks[userName] = this.data.stacks[userName] || []
+      this.data.stacks[userName].push(youtubeId)
     }
     return { addType, idx }
   }
 
   determinePrevIndex() {
     let index = -1
-    for (let i in this.data.playlist) {
+    for (let i = 0; i < this.data.playlist.length; i++) {
       const item = this.data.playlist[i]
       if (this.data.filter.tag === '' || item.tags.includes(this.data.filter.tag)) {
         index = i
@@ -267,8 +314,8 @@ class SongrequestModule {
   }
 
   determineNextIndex() {
-    for (let i in this.data.playlist) {
-      if (i == 0) { // i can be string ;_;
+    for (let i = 0; i < this.data.playlist.length; i++) {
+      if (i === 0) {
         continue
       }
       const item = this.data.playlist[i]
@@ -283,7 +330,7 @@ class SongrequestModule {
     return this.data.playlist.findIndex(item => this.data.filter.tag === '' || item.tags.includes(this.data.filter.tag))
   }
 
-  incStat(stat, idx = -1) {
+  incStat(stat: 'goods' | 'bads' | 'plays', idx: number = -1) {
     if (idx === -1) {
       idx = this.determineFirstIndex()
     }
@@ -295,7 +342,7 @@ class SongrequestModule {
     }
   }
 
-  videoVisibility(visible, idx = -1) {
+  videoVisibility(visible: boolean, idx = -1) {
     if (idx === -1) {
       idx = this.determineFirstIndex()
     }
@@ -309,7 +356,7 @@ class SongrequestModule {
     this.updateClients('video')
   }
 
-  async durationUntilIndex(idx) {
+  async durationUntilIndex(idx: number) {
     if (idx <= 0) {
       return 0
     }
@@ -322,7 +369,7 @@ class SongrequestModule {
     return durationTotalMs
   }
 
-  async stats(userName) {
+  async stats(userName: string) {
     const countTotal = this.data.playlist.length
     let durationTotal = 0
     if (countTotal > 0) {
@@ -353,18 +400,22 @@ class SongrequestModule {
     this.updateClients('resetStats')
   }
 
-  playIdx(idx) {
+  playIdx(idx: number) {
     if (this.data.playlist.length === 0) {
       return
     }
-    while (idx-- > 0)
-      this.data.playlist.push(this.data.playlist.shift())
+    while (idx-- > 0) {
+      const item = this.data.playlist.shift()
+      if (item) {
+        this.data.playlist.push(item)
+      }
+    }
 
     this.save()
     this.updateClients('skip')
   }
 
-  rmIdx(idx) {
+  rmIdx(idx: number) {
     if (this.data.playlist.length === 0) {
       return
     }
@@ -377,34 +428,34 @@ class SongrequestModule {
     }
   }
 
-  goodIdx(idx) {
+  goodIdx(idx: number) {
     this.incStat('goods', idx)
     this.save()
     this.updateClients('like')
   }
 
-  badIdx(idx) {
+  badIdx(idx: number) {
     this.incStat('bads', idx)
     this.save()
     this.updateClients('dislike')
   }
 
-  async request(str) {
+  async request(str: string) {
     await this.add(str, this.user.name)
   }
 
-  findSongIdxByYoutubeId(youtubeId) {
+  findSongIdxByYoutubeId(youtubeId: string) {
     return this.data.playlist.findIndex(item => item.yt === youtubeId)
   }
 
-  findSongIdxBySearchInOrder(str) {
+  findSongIdxBySearchInOrder(str: string) {
     const split = str.split(/\s+/)
     const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     const regex = new RegExp(regexArgs.join('.*'), 'i')
     return this.data.playlist.findIndex(item => item.title.match(regex))
   }
 
-  findSongIdxBySearch(str) {
+  findSongIdxBySearch(str: string) {
     const split = str.split(/\s+/)
     const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     const regexes = regexArgs.map(arg => new RegExp(arg, 'i'))
@@ -424,13 +475,13 @@ class SongrequestModule {
     this.updateClients('like')
   }
 
-  filter(filter) {
+  filter(filter: { tag: string }) {
     this.data.filter = filter
     this.save()
     this.updateClients('filter')
   }
 
-  addTag(tag, idx = -1) {
+  addTag(tag: string, idx = -1) {
     if (idx === -1) {
       idx = this.determineFirstIndex()
     }
@@ -446,7 +497,7 @@ class SongrequestModule {
     }
   }
 
-  updateTag(oldTag, newTag) {
+  updateTag(oldTag: string, newTag: string) {
     this.data.playlist = this.data.playlist.map(item => {
       item.tags = [...new Set(item.tags.map(tag => {
         return tag === oldTag ? newTag : tag
@@ -457,7 +508,7 @@ class SongrequestModule {
     this.updateClients('tags')
   }
 
-  rmTag(tag, idx = -1) {
+  rmTag(tag: string, idx = -1) {
     if (idx === -1) {
       idx = this.determineFirstIndex()
     }
@@ -473,7 +524,7 @@ class SongrequestModule {
     }
   }
 
-  volume(vol) {
+  volume(vol: number) {
     if (vol < 0) {
       vol = 0
     }
@@ -507,7 +558,7 @@ class SongrequestModule {
     this.updateClients('dislike')
   }
 
-  settings(settings) {
+  settings(settings: SongrequestModuleSettings) {
     this.data.settings = settings
     this.save()
     this.updateClients('settings')
@@ -537,7 +588,10 @@ class SongrequestModule {
       return
     }
     for (let i = 0; i < index; i++) {
-      this.data.playlist.push(this.data.playlist.shift())
+      const item = this.data.playlist.shift()
+      if (item) {
+        this.data.playlist.push(item)
+      }
     }
 
     this.save()
@@ -566,7 +620,7 @@ class SongrequestModule {
     this.updateClients('shuffle')
   }
 
-  move(oldIndex, newIndex) {
+  move(oldIndex: number, newIndex: number) {
     if (oldIndex >= this.data.playlist.length) {
       return
     }
@@ -593,7 +647,7 @@ class SongrequestModule {
     this.updateClients('remove')
   }
 
-  undo(username) {
+  undo(username: string) {
     if (this.data.playlist.length === 0) {
       return false
     }
@@ -611,12 +665,21 @@ class SongrequestModule {
     return item
   }
 
-  async songrequestCmd(command, client, target, context, msg) {
+  async songrequestCmd(
+    command: RawCommand,
+    client: TwitchChatClient,
+    target: string,
+    context: TwitchChatContext,
+    msg: string,
+  ) {
     const modOrUp = () => fn.isMod(context) || fn.isBroadcaster(context)
 
     const say = fn.sayFn(client, target)
-    const answerAddRequest = async (addType, idx) => {
+    const answerAddRequest = async (addType: number, idx: number) => {
       const item = idx >= 0 ? this.data.playlist[idx] : null
+      if (!item) {
+        return `Could not process that song request`
+      }
       let info
       if (idx < 0) {
         info = ``
@@ -742,7 +805,7 @@ class SongrequestModule {
         case 'stat':
         case 'stats':
           const stats = await this.stats(context['display-name'])
-          let number = stats.count.byUser
+          let number = `${stats.count.byUser}`
           const verb = stats.count.byUser === 1 ? 'was' : 'were'
           if (stats.count.byUser === 1) {
             number = 'one'
@@ -822,7 +885,7 @@ class SongrequestModule {
     say(await answerAddRequest(addType, idx))
   }
 
-  async loadYoutubeData(youtubeId) {
+  async loadYoutubeData(youtubeId: string): Promise<YoutubeVideosResponseDataEntry> {
     let key = `youtubeData_${youtubeId}_20210717_2`
     let d = this.cache.get(key)
     if (!d) {
@@ -844,7 +907,11 @@ class SongrequestModule {
     return (found === -1 ? 0 : found) + 1
   }
 
-  createItem(youtubeId, youtubeData, userName) {
+  createItem(
+    youtubeId: string,
+    youtubeData: YoutubeVideosResponseDataEntry,
+    userName: string,
+  ): PlaylistItem {
     return {
       id: Math.random(),
       yt: youtubeId,
@@ -855,10 +922,11 @@ class SongrequestModule {
       goods: 0,
       bads: 0,
       tags: [],
+      last_play: 0,
     }
   }
 
-  async addToPlaylist(tmpItem) {
+  async addToPlaylist(tmpItem: PlaylistItem): Promise<{ addType: number, idx: number }> {
     const idx = this.findSongIdxByYoutubeId(tmpItem.yt)
     let insertIndex = this.findInsertIndex()
 
@@ -892,7 +960,7 @@ class SongrequestModule {
     }
   }
 
-  async resr(str) {
+  async resr(str: string) {
     let idx = this.findSongIdxBySearchInOrder(str)
     if (idx < 0) {
       idx = this.findSongIdxBySearch(str)
@@ -901,7 +969,7 @@ class SongrequestModule {
     if (idx < 0) {
       return {
         addType: ADD_TYPE.NOT_ADDED,
-        insertIndex: -1,
+        idx: -1,
       }
     }
 

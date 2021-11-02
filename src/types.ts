@@ -81,8 +81,17 @@ export interface UploadedFile {
 }
 
 export interface PlaylistItem {
-  id: string
+  id: number
   tags: string[]
+  yt: string
+  title: string
+  timestamp: number
+  hidevideo?: boolean
+  last_play: number
+  plays: number
+  goods: number
+  bads: number
+  user: string
 }
 
 export interface DrawcastSettings {
@@ -120,7 +129,7 @@ export interface TwitchChatClient extends Client {
 export interface TwitchChatContext {
   "room-id": any
   "user-id": any
-  "display-name": any
+  "display-name": string
   mod: any
   subscriber: any
 }
