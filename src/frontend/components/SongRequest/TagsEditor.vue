@@ -47,11 +47,11 @@ export default defineComponent({
     tagEditIdx: -1,
   }),
   methods: {
-    onInputFocus(tag, idx) {
+    onInputFocus(tag, idx: number) {
       this.editTag = tag.value;
       this.tagEditIdx = idx;
     },
-    updateTag(oldTag, newTag) {
+    updateTag(oldTag: string, newTag: string) {
       this.$emit("updateTag", [oldTag, newTag]);
     },
   },

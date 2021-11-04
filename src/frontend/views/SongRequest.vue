@@ -168,11 +168,40 @@ import { defineComponent } from "vue";
 import WsClient from "../WsClient.js";
 import xhr from "../xhr";
 import { PlaylistItem } from "../../types";
+import {
+  SongrequestModuleSettings,
+  SongrequestModuleWsEventData,
+} from "../../mod/modules/SongrequestModule.js";
 
 type TagInfo = { value: string; count: number };
 
+interface ComponentData {
+  playerVisible: boolean;
+  playlist: PlaylistItem[];
+  settings: SongrequestModuleSettings;
+  filter: {
+    tag: string;
+  };
+  ws: WsClient | null;
+  resrinput: string;
+  srinput: string;
+  inited: boolean;
+  tab: "playlist" | "help" | "import" | "tags";
+  importPlaylist: string;
+}
+
+interface Player {
+  stop: () => void;
+  play: (yt: string) => void;
+  pause: () => void;
+  unpause: () => void;
+  setVolume: (volume: number) => void;
+  setLoop: (loop: boolean) => void;
+  playing: () => boolean;
+}
+
 export default defineComponent({
-  data: () => ({
+  data: (): ComponentData => ({
     playerVisible: false,
     playlist: [],
     settings: {
@@ -183,6 +212,7 @@ export default defineComponent({
       },
       showProgressBar: false,
       customCss: "",
+      customCssPresets: [],
     },
     filter: { tag: "" },
     ws: null,
@@ -209,18 +239,16 @@ export default defineComponent({
       });
       return tags;
     },
-    player() {
-      return (
-        this.$refs.youtube || {
-          stop: () => {},
-          play: () => {},
-          pause: () => {},
-          unpause: () => {},
-          setVolume: () => {},
-          setLoop: () => {},
-          playing: () => {},
-        }
-      );
+    player(): Player {
+      return (this.$refs.youtube || {
+        stop: () => {},
+        play: () => {},
+        pause: () => {},
+        unpause: () => {},
+        setVolume: () => {},
+        setLoop: () => {},
+        playing: () => {},
+      }) as Player;
     },
     filteredPlaylist(): PlaylistItem[] {
       if (this.filter.tag === "") {
@@ -233,24 +261,24 @@ export default defineComponent({
     item() {
       return this.filteredPlaylist[0];
     },
-    hasItems() {
+    hasItems(): boolean {
       return this.filteredPlaylist.length !== 0;
     },
-    playerstyle() {
+    playerstyle(): string {
       return this.playerVisible
         ? ""
         : "width:0;height:0;padding:0;margin-bottom:0;";
     },
-    togglePlayerButtonText() {
+    togglePlayerButtonText(): string {
       return this.playerVisible ? "Hide Player" : "Show Player";
     },
-    importPlaylistUrl() {
+    importPlaylistUrl(): string {
       return `${location.protocol}//${location.host}/sr/import`;
     },
-    exportPlaylistUrl() {
+    exportPlaylistUrl(): string {
       return `${location.protocol}//${location.host}/sr/export`;
     },
-    widgetUrl() {
+    widgetUrl(): string {
       return `${location.protocol}//${location.host}/widget/sr/${this.$me.widgetToken}/`;
     },
   },
@@ -258,13 +286,13 @@ export default defineComponent({
     sendSettings() {
       this.sendCtrl("settings", [this.settings]);
     },
-    onTagUpdated(evt) {
+    onTagUpdated(evt: [string, string]) {
       this.updateTag(evt[0], evt[1]);
     },
-    onPlaylistCtrl(evt) {
+    onPlaylistCtrl(evt: [string, any[]]) {
       this.sendCtrl(evt[0], evt[1]);
     },
-    applyFilter(tag) {
+    applyFilter(tag: string) {
       this.sendCtrl("filter", [{ tag }]);
     },
     async doImportPlaylist() {
@@ -302,14 +330,18 @@ export default defineComponent({
         this.sendCtrl("sr", [this.srinput]);
       }
     },
-    sendCtrl(ctrl: string, args) {
+    sendCtrl(ctrl: string, args: any[]) {
       this.sendMsg({ event: "ctrl", ctrl, args });
     },
     ended() {
       this.sendMsg({ event: "ended" });
     },
-    sendMsg(data) {
-      this.ws.send(JSON.stringify(data));
+    sendMsg(data: Record<string, any>) {
+      if (this.ws) {
+        this.ws.send(JSON.stringify(data));
+      } else {
+        console.warn("sendMsg: this.ws not initialized");
+      }
     },
     play() {
       this.adjustVolume(this.settings.volume);
@@ -330,42 +362,41 @@ export default defineComponent({
         this.sendMsg({ event: "pause" });
       }
     },
-    adjustVolume(volume) {
+    adjustVolume(volume: number) {
       this.player.setVolume(volume);
     },
-    updateTag(oldTag, newTag) {
+    updateTag(oldTag: string, newTag: string) {
       if (oldTag === newTag) {
         return;
       }
       this.sendCtrl("updatetag", [oldTag, newTag]);
-      this.tagEditIdx = -1;
     },
   },
   async mounted() {
     this.$nextTick(() => {
       this.ws = new WsClient(this.$conf.wsBase + "/sr", this.$me.token);
-      this.ws.onMessage("settings", (data) => {
+      this.ws.onMessage("settings", (data: SongrequestModuleWsEventData) => {
         this.settings = data.settings;
       });
-      this.ws.onMessage(["pause"], (data) => {
+      this.ws.onMessage(["pause"], (data: SongrequestModuleWsEventData) => {
         if (this.player.playing()) {
           this.pause();
         }
       });
-      this.ws.onMessage(["unpause"], (data) => {
+      this.ws.onMessage(["unpause"], (data: SongrequestModuleWsEventData) => {
         if (!this.player.playing()) {
           this.unpause();
         }
       });
-      this.ws.onMessage(["loop"], (data) => {
+      this.ws.onMessage(["loop"], (data: SongrequestModuleWsEventData) => {
         this.player.setLoop(true);
       });
-      this.ws.onMessage(["noloop"], (data) => {
+      this.ws.onMessage(["noloop"], (data: SongrequestModuleWsEventData) => {
         this.player.setLoop(false);
       });
       this.ws.onMessage(
         ["onEnded", "prev", "skip", "remove", "clear", "move", "tags"],
-        (data) => {
+        (data: SongrequestModuleWsEventData) => {
           this.settings = data.settings;
           const oldId =
             this.filteredPlaylist.length > 0
@@ -382,7 +413,7 @@ export default defineComponent({
           }
         }
       );
-      this.ws.onMessage(["filter"], (data) => {
+      this.ws.onMessage(["filter"], (data: SongrequestModuleWsEventData) => {
         this.settings = data.settings;
         const oldId =
           this.filteredPlaylist.length > 0 ? this.filteredPlaylist[0].id : null;
@@ -395,21 +426,24 @@ export default defineComponent({
       });
       this.ws.onMessage(
         ["dislike", "like", "video", "playIdx", "resetStats", "shuffle"],
-        (data) => {
+        (data: SongrequestModuleWsEventData) => {
           this.settings = data.settings;
           this.filter = data.filter;
           this.playlist = data.playlist;
         }
       );
-      this.ws.onMessage(["add", "init"], (data) => {
-        this.settings = data.settings;
-        this.filter = data.filter;
-        this.playlist = data.playlist;
-        if (!this.inited && !this.player.playing()) {
-          this.play();
+      this.ws.onMessage(
+        ["add", "init"],
+        (data: SongrequestModuleWsEventData) => {
+          this.settings = data.settings;
+          this.filter = data.filter;
+          this.playlist = data.playlist;
+          if (!this.inited && !this.player.playing()) {
+            this.play();
+          }
+          this.inited = true;
         }
-        this.inited = true;
-      });
+      );
       this.ws.connect();
       this.play();
     });

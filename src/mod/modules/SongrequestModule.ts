@@ -18,13 +18,19 @@ const ADD_TYPE = {
 }
 
 
-interface SongrequestModuleSettings {
+interface SongrequestModuleCustomCssPreset {
+  name: string
+  css: string
+}
+
+export interface SongrequestModuleSettings {
   volume: number
   hideVideoImage: {
     file: string
     filename: string
   }
   customCss: string
+  customCssPresets: SongrequestModuleCustomCssPreset[]
   showProgressBar: boolean
 }
 
@@ -37,14 +43,24 @@ interface SongrequestModuleData {
   stacks: Record<string, string[]>
 }
 
+export interface SongrequestModuleWsEventData {
+  filter: {
+    tag: string
+  },
+  playlist: PlaylistItem[],
+  settings: SongrequestModuleSettings,
+}
+
+interface WsData {
+  event: string
+  data: SongrequestModuleWsEventData
+}
+
 class SongrequestModule {
   public name = 'sr'
-  private db: Db
   private user: User
-  private variables: Variables
   private cache: Cache
   private storage: ModuleStorage
-  private ws: WebServer
   private wss: WebSocketServer
   private data: SongrequestModuleData
   constructor(
@@ -58,12 +74,9 @@ class SongrequestModule {
     ws: WebServer,
     wss: WebSocketServer
   ) {
-    this.db = db
     this.user = user
-    this.variables = variables
     this.cache = cache
     this.storage = storage
-    this.ws = ws
     this.wss = wss
     const data = this.storage.load(this.name, {
       filter: {
@@ -76,6 +89,7 @@ class SongrequestModule {
           filename: '',
         },
         customCss: '',
+        customCssPresets: [],
         showProgressBar: false,
       },
       playlist: [],
@@ -104,6 +118,9 @@ class SongrequestModule {
     }
     if (!data.settings.showProgressBar) {
       data.settings.showProgressBar = false
+    }
+    if (!data.settings.customCssPresets) {
+      data.settings.customCssPresets = []
     }
 
     this.data = {
@@ -195,7 +212,7 @@ class SongrequestModule {
     })
   }
 
-  wsdata(eventName: string) {
+  wsdata(eventName: string): WsData {
     return {
       event: eventName,
       data: {

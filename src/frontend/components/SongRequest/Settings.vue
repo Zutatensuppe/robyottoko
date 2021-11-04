@@ -74,13 +74,22 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
+import { SongrequestModuleSettings } from "../../../mod/modules/SongrequestModule";
 import { UploadedFile } from "../../../types";
+
+interface ComponentData {
+  settings: SongrequestModuleSettings;
+  css: {
+    classExamples: { class: string; desc: string }[];
+    codeExamples: { code: string; desc: string }[];
+  };
+}
 
 export default defineComponent({
   props: {
     modelValue: {
-      type: Object,
+      type: Object as PropType<SongrequestModuleSettings>,
       required: true,
     },
   },
@@ -109,7 +118,7 @@ export default defineComponent({
       this.$emit("update:modelValue", this.settings);
     },
   },
-  data: () => ({
+  data: (): ComponentData => ({
     settings: {
       volume: 100,
       hideVideoImage: {
@@ -117,6 +126,7 @@ export default defineComponent({
         filename: "",
       },
       showProgressBar: false,
+      customCssPresets: [],
       customCss: "",
     },
     css: {
