@@ -16,7 +16,7 @@ import Mail from './net/Mail.js'
 import EventHub from './EventHub.ts'
 import GeneralModule from './mod/modules/GeneralModule'
 import SongrequestModule from './mod/modules/SongrequestModule.ts'
-import VoteModule from './mod/modules/VoteModule'
+import VoteModule from './mod/modules/VoteModule.ts'
 import SpeechToTextModule from './mod/modules/SpeechToTextModule'
 import DrawcastModule from './mod/modules/DrawcastModule.ts'
 

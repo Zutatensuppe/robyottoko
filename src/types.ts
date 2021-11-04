@@ -130,6 +130,7 @@ export interface TwitchChatContext {
   "room-id": any
   "user-id": any
   "display-name": string
+  // username: string
   mod: any
   subscriber: any
 }

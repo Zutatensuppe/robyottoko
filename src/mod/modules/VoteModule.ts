@@ -1,37 +1,52 @@
-import Db from '../../Db.ts'
-import fn from '../../fn.ts'
-import WebServer from '../../WebServer.ts'
-import WebSocketServer from '../../net/WebSocketServer.ts'
-import TwitchHelixClient from '../../services/TwitchHelixClient.ts'
-import Variables from '../../services/Variables.ts'
+import Db from '../../Db'
+import fn from '../../fn'
+import WebServer from '../../WebServer'
+import WebSocketServer from '../../net/WebSocketServer'
+import TwitchHelixClient from '../../services/TwitchHelixClient'
+import Variables from '../../services/Variables'
+import { User } from '../../services/Users'
+import { RawCommand, TwitchChatClient, TwitchChatContext } from '../../types'
+import ModuleStorage from '../ModuleStorage'
+import Cache from '../../services/Cache'
 
-class DrawcastModule {
+interface VoteModuleData {
+  votes: Record<string, Record<string, string>>
+}
+
+class VoteModule {
+  public name = 'vote'
+  private user: User
+  private variables: Variables
+  private wss: WebSocketServer
+  private storage: ModuleStorage
+  private ws: WebServer
+  private data: VoteModuleData
+
   constructor(
-    /** @type Db */ db,
-    user,
-    /** @type Variables */ variables,
-    chatClient,
-    /** @type TwitchHelixClient */ helixClient,
-    storage,
-    cache,
-    /** @type WebServer */ ws,
-    /** @type WebSocketServer */ wss,
+    db: Db,
+    user: User,
+    variables: Variables,
+    chatClient: TwitchChatClient,
+    helixClient: TwitchHelixClient,
+    storage: ModuleStorage,
+    cache: Cache,
+    ws: WebServer,
+    wss: WebSocketServer,
   ) {
     this.user = user
     this.variables = variables
     this.wss = wss
     this.storage = storage
-    this.name = 'vote'
 
     this.ws = ws
-    this.reinit()
+    this.data = this.reinit()
   }
 
   reinit() {
     const data = this.storage.load(this.name, {
       votes: {},
     })
-    this.data = data
+    return data as VoteModuleData
   }
 
   save() {
@@ -52,34 +67,31 @@ class DrawcastModule {
     // pass
   }
 
-  wsdata(eventName) {
-    return {
-      event: eventName,
-      data: Object.assign({}, this.data),
-    };
-  }
-
-  updateClient(eventName, ws) {
-    this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
-  }
-
-  updateClients(eventName) {
-    this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName))
-  }
-
   getWsEvents() {
     return {}
   }
 
-  vote(type, thing, client, target, context) {
+  vote(
+    type: string,
+    thing: string,
+    client: TwitchChatClient,
+    target: string,
+    context: TwitchChatContext,
+  ) {
     const say = fn.sayFn(client, target)
     this.data.votes[type] = this.data.votes[type] || {}
-    this.data.votes[type][context.username] = thing
-    say(`Thanks ${context.username}, registered your "${type}" vote: ${thing}`)
+    this.data.votes[type][context['display-name']] = thing
+    say(`Thanks ${context['display-name']}, registered your "${type}" vote: ${thing}`)
     this.save()
   }
 
-  async playCmd(command, client, target, context, msg) {
+  async playCmd(
+    command: RawCommand,
+    client: TwitchChatClient,
+    target: string,
+    context: TwitchChatContext,
+    msg: string,
+  ) {
     const say = fn.sayFn(client, target)
     if (command.args.length === 0) {
       say(`Usage: !play THING`)
@@ -91,12 +103,18 @@ class DrawcastModule {
     this.vote(type, thing, client, target, context)
   }
 
-  async voteCmd(command, client, target, context, msg) {
+  async voteCmd(
+    command: RawCommand,
+    client: TwitchChatClient,
+    target: string,
+    context: TwitchChatContext,
+    msg: string,
+  ) {
     const say = fn.sayFn(client, target)
 
     // maybe open up for everyone, but for now use dedicated
     // commands like !play THING
-    if (!fn.isMod(context) && !fn.isBroadcaster()) {
+    if (!fn.isMod(context) && !fn.isBroadcaster(context)) {
       say('Not allowed to execute !vote command')
     }
 
@@ -110,7 +128,7 @@ class DrawcastModule {
       if (!this.data.votes[type]) {
         say(`No votes for "${type}".`)
       }
-      const usersByValues = {}
+      const usersByValues: Record<string, string[]> = {}
       for (const user of Object.keys(this.data.votes[type])) {
         const val = this.data.votes[type][user]
         usersByValues[val] = usersByValues[val] || []
@@ -164,8 +182,13 @@ class DrawcastModule {
     }
   }
 
-  onChatMsg(client, target, context, msg) {
+  onChatMsg(
+    client: TwitchChatClient,
+    target: string,
+    context: TwitchChatContext,
+    msg: string,
+  ) {
   }
 }
 
-export default DrawcastModule
+export default VoteModule
