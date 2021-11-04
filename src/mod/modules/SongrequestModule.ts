@@ -876,6 +876,28 @@ class SongrequestModule {
       }
       return
     }
+    if (command.args[0] === 'preset') {
+      if (modOrUp()) {
+        const presetName = command.args.slice(1).join(' ')
+        if (presetName === '') {
+          if (this.data.settings.customCssPresets.length) {
+            say(`Presets: ${this.data.settings.customCssPresets.map(preset => preset.name).join(', ')}`)
+          } else {
+            say(`No presets configured`)
+          }
+        } else {
+          const preset = this.data.settings.customCssPresets.find(preset => preset.name === presetName)
+          if (preset) {
+            this.data.settings.customCss = preset.css
+            say(`Switched to preset: ${presetName}`)
+          } else {
+            say(`Preset does not exist: ${presetName}`)
+          }
+          this.updateClients('settings')
+        }
+      }
+      return
+    }
     if (command.args[0] === 'rmtag') {
       if (modOrUp()) {
         const tag = command.args.slice(1).join(' ')
