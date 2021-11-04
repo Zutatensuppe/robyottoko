@@ -44,9 +44,29 @@
           <td>Show a progress bar in the bottom part of the video in the widget.</td>
         </tr>
         <tr>
-          <td><code>settings.customCss</code></td>
           <td>
-            <codearea v-model="settings.customCss" @update:modelValue="sendSettings"></codearea>
+            <code>settings.customCss</code>
+
+            <div class="field has-addons mr-1">
+              <div class="control is-expanded">
+                <input class="input is-small" v-model="cssPresetName" @focus="cssPresetDropdownActive = true" @blur="cssPresetDropdownActive = false"/>
+              </div>
+              <div class="control">
+                <span class="button is-small" @click="savePreset">Save preset</span>
+              </div>
+            </div>
+
+            <div class="mb-1" v-for="(preset, idx) in settings.customCssPresets" :key="idx">
+              <span class="button is-small" @click="loadPreset(preset.name)">{{preset.name}}</span>
+              <span class="button is-small ml-1" @click="removePreset(preset.name)"><i class="fa fa-remove" /></span>
+            </div>
+          </td>
+          <td>
+            <textarea
+              class="textarea"
+              v-model="settings.customCss"
+              @update:modelValue="sendSettings"
+            ></textarea>
           </td>
           <td>
             <p>Classes that can be used for styling:</p>
@@ -80,6 +100,8 @@ import { UploadedFile } from "../../../types";
 
 interface ComponentData {
   settings: SongrequestModuleSettings;
+  cssPresetName: string;
+  cssPresetDropdownActive: boolean;
   css: {
     classExamples: { class: string; desc: string }[];
     codeExamples: { code: string; desc: string }[];
@@ -100,6 +122,37 @@ export default defineComponent({
     this.settings = this.modelValue;
   },
   methods: {
+    loadPreset(presetName: string) {
+      const preset = this.settings.customCssPresets.find(
+        (preset) => preset.name === presetName
+      );
+      if (preset) {
+        this.settings.customCss = preset.css;
+      } else {
+        console.warn(`preset not found: ${presetName}`);
+      }
+      this.sendSettings();
+    },
+    removePreset(presetName: string) {
+      this.settings.customCssPresets = this.settings.customCssPresets.filter(
+        (preset) => preset.name !== presetName
+      );
+      this.sendSettings();
+    },
+    savePreset() {
+      const idx = this.settings.customCssPresets.findIndex(
+        (preset) => preset.name === this.cssPresetName
+      );
+      if (idx >= 0) {
+        this.settings.customCssPresets[idx].css = this.settings.customCss;
+      } else {
+        this.settings.customCssPresets.push({
+          name: this.cssPresetName,
+          css: this.settings.customCss,
+        });
+      }
+      this.sendSettings();
+    },
     hideVideoImageRemoved() {
       this.settings.hideVideoImage = {
         filename: "",
@@ -119,6 +172,8 @@ export default defineComponent({
     },
   },
   data: (): ComponentData => ({
+    cssPresetName: "",
+    cssPresetDropdownActive: false,
     settings: {
       volume: 100,
       hideVideoImage: {
