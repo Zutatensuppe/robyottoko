@@ -6,11 +6,11 @@ const playMedia = (
   userId: number,
   originalCmd: MediaCommand,
 ) => (
-  command: RawCommand,
+  command: RawCommand | null,
   client: TwitchChatClient,
-  target: string,
-  context: TwitchChatContext,
-  msg: string,
+  target: string | null,
+  context: TwitchChatContext | null,
+  msg: string | null,
   ) => {
     const data = originalCmd.data
     wss.notifyAll([userId], 'general', {

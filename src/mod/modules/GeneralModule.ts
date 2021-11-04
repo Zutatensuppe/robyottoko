@@ -1,31 +1,74 @@
-import countdown from '../../commands/countdown.ts'
-import jishoOrgLookup from '../../commands/jishoOrgLookup.ts'
-import madochanCreateWord from '../../commands/madochanCreateWord.ts'
-import text from '../../commands/text.ts'
-import randomText from '../../commands/randomText.ts'
-import playMedia from '../../commands/playMedia.ts'
-import fn from '../../fn.ts'
-import chatters from '../../commands/chatters.ts'
-import Db from '../../Db.ts'
-import TwitchHelixClient from '../../services/TwitchHelixClient.ts'
-import WebServer from '../../WebServer.ts'
-import WebSocketServer from '../../net/WebSocketServer.ts'
-import Madochan from '../../services/Madochan.ts'
-import Variables from '../../services/Variables.ts'
+import countdown from '../../commands/countdown'
+import jishoOrgLookup from '../../commands/jishoOrgLookup'
+import madochanCreateWord from '../../commands/madochanCreateWord'
+import text from '../../commands/text'
+import randomText from '../../commands/randomText'
+import playMedia from '../../commands/playMedia'
+import fn from '../../fn'
+import chatters from '../../commands/chatters'
+import Db from '../../Db'
+import TwitchHelixClient from '../../services/TwitchHelixClient'
+import WebServer from '../../WebServer'
+import WebSocketServer, { Socket } from '../../net/WebSocketServer'
+import Madochan from '../../services/Madochan'
+import Variables from '../../services/Variables'
+import { User } from '../../services/Users'
+import { Command, CommandData, FunctionCommand, TwitchChatClient, TwitchChatContext } from '../../types'
+import ModuleStorage from '../ModuleStorage'
+import Cache from '../../services/Cache'
 
-const log = fn.logger('GeneralModule.js')
+const log = fn.logger('GeneralModule.ts')
+
+interface GeneralModuleSettings {
+  volume: number
+}
+
+interface GeneralModuleData {
+  commands: CommandData[]
+  settings: GeneralModuleSettings
+}
+
+interface GeneralModuleTimer {
+  lines: number
+  minLines: number
+  minInterval: number
+  command: FunctionCommand
+  next: number
+}
+
+interface GeneralModuleInitData {
+  data: GeneralModuleData
+  commands: Record<string, FunctionCommand[]>
+  timers: GeneralModuleTimer[]
+}
 
 class GeneralModule {
+  public name = 'general'
+  public variables: Variables
+
+  private db: Db
+  private user: User
+  private chatClient: TwitchChatClient
+  private helixClient: TwitchHelixClient
+  private storage: ModuleStorage
+  private wss: WebSocketServer
+
+  private data: GeneralModuleData
+  private commands: Record<string, FunctionCommand[]>
+  private timers: GeneralModuleTimer[]
+
+  private interval: NodeJS.Timer | null = null
+
   constructor(
-    /** @type Db */ db,
-    user,
-    /** @type Variables */ variables,
-    chatClient,
-    /** @type TwitchHelixClient */ helixClient,
-    storage,
-    cache,
-    /** @type WebServer */ ws,
-    /** @type WebSocketServer */ wss
+    db: Db,
+    user: User,
+    variables: Variables,
+    chatClient: TwitchChatClient,
+    helixClient: TwitchHelixClient,
+    storage: ModuleStorage,
+    cache: Cache,
+    ws: WebServer,
+    wss: WebSocketServer,
   ) {
     this.db = db
     this.user = user
@@ -33,15 +76,34 @@ class GeneralModule {
     this.chatClient = chatClient
     this.helixClient = helixClient
     this.storage = storage
-    this.cache = cache
-    this.ws = ws
     this.wss = wss
-    this.name = 'general'
-    this.reinit()
+    const initData = this.reinit()
+    this.data = initData.data
+    this.commands = initData.commands
+    this.timers = initData.timers
+    this.inittimers()
   }
 
-  fix(commands) {
-    return (commands || []).map(cmd => {
+  inittimers() {
+    this.interval = null
+    if (this.interval) {
+      clearInterval(this.interval)
+    }
+
+    this.interval = setInterval(() => {
+      const now = new Date().getTime()
+      this.timers.forEach(t => {
+        if (t.lines >= t.minLines && now > t.next) {
+          t.command.fn(null, this.chatClient, null, null, null)
+          t.lines = 0
+          t.next = now + t.minInterval
+        }
+      })
+    }, 1 * fn.SECOND)
+  }
+
+  fix(commands: any[]): Command[] {
+    return (commands || []).map((cmd: any) => {
       if (cmd.command) {
         cmd.triggers = [{ type: 'command', data: { command: cmd.command } }]
         delete cmd.command
@@ -52,7 +114,7 @@ class GeneralModule {
         cmd.data.minDurationMs = cmd.data.minDurationMs || 0
         cmd.data.sound.volume = cmd.data.sound.volume || 100
       }
-      cmd.triggers = cmd.triggers.map(trigger => {
+      cmd.triggers = cmd.triggers.map((trigger: any) => {
         trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0
         return trigger
       })
@@ -60,20 +122,19 @@ class GeneralModule {
     })
   }
 
-  reinit() {
-    this.data = this.storage.load(this.name, {
+  reinit(): GeneralModuleInitData {
+    const data = this.storage.load(this.name, {
       commands: [],
       settings: {
         volume: 100,
       },
     })
-    this.data.commands = this.fix(this.data.commands)
+    data.commands = this.fix(data.commands)
 
-    this.commands = {}
-    this.timers = []
-    this.interval = null
+    const commands: Record<string, FunctionCommand[]> = {}
+    const timers: GeneralModuleTimer[] = []
 
-    this.data.commands.forEach((cmd) => {
+    data.commands.forEach((cmd: any) => {
       if (cmd.triggers.length === 0) {
         return
       }
@@ -110,8 +171,8 @@ class GeneralModule {
       for (const trigger of cmd.triggers) {
         if (trigger.type === 'command') {
           if (trigger.data.command) {
-            this.commands[trigger.data.command] = this.commands[trigger.data.command] || []
-            this.commands[trigger.data.command].push(cmdObj)
+            commands[trigger.data.command] = commands[trigger.data.command] || []
+            commands[trigger.data.command].push(cmdObj)
           }
         } else if (trigger.type === 'timer') {
           // fix for legacy data
@@ -121,7 +182,7 @@ class GeneralModule {
 
           const interval = fn.parseHumanDuration(trigger.data.minInterval)
           if (trigger.data.minLines || interval) {
-            this.timers.push({
+            timers.push({
               lines: 0,
               minLines: trigger.data.minLines,
               minInterval: interval,
@@ -132,26 +193,12 @@ class GeneralModule {
         }
       }
     })
-
-    if (this.interval) {
-      clearInterval(this.interval)
-    }
-
-    this.interval = setInterval(() => {
-      const now = new Date().getTime()
-      this.timers.forEach(t => {
-        if (t.lines >= t.minLines && now > t.next) {
-          t.command.fn(t.command, this.chatClient, null, null, null)
-          t.lines = 0
-          t.next = now + t.minInterval
-        }
-      })
-    }, 1 * fn.SECOND)
+    return { data, commands, timers } as GeneralModuleInitData
   }
 
   widgets() {
     return {
-      'media': async (req, res, next) => {
+      'media': async (req: any, res: any, next: Function) => {
         res.render('widget.spy', {
           title: 'Media Widget',
           page: 'media',
@@ -167,7 +214,7 @@ class GeneralModule {
     }
   }
 
-  wsdata(eventName) {
+  wsdata(eventName: string) {
     return {
       event: eventName,
       data: {
@@ -178,30 +225,36 @@ class GeneralModule {
     };
   }
 
-  updateClient(eventName, ws) {
+  updateClient(eventName: string, ws: Socket) {
     this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
   }
 
-  updateClients(eventName) {
+  updateClients(eventName: string) {
     this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName))
   }
 
   saveCommands() {
     this.storage.save(this.name, this.data)
-    this.reinit()
+    const initData = this.reinit()
+    this.data = initData.data
+    this.commands = initData.commands
+    this.timers = initData.timers
     this.updateClients('init')
   }
 
   getWsEvents() {
     return {
-      'conn': (ws) => {
+      'conn': (ws: Socket) => {
         this.updateClient('init', ws)
       },
-      'save': (ws, { commands, settings }) => {
-        this.data.commands = this.fix(commands)
-        this.data.settings = settings
+      'save': (ws: Socket, data: GeneralModuleData) => {
+        this.data.commands = this.fix(data.commands)
+        this.data.settings = data.settings
         this.storage.save(this.name, this.data)
-        this.reinit()
+        const initData = this.reinit()
+        this.data = initData.data
+        this.commands = initData.commands
+        this.timers = initData.timers
         this.updateClients('init')
       },
     }
@@ -211,10 +264,10 @@ class GeneralModule {
   }
 
   async onChatMsg(
-    client,
-    /** @type string */ target,
-    context,
-    /** @type string */ msg
+    client: TwitchChatClient,
+    target: string,
+    context: TwitchChatContext,
+    msg: string,
   ) {
     let keys = Object.keys(this.commands)
     // make sure longest commands are found first

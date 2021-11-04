@@ -15,8 +15,8 @@ interface VoteModuleData {
 
 class VoteModule {
   public name = 'vote'
+  public variables: Variables
   private user: User
-  private variables: Variables
   private wss: WebSocketServer
   private storage: ModuleStorage
   private ws: WebServer

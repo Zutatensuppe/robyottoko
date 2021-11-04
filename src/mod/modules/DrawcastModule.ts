@@ -19,13 +19,15 @@ interface PostEventData {
 }
 
 class DrawcastModule {
+  public name = 'drawcast'
+  public variables: Variables
+
   private user: User
   private wss: WebSocketServer
   private storage: ModuleStorage
   private ws: WebServer
   private tokens: Tokens
 
-  public name = 'drawcast'
   private defaultSettings = {
     submitButtonText: 'Submit',
     submitConfirm: '', // leave empty to not require confirm
@@ -61,6 +63,7 @@ class DrawcastModule {
     ws: WebServer,
     wss: WebSocketServer,
   ) {
+    this.variables = variables
     this.user = user
     this.wss = wss
     this.storage = storage

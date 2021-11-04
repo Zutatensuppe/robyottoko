@@ -11,11 +11,11 @@ const countdown = (
   userId: number,
   originalCmd: CountdownCommand,
 ) => async (
-  command: RawCommand,
+  command: RawCommand | null,
   client: TwitchChatClient,
-  target: string,
-  context: TwitchChatContext,
-  msg: string,
+  target: string | null,
+  context: TwitchChatContext | null,
+  msg: string | null,
   ) => {
     const sayFn = fn.sayFn(client, target)
     const doReplacements = async (text: string) => {

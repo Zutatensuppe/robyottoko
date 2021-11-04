@@ -58,6 +58,8 @@ interface WsData {
 
 class SongrequestModule {
   public name = 'sr'
+  public variables: Variables
+
   private user: User
   private cache: Cache
   private storage: ModuleStorage
@@ -74,6 +76,7 @@ class SongrequestModule {
     ws: WebServer,
     wss: WebSocketServer
   ) {
+    this.variables = variables
     this.user = user
     this.cache = cache
     this.storage = storage

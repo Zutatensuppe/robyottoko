@@ -87,7 +87,7 @@ const isSubscriber = (ctx: TwitchChatContext) => !!ctx.subscriber
 
 const sayFn = (
   client: TwitchChatClient,
-  target: string,
+  target: string | null,
 ) => (
   msg: string
 ) => {
@@ -226,8 +226,8 @@ async function replaceAsync(
 
 const doReplacements = async (
   text: string,
-  command: RawCommand,
-  context: TwitchChatContext,
+  command: RawCommand | null,
+  context: TwitchChatContext | null,
   variables: Variables,
   originalCmd: Command,
 ) => {
@@ -235,12 +235,18 @@ const doReplacements = async (
     {
       regex: /\$args\(\)/g,
       replacer: async (m0: string, m1: string) => {
+        if (!command) {
+          return ''
+        }
         return command.args.join(' ')
       },
     },
     {
       regex: /\$args\((\d+)\)/g,
       replacer: async (m0: string, m1: string) => {
+        if (!command) {
+          return ''
+        }
         const index = parseInt(m1, 10)
         if (index < command.args.length) {
           return command.args[index]
@@ -259,6 +265,9 @@ const doReplacements = async (
     {
       regex: /\$user\.name/g,
       replacer: async () => {
+        if (!context) {
+          return ''
+        }
         return context['display-name']
       },
     },
@@ -266,7 +275,12 @@ const doReplacements = async (
       regex: /\$([a-z][a-z0-9]*)(?!\()/g,
       replacer: async (m0: string, m1: string) => {
         switch (m1) {
-          case 'args': return command.args.join(' ')
+          case 'args': {
+            if (!command) {
+              return ''
+            }
+            return command.args.join(' ')
+          }
         }
         return m0
       }

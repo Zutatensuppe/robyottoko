@@ -5,12 +5,15 @@ import JishoOrg from './../services/JishoOrg'
 const jishoOrgLookup = (
   // no params
 ) => async (
-  command: RawCommand,
+  command: RawCommand | null,
   client: TwitchChatClient,
-  target: string,
-  context: TwitchChatContext,
-  msg: string,
+  target: string | null,
+  context: TwitchChatContext | null,
+  msg: string | null,
   ) => {
+    if (!command) {
+      return
+    }
     const say = fn.sayFn(client, target)
     const phrase = command.args.join(' ')
     const data = await JishoOrg.searchWord(phrase)

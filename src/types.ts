@@ -197,7 +197,13 @@ export interface CountdownCommand extends Command {
 }
 
 export interface FunctionCommand extends Command {
-  fn: (rawCmd: RawCommand, client: Client, target: string, context: TwitchChatContext, msg: string) => any
+  fn: (
+    rawCmd: RawCommand | null,
+    client: Client,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) => any
 }
 
 export interface BotModule {

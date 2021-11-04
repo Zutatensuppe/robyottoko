@@ -6,11 +6,11 @@ const randomText = (
   variables: Variables,
   originalCmd: RandomTextCommand,
 ) => async (
-  command: RawCommand,
+  command: RawCommand | null,
   client: TwitchChatClient,
-  target: string,
-  context: TwitchChatContext,
-  msg: string,
+  target: string | null,
+  context: TwitchChatContext | null,
+  msg: string | null,
   ) => {
     const texts = originalCmd.data.text
     const say = fn.sayFn(client, target)
