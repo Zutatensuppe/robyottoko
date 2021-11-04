@@ -2454,12 +2454,9 @@ const ADD_TYPE = {
 class SongrequestModule {
     constructor(db, user, variables, chatClient, helixClient, storage, cache, ws, wss) {
         this.name = 'sr';
-        this.db = db;
         this.user = user;
-        this.variables = variables;
         this.cache = cache;
         this.storage = storage;
-        this.ws = ws;
         this.wss = wss;
         const data = this.storage.load(this.name, {
             filter: {
@@ -2472,6 +2469,7 @@ class SongrequestModule {
                     filename: '',
                 },
                 customCss: '',
+                customCssPresets: [],
                 showProgressBar: false,
             },
             playlist: [],
@@ -2499,6 +2497,9 @@ class SongrequestModule {
         }
         if (!data.settings.showProgressBar) {
             data.settings.showProgressBar = false;
+        }
+        if (!data.settings.customCssPresets) {
+            data.settings.customCssPresets = [];
         }
         this.data = {
             filter: data.filter,
@@ -3233,6 +3234,31 @@ class SongrequestModule {
                 const tag = command.args.slice(1).join(' ');
                 this.addTag(tag);
                 say(`Added tag "${tag}"`);
+            }
+            return;
+        }
+        if (command.args[0] === 'preset') {
+            if (modOrUp()) {
+                const presetName = command.args.slice(1).join(' ');
+                if (presetName === '') {
+                    if (this.data.settings.customCssPresets.length) {
+                        say(`Presets: ${this.data.settings.customCssPresets.map(preset => preset.name).join(', ')}`);
+                    }
+                    else {
+                        say(`No presets configured`);
+                    }
+                }
+                else {
+                    const preset = this.data.settings.customCssPresets.find(preset => preset.name === presetName);
+                    if (preset) {
+                        this.data.settings.customCss = preset.css;
+                        say(`Switched to preset: ${presetName}`);
+                    }
+                    else {
+                        say(`Preset does not exist: ${presetName}`);
+                    }
+                    this.updateClients('settings');
+                }
             }
             return;
         }
