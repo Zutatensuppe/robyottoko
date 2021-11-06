@@ -336,7 +336,7 @@ const doReplacements = async (text, command, context, variables, originalCmd) =>
                     return '';
                 }
                 let from = 0;
-                let to = 0;
+                let to = command.args.length;
                 if (m1 !== '') {
                     from = parseInt(m1, 10);
                     to = from;
