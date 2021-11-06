@@ -85,6 +85,21 @@
       </div>
 
       <div v-if="inited && tab === 'commands'">
+        <div>
+          Show:
+          <label
+            class="mr-1"
+            v-for="(possibleAction, idx) in possibleActions"
+            :key="idx"
+            ><input
+              class="mr-1"
+              type="checkbox"
+              :value="possibleAction"
+              v-model="filter.actions"
+            />{{ possibleAction }}</label
+          >
+        </div>
+
         <div class="table-container" v-if="commands.length > 0">
           <table class="table is-striped" ref="table">
             <thead>
@@ -117,7 +132,7 @@
               item-key="id"
             >
               <template #item="{ element, index }">
-                <tr>
+                <tr v-show="!filteredOut(element)">
                   <td class="pt-4 handle">
                     <i class="fa fa-arrows"></i>
                   </td>
@@ -326,6 +341,10 @@ interface ComponentData {
   editIdx: number | null;
   editCommand: Command | null;
   inited: boolean;
+  possibleActions: string[];
+  filter: {
+    actions: string[];
+  };
   tab: "commands" | "settings";
 }
 
@@ -344,6 +363,25 @@ export default defineComponent({
     editIdx: null,
     editCommand: null,
 
+    possibleActions: [
+      "text",
+      "media",
+      "countdown",
+      "jisho_org_lookup",
+      "madochan_createword",
+      "chatters",
+    ],
+    filter: {
+      actions: [
+        "text",
+        "media",
+        "countdown",
+        "jisho_org_lookup",
+        "madochan_createword",
+        "chatters",
+      ],
+    },
+
     inited: false,
 
     tab: "commands", // commands|settings
@@ -357,6 +395,9 @@ export default defineComponent({
     },
   },
   methods: {
+    filteredOut(item: Command) {
+      return !this.filter.actions.includes(item.action);
+    },
     permissionsStr(item: Command) {
       if (!item.restrict_to || item.restrict_to.length === 0) {
         return "Everyone";

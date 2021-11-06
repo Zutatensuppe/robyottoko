@@ -2242,8 +2242,17 @@ class GeneralModule {
             settings: {
                 volume: 100,
             },
+            adminSettings: {
+                showImages: true,
+            },
         });
         data.commands = this.fix(data.commands);
+        if (!data.adminSettings) {
+            data.adminSettings = {};
+        }
+        if (typeof data.adminSettings.showImages === 'undefined') {
+            data.adminSettings.showImages = true;
+        }
         const commands = {};
         const timers = [];
         data.commands.forEach((cmd) => {
@@ -2325,6 +2334,7 @@ class GeneralModule {
             data: {
                 commands: this.data.commands,
                 settings: this.data.settings,
+                adminSettings: this.data.adminSettings,
                 globalVariables: this.variables.all(),
             },
         };
@@ -2351,6 +2361,7 @@ class GeneralModule {
             'save': (ws, data) => {
                 this.data.commands = this.fix(data.commands);
                 this.data.settings = data.settings;
+                this.data.adminSettings = data.adminSettings;
                 this.storage.save(this.name, this.data);
                 const initData = this.reinit();
                 this.data = initData.data;
