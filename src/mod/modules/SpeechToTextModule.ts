@@ -10,7 +10,7 @@ import { TwitchChatClient, TwitchChatContext } from '../../types'
 import WebServer from '../../WebServer'
 import ModuleStorage from '../ModuleStorage'
 
-interface SpeechToTextModuleSettings {
+export interface SpeechToTextModuleSettings {
   status: {
     enabled: boolean
   }
@@ -67,9 +67,22 @@ interface SpeechToTextTranslateEventData {
   dst: string
 }
 
-interface SpeechToTextSaveEventData {
+export interface SpeechToTextWsInitData {
+  settings: SpeechToTextModuleSettings
+  defaultSettings: SpeechToTextModuleSettings
+}
+
+interface SpeechToTextWsData {
+  event: string
+  data: SpeechToTextWsInitData
+}
+
+
+export interface SpeechToTextSaveEventData {
+  event: "save"
   settings: SpeechToTextModuleSettings
 }
+
 
 class SpeechToTextModule {
   public name = 'speech-to-text'
@@ -171,7 +184,7 @@ class SpeechToTextModule {
     return {}
   }
 
-  wsdata(eventName: string) {
+  wsdata(eventName: string): SpeechToTextWsData {
     return {
       event: eventName,
       data: Object.assign({}, this.data, { defaultSettings: this.defaultSettings }),
@@ -206,7 +219,7 @@ class SpeechToTextModule {
       'conn': (ws: Socket) => {
         this.updateClient('init', ws)
       },
-      'save': (ws: Socket, { settings }: SpeechToTextSaveEventData) => {
+      'save': (ws: Socket, { settings }: { settings: SpeechToTextModuleSettings }) => {
         this.data.settings = settings
         this.storage.save(this.name, this.data)
         this.reinit()

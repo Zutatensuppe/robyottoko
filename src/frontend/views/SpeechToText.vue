@@ -626,11 +626,23 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-
 import WsClient from "../WsClient";
+import {
+  SpeechToTextModuleSettings,
+  SpeechToTextSaveEventData,
+  SpeechToTextWsInitData,
+} from "../../mod/modules/SpeechToTextModule";
+
+interface ComponentData {
+  unchangedJson: string;
+  changedJson: string;
+  settings: SpeechToTextModuleSettings | null;
+  defaultSettings: SpeechToTextModuleSettings | null;
+  ws: WsClient | null;
+}
 
 export default defineComponent({
-  data: () => ({
+  data: (): ComponentData => ({
     unchangedJson: "{}",
     changedJson: "{}",
     settings: null,
@@ -646,18 +658,26 @@ export default defineComponent({
     },
   },
   computed: {
-    changed() {
+    changed(): boolean {
       return this.unchangedJson !== this.changedJson;
     },
-    widgetUrl() {
+    widgetUrl(): string {
       return `${location.protocol}//${location.host}/widget/speech-to-text/${this.$me.widgetToken}/`;
     },
   },
   methods: {
     sendSave() {
+      if (!this.settings) {
+        console.warn("sendSave: this.settings not initialized");
+        return;
+      }
       this.sendMsg({ event: "save", settings: this.settings });
     },
-    sendMsg(data) {
+    sendMsg(data: SpeechToTextSaveEventData) {
+      if (!this.ws) {
+        console.warn("sendMsg: this.ws not initialized");
+        return;
+      }
       this.ws.send(JSON.stringify(data));
     },
   },
@@ -667,7 +687,7 @@ export default defineComponent({
       this.$me.token
     );
 
-    this.ws.onMessage("init", (data) => {
+    this.ws.onMessage("init", (data: SpeechToTextWsInitData) => {
       this.settings = data.settings;
       this.defaultSettings = data.defaultSettings;
       this.unchangedJson = JSON.stringify(data.settings);
