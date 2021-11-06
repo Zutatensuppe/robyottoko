@@ -1,14 +1,15 @@
-const log = (...args) => console.log('[WsClient.js]', ...args)
+const log = (...args: any[]) => console.log('[WsClient.ts]', ...args)
 
-import WsWrapper from './WsWrapper.js'
+import WsWrapper from './WsWrapper'
 
 export default class WsClient extends WsWrapper {
+  private _on: Record<string, Record<string, Function[]>> = {}
+
   constructor(
-    addr,
-    protocols,
+    addr: string,
+    protocols: string,
   ) {
     super(addr, protocols)
-    this._on = {}
     this.onopen = (e) => {
       this._dispatch('socket', 'open', e)
     }
@@ -26,15 +27,15 @@ export default class WsClient extends WsWrapper {
     }
   }
 
-  onSocket(tag, callback) {
+  onSocket(tag: string | string[], callback: Function) {
     this.addEventListener('socket', tag, callback)
   }
 
-  onMessage(tag, callback) {
+  onMessage(tag: string | string[], callback: Function) {
     this.addEventListener('message', tag, callback)
   }
 
-  addEventListener(type, tag, callback) {
+  addEventListener(type: string, tag: string | string[], callback: Function) {
     const tags = Array.isArray(tag) ? tag : [tag]
     this._on[type] = this._on[type] || {}
     for (const t of tags) {
@@ -43,18 +44,18 @@ export default class WsClient extends WsWrapper {
     }
   }
 
-  _parseMessageData(data) {
+  _parseMessageData(data: string) {
     try {
       const d = JSON.parse(data)
       if (d.event) {
-        return {event: d.event, data: d.data || null}
+        return { event: d.event, data: d.data || null }
       }
     } catch {
     }
-    return {event: null, data: null}
+    return { event: null, data: null }
   }
 
-  _dispatch(type, tag, ...args) {
+  _dispatch(type: string, tag: string, ...args: any[]) {
     const t = this._on[type] || {}
     const callbacks = (t[tag] || [])
     if (callbacks.length === 0) {

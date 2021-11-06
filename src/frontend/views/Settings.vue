@@ -182,9 +182,25 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { TwitchChannel } from "../../services/TwitchChannels";
+
+interface ComponentData {
+  unchangedJson: string;
+  changedJson: string;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    pass: string;
+    groups: string[];
+    tmi_identity_client_id: string;
+    tmi_identity_client_secret: string;
+  };
+  twitch_channels: TwitchChannel[];
+}
 
 export default defineComponent({
-  data: () => ({
+  data: (): ComponentData => ({
     unchangedJson: "[]",
     changedJson: "[]",
     user: {
@@ -193,6 +209,8 @@ export default defineComponent({
       email: "",
       pass: "",
       groups: [],
+      tmi_identity_client_id: "",
+      tmi_identity_client_secret: "",
     },
     twitch_channels: [],
   }),
@@ -256,24 +274,25 @@ export default defineComponent({
       });
       this.changedJson = this.unchangedJson;
     },
-    rmchannel(idx) {
+    rmchannel(idx: number) {
       this.twitch_channels = this.twitch_channels.filter(
         (val, index) => index !== idx
       );
     },
     addchannel() {
       this.twitch_channels.push({
+        user_id: this.user.id,
         channel_id: "",
         channel_name: "",
         access_token: "",
       });
     },
-    async loadid(idx) {
-      this.twitch_channels[idx].channel_id = await this.getUserIdByName(
+    async loadid(idx: number) {
+      this.twitch_channels[idx].channel_id = await this.getTwitchUserIdByName(
         this.twitch_channels[idx].channel_name
       );
     },
-    async getUserIdByName(name) {
+    async getTwitchUserIdByName(name: string): Promise<string> {
       const data = {
         name,
         client_id: this.user.tmi_identity_client_id || null,
@@ -289,7 +308,7 @@ export default defineComponent({
       });
       try {
         const json = await res.json();
-        return json.id;
+        return `${json.id}`;
       } catch (e) {
         // TODO: display error message
         return "";

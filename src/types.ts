@@ -104,7 +104,11 @@ export interface DrawcastSettings {
   displayDuration: int
   displayLatestForever: string
   displayLatestAutomatically: string
-  notificationSound: string
+  notificationSound: {
+    filename: string
+    file: string
+    volume: number
+  }
   favorites: string[]
 }
 

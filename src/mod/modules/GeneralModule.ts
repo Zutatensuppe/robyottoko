@@ -60,7 +60,7 @@ interface WsData {
 }
 
 
-export interface SaveEventData {
+export interface GeneralSaveEventData {
   event: "save";
   commands: Command[];
   settings: GeneralModuleSettings;
@@ -282,7 +282,7 @@ class GeneralModule {
       'conn': (ws: Socket) => {
         this.updateClient('init', ws)
       },
-      'save': (ws: Socket, data: SaveEventData) => {
+      'save': (ws: Socket, data: GeneralSaveEventData) => {
         this.data.commands = this.fix(data.commands)
         this.data.settings = data.settings
         this.data.adminSettings = data.adminSettings

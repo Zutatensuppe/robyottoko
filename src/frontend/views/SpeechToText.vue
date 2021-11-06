@@ -627,7 +627,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 
-import WsClient from "../WsClient.js";
+import WsClient from "../WsClient";
 
 export default defineComponent({
   data: () => ({

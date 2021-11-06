@@ -60,7 +60,7 @@ export default defineComponent({
       formData.append("file", file, file.name);
       const res = await xhr.post("/api/upload", {
         body: formData,
-        onUploadProgress: (evt) => {
+        onUploadProgress: (evt: ProgressEvent<XMLHttpRequestEventTarget>) => {
           this.progress = evt.loaded / evt.total;
         },
       });

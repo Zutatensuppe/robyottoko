@@ -257,18 +257,35 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import { DrawcastData, UploadedFile } from "../../types.ts";
-import WsClient from "../WsClient.js";
+import { DrawcastSaveEventData } from "../../mod/modules/DrawcastModule";
+import { DrawcastData, DrawcastSettings, UploadedFile } from "../../types";
+import WsClient from "../WsClient";
 import xhr from "../xhr";
 
+interface ComponentData {
+  unchangedJson: string;
+  changedJson: string;
+  settings: DrawcastSettings | null;
+  defaultSettings: any | null; // TODO: change any
+  ws: WsClient | null;
+  drawUrl: string;
+  favoriteSelection: {
+    hovered: string;
+    items: string[];
+    pagination: {
+      page: number;
+      perPage: number;
+    };
+  };
+}
+
 export default defineComponent({
-  data: () => ({
+  data: (): ComponentData => ({
     unchangedJson: "{}",
     changedJson: "{}",
-    settings: null as DrawcastData | null,
+    settings: null,
     defaultSettings: null,
     ws: null,
-
     drawUrl: "",
     favoriteSelection: {
       hovered: "",
@@ -281,7 +298,6 @@ export default defineComponent({
   }),
   async created() {
     this.ws = new WsClient(this.$conf.wsBase + "/drawcast", this.$me.token);
-
     this.ws.onMessage("init", async (data: DrawcastData) => {
       this.settings = data.settings;
       this.defaultSettings = data.defaultSettings;
@@ -305,7 +321,7 @@ export default defineComponent({
     changed() {
       return this.unchangedJson !== this.changedJson;
     },
-    receiveUrl() {
+    receiveUrl(): string {
       return `${location.protocol}//${location.host}/widget/drawcast_receive/${this.$me.widgetToken}/`;
     },
     favoriteSelectionTotalPages() {
@@ -333,6 +349,10 @@ export default defineComponent({
   },
   methods: {
     toggleFavorite(url: string) {
+      if (!this.settings) {
+        console.warn("toggleFavorite: this.settings not initialized");
+        return;
+      }
       if (this.settings.favorites.includes(url)) {
         this.settings.favorites = this.settings.favorites.filter(
           (u: string) => u !== url
@@ -342,6 +362,10 @@ export default defineComponent({
       }
     },
     soundUploaded(file: UploadedFile) {
+      if (!this.settings) {
+        console.warn("soundUploaded: this.settings not initialized");
+        return;
+      }
       this.settings.notificationSound = {
         filename: file.originalname,
         file: file.filename,
@@ -349,16 +373,21 @@ export default defineComponent({
       };
     },
     sendSave() {
+      if (!this.settings) {
+        console.warn("sendSave: this.settings not initialized");
+        return;
+      }
       this.sendMsg({
         event: "save",
         settings: {
-          canvasWidth: parseInt(this.settings.canvasWidth, 10) || 720,
-          canvasHeight: parseInt(this.settings.canvasHeight, 10) || 405,
+          canvasWidth: parseInt(`${this.settings.canvasWidth}`, 10) || 720,
+          canvasHeight: parseInt(`${this.settings.canvasHeight}`, 10) || 405,
           submitButtonText: this.settings.submitButtonText,
           submitConfirm: this.settings.submitConfirm,
           customDescription: this.settings.customDescription,
           palette: this.settings.palette,
-          displayDuration: parseInt(this.settings.displayDuration, 10) || 5000,
+          displayDuration:
+            parseInt(`${this.settings.displayDuration}`, 10) || 5000,
           displayLatestForever: this.settings.displayLatestForever,
           displayLatestAutomatically: this.settings.displayLatestAutomatically,
           notificationSound: this.settings.notificationSound,
@@ -366,7 +395,11 @@ export default defineComponent({
         },
       });
     },
-    sendMsg(data) {
+    sendMsg(data: DrawcastSaveEventData) {
+      if (!this.ws) {
+        console.warn("sendMsg: this.ws not initialized");
+        return;
+      }
       this.ws.send(JSON.stringify(data));
     },
   },

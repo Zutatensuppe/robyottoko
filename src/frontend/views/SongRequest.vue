@@ -165,13 +165,13 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import WsClient from "../WsClient.js";
+import WsClient from "../WsClient";
 import xhr from "../xhr";
 import { PlaylistItem } from "../../types";
 import {
   SongrequestModuleSettings,
   SongrequestModuleWsEventData,
-} from "../../mod/modules/SongrequestModule.js";
+} from "../../mod/modules/SongrequestModule";
 
 type TagInfo = { value: string; count: number };
 

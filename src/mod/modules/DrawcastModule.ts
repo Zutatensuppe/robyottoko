@@ -18,6 +18,11 @@ interface PostEventData {
   }
 }
 
+export interface DrawcastSaveEventData {
+  event: "save"
+  settings: DrawcastSettings
+}
+
 class DrawcastModule {
   public name = 'drawcast'
   public variables: Variables

@@ -308,14 +308,14 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 
-import WsClient from "../WsClient.js";
-import commands from "../commands.ts";
-import fn from "../../common/fn.ts";
+import WsClient from "../WsClient";
+import commands from "../commands";
+import fn from "../../common/fn";
 import {
   GeneralModuleAdminSettings,
   GeneralModuleSettings,
   GeneralModuleWsEventData,
-  SaveEventData,
+  GeneralSaveEventData,
 } from "../../mod/modules/GeneralModule.js";
 import { Command, GlobalVariable } from "../../types.js";
 
@@ -470,7 +470,7 @@ export default defineComponent({
         adminSettings: this.adminSettings,
       });
     },
-    sendMsg(data: SaveEventData) {
+    sendMsg(data: GeneralSaveEventData) {
       if (this.ws) {
         this.ws.send(JSON.stringify(data));
       } else {

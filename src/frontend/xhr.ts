@@ -1,4 +1,10 @@
-const request = async (method, url, options) => {
+interface RequestOptions {
+  headers: Record<string, string>
+  body: XMLHttpRequestBodyInit,
+  onUploadProgress?: (ev: ProgressEvent<XMLHttpRequestEventTarget>) => void,
+}
+
+const request = async (method: string, url: string, options: RequestOptions) => {
   return new Promise((resolve, reject) => {
     const xhr = new window.XMLHttpRequest()
     xhr.open(method, url, true)
@@ -30,6 +36,6 @@ const request = async (method, url, options) => {
 
 export default {
   request,
-  get: (url, options) => request('get', url, options),
-  post: (url, options) => request('post', url, options),
+  get: (url: string, options: RequestOptions) => request('get', url, options),
+  post: (url: string, options: RequestOptions) => request('post', url, options),
 }

@@ -8,24 +8,28 @@ const CODE_CUSTOM_DISCONNECT = 4000
  */
 export default class WsWrapper {
   // actual ws handle
-  handle = null
+  handle: WebSocket | null = null
 
   // timeout for automatic reconnect
-  reconnectTimeout = null
+  reconnectTimeout: NodeJS.Timeout | null = null
 
   // buffer for 'send'
-  sendBuffer = []
+  sendBuffer: string[] = []
 
-  constructor(addr, protocols) {
+  addr: string
+
+  protocols: string
+
+  public onopen: (e: any) => void = () => { }
+  public onclose: (e: any) => void = () => { }
+  public onmessage: (e: any) => void = () => { }
+
+  constructor(addr: string, protocols: string) {
     this.addr = addr
     this.protocols = protocols
-
-    this.onopen = () => { }
-    this.onclose = () => { }
-    this.onmessage = () => { }
   }
 
-  send(txt) {
+  send(txt: string) {
     if (this.handle) {
       this.handle.send(txt)
     } else {
@@ -42,7 +46,10 @@ export default class WsWrapper {
       this.handle = ws
       // should have a queue worker
       while (this.sendBuffer.length > 0) {
-        this.handle.send(this.sendBuffer.shift())
+        const text = this.sendBuffer.shift()
+        if (text) {
+          this.handle.send(text)
+        }
       }
       this.onopen(e)
     }
