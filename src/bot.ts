@@ -1,24 +1,24 @@
-import config from './config.ts'
-import Auth from './net/Auth.ts'
-import ModuleManager from './mod/ModuleManager.ts'
-import WebSocketServer from './net/WebSocketServer.ts'
-import WebServer from './WebServer.ts'
-import TwitchClientManager from './net/TwitchClientManager.ts'
-import ModuleStorage from './mod/ModuleStorage.ts'
-import { logger } from './fn.ts'
-import Users from './services/Users.ts'
-import Tokens from './services/Tokens.ts'
-import TwitchChannels from './services/TwitchChannels.ts'
-import Cache from './services/Cache.ts'
-import Db from './Db.ts'
-import Variables from './services/Variables.ts'
-import Mail from './net/Mail.ts'
-import EventHub from './EventHub.ts'
-import GeneralModule from './mod/modules/GeneralModule.ts'
-import SongrequestModule from './mod/modules/SongrequestModule.ts'
-import VoteModule from './mod/modules/VoteModule.ts'
-import SpeechToTextModule from './mod/modules/SpeechToTextModule.ts'
-import DrawcastModule from './mod/modules/DrawcastModule.ts'
+import config from './config'
+import Auth from './net/Auth'
+import ModuleManager from './mod/ModuleManager'
+import WebSocketServer from './net/WebSocketServer'
+import WebServer from './WebServer'
+import TwitchClientManager from './net/TwitchClientManager'
+import ModuleStorage from './mod/ModuleStorage'
+import { logger } from './fn'
+import Users, { User } from './services/Users'
+import Tokens from './services/Tokens'
+import TwitchChannels from './services/TwitchChannels'
+import Cache from './services/Cache'
+import Db from './Db'
+import Variables from './services/Variables'
+import Mail from './net/Mail'
+import EventHub from './EventHub'
+import GeneralModule from './mod/modules/GeneralModule'
+import SongrequestModule from './mod/modules/SongrequestModule'
+import VoteModule from './mod/modules/VoteModule'
+import SpeechToTextModule from './mod/modules/SpeechToTextModule'
+import DrawcastModule from './mod/modules/DrawcastModule'
 
 import { fileURLToPath } from 'url'
 
@@ -60,7 +60,7 @@ const webServer = new WebServer(
 )
 
 const run = async () => {
-  const initForUser = (user) => {
+  const initForUser = (user: User) => {
     const variables = new Variables(db, user.id)
     const clientManager = new TwitchClientManager(
       eventHub,
@@ -97,7 +97,7 @@ const run = async () => {
     initForUser(user)
   }
 
-  eventHub.on('user_registration_complete', (user) => {
+  eventHub.on('user_registration_complete', (user: User) => {
     initForUser(user)
   })
 }
@@ -105,7 +105,7 @@ const run = async () => {
 run()
 
 const log = logger(__filename)
-const gracefulShutdown = (signal) => {
+const gracefulShutdown = (signal: 'SIGUSR2' | 'SIGINT' | 'SIGTERM') => {
   log.info(`${signal} received...`)
 
   log.info('shutting down webserver...')

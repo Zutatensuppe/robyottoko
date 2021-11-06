@@ -1213,7 +1213,12 @@ class WebServer {
                 // new user was registered. module manager should be notified about this
                 // so that bot doesnt need to be restarted :O
                 const user = this.userRepo.getById(tokenObj.user_id);
-                this.eventHub.trigger('user_registration_complete', user);
+                if (user) {
+                    this.eventHub.trigger('user_registration_complete', user);
+                }
+                else {
+                    log$5.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`);
+                }
                 return;
             }
             res.status(400).send({ reason: 'invalid_token' });
@@ -1283,6 +1288,9 @@ class WebServer {
             const changedUser = this.userRepo.getById(user.id);
             if (changedUser) {
                 this.eventHub.trigger('user_changed', changedUser);
+            }
+            else {
+                log$5.error(`save-settings: user doesn't exist after saving it: ${user.id}`);
             }
             res.send();
         });
@@ -1991,6 +1999,9 @@ class EventHub {
 
 const log$1 = fn.logger('countdown.ts');
 const countdown = (variables, wss, userId, originalCmd) => async (command, client, target, context, msg) => {
+    if (!client) {
+        return;
+    }
     const sayFn = fn.sayFn(client, target);
     const doReplacements = async (text) => {
         return await fn.doReplacements(text, command, context, variables, originalCmd);
@@ -2078,7 +2089,7 @@ var JishoOrg = {
 const jishoOrgLookup = (
 // no params
 ) => async (command, client, target, context, msg) => {
-    if (!command) {
+    if (!client || !command) {
         return;
     }
     const say = fn.sayFn(client, target);
@@ -2106,7 +2117,7 @@ var Madochan = {
 };
 
 const madochanCreateWord = (model, weirdness) => async (command, client, target, context, msg) => {
-    if (!command) {
+    if (!client || !command) {
         return;
     }
     const say = fn.sayFn(client, target);
@@ -2126,12 +2137,18 @@ const madochanCreateWord = (model, weirdness) => async (command, client, target,
 };
 
 const text = (variables, originalCmd) => async (command, client, target, context, msg) => {
+    if (!client) {
+        return;
+    }
     const text = originalCmd.data.text;
     const say = fn.sayFn(client, target);
     say(await fn.doReplacements(text, command, context, variables, originalCmd));
 };
 
 const randomText = (variables, originalCmd) => async (command, client, target, context, msg) => {
+    if (!client) {
+        return;
+    }
     const texts = originalCmd.data.text;
     const say = fn.sayFn(client, target);
     say(await fn.doReplacements(fn.getRandom(texts), command, context, variables, originalCmd));
@@ -2146,7 +2163,7 @@ const playMedia = (wss, userId, originalCmd) => (command, client, target, contex
 };
 
 const chatters = (db, helixClient) => async (command, client, target, context, msg) => {
-    if (!context) {
+    if (!client || !context || !helixClient) {
         return;
     }
     const say = fn.sayFn(client, target);
@@ -2509,7 +2526,7 @@ class SongrequestModule {
             stacks: data.stacks,
         };
     }
-    onChatMsg(client, target, context, msg) {
+    async onChatMsg(client, target, context, msg) {
     }
     saveCommands() {
         // pass
@@ -3047,6 +3064,9 @@ class SongrequestModule {
         return item;
     }
     async songrequestCmd(command, client, target, context, msg) {
+        if (!client || !command || !context) {
+            return;
+        }
         const modOrUp = () => fn.isMod(context) || fn.isBroadcaster(context);
         const say = fn.sayFn(client, target);
         const answerAddRequest = async (addType, idx) => {
@@ -3424,6 +3444,9 @@ class VoteModule {
         this.save();
     }
     async playCmd(command, client, target, context, msg) {
+        if (!client || !command || !context || !target) {
+            return;
+        }
         const say = fn.sayFn(client, target);
         if (command.args.length === 0) {
             say(`Usage: !play THING`);
@@ -3434,6 +3457,9 @@ class VoteModule {
         this.vote(type, thing, client, target, context);
     }
     async voteCmd(command, client, target, context, msg) {
+        if (!client || !command || !context || !target) {
+            return;
+        }
         const say = fn.sayFn(client, target);
         // maybe open up for everyone, but for now use dedicated
         // commands like !play THING
@@ -3497,7 +3523,7 @@ class VoteModule {
                 }],
         };
     }
-    onChatMsg(client, target, context, msg) {
+    async onChatMsg(client, target, context, msg) {
     }
 }
 
@@ -3619,7 +3645,7 @@ class SpeechToTextModule {
     getCommands() {
         return {};
     }
-    onChatMsg(client, target, context, msg) {
+    async onChatMsg(client, target, context, msg) {
     }
 }
 
@@ -3783,20 +3809,18 @@ class DrawcastModule {
     getCommands() {
         return {};
     }
-    onChatMsg(client, target, context, msg) {
+    async onChatMsg(client, target, context, msg) {
     }
 }
 
 const __filename = fileURLToPath(import.meta.url);
-
 const modules = [
-  GeneralModule,
-  SongrequestModule,
-  VoteModule,
-  SpeechToTextModule,
-  DrawcastModule,
+    GeneralModule,
+    SongrequestModule,
+    VoteModule,
+    SpeechToTextModule,
+    DrawcastModule,
 ];
-
 const db = new Db(config.db);
 // make sure we are always on latest db version
 db.patch(false);
@@ -3806,92 +3830,49 @@ const twitchChannelRepo = new TwitchChannels(db);
 const cache = new Cache(db);
 const auth = new Auth(userRepo, tokenRepo);
 const mail = new Mail(config.mail);
-
 const eventHub = new EventHub();
 const moduleManager = new ModuleManager();
 const webSocketServer = new WebSocketServer(moduleManager, config.ws, auth);
-const webServer = new WebServer(
-  eventHub,
-  db,
-  userRepo,
-  tokenRepo,
-  mail,
-  twitchChannelRepo,
-  moduleManager,
-  config.http,
-  config.twitch,
-  webSocketServer,
-  auth
-);
-
+const webServer = new WebServer(eventHub, db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, config.http, config.twitch, webSocketServer, auth);
 const run = async () => {
-  const initForUser = (user) => {
-    const variables = new Variables(db, user.id);
-    const clientManager = new TwitchClientManager(
-      eventHub,
-      config.twitch,
-      db,
-      user,
-      twitchChannelRepo,
-      moduleManager,
-      variables
-    );
-    const chatClient = clientManager.getChatClient();
-    const helixClient = clientManager.getHelixClient();
-    const moduleStorage = new ModuleStorage(db, user.id);
-    for (const moduleClass of modules) {
-      moduleManager.add(user.id, new moduleClass(
-        db,
-        user,
-        variables,
-        chatClient,
-        helixClient,
-        moduleStorage,
-        cache,
-        webServer,
-        webSocketServer
-      ));
+    const initForUser = (user) => {
+        const variables = new Variables(db, user.id);
+        const clientManager = new TwitchClientManager(eventHub, config.twitch, db, user, twitchChannelRepo, moduleManager, variables);
+        const chatClient = clientManager.getChatClient();
+        const helixClient = clientManager.getHelixClient();
+        const moduleStorage = new ModuleStorage(db, user.id);
+        for (const moduleClass of modules) {
+            moduleManager.add(user.id, new moduleClass(db, user, variables, chatClient, helixClient, moduleStorage, cache, webServer, webSocketServer));
+        }
+    };
+    webSocketServer.listen();
+    await webServer.listen();
+    // one for each user
+    for (const user of userRepo.all()) {
+        initForUser(user);
     }
-  };
-
-  webSocketServer.listen();
-  await webServer.listen();
-
-  // one for each user
-  for (const user of userRepo.all()) {
-    initForUser(user);
-  }
-
-  eventHub.on('user_registration_complete', (user) => {
-    initForUser(user);
-  });
+    eventHub.on('user_registration_complete', (user) => {
+        initForUser(user);
+    });
 };
-
 run();
-
 const log = logger(__filename);
 const gracefulShutdown = (signal) => {
-  log.info(`${signal} received...`);
-
-  log.info('shutting down webserver...');
-  webServer.close();
-
-  log.info('shutting down websocketserver...');
-  webSocketServer.close();
-
-  log.info('shutting down...');
-  process.exit();
+    log.info(`${signal} received...`);
+    log.info('shutting down webserver...');
+    webServer.close();
+    log.info('shutting down websocketserver...');
+    webSocketServer.close();
+    log.info('shutting down...');
+    process.exit();
 };
-
 // used by nodemon
 process.once('SIGUSR2', function () {
-  gracefulShutdown('SIGUSR2');
+    gracefulShutdown('SIGUSR2');
 });
-
 process.once('SIGINT', function (code) {
-  gracefulShutdown('SIGINT');
+    gracefulShutdown('SIGINT');
 });
-
 process.once('SIGTERM', function (code) {
-  gracefulShutdown('SIGTERM');
+    gracefulShutdown('SIGTERM');
 });

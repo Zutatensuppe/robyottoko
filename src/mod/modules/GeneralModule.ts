@@ -73,8 +73,8 @@ class GeneralModule {
 
   private db: Db
   private user: User
-  private chatClient: TwitchChatClient
-  private helixClient: TwitchHelixClient
+  private chatClient: TwitchChatClient | null
+  private helixClient: TwitchHelixClient | null
   private storage: ModuleStorage
   private wss: WebSocketServer
 
@@ -88,8 +88,8 @@ class GeneralModule {
     db: Db,
     user: User,
     variables: Variables,
-    chatClient: TwitchChatClient,
-    helixClient: TwitchHelixClient,
+    chatClient: TwitchChatClient | null,
+    helixClient: TwitchHelixClient | null,
     storage: ModuleStorage,
     cache: Cache,
     ws: WebServer,

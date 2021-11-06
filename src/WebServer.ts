@@ -364,7 +364,11 @@ class WebServer {
         // new user was registered. module manager should be notified about this
         // so that bot doesnt need to be restarted :O
         const user = this.userRepo.getById(tokenObj.user_id)
-        this.eventHub.trigger('user_registration_complete', user)
+        if (user) {
+          this.eventHub.trigger('user_registration_complete', user)
+        } else {
+          log.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`)
+        }
         return
       }
 
@@ -445,6 +449,8 @@ class WebServer {
       const changedUser = this.userRepo.getById(user.id)
       if (changedUser) {
         this.eventHub.trigger('user_changed', changedUser)
+      } else {
+        log.error(`save-settings: user doesn't exist after saving it: ${user.id}`)
       }
       res.send()
     })

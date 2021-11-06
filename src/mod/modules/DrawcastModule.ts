@@ -61,8 +61,8 @@ class DrawcastModule {
     db: Db,
     user: User,
     variables: Variables,
-    chatClient: TwitchChatClient,
-    helixClient: TwitchHelixClient,
+    chatClient: TwitchChatClient | null,
+    helixClient: TwitchHelixClient | null,
     storage: ModuleStorage,
     cache: Cache,
     ws: WebServer,
@@ -219,7 +219,7 @@ class DrawcastModule {
     return {}
   }
 
-  onChatMsg(
+  async onChatMsg(
     client: TwitchChatClient,
     target: string,
     context: TwitchChatContext,

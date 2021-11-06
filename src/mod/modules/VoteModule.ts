@@ -26,8 +26,8 @@ class VoteModule {
     db: Db,
     user: User,
     variables: Variables,
-    chatClient: TwitchChatClient,
-    helixClient: TwitchHelixClient,
+    chatClient: TwitchChatClient | null,
+    helixClient: TwitchHelixClient | null,
     storage: ModuleStorage,
     cache: Cache,
     ws: WebServer,
@@ -86,12 +86,16 @@ class VoteModule {
   }
 
   async playCmd(
-    command: RawCommand,
-    client: TwitchChatClient,
-    target: string,
-    context: TwitchChatContext,
-    msg: string,
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
   ) {
+    if (!client || !command || !context || !target) {
+      return
+    }
+
     const say = fn.sayFn(client, target)
     if (command.args.length === 0) {
       say(`Usage: !play THING`)
@@ -104,12 +108,16 @@ class VoteModule {
   }
 
   async voteCmd(
-    command: RawCommand,
-    client: TwitchChatClient,
-    target: string,
-    context: TwitchChatContext,
-    msg: string,
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
   ) {
+    if (!client || !command || !context || !target) {
+      return
+    }
+
     const say = fn.sayFn(client, target)
 
     // maybe open up for everyone, but for now use dedicated
@@ -182,7 +190,7 @@ class VoteModule {
     }
   }
 
-  onChatMsg(
+  async onChatMsg(
     client: TwitchChatClient,
     target: string,
     context: TwitchChatContext,

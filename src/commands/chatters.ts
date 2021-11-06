@@ -5,15 +5,15 @@ import fn from './../fn'
 
 const chatters = (
   db: Db,
-  helixClient: TwitchHelixClient
+  helixClient: TwitchHelixClient | null
 ) => async (
   command: RawCommand | null,
-  client: TwitchChatClient,
+  client: TwitchChatClient | null,
   target: string | null,
   context: TwitchChatContext | null,
   msg: string | null,
   ) => {
-    if (!context) {
+    if (!client || !context || !helixClient) {
       return
     }
 

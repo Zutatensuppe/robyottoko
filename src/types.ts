@@ -1,7 +1,6 @@
 import { Client } from 'tmi.js'
 import { Socket } from './net/WebSocketServer'
 import { Token } from './services/Tokens'
-import { User } from './services/Users'
 import Variables from './services/Variables'
 
 type int = number
@@ -222,7 +221,7 @@ export interface FunctionCommand {
   data?: CommandData
   fn: (
     rawCmd: RawCommand | null,
-    client: Client,
+    client: TwitchChatClient | null,
     target: string | null,
     context: TwitchChatContext | null,
     msg: string | null,

@@ -6,12 +6,12 @@ const jishoOrgLookup = (
   // no params
 ) => async (
   command: RawCommand | null,
-  client: TwitchChatClient,
+  client: TwitchChatClient | null,
   target: string | null,
   context: TwitchChatContext | null,
   msg: string | null,
   ) => {
-    if (!command) {
+    if (!client || !command) {
       return
     }
     const say = fn.sayFn(client, target)

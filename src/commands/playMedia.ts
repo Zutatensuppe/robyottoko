@@ -7,7 +7,7 @@ const playMedia = (
   originalCmd: MediaCommand,
 ) => (
   command: RawCommand | null,
-  client: TwitchChatClient,
+  client: TwitchChatClient | null,
   target: string | null,
   context: TwitchChatContext | null,
   msg: string | null,

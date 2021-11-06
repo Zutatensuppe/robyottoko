@@ -69,8 +69,8 @@ class SongrequestModule {
     db: Db,
     user: User,
     variables: Variables,
-    chatClient: TwitchChatClient,
-    helixClient: TwitchHelixClient,
+    chatClient: TwitchChatClient | null,
+    helixClient: TwitchHelixClient | null,
     storage: ModuleStorage,
     cache: Cache,
     ws: WebServer,
@@ -134,7 +134,7 @@ class SongrequestModule {
     }
   }
 
-  onChatMsg(
+  async onChatMsg(
     client: TwitchChatClient,
     target: string,
     context: TwitchChatContext,
@@ -686,14 +686,17 @@ class SongrequestModule {
   }
 
   async songrequestCmd(
-    command: RawCommand,
-    client: TwitchChatClient,
-    target: string,
-    context: TwitchChatContext,
-    msg: string,
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
   ) {
-    const modOrUp = () => fn.isMod(context) || fn.isBroadcaster(context)
+    if (!client || !command || !context) {
+      return
+    }
 
+    const modOrUp = () => fn.isMod(context) || fn.isBroadcaster(context)
     const say = fn.sayFn(client, target)
     const answerAddRequest = async (addType: number, idx: number) => {
       const item = idx >= 0 ? this.data.playlist[idx] : null
