@@ -13,19 +13,24 @@ import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Madochan from '../../services/Madochan'
 import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
-import { Command, CommandData, FunctionCommand, TwitchChatClient, TwitchChatContext } from '../../types'
+import { Command, FunctionCommand, GlobalVariable, TwitchChatClient, TwitchChatContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import Cache from '../../services/Cache'
 
 const log = fn.logger('GeneralModule.ts')
 
-interface GeneralModuleSettings {
+export interface GeneralModuleSettings {
   volume: number
 }
 
+export interface GeneralModuleAdminSettings {
+  showImages: boolean
+}
+
 interface GeneralModuleData {
-  commands: CommandData[]
+  commands: Command[]
   settings: GeneralModuleSettings
+  adminSettings: GeneralModuleAdminSettings
 }
 
 interface GeneralModuleTimer {
@@ -40,6 +45,26 @@ interface GeneralModuleInitData {
   data: GeneralModuleData
   commands: Record<string, FunctionCommand[]>
   timers: GeneralModuleTimer[]
+}
+
+export interface GeneralModuleWsEventData {
+  commands: Command[]
+  settings: GeneralModuleSettings
+  adminSettings: GeneralModuleAdminSettings
+  globalVariables: GlobalVariable[]
+}
+
+interface WsData {
+  event: string
+  data: GeneralModuleWsEventData
+}
+
+
+export interface SaveEventData {
+  event: "save";
+  commands: Command[];
+  settings: GeneralModuleSettings;
+  adminSettings: GeneralModuleAdminSettings;
 }
 
 class GeneralModule {
@@ -128,8 +153,17 @@ class GeneralModule {
       settings: {
         volume: 100,
       },
+      adminSettings: {
+        showImages: true,
+      },
     })
     data.commands = this.fix(data.commands)
+    if (!data.adminSettings) {
+      data.adminSettings = {}
+    }
+    if (typeof data.adminSettings.showImages === 'undefined') {
+      data.adminSettings.showImages = true
+    }
 
     const commands: Record<string, FunctionCommand[]> = {}
     const timers: GeneralModuleTimer[] = []
@@ -214,12 +248,13 @@ class GeneralModule {
     }
   }
 
-  wsdata(eventName: string) {
+  wsdata(eventName: string): WsData {
     return {
       event: eventName,
       data: {
         commands: this.data.commands,
         settings: this.data.settings,
+        adminSettings: this.data.adminSettings,
         globalVariables: this.variables.all(),
       },
     };
@@ -247,9 +282,10 @@ class GeneralModule {
       'conn': (ws: Socket) => {
         this.updateClient('init', ws)
       },
-      'save': (ws: Socket, data: GeneralModuleData) => {
+      'save': (ws: Socket, data: SaveEventData) => {
         this.data.commands = this.fix(data.commands)
         this.data.settings = data.settings
+        this.data.adminSettings = data.adminSettings
         this.storage.save(this.name, this.data)
         const initData = this.reinit()
         this.data = initData.data

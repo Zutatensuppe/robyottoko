@@ -1,4 +1,6 @@
-const newTrigger = (type) => ({
+import { Command } from "../types"
+
+const newTrigger = (type: string) => ({
   type,
   data: {
     // for trigger type "command" (todo: should only exist if type is command, not always)
@@ -31,7 +33,7 @@ const newCountdown = () => ({
   outro: 'Done!'
 })
 
-const newCmd = (type) => {
+const newCmd = (type: string): Command | null => {
   switch (type) {
     case 'text': return {
       triggers: [newTrigger('command')],
@@ -49,7 +51,7 @@ const newCmd = (type) => {
       restrict_to: [],
       variables: [],
       variableChanges: [],
-      data: newMedia(1000),
+      data: newMedia(),
     }
     case 'countdown': return {
       triggers: [newTrigger('command')],

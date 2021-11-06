@@ -470,7 +470,7 @@ import { defineComponent } from "vue";
 
 import fn from "../../../common/fn.ts";
 import { UploadedFile } from "../../../types.ts";
-import commands from "../../commands.js";
+import commands from "../../commands.ts";
 
 export default defineComponent({
   props: {

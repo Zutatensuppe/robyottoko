@@ -92,7 +92,17 @@
                 <th></th>
                 <th></th>
                 <th>Trigger</th>
-                <th>Response</th>
+                <th>
+                  Response
+                  <label>
+                    <input
+                      type="checkbox"
+                      v-model="adminSettings.showImages"
+                      @update:modelValue="sendSave"
+                    />
+                    Show images
+                  </label>
+                </th>
                 <th>Type</th>
                 <th>Permissions</th>
                 <th></th>
@@ -171,13 +181,19 @@
                         "
                       >
                         <responsive-image
-                          v-if="element.data.image.file"
+                          v-if="
+                            element.data.image.file && adminSettings.showImages
+                          "
                           :src="element.data.image.file"
                           :title="element.data.image.filename"
                           width="100px"
                           height="50px"
                           style="display: inline-block"
                         />
+                        <code v-else-if="element.data.image.file">{{
+                          element.data.image.filename
+                        }}</code>
+
                         <i
                           class="fa fa-plus is-justify-content-center mr-2 ml-2"
                           v-if="
@@ -276,7 +292,7 @@
               <td>
                 <volume-slider
                   v-model="settings.volume"
-                  @update:modelValue="onVolumeChange"
+                  @update:modelValue="sendSave"
                 />
               </td>
               <td>Base volume for all media playing from commands</td>
@@ -291,14 +307,36 @@
 import { defineComponent } from "vue";
 
 import WsClient from "../WsClient.js";
-import commands from "../commands.js";
+import commands from "../commands.ts";
 import fn from "../../common/fn.ts";
+import {
+  GeneralModuleAdminSettings,
+  GeneralModuleSettings,
+  GeneralModuleWsEventData,
+  SaveEventData,
+} from "../../mod/modules/GeneralModule.js";
+import { Command, GlobalVariable } from "../../types.js";
+
+interface ComponentData {
+  commands: Command[];
+  settings: GeneralModuleSettings;
+  adminSettings: GeneralModuleAdminSettings;
+  globalVariables: GlobalVariable[];
+  ws: WsClient | null;
+  editIdx: number | null;
+  editCommand: Command | null;
+  inited: boolean;
+  tab: "commands" | "settings";
+}
 
 export default defineComponent({
-  data: () => ({
+  data: (): ComponentData => ({
     commands: [],
     settings: {
       volume: 100,
+    },
+    adminSettings: {
+      showImages: true,
     },
     globalVariables: [],
     ws: null,
@@ -314,12 +352,12 @@ export default defineComponent({
     baseVolume() {
       return this.settings.volume;
     },
-    widgetUrl() {
+    widgetUrl(): string {
       return `${location.protocol}//${location.host}/widget/media/${this.$me.widgetToken}/`;
     },
   },
   methods: {
-    permissionsStr(item) {
+    permissionsStr(item: Command) {
       if (!item.restrict_to || item.restrict_to.length === 0) {
         return "Everyone";
       }
@@ -335,7 +373,7 @@ export default defineComponent({
       }
       return parts.join(", ");
     },
-    add(type) {
+    add(type: string) {
       const cmd = commands.newCmd(type);
       if (!cmd) {
         return;
@@ -343,47 +381,53 @@ export default defineComponent({
       this.editIdx = this.commands.length;
       this.editCommand = cmd;
     },
-    remove(idx) {
+    remove(idx: number) {
       this.commands = this.commands.filter((val, index) => index !== idx);
       this.sendSave();
     },
-    edit(idx) {
+    edit(idx: number) {
       this.editIdx = idx;
       this.editCommand = this.commands[idx];
     },
-    duplicate(idx) {
+    duplicate(idx: number) {
       this.editIdx = this.commands.length;
       this.editCommand = JSON.parse(JSON.stringify(this.commands[idx]));
     },
-    editedCommand(command) {
+    editedCommand(command: Command): void {
+      if (this.editIdx === null) {
+        return;
+      }
       this.commands[this.editIdx] = command;
       this.sendSave();
       this.editIdx = null;
       this.editCommand = null;
-    },
-    onVolumeChange() {
-      this.sendSave();
     },
     sendSave() {
       this.sendMsg({
         event: "save",
         commands: this.commands,
         settings: this.settings,
+        adminSettings: this.adminSettings,
       });
     },
-    sendMsg(data) {
-      this.ws.send(JSON.stringify(data));
+    sendMsg(data: SaveEventData) {
+      if (this.ws) {
+        this.ws.send(JSON.stringify(data));
+      } else {
+        console.warn("sendMsg: this.ws not initialized");
+      }
     },
-    dragEnd(evt) {
+    dragEnd(evt: { oldIndex: number; newIndex: number }) {
       this.commands = fn.arrayMove(this.commands, evt.oldIndex, evt.newIndex);
       this.sendSave();
     },
   },
   async mounted() {
     this.ws = new WsClient(this.$conf.wsBase + "/general", this.$me.token);
-    this.ws.onMessage("init", (data) => {
+    this.ws.onMessage("init", (data: GeneralModuleWsEventData) => {
       this.commands = data.commands;
       this.settings = data.settings;
+      this.adminSettings = data.adminSettings;
       this.globalVariables = data.globalVariables;
       this.inited = true;
     });

@@ -169,7 +169,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import commands from "../../commands.js";
+import commands from "../../commands.ts";
 import fn from "../../../common/fn.ts";
 
 export default defineComponent({
