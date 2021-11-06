@@ -2,11 +2,11 @@
   <div>
     <div class="filters">
       <div class="currentfilter">
-        <div class="mr-1 pt-1">Filter:</div>
+        <div class="mr-1">Filter:</div>
         <span class="tag mr-1" v-if="filter.tag" @click="applyFilter('')"
           >{{ filter.tag }} <i class="fa fa-remove ml-1"
         /></span>
-        <div v-else class="field has-addons mr-1">
+        <div v-else class="field has-addons mr-1 mb-0">
           <div class="control">
             <input
               class="input is-small filter-tag-input"
@@ -233,3 +233,15 @@ export default defineComponent({
   },
 });
 </script>
+<style scoped>
+.filters .tag {
+  cursor: pointer;
+}
+.filters .currentfilter {
+  display: flex;
+  align-items: center;
+}
+.filters .filter-tag-input {
+  max-width: 200px;
+}
+</style>

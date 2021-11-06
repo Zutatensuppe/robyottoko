@@ -33,7 +33,7 @@
 
       <div v-if="inited && tab === 'commands'">
         <div class="actions">
-          Show:
+          <div class="mr-1">Filter:</div>
           <div class="field has-addons mr-1 mb-0">
             <div class="control">
               <input class="input is-small" v-model="filter.search" />
@@ -519,9 +519,11 @@ export default defineComponent({
       this.addDropdownActive = false;
     },
     hideAddDropdown(e: Event) {
-      if (
-        (this.$refs.addDropdown as HTMLDivElement).contains(e.target as any)
-      ) {
+      if (!this.$refs.addDropdown) {
+        return;
+      }
+      const el = this.$refs.addDropdown as HTMLDivElement;
+      if (el.contains(e.target as any)) {
         return;
       }
       this.closeDropdown();

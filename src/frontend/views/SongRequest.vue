@@ -460,14 +460,4 @@ export default defineComponent({
 .table .tag {
   cursor: pointer;
 }
-.filters .tag {
-  cursor: pointer;
-}
-
-.filters .currentfilter {
-  display: flex;
-}
-.filters .filter-tag-input {
-  max-width: 200px;
-}
 </style>
