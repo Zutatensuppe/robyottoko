@@ -1,6 +1,6 @@
-import { Command } from "../types"
+import { Command, CommandTrigger } from "../types"
 
-const newTrigger = (type: string) => ({
+const newTrigger = (type: 'command' | 'timer'): CommandTrigger => ({
   type,
   data: {
     // for trigger type "command" (todo: should only exist if type is command, not always)

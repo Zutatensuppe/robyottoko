@@ -144,7 +144,16 @@ export interface RawCommand {
   args: string[]
 }
 
-export interface CommandTrigger { }
+export interface CommandTrigger {
+  type: 'command' | 'timer'
+  data: {
+    // for trigger type "command" (todo: should only exist if type is command, not always)
+    command: string
+    // for trigger type "timer" (todo: should only exist if type is timer, not always)
+    minInterval: number // duration in ms or something parsable (eg 1s, 10m, ....)
+    minLines: number
+  }
+}
 export interface CommandVariable {
   name: string
   value: any

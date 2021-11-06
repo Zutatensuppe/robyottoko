@@ -32,8 +32,13 @@
       </div>
 
       <div v-if="inited && tab === 'commands'">
-        <div>
+        <div class="actions">
           Show:
+          <div class="field has-addons mr-1 mb-0">
+            <div class="control">
+              <input class="input is-small" v-model="filter.search" />
+            </div>
+          </div>
           <label
             class="mr-1"
             v-for="(possibleAction, idx) in possibleActions"
@@ -43,7 +48,7 @@
               type="checkbox"
               :value="possibleAction"
               v-model="filter.actions"
-            />{{ possibleAction }}</label
+            />{{ possibleAction }} ({{ commandCount(possibleAction) }})</label
           >
           <div
             class="dropdown"
@@ -333,6 +338,7 @@ interface ComponentData {
   possibleCommands: { action: string; title: string; text: string }[];
   possibleActions: string[];
   filter: {
+    search: string;
     actions: string[];
   };
   tab: "commands" | "settings";
@@ -391,6 +397,7 @@ export default defineComponent({
       "chatters",
     ],
     filter: {
+      search: "",
       actions: [
         "text",
         "media",
@@ -403,7 +410,7 @@ export default defineComponent({
 
     inited: false,
 
-    tab: "commands", // commands|settings
+    tab: "commands",
   }),
   computed: {
     baseVolume() {
@@ -414,8 +421,32 @@ export default defineComponent({
     },
   },
   methods: {
+    commandCount(action: string): number {
+      let count = 0;
+      for (const cmd of this.commands) {
+        if (cmd.action === action) {
+          count++;
+        }
+      }
+      return count;
+    },
     filteredOut(item: Command) {
-      return !this.filter.actions.includes(item.action);
+      if (!this.filter.actions.includes(item.action)) {
+        return true;
+      }
+      if (this.filter.search) {
+        const search = this.filter.search.toLowerCase();
+        if (
+          !item.triggers.find(
+            ({ type, data }) =>
+              type === "command" &&
+              data.command.toLowerCase().indexOf(search) >= 0
+          )
+        ) {
+          return true;
+        }
+      }
+      return false;
     },
     permissionsStr(item: Command) {
       if (!item.restrict_to || item.restrict_to.length === 0) {
@@ -526,5 +557,9 @@ export default defineComponent({
   border-bottom: 1px solid #dbdbdb;
   padding-bottom: 0.25em;
   margin-bottom: 0.25em;
+}
+.actions {
+  display: flex;
+  align-items: center;
 }
 </style>
