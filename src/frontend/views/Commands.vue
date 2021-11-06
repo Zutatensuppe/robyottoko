@@ -321,8 +321,8 @@ import {
   GeneralModuleSettings,
   GeneralModuleWsEventData,
   GeneralSaveEventData,
-} from "../../mod/modules/GeneralModule.js";
-import { Command, GlobalVariable } from "../../types.js";
+} from "../../mod/modules/GeneralModule";
+import { Command, GlobalVariable } from "../../types";
 
 interface ComponentData {
   commands: Command[];
