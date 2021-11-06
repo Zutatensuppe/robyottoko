@@ -19,6 +19,10 @@ export interface WsConfig {
   connectstring: string
 }
 
+export interface MailConfig {
+  sendinblue_api_key: string
+}
+
 export interface HttpConfig {
   hostname: string
   port: int
@@ -49,9 +53,7 @@ export interface Config {
     level: LogLevel
   }
   twitch: TwitchConfig
-  mail: {
-    sendinblue_api_key: string
-  }
+  mail: MailConfig
   http: HttpConfig
   ws: WsConfig
   db: DbConfig
@@ -243,12 +245,12 @@ interface MailServiceUser {
   name: string
 }
 
-interface MailServicePasswordResetData {
+export interface MailServicePasswordResetData {
   user: MailServiceUser
   token: Token
 }
 
-interface MailServiceRegistrationData {
+export interface MailServiceRegistrationData {
   user: MailServiceUser
   token: Token
 }

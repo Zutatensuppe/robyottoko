@@ -179,7 +179,7 @@ const logger = (filename, ...pre) => {
         error: fn('error'),
     };
 };
-const log$7 = logger('fn.ts');
+const log$8 = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
         return mime.replace('image/', '');
@@ -224,7 +224,7 @@ const isSubscriber = (ctx) => !!ctx.subscriber;
 const sayFn = (client, target) => (msg) => {
     const targets = target ? [target] : client.channels;
     targets.forEach(t => {
-        log$7.info(`saying in ${t}: ${msg}`);
+        log$8.info(`saying in ${t}: ${msg}`);
         client.say(t, msg).catch((e) => { });
     });
 };
@@ -261,7 +261,7 @@ const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, client, target,
         if (!mayExecute(context, cmdDef)) {
             continue;
         }
-        log$7.info(`${target}| * Executing ${rawCmd.name} command`);
+        log$8.info(`${target}| * Executing ${rawCmd.name} command`);
         if (cmdDef.variableChanges) {
             for (const variableChange of cmdDef.variableChanges) {
                 const op = variableChange.change;
@@ -310,9 +310,9 @@ const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, client, target,
         const p = new Promise(async (resolve) => {
             const r = await cmdDef.fn(rawCmd, client, target, context, msg);
             if (r) {
-                log$7.info(`${target}| * Returned: ${r}`);
+                log$8.info(`${target}| * Returned: ${r}`);
             }
-            log$7.info(`${target}| * Executed ${rawCmd.name} command`);
+            log$8.info(`${target}| * Executed ${rawCmd.name} command`);
             resolve(true);
         });
         promises.push(p);
@@ -666,7 +666,7 @@ class ModuleManager {
     }
 }
 
-const log$6 = logger("WebSocketServer.ts");
+const log$7 = logger("WebSocketServer.ts");
 class WebSocketServer {
     constructor(moduleManager, config, auth) {
         this.moduleManager = moduleManager;
@@ -684,14 +684,14 @@ class WebSocketServer {
             const token = socket.protocol;
             const tokenInfo = this.auth.wsTokenFromProtocol(token);
             if (!tokenInfo) {
-                log$6.info('not found token: ', token);
+                log$7.info('not found token: ', token);
                 socket.close();
                 return;
             }
             socket.user_id = tokenInfo.user_id;
             const pathname = new URL(this.connectstring()).pathname;
             if (request.url?.indexOf(pathname) !== 0) {
-                log$6.info('bad request url: ', request.url);
+                log$7.info('bad request url: ', request.url);
                 socket.close();
                 return;
             }
@@ -709,7 +709,7 @@ class WebSocketServer {
                 const evts = module.getWsEvents();
                 if (evts) {
                     socket.on('message', (data) => {
-                        log$6.info(`ws|${socket.user_id}| `, data);
+                        log$7.info(`ws|${socket.user_id}| `, data);
                         const unknownData = data;
                         const d = JSON.parse(unknownData);
                         if (!d.event) {
@@ -749,13 +749,13 @@ class WebSocketServer {
             && socket.user_id
             && user_ids.includes(socket.user_id)
             && socket.module === moduleName) {
-            log$6.info(`notifying ${socket.user_id} (${data.event})`);
+            log$7.info(`notifying ${socket.user_id} (${data.event})`);
             socket.send(JSON.stringify(data));
         }
     }
     notifyAll(user_ids, moduleName, data) {
         if (!this._websocketserver) {
-            log$6.error(`tried to notifyAll, but _websocketserver is null`);
+            log$7.error(`tried to notifyAll, but _websocketserver is null`);
             return;
         }
         this._websocketserver.clients.forEach((socket) => {
@@ -834,7 +834,7 @@ var sprightly$1 = async (path, options, callback) => {
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-const log$5 = logger('TwitchHelixClient.ts');
+const log$6 = logger('TwitchHelixClient.ts');
 const API_BASE = 'https://api.twitch.tv/helix';
 class TwitchHelixClient {
     constructor(clientId, clientSecret) {
@@ -867,7 +867,7 @@ class TwitchHelixClient {
             return json.data[0].id;
         }
         catch (e) {
-            log$5.error(json);
+            log$6.error(json);
             return '';
         }
     }
@@ -929,7 +929,7 @@ class Variables {
 
 const __filename$2 = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename$2);
-const log$4 = fn.logger(__filename$2);
+const log$5 = fn.logger(__filename$2);
 class WebServer {
     constructor(eventHub, db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, configHttp, configTwitch, wss, auth) {
         this.eventHub = eventHub;
@@ -997,8 +997,8 @@ class WebServer {
             hmac.update(msg);
             const expected = `sha256=${hmac.digest('hex')}`;
             if (req.headers['twitch-eventsub-message-signature'] !== expected) {
-                log$4.debug(req);
-                log$4.error('bad message signature', {
+                log$5.debug(req);
+                log$5.error('bad message signature', {
                     got: req.headers['twitch-eventsub-message-signature'],
                     expected,
                 });
@@ -1320,16 +1320,16 @@ class WebServer {
             }
         });
         app.post('/twitch/event-sub/', express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
-            log$4.debug(req.body);
-            log$4.debug(req.headers);
+            log$5.debug(req.body);
+            log$5.debug(req.headers);
             if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-                log$4.info(`got verification request, challenge: ${req.body.challenge}`);
+                log$5.info(`got verification request, challenge: ${req.body.challenge}`);
                 res.write(req.body.challenge);
                 res.send();
                 return;
             }
             if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-                log$4.info(`got notification request: ${req.body.subscription.type}`);
+                log$5.info(`got notification request: ${req.body.subscription.type}`);
                 if (req.body.subscription.type === 'stream.online') {
                     // insert new stream
                     this.db.insert('streams', {
@@ -1367,7 +1367,7 @@ class WebServer {
         app.post('/api/upload', requireLoginApi, (req, res) => {
             upload(req, res, (err) => {
                 if (err) {
-                    log$4.error(err);
+                    log$5.error(err);
                     res.status(400).send("Something went wrong!");
                 }
                 res.send(req.file);
@@ -1403,7 +1403,7 @@ class WebServer {
             const indexFile = `${__dirname}/../../build/public/index.html`;
             res.sendFile(path.resolve(indexFile));
         });
-        this.handle = app.listen(port, hostname, () => log$4.info(`server running on http://${hostname}:${port}`));
+        this.handle = app.listen(port, hostname, () => log$5.info(`server running on http://${hostname}:${port}`));
     }
     close() {
         if (this.handle) {
@@ -1596,7 +1596,7 @@ class TwitchClientManager {
     }
 }
 
-const log$3 = logger('ModuleStorage.ts');
+const log$4 = logger('ModuleStorage.ts');
 const TABLE$4 = 'module';
 class ModuleStorage {
     constructor(db, userId) {
@@ -1611,7 +1611,7 @@ class ModuleStorage {
             return data ? Object.assign({}, def, data) : def;
         }
         catch (e) {
-            log$3.error(e);
+            log$4.error(e);
             return def;
         }
     }
@@ -1737,7 +1737,7 @@ class Cache {
     }
 }
 
-const log$2 = logger('Db.ts');
+const log$3 = logger('Db.ts');
 class Db {
     constructor(dbConf) {
         this.conf = dbConf;
@@ -1755,7 +1755,7 @@ class Db {
         for (const f of files) {
             if (patches.includes(f)) {
                 if (verbose) {
-                    log$2.info(`➡ skipping already applied db patch: ${f}`);
+                    log$3.info(`➡ skipping already applied db patch: ${f}`);
                 }
                 continue;
             }
@@ -1765,16 +1765,16 @@ class Db {
                 this.dbh.transaction((all) => {
                     for (const q of all) {
                         if (verbose) {
-                            log$2.info(`Running: ${q}`);
+                            log$3.info(`Running: ${q}`);
                         }
                         this.run(q);
                     }
                     this.insert('db_patches', { id: f });
                 })(all);
-                log$2.info(`✓ applied db patch: ${f}`);
+                log$3.info(`✓ applied db patch: ${f}`);
             }
             catch (e) {
-                log$2.error(`✖ unable to apply patch: ${f} ${e}`);
+                log$3.error(`✖ unable to apply patch: ${f} ${e}`);
                 return;
             }
         }
@@ -1911,65 +1911,64 @@ class Db {
     }
 }
 
+// @ts-ignore
+const log$2 = fn.logger('Mail.ts');
 class Mail {
-  constructor(cfg) {
-    const defaultClient = SibApiV3Sdk.ApiClient.instance;
-    const apiKey = defaultClient.authentications['api-key'];
-    apiKey.apiKey = cfg.sendinblue_api_key;
-    this.apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-  }
-
-  sendPasswordResetMail(passwordReset) {
-    const mail = new SibApiV3Sdk.SendSmtpEmail();
-    mail.subject = "{{params.subject}}";
-    mail.htmlContent = `<html><body>
+    constructor(cfg) {
+        const defaultClient = SibApiV3Sdk.ApiClient.instance;
+        const apiKey = defaultClient.authentications['api-key'];
+        apiKey.apiKey = cfg.sendinblue_api_key;
+        this.apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+    }
+    sendPasswordResetMail(passwordReset) {
+        const mail = new SibApiV3Sdk.SendSmtpEmail();
+        mail.subject = "{{params.subject}}";
+        mail.htmlContent = `<html><body>
       <h1>Hello {{params.username}}</h1>
       <p>To reset your password for <a href="https://hyottoko.club">hyottoko.club</a>
       click the following link:</p>
       <p><a href="{{params.link}}">{{params.link}}</a></p>
       </body></html>`;
-    mail.sender = { name: "Hyottoko.club", email: "noreply@hyottoko.club" };
-    mail.to = [{
-      email: passwordReset.user.email,
-      name: passwordReset.user.name,
-    }];
-    mail.params = {
-      username: passwordReset.user.name,
-      subject: "Password Reset for Hyottoko.club",
-      link: `https://hyottoko.club/password-reset?t=${passwordReset.token.token}`
-    };
-    this.send(mail);
-  }
-
-  sendRegistrationMail(registration) {
-    const mail = new SibApiV3Sdk.SendSmtpEmail();
-    mail.subject = "{{params.subject}}";
-    mail.htmlContent = `<html><body>
+        mail.sender = { name: "Hyottoko.club", email: "noreply@hyottoko.club" };
+        mail.to = [{
+                email: passwordReset.user.email,
+                name: passwordReset.user.name,
+            }];
+        mail.params = {
+            username: passwordReset.user.name,
+            subject: "Password Reset for Hyottoko.club",
+            link: `https://hyottoko.club/password-reset?t=${passwordReset.token.token}`
+        };
+        this.send(mail);
+    }
+    sendRegistrationMail(registration) {
+        const mail = new SibApiV3Sdk.SendSmtpEmail();
+        mail.subject = "{{params.subject}}";
+        mail.htmlContent = `<html><body>
       <h1>Hello {{params.username}}</h1>
       <p>Thank you for registering an account at <a href="https://hyottoko.club">hyottoko.club</a>.</p>
       <p>Please confirm your registration by clicking the following link:</p>
       <p><a href="{{params.link}}">{{params.link}}</a></p>
       </body></html>`;
-    mail.sender = { name: "Hyottoko.club", email: "noreply@hyottoko.club" };
-    mail.to = [{
-      email: registration.user.email,
-      name: registration.user.name,
-    }];
-    mail.params = {
-      username: registration.user.name,
-      subject: "User Registration on Hyottoko.club",
-      link: `https://hyottoko.club/login?t=${registration.token.token}`
-    };
-    this.send(mail);
-  }
-
-  send(mail) {
-    this.apiInstance.sendTransacEmail(mail).then(function (data) {
-      console.log('API called successfully. Returned data: ' + JSON.stringify(data));
-    }, function (error) {
-      console.error(error);
-    });
-  }
+        mail.sender = { name: "Hyottoko.club", email: "noreply@hyottoko.club" };
+        mail.to = [{
+                email: registration.user.email,
+                name: registration.user.name,
+            }];
+        mail.params = {
+            username: registration.user.name,
+            subject: "User Registration on Hyottoko.club",
+            link: `https://hyottoko.club/login?t=${registration.token.token}`
+        };
+        this.send(mail);
+    }
+    send(mail) {
+        this.apiInstance.sendTransacEmail(mail).then(function (data) {
+            log$2.info('API called successfully. Returned data: ' + JSON.stringify(data));
+        }, function (error) {
+            log$2.error(error);
+        });
+    }
 }
 
 class EventHub {

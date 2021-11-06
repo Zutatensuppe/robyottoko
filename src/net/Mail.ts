@@ -1,14 +1,21 @@
+// @ts-ignore
 import SibApiV3Sdk from 'sib-api-v3-sdk'
+import fn from '../fn';
+import { MailConfig, MailServicePasswordResetData, MailServiceRegistrationData } from '../types';
+
+const log = fn.logger('Mail.ts')
 
 class Mail {
-  constructor(cfg) {
+  private apiInstance: SibApiV3Sdk.TransactionalEmailsApi
+
+  constructor(cfg: MailConfig) {
     const defaultClient = SibApiV3Sdk.ApiClient.instance
     const apiKey = defaultClient.authentications['api-key']
     apiKey.apiKey = cfg.sendinblue_api_key
     this.apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
   }
 
-  sendPasswordResetMail(passwordReset) {
+  sendPasswordResetMail(passwordReset: MailServicePasswordResetData) {
     const mail = new SibApiV3Sdk.SendSmtpEmail();
     mail.subject = "{{params.subject}}";
     mail.htmlContent = `<html><body>
@@ -30,7 +37,7 @@ class Mail {
     this.send(mail)
   }
 
-  sendRegistrationMail(registration) {
+  sendRegistrationMail(registration: MailServiceRegistrationData) {
     const mail = new SibApiV3Sdk.SendSmtpEmail();
     mail.subject = "{{params.subject}}";
     mail.htmlContent = `<html><body>
@@ -52,11 +59,11 @@ class Mail {
     this.send(mail)
   }
 
-  send(mail) {
-    this.apiInstance.sendTransacEmail(mail).then(function (data) {
-      console.log('API called successfully. Returned data: ' + JSON.stringify(data))
-    }, function (error) {
-      console.error(error)
+  send(mail: SibApiV3Sdk.SendSmtpEmail) {
+    this.apiInstance.sendTransacEmail(mail).then(function (data: any) {
+      log.info('API called successfully. Returned data: ' + JSON.stringify(data))
+    }, function (error: any) {
+      log.error(error)
     });
   }
 }
