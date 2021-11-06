@@ -233,25 +233,31 @@ const doReplacements = async (
 ) => {
   const replaces: { regex: RegExp, replacer: (...args: string[]) => Promise<any> }[] = [
     {
-      regex: /\$args\(\)/g,
-      replacer: async (m0: string, m1: string) => {
+      regex: /\$args\((\d*)(:?)(\d*)\)/g,
+      replacer: async (m0: string, m1: string, m2: string, m3: string) => {
         if (!command) {
           return ''
         }
-        return command.args.join(' ')
-      },
-    },
-    {
-      regex: /\$args\((\d+)\)/g,
-      replacer: async (m0: string, m1: string) => {
-        if (!command) {
+        let from = 0
+        let to = 0
+        if (m1 !== '') {
+          from = parseInt(m1, 10)
+          to = from
+        }
+        if (m2 !== '') {
+          to = command.args.length - 1
+        }
+        if (m3 !== '') {
+          to = parseInt(m3, 10)
+        }
+        if (from === to) {
+          const index = from
+          if (index < command.args.length) {
+            return command.args[index]
+          }
           return ''
         }
-        const index = parseInt(m1, 10)
-        if (index < command.args.length) {
-          return command.args[index]
-        }
-        return ''
+        return command.args.slice(from, to + 1).join(' ')
       },
     },
     {

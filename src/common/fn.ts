@@ -104,13 +104,7 @@ export function arrayMove(arr: any[], oldIndex: number, newIndex: number) {
 const doDummyReplacements = (text: string, str: string) => {
   const replaces = [
     {
-      regex: /\$args\(\)/g,
-      replacer: (m0: string, m1: string) => {
-        return str
-      },
-    },
-    {
-      regex: /\$args\((\d+)\)/g,
+      regex: /\$args\((\d*)(:?)(\d*)\)/g,
       replacer: (m0: string, m1: string) => {
         return str
       },
