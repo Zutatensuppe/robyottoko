@@ -2,59 +2,6 @@
   <div id="app">
     <div id="top" ref="top">
       <navbar />
-      <div id="actionbar" class="p-1">
-        <button
-          class="button is-small mr-1"
-          :disabled="inited ? null : true"
-          @click="add('text')"
-          title="Send a message to chat"
-        >
-          Add text
-        </button>
-        <button
-          class="button is-small mr-1"
-          @click="add('media')"
-          :disabled="inited ? null : true"
-          title="Display an image and/or play a sound"
-        >
-          Add media
-        </button>
-        <button
-          class="button is-small mr-1"
-          @click="add('countdown')"
-          :disabled="inited ? null : true"
-          title="Add a countdown or messages spaced by time intervals"
-        >
-          Add countdown
-        </button>
-        <button
-          class="button is-small mr-1"
-          @click="add('jisho_org_lookup')"
-          :disabled="inited ? null : true"
-          title="Lookup a word via jisho.org"
-        >
-          Add jisho_org_lookup
-        </button>
-        <button
-          class="button is-small mr-1"
-          @click="add('madochan_createword')"
-          :disabled="inited ? null : true"
-          title="Create a word with madochan"
-        >
-          Add madochan
-        </button>
-        <button
-          class="button is-small mr-1"
-          @click="add('chatters')"
-          :disabled="inited ? null : true"
-          title="Displays users who chatted during the stream"
-        >
-          Add chatters
-        </button>
-        <a class="button is-small" :href="widgetUrl" target="_blank"
-          >Open Media widget</a
-        >
-      </div>
     </div>
     <div id="main" ref="main">
       <command-edit
@@ -97,6 +44,46 @@
               :value="possibleAction"
               v-model="filter.actions"
             />{{ possibleAction }}</label
+          >
+          <div
+            class="dropdown"
+            :class="{ 'is-active': addDropdownActive }"
+            ref="addDropdown"
+          >
+            <div class="dropdown-trigger">
+              <button
+                class="button is-small mr-1"
+                aria-haspopup="true"
+                aria-controls="dropdown-menu"
+                :disabled="inited ? null : true"
+                @click="openDropdown"
+              >
+                <span>Add command</span>
+                <span class="icon is-small">
+                  <i class="fa fa-angle-down" aria-hidden="true"></i>
+                </span>
+              </button>
+            </div>
+            <div class="dropdown-menu" id="dropdown-menu" role="menu">
+              <div class="dropdown-content">
+                <a
+                  href="#"
+                  class="dropdown-item"
+                  v-for="(possibleCommand, idx) in possibleCommands"
+                  :key="idx"
+                  @click="
+                    closeDropdown();
+                    add(possibleCommand.action);
+                  "
+                  :title="possibleCommand.title"
+                >
+                  {{ possibleCommand.text }}
+                </a>
+              </div>
+            </div>
+          </div>
+          <a class="button is-small" :href="widgetUrl" target="_blank"
+            >Open Media widget</a
           >
         </div>
 
@@ -341,6 +328,9 @@ interface ComponentData {
   editIdx: number | null;
   editCommand: Command | null;
   inited: boolean;
+
+  addDropdownActive: boolean;
+  possibleCommands: { action: string; title: string; text: string }[];
   possibleActions: string[];
   filter: {
     actions: string[];
@@ -363,6 +353,35 @@ export default defineComponent({
     editIdx: null,
     editCommand: null,
 
+    addDropdownActive: false,
+    possibleCommands: [
+      { action: "text", title: "Send a message to chat", text: "Add text" },
+      {
+        action: "media",
+        title: "Display an image and/or play a sound",
+        text: "Add media",
+      },
+      {
+        action: "countdown",
+        title: "Add a countdown or messages spaced by time intervals",
+        text: "Add countdown",
+      },
+      {
+        action: "jisho_org_lookup",
+        title: "Lookup a word via jisho.org",
+        text: "Add jisho_org_lookup",
+      },
+      {
+        action: "madochan_createword",
+        title: "Create a word with madochan",
+        text: "Add madochan",
+      },
+      {
+        action: "chatters",
+        title: "Displays users who chatted during the stream",
+        text: "Add chatters",
+      },
+    ],
     possibleActions: [
       "text",
       "media",
@@ -462,6 +481,20 @@ export default defineComponent({
       this.commands = fn.arrayMove(this.commands, evt.oldIndex, evt.newIndex);
       this.sendSave();
     },
+    openDropdown() {
+      this.addDropdownActive = true;
+    },
+    closeDropdown() {
+      this.addDropdownActive = false;
+    },
+    hideAddDropdown(e: Event) {
+      if (
+        (this.$refs.addDropdown as HTMLDivElement).contains(e.target as any)
+      ) {
+        return;
+      }
+      this.closeDropdown();
+    },
   },
   async mounted() {
     this.ws = new WsClient(this.$conf.wsBase + "/general", this.$me.token);
@@ -473,11 +506,13 @@ export default defineComponent({
       this.inited = true;
     });
     this.ws.connect();
+    window.addEventListener("click", this.hideAddDropdown);
   },
   unmounted() {
     if (this.ws) {
       this.ws.disconnect();
     }
+    window.removeEventListener("click", this.hideAddDropdown);
   },
 });
 </script>
