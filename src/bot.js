@@ -17,7 +17,7 @@ import EventHub from './EventHub.ts'
 import GeneralModule from './mod/modules/GeneralModule.ts'
 import SongrequestModule from './mod/modules/SongrequestModule.ts'
 import VoteModule from './mod/modules/VoteModule.ts'
-import SpeechToTextModule from './mod/modules/SpeechToTextModule'
+import SpeechToTextModule from './mod/modules/SpeechToTextModule.ts'
 import DrawcastModule from './mod/modules/DrawcastModule.ts'
 
 import { fileURLToPath } from 'url'
