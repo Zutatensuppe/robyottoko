@@ -4,7 +4,7 @@ import path from 'path'
 import { getText } from './net/xhr'
 import { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove } from './common/fn'
 
-import { Command, GlobalVariable, LogLevel, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, BotModule } from './types'
+import { Command, GlobalVariable, LogLevel, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module } from './types'
 import Variables from './services/Variables'
 
 export { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove }
@@ -98,7 +98,7 @@ const sayFn = (
     })
   }
 
-const mayExecute = (context: TwitchChatContext, cmd: Command) => {
+const mayExecute = (context: TwitchChatContext, cmd: Command | FunctionCommand) => {
   if (!cmd.restrict_to || cmd.restrict_to.length === 0) {
     return true
   }
@@ -132,7 +132,7 @@ const parseCommandFromMessage = (msg: string) => {
 }
 
 const tryExecuteCommand = async (
-  contextModule: BotModule,
+  contextModule: Module,
   rawCmd: RawCommand,
   cmdDefs: FunctionCommand[],
   client: TwitchChatClient,
@@ -154,28 +154,30 @@ const tryExecuteCommand = async (
         const value = await doReplacements(variableChange.value, rawCmd, context, variables, cmdDef)
 
         // check if there is a local variable for the change
-        let idx = cmdDef.variables.findIndex(v => (v.name === name))
-        if (idx !== -1) {
-          if (op === 'set') {
-            cmdDef.variables[idx].value = value
-          } else if (op === 'increase_by') {
-            cmdDef.variables[idx].value = (
-              parseInt(cmdDef.variables[idx].value, 10)
-              + parseInt(value, 10)
-            )
-          } else if (op === 'decrease_by') {
-            cmdDef.variables[idx].value = (
-              parseInt(cmdDef.variables[idx].value, 10)
-              - parseInt(value, 10)
-            )
+        if (cmdDef.variables) {
+          const idx = cmdDef.variables.findIndex(v => (v.name === name))
+          if (idx !== -1) {
+            if (op === 'set') {
+              cmdDef.variables[idx].value = value
+            } else if (op === 'increase_by') {
+              cmdDef.variables[idx].value = (
+                parseInt(cmdDef.variables[idx].value, 10)
+                + parseInt(value, 10)
+              )
+            } else if (op === 'decrease_by') {
+              cmdDef.variables[idx].value = (
+                parseInt(cmdDef.variables[idx].value, 10)
+                - parseInt(value, 10)
+              )
+            }
+            console.log(cmdDef.variables[idx].value)
+            //
+            continue
           }
-          console.log(cmdDef.variables[idx].value)
-          //
-          continue
         }
 
         const globalVars: GlobalVariable[] = contextModule.variables.all()
-        idx = globalVars.findIndex(v => (v.name === name))
+        const idx = globalVars.findIndex(v => (v.name === name))
         if (idx !== -1) {
           if (op === 'set') {
             contextModule.variables.set(name, value)
@@ -229,7 +231,7 @@ const doReplacements = async (
   command: RawCommand | null,
   context: TwitchChatContext | null,
   variables: Variables,
-  originalCmd: Command,
+  originalCmd: Command | FunctionCommand,
 ) => {
   const replaces: { regex: RegExp, replacer: (...args: string[]) => Promise<any> }[] = [
     {
@@ -263,6 +265,9 @@ const doReplacements = async (
     {
       regex: /\$var\(([^)]+)\)/g,
       replacer: async (m0: string, m1: string) => {
+        if (!originalCmd.variables) {
+          return ''
+        }
         const v = originalCmd.variables.find(v => v.name === m1)
         const val = v ? v.value : variables.get(m1)
         return val === null ? '' : val

@@ -1,24 +1,46 @@
+// @ts-ignore
 import tmi from 'tmi.js'
-import TwitchHelixClient from '../services/TwitchHelixClient.ts'
-import fn from '../fn.ts'
-import Db from '../Db.ts'
-import TwitchChannels from '../services/TwitchChannels.ts'
-import EventHub from '../EventHub.ts'
+import TwitchHelixClient from '../services/TwitchHelixClient'
+import fn from '../fn'
+import Db from '../Db'
+import TwitchChannels from '../services/TwitchChannels'
+import EventHub from '../EventHub'
 import { fileURLToPath } from 'url'
+import { User } from '../services/Users'
+import ModuleManager from '../mod/ModuleManager'
+import Variables from '../services/Variables'
+import { TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
 
 const __filename = fileURLToPath(import.meta.url)
 
+interface Identity {
+  username: string
+  password: string
+  client_id: string
+  client_secret: string
+}
+
 class TwitchClientManager {
+  private cfg: TwitchConfig
+  private db: Db
+  private user: User
+  private twitchChannelRepo: TwitchChannels
+  private moduleManager: ModuleManager
+  private variables: Variables
+
+  private chatClient: TwitchChatClient | null = null
+  private helixClient: TwitchHelixClient | null = null
+  private identity: Identity | null = null
+
   constructor(
-    /** @type EventHub */ eventHub,
-    cfg,
-    /** @type Db */ db,
-    user,
-    /** @type TwitchChannels */ twitchChannelRepo,
-    moduleManager,
-    variables,
+    eventHub: EventHub,
+    cfg: TwitchConfig,
+    db: Db,
+    user: User,
+    twitchChannelRepo: TwitchChannels,
+    moduleManager: ModuleManager,
+    variables: Variables,
   ) {
-    this.eventHub = eventHub
     this.cfg = cfg
     this.db = db
     this.user = user
@@ -28,15 +50,15 @@ class TwitchClientManager {
 
     this.init('init')
 
-    eventHub.on('user_changed', (tmpUser) => {
-      if (tmpUser.id === user.id) {
-        this.user = tmpUser
+    eventHub.on('user_changed', (changedUser: User) => {
+      if (changedUser.id === user.id) {
+        this.user = changedUser
         this.init('user_change')
       }
     })
   }
 
-  async init(reason) {
+  async init(reason: string) {
     let connectReason = reason
     const cfg = this.cfg
     const db = this.db
@@ -51,11 +73,11 @@ class TwitchClientManager {
         await this.chatClient.disconnect()
       } catch (e) { }
     }
-    if (this.pubSubClient) {
-      try {
-        this.pubSubClient.disconnect()
-      } catch (e) { }
-    }
+    // if (this.pubSubClient) {
+    //   try {
+    //     this.pubSubClient.disconnect()
+    //   } catch (e) { }
+    // }
 
     const twitchChannels = twitchChannelRepo.allByUserId(user.id)
     if (twitchChannels.length === 0) {
@@ -63,7 +85,7 @@ class TwitchClientManager {
       return
     }
 
-    this.identity = (
+    const identity = (
       user.tmi_identity_username
       && user.tmi_identity_password
       && user.tmi_identity_client_id
@@ -78,21 +100,23 @@ class TwitchClientManager {
       client_id: cfg.tmi.identity.client_id,
       client_secret: cfg.tmi.identity.client_secret,
     }
+    this.identity = identity
 
     // connect to chat via tmi (to all channels configured)
-    this.chatClient = new tmi.client({
+    const chatClient = new tmi.client({
       identity: {
-        username: this.identity.username,
-        password: this.identity.password,
-        client_id: this.identity.client_id,
+        username: identity.username,
+        password: identity.password,
+        client_id: identity.client_id,
       },
       channels: twitchChannels.map(ch => ch.channel_name),
       connection: {
         reconnect: true,
       }
     })
+    this.chatClient = chatClient
 
-    this.chatClient.on('message', async (target, context, msg, self) => {
+    chatClient.on('message', async (target: string, context: TwitchChatContext, msg: string, self: boolean) => {
       if (self) { return; } // Ignore messages from the bot
 
       // log.debug(context)
@@ -120,18 +144,18 @@ class TwitchClientManager {
       for (const m of moduleManager.all(user.id)) {
         const commands = m.getCommands() || {}
         const cmdDefs = commands[rawCmd.name] || []
-        await fn.tryExecuteCommand(m, rawCmd, cmdDefs, this.chatClient, target, context, msg, this.variables)
-        await m.onChatMsg(this.chatClient, target, context, msg);
+        await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg, this.variables)
+        await m.onChatMsg(chatClient, target, context, msg);
       }
     })
 
     // Called every time the bot connects to Twitch chat
-    this.chatClient.on('connected', (addr, port) => {
+    chatClient.on('connected', (addr: string, port: number) => {
       log.info(`* Connected to ${addr}:${port}`)
       for (let channel of twitchChannels) {
         // note: this can lead to multiple messages if multiple users
         //       have the same channels set up
-        const say = fn.sayFn(this.chatClient, channel.channel_name)
+        const say = fn.sayFn(chatClient, channel.channel_name)
         if (connectReason === 'init') {
           say('⚠️ Bot rebooted - please restart timers...')
         } else if (connectReason === 'user_change') {
@@ -182,15 +206,16 @@ class TwitchClientManager {
     //   })
     // })
 
-    this.chatClient.connect()
+    chatClient.connect()
     // this.pubSubClient.connect()
 
     // register EventSub
     // @see https://dev.twitch.tv/docs/eventsub
-    this.helixClient = new TwitchHelixClient(
-      this.identity.client_id,
-      this.identity.client_secret
+    const helixClient = new TwitchHelixClient(
+      identity.client_id,
+      identity.client_secret
     )
+    this.helixClient = helixClient
 
     // to delete all subscriptions
     // ;(async () => {

@@ -128,13 +128,15 @@ export interface GlobalVariable {
 export interface TwitchChatClient extends Client {
   channels: string[]
   say: (target: string, msg: string) => Promise<any>
+  disconnect: () => any
+  on: (event: string, callback: (target: string, context: TwitchChatContext, msg: string, self: boolean) => Promise<void>) => void
 }
 
 export interface TwitchChatContext {
   "room-id": any
   "user-id": any
   "display-name": string
-  // username: string
+  username: string
   mod: any
   subscriber: any
 }
@@ -209,7 +211,13 @@ export interface CountdownCommand extends Command {
   }
 }
 
-export interface FunctionCommand extends Command {
+export interface FunctionCommand {
+  triggers?: CommandTrigger[]
+  action?: CommandAction
+  restrict_to?: CommandRestrict[]
+  variables?: CommandVariable[]
+  variableChanges?: CommandVariableChange[]
+  data?: CommandData
   fn: (
     rawCmd: RawCommand | null,
     client: Client,
@@ -219,16 +227,15 @@ export interface FunctionCommand extends Command {
   ) => any
 }
 
-export interface BotModule {
-  variables: Variables
-  saveCommands: () => void
-}
-
 export interface Module {
   name: string
+  variables: Variables
+  saveCommands: () => void
   getWsEvents: () => Record<string, (ws: Socket, data?: any) => any>
   widgets: () => Record<string, (req: any, res: any, next: Function) => Promise<any>>
   getRoutes: () => Record<string, Record<string, (req: any, res: any, next: Function) => Promise<any>>>
+  getCommands: () => Record<string, FunctionCommand[]>
+  onChatMsg: (client: TwitchChatClient, target: string, context: TwitchChatContext, msg: string) => Promise<void>
 }
 
 interface MailServiceUser {

@@ -268,25 +268,27 @@ const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, client, target,
                 const name = await doReplacements(variableChange.name, rawCmd, context, variables, cmdDef);
                 const value = await doReplacements(variableChange.value, rawCmd, context, variables, cmdDef);
                 // check if there is a local variable for the change
-                let idx = cmdDef.variables.findIndex(v => (v.name === name));
-                if (idx !== -1) {
-                    if (op === 'set') {
-                        cmdDef.variables[idx].value = value;
+                if (cmdDef.variables) {
+                    const idx = cmdDef.variables.findIndex(v => (v.name === name));
+                    if (idx !== -1) {
+                        if (op === 'set') {
+                            cmdDef.variables[idx].value = value;
+                        }
+                        else if (op === 'increase_by') {
+                            cmdDef.variables[idx].value = (parseInt(cmdDef.variables[idx].value, 10)
+                                + parseInt(value, 10));
+                        }
+                        else if (op === 'decrease_by') {
+                            cmdDef.variables[idx].value = (parseInt(cmdDef.variables[idx].value, 10)
+                                - parseInt(value, 10));
+                        }
+                        console.log(cmdDef.variables[idx].value);
+                        //
+                        continue;
                     }
-                    else if (op === 'increase_by') {
-                        cmdDef.variables[idx].value = (parseInt(cmdDef.variables[idx].value, 10)
-                            + parseInt(value, 10));
-                    }
-                    else if (op === 'decrease_by') {
-                        cmdDef.variables[idx].value = (parseInt(cmdDef.variables[idx].value, 10)
-                            - parseInt(value, 10));
-                    }
-                    console.log(cmdDef.variables[idx].value);
-                    //
-                    continue;
                 }
                 const globalVars = contextModule.variables.all();
-                idx = globalVars.findIndex(v => (v.name === name));
+                const idx = globalVars.findIndex(v => (v.name === name));
                 if (idx !== -1) {
                     if (op === 'set') {
                         contextModule.variables.set(name, value);
@@ -360,6 +362,9 @@ const doReplacements = async (text, command, context, variables, originalCmd) =>
         {
             regex: /\$var\(([^)]+)\)/g,
             replacer: async (m0, m1) => {
+                if (!originalCmd.variables) {
+                    return '';
+                }
                 const v = originalCmd.variables.find(v => v.name === m1);
                 const val = v ? v.value : variables.get(m1);
                 return val === null ? '' : val;
@@ -1275,7 +1280,10 @@ class WebServer {
             });
             this.userRepo.save(user);
             this.twitchChannelRepo.saveUserChannels(user.id, twitch_channels);
-            this.eventHub.trigger('user_changed', this.userRepo.getById(user.id));
+            const changedUser = this.userRepo.getById(user.id);
+            if (changedUser) {
+                this.eventHub.trigger('user_changed', changedUser);
+            }
             res.send();
         });
         // twitch calls this url after auth
@@ -1404,7 +1412,332 @@ class WebServer {
     }
 }
 
-const log$3 = logger('Db.ts');
+// @ts-ignore
+const __filename$1 = fileURLToPath(import.meta.url);
+class TwitchClientManager {
+    constructor(eventHub, cfg, db, user, twitchChannelRepo, moduleManager, variables) {
+        this.chatClient = null;
+        this.helixClient = null;
+        this.identity = null;
+        this.cfg = cfg;
+        this.db = db;
+        this.user = user;
+        this.twitchChannelRepo = twitchChannelRepo;
+        this.moduleManager = moduleManager;
+        this.variables = variables;
+        this.init('init');
+        eventHub.on('user_changed', (changedUser) => {
+            if (changedUser.id === user.id) {
+                this.user = changedUser;
+                this.init('user_change');
+            }
+        });
+    }
+    async init(reason) {
+        let connectReason = reason;
+        const cfg = this.cfg;
+        const db = this.db;
+        const user = this.user;
+        const twitchChannelRepo = this.twitchChannelRepo;
+        const moduleManager = this.moduleManager;
+        const log = fn.logger(__filename$1, `${user.name}|`);
+        if (this.chatClient) {
+            try {
+                await this.chatClient.disconnect();
+            }
+            catch (e) { }
+        }
+        // if (this.pubSubClient) {
+        //   try {
+        //     this.pubSubClient.disconnect()
+        //   } catch (e) { }
+        // }
+        const twitchChannels = twitchChannelRepo.allByUserId(user.id);
+        if (twitchChannels.length === 0) {
+            log.info(`* No twitch channels configured`);
+            return;
+        }
+        const identity = (user.tmi_identity_username
+            && user.tmi_identity_password
+            && user.tmi_identity_client_id) ? {
+            username: user.tmi_identity_username,
+            password: user.tmi_identity_password,
+            client_id: user.tmi_identity_client_id,
+            client_secret: user.tmi_identity_client_secret,
+        } : {
+            username: cfg.tmi.identity.username,
+            password: cfg.tmi.identity.password,
+            client_id: cfg.tmi.identity.client_id,
+            client_secret: cfg.tmi.identity.client_secret,
+        };
+        this.identity = identity;
+        // connect to chat via tmi (to all channels configured)
+        const chatClient = new tmi.client({
+            identity: {
+                username: identity.username,
+                password: identity.password,
+                client_id: identity.client_id,
+            },
+            channels: twitchChannels.map(ch => ch.channel_name),
+            connection: {
+                reconnect: true,
+            }
+        });
+        this.chatClient = chatClient;
+        chatClient.on('message', async (target, context, msg, self) => {
+            if (self) {
+                return;
+            } // Ignore messages from the bot
+            // log.debug(context)
+            const roles = [];
+            if (fn.isMod(context)) {
+                roles.push('M');
+            }
+            if (fn.isSubscriber(context)) {
+                roles.push('S');
+            }
+            if (fn.isBroadcaster(context)) {
+                roles.push('B');
+            }
+            log.info(`${context.username}[${roles.join('')}]@${target}: ${msg}`);
+            const rawCmd = fn.parseCommandFromMessage(msg);
+            db.insert('chat_log', {
+                created_at: `${new Date().toJSON()}`,
+                broadcaster_user_id: context['room-id'],
+                user_name: context.username,
+                display_name: context['display-name'],
+                message: msg,
+            });
+            for (const m of moduleManager.all(user.id)) {
+                const commands = m.getCommands() || {};
+                const cmdDefs = commands[rawCmd.name] || [];
+                await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg, this.variables);
+                await m.onChatMsg(chatClient, target, context, msg);
+            }
+        });
+        // Called every time the bot connects to Twitch chat
+        chatClient.on('connected', (addr, port) => {
+            log.info(`* Connected to ${addr}:${port}`);
+            for (let channel of twitchChannels) {
+                // note: this can lead to multiple messages if multiple users
+                //       have the same channels set up
+                const say = fn.sayFn(chatClient, channel.channel_name);
+                if (connectReason === 'init') {
+                    say('⚠️ Bot rebooted - please restart timers...');
+                }
+                else if (connectReason === 'user_change') {
+                    say('✅ User settings updated...');
+                }
+                else {
+                    say('✅ Reconnected...');
+                }
+            }
+            // set connectReason to empty, everything from now is just a reconnect
+            // due to disconnect from twitch
+            connectReason = '';
+        });
+        // connect to PubSub websocket
+        // https://dev.twitch.tv/docs/pubsub#topics
+        // this.pubSubClient = TwitchPubSubClient()
+        // this.pubSubClient.on('open', async () => {
+        //   // listen for evts
+        //   for (let channel of twitchChannels) {
+        //     if (channel.access_token && channel.channel_id) {
+        //       this.pubSubClient.listen(
+        //         `channel-points-channel-v1.${channel.channel_id}`,
+        //         channel.access_token
+        //       )
+        //     }
+        //   }
+        //   this.pubSubClient.on('message', (message) => {
+        //     if (message.type !== 'MESSAGE') {
+        //       return
+        //     }
+        //     const messageData = JSON.parse(message.data.message)
+        //     // channel points redeemed with non standard reward
+        //     // standard rewards are not supported :/
+        //     if (messageData.type === 'reward-redeemed') {
+        //       const redemption = messageData.data.redemption
+        //       // redemption.reward
+        //       // { id, channel_id, title, prompt, cost, ... }
+        //       // redemption.userchatClient
+        //       // { id, login, display_name}
+        //       for (const m of moduleManager.all(user.id)) {
+        //         if (m.handleRewardRedemption) {
+        //           m.handleRewardRedemption(redemption)
+        //         }
+        //       }
+        //     }
+        //   })
+        // })
+        chatClient.connect();
+        // this.pubSubClient.connect()
+        // register EventSub
+        // @see https://dev.twitch.tv/docs/eventsub
+        const helixClient = new TwitchHelixClient(identity.client_id, identity.client_secret);
+        this.helixClient = helixClient;
+        // to delete all subscriptions
+        // ;(async () => {
+        //   const subzz = await this.helixClient.getSubscriptions()
+        //   for (const s of subzz.data) {
+        //     console.log(s.id)
+        //     await this.helixClient.deleteSubscription(s.id)
+        //   }
+        // })()
+    }
+    getChatClient() {
+        return this.chatClient;
+    }
+    getHelixClient() {
+        return this.helixClient;
+    }
+    getIdentity() {
+        return this.identity;
+    }
+}
+
+const log$3 = logger('ModuleStorage.ts');
+const TABLE$4 = 'module';
+class ModuleStorage {
+    constructor(db, userId) {
+        this.db = db;
+        this.userId = userId;
+    }
+    load(key, def) {
+        try {
+            const where = { user_id: this.userId, key };
+            const row = this.db.get(TABLE$4, where);
+            const data = row ? JSON.parse('' + row.data) : null;
+            return data ? Object.assign({}, def, data) : def;
+        }
+        catch (e) {
+            log$3.error(e);
+            return def;
+        }
+    }
+    save(key, rawData) {
+        const where = { user_id: this.userId, key };
+        const data = JSON.stringify(rawData);
+        const dbData = Object.assign({}, where, { data });
+        this.db.upsert(TABLE$4, dbData, where);
+    }
+}
+
+const TABLE$3 = 'user';
+class Users {
+    constructor(db) {
+        this.db = db;
+    }
+    get(by) {
+        return this.db.get(TABLE$3, by) || null;
+    }
+    all() {
+        return this.db.getMany(TABLE$3);
+    }
+    getById(id) {
+        return this.get({ id });
+    }
+    save(user) {
+        return this.db.upsert(TABLE$3, user, { id: user.id });
+    }
+    getGroups(id) {
+        const rows = this.db._getMany(`
+select g.name from user_group g inner join user_x_user_group x
+where x.user_id = ?`, [id]);
+        return rows.map(r => r.name);
+    }
+    createUser(user) {
+        return this.db.insert(TABLE$3, user);
+    }
+}
+
+const TABLE$2 = 'token';
+function generateToken(length) {
+    // edit the token allowed characters
+    const a = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'.split('');
+    const b = [];
+    for (let i = 0; i < length; i++) {
+        const j = parseInt((Math.random() * (a.length - 1)).toFixed(0), 10);
+        b[i] = a[j];
+    }
+    return b.join('');
+}
+class Tokens {
+    constructor(db) {
+        this.db = db;
+    }
+    getByUserIdAndType(user_id, type) {
+        return this.db.get(TABLE$2, { user_id, type });
+    }
+    insert(tokenInfo) {
+        return this.db.insert(TABLE$2, tokenInfo);
+    }
+    createToken(user_id, type) {
+        const token = generateToken(32);
+        const tokenObj = { user_id, type, token };
+        this.insert(tokenObj);
+        return tokenObj;
+    }
+    getOrCreateToken(user_id, type) {
+        return this.getByUserIdAndType(user_id, type) || this.createToken(user_id, type);
+    }
+    getByToken(token) {
+        return this.db.get(TABLE$2, { token }) || null;
+    }
+    delete(token) {
+        return this.db.delete(TABLE$2, { token });
+    }
+    getWidgetTokenForUserId(user_id) {
+        return this.getOrCreateToken(user_id, 'widget');
+    }
+    getPubTokenForUserId(user_id) {
+        return this.getOrCreateToken(user_id, 'pub');
+    }
+    generateAuthTokenForUserId(user_id) {
+        return this.createToken(user_id, 'auth');
+    }
+}
+
+const TABLE$1 = 'twitch_channel';
+class TwitchChannels {
+    constructor(db) {
+        this.db = db;
+    }
+    save(channel) {
+        return this.db.upsert(TABLE$1, channel, {
+            user_id: channel.user_id,
+            channel_name: channel.channel_name,
+        });
+    }
+    allByUserId(user_id) {
+        return this.db.getMany(TABLE$1, { user_id });
+    }
+    saveUserChannels(user_id, channels) {
+        for (const channel of channels) {
+            this.save(channel);
+        }
+        this.db.delete(TABLE$1, {
+            user_id: user_id,
+            channel_name: { '$nin': channels.map(c => c.channel_name) }
+        });
+    }
+}
+
+const TABLE = 'cache';
+class Cache {
+    constructor(db) {
+        this.db = db;
+    }
+    set(key, value) {
+        this.db.upsert(TABLE, { key, value: JSON.stringify(value) }, { key });
+    }
+    get(key) {
+        const row = this.db.get(TABLE, { key });
+        return row ? JSON.parse(row.value) : null;
+    }
+}
+
+const log$2 = logger('Db.ts');
 class Db {
     constructor(dbConf) {
         this.conf = dbConf;
@@ -1422,7 +1755,7 @@ class Db {
         for (const f of files) {
             if (patches.includes(f)) {
                 if (verbose) {
-                    log$3.info(`➡ skipping already applied db patch: ${f}`);
+                    log$2.info(`➡ skipping already applied db patch: ${f}`);
                 }
                 continue;
             }
@@ -1432,16 +1765,16 @@ class Db {
                 this.dbh.transaction((all) => {
                     for (const q of all) {
                         if (verbose) {
-                            log$3.info(`Running: ${q}`);
+                            log$2.info(`Running: ${q}`);
                         }
                         this.run(q);
                     }
                     this.insert('db_patches', { id: f });
                 })(all);
-                log$3.info(`✓ applied db patch: ${f}`);
+                log$2.info(`✓ applied db patch: ${f}`);
             }
             catch (e) {
-                log$3.error(`✖ unable to apply patch: ${f} ${e}`);
+                log$2.error(`✖ unable to apply patch: ${f} ${e}`);
                 return;
             }
         }
@@ -1578,374 +1911,6 @@ class Db {
     }
 }
 
-const TABLE$4 = 'twitch_channel';
-class TwitchChannels {
-    constructor(db) {
-        this.db = db;
-    }
-    save(channel) {
-        return this.db.upsert(TABLE$4, channel, {
-            user_id: channel.user_id,
-            channel_name: channel.channel_name,
-        });
-    }
-    allByUserId(user_id) {
-        return this.db.getMany(TABLE$4, { user_id });
-    }
-    saveUserChannels(user_id, channels) {
-        for (const channel of channels) {
-            this.save(channel);
-        }
-        this.db.delete(TABLE$4, {
-            user_id: user_id,
-            channel_name: { '$nin': channels.map(c => c.channel_name) }
-        });
-    }
-}
-
-class EventHub {
-    constructor() {
-        this.cbs = {};
-    }
-    on(what, cb) {
-        this.cbs[what] = this.cbs[what] || [];
-        this.cbs[what].push(cb);
-    }
-    trigger(what, data) {
-        if (!this.cbs[what]) {
-            return;
-        }
-        for (const cb of this.cbs[what]) {
-            cb(data);
-        }
-    }
-}
-
-const __filename$1 = fileURLToPath(import.meta.url);
-
-class TwitchClientManager {
-  constructor(
-    /** @type EventHub */ eventHub,
-    cfg,
-    /** @type Db */ db,
-    user,
-    /** @type TwitchChannels */ twitchChannelRepo,
-    moduleManager,
-    variables,
-  ) {
-    this.eventHub = eventHub;
-    this.cfg = cfg;
-    this.db = db;
-    this.user = user;
-    this.twitchChannelRepo = twitchChannelRepo;
-    this.moduleManager = moduleManager;
-    this.variables = variables;
-
-    this.init('init');
-
-    eventHub.on('user_changed', (tmpUser) => {
-      if (tmpUser.id === user.id) {
-        this.user = tmpUser;
-        this.init('user_change');
-      }
-    });
-  }
-
-  async init(reason) {
-    let connectReason = reason;
-    const cfg = this.cfg;
-    const db = this.db;
-    const user = this.user;
-    const twitchChannelRepo = this.twitchChannelRepo;
-    const moduleManager = this.moduleManager;
-
-    const log = fn.logger(__filename$1, `${user.name}|`);
-
-    if (this.chatClient) {
-      try {
-        await this.chatClient.disconnect();
-      } catch (e) { }
-    }
-    if (this.pubSubClient) {
-      try {
-        this.pubSubClient.disconnect();
-      } catch (e) { }
-    }
-
-    const twitchChannels = twitchChannelRepo.allByUserId(user.id);
-    if (twitchChannels.length === 0) {
-      log.info(`* No twitch channels configured`);
-      return
-    }
-
-    this.identity = (
-      user.tmi_identity_username
-      && user.tmi_identity_password
-      && user.tmi_identity_client_id
-    ) ? {
-      username: user.tmi_identity_username,
-      password: user.tmi_identity_password,
-      client_id: user.tmi_identity_client_id,
-      client_secret: user.tmi_identity_client_secret,
-    } : {
-      username: cfg.tmi.identity.username,
-      password: cfg.tmi.identity.password,
-      client_id: cfg.tmi.identity.client_id,
-      client_secret: cfg.tmi.identity.client_secret,
-    };
-
-    // connect to chat via tmi (to all channels configured)
-    this.chatClient = new tmi.client({
-      identity: {
-        username: this.identity.username,
-        password: this.identity.password,
-        client_id: this.identity.client_id,
-      },
-      channels: twitchChannels.map(ch => ch.channel_name),
-      connection: {
-        reconnect: true,
-      }
-    });
-
-    this.chatClient.on('message', async (target, context, msg, self) => {
-      if (self) { return; } // Ignore messages from the bot
-
-      // log.debug(context)
-      const roles = [];
-      if (fn.isMod(context)) {
-        roles.push('M');
-      }
-      if (fn.isSubscriber(context)) {
-        roles.push('S');
-      }
-      if (fn.isBroadcaster(context)) {
-        roles.push('B');
-      }
-      log.info(`${context.username}[${roles.join('')}]@${target}: ${msg}`);
-      const rawCmd = fn.parseCommandFromMessage(msg);
-
-      db.insert('chat_log', {
-        created_at: `${new Date().toJSON()}`,
-        broadcaster_user_id: context['room-id'],
-        user_name: context.username,
-        display_name: context['display-name'],
-        message: msg,
-      });
-
-      for (const m of moduleManager.all(user.id)) {
-        const commands = m.getCommands() || {};
-        const cmdDefs = commands[rawCmd.name] || [];
-        await fn.tryExecuteCommand(m, rawCmd, cmdDefs, this.chatClient, target, context, msg, this.variables);
-        await m.onChatMsg(this.chatClient, target, context, msg);
-      }
-    });
-
-    // Called every time the bot connects to Twitch chat
-    this.chatClient.on('connected', (addr, port) => {
-      log.info(`* Connected to ${addr}:${port}`);
-      for (let channel of twitchChannels) {
-        // note: this can lead to multiple messages if multiple users
-        //       have the same channels set up
-        const say = fn.sayFn(this.chatClient, channel.channel_name);
-        if (connectReason === 'init') {
-          say('⚠️ Bot rebooted - please restart timers...');
-        } else if (connectReason === 'user_change') {
-          say('✅ User settings updated...');
-        } else {
-          say('✅ Reconnected...');
-        }
-      }
-
-      // set connectReason to empty, everything from now is just a reconnect
-      // due to disconnect from twitch
-      connectReason = '';
-    });
-
-    // connect to PubSub websocket
-    // https://dev.twitch.tv/docs/pubsub#topics
-    // this.pubSubClient = TwitchPubSubClient()
-    // this.pubSubClient.on('open', async () => {
-    //   // listen for evts
-    //   for (let channel of twitchChannels) {
-    //     if (channel.access_token && channel.channel_id) {
-    //       this.pubSubClient.listen(
-    //         `channel-points-channel-v1.${channel.channel_id}`,
-    //         channel.access_token
-    //       )
-    //     }
-    //   }
-    //   this.pubSubClient.on('message', (message) => {
-    //     if (message.type !== 'MESSAGE') {
-    //       return
-    //     }
-    //     const messageData = JSON.parse(message.data.message)
-
-    //     // channel points redeemed with non standard reward
-    //     // standard rewards are not supported :/
-    //     if (messageData.type === 'reward-redeemed') {
-    //       const redemption = messageData.data.redemption
-    //       // redemption.reward
-    //       // { id, channel_id, title, prompt, cost, ... }
-    //       // redemption.userchatClient
-    //       // { id, login, display_name}
-    //       for (const m of moduleManager.all(user.id)) {
-    //         if (m.handleRewardRedemption) {
-    //           m.handleRewardRedemption(redemption)
-    //         }
-    //       }
-    //     }
-    //   })
-    // })
-
-    this.chatClient.connect();
-    // this.pubSubClient.connect()
-
-    // register EventSub
-    // @see https://dev.twitch.tv/docs/eventsub
-    this.helixClient = new TwitchHelixClient(
-      this.identity.client_id,
-      this.identity.client_secret
-    );
-
-    // to delete all subscriptions
-    // ;(async () => {
-    //   const subzz = await this.helixClient.getSubscriptions()
-    //   for (const s of subzz.data) {
-    //     console.log(s.id)
-    //     await this.helixClient.deleteSubscription(s.id)
-    //   }
-    // })()
-  }
-
-  getChatClient() {
-    return this.chatClient
-  }
-
-  getHelixClient() {
-    return this.helixClient
-  }
-
-  getIdentity() {
-    return this.identity
-  }
-}
-
-const log$2 = logger('ModuleStorage.ts');
-const TABLE$3 = 'module';
-class ModuleStorage {
-    constructor(db, userId) {
-        this.db = db;
-        this.userId = userId;
-    }
-    load(key, def) {
-        try {
-            const where = { user_id: this.userId, key };
-            const row = this.db.get(TABLE$3, where);
-            const data = row ? JSON.parse('' + row.data) : null;
-            return data ? Object.assign({}, def, data) : def;
-        }
-        catch (e) {
-            log$2.error(e);
-            return def;
-        }
-    }
-    save(key, rawData) {
-        const where = { user_id: this.userId, key };
-        const data = JSON.stringify(rawData);
-        const dbData = Object.assign({}, where, { data });
-        this.db.upsert(TABLE$3, dbData, where);
-    }
-}
-
-const TABLE$2 = 'user';
-class Users {
-    constructor(db) {
-        this.db = db;
-    }
-    get(by) {
-        return this.db.get(TABLE$2, by) || null;
-    }
-    all() {
-        return this.db.getMany(TABLE$2);
-    }
-    getById(id) {
-        return this.get({ id });
-    }
-    save(user) {
-        return this.db.upsert(TABLE$2, user, { id: user.id });
-    }
-    getGroups(id) {
-        const rows = this.db._getMany(`
-select g.name from user_group g inner join user_x_user_group x
-where x.user_id = ?`, [id]);
-        return rows.map(r => r.name);
-    }
-    createUser(user) {
-        return this.db.insert(TABLE$2, user);
-    }
-}
-
-const TABLE$1 = 'token';
-function generateToken(length) {
-    // edit the token allowed characters
-    const a = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'.split('');
-    const b = [];
-    for (let i = 0; i < length; i++) {
-        const j = parseInt((Math.random() * (a.length - 1)).toFixed(0), 10);
-        b[i] = a[j];
-    }
-    return b.join('');
-}
-class Tokens {
-    constructor(db) {
-        this.db = db;
-    }
-    getByUserIdAndType(user_id, type) {
-        return this.db.get(TABLE$1, { user_id, type });
-    }
-    insert(tokenInfo) {
-        return this.db.insert(TABLE$1, tokenInfo);
-    }
-    createToken(user_id, type) {
-        const token = generateToken(32);
-        const tokenObj = { user_id, type, token };
-        this.insert(tokenObj);
-        return tokenObj;
-    }
-    getOrCreateToken(user_id, type) {
-        return this.getByUserIdAndType(user_id, type) || this.createToken(user_id, type);
-    }
-    getByToken(token) {
-        return this.db.get(TABLE$1, { token }) || null;
-    }
-    delete(token) {
-        return this.db.delete(TABLE$1, { token });
-    }
-    getWidgetTokenForUserId(user_id) {
-        return this.getOrCreateToken(user_id, 'widget');
-    }
-    getPubTokenForUserId(user_id) {
-        return this.getOrCreateToken(user_id, 'pub');
-    }
-    generateAuthTokenForUserId(user_id) {
-        return this.createToken(user_id, 'auth');
-    }
-}
-
-const TABLE = 'cache';
-class Cache {
-    constructor(db) {
-        this.db = db;
-    }
-    set(key, value) {
-        this.db.upsert(TABLE, { key, value: JSON.stringify(value) }, { key });
-    }
-    get(key) {
-        const row = this.db.get(TABLE, { key });
-        return row ? JSON.parse(row.value) : null;
-    }
-}
-
 class Mail {
   constructor(cfg) {
     const defaultClient = SibApiV3Sdk.ApiClient.instance;
@@ -2005,6 +1970,24 @@ class Mail {
       console.error(error);
     });
   }
+}
+
+class EventHub {
+    constructor() {
+        this.cbs = {};
+    }
+    on(what, cb) {
+        this.cbs[what] = this.cbs[what] || [];
+        this.cbs[what].push(cb);
+    }
+    trigger(what, data) {
+        if (!this.cbs[what]) {
+            return;
+        }
+        for (const cb of this.cbs[what]) {
+            cb(data);
+        }
+    }
 }
 
 const log$1 = fn.logger('countdown.ts');

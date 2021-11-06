@@ -441,7 +441,11 @@ class WebServer {
       this.userRepo.save(user)
       this.twitchChannelRepo.saveUserChannels(user.id, twitch_channels)
 
-      this.eventHub.trigger('user_changed', this.userRepo.getById(user.id))
+
+      const changedUser = this.userRepo.getById(user.id)
+      if (changedUser) {
+        this.eventHub.trigger('user_changed', changedUser)
+      }
       res.send()
     })
 
