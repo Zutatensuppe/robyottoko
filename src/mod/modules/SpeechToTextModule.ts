@@ -169,13 +169,13 @@ class SpeechToTextModule {
 
   widgets() {
     return {
-      'speech-to-text': async (req: any, res: any, next: Function) => {
-        res.render('widget.spy', {
+      'speech-to-text': (req: any, res: any, next: Function) => {
+        return {
           title: 'Speech to Text Widget',
           page: 'speech-to-text',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
           widgetToken: req.params.widget_token,
-        })
+        }
       },
     }
   }

@@ -233,7 +233,7 @@ export interface Module {
   variables: Variables
   saveCommands: () => void
   getWsEvents: () => Record<string, (ws: Socket, data?: any) => any>
-  widgets: () => Record<string, (req: any, res: any, next: Function) => Promise<any>>
+  widgets: () => Record<string, (req: any, res: any, next: Function) => Record<string, string>>
   getRoutes: () => Record<string, Record<string, (req: any, res: any, next: Function) => Promise<any>>>
   getCommands: () => Record<string, FunctionCommand[]>
   onChatMsg: (client: TwitchChatClient, target: string, context: TwitchChatContext, msg: string) => Promise<void>

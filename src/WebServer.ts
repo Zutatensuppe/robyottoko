@@ -5,7 +5,7 @@ import crypto from 'crypto'
 import express from 'express'
 import multer from 'multer'
 import path from 'path'
-import sprightly from './services/Sprightly'
+import Templates from './services/Templates'
 import http from 'http'
 import Db from './Db'
 import fn from './fn'
@@ -94,8 +94,9 @@ class WebServer {
     const hostname = this.hostname
     const app = express()
 
-    app.engine('spy', sprightly)
-    app.set('views', path.join(__dirname, 'templates'));
+    const templates = new Templates(path.join(__dirname, 'templates'))
+    await templates.add('widget.spy')
+    await templates.add('twitch/redirect_uri.spy')
 
     app.get('/pub/:id', (req, res, next) => {
       const row = this.db.get('pub', {
@@ -458,7 +459,7 @@ class WebServer {
     // twitch calls this url after auth
     // from here we render a js that reads the token and shows it to the user
     app.get('/twitch/redirect_uri', async (req, res) => {
-      res.render('twitch/redirect_uri.spy', {})
+      res.send(templates.render('twitch/redirect_uri.spy', {}))
     })
     app.post('/twitch/user-id-by-name', requireLoginApi, express.json(), async (req: any, res) => {
       let clientId
@@ -556,17 +557,20 @@ class WebServer {
     })
 
     app.get('/widget/:widget_type/:widget_token/', async (req, res, next) => {
-      const user = this.auth.userFromWidgetToken(req.params.widget_token)
-        || this.auth.userFromPubToken(req.params.widget_token)
+      const token = req.params.widget_token
+      const user = this.auth.userFromWidgetToken(token)
+        || this.auth.userFromPubToken(token)
       if (!user) {
         res.status(404).send()
         return
       }
-      const key = req.params.widget_type
+      const type = req.params.widget_type
+      log.debug(`/widget/:widget_type/:widget_token/`, type, token)
       for (const m of this.moduleManager.all(user.id)) {
         const map = m.widgets()
-        if (map && map[key]) {
-          await map[key](req, res, next)
+        if (map && map[type]) {
+          const widgetData = await map[type](req, res, next)
+          res.send(templates.render('widget.spy', widgetData))
           return
         }
       }

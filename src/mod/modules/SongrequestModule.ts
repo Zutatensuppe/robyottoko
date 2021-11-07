@@ -1,5 +1,5 @@
 import Db from '../../Db'
-import fn from '../../fn'
+import fn, { logger } from '../../fn'
 import WebServer from '../../WebServer'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import TwitchHelixClient from '../../services/TwitchHelixClient'
@@ -9,6 +9,8 @@ import { User } from '../../services/Users'
 import { PlaylistItem, RawCommand, TwitchChatClient, TwitchChatContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import Cache from '../../services/Cache'
+
+const log = logger('SongrequestModule.ts')
 
 const ADD_TYPE = {
   NOT_ADDED: 0,
@@ -159,13 +161,13 @@ class SongrequestModule {
 
   widgets() {
     return {
-      'sr': async (req: any, res: any, next: Function) => {
-        res.render('widget.spy', {
+      'sr': (req: any, res: any, next: Function) => {
+        return {
           title: 'Song Request Widget',
           page: 'sr',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
           widgetToken: req.params.widget_token,
-        })
+        }
       },
     }
   }

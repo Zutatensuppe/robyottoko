@@ -1,5 +1,5 @@
 import Db from '../../Db'
-import fn from '../../fn'
+import fn, { logger } from '../../fn'
 import fs from 'fs'
 import WebServer from '../../WebServer'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
@@ -10,6 +10,8 @@ import { DrawcastSettings, TwitchChatClient, TwitchChatContext } from '../../typ
 import ModuleStorage from '../ModuleStorage'
 import { User } from '../../services/Users'
 import Cache from '../../services/Cache'
+
+const log = logger('DrawcastModule.ts')
 
 interface PostEventData {
   event: 'post'
@@ -130,21 +132,21 @@ class DrawcastModule {
 
   widgets() {
     return {
-      'drawcast_receive': async (req: any, res: any, next: Function) => {
-        res.render('widget.spy', {
+      'drawcast_receive': (req: any, res: any, next: Function) => {
+        return {
           title: 'Drawcast Widget',
           page: 'drawcast_receive',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
           widgetToken: req.params.widget_token,
-        })
+        }
       },
-      'drawcast_draw': async (req: any, res: any, next: Function) => {
-        res.render('widget.spy', {
+      'drawcast_draw': (req: any, res: any, next: Function) => {
+        return {
           title: 'Drawcast Widget',
           page: 'drawcast_draw',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
           widgetToken: req.params.widget_token,
-        })
+        }
       },
     }
   }

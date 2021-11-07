@@ -232,13 +232,13 @@ class GeneralModule {
 
   widgets() {
     return {
-      'media': async (req: any, res: any, next: Function) => {
-        res.render('widget.spy', {
+      'media': (req: any, res: any, next: Function) => {
+        return {
           title: 'Media Widget',
           page: 'media',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
           widgetToken: req.params.widget_token,
-        })
+        }
       },
     }
   }

@@ -769,70 +769,22 @@ class WebSocketServer {
     }
 }
 
-const regexp = /<<(.*?)>>|\{\{(.*?)\}\}/;
-class Sprightly {
-    constructor() {
-        this.fileContent = [];
-        this.options = null;
-        this.level = 0;
-        this.directory = '';
+class Templates {
+    constructor(baseDir) {
+        this.templates = {};
+        this.baseDir = baseDir;
     }
-    async parse(pFile) {
-        const file = pFile.split('\n');
-        this.fileContent = file; // register the current file content. Used in specifiying errors location
-        for (let i = 0; i < file.length; i++) {
-            this.level = i; // register the current level in file. Used in specifiying errors location
-            for (let match = file[i].match(regexp), result; match;) {
-                if (match[0][0] === '<') {
-                    this.directory = `${match[1].trim()}.${this.options.settings['view engine']}`; // register the current file. Used in specifiying errors location
-                    result = await this.read(path.join(this.options.settings.views, this.directory));
-                }
-                else {
-                    result = this.options[match[2].trim()];
-                }
-                file[i] = file[i].replace(match[0], result ? result : '');
-                match = file[i].match(regexp);
-            }
-        }
-        return file.join('');
+    async add(templatePath) {
+        const templatePathAbsolute = path.join(this.baseDir, templatePath);
+        this.templates[templatePath] = (await promises.readFile(templatePathAbsolute)).toString();
     }
-    async read(path) {
-        const file = (await promises.readFile(path)).toString();
-        return await this.parse(file);
+    render(templatePath, data) {
+        const template = this.templates[templatePath];
+        return template.replace(/\{\{(.*?)\}\}/g, (m0, m1) => {
+            return data[m1.trim()] || '';
+        });
     }
 }
-const sprightly = new Sprightly();
-var sprightly$1 = async (path, options, callback) => {
-    try {
-        sprightly.options = options;
-        callback(undefined, await sprightly.read(path));
-    }
-    catch (e) {
-        console.log(e);
-        const message = `Cannot find file or directory "${sprightly.directory}" inside the views directory
-        ${sprightly.level - 1 >= 0 ? `${String(sprightly.level).padStart(4, '0')}| ${sprightly.fileContent[sprightly.level - 1]}` : ''}
-    >>  ${String(sprightly.level + 1).padStart(4, '0')}| ${sprightly.fileContent[sprightly.level]}
-        ${sprightly.level + 1 < sprightly.fileContent.length ? `${String(sprightly.level + 2).padStart(4, '0')}| ${sprightly.fileContent[sprightly.level + 1]}` : ''}`;
-        callback(message);
-    }
-};
-// MIT License
-// Copyright (c) 2020 Obada Khalili
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
 
 const log$6 = logger('TwitchHelixClient.ts');
 const API_BASE = 'https://api.twitch.tv/helix';
@@ -968,8 +920,9 @@ class WebServer {
         const port = this.port;
         const hostname = this.hostname;
         const app = express();
-        app.engine('spy', sprightly$1);
-        app.set('views', path.join(__dirname, 'templates'));
+        const templates = new Templates(path.join(__dirname, 'templates'));
+        await templates.add('widget.spy');
+        await templates.add('twitch/redirect_uri.spy');
         app.get('/pub/:id', (req, res, next) => {
             const row = this.db.get('pub', {
                 id: req.params.id,
@@ -1297,7 +1250,7 @@ class WebServer {
         // twitch calls this url after auth
         // from here we render a js that reads the token and shows it to the user
         app.get('/twitch/redirect_uri', async (req, res) => {
-            res.render('twitch/redirect_uri.spy', {});
+            res.send(templates.render('twitch/redirect_uri.spy', {}));
         });
         app.post('/twitch/user-id-by-name', requireLoginApi, express.json(), async (req, res) => {
             let clientId;
@@ -1382,17 +1335,20 @@ class WebServer {
             });
         });
         app.get('/widget/:widget_type/:widget_token/', async (req, res, next) => {
-            const user = this.auth.userFromWidgetToken(req.params.widget_token)
-                || this.auth.userFromPubToken(req.params.widget_token);
+            const token = req.params.widget_token;
+            const user = this.auth.userFromWidgetToken(token)
+                || this.auth.userFromPubToken(token);
             if (!user) {
                 res.status(404).send();
                 return;
             }
-            const key = req.params.widget_type;
+            const type = req.params.widget_type;
+            log$5.debug(`/widget/:widget_type/:widget_token/`, type, token);
             for (const m of this.moduleManager.all(user.id)) {
                 const map = m.widgets();
-                if (map && map[key]) {
-                    await map[key](req, res, next);
+                if (map && map[type]) {
+                    const widgetData = await map[type](req, res, next);
+                    res.send(templates.render('widget.spy', widgetData));
                     return;
                 }
             }
@@ -2320,13 +2276,13 @@ class GeneralModule {
     }
     widgets() {
         return {
-            'media': async (req, res, next) => {
-                res.render('widget.spy', {
+            'media': (req, res, next) => {
+                return {
                     title: 'Media Widget',
                     page: 'media',
                     wsUrl: `${this.wss.connectstring()}/${this.name}`,
                     widgetToken: req.params.widget_token,
-                });
+                };
             },
         };
     }
@@ -2462,6 +2418,7 @@ var Youtube = {
     getUrlById,
 };
 
+logger('SongrequestModule.ts');
 const ADD_TYPE = {
     NOT_ADDED: 0,
     ADDED: 1,
@@ -2543,13 +2500,13 @@ class SongrequestModule {
     }
     widgets() {
         return {
-            'sr': async (req, res, next) => {
-                res.render('widget.spy', {
+            'sr': (req, res, next) => {
+                return {
                     title: 'Song Request Widget',
                     page: 'sr',
                     wsUrl: `${this.wss.connectstring()}/${this.name}`,
                     widgetToken: req.params.widget_token,
-                });
+                };
             },
         };
     }
@@ -3589,13 +3546,13 @@ class SpeechToTextModule {
     }
     widgets() {
         return {
-            'speech-to-text': async (req, res, next) => {
-                res.render('widget.spy', {
+            'speech-to-text': (req, res, next) => {
+                return {
                     title: 'Speech to Text Widget',
                     page: 'speech-to-text',
                     wsUrl: `${this.wss.connectstring()}/${this.name}`,
                     widgetToken: req.params.widget_token,
-                });
+                };
             },
         };
     }
@@ -3649,6 +3606,7 @@ class SpeechToTextModule {
     }
 }
 
+logger('DrawcastModule.ts');
 class DrawcastModule {
     constructor(db, user, variables, chatClient, helixClient, storage, cache, ws, wss) {
         this.name = 'drawcast';
@@ -3729,21 +3687,21 @@ class DrawcastModule {
     }
     widgets() {
         return {
-            'drawcast_receive': async (req, res, next) => {
-                res.render('widget.spy', {
+            'drawcast_receive': (req, res, next) => {
+                return {
                     title: 'Drawcast Widget',
                     page: 'drawcast_receive',
                     wsUrl: `${this.wss.connectstring()}/${this.name}`,
                     widgetToken: req.params.widget_token,
-                });
+                };
             },
-            'drawcast_draw': async (req, res, next) => {
-                res.render('widget.spy', {
+            'drawcast_draw': (req, res, next) => {
+                return {
                     title: 'Drawcast Widget',
                     page: 'drawcast_draw',
                     wsUrl: `${this.wss.connectstring()}/${this.name}`,
                     widgetToken: req.params.widget_token,
-                });
+                };
             },
         };
     }
