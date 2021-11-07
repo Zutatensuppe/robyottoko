@@ -20,6 +20,25 @@ export const mustParseHumanDuration = (
   if (d.match(/^\d+$/)) {
     return parseInt(d, 10)
   }
+  const m1 = d.match(/^((?:\d*)\.(?:\d*))(d|h|m|s)$/)
+  if (m1) {
+    const value = parseFloat(m1[1])
+    if (isNaN(value)) {
+      throw new Error("unable to parse duration")
+    }
+    const unit = m1[2]
+    let ms = 0
+    if (unit === 'd') {
+      ms = value * DAY
+    } else if (unit === 'h') {
+      ms = value * HOUR
+    } else if (unit === 'm') {
+      ms = value * MINUTE
+    } else if (unit === 's') {
+      ms = value * SECOND
+    }
+    return Math.round(ms)
+  }
 
   const m = d.match(/^(?:(\d+)d)?\s?(?:(\d+)h)?\s?(?:(\d+)m)?\s?(?:(\d+)s)?\s?(?:(\d+)ms)?$/)
   if (!m) {

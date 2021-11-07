@@ -51,6 +51,7 @@ ${'3m27s'}   | ${207000}
 ${'1000'}    | ${1000}
 ${'50ms'}    | ${50}
 ${'1s 50ms'} | ${1050}
+${'1.5s'}    | ${1500}
 `('parseHumanDuration $duration', ({ duration, expected }) => {
   const actual = parseHumanDuration(duration)
   expect(actual).toStrictEqual(expected)
