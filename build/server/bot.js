@@ -2345,12 +2345,7 @@ class GeneralModule {
                 this.data.commands = this.fix(data.commands);
                 this.data.settings = data.settings;
                 this.data.adminSettings = data.adminSettings;
-                this.storage.save(this.name, this.data);
-                const initData = this.reinit();
-                this.data = initData.data;
-                this.commands = initData.commands;
-                this.timers = initData.timers;
-                this.updateClients('init');
+                this.saveCommands();
             },
         };
     }
