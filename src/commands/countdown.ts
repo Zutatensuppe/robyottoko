@@ -34,59 +34,55 @@ const countdown = (
 
     const settings = originalCmd.data
 
-    const actions = []
     const t = (settings.type || 'auto')
 
+    let actionDefs: { type: 'text' | 'delay' | 'media', value: string }[] = []
     if (t === 'auto') {
-      const steps = parseInt(await doReplacements(settings.steps), 10)
-      let interval: number
-      try {
-        interval = (await parseDuration(settings.interval)) || (1 * fn.SECOND)
-      } catch (e: any) {
-        log.error(e.message, settings.interval)
-        return
-      }
+      const steps = parseInt(await doReplacements(`${settings.steps}`), 10)
       const msgStep = settings.step || "{step}"
       const msgIntro = settings.intro || null
       const msgOutro = settings.outro || null
-      console.log(steps, settings)
+
       if (msgIntro) {
-        actions.push(async () => await say(msgIntro.replace(/\{steps\}/g, `${steps}`)))
-        actions.push(async () => await fn.sleep(interval))
+        actionDefs.push({ type: 'text', value: msgIntro.replace(/\{steps\}/g, `${steps}`) })
+        actionDefs.push({ type: 'delay', value: settings.interval || '1s' })
       }
 
       for (let step = steps; step > 0; step--) {
-        actions.push(async () => say(msgStep
-          .replace(/\{steps\}/g, `${steps}`)
-          .replace(/\{step\}/g, `${step}`)
-        ))
-        actions.push(async () => await fn.sleep(interval))
+        actionDefs.push({
+          type: 'text',
+          value: msgStep.replace(/\{steps\}/g, `${steps}`).replace(/\{step\}/g, `${step}`),
+        })
+        actionDefs.push({ type: 'delay', value: settings.interval || '1s' })
       }
 
       if (msgOutro) {
-        actions.push(async () => await say(msgOutro.replace(/\{steps\}/g, `${steps}`)))
+        actionDefs.push({ type: 'text', value: msgOutro.replace(/\{steps\}/g, `${steps}`) })
       }
     } else if (t === 'manual') {
-      for (const a of settings.actions) {
-        if (a.type === 'text') {
-          actions.push(async () => say(a.value))
-        } else if (a.type === 'media') {
-          actions.push(async () => {
-            wss.notifyAll([userId], 'general', {
-              event: 'playmedia',
-              data: a.value,
-            })
+      actionDefs = settings.actions
+    }
+
+    const actions = []
+    for (const a of actionDefs) {
+      if (a.type === 'text') {
+        actions.push(async () => say(a.value))
+      } else if (a.type === 'media') {
+        actions.push(async () => {
+          wss.notifyAll([userId], 'general', {
+            event: 'playmedia',
+            data: a.value,
           })
-        } else if (a.type === 'delay') {
-          let duration: number
-          try {
-            duration = (await parseDuration(a.value)) || 0
-          } catch (e: any) {
-            log.error(e.message, a.value)
-            return
-          }
-          actions.push(async () => await fn.sleep(duration))
+        })
+      } else if (a.type === 'delay') {
+        let duration: number
+        try {
+          duration = (await parseDuration(a.value)) || 0
+        } catch (e: any) {
+          log.error(e.message, a.value)
+          return
         }
+        actions.push(async () => await fn.sleep(duration))
       }
     }
 

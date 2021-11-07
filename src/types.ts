@@ -217,7 +217,7 @@ export interface CountdownCommand extends Command {
     interval: string
     intro: string
     outro: string
-    actions: { type: string, value: string }[]
+    actions: { type: 'text' | 'media' | 'delay', value: string }[]
   }
 }
 
