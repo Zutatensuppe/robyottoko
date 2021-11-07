@@ -168,6 +168,14 @@ export interface CommandVariableChange {
 }
 export interface CommandData { }
 
+export type CommandFunction = (
+  rawCmd: RawCommand | null,
+  client: TwitchChatClient | null,
+  target: string | null,
+  context: TwitchChatContext | null,
+  msg: string | null,
+) => any
+
 export type CommandAction = 'text' | 'media' | 'countdown' | 'jisho_org_lookup' | 'madochan_createword' | 'chatters'
 export type CommandRestrict = 'mod' | 'sub' | 'broadcaster'
 
@@ -219,13 +227,7 @@ export interface FunctionCommand {
   variables?: CommandVariable[]
   variableChanges?: CommandVariableChange[]
   data?: CommandData
-  fn: (
-    rawCmd: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-    msg: string | null,
-  ) => any
+  fn: CommandFunction
 }
 
 export interface Module {

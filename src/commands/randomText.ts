@@ -1,11 +1,11 @@
 import Variables from '../services/Variables'
-import { RandomTextCommand, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import { CommandFunction, RandomTextCommand, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
 import fn from './../fn'
 
 const randomText = (
   variables: Variables,
   originalCmd: RandomTextCommand,
-) => async (
+): CommandFunction => async (
   command: RawCommand | null,
   client: TwitchChatClient | null,
   target: string | null,

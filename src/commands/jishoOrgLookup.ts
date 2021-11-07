@@ -1,10 +1,10 @@
-import { RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import { CommandFunction, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
 import fn from './../fn'
 import JishoOrg from './../services/JishoOrg'
 
 const jishoOrgLookup = (
   // no params
-) => async (
+): CommandFunction => async (
   command: RawCommand | null,
   client: TwitchChatClient | null,
   target: string | null,

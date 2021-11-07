@@ -1,12 +1,12 @@
 import Db from '../Db'
 import TwitchHelixClient from '../services/TwitchHelixClient'
-import { RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import { CommandFunction, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
 import fn from './../fn'
 
 const chatters = (
   db: Db,
   helixClient: TwitchHelixClient | null
-) => async (
+): CommandFunction => async (
   command: RawCommand | null,
   client: TwitchChatClient | null,
   target: string | null,

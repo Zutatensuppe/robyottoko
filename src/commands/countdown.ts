@@ -1,6 +1,6 @@
 import WebSocketServer from '../net/WebSocketServer'
 import Variables from '../services/Variables'
-import { CountdownCommand, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import { CommandFunction, CountdownCommand, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
 import fn from './../fn'
 
 const log = fn.logger('countdown.ts')
@@ -10,7 +10,7 @@ const countdown = (
   wss: WebSocketServer,
   userId: number,
   originalCmd: CountdownCommand,
-) => async (
+): CommandFunction => async (
   command: RawCommand | null,
   client: TwitchChatClient | null,
   target: string | null,

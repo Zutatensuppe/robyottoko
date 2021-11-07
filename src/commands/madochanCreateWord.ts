@@ -1,11 +1,11 @@
-import { RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import { CommandFunction, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
 import fn from './../fn'
 import Madochan from './../services/Madochan'
 
 const madochanCreateWord = (
   model: string,
   weirdness: number,
-) => async (
+): CommandFunction => async (
   command: RawCommand | null,
   client: TwitchChatClient | null,
   target: string | null,
