@@ -870,6 +870,15 @@ class SongrequestModule {
           return
       }
     }
+    if (command.args[0] === 'volume') {
+      if (command.args.length === 1) {
+        say(`Current volume: ${this.data.settings.volume}`)
+      } else if (modOrUp()) {
+        this.volume(parseInt(command.args[1], 10))
+        say(`New volume: ${this.data.settings.volume}`)
+      }
+      return
+    }
     if (command.args[0] === 'tag' || command.args[0] === 'addtag') {
       if (modOrUp()) {
         const tag = command.args.slice(1).join(' ')
