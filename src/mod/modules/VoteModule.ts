@@ -2,12 +2,12 @@ import Db from '../../Db'
 import fn from '../../fn'
 import WebServer from '../../WebServer'
 import WebSocketServer from '../../net/WebSocketServer'
-import TwitchHelixClient from '../../services/TwitchHelixClient'
 import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
-import { RawCommand, TwitchChatClient, TwitchChatContext } from '../../types'
+import { ChatMessageContext, RawCommand, TwitchChatClient, TwitchChatContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import Cache from '../../services/Cache'
+import TwitchClientManager from '../../net/TwitchClientManager'
 
 interface VoteModuleData {
   votes: Record<string, Record<string, string>>
@@ -16,29 +16,21 @@ interface VoteModuleData {
 class VoteModule {
   public name = 'vote'
   public variables: Variables
-  private user: User
-  private wss: WebSocketServer
   private storage: ModuleStorage
-  private ws: WebServer
   private data: VoteModuleData
 
   constructor(
     db: Db,
     user: User,
     variables: Variables,
-    chatClient: TwitchChatClient | null,
-    helixClient: TwitchHelixClient | null,
+    clientManager: TwitchClientManager,
     storage: ModuleStorage,
     cache: Cache,
     ws: WebServer,
     wss: WebSocketServer,
   ) {
-    this.user = user
     this.variables = variables
-    this.wss = wss
     this.storage = storage
-
-    this.ws = ws
     this.data = this.reinit()
   }
 
@@ -190,12 +182,7 @@ class VoteModule {
     }
   }
 
-  async onChatMsg(
-    client: TwitchChatClient,
-    target: string,
-    context: TwitchChatContext,
-    msg: string,
-  ) {
+  async onChatMsg(chatMessageContext: ChatMessageContext) {
   }
 }
 

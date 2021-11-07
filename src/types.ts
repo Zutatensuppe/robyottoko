@@ -230,6 +230,13 @@ export interface FunctionCommand {
   fn: CommandFunction
 }
 
+export interface ChatMessageContext {
+  client: TwitchChatClient
+  target: string
+  context: TwitchChatContext
+  msg: string
+}
+
 export interface Module {
   name: string
   variables: Variables
@@ -238,7 +245,7 @@ export interface Module {
   widgets: () => Record<string, (req: any, res: any, next: Function) => Record<string, string>>
   getRoutes: () => Record<string, Record<string, (req: any, res: any, next: Function) => Promise<any>>>
   getCommands: () => Record<string, FunctionCommand[]>
-  onChatMsg: (client: TwitchChatClient, target: string, context: TwitchChatContext, msg: string) => Promise<void>
+  onChatMsg: (chatMessageContext: ChatMessageContext) => Promise<void>
 }
 
 interface MailServiceUser {

@@ -2,13 +2,13 @@ import Db from '../../Db'
 import fn, { logger } from '../../fn'
 import WebServer from '../../WebServer'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
-import TwitchHelixClient from '../../services/TwitchHelixClient'
 import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
 import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
-import { PlaylistItem, RawCommand, TwitchChatClient, TwitchChatContext } from '../../types'
+import { ChatMessageContext, PlaylistItem, RawCommand, TwitchChatClient, TwitchChatContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import Cache from '../../services/Cache'
+import TwitchClientManager from '../../net/TwitchClientManager'
 
 const log = logger('SongrequestModule.ts')
 
@@ -71,8 +71,7 @@ class SongrequestModule {
     db: Db,
     user: User,
     variables: Variables,
-    chatClient: TwitchChatClient | null,
-    helixClient: TwitchHelixClient | null,
+    clientManager: TwitchClientManager,
     storage: ModuleStorage,
     cache: Cache,
     ws: WebServer,
@@ -136,12 +135,7 @@ class SongrequestModule {
     }
   }
 
-  async onChatMsg(
-    client: TwitchChatClient,
-    target: string,
-    context: TwitchChatContext,
-    msg: string,
-  ) {
+  async onChatMsg(chatMessageContext: ChatMessageContext) {
   }
 
   saveCommands() {

@@ -4,12 +4,12 @@ import fs from 'fs'
 import WebServer from '../../WebServer'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Tokens from '../../services/Tokens'
-import TwitchHelixClient from '../../services/TwitchHelixClient'
 import Variables from '../../services/Variables'
-import { DrawcastSettings, TwitchChatClient, TwitchChatContext } from '../../types'
+import { ChatMessageContext, DrawcastSettings } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import { User } from '../../services/Users'
 import Cache from '../../services/Cache'
+import TwitchClientManager from '../../net/TwitchClientManager'
 
 const log = logger('DrawcastModule.ts')
 
@@ -63,8 +63,7 @@ class DrawcastModule {
     db: Db,
     user: User,
     variables: Variables,
-    chatClient: TwitchChatClient | null,
-    helixClient: TwitchHelixClient | null,
+    clientManager: TwitchClientManager,
     storage: ModuleStorage,
     cache: Cache,
     ws: WebServer,
@@ -221,12 +220,7 @@ class DrawcastModule {
     return {}
   }
 
-  async onChatMsg(
-    client: TwitchChatClient,
-    target: string,
-    context: TwitchChatContext,
-    msg: string,
-  ) {
+  async onChatMsg(chatMessageContext: ChatMessageContext) {
   }
 }
 

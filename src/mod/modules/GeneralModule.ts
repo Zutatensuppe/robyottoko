@@ -13,9 +13,10 @@ import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Madochan from '../../services/Madochan'
 import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
-import { Command, FunctionCommand, GlobalVariable, TwitchChatClient, TwitchChatContext } from '../../types'
+import { ChatMessageContext, Command, FunctionCommand, GlobalVariable, TwitchChatClient, TwitchChatContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import Cache from '../../services/Cache'
+import TwitchClientManager from '../../net/TwitchClientManager'
 
 const log = fn.logger('GeneralModule.ts')
 
@@ -88,8 +89,7 @@ class GeneralModule {
     db: Db,
     user: User,
     variables: Variables,
-    chatClient: TwitchChatClient | null,
-    helixClient: TwitchHelixClient | null,
+    clientManager: TwitchClientManager,
     storage: ModuleStorage,
     cache: Cache,
     ws: WebServer,
@@ -98,8 +98,8 @@ class GeneralModule {
     this.db = db
     this.user = user
     this.variables = variables
-    this.chatClient = chatClient
-    this.helixClient = helixClient
+    this.chatClient = clientManager.getChatClient()
+    this.helixClient = clientManager.getHelixClient()
     this.storage = storage
     this.wss = wss
     const initData = this.reinit()
@@ -299,12 +299,7 @@ class GeneralModule {
     return {}
   }
 
-  async onChatMsg(
-    client: TwitchChatClient,
-    target: string,
-    context: TwitchChatContext,
-    msg: string,
-  ) {
+  async onChatMsg(chatMessageContext: ChatMessageContext) {
     let keys = Object.keys(this.commands)
     // make sure longest commands are found first
     // so that in case commands `!draw` and `!draw bad` are set up
@@ -312,12 +307,21 @@ class GeneralModule {
     // executed and not also `!draw`
     keys = keys.sort((a, b) => b.length - a.length)
     for (const key of keys) {
-      const rawCmd = fn.parseKnownCommandFromMessage(msg, key)
+      const rawCmd = fn.parseKnownCommandFromMessage(chatMessageContext.msg, key)
       if (!rawCmd) {
         continue
       }
       const cmdDefs = this.commands[key] || []
-      await fn.tryExecuteCommand(this, rawCmd, cmdDefs, client, target, context, msg, this.variables)
+      await fn.tryExecuteCommand(
+        this,
+        rawCmd,
+        cmdDefs,
+        chatMessageContext.client,
+        chatMessageContext.target,
+        chatMessageContext.context,
+        chatMessageContext.msg,
+        this.variables
+      )
       break
     }
     this.timers.forEach(t => {

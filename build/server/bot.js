@@ -1472,11 +1472,12 @@ class TwitchClientManager {
                 display_name: context['display-name'],
                 message: msg,
             });
+            const chatMessageContext = { client: chatClient, target, context, msg };
             for (const m of moduleManager.all(user.id)) {
                 const commands = m.getCommands() || {};
                 const cmdDefs = commands[rawCmd.name] || [];
                 await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg, this.variables);
-                await m.onChatMsg(chatClient, target, context, msg);
+                await m.onChatMsg(chatMessageContext);
             }
         });
         // Called every time the bot connects to Twitch chat
@@ -2146,14 +2147,14 @@ const chatters = (db, helixClient) => async (command, client, target, context, m
 
 fn.logger('GeneralModule.ts');
 class GeneralModule {
-    constructor(db, user, variables, chatClient, helixClient, storage, cache, ws, wss) {
+    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
         this.name = 'general';
         this.interval = null;
         this.db = db;
         this.user = user;
         this.variables = variables;
-        this.chatClient = chatClient;
-        this.helixClient = helixClient;
+        this.chatClient = clientManager.getChatClient();
+        this.helixClient = clientManager.getHelixClient();
         this.storage = storage;
         this.wss = wss;
         const initData = this.reinit();
@@ -2335,7 +2336,7 @@ class GeneralModule {
     getCommands() {
         return {};
     }
-    async onChatMsg(client, target, context, msg) {
+    async onChatMsg(chatMessageContext) {
         let keys = Object.keys(this.commands);
         // make sure longest commands are found first
         // so that in case commands `!draw` and `!draw bad` are set up
@@ -2343,12 +2344,12 @@ class GeneralModule {
         // executed and not also `!draw`
         keys = keys.sort((a, b) => b.length - a.length);
         for (const key of keys) {
-            const rawCmd = fn.parseKnownCommandFromMessage(msg, key);
+            const rawCmd = fn.parseKnownCommandFromMessage(chatMessageContext.msg, key);
             if (!rawCmd) {
                 continue;
             }
             const cmdDefs = this.commands[key] || [];
-            await fn.tryExecuteCommand(this, rawCmd, cmdDefs, client, target, context, msg, this.variables);
+            await fn.tryExecuteCommand(this, rawCmd, cmdDefs, chatMessageContext.client, chatMessageContext.target, chatMessageContext.context, chatMessageContext.msg, this.variables);
             break;
         }
         this.timers.forEach(t => {
@@ -2426,7 +2427,7 @@ const ADD_TYPE = {
     EXISTED: 3,
 };
 class SongrequestModule {
-    constructor(db, user, variables, chatClient, helixClient, storage, cache, ws, wss) {
+    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
         this.name = 'sr';
         this.variables = variables;
         this.user = user;
@@ -2483,7 +2484,7 @@ class SongrequestModule {
             stacks: data.stacks,
         };
     }
-    async onChatMsg(client, target, context, msg) {
+    async onChatMsg(chatMessageContext) {
     }
     saveCommands() {
         // pass
@@ -3361,13 +3362,10 @@ class SongrequestModule {
 }
 
 class VoteModule {
-    constructor(db, user, variables, chatClient, helixClient, storage, cache, ws, wss) {
+    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
         this.name = 'vote';
-        this.user = user;
         this.variables = variables;
-        this.wss = wss;
         this.storage = storage;
-        this.ws = ws;
         this.data = this.reinit();
     }
     reinit() {
@@ -3480,12 +3478,12 @@ class VoteModule {
                 }],
         };
     }
-    async onChatMsg(client, target, context, msg) {
+    async onChatMsg(chatMessageContext) {
     }
 }
 
 class SpeechToTextModule {
-    constructor(db, user, variables, chatClient, helixClient, storage, cache, ws, wss) {
+    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
         this.name = 'speech-to-text';
         this.user = user;
         this.variables = variables;
@@ -3602,13 +3600,13 @@ class SpeechToTextModule {
     getCommands() {
         return {};
     }
-    async onChatMsg(client, target, context, msg) {
+    async onChatMsg(chatMessageContext) {
     }
 }
 
 logger('DrawcastModule.ts');
 class DrawcastModule {
-    constructor(db, user, variables, chatClient, helixClient, storage, cache, ws, wss) {
+    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
         this.name = 'drawcast';
         this.defaultSettings = {
             submitButtonText: 'Submit',
@@ -3767,7 +3765,7 @@ class DrawcastModule {
     getCommands() {
         return {};
     }
-    async onChatMsg(client, target, context, msg) {
+    async onChatMsg(chatMessageContext) {
     }
 }
 
@@ -3796,11 +3794,9 @@ const run = async () => {
     const initForUser = (user) => {
         const variables = new Variables(db, user.id);
         const clientManager = new TwitchClientManager(eventHub, config.twitch, db, user, twitchChannelRepo, moduleManager, variables);
-        const chatClient = clientManager.getChatClient();
-        const helixClient = clientManager.getHelixClient();
         const moduleStorage = new ModuleStorage(db, user.id);
         for (const moduleClass of modules) {
-            moduleManager.add(user.id, new moduleClass(db, user, variables, chatClient, helixClient, moduleStorage, cache, webServer, webSocketServer));
+            moduleManager.add(user.id, new moduleClass(db, user, variables, clientManager, moduleStorage, cache, webServer, webSocketServer));
         }
     };
     webSocketServer.listen();

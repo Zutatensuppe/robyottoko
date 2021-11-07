@@ -1,12 +1,12 @@
 import config from '../../config'
 import Db from '../../Db'
+import TwitchClientManager from '../../net/TwitchClientManager'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import { getText, asQueryArgs } from '../../net/xhr'
 import Cache from '../../services/Cache'
-import TwitchHelixClient from '../../services/TwitchHelixClient'
 import { User } from '../../services/Users'
 import Variables from '../../services/Variables'
-import { TwitchChatClient, TwitchChatContext } from '../../types'
+import { ChatMessageContext } from '../../types'
 import WebServer from '../../WebServer'
 import ModuleStorage from '../ModuleStorage'
 
@@ -98,8 +98,7 @@ class SpeechToTextModule {
     db: Db,
     user: User,
     variables: Variables,
-    chatClient: TwitchChatClient | null,
-    helixClient: TwitchHelixClient | null,
+    clientManager: TwitchClientManager,
     storage: ModuleStorage,
     cache: Cache,
     ws: WebServer,
@@ -231,12 +230,7 @@ class SpeechToTextModule {
     return {}
   }
 
-  async onChatMsg(
-    client: TwitchChatClient,
-    target: string,
-    context: TwitchChatContext,
-    msg: string,
-  ) {
+  async onChatMsg(chatMessageContext: ChatMessageContext) {
   }
 }
 

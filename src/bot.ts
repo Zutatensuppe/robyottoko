@@ -71,16 +71,13 @@ const run = async () => {
       moduleManager,
       variables
     )
-    const chatClient = clientManager.getChatClient()
-    const helixClient = clientManager.getHelixClient()
     const moduleStorage = new ModuleStorage(db, user.id)
     for (const moduleClass of modules) {
       moduleManager.add(user.id, new moduleClass(
         db,
         user,
         variables,
-        chatClient,
-        helixClient,
+        clientManager,
         moduleStorage,
         cache,
         webServer,
