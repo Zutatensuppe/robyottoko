@@ -138,8 +138,7 @@ const tryExecuteCommand = async (
   client: TwitchChatClient,
   target: string,
   context: TwitchChatContext,
-  msg: string,
-  variables: Variables
+  msg: string
 ) => {
   const promises = []
   for (const cmdDef of cmdDefs) {
@@ -150,8 +149,8 @@ const tryExecuteCommand = async (
     if (cmdDef.variableChanges) {
       for (const variableChange of cmdDef.variableChanges) {
         const op = variableChange.change
-        const name = await doReplacements(variableChange.name, rawCmd, context, variables, cmdDef)
-        const value = await doReplacements(variableChange.value, rawCmd, context, variables, cmdDef)
+        const name = await doReplacements(variableChange.name, rawCmd, context, contextModule.variables, cmdDef)
+        const value = await doReplacements(variableChange.value, rawCmd, context, contextModule.variables, cmdDef)
 
         // check if there is a local variable for the change
         if (cmdDef.variables) {

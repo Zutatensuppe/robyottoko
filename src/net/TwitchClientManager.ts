@@ -26,7 +26,6 @@ class TwitchClientManager {
   private user: User
   private twitchChannelRepo: TwitchChannels
   private moduleManager: ModuleManager
-  private variables: Variables
 
   private chatClient: TwitchChatClient | null = null
   private helixClient: TwitchHelixClient | null = null
@@ -39,14 +38,12 @@ class TwitchClientManager {
     user: User,
     twitchChannelRepo: TwitchChannels,
     moduleManager: ModuleManager,
-    variables: Variables,
   ) {
     this.cfg = cfg
     this.db = db
     this.user = user
     this.twitchChannelRepo = twitchChannelRepo
     this.moduleManager = moduleManager
-    this.variables = variables
 
     this.init('init')
 
@@ -145,7 +142,7 @@ class TwitchClientManager {
       for (const m of moduleManager.all(user.id)) {
         const commands = m.getCommands() || {}
         const cmdDefs = commands[rawCmd.name] || []
-        await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg, this.variables)
+        await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg)
         await m.onChatMsg(chatMessageContext);
       }
     })

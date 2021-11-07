@@ -255,7 +255,7 @@ const parseCommandFromMessage = (msg) => {
     const command = msg.trim().split(' ');
     return { name: command[0], args: command.slice(1) };
 };
-const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, client, target, context, msg, variables) => {
+const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, client, target, context, msg) => {
     const promises = [];
     for (const cmdDef of cmdDefs) {
         if (!mayExecute(context, cmdDef)) {
@@ -265,8 +265,8 @@ const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, client, target,
         if (cmdDef.variableChanges) {
             for (const variableChange of cmdDef.variableChanges) {
                 const op = variableChange.change;
-                const name = await doReplacements(variableChange.name, rawCmd, context, variables, cmdDef);
-                const value = await doReplacements(variableChange.value, rawCmd, context, variables, cmdDef);
+                const name = await doReplacements(variableChange.name, rawCmd, context, contextModule.variables, cmdDef);
+                const value = await doReplacements(variableChange.value, rawCmd, context, contextModule.variables, cmdDef);
                 // check if there is a local variable for the change
                 if (cmdDef.variables) {
                     const idx = cmdDef.variables.findIndex(v => (v.name === name));
@@ -1379,7 +1379,7 @@ class WebServer {
 // @ts-ignore
 const __filename$1 = fileURLToPath(import.meta.url);
 class TwitchClientManager {
-    constructor(eventHub, cfg, db, user, twitchChannelRepo, moduleManager, variables) {
+    constructor(eventHub, cfg, db, user, twitchChannelRepo, moduleManager) {
         this.chatClient = null;
         this.helixClient = null;
         this.identity = null;
@@ -1388,7 +1388,6 @@ class TwitchClientManager {
         this.user = user;
         this.twitchChannelRepo = twitchChannelRepo;
         this.moduleManager = moduleManager;
-        this.variables = variables;
         this.init('init');
         eventHub.on('user_changed', (changedUser) => {
             if (changedUser.id === user.id) {
@@ -1476,7 +1475,7 @@ class TwitchClientManager {
             for (const m of moduleManager.all(user.id)) {
                 const commands = m.getCommands() || {};
                 const cmdDefs = commands[rawCmd.name] || [];
-                await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg, this.variables);
+                await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg);
                 await m.onChatMsg(chatMessageContext);
             }
         });
@@ -2349,7 +2348,7 @@ class GeneralModule {
                 continue;
             }
             const cmdDefs = this.commands[key] || [];
-            await fn.tryExecuteCommand(this, rawCmd, cmdDefs, chatMessageContext.client, chatMessageContext.target, chatMessageContext.context, chatMessageContext.msg, this.variables);
+            await fn.tryExecuteCommand(this, rawCmd, cmdDefs, chatMessageContext.client, chatMessageContext.target, chatMessageContext.context, chatMessageContext.msg);
             break;
         }
         this.timers.forEach(t => {
@@ -3792,8 +3791,8 @@ const webSocketServer = new WebSocketServer(moduleManager, config.ws, auth);
 const webServer = new WebServer(eventHub, db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, config.http, config.twitch, webSocketServer, auth);
 const run = async () => {
     const initForUser = (user) => {
+        const clientManager = new TwitchClientManager(eventHub, config.twitch, db, user, twitchChannelRepo, moduleManager);
         const variables = new Variables(db, user.id);
-        const clientManager = new TwitchClientManager(eventHub, config.twitch, db, user, twitchChannelRepo, moduleManager, variables);
         const moduleStorage = new ModuleStorage(db, user.id);
         for (const moduleClass of modules) {
             moduleManager.add(user.id, new moduleClass(db, user, variables, clientManager, moduleStorage, cache, webServer, webSocketServer));

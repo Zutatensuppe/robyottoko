@@ -1,3 +1,4 @@
+// @ts-ignore
 import { Client } from 'tmi.js'
 import { Socket } from './net/WebSocketServer'
 import { Token } from './services/Tokens'

@@ -61,7 +61,6 @@ const webServer = new WebServer(
 
 const run = async () => {
   const initForUser = (user: User) => {
-    const variables = new Variables(db, user.id)
     const clientManager = new TwitchClientManager(
       eventHub,
       config.twitch,
@@ -69,8 +68,8 @@ const run = async () => {
       user,
       twitchChannelRepo,
       moduleManager,
-      variables
     )
+    const variables = new Variables(db, user.id)
     const moduleStorage = new ModuleStorage(db, user.id)
     for (const moduleClass of modules) {
       moduleManager.add(user.id, new moduleClass(

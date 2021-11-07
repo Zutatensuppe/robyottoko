@@ -319,8 +319,7 @@ class GeneralModule {
         chatMessageContext.client,
         chatMessageContext.target,
         chatMessageContext.context,
-        chatMessageContext.msg,
-        this.variables
+        chatMessageContext.msg
       )
       break
     }
