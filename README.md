@@ -10,7 +10,7 @@ Features are:
   - countdown
   - playing a sound
   - showing an image
-  - jisho.org word lookup
+  - translation of words (via dict.cc and jisho.org)
   - text returned from custom api
 - Song requests via youtube
   - up/down vote per song

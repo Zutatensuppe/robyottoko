@@ -2046,37 +2046,6 @@ const countdown = (variables, wss, userId, originalCmd) => async (command, clien
     }
 };
 
-const searchWord = async (keyword, page = 1) => {
-    const url = 'https://jisho.org/api/v1/search/words' + asQueryArgs({
-        keyword: keyword,
-        page: page,
-    });
-    const json = (await getJson(url));
-    return json.data;
-};
-var JishoOrg = {
-    searchWord,
-};
-
-const jishoOrgLookup = (
-// no params
-) => async (command, client, target, context, msg) => {
-    if (!client || !command) {
-        return;
-    }
-    const say = fn.sayFn(client, target);
-    const phrase = command.args.join(' ');
-    const data = await JishoOrg.searchWord(phrase);
-    if (data.length === 0) {
-        say(`Sorry, I didn't find anything for "${phrase}"`);
-        return;
-    }
-    const e = data[0];
-    const j = e.japanese[0];
-    const d = e.senses[0].english_definitions;
-    say(`Phrase "${phrase}": ${j.word} (${j.reading}) ${d.join(', ')}`);
-};
-
 const createWord = async (createWordRequestData) => {
     const url = 'https://madochan.hyottoko.club/api/v1/_create_word';
     const json = (await postJson(url, asJson(createWordRequestData)));
@@ -2160,6 +2129,158 @@ const chatters = (db, helixClient) => async (command, client, target, context, m
     });
 };
 
+const searchWord$1 = async (keyword, page = 1) => {
+    const url = 'https://jisho.org/api/v1/search/words' + asQueryArgs({
+        keyword: keyword,
+        page: page,
+    });
+    const json = (await getJson(url));
+    return json.data;
+};
+var JishoOrg = {
+    searchWord: searchWord$1,
+};
+
+const LANG_TO_URL_MAP = {
+    de: 'https://www.dict.cc/',
+    ru: 'https://enru.dict.cc/',
+    es: 'https://enes.dict.cc/',
+    it: 'https://enit.dict.cc/',
+    fr: 'https://enfr.dict.cc/',
+};
+// TODO: change from regex to parsing the html ^^
+const parseResult = (text) => {
+    const normalize = (str) => {
+        return str.toLowerCase().replace(/[\.\!\?]/, '');
+    };
+    const stringToArray = (str) => {
+        const arr = [];
+        str.replace(/"([^"]*)"/g, (m, m1) => {
+            arr.push(m1);
+            return m;
+        });
+        return arr;
+    };
+    let m = null;
+    m = text.match(/<link rel="canonical" href="https:\/\/[^\.]+\.dict\.cc\/\?s=([^"]+)">/);
+    const matchedWords = m ? decodeURIComponent(m[1]).split('+') : [];
+    if (matchedWords.length === 0) {
+        return [];
+    }
+    m = text.match(/var c1Arr = new Array\(([^)]*)\)/);
+    const arr1 = m ? stringToArray(m[1]) : [];
+    const arr1NoPunct = arr1.map(item => normalize(item));
+    m = text.match(/var c2Arr = new Array\(([^)]*)\)/);
+    const arr2 = m ? stringToArray(m[1]) : [];
+    const arr2NoPunct = arr2.map(item => normalize(item));
+    let searchWords = [];
+    let fromArrSearch = [];
+    let fromArr = [];
+    let toArr = [];
+    const matchedSentence = normalize(matchedWords.join(' '));
+    if (arr1NoPunct.includes(matchedSentence)) {
+        fromArrSearch = arr1NoPunct;
+        fromArr = arr1;
+        toArr = arr2;
+        searchWords = [matchedSentence];
+    }
+    else if (arr2NoPunct.includes(matchedSentence)) {
+        fromArrSearch = arr2NoPunct;
+        fromArr = arr2;
+        toArr = arr1;
+        searchWords = [matchedSentence];
+    }
+    else {
+        for (let matchedWord of matchedWords) {
+            if (arr1.includes(matchedWord)) {
+                fromArr = fromArrSearch = arr1;
+                toArr = arr2;
+            }
+            else {
+                fromArr = fromArrSearch = arr2;
+                toArr = arr1;
+            }
+        }
+        searchWords = matchedWords;
+    }
+    const results = [];
+    for (let i in fromArr) {
+        if (!fromArrSearch[i]) {
+            continue;
+        }
+        if (!searchWords.includes(fromArrSearch[i])) {
+            continue;
+        }
+        const idx = results.findIndex(item => item.from === fromArr[i]);
+        if (idx < 0) {
+            results.push({ from: fromArr[i], to: [toArr[i]] });
+        }
+        else {
+            results[idx].to.push(toArr[i]);
+        }
+    }
+    return results;
+};
+const searchWord = async (keyword, lang) => {
+    const baseUrl = LANG_TO_URL_MAP[lang];
+    if (!baseUrl) {
+        return [];
+    }
+    const url = baseUrl + asQueryArgs({ s: keyword });
+    const text = await getText(url);
+    return parseResult(text);
+};
+var DictCc = {
+    searchWord,
+    parseResult,
+    LANG_TO_URL_MAP,
+};
+
+const jishoOrgLookup = async (phrase) => {
+    const data = await JishoOrg.searchWord(phrase);
+    if (data.length === 0) {
+        return [];
+    }
+    const e = data[0];
+    const j = e.japanese[0];
+    const d = e.senses[0].english_definitions;
+    return [{
+            from: phrase,
+            to: [`${j.word} (${j.reading}) ${d.join(', ')}`],
+        }];
+};
+const LANG_TO_FN = {
+    ja: jishoOrgLookup,
+};
+for (let key of Object.keys(DictCc.LANG_TO_URL_MAP)) {
+    LANG_TO_FN[key] = (phrase) => DictCc.searchWord(phrase, key);
+}
+const dictLookup = (lang, phrase, variables, originalCmd) => async (command, client, target, context, msg) => {
+    if (!client || !command) {
+        return [];
+    }
+    const say = fn.sayFn(client, target);
+    const tmpLang = await fn.doReplacements(lang, command, context, variables, originalCmd);
+    const dictFn = LANG_TO_FN[tmpLang] || null;
+    if (!dictFn) {
+        say(`Sorry, language not supported: "${tmpLang}"`);
+        return;
+    }
+    // if no phrase is setup, use all args given to command
+    if (phrase === '') {
+        phrase = '$args()';
+    }
+    const tmpPhrase = await fn.doReplacements(phrase, command, context, variables, originalCmd);
+    const items = await dictFn(tmpPhrase);
+    if (items.length === 0) {
+        say(`Sorry, I didn't find anything for "${tmpPhrase}" in language "${tmpLang}"`);
+        return;
+    }
+    for (let item of items) {
+        say(`Phrase "${item.from}": ${item.to.join(", ")}`);
+    }
+};
+
 fn.logger('GeneralModule.ts');
 class GeneralModule {
     constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
@@ -2206,6 +2327,10 @@ class GeneralModule {
                 cmd.data.minDurationMs = cmd.data.minDurationMs || 0;
                 cmd.data.sound.volume = cmd.data.sound.volume || 100;
             }
+            if (cmd.action === 'jisho_org_lookup') {
+                cmd.action = 'dict_lookup';
+                cmd.data = { lang: 'ja', phrase: '' };
+            }
             cmd.triggers = cmd.triggers.map((trigger) => {
                 trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0;
                 return trigger;
@@ -2243,8 +2368,8 @@ class GeneralModule {
                         fn: madochanCreateWord(`${cmd.data.model}` || Madochan.defaultModel, parseInt(cmd.data.weirdness, 10) || Madochan.defaultWeirdness)
                     });
                     break;
-                case 'jisho_org_lookup':
-                    cmdObj = Object.assign({}, cmd, { fn: jishoOrgLookup() });
+                case 'dict_lookup':
+                    cmdObj = Object.assign({}, cmd, { fn: dictLookup(cmd.data.lang, cmd.data.phrase, this.variables, cmd) });
                     break;
                 case 'text':
                     cmdObj = Object.assign({}, cmd, {
@@ -2262,6 +2387,9 @@ class GeneralModule {
                 case 'chatters':
                     cmdObj = Object.assign({}, cmd, { fn: chatters(this.db, this.helixClient) });
                     break;
+            }
+            if (!cmdObj) {
+                return;
             }
             for (const trigger of cmd.triggers) {
                 if (trigger.type === 'command') {

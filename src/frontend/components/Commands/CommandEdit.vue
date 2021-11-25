@@ -108,7 +108,7 @@
                 <div class="field has-addons mr-1">
                   <div class="control has-icons-left">
                     <div
-                      v-if="item.action !== 'jisho_org_lookup'"
+                      v-if="item.action !== 'dict_lookup'"
                       class="select is-small"
                     >
                       <select v-model="newtrigger">
@@ -123,9 +123,60 @@
                 </div>
               </td>
             </tr>
-            <tr v-if="item.action === 'jisho_org_lookup'">
+            <tr v-if="item.action === 'dict_lookup'">
+              <td>Language:</td>
+              <td>
+                <input
+                  class="input is-small spaceinput mb-1"
+                  v-model="item.data.lang"
+                />
+                <span
+                  v-for="(lang, idx) in dictLangs"
+                  :key="idx"
+                  class="button is-small mr-1"
+                  @click="item.data.lang = lang.value"
+                  :title="lang.title"
+                  >{{ lang.flag }}</span
+                >
+                <span
+                  class="button is-small mr-1"
+                  @click="item.data.lang = '$args(0)'"
+                  ><code>$args(0)</code></span
+                >
+              </td>
+            </tr>
+            <tr v-if="item.action === 'dict_lookup'">
+              <td>Phrase:</td>
+              <td>
+                <input
+                  class="input is-small spaceinput mb-1"
+                  v-model="item.data.phrase"
+                />
+                <span
+                  class="button is-small mr-1"
+                  @click="item.data.phrase = ''"
+                  >All args</span
+                >
+                <span
+                  class="button is-small mr-1"
+                  @click="item.data.phrase = '$args(1:)'"
+                  ><code>$args(1:)</code></span
+                >
+              </td>
+            </tr>
+            <tr v-if="item.action === 'dict_lookup'">
               <td>Response:</td>
-              <td>Outputs the translation for the searched word.</td>
+              <td>
+                <div class="help">
+                  Outputs the translation for the input phrase. The translation
+                  is always from/to english. <br />
+                  To let the user decide on the language use
+                  <code>$args(0)</code> as language, and
+                  <code>$args(1:)</code> as phrase. <br />
+                  If phrase is left empty, all arguments to the command will be
+                  used as the phrase.
+                </div>
+              </td>
             </tr>
             <tr v-if="item.action === 'madochan_createword'">
               <td>Response:</td>
@@ -495,6 +546,14 @@ export default defineComponent({
     item: null,
     newtrigger: "command",
     variableChangeFocusIdx: -1,
+    dictLangs: [
+      { value: "ja", flag: "🇯🇵", title: "Japanese" },
+      { value: "ru", flag: "🇷🇺", title: "Russian" },
+      { value: "de", flag: "🇩🇪", title: "German" },
+      { value: "es", flag: "🇪🇸", title: "Spanish" },
+      { value: "fr", flag: "🇫🇷", title: "French" },
+      { value: "it", flag: "🇮🇹", title: "Italian" },
+    ],
   }),
   mounted() {
     this.item = JSON.parse(JSON.stringify(this.modelValue));
@@ -633,7 +692,7 @@ export default defineComponent({
         edit: "Edit ",
       };
       const map = {
-        jisho_org_lookup: "jisho.org lookup",
+        dict_lookup: "dictionary lookup",
         madochan_createword: "madochan",
         chatters: "chatters command",
         media: "media command",

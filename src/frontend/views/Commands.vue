@@ -156,7 +156,7 @@
                     </div>
                   </td>
                   <td>
-                    <div v-if="element.action === 'jisho_org_lookup'">
+                    <div v-if="element.action === 'dict_lookup'">
                       Outputs the translation for the searched word.
                     </div>
                     <div v-if="element.action === 'madochan_createword'">
@@ -373,9 +373,9 @@ export default defineComponent({
         text: "Add countdown",
       },
       {
-        action: "jisho_org_lookup",
-        title: "Lookup a word via jisho.org",
-        text: "Add jisho_org_lookup",
+        action: "dict_lookup",
+        title: "Lookup a translation of a word",
+        text: "Add dict_lookup",
       },
       {
         action: "madochan_createword",
@@ -392,7 +392,7 @@ export default defineComponent({
       "text",
       "media",
       "countdown",
-      "jisho_org_lookup",
+      "dict_lookup",
       "madochan_createword",
       "chatters",
     ],
@@ -402,7 +402,7 @@ export default defineComponent({
         "text",
         "media",
         "countdown",
-        "jisho_org_lookup",
+        "dict_lookup",
         "madochan_createword",
         "chatters",
       ],

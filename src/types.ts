@@ -177,7 +177,7 @@ export type CommandFunction = (
   msg: string | null,
 ) => any
 
-export type CommandAction = 'text' | 'media' | 'countdown' | 'jisho_org_lookup' | 'madochan_createword' | 'chatters'
+export type CommandAction = 'text' | 'media' | 'countdown' | 'dict_lookup' | 'madochan_createword' | 'chatters'
 export type CommandRestrict = 'mod' | 'sub' | 'broadcaster'
 
 export interface Command {
@@ -195,6 +195,19 @@ export interface TextCommand extends Command {
   data: {
     text: string
   }
+}
+
+export interface DictLookupCommand extends Command {
+  action: "dict_lookup"
+  data: {
+    lang: string
+    phrase: string
+  }
+}
+
+export interface DictSearchResponseDataEntry {
+  from: string
+  to: string[]
 }
 
 export interface RandomTextCommand extends Command {

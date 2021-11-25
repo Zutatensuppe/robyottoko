@@ -61,13 +61,16 @@ const newCmd = (type: string): Command | null => {
       variableChanges: [],
       data: newCountdown(),
     }
-    case 'jisho_org_lookup': return {
+    case 'dict_lookup': return {
       triggers: [newTrigger('command')],
-      action: 'jisho_org_lookup',
+      action: 'dict_lookup',
       restrict_to: [],
       variables: [],
       variableChanges: [],
-      data: {},
+      data: {
+        lang: 'ja',
+        phrase: '',
+      },
     }
     case 'madochan_createword': return {
       triggers: [newTrigger('command')],

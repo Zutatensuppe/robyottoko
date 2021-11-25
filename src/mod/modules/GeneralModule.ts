@@ -1,5 +1,4 @@
 import countdown from '../../commands/countdown'
-import jishoOrgLookup from '../../commands/jishoOrgLookup'
 import madochanCreateWord from '../../commands/madochanCreateWord'
 import text from '../../commands/text'
 import randomText from '../../commands/randomText'
@@ -17,6 +16,7 @@ import { ChatMessageContext, Command, FunctionCommand, GlobalVariable, TwitchCha
 import ModuleStorage from '../ModuleStorage'
 import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
+import dictLookup from '../../commands/dictLookup'
 
 const log = fn.logger('GeneralModule.ts')
 
@@ -139,6 +139,10 @@ class GeneralModule {
         cmd.data.minDurationMs = cmd.data.minDurationMs || 0
         cmd.data.sound.volume = cmd.data.sound.volume || 100
       }
+      if (cmd.action === 'jisho_org_lookup') {
+        cmd.action = 'dict_lookup'
+        cmd.data = { lang: 'ja', phrase: '' }
+      }
       cmd.triggers = cmd.triggers.map((trigger: any) => {
         trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0
         return trigger
@@ -182,8 +186,8 @@ class GeneralModule {
             )
           })
           break;
-        case 'jisho_org_lookup':
-          cmdObj = Object.assign({}, cmd, { fn: jishoOrgLookup() })
+        case 'dict_lookup':
+          cmdObj = Object.assign({}, cmd, { fn: dictLookup(cmd.data.lang, cmd.data.phrase, this.variables, cmd) })
           break;
         case 'text':
           cmdObj = Object.assign({}, cmd, {
@@ -201,6 +205,9 @@ class GeneralModule {
         case 'chatters':
           cmdObj = Object.assign({}, cmd, { fn: chatters(this.db, this.helixClient) })
           break;
+      }
+      if (!cmdObj) {
+        return
       }
       for (const trigger of cmd.triggers) {
         if (trigger.type === 'command') {
