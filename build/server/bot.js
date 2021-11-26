@@ -1553,17 +1553,20 @@ class TwitchClientManager {
         if (this.chatClient) {
             try {
                 await this.chatClient.disconnect();
+                this.chatClient = null;
             }
             catch (e) { }
         }
-        // if (this.pubSubClient) {
-        //   try {
-        //     this.pubSubClient.disconnect()
-        //   } catch (e) { }
-        // }
+        if (this.pubSubClient) {
+            try {
+                this.pubSubClient.disconnect();
+                this.pubSubClient = null;
+            }
+            catch (e) { }
+        }
         const twitchChannels = twitchChannelRepo.allByUserId(user.id);
         if (twitchChannels.length === 0) {
-            log.info(`* No twitch channels configured`);
+            log.info(`* No twitch channels configured at all`);
             return;
         }
         const identity = (user.tmi_identity_username
@@ -1650,45 +1653,52 @@ class TwitchClientManager {
         // @see https://dev.twitch.tv/docs/eventsub
         const helixClient = new TwitchHelixClient(identity.client_id, identity.client_secret);
         this.helixClient = helixClient;
-        log.info(`Initializing PubSub`);
-        // connect to PubSub websocket
+        // connect to PubSub websocket only when required
         // https://dev.twitch.tv/docs/pubsub#topics
-        this.pubSubClient = new TwitchPubSubClient();
-        this.pubSubClient.on('open', async () => {
-            if (!this.pubSubClient) {
-                return;
-            }
-            // listen for evts
-            for (let channel of twitchChannels) {
-                if (channel.access_token && channel.channel_id) {
+        log.info(`Initializing PubSub`);
+        const relevantPubSubClientTwitchChannels = twitchChannels.filter(channel => {
+            return !!(channel.access_token && channel.channel_id);
+        });
+        if (relevantPubSubClientTwitchChannels.length === 0) {
+            log.info(`* No twitch channels configured with access_token and channel_id set`);
+        }
+        else {
+            this.pubSubClient = new TwitchPubSubClient();
+            this.pubSubClient.on('open', async () => {
+                if (!this.pubSubClient) {
+                    return;
+                }
+                // listen for evts
+                for (let channel of relevantPubSubClientTwitchChannels) {
                     log.info(`${channel.channel_name} listen for channel point redemptions`);
                     this.pubSubClient.listen(`channel-points-channel-v1.${channel.channel_id}`, channel.access_token);
                 }
-                else {
-                    log.info(`${channel.channel_name} has no access_token or no channel_id`);
-                }
-            }
-            // TODO: change any
-            this.pubSubClient.on('message', async (message) => {
-                if (message.type !== 'MESSAGE') {
-                    return;
-                }
-                const messageData = JSON.parse(message.data.message);
-                // channel points redeemed with non standard reward
-                // standard rewards are not supported :/
-                if (messageData.type === 'reward-redeemed') {
-                    const redemptionMessage = messageData;
-                    log.debug(redemptionMessage.data.redemption);
-                    for (const m of moduleManager.all(user.id)) {
-                        if (m.handleRewardRedemption) {
-                            await m.handleRewardRedemption(redemptionMessage.data.redemption);
+                // TODO: change any type
+                this.pubSubClient.on('message', async (message) => {
+                    if (message.type !== 'MESSAGE') {
+                        return;
+                    }
+                    const messageData = JSON.parse(message.data.message);
+                    // channel points redeemed with non standard reward
+                    // standard rewards are not supported :/
+                    if (messageData.type === 'reward-redeemed') {
+                        const redemptionMessage = messageData;
+                        log.debug(redemptionMessage.data.redemption);
+                        for (const m of moduleManager.all(user.id)) {
+                            if (m.handleRewardRedemption) {
+                                await m.handleRewardRedemption(redemptionMessage.data.redemption);
+                            }
                         }
                     }
-                }
+                });
             });
-        });
-        chatClient.connect();
-        this.pubSubClient.connect();
+        }
+        if (this.chatClient) {
+            this.chatClient.connect();
+        }
+        if (this.pubSubClient) {
+            this.pubSubClient.connect();
+        }
         // to delete all subscriptions
         // ;(async () => {
         //   if (!this.helixClient) {

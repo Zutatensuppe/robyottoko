@@ -3,7 +3,7 @@ import tmi from 'tmi.js'
 import TwitchHelixClient from '../services/TwitchHelixClient'
 import fn from '../fn'
 import Db from '../Db'
-import TwitchChannels from '../services/TwitchChannels'
+import TwitchChannels, { TwitchChannelWithAccessToken } from '../services/TwitchChannels'
 import EventHub from '../EventHub'
 import { fileURLToPath } from 'url'
 import { User } from '../services/Users'
@@ -69,17 +69,20 @@ class TwitchClientManager {
     if (this.chatClient) {
       try {
         await this.chatClient.disconnect()
+        this.chatClient = null
       } catch (e) { }
     }
-    // if (this.pubSubClient) {
-    //   try {
-    //     this.pubSubClient.disconnect()
-    //   } catch (e) { }
-    // }
+
+    if (this.pubSubClient) {
+      try {
+        this.pubSubClient.disconnect()
+        this.pubSubClient = null
+      } catch (e) { }
+    }
 
     const twitchChannels = twitchChannelRepo.allByUserId(user.id)
     if (twitchChannels.length === 0) {
-      log.info(`* No twitch channels configured`)
+      log.info(`* No twitch channels configured at all`)
       return
     }
 
@@ -177,49 +180,57 @@ class TwitchClientManager {
     )
     this.helixClient = helixClient
 
-    log.info(`Initializing PubSub`)
-    // connect to PubSub websocket
+    // connect to PubSub websocket only when required
     // https://dev.twitch.tv/docs/pubsub#topics
-    this.pubSubClient = new TwitchPubSubClient()
-    this.pubSubClient.on('open', async () => {
-      if (!this.pubSubClient) {
-        return
-      }
+    log.info(`Initializing PubSub`)
+    const relevantPubSubClientTwitchChannels: TwitchChannelWithAccessToken[] = twitchChannels.filter(channel => {
+      return !!(channel.access_token && channel.channel_id)
+    }) as TwitchChannelWithAccessToken[]
+    if (relevantPubSubClientTwitchChannels.length === 0) {
+      log.info(`* No twitch channels configured with access_token and channel_id set`)
+    } else {
+      this.pubSubClient = new TwitchPubSubClient()
+      this.pubSubClient.on('open', async () => {
+        if (!this.pubSubClient) {
+          return
+        }
 
-      // listen for evts
-      for (let channel of twitchChannels) {
-        if (channel.access_token && channel.channel_id) {
+        // listen for evts
+        for (let channel of relevantPubSubClientTwitchChannels) {
           log.info(`${channel.channel_name} listen for channel point redemptions`)
           this.pubSubClient.listen(
             `channel-points-channel-v1.${channel.channel_id}`,
             channel.access_token
           )
-        } else {
-          log.info(`${channel.channel_name} has no access_token or no channel_id`)
         }
-      }
-      // TODO: change any
-      this.pubSubClient.on('message', async (message: any) => {
-        if (message.type !== 'MESSAGE') {
-          return
-        }
-        const messageData: any = JSON.parse(message.data.message)
-        // channel points redeemed with non standard reward
-        // standard rewards are not supported :/
-        if (messageData.type === 'reward-redeemed') {
-          const redemptionMessage: TwitchChannelPointsEventMessage = messageData
-          log.debug(redemptionMessage.data.redemption)
-          for (const m of moduleManager.all(user.id)) {
-            if (m.handleRewardRedemption) {
-              await m.handleRewardRedemption(redemptionMessage.data.redemption)
+
+        // TODO: change any type
+        this.pubSubClient.on('message', async (message: any) => {
+          if (message.type !== 'MESSAGE') {
+            return
+          }
+          const messageData: any = JSON.parse(message.data.message)
+          // channel points redeemed with non standard reward
+          // standard rewards are not supported :/
+          if (messageData.type === 'reward-redeemed') {
+            const redemptionMessage: TwitchChannelPointsEventMessage = messageData
+            log.debug(redemptionMessage.data.redemption)
+            for (const m of moduleManager.all(user.id)) {
+              if (m.handleRewardRedemption) {
+                await m.handleRewardRedemption(redemptionMessage.data.redemption)
+              }
             }
           }
-        }
+        })
       })
-    })
+    }
 
-    chatClient.connect()
-    this.pubSubClient.connect()
+    if (this.chatClient) {
+      this.chatClient.connect()
+    }
+    if (this.pubSubClient) {
+      this.pubSubClient.connect()
+    }
 
     // to delete all subscriptions
     // ;(async () => {

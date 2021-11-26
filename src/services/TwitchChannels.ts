@@ -9,6 +9,13 @@ export interface TwitchChannel {
   access_token: string | null
 }
 
+export interface TwitchChannelWithAccessToken {
+  user_id: number
+  channel_name: string
+  channel_id: string
+  access_token: string
+}
+
 interface UpdateTwitchChannel {
   user_id?: number
   channel_name?: string
