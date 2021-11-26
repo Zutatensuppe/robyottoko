@@ -93,6 +93,9 @@ const sayFn = (
 ) => {
     const targets = target ? [target] : client.channels
     targets.forEach(t => {
+      // TODO: fix this somewhere else?
+      // client can only say things in lowercase channels
+      t = t.toLowerCase()
       log.info(`saying in ${t}: ${msg}`)
       client.say(t, msg).catch((e: any) => { })
     })

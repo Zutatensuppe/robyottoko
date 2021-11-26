@@ -246,6 +246,9 @@ const isSubscriber = (ctx) => !!ctx.subscriber;
 const sayFn = (client, target) => (msg) => {
     const targets = target ? [target] : client.channels;
     targets.forEach(t => {
+        // TODO: fix this somewhere else?
+        // client can only say things in lowercase channels
+        t = t.toLowerCase();
         log$9.info(`saying in ${t}: ${msg}`);
         client.say(t, msg).catch((e) => { });
     });
