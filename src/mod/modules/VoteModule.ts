@@ -4,7 +4,7 @@ import WebServer from '../../WebServer'
 import WebSocketServer from '../../net/WebSocketServer'
 import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
-import { ChatMessageContext, RawCommand, TwitchChatClient, TwitchChatContext } from '../../types'
+import { ChatMessageContext, RawCommand, TwitchChannelPointsRedemption, TwitchChatClient, TwitchChatContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
@@ -183,6 +183,10 @@ class VoteModule {
   }
 
   async onChatMsg(chatMessageContext: ChatMessageContext) {
+  }
+
+  async handleRewardRedemption(redemption: TwitchChannelPointsRedemption) {
+
   }
 }
 

@@ -5,7 +5,7 @@ import WebServer from '../../WebServer'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Tokens from '../../services/Tokens'
 import Variables from '../../services/Variables'
-import { ChatMessageContext, DrawcastSettings } from '../../types'
+import { ChatMessageContext, DrawcastSettings, TwitchChannelPointsRedemption } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import { User } from '../../services/Users'
 import Cache from '../../services/Cache'
@@ -221,6 +221,10 @@ class DrawcastModule {
   }
 
   async onChatMsg(chatMessageContext: ChatMessageContext) {
+  }
+
+  async handleRewardRedemption(redemption: TwitchChannelPointsRedemption) {
+
   }
 }
 

@@ -1,6 +1,6 @@
 import { Command, CommandTrigger } from "../types"
 
-const newTrigger = (type: 'command' | 'timer'): CommandTrigger => ({
+const newTrigger = (type: 'command' | 'reward_redemption' | 'timer'): CommandTrigger => ({
   type,
   data: {
     // for trigger type "command" (todo: should only exist if type is command, not always)

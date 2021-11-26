@@ -5,7 +5,7 @@ import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
 import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
-import { ChatMessageContext, PlaylistItem, RawCommand, TwitchChatClient, TwitchChatContext } from '../../types'
+import { ChatMessageContext, PlaylistItem, RawCommand, TwitchChannelPointsRedemption, TwitchChatClient, TwitchChatContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
@@ -1043,6 +1043,10 @@ class SongrequestModule {
       addType: ADD_TYPE.REQUEUED,
       idx: insertIndex,
     }
+  }
+
+  async handleRewardRedemption(redemption: TwitchChannelPointsRedemption) {
+
   }
 }
 

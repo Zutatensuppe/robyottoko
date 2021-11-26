@@ -53,6 +53,37 @@
                   </div>
 
                   <div
+                    class="field has-addons"
+                    v-if="item.triggers[idx2].type === 'reward_redemption'"
+                  >
+                    <div class="control has-icons-left">
+                      <input
+                        class="input is-small"
+                        :class="{
+                          'has-background-danger-light':
+                            !item.triggers[idx2].data.command,
+                          'has-text-danger-dark':
+                            !item.triggers[idx2].data.command,
+                        }"
+                        type="text"
+                        v-model="item.triggers[idx2].data.command"
+                      />
+                      <span class="icon is-small is-left">
+                        <i class="fa fa-bullseye"></i>
+                      </span>
+                    </div>
+                    <div class="control">
+                      <button
+                        class="button is-small"
+                        :disabled="item.triggers.length <= 1"
+                        @click="rmtrigger(idx2)"
+                      >
+                        <i class="fa fa-remove" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
                     v-if="item.triggers[idx2].type === 'timer'"
                     class="timer-trigger"
                   >
@@ -113,6 +144,9 @@
                     >
                       <select v-model="newtrigger">
                         <option value="command">Command</option>
+                        <option value="reward_redemption">
+                          Reward Redemption
+                        </option>
                         <option value="timer">Timer</option>
                       </select>
                     </div>

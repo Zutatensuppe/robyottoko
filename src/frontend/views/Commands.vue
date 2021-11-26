@@ -33,25 +33,8 @@
 
       <div v-if="inited && tab === 'commands'">
         <div class="actions">
-          <div class="mr-1">Filter:</div>
-          <div class="field has-addons mr-1 mb-0">
-            <div class="control">
-              <input class="input is-small" v-model="filter.search" />
-            </div>
-          </div>
-          <label
-            class="mr-1"
-            v-for="(possibleAction, idx) in possibleActions"
-            :key="idx"
-            ><input
-              class="mr-1"
-              type="checkbox"
-              :value="possibleAction"
-              v-model="filter.actions"
-            />{{ possibleAction }} ({{ commandCount(possibleAction) }})</label
-          >
           <div
-            class="dropdown"
+            class="dropdown mr-1"
             :class="{ 'is-active': addDropdownActive }"
             ref="addDropdown"
           >
@@ -87,8 +70,25 @@
               </div>
             </div>
           </div>
-          <a class="button is-small" :href="widgetUrl" target="_blank"
+          <a class="button is-small mr-1" :href="widgetUrl" target="_blank"
             >Open Media widget</a
+          >
+          <div class="mr-1">Filter:</div>
+          <div class="field has-addons mr-1 mb-0">
+            <div class="control">
+              <input class="input is-small" v-model="filter.search" />
+            </div>
+          </div>
+          <label
+            class="mr-1"
+            v-for="(possibleAction, idx) in possibleActions"
+            :key="idx"
+            ><input
+              class="mr-1"
+              type="checkbox"
+              :value="possibleAction"
+              v-model="filter.actions"
+            />{{ possibleAction }} ({{ commandCount(possibleAction) }})</label
           >
         </div>
 
@@ -139,11 +139,18 @@
                       :key="idx2"
                       class="spacerow"
                     >
-                      <div>
-                        <code
-                          v-if="element.triggers[idx2].type === 'command'"
-                          >{{ element.triggers[idx2].data.command }}</code
-                        >
+                      <div v-if="element.triggers[idx2].type === 'command'">
+                        <code>{{ element.triggers[idx2].data.command }}</code>
+                      </div>
+                      <div
+                        v-if="
+                          element.triggers[idx2].type === 'reward_redemption'
+                        "
+                      >
+                        <span class="is-small" title="Channel Point Reward"
+                          ><i class="fa fa-bullseye"></i>:
+                        </span>
+                        <code>{{ element.triggers[idx2].data.command }}</code>
                       </div>
                       <div v-if="element.triggers[idx2].type === 'timer'">
                         <span class="is-small">Timer: </span>
@@ -398,14 +405,7 @@ export default defineComponent({
     ],
     filter: {
       search: "",
-      actions: [
-        "text",
-        "media",
-        "countdown",
-        "dict_lookup",
-        "madochan_createword",
-        "chatters",
-      ],
+      actions: [],
     },
 
     inited: false,
@@ -431,6 +431,9 @@ export default defineComponent({
       return count;
     },
     filteredOut(item: Command) {
+      if (this.filter.actions.length === 0) {
+        return false;
+      }
       if (!this.filter.actions.includes(item.action)) {
         return true;
       }

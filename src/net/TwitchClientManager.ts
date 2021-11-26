@@ -8,8 +8,8 @@ import EventHub from '../EventHub'
 import { fileURLToPath } from 'url'
 import { User } from '../services/Users'
 import ModuleManager from '../mod/ModuleManager'
-import Variables from '../services/Variables'
-import { TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
+import { TwitchChannelPointsEventMessage, TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
+import TwitchPubSubClient from '../services/TwitchPubSubClient'
 
 const __filename = fileURLToPath(import.meta.url)
 
@@ -30,6 +30,7 @@ class TwitchClientManager {
   private chatClient: TwitchChatClient | null = null
   private helixClient: TwitchHelixClient | null = null
   private identity: Identity | null = null
+  private pubSubClient: TwitchPubSubClient | null = null
 
   constructor(
     eventHub: EventHub,
@@ -168,45 +169,6 @@ class TwitchClientManager {
       connectReason = ''
     })
 
-    // connect to PubSub websocket
-    // https://dev.twitch.tv/docs/pubsub#topics
-    // this.pubSubClient = TwitchPubSubClient()
-    // this.pubSubClient.on('open', async () => {
-    //   // listen for evts
-    //   for (let channel of twitchChannels) {
-    //     if (channel.access_token && channel.channel_id) {
-    //       this.pubSubClient.listen(
-    //         `channel-points-channel-v1.${channel.channel_id}`,
-    //         channel.access_token
-    //       )
-    //     }
-    //   }
-    //   this.pubSubClient.on('message', (message) => {
-    //     if (message.type !== 'MESSAGE') {
-    //       return
-    //     }
-    //     const messageData = JSON.parse(message.data.message)
-
-    //     // channel points redeemed with non standard reward
-    //     // standard rewards are not supported :/
-    //     if (messageData.type === 'reward-redeemed') {
-    //       const redemption = messageData.data.redemption
-    //       // redemption.reward
-    //       // { id, channel_id, title, prompt, cost, ... }
-    //       // redemption.userchatClient
-    //       // { id, login, display_name}
-    //       for (const m of moduleManager.all(user.id)) {
-    //         if (m.handleRewardRedemption) {
-    //           m.handleRewardRedemption(redemption)
-    //         }
-    //       }
-    //     }
-    //   })
-    // })
-
-    chatClient.connect()
-    // this.pubSubClient.connect()
-
     // register EventSub
     // @see https://dev.twitch.tv/docs/eventsub
     const helixClient = new TwitchHelixClient(
@@ -215,8 +177,55 @@ class TwitchClientManager {
     )
     this.helixClient = helixClient
 
+    log.info(`Initializing PubSub`)
+    // connect to PubSub websocket
+    // https://dev.twitch.tv/docs/pubsub#topics
+    this.pubSubClient = new TwitchPubSubClient()
+    this.pubSubClient.on('open', async () => {
+      if (!this.pubSubClient) {
+        return
+      }
+
+      // listen for evts
+      for (let channel of twitchChannels) {
+        if (channel.access_token && channel.channel_id) {
+          log.info(`${channel.channel_name} listen for channel point redemptions`)
+          this.pubSubClient.listen(
+            `channel-points-channel-v1.${channel.channel_id}`,
+            channel.access_token
+          )
+        } else {
+          log.info(`${channel.channel_name} has no access_token or no channel_id`)
+        }
+      }
+      // TODO: change any
+      this.pubSubClient.on('message', async (message: any) => {
+        if (message.type !== 'MESSAGE') {
+          return
+        }
+        const messageData: any = JSON.parse(message.data.message)
+        // channel points redeemed with non standard reward
+        // standard rewards are not supported :/
+        if (messageData.type === 'reward-redeemed') {
+          const redemptionMessage: TwitchChannelPointsEventMessage = messageData
+          log.debug(redemptionMessage.data.redemption)
+          for (const m of moduleManager.all(user.id)) {
+            if (m.handleRewardRedemption) {
+              await m.handleRewardRedemption(redemptionMessage.data.redemption)
+            }
+          }
+        }
+      })
+    })
+
+    chatClient.connect()
+    this.pubSubClient.connect()
+
     // to delete all subscriptions
     // ;(async () => {
+    //   if (!this.helixClient) {
+    //     return
+    //   }
     //   const subzz = await this.helixClient.getSubscriptions()
     //   for (const s of subzz.data) {
     //     console.log(s.id)
