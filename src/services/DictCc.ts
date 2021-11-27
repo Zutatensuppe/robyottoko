@@ -9,13 +9,14 @@ export const LANG_TO_URL_MAP: Record<string, string> = {
   fr: 'https://enfr.dict.cc/',
 }
 
-// TODO: change from regex to parsing the html ^^
-const parseResult = (
+/**
+ * Exctract searched words and word lists for both languages
+ * from a dict.cc result html
+ * TODO: change from regex to parsing the html ^^
+ */
+const extractInfo = (
   text: string
-): any[] => {
-  const normalize = (str: string): string => {
-    return str.toLowerCase().replace(/[\.\!\?]/, '')
-  }
+): { words: string[], arr1: string[], arr2: string[] } => {
   const stringToArray = (str: string): string[] => {
     const arr: string[] = []
     str.replace(/"([^"]*)"/g, (m: string, m1: string): string => {
@@ -24,20 +25,40 @@ const parseResult = (
     })
     return arr
   }
+  const arrayByRegex = (regex: RegExp): string[] => {
+    const m = text.match(regex)
+    return m ? stringToArray(m[1]) : []
+  }
 
-  let m: RegExpMatchArray | null = null
+  const m = text.match(/<link rel="canonical" href="https:\/\/[^\.]+\.dict\.cc\/\?s=([^"]+)">/)
+  const words = m ? decodeURIComponent(m[1]).split('+') : []
+  if (!words.length) {
+    return { words, arr1: [], arr2: [] }
+  }
 
-  m = text.match(/<link rel="canonical" href="https:\/\/[^\.]+\.dict\.cc\/\?s=([^"]+)">/)
-  const matchedWords = m ? decodeURIComponent(m[1]).split('+') : []
-  if (matchedWords.length === 0) {
+  return {
+    words,
+    arr1: arrayByRegex(/var c1Arr = new Array\((.*)\);/),
+    arr2: arrayByRegex(/var c2Arr = new Array\((.*)\);/),
+  }
+}
+
+const parseResult = (
+  text: string
+): any[] => {
+  const normalize = (str: string): string => {
+    return str.toLowerCase().replace(/[\.\!\?]/, '')
+  }
+  const info = extractInfo(text)
+  const matchedWords = info.words
+  if (!matchedWords) {
     return []
   }
 
-  m = text.match(/var c1Arr = new Array\(([^)]*)\)/)
-  const arr1 = m ? stringToArray(m[1]) : []
+  const arr1 = info.arr1
+  const arr2 = info.arr2
+
   const arr1NoPunct = arr1.map(item => normalize(item))
-  m = text.match(/var c2Arr = new Array\(([^)]*)\)/)
-  const arr2 = m ? stringToArray(m[1]) : []
   const arr2NoPunct = arr2.map(item => normalize(item))
 
   let searchWords: string[] = []

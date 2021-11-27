@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
+
 test('parseResult', () => {
   let txt, actual, expected
   txt = fs.readFileSync(__dirname + '/fixtures/dictcc.1.fixture.html')
@@ -54,6 +55,14 @@ test('parseResult', () => {
   actual = dictCc.parseResult(String(txt))
   expected = [
     { from: 'Guten Morgen!', to: ['Good morning!', 'Good morrow!'] },
+  ]
+  expect(actual).toStrictEqual(expected)
+
+  txt = fs.readFileSync(__dirname + '/fixtures/dictcc.8.fixture.html')
+  actual = dictCc.parseResult(String(txt))
+  expected = [
+    { from: 'dame', to: ['Dame', 'Frauenzimmer', 'Weibsbild', 'Frau', 'Matrone'] },
+    { from: 'Dame', to: ['Freifrau'] },
   ]
   expect(actual).toStrictEqual(expected)
 })
