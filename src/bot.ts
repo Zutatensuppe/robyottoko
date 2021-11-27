@@ -19,6 +19,7 @@ import SongrequestModule from './mod/modules/SongrequestModule'
 import VoteModule from './mod/modules/VoteModule'
 import SpeechToTextModule from './mod/modules/SpeechToTextModule'
 import DrawcastModule from './mod/modules/DrawcastModule'
+import AvatarModule from './mod/modules/AvatarModule'
 
 import { fileURLToPath } from 'url'
 
@@ -30,6 +31,7 @@ const modules = [
   VoteModule,
   SpeechToTextModule,
   DrawcastModule,
+  AvatarModule,
 ]
 
 const db = new Db(config.db)

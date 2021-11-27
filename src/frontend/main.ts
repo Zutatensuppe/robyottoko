@@ -11,6 +11,7 @@ import Settings from './views/Settings.vue'
 import SongRequest from './views/SongRequest.vue'
 import Commands from './views/Commands.vue'
 import SpeechToText from './views/SpeechToText.vue'
+import Avatar from './views/Avatar.vue'
 import PasswordReset from './views/PasswordReset.vue'
 import ForgotPassword from './views/ForgotPassword.vue'
 
@@ -91,6 +92,12 @@ const run = async () => {
       {
         name: 'speech-to-text', path: '/speech-to-text/', component: SpeechToText, meta: {
           title: 'Speech to text',
+          protected: true,
+        }
+      },
+      {
+        name: 'avatar', path: '/avatar/', component: Avatar, meta: {
+          title: 'Avatar',
           protected: true,
         }
       },
