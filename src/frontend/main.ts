@@ -35,6 +35,12 @@ import SongRequestPlaylistEditor from "./components/SongRequest/PlaylistEditor.v
 import SongRequestSettings from "./components/SongRequest/Settings.vue";
 import SongRequestTagsEditor from "./components/SongRequest/TagsEditor.vue";
 
+import AvatarEditor from "./components/Avatar/AvatarEditor.vue";
+import AvatarSlotDefinitionEditor from "./components/Avatar/AvatarSlotDefinitionEditor.vue";
+import AvatarSlotItemEditor from "./components/Avatar/AvatarSlotItemEditor.vue";
+import AvatarPreview from "./components/Avatar/AvatarPreview.vue";
+import AvatarAnimationEditor from "./components/Avatar/AvatarAnimationEditor.vue";
+
 import "./style.css"
 
 const run = async () => {
@@ -165,6 +171,12 @@ const run = async () => {
   app.component('tags-editor', SongRequestTagsEditor)
   app.component('song-request-settings', SongRequestSettings)
   app.component('help', SongRequestHelp)
+  // avatar - maybe dont register these globally?
+  app.component('avatar-editor', AvatarEditor)
+  app.component('avatar-slot-definition-editor', AvatarSlotDefinitionEditor)
+  app.component('avatar-slot-item-editor', AvatarSlotItemEditor)
+  app.component('avatar-preview', AvatarPreview)
+  app.component('avatar-animation-editor', AvatarAnimationEditor)
   app.mount('#app')
 }
 

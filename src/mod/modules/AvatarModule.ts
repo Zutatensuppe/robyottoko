@@ -13,8 +13,47 @@ import TwitchClientManager from '../../net/TwitchClientManager'
 
 const log = logger('AvatarModule.ts')
 
+type int = number
+type SlotName = string
+type SlotUrl = string
+type AnimationName = string
+type StateValue = string
+
+export interface AvatarModuleAnimationFrameDefinition {
+  url: SlotUrl
+  duration: int
+}
+
+export interface AvatarModuleAnimationDefinition {
+  state: StateValue
+  frames: AvatarModuleAnimationFrameDefinition[]
+}
+
+export interface AvatarModuleAvatarSlotItem {
+  url: SlotUrl | null
+  title: string
+  animation: AvatarModuleAnimationDefinition[]
+}
+
+export interface AvatarModuleAvatarSlotDefinition {
+  slot: SlotName
+  defaultItemIndex: int
+  items: AvatarModuleAvatarSlotItem[]
+}
+
+export interface AvatarModuleAvatarStateDefinition {
+  value: StateValue
+  deletable: boolean
+}
+
+export interface AvatarModuleAvatarDefinition {
+  name: string
+  stateDefinitions: AvatarModuleAvatarStateDefinition[]
+  slotDefinitions: AvatarModuleAvatarSlotDefinition[]
+}
 
 export interface AvatarModuleSettings {
+  avatarDefinitions: AvatarModuleAvatarDefinition[]
 }
 
 export interface AvatarModuleData {
@@ -42,7 +81,9 @@ class AvatarModule {
   private tokens: Tokens
 
   private data: AvatarModuleData
-  private defaultSettings: AvatarModuleSettings = {}
+  private defaultSettings: AvatarModuleSettings = {
+    avatarDefinitions: []
+  }
 
   constructor(
     db: Db,
@@ -72,6 +113,18 @@ class AvatarModule {
     const data = this.storage.load(this.name, {
       settings: this.defaultSettings
     })
+
+    // -start- fixes to old data structure
+    for (let avatarDef of data.settings.avatarDefinitions) {
+      for (let slotDef of avatarDef.slotDefinitions) {
+        for (let item of slotDef.items) {
+          // item.animation = avatarDef.stateDefinitions.map((stateDefinition: AvatarModuleAvatarStateDefinition) => ({state: stateDefinition.value, frames: [] }))
+        }
+      }
+    }
+    // -end-   fixes to old data structure
+
+
     return {
       settings: data.settings
     }

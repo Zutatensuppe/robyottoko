@@ -8,7 +8,7 @@ import exampleTuberHyottoko from '../avatar-examples/hyottoko/def.js'
 // media.getusermedia.insecure.enabled
 
 export default {
-  template: `<div class="base">
+  template: `<div class="base" v-if="initialized">
     <div class="avatar">
       <img class="avatar-item" v-for="(item,idx) in slotArray" :key="idx" :src="item" />
     </div>
@@ -19,14 +19,11 @@ export default {
     </div>
 
     State:
-    <div>
-      <button @click="lockState(null)">default</button>
-      <button @click="lockState('sleep')">sleep</button>
-    <div>
+    <button v-for="(def,idx) in tuberDef.stateDefinitions" :key="idx" @click="lockState(def.value)">{{def.value}}</button>
 
     Tubers:
     <div>
-      <button @click="setTuber(t)" v-for="t in tuberDefs">{{t.name}}</button>
+      <button @click="setTuber(avatarDef)" v-for="avatarDef in settings.avatarDefinitions">{{avatarDef.name}}</button>
     </div>
   </div>`,
   props: {
@@ -35,14 +32,16 @@ export default {
   data() {
     return {
       speaking: false,
-      lockedState: null,
+      lockedState: 'default',
+      slotTimeouts: {},
+      initialized: false,
       tuber: {
         slot: {},
         items: [],
       },
-      slotTimeouts: {},
       tuberDef: null,
-      tuberDefs: [ exampleTuberPara, exampleTuberHyottoko ],
+      settings: null,
+      // tuberDefs: [ exampleTuberPara, exampleTuberHyottoko ],
     }
   },
   computed: {
@@ -50,7 +49,7 @@ export default {
       return this.tuberDef.slotDefinitions.map(slotDef => this.tuber.slot[slotDef.slot]).filter(slot => !!slot)
     },
     animationName() {
-      if (this.lockedState) {
+      if (this.lockedState !== 'default') {
         return this.lockedState
       }
       return this.speaking ? 'speaking' : 'default'
@@ -112,17 +111,19 @@ export default {
           ////////
 
           const animationName = this.animationName
-          const duration = item.animation[animationName]?.duration || 100
+          const anim = item.animation.find(({ state }) => animationName === state)
+          const duration = anim?.frames[0]?.duration || 100
           let animationFrameIdx = 0
           const nextFrame = () => {
             const animationName = this.animationName
-            if (!item.animation[animationName])  {
+            const anim = item.animation.find(({ state }) => animationName === state)
+            if (!anim || anim.frames.length === 0)  {
               this.setSlot(slot, item.url, false)
               this.slotTimeouts[slot] = setTimeout(nextFrame, 100)
               return
             }
 
-            const animationFrames = item.animation[this.animationName]
+            const animationFrames = anim.frames
             animationFrameIdx++
             if (animationFrameIdx >= animationFrames.length) {
               animationFrameIdx = 0
@@ -141,13 +142,9 @@ export default {
       }
       this.tuber.slot = {}
       this.tuberDef = JSON.parse(JSON.stringify(tuber))
-      for (let slot in this.tuberDef.default.slot) {
-        // const slotDef = this.tuberDef.slotDefinitions.find(sd => sd.slot === slot)
-        // const index = slotDef.findIndex(item => item.url === slot)
-        // for (let slotDef = this.tuberDef.slotDefinitions)
-
-
-        this.setSlot(slot, this.tuberDef.default.slot[slot], true)
+      console.log(JSON.parse(JSON.stringify(tuber)))
+      for (let slotDefinition of this.tuberDef.slotDefinitions) {
+        this.setSlot(slotDefinition.slot, slotDefinition.items[slotDefinition.defaultItemIndex].url, true)
       }
     },
     webaudio_tooling_obj() {
@@ -201,14 +198,15 @@ export default {
     },
   },
   created() {
-    this.setTuber(this.tuberDefs[0])
+    // this.setTuber(this.tuberDefs[0])
   },
   async mounted() {
     this.ws.onMessage('init', (data) => {
       this.settings = data.settings
+      this.setTuber(this.settings.avatarDefinitions[0])
+      this.initialized = true
+      this.webaudio_tooling_obj()
     })
     this.ws.connect()
-
-    this.webaudio_tooling_obj()
   }
 }

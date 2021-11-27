@@ -15,13 +15,29 @@
         >
       </div>
     </div>
-    <div id="main" ref="main"></div>
+    <div id="main" ref="main" v-if="settings">
+      <avatar-editor
+        v-for="(avatarDefinition, idx) in settings.avatarDefinitions"
+        :key="idx"
+        :modelValue="avatarDefinition"
+        @update:modelValue="updateAvatar(idx, $event)"
+      />
+
+      <input
+        class="input is-small"
+        type="text"
+        v-model="newAvatarName"
+        placeholder="Avatar name"
+      />
+      <span class="button is-small" @click="addAvatar">Add avatar</span>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
 import {
+  AvatarModuleAvatarDefinition,
   AvatarModuleSettings,
   AvatarModuleWsInitData,
   AvatarModuleWsSaveData,
@@ -29,6 +45,8 @@ import {
 import WsClient from "../WsClient";
 
 interface ComponentData {
+  newAvatarName: string;
+
   unchangedJson: string;
   changedJson: string;
   settings: AvatarModuleSettings | null;
@@ -38,6 +56,8 @@ interface ComponentData {
 
 export default defineComponent({
   data: (): ComponentData => ({
+    newAvatarName: "Unnamed Avatar",
+
     unchangedJson: "{}",
     changedJson: "{}",
     settings: null,
@@ -61,6 +81,25 @@ export default defineComponent({
     },
   },
   methods: {
+    updateAvatar(idx, $evt) {
+      console.log(idx, $evt);
+    },
+    addAvatar() {
+      if (!this.settings) {
+        console.warn("addAvatar: this.settings not initialized");
+        return;
+      }
+      const avatar: AvatarModuleAvatarDefinition = {
+        name: this.newAvatarName,
+        stateDefinitions: [
+          { value: "default", deletable: false },
+          { value: "speaking", deletable: false },
+        ],
+        slotDefinitions: [],
+      };
+      this.settings.avatarDefinitions.push(avatar);
+    },
+
     sendSave() {
       if (!this.settings) {
         console.warn("sendSave: this.settings not initialized");
@@ -93,3 +132,14 @@ export default defineComponent({
   },
 });
 </script>
+<style>
+.avatar-slot-definition-editor {
+  border: solid 1px;
+}
+.avatar-slot-item-editor {
+  border: solid 1px red;
+}
+.is-default {
+  background: yellow;
+}
+</style>
