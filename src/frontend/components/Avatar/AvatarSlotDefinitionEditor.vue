@@ -72,9 +72,8 @@ export default defineComponent({
     },
     addItem() {
       const item: AvatarModuleAvatarSlotItem = {
-        url: "",
         title: "",
-        animation: this.avatarDef.stateDefinitions.map((stateDef) => ({
+        states: this.avatarDef.stateDefinitions.map((stateDef) => ({
           state: stateDef.value,
           frames: [],
         })),

@@ -102,7 +102,7 @@ export default defineComponent({
       this.modelValue.stateDefinitions.push(stateDefinition);
       for (let slotDef of this.modelValue.slotDefinitions) {
         for (let item of slotDef.items) {
-          item.animation.push({
+          item.states.push({
             state: stateDefinition.value,
             frames: [],
           });
@@ -124,7 +124,7 @@ export default defineComponent({
       );
       for (let slotDef of this.modelValue.slotDefinitions) {
         for (let item of slotDef.items) {
-          item.animation = item.animation.filter((anim) =>
+          item.states = item.states.filter((anim) =>
             stateStrings.includes(anim.state)
           );
         }

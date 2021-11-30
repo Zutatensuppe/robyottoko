@@ -1,5 +1,5 @@
 <template>
-  <div class="avatar-animation-editor">
+  <div class="avatar-slot-item-state-editor">
     {{ modelValue.state }}:
     <span
       class="avatar-animation-frame"
@@ -28,7 +28,7 @@
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
 import {
-  AvatarModuleAnimationDefinition,
+  AvatarModuleSlotItemStateDefinition,
   AvatarModuleAnimationFrameDefinition,
 } from "../../../mod/modules/AvatarModule";
 import { UploadedFile } from "../../../types";
@@ -36,7 +36,7 @@ import { UploadedFile } from "../../../types";
 export default defineComponent({
   props: {
     modelValue: {
-      type: Object as PropType<AvatarModuleAnimationDefinition>,
+      type: Object as PropType<AvatarModuleSlotItemStateDefinition>,
       required: true,
     },
   },

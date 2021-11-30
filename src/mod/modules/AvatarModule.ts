@@ -16,7 +16,6 @@ const log = logger('AvatarModule.ts')
 type int = number
 type SlotName = string
 type SlotUrl = string
-type AnimationName = string
 type StateValue = string
 
 export interface AvatarModuleAnimationFrameDefinition {
@@ -24,15 +23,14 @@ export interface AvatarModuleAnimationFrameDefinition {
   duration: int
 }
 
-export interface AvatarModuleAnimationDefinition {
+export interface AvatarModuleSlotItemStateDefinition {
   state: StateValue
   frames: AvatarModuleAnimationFrameDefinition[]
 }
 
 export interface AvatarModuleAvatarSlotItem {
-  url: SlotUrl | null
   title: string
-  animation: AvatarModuleAnimationDefinition[]
+  states: AvatarModuleSlotItemStateDefinition[]
 }
 
 export interface AvatarModuleAvatarSlotDefinition {
@@ -118,7 +116,10 @@ class AvatarModule {
     for (let avatarDef of data.settings.avatarDefinitions) {
       for (let slotDef of avatarDef.slotDefinitions) {
         for (let item of slotDef.items) {
-          // item.animation = avatarDef.stateDefinitions.map((stateDefinition: AvatarModuleAvatarStateDefinition) => ({state: stateDefinition.value, frames: [] }))
+          // delete item.url
+          // item.states = item.animation
+          // delete item.animation
+          // avatarDef.stateDefinitions.map((stateDefinition: AvatarModuleAvatarStateDefinition) => ({state: stateDefinition.value, frames: [] }))
         }
       }
     }

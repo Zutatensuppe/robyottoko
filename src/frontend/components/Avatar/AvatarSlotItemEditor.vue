@@ -11,19 +11,9 @@
       <input type="text" class="input is-small" v-model="modelValue.title" />
     </div>
     <div>
-      Image:
-      <img v-if="modelValue.url" :src="modelValue.url" width="64" height="64" />
-      <upload
-        v-else
-        @uploaded="imageUploaded"
-        accept="image/*"
-        label="Upload Image"
-      />
-    </div>
-    <div>
-      Animation:
-      <avatar-animation-editor
-        v-for="(animation, idx) in modelValue.animation"
+      States:
+      <avatar-slot-item-state-editor
+        v-for="(animation, idx) in modelValue.states"
         :modelValue="animation"
         @update:modelValue="updateAnimation(idx, $event)"
         :key="idx"
@@ -35,11 +25,8 @@
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
 import { AvatarModuleAvatarSlotItem } from "../../../mod/modules/AvatarModule";
-import { UploadedFile } from "../../../types";
-import AvatarAnimationEditor from "./AvatarAnimationEditor.vue";
 
 export default defineComponent({
-  components: { AvatarAnimationEditor },
   props: {
     modelValue: {
       type: Object as PropType<AvatarModuleAvatarSlotItem>,
@@ -51,9 +38,6 @@ export default defineComponent({
   methods: {
     updateAnimation(index, animation) {
       // TODO:
-    },
-    imageUploaded(file: UploadedFile) {
-      this.modelValue.url = `/uploads/${file.filename}`;
     },
     makeDefault() {
       this.$emit("makeDefault", this.modelValue);
