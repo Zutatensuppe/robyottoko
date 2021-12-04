@@ -133,24 +133,24 @@ export default defineComponent({
           if (item.url !== url) {
             continue;
           }
-          if (!item.animation) {
+          if (!item.states) {
             return;
           }
 
           ////////
 
           const animationName = this.animationName;
-          const duration = item.animation[animationName][0]?.duration || 100;
+          const duration = item.states[animationName][0]?.duration || 100;
           let animationFrameIdx = 0;
           const nextFrame = () => {
             const animationName = this.animationName;
-            if (!item.animation[animationName]) {
+            if (!item.states[animationName]) {
               this.setSlot(slot, item.url, false);
               this.slotTimeouts[slot] = setTimeout(nextFrame, 100);
               return;
             }
 
-            const animationFrames = item.animation[this.animationName];
+            const animationFrames = item.states[this.animationName];
             animationFrameIdx++;
             if (animationFrameIdx >= animationFrames.length) {
               animationFrameIdx = 0;

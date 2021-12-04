@@ -1,67 +1,83 @@
 <template>
-  <div class="avatar-editor columns">
-    <div class="column">
-      <div>
-        <strong>Avatar: {{ modelValue.name }}</strong>
-      </div>
-      <div>
-        <strong>States:</strong>
-        <div v-for="(stateDef, idx) in modelValue.stateDefinitions" :key="idx">
-          <code>{{ stateDef.value }}</code>
-          <span
-            v-if="stateDef.deletable"
-            class="button is-small"
-            @click="removeStateDefinition(idx)"
-            ><i class="fa fa-trash"></i
-          ></span>
-        </div>
+  <div class="avatar-editor modal is-active" v-if="item">
+    <div class="modal-background" @click="onOverlayClick"></div>
+    <div class="modal-card" style="width: auto">
+      <header class="modal-card-head">
+        <p class="modal-card-title">Edit Avatar</p>
+        <button
+          class="delete"
+          aria-label="close"
+          @click="onCloseClick"
+        ></button>
+      </header>
+      <section class="modal-card-body">
+        <table class="table is-striped">
+          <tbody>
+            <tr>
+              <td>Name:</td>
+              <td><input class="input is-small" v-model="item.name" /></td>
+            </tr>
+            <tr>
+              <td>States:</td>
+              <td>
+                <span
+                  class="tag"
+                  v-for="(stateDef, idx) in item.stateDefinitions"
+                  :key="idx"
+                >
+                  <span>{{ stateDef.value }}</span>
+                  <span
+                    class="ml-1 is-clickable"
+                    v-if="stateDef.deletable"
+                    @click="removeStateDefinition(idx)"
+                    ><i class="fa fa-trash"></i
+                  ></span>
+                </span>
 
-        <input
-          class="input is-small"
-          type="text"
-          v-model="newState"
-          placeholder="Slot"
-        />
-        <span
-          class="button is-small"
-          @click="addStateDefinition"
-          :disabled="newState === '' ? true : null"
-          >Add custom state</span
-        >
-      </div>
-      <div>
-        <strong>Slots:</strong>
-        <avatar-slot-definition-editor
-          v-for="(slotDefinition, idx) in modelValue.slotDefinitions"
-          :key="idx"
-          :modelValue="slotDefinition"
-          :avatarDef="modelValue"
-          @update:modelValue="updateSlotDefinition(idx, $event)"
-          @remove="removeSlotDefinition(idx)"
-        />
-      </div>
+                <input
+                  class="input is-small"
+                  type="text"
+                  v-model="newState"
+                  placeholder="State"
+                />
+                <span
+                  class="button is-small"
+                  @click="addStateDefinition"
+                  :disabled="isStateAddable ? null : true"
+                  >Add custom state</span
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>Slots</td>
+              <td>
+                <avatar-slot-definition-editor
+                  class="card mb-2"
+                  v-for="(slotDefinition, idx) in item.slotDefinitions"
+                  :key="idx"
+                  :modelValue="slotDefinition"
+                  :avatarDef="item"
+                  @update:modelValue="updateSlotDefinition(idx, $event)"
+                  @moveUp="moveSlotUp(idx)"
+                  @moveDown="moveSlotDown(idx)"
+                  @remove="removeSlotDefinition(idx)"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-      <input
-        class="input is-small"
-        type="text"
-        v-model="newSlotDefinitionName"
-        placeholder="Slot"
-      />
-      <span class="button is-small" @click="addSlotDefinition"
-        >Add slot definition</span
-      >
-    </div>
-    <div class="column">
-      <hr />
-      AVATAR DBG:
-      <pre>{{ modelValue }}</pre>
-
-      <hr />
-
-      AVATAR PREVIEW:
-      <div style="border: solid 2px">
-        <!-- <avatar-preview :avatar="modelValue" /> -->
-      </div>
+        <span class="button is-small" @click="addSlotDefinition">Add slot</span>
+      </section>
+      <footer class="modal-card-foot">
+        <button class="button is-small is-primary" @click="onSaveClick">
+          Save
+        </button>
+        <button class="button is-small is-primary" @click="onSaveAndCloseClick">
+          Save and close
+        </button>
+        <button class="button is-small" @click="onCancelClick">Cancel</button>
+      </footer>
     </div>
   </div>
 </template>
@@ -74,6 +90,11 @@ import {
   AvatarModuleAvatarStateDefinition,
 } from "../../../mod/modules/AvatarModule";
 
+interface ComponentData {
+  item: AvatarModuleAvatarDefinition | null;
+  newState: string;
+  newSlotDefinitionName: string;
+}
 export default defineComponent({
   props: {
     modelValue: {
@@ -81,26 +102,81 @@ export default defineComponent({
       required: true,
     },
   },
-  emits: ["update:modelValue"],
-  data: () => ({
+  emits: ["update:modelValue", "cancel"],
+  data: (): ComponentData => ({
+    item: null,
+
     newState: "",
     newSlotDefinitionName: "",
   }),
+  mounted() {
+    this.item = JSON.parse(JSON.stringify(this.modelValue));
+  },
+  watch: {
+    modelValue: {
+      handler(v) {
+        this.item = JSON.parse(JSON.stringify(v));
+      },
+    },
+  },
+  computed: {
+    isStateAddable() {
+      if (!this.item) {
+        return false;
+      }
+      if (
+        this.newState === "" ||
+        this.item.stateDefinitions.find(({ value }) => value === this.newState)
+      ) {
+        return false;
+      }
+      return true;
+    },
+  },
   methods: {
-    emitChange() {
+    onSaveClick() {
+      if (!this.item) {
+        console.warn("onSaveClick: this.item not initialized");
+        return;
+      }
       this.$emit("update:modelValue", {
-        name: this.modelValue.name,
-        stateDefinitions: this.modelValue.stateDefinitions,
-        slotDefinitions: this.modelValue.slotDefinitions,
+        name: this.item.name,
+        stateDefinitions: this.item.stateDefinitions,
+        slotDefinitions: this.item.slotDefinitions,
       });
     },
+    onSaveAndCloseClick() {
+      if (!this.item) {
+        console.warn("onSaveClick: this.item not initialized");
+        return;
+      }
+      this.$emit("update:modelValue", {
+        name: this.item.name,
+        stateDefinitions: this.item.stateDefinitions,
+        slotDefinitions: this.item.slotDefinitions,
+      });
+      this.$emit("cancel");
+    },
+    onCancelClick() {
+      this.$emit("cancel");
+    },
+    onOverlayClick() {
+      this.$emit("cancel");
+    },
+    onCloseClick() {
+      this.$emit("cancel");
+    },
     addStateDefinition() {
+      if (!this.item) {
+        console.warn("addStateDefinition: this.item not initialized");
+        return;
+      }
       const stateDefinition: AvatarModuleAvatarStateDefinition = {
         value: this.newState,
         deletable: true,
       };
-      this.modelValue.stateDefinitions.push(stateDefinition);
-      for (let slotDef of this.modelValue.slotDefinitions) {
+      this.item.stateDefinitions.push(stateDefinition);
+      for (let slotDef of this.item.slotDefinitions) {
         for (let item of slotDef.items) {
           item.states.push({
             state: stateDefinition.value,
@@ -108,55 +184,90 @@ export default defineComponent({
           });
         }
       }
-      this.emitChange();
     },
-    removeStateDefinition(index) {
+    removeStateDefinition(index: string | number) {
+      if (!this.item) {
+        console.warn("removeStateDefinition: this.item not initialized");
+        return;
+      }
       const stateDefinitions: AvatarModuleAvatarStateDefinition[] = [];
-      for (let idx in this.modelValue.stateDefinitions) {
-        if (parseInt(idx, 10) === parseInt(index, 10)) {
+      for (let idx in this.item.stateDefinitions) {
+        if (parseInt(idx, 10) === parseInt(`${index}`, 10)) {
           continue;
         }
-        stateDefinitions.push(this.modelValue.stateDefinitions[idx]);
+        stateDefinitions.push(this.item.stateDefinitions[idx]);
       }
-      this.modelValue.stateDefinitions = stateDefinitions;
+      this.item.stateDefinitions = stateDefinitions;
       const stateStrings = stateDefinitions.map(
         (stateDefinition) => stateDefinition.value
       );
-      for (let slotDef of this.modelValue.slotDefinitions) {
+      for (let slotDef of this.item.slotDefinitions) {
         for (let item of slotDef.items) {
           item.states = item.states.filter((anim) =>
             stateStrings.includes(anim.state)
           );
         }
       }
-      this.emitChange();
     },
-    removeSlotDefinition(index) {
+    removeSlotDefinition(index: string | number) {
+      if (!this.item) {
+        console.warn("removeSlotDefinition: this.item not initialized");
+        return;
+      }
       const slotDefinitions: AvatarModuleAvatarSlotDefinition[] = [];
-      for (let idx in this.modelValue.slotDefinitions) {
-        if (parseInt(idx, 10) === parseInt(index, 10)) {
+      for (let idx in this.item.slotDefinitions) {
+        if (parseInt(idx, 10) === parseInt(`${index}`, 10)) {
           continue;
         }
-        slotDefinitions.push(this.modelValue.slotDefinitions[idx]);
+        slotDefinitions.push(this.item.slotDefinitions[idx]);
       }
-      this.modelValue.slotDefinitions = slotDefinitions;
-      this.emitChange();
+      this.item.slotDefinitions = slotDefinitions;
     },
     updateSlotDefinition(
-      index,
+      index: string | number,
       slotDefinition: AvatarModuleAvatarSlotDefinition
     ) {
-      this.modelValue.slotDefinitions[parseInt(index, 10)] = slotDefinition;
-      this.emitChange();
+      if (!this.item) {
+        console.warn("updateSlotDefinition: this.item not initialized");
+        return;
+      }
+      this.item.slotDefinitions[parseInt(`${index}`, 10)] = slotDefinition;
     },
     addSlotDefinition() {
+      if (!this.item) {
+        console.warn("addSlotDefinition: this.item not initialized");
+        return;
+      }
       const slotDefinition: AvatarModuleAvatarSlotDefinition = {
-        slot: this.newSlotDefinitionName,
+        slot: "Unnamed slot",
         defaultItemIndex: -1,
         items: [],
       };
-      this.modelValue.slotDefinitions.push(slotDefinition);
-      this.emitChange();
+      this.item.slotDefinitions.push(slotDefinition);
+    },
+    moveSlotUp(idx: number) {
+      if (!this.item) {
+        console.warn("moveSlotUp: this.item not initialized");
+        return;
+      }
+      if (idx <= 0) {
+        return;
+      }
+      const tmp = this.item.slotDefinitions[idx - 1];
+      this.item.slotDefinitions[idx - 1] = this.item.slotDefinitions[idx];
+      this.item.slotDefinitions[idx] = tmp;
+    },
+    moveSlotDown(idx: number) {
+      if (!this.item) {
+        console.warn("moveSlotDown: this.item not initialized");
+        return;
+      }
+      if (idx >= this.item.slotDefinitions.length - 1) {
+        return;
+      }
+      const tmp = this.item.slotDefinitions[idx + 1];
+      this.item.slotDefinitions[idx + 1] = this.item.slotDefinitions[idx];
+      this.item.slotDefinitions[idx] = tmp;
     },
   },
 });

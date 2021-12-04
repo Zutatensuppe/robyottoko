@@ -3,32 +3,57 @@
     <div id="top" ref="top">
       <navbar />
       <div id="actionbar" class="p-1">
-        <button
-          class="button is-small is-primary mr-1"
-          :disabled="!changed"
-          @click="sendSave"
-        >
-          Save
-        </button>
         <a class="button is-small" :href="widgetUrl" target="_blank"
           >Open widget</a
         >
       </div>
     </div>
     <div id="main" ref="main" v-if="settings">
+      <table class="table is-striped">
+        <draggable
+          :modelValue="settings.avatarDefinitions"
+          @end="dragEnd"
+          tag="tbody"
+          handle=".handle"
+          item-key="id"
+        >
+          <template #item="{ element, index }">
+            <tr>
+              <td class="pt-4 handle">
+                <i class="fa fa-arrows"></i>
+              </td>
+              <td class="pl-0 pr-0">
+                <button class="button is-small" @click="edit(index)">
+                  <i class="fa fa-pencil" />
+                </button>
+              </td>
+              <td>
+                {{ element.name }}
+              </td>
+              <td class="pl-0 pr-0">
+                <doubleclick-button
+                  class="button is-small mr-1"
+                  message="Are you sure?"
+                  :timeout="1000"
+                  @doubleclick="remove(index)"
+                  ><i class="fa fa-trash"
+                /></doubleclick-button>
+                <button class="button is-small" @click="duplicate(index)">
+                  <i class="fa fa-clone" />
+                </button>
+              </td>
+            </tr>
+          </template>
+        </draggable>
+      </table>
+
       <avatar-editor
-        v-for="(avatarDefinition, idx) in settings.avatarDefinitions"
-        :key="idx"
-        :modelValue="avatarDefinition"
-        @update:modelValue="updateAvatar(idx, $event)"
+        v-if="editEntity"
+        :modelValue="editEntity"
+        @update:modelValue="updatedAvatar"
+        @cancel="editEntity = null"
       />
 
-      <input
-        class="input is-small"
-        type="text"
-        v-model="newAvatarName"
-        placeholder="Avatar name"
-      />
       <span class="button is-small" @click="addAvatar">Add avatar</span>
     </div>
   </div>
@@ -36,6 +61,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import fn from "../../common/fn";
 import {
   AvatarModuleAvatarDefinition,
   AvatarModuleSettings,
@@ -45,7 +71,8 @@ import {
 import WsClient from "../WsClient";
 
 interface ComponentData {
-  newAvatarName: string;
+  editIdx: number;
+  editEntity: AvatarModuleAvatarDefinition | null;
 
   unchangedJson: string;
   changedJson: string;
@@ -56,7 +83,8 @@ interface ComponentData {
 
 export default defineComponent({
   data: (): ComponentData => ({
-    newAvatarName: "Unnamed Avatar",
+    editIdx: -1,
+    editEntity: null,
 
     unchangedJson: "{}",
     changedJson: "{}",
@@ -81,8 +109,41 @@ export default defineComponent({
     },
   },
   methods: {
-    updateAvatar(idx, $evt) {
-      console.log(idx, $evt);
+    edit(idx: number) {
+      if (!this.settings) {
+        console.warn("edit: this.settings not initialized");
+        return;
+      }
+      this.editIdx = idx;
+      this.editEntity = this.settings.avatarDefinitions[idx];
+    },
+    remove(idx: number) {
+      if (!this.settings) {
+        console.warn("remove: this.settings not initialized");
+        return;
+      }
+      this.settings.avatarDefinitions = this.settings.avatarDefinitions.filter(
+        (val, index) => index !== idx
+      );
+      this.sendSave();
+    },
+    duplicate(idx: number) {
+      if (!this.settings) {
+        console.warn("duplicate: this.settings not initialized");
+        return;
+      }
+      this.editIdx = this.settings.avatarDefinitions.length;
+      this.editEntity = JSON.parse(
+        JSON.stringify(this.settings.avatarDefinitions[idx])
+      );
+    },
+    updatedAvatar(avatar: AvatarModuleAvatarDefinition) {
+      if (!this.settings) {
+        console.warn("updateAvatar: this.settings not initialized");
+        return;
+      }
+      this.settings.avatarDefinitions[this.editIdx] = avatar;
+      this.sendSave();
     },
     addAvatar() {
       if (!this.settings) {
@@ -90,14 +151,15 @@ export default defineComponent({
         return;
       }
       const avatar: AvatarModuleAvatarDefinition = {
-        name: this.newAvatarName,
+        name: "Unnamed Avatar",
         stateDefinitions: [
           { value: "default", deletable: false },
           { value: "speaking", deletable: false },
         ],
         slotDefinitions: [],
       };
-      this.settings.avatarDefinitions.push(avatar);
+      this.editIdx = this.settings.avatarDefinitions.length;
+      this.editEntity = avatar;
     },
 
     sendSave() {
@@ -113,6 +175,18 @@ export default defineComponent({
         return;
       }
       this.ws.send(JSON.stringify(data));
+    },
+    dragEnd(evt: { oldIndex: number; newIndex: number }) {
+      if (!this.settings) {
+        console.warn("dragEnd: this.settings not initialized");
+        return;
+      }
+      this.settings.avatarDefinitions = fn.arrayMove(
+        this.settings.avatarDefinitions,
+        evt.oldIndex,
+        evt.newIndex
+      );
+      this.sendSave();
     },
   },
   async mounted() {
@@ -133,13 +207,7 @@ export default defineComponent({
 });
 </script>
 <style>
-.avatar-slot-definition-editor {
-  border: solid 1px;
-}
-.avatar-slot-item-editor {
-  border: solid 1px red;
-}
-.is-default {
-  background: yellow;
+.avatar-editor .modal-card-body {
+  min-width: 800px;
 }
 </style>

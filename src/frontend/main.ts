@@ -40,6 +40,7 @@ import AvatarSlotDefinitionEditor from "./components/Avatar/AvatarSlotDefinition
 import AvatarSlotItemEditor from "./components/Avatar/AvatarSlotItemEditor.vue";
 import AvatarPreview from "./components/Avatar/AvatarPreview.vue";
 import AvatarSlotItemStateEditor from "./components/Avatar/AvatarSlotItemStateEditor.vue";
+import AvatarAnimation from "./components/Avatar/AvatarAnimation.vue";
 
 import "./style.css"
 
@@ -177,6 +178,7 @@ const run = async () => {
   app.component('avatar-slot-item-editor', AvatarSlotItemEditor)
   app.component('avatar-preview', AvatarPreview)
   app.component('avatar-slot-item-state-editor', AvatarSlotItemStateEditor)
+  app.component('avatar-animation', AvatarAnimation)
   app.mount('#app')
 }
 

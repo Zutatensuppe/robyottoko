@@ -8,7 +8,9 @@
       :accept="accept"
     />
     <span class="button is-small"
-      ><i class="fa fa-upload mr-1" /> {{ buttonText }}</span
+      ><i class="fa fa-upload" :class="{ 'mr-1': buttonText }" />{{
+        buttonText
+      }}</span
     >
     <span class="progress" :style="progressStyle"></span>
   </label>
@@ -22,7 +24,10 @@ export default defineComponent({
   name: "upload",
   props: {
     accept: String,
-    label: String,
+    label: {
+      type: String,
+      default: "Upload File",
+    },
   },
   data: () => ({
     uploading: false,
@@ -34,9 +39,9 @@ export default defineComponent({
     },
     buttonText() {
       if (!this.uploading) {
-        return this.label || "Upload File";
+        return this.label ? ` ${this.label}` : "";
       }
-      return `Uploading (${this.uploadPercent}%)`;
+      return ` Uploading (${this.uploadPercent}%)`;
     },
     progressStyle() {
       if (!this.uploading) {

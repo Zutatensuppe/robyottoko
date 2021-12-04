@@ -1,27 +1,50 @@
 <template>
-  <div class="avatar-slot-item-state-editor">
-    {{ modelValue.state }}:
-    <span
-      class="avatar-animation-frame"
-      v-for="(frame, idx) in modelValue.frames"
-      :key="idx"
-    >
-      <span class="button is-small" @click="removeFrame(idx)">
-        <i class="fa fa-trash"></i>
-      </span>
-      <img v-if="frame.url" :src="frame.url" width="64" height="64" />
-      <upload
-        v-else
-        @uploaded="imageUploaded(idx, $event)"
-        accept="image/*"
-        label="Upload Image"
-      />
-      <input class="input is-small" type="text" v-model="frame.duration" />
-    </span>
+  <div class="avatar-slot-item-state-editor card">
+    <div class="avatar-slot-item-state-editor-title">
+      {{ modelValue.state }}
+    </div>
+    <avatar-animation
+      :frames="modelValue.frames"
+      v-if="modelValue.frames.length"
+    />
+    <avatar-animation
+      v-else
+      :frames="defaultState.frames"
+      class="avatar-fallback-animation"
+    />
+    <div>
+      <div
+        class="avatar-animation-card mr-1"
+        v-for="(frame, idx) in modelValue.frames"
+        :key="idx"
+      >
+        <span class="avatar-animation-frame">
+          <div class="avatar-animation-frame-remove">
+            <span class="button is-small" @click="removeFrame(idx)">
+              <i class="fa fa-trash"></i>
+            </span>
+          </div>
+          <img v-if="frame.url" :src="frame.url" width="64" height="64" />
 
-    <span class="button is-small" @click="addFrame"
-      ><i class="fa fa-plus"></i
-    ></span>
+          <upload
+            v-else
+            @uploaded="imageUploaded(idx, $event)"
+            accept="image/*"
+            label=""
+            class="avatar-animation-frame-upload"
+          />
+          <input class="input is-small" type="text" v-model="frame.duration" />
+        </span>
+      </div>
+
+      <div class="avatar-animation-card mr-1">
+        <span class="avatar-animation-frame">
+          <span class="button is-small" @click="addFrame"
+            ><i class="fa fa-plus"></i
+          ></span>
+        </span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -39,20 +62,27 @@ export default defineComponent({
       type: Object as PropType<AvatarModuleSlotItemStateDefinition>,
       required: true,
     },
+    defaultState: {
+      type: Object as PropType<AvatarModuleSlotItemStateDefinition>,
+      required: true,
+    },
+  },
+  data() {
+    return {
+      editing: false,
+    };
   },
   methods: {
-    imageUploaded(index, file: UploadedFile) {
+    onOverlayClick() {
+      this.editing = false;
+    },
+    imageUploaded(index: number, file: UploadedFile) {
       this.modelValue.frames[index].url = `/uploads/${file.filename}`;
     },
-    removeFrame(index) {
-      const frames: AvatarModuleAnimationFrameDefinition[] = [];
-      for (let idx in this.modelValue.frames) {
-        if (parseInt(idx, 10) === parseInt(index, 10)) {
-          continue;
-        }
-        frames.push(this.modelValue.frames[idx]);
-      }
-      this.modelValue.frames = frames;
+    removeFrame(idx: number) {
+      this.modelValue.frames = this.modelValue.frames.filter(
+        (val, index) => index !== idx
+      );
     },
     addFrame() {
       const frame: AvatarModuleAnimationFrameDefinition = {
@@ -65,10 +95,54 @@ export default defineComponent({
 });
 </script>
 <style>
+.avatar-slot-item-state-editor {
+  display: inline-block;
+  border: solid 1px hsl(0, 0%, 86%);
+}
+.avatar-slot-item-state-editor-title {
+  text-align: center;
+  font-weight: bold;
+  background: #efefef;
+  border-bottom: solid 1px hsl(0, 0%, 86%);
+}
+.avatar-animation-card {
+  display: inline-block;
+  width: 64px;
+  vertical-align: top;
+}
 .avatar-animation-frame {
+  display: inline-block;
+  position: relative;
+  background: #efefef;
+}
+.avatar-animation-frame img {
+  vertical-align: bottom;
+}
+.avatar-animation-frame-upload {
+  width: 64px;
+  height: 64px;
+  display: flex !important;
+  align-items: center;
+  text-align: center;
+  z-index: 1;
+}
+.avatar-animation-frame-upload .button {
+  margin: 0 auto;
+}
+.avatar-animation-frame-remove {
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: none;
+  z-index: 2;
+}
+.avatar-animation-frame:hover .avatar-animation-frame-remove {
   display: inline-block;
 }
 .avatar-animation-frame input[type="text"] {
   max-width: 100px;
+}
+.avatar-fallback-animation {
+  opacity: 0.7;
 }
 </style>
