@@ -1,7 +1,7 @@
-import fn from '../fn.js'
+import AvatarAnimation from '../components/avatar-animation.js'
 
-import exampleTuberPara from '../avatar-examples/para-png-tuber/def.js'
-import exampleTuberHyottoko from '../avatar-examples/hyottoko/def.js'
+// import exampleTuberPara from '../avatar-examples/para-png-tuber/def.js'
+// import exampleTuberHyottoko from '../avatar-examples/hyottoko/def.js'
 
 const SPEAKING_THRESHOLD = 0.05
 // in ff enable for usage with localhost (and no https):
@@ -11,22 +11,27 @@ const SPEAKING_THRESHOLD = 0.05
 export default {
   template: `<div class="base" v-if="initialized">
     <div class="avatar">
-      <img class="avatar-item" v-for="(item,idx) in slotArray" :key="idx" :src="item" />
+      <avatar-animation v-for="(anim,idx) in animations" :key="idx" :frames="anim.frames" :width="256" :height="256" />
     </div>
 
-    <div v-for="(def,idx) in tuberDef.slotDefinitions" :key="idx">
-      {{def.slot}}:
-      <button @click="setSlot(idx, idx2, 0, true)" v-for="(item,idx2) in def.items">{{item.title}}</button>
-    </div>
-
-    State:
-    <button v-for="(def,idx) in tuberDef.stateDefinitions" :key="idx" @click="lockState(def.value)">{{def.value}}</button>
-
-    Tubers:
-    <div>
-      <button @click="setTuber(avatarDef)" v-for="avatarDef in settings.avatarDefinitions">{{avatarDef.name}}</button>
-    </div>
+    <table>
+      <tr v-for="(def,idx) in tuberDef.slotDefinitions" :key="idx">
+        <td>{{def.slot}}:</td>
+        <td><button @click="setSlot(def.slot, idx2)" v-for="(item,idx2) in def.items">{{item.title}}</button></td>
+      </tr>
+      <tr>
+        <td>State:</td>
+        <td><button v-for="(def,idx) in tuberDef.stateDefinitions" :key="idx" @click="lockState(def.value)">{{def.value}}</button></td>
+      </tr>
+      <tr>
+        <td>Tubers:</td>
+        <td><button @click="setTuber(avatarDef)" v-for="avatarDef in settings.avatarDefinitions">{{avatarDef.name}}</button></td>
+      </tr>
+    </table>
   </div>`,
+  components: {
+    AvatarAnimation,
+  },
   props: {
     ws: Object,
   },
@@ -34,11 +39,9 @@ export default {
     return {
       speaking: false,
       lockedState: 'default',
-      slotTimeouts: {},
       initialized: false,
       tuber: {
         slot: {},
-        items: [],
       },
       tuberDef: null,
       settings: null,
@@ -46,103 +49,44 @@ export default {
     }
   },
   computed: {
-    slotArray() {
-      const arr = []
-      for (let slotIdx in this.tuberDef.slotDefinitions) {
-        const slotDef = this.tuberDef.slotDefinitions[slotIdx]
-        const { itemIdx, animationFrameIdx } = this.tuber.slot[slotIdx]
-        if (animationFrameIdx < 0 || !slotDef.items[itemIdx]) {
-          continue
-        }
-        const stateDef = this.getStateDef(slotIdx, itemIdx)
-        const frame = stateDef.frames[animationFrameIdx] || stateDef.frames[0]
-        if (!frame || !frame.url) {
-          continue
-        }
-        arr.push(frame.url)
-      }
-      return arr
-    },
     animationName() {
       if (this.lockedState !== 'default') {
         return this.lockedState
       }
       return this.speaking ? 'speaking' : 'default'
     },
+    animations() {
+      return this.tuberDef.slotDefinitions.map((slotDef) => {
+        const item = slotDef.items[this.tuber.slot[slotDef.slot]];
+        const stateDef = item.states.find(({ state }) => state === this.animationName);
+        if (stateDef.frames.length > 0) {
+          return stateDef
+        }
+        return item.states.find(({ state }) => state === 'default')
+      })
+    },
   },
   methods: {
-    setSlot(slotIdx, itemIdx, animationFrameIdx, doSetAnimation) {
-      this.tuber.slot[slotIdx] = { itemIdx, animationFrameIdx }
-      if (doSetAnimation) {
-        this.setAnimation(slotIdx, itemIdx, animationFrameIdx)
-      }
+    setSlot(slotName, itemIdx) {
+      this.tuber.slot[slotName] = itemIdx
       this.tuber.slot = Object.assign({}, this.tuber.slot)
     },
     setSpeaking(speaking) {
       if (this.speaking !== speaking) {
         this.speaking = speaking
-        // TODO: start right animation immediately
-        // for (let slot in this.tuber.slot) {
-        //   this.setSlot(slot, this.tuber.slot[slot], true)
-        // }
       }
     },
     lockState(lockedState) {
       if (this.lockedState !== lockedState) {
         this.lockedState = lockedState
-        // TODO: start right animation immediately
-        // for (let slot in this.tuber.slot) {
-        //   this.setSlot(slot, this.tuber.slot[slot], true)
-        // }
       }
-    },
-    getStateDef(slotIdx, itemIdx) {
-      const slotDef = this.tuberDef.slotDefinitions[slotIdx]
-      const item = slotDef.items[itemIdx]
-      const stateDef = item.states.find(({ state }) => this.animationName === state)
-      if (stateDef.frames.length > 0) {
-        return stateDef
-      }
-      return item.states.find(({ state }) => 'default' === state)
-    },
-    setAnimation(slotIdx, itemIdx, animationFrameIdx) {
-      if (this.slotTimeouts[slotIdx]) {
-        clearTimeout(this.slotTimeouts[slotIdx])
-        delete this.slotTimeouts[slotIdx]
-      }
-
-      const stateDef = this.getStateDef(slotIdx, itemIdx)
-      const duration = stateDef?.frames[0]?.duration || 100
-      let tmpFrameIdx = animationFrameIdx
-      const nextFrame = () => {
-        const stateDef = this.getStateDef(slotIdx, itemIdx)
-        let duration
-        if (!stateDef || stateDef.frames.length === 0) {
-          tmpFrameIdx = -1
-          duration = 100
-        } else {
-          tmpFrameIdx++
-          if (tmpFrameIdx >= stateDef.frames.length) {
-            tmpFrameIdx = 0
-          }
-          duration = stateDef.frames[tmpFrameIdx].duration
-        }
-        this.setSlot(slotIdx, itemIdx, tmpFrameIdx, false)
-        this.slotTimeouts[slotIdx] = setTimeout(nextFrame, duration)
-      }
-      this.slotTimeouts[slotIdx] = setTimeout(nextFrame, duration)
     },
     setTuber(tuber) {
-      for (let slot in this.slotTimeouts) {
-        clearTimeout(this.slotTimeouts[slot])
-        delete this.slotTimeouts[slot]
-      }
       this.tuber.slot = {}
       this.tuberDef = JSON.parse(JSON.stringify(tuber))
-      for (let slotIdx in this.tuberDef.slotDefinitions) {
-        const slotDefinition = this.tuberDef.slotDefinitions[slotIdx]
-        this.setSlot(slotIdx, slotDefinition.defaultItemIndex, 0, true)
-      }
+      this.tuberDef.slotDefinitions.forEach(slotDef => {
+        this.tuber.slot[slotDef.slot] = slotDef.defaultItemIndex
+      })
     },
     webaudio_tooling_obj() {
       console.log("audio is starting up ...");

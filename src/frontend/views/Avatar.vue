@@ -10,6 +10,15 @@
     </div>
     <div id="main" ref="main" v-if="settings">
       <table class="table is-striped">
+        <thead>
+          <tr>
+            <th></th>
+            <th></th>
+            <th>Preview</th>
+            <th>Name</th>
+            <th></th>
+          </tr>
+        </thead>
         <draggable
           :modelValue="settings.avatarDefinitions"
           @end="dragEnd"
@@ -26,6 +35,9 @@
                 <button class="button is-small" @click="edit(index)">
                   <i class="fa fa-pencil" />
                 </button>
+              </td>
+              <td>
+                <avatar-preview :avatar="element" />
               </td>
               <td>
                 {{ element.name }}
@@ -207,7 +219,17 @@ export default defineComponent({
 });
 </script>
 <style>
-.avatar-editor .modal-card-body {
-  min-width: 800px;
+.avatar-editor .modal-card {
+  width: calc(100% - 2em);
+}
+.avatar-all-images {
+  position: sticky;
+  top: 0;
+  overflow: scroll;
+}
+.avatar-all-images img {
+  background: #efefef;
+  height: 64px;
+  vertical-align: bottom;
 }
 </style>

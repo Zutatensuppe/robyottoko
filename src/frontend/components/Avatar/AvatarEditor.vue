@@ -1,7 +1,7 @@
 <template>
   <div class="avatar-editor modal is-active" v-if="item">
     <div class="modal-background" @click="onOverlayClick"></div>
-    <div class="modal-card" style="width: auto">
+    <div class="modal-card">
       <header class="modal-card-head">
         <p class="modal-card-title">Edit Avatar</p>
         <button
@@ -10,64 +10,83 @@
           @click="onCloseClick"
         ></button>
       </header>
-      <section class="modal-card-body">
-        <table class="table is-striped">
-          <tbody>
-            <tr>
-              <td>Name:</td>
-              <td><input class="input is-small" v-model="item.name" /></td>
-            </tr>
-            <tr>
-              <td>States:</td>
-              <td>
-                <span
-                  class="tag"
-                  v-for="(stateDef, idx) in item.stateDefinitions"
-                  :key="idx"
-                >
-                  <span>{{ stateDef.value }}</span>
-                  <span
-                    class="ml-1 is-clickable"
-                    v-if="stateDef.deletable"
-                    @click="removeStateDefinition(idx)"
-                    ><i class="fa fa-trash"></i
-                  ></span>
-                </span>
+      <section class="modal-card-body" ref="cardBody">
+        <div class="columns">
+          <div class="column is-three-quarters">
+            <table class="table is-striped">
+              <tbody>
+                <tr>
+                  <td>Name:</td>
+                  <td><input class="input is-small" v-model="item.name" /></td>
+                </tr>
+                <tr>
+                  <td>States:</td>
+                  <td>
+                    <span
+                      class="tag"
+                      v-for="(stateDef, idx) in item.stateDefinitions"
+                      :key="idx"
+                    >
+                      <span>{{ stateDef.value }}</span>
+                      <span
+                        class="ml-1 is-clickable"
+                        v-if="stateDef.deletable"
+                        @click="removeStateDefinition(idx)"
+                        ><i class="fa fa-trash"></i
+                      ></span>
+                    </span>
 
-                <input
-                  class="input is-small"
-                  type="text"
-                  v-model="newState"
-                  placeholder="State"
-                />
-                <span
-                  class="button is-small"
-                  @click="addStateDefinition"
-                  :disabled="isStateAddable ? null : true"
-                  >Add custom state</span
-                >
-              </td>
-            </tr>
-            <tr>
-              <td>Slots</td>
-              <td>
-                <avatar-slot-definition-editor
-                  class="card mb-2"
-                  v-for="(slotDefinition, idx) in item.slotDefinitions"
-                  :key="idx"
-                  :modelValue="slotDefinition"
-                  :avatarDef="item"
-                  @update:modelValue="updateSlotDefinition(idx, $event)"
-                  @moveUp="moveSlotUp(idx)"
-                  @moveDown="moveSlotDown(idx)"
-                  @remove="removeSlotDefinition(idx)"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                    <input
+                      class="input is-small"
+                      type="text"
+                      v-model="newState"
+                      placeholder="State"
+                    />
+                    <span
+                      class="button is-small"
+                      @click="addStateDefinition"
+                      :disabled="isStateAddable ? null : true"
+                      >Add custom state</span
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td>Slots</td>
+                  <td>
+                    <avatar-slot-definition-editor
+                      class="card mb-2"
+                      v-for="(slotDefinition, idx) in item.slotDefinitions"
+                      :key="idx"
+                      :modelValue="slotDefinition"
+                      :avatarDef="item"
+                      @update:modelValue="updateSlotDefinition(idx, $event)"
+                      @moveUp="moveSlotUp(idx)"
+                      @moveDown="moveSlotDown(idx)"
+                      @remove="removeSlotDefinition(idx)"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
 
-        <span class="button is-small" @click="addSlotDefinition">Add slot</span>
+            <span class="button is-small" @click="addSlotDefinition"
+              >Add slot</span
+            >
+          </div>
+          <div class="column">
+            <div class="avatar-all-images" ref="allImagesDiv">
+              <img
+                v-for="(img, idx) in allImages"
+                :key="idx"
+                :src="img"
+                draggable="true"
+                class="mr-1 mb-1"
+                @dragstart="imageDragStart"
+                :data-src="img"
+              />
+            </div>
+          </div>
+        </div>
       </section>
       <footer class="modal-card-foot">
         <button class="button is-small is-primary" @click="onSaveClick">
@@ -111,6 +130,11 @@ export default defineComponent({
   }),
   mounted() {
     this.item = JSON.parse(JSON.stringify(this.modelValue));
+    this.adjustAllImagesDivSize();
+    window.addEventListener("resize", this.adjustAllImagesDivSize);
+  },
+  unmounted() {
+    window.removeEventListener("resize", this.adjustAllImagesDivSize);
   },
   watch: {
     modelValue: {
@@ -120,6 +144,21 @@ export default defineComponent({
     },
   },
   computed: {
+    allImages() {
+      const images: string[] = [];
+      this.item?.slotDefinitions.forEach((slotDef) => {
+        slotDef.items.forEach((item) => {
+          item.states.forEach((state) => {
+            state.frames.forEach((frame) => {
+              if (frame.url && !images.includes(frame.url)) {
+                images.push(frame.url);
+              }
+            });
+          });
+        });
+      });
+      return images;
+    },
     isStateAddable() {
       if (!this.item) {
         return false;
@@ -134,6 +173,21 @@ export default defineComponent({
     },
   },
   methods: {
+    adjustAllImagesDivSize() {
+      this.$nextTick(() => {
+        if (!this.$refs.cardBody || !this.$refs.allImagesDiv) {
+          return;
+        }
+        const maxHeight = this.$refs.cardBody.clientHeight;
+        this.$refs.allImagesDiv.style.maxHeight = `${maxHeight}px`;
+      });
+    },
+    imageDragStart($evt) {
+      $evt.dataTransfer.setData(
+        "avatar-image-url",
+        $evt.target.getAttribute("data-src")
+      );
+    },
     onSaveClick() {
       if (!this.item) {
         console.warn("onSaveClick: this.item not initialized");

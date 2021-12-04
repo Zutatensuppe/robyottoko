@@ -1,5 +1,10 @@
 <template>
-  <div class="avatar-slot-item-state-editor card">
+  <div
+    class="avatar-slot-item-state-editor card"
+    @dragover="onDragOver"
+    @dragenter="onDragEnter"
+    @drop="onDrop"
+  >
     <div class="avatar-slot-item-state-editor-title">
       {{ modelValue.state }}
     </div>
@@ -73,6 +78,26 @@ export default defineComponent({
     };
   },
   methods: {
+    onDragOver($evt) {
+      if ($evt.dataTransfer.getData("avatar-image-url")) {
+        $evt.preventDefault();
+      }
+    },
+    onDragEnter($evt) {
+      if ($evt.dataTransfer.getData("avatar-image-url")) {
+        $evt.preventDefault();
+      }
+    },
+    onDrop($evt) {
+      if ($evt.dataTransfer.getData("avatar-image-url")) {
+        $evt.preventDefault();
+        const frame: AvatarModuleAnimationFrameDefinition = {
+          url: $evt.dataTransfer.getData("avatar-image-url"),
+          duration: 100,
+        };
+        this.modelValue.frames.push(frame);
+      }
+    },
     onOverlayClick() {
       this.editing = false;
     },
