@@ -1048,6 +1048,11 @@ class WebServer {
                         url: this.widgetUrl('speech-to-text', req.userWidgetToken),
                     },
                     {
+                        title: 'Avatar',
+                        hint: '???',
+                        url: this.widgetUrl('avatar', req.userWidgetToken),
+                    },
+                    {
                         title: 'Drawcast (Overlay)',
                         hint: 'Browser source, or open in browser and capture window',
                         url: this.widgetUrl('drawcast_receive', req.userWidgetToken),
@@ -2273,6 +2278,7 @@ const LANG_TO_URL_MAP = {
 /**
  * Exctract searched words and word lists for both languages
  * from a dict.cc result html
+ * TODO: change from regex to parsing the html ^^
  */
 const extractInfo = (text) => {
     const stringToArray = (str) => {
@@ -2298,7 +2304,6 @@ const extractInfo = (text) => {
         arr2: arrayByRegex(/var c2Arr = new Array\((.*)\);/),
     };
 };
-// TODO: change from regex to parsing the html ^^
 const parseResult = (text) => {
     const normalize = (str) => {
         return str.toLowerCase().replace(/[\.\!\?]/, '');
@@ -4111,6 +4116,93 @@ class DrawcastModule {
     }
 }
 
+logger('AvatarModule.ts');
+class AvatarModule {
+    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
+        this.name = 'avatar';
+        this.defaultSettings = {
+            avatarDefinitions: []
+        };
+        this.variables = variables;
+        this.user = user;
+        this.wss = wss;
+        this.storage = storage;
+        this.ws = ws;
+        this.tokens = new Tokens(db);
+        this.data = this.reinit();
+    }
+    saveCommands() {
+        // pass
+    }
+    reinit() {
+        const data = this.storage.load(this.name, {
+            settings: this.defaultSettings
+        });
+        // -start- fixes to old data structure
+        for (let avatarDef of data.settings.avatarDefinitions) {
+            for (let slotDef of avatarDef.slotDefinitions) {
+                for (let item of slotDef.items) {
+                    // delete item.url
+                    // item.states = item.animation
+                    // delete item.animation
+                    // avatarDef.stateDefinitions.map((stateDefinition: AvatarModuleAvatarStateDefinition) => ({state: stateDefinition.value, frames: [] }))
+                }
+            }
+        }
+        // -end-   fixes to old data structure
+        return {
+            settings: data.settings
+        };
+    }
+    widgets() {
+        return {
+            'avatar': (req, res, next) => {
+                return {
+                    title: 'Avatar Widget',
+                    page: 'avatar',
+                    wsUrl: `${this.wss.connectstring()}/${this.name}`,
+                    widgetToken: req.params.widget_token,
+                };
+            },
+        };
+    }
+    getRoutes() {
+        return {};
+    }
+    wsdata(eventName) {
+        return {
+            event: eventName,
+            data: Object.assign({}, this.data, { defaultSettings: this.defaultSettings }),
+        };
+    }
+    updateClient(eventName, ws) {
+        this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws);
+    }
+    updateClients(eventName) {
+        this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName));
+    }
+    getWsEvents() {
+        return {
+            'conn': (ws) => {
+                this.updateClient('init', ws);
+            },
+            'save': (ws, data) => {
+                this.data.settings = data.settings;
+                this.storage.save(this.name, this.data);
+                this.data = this.reinit();
+                this.updateClients('init');
+            },
+        };
+    }
+    getCommands() {
+        return {};
+    }
+    async onChatMsg(chatMessageContext) {
+    }
+    async handleRewardRedemption(redemption) {
+    }
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const modules = [
     GeneralModule,
@@ -4118,6 +4210,7 @@ const modules = [
     VoteModule,
     SpeechToTextModule,
     DrawcastModule,
+    AvatarModule,
 ];
 const db = new Db(config.db);
 // make sure we are always on latest db version
