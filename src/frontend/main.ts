@@ -11,6 +11,7 @@ import Settings from './views/Settings.vue'
 import SongRequest from './views/SongRequest.vue'
 import Commands from './views/Commands.vue'
 import SpeechToText from './views/SpeechToText.vue'
+import Avatar from './views/Avatar.vue'
 import PasswordReset from './views/PasswordReset.vue'
 import ForgotPassword from './views/ForgotPassword.vue'
 
@@ -33,6 +34,13 @@ import SongRequestHelp from "./components/SongRequest/Help.vue";
 import SongRequestPlaylistEditor from "./components/SongRequest/PlaylistEditor.vue";
 import SongRequestSettings from "./components/SongRequest/Settings.vue";
 import SongRequestTagsEditor from "./components/SongRequest/TagsEditor.vue";
+
+import AvatarEditor from "./components/Avatar/AvatarEditor.vue";
+import AvatarSlotDefinitionEditor from "./components/Avatar/AvatarSlotDefinitionEditor.vue";
+import AvatarSlotItemEditor from "./components/Avatar/AvatarSlotItemEditor.vue";
+import AvatarPreview from "./components/Avatar/AvatarPreview.vue";
+import AvatarSlotItemStateEditor from "./components/Avatar/AvatarSlotItemStateEditor.vue";
+import AvatarAnimation from "./components/Avatar/AvatarAnimation.vue";
 
 import "./style.css"
 
@@ -91,6 +99,12 @@ const run = async () => {
       {
         name: 'speech-to-text', path: '/speech-to-text/', component: SpeechToText, meta: {
           title: 'Speech to text',
+          protected: true,
+        }
+      },
+      {
+        name: 'avatar', path: '/avatar/', component: Avatar, meta: {
+          title: 'Avatar',
           protected: true,
         }
       },
@@ -158,6 +172,13 @@ const run = async () => {
   app.component('tags-editor', SongRequestTagsEditor)
   app.component('song-request-settings', SongRequestSettings)
   app.component('help', SongRequestHelp)
+  // avatar - maybe dont register these globally?
+  app.component('avatar-editor', AvatarEditor)
+  app.component('avatar-slot-definition-editor', AvatarSlotDefinitionEditor)
+  app.component('avatar-slot-item-editor', AvatarSlotItemEditor)
+  app.component('avatar-preview', AvatarPreview)
+  app.component('avatar-slot-item-state-editor', AvatarSlotItemStateEditor)
+  app.component('avatar-animation', AvatarAnimation)
   app.mount('#app')
 }
 

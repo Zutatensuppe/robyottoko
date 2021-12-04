@@ -79,6 +79,10 @@ export default defineComponent({
         text: "Speech-To-Text",
       },
       {
+        to: { name: "avatar" },
+        text: "Avatar",
+      },
+      {
         to: { name: "drawcast" },
         text: "Drawcast",
       },
