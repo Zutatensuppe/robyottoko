@@ -129,6 +129,12 @@ const doDummyReplacements = (text: string, str: string) => {
       },
     },
     {
+      regex: /\$rand\((\d+),(\d+)\)/g,
+      replacer: (m0: string, m1: string, m2: string) => {
+        return str
+      },
+    },
+    {
       regex: /\$var\(([^)]+)\)/g,
       replacer: (m0: string, m1: string) => {
         return str

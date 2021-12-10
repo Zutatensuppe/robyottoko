@@ -385,6 +385,14 @@ const doReplacements = async (text, command, context, variables, originalCmd) =>
             },
         },
         {
+            regex: /\$rand\((\d+)?,?(\d+)?\)/g,
+            replacer: async (m0, m1, m2) => {
+                const min = typeof m1 === 'undefined' ? 1 : parseInt(m1, 10);
+                const max = typeof m2 === 'undefined' ? 100 : parseInt(m2, 10);
+                return `${getRandomInt(min, max)}`;
+            },
+        },
+        {
             regex: /\$var\(([^)]+)\)/g,
             replacer: async (m0, m1) => {
                 if (!originalCmd.variables) {
