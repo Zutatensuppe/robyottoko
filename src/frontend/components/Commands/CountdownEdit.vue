@@ -78,7 +78,7 @@
                       :src="element.value.image.file"
                       :title="element.value.image.filename"
                       width="100%"
-                      height="90"
+                      height="90px"
                       style="display: block"
                     />
                     <button

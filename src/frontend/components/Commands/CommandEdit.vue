@@ -300,7 +300,7 @@
                   :src="item.data.image.file"
                   :title="item.data.image.filename"
                   width="100%"
-                  height="90"
+                  height="90px"
                   style="display: block"
                 />
                 <button
