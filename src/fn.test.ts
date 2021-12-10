@@ -1,4 +1,18 @@
-import { arrayMove, joinIntoChunks, humanDuration, parseISO8601Duration, DAY, HOUR, MINUTE, SECOND, MS, parseHumanDuration } from './fn'
+import {
+  arrayMove,
+  joinIntoChunks,
+  humanDuration,
+  parseISO8601Duration,
+  DAY,
+  HOUR,
+  MINUTE,
+  SECOND,
+  MS,
+  parseHumanDuration,
+  findIdxBySearchInOrder,
+  findIdxBySearch,
+  findIdxBySearchExactPart,
+} from './fn'
 
 test('joinIntoChunks', () => {
   let actual = joinIntoChunks(['hyottoko', 'van', 'megaport'], ', ', 12)
@@ -79,5 +93,33 @@ ${['a', 'b', 'c', 'd']} | ${2} | ${0} | ${['c', 'a', 'b', 'd']}
 ${['a', 'b', 'c', 'd']} | ${0} | ${2} | ${['b', 'c', 'a', 'd']}
 `('arrayMove', ({ arr, from, to, expected }) => {
   const actual = arrayMove(arr, from, to)
+  expect(actual).toStrictEqual(expected)
+})
+
+test.each`
+array             | search   | expected
+${['abc', 'lel']} | ${'lel'} | ${1}
+${['Trio Da Da Da Official Video', 'Panda! Go Panda! (Panda Kopanda) intro theme']} | ${'da da da'} | ${0}
+${['Panda! Go Panda! (Panda Kopanda) intro theme', 'Trio Da Da Da Official Video']} | ${'da da da'} | ${1}
+`('findIdxBySearchExactPart', ({ array, search, expected }) => {
+  const actual = findIdxBySearchExactPart(array, search)
+  expect(actual).toStrictEqual(expected)
+})
+
+test.each`
+array             | search   | expected
+${['abc', 'lel']} | ${'lel'} | ${1}
+${['Trio Da Da Da Official Video', 'Panda! Go Panda! (Panda Kopanda) intro theme']} | ${'da da da'} | ${0}
+${['Panda! Go Panda! (Panda Kopanda) intro theme', 'Trio Da Da Da Official Video']} | ${'da da da'} | ${0}
+`('findIdxBySearchInOrder', ({ array, search, expected }) => {
+  const actual = findIdxBySearchInOrder(array, search)
+  expect(actual).toStrictEqual(expected)
+})
+
+test.each`
+array             | search   | expected
+${['abc', 'lel']} | ${'lel'} | ${1}
+`('findIdxBySearch', ({ array, search, expected }) => {
+  const actual = findIdxBySearch(array, search)
   expect(actual).toStrictEqual(expected)
 })

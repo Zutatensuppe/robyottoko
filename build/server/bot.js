@@ -555,6 +555,40 @@ const passwordHash = (plainPass, salt) => {
     hash.update(`${salt}${plainPass}`);
     return hash.digest('hex');
 };
+const findIdxFuzzy = (array, search, keyFn = ((item) => String(item))) => {
+    let idx = findIdxBySearchExactPart(array, search, keyFn);
+    if (idx === -1) {
+        idx = findIdxBySearchInOrder(array, search, keyFn);
+    }
+    if (idx === -1) {
+        idx = findIdxBySearch(array, search, keyFn);
+    }
+    return idx;
+};
+const findIdxBySearchExactPart = (array, search, keyFn = ((item) => String(item))) => {
+    const searchLower = search.toLowerCase();
+    return array.findIndex(item => keyFn(item).toLowerCase().indexOf(searchLower) !== -1);
+};
+const findIdxBySearchInOrder = (array, search, keyFn = ((item) => String(item))) => {
+    const split = search.split(/\s+/);
+    const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const regex = new RegExp(regexArgs.join('.*'), 'i');
+    return array.findIndex(item => keyFn(item).match(regex));
+};
+const findIdxBySearch = (array, search, keyFn = ((item) => String(item))) => {
+    const split = search.split(/\s+/);
+    const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const regexes = regexArgs.map(arg => new RegExp(arg, 'i'));
+    return array.findIndex(item => {
+        const str = keyFn(item);
+        for (const regex of regexes) {
+            if (!str.match(regex)) {
+                return false;
+            }
+        }
+        return true;
+    });
+};
 var fn = {
     logger,
     mimeToExt,
@@ -584,6 +618,10 @@ var fn = {
     split,
     joinIntoChunks,
     arrayMove,
+    findIdxFuzzy,
+    findIdxBySearchExactPart,
+    findIdxBySearchInOrder,
+    findIdxBySearch,
     MS,
     SECOND,
     MINUTE,
@@ -3164,25 +3202,6 @@ class SongrequestModule {
     findSongIdxByYoutubeId(youtubeId) {
         return this.data.playlist.findIndex(item => item.yt === youtubeId);
     }
-    findSongIdxBySearchInOrder(str) {
-        const split = str.split(/\s+/);
-        const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-        const regex = new RegExp(regexArgs.join('.*'), 'i');
-        return this.data.playlist.findIndex(item => item.title.match(regex));
-    }
-    findSongIdxBySearch(str) {
-        const split = str.split(/\s+/);
-        const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-        const regexes = regexArgs.map(arg => new RegExp(arg, 'i'));
-        return this.data.playlist.findIndex(item => {
-            for (const regex of regexes) {
-                if (!item.title.match(regex)) {
-                    return false;
-                }
-            }
-            return true;
-        });
-    }
     like() {
         this.incStat('goods');
         this.save();
@@ -3670,10 +3689,7 @@ class SongrequestModule {
         };
     }
     async resr(str) {
-        let idx = this.findSongIdxBySearchInOrder(str);
-        if (idx < 0) {
-            idx = this.findSongIdxBySearch(str);
-        }
+        const idx = findIdxFuzzy(this.data.playlist, str, (item) => item.title);
         if (idx < 0) {
             return {
                 addType: ADD_TYPE.NOT_ADDED,

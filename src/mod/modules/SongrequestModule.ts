@@ -1,5 +1,5 @@
 import Db from '../../Db'
-import fn, { logger } from '../../fn'
+import fn, { findIdxFuzzy, logger } from '../../fn'
 import WebServer from '../../WebServer'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
@@ -462,27 +462,6 @@ class SongrequestModule {
 
   findSongIdxByYoutubeId(youtubeId: string) {
     return this.data.playlist.findIndex(item => item.yt === youtubeId)
-  }
-
-  findSongIdxBySearchInOrder(str: string) {
-    const split = str.split(/\s+/)
-    const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-    const regex = new RegExp(regexArgs.join('.*'), 'i')
-    return this.data.playlist.findIndex(item => item.title.match(regex))
-  }
-
-  findSongIdxBySearch(str: string) {
-    const split = str.split(/\s+/)
-    const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-    const regexes = regexArgs.map(arg => new RegExp(arg, 'i'))
-    return this.data.playlist.findIndex(item => {
-      for (const regex of regexes) {
-        if (!item.title.match(regex)) {
-          return false
-        }
-      }
-      return true
-    })
   }
 
   like() {
@@ -1011,11 +990,7 @@ class SongrequestModule {
   }
 
   async resr(str: string) {
-    let idx = this.findSongIdxBySearchInOrder(str)
-    if (idx < 0) {
-      idx = this.findSongIdxBySearch(str)
-    }
-
+    const idx = findIdxFuzzy(this.data.playlist, str, (item) => item.title)
     if (idx < 0) {
       return {
         addType: ADD_TYPE.NOT_ADDED,

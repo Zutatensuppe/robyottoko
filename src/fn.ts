@@ -472,6 +472,60 @@ export const passwordHash = (
   return hash.digest('hex')
 }
 
+export const findIdxFuzzy = <T>(
+  array: T[],
+  search: string,
+  keyFn: (item: T) => string = ((item) => String(item))
+) => {
+  let idx = findIdxBySearchExactPart(array, search, keyFn)
+  if (idx === -1) {
+    idx = findIdxBySearchInOrder(array, search, keyFn)
+  }
+  if (idx === -1) {
+    idx = findIdxBySearch(array, search, keyFn)
+  }
+  return idx
+}
+
+export const findIdxBySearchExactPart = <T>(
+  array: T[],
+  search: string,
+  keyFn: (item: T) => string = ((item) => String(item))
+) => {
+  const searchLower = search.toLowerCase()
+  return array.findIndex(item => keyFn(item).toLowerCase().indexOf(searchLower) !== -1)
+}
+
+export const findIdxBySearchInOrder = <T>(
+  array: T[],
+  search: string,
+  keyFn: (item: T) => string = ((item) => String(item))
+) => {
+  const split = search.split(/\s+/)
+  const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  const regex = new RegExp(regexArgs.join('.*'), 'i')
+  return array.findIndex(item => keyFn(item).match(regex))
+}
+
+export const findIdxBySearch = <T>(
+  array: T[],
+  search: string,
+  keyFn: (item: T) => string = ((item) => String(item))
+) => {
+  const split = search.split(/\s+/)
+  const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  const regexes = regexArgs.map(arg => new RegExp(arg, 'i'))
+  return array.findIndex(item => {
+    const str = keyFn(item)
+    for (const regex of regexes) {
+      if (!str.match(regex)) {
+        return false
+      }
+    }
+    return true
+  })
+}
+
 export default {
   logger,
   mimeToExt,
@@ -501,6 +555,10 @@ export default {
   split,
   joinIntoChunks,
   arrayMove,
+  findIdxFuzzy,
+  findIdxBySearchExactPart,
+  findIdxBySearchInOrder,
+  findIdxBySearch,
   MS,
   SECOND,
   MINUTE,
