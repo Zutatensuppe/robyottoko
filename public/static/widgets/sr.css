@@ -62,9 +62,26 @@ body {
   padding: .5em 1em;
   border: solid 1px #444;
   display: grid;
-  grid-template-areas: "title title"
-                       "meta vote";
-  grid-template-columns: auto 150px;
+  grid-template-areas: "thumbnail title title"
+                       "thumbnail meta-left meta-right";
+  grid-template-columns: max-content auto 150px;
+  column-gap: 10px;
+}
+
+.thumbnail {
+  width: 90px;
+  grid-area: thumbnail;
+}
+.media-16-9 {
+  position: relative;
+  padding-bottom: 56.25%;
+}
+.media-16-9 img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .title {
@@ -74,17 +91,16 @@ body {
   margin-bottom: 5px;
 }
 
-.meta {
-  grid-area: meta;
-  align-self: end;
+.meta-left {
+  grid-area: meta-left;
 }
 
 .meta-user:after { content: ',' }
 
-.vote {
+.meta-right {
   font-size: 1.5em;
   text-align: right;
-  grid-area: vote;
+  grid-area: meta-right;
 }
 
 .playing {

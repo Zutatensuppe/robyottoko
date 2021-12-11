@@ -1,10 +1,48 @@
 import Youtube from '../components/youtube.js'
 import ResponsiveImage from '../components/responsive-image.js'
 
+const ListItem = {
+  name: 'list-item',
+  props: {
+    item: {
+      type: Object,
+      required: true,
+    },
+  },
+  template: `
+    <li class="item">
+      <div class="thumbnail">
+        <div class="media-16-9">
+          <img :src="thumbnail" />
+        </div>
+      </div>
+      <div class="title">
+        <span class="title-content title-orig">{{ item.title || item.yt }}</span>
+        <span class="title-content title-dupl">{{ item.title || item.yt }}</span>
+      </div>
+      <div class="meta meta-left">
+        <span class="meta-user"><span class="meta-user-text-before">requested by </span>{{ item.user }}<span class="meta-user-text-after"></span></span>
+        <span class="meta-plays"><span class="meta-plays-text-before">played </span>{{ item.plays }}<span class="meta-plays-text-after"> time{{ item.plays === 1 ? '' : 's' }}</span></span>
+      </div>
+      <div class="meta meta-right vote">
+        <span class="meta-plays"><i class="fa fa-repeat"/> {{ item.plays }}</span>
+        <span class="vote-up"><i class="fa fa-thumbs-up"/> {{ item.goods }}</span>
+        <span class="vote-down"><i class="fa fa-thumbs-down"/> {{ item.bads }}</span>
+      </div>
+    </li> `,
+  computed: {
+    thumbnail() {
+      return `https://i.ytimg.com/vi/${this.item.yt}/mqdefault.jpg`
+    },
+  },
+}
+
+
 export default {
   components: {
     Youtube,
     ResponsiveImage,
+    ListItem,
   },
   props: {
     ws: Object,
@@ -39,28 +77,14 @@ export default {
       <youtube ref="youtube" @ended="ended" />
     </div>
     <ol class="list">
-      <li
+      <list-item
         v-for="(item, idx) in playlist"
-        class="item"
         :class="idx === 0 ? 'playing' : 'not-playing'"
         v-if="!isFilteredOut(item)"
-      >
-        <div class="title">
-          <span class="title-content title-orig">{{ item.title || item.yt }}</span>
-          <span class="title-content title-dupl">{{ item.title || item.yt }}</span>
-        </div>
-        <div class="meta">
-          <span class="meta-user">requested by {{ item.user }}</span>
-          <span class="meta-plays">played {{ item.plays }} time{{ item.plays === 1 ? '' : 's' }}</span>
-        </div>
-        <div class="vote">
-          <span class="vote-up"><i class="fa fa-thumbs-up"/> {{ item.goods }}</span>
-          <span class="vote-down"><i class="fa fa-thumbs-down"/> {{ item.bads }}</span>
-        </div>
-      </li>
+        :item="item" />
     </ol>
   </div>
-`,
+  `,
   watch: {
     playlist: function (newVal, oldVal) {
       if (!newVal.find(item => !this.isFilteredOut(item))) {
