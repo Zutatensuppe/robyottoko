@@ -246,10 +246,11 @@ body { font-family: 'Shadows into Light'; font-size: 30px; }`,
         },
         {
           desc: "Show only titles and marquee the current song:",
-          code: `.playing .title { animation: init 10s linear forwards, back 10s 0s linear infinite; }
-.title { margin: 1em 0; white-space: nowrap; }
-.not-playing .title { text-overflow: ellipsis; overflow: hidden; }
-.meta, .vote { display: none; }
+          code: `.playing .title { overflow: hidden; white-space: nowrap; height: 20px; line-height: 20px; }
+.playing .title-content { position: absolute; padding: 0 10px; min-width: 100%; animation: init 5s linear, back 10s linear 5s infinite; }
+.playing .title-content.title-dupl { display: block; animation: back 10s linear 0s infinite; }
+.title { margin-bottom: 0; }
+.meta-left, .meta-right, .thumbnail { display: none; }
 @keyframes back {
     from { transform: translateX(100%); }
     to { transform: translateX(-100%); }
@@ -259,18 +260,64 @@ body { font-family: 'Shadows into Light'; font-size: 30px; }`,
 }`,
         },
         {
-          desc: "Show only titles and marquee the current song (better version):",
-          code: `.playing .title { overflow: hidden; white-space: nowrap; height: 20px; line-height: 20px; }
-.playing .title-content { position: absolute; padding: 0 10px; min-width: 100%; animation: init 5s linear, back 10s linear 5s infinite; }
-.playing .title-content.title-dupl { display: block; animation: back 10s linear 0s infinite; }
-.vote, .meta { display: none; }
-@keyframes back {
-    from { transform: translateX(100%); }
-    to { transform: translateX(-100%); }
-}
-@keyframes init {
-    to { transform: translateX(-100%); }
-}`,
+          desc: "Replace icon for thumbs-up with an image",
+          code: `.meta-right .vote-up { background: url('https://hyottoko.club/assets/hyottoko.30d2bcb9.png') no-repeat 0 center; background-size: 1em; padding-left: 1.2em; }
+.meta-right .vote-up .fa { display: none; }`,
+        },
+        {
+          desc: "Remove text before/after username",
+          code: `.meta-user-text-before,
+.meta-user-text-after {display: none}`,
+        },
+        {
+          desc: "Add a fontawesome icon before username (\\f075 is the icon unicode, refer to https://fontawesome.com/v4.7/icons/)",
+          code: `.meta-user-name::before { content: "${"\\f"}075"; display: inline-block; font: normal normal normal 14px/1 FontAwesome; font-size: inherit; margin-right: .5em; }`,
+        },
+        {
+          desc: "Add an image icon before username",
+          code: `.meta-user-name { background: url('https://hyottoko.club/assets/hyottoko.30d2bcb9.png') no-repeat 0 center; background-size: 1em; padding-left: 1.2em; }`,
+        },
+        {
+          desc: "Add an image icon before username for specific user only",
+          code: `[data-user="nc_para_" i] .meta-user-name { background: url('https://hyottoko.club/assets/hyottoko.30d2bcb9.png') no-repeat 0 center; background-size: 1em; padding-left: 1.2em; }`,
+        },
+        {
+          desc: "Change item display depending on username (this one changes background and makes thumbnails black boxes)",
+          code: `[data-user="nc_para_" i] { background: #dd0066; }
+[data-user="nc_para_" i] .thumbnail img { display: none; }
+[data-user="nc_para_" i] .thumbnail { background: black; }`,
+        },
+        {
+          desc: "Show player left of the playlist (and limit its height to 320px)",
+          code: `.wrapper { display: grid; grid-template-areas: "player playlist"; grid-template-columns: 50% auto; grid-template-rows: 320px; }
+.player iframe { height: 320px; }`,
+        },
+        {
+          desc: "Show thumbnails only, and display meta info above them",
+          code: `.item { display: block; position: relative; padding: 0; color: white; }
+.title, .meta-left, .meta-right { position: absolute; padding: .2em; background: rgba(244,0,90,.9); }
+.meta-left { top: 0; left: 0; font-size: 1em; }
+.meta-right { top: 0; right: 0; font-size: 1em; }
+.title { bottom: 0; left: 0; right: 0; margin-bottom: 0; }
+.thumbnail { width: auto; }`,
+        },
+        {
+          desc: "Align thumbnails to the bottom",
+          code: `.thumbnail { align-self: end; }`,
+        },
+        {
+          desc: "Align thumbnails to the center",
+          code: `.thumbnail { align-self: center; }`,
+        },
+        {
+          desc: "Add a margin/padding to the thumbnails",
+          code: `.thumbnail { padding: 20px; }`,
+        },
+        {
+          desc: "Show number of plays not at player, but in icon form on the right near votes",
+          code: `.meta-left .meta-user:after,
+.meta-left .meta-plays { display: none; }
+.meta-right .meta-plays { display: inline-block; }`,
         },
       ],
     },

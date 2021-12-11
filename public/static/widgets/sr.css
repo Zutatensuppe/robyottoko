@@ -95,12 +95,17 @@ body {
   grid-area: meta-left;
 }
 
-.meta-user:after { content: ',' }
+.meta-user:after {
+  content: ','
+}
 
 .meta-right {
-  font-size: 1.5em;
   text-align: right;
   grid-area: meta-right;
+}
+
+.meta-right .meta-plays {
+  display: none;
 }
 
 .playing {
