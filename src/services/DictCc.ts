@@ -7,6 +7,7 @@ export const LANG_TO_URL_MAP: Record<string, string> = {
   es: 'https://enes.dict.cc/',
   it: 'https://enit.dict.cc/',
   fr: 'https://enfr.dict.cc/',
+  pt: 'https://enpt.dict.cc/',
 }
 
 /**

@@ -587,6 +587,7 @@ export default defineComponent({
       { value: "es", flag: "🇪🇸", title: "Spanish" },
       { value: "fr", flag: "🇫🇷", title: "French" },
       { value: "it", flag: "🇮🇹", title: "Italian" },
+      { value: "pt", flag: "🇵🇹/🇧🇷", title: "Portuguese" },
     ],
   }),
   mounted() {
