@@ -16,7 +16,13 @@
 }
 
 
-code { white-space: pre; }
+code {
+  white-space: pre;
+  max-width: 30vw;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 body { margin: 0; }
 
 /* * { vertical-align: text-bottom; } */
