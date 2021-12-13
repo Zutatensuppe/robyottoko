@@ -2192,7 +2192,7 @@ const countdown = (variables, wss, userId, originalCmd) => async (command, clien
     const actions = [];
     for (const a of actionDefs) {
         if (a.type === 'text') {
-            actions.push(async () => say(a.value));
+            actions.push(async () => say(`${a.value}`));
         }
         else if (a.type === 'media') {
             actions.push(async () => {
@@ -2205,7 +2205,7 @@ const countdown = (variables, wss, userId, originalCmd) => async (command, clien
         else if (a.type === 'delay') {
             let duration;
             try {
-                duration = (await parseDuration(a.value)) || 0;
+                duration = (await parseDuration(`${a.value}`)) || 0;
             }
             catch (e) {
                 log$1.error(e.message, a.value);

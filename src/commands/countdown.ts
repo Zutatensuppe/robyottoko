@@ -1,6 +1,6 @@
 import WebSocketServer from '../net/WebSocketServer'
 import Variables from '../services/Variables'
-import { CommandFunction, CountdownCommand, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import { CommandFunction, CountdownAction, CountdownCommand, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
 import fn from './../fn'
 
 const log = fn.logger('countdown.ts')
@@ -36,7 +36,7 @@ const countdown = (
 
     const t = (settings.type || 'auto')
 
-    let actionDefs: { type: 'text' | 'delay' | 'media', value: string }[] = []
+    let actionDefs: CountdownAction[] = []
     if (t === 'auto') {
       const steps = parseInt(await doReplacements(`${settings.steps}`), 10)
       const msgStep = settings.step || "{step}"
@@ -66,7 +66,7 @@ const countdown = (
     const actions = []
     for (const a of actionDefs) {
       if (a.type === 'text') {
-        actions.push(async () => say(a.value))
+        actions.push(async () => say(`${a.value}`))
       } else if (a.type === 'media') {
         actions.push(async () => {
           wss.notifyAll([userId], 'general', {
@@ -77,7 +77,7 @@ const countdown = (
       } else if (a.type === 'delay') {
         let duration: number
         try {
-          duration = (await parseDuration(a.value)) || 0
+          duration = (await parseDuration(`${a.value}`)) || 0
         } catch (e: any) {
           log.error(e.message, a.value)
           return
