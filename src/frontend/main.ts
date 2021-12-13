@@ -130,7 +130,7 @@ const run = async () => {
   }
 
   const conf = await getJson('/api/conf')
-  user.init()
+  await user.init()
 
   router.beforeEach((to, from, next) => {
     if (to.meta.protected && !user.getMe()) {
