@@ -551,11 +551,24 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
 
-import fn from "../../../common/fn.ts";
-import { UploadedFile } from "../../../types.ts";
-import commands from "../../commands.ts";
+import fn from "../../../common/fn";
+import { Command, UploadedFile } from "../../../types";
+import commands from "../../commands";
+
+interface ComponentDataLang {
+  value: string;
+  flag: string;
+  title: string;
+}
+
+interface ComponentData {
+  item: Command | null;
+  newtrigger: "command" | "reward_redemption" | "timer";
+  variableChangeFocusIdx: number;
+  dictLangs: ComponentDataLang[];
+}
 
 export default defineComponent({
   props: {
@@ -564,7 +577,7 @@ export default defineComponent({
       required: true,
     },
     mode: {
-      type: String,
+      type: String as PropType<"create" | "edit">,
       required: true,
     },
     globalVariables: {
@@ -576,7 +589,7 @@ export default defineComponent({
     },
   },
   emits: ["update:modelValue", "cancel"],
-  data: () => ({
+  data: (): ComponentData => ({
     item: null,
     newtrigger: "command",
     variableChangeFocusIdx: -1,
@@ -606,30 +619,54 @@ export default defineComponent({
   },
   methods: {
     addtxt() {
+      if (!this.item) {
+        console.warn("addtxt: this.item not initialized");
+        return;
+      }
       this.item.data.text.push(commands.newText());
     },
     addtrigger() {
+      if (!this.item) {
+        console.warn("addtrigger: this.item not initialized");
+        return;
+      }
       this.item.triggers.push(commands.newTrigger(this.newtrigger));
     },
     onAddVariableChange() {
+      if (!this.item) {
+        console.warn("onAddVariableChange: this.item not initialized");
+        return;
+      }
       this.item.variableChanges.push({
         name: "",
         change: "set",
         value: "",
       });
     },
-    rmVariableChange(idx) {
+    rmVariableChange(idx: number) {
+      if (!this.item) {
+        console.warn("rmVariableChange: this.item not initialized");
+        return;
+      }
       this.item.variableChanges = this.item.variableChanges.filter(
         (val, index) => index !== idx
       );
     },
     onAddVariable() {
+      if (!this.item) {
+        console.warn("onAddVariable: this.item not initialized");
+        return;
+      }
       this.item.variables.push({
         name: "",
         value: "",
       });
     },
-    rmVariable(idx) {
+    rmVariable(idx: number) {
+      if (!this.item) {
+        console.warn("rmVariable: this.item not initialized");
+        return;
+      }
       this.item.variables = this.item.variables.filter(
         (val, index) => index !== idx
       );
@@ -647,24 +684,44 @@ export default defineComponent({
       this.$emit("cancel");
     },
     mediaSndUploaded(data: UploadedFile) {
+      if (!this.item) {
+        console.warn("mediaSndUploaded: this.item not initialized");
+        return;
+      }
       this.item.data.sound.filename = data.originalname;
       this.item.data.sound.file = data.filename;
     },
     mediaImgUploaded(data: UploadedFile) {
+      if (!this.item) {
+        console.warn("mediaImgUploaded: this.item not initialized");
+        return;
+      }
       this.item.data.image.filename = data.originalname;
       this.item.data.image.file = data.filename;
     },
-    rmtxt(idx) {
+    rmtxt(idx: number) {
+      if (!this.item) {
+        console.warn("rmtxt: this.item not initialized");
+        return;
+      }
       this.item.data.text = this.item.data.text.filter(
         (val, index) => index !== idx
       );
     },
-    rmtrigger(idx) {
+    rmtrigger(idx: number) {
+      if (!this.item) {
+        console.warn("rmtrigger: this.item not initialized");
+        return;
+      }
       this.item.triggers = this.item.triggers.filter(
         (val, index) => index !== idx
       );
     },
-    autocompletableVariables(/** @type string */ start) {
+    autocompletableVariables(start: string) {
+      if (!this.item) {
+        console.warn("autocompletableVariables: this.item not initialized");
+        return;
+      }
       const variables = this.item.variables.slice().map((localVar) => {
         return {
           var: localVar,
@@ -691,6 +748,10 @@ export default defineComponent({
   },
   computed: {
     valid() {
+      if (!this.item) {
+        return false;
+      }
+
       // check if all triggers are correct
       for (const trigger of this.item.triggers) {
         if (trigger.type === "command") {
@@ -703,7 +764,7 @@ export default defineComponent({
           } catch (e) {
             return false;
           }
-          const l = parseInt(trigger.data.minLines, 10);
+          const l = parseInt(`${trigger.data.minLines}`, 10);
           if (isNaN(l)) {
             return false;
           }
@@ -722,6 +783,9 @@ export default defineComponent({
       return true;
     },
     title() {
+      if (!this.item) {
+        return "";
+      }
       const verb = {
         create: "Create new ",
         edit: "Edit ",
