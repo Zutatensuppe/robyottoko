@@ -107,10 +107,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="(channel, idx) in twitch_channels"
-              :key="channel.channel_name"
-            >
+            <tr v-for="(channel, idx) in twitch_channels" :key="idx">
               <td>
                 <input
                   class="input is-small"
