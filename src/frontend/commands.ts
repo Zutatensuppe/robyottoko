@@ -1,6 +1,6 @@
-import { Command, CommandTrigger, MediaCommandData } from "../types"
+import { Command, CommandTrigger, CommandTriggerType, MediaCommandData } from "../types"
 
-const newTrigger = (type: 'command' | 'reward_redemption' | 'timer'): CommandTrigger => ({
+const newTrigger = (type: CommandTriggerType): CommandTrigger => ({
   type,
   data: {
     // for trigger type "command" (todo: should only exist if type is command, not always)

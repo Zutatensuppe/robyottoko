@@ -149,8 +149,10 @@ export interface RawCommand {
   args: string[]
 }
 
+export type CommandTriggerType = 'command' | 'reward_redemption' | 'timer'
+
 export interface CommandTrigger {
-  type: 'command' | 'timer'
+  type: CommandTriggerType
   data: {
     // for trigger type "command" (todo: should only exist if type is command, not always)
     command: string
@@ -235,8 +237,10 @@ export interface MediaCommandData {
   minDurationMs: string | number
 }
 
+export type CountdownActionType = 'text' | 'media' | 'delay'
+
 export interface CountdownAction {
-  type: 'text' | 'media' | 'delay'
+  type: CountdownActionType
   value: string | MediaCommandData
 }
 
