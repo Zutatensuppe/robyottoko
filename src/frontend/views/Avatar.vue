@@ -80,6 +80,7 @@ import {
   AvatarModuleWsInitData,
   AvatarModuleWsSaveData,
 } from "../../mod/modules/AvatarModule";
+import user from "../user";
 import WsClient from "../WsClient";
 
 interface ComponentData {
@@ -91,6 +92,8 @@ interface ComponentData {
   settings: AvatarModuleSettings | null;
   defaultSettings: AvatarModuleSettings | null;
   ws: WsClient | null;
+
+  $me: any;
 }
 
 export default defineComponent({
@@ -103,6 +106,8 @@ export default defineComponent({
     settings: null,
     defaultSettings: null,
     ws: null,
+
+    $me: null,
   }),
   watch: {
     settings: {
@@ -200,6 +205,9 @@ export default defineComponent({
       );
       this.sendSave();
     },
+  },
+  created() {
+    this.$me = user.getMe();
   },
   async mounted() {
     this.ws = new WsClient(this.$conf.wsBase + "/avatar", this.$me.token);

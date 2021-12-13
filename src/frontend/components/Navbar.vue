@@ -48,6 +48,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
+import user from "../user";
 
 export default defineComponent({
   name: "navbar",
@@ -56,7 +57,11 @@ export default defineComponent({
       return this.$me?.user?.name || "";
     },
   },
+  created() {
+    this.$me = user.getMe();
+  },
   data: () => ({
+    $me: null,
     linksStart: [
       {
         to: { name: "index" },
@@ -98,14 +103,11 @@ export default defineComponent({
       this.burgerActive = !this.burgerActive;
     },
     async onLogoutClick() {
-      const res = await fetch("/api/logout", {
-        method: "POST",
-      });
-      const data = await res.json();
-      if (data.success) {
-        this.$router.push({ name: "login" });
+      const res = await user.logout();
+      if (res.error) {
+        throw new Error(res.error);
       } else {
-        throw new Error("[2021-09-25 18:36]");
+        this.$router.push({ name: "login" });
       }
     },
   },

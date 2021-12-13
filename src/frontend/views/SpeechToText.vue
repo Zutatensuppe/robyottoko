@@ -632,8 +632,10 @@ import {
   SpeechToTextSaveEventData,
   SpeechToTextWsInitData,
 } from "../../mod/modules/SpeechToTextModule";
+import user from "../user";
 
 interface ComponentData {
+  $me: any;
   unchangedJson: string;
   changedJson: string;
   settings: SpeechToTextModuleSettings | null;
@@ -642,7 +644,11 @@ interface ComponentData {
 }
 
 export default defineComponent({
+  created() {
+    this.$me = user.getMe();
+  },
   data: (): ComponentData => ({
+    $me: null,
     unchangedJson: "{}",
     changedJson: "{}",
     settings: null,

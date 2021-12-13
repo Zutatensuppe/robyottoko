@@ -172,10 +172,12 @@ import {
   SongrequestModuleSettings,
   SongrequestModuleWsEventData,
 } from "../../mod/modules/SongrequestModule";
+import user from "../user";
 
 type TagInfo = { value: string; count: number };
 
 interface ComponentData {
+  $me: any;
   playerVisible: boolean;
   playlist: PlaylistItem[];
   settings: SongrequestModuleSettings;
@@ -202,6 +204,7 @@ interface Player {
 
 export default defineComponent({
   data: (): ComponentData => ({
+    $me: null,
     playerVisible: false,
     playlist: [],
     settings: {
@@ -371,6 +374,9 @@ export default defineComponent({
       }
       this.sendCtrl("updatetag", [oldTag, newTag]);
     },
+  },
+  created() {
+    this.$me = user.getMe();
   },
   async mounted() {
     this.$nextTick(() => {

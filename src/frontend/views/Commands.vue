@@ -330,8 +330,10 @@ import {
   GeneralSaveEventData,
 } from "../../mod/modules/GeneralModule";
 import { Command, GlobalVariable } from "../../types";
+import user from "../user";
 
 interface ComponentData {
+  $me: any;
   commands: Command[];
   settings: GeneralModuleSettings;
   adminSettings: GeneralModuleAdminSettings;
@@ -352,7 +354,11 @@ interface ComponentData {
 }
 
 export default defineComponent({
+  created() {
+    this.$me = user.getMe();
+  },
   data: (): ComponentData => ({
+    $me: null,
     commands: [],
     settings: {
       volume: 100,

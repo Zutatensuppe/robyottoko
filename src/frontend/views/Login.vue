@@ -60,6 +60,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
+import user from "../user";
 
 export default defineComponent({
   data: () => ({
@@ -97,20 +98,11 @@ export default defineComponent({
     async submit() {
       this.success = "";
       this.error = "";
-      const res = await fetch("/api/auth", {
-        method: "post",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ user: this.user, pass: this.pass }),
-      });
-      if (res.status === 200) {
-        this.$router.push({ name: "index" });
-      } else if (res.status === 401) {
-        this.error = (await res.json()).reason;
+      const res = await user.login(this.user, this.pass);
+      if (res.error) {
+        this.error = res.error;
       } else {
-        this.error = "Unknown error";
+        this.$router.push({ name: "index" });
       }
     },
   },

@@ -43,6 +43,7 @@ import AvatarSlotItemStateEditor from "./components/Avatar/AvatarSlotItemStateEd
 import AvatarAnimation from "./components/Avatar/AvatarAnimation.vue";
 
 import "./style.css"
+import user from './user'
 
 const run = async () => {
   const router = VueRouter.createRouter({
@@ -129,14 +130,14 @@ const run = async () => {
   }
 
   const conf = await getJson('/api/conf')
-  const me = await getJson('/api/user/me')
+  user.init()
 
   router.beforeEach((to, from, next) => {
-    if (to.meta.protected && !me) {
+    if (to.meta.protected && !user.getMe()) {
       next({ name: 'login' })
       return
     }
-    if (!to.meta.protected && me) {
+    if (!to.meta.protected && user.getMe()) {
       next({ name: 'index' })
       return
     }
@@ -151,7 +152,6 @@ const run = async () => {
   })
   const app = Vue.createApp(App)
   app.config.globalProperties.$conf = conf
-  app.config.globalProperties.$me = me
   app.use(router)
   app.component('doubleclick-button', DoubleclickButton)
   app.component('draggable', draggable)
