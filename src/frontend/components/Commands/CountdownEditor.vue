@@ -169,8 +169,9 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import commands from "../../commands.ts";
-import fn from "../../../common/fn.ts";
+import commands from "../../commands";
+import fn from "../../../common/fn";
+import { CountdownAction } from "../../../types";
 
 export default defineComponent({
   name: "countdown-edit",
@@ -188,7 +189,7 @@ export default defineComponent({
       type: "manual",
 
       // settings for manual
-      actions: [],
+      actions: [] as CountdownAction[],
 
       // settings for auto (old style)
       steps: 3,
@@ -217,16 +218,16 @@ export default defineComponent({
         value: commands.newMedia(),
       });
     },
-    rmaction(idx) {
+    rmaction(idx: number) {
       this.countdown.actions = this.countdown.actions.filter(
         (val, index) => index !== idx
       );
     },
-    mediaSndUploaded(idx, data) {
+    mediaSndUploaded(idx: number, data) {
       this.countdown.actions[idx].value.sound.filename = data.originalname;
       this.countdown.actions[idx].value.sound.file = data.filename;
     },
-    mediaImgUploaded(idx, data) {
+    mediaImgUploaded(idx: number, data) {
       this.countdown.actions[idx].value.image.filename = data.originalname;
       this.countdown.actions[idx].value.image.file = data.filename;
     },

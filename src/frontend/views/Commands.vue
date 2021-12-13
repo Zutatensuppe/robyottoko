@@ -4,7 +4,7 @@
       <navbar />
     </div>
     <div id="main" ref="main">
-      <command-edit
+      <command-editor
         v-if="editCommand"
         :globalVariables="globalVariables"
         :modelValue="editCommand"

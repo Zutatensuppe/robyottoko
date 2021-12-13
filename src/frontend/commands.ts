@@ -1,4 +1,4 @@
-import { Command, CommandTrigger } from "../types"
+import { Command, CommandTrigger, MediaCommandData } from "../types"
 
 const newTrigger = (type: 'command' | 'reward_redemption' | 'timer'): CommandTrigger => ({
   type,
@@ -13,7 +13,7 @@ const newTrigger = (type: 'command' | 'reward_redemption' | 'timer'): CommandTri
 
 const newText = () => ''
 
-const newMedia = () => ({
+const newMedia = (): MediaCommandData => ({
   sound: {
     filename: '',
     file: '',

@@ -222,6 +222,24 @@ export interface MediaCommand extends Command {
   action: "media"
 }
 
+export interface MediaCommandData {
+  sound: {
+    filename: string
+    file: string
+    volume: number
+  },
+  image: {
+    filename: string
+    file: string
+  },
+  minDurationMs: string | number
+}
+
+export interface CountdownAction {
+  type: 'text' | 'media' | 'delay'
+  value: string | MediaCommandData
+}
+
 export interface CountdownCommand extends Command {
   action: "countdown"
   data: {
@@ -231,7 +249,7 @@ export interface CountdownCommand extends Command {
     interval: string
     intro: string
     outro: string
-    actions: { type: 'text' | 'media' | 'delay', value: string }[]
+    actions: CountdownAction[]
   }
 }
 

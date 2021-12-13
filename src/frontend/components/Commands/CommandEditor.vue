@@ -367,7 +367,10 @@
             <tr v-if="item.action === 'countdown'">
               <td>Settings</td>
               <td>
-                <countdown-edit v-model="item.data" :baseVolume="baseVolume" />
+                <countdown-editor
+                  v-model="item.data"
+                  :baseVolume="baseVolume"
+                />
               </td>
             </tr>
             <tr>

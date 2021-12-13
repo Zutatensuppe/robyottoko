@@ -27,8 +27,8 @@ import Duration from "./components/Duration.vue";
 import DoubleclickButton from "./components/DoubleclickButton.vue";
 import Youtube from "./components/Youtube.vue";
 
-import CommandsCommandEdit from "./components/Commands/CommandEdit.vue";
-import CommandsCountdownEdit from "./components/Commands/CountdownEdit.vue";
+import CommandsCommandEditor from "./components/Commands/CommandEditor.vue";
+import CommandsCountdownEditor from "./components/Commands/CountdownEditor.vue";
 
 import SongRequestHelp from "./components/SongRequest/Help.vue";
 import SongRequestPlaylistEditor from "./components/SongRequest/PlaylistEditor.vue";
@@ -165,8 +165,8 @@ const run = async () => {
   app.component('volume-slider', VolumeSlider)
   app.component('youtube', Youtube)
   // commands - maybe dont register these globally?
-  app.component('command-edit', CommandsCommandEdit)
-  app.component('countdown-edit', CommandsCountdownEdit)
+  app.component('command-editor', CommandsCommandEditor)
+  app.component('countdown-editor', CommandsCountdownEditor)
   // songrequest - maybe dont register these globally?
   app.component('playlist-editor', SongRequestPlaylistEditor)
   app.component('tags-editor', SongRequestTagsEditor)
