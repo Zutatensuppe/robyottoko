@@ -582,6 +582,16 @@ class WebServer {
       res.status(404).send()
     })
 
+    app.all('/login', async (req: any, res, next) => {
+      const indexFile = `${__dirname}/../../build/public/index.html`
+      res.sendFile(path.resolve(indexFile));
+    })
+
+    app.all('/password-reset', async (req: any, res, next) => {
+      const indexFile = `${__dirname}/../../build/public/index.html`
+      res.sendFile(path.resolve(indexFile));
+    })
+
     app.all('*', requireLogin, express.json({ limit: '50mb' }), async (req: any, res, next) => {
       const method = req.method.toLowerCase()
       const key = req.url
