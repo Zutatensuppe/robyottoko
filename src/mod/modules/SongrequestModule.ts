@@ -58,6 +58,40 @@ interface WsData {
   data: SongrequestModuleWsEventData
 }
 
+const default_settings = (obj: any = null) => ({
+  volume: obj?.volume || 100,
+  hideVideoImage: {
+    file: obj?.hideVideoImage?.file || '',
+    filename: obj?.hideVideoImage?.filename || '',
+  },
+  customCss: obj?.customCss || '',
+  customCssPresets: obj?.customCssPresets || [],
+  showProgressBar: obj?.showProgressBar || false,
+})
+
+const default_playlist_item = (item: any = null): PlaylistItem => {
+  return {
+    id: item?.id || 0,
+    tags: item?.tags || [],
+    yt: item?.yt || '',
+    title: item?.title || '',
+    timestamp: item?.timestamp || 0,
+    hidevideo: !!(item?.hidevideo),
+    last_play: item?.last_play || 0,
+    plays: item?.plays || 0,
+    goods: item?.goods || 0,
+    bads: item?.bads || 0,
+    user: item?.user || '',
+  }
+}
+
+const default_playlist = (list: any = null): PlaylistItem[] => {
+  if (Array.isArray(list)) {
+    return list.map(item => default_playlist_item(item))
+  }
+  return []
+}
+
 class SongrequestModule {
   public name = 'sr'
   public variables: Variables
@@ -86,46 +120,16 @@ class SongrequestModule {
       filter: {
         tag: '',
       },
-      settings: {
-        volume: 100,
-        hideVideoImage: {
-          file: '',
-          filename: '',
-        },
-        customCss: '',
-        customCssPresets: [],
-        showProgressBar: false,
-      },
-      playlist: [],
+      settings: default_settings(),
+      playlist: default_playlist(),
       stacks: {},
     })
 
     // make sure items have correct structure
     // needed by rest of the code
     // TODO: maybe use same code as in save function
-    data.playlist = data.playlist.map((item: PlaylistItem) => {
-      item.tags = item.tags || []
-      item.hidevideo = typeof item.hidevideo === 'undefined' ? false : item.hidevideo
-      return item
-    })
-    data.settings = data.settings || {
-      volume: 100,
-      hideVideoImage: {
-        file: '',
-        filename: '',
-      },
-      customCss: '',
-      showProgressBar: false,
-    }
-    if (!data.settings.customCss) {
-      data.settings.customCss = ''
-    }
-    if (!data.settings.showProgressBar) {
-      data.settings.showProgressBar = false
-    }
-    if (!data.settings.customCssPresets) {
-      data.settings.customCssPresets = []
-    }
+    data.playlist = default_playlist(data.playlist)
+    data.settings = default_settings(data.settings)
 
     this.data = {
       filter: data.filter,
@@ -169,10 +173,10 @@ class SongrequestModule {
   getRoutes() {
     return {
       post: {
-        '/sr/import': async (req: any, res: any, next: Function) => {
+        '/api/sr/import': async (req: any, res: any, next: Function) => {
           try {
-            this.data.settings = req.body.settings
-            this.data.playlist = req.body.playlist
+            this.data.settings = default_settings(req.body.settings)
+            this.data.playlist = default_playlist(req.body.playlist)
             this.save()
             this.updateClients('init')
             res.send({ error: false })
@@ -182,7 +186,7 @@ class SongrequestModule {
         },
       },
       get: {
-        '/sr/export': async (req: any, res: any, next: Function) => {
+        '/api/sr/export': async (req: any, res: any, next: Function) => {
           res.send({
             settings: this.data.settings,
             playlist: this.data.playlist,

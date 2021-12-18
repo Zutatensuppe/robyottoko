@@ -1,6 +1,9 @@
 import * as VueRouter from 'vue-router'
 import * as Vue from 'vue'
 
+import Toast from "vue-toastification";
+import "vue-toastification/dist/index.css";
+
 import App from './App.vue'
 import Index from './views/Index.vue'
 import Login from './views/Login.vue'
@@ -153,6 +156,7 @@ const run = async () => {
   const app = Vue.createApp(App)
   app.config.globalProperties.$conf = conf
   app.use(router)
+  app.use(Toast, {})
   app.component('doubleclick-button', DoubleclickButton)
   app.component('draggable', draggable)
   app.component('duration-input', DurationInput)

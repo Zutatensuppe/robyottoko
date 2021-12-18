@@ -173,6 +173,7 @@ import {
   SongrequestModuleWsEventData,
 } from "../../mod/modules/SongrequestModule";
 import user from "../user";
+import { useToast } from "vue-toastification";
 
 type TagInfo = { value: string; count: number };
 
@@ -190,6 +191,8 @@ interface ComponentData {
   inited: boolean;
   tab: "playlist" | "help" | "import" | "tags";
   importPlaylist: string;
+
+  toast: any;
 }
 
 interface Player {
@@ -226,6 +229,7 @@ export default defineComponent({
 
     tab: "playlist", // playlist|help|import|tags
     importPlaylist: "",
+    toast: useToast(),
   }),
   computed: {
     tags() {
@@ -276,10 +280,10 @@ export default defineComponent({
       return this.playerVisible ? "Hide Player" : "Show Player";
     },
     importPlaylistUrl(): string {
-      return `${location.protocol}//${location.host}/sr/import`;
+      return `${location.protocol}//${location.host}/api/sr/import`;
     },
     exportPlaylistUrl(): string {
-      return `${location.protocol}//${location.host}/sr/export`;
+      return `${location.protocol}//${location.host}/api/sr/export`;
     },
     widgetUrl(): string {
       return `${location.protocol}//${location.host}/widget/sr/${this.$me.widgetToken}/`;
@@ -308,9 +312,9 @@ export default defineComponent({
       });
       if (res.status === 200) {
         this.tab = "playlist";
-        this.$toasted.success("Import successful");
+        this.toast.success("Import successful");
       } else {
-        this.$toasted.error("Import failed");
+        this.toast.error("Import failed");
       }
     },
     togglePlayer() {
