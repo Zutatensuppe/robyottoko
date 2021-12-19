@@ -1,5 +1,7 @@
 import AvatarAnimation from '../components/avatar-animation.js'
-import SoundMeter from '../soundmeter.js'
+
+// import exampleTuberPara from '../avatar-examples/para-png-tuber/def.js'
+// import exampleTuberHyottoko from '../avatar-examples/hyottoko/def.js'
 
 const SPEAKING_THRESHOLD = 0.05
 // in ff enable for usage with localhost (and no https):
@@ -42,7 +44,7 @@ export default {
       speaking: false,
       lockedState: 'default',
       initialized: false,
-      audioInitialized: false,
+      micInitialized: false,
       tuber: {
         slot: {},
       },
@@ -99,10 +101,11 @@ export default {
       this.ctrl('setTuber', [tuber])
     },
     startMic() {
-      if (this.audioInitialized) {
+      if (this.micInitialized) {
         return
       }
-      this.audioInitialized = true
+      this.micInitialized = true
+      const BUFF_SIZE = 16384;
       if (!navigator.getUserMedia) {
         navigator.getUserMedia = (
           navigator.getUserMedia
@@ -111,35 +114,45 @@ export default {
           || navigator.msGetUserMedia
         );
       }
-      if (!navigator.getUserMedia) {
+      if (navigator.getUserMedia) {
+        navigator.getUserMedia(
+          { audio: true },
+          function (stream) {
+            start_microphone(stream);
+          },
+          function (e) {
+            alert('Error capturing audio.');
+          }
+        );
+      } else {
         alert('getUserMedia not supported in this browser.');
-        return
       }
 
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      const audioContext = new AudioContext();
-      navigator.mediaDevices
-        .getUserMedia({ audio: true })
-        .then((stream) => {
-          const soundMeter = new SoundMeter(audioContext);
-          soundMeter.connectToSource(stream, (e) => {
-            if (e) {
-              console.log(e)
-              return
-            }
-            setInterval(() => {
-              this.setSpeaking(soundMeter.instant.toFixed(2) > SPEAKING_THRESHOLD)
-            }, 200)
-          });
-        })
-        .catch((e) => {
-          console.log(e)
-          alert('Error capturing audio.');
-        });
+      const process_microphone_buffer = (event) => { // invoked by event loop
+        const microphone_output_buffer = event.inputBuffer.getChannelData(0);
+        let speaking = false
+        for (let i = 0; i < microphone_output_buffer.length; i++) {
+          if (microphone_output_buffer[i] > SPEAKING_THRESHOLD) {
+            speaking = true
+            break
+          }
+        }
+        this.setSpeaking(speaking)
+      }
+
+      async function start_microphone(stream) {
+        const audioContext = new AudioContext();
+        const gain_node = audioContext.createGain();
+        const microphone_stream = audioContext.createMediaStreamSource(stream);
+        microphone_stream.connect(gain_node);
+        const script_processor_node = audioContext.createScriptProcessor(BUFF_SIZE, 1, 1);
+        script_processor_node.onaudioprocess = process_microphone_buffer;
+        microphone_stream.connect(script_processor_node);
+      }
     },
   },
   async mounted() {
-    this.ws.onMessage('init', (data) => {
+    this.ws.onMessage('init', async (data) => {
       this.settings = data.settings
       this.setTuber(this.settings.avatarDefinitions[0])
       this.initialized = true
