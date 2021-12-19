@@ -128,8 +128,9 @@ export default {
               return
             }
             setInterval(() => {
-              this.setSpeaking(soundMeter.instant.toFixed(2) > SPEAKING_THRESHOLD)
-            }, 200)
+              const threshold = this.speaking ? SPEAKING_THRESHOLD / 2 : SPEAKING_THRESHOLD
+              this.setSpeaking(soundMeter.instant.toFixed(2) > threshold)
+            }, 100)
           });
         })
         .catch((e) => {
