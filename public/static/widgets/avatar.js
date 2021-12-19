@@ -1,7 +1,5 @@
 import AvatarAnimation from '../components/avatar-animation.js'
-
-// import exampleTuberPara from '../avatar-examples/para-png-tuber/def.js'
-// import exampleTuberHyottoko from '../avatar-examples/hyottoko/def.js'
+import SoundMeter from '../soundmeter.js'
 
 const SPEAKING_THRESHOLD = 0.05
 // in ff enable for usage with localhost (and no https):
@@ -40,6 +38,7 @@ export default {
       speaking: false,
       lockedState: 'default',
       initialized: false,
+      audioInitialized: false,
       tuber: {
         slot: {},
       },
@@ -98,7 +97,8 @@ export default {
     webaudio_tooling_obj() {
       console.log("audio is starting up ...");
 
-      const BUFF_SIZE = 16384;
+      window.AudioContext = window.AudioContext || window.webkitAudioContext;
+      const audioContext = new AudioContext();
 
       if (!navigator.getUserMedia) {
         navigator.getUserMedia = (
@@ -108,41 +108,29 @@ export default {
           || navigator.msGetUserMedia
         );
       }
-      if (navigator.getUserMedia) {
-        navigator.getUserMedia(
-          { audio: true },
-          function (stream) {
-            start_microphone(stream);
-          },
-          function (e) {
-            alert('Error capturing audio.');
-          }
-        );
-      } else {
+      if (!navigator.getUserMedia) {
         alert('getUserMedia not supported in this browser.');
+        return
       }
 
-      const process_microphone_buffer = (event) => { // invoked by event loop
-        const microphone_output_buffer = event.inputBuffer.getChannelData(0);
-        let speaking = false
-        for (let i = 0; i < microphone_output_buffer.length; i++) {
-          if (microphone_output_buffer[i] > SPEAKING_THRESHOLD) {
-            speaking = true
-            break
-          }
-        }
-        this.setSpeaking(speaking)
-      }
-
-      function start_microphone(stream) {
-        const audioContext = new AudioContext();
-        const gain_node = audioContext.createGain();
-        const microphone_stream = audioContext.createMediaStreamSource(stream);
-        microphone_stream.connect(gain_node);
-        const script_processor_node = audioContext.createScriptProcessor(BUFF_SIZE, 1, 1);
-        script_processor_node.onaudioprocess = process_microphone_buffer;
-        microphone_stream.connect(script_processor_node);
-      }
+      navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then((stream) => {
+          const soundMeter = new SoundMeter(audioContext);
+          soundMeter.connectToSource(stream, (e) => {
+            if (e) {
+              console.log(e)
+              return
+            }
+            setInterval(() => {
+              this.setSpeaking(soundMeter.instant.toFixed(2) > SPEAKING_THRESHOLD)
+            }, 200)
+          });
+        })
+        .catch((e) => {
+          console.log(e)
+          alert('Error capturing audio.');
+        });
     },
   },
   async mounted() {
@@ -150,7 +138,10 @@ export default {
       this.settings = data.settings
       this.setTuber(this.settings.avatarDefinitions[0])
       this.initialized = true
-      this.webaudio_tooling_obj()
+      if (!this.audioInitialized) {
+        this.webaudio_tooling_obj()
+        this.audioInitialized = true
+      }
     })
     this.ws.connect()
   }
