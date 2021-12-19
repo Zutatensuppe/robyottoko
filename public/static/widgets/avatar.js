@@ -13,6 +13,10 @@ export default {
     </div>
 
     <table>
+      <tr>
+        <td>Start Mic</td>
+        <td><button @click="startMic">Start</button></td>
+      </tr>
       <tr v-for="(def,idx) in tuberDef.slotDefinitions" :key="idx">
         <td>{{def.slot}}:</td>
         <td><button @click="setSlot(def.slot, idx2)" v-for="(item,idx2) in def.items">{{item.title}}</button></td>
@@ -94,12 +98,11 @@ export default {
       })
       this.ctrl('setTuber', [tuber])
     },
-    webaudio_tooling_obj() {
-      console.log("audio is starting up ...");
-
-      window.AudioContext = window.AudioContext || window.webkitAudioContext;
-      const audioContext = new AudioContext();
-
+    startMic() {
+      if (this.audioInitialized) {
+        return
+      }
+      this.audioInitialized = true
       if (!navigator.getUserMedia) {
         navigator.getUserMedia = (
           navigator.getUserMedia
@@ -113,6 +116,8 @@ export default {
         return
       }
 
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const audioContext = new AudioContext();
       navigator.mediaDevices
         .getUserMedia({ audio: true })
         .then((stream) => {
@@ -138,10 +143,6 @@ export default {
       this.settings = data.settings
       this.setTuber(this.settings.avatarDefinitions[0])
       this.initialized = true
-      if (!this.audioInitialized) {
-        this.webaudio_tooling_obj()
-        this.audioInitialized = true
-      }
     })
     this.ws.connect()
   }
