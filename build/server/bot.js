@@ -4164,6 +4164,10 @@ class AvatarModule {
     constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
         this.name = 'avatar';
         this.defaultSettings = {
+            styles: {
+                // page background color
+                bgColor: '#80ff00',
+            },
             avatarDefinitions: []
         };
         this.variables = variables;
@@ -4181,6 +4185,12 @@ class AvatarModule {
         const data = this.storage.load(this.name, {
             settings: this.defaultSettings
         });
+        if (!data.settings.styles) {
+            data.settings.styles = this.defaultSettings.styles;
+        }
+        if (!data.settings.styles.bgColor) {
+            data.settings.styles.bgColor = this.defaultSettings.styles.bgColor;
+        }
         // -start- fixes to old data structure
         for (let avatarDef of data.settings.avatarDefinitions) {
             for (let slotDef of avatarDef.slotDefinitions) {

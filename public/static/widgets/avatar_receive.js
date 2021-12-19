@@ -63,10 +63,20 @@ export default {
         this.tuber.slot[slotDef.slot] = slotDef.defaultItemIndex
       })
     },
+    applyStyles() {
+      const styles = this.settings.styles
+
+      if (styles.bgColor != null) {
+        document.bgColor = styles.bgColor
+      }
+    },
   },
   async mounted() {
     this.ws.onMessage('init', (data) => {
       this.settings = data.settings
+      Vue.nextTick(() => {
+        this.applyStyles()
+      })
       this.setTuber(this.settings.avatarDefinitions[0])
       this.initialized = true
     })

@@ -126,3 +126,5 @@ body {
 .modal .table {
   width: 100%;
 }
+
+input[type="color"] { min-width: 100px; }

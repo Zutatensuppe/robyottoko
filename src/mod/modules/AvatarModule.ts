@@ -51,6 +51,10 @@ export interface AvatarModuleAvatarDefinition {
 }
 
 export interface AvatarModuleSettings {
+  styles: {
+    // page background color
+    bgColor: string,
+  },
   avatarDefinitions: AvatarModuleAvatarDefinition[]
 }
 
@@ -84,6 +88,10 @@ class AvatarModule {
 
   private data: AvatarModuleData
   private defaultSettings: AvatarModuleSettings = {
+    styles: {
+      // page background color
+      bgColor: '#80ff00',
+    },
     avatarDefinitions: []
   }
 
@@ -115,6 +123,12 @@ class AvatarModule {
     const data = this.storage.load(this.name, {
       settings: this.defaultSettings
     })
+    if (!data.settings.styles) {
+      data.settings.styles = this.defaultSettings.styles
+    }
+    if (!data.settings.styles.bgColor) {
+      data.settings.styles.bgColor = this.defaultSettings.styles.bgColor
+    }
 
     // -start- fixes to old data structure
     for (let avatarDef of data.settings.avatarDefinitions) {

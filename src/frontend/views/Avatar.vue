@@ -3,70 +3,122 @@
     <div id="top" ref="top">
       <navbar />
       <div id="actionbar" class="p-1">
-        <a class="button is-small" :href="widgetUrl" target="_blank"
-          >Open widget</a
+        <a class="button is-small mr-1" :href="controlWidgetUrl" target="_blank"
+          >Open control widget</a
+        >
+        <a class="button is-small mr-1" :href="displayWidgetUrl" target="_blank"
+          >Open display widget</a
         >
       </div>
     </div>
     <div id="main" ref="main" v-if="settings">
-      <table class="table is-striped">
-        <thead>
+      <div class="tabs">
+        <ul>
+          <li
+            :class="{ 'is-active': tab === 'avatars' }"
+            @click="tab = 'avatars'"
+          >
+            <a>Avatars</a>
+          </li>
+          <li
+            :class="{ 'is-active': tab === 'settings' }"
+            @click="tab = 'settings'"
+          >
+            <a>Settings</a>
+          </li>
+        </ul>
+      </div>
+      <table class="table is-striped" v-if="tab === 'settings'">
+        <tbody>
           <tr>
-            <th></th>
-            <th></th>
-            <th>Preview</th>
-            <th>Name</th>
-            <th></th>
+            <td colspan="3">General</td>
           </tr>
-        </thead>
-        <draggable
-          :modelValue="settings.avatarDefinitions"
-          @end="dragEnd"
-          tag="tbody"
-          handle=".handle"
-          item-key="id"
-        >
-          <template #item="{ element, index }">
-            <tr>
-              <td class="pt-4 handle">
-                <i class="fa fa-arrows"></i>
-              </td>
-              <td class="pl-0 pr-0">
-                <button class="button is-small" @click="edit(index)">
-                  <i class="fa fa-pencil" />
-                </button>
-              </td>
-              <td>
-                <avatar-preview :avatar="element" />
-              </td>
-              <td>
-                {{ element.name }}
-              </td>
-              <td class="pl-0 pr-0">
-                <doubleclick-button
-                  class="button is-small mr-1"
-                  message="Are you sure?"
-                  :timeout="1000"
-                  @doubleclick="remove(index)"
-                  ><i class="fa fa-trash"
-                /></doubleclick-button>
-                <button class="button is-small" @click="duplicate(index)">
-                  <i class="fa fa-clone" />
-                </button>
-              </td>
-            </tr>
-          </template>
-        </draggable>
+          <tr>
+            <td><code>settings.style.bgColor</code></td>
+            <td>
+              <input
+                class="input is-small"
+                type="color"
+                v-model="settings.styles.bgColor"
+                @update:modelValue="sendSave"
+              />
+            </td>
+            <td>
+              <button
+                class="button is-small"
+                :disabled="
+                  settings.styles.bgColor === defaultSettings.styles.bgColor
+                "
+                @click="
+                  settings.styles.bgColor = defaultSettings.styles.bgColor
+                "
+              >
+                <i class="fa fa-remove"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
       </table>
+      <div v-if="tab === 'avatars'">
+        <table class="table is-striped">
+          <thead>
+            <tr>
+              <th></th>
+              <th></th>
+              <th>Preview</th>
+              <th>Name</th>
+              <th></th>
+            </tr>
+          </thead>
+          <draggable
+            :modelValue="settings.avatarDefinitions"
+            @end="dragEnd"
+            tag="tbody"
+            handle=".handle"
+            item-key="id"
+          >
+            <template #item="{ element, index }">
+              <tr>
+                <td class="pt-4 handle">
+                  <i class="fa fa-arrows"></i>
+                </td>
+                <td class="pl-0 pr-0">
+                  <button class="button is-small" @click="edit(index)">
+                    <i class="fa fa-pencil" />
+                  </button>
+                </td>
+                <td>
+                  <avatar-preview :avatar="element" />
+                </td>
+                <td>
+                  {{ element.name }}
+                </td>
+                <td class="pl-0 pr-0">
+                  <doubleclick-button
+                    class="button is-small mr-1"
+                    message="Are you sure?"
+                    :timeout="1000"
+                    @doubleclick="remove(index)"
+                    ><i class="fa fa-trash"
+                  /></doubleclick-button>
+                  <button class="button is-small" @click="duplicate(index)">
+                    <i class="fa fa-clone" />
+                  </button>
+                </td>
+              </tr>
+            </template>
+          </draggable>
+        </table>
 
-      <avatar-editor
-        v-if="editEntity"
-        :modelValue="editEntity"
-        @update:modelValue="updatedAvatar"
-        @cancel="editEntity = null"
-      />
+        <avatar-editor
+          v-if="editEntity"
+          :modelValue="editEntity"
+          @update:modelValue="updatedAvatar"
+          @cancel="editEntity = null"
+        />
 
-      <span class="button is-small" @click="addAvatar">Add avatar</span>
+        <span class="button is-small" @click="addAvatar">Add avatar</span>
+      </div>
     </div>
   </div>
 </template>
@@ -93,6 +145,8 @@ interface ComponentData {
   defaultSettings: AvatarModuleSettings | null;
   ws: WsClient | null;
 
+  tab: "settings" | "avatars";
+
   $me: any;
 }
 
@@ -106,6 +160,8 @@ export default defineComponent({
     settings: null,
     defaultSettings: null,
     ws: null,
+
+    tab: "avatars",
 
     $me: null,
   }),
@@ -121,8 +177,11 @@ export default defineComponent({
     changed(): boolean {
       return this.unchangedJson !== this.changedJson;
     },
-    widgetUrl(): string {
+    controlWidgetUrl(): string {
       return `${location.protocol}//${location.host}/widget/avatar/${this.$me.widgetToken}/`;
+    },
+    displayWidgetUrl(): string {
+      return `${location.protocol}//${location.host}/widget/avatar_receive/${this.$me.widgetToken}/`;
     },
   },
   methods: {
