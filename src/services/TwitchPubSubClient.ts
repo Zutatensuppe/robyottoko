@@ -64,6 +64,10 @@ class TwitchPubSubClient {
       if (!this.handle) {
         return
       }
+      if (this.handle.readyState !== WebSocket.OPEN) {
+        log.error('ERR', `readyState is not OPEN (${WebSocket.OPEN})`)
+        return
+      }
       if (this.reconnectTimeout) {
         clearTimeout(this.reconnectTimeout)
       }
