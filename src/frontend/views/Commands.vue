@@ -437,25 +437,20 @@ export default defineComponent({
       return count;
     },
     filteredOut(item: Command) {
-      if (this.filter.actions.length === 0) {
-        return false;
-      }
-      if (!this.filter.actions.includes(item.action)) {
+      if (
+        this.filter.actions.length > 0 &&
+        !this.filter.actions.includes(item.action)
+      ) {
         return true;
       }
-      if (this.filter.search) {
-        const search = this.filter.search.toLowerCase();
-        if (
-          !item.triggers.find(
-            ({ type, data }) =>
-              type === "command" &&
-              data.command.toLowerCase().indexOf(search) >= 0
-          )
-        ) {
-          return true;
-        }
+      if (!this.filter.search) {
+        return false;
       }
-      return false;
+      const search = this.filter.search.toLowerCase();
+      return !item.triggers.find(
+        ({ type, data }) =>
+          type === "command" && data.command.toLowerCase().indexOf(search) >= 0
+      );
     },
     permissionsStr(item: Command) {
       if (!item.restrict_to || item.restrict_to.length === 0) {
