@@ -78,14 +78,14 @@ export default {
     setSpeaking(speaking) {
       if (this.speaking !== speaking) {
         this.speaking = speaking
+        this.ctrl('setSpeaking', [speaking])
       }
-      this.ctrl('setSpeaking', [speaking])
     },
     lockState(lockedState) {
       if (this.lockedState !== lockedState) {
         this.lockedState = lockedState
+        this.ctrl('lockState', [lockedState])
       }
-      this.ctrl('lockState', [lockedState])
     },
     setTuber(tuber) {
       this.tuber.slot = {}
