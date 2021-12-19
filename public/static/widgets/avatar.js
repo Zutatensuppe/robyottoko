@@ -140,7 +140,7 @@ export default {
         this.setSpeaking(speaking)
       }
 
-      async function start_microphone(stream) {
+      function start_microphone(stream) {
         const audioContext = new AudioContext();
         const gain_node = audioContext.createGain();
         const microphone_stream = audioContext.createMediaStreamSource(stream);
@@ -151,8 +151,8 @@ export default {
       }
     },
   },
-  async mounted() {
-    this.ws.onMessage('init', async (data) => {
+  mounted() {
+    this.ws.onMessage('init', (data) => {
       this.settings = data.settings
       this.setTuber(this.settings.avatarDefinitions[0])
       this.initialized = true
