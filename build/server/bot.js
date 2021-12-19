@@ -1094,9 +1094,14 @@ class WebServer {
                         url: this.widgetUrl('speech-to-text', req.userWidgetToken),
                     },
                     {
-                        title: 'Avatar',
+                        title: 'Avatar (control)',
                         hint: '???',
                         url: this.widgetUrl('avatar', req.userWidgetToken),
+                    },
+                    {
+                        title: 'Avatar (receive)',
+                        hint: 'Browser source, or open in browser and capture window',
+                        url: this.widgetUrl('avatar_receive', req.userWidgetToken),
                     },
                     {
                         title: 'Drawcast (Overlay)',
@@ -4196,8 +4201,16 @@ class AvatarModule {
         return {
             'avatar': (req, res, next) => {
                 return {
-                    title: 'Avatar Widget',
+                    title: 'Avatar Widget (control)',
                     page: 'avatar',
+                    wsUrl: `${this.wss.connectstring()}/${this.name}`,
+                    widgetToken: req.params.widget_token,
+                };
+            },
+            'avatar_receive': (req, res, next) => {
+                return {
+                    title: 'Avatar Widget (receive)',
+                    page: 'avatar_receive',
                     wsUrl: `${this.wss.connectstring()}/${this.name}`,
                     widgetToken: req.params.widget_token,
                 };
@@ -4207,28 +4220,30 @@ class AvatarModule {
     getRoutes() {
         return {};
     }
-    wsdata(eventName) {
-        return {
-            event: eventName,
-            data: Object.assign({}, this.data, { defaultSettings: this.defaultSettings }),
-        };
+    wsdata(event) {
+        const data = Object.assign({}, this.data, { defaultSettings: this.defaultSettings });
+        return { event, data };
     }
-    updateClient(eventName, ws) {
-        this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws);
+    updateClient(data, ws) {
+        this.wss.notifyOne([this.user.id], this.name, data, ws);
     }
-    updateClients(eventName) {
-        this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName));
+    updateClients(data) {
+        this.wss.notifyAll([this.user.id], this.name, data);
     }
     getWsEvents() {
         return {
             'conn': (ws) => {
-                this.updateClient('init', ws);
+                this.updateClient(this.wsdata('init'), ws);
             },
             'save': (ws, data) => {
                 this.data.settings = data.settings;
                 this.storage.save(this.name, this.data);
                 this.data = this.reinit();
-                this.updateClients('init');
+                this.updateClients(this.wsdata('init'));
+            },
+            'ctrl': (ws, data) => {
+                // just pass the ctrl on to the clients
+                this.updateClients({ event: 'ctrl', data });
             },
         };
     }

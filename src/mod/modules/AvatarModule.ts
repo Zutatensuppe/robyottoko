@@ -68,6 +68,10 @@ export interface AvatarModuleWsSaveData {
   settings: AvatarModuleSettings
 }
 
+export interface AvatarModuleWsControlData {
+
+}
+
 class AvatarModule {
   public name = 'avatar'
   public variables: Variables
@@ -135,8 +139,16 @@ class AvatarModule {
     return {
       'avatar': (req: any, res: any, next: Function) => {
         return {
-          title: 'Avatar Widget',
+          title: 'Avatar Widget (control)',
           page: 'avatar',
+          wsUrl: `${this.wss.connectstring()}/${this.name}`,
+          widgetToken: req.params.widget_token,
+        }
+      },
+      'avatar_receive': (req: any, res: any, next: Function) => {
+        return {
+          title: 'Avatar Widget (receive)',
+          page: 'avatar_receive',
           wsUrl: `${this.wss.connectstring()}/${this.name}`,
           widgetToken: req.params.widget_token,
         }
@@ -148,31 +160,33 @@ class AvatarModule {
     return {}
   }
 
-  wsdata(eventName: string) {
-    return {
-      event: eventName,
-      data: Object.assign({}, this.data, { defaultSettings: this.defaultSettings }),
-    };
+  wsdata(event: string) {
+    const data = Object.assign({}, this.data, { defaultSettings: this.defaultSettings })
+    return { event, data }
   }
 
-  updateClient(eventName: string, ws: Socket) {
-    this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
+  updateClient(data: Record<string, any>, ws: Socket) {
+    this.wss.notifyOne([this.user.id], this.name, data, ws)
   }
 
-  updateClients(eventName: string) {
-    this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName))
+  updateClients(data: Record<string, any>) {
+    this.wss.notifyAll([this.user.id], this.name, data)
   }
 
   getWsEvents() {
     return {
       'conn': (ws: Socket) => {
-        this.updateClient('init', ws)
+        this.updateClient(this.wsdata('init'), ws)
       },
       'save': (ws: Socket, data: AvatarModuleWsSaveData) => {
         this.data.settings = data.settings
         this.storage.save(this.name, this.data)
         this.data = this.reinit()
-        this.updateClients('init')
+        this.updateClients(this.wsdata('init'))
+      },
+      'ctrl': (ws: Socket, data: AvatarModuleWsControlData) => {
+        // just pass the ctrl on to the clients
+        this.updateClients({ event: 'ctrl', data })
       },
     }
   }

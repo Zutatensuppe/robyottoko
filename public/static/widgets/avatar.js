@@ -67,19 +67,25 @@ export default {
     },
   },
   methods: {
+    ctrl(ctrl, args) {
+      this.ws.send(JSON.stringify({ event: 'ctrl', data: { ctrl, args } }))
+    },
     setSlot(slotName, itemIdx) {
       this.tuber.slot[slotName] = itemIdx
       this.tuber.slot = Object.assign({}, this.tuber.slot)
+      this.ctrl('setSlot', [slotName, itemIdx])
     },
     setSpeaking(speaking) {
       if (this.speaking !== speaking) {
         this.speaking = speaking
       }
+      this.ctrl('setSpeaking', [speaking])
     },
     lockState(lockedState) {
       if (this.lockedState !== lockedState) {
         this.lockedState = lockedState
       }
+      this.ctrl('lockState', [lockedState])
     },
     setTuber(tuber) {
       this.tuber.slot = {}
@@ -87,6 +93,7 @@ export default {
       this.tuberDef.slotDefinitions.forEach(slotDef => {
         this.tuber.slot[slotDef.slot] = slotDef.defaultItemIndex
       })
+      this.ctrl('setTuber', [tuber])
     },
     webaudio_tooling_obj() {
       console.log("audio is starting up ...");
@@ -137,9 +144,6 @@ export default {
         microphone_stream.connect(script_processor_node);
       }
     },
-  },
-  created() {
-    // this.setTuber(this.tuberDefs[0])
   },
   async mounted() {
     this.ws.onMessage('init', (data) => {

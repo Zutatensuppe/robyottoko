@@ -209,9 +209,14 @@ class WebServer {
             url: this.widgetUrl('speech-to-text', req.userWidgetToken),
           },
           {
-            title: 'Avatar',
+            title: 'Avatar (control)',
             hint: '???',
             url: this.widgetUrl('avatar', req.userWidgetToken),
+          },
+          {
+            title: 'Avatar (receive)',
+            hint: 'Browser source, or open in browser and capture window',
+            url: this.widgetUrl('avatar_receive', req.userWidgetToken),
           },
           {
             title: 'Drawcast (Overlay)',
