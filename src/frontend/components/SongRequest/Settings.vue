@@ -7,7 +7,14 @@
           <td>
             <volume-slider v-model="settings.volume" @update:modelValue="sendSettings" />
           </td>
-          <td>Base volume for all songs played</td>
+          <td>Base volume for all songs played.</td>
+        </tr>
+        <tr>
+          <td><code>settings.initAutoplay</code></td>
+          <td>
+            <input type="checkbox" v-model="settings.initAutoplay" @update:modelValue="sendSettings" />
+          </td>
+          <td>If checked, the widget will autoplay when first opened.</td>
         </tr>
         <tr>
           <td><code>settings.hideVideoImage</code></td>

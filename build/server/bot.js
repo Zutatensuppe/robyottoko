@@ -2828,6 +2828,7 @@ const default_settings = (obj = null) => ({
     customCss: obj?.customCss || '',
     customCssPresets: obj?.customCssPresets || [],
     showProgressBar: obj?.showProgressBar || false,
+    initAutoplay: typeof obj?.initAutoplay === 'undefined' ? true : obj?.initAutoplay,
 });
 const default_playlist_item = (item = null) => {
     return {

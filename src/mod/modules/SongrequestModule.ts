@@ -34,6 +34,7 @@ export interface SongrequestModuleSettings {
   customCss: string
   customCssPresets: SongrequestModuleCustomCssPreset[]
   showProgressBar: boolean
+  initAutoplay: boolean
 }
 
 interface SongrequestModuleData {
@@ -67,6 +68,7 @@ const default_settings = (obj: any = null) => ({
   customCss: obj?.customCss || '',
   customCssPresets: obj?.customCssPresets || [],
   showProgressBar: obj?.showProgressBar || false,
+  initAutoplay: typeof obj?.initAutoplay === 'undefined' ? true : obj?.initAutoplay,
 })
 
 const default_playlist_item = (item: any = null): PlaylistItem => {

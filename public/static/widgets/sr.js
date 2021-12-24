@@ -59,6 +59,7 @@ export default {
         },
         customCss: '',
         showProgressBar: false,
+        initAutoplay: true,
       },
       progress: 0,
       progressInterval: null,
@@ -240,11 +241,12 @@ export default {
       this.filter = data.filter
       this.playlist = data.playlist
       if (!this.inited && !this.player.playing()) {
-        this.play()
+        if (this.settings.initAutoplay) {
+          this.play()
+        }
       }
       this.inited = true
     })
     this.ws.connect()
-    this.play()
   },
 }
