@@ -176,6 +176,8 @@ class GeneralModule {
     const redemptions: Record<string, FunctionCommand[]> = {}
     const timers: GeneralModuleTimer[] = []
 
+    commands['!media'] = [{ fn: this.mediaCmd.bind(this) }]
+
     data.commands.forEach((cmd: any) => {
       if (cmd.triggers.length === 0) {
         return
@@ -356,37 +358,10 @@ class GeneralModule {
   }
 
   getCommands() {
-    return {
-      '!media': [{
-        fn: this.mediaCmd.bind(this),
-      }],
-    }
+    return this.commands
   }
 
   async onChatMsg(chatMessageContext: ChatMessageContext) {
-    let keys = Object.keys(this.commands)
-    // make sure longest commands are found first
-    // so that in case commands `!draw` and `!draw bad` are set up
-    // and `!draw bad` is written in chat, that command only will be
-    // executed and not also `!draw`
-    keys = keys.sort((a, b) => b.length - a.length)
-    for (const key of keys) {
-      const rawCmd = fn.parseKnownCommandFromMessage(chatMessageContext.msg, key)
-      if (!rawCmd) {
-        continue
-      }
-      const cmdDefs = this.commands[key] || []
-      await fn.tryExecuteCommand(
-        this,
-        rawCmd,
-        cmdDefs,
-        chatMessageContext.client,
-        chatMessageContext.target,
-        chatMessageContext.context,
-        chatMessageContext.msg
-      )
-      break
-    }
     this.timers.forEach(t => {
       t.lines++
     })

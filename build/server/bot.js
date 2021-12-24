@@ -276,10 +276,6 @@ const parseKnownCommandFromMessage = (msg, cmd) => {
     }
     return null;
 };
-const parseCommandFromMessage = (msg) => {
-    const command = msg.trim().split(' ');
-    return { name: command[0], args: command.slice(1) };
-};
 const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, client, target, context, msg) => {
     const promises = [];
     for (const cmdDef of cmdDefs) {
@@ -603,7 +599,6 @@ var fn = {
     decodeBase64Image,
     sayFn,
     mayExecute,
-    parseCommandFromMessage,
     parseKnownCommandFromMessage,
     passwordSalt,
     passwordHash,
@@ -1701,8 +1696,9 @@ class TwitchClientManager {
                     if (!rawCmd) {
                         continue;
                     }
-                    const cmdDefs = commands[rawCmd.name] || [];
+                    const cmdDefs = commands[key] || [];
                     await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg);
+                    break;
                 }
                 await m.onChatMsg(chatMessageContext);
             }
@@ -2578,6 +2574,7 @@ class GeneralModule {
         const commands = {};
         const redemptions = {};
         const timers = [];
+        commands['!media'] = [{ fn: this.mediaCmd.bind(this) }];
         data.commands.forEach((cmd) => {
             if (cmd.triggers.length === 0) {
                 return;
@@ -2736,28 +2733,9 @@ class GeneralModule {
         }
     }
     getCommands() {
-        return {
-            '!media': [{
-                    fn: this.mediaCmd.bind(this),
-                }],
-        };
+        return this.commands;
     }
     async onChatMsg(chatMessageContext) {
-        let keys = Object.keys(this.commands);
-        // make sure longest commands are found first
-        // so that in case commands `!draw` and `!draw bad` are set up
-        // and `!draw bad` is written in chat, that command only will be
-        // executed and not also `!draw`
-        keys = keys.sort((a, b) => b.length - a.length);
-        for (const key of keys) {
-            const rawCmd = fn.parseKnownCommandFromMessage(chatMessageContext.msg, key);
-            if (!rawCmd) {
-                continue;
-            }
-            const cmdDefs = this.commands[key] || [];
-            await fn.tryExecuteCommand(this, rawCmd, cmdDefs, chatMessageContext.client, chatMessageContext.target, chatMessageContext.context, chatMessageContext.msg);
-            break;
-        }
         this.timers.forEach(t => {
             t.lines++;
         });

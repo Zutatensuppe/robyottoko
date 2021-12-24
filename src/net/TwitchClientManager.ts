@@ -155,8 +155,9 @@ class TwitchClientManager {
           if (!rawCmd) {
             continue
           }
-          const cmdDefs = commands[rawCmd.name] || []
+          const cmdDefs = commands[key] || []
           await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg)
+          break
         }
         await m.onChatMsg(chatMessageContext);
       }
