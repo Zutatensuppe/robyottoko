@@ -6,26 +6,12 @@
         <button
           class="button is-small mr-1"
           :disabled="inited ? null : true"
-          @click="sendCtrl('resetStats', [])"
-          title="Reset stats"
+          @click="sendCtrl(control.ctrl, [])"
+          :title="control.title"
+          v-for="(control, idx) in controlDefinitions"
+          :key="idx"
         >
-          <i class="fa fa-eraser mr-1" /><span class="txt"> Reset stats</span>
-        </button>
-        <button
-          class="button is-small mr-1"
-          :disabled="inited ? null : true"
-          @click="sendCtrl('clear', [])"
-          title="Clear"
-        >
-          <i class="fa fa-eject mr-1" /><span class="txt"> Clear</span>
-        </button>
-        <button
-          class="button is-small mr-1"
-          :disabled="inited ? null : true"
-          @click="sendCtrl('shuffle', [])"
-          title="Shuffle"
-        >
-          <i class="fa fa-random mr-1" /><span class="txt"> Shuffle</span>
+          <i class="fa" :class="control.icon" />
         </button>
         <button
           class="button is-small mr-1"
@@ -177,6 +163,12 @@ import { useToast } from "vue-toastification";
 
 type TagInfo = { value: string; count: number };
 
+interface ControlDefinition {
+  title: string;
+  ctrl: string;
+  icon: string;
+}
+
 interface ComponentData {
   $me: any;
   playerVisible: boolean;
@@ -193,6 +185,7 @@ interface ComponentData {
   importPlaylist: string;
 
   toast: any;
+  controlDefinitions: ControlDefinition[];
 }
 
 interface Player {
@@ -219,6 +212,7 @@ export default defineComponent({
       showProgressBar: false,
       customCss: "",
       customCssPresets: [],
+      initAutoplay: true,
     },
     filter: { tag: "" },
     ws: null,
@@ -229,7 +223,45 @@ export default defineComponent({
 
     tab: "playlist", // playlist|help|import|tags
     importPlaylist: "",
+
     toast: useToast(),
+    controlDefinitions: [
+      {
+        title: "Reset stats",
+        ctrl: "resetStats",
+        icon: "fa-eraser",
+      },
+      {
+        title: "Clear playlist",
+        ctrl: "clear",
+        icon: "fa-eject",
+      },
+      {
+        title: "Shuffle",
+        ctrl: "shuffle",
+        icon: "fa-random",
+      },
+      {
+        title: "Play",
+        ctrl: "unpause",
+        icon: "fa-play",
+      },
+      {
+        title: "Pause",
+        ctrl: "pause",
+        icon: "fa-pause",
+      },
+      {
+        title: "Prev",
+        ctrl: "prev",
+        icon: "fa-step-backward",
+      },
+      {
+        title: "Next",
+        ctrl: "skip",
+        icon: "fa-step-forward",
+      },
+    ],
   }),
   computed: {
     tags() {

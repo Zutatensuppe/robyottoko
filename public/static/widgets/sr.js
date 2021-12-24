@@ -50,6 +50,7 @@ export default {
   data() {
     return {
       filter: { tag: '' },
+      hasPlayed: false,
       playlist: [],
       settings: {
         volume: 100,
@@ -134,6 +135,7 @@ export default {
       this.ws.send(JSON.stringify(data))
     },
     play() {
+      this.hasPlayed = true
       this.adjustVolume()
       if (this.hasItems) {
         this.player.play(this.item.yt)
@@ -215,7 +217,11 @@ export default {
     })
     this.ws.onMessage(['unpause'], (data) => {
       if (!this.player.playing()) {
-        this.unpause()
+        if (this.hasPlayed) {
+          this.unpause()
+        } else {
+          this.play()
+        }
       }
     })
     this.ws.onMessage(['loop'], (data) => {
