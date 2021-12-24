@@ -8,10 +8,14 @@ const ListItem = {
       type: Object,
       required: true,
     },
+    showThumbnails: {
+      type: Boolean,
+      required: true,
+    },
   },
   template: `
     <li class="item" :data-user="item.user" :data-yt="item.yt">
-      <div class="thumbnail">
+      <div class="thumbnail" v-if="showThumbnails">
         <div class="media-16-9">
           <img :src="thumbnail" />
         </div>
@@ -61,6 +65,8 @@ export default {
         customCss: '',
         showProgressBar: false,
         initAutoplay: true,
+        showThumbnails: true,
+        maxItemsShown: -1,
       },
       progress: 0,
       progressInterval: null,
@@ -69,7 +75,7 @@ export default {
     }
   },
   template: `
-  <div class="wrapper">
+  <div class="wrapper" :class="classes">
     <div class="player video-16-9">
       <responsive-image class="hide-video" v-if="hidevideo && settings.hideVideoImage.file" :src="settings.hideVideoImage.file" />
       <div class="hide-video" v-else-if="hidevideo"></div>
@@ -82,24 +88,32 @@ export default {
       <list-item
         v-for="(item, idx) in playlist"
         :class="idx === 0 ? 'playing' : 'not-playing'"
-        v-if="!isFilteredOut(item)"
-        :item="item" />
+        v-if="!isFilteredOut(item, idx)"
+        :key="idx"
+        :item="item"
+        :showThumbnails="settings.showThumbnails" />
     </ol>
   </div>
   `,
   watch: {
     playlist: function (newVal, oldVal) {
-      if (!newVal.find(item => !this.isFilteredOut(item))) {
+      if (!newVal.find((item, idx) => !this.isFilteredOut(item, idx))) {
         this.player.stop()
       }
     },
     filter: function (newVal, oldVal) {
-      if (!this.playlist.find(item => !this.isFilteredOut(item))) {
+      if (!this.playlist.find((item, idx) => !this.isFilteredOut(item, idx))) {
         this.player.stop()
       }
     },
   },
   computed: {
+    classes() {
+      return [
+        this.settings.showThumbnails ? 'with-thumbnails' : 'without-thumbnails',
+        this.settings.showProgressBar ? 'with-progress-bar' : 'without-progress-bar',
+      ]
+    },
     player() {
       return this.$refs.youtube
     },
@@ -125,7 +139,10 @@ export default {
     },
   },
   methods: {
-    isFilteredOut(item) {
+    isFilteredOut(item, idx) {
+      if (this.settings.maxItemsShown >= 0 && (this.settings.maxItemsShown - 1) < idx) {
+        return true
+      }
       return this.filter.tag !== '' && !item.tags.includes(this.filter.tag)
     },
     ended() {

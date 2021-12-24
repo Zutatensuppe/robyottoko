@@ -2859,6 +2859,13 @@ const ADD_TYPE = {
     REQUEUED: 2,
     EXISTED: 3,
 };
+const default_custom_css_preset = (obj = null) => ({
+    name: obj?.name || '',
+    css: obj?.css || '',
+    showProgressBar: typeof obj?.showProgressBar === 'undefined' ? false : obj.showProgressBar,
+    showThumbnails: typeof obj?.showThumbnails === 'undefined' ? true : obj.showThumbnails,
+    maxItemsShown: typeof obj?.maxItemsShown === 'undefined' ? -1 : obj.maxItemsShown,
+});
 const default_settings = (obj = null) => ({
     volume: obj?.volume || 100,
     hideVideoImage: {
@@ -2866,9 +2873,11 @@ const default_settings = (obj = null) => ({
         filename: obj?.hideVideoImage?.filename || '',
     },
     customCss: obj?.customCss || '',
-    customCssPresets: obj?.customCssPresets || [],
-    showProgressBar: obj?.showProgressBar || false,
-    initAutoplay: typeof obj?.initAutoplay === 'undefined' ? true : obj?.initAutoplay,
+    customCssPresets: typeof obj?.customCssPresets === 'undefined' ? [] : obj.customCssPresets.map(default_custom_css_preset),
+    showProgressBar: typeof obj?.showProgressBar === 'undefined' ? false : obj.showProgressBar,
+    initAutoplay: typeof obj?.initAutoplay === 'undefined' ? true : obj.initAutoplay,
+    showThumbnails: typeof obj?.showThumbnails === 'undefined' ? true : obj.showThumbnails,
+    maxItemsShown: typeof obj?.maxItemsShown === 'undefined' ? -1 : obj.maxItemsShown,
 });
 const default_playlist_item = (item = null) => {
     return {

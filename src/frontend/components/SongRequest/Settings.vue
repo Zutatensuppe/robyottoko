@@ -3,6 +3,9 @@
     <table class="table is-striped" ref="table" v-if="settings">
       <tbody>
         <tr>
+          <td colspan="3">General</td>
+        </tr>
+        <tr>
           <td><code>settings.volume</code></td>
           <td>
             <volume-slider v-model="settings.volume" @update:modelValue="sendSettings" />
@@ -44,11 +47,28 @@
           <td>Image to display when a video is hidden.</td>
         </tr>
         <tr>
+          <td colspan="3">Visuals</td>
+        </tr>
+        <tr>
           <td><code>settings.showProgressBar</code></td>
           <td>
             <input type="checkbox" v-model="settings.showProgressBar" @update:modelValue="sendSettings" />
           </td>
-          <td>Show a progress bar in the bottom part of the video in the widget.</td>
+          <td>Render a progress bar in the bottom part of the video in the widget.</td>
+        </tr>
+        <tr>
+          <td><code>settings.showThumbnails</code></td>
+          <td>
+            <input type="checkbox" v-model="settings.showThumbnails" @update:modelValue="sendSettings" />
+          </td>
+          <td>Render video thumbnails in the widget.</td>
+        </tr>
+        <tr>
+          <td><code>settings.maxItemsShown</code></td>
+          <td>
+            <input type="number" min="-1" v-model="settings.maxItemsShown" @update:modelValue="sendSettings" />
+          </td>
+          <td>Max. number of items displayed in the playlist. Set to -1 for no limit.</td>
         </tr>
         <tr>
           <td>
@@ -135,6 +155,9 @@ export default defineComponent({
       );
       if (preset) {
         this.settings.customCss = preset.css;
+        this.settings.showProgressBar = preset.showProgressBar;
+        this.settings.showThumbnails = preset.showThumbnails;
+        this.settings.maxItemsShown = preset.maxItemsShown;
       } else {
         console.warn(`preset not found: ${presetName}`);
       }
@@ -152,10 +175,19 @@ export default defineComponent({
       );
       if (idx >= 0) {
         this.settings.customCssPresets[idx].css = this.settings.customCss;
+        this.settings.customCssPresets[idx].showProgressBar =
+          this.settings.showProgressBar;
+        this.settings.customCssPresets[idx].showThumbnails =
+          this.settings.showThumbnails;
+        this.settings.customCssPresets[idx].maxItemsShown =
+          this.settings.maxItemsShown;
       } else {
         this.settings.customCssPresets.push({
           name: this.cssPresetName,
           css: this.settings.customCss,
+          showProgressBar: this.settings.showProgressBar,
+          showThumbnails: this.settings.showThumbnails,
+          maxItemsShown: this.settings.maxItemsShown,
         });
       }
       this.sendSettings();

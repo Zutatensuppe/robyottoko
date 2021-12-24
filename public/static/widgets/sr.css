@@ -62,10 +62,19 @@ body {
   padding: .5em 1em;
   border: solid 1px #444;
   display: grid;
-  grid-template-areas: "thumbnail title title"
-                       "thumbnail meta-left meta-right";
-  grid-template-columns: max-content auto 150px;
   column-gap: 10px;
+}
+
+.without-thumbnails .item {
+  grid-template-areas: "title title"
+                       "meta-left meta-right";
+  grid-template-columns: auto 150px;
+}
+
+.with-thumbnails .item {
+  grid-template-areas: "thumbnail title title"
+                      "thumbnail meta-left meta-right";
+  grid-template-columns: max-content auto 150px;
 }
 
 .thumbnail {
