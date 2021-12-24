@@ -2666,6 +2666,12 @@ class GeneralModule {
     updateClients(eventName) {
         this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName));
     }
+    saveSettings() {
+        this.storage.save(this.name, this.data);
+        // no need for calling reinit, that would also recreate timers and stuff
+        // but updating settings shouldnt mess with those
+        this.updateClients('init');
+    }
     saveCommands() {
         this.storage.save(this.name, this.data);
         const initData = this.reinit();
@@ -2688,8 +2694,42 @@ class GeneralModule {
             },
         };
     }
+    volume(vol) {
+        if (vol < 0) {
+            vol = 0;
+        }
+        if (vol > 100) {
+            vol = 100;
+        }
+        this.data.settings.volume = parseInt(`${vol}`, 10);
+        this.saveSettings();
+    }
+    async mediaCmd(command, client, target, context, msg) {
+        if (!client || !command || !context) {
+            return;
+        }
+        const modOrUp = () => fn.isMod(context) || fn.isBroadcaster(context);
+        const say = fn.sayFn(client, target);
+        if (command.args.length === 0) {
+            return;
+        }
+        if (command.args[0] !== 'volume') {
+            if (command.args.length === 1) {
+                say(`Current volume: ${this.data.settings.volume}`);
+                return;
+            }
+            if (modOrUp()) {
+                this.volume(parseInt(command.args[1], 10));
+                say(`New volume: ${this.data.settings.volume}`);
+            }
+        }
+    }
     getCommands() {
-        return {};
+        return {
+            '!media': [{
+                    fn: this.mediaCmd.bind(this),
+                }],
+        };
     }
     async onChatMsg(chatMessageContext) {
         let keys = Object.keys(this.commands);
