@@ -129,11 +129,6 @@ const parseKnownCommandFromMessage = (
   return null
 }
 
-const parseCommandFromMessage = (msg: string) => {
-  const command = msg.trim().split(' ')
-  return { name: command[0], args: command.slice(1) }
-}
-
 const tryExecuteCommand = async (
   contextModule: Module,
   rawCmd: RawCommand,
@@ -540,7 +535,6 @@ export default {
   decodeBase64Image,
   sayFn,
   mayExecute,
-  parseCommandFromMessage,
   parseKnownCommandFromMessage,
   passwordSalt,
   passwordHash,
