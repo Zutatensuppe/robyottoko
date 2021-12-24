@@ -1680,7 +1680,6 @@ class TwitchClientManager {
                 roles.push('B');
             }
             log.info(`${context.username}[${roles.join('')}]@${target}: ${msg}`);
-            const rawCmd = fn.parseCommandFromMessage(msg);
             db.insert('chat_log', {
                 created_at: `${new Date().toJSON()}`,
                 broadcaster_user_id: context['room-id'],
@@ -1691,9 +1690,21 @@ class TwitchClientManager {
             const chatMessageContext = { client: chatClient, target, context, msg };
             for (const m of moduleManager.all(user.id)) {
                 const commands = m.getCommands() || {};
-                const cmdDefs = commands[rawCmd.name] || [];
-                await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg);
-                await m.onChatMsg(chatMessageContext);
+                let keys = Object.keys(commands);
+                // make sure longest commands are found first
+                // so that in case commands `!draw` and `!draw bad` are set up
+                // and `!draw bad` is written in chat, that command only will be
+                // executed and not also `!draw`
+                keys = keys.sort((a, b) => b.length - a.length);
+                for (const key of keys) {
+                    const rawCmd = fn.parseKnownCommandFromMessage(chatMessageContext.msg, key);
+                    if (!rawCmd) {
+                        continue;
+                    }
+                    const cmdDefs = commands[rawCmd.name] || [];
+                    await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg);
+                    await m.onChatMsg(chatMessageContext);
+                }
             }
         });
         // Called every time the bot connects to Twitch chat
@@ -2713,7 +2724,7 @@ class GeneralModule {
         if (command.args.length === 0) {
             return;
         }
-        if (command.args[0] !== 'volume') {
+        if (command.args[0] === 'volume') {
             if (command.args.length === 1) {
                 say(`Current volume: ${this.data.settings.volume}`);
                 return;

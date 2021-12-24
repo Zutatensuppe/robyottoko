@@ -343,7 +343,7 @@ class GeneralModule {
     if (command.args.length === 0) {
       return
     }
-    if (command.args[0] !== 'volume') {
+    if (command.args[0] === 'volume') {
       if (command.args.length === 1) {
         say(`Current volume: ${this.data.settings.volume}`)
         return
