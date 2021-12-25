@@ -106,7 +106,10 @@ export const newCmd = (type: string): Command | null => {
   }
 }
 
-export const commandHasTrigger = (command: FunctionCommand, trigger: CommandTrigger) => {
+export const commandHasTrigger = (
+  command: FunctionCommand,
+  trigger: CommandTrigger,
+) => {
   for (const cmdTrigger of command.triggers) {
     if (cmdTrigger.type !== trigger.type) {
       continue
@@ -130,4 +133,12 @@ export const commandHasTrigger = (command: FunctionCommand, trigger: CommandTrig
     }
   }
   return false
+}
+
+export const getUniqueCommandsByTrigger = (
+  commands: FunctionCommand[],
+  trigger: CommandTrigger,
+) => {
+  const tmp = commands.filter((command) => commandHasTrigger(command, trigger))
+  return tmp.filter((item, i, ar) => ar.indexOf(item) === i)
 }

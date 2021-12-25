@@ -17,7 +17,7 @@ import ModuleStorage from '../ModuleStorage'
 import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
 import dictLookup from '../../commands/dictLookup'
-import { commandHasTrigger, newCommandTrigger, newTrigger } from '../../util'
+import { getUniqueCommandsByTrigger, newCommandTrigger } from '../../util'
 
 const log = fn.logger('GeneralModule.ts')
 
@@ -149,6 +149,9 @@ class GeneralModule {
       }
       cmd.triggers = cmd.triggers.map((trigger: any) => {
         trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0
+        if (trigger.data.minSeconds) {
+          trigger.data.minInterval = trigger.data.minSeconds * 1000
+        }
         return trigger
       })
       return cmd
@@ -232,11 +235,6 @@ class GeneralModule {
             redemptions.push(cmdObj)
           }
         } else if (trigger.type === 'timer') {
-          // fix for legacy data
-          if (trigger.data.minSeconds) {
-            trigger.data.minInterval = trigger.data.minSeconds * 1000
-          }
-
           const interval = fn.parseHumanDuration(trigger.data.minInterval)
           if (trigger.data.minLines || interval) {
             timers.push({
@@ -386,7 +384,7 @@ class GeneralModule {
           name: redemption.reward.title,
           args: redemption.user_input ? [redemption.user_input] : [],
         }
-        const cmdDefs = this.rewardRedemptions.filter((r) => commandHasTrigger(r, trigger))
+        const cmdDefs = getUniqueCommandsByTrigger(this.rewardRedemptions, trigger)
         const target = twitchChannel.channel_name
         const twitchChatContext = {
           "room-id": redemption.channel_id,

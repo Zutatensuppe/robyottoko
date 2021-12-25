@@ -10,7 +10,7 @@ import { User } from '../services/Users'
 import ModuleManager from '../mod/ModuleManager'
 import { TwitchChannelPointsEventMessage, TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
 import TwitchPubSubClient from '../services/TwitchPubSubClient'
-import { commandHasTrigger } from '../util'
+import { getUniqueCommandsByTrigger } from '../util'
 
 const __filename = fileURLToPath(import.meta.url)
 
@@ -163,7 +163,7 @@ class TwitchClientManager {
           if (!rawCmd) {
             continue
           }
-          const cmdDefs = commands.filter((command) => commandHasTrigger(command, trigger))
+          const cmdDefs = getUniqueCommandsByTrigger(commands, trigger)
           await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg)
           break
         }
