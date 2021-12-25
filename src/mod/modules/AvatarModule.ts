@@ -1,11 +1,10 @@
 import Db from '../../Db'
-import fn, { logger } from '../../fn'
-import fs from 'fs'
+import { logger } from '../../fn'
 import WebServer from '../../WebServer'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Tokens from '../../services/Tokens'
 import Variables from '../../services/Variables'
-import { ChatMessageContext, DrawcastSettings, TwitchChannelPointsRedemption } from '../../types'
+import { ChatMessageContext, RewardRedemptionContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import { User } from '../../services/Users'
 import Cache from '../../services/Cache'
@@ -212,7 +211,7 @@ class AvatarModule {
   async onChatMsg(chatMessageContext: ChatMessageContext) {
   }
 
-  async handleRewardRedemption(redemption: TwitchChannelPointsRedemption) {
+  async onRewardRedemption(RewardRedemptionContext: RewardRedemptionContext) {
   }
 }
 

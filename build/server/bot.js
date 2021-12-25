@@ -1603,6 +1603,11 @@ const newTrigger = (type) => ({
         minLines: 0,
     },
 });
+const newRewardRedemptionTrigger = (command = '') => {
+    const trigger = newTrigger('reward_redemption');
+    trigger.data.command = command;
+    return trigger;
+};
 const newCommandTrigger = (command = '', commandExact = false) => {
     const trigger = newTrigger('command');
     trigger.data.command = command;
@@ -1818,14 +1823,40 @@ class TwitchClientManager {
                     const messageData = JSON.parse(message.data.message);
                     // channel points redeemed with non standard reward
                     // standard rewards are not supported :/
-                    if (messageData.type === 'reward-redeemed') {
-                        const redemptionMessage = messageData;
-                        log.debug(redemptionMessage.data.redemption);
-                        for (const m of moduleManager.all(user.id)) {
-                            if (m.handleRewardRedemption) {
-                                await m.handleRewardRedemption(redemptionMessage.data.redemption);
-                            }
-                        }
+                    if (messageData.type !== 'reward-redeemed') {
+                        return;
+                    }
+                    const redemptionMessage = messageData;
+                    log.debug(redemptionMessage.data.redemption);
+                    const redemption = redemptionMessage.data.redemption;
+                    const twitchChannel = db.get('twitch_channel', { channel_id: redemption.channel_id });
+                    if (!twitchChannel) {
+                        return;
+                    }
+                    const target = twitchChannel.channel_name;
+                    const context = {
+                        "room-id": redemption.channel_id,
+                        "user-id": redemption.user.id,
+                        "display-name": redemption.user.display_name,
+                        username: redemption.user.login,
+                        mod: false,
+                        subscriber: redemption.reward.is_sub_only, // this does not really tell us if the user is sub or not, just if the redemption was sub only
+                    };
+                    const msg = redemption.reward.title;
+                    const rewardRedemptionContext = { client: chatClient, target, context, redemption };
+                    for (const m of moduleManager.all(user.id)) {
+                        // reward redemption should all have exact key/name of the reward,
+                        // no sorting required
+                        const commands = m.getCommands();
+                        // make a tmp trigger to match commands against
+                        const trigger = newRewardRedemptionTrigger(redemption.reward.title);
+                        const rawCmd = {
+                            name: redemption.reward.title,
+                            args: redemption.user_input ? [redemption.user_input] : [],
+                        };
+                        const cmdDefs = getUniqueCommandsByTrigger(commands, trigger);
+                        await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg);
+                        await m.onRewardRedemption(rewardRedemptionContext);
                     }
                 });
             });
@@ -2573,7 +2604,6 @@ class GeneralModule {
         const initData = this.reinit();
         this.data = initData.data;
         this.commands = initData.commands;
-        this.rewardRedemptions = initData.redemptions;
         this.timers = initData.timers;
         this.inittimers();
     }
@@ -2637,7 +2667,6 @@ class GeneralModule {
             data.adminSettings.showImages = true;
         }
         const commands = [];
-        const redemptions = [];
         const timers = [];
         commands.push({
             triggers: [newCommandTrigger('!media volume')],
@@ -2688,7 +2717,7 @@ class GeneralModule {
                 else if (trigger.type === 'reward_redemption') {
                     // TODO: check why this if is required, maybe for protection against '' command?
                     if (trigger.data.command) {
-                        redemptions.push(cmdObj);
+                        commands.push(cmdObj);
                     }
                 }
                 else if (trigger.type === 'timer') {
@@ -2705,7 +2734,7 @@ class GeneralModule {
                 }
             }
         });
-        return { data, commands, redemptions, timers };
+        return { data, commands, timers };
     }
     widgets() {
         return {
@@ -2750,7 +2779,6 @@ class GeneralModule {
         const initData = this.reinit();
         this.data = initData.data;
         this.commands = initData.commands;
-        this.rewardRedemptions = initData.redemptions;
         this.timers = initData.timers;
         this.updateClients('init');
     }
@@ -2798,42 +2826,7 @@ class GeneralModule {
             t.lines++;
         });
     }
-    async handleRewardRedemption(redemption) {
-        if (!this.chatClient) {
-            return;
-        }
-        // reward redemption should all have exact key/name of the reward, no sorting
-        // required
-        for (const rewardRedemption of this.rewardRedemptions) {
-            for (const trigger of rewardRedemption.triggers) {
-                if (trigger.type !== 'reward_redemption'
-                    || trigger.data.command !== redemption.reward.title) {
-                    continue;
-                }
-                const twitchChannel = this.db.get('twitch_channel', { channel_id: redemption.channel_id });
-                if (!twitchChannel) {
-                    return;
-                }
-                const rawCmd = {
-                    name: redemption.reward.title,
-                    args: redemption.user_input ? [redemption.user_input] : [],
-                };
-                const cmdDefs = getUniqueCommandsByTrigger(this.rewardRedemptions, trigger);
-                const target = twitchChannel.channel_name;
-                const twitchChatContext = {
-                    "room-id": redemption.channel_id,
-                    "user-id": redemption.user.id,
-                    "display-name": redemption.user.display_name,
-                    username: redemption.user.login,
-                    mod: false,
-                    subscriber: redemption.reward.is_sub_only, // this does not really tell us if the user is sub or not, just if the redemption was sub only
-                };
-                const msg = redemption.reward.title;
-                await fn.tryExecuteCommand(this, rawCmd, cmdDefs, this.chatClient, target, twitchChatContext, msg);
-                // dont trigger same redemption twice, so return
-                return;
-            }
-        }
+    async onRewardRedemption(RewardRedemptionContext) {
     }
 }
 
@@ -2974,8 +2967,6 @@ class SongrequestModule {
             settings: data.settings,
             stacks: data.stacks,
         };
-    }
-    async onChatMsg(chatMessageContext) {
     }
     saveCommands() {
         // pass
@@ -3483,40 +3474,6 @@ class SongrequestModule {
         this.rmIdx(idx);
         return item;
     }
-    getCommands() {
-        return [
-            { triggers: [newCommandTrigger('!sr current', true)], fn: this.cmdSrCurrent.bind(this) },
-            { triggers: [newCommandTrigger('!sr undo', true)], fn: this.cmdSrUndo.bind(this) },
-            { triggers: [newCommandTrigger('!sr good', true)], fn: this.cmdSrGood.bind(this) },
-            { triggers: [newCommandTrigger('!sr bad', true)], fn: this.cmdSrBad.bind(this) },
-            { triggers: [newCommandTrigger('!sr stat', true)], fn: this.cmdSrStats.bind(this) },
-            { triggers: [newCommandTrigger('!sr stats', true)], fn: this.cmdSrStats.bind(this) },
-            { triggers: [newCommandTrigger('!sr prev', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrPrev.bind(this) },
-            { triggers: [newCommandTrigger('!sr next', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNext.bind(this) },
-            { triggers: [newCommandTrigger('!sr skip', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNext.bind(this) },
-            { triggers: [newCommandTrigger('!sr jumptonew', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrJumpToNew.bind(this) },
-            { triggers: [newCommandTrigger('!sr clear', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrClear.bind(this) },
-            { triggers: [newCommandTrigger('!sr rm', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrRm.bind(this) },
-            { triggers: [newCommandTrigger('!sr shuffle', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrShuffle.bind(this) },
-            { triggers: [newCommandTrigger('!sr resetStats', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrResetStats.bind(this) },
-            { triggers: [newCommandTrigger('!sr loop', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrLoop.bind(this) },
-            { triggers: [newCommandTrigger('!sr noloop', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNoloop.bind(this) },
-            { triggers: [newCommandTrigger('!sr unloop', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNoloop.bind(this) },
-            { triggers: [newCommandTrigger('!sr pause', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrPause.bind(this) },
-            { triggers: [newCommandTrigger('!sr nopause', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrUnpause.bind(this) },
-            { triggers: [newCommandTrigger('!sr unpause', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrUnpause.bind(this) },
-            { triggers: [newCommandTrigger('!sr hidevideo', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrHidevideo.bind(this) },
-            { triggers: [newCommandTrigger('!sr showvideo', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrShowvideo.bind(this) },
-            { triggers: [newCommandTrigger('!sr')], fn: this.cmdSr.bind(this) },
-            { triggers: [newCommandTrigger('!resr')], fn: this.cmdResr.bind(this) },
-            { triggers: [newCommandTrigger('!sr tag')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrAddTag.bind(this) },
-            { triggers: [newCommandTrigger('!sr addtag')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrAddTag.bind(this) },
-            { triggers: [newCommandTrigger('!sr rmtag')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrRmTag.bind(this) },
-            { triggers: [newCommandTrigger('!sr volume')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrVolume.bind(this) },
-            { triggers: [newCommandTrigger('!sr filter')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrFilter.bind(this) },
-            { triggers: [newCommandTrigger('!sr preset')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrPreset.bind(this) },
-        ];
-    }
     async answerAddRequest(addType, idx) {
         const item = idx >= 0 ? this.data.playlist[idx] : null;
         if (!item) {
@@ -3858,7 +3815,43 @@ class SongrequestModule {
             idx: insertIndex,
         };
     }
-    async handleRewardRedemption(redemption) {
+    getCommands() {
+        return [
+            { triggers: [newCommandTrigger('!sr current', true)], fn: this.cmdSrCurrent.bind(this) },
+            { triggers: [newCommandTrigger('!sr undo', true)], fn: this.cmdSrUndo.bind(this) },
+            { triggers: [newCommandTrigger('!sr good', true)], fn: this.cmdSrGood.bind(this) },
+            { triggers: [newCommandTrigger('!sr bad', true)], fn: this.cmdSrBad.bind(this) },
+            { triggers: [newCommandTrigger('!sr stat', true)], fn: this.cmdSrStats.bind(this) },
+            { triggers: [newCommandTrigger('!sr stats', true)], fn: this.cmdSrStats.bind(this) },
+            { triggers: [newCommandTrigger('!sr prev', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrPrev.bind(this) },
+            { triggers: [newCommandTrigger('!sr next', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNext.bind(this) },
+            { triggers: [newCommandTrigger('!sr skip', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNext.bind(this) },
+            { triggers: [newCommandTrigger('!sr jumptonew', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrJumpToNew.bind(this) },
+            { triggers: [newCommandTrigger('!sr clear', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrClear.bind(this) },
+            { triggers: [newCommandTrigger('!sr rm', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrRm.bind(this) },
+            { triggers: [newCommandTrigger('!sr shuffle', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrShuffle.bind(this) },
+            { triggers: [newCommandTrigger('!sr resetStats', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrResetStats.bind(this) },
+            { triggers: [newCommandTrigger('!sr loop', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrLoop.bind(this) },
+            { triggers: [newCommandTrigger('!sr noloop', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNoloop.bind(this) },
+            { triggers: [newCommandTrigger('!sr unloop', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNoloop.bind(this) },
+            { triggers: [newCommandTrigger('!sr pause', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrPause.bind(this) },
+            { triggers: [newCommandTrigger('!sr nopause', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrUnpause.bind(this) },
+            { triggers: [newCommandTrigger('!sr unpause', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrUnpause.bind(this) },
+            { triggers: [newCommandTrigger('!sr hidevideo', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrHidevideo.bind(this) },
+            { triggers: [newCommandTrigger('!sr showvideo', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrShowvideo.bind(this) },
+            { triggers: [newCommandTrigger('!sr')], fn: this.cmdSr.bind(this) },
+            { triggers: [newCommandTrigger('!resr')], fn: this.cmdResr.bind(this) },
+            { triggers: [newCommandTrigger('!sr tag')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrAddTag.bind(this) },
+            { triggers: [newCommandTrigger('!sr addtag')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrAddTag.bind(this) },
+            { triggers: [newCommandTrigger('!sr rmtag')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrRmTag.bind(this) },
+            { triggers: [newCommandTrigger('!sr volume')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrVolume.bind(this) },
+            { triggers: [newCommandTrigger('!sr filter')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrFilter.bind(this) },
+            { triggers: [newCommandTrigger('!sr preset')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrPreset.bind(this) },
+        ];
+    }
+    async onChatMsg(chatMessageContext) {
+    }
+    async onRewardRedemption(RewardRedemptionContext) {
     }
 }
 
@@ -3977,7 +3970,7 @@ class VoteModule {
     }
     async onChatMsg(chatMessageContext) {
     }
-    async handleRewardRedemption(redemption) {
+    async onRewardRedemption(RewardRedemptionContext) {
     }
 }
 
@@ -4101,7 +4094,7 @@ class SpeechToTextModule {
     }
     async onChatMsg(chatMessageContext) {
     }
-    async handleRewardRedemption(redemption) {
+    async onRewardRedemption(RewardRedemptionContext) {
     }
 }
 
@@ -4268,7 +4261,7 @@ class DrawcastModule {
     }
     async onChatMsg(chatMessageContext) {
     }
-    async handleRewardRedemption(redemption) {
+    async onRewardRedemption(RewardRedemptionContext) {
     }
 }
 
@@ -4375,7 +4368,7 @@ class AvatarModule {
     }
     async onChatMsg(chatMessageContext) {
     }
-    async handleRewardRedemption(redemption) {
+    async onRewardRedemption(RewardRedemptionContext) {
     }
 }
 

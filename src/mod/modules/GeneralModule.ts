@@ -12,12 +12,12 @@ import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Madochan from '../../services/Madochan'
 import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
-import { ChatMessageContext, Command, FunctionCommand, GlobalVariable, TwitchChannelPointsRedemption, TwitchChatClient, TwitchChatContext, RawCommand } from '../../types'
+import { ChatMessageContext, Command, FunctionCommand, GlobalVariable, TwitchChatClient, TwitchChatContext, RawCommand, RewardRedemptionContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
 import dictLookup from '../../commands/dictLookup'
-import { getUniqueCommandsByTrigger, newCommandTrigger } from '../../util'
+import { newCommandTrigger } from '../../util'
 
 const log = fn.logger('GeneralModule.ts')
 
@@ -83,7 +83,6 @@ class GeneralModule {
 
   private data: GeneralModuleData
   private commands: FunctionCommand[]
-  private rewardRedemptions: FunctionCommand[]
   private timers: GeneralModuleTimer[]
 
   private interval: NodeJS.Timer | null = null
@@ -108,7 +107,6 @@ class GeneralModule {
     const initData = this.reinit()
     this.data = initData.data
     this.commands = initData.commands
-    this.rewardRedemptions = initData.redemptions
     this.timers = initData.timers
     this.inittimers()
   }
@@ -177,7 +175,6 @@ class GeneralModule {
     }
 
     const commands: FunctionCommand[] = []
-    const redemptions: FunctionCommand[] = []
     const timers: GeneralModuleTimer[] = []
 
     commands.push({
@@ -232,7 +229,7 @@ class GeneralModule {
         } else if (trigger.type === 'reward_redemption') {
           // TODO: check why this if is required, maybe for protection against '' command?
           if (trigger.data.command) {
-            redemptions.push(cmdObj)
+            commands.push(cmdObj)
           }
         } else if (trigger.type === 'timer') {
           const interval = fn.parseHumanDuration(trigger.data.minInterval)
@@ -248,7 +245,7 @@ class GeneralModule {
         }
       }
     })
-    return { data, commands, redemptions, timers } as GeneralModuleInitData
+    return { data, commands, timers } as GeneralModuleInitData
   }
 
   widgets() {
@@ -301,7 +298,6 @@ class GeneralModule {
     const initData = this.reinit()
     this.data = initData.data
     this.commands = initData.commands
-    this.rewardRedemptions = initData.redemptions
     this.timers = initData.timers
     this.updateClients('init')
   }
@@ -361,46 +357,7 @@ class GeneralModule {
     })
   }
 
-  async handleRewardRedemption(redemption: TwitchChannelPointsRedemption) {
-    if (!this.chatClient) {
-      return
-    }
-    // reward redemption should all have exact key/name of the reward, no sorting
-    // required
-    for (const rewardRedemption of this.rewardRedemptions) {
-      for (const trigger of rewardRedemption.triggers) {
-        if (
-          trigger.type !== 'reward_redemption'
-          || trigger.data.command !== redemption.reward.title
-        ) {
-          continue
-        }
-
-        const twitchChannel = this.db.get('twitch_channel', { channel_id: redemption.channel_id })
-        if (!twitchChannel) {
-          return
-        }
-        const rawCmd: RawCommand = {
-          name: redemption.reward.title,
-          args: redemption.user_input ? [redemption.user_input] : [],
-        }
-        const cmdDefs = getUniqueCommandsByTrigger(this.rewardRedemptions, trigger)
-        const target = twitchChannel.channel_name
-        const twitchChatContext = {
-          "room-id": redemption.channel_id,
-          "user-id": redemption.user.id,
-          "display-name": redemption.user.display_name,
-          username: redemption.user.login,
-          mod: false, // no way to tell without further looking up user somehow
-          subscriber: redemption.reward.is_sub_only, // this does not really tell us if the user is sub or not, just if the redemption was sub only
-        }
-        const msg = redemption.reward.title
-        await fn.tryExecuteCommand(this, rawCmd, cmdDefs, this.chatClient, target, twitchChatContext, msg)
-
-        // dont trigger same redemption twice, so return
-        return
-      }
-    }
+  async onRewardRedemption(RewardRedemptionContext: RewardRedemptionContext) {
   }
 }
 

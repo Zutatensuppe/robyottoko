@@ -8,9 +8,9 @@ import EventHub from '../EventHub'
 import { fileURLToPath } from 'url'
 import { User } from '../services/Users'
 import ModuleManager from '../mod/ModuleManager'
-import { TwitchChannelPointsEventMessage, TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
+import { RawCommand, RewardRedemptionContext, TwitchChannelPointsEventMessage, TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
 import TwitchPubSubClient from '../services/TwitchPubSubClient'
-import { getUniqueCommandsByTrigger } from '../util'
+import { getUniqueCommandsByTrigger, newRewardRedemptionTrigger, newTrigger } from '../util'
 
 const __filename = fileURLToPath(import.meta.url)
 
@@ -232,14 +232,45 @@ class TwitchClientManager {
           const messageData: any = JSON.parse(message.data.message)
           // channel points redeemed with non standard reward
           // standard rewards are not supported :/
-          if (messageData.type === 'reward-redeemed') {
-            const redemptionMessage: TwitchChannelPointsEventMessage = messageData
-            log.debug(redemptionMessage.data.redemption)
-            for (const m of moduleManager.all(user.id)) {
-              if (m.handleRewardRedemption) {
-                await m.handleRewardRedemption(redemptionMessage.data.redemption)
-              }
+          if (messageData.type !== 'reward-redeemed') {
+            return
+          }
+
+          const redemptionMessage: TwitchChannelPointsEventMessage = messageData
+          log.debug(redemptionMessage.data.redemption)
+          const redemption = redemptionMessage.data.redemption
+
+          const twitchChannel = db.get('twitch_channel', { channel_id: redemption.channel_id })
+          if (!twitchChannel) {
+            return
+          }
+
+          const target = twitchChannel.channel_name
+          const context: TwitchChatContext = {
+            "room-id": redemption.channel_id,
+            "user-id": redemption.user.id,
+            "display-name": redemption.user.display_name,
+            username: redemption.user.login,
+            mod: false, // no way to tell without further looking up user somehow
+            subscriber: redemption.reward.is_sub_only, // this does not really tell us if the user is sub or not, just if the redemption was sub only
+          }
+          const msg = redemption.reward.title
+          const rewardRedemptionContext: RewardRedemptionContext = { client: chatClient, target, context, redemption }
+
+          for (const m of moduleManager.all(user.id)) {
+            // reward redemption should all have exact key/name of the reward,
+            // no sorting required
+            const commands = m.getCommands()
+
+            // make a tmp trigger to match commands against
+            const trigger = newRewardRedemptionTrigger(redemption.reward.title)
+            const rawCmd: RawCommand = {
+              name: redemption.reward.title,
+              args: redemption.user_input ? [redemption.user_input] : [],
             }
+            const cmdDefs = getUniqueCommandsByTrigger(commands, trigger)
+            await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg)
+            await m.onRewardRedemption(rewardRedemptionContext)
           }
         })
       })

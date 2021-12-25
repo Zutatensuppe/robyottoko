@@ -35,6 +35,12 @@ export const newTrigger = (type: CommandTriggerType): CommandTrigger => ({
   },
 })
 
+export const newRewardRedemptionTrigger = (command: string = ''): CommandTrigger => {
+  const trigger = newTrigger('reward_redemption')
+  trigger.data.command = command
+  return trigger
+}
+
 export const newCommandTrigger = (command: string = '', commandExact: boolean = false): CommandTrigger => {
   const trigger = newTrigger('command')
   trigger.data.command = command

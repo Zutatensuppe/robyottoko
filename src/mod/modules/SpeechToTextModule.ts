@@ -6,7 +6,7 @@ import { getText, asQueryArgs } from '../../net/xhr'
 import Cache from '../../services/Cache'
 import { User } from '../../services/Users'
 import Variables from '../../services/Variables'
-import { ChatMessageContext, TwitchChannelPointsRedemption } from '../../types'
+import { ChatMessageContext, RewardRedemptionContext } from '../../types'
 import WebServer from '../../WebServer'
 import ModuleStorage from '../ModuleStorage'
 
@@ -233,9 +233,7 @@ class SpeechToTextModule {
   async onChatMsg(chatMessageContext: ChatMessageContext) {
   }
 
-
-  async handleRewardRedemption(redemption: TwitchChannelPointsRedemption) {
-
+  async onRewardRedemption(RewardRedemptionContext: RewardRedemptionContext) {
   }
 }
 

@@ -5,7 +5,7 @@ import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
 import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
-import { ChatMessageContext, PlaylistItem, RawCommand, TwitchChannelPointsRedemption, TwitchChatClient, TwitchChatContext, CommandRestrict } from '../../types'
+import { ChatMessageContext, PlaylistItem, RawCommand, TwitchChatClient, TwitchChatContext, CommandRestrict, RewardRedemptionContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
@@ -157,9 +157,6 @@ class SongrequestModule {
       settings: data.settings,
       stacks: data.stacks,
     }
-  }
-
-  async onChatMsg(chatMessageContext: ChatMessageContext) {
   }
 
   saveCommands() {
@@ -671,41 +668,6 @@ class SongrequestModule {
     const item = this.data.playlist[idx]
     this.rmIdx(idx)
     return item
-  }
-
-  getCommands() {
-    return [
-      { triggers: [newCommandTrigger('!sr current', true)], fn: this.cmdSrCurrent.bind(this) },
-      { triggers: [newCommandTrigger('!sr undo', true)], fn: this.cmdSrUndo.bind(this) },
-      { triggers: [newCommandTrigger('!sr good', true)], fn: this.cmdSrGood.bind(this) },
-      { triggers: [newCommandTrigger('!sr bad', true)], fn: this.cmdSrBad.bind(this) },
-      { triggers: [newCommandTrigger('!sr stat', true)], fn: this.cmdSrStats.bind(this) },
-      { triggers: [newCommandTrigger('!sr stats', true)], fn: this.cmdSrStats.bind(this) },
-      { triggers: [newCommandTrigger('!sr prev', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrPrev.bind(this) },
-      { triggers: [newCommandTrigger('!sr next', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNext.bind(this) },
-      { triggers: [newCommandTrigger('!sr skip', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNext.bind(this) },
-      { triggers: [newCommandTrigger('!sr jumptonew', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrJumpToNew.bind(this) },
-      { triggers: [newCommandTrigger('!sr clear', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrClear.bind(this) },
-      { triggers: [newCommandTrigger('!sr rm', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrRm.bind(this) },
-      { triggers: [newCommandTrigger('!sr shuffle', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrShuffle.bind(this) },
-      { triggers: [newCommandTrigger('!sr resetStats', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrResetStats.bind(this) },
-      { triggers: [newCommandTrigger('!sr loop', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrLoop.bind(this) },
-      { triggers: [newCommandTrigger('!sr noloop', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNoloop.bind(this) },
-      { triggers: [newCommandTrigger('!sr unloop', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNoloop.bind(this) },
-      { triggers: [newCommandTrigger('!sr pause', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrPause.bind(this) },
-      { triggers: [newCommandTrigger('!sr nopause', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrUnpause.bind(this) },
-      { triggers: [newCommandTrigger('!sr unpause', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrUnpause.bind(this) },
-      { triggers: [newCommandTrigger('!sr hidevideo', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrHidevideo.bind(this) },
-      { triggers: [newCommandTrigger('!sr showvideo', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrShowvideo.bind(this) },
-      { triggers: [newCommandTrigger('!sr')], fn: this.cmdSr.bind(this) },
-      { triggers: [newCommandTrigger('!resr')], fn: this.cmdResr.bind(this) },
-      { triggers: [newCommandTrigger('!sr tag')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrAddTag.bind(this) },
-      { triggers: [newCommandTrigger('!sr addtag')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrAddTag.bind(this) },
-      { triggers: [newCommandTrigger('!sr rmtag')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrRmTag.bind(this) },
-      { triggers: [newCommandTrigger('!sr volume')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrVolume.bind(this) },
-      { triggers: [newCommandTrigger('!sr filter')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrFilter.bind(this) },
-      { triggers: [newCommandTrigger('!sr preset')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrPreset.bind(this) },
-    ]
   }
 
   async answerAddRequest(addType: number, idx: number) {
@@ -1240,8 +1202,45 @@ class SongrequestModule {
     }
   }
 
-  async handleRewardRedemption(redemption: TwitchChannelPointsRedemption) {
+  getCommands() {
+    return [
+      { triggers: [newCommandTrigger('!sr current', true)], fn: this.cmdSrCurrent.bind(this) },
+      { triggers: [newCommandTrigger('!sr undo', true)], fn: this.cmdSrUndo.bind(this) },
+      { triggers: [newCommandTrigger('!sr good', true)], fn: this.cmdSrGood.bind(this) },
+      { triggers: [newCommandTrigger('!sr bad', true)], fn: this.cmdSrBad.bind(this) },
+      { triggers: [newCommandTrigger('!sr stat', true)], fn: this.cmdSrStats.bind(this) },
+      { triggers: [newCommandTrigger('!sr stats', true)], fn: this.cmdSrStats.bind(this) },
+      { triggers: [newCommandTrigger('!sr prev', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrPrev.bind(this) },
+      { triggers: [newCommandTrigger('!sr next', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNext.bind(this) },
+      { triggers: [newCommandTrigger('!sr skip', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNext.bind(this) },
+      { triggers: [newCommandTrigger('!sr jumptonew', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrJumpToNew.bind(this) },
+      { triggers: [newCommandTrigger('!sr clear', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrClear.bind(this) },
+      { triggers: [newCommandTrigger('!sr rm', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrRm.bind(this) },
+      { triggers: [newCommandTrigger('!sr shuffle', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrShuffle.bind(this) },
+      { triggers: [newCommandTrigger('!sr resetStats', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrResetStats.bind(this) },
+      { triggers: [newCommandTrigger('!sr loop', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrLoop.bind(this) },
+      { triggers: [newCommandTrigger('!sr noloop', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNoloop.bind(this) },
+      { triggers: [newCommandTrigger('!sr unloop', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNoloop.bind(this) },
+      { triggers: [newCommandTrigger('!sr pause', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrPause.bind(this) },
+      { triggers: [newCommandTrigger('!sr nopause', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrUnpause.bind(this) },
+      { triggers: [newCommandTrigger('!sr unpause', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrUnpause.bind(this) },
+      { triggers: [newCommandTrigger('!sr hidevideo', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrHidevideo.bind(this) },
+      { triggers: [newCommandTrigger('!sr showvideo', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrShowvideo.bind(this) },
+      { triggers: [newCommandTrigger('!sr')], fn: this.cmdSr.bind(this) },
+      { triggers: [newCommandTrigger('!resr')], fn: this.cmdResr.bind(this) },
+      { triggers: [newCommandTrigger('!sr tag')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrAddTag.bind(this) },
+      { triggers: [newCommandTrigger('!sr addtag')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrAddTag.bind(this) },
+      { triggers: [newCommandTrigger('!sr rmtag')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrRmTag.bind(this) },
+      { triggers: [newCommandTrigger('!sr volume')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrVolume.bind(this) },
+      { triggers: [newCommandTrigger('!sr filter')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrFilter.bind(this) },
+      { triggers: [newCommandTrigger('!sr preset')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrPreset.bind(this) },
+    ]
+  }
 
+  async onChatMsg(chatMessageContext: ChatMessageContext) {
+  }
+
+  async onRewardRedemption(RewardRedemptionContext: RewardRedemptionContext) {
   }
 }
 

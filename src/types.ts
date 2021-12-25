@@ -275,6 +275,13 @@ export interface ChatMessageContext {
   msg: string
 }
 
+export interface RewardRedemptionContext {
+  client: TwitchChatClient
+  target: string
+  context: TwitchChatContext
+  redemption: TwitchChannelPointsRedemption,
+}
+
 // https://dev.twitch.tv/docs/pubsub
 export interface TwitchChannelPointsEventMessage {
   type: 'reward-redeemed',
@@ -334,7 +341,7 @@ export interface Module {
   getRoutes: () => Record<string, Record<string, (req: any, res: any, next: Function) => Promise<any>>>
   getCommands: () => FunctionCommand[]
   onChatMsg: (chatMessageContext: ChatMessageContext) => Promise<void>
-  handleRewardRedemption: (redemption: TwitchChannelPointsRedemption) => Promise<void>
+  onRewardRedemption: (rewardRedemptionContext: RewardRedemptionContext) => Promise<void>
 }
 
 interface MailServiceUser {
