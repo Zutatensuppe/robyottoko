@@ -16,126 +16,15 @@
             <tr>
               <td>Triggers:</td>
               <td>
-                <div
+                <trigger-editor
                   v-for="(trigger, idx2) in item.triggers"
                   :key="idx2"
                   class="spacerow"
-                >
-                  <div
-                    class="field has-addons"
-                    v-if="item.triggers[idx2].type === 'command'"
-                  >
-                    <div class="control has-icons-left">
-                      <input
-                        class="input is-small"
-                        :class="{
-                          'has-background-danger-light':
-                            !item.triggers[idx2].data.command,
-                          'has-text-danger-dark':
-                            !item.triggers[idx2].data.command,
-                        }"
-                        type="text"
-                        v-model="item.triggers[idx2].data.command"
-                      />
-                      <span class="icon is-small is-left">
-                        <i class="fa fa-comments-o"></i>
-                      </span>
-                    </div>
-                    <div class="control">
-                      <button
-                        class="button is-small"
-                        :disabled="item.triggers.length <= 1"
-                        @click="rmtrigger(idx2)"
-                      >
-                        <i class="fa fa-remove" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div
-                    class="field has-addons"
-                    v-if="item.triggers[idx2].type === 'reward_redemption'"
-                  >
-                    <div class="control has-icons-left">
-                      <input
-                        class="input is-small"
-                        :class="{
-                          'has-background-danger-light':
-                            !item.triggers[idx2].data.command,
-                          'has-text-danger-dark':
-                            !item.triggers[idx2].data.command,
-                        }"
-                        type="text"
-                        v-model="item.triggers[idx2].data.command"
-                      />
-                      <span class="icon is-small is-left">
-                        <i class="fa fa-bullseye"></i>
-                      </span>
-                    </div>
-                    <div class="control">
-                      <button
-                        class="button is-small"
-                        :disabled="item.triggers.length <= 1"
-                        @click="rmtrigger(idx2)"
-                      >
-                        <i class="fa fa-remove" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div
-                    v-if="item.triggers[idx2].type === 'timer'"
-                    class="timer-trigger"
-                  >
-                    <div class="control">
-                      <button
-                        class="button is-small"
-                        :disabled="item.triggers.length <= 1"
-                        @click="rmtrigger(idx2)"
-                      >
-                        <i class="fa fa-remove" />
-                      </button>
-                    </div>
-                    <div class="columns">
-                      <div class="column is-one-third">
-                        <label>Min. Lines</label>
-                      </div>
-                      <div class="column is-two-third">
-                        <div class="control has-icons-left">
-                          <input
-                            class="input is-small spaceinput"
-                            v-model="item.triggers[idx2].data.minLines"
-                          />
-                          <span class="icon is-small is-left">
-                            <i class="fa fa-comments-o"></i>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="columns">
-                      <div class="column is-one-third">
-                        <label>Min. Interval</label>
-                      </div>
-                      <div class="column is-two-third">
-                        <div class="control has-icons-left has-icons-right">
-                          <duration-input
-                            :modelValue="item.triggers[idx2].data.minInterval"
-                            @update:modelValue="
-                              item.triggers[idx2].data.minInterval = $event
-                            "
-                          />
-                          <span class="icon is-small is-left">
-                            <i class="fa fa-hourglass"></i>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <p class="help">
-                      Command will be triggered when at least min. lines chat
-                      messages arrived AND time interval have passed.
-                    </p>
-                  </div>
-                </div>
+                  :modelValue="trigger"
+                  :removable="item.triggers.length > 1"
+                  @update:modelValue="item.triggers[idx2] = $event"
+                  @remove="rmtrigger(idx2)"
+                />
                 <div class="field has-addons mr-1">
                   <div class="control has-icons-left">
                     <div

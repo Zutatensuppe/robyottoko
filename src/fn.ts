@@ -91,7 +91,10 @@ const sayFn = (
 ) => (
   msg: string
 ) => {
-    const targets = target ? [target] : client.channels
+    // in case no target is given we use the configured channels
+    // we should be able to use client.channels or client.getChannels()
+    // but they are always empty :/
+    const targets = target ? [target] : client.opts.channels
     targets.forEach(t => {
       // TODO: fix this somewhere else?
       // client can only say things in lowercase channels

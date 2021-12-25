@@ -32,6 +32,7 @@ import Youtube from "./components/Youtube.vue";
 
 import CommandsCommandEditor from "./components/Commands/CommandEditor.vue";
 import CommandsCountdownEditor from "./components/Commands/CountdownEditor.vue";
+import CommandsTriggerEditor from "./components/Commands/TriggerEditor.vue";
 
 import SongRequestHelp from "./components/SongRequest/Help.vue";
 import SongRequestPlaylistEditor from "./components/SongRequest/PlaylistEditor.vue";
@@ -127,7 +128,7 @@ const run = async () => {
     ],
   })
 
-  const getJson = async (path) => {
+  const getJson = async (path: string) => {
     const res = await fetch(path);
     return res.status === 200 ? (await res.json()) : null
   }
@@ -171,6 +172,7 @@ const run = async () => {
   // commands - maybe dont register these globally?
   app.component('command-editor', CommandsCommandEditor)
   app.component('countdown-editor', CommandsCountdownEditor)
+  app.component('trigger-editor', CommandsTriggerEditor)
   // songrequest - maybe dont register these globally?
   app.component('playlist-editor', SongRequestPlaylistEditor)
   app.component('tags-editor', SongRequestTagsEditor)

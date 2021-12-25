@@ -128,7 +128,9 @@ export interface GlobalVariable {
 
 // TODO: use type definitions for tmi.js
 export interface TwitchChatClient extends Client {
-  channels: string[]
+  opts: {
+    channels: string[],
+  },
   say: (target: string, msg: string) => Promise<any>
   connect: () => any
   disconnect: () => any
