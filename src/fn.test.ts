@@ -12,7 +12,9 @@ import {
   findIdxBySearchInOrder,
   findIdxBySearch,
   findIdxBySearchExactPart,
+  parseCommandFromTriggerAndMessage,
 } from './fn'
+import { CommandTrigger } from './types'
 
 test('joinIntoChunks', () => {
   let actual = joinIntoChunks(['hyottoko', 'van', 'megaport'], ', ', 12)
@@ -121,5 +123,21 @@ array             | search   | expected
 ${['abc', 'lel']} | ${'lel'} | ${1}
 `('findIdxBySearch', ({ array, search, expected }) => {
   const actual = findIdxBySearch(array, search)
+  expect(actual).toStrictEqual(expected)
+})
+
+test.each`
+msg                | command       | commandExact | expected
+${'!sr good good'} | ${'!sr good'} | ${false}     | ${{ name: '!sr good', args: ['good'] }}
+${'!sr good'}      | ${'!sr good'} | ${false}     | ${{ name: '!sr good', args: [] }}
+${'!sr hello'}     | ${'!sr'}      | ${false}     | ${{ name: '!sr', args: ['hello'] }}
+${'!sr'}           | ${'!sr'}      | ${false}     | ${{ name: '!sr', args: [] }}
+${'!sr good good'} | ${'!sr good'} | ${true}      | ${null}
+${'!sr good'}      | ${'!sr good'} | ${true}      | ${{ name: '!sr good', args: [] }}
+${'!sr hello'}     | ${'!sr'}      | ${true}      | ${null}
+${'!sr'}           | ${'!sr'}      | ${true}      | ${{ name: '!sr', args: [] }}
+`('parseKnownCommandFromTriggerAndMessage $msg', ({ msg, command, commandExact, expected }) => {
+  const trigger = { type: 'command', data: { command, commandExact } } as CommandTrigger
+  const actual = parseCommandFromTriggerAndMessage(msg, trigger)
   expect(actual).toStrictEqual(expected)
 })

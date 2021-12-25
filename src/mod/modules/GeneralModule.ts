@@ -17,6 +17,7 @@ import ModuleStorage from '../ModuleStorage'
 import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
 import dictLookup from '../../commands/dictLookup'
+import { commandHasTrigger, newCommandTrigger, newTrigger } from '../../util'
 
 const log = fn.logger('GeneralModule.ts')
 
@@ -44,8 +45,8 @@ interface GeneralModuleTimer {
 
 interface GeneralModuleInitData {
   data: GeneralModuleData
-  commands: Record<string, FunctionCommand[]>
-  redemptions: Record<string, FunctionCommand[]>
+  commands: FunctionCommand[]
+  redemptions: FunctionCommand[]
   timers: GeneralModuleTimer[]
 }
 
@@ -81,8 +82,8 @@ class GeneralModule {
   private wss: WebSocketServer
 
   private data: GeneralModuleData
-  private commands: Record<string, FunctionCommand[]>
-  private rewardRedemptions: Record<string, FunctionCommand[]>
+  private commands: FunctionCommand[]
+  private rewardRedemptions: FunctionCommand[]
   private timers: GeneralModuleTimer[]
 
   private interval: NodeJS.Timer | null = null
@@ -133,7 +134,7 @@ class GeneralModule {
   fix(commands: any[]): Command[] {
     return (commands || []).map((cmd: any) => {
       if (cmd.command) {
-        cmd.triggers = [{ type: 'command', data: { command: cmd.command } }]
+        cmd.triggers = [newCommandTrigger(cmd.command, cmd.commandExact || false)]
         delete cmd.command
       }
       cmd.variables = cmd.variables || []
@@ -172,11 +173,15 @@ class GeneralModule {
       data.adminSettings.showImages = true
     }
 
-    const commands: Record<string, FunctionCommand[]> = {}
-    const redemptions: Record<string, FunctionCommand[]> = {}
+    const commands: FunctionCommand[] = []
+    const redemptions: FunctionCommand[] = []
     const timers: GeneralModuleTimer[] = []
 
-    commands['!media'] = [{ fn: this.mediaCmd.bind(this) }]
+    commands.push({
+      triggers: [newCommandTrigger('!media volume')],
+      restrict_to: ['mod', 'broadcaster'],
+      fn: this.mediaVolumeCmd.bind(this),
+    })
 
     data.commands.forEach((cmd: any) => {
       if (cmd.triggers.length === 0) {
@@ -217,14 +222,14 @@ class GeneralModule {
       }
       for (const trigger of cmd.triggers) {
         if (trigger.type === 'command') {
+          // TODO: check why this if is required, maybe for protection against '' command?
           if (trigger.data.command) {
-            commands[trigger.data.command] = commands[trigger.data.command] || []
-            commands[trigger.data.command].push(cmdObj)
+            commands.push(cmdObj)
           }
         } else if (trigger.type === 'reward_redemption') {
+          // TODO: check why this if is required, maybe for protection against '' command?
           if (trigger.data.command) {
-            redemptions[trigger.data.command] = redemptions[trigger.data.command] || []
-            redemptions[trigger.data.command].push(cmdObj)
+            redemptions.push(cmdObj)
           }
         } else if (trigger.type === 'timer') {
           // fix for legacy data
@@ -328,32 +333,23 @@ class GeneralModule {
     this.saveSettings()
   }
 
-  async mediaCmd(
+  async mediaVolumeCmd(
     command: RawCommand | null,
     client: TwitchChatClient | null,
     target: string | null,
     context: TwitchChatContext | null,
     msg: string | null,
   ) {
-    if (!client || !command || !context) {
+    if (!client || !command) {
       return
     }
 
-    const modOrUp = () => fn.isMod(context) || fn.isBroadcaster(context)
     const say = fn.sayFn(client, target)
-
     if (command.args.length === 0) {
-      return
-    }
-    if (command.args[0] === 'volume') {
-      if (command.args.length === 1) {
-        say(`Current volume: ${this.data.settings.volume}`)
-        return
-      }
-      if (modOrUp()) {
-        this.volume(parseInt(command.args[1], 10))
-        say(`New volume: ${this.data.settings.volume}`)
-      }
+      say(`Current volume: ${this.data.settings.volume}`)
+    } else {
+      this.volume(parseInt(command.args[0], 10))
+      say(`New volume: ${this.data.settings.volume}`)
     }
   }
 
@@ -368,52 +364,44 @@ class GeneralModule {
   }
 
   async handleRewardRedemption(redemption: TwitchChannelPointsRedemption) {
-    // log.debug('handleRewardRedemption', 0)
     if (!this.chatClient) {
       return
     }
-    // log.debug('handleRewardRedemption', 1)
-    let keys = Object.keys(this.rewardRedemptions)
-    // make sure longest commands are found first
-    // so that in case commands `!draw` and `!draw bad` are set up
-    // and `!draw bad` is written in chat, that command only will be
-    // executed and not also `!draw`
-    keys = keys.sort((a, b) => b.length - a.length)
-    // log.debug('handleRewardRedemption', 2, keys)
-    for (const key of keys) {
-      if (key !== redemption.reward.title) {
-        continue
-      }
-      const twitchChannel = this.db.get('twitch_channel', { channel_id: redemption.channel_id })
-      // log.debug('handleRewardRedemption', 3, redemption.channel_id)
+    // reward redemption should all have exact key/name of the reward, no sorting
+    // required
+    for (const rewardRedemption of this.rewardRedemptions) {
+      for (const trigger of rewardRedemption.triggers) {
+        if (
+          trigger.type !== 'reward_redemption'
+          || trigger.data.command !== redemption.reward.title
+        ) {
+          continue
+        }
 
-      if (!twitchChannel) {
-        continue
-      }
-
-      const rawCmd: RawCommand = {
-        name: redemption.reward.title,
-        args: redemption.user_input ? [redemption.user_input] : [],
-      }
-      const cmdDefs = this.rewardRedemptions[key] || []
-
-      await fn.tryExecuteCommand(
-        this,
-        rawCmd,
-        cmdDefs,
-        this.chatClient,
-        twitchChannel.channel_name,
-        {
+        const twitchChannel = this.db.get('twitch_channel', { channel_id: redemption.channel_id })
+        if (!twitchChannel) {
+          continue
+        }
+        const rawCmd: RawCommand = {
+          name: redemption.reward.title,
+          args: redemption.user_input ? [redemption.user_input] : [],
+        }
+        const cmdDefs = this.rewardRedemptions.filter((r) => commandHasTrigger(r, trigger))
+        const target = twitchChannel.channel_name
+        const twitchChatContext = {
           "room-id": redemption.channel_id,
           "user-id": redemption.user.id,
           "display-name": redemption.user.display_name,
           username: redemption.user.login,
           mod: false, // no way to tell without further looking up user somehow
           subscriber: redemption.reward.is_sub_only, // this does not really tell us if the user is sub or not, just if the redemption was sub only
-        },
-        redemption.reward.title
-      )
-      break
+        }
+        const msg = redemption.reward.title
+        await fn.tryExecuteCommand(this, rawCmd, cmdDefs, this.chatClient, target, twitchChatContext, msg)
+
+        // dont trigger same redemption twice, so break
+        break
+      }
     }
   }
 }

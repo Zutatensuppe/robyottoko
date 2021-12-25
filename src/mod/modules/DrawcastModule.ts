@@ -217,7 +217,7 @@ class DrawcastModule {
   }
 
   getCommands() {
-    return {}
+    return []
   }
 
   async onChatMsg(chatMessageContext: ChatMessageContext) {

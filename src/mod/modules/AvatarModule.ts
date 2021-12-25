@@ -206,7 +206,7 @@ class AvatarModule {
   }
 
   getCommands() {
-    return {}
+    return []
   }
 
   async onChatMsg(chatMessageContext: ChatMessageContext) {

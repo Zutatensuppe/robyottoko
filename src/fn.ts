@@ -4,7 +4,7 @@ import path from 'path'
 import { getText } from './net/xhr'
 import { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove } from './common/fn'
 
-import { Command, GlobalVariable, LogLevel, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module } from './types'
+import { Command, GlobalVariable, LogLevel, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module, CommandTrigger } from './types'
 import Variables from './services/Variables'
 
 export { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove }
@@ -117,13 +117,31 @@ const mayExecute = (context: TwitchChatContext, cmd: Command | FunctionCommand) 
   return false
 }
 
-const parseKnownCommandFromMessage = (
+export const parseCommandFromTriggerAndMessage = (
   msg: string,
-  cmd: string,
+  trigger: CommandTrigger,
 ): RawCommand | null => {
-  if (msg.startsWith(cmd + ' ') || msg === cmd) {
-    const name = msg.substr(0, cmd.length).trim()
-    const args = msg.substr(cmd.length).trim().split(' ').filter(s => !!s)
+  if (trigger.type !== 'command') {
+    return null
+  }
+  return parseCommandFromCmdAndMessage(
+    msg,
+    trigger.data.command,
+    trigger.data.commandExact,
+  )
+}
+
+export const parseCommandFromCmdAndMessage = (
+  msg: string,
+  command: string,
+  commandExact: boolean,
+): RawCommand | null => {
+  if (
+    msg === command
+    || (!commandExact && msg.startsWith(command + ' '))
+  ) {
+    const name = msg.substring(0, command.length).trim()
+    const args = msg.substring(command.length).trim().split(' ').filter(s => !!s)
     return { name, args }
   }
   return null
@@ -535,7 +553,8 @@ export default {
   decodeBase64Image,
   sayFn,
   mayExecute,
-  parseKnownCommandFromMessage,
+  parseCommandFromTriggerAndMessage,
+  parseCommandFromCmdAndMessage,
   passwordSalt,
   passwordHash,
   tryExecuteCommand,

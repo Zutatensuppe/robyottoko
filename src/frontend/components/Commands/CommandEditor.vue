@@ -558,7 +558,7 @@ import { defineComponent, PropType } from "vue";
 
 import fn from "../../../common/fn";
 import { Command, UploadedFile } from "../../../types";
-import commands from "../../commands";
+import { newText, newTrigger } from "../../../util";
 
 interface ComponentDataLang {
   value: string;
@@ -626,14 +626,14 @@ export default defineComponent({
         console.warn("addtxt: this.item not initialized");
         return;
       }
-      this.item.data.text.push(commands.newText());
+      this.item.data.text.push(newText());
     },
     addtrigger() {
       if (!this.item) {
         console.warn("addtrigger: this.item not initialized");
         return;
       }
-      this.item.triggers.push(commands.newTrigger(this.newtrigger));
+      this.item.triggers.push(newTrigger(this.newtrigger));
     },
     onAddVariableChange() {
       if (!this.item) {

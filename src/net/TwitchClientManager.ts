@@ -10,6 +10,7 @@ import { User } from '../services/Users'
 import ModuleManager from '../mod/ModuleManager'
 import { TwitchChannelPointsEventMessage, TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
 import TwitchPubSubClient from '../services/TwitchPubSubClient'
+import { commandHasTrigger } from '../util'
 
 const __filename = fileURLToPath(import.meta.url)
 
@@ -143,19 +144,26 @@ class TwitchClientManager {
       const chatMessageContext = { client: chatClient, target, context, msg }
 
       for (const m of moduleManager.all(user.id)) {
-        const commands = m.getCommands() || {}
-        let keys = Object.keys(commands)
+        const commands = m.getCommands() || []
+        let triggers = []
+        for (const command of commands) {
+          for (const trigger of command.triggers) {
+            if (trigger.type === 'command') {
+              triggers.push(trigger)
+            }
+          }
+        }
         // make sure longest commands are found first
         // so that in case commands `!draw` and `!draw bad` are set up
         // and `!draw bad` is written in chat, that command only will be
         // executed and not also `!draw`
-        keys = keys.sort((a, b) => b.length - a.length)
-        for (const key of keys) {
-          const rawCmd = fn.parseKnownCommandFromMessage(chatMessageContext.msg, key)
+        triggers = triggers.sort((a, b) => b.data.command.length - a.data.command.length)
+        for (const trigger of triggers) {
+          const rawCmd = fn.parseCommandFromTriggerAndMessage(chatMessageContext.msg, trigger)
           if (!rawCmd) {
             continue
           }
-          const cmdDefs = commands[key] || []
+          const cmdDefs = commands.filter((command) => commandHasTrigger(command, trigger))
           await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg)
           break
         }

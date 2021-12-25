@@ -8,6 +8,7 @@ import { ChatMessageContext, RawCommand, TwitchChannelPointsRedemption, TwitchCh
 import ModuleStorage from '../ModuleStorage'
 import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
+import { newCommandTrigger } from '../../util'
 
 interface VoteModuleData {
   votes: Record<string, Record<string, string>>
@@ -170,23 +171,17 @@ class VoteModule {
   }
 
   getCommands() {
-    return {
-      '!vote': [{
-        fn: this.voteCmd.bind(this),
-      }],
-
+    return [
+      { triggers: [newCommandTrigger('!vote')], fn: this.voteCmd.bind(this) },
       // make configurable
-      '!play': [{
-        fn: this.playCmd.bind(this),
-      }],
-    }
+      { triggers: [newCommandTrigger('!play')], fn: this.playCmd.bind(this) },
+    ]
   }
 
   async onChatMsg(chatMessageContext: ChatMessageContext) {
   }
 
   async handleRewardRedemption(redemption: TwitchChannelPointsRedemption) {
-
   }
 }
 

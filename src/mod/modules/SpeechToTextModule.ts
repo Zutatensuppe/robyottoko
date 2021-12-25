@@ -227,7 +227,7 @@ class SpeechToTextModule {
     }
   }
   getCommands() {
-    return {}
+    return []
   }
 
   async onChatMsg(chatMessageContext: ChatMessageContext) {

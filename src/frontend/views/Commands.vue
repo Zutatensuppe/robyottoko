@@ -321,7 +321,7 @@
 import { defineComponent } from "vue";
 
 import WsClient from "../WsClient";
-import commands from "../commands";
+import { newCmd } from "../../util";
 import fn from "../../common/fn";
 import {
   GeneralModuleAdminSettings,
@@ -469,7 +469,7 @@ export default defineComponent({
       return parts.join(", ");
     },
     add(type: string) {
-      const cmd = commands.newCmd(type);
+      const cmd = newCmd(type);
       if (!cmd) {
         return;
       }

@@ -5,12 +5,15 @@ import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
 import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
-import { ChatMessageContext, PlaylistItem, RawCommand, TwitchChannelPointsRedemption, TwitchChatClient, TwitchChatContext } from '../../types'
+import { ChatMessageContext, PlaylistItem, RawCommand, TwitchChannelPointsRedemption, TwitchChatClient, TwitchChatContext, CommandRestrict } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
+import { newCommandTrigger } from '../../util'
 
 const log = logger('SongrequestModule.ts')
+
+const MOD_OR_ABOVE: CommandRestrict[] = ["mod", "broadcaster"]
 
 const ADD_TYPE = {
   NOT_ADDED: 0,
@@ -161,17 +164,6 @@ class SongrequestModule {
 
   saveCommands() {
     // pass
-  }
-
-  getCommands() {
-    return {
-      '!sr': [{
-        fn: this.songrequestCmd.bind(this),
-      }],
-      '!resr': [{
-        fn: this.songrequestCmd.bind(this),
-      }],
-    }
   }
 
   widgets() {
@@ -681,7 +673,111 @@ class SongrequestModule {
     return item
   }
 
-  async songrequestCmd(
+  getCommands() {
+    return [
+      { triggers: [newCommandTrigger('!sr current', true)], fn: this.cmdSrCurrent.bind(this) },
+      { triggers: [newCommandTrigger('!sr undo', true)], fn: this.cmdSrUndo.bind(this) },
+      { triggers: [newCommandTrigger('!sr good', true)], fn: this.cmdSrGood.bind(this) },
+      { triggers: [newCommandTrigger('!sr bad', true)], fn: this.cmdSrBad.bind(this) },
+      { triggers: [newCommandTrigger('!sr stat', true)], fn: this.cmdSrStats.bind(this) },
+      { triggers: [newCommandTrigger('!sr stats', true)], fn: this.cmdSrStats.bind(this) },
+      { triggers: [newCommandTrigger('!sr prev', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrPrev.bind(this) },
+      { triggers: [newCommandTrigger('!sr next', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNext.bind(this) },
+      { triggers: [newCommandTrigger('!sr skip', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNext.bind(this) },
+      { triggers: [newCommandTrigger('!sr jumptonew', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrJumpToNew.bind(this) },
+      { triggers: [newCommandTrigger('!sr clear', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrClear.bind(this) },
+      { triggers: [newCommandTrigger('!sr rm', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrRm.bind(this) },
+      { triggers: [newCommandTrigger('!sr shuffle', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrShuffle.bind(this) },
+      { triggers: [newCommandTrigger('!sr resetStats', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrResetStats.bind(this) },
+      { triggers: [newCommandTrigger('!sr loop', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrLoop.bind(this) },
+      { triggers: [newCommandTrigger('!sr noloop', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNoloop.bind(this) },
+      { triggers: [newCommandTrigger('!sr unloop', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNoloop.bind(this) },
+      { triggers: [newCommandTrigger('!sr pause', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrPause.bind(this) },
+      { triggers: [newCommandTrigger('!sr nopause', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrUnpause.bind(this) },
+      { triggers: [newCommandTrigger('!sr unpause', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrUnpause.bind(this) },
+      { triggers: [newCommandTrigger('!sr hidevideo', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrHidevideo.bind(this) },
+      { triggers: [newCommandTrigger('!sr showvideo', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrShowvideo.bind(this) },
+      { triggers: [newCommandTrigger('!sr')], fn: this.cmdSr.bind(this) },
+      { triggers: [newCommandTrigger('!resr')], fn: this.cmdResr.bind(this) },
+      { triggers: [newCommandTrigger('!sr tag')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrAddTag.bind(this) },
+      { triggers: [newCommandTrigger('!sr addtag')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrAddTag.bind(this) },
+      { triggers: [newCommandTrigger('!sr rmtag')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrRmTag.bind(this) },
+      { triggers: [newCommandTrigger('!sr volume')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrVolume.bind(this) },
+      { triggers: [newCommandTrigger('!sr filter')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrFilter.bind(this) },
+      { triggers: [newCommandTrigger('!sr preset')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrPreset.bind(this) },
+    ]
+  }
+
+  async answerAddRequest(addType: number, idx: number) {
+    const item = idx >= 0 ? this.data.playlist[idx] : null
+    if (!item) {
+      return `Could not process that song request`
+    }
+    let info
+    if (idx < 0) {
+      info = ``
+    } else if (idx === 0) {
+      info = `[Position ${idx + 1}, playing now]`
+    } else {
+      const last_play = this.data.playlist[0].last_play || 0
+      const diffMs = last_play ? (new Date().getTime() - last_play) : 0
+      const diff = Math.round(diffMs / 1000) * 1000
+      const durationMs = await this.durationUntilIndex(idx) - diff
+      const timePrediction = durationMs <= 0 ? '' : `, will play in ~${fn.humanDuration(durationMs)}`
+      info = `[Position ${idx + 1}${timePrediction}]`
+    }
+
+    if (addType === ADD_TYPE.ADDED) {
+      return `🎵 Added "${item.title}" (${Youtube.getUrlById(item.yt)}) to the playlist! ${info}`
+    } else if (addType === ADD_TYPE.REQUEUED) {
+      return `🎵 "${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist and only moved up. ${info}`
+    } else if (addType === ADD_TYPE.EXISTED) {
+      return `🎵 "${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist. ${info}`
+    } else {
+      return `Could not process that song request`
+    }
+  }
+
+  async cmdSrCurrent(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    if (!client || !command || !context) {
+      return
+    }
+    const say = fn.sayFn(client, target)
+    if (this.data.playlist.length === 0) {
+      say(`Playlist is empty`)
+      return
+    }
+    const cur = this.data.playlist[0]
+    // todo: error handling, title output etc..
+    say(`Currently playing: ${cur.title} (${Youtube.getUrlById(cur.yt)}, ${cur.plays}x plays, requested by ${cur.user})`)
+  }
+
+  async cmdSrUndo(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    if (!client || !command || !context) {
+      return
+    }
+    const say = fn.sayFn(client, target)
+    const undid = this.undo(context['display-name'])
+    if (!undid) {
+      say(`Could not undo anything`)
+    } else {
+      say(`Removed "${undid.title}" from the playlist!`)
+    }
+  }
+
+  async cmdResr(
     command: RawCommand | null,
     client: TwitchChatClient | null,
     target: string | null,
@@ -692,247 +788,350 @@ class SongrequestModule {
       return
     }
 
-    const modOrUp = () => fn.isMod(context) || fn.isBroadcaster(context)
     const say = fn.sayFn(client, target)
-    const answerAddRequest = async (addType: number, idx: number) => {
-      const item = idx >= 0 ? this.data.playlist[idx] : null
-      if (!item) {
-        return `Could not process that song request`
-      }
-      let info
-      if (idx < 0) {
-        info = ``
-      } else if (idx === 0) {
-        info = `[Position ${idx + 1}, playing now]`
-      } else {
-        const last_play = this.data.playlist[0].last_play || 0
-        const diffMs = last_play ? (new Date().getTime() - last_play) : 0
-        const diff = Math.round(diffMs / 1000) * 1000
-        const durationMs = await this.durationUntilIndex(idx) - diff
-        const timePrediction = durationMs <= 0 ? '' : `, will play in ~${fn.humanDuration(durationMs)}`
-        info = `[Position ${idx + 1}${timePrediction}]`
-      }
 
-      if (addType === ADD_TYPE.ADDED) {
-        return `🎵 Added "${item.title}" (${Youtube.getUrlById(item.yt)}) to the playlist! ${info}`
-      } else if (addType === ADD_TYPE.REQUEUED) {
-        return `🎵 "${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist and only moved up. ${info}`
-      } else if (addType === ADD_TYPE.EXISTED) {
-        return `🎵 "${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist. ${info}`
-      } else {
-        return `Could not process that song request`
-      }
-    }
-
-    if (command.name === '!resr') {
-      if (command.args.length === 0) {
-        say(`Usage: !resr SEARCH`)
-        return
-      }
-      const searchterm = command.args.join(' ')
-      const { addType, idx } = await this.resr(searchterm)
-      if (idx >= 0) {
-        say(await answerAddRequest(addType, idx))
-      } else {
-        say(`Song not found in playlist`)
-      }
+    if (command.args.length === 0) {
+      say(`Usage: !resr SEARCH`)
       return
     }
+
+    const searchterm = command.args.join(' ')
+    const { addType, idx } = await this.resr(searchterm)
+    if (idx >= 0) {
+      say(await this.answerAddRequest(addType, idx))
+    } else {
+      say(`Song not found in playlist`)
+    }
+  }
+
+  async cmdSrGood(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    this.like()
+  }
+
+  async cmdSrBad(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    this.dislike()
+  }
+
+  async cmdSrStats(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    if (!client || !command || !context) {
+      return
+    }
+
+    const say = fn.sayFn(client, target)
+
+    const stats = await this.stats(context['display-name'])
+    let number = `${stats.count.byUser}`
+    const verb = stats.count.byUser === 1 ? 'was' : 'were'
+    if (stats.count.byUser === 1) {
+      number = 'one'
+    } else if (stats.count.byUser === 0) {
+      number = 'none'
+    }
+    const countStr = `There are ${stats.count.total} songs in the playlist, `
+      + `${number} of which ${verb} requested by ${context['display-name']}.`
+    const durationStr = `The total duration of the playlist is ${stats.duration.human}.`
+    say([countStr, durationStr].join(' '))
+  }
+
+  async cmdSrPrev(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    this.prev()
+  }
+
+  async cmdSrNext(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    this.next()
+  }
+
+  async cmdSrJumpToNew(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    this.jumptonew()
+  }
+
+  async cmdSrClear(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    this.clear()
+  }
+
+  async cmdSrRm(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    this.remove()
+  }
+
+  async cmdSrShuffle(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    this.shuffle()
+  }
+
+  async cmdSrResetStats(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    this.resetStats()
+  }
+
+  async cmdSrLoop(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    if (!client) {
+      return
+    }
+    const say = fn.sayFn(client, target)
+    this.loop()
+    say('Now looping the current song')
+  }
+
+  async cmdSrNoloop(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    if (!client) {
+      return
+    }
+    const say = fn.sayFn(client, target)
+    this.noloop()
+    say('Stopped looping the current song')
+  }
+
+  async cmdSrAddTag(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    if (!client || !command) {
+      return
+    }
+    if (!command.args.length) {
+      return
+    }
+    const say = fn.sayFn(client, target)
+    const tag = command.args.join(' ')
+    this.addTag(tag)
+    say(`Added tag "${tag}"`)
+  }
+
+  async cmdSrRmTag(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    if (!client || !command) {
+      return
+    }
+    if (!command.args.length) {
+      return
+    }
+    const say = fn.sayFn(client, target)
+    const tag = command.args.join(' ')
+    this.rmTag(tag)
+    say(`Removed tag "${tag}"`)
+  }
+
+  async cmdSrPause(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    this.pause()
+  }
+
+  async cmdSrUnpause(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    this.unpause()
+  }
+
+  async cmdSrVolume(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    if (!client || !command) {
+      return
+    }
+
+    const say = fn.sayFn(client, target)
+    if (command.args.length === 0) {
+      say(`Current volume: ${this.data.settings.volume}`)
+    } else {
+      this.volume(parseInt(command.args[0], 10))
+      say(`New volume: ${this.data.settings.volume}`)
+    }
+  }
+
+  async cmdSrHidevideo(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    if (!client) {
+      return
+    }
+    const say = fn.sayFn(client, target)
+    this.videoVisibility(false)
+    say(`Video is now hidden.`)
+  }
+
+  async cmdSrShowvideo(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    if (!client) {
+      return
+    }
+    const say = fn.sayFn(client, target)
+    this.videoVisibility(true)
+    say(`Video is now shown.`)
+  }
+
+  async cmdSrFilter(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    if (!client || !command || !context) {
+      return
+    }
+
+    const say = fn.sayFn(client, target)
+    const tag = command.args.join(' ')
+    this.filter({ tag })
+    if (tag !== '') {
+      say(`Playing only songs tagged with "${tag}"`)
+    } else {
+      say(`Playing all songs`)
+    }
+  }
+
+  async cmdSrPreset(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    if (!client || !command || !context) {
+      return
+    }
+
+    const say = fn.sayFn(client, target)
+    const presetName = command.args.join(' ')
+    if (presetName === '') {
+      if (this.data.settings.customCssPresets.length) {
+        say(`Presets: ${this.data.settings.customCssPresets.map(preset => preset.name).join(', ')}`)
+      } else {
+        say(`No presets configured`)
+      }
+    } else {
+      const preset = this.data.settings.customCssPresets.find(preset => preset.name === presetName)
+      if (preset) {
+        this.data.settings.customCss = preset.css
+        say(`Switched to preset: ${presetName}`)
+      } else {
+        say(`Preset does not exist: ${presetName}`)
+      }
+      this.updateClients('settings')
+    }
+  }
+
+  async cmdSr(
+    command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    context: TwitchChatContext | null,
+    msg: string | null,
+  ) {
+    if (!client || !command || !context) {
+      return
+    }
+
+    const say = fn.sayFn(client, target)
 
     if (command.args.length === 0) {
       say(`Usage: !sr YOUTUBE-URL`)
       return
     }
-    if (command.args.length === 1) {
-      switch (command.args[0]) {
-        case 'current':
-          if (this.data.playlist.length === 0) {
-            say(`Playlist is empty`)
-            return
-          }
-          const cur = this.data.playlist[0]
-          // todo: error handling, title output etc..
-          say(`Currently playing: ${cur.title} (${Youtube.getUrlById(cur.yt)}, ${cur.plays}x plays, requested by ${cur.user})`)
-          return
-        case 'good':
-          this.like()
-          return
-        case 'bad':
-          this.dislike()
-          return
-        case 'prev':
-          if (modOrUp()) {
-            this.prev()
-            return
-          }
-          break
-        case 'hidevideo':
-          if (modOrUp()) {
-            this.videoVisibility(false)
-            say(`Video is now hidden.`)
-            return
-          }
-          break
-        case 'showvideo':
-          if (modOrUp()) {
-            this.videoVisibility(true)
-            say(`Video is now shown.`)
-            return
-          }
-          break
-        case 'next':
-        case 'skip':
-          if (modOrUp()) {
-            this.next()
-            return
-          }
-          break
-        case 'jumptonew':
-          if (modOrUp()) {
-            this.jumptonew()
-            return
-          }
-          break
-        case 'pause':
-          if (modOrUp()) {
-            this.pause()
-            return
-          }
-          break;
-        case 'nopause':
-        case 'unpause':
-          if (modOrUp()) {
-            this.unpause()
-            return
-          }
-          break;
-        case 'loop':
-          if (modOrUp()) {
-            this.loop()
-            say('Now looping the current song')
-            return
-          }
-          break;
-        case 'noloop':
-        case 'unloop':
-          if (modOrUp()) {
-            this.noloop()
-            say('Stopped looping the current song')
-            return
-          }
-          break;
-        case 'stat':
-        case 'stats':
-          const stats = await this.stats(context['display-name'])
-          let number = `${stats.count.byUser}`
-          const verb = stats.count.byUser === 1 ? 'was' : 'were'
-          if (stats.count.byUser === 1) {
-            number = 'one'
-          } else if (stats.count.byUser === 0) {
-            number = 'none'
-          }
-          const countStr = `There are ${stats.count.total} songs in the playlist, `
-            + `${number} of which ${verb} requested by ${context['display-name']}.`
-          const durationStr = `The total duration of the playlist is ${stats.duration.human}.`
-          say([countStr, durationStr].join(' '))
-          return
-        case 'resetStats':
-          if (modOrUp()) {
-            this.resetStats()
-            return
-          }
-          break
-        case 'clear':
-          if (modOrUp()) {
-            this.clear()
-            return
-          }
-          break
-        case 'rm':
-          if (modOrUp()) {
-            this.remove()
-            return
-          }
-          break
-        case 'shuffle':
-          if (modOrUp()) {
-            this.shuffle()
-            return
-          }
-          break
-        case 'undo':
-          const undid = this.undo(context['display-name'])
-          if (!undid) {
-            say(`Could not undo anything`)
-          } else {
-            say(`Removed "${undid.title}" from the playlist!`)
-          }
-          return
-      }
-    }
-    if (command.args[0] === 'volume') {
-      if (command.args.length === 1) {
-        say(`Current volume: ${this.data.settings.volume}`)
-      } else if (modOrUp()) {
-        this.volume(parseInt(command.args[1], 10))
-        say(`New volume: ${this.data.settings.volume}`)
-      }
-      return
-    }
-    if (command.args[0] === 'tag' || command.args[0] === 'addtag') {
-      if (modOrUp()) {
-        const tag = command.args.slice(1).join(' ')
-        this.addTag(tag)
-        say(`Added tag "${tag}"`)
-      }
-      return
-    }
-    if (command.args[0] === 'preset') {
-      if (modOrUp()) {
-        const presetName = command.args.slice(1).join(' ')
-        if (presetName === '') {
-          if (this.data.settings.customCssPresets.length) {
-            say(`Presets: ${this.data.settings.customCssPresets.map(preset => preset.name).join(', ')}`)
-          } else {
-            say(`No presets configured`)
-          }
-        } else {
-          const preset = this.data.settings.customCssPresets.find(preset => preset.name === presetName)
-          if (preset) {
-            this.data.settings.customCss = preset.css
-            say(`Switched to preset: ${presetName}`)
-          } else {
-            say(`Preset does not exist: ${presetName}`)
-          }
-          this.updateClients('settings')
-        }
-      }
-      return
-    }
-    if (command.args[0] === 'rmtag') {
-      if (modOrUp()) {
-        const tag = command.args.slice(1).join(' ')
-        this.rmTag(tag)
-        say(`Removed tag "${tag}"`)
-      }
-      return
-    }
-    if (command.args[0] === 'filter') {
-      if (modOrUp()) {
-        const tag = command.args.slice(1).join(' ')
-        this.filter({ tag })
-        if (tag !== '') {
-          say(`Playing only songs tagged with "${tag}"`)
-        } else {
-          say(`Playing all songs`)
-        }
-      }
-      return
-    }
 
     const str = command.args.join(' ')
     const { addType, idx } = await this.add(str, context['display-name'])
-    say(await answerAddRequest(addType, idx))
+    say(await this.answerAddRequest(addType, idx))
   }
 
   async loadYoutubeData(youtubeId: string): Promise<YoutubeVideosResponseDataEntry> {

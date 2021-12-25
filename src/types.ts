@@ -156,6 +156,7 @@ export interface CommandTrigger {
   data: {
     // for trigger type "command" (todo: should only exist if type is command, not always)
     command: string
+    commandExact: boolean
     // for trigger type "timer" (todo: should only exist if type is timer, not always)
     minInterval: number // duration in ms or something parsable (eg 1s, 10m, ....)
     minLines: number
@@ -258,7 +259,7 @@ export interface CountdownCommand extends Command {
 }
 
 export interface FunctionCommand {
-  triggers?: CommandTrigger[]
+  triggers: CommandTrigger[]
   action?: CommandAction
   restrict_to?: CommandRestrict[]
   variables?: CommandVariable[]
@@ -331,7 +332,7 @@ export interface Module {
   getWsEvents: () => Record<string, (ws: Socket, data?: any) => any>
   widgets: () => Record<string, (req: any, res: any, next: Function) => Record<string, string>>
   getRoutes: () => Record<string, Record<string, (req: any, res: any, next: Function) => Promise<any>>>
-  getCommands: () => Record<string, FunctionCommand[]>
+  getCommands: () => FunctionCommand[]
   onChatMsg: (chatMessageContext: ChatMessageContext) => Promise<void>
   handleRewardRedemption: (redemption: TwitchChannelPointsRedemption) => Promise<void>
 }

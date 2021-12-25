@@ -169,9 +169,9 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import commands from "../../commands";
 import fn from "../../../common/fn";
 import { CountdownAction } from "../../../types";
+import { newMedia, newText } from "../../../util";
 
 export default defineComponent({
   name: "countdown-edit",
@@ -210,13 +210,10 @@ export default defineComponent({
       this.countdown.actions.push({ type: "delay", value: "1s" });
     },
     onAddText() {
-      this.countdown.actions.push({ type: "text", value: commands.newText() });
+      this.countdown.actions.push({ type: "text", value: newText() });
     },
     onAddMedia() {
-      this.countdown.actions.push({
-        type: "media",
-        value: commands.newMedia(),
-      });
+      this.countdown.actions.push({ type: "media", value: newMedia() });
     },
     rmaction(idx: number) {
       this.countdown.actions = this.countdown.actions.filter(
