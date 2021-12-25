@@ -2809,7 +2809,7 @@ class GeneralModule {
                 }
                 const twitchChannel = this.db.get('twitch_channel', { channel_id: redemption.channel_id });
                 if (!twitchChannel) {
-                    continue;
+                    return;
                 }
                 const rawCmd = {
                     name: redemption.reward.title,
@@ -2827,8 +2827,8 @@ class GeneralModule {
                 };
                 const msg = redemption.reward.title;
                 await fn.tryExecuteCommand(this, rawCmd, cmdDefs, this.chatClient, target, twitchChatContext, msg);
-                // dont trigger same redemption twice, so break
-                break;
+                // dont trigger same redemption twice, so return
+                return;
             }
         }
     }
