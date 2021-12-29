@@ -82,20 +82,20 @@ export const ACTION_DESCRIPTION_MAP: Record<CommandAction, string> = {
   sr_hidevideo: "Hide video for current song",
   sr_showvideo: "Show video for current song",
   sr_request: `
-  Search for <code>&lt;SEARCH&gt;</code> (the arguments to this command)
+  Search for <code>&lt;SEARCH&gt;</code> (argument to this command)
   at youtube (by id or by title)
   and queue the first result in the playlist (after the first found
   batch of unplayed songs).`,
   sr_re_request: `
-  Search for <code>&lt;SEARCH&gt;</code> (the arguments to this command)
+  Search for <code>&lt;SEARCH&gt;</code> (argument to this command)
   in the current playlist and queue the first result in the playlist
   (after the first found batch of unplayed songs).`,
-  sr_addtag: "Add tag <code>&lt;TAG&gt;</code> (arguments to this command) to the current song",
-  sr_rmtag: "Remove tag <code>&lt;TAG&gt;</code> (arguments to this command) from the current song",
+  sr_addtag: "Add tag <code>&lt;TAG&gt;</code> (argument to this command) to the current song",
+  sr_rmtag: "Remove tag <code>&lt;TAG&gt;</code> (argument to this command) from the current song",
   sr_volume: `Sets the song request volume to <code>&lt;VOLUME&gt;</code> (argument to this command, min 0, max 100).
   <br />
   If no argument is given, just outputs the current volume`,
-  sr_filter: `Play only songs with the given tag <code>&lt;TAG&gt;</code>. If no tag
+  sr_filter: `Play only songs with the given tag <code>&lt;TAG&gt;</code> (argument to this command). If no tag
   is given, play all songs.`,
   sr_preset: `Switches to the preset <code>&lt;PRESET&gt;</code> (argument to this command) if it exists.
   If no arguments are given, outputs all available presets.`,
