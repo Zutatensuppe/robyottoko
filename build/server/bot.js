@@ -2943,6 +2943,40 @@ const default_playlist = (list = null) => {
     }
     return [];
 };
+const default_commands = (list = null) => {
+    if (Array.isArray(list)) {
+        // TODO: sanitize items
+        return list;
+    }
+    return [
+        // default commands for song request
+        { action: 'sr_current', triggers: [newCommandTrigger('!sr current', true)] },
+        { action: 'sr_undo', triggers: [newCommandTrigger('!sr undo', true)] },
+        { action: 'sr_good', triggers: [newCommandTrigger('!sr good', true)] },
+        { action: 'sr_bad', triggers: [newCommandTrigger('!sr bad', true)] },
+        { action: 'sr_stats', triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)] },
+        { action: 'sr_prev', triggers: [newCommandTrigger('!sr prev', true)], restrict_to: MOD_OR_ABOVE },
+        { action: 'sr_next', triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)], restrict_to: MOD_OR_ABOVE },
+        { action: 'sr_jumptonew', triggers: [newCommandTrigger('!sr jumptonew', true)], restrict_to: MOD_OR_ABOVE },
+        { action: 'sr_clear', triggers: [newCommandTrigger('!sr clear', true)], restrict_to: MOD_OR_ABOVE },
+        { action: 'sr_rm', triggers: [newCommandTrigger('!sr rm', true)], restrict_to: MOD_OR_ABOVE },
+        { action: 'sr_shuffle', triggers: [newCommandTrigger('!sr shuffle', true)], restrict_to: MOD_OR_ABOVE },
+        { action: 'sr_reset_stats', triggers: [newCommandTrigger('!sr resetStats', true)], restrict_to: MOD_OR_ABOVE },
+        { action: 'sr_loop', triggers: [newCommandTrigger('!sr loop', true)], restrict_to: MOD_OR_ABOVE },
+        { action: 'sr_noloop', triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)], restrict_to: MOD_OR_ABOVE },
+        { action: 'sr_pause', triggers: [newCommandTrigger('!sr pause', true)], restrict_to: MOD_OR_ABOVE },
+        { action: 'sr_unpause', triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)], restrict_to: MOD_OR_ABOVE },
+        { action: 'sr_hidevideo', triggers: [newCommandTrigger('!sr hidevideo', true)], restrict_to: MOD_OR_ABOVE },
+        { action: 'sr_showvideo', triggers: [newCommandTrigger('!sr showvideo', true)], restrict_to: MOD_OR_ABOVE },
+        { action: 'sr_request', triggers: [newCommandTrigger('!sr')] },
+        { action: 'sr_re_request', triggers: [newCommandTrigger('!resr')] },
+        { action: 'sr_addtag', triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')], restrict_to: MOD_OR_ABOVE },
+        { action: 'sr_rmtag', triggers: [newCommandTrigger('!sr rmtag')], restrict_to: MOD_OR_ABOVE },
+        { action: 'sr_volume', triggers: [newCommandTrigger('!sr volume')], restrict_to: MOD_OR_ABOVE },
+        { action: 'sr_filter', triggers: [newCommandTrigger('!sr filter')], restrict_to: MOD_OR_ABOVE },
+        { action: 'sr_preset', triggers: [newCommandTrigger('!sr preset')], restrict_to: MOD_OR_ABOVE },
+    ];
+};
 class SongrequestModule {
     constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
         this.name = 'sr';
@@ -2951,12 +2985,24 @@ class SongrequestModule {
         this.cache = cache;
         this.storage = storage;
         this.wss = wss;
+        const initData = this.reinit();
+        this.data = {
+            filter: initData.data.filter,
+            playlist: initData.data.playlist,
+            commands: initData.data.commands,
+            settings: initData.data.settings,
+            stacks: initData.data.stacks,
+        };
+        this.commands = initData.commands;
+    }
+    reinit() {
         const data = this.storage.load(this.name, {
             filter: {
                 tag: '',
             },
             settings: default_settings(),
             playlist: default_playlist(),
+            commands: default_commands(),
             stacks: {},
         });
         // make sure items have correct structure
@@ -2964,12 +3010,54 @@ class SongrequestModule {
         // TODO: maybe use same code as in save function
         data.playlist = default_playlist(data.playlist);
         data.settings = default_settings(data.settings);
-        this.data = {
-            filter: data.filter,
-            playlist: data.playlist,
-            settings: data.settings,
-            stacks: data.stacks,
+        data.commands = default_commands(data.commands);
+        return {
+            data: {
+                playlist: data.playlist,
+                settings: data.settings,
+                commands: data.commands,
+                filter: data.filter,
+                stacks: data.stacks,
+            },
+            commands: this.initCommands(data.commands),
         };
+    }
+    initCommands(rawCommands) {
+        const map = {
+            sr_current: this.cmdSrCurrent,
+            sr_undo: this.cmdSrUndo,
+            sr_good: this.cmdSrGood,
+            sr_bad: this.cmdSrBad,
+            sr_stats: this.cmdSrStats,
+            sr_prev: this.cmdSrPrev,
+            sr_next: this.cmdSrNext,
+            sr_jumptonew: this.cmdSrJumpToNew,
+            sr_clear: this.cmdSrClear,
+            sr_rm: this.cmdSrRm,
+            sr_shuffle: this.cmdSrShuffle,
+            sr_reset_stats: this.cmdSrResetStats,
+            sr_loop: this.cmdSrLoop,
+            sr_noloop: this.cmdSrNoloop,
+            sr_pause: this.cmdSrPause,
+            sr_unpause: this.cmdSrUnpause,
+            sr_hidevideo: this.cmdSrHidevideo,
+            sr_showvideo: this.cmdSrShowvideo,
+            sr_request: this.cmdSr,
+            sr_re_request: this.cmdResr,
+            sr_addtag: this.cmdSrAddTag,
+            sr_rmtag: this.cmdSrRmTag,
+            sr_volume: this.cmdSrVolume,
+            sr_filter: this.cmdSrFilter,
+            sr_preset: this.cmdSrPreset,
+        };
+        const commands = [];
+        rawCommands.forEach((cmd) => {
+            if (cmd.triggers.length === 0 || !map[cmd.action]) {
+                return;
+            }
+            commands.push(Object.assign({}, cmd, { fn: map[cmd.action].bind(this) }));
+        });
+        return commands;
     }
     saveCommands() {
         // pass
@@ -3819,38 +3907,7 @@ class SongrequestModule {
         };
     }
     getCommands() {
-        return [
-            { triggers: [newCommandTrigger('!sr current', true)], fn: this.cmdSrCurrent.bind(this) },
-            { triggers: [newCommandTrigger('!sr undo', true)], fn: this.cmdSrUndo.bind(this) },
-            { triggers: [newCommandTrigger('!sr good', true)], fn: this.cmdSrGood.bind(this) },
-            { triggers: [newCommandTrigger('!sr bad', true)], fn: this.cmdSrBad.bind(this) },
-            { triggers: [newCommandTrigger('!sr stat', true)], fn: this.cmdSrStats.bind(this) },
-            { triggers: [newCommandTrigger('!sr stats', true)], fn: this.cmdSrStats.bind(this) },
-            { triggers: [newCommandTrigger('!sr prev', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrPrev.bind(this) },
-            { triggers: [newCommandTrigger('!sr next', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNext.bind(this) },
-            { triggers: [newCommandTrigger('!sr skip', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNext.bind(this) },
-            { triggers: [newCommandTrigger('!sr jumptonew', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrJumpToNew.bind(this) },
-            { triggers: [newCommandTrigger('!sr clear', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrClear.bind(this) },
-            { triggers: [newCommandTrigger('!sr rm', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrRm.bind(this) },
-            { triggers: [newCommandTrigger('!sr shuffle', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrShuffle.bind(this) },
-            { triggers: [newCommandTrigger('!sr resetStats', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrResetStats.bind(this) },
-            { triggers: [newCommandTrigger('!sr loop', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrLoop.bind(this) },
-            { triggers: [newCommandTrigger('!sr noloop', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNoloop.bind(this) },
-            { triggers: [newCommandTrigger('!sr unloop', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrNoloop.bind(this) },
-            { triggers: [newCommandTrigger('!sr pause', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrPause.bind(this) },
-            { triggers: [newCommandTrigger('!sr nopause', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrUnpause.bind(this) },
-            { triggers: [newCommandTrigger('!sr unpause', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrUnpause.bind(this) },
-            { triggers: [newCommandTrigger('!sr hidevideo', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrHidevideo.bind(this) },
-            { triggers: [newCommandTrigger('!sr showvideo', true)], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrShowvideo.bind(this) },
-            { triggers: [newCommandTrigger('!sr')], fn: this.cmdSr.bind(this) },
-            { triggers: [newCommandTrigger('!resr')], fn: this.cmdResr.bind(this) },
-            { triggers: [newCommandTrigger('!sr tag')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrAddTag.bind(this) },
-            { triggers: [newCommandTrigger('!sr addtag')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrAddTag.bind(this) },
-            { triggers: [newCommandTrigger('!sr rmtag')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrRmTag.bind(this) },
-            { triggers: [newCommandTrigger('!sr volume')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrVolume.bind(this) },
-            { triggers: [newCommandTrigger('!sr filter')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrFilter.bind(this) },
-            { triggers: [newCommandTrigger('!sr preset')], restrict_to: MOD_OR_ABOVE, fn: this.cmdSrPreset.bind(this) },
-        ];
+        return this.commands;
     }
     async onChatMsg(chatMessageContext) {
     }
