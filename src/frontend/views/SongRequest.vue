@@ -81,28 +81,12 @@
       <div class="tabs">
         <ul>
           <li
-            :class="{ 'is-active': tab === 'playlist' }"
-            @click="tab = 'playlist'"
+            v-for="(def, idx) in tabDefinitions"
+            :key="idx"
+            :class="{ 'is-active': tab === def.tab }"
+            @click="tab = def.tab"
           >
-            <a>Playlist</a>
-          </li>
-          <li
-            :class="{ 'is-active': tab === 'settings' }"
-            @click="tab = 'settings'"
-          >
-            <a>Settings</a>
-          </li>
-          <li :class="{ 'is-active': tab === 'help' }" @click="tab = 'help'">
-            <a>Help</a>
-          </li>
-          <li :class="{ 'is-active': tab === 'tags' }" @click="tab = 'tags'">
-            <a>Tags</a>
-          </li>
-          <li
-            :class="{ 'is-active': tab === 'import' }"
-            @click="tab = 'import'"
-          >
-            <a>Import/Export</a>
+            <a>{{ def.title }}</a>
           </li>
         </ul>
       </div>
@@ -120,9 +104,6 @@
         </div>
         <textarea class="textarea mb-1" v-model="importPlaylist"></textarea>
       </div>
-      <div id="help" v-if="inited && tab === 'help'">
-        <help />
-      </div>
       <div id="tags" v-if="inited && tab === 'tags'">
         <tags-editor :tags="tags" @updateTag="onTagUpdated" />
       </div>
@@ -130,7 +111,7 @@
         id="settings"
         v-if="inited && tab === 'settings'"
         v-model="settings"
-        @update:modelValue="sendSettings"
+        @update:modelValue="sendSave"
       />
       <div
         id="playlist"
@@ -145,6 +126,14 @@
           @ctrl="onPlaylistCtrl"
         />
       </div>
+      <commands-editor
+        v-if="inited && tab === 'commands'"
+        v-model="commands"
+        @update:modelValue="sendSave"
+        :globalVariables="globalVariables"
+        :possibleActions="possibleActions"
+        :baseVolume="100"
+      />
     </div>
   </div>
 </template>
@@ -153,12 +142,18 @@
 import { defineComponent } from "vue";
 import WsClient from "../WsClient";
 import xhr from "../xhr";
-import { PlaylistItem } from "../../types";
+import {
+  Command,
+  CommandAction,
+  GlobalVariable,
+  PlaylistItem,
+} from "../../types";
 import {
   SongrequestModuleSettings,
   SongrequestModuleWsEventData,
 } from "../../mod/modules/SongrequestModule";
 import user from "../user";
+import conf from "../conf";
 import { useToast } from "vue-toastification";
 
 type TagInfo = { value: string; count: number };
@@ -169,10 +164,17 @@ interface ControlDefinition {
   icon: string;
 }
 
+interface TabDefinition {
+  title: string;
+  tab: string;
+}
+
 interface ComponentData {
   $me: any;
+  $conf: any;
   playerVisible: boolean;
   playlist: PlaylistItem[];
+  commands: Command[];
   settings: SongrequestModuleSettings;
   filter: {
     tag: string;
@@ -181,11 +183,14 @@ interface ComponentData {
   resrinput: string;
   srinput: string;
   inited: boolean;
-  tab: "playlist" | "help" | "import" | "tags";
+  tab: "playlist" | "commands" | "import" | "tags";
   importPlaylist: string;
 
   toast: any;
   controlDefinitions: ControlDefinition[];
+  tabDefinitions: TabDefinition[];
+  globalVariables: GlobalVariable[];
+  possibleActions: CommandAction[];
 }
 
 interface Player {
@@ -201,8 +206,11 @@ interface Player {
 export default defineComponent({
   data: (): ComponentData => ({
     $me: null,
+    $conf: null,
     playerVisible: false,
     playlist: [],
+    commands: [],
+    globalVariables: [],
     settings: {
       volume: 100,
       hideVideoImage: {
@@ -223,7 +231,7 @@ export default defineComponent({
 
     inited: false,
 
-    tab: "playlist", // playlist|help|import|tags
+    tab: "playlist", // playlist|import|tags
     importPlaylist: "",
 
     toast: useToast(),
@@ -263,6 +271,41 @@ export default defineComponent({
         ctrl: "skip",
         icon: "fa-step-forward",
       },
+    ],
+    tabDefinitions: [
+      { tab: "playlist", title: "Playlist" },
+      { tab: "commands", title: "Commands" },
+      { tab: "settings", title: "Settings" },
+      { tab: "tags", title: "Tags" },
+      { tab: "import", title: "Import/Export" },
+    ],
+
+    possibleActions: [
+      "sr_current",
+      "sr_undo",
+      "sr_good",
+      "sr_bad",
+      "sr_stats",
+      "sr_prev",
+      "sr_next",
+      "sr_jumptonew",
+      "sr_clear",
+      "sr_rm",
+      "sr_shuffle",
+      "sr_reset_stats",
+      "sr_loop",
+      "sr_noloop",
+      "sr_pause",
+      "sr_unpause",
+      "sr_hidevideo",
+      "sr_showvideo",
+      "sr_request",
+      "sr_re_request",
+      "sr_addtag",
+      "sr_rmtag",
+      "sr_volume",
+      "sr_filter",
+      "sr_preset",
     ],
   }),
   computed: {
@@ -324,8 +367,12 @@ export default defineComponent({
     },
   },
   methods: {
-    sendSettings() {
-      this.sendCtrl("settings", [this.settings]);
+    sendSave() {
+      this.sendMsg({
+        event: "save",
+        commands: this.commands,
+        settings: this.settings,
+      });
     },
     onTagUpdated(evt: [string, string]) {
       this.updateTag(evt[0], evt[1]);
@@ -415,12 +462,15 @@ export default defineComponent({
   },
   created() {
     this.$me = user.getMe();
+    this.$conf = conf.getConf();
   },
   async mounted() {
     this.$nextTick(() => {
       this.ws = new WsClient(this.$conf.wsBase + "/sr", this.$me.token);
-      this.ws.onMessage("settings", (data: SongrequestModuleWsEventData) => {
+      this.ws.onMessage("save", (data: SongrequestModuleWsEventData) => {
         this.settings = data.settings;
+        this.commands = data.commands;
+        this.globalVariables = data.globalVariables;
       });
       this.ws.onMessage(["pause"], (data: SongrequestModuleWsEventData) => {
         if (this.player.playing()) {
@@ -442,6 +492,8 @@ export default defineComponent({
         ["onEnded", "prev", "skip", "remove", "clear", "move", "tags"],
         (data: SongrequestModuleWsEventData) => {
           this.settings = data.settings;
+          this.commands = data.commands;
+          this.globalVariables = data.globalVariables;
           const oldId =
             this.filteredPlaylist.length > 0
               ? this.filteredPlaylist[0].id
@@ -459,6 +511,8 @@ export default defineComponent({
       );
       this.ws.onMessage(["filter"], (data: SongrequestModuleWsEventData) => {
         this.settings = data.settings;
+        this.commands = data.commands;
+        this.globalVariables = data.globalVariables;
         const oldId =
           this.filteredPlaylist.length > 0 ? this.filteredPlaylist[0].id : null;
         this.filter = data.filter;
@@ -472,6 +526,8 @@ export default defineComponent({
         ["dislike", "like", "video", "playIdx", "resetStats", "shuffle"],
         (data: SongrequestModuleWsEventData) => {
           this.settings = data.settings;
+          this.commands = data.commands;
+          this.globalVariables = data.globalVariables;
           this.filter = data.filter;
           this.playlist = data.playlist;
         }
@@ -480,6 +536,8 @@ export default defineComponent({
         ["add", "init"],
         (data: SongrequestModuleWsEventData) => {
           this.settings = data.settings;
+          this.commands = data.commands;
+          this.globalVariables = data.globalVariables;
           this.filter = data.filter;
           this.playlist = data.playlist;
           if (!this.inited && !this.player.playing()) {

@@ -31,10 +31,10 @@ import DoubleclickButton from "./components/DoubleclickButton.vue";
 import Youtube from "./components/Youtube.vue";
 
 import CommandsCommandEditor from "./components/Commands/CommandEditor.vue";
+import CommandsCommandsEditor from "./components/Commands/CommandsEditor.vue";
 import CommandsCountdownEditor from "./components/Commands/CountdownEditor.vue";
 import CommandsTriggerEditor from "./components/Commands/TriggerEditor.vue";
 
-import SongRequestHelp from "./components/SongRequest/Help.vue";
 import SongRequestPlaylistEditor from "./components/SongRequest/PlaylistEditor.vue";
 import SongRequestSettings from "./components/SongRequest/Settings.vue";
 import SongRequestTagsEditor from "./components/SongRequest/TagsEditor.vue";
@@ -47,6 +47,7 @@ import AvatarSlotItemStateEditor from "./components/Avatar/AvatarSlotItemStateEd
 import AvatarAnimation from "./components/Avatar/AvatarAnimation.vue";
 
 import "./style.css"
+import conf from './conf'
 import user from './user'
 
 const run = async () => {
@@ -128,12 +129,7 @@ const run = async () => {
     ],
   })
 
-  const getJson = async (path: string) => {
-    const res = await fetch(path);
-    return res.status === 200 ? (await res.json()) : null
-  }
-
-  const conf = await getJson('/api/conf')
+  await conf.init()
   await user.init()
 
   router.beforeEach((to, from, next) => {
@@ -155,7 +151,6 @@ const run = async () => {
     next()
   })
   const app = Vue.createApp(App)
-  app.config.globalProperties.$conf = conf
   app.use(router)
   app.use(Toast, {})
   app.component('doubleclick-button', DoubleclickButton)
@@ -169,7 +164,7 @@ const run = async () => {
   app.component('upload', Upload)
   app.component('volume-slider', VolumeSlider)
   app.component('youtube', Youtube)
-  // commands - maybe dont register these globally?
+  app.component('commands-editor', CommandsCommandsEditor)
   app.component('command-editor', CommandsCommandEditor)
   app.component('countdown-editor', CommandsCountdownEditor)
   app.component('trigger-editor', CommandsTriggerEditor)
@@ -177,7 +172,6 @@ const run = async () => {
   app.component('playlist-editor', SongRequestPlaylistEditor)
   app.component('tags-editor', SongRequestTagsEditor)
   app.component('song-request-settings', SongRequestSettings)
-  app.component('help', SongRequestHelp)
   // avatar - maybe dont register these globally?
   app.component('avatar-editor', AvatarEditor)
   app.component('avatar-slot-definition-editor', AvatarSlotDefinitionEditor)

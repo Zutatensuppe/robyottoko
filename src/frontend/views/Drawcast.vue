@@ -260,11 +260,13 @@ import { defineComponent } from "vue";
 import { DrawcastSaveEventData } from "../../mod/modules/DrawcastModule";
 import { DrawcastData, DrawcastSettings, UploadedFile } from "../../types";
 import user from "../user";
+import conf from "../conf";
 import WsClient from "../WsClient";
 import xhr from "../xhr";
 
 interface ComponentData {
   $me: any;
+  $conf: any;
   unchangedJson: string;
   changedJson: string;
   settings: DrawcastSettings | null;
@@ -284,6 +286,7 @@ interface ComponentData {
 export default defineComponent({
   data: (): ComponentData => ({
     $me: null,
+    $conf: null,
     unchangedJson: "{}",
     changedJson: "{}",
     settings: null,
@@ -301,6 +304,7 @@ export default defineComponent({
   }),
   async created() {
     this.$me = user.getMe();
+    this.$conf = conf.getConf();
     this.ws = new WsClient(this.$conf.wsBase + "/drawcast", this.$me.token);
     this.ws.onMessage("init", async (data: DrawcastData) => {
       this.settings = data.settings;

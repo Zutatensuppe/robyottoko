@@ -22,6 +22,9 @@ code {
   display: inline-block;
   overflow: hidden;
   text-overflow: ellipsis;
+  padding-top: 0;
+  padding-bottom: 0;
+  vertical-align: middle;
 }
 body { margin: 0; }
 

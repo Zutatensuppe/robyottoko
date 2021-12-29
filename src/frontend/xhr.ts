@@ -1,16 +1,23 @@
 interface RequestOptions {
-  headers: Record<string, string>
-  body: XMLHttpRequestBodyInit,
+  headers?: Record<string, string>
+  body?: XMLHttpRequestBodyInit,
   onUploadProgress?: (ev: ProgressEvent<XMLHttpRequestEventTarget>) => void,
 }
 
-const request = async (method: string, url: string, options: RequestOptions) => {
+export interface Response {
+  status: number
+  text: string
+  json: () => Promise<any>
+}
+
+const request = async (method: string, url: string, options: RequestOptions): Promise<Response> => {
   return new Promise((resolve, reject) => {
     const xhr = new window.XMLHttpRequest()
     xhr.open(method, url, true)
     xhr.withCredentials = true
-    for (const k in options.headers || {}) {
-      xhr.setRequestHeader(k, options.headers[k])
+    const headers = options.headers || {}
+    for (const k in headers) {
+      xhr.setRequestHeader(k, headers[k])
     }
     xhr.addEventListener('load', function (ev) {
       resolve({

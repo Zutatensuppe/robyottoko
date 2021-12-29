@@ -132,6 +132,7 @@ import {
   AvatarModuleWsInitData,
   AvatarModuleWsSaveData,
 } from "../../mod/modules/AvatarModule";
+import conf from "../conf";
 import user from "../user";
 import WsClient from "../WsClient";
 
@@ -148,6 +149,7 @@ interface ComponentData {
   tab: "settings" | "avatars";
 
   $me: any;
+  $conf: any;
 }
 
 export default defineComponent({
@@ -164,6 +166,7 @@ export default defineComponent({
     tab: "avatars",
 
     $me: null,
+    $conf: null,
   }),
   watch: {
     settings: {
@@ -267,6 +270,7 @@ export default defineComponent({
   },
   created() {
     this.$me = user.getMe();
+    this.$conf = conf.getConf();
   },
   async mounted() {
     this.ws = new WsClient(this.$conf.wsBase + "/avatar", this.$me.token);

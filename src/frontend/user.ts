@@ -1,6 +1,6 @@
 let me: any = null;
 
-const getJson = async (path) => {
+const getJson = async (path: string) => {
   const res = await fetch(path);
   return res.status === 200 ? (await res.json()) : null
 }
@@ -42,9 +42,7 @@ async function login(user: string, pass: string) {
 }
 
 export default {
-  getMe: () => {
-    return me
-  },
+  getMe: () => me,
   logout,
   login,
   init,

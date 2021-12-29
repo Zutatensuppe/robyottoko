@@ -5,15 +5,13 @@ import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
 import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
-import { ChatMessageContext, PlaylistItem, RawCommand, TwitchChatClient, TwitchChatContext, CommandRestrict, RewardRedemptionContext, FunctionCommand, Command } from '../../types'
+import { ChatMessageContext, PlaylistItem, RawCommand, TwitchChatClient, TwitchChatContext, RewardRedemptionContext, FunctionCommand, Command, GlobalVariable } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
-import { newCommandTrigger } from '../../util'
+import { newCmd } from '../../util'
 
 const log = logger('SongrequestModule.ts')
-
-const MOD_OR_ABOVE: CommandRestrict[] = ["mod", "broadcaster"]
 
 const ADD_TYPE = {
   NOT_ADDED: 0,
@@ -21,7 +19,6 @@ const ADD_TYPE = {
   REQUEUED: 2,
   EXISTED: 3,
 }
-
 
 interface SongrequestModuleCustomCssPreset {
   name: string
@@ -65,6 +62,8 @@ export interface SongrequestModuleWsEventData {
     tag: string
   },
   playlist: PlaylistItem[],
+  commands: Command[],
+  globalVariables: GlobalVariable[],
   settings: SongrequestModuleSettings,
 }
 
@@ -125,31 +124,31 @@ const default_commands = (list: any = null) => {
   }
   return [
     // default commands for song request
-    { action: 'sr_current', triggers: [newCommandTrigger('!sr current', true)] },
-    { action: 'sr_undo', triggers: [newCommandTrigger('!sr undo', true)] },
-    { action: 'sr_good', triggers: [newCommandTrigger('!sr good', true)] },
-    { action: 'sr_bad', triggers: [newCommandTrigger('!sr bad', true)] },
-    { action: 'sr_stats', triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)] },
-    { action: 'sr_prev', triggers: [newCommandTrigger('!sr prev', true)], restrict_to: MOD_OR_ABOVE },
-    { action: 'sr_next', triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)], restrict_to: MOD_OR_ABOVE },
-    { action: 'sr_jumptonew', triggers: [newCommandTrigger('!sr jumptonew', true)], restrict_to: MOD_OR_ABOVE },
-    { action: 'sr_clear', triggers: [newCommandTrigger('!sr clear', true)], restrict_to: MOD_OR_ABOVE },
-    { action: 'sr_rm', triggers: [newCommandTrigger('!sr rm', true)], restrict_to: MOD_OR_ABOVE },
-    { action: 'sr_shuffle', triggers: [newCommandTrigger('!sr shuffle', true)], restrict_to: MOD_OR_ABOVE },
-    { action: 'sr_reset_stats', triggers: [newCommandTrigger('!sr resetStats', true)], restrict_to: MOD_OR_ABOVE },
-    { action: 'sr_loop', triggers: [newCommandTrigger('!sr loop', true)], restrict_to: MOD_OR_ABOVE },
-    { action: 'sr_noloop', triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)], restrict_to: MOD_OR_ABOVE },
-    { action: 'sr_pause', triggers: [newCommandTrigger('!sr pause', true)], restrict_to: MOD_OR_ABOVE },
-    { action: 'sr_unpause', triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)], restrict_to: MOD_OR_ABOVE },
-    { action: 'sr_hidevideo', triggers: [newCommandTrigger('!sr hidevideo', true)], restrict_to: MOD_OR_ABOVE },
-    { action: 'sr_showvideo', triggers: [newCommandTrigger('!sr showvideo', true)], restrict_to: MOD_OR_ABOVE },
-    { action: 'sr_request', triggers: [newCommandTrigger('!sr')] },
-    { action: 'sr_re_request', triggers: [newCommandTrigger('!resr')] },
-    { action: 'sr_addtag', triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')], restrict_to: MOD_OR_ABOVE },
-    { action: 'sr_rmtag', triggers: [newCommandTrigger('!sr rmtag')], restrict_to: MOD_OR_ABOVE },
-    { action: 'sr_volume', triggers: [newCommandTrigger('!sr volume')], restrict_to: MOD_OR_ABOVE },
-    { action: 'sr_filter', triggers: [newCommandTrigger('!sr filter')], restrict_to: MOD_OR_ABOVE },
-    { action: 'sr_preset', triggers: [newCommandTrigger('!sr preset')], restrict_to: MOD_OR_ABOVE },
+    newCmd('sr_current'),
+    newCmd('sr_undo'),
+    newCmd('sr_good'),
+    newCmd('sr_bad'),
+    newCmd('sr_stats'),
+    newCmd('sr_prev'),
+    newCmd('sr_next'),
+    newCmd('sr_jumptonew'),
+    newCmd('sr_clear'),
+    newCmd('sr_rm'),
+    newCmd('sr_shuffle'),
+    newCmd('sr_reset_stats'),
+    newCmd('sr_loop'),
+    newCmd('sr_noloop'),
+    newCmd('sr_pause'),
+    newCmd('sr_unpause'),
+    newCmd('sr_hidevideo'),
+    newCmd('sr_showvideo'),
+    newCmd('sr_request'),
+    newCmd('sr_re_request'),
+    newCmd('sr_addtag'),
+    newCmd('sr_rmtag'),
+    newCmd('sr_volume'),
+    newCmd('sr_filter'),
+    newCmd('sr_preset'),
   ]
 }
 
@@ -330,6 +329,8 @@ class SongrequestModule {
         filter: this.data.filter,
         playlist: this.data.playlist,
         settings: this.data.settings,
+        commands: this.data.commands,
+        globalVariables: this.variables.all(),
       }
     };
   }
@@ -370,6 +371,16 @@ class SongrequestModule {
         this.save()
         this.updateClients('onEnded')
       },
+      'save': (ws: Socket, data: { commands: any[], settings: any }) => {
+        this.data.commands = data.commands
+        this.data.settings = data.settings
+
+        this.storage.save(this.name, this.data)
+        const initData = this.reinit()
+        this.data = initData.data
+        this.commands = initData.commands
+        this.updateClients('save')
+      },
       'ctrl': (ws: Socket, { ctrl, args }: { ctrl: string, args: any[] }) => {
         switch (ctrl) {
           case 'volume': this.volume(...args as [number]); break;
@@ -397,7 +408,6 @@ class SongrequestModule {
           case 'updatetag': this.updateTag(...args as [string, string]); break;
           case 'filter': this.filter(...args as [{ tag: string }]); break;
           case 'videoVisibility': this.videoVisibility(...args as [boolean, number]); break;
-          case 'settings': this.settings(...args as [SongrequestModuleSettings]); break;
         }
       },
     }

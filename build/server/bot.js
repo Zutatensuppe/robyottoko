@@ -1595,6 +1595,26 @@ class TwitchPubSubClient {
     }
 }
 
+const MOD_OR_ABOVE = ["mod", "broadcaster"];
+const newText = () => '';
+const newMedia = () => ({
+    sound: {
+        filename: '',
+        file: '',
+        volume: 100,
+    },
+    image: {
+        filename: '',
+        file: '',
+    },
+    minDurationMs: '1s',
+});
+const newCountdown = () => ({
+    steps: 3,
+    interval: '1s',
+    intro: 'Starting countdown...',
+    outro: 'Done!'
+});
 const newTrigger = (type) => ({
     type,
     data: {
@@ -1616,6 +1636,278 @@ const newCommandTrigger = (command = '', commandExact = false) => {
     trigger.data.command = command;
     trigger.data.commandExact = commandExact;
     return trigger;
+};
+const newCmd = (type) => {
+    switch (type) {
+        // GENERAL
+        case 'text': return {
+            triggers: [newCommandTrigger()],
+            action: 'text',
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {
+                text: [newText()],
+            },
+        };
+        case 'media': return {
+            triggers: [newCommandTrigger()],
+            action: 'media',
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: newMedia(),
+        };
+        case 'media_volume': return {
+            triggers: [newCommandTrigger()],
+            action: 'media_volume',
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'countdown': return {
+            triggers: [newCommandTrigger()],
+            action: 'countdown',
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: newCountdown(),
+        };
+        case 'dict_lookup': return {
+            triggers: [newCommandTrigger()],
+            action: 'dict_lookup',
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {
+                lang: 'ja',
+                phrase: '',
+            },
+        };
+        case 'madochan_createword': return {
+            triggers: [newCommandTrigger()],
+            action: 'madochan_createword',
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {
+                // TODO: use from same resource as server
+                model: '100epochs800lenhashingbidirectional.h5',
+                weirdness: 1,
+            },
+        };
+        case 'chatters': return {
+            triggers: [newCommandTrigger()],
+            action: 'chatters',
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        // SONG REQUEST
+        case 'sr_current': return {
+            action: 'sr_current',
+            triggers: [newCommandTrigger('!sr current', true)],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_undo': return {
+            action: 'sr_undo',
+            triggers: [newCommandTrigger('!sr undo', true)],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_good': return {
+            action: 'sr_good',
+            triggers: [newCommandTrigger('!sr good', true)],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_bad': return {
+            action: 'sr_bad',
+            triggers: [newCommandTrigger('!sr bad', true)],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_stats': return {
+            action: 'sr_stats',
+            triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_prev': return {
+            action: 'sr_prev',
+            triggers: [newCommandTrigger('!sr prev', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_next': return {
+            action: 'sr_next',
+            triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_jumptonew': return {
+            action: 'sr_jumptonew',
+            triggers: [newCommandTrigger('!sr jumptonew', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_clear': return {
+            action: 'sr_clear',
+            triggers: [newCommandTrigger('!sr clear', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_rm': return {
+            action: 'sr_rm',
+            triggers: [newCommandTrigger('!sr rm', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_shuffle': return {
+            action: 'sr_shuffle',
+            triggers: [newCommandTrigger('!sr shuffle', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_reset_stats': return {
+            action: 'sr_reset_stats',
+            triggers: [newCommandTrigger('!sr resetStats', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_loop': return {
+            action: 'sr_loop',
+            triggers: [newCommandTrigger('!sr loop', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_noloop': return {
+            action: 'sr_noloop',
+            triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_pause': return {
+            action: 'sr_pause',
+            triggers: [newCommandTrigger('!sr pause', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_unpause': return {
+            action: 'sr_unpause',
+            triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_hidevideo': return {
+            action: 'sr_hidevideo',
+            triggers: [newCommandTrigger('!sr hidevideo', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_showvideo': return {
+            action: 'sr_showvideo',
+            triggers: [newCommandTrigger('!sr showvideo', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_request': return {
+            action: 'sr_request',
+            triggers: [newCommandTrigger('!sr')],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_re_request': return {
+            action: 'sr_re_request',
+            triggers: [newCommandTrigger('!resr')],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_addtag': return {
+            action: 'sr_addtag',
+            triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_rmtag': return {
+            action: 'sr_rmtag',
+            triggers: [newCommandTrigger('!sr rmtag')],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_volume': return {
+            action: 'sr_volume',
+            triggers: [newCommandTrigger('!sr volume')],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_filter': return {
+            action: 'sr_filter',
+            triggers: [newCommandTrigger('!sr filter')],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        case 'sr_preset': return {
+            action: 'sr_preset',
+            triggers: [newCommandTrigger('!sr preset')],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
+        default: return null;
+    }
 };
 const commandHasTrigger = (command, trigger) => {
     for (const cmdTrigger of command.triggers) {
@@ -2671,17 +2963,17 @@ class GeneralModule {
         }
         const commands = [];
         const timers = [];
-        commands.push({
-            triggers: [newCommandTrigger('!media volume')],
-            restrict_to: ['mod', 'broadcaster'],
-            fn: this.mediaVolumeCmd.bind(this),
-        });
         data.commands.forEach((cmd) => {
             if (cmd.triggers.length === 0) {
                 return;
             }
             let cmdObj = null;
             switch (cmd.action) {
+                case 'media_volume':
+                    cmdObj = Object.assign({}, cmd, {
+                        fn: this.mediaVolumeCmd.bind(this),
+                    });
+                    break;
                 case 'madochan_createword':
                     cmdObj = Object.assign({}, cmd, {
                         fn: madochanCreateWord(`${cmd.data.model}` || Madochan.defaultModel, parseInt(cmd.data.weirdness, 10) || Madochan.defaultWeirdness)
@@ -2895,7 +3187,6 @@ var Youtube = {
 };
 
 logger('SongrequestModule.ts');
-const MOD_OR_ABOVE = ["mod", "broadcaster"];
 const ADD_TYPE = {
     NOT_ADDED: 0,
     ADDED: 1,
@@ -2950,31 +3241,31 @@ const default_commands = (list = null) => {
     }
     return [
         // default commands for song request
-        { action: 'sr_current', triggers: [newCommandTrigger('!sr current', true)] },
-        { action: 'sr_undo', triggers: [newCommandTrigger('!sr undo', true)] },
-        { action: 'sr_good', triggers: [newCommandTrigger('!sr good', true)] },
-        { action: 'sr_bad', triggers: [newCommandTrigger('!sr bad', true)] },
-        { action: 'sr_stats', triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)] },
-        { action: 'sr_prev', triggers: [newCommandTrigger('!sr prev', true)], restrict_to: MOD_OR_ABOVE },
-        { action: 'sr_next', triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)], restrict_to: MOD_OR_ABOVE },
-        { action: 'sr_jumptonew', triggers: [newCommandTrigger('!sr jumptonew', true)], restrict_to: MOD_OR_ABOVE },
-        { action: 'sr_clear', triggers: [newCommandTrigger('!sr clear', true)], restrict_to: MOD_OR_ABOVE },
-        { action: 'sr_rm', triggers: [newCommandTrigger('!sr rm', true)], restrict_to: MOD_OR_ABOVE },
-        { action: 'sr_shuffle', triggers: [newCommandTrigger('!sr shuffle', true)], restrict_to: MOD_OR_ABOVE },
-        { action: 'sr_reset_stats', triggers: [newCommandTrigger('!sr resetStats', true)], restrict_to: MOD_OR_ABOVE },
-        { action: 'sr_loop', triggers: [newCommandTrigger('!sr loop', true)], restrict_to: MOD_OR_ABOVE },
-        { action: 'sr_noloop', triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)], restrict_to: MOD_OR_ABOVE },
-        { action: 'sr_pause', triggers: [newCommandTrigger('!sr pause', true)], restrict_to: MOD_OR_ABOVE },
-        { action: 'sr_unpause', triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)], restrict_to: MOD_OR_ABOVE },
-        { action: 'sr_hidevideo', triggers: [newCommandTrigger('!sr hidevideo', true)], restrict_to: MOD_OR_ABOVE },
-        { action: 'sr_showvideo', triggers: [newCommandTrigger('!sr showvideo', true)], restrict_to: MOD_OR_ABOVE },
-        { action: 'sr_request', triggers: [newCommandTrigger('!sr')] },
-        { action: 'sr_re_request', triggers: [newCommandTrigger('!resr')] },
-        { action: 'sr_addtag', triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')], restrict_to: MOD_OR_ABOVE },
-        { action: 'sr_rmtag', triggers: [newCommandTrigger('!sr rmtag')], restrict_to: MOD_OR_ABOVE },
-        { action: 'sr_volume', triggers: [newCommandTrigger('!sr volume')], restrict_to: MOD_OR_ABOVE },
-        { action: 'sr_filter', triggers: [newCommandTrigger('!sr filter')], restrict_to: MOD_OR_ABOVE },
-        { action: 'sr_preset', triggers: [newCommandTrigger('!sr preset')], restrict_to: MOD_OR_ABOVE },
+        newCmd('sr_current'),
+        newCmd('sr_undo'),
+        newCmd('sr_good'),
+        newCmd('sr_bad'),
+        newCmd('sr_stats'),
+        newCmd('sr_prev'),
+        newCmd('sr_next'),
+        newCmd('sr_jumptonew'),
+        newCmd('sr_clear'),
+        newCmd('sr_rm'),
+        newCmd('sr_shuffle'),
+        newCmd('sr_reset_stats'),
+        newCmd('sr_loop'),
+        newCmd('sr_noloop'),
+        newCmd('sr_pause'),
+        newCmd('sr_unpause'),
+        newCmd('sr_hidevideo'),
+        newCmd('sr_showvideo'),
+        newCmd('sr_request'),
+        newCmd('sr_re_request'),
+        newCmd('sr_addtag'),
+        newCmd('sr_rmtag'),
+        newCmd('sr_volume'),
+        newCmd('sr_filter'),
+        newCmd('sr_preset'),
     ];
 };
 class SongrequestModule {
@@ -3126,6 +3417,8 @@ class SongrequestModule {
                 filter: this.data.filter,
                 playlist: this.data.playlist,
                 settings: this.data.settings,
+                commands: this.data.commands,
+                globalVariables: this.variables.all(),
             }
         };
     }
@@ -3158,6 +3451,15 @@ class SongrequestModule {
                 }
                 this.save();
                 this.updateClients('onEnded');
+            },
+            'save': (ws, data) => {
+                this.data.commands = data.commands;
+                this.data.settings = data.settings;
+                this.storage.save(this.name, this.data);
+                const initData = this.reinit();
+                this.data = initData.data;
+                this.commands = initData.commands;
+                this.updateClients('save');
             },
             'ctrl': (ws, { ctrl, args }) => {
                 switch (ctrl) {
@@ -3235,9 +3537,6 @@ class SongrequestModule {
                         break;
                     case 'videoVisibility':
                         this.videoVisibility(...args);
-                        break;
-                    case 'settings':
-                        this.settings(...args);
                         break;
                 }
             },

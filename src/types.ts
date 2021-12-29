@@ -183,7 +183,14 @@ export type CommandFunction = (
   msg: string | null,
 ) => any
 
-export type CommandAction = 'text' | 'media' | 'countdown' | 'dict_lookup' | 'madochan_createword' | 'chatters'
+export type CommandAction =
+  // general
+  'text' | 'media' | 'media_volume' | 'countdown' | 'dict_lookup' | 'madochan_createword' | 'chatters'
+  // song request
+  | 'sr_current' | 'sr_undo' | 'sr_good' | 'sr_bad' | 'sr_stats' | 'sr_prev' | 'sr_next'
+  | 'sr_jumptonew' | 'sr_clear' | 'sr_rm' | 'sr_shuffle' | 'sr_reset_stats' | 'sr_loop'
+  | 'sr_noloop' | 'sr_pause' | 'sr_unpause' | 'sr_hidevideo' | 'sr_showvideo' | 'sr_request'
+  | 'sr_re_request' | 'sr_addtag' | 'sr_rmtag' | 'sr_volume' | 'sr_filter' | 'sr_preset'
 export type CommandRestrict = 'mod' | 'sub' | 'broadcaster'
 
 export interface Command {

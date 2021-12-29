@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="field has-addons" v-if="value.type === 'command'">
-      <div class="control has-icons-left">
+      <div class="control has-icons-left mr-1">
         <input
           class="input is-small"
           :class="{
@@ -15,6 +15,20 @@
         <span class="icon is-small is-left">
           <i class="fa fa-comments-o"></i>
         </span>
+      </div>
+      <div
+        class="control mr-1"
+        title="Check if command should only be executed if it matches exactly (= no arguments come after it)."
+      >
+        <label>
+          <input
+            type="checkbox"
+            class="checkbox mr-1"
+            v-model="value.data.commandExact"
+            @update:modelValue="emitUpdate"
+          />
+          <span class="is-small is-left">exact</span>
+        </label>
       </div>
       <div class="control">
         <button

@@ -46,6 +46,10 @@
                 </div>
               </td>
             </tr>
+            <tr v-if="actionDescriptions[item.action]">
+              <td>Description:</td>
+              <td v-html="actionDescriptions[item.action]"></td>
+            </tr>
             <tr v-if="item.action === 'dict_lookup'">
               <td>Language:</td>
               <td>
@@ -447,7 +451,12 @@ import { defineComponent, PropType } from "vue";
 
 import fn from "../../../common/fn";
 import { Command, UploadedFile } from "../../../types";
-import { newText, newTrigger } from "../../../util";
+import {
+  ACTION_DESCRIPTION_MAP,
+  ACTION_NAME_MAP,
+  newText,
+  newTrigger,
+} from "../../../util";
 
 interface ComponentDataLang {
   value: string;
@@ -674,6 +683,9 @@ export default defineComponent({
 
       return true;
     },
+    actionDescriptions() {
+      return ACTION_DESCRIPTION_MAP;
+    },
     title() {
       if (!this.item) {
         return "";
@@ -682,15 +694,7 @@ export default defineComponent({
         create: "Create new ",
         edit: "Edit ",
       };
-      const map = {
-        dict_lookup: "dictionary lookup",
-        madochan_createword: "madochan",
-        chatters: "chatters command",
-        media: "media command",
-        countdown: "countdown",
-        text: "command",
-      };
-      return `${verb[this.mode]}${map[this.item.action]}`;
+      return `${verb[this.mode]}${ACTION_NAME_MAP[this.item.action]}`;
     },
   },
 });

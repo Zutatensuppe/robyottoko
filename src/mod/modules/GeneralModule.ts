@@ -177,18 +177,17 @@ class GeneralModule {
     const commands: FunctionCommand[] = []
     const timers: GeneralModuleTimer[] = []
 
-    commands.push({
-      triggers: [newCommandTrigger('!media volume')],
-      restrict_to: ['mod', 'broadcaster'],
-      fn: this.mediaVolumeCmd.bind(this),
-    })
-
     data.commands.forEach((cmd: any) => {
       if (cmd.triggers.length === 0) {
         return
       }
       let cmdObj = null
       switch (cmd.action) {
+        case 'media_volume':
+          cmdObj = Object.assign({}, cmd, {
+            fn: this.mediaVolumeCmd.bind(this),
+          })
+          break;
         case 'madochan_createword':
           cmdObj = Object.assign({}, cmd, {
             fn: madochanCreateWord(
