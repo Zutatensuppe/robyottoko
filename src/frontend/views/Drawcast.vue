@@ -110,6 +110,28 @@
             </td>
           </tr>
           <tr>
+            <td><code>settings.favoriteImagesTitle</code></td>
+            <td>
+              <input
+                class="input is-small"
+                type="text"
+                v-model="settings.favoriteImagesTitle"
+              />
+            </td>
+            <td>Title for the favorites gallery.</td>
+          </tr>
+          <tr>
+            <td><code>settings.recentImagesTitle</code></td>
+            <td>
+              <input
+                class="input is-small"
+                type="text"
+                v-model="settings.recentImagesTitle"
+              />
+            </td>
+            <td>Title for the recently submitted images gallery.</td>
+          </tr>
+          <tr>
             <td><code>settings.customDescription</code></td>
             <td>
               <textarea
@@ -118,6 +140,39 @@
               ></textarea>
             </td>
             <td>Description text below the drawing panel.</td>
+          </tr>
+          <tr>
+            <td><code>settings.customProfileImage</code></td>
+            <td>
+              <div
+                class="spacerow media-holder"
+                v-if="settings.customProfileImage"
+              >
+                <responsive-image
+                  :src="settings.customProfileImage.file"
+                  :title="settings.customProfileImage.filename"
+                  width="100px"
+                  height="50px"
+                  style="display: inline-block"
+                />
+                <br />
+                <button
+                  class="button is-small"
+                  @click="customProfileImageRemoved"
+                >
+                  <i class="fa fa-remove mr-1" /> Remove Image
+                </button>
+              </div>
+              <upload
+                @uploaded="customProfileImageUploaded"
+                accept="image/*"
+                label="Upload Image"
+              />
+            </td>
+            <td>
+              Profile image that will be displayed next to the
+              <code>settings.customDescription</code>.
+            </td>
           </tr>
           <tr>
             <td><code>settings.palette</code></td>
@@ -369,6 +424,27 @@ export default defineComponent({
         this.settings.favorites.push(url);
       }
     },
+    customProfileImageRemoved() {
+      if (!this.settings) {
+        console.warn(
+          "customProfileImageRemoved: this.settings not initialized"
+        );
+        return;
+      }
+      this.settings.customProfileImage = null;
+    },
+    customProfileImageUploaded(file: UploadedFile) {
+      if (!this.settings) {
+        console.warn(
+          "customProfileImageUploaded: this.settings not initialized"
+        );
+        return;
+      }
+      this.settings.customProfileImage = {
+        filename: file.originalname,
+        file: file.filename,
+      };
+    },
     soundUploaded(file: UploadedFile) {
       if (!this.settings) {
         console.warn("soundUploaded: this.settings not initialized");
@@ -392,7 +468,10 @@ export default defineComponent({
           canvasHeight: parseInt(`${this.settings.canvasHeight}`, 10) || 405,
           submitButtonText: this.settings.submitButtonText,
           submitConfirm: this.settings.submitConfirm,
+          favoriteImagesTitle: this.settings.favoriteImagesTitle,
+          recentImagesTitle: this.settings.recentImagesTitle,
           customDescription: this.settings.customDescription,
+          customProfileImage: this.settings.customProfileImage,
           palette: this.settings.palette,
           displayDuration:
             parseInt(`${this.settings.displayDuration}`, 10) || 5000,

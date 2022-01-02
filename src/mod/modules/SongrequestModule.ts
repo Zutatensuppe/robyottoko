@@ -10,6 +10,7 @@ import ModuleStorage from '../ModuleStorage'
 import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
 import { newCmd } from '../../util'
+import TwitchChannels from '../../services/TwitchChannels'
 
 const log = logger('SongrequestModule.ts')
 
@@ -167,6 +168,7 @@ class SongrequestModule {
   constructor(
     db: Db,
     user: User,
+    twitchChannelRepo: TwitchChannels,
     variables: Variables,
     clientManager: TwitchClientManager,
     storage: ModuleStorage,

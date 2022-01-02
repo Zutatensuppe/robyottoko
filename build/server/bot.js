@@ -959,6 +959,9 @@ class Variables {
 const __filename$2 = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename$2);
 const log$6 = fn.logger(__filename$2);
+const widgetTmplMap = {
+    drawcast_draw: '../../public/static/widgets/drawcast_draw/index.html',
+};
 class WebServer {
     constructor(eventHub, db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, configHttp, configTwitch, wss, auth) {
         this.eventHub = eventHub;
@@ -999,6 +1002,9 @@ class WebServer {
         const app = express();
         const templates = new Templates(path.join(__dirname, 'templates'));
         await templates.add('widget.spy');
+        for (let tmpl of Object.values(widgetTmplMap)) {
+            await templates.add(tmpl);
+        }
         await templates.add('twitch/redirect_uri.spy');
         app.get('/pub/:id', (req, res, next) => {
             const row = this.db.get('pub', {
@@ -1434,8 +1440,9 @@ class WebServer {
             for (const m of this.moduleManager.all(user.id)) {
                 const map = m.widgets();
                 if (map && map[type]) {
+                    const tmpl = widgetTmplMap[type] || 'widget.spy';
                     const widgetData = await map[type](req, res, next);
-                    res.send(templates.render('widget.spy', widgetData));
+                    res.send(templates.render(tmpl, widgetData));
                     return;
                 }
             }
@@ -4464,9 +4471,12 @@ class DrawcastModule {
         this.defaultSettings = {
             submitButtonText: 'Submit',
             submitConfirm: '',
+            favoriteImagesTitle: '',
+            recentImagesTitle: '',
             canvasWidth: 720,
             canvasHeight: 405,
             customDescription: '',
+            customProfileImage: null,
             palette: [
                 // row 1
                 '#000000', '#808080', '#ff0000', '#ff8000', '#ffff00', '#00ff00',
@@ -4520,6 +4530,9 @@ class DrawcastModule {
         if (!data.settings.displayDuration) {
             data.settings.displayDuration = this.defaultSettings.displayDuration;
         }
+        if (!data.settings.customProfileImage) {
+            data.settings.customProfileImage = this.defaultSettings.customProfileImage;
+        }
         if (!data.settings.notificationSound) {
             data.settings.notificationSound = this.defaultSettings.notificationSound;
         }
@@ -4528,6 +4541,12 @@ class DrawcastModule {
         }
         if (!data.settings.displayLatestAutomatically) {
             data.settings.displayLatestAutomatically = this.defaultSettings.displayLatestAutomatically;
+        }
+        if (typeof data.settings.favoriteImagesTitle === 'undefined') {
+            data.settings.favoriteImagesTitle = this.defaultSettings.favoriteImagesTitle;
+        }
+        if (typeof data.settings.recentImagesTitle === 'undefined') {
+            data.settings.recentImagesTitle = this.defaultSettings.recentImagesTitle;
         }
         if (!data.settings.favorites) {
             data.settings.favorites = [];

@@ -77,6 +77,7 @@ const run = async () => {
       moduleManager.add(user.id, new moduleClass(
         db,
         user,
+        twitchChannelRepo,
         variables,
         clientManager,
         moduleStorage,

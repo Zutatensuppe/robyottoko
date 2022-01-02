@@ -26,6 +26,10 @@ const __dirname = dirname(__filename)
 
 const log = fn.logger(__filename)
 
+const widgetTmplMap: Record<string, string> = {
+  drawcast_draw: '../../public/static/widgets/drawcast_draw/index.html',
+}
+
 class WebServer {
   private handle: http.Server | null
   private eventHub: EventHub
@@ -96,6 +100,9 @@ class WebServer {
 
     const templates = new Templates(path.join(__dirname, 'templates'))
     await templates.add('widget.spy')
+    for (let tmpl of Object.values(widgetTmplMap)) {
+      await templates.add(tmpl)
+    }
     await templates.add('twitch/redirect_uri.spy')
 
     app.get('/pub/:id', (req, res, next) => {
@@ -579,8 +586,9 @@ class WebServer {
       for (const m of this.moduleManager.all(user.id)) {
         const map = m.widgets()
         if (map && map[type]) {
+          const tmpl = widgetTmplMap[type] || 'widget.spy'
           const widgetData = await map[type](req, res, next)
-          res.send(templates.render('widget.spy', widgetData))
+          res.send(templates.render(tmpl, widgetData))
           return
         }
       }

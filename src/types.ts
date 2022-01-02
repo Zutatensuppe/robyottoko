@@ -101,7 +101,13 @@ export interface DrawcastSettings {
   canvasHeight: int
   submitButtonText: string
   submitConfirm: string
+  favoriteImagesTitle: string
+  recentImagesTitle: string
   customDescription: string
+  customProfileImage: {
+    file: string
+    filename: string
+  } | null
   palette: string
   displayDuration: int
   displayLatestForever: string
@@ -110,7 +116,7 @@ export interface DrawcastSettings {
     filename: string
     file: string
     volume: number
-  }
+  } | null
   favorites: string[]
 }
 

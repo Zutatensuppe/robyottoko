@@ -90,37 +90,54 @@ class TwitchHelixClient {
     return json.access_token
   }
 
+  _url(path: string): string {
+    return `${API_BASE}${path}`
+  }
+
   // https://dev.twitch.tv/docs/api/reference#get-users
-  async getUserIdByName(userName: string): Promise<string> {
-    const url = `${API_BASE}/users${asQueryArgs({ login: userName })}`
+  async _getUserBy(query: any): Promise<TwitchHelixUserSearchResponseDataEntry | null> {
+    const url = this._url(`/users${asQueryArgs(query)}`)
     const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixUserSearchResponseData
     try {
-      return json.data[0].id
+      return json.data[0]
     } catch (e) {
       log.error(json)
-      return ''
+      return null
     }
+  }
+
+  async getUserById(userId: string): Promise<TwitchHelixUserSearchResponseDataEntry | null> {
+    return await this._getUserBy({ id: userId })
+  }
+
+  async getUserByName(userName: string): Promise<TwitchHelixUserSearchResponseDataEntry | null> {
+    return await this._getUserBy({ login: userName })
+  }
+
+  async getUserIdByName(userName: string): Promise<string> {
+    const user = await this.getUserByName(userName)
+    return user ? user.id : ''
   }
 
   // https://dev.twitch.tv/docs/api/reference#get-streams
   async getStreams(userId: string): Promise<TwitchHelixStreamSearchResponseData> {
-    const url = `${API_BASE}/streams${asQueryArgs({ user_id: userId })}`
+    const url = this._url(`/streams${asQueryArgs({ user_id: userId })}`)
     const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixStreamSearchResponseData
     return json
   }
 
   async getSubscriptions() {
-    const url = `${API_BASE}/eventsub/subscriptions`
+    const url = this._url('/eventsub/subscriptions')
     return await getJson(url, await this.withAuthHeaders())
   }
 
   async deleteSubscription(id: string) {
-    const url = `${API_BASE}/eventsub/subscriptions${asQueryArgs({ id: id })}`
+    const url = this._url(`/eventsub/subscriptions${asQueryArgs({ id: id })}`)
     return await requestText('delete', url, await this.withAuthHeaders())
   }
 
   async createSubscription(subscription: TwitchHelixSubscription) {
-    const url = `${API_BASE}/eventsub/subscriptions`
+    const url = this._url('/eventsub/subscriptions')
     return await postJson(url, await this.withAuthHeaders(asJson(subscription)))
   }
 }

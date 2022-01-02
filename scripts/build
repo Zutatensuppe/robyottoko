@@ -7,4 +7,7 @@ npm run rollup -- -c rollup.server.config.js
 cp -r src/templates build/server/
 
 # frontend build
-npm run vite -- build
+npm run vite -- build --config vite.config.js
+
+# widgets build
+npm run vite -- build --config widget-drawcast_draw.vite.config.js

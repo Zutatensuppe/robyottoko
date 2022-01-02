@@ -10,6 +10,7 @@ import ModuleStorage from '../ModuleStorage'
 import { User } from '../../services/Users'
 import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
+import TwitchChannels from '../../services/TwitchChannels'
 
 const log = logger('DrawcastModule.ts')
 
@@ -38,9 +39,12 @@ class DrawcastModule {
   private defaultSettings = {
     submitButtonText: 'Submit',
     submitConfirm: '', // leave empty to not require confirm
+    favoriteImagesTitle: '',
+    recentImagesTitle: '',
     canvasWidth: 720,
     canvasHeight: 405,
     customDescription: '',
+    customProfileImage: null,
     palette: [
       // row 1
       '#000000', '#808080', '#ff0000', '#ff8000', '#ffff00', '#00ff00',
@@ -62,6 +66,7 @@ class DrawcastModule {
   constructor(
     db: Db,
     user: User,
+    twitchChannelRepo: TwitchChannels,
     variables: Variables,
     clientManager: TwitchClientManager,
     storage: ModuleStorage,
@@ -112,6 +117,9 @@ class DrawcastModule {
     if (!data.settings.displayDuration) {
       data.settings.displayDuration = this.defaultSettings.displayDuration
     }
+    if (typeof data.settings.customProfileImage === 'undefined') {
+      data.settings.customProfileImage = this.defaultSettings.customProfileImage
+    }
     if (!data.settings.notificationSound) {
       data.settings.notificationSound = this.defaultSettings.notificationSound
     }
@@ -120,6 +128,12 @@ class DrawcastModule {
     }
     if (!data.settings.displayLatestAutomatically) {
       data.settings.displayLatestAutomatically = this.defaultSettings.displayLatestAutomatically
+    }
+    if (typeof data.settings.favoriteImagesTitle === 'undefined') {
+      data.settings.favoriteImagesTitle = this.defaultSettings.favoriteImagesTitle
+    }
+    if (typeof data.settings.recentImagesTitle === 'undefined') {
+      data.settings.recentImagesTitle = this.defaultSettings.recentImagesTitle
     }
     if (!data.settings.favorites) {
       data.settings.favorites = []
