@@ -888,34 +888,47 @@ class TwitchHelixClient {
         const json = (await postJson(url));
         return json.access_token;
     }
+    _url(path) {
+        return `${API_BASE}${path}`;
+    }
     // https://dev.twitch.tv/docs/api/reference#get-users
-    async getUserIdByName(userName) {
-        const url = `${API_BASE}/users${asQueryArgs({ login: userName })}`;
+    async _getUserBy(query) {
+        const url = this._url(`/users${asQueryArgs(query)}`);
         const json = await getJson(url, await this.withAuthHeaders());
         try {
-            return json.data[0].id;
+            return json.data[0];
         }
         catch (e) {
             log$7.error(json);
-            return '';
+            return null;
         }
+    }
+    async getUserById(userId) {
+        return await this._getUserBy({ id: userId });
+    }
+    async getUserByName(userName) {
+        return await this._getUserBy({ login: userName });
+    }
+    async getUserIdByName(userName) {
+        const user = await this.getUserByName(userName);
+        return user ? user.id : '';
     }
     // https://dev.twitch.tv/docs/api/reference#get-streams
     async getStreams(userId) {
-        const url = `${API_BASE}/streams${asQueryArgs({ user_id: userId })}`;
+        const url = this._url(`/streams${asQueryArgs({ user_id: userId })}`);
         const json = await getJson(url, await this.withAuthHeaders());
         return json;
     }
     async getSubscriptions() {
-        const url = `${API_BASE}/eventsub/subscriptions`;
+        const url = this._url('/eventsub/subscriptions');
         return await getJson(url, await this.withAuthHeaders());
     }
     async deleteSubscription(id) {
-        const url = `${API_BASE}/eventsub/subscriptions${asQueryArgs({ id: id })}`;
+        const url = this._url(`/eventsub/subscriptions${asQueryArgs({ id: id })}`);
         return await requestText('delete', url, await this.withAuthHeaders());
     }
     async createSubscription(subscription) {
-        const url = `${API_BASE}/eventsub/subscriptions`;
+        const url = this._url('/eventsub/subscriptions');
         return await postJson(url, await this.withAuthHeaders(asJson(subscription)));
     }
 }
@@ -2893,7 +2906,7 @@ const dictLookup = (lang, phrase, variables, originalCmd) => async (command, cli
 
 fn.logger('GeneralModule.ts');
 class GeneralModule {
-    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
+    constructor(db, user, twitchChannelRepo, variables, clientManager, storage, cache, ws, wss) {
         this.name = 'general';
         this.interval = null;
         this.db = db;
@@ -3276,7 +3289,7 @@ const default_commands = (list = null) => {
     ];
 };
 class SongrequestModule {
-    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
+    constructor(db, user, twitchChannelRepo, variables, clientManager, storage, cache, ws, wss) {
         this.name = 'sr';
         this.variables = variables;
         this.user = user;
@@ -4222,7 +4235,7 @@ class SongrequestModule {
 }
 
 class VoteModule {
-    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
+    constructor(db, user, twitchChannelRepo, variables, clientManager, storage, cache, ws, wss) {
         this.name = 'vote';
         this.variables = variables;
         this.storage = storage;
@@ -4341,7 +4354,7 @@ class VoteModule {
 }
 
 class SpeechToTextModule {
-    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
+    constructor(db, user, twitchChannelRepo, variables, clientManager, storage, cache, ws, wss) {
         this.name = 'speech-to-text';
         this.user = user;
         this.variables = variables;
@@ -4466,7 +4479,7 @@ class SpeechToTextModule {
 
 logger('DrawcastModule.ts');
 class DrawcastModule {
-    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
+    constructor(db, user, twitchChannelRepo, variables, clientManager, storage, cache, ws, wss) {
         this.name = 'drawcast';
         this.defaultSettings = {
             submitButtonText: 'Submit',
@@ -4530,7 +4543,7 @@ class DrawcastModule {
         if (!data.settings.displayDuration) {
             data.settings.displayDuration = this.defaultSettings.displayDuration;
         }
-        if (!data.settings.customProfileImage) {
+        if (typeof data.settings.customProfileImage === 'undefined') {
             data.settings.customProfileImage = this.defaultSettings.customProfileImage;
         }
         if (!data.settings.notificationSound) {
@@ -4645,7 +4658,7 @@ class DrawcastModule {
 
 logger('AvatarModule.ts');
 class AvatarModule {
-    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
+    constructor(db, user, twitchChannelRepo, variables, clientManager, storage, cache, ws, wss) {
         this.name = 'avatar';
         this.defaultSettings = {
             styles: {
@@ -4778,7 +4791,7 @@ const run = async () => {
         const variables = new Variables(db, user.id);
         const moduleStorage = new ModuleStorage(db, user.id);
         for (const moduleClass of modules) {
-            moduleManager.add(user.id, new moduleClass(db, user, variables, clientManager, moduleStorage, cache, webServer, webSocketServer));
+            moduleManager.add(user.id, new moduleClass(db, user, twitchChannelRepo, variables, clientManager, moduleStorage, cache, webServer, webSocketServer));
         }
     };
     webSocketServer.listen();

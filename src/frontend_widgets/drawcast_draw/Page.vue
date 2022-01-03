@@ -179,13 +179,14 @@
           }}</span>
         </div>
         <div class="drawing_panel_drawings" v-if="nonfavorites.length">
-          <div
+          <img
             class="image favorite clickable"
             v-for="(img, idx) in favorites"
             :key="idx"
             @click="modify(img)"
-            :style="{ backgroundImage: `url(${img})` }"
-          ></div>
+            :src="img"
+            height="190"
+          />
         </div>
       </div>
       <div class="drawings-panel recent-drawings-panel">
@@ -195,13 +196,14 @@
           }}</span>
         </div>
         <div class="drawing_panel_drawings">
-          <div
+          <img
             class="image clickable"
             v-for="(img, idx) in nonfavorites"
             :key="idx"
             @click="modify(img)"
-            :style="{ backgroundImage: `url(${img})` }"
-          ></div>
+            :src="img"
+            height="190"
+          />
           <div class="dotdotdot"></div>
         </div>
       </div>
@@ -276,6 +278,15 @@ const mousePoint = (evt: MouseEvent) => {
   const canvas = evt.target as HTMLCanvasElement;
   const coords = translateCoords(canvas, evt.offsetX, evt.offsetY);
   return coords;
+};
+
+const hexIsLight = (color: string) => {
+  const hex = color.replace("#", "");
+  const c_r = parseInt(hex.substr(0, 2), 16);
+  const c_g = parseInt(hex.substr(2, 2), 16);
+  const c_b = parseInt(hex.substr(4, 2), 16);
+  const brightness = (c_r * 299 + c_g * 587 + c_b * 114) / 1000;
+  return brightness > 155;
 };
 
 export default defineComponent({
@@ -353,12 +364,13 @@ export default defineComponent({
       c.width = parseInt(this.size, 10) + 1;
       c.height = parseInt(this.size, 10) + 1;
       ctx.beginPath();
-      ctx.strokeStyle = "#000";
       if (this.tool === "eraser") {
         ctx.fillStyle = "#fff";
       } else {
         ctx.fillStyle = this.color;
       }
+      ctx.strokeStyle = hexIsLight(ctx.fillStyle) ? "#000" : "#fff";
+
       ctx.arc(this.halfSize, this.halfSize, this.halfSize, 0, 2 * Math.PI);
       ctx.closePath();
       ctx.fill();

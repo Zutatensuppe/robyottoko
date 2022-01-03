@@ -467,8 +467,8 @@ body {
   font-size: 18px;
 }
 .drawings-panel {
-  width: 100%;
-  margin-top: 20px;
+  width: fit-content;
+  margin: 20px auto 0;
   background: rgba(255,252,252,1);
   padding: 10px 10px;
   border-top-left-radius: 8px;
@@ -476,7 +476,6 @@ body {
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
   box-shadow: 2px 2px 1px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
 }
 .drawings_panel_title {
   background: rgba(250,242,245,1);
@@ -489,25 +488,23 @@ body {
 }
 
 .drawing_panel_drawings {
-  width: 100%;
   padding: 7px 15px;
+
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 .drawing_panel_drawings .image {
   height: 190px;
-  width: 190px;
   display: inline-block;
-  margin-right: 10px;
   box-shadow: var(--light-shadow);
-  background-size: contain;
-  background-position: center center;
-  background-repeat: no-repeat;
 }
 .drawing_panel_drawings .dotdotdot {
   background-image: url("HyottokoDotDotDot.svg");
   height: 190px;
   width: 190px;
   display: inline-block;
-  margin-right: 10px;
   background-position: center center;
   background-repeat: no-repeat;
 }
