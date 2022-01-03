@@ -245,7 +245,7 @@ const v = (name: string, def: string): string => {
   return `${window[name] !== `{{${name}}}` ? window[name] : def}`;
 };
 // TODO: remove from source, looks strange
-const wsUrl = v("wsUrl", import.meta.env.VITE_WIDGET_WS_URL);
+const wsUrl = v("wsUrl", import.meta.env.VITE_WIDGET_WS_URL + "/drawcast");
 const meToken = v("widgetToken", import.meta.env.VITE_WIDGET_TOKEN);
 
 const translateCoords = (

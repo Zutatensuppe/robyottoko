@@ -28,6 +28,7 @@ const log = fn.logger(__filename)
 
 const widgetTmplMap: Record<string, string> = {
   drawcast_draw: '../../public/static/widgets/drawcast_draw/index.html',
+  sr: '../../public/static/widgets/sr/index.html',
 }
 
 class WebServer {

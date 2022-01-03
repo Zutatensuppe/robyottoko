@@ -974,6 +974,7 @@ const __dirname = dirname(__filename$2);
 const log$6 = fn.logger(__filename$2);
 const widgetTmplMap = {
     drawcast_draw: '../../public/static/widgets/drawcast_draw/index.html',
+    sr: '../../public/static/widgets/sr/index.html',
 };
 class WebServer {
     constructor(eventHub, db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, configHttp, configTwitch, wss, auth) {
