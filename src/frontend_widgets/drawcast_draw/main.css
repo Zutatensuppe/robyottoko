@@ -32,16 +32,21 @@ body {
   position: relative;
 }
 .streamer_info {
-  width: 634px;
+  max-width: 634px;
+  width: fit-content;
   left: 50%;
   transform: translate(-50%, 0);
   padding: 5px 5px;
   position: relative;
   display: grid;
   grid-template-areas: "avatar message";
-  grid-template-columns: min-content 554px;
+  grid-template-columns: min-content auto;
   grid-gap: 10px;
   margin-bottom: 10px;
+}
+.streamer_info.no-avatar {
+  grid-template-areas: "message";
+  grid-template-columns: auto;
 }
 .streamer_avatar {
   grid-area: avatar;

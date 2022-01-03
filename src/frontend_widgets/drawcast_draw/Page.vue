@@ -1,7 +1,11 @@
 <template>
   <div id="drawcast">
     <div class="drawcast_body">
-      <div class="streamer_info" v-if="customDescription">
+      <div
+        class="streamer_info"
+        v-if="customDescription"
+        :class="{ 'no-avatar': !customProfileImageUrl }"
+      >
         <div
           class="streamer_avatar"
           v-if="customProfileImageUrl"
