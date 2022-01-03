@@ -975,6 +975,7 @@ const log$6 = fn.logger(__filename$2);
 const widgetTmplMap = {
     drawcast_draw: '../../public/static/widgets/drawcast_draw/index.html',
     sr: '../../public/static/widgets/sr/index.html',
+    media: '../../public/static/widgets/media/index.html',
 };
 class WebServer {
     constructor(eventHub, db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, configHttp, configTwitch, wss, auth) {
