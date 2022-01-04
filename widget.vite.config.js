@@ -1,12 +1,13 @@
 import vite from 'vite'
 import vue from '@vitejs/plugin-vue'
 
+const widget = process.env.WIDGET
 export default vite.defineConfig({
   plugins: [vue()],
-  root: './src/frontend_widgets/drawcast_receive',
-  base: '/static/widgets/drawcast_receive/',
+  root: `./src/frontend_widgets/${widget}`,
+  base: `/static/widgets/${widget}/`,
   build: {
-    outDir: '../../../build/public/static/widgets/drawcast_receive',
+    outDir: `../../../build/public/static/widgets/${widget}`,
     emptyOutDir: true,
   },
   server: {
