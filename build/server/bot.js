@@ -974,6 +974,7 @@ const __dirname = dirname(__filename$2);
 const log$6 = fn.logger(__filename$2);
 const widgetTmplMap = {
     drawcast_draw: '../../public/static/widgets/drawcast_draw/index.html',
+    drawcast_receive: '../../public/static/widgets/drawcast_receive/index.html',
     sr: '../../public/static/widgets/sr/index.html',
     media: '../../public/static/widgets/media/index.html',
 };

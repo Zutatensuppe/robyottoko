@@ -10,7 +10,6 @@ const v = (name: string, def: string): string => {
 };
 // TODO: remove from source, looks strange
 const wsUrl = v("wsUrl", import.meta.env.VITE_WIDGET_WS_URL + "/general");
-console.log(wsUrl);
 const meToken = v("widgetToken", import.meta.env.VITE_WIDGET_TOKEN);
 
 import fn from "../../common/fn";

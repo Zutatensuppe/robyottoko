@@ -11,5 +11,6 @@ npm run vite -- build --config vite.config.js
 
 # widgets build
 npm run vite -- build --config widget-drawcast_draw.vite.config.js
+npm run vite -- build --config widget-drawcast_receive.vite.config.js
 npm run vite -- build --config widget-sr.vite.config.js
 npm run vite -- build --config widget-media.vite.config.js
