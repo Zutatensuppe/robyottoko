@@ -71,20 +71,20 @@ export default defineComponent({
   methods: {
     getDuration() {
       if (this.yt) {
-        return this.yt.getDuration()
+        return this.yt.getDuration();
       }
-      return 0
+      return 0;
     },
     getCurrentTime() {
       if (this.yt) {
-        return this.yt.getCurrentTime()
+        return this.yt.getCurrentTime();
       }
-      return 0
+      return 0;
     },
     getProgress() {
-      const d = this.getDuration()
-      const c = this.getCurrentTime()
-      return d ? c / d : 0
+      const d = this.getDuration();
+      const c = this.getCurrentTime();
+      return d ? c / d : 0;
     },
     stop() {
       if (this.yt) {

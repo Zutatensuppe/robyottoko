@@ -3,14 +3,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import WsClient from "../../frontend/WsClient";
-
-const v = (name: string, def: string): string => {
-  return `${window[name] !== `{{${name}}}` ? window[name] : def}`;
-};
-// TODO: remove from source, looks strange
-const wsUrl = v("wsUrl", import.meta.env.VITE_WIDGET_WS_URL + "/drawcast");
-const meToken = v("widgetToken", import.meta.env.VITE_WIDGET_TOKEN);
+import util from "../util";
 
 export default defineComponent({
   data() {
@@ -91,7 +84,7 @@ export default defineComponent({
     },
   },
   mounted() {
-    this.ws = new WsClient(wsUrl, meToken);
+    this.ws = util.wsClient("drawcast");
 
     this.ws.onMessage("init", (data) => {
       // submit button may not be empty

@@ -43,10 +43,12 @@ export interface SongrequestModuleSettings {
   maxItemsShown: number
 }
 
+export interface SongRequestModuleFilter {
+  tag: string
+}
+
 interface SongrequestModuleData {
-  filter: {
-    tag: string
-  }
+  filter: SongRequestModuleFilter
   settings: SongrequestModuleSettings
   playlist: PlaylistItem[]
   commands: Command[],
@@ -82,7 +84,7 @@ const default_custom_css_preset = (obj: any = null) => ({
 })
 
 const default_settings = (obj: any = null) => ({
-  volume: obj?.volume || 100,
+  volume: typeof obj?.volume === 'undefined' ? 100 : obj.volume,
   hideVideoImage: {
     file: obj?.hideVideoImage?.file || '',
     filename: obj?.hideVideoImage?.filename || '',

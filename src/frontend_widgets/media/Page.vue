@@ -3,14 +3,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import WsClient from "../../frontend/WsClient";
-
-const v = (name: string, def: string): string => {
-  return `${window[name] !== `{{${name}}}` ? window[name] : def}`;
-};
-// TODO: remove from source, looks strange
-const wsUrl = v("wsUrl", import.meta.env.VITE_WIDGET_WS_URL + "/general");
-const meToken = v("widgetToken", import.meta.env.VITE_WIDGET_TOKEN);
+import util from "../util";
 
 import fn from "../../common/fn";
 const TIME_BETWEEN_MEDIA = 100;
@@ -120,7 +113,7 @@ export default defineComponent({
     },
   },
   mounted() {
-    this.ws = new WsClient(wsUrl, meToken);
+    this.ws = util.wsClient("general");
 
     this.ws.onMessage("init", (data) => {
       this.settings = data.settings;

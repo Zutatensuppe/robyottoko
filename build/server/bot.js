@@ -3224,7 +3224,7 @@ const default_custom_css_preset = (obj = null) => ({
     maxItemsShown: typeof obj?.maxItemsShown === 'undefined' ? -1 : obj.maxItemsShown,
 });
 const default_settings = (obj = null) => ({
-    volume: obj?.volume || 100,
+    volume: typeof obj?.volume === 'undefined' ? 100 : obj.volume,
     hideVideoImage: {
         file: obj?.hideVideoImage?.file || '',
         filename: obj?.hideVideoImage?.filename || '',

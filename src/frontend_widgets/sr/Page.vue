@@ -14,9 +14,8 @@
     </div>
     <ol class="list">
       <list-item
-        v-for="(item, idx) in playlist"
+        v-for="(item, idx) in playlistItems"
         :class="idx === 0 ? 'playing' : 'not-playing'"
-        v-if="!isFilteredOut(item, idx)"
         :key="idx"
         :item="item"
         :showThumbnails="settings.showThumbnails"
@@ -28,16 +27,26 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import WsClient from "../../frontend/WsClient";
+import {
+  SongRequestModuleFilter,
+  SongrequestModuleSettings,
+} from "../../mod/modules/SongrequestModule";
+import { PlaylistItem } from "../../types";
+import util from "../util";
 
-const v = (name: string, def: string): string => {
-  return `${window[name] !== `{{${name}}}` ? window[name] : def}`;
-};
-// TODO: remove from source, looks strange
-const wsUrl = v("wsUrl", import.meta.env.VITE_WIDGET_WS_URL + "/sr");
-const meToken = v("widgetToken", import.meta.env.VITE_WIDGET_TOKEN);
+interface ComponentData {
+  ws: WsClient | null;
+  filter: SongRequestModuleFilter;
+  hasPlayed: boolean;
+  playlist: PlaylistItem[];
+  settings: SongrequestModuleSettings;
+  progress: number;
+  progressInterval: any;
+  inited: boolean;
+}
 
 export default defineComponent({
-  data() {
+  data(): ComponentData {
     return {
       ws: null,
       filter: { tag: "" },
@@ -50,6 +59,7 @@ export default defineComponent({
           filename: "",
         },
         customCss: "",
+        customCssPresets: [],
         showProgressBar: false,
         initAutoplay: true,
         showThumbnails: true,
@@ -89,6 +99,16 @@ export default defineComponent({
       return {
         width: `${this.progress * 100}%`,
       };
+    },
+    playlistItems() {
+      const playlistItems: PlaylistItem[] = [];
+      for (const idx in this.playlist) {
+        const item = this.playlist[idx];
+        if (!this.isFilteredOut(item, idx)) {
+          playlistItems[idx] = item;
+        }
+      }
+      return playlistItems;
     },
     filteredPlaylist() {
       if (this.filter.tag === "") {
@@ -177,9 +197,9 @@ export default defineComponent({
     },
   },
   mounted() {
-    this.ws = new WsClient(wsUrl, meToken);
+    this.ws = util.wsClient("sr");
 
-    this.ws.onMessage("settings", (data) => {
+    this.ws.onMessage(["save", "settings"], (data) => {
       this.applySettings(data.settings);
     });
     this.ws.onMessage(

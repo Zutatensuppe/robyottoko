@@ -239,14 +239,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import WsClient from "../../frontend/WsClient";
-
-const v = (name: string, def: string): string => {
-  return `${window[name] !== `{{${name}}}` ? window[name] : def}`;
-};
-// TODO: remove from source, looks strange
-const wsUrl = v("wsUrl", import.meta.env.VITE_WIDGET_WS_URL + "/drawcast");
-const meToken = v("widgetToken", import.meta.env.VITE_WIDGET_TOKEN);
+import util from "../util";
 
 const translateCoords = (
   canvas: HTMLCanvasElement,
@@ -360,7 +353,7 @@ export default defineComponent({
     },
     cursor() {
       const c = document.createElement("canvas");
-      const ctx = c.getContext("2d");
+      const ctx = c.getContext("2d") as CanvasRenderingContext2D;
       if (this.tool === "color-sampler") {
         return "crosshair";
       }
@@ -383,7 +376,7 @@ export default defineComponent({
     },
   },
   methods: {
-    opt(option, value) {
+    opt(option: string, value: string) {
       this.opts[option] = value;
       window.localStorage.setItem("drawcastOpts", JSON.stringify(this.opts));
     },
@@ -545,8 +538,8 @@ export default defineComponent({
       return a ? `#${hex(r)}${hex(g)}${hex(b)}` : this.palette[0];
     },
   },
-  async mounted() {
-    this.ws = new WsClient(wsUrl, meToken);
+  mounted() {
+    this.ws = util.wsClient("drawcast");
 
     const opts = window.localStorage.getItem("drawcastOpts");
     this.opts = opts ? JSON.parse(opts) : { canvasBg: "transparent" };
