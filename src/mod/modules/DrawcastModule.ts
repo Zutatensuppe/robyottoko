@@ -149,7 +149,7 @@ class DrawcastModule {
         return {
           title: 'Drawcast Widget',
           page: 'drawcast_receive',
-          wsUrl: `${this.wss.connectstring()}/${this.name}`,
+          wsUrl: this.wss.connectstring(),
           widgetToken: req.params.widget_token,
         }
       },
@@ -157,7 +157,7 @@ class DrawcastModule {
         return {
           title: 'Drawcast Widget',
           page: 'drawcast_draw',
-          wsUrl: `${this.wss.connectstring()}/${this.name}`,
+          wsUrl: this.wss.connectstring(),
           widgetToken: req.params.widget_token,
         }
       },

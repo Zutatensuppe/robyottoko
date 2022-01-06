@@ -273,7 +273,7 @@ class SongrequestModule {
         return {
           title: 'Song Request Widget',
           page: 'sr',
-          wsUrl: `${this.wss.connectstring()}/${this.name}`,
+          wsUrl: this.wss.connectstring(),
           widgetToken: req.params.widget_token,
         }
       },

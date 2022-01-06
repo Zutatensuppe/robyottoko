@@ -255,7 +255,7 @@ class GeneralModule {
         return {
           title: 'Media Widget',
           page: 'media',
-          wsUrl: `${this.wss.connectstring()}/${this.name}`,
+          wsUrl: this.wss.connectstring(),
           widgetToken: req.params.widget_token,
         }
       },

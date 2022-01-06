@@ -3060,7 +3060,7 @@ class GeneralModule {
                 return {
                     title: 'Media Widget',
                     page: 'media',
-                    wsUrl: `${this.wss.connectstring()}/${this.name}`,
+                    wsUrl: this.wss.connectstring(),
                     widgetToken: req.params.widget_token,
                 };
             },
@@ -3382,7 +3382,7 @@ class SongrequestModule {
                 return {
                     title: 'Song Request Widget',
                     page: 'sr',
-                    wsUrl: `${this.wss.connectstring()}/${this.name}`,
+                    wsUrl: this.wss.connectstring(),
                     widgetToken: req.params.widget_token,
                 };
             },
@@ -4577,7 +4577,7 @@ class DrawcastModule {
                 return {
                     title: 'Drawcast Widget',
                     page: 'drawcast_receive',
-                    wsUrl: `${this.wss.connectstring()}/${this.name}`,
+                    wsUrl: this.wss.connectstring(),
                     widgetToken: req.params.widget_token,
                 };
             },
@@ -4585,7 +4585,7 @@ class DrawcastModule {
                 return {
                     title: 'Drawcast Widget',
                     page: 'drawcast_draw',
-                    wsUrl: `${this.wss.connectstring()}/${this.name}`,
+                    wsUrl: this.wss.connectstring(),
                     widgetToken: req.params.widget_token,
                 };
             },
