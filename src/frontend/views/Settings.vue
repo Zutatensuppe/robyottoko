@@ -101,6 +101,7 @@
           <thead>
             <tr>
               <td>Channel name</td>
+              <td>Chat status updates</td>
               <td>Channel id*</td>
               <td>Access Token*</td>
               <td></td>
@@ -113,6 +114,14 @@
                   class="input is-small"
                   type="text"
                   v-model="channel.channel_name"
+                />
+              </td>
+              <td>
+                <checkbox
+                  class="is-small"
+                  :onValue="1"
+                  :offValue="0"
+                  v-model="channel.bot_status_messages"
                 />
               </td>
               <td>
@@ -153,7 +162,8 @@
       <div class="content" v-if="twitch_channels.length > 0">
         <p>
           Channel Id* and Access Token*: You may not need the client id or
-          access token. No public feature currently uses them.
+          access token. They are required for channel point reward redemption
+          triggers only.
         </p>
         <p v-if="accessTokenLink">To get an access token, do the following:</p>
         <ol v-if="accessTokenLink" class="list">
@@ -279,6 +289,7 @@ export default defineComponent({
     addchannel() {
       this.twitch_channels.push({
         user_id: this.user.id,
+        bot_status_messages: 1,
         channel_id: "",
         channel_name: "",
         access_token: "",
@@ -295,7 +306,7 @@ export default defineComponent({
         client_id: this.user.tmi_identity_client_id || null,
         client_secret: this.user.tmi_identity_client_secret || null,
       };
-      const res = await fetch("/twitch/user-id-by-name", {
+      const res = await fetch("/api/twitch/user-id-by-name", {
         method: "post",
         headers: {
           Accept: "application/json",

@@ -1361,7 +1361,7 @@ class WebServer {
         app.get('/twitch/redirect_uri', async (req, res) => {
             res.send(templates.render('twitch/redirect_uri.spy', {}));
         });
-        app.post('/twitch/user-id-by-name', requireLoginApi, express.json(), async (req, res) => {
+        app.post('/api/twitch/user-id-by-name', requireLoginApi, express.json(), async (req, res) => {
             let clientId;
             let clientSecret;
             if (!req.user.groups.includes('admin')) {
@@ -1526,6 +1526,7 @@ class TwitchPubSubClient {
         // buffer for 'send'
         this.sendBuffer = [];
         this.heartbeatHandle = null;
+        this.nonceMessages = {};
         this.evts = new EventHub();
     }
     _send(message) {
@@ -1547,14 +1548,17 @@ class TwitchPubSubClient {
         this._send({ type: 'PING' });
     }
     listen(topic, authToken) {
-        this._send({
+        const n = nonce(15);
+        const message = {
             type: 'LISTEN',
-            nonce: nonce(15),
+            nonce: n,
             data: {
                 topics: [topic],
-                auth_token: authToken
+                auth_token: authToken,
             }
-        });
+        };
+        this.nonceMessages[n] = message;
+        this._send(message);
     }
     connect() {
         this.handle = new WebSocket(PUBSUB_WS_ADDR);
@@ -1585,8 +1589,13 @@ class TwitchPubSubClient {
         };
         this.handle.onmessage = (e) => {
             const message = JSON.parse(`${e.data}`);
+            if (!message.nonce) {
+                return;
+            }
+            message.sentData = this.nonceMessages[message.nonce];
+            delete this.nonceMessages[message.nonce];
             // log.debug('RECV', JSON.stringify(message))
-            if (message.type == 'RECONNECT') {
+            if (message.type === 'RECONNECT') {
                 log$5.info('INFO', 'Reconnecting...');
                 this.connect();
             }
@@ -1601,6 +1610,7 @@ class TwitchPubSubClient {
             this.handle = null;
             if (e.code === CODE_CUSTOM_DISCONNECT || e.code === CODE_GOING_AWAY) ;
             else {
+                log$5.info('INFO', 'Onclose...');
                 this.reconnectTimeout = setTimeout(() => { this.connect(); }, reconnectInterval);
             }
             if (this.heartbeatHandle) {
@@ -1970,6 +1980,9 @@ class TwitchClientManager {
         this.helixClient = null;
         this.identity = null;
         this.pubSubClient = null;
+        // this should probably be handled in the pub sub client code?
+        // channel_id => [] list of auth tokens that are bad
+        this.badAuthTokens = {};
         this.cfg = cfg;
         this.db = db;
         this.user = user;
@@ -1983,6 +1996,29 @@ class TwitchClientManager {
             }
         });
     }
+    _resetBadAuthTokens() {
+        this.badAuthTokens = {};
+    }
+    _addBadAuthToken(channelIds, authToken) {
+        for (let channelId of channelIds) {
+            if (!this.badAuthTokens[channelId]) {
+                this.badAuthTokens[channelId] = [];
+            }
+            if (!this.badAuthTokens[channelId].includes(authToken)) {
+                this.badAuthTokens[channelId].push(authToken);
+            }
+        }
+    }
+    _isBadAuthToken(channelId, authToken) {
+        return !!(this.badAuthTokens[channelId]
+            && this.badAuthTokens[channelId].includes(authToken));
+    }
+    determineRelevantPubSubChannels(twitchChannels) {
+        return twitchChannels.filter(channel => {
+            return !!(channel.access_token && channel.channel_id)
+                && !this._isBadAuthToken(channel.channel_id, channel.access_token);
+        });
+    }
     async init(reason) {
         let connectReason = reason;
         const cfg = this.cfg;
@@ -1991,20 +2027,8 @@ class TwitchClientManager {
         const twitchChannelRepo = this.twitchChannelRepo;
         const moduleManager = this.moduleManager;
         const log = fn.logger(__filename$1, `${user.name}|`);
-        if (this.chatClient) {
-            try {
-                await this.chatClient.disconnect();
-                this.chatClient = null;
-            }
-            catch (e) { }
-        }
-        if (this.pubSubClient) {
-            try {
-                this.pubSubClient.disconnect();
-                this.pubSubClient = null;
-            }
-            catch (e) { }
-        }
+        await this._disconnectChatClient();
+        this._disconnectPubSubClient();
         const twitchChannels = twitchChannelRepo.allByUserId(user.id);
         if (twitchChannels.length === 0) {
             log.info(`* No twitch channels configured at all`);
@@ -2092,6 +2116,9 @@ class TwitchClientManager {
         chatClient.on('connected', (addr, port) => {
             log.info(`* Connected to ${addr}:${port}`);
             for (let channel of twitchChannels) {
+                if (!channel.bot_status_messages) {
+                    continue;
+                }
                 // note: this can lead to multiple messages if multiple users
                 //       have the same channels set up
                 const say = fn.sayFn(chatClient, channel.channel_name);
@@ -2116,10 +2143,8 @@ class TwitchClientManager {
         // connect to PubSub websocket only when required
         // https://dev.twitch.tv/docs/pubsub#topics
         log.info(`Initializing PubSub`);
-        const relevantPubSubClientTwitchChannels = twitchChannels.filter(channel => {
-            return !!(channel.access_token && channel.channel_id);
-        });
-        if (relevantPubSubClientTwitchChannels.length === 0) {
+        const pubsubChannels = this.determineRelevantPubSubChannels(twitchChannels);
+        if (pubsubChannels.length === 0) {
             log.info(`* No twitch channels configured with access_token and channel_id set`);
         }
         else {
@@ -2129,12 +2154,31 @@ class TwitchClientManager {
                     return;
                 }
                 // listen for evts
-                for (let channel of relevantPubSubClientTwitchChannels) {
+                const pubsubChannels = this.determineRelevantPubSubChannels(twitchChannels);
+                if (pubsubChannels.length === 0) {
+                    log.info(`* No twitch channels configured with a valid access_token`);
+                    this._disconnectPubSubClient();
+                    return;
+                }
+                for (let channel of pubsubChannels) {
                     log.info(`${channel.channel_name} listen for channel point redemptions`);
                     this.pubSubClient.listen(`channel-points-channel-v1.${channel.channel_id}`, channel.access_token);
                 }
                 // TODO: change any type
                 this.pubSubClient.on('message', async (message) => {
+                    if (message.type === 'RESPONSE' && message.error === 'ERR_BADAUTH' && message.sentData) {
+                        const channelIds = message.sentData.data.topics.map((t) => t.split('.')[1]);
+                        const authToken = message.sentData.data.auth_token;
+                        this._addBadAuthToken(channelIds, authToken);
+                        // now check if there are still any valid twitch channels, if not
+                        // then disconnect, because we dont need the pubsub to be active
+                        const pubsubChannels = this.determineRelevantPubSubChannels(twitchChannels);
+                        if (pubsubChannels.length === 0) {
+                            log.info(`* No twitch channels configured with a valid access_token`);
+                            this._disconnectPubSubClient();
+                            return;
+                        }
+                    }
                     if (message.type !== 'MESSAGE') {
                         return;
                     }
@@ -2196,6 +2240,25 @@ class TwitchClientManager {
         //     await this.helixClient.deleteSubscription(s.id)
         //   }
         // })()
+    }
+    async _disconnectChatClient() {
+        if (this.chatClient) {
+            try {
+                await this.chatClient.disconnect();
+                this.chatClient = null;
+            }
+            catch (e) { }
+        }
+    }
+    _disconnectPubSubClient() {
+        try {
+            if (this.pubSubClient !== null) {
+                this.pubSubClient.disconnect();
+                this.pubSubClient = null;
+            }
+        }
+        catch (e) { }
+        this._resetBadAuthTokens();
     }
     getChatClient() {
         return this.chatClient;

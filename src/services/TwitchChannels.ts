@@ -7,6 +7,7 @@ export interface TwitchChannel {
   channel_name: string
   channel_id: string
   access_token: string | null
+  bot_status_messages: number
 }
 
 export interface TwitchChannelWithAccessToken {
@@ -14,6 +15,7 @@ export interface TwitchChannelWithAccessToken {
   channel_name: string
   channel_id: string
   access_token: string
+  bot_status_messages: number
 }
 
 interface UpdateTwitchChannel {
@@ -21,6 +23,7 @@ interface UpdateTwitchChannel {
   channel_name?: string
   channel_id?: string
   access_token?: string
+  bot_status_messages?: number
 }
 
 class TwitchChannels {

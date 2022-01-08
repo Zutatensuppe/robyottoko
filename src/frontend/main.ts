@@ -21,6 +21,7 @@ import ForgotPassword from './views/ForgotPassword.vue'
 import draggable from "vuedraggable";
 import Upload from "./components/Upload.vue";
 import DurationInput from "./components/DurationInput.vue";
+import Checkbox from "./components/Checkbox.vue";
 import Player from "./components/Player.vue";
 import Slider from "./components/Slider.vue";
 import VolumeSlider from "./components/VolumeSlider.vue";
@@ -154,6 +155,7 @@ const run = async () => {
   app.use(router)
   app.use(Toast, {})
   app.component('doubleclick-button', DoubleclickButton)
+  app.component('checkbox', Checkbox)
   app.component('draggable', draggable)
   app.component('duration-input', DurationInput)
   app.component('duration', Duration)

@@ -25,6 +25,8 @@ class TwitchPubSubClient {
 
   heartbeatHandle: NodeJS.Timeout | null = null
 
+  nonceMessages: Record<string, any> = {}
+
   constructor() {
     this.evts = new EventHub()
   }
@@ -48,14 +50,17 @@ class TwitchPubSubClient {
   }
 
   listen(topic: string, authToken: string) {
-    this._send({
+    const n = nonce(15)
+    const message = {
       type: 'LISTEN',
-      nonce: nonce(15),
+      nonce: n,
       data: {
         topics: [topic],
-        auth_token: authToken
+        auth_token: authToken,
       }
-    })
+    }
+    this.nonceMessages[n] = message
+    this._send(message)
   }
 
   connect() {
@@ -87,11 +92,19 @@ class TwitchPubSubClient {
     }
     this.handle.onmessage = (e) => {
       const message = JSON.parse(`${e.data}`)
+      if (!message.nonce) {
+        return
+      }
+
+      message.sentData = this.nonceMessages[message.nonce]
+      delete this.nonceMessages[message.nonce]
+
       // log.debug('RECV', JSON.stringify(message))
-      if (message.type == 'RECONNECT') {
+      if (message.type === 'RECONNECT') {
         log.info('INFO', 'Reconnecting...')
         this.connect()
       }
+
       this.evts.trigger('message', message)
     }
     this.handle.onerror = (e) => {
@@ -104,6 +117,7 @@ class TwitchPubSubClient {
       if (e.code === CODE_CUSTOM_DISCONNECT || e.code === CODE_GOING_AWAY) {
         // no need to reconnect on custom disconnect or going away
       } else {
+        log.info('INFO', 'Onclose...')
         this.reconnectTimeout = setTimeout(() => { this.connect() }, reconnectInterval)
       }
       if (this.heartbeatHandle) {

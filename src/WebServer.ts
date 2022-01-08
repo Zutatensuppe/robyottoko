@@ -481,7 +481,7 @@ class WebServer {
     app.get('/twitch/redirect_uri', async (req, res) => {
       res.send(templates.render('twitch/redirect_uri.spy', {}))
     })
-    app.post('/twitch/user-id-by-name', requireLoginApi, express.json(), async (req: any, res) => {
+    app.post('/api/twitch/user-id-by-name', requireLoginApi, express.json(), async (req: any, res) => {
       let clientId
       let clientSecret
       if (!req.user.groups.includes('admin')) {
