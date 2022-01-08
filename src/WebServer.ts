@@ -31,6 +31,7 @@ const widgetTmplMap: Record<string, string> = {
   drawcast_receive: '../../public/static/widgets/drawcast_receive/index.html',
   sr: '../../public/static/widgets/sr/index.html',
   media: '../../public/static/widgets/media/index.html',
+  'speech-to-text': '../../public/static/widgets/speech-to-text/index.html',
 }
 
 class WebServer {

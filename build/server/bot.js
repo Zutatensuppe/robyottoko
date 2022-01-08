@@ -977,6 +977,7 @@ const widgetTmplMap = {
     drawcast_receive: '../../public/static/widgets/drawcast_receive/index.html',
     sr: '../../public/static/widgets/sr/index.html',
     media: '../../public/static/widgets/media/index.html',
+    'speech-to-text': '../../public/static/widgets/speech-to-text/index.html',
 };
 class WebServer {
     constructor(eventHub, db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, configHttp, configTwitch, wss, auth) {
@@ -4485,7 +4486,7 @@ class SpeechToTextModule {
                 return {
                     title: 'Speech to Text Widget',
                     page: 'speech-to-text',
-                    wsUrl: `${this.wss.connectstring()}/${this.name}`,
+                    wsUrl: this.wss.connectstring(),
                     widgetToken: req.params.widget_token,
                 };
             },

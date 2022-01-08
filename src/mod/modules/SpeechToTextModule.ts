@@ -174,7 +174,7 @@ class SpeechToTextModule {
         return {
           title: 'Speech to Text Widget',
           page: 'speech-to-text',
-          wsUrl: `${this.wss.connectstring()}/${this.name}`,
+          wsUrl: this.wss.connectstring(),
           widgetToken: req.params.widget_token,
         }
       },
