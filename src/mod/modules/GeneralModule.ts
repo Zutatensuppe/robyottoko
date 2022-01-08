@@ -251,14 +251,6 @@ class GeneralModule {
 
   widgets() {
     return {
-      'media': (req: any, res: any, next: Function) => {
-        return {
-          title: 'Media Widget',
-          page: 'media',
-          wsUrl: this.wss.connectstring(),
-          widgetToken: req.params.widget_token,
-        }
-      },
     }
   }
 

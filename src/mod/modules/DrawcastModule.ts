@@ -145,22 +145,6 @@ class DrawcastModule {
 
   widgets() {
     return {
-      'drawcast_receive': (req: any, res: any, next: Function) => {
-        return {
-          title: 'Drawcast Widget',
-          page: 'drawcast_receive',
-          wsUrl: this.wss.connectstring(),
-          widgetToken: req.params.widget_token,
-        }
-      },
-      'drawcast_draw': (req: any, res: any, next: Function) => {
-        return {
-          title: 'Drawcast Widget',
-          page: 'drawcast_draw',
-          wsUrl: this.wss.connectstring(),
-          widgetToken: req.params.widget_token,
-        }
-      },
     }
   }
 

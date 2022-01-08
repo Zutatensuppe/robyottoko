@@ -26,13 +26,21 @@ const __dirname = dirname(__filename)
 
 const log = fn.logger(__filename)
 
-const widgetTmplMap: Record<string, string> = {
-  drawcast_draw: '../../public/static/widgets/drawcast_draw/index.html',
-  drawcast_receive: '../../public/static/widgets/drawcast_receive/index.html',
-  sr: '../../public/static/widgets/sr/index.html',
-  media: '../../public/static/widgets/media/index.html',
-  'speech-to-text': '../../public/static/widgets/speech-to-text/index.html',
+const widgetTemplate = (widget: string) => {
+  if (process.env.WIDGET_DUMMY) {
+    return process.env.WIDGET_DUMMY
+  }
+  return '../public/static/widgets/' + widget + '/index.html'
 }
+const widgets: string[] = [
+  'drawcast_draw',
+  'drawcast_receive',
+  'sr',
+  'media',
+  'speech-to-text',
+  'avatar',
+  'avatar_receive',
+]
 
 class WebServer {
   private handle: http.Server | null
@@ -102,12 +110,11 @@ class WebServer {
     const hostname = this.hostname
     const app = express()
 
-    const templates = new Templates(path.join(__dirname, 'templates'))
-    await templates.add('widget.spy')
-    for (let tmpl of Object.values(widgetTmplMap)) {
-      await templates.add(tmpl)
+    const templates = new Templates(__dirname)
+    for (let widget of widgets) {
+      await templates.add(widgetTemplate(widget))
     }
-    await templates.add('twitch/redirect_uri.spy')
+    await templates.add('templates/twitch_redirect_uri.html')
 
     app.get('/pub/:id', (req, res, next) => {
       const row = this.db.get('pub', {
@@ -480,7 +487,7 @@ class WebServer {
     // twitch calls this url after auth
     // from here we render a js that reads the token and shows it to the user
     app.get('/twitch/redirect_uri', async (req, res) => {
-      res.send(templates.render('twitch/redirect_uri.spy', {}))
+      res.send(templates.render('templates/twitch_redirect_uri.html', {}))
     })
     app.post('/api/twitch/user-id-by-name', requireLoginApi, express.json(), async (req: any, res) => {
       let clientId
@@ -587,14 +594,12 @@ class WebServer {
       }
       const type = req.params.widget_type
       log.debug(`/widget/:widget_type/:widget_token/`, type, token)
-      for (const m of this.moduleManager.all(user.id)) {
-        const map = m.widgets()
-        if (map && map[type]) {
-          const tmpl = widgetTmplMap[type] || 'widget.spy'
-          const widgetData = await map[type](req, res, next)
-          res.send(templates.render(tmpl, widgetData))
-          return
-        }
+      if (widgets.includes(type)) {
+        res.send(templates.render(widgetTemplate(type), {
+          wsUrl: this.wss.connectstring(),
+          widgetToken: token,
+        }))
+        return
       }
       res.status(404).send()
     })

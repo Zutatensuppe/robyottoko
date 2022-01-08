@@ -152,22 +152,6 @@ class AvatarModule {
 
   widgets() {
     return {
-      'avatar': (req: any, res: any, next: Function) => {
-        return {
-          title: 'Avatar Widget (control)',
-          page: 'avatar',
-          wsUrl: `${this.wss.connectstring()}/${this.name}`,
-          widgetToken: req.params.widget_token,
-        }
-      },
-      'avatar_receive': (req: any, res: any, next: Function) => {
-        return {
-          title: 'Avatar Widget (receive)',
-          page: 'avatar_receive',
-          wsUrl: `${this.wss.connectstring()}/${this.name}`,
-          widgetToken: req.params.widget_token,
-        }
-      },
     }
   }
 

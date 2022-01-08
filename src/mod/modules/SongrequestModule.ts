@@ -269,14 +269,6 @@ class SongrequestModule {
 
   widgets() {
     return {
-      'sr': (req: any, res: any, next: Function) => {
-        return {
-          title: 'Song Request Widget',
-          page: 'sr',
-          wsUrl: this.wss.connectstring(),
-          widgetToken: req.params.widget_token,
-        }
-      },
     }
   }
 

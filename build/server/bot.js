@@ -972,13 +972,21 @@ class Variables {
 const __filename$2 = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename$2);
 const log$6 = fn.logger(__filename$2);
-const widgetTmplMap = {
-    drawcast_draw: '../../public/static/widgets/drawcast_draw/index.html',
-    drawcast_receive: '../../public/static/widgets/drawcast_receive/index.html',
-    sr: '../../public/static/widgets/sr/index.html',
-    media: '../../public/static/widgets/media/index.html',
-    'speech-to-text': '../../public/static/widgets/speech-to-text/index.html',
+const widgetTemplate = (widget) => {
+    if (process.env.WIDGET_DUMMY) {
+        return process.env.WIDGET_DUMMY;
+    }
+    return '../public/static/widgets/' + widget + '/index.html';
 };
+const widgets = [
+    'drawcast_draw',
+    'drawcast_receive',
+    'sr',
+    'media',
+    'speech-to-text',
+    'avatar',
+    'avatar_receive',
+];
 class WebServer {
     constructor(eventHub, db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, configHttp, configTwitch, wss, auth) {
         this.eventHub = eventHub;
@@ -1017,12 +1025,11 @@ class WebServer {
         const port = this.port;
         const hostname = this.hostname;
         const app = express();
-        const templates = new Templates(path.join(__dirname, 'templates'));
-        await templates.add('widget.spy');
-        for (let tmpl of Object.values(widgetTmplMap)) {
-            await templates.add(tmpl);
+        const templates = new Templates(__dirname);
+        for (let widget of widgets) {
+            await templates.add(widgetTemplate(widget));
         }
-        await templates.add('twitch/redirect_uri.spy');
+        await templates.add('templates/twitch_redirect_uri.html');
         app.get('/pub/:id', (req, res, next) => {
             const row = this.db.get('pub', {
                 id: req.params.id,
@@ -1360,7 +1367,7 @@ class WebServer {
         // twitch calls this url after auth
         // from here we render a js that reads the token and shows it to the user
         app.get('/twitch/redirect_uri', async (req, res) => {
-            res.send(templates.render('twitch/redirect_uri.spy', {}));
+            res.send(templates.render('templates/twitch_redirect_uri.html', {}));
         });
         app.post('/api/twitch/user-id-by-name', requireLoginApi, express.json(), async (req, res) => {
             let clientId;
@@ -1454,14 +1461,12 @@ class WebServer {
             }
             const type = req.params.widget_type;
             log$6.debug(`/widget/:widget_type/:widget_token/`, type, token);
-            for (const m of this.moduleManager.all(user.id)) {
-                const map = m.widgets();
-                if (map && map[type]) {
-                    const tmpl = widgetTmplMap[type] || 'widget.spy';
-                    const widgetData = await map[type](req, res, next);
-                    res.send(templates.render(tmpl, widgetData));
-                    return;
-                }
+            if (widgets.includes(type)) {
+                res.send(templates.render(widgetTemplate(type), {
+                    wsUrl: this.wss.connectstring(),
+                    widgetToken: token,
+                }));
+                return;
             }
             res.status(404).send();
         });
@@ -3119,16 +3124,7 @@ class GeneralModule {
         return { data, commands, timers };
     }
     widgets() {
-        return {
-            'media': (req, res, next) => {
-                return {
-                    title: 'Media Widget',
-                    page: 'media',
-                    wsUrl: this.wss.connectstring(),
-                    widgetToken: req.params.widget_token,
-                };
-            },
-        };
+        return {};
     }
     getRoutes() {
         return {};
@@ -3441,16 +3437,7 @@ class SongrequestModule {
         // pass
     }
     widgets() {
-        return {
-            'sr': (req, res, next) => {
-                return {
-                    title: 'Song Request Widget',
-                    page: 'sr',
-                    wsUrl: this.wss.connectstring(),
-                    widgetToken: req.params.widget_token,
-                };
-            },
-        };
+        return {};
     }
     getRoutes() {
         return {
@@ -4481,16 +4468,7 @@ class SpeechToTextModule {
         // pass
     }
     widgets() {
-        return {
-            'speech-to-text': (req, res, next) => {
-                return {
-                    title: 'Speech to Text Widget',
-                    page: 'speech-to-text',
-                    wsUrl: this.wss.connectstring(),
-                    widgetToken: req.params.widget_token,
-                };
-            },
-        };
+        return {};
     }
     getRoutes() {
         return {};
@@ -4636,24 +4614,7 @@ class DrawcastModule {
         };
     }
     widgets() {
-        return {
-            'drawcast_receive': (req, res, next) => {
-                return {
-                    title: 'Drawcast Widget',
-                    page: 'drawcast_receive',
-                    wsUrl: this.wss.connectstring(),
-                    widgetToken: req.params.widget_token,
-                };
-            },
-            'drawcast_draw': (req, res, next) => {
-                return {
-                    title: 'Drawcast Widget',
-                    page: 'drawcast_draw',
-                    wsUrl: this.wss.connectstring(),
-                    widgetToken: req.params.widget_token,
-                };
-            },
-        };
+        return {};
     }
     getRoutes() {
         return {
@@ -4772,24 +4733,7 @@ class AvatarModule {
         };
     }
     widgets() {
-        return {
-            'avatar': (req, res, next) => {
-                return {
-                    title: 'Avatar Widget (control)',
-                    page: 'avatar',
-                    wsUrl: `${this.wss.connectstring()}/${this.name}`,
-                    widgetToken: req.params.widget_token,
-                };
-            },
-            'avatar_receive': (req, res, next) => {
-                return {
-                    title: 'Avatar Widget (receive)',
-                    page: 'avatar_receive',
-                    wsUrl: `${this.wss.connectstring()}/${this.name}`,
-                    widgetToken: req.params.widget_token,
-                };
-            },
-        };
+        return {};
     }
     getRoutes() {
         return {};
