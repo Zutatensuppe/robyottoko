@@ -632,12 +632,9 @@ import {
   SpeechToTextSaveEventData,
   SpeechToTextWsInitData,
 } from "../../mod/modules/SpeechToTextModule";
-import user from "../user";
-import conf from "../conf";
+import util from "../util";
 
 interface ComponentData {
-  $me: any;
-  $conf: any;
   unchangedJson: string;
   changedJson: string;
   settings: SpeechToTextModuleSettings | null;
@@ -646,13 +643,7 @@ interface ComponentData {
 }
 
 export default defineComponent({
-  created() {
-    this.$me = user.getMe();
-    this.$conf = conf.getConf();
-  },
   data: (): ComponentData => ({
-    $me: null,
-    $conf: null,
     unchangedJson: "{}",
     changedJson: "{}",
     settings: null,
@@ -672,7 +663,7 @@ export default defineComponent({
       return this.unchangedJson !== this.changedJson;
     },
     widgetUrl(): string {
-      return `${location.protocol}//${location.host}/widget/speech-to-text/${this.$me.widgetToken}/`;
+      return util.widgetUrl("speech-to-text");
     },
   },
   methods: {
@@ -692,11 +683,7 @@ export default defineComponent({
     },
   },
   async mounted() {
-    this.ws = new WsClient(
-      this.$conf.wsBase + "/speech-to-text",
-      this.$me.token
-    );
-
+    this.ws = util.wsClient("speech-to-text");
     this.ws.onMessage("init", (data: SpeechToTextWsInitData) => {
       this.settings = data.settings;
       this.defaultSettings = data.defaultSettings;

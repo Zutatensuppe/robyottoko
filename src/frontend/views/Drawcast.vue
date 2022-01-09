@@ -314,14 +314,11 @@
 import { defineComponent } from "vue";
 import { DrawcastSaveEventData } from "../../mod/modules/DrawcastModule";
 import { DrawcastData, DrawcastSettings, UploadedFile } from "../../types";
-import user from "../user";
-import conf from "../conf";
+import util from "../util";
 import WsClient from "../WsClient";
 import xhr from "../xhr";
 
 interface ComponentData {
-  $me: any;
-  $conf: any;
   unchangedJson: string;
   changedJson: string;
   settings: DrawcastSettings | null;
@@ -340,8 +337,6 @@ interface ComponentData {
 
 export default defineComponent({
   data: (): ComponentData => ({
-    $me: null,
-    $conf: null,
     unchangedJson: "{}",
     changedJson: "{}",
     settings: null,
@@ -358,9 +353,7 @@ export default defineComponent({
     },
   }),
   async created() {
-    this.$me = user.getMe();
-    this.$conf = conf.getConf();
-    this.ws = new WsClient(this.$conf.wsBase + "/drawcast", this.$me.token);
+    this.ws = util.wsClient("drawcast");
     this.ws.onMessage("init", async (data: DrawcastData) => {
       this.settings = data.settings;
       this.defaultSettings = data.defaultSettings;
@@ -385,7 +378,7 @@ export default defineComponent({
       return this.unchangedJson !== this.changedJson;
     },
     receiveUrl(): string {
-      return `${location.protocol}//${location.host}/widget/drawcast_receive/${this.$me.widgetToken}/`;
+      return util.widgetUrl("drawcast_receive");
     },
     favoriteSelectionTotalPages() {
       return (

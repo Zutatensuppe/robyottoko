@@ -15,16 +15,12 @@
       <div class="tabs">
         <ul>
           <li
-            :class="{ 'is-active': tab === 'avatars' }"
-            @click="tab = 'avatars'"
+            v-for="(def, idx) in tabDefinitions"
+            :key="idx"
+            :class="{ 'is-active': tab === def.tab }"
+            @click="tab = def.tab"
           >
-            <a>Avatars</a>
-          </li>
-          <li
-            :class="{ 'is-active': tab === 'settings' }"
-            @click="tab = 'settings'"
-          >
-            <a>Settings</a>
+            <a>{{ def.title }}</a>
           </li>
         </ul>
       </div>
@@ -132,9 +128,13 @@ import {
   AvatarModuleWsInitData,
   AvatarModuleWsSaveData,
 } from "../../mod/modules/AvatarModule";
-import conf from "../conf";
-import user from "../user";
+import util from "../util";
 import WsClient from "../WsClient";
+
+interface TabDefinition {
+  tab: string;
+  title: string;
+}
 
 interface ComponentData {
   editIdx: number;
@@ -146,10 +146,8 @@ interface ComponentData {
   defaultSettings: AvatarModuleSettings | null;
   ws: WsClient | null;
 
+  tabDefinitions: TabDefinition[];
   tab: "settings" | "avatars";
-
-  $me: any;
-  $conf: any;
 }
 
 export default defineComponent({
@@ -163,10 +161,11 @@ export default defineComponent({
     defaultSettings: null,
     ws: null,
 
+    tabDefinitions: [
+      { tab: "avatars", title: "Avatars" },
+      { tab: "settings", title: "Settings" },
+    ],
     tab: "avatars",
-
-    $me: null,
-    $conf: null,
   }),
   watch: {
     settings: {
@@ -181,10 +180,10 @@ export default defineComponent({
       return this.unchangedJson !== this.changedJson;
     },
     controlWidgetUrl(): string {
-      return `${location.protocol}//${location.host}/widget/avatar/${this.$me.widgetToken}/`;
+      return util.widgetUrl("avatar");
     },
     displayWidgetUrl(): string {
-      return `${location.protocol}//${location.host}/widget/avatar_receive/${this.$me.widgetToken}/`;
+      return util.widgetUrl("avatar_receive");
     },
   },
   methods: {
@@ -270,13 +269,8 @@ export default defineComponent({
       this.sendSave();
     },
   },
-  created() {
-    this.$me = user.getMe();
-    this.$conf = conf.getConf();
-  },
   async mounted() {
-    this.ws = new WsClient(this.$conf.wsBase + "/avatar", this.$me.token);
-
+    this.ws = util.wsClient("avatar");
     this.ws.onMessage("init", (data: AvatarModuleWsInitData) => {
       this.settings = data.settings;
       this.defaultSettings = data.defaultSettings;

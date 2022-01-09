@@ -63,8 +63,7 @@ import {
   GeneralSaveEventData,
 } from "../../mod/modules/GeneralModule";
 import { Command, CommandAction, GlobalVariable } from "../../types";
-import user from "../user";
-import conf from "../conf";
+import util from "../util";
 
 interface TabDefinition {
   tab: string;
@@ -72,27 +71,19 @@ interface TabDefinition {
 }
 
 interface ComponentData {
-  $me: any;
-  $conf: any;
   commands: Command[];
   settings: GeneralModuleSettings;
   adminSettings: GeneralModuleAdminSettings;
   globalVariables: GlobalVariable[];
   ws: WsClient | null;
   inited: boolean;
-  tabDefinitions: TabDefinition[];
   possibleActions: CommandAction[];
+  tabDefinitions: TabDefinition[];
   tab: "commands" | "settings";
 }
 
 export default defineComponent({
-  created() {
-    this.$me = user.getMe();
-    this.$conf = conf.getConf();
-  },
   data: (): ComponentData => ({
-    $me: null,
-    $conf: null,
     commands: [],
     settings: {
       volume: 100,
@@ -127,7 +118,7 @@ export default defineComponent({
       return this.settings.volume;
     },
     widgetUrl(): string {
-      return `${location.protocol}//${location.host}/widget/media/${this.$me.widgetToken}/`;
+      return util.widgetUrl("media");
     },
   },
   methods: {
@@ -152,7 +143,7 @@ export default defineComponent({
     },
   },
   async mounted() {
-    this.ws = new WsClient(this.$conf.wsBase + "/general", this.$me.token);
+    this.ws = util.wsClient("general");
     this.ws.onMessage("init", (data: GeneralModuleWsEventData) => {
       this.commands = data.commands;
       this.settings = data.settings;

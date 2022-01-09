@@ -152,9 +152,8 @@ import {
   SongrequestModuleSettings,
   SongrequestModuleWsEventData,
 } from "../../mod/modules/SongrequestModule";
-import user from "../user";
-import conf from "../conf";
 import { useToast } from "vue-toastification";
+import util from "../util";
 
 type TagInfo = { value: string; count: number };
 
@@ -170,8 +169,6 @@ interface TabDefinition {
 }
 
 interface ComponentData {
-  $me: any;
-  $conf: any;
   playerVisible: boolean;
   playlist: PlaylistItem[];
   commands: Command[];
@@ -205,8 +202,6 @@ interface Player {
 
 export default defineComponent({
   data: (): ComponentData => ({
-    $me: null,
-    $conf: null,
     playerVisible: false,
     playlist: [],
     commands: [],
@@ -363,7 +358,7 @@ export default defineComponent({
       return `${location.protocol}//${location.host}/api/sr/export`;
     },
     widgetUrl(): string {
-      return `${location.protocol}//${location.host}/widget/sr/${this.$me.widgetToken}/`;
+      return util.widgetUrl("sr");
     },
   },
   methods: {
@@ -460,13 +455,9 @@ export default defineComponent({
       this.sendCtrl("updatetag", [oldTag, newTag]);
     },
   },
-  created() {
-    this.$me = user.getMe();
-    this.$conf = conf.getConf();
-  },
   async mounted() {
     this.$nextTick(() => {
-      this.ws = new WsClient(this.$conf.wsBase + "/sr", this.$me.token);
+      this.ws = util.wsClient("sr");
       this.ws.onMessage("save", (data: SongrequestModuleWsEventData) => {
         this.settings = data.settings;
         this.commands = data.commands;
