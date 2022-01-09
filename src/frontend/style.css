@@ -131,3 +131,6 @@ body {
 }
 
 input[type="color"] { min-width: 100px; }
+
+
+.number-input { width: 100px; display: inline-block; }

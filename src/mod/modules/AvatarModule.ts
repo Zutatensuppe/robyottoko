@@ -46,6 +46,8 @@ export interface AvatarModuleAvatarStateDefinition {
 
 export interface AvatarModuleAvatarDefinition {
   name: string
+  width: int
+  height: int
   stateDefinitions: AvatarModuleAvatarStateDefinition[]
   slotDefinitions: AvatarModuleAvatarSlotDefinition[]
 }
@@ -133,6 +135,13 @@ class AvatarModule {
 
     // -start- fixes to old data structure
     for (let avatarDef of data.settings.avatarDefinitions) {
+      if (typeof avatarDef.width === 'undefined') {
+        avatarDef.width = 64
+      }
+      if (typeof avatarDef.height === 'undefined') {
+        avatarDef.height = 64
+      }
+      console.log('avatar', avatarDef.width, avatarDef.height)
       for (let slotDef of avatarDef.slotDefinitions) {
         for (let item of slotDef.items) {
           // delete item.url
@@ -143,7 +152,6 @@ class AvatarModule {
       }
     }
     // -end-   fixes to old data structure
-
 
     return {
       settings: data.settings

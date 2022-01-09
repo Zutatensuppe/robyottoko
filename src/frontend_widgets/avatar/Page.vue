@@ -1,12 +1,18 @@
 <template>
   <div class="base" v-if="initialized">
-    <div class="avatar">
+    <div
+      class="avatar"
+      :style="{
+        width: `${tuberDef.width}px`,
+        height: `${tuberDef.height}px`,
+      }"
+    >
       <avatar-animation
         v-for="(anim, idx) in animations"
         :key="idx"
         :frames="anim.frames"
-        :width="256"
-        :height="256"
+        :width="tuberDef.width"
+        :height="tuberDef.height"
       />
     </div>
 
@@ -21,6 +27,7 @@
           <button
             @click="setSlot(def.slot, idx2)"
             v-for="(item, idx2) in def.items"
+            :key="idx2"
           >
             {{ item.title }}
           </button>
@@ -43,7 +50,8 @@
         <td>
           <button
             @click="setTuber(avatarDef)"
-            v-for="avatarDef in settings.avatarDefinitions"
+            v-for="(avatarDef, idx) in settings.avatarDefinitions"
+            :key="idx"
           >
             {{ avatarDef.name }}
           </button>

@@ -20,6 +20,25 @@
                   <td><input class="input is-small" v-model="item.name" /></td>
                 </tr>
                 <tr>
+                  <td>Dimensions:</td>
+                  <td>
+                    <input
+                      class="input is-small number-input"
+                      v-model="item.width"
+                    />✖<input
+                      class="input is-small number-input"
+                      v-model="item.height"
+                    />
+                    Pixels
+                    <span
+                      v-if="allImages.length"
+                      class="button is-small"
+                      @click="autoDetectDimensions"
+                      >Auto-detect</span
+                    >
+                  </td>
+                </tr>
+                <tr>
                   <td>States:</td>
                   <td>
                     <span
@@ -173,6 +192,20 @@ export default defineComponent({
     },
   },
   methods: {
+    autoDetectDimensions() {
+      if (this.allImages.length === 0) {
+        return;
+      }
+      const img = new Image();
+      img.onload = () => {
+        if (!this.item) {
+          return;
+        }
+        this.item.width = img.width;
+        this.item.height = img.height;
+      };
+      img.src = this.allImages[0];
+    },
     adjustAllImagesDivSize() {
       this.$nextTick(() => {
         if (!this.$refs.cardBody || !this.$refs.allImagesDiv) {
@@ -188,27 +221,24 @@ export default defineComponent({
         $evt.target.getAttribute("data-src")
       );
     },
-    onSaveClick() {
+    emitUpdate() {
       if (!this.item) {
-        console.warn("onSaveClick: this.item not initialized");
+        console.warn("emitUpdate: this.item not initialized");
         return;
       }
       this.$emit("update:modelValue", {
         name: this.item.name,
+        width: parseInt(`${this.item.width}`, 10),
+        height: parseInt(`${this.item.height}`, 10),
         stateDefinitions: this.item.stateDefinitions,
         slotDefinitions: this.item.slotDefinitions,
       });
     },
+    onSaveClick() {
+      this.emitUpdate();
+    },
     onSaveAndCloseClick() {
-      if (!this.item) {
-        console.warn("onSaveClick: this.item not initialized");
-        return;
-      }
-      this.$emit("update:modelValue", {
-        name: this.item.name,
-        stateDefinitions: this.item.stateDefinitions,
-        slotDefinitions: this.item.slotDefinitions,
-      });
+      this.emitUpdate();
       this.$emit("cancel");
     },
     onCancelClick() {

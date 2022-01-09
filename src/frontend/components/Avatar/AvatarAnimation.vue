@@ -1,5 +1,11 @@
 <template>
-  <span class="avatar-animation">
+  <span
+    class="avatar-animation"
+    :style="{
+      width: `${width}px`,
+      height: `${width}px`,
+    }"
+  >
     <img v-if="src" :src="src" :width="width" :height="height" />
     <span
       v-else

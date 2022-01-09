@@ -231,6 +231,8 @@ export default defineComponent({
       }
       const avatar: AvatarModuleAvatarDefinition = {
         name: "Unnamed Avatar",
+        width: 64,
+        height: 64,
         stateDefinitions: [
           { value: "default", deletable: false },
           { value: "speaking", deletable: false },
