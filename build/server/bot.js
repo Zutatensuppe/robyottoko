@@ -1595,11 +1595,10 @@ class TwitchPubSubClient {
         };
         this.handle.onmessage = (e) => {
             const message = JSON.parse(`${e.data}`);
-            if (!message.nonce) {
-                return;
+            if (message.nonce) {
+                message.sentData = this.nonceMessages[message.nonce];
+                delete this.nonceMessages[message.nonce];
             }
-            message.sentData = this.nonceMessages[message.nonce];
-            delete this.nonceMessages[message.nonce];
             // log.debug('RECV', JSON.stringify(message))
             if (message.type === 'RECONNECT') {
                 log$5.info('INFO', 'Reconnecting...');
