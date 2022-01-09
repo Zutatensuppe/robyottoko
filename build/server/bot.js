@@ -4724,7 +4724,6 @@ class AvatarModule {
             if (typeof avatarDef.height === 'undefined') {
                 avatarDef.height = 64;
             }
-            console.log('avatar', avatarDef.width, avatarDef.height);
             for (let slotDef of avatarDef.slotDefinitions) {
                 for (let item of slotDef.items) {
                     // delete item.url
