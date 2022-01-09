@@ -62,7 +62,7 @@ const webServer = new WebServer(
 )
 
 const run = async () => {
-  const initForUser = (user: User) => {
+  const initForUser = async (user: User) => {
     const clientManager = new TwitchClientManager(
       eventHub,
       config.twitch,
@@ -71,6 +71,7 @@ const run = async () => {
       twitchChannelRepo,
       moduleManager,
     )
+    await clientManager.init('init')
     const variables = new Variables(db, user.id)
     const moduleStorage = new ModuleStorage(db, user.id)
     for (const moduleClass of modules) {
@@ -93,11 +94,11 @@ const run = async () => {
 
   // one for each user
   for (const user of userRepo.all()) {
-    initForUser(user)
+    await initForUser(user)
   }
 
-  eventHub.on('user_registration_complete', (user: User) => {
-    initForUser(user)
+  eventHub.on('user_registration_complete', async (user: User) => {
+    await initForUser(user)
   })
 }
 

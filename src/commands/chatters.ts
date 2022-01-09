@@ -1,7 +1,9 @@
 import Db from '../Db'
 import TwitchHelixClient from '../services/TwitchHelixClient'
 import { CommandFunction, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
-import fn from './../fn'
+import fn, { logger } from './../fn'
+
+const log = logger('chatters.ts')
 
 const chatters = (
   db: Db,
@@ -14,6 +16,10 @@ const chatters = (
   msg: string | null,
   ) => {
     if (!client || !context || !helixClient) {
+      log.info('client', client)
+      log.info('context', context)
+      log.info('helixClient', helixClient)
+      log.info('unable to execute chattes command, client, context or helixClient missing')
       return
     }
 

@@ -51,12 +51,10 @@ class TwitchClientManager {
     this.twitchChannelRepo = twitchChannelRepo
     this.moduleManager = moduleManager
 
-    this.init('init')
-
-    eventHub.on('user_changed', (changedUser: User) => {
+    eventHub.on('user_changed', async (changedUser: User) => {
       if (changedUser.id === user.id) {
         this.user = changedUser
-        this.init('user_change')
+        await this.init('user_change')
       }
     })
   }
