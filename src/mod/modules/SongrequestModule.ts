@@ -312,6 +312,7 @@ class SongrequestModule {
         item.tags = item.tags || []
         return item
       }),
+      commands: this.data.commands,
       settings: this.data.settings,
       stacks: this.data.stacks,
     })
@@ -370,8 +371,7 @@ class SongrequestModule {
       'save': (ws: Socket, data: { commands: any[], settings: any }) => {
         this.data.commands = data.commands
         this.data.settings = data.settings
-
-        this.storage.save(this.name, this.data)
+        this.save()
         const initData = this.reinit()
         this.data = initData.data
         this.commands = initData.commands
