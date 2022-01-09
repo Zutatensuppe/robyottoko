@@ -57,6 +57,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import api from "../api";
 
 export default defineComponent({
   data: () => ({
@@ -88,15 +89,8 @@ export default defineComponent({
       this.changedJson = this.unchangedJson;
     },
     async sendSave() {
-      await fetch("/save-variables", {
-        method: "post",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          variables: this.variables,
-        }),
+      await api.saveVariables({
+        variables: this.variables,
       });
       this.setUnchanged();
     },
@@ -110,7 +104,7 @@ export default defineComponent({
     },
   },
   async mounted() {
-    const res = await fetch("/api/page/variables");
+    const res = await api.getPageVariablesData();
     if (res.status !== 200) {
       this.$router.push({ name: "login" });
       return;

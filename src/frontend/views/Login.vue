@@ -60,6 +60,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
+import api from "../api";
 import user from "../user";
 
 export default defineComponent({
@@ -76,14 +77,7 @@ export default defineComponent({
     if (token) {
       this.success = "";
       this.error = "";
-      const res = await fetch("/api/_handle-token", {
-        method: "post",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ token: token }),
-      });
+      const res = await api.handleToken({ token });
       if (res.status === 200) {
         const json = await res.json();
         if (json.type === "registration-verified") {

@@ -25,13 +25,14 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
+import api from "../api";
 
 export default defineComponent({
   data: () => ({
     widgets: null,
   }),
   async created() {
-    const res = await fetch("/api/page/index");
+    const res = await api.getPageIndexData();
     if (res.status !== 200) {
       this.$router.push({ name: "login" });
       return;

@@ -190,6 +190,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { TwitchChannel } from "../../services/TwitchChannels";
+import api from "../api";
 
 interface ComponentData {
   unchangedJson: string;
@@ -306,14 +307,7 @@ export default defineComponent({
         client_id: this.user.tmi_identity_client_id || null,
         client_secret: this.user.tmi_identity_client_secret || null,
       };
-      const res = await fetch("/api/twitch/user-id-by-name", {
-        method: "post",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+      const res = await api.twitchUserIdByName(data);
       try {
         const json = await res.json();
         return `${json.id}`;
@@ -323,16 +317,9 @@ export default defineComponent({
       }
     },
     async sendSave() {
-      await fetch("/api/save-settings", {
-        method: "post",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          user: this.user,
-          twitch_channels: this.twitch_channels,
-        }),
+      await api.saveUserSettings({
+        user: this.user,
+        twitch_channels: this.twitch_channels,
       });
       this.setUnchanged();
     },
@@ -352,7 +339,7 @@ export default defineComponent({
     },
   },
   async mounted() {
-    const res = await fetch("/api/page/settings");
+    const res = await api.getPageSettingsData();
     if (res.status !== 200) {
       this.$router.push({ name: "login" });
       return;

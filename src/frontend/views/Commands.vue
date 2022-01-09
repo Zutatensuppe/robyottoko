@@ -135,11 +135,11 @@ export default defineComponent({
       });
     },
     sendMsg(data: GeneralSaveEventData) {
-      if (this.ws) {
-        this.ws.send(JSON.stringify(data));
-      } else {
+      if (!this.ws) {
         console.warn("sendMsg: this.ws not initialized");
+        return;
       }
+      this.ws.send(JSON.stringify(data));
     },
   },
   async mounted() {

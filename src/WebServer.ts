@@ -410,7 +410,7 @@ class WebServer {
       res.send({ variables: variables.all() })
     })
 
-    app.post('/save-variables', requireLoginApi, express.json(), async (req: any, res) => {
+    app.post('/api/save-variables', requireLoginApi, express.json(), async (req: any, res) => {
       const variables = new Variables(this.db, req.user.id)
       variables.replace(req.body.variables || [])
       res.send()

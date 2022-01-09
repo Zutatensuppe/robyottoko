@@ -46,6 +46,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
+import api from "../api";
 
 export default defineComponent({
   data: () => ({
@@ -65,14 +66,7 @@ export default defineComponent({
 
       this.success = false;
       this.error = "";
-      const res = await fetch("/api/user/_reset_password", {
-        method: "post",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ pass: this.pass, token }),
-      });
+      const res = await api.resetPassword({ pass: this.pass, token });
       if (res.status === 200) {
         this.success = true;
       } else {
