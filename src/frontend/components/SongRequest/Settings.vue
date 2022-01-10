@@ -358,6 +358,20 @@ body { font-family: 'Shadows into Light'; font-size: 30px; }`,
 .meta-left .meta-plays { display: none; }
 .meta-right .meta-plays { display: inline-block; }`,
         },
+        {
+          desc: "Show the progress bar only, and no video (progress bar above list)",
+          code: `
+.player { height: 5px; padding-bottom: 0; }
+.progress { height: 5px; }`,
+        },
+        {
+          desc: "Show the progress bar only, and no video (progress bar below list)",
+          code: `
+.wrapper { display: grid; grid-template-areas: "list" "player"; }
+.player { height: 5px; padding-bottom: 0; grid-area: player }
+.list { grid-area: list }
+.progress { height: 5px; }`,
+        },
       ],
     },
   }),
@@ -365,11 +379,18 @@ body { font-family: 'Shadows into Light'; font-size: 30px; }`,
 </script>
 
 <style scoped>
-pre {
-  padding: 0.5em 1em;
-}
 .textarea:not([rows]) {
   min-width: 500px;
   min-height: 800px;
+}
+pre {
+  padding: 0.5em 1em;
+  max-width: 30vw;
+  overflow: scroll;
+}
+pre code {
+  max-width: none;
+  overflow: auto;
+  text-overflow: initial;
 }
 </style>
