@@ -150,6 +150,66 @@ export const parseCommandFromCmdAndMessage = (
   return null
 }
 
+const applyVariableChanges = async (
+  cmdDef: FunctionCommand,
+  contextModule: Module,
+  rawCmd: RawCommand | null,
+  context: TwitchChatContext | null,
+) => {
+  if (!cmdDef.variableChanges) {
+    return
+  }
+  for (const variableChange of cmdDef.variableChanges) {
+    const op = variableChange.change
+    const name = await doReplacements(variableChange.name, rawCmd, context, contextModule.variables, cmdDef)
+    const value = await doReplacements(variableChange.value, rawCmd, context, contextModule.variables, cmdDef)
+
+    // check if there is a local variable for the change
+    if (cmdDef.variables) {
+      const idx = cmdDef.variables.findIndex(v => (v.name === name))
+      if (idx !== -1) {
+        if (op === 'set') {
+          cmdDef.variables[idx].value = value
+        } else if (op === 'increase_by') {
+          cmdDef.variables[idx].value = (
+            parseInt(cmdDef.variables[idx].value, 10)
+            + parseInt(value, 10)
+          )
+        } else if (op === 'decrease_by') {
+          cmdDef.variables[idx].value = (
+            parseInt(cmdDef.variables[idx].value, 10)
+            - parseInt(value, 10)
+          )
+        }
+        console.log(cmdDef.variables[idx].value)
+        //
+        continue
+      }
+    }
+
+    const globalVars: GlobalVariable[] = contextModule.variables.all()
+    const idx = globalVars.findIndex(v => (v.name === name))
+    if (idx !== -1) {
+      if (op === 'set') {
+        contextModule.variables.set(name, value)
+      } else if (op === 'increase_by') {
+        contextModule.variables.set(name, (
+          parseInt(globalVars[idx].value, 10)
+          + parseInt(value, 10)
+        ))
+      } else if (op === 'decrease_by') {
+        contextModule.variables.set(name, (
+          parseInt(globalVars[idx].value, 10)
+          - parseInt(value, 10)
+        ))
+      }
+      //
+      continue
+    }
+  }
+  contextModule.saveCommands()
+}
+
 const tryExecuteCommand = async (
   contextModule: Module,
   rawCmd: RawCommand,
@@ -165,58 +225,8 @@ const tryExecuteCommand = async (
       continue
     }
     log.info(`${target}| * Executing ${rawCmd.name} command`)
-    if (cmdDef.variableChanges) {
-      for (const variableChange of cmdDef.variableChanges) {
-        const op = variableChange.change
-        const name = await doReplacements(variableChange.name, rawCmd, context, contextModule.variables, cmdDef)
-        const value = await doReplacements(variableChange.value, rawCmd, context, contextModule.variables, cmdDef)
-
-        // check if there is a local variable for the change
-        if (cmdDef.variables) {
-          const idx = cmdDef.variables.findIndex(v => (v.name === name))
-          if (idx !== -1) {
-            if (op === 'set') {
-              cmdDef.variables[idx].value = value
-            } else if (op === 'increase_by') {
-              cmdDef.variables[idx].value = (
-                parseInt(cmdDef.variables[idx].value, 10)
-                + parseInt(value, 10)
-              )
-            } else if (op === 'decrease_by') {
-              cmdDef.variables[idx].value = (
-                parseInt(cmdDef.variables[idx].value, 10)
-                - parseInt(value, 10)
-              )
-            }
-            console.log(cmdDef.variables[idx].value)
-            //
-            continue
-          }
-        }
-
-        const globalVars: GlobalVariable[] = contextModule.variables.all()
-        const idx = globalVars.findIndex(v => (v.name === name))
-        if (idx !== -1) {
-          if (op === 'set') {
-            contextModule.variables.set(name, value)
-          } else if (op === 'increase_by') {
-            contextModule.variables.set(name, (
-              parseInt(globalVars[idx].value, 10)
-              + parseInt(value, 10)
-            ))
-          } else if (op === 'decrease_by') {
-            contextModule.variables.set(name, (
-              parseInt(globalVars[idx].value, 10)
-              - parseInt(value, 10)
-            ))
-          }
-          //
-          continue
-        }
-      }
-      contextModule.saveCommands()
-    }
     const p = new Promise(async (resolve) => {
+      await applyVariableChanges(cmdDef, contextModule, rawCmd, context)
       const r = await cmdDef.fn(rawCmd, client, target, context, msg)
       if (r) {
         log.info(`${target}| * Returned: ${r}`)
@@ -551,6 +561,7 @@ export const findIdxBySearch = <T>(
 }
 
 export default {
+  applyVariableChanges,
   logger,
   mimeToExt,
   decodeBase64Image,

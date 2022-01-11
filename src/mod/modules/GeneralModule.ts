@@ -121,9 +121,16 @@ class GeneralModule {
 
     this.interval = setInterval(() => {
       const now = new Date().getTime()
-      this.timers.forEach(t => {
+      this.timers.forEach(async (t) => {
         if (t.lines >= t.minLines && now > t.next) {
-          t.command.fn(null, this.chatClient, null, null, null)
+          const cmdDef = t.command
+          const rawCmd = null
+          const clinet = this.chatClient
+          const target = null
+          const context = null
+          const msg = null
+          await fn.applyVariableChanges(cmdDef, this, rawCmd, context)
+          await cmdDef.fn(rawCmd, clinet, target, context, msg)
           t.lines = 0
           t.next = now + t.minInterval
         }

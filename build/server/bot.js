@@ -286,6 +286,54 @@ const parseCommandFromCmdAndMessage = (msg, command, commandExact) => {
     }
     return null;
 };
+const applyVariableChanges = async (cmdDef, contextModule, rawCmd, context) => {
+    if (!cmdDef.variableChanges) {
+        return;
+    }
+    for (const variableChange of cmdDef.variableChanges) {
+        const op = variableChange.change;
+        const name = await doReplacements(variableChange.name, rawCmd, context, contextModule.variables, cmdDef);
+        const value = await doReplacements(variableChange.value, rawCmd, context, contextModule.variables, cmdDef);
+        // check if there is a local variable for the change
+        if (cmdDef.variables) {
+            const idx = cmdDef.variables.findIndex(v => (v.name === name));
+            if (idx !== -1) {
+                if (op === 'set') {
+                    cmdDef.variables[idx].value = value;
+                }
+                else if (op === 'increase_by') {
+                    cmdDef.variables[idx].value = (parseInt(cmdDef.variables[idx].value, 10)
+                        + parseInt(value, 10));
+                }
+                else if (op === 'decrease_by') {
+                    cmdDef.variables[idx].value = (parseInt(cmdDef.variables[idx].value, 10)
+                        - parseInt(value, 10));
+                }
+                console.log(cmdDef.variables[idx].value);
+                //
+                continue;
+            }
+        }
+        const globalVars = contextModule.variables.all();
+        const idx = globalVars.findIndex(v => (v.name === name));
+        if (idx !== -1) {
+            if (op === 'set') {
+                contextModule.variables.set(name, value);
+            }
+            else if (op === 'increase_by') {
+                contextModule.variables.set(name, (parseInt(globalVars[idx].value, 10)
+                    + parseInt(value, 10)));
+            }
+            else if (op === 'decrease_by') {
+                contextModule.variables.set(name, (parseInt(globalVars[idx].value, 10)
+                    - parseInt(value, 10)));
+            }
+            //
+            continue;
+        }
+    }
+    contextModule.saveCommands();
+};
 const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, client, target, context, msg) => {
     const promises = [];
     for (const cmdDef of cmdDefs) {
@@ -293,52 +341,8 @@ const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, client, target,
             continue;
         }
         log$a.info(`${target}| * Executing ${rawCmd.name} command`);
-        if (cmdDef.variableChanges) {
-            for (const variableChange of cmdDef.variableChanges) {
-                const op = variableChange.change;
-                const name = await doReplacements(variableChange.name, rawCmd, context, contextModule.variables, cmdDef);
-                const value = await doReplacements(variableChange.value, rawCmd, context, contextModule.variables, cmdDef);
-                // check if there is a local variable for the change
-                if (cmdDef.variables) {
-                    const idx = cmdDef.variables.findIndex(v => (v.name === name));
-                    if (idx !== -1) {
-                        if (op === 'set') {
-                            cmdDef.variables[idx].value = value;
-                        }
-                        else if (op === 'increase_by') {
-                            cmdDef.variables[idx].value = (parseInt(cmdDef.variables[idx].value, 10)
-                                + parseInt(value, 10));
-                        }
-                        else if (op === 'decrease_by') {
-                            cmdDef.variables[idx].value = (parseInt(cmdDef.variables[idx].value, 10)
-                                - parseInt(value, 10));
-                        }
-                        console.log(cmdDef.variables[idx].value);
-                        //
-                        continue;
-                    }
-                }
-                const globalVars = contextModule.variables.all();
-                const idx = globalVars.findIndex(v => (v.name === name));
-                if (idx !== -1) {
-                    if (op === 'set') {
-                        contextModule.variables.set(name, value);
-                    }
-                    else if (op === 'increase_by') {
-                        contextModule.variables.set(name, (parseInt(globalVars[idx].value, 10)
-                            + parseInt(value, 10)));
-                    }
-                    else if (op === 'decrease_by') {
-                        contextModule.variables.set(name, (parseInt(globalVars[idx].value, 10)
-                            - parseInt(value, 10)));
-                    }
-                    //
-                    continue;
-                }
-            }
-            contextModule.saveCommands();
-        }
         const p = new Promise(async (resolve) => {
+            await applyVariableChanges(cmdDef, contextModule, rawCmd, context);
             const r = await cmdDef.fn(rawCmd, client, target, context, msg);
             if (r) {
                 log$a.info(`${target}| * Returned: ${r}`);
@@ -604,6 +608,7 @@ const findIdxBySearch = (array, search, keyFn = ((item) => String(item))) => {
     });
 };
 var fn = {
+    applyVariableChanges,
     logger,
     mimeToExt,
     decodeBase64Image,
@@ -3004,9 +3009,16 @@ class GeneralModule {
         }
         this.interval = setInterval(() => {
             const now = new Date().getTime();
-            this.timers.forEach(t => {
+            this.timers.forEach(async (t) => {
                 if (t.lines >= t.minLines && now > t.next) {
-                    t.command.fn(null, this.chatClient, null, null, null);
+                    const cmdDef = t.command;
+                    const rawCmd = null;
+                    const clinet = this.chatClient;
+                    const target = null;
+                    const context = null;
+                    const msg = null;
+                    await fn.applyVariableChanges(cmdDef, this, rawCmd, context);
+                    await cmdDef.fn(rawCmd, clinet, target, context, msg);
                     t.lines = 0;
                     t.next = now + t.minInterval;
                 }
