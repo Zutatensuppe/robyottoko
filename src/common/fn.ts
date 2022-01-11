@@ -129,7 +129,7 @@ const doDummyReplacements = (text: string, str: string) => {
       },
     },
     {
-      regex: /\$rand\((\d+),(\d+)\)/g,
+      regex: /\$rand\(\s*(\d+)?\s*,\s*?(\d+)?\s*\)/g,
       replacer: (m0: string, m1: string, m2: string) => {
         return str
       },

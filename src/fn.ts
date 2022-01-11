@@ -281,7 +281,7 @@ const doReplacements = async (
       },
     },
     {
-      regex: /\$rand\((\d+)?,?(\d+)?\)/g,
+      regex: /\$rand\(\s*(\d+)?\s*,\s*?(\d+)?\s*\)/g,
       replacer: async (m0: string, m1: string, m2: string) => {
         const min = typeof m1 === 'undefined' ? 1 : parseInt(m1, 10)
         const max = typeof m2 === 'undefined' ? 100 : parseInt(m2, 10)
