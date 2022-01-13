@@ -1,18 +1,14 @@
+import api from "./api";
+
 let me: any = null;
 
-const getJson = async (path: string) => {
-  const res = await fetch(path);
-  return res.status === 200 ? (await res.json()) : null
-}
-
 async function init() {
-  me = await getJson('/api/user/me')
+  const res = await api.getMe();
+  me = res.status === 200 ? (await res.json()) : null
 }
 
 async function logout() {
-  const res = await fetch("/api/logout", {
-    method: "POST",
-  });
+  const res = await api.logout();
   const data = await res.json();
   if (data.success) {
     me = null
@@ -23,14 +19,7 @@ async function logout() {
 }
 
 async function login(user: string, pass: string) {
-  const res = await fetch("/api/auth", {
-    method: "post",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ user, pass }),
-  });
+  const res = await api.login({ user, pass });
   if (res.status === 200) {
     await init()
     return { error: false }
