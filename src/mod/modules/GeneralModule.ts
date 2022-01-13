@@ -77,8 +77,7 @@ class GeneralModule {
 
   private db: Db
   private user: User
-  private chatClient: TwitchChatClient | null
-  private helixClient: TwitchHelixClient | null
+  private clientManager: TwitchClientManager
   private storage: ModuleStorage
   private wss: WebSocketServer
 
@@ -102,8 +101,7 @@ class GeneralModule {
     this.db = db
     this.user = user
     this.variables = variables
-    this.chatClient = clientManager.getChatClient()
-    this.helixClient = clientManager.getHelixClient()
+    this.clientManager = clientManager
     this.storage = storage
     this.wss = wss
     const initData = this.reinit()
@@ -113,10 +111,14 @@ class GeneralModule {
     this.inittimers()
   }
 
+  async userChanged(user: User) {
+    this.user = user
+  }
+
   inittimers() {
-    this.interval = null
     if (this.interval) {
       clearInterval(this.interval)
+      this.interval = null
     }
 
     this.interval = setInterval(() => {
@@ -125,12 +127,12 @@ class GeneralModule {
         if (t.lines >= t.minLines && now > t.next) {
           const cmdDef = t.command
           const rawCmd = null
-          const clinet = this.chatClient
+          const client = this.clientManager.getChatClient()
           const target = null
           const context = null
           const msg = null
           await fn.applyVariableChanges(cmdDef, this, rawCmd, context)
-          await cmdDef.fn(rawCmd, clinet, target, context, msg)
+          await cmdDef.fn(rawCmd, client, target, context, msg)
           t.lines = 0
           t.next = now + t.minInterval
         }
@@ -222,7 +224,7 @@ class GeneralModule {
           cmdObj = Object.assign({}, cmd, { fn: countdown(this.variables, this.wss, this.user.id, cmd) })
           break;
         case 'chatters':
-          cmdObj = Object.assign({}, cmd, { fn: chatters(this.db, this.helixClient) })
+          cmdObj = Object.assign({}, cmd, { fn: chatters(this.db, this.clientManager.getHelixClient()) })
           break;
       }
       if (!cmdObj) {

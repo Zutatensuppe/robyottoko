@@ -195,6 +195,10 @@ class SongrequestModule {
     this.commands = initData.commands
   }
 
+  async userChanged(user: User) {
+    this.user = user
+  }
+
   reinit(): SongerquestModuleInitData {
     const data = this.storage.load(this.name, {
       filter: {

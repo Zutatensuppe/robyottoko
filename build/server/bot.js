@@ -1985,7 +1985,7 @@ const getUniqueCommandsByTrigger = (commands, trigger) => {
 // @ts-ignore
 const __filename$1 = fileURLToPath(import.meta.url);
 class TwitchClientManager {
-    constructor(eventHub, cfg, db, user, twitchChannelRepo, moduleManager) {
+    constructor(cfg, db, user, twitchChannelRepo, moduleManager) {
         this.chatClient = null;
         this.helixClient = null;
         this.identity = null;
@@ -1998,12 +1998,10 @@ class TwitchClientManager {
         this.user = user;
         this.twitchChannelRepo = twitchChannelRepo;
         this.moduleManager = moduleManager;
-        eventHub.on('user_changed', async (changedUser) => {
-            if (changedUser.id === user.id) {
-                this.user = changedUser;
-                await this.init('user_change');
-            }
-        });
+    }
+    async userChanged(user) {
+        this.user = user;
+        await this.init('user_change');
     }
     _resetBadAuthTokens() {
         this.badAuthTokens = {};
@@ -2992,8 +2990,7 @@ class GeneralModule {
         this.db = db;
         this.user = user;
         this.variables = variables;
-        this.chatClient = clientManager.getChatClient();
-        this.helixClient = clientManager.getHelixClient();
+        this.clientManager = clientManager;
         this.storage = storage;
         this.wss = wss;
         const initData = this.reinit();
@@ -3002,10 +2999,13 @@ class GeneralModule {
         this.timers = initData.timers;
         this.inittimers();
     }
+    async userChanged(user) {
+        this.user = user;
+    }
     inittimers() {
-        this.interval = null;
         if (this.interval) {
             clearInterval(this.interval);
+            this.interval = null;
         }
         this.interval = setInterval(() => {
             const now = new Date().getTime();
@@ -3013,12 +3013,12 @@ class GeneralModule {
                 if (t.lines >= t.minLines && now > t.next) {
                     const cmdDef = t.command;
                     const rawCmd = null;
-                    const clinet = this.chatClient;
+                    const client = this.clientManager.getChatClient();
                     const target = null;
                     const context = null;
                     const msg = null;
                     await fn.applyVariableChanges(cmdDef, this, rawCmd, context);
-                    await cmdDef.fn(rawCmd, clinet, target, context, msg);
+                    await cmdDef.fn(rawCmd, client, target, context, msg);
                     t.lines = 0;
                     t.next = now + t.minInterval;
                 }
@@ -3103,7 +3103,7 @@ class GeneralModule {
                     cmdObj = Object.assign({}, cmd, { fn: countdown(this.variables, this.wss, this.user.id, cmd) });
                     break;
                 case 'chatters':
-                    cmdObj = Object.assign({}, cmd, { fn: chatters(this.db, this.helixClient) });
+                    cmdObj = Object.assign({}, cmd, { fn: chatters(this.db, this.clientManager.getHelixClient()) });
                     break;
             }
             if (!cmdObj) {
@@ -3383,6 +3383,9 @@ class SongrequestModule {
             stacks: initData.data.stacks,
         };
         this.commands = initData.commands;
+    }
+    async userChanged(user) {
+        this.user = user;
     }
     reinit() {
         const data = this.storage.load(this.name, {
@@ -4311,6 +4314,9 @@ class VoteModule {
         this.storage = storage;
         this.data = this.reinit();
     }
+    async userChanged(user) {
+        // pass
+    }
     reinit() {
         const data = this.storage.load(this.name, {
             votes: {},
@@ -4474,6 +4480,9 @@ class SpeechToTextModule {
         };
         this.data = this.reinit();
     }
+    async userChanged(user) {
+        this.user = user;
+    }
     reinit() {
         const data = this.storage.load(this.name, {
             settings: this.defaultSettings
@@ -4573,6 +4582,9 @@ class DrawcastModule {
         this.tokens = new Tokens(db);
         this.data = this.reinit();
         this.images = this.loadAllImages().slice(0, 20);
+    }
+    async userChanged(user) {
+        this.user = user;
     }
     loadAllImages() {
         try {
@@ -4719,6 +4731,9 @@ class AvatarModule {
         this.tokens = new Tokens(db);
         this.data = this.reinit();
     }
+    async userChanged(user) {
+        this.user = user;
+    }
     saveCommands() {
         // pass
     }
@@ -4819,14 +4834,24 @@ const moduleManager = new ModuleManager();
 const webSocketServer = new WebSocketServer(moduleManager, config.ws, auth);
 const webServer = new WebServer(eventHub, db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, config.http, config.twitch, webSocketServer, auth);
 const run = async () => {
+    // this function may only be called once per user!
+    // changes to user will be handled by user_changed event
     const initForUser = async (user) => {
-        const clientManager = new TwitchClientManager(eventHub, config.twitch, db, user, twitchChannelRepo, moduleManager);
+        const clientManager = new TwitchClientManager(config.twitch, db, user, twitchChannelRepo, moduleManager);
         await clientManager.init('init');
         const variables = new Variables(db, user.id);
         const moduleStorage = new ModuleStorage(db, user.id);
         for (const moduleClass of modules) {
             moduleManager.add(user.id, new moduleClass(db, user, twitchChannelRepo, variables, clientManager, moduleStorage, cache, webServer, webSocketServer));
         }
+        eventHub.on('user_changed', async (changedUser) => {
+            if (changedUser.id === user.id) {
+                await clientManager.userChanged(changedUser);
+                for (const mod of moduleManager.all(user.id)) {
+                    await mod.userChanged(changedUser);
+                }
+            }
+        });
     };
     webSocketServer.listen();
     await webServer.listen();

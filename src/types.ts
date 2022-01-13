@@ -2,6 +2,7 @@
 import { Client } from 'tmi.js'
 import { Socket } from './net/WebSocketServer'
 import { Token } from './services/Tokens'
+import { User } from './services/Users'
 import Variables from './services/Variables'
 
 type int = number
@@ -350,6 +351,7 @@ export interface TwitchChannelPointsRedemption {
 export interface Module {
   name: string
   variables: Variables
+  userChanged: (user: User) => Promise<void>
   saveCommands: () => void
   getWsEvents: () => Record<string, (ws: Socket, data?: any) => any>
   widgets: () => Record<string, (req: any, res: any, next: Function) => Record<string, string>>

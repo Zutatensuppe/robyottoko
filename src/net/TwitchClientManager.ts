@@ -4,7 +4,6 @@ import TwitchHelixClient from '../services/TwitchHelixClient'
 import fn from '../fn'
 import Db from '../Db'
 import TwitchChannels, { TwitchChannel, TwitchChannelWithAccessToken } from '../services/TwitchChannels'
-import EventHub from '../EventHub'
 import { fileURLToPath } from 'url'
 import { User } from '../services/Users'
 import ModuleManager from '../mod/ModuleManager'
@@ -38,7 +37,6 @@ class TwitchClientManager {
   private badAuthTokens: Record<string, string[]> = {}
 
   constructor(
-    eventHub: EventHub,
     cfg: TwitchConfig,
     db: Db,
     user: User,
@@ -50,13 +48,11 @@ class TwitchClientManager {
     this.user = user
     this.twitchChannelRepo = twitchChannelRepo
     this.moduleManager = moduleManager
+  }
 
-    eventHub.on('user_changed', async (changedUser: User) => {
-      if (changedUser.id === user.id) {
-        this.user = changedUser
-        await this.init('user_change')
-      }
-    })
+  async userChanged(user: User) {
+    this.user = user
+    await this.init('user_change')
   }
 
   _resetBadAuthTokens() {

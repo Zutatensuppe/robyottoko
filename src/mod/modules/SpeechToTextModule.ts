@@ -157,6 +157,10 @@ class SpeechToTextModule {
     this.data = this.reinit()
   }
 
+  async userChanged(user: User) {
+    this.user = user
+  }
+
   reinit() {
     const data = this.storage.load(this.name, {
       settings: this.defaultSettings

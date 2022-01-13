@@ -86,6 +86,10 @@ class DrawcastModule {
     this.images = this.loadAllImages().slice(0, 20)
   }
 
+  async userChanged(user: User) {
+    this.user = user
+  }
+
   loadAllImages() {
     try {
       // todo: probably better to store latest x images in db

@@ -37,6 +37,10 @@ class VoteModule {
     this.data = this.reinit()
   }
 
+  async userChanged(user: User) {
+    // pass
+  }
+
   reinit() {
     const data = this.storage.load(this.name, {
       votes: {},

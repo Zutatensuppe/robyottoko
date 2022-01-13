@@ -62,9 +62,10 @@ const webServer = new WebServer(
 )
 
 const run = async () => {
+  // this function may only be called once per user!
+  // changes to user will be handled by user_changed event
   const initForUser = async (user: User) => {
     const clientManager = new TwitchClientManager(
-      eventHub,
       config.twitch,
       db,
       user,
@@ -87,6 +88,15 @@ const run = async () => {
         webSocketServer
       ))
     }
+
+    eventHub.on('user_changed', async (changedUser: User) => {
+      if (changedUser.id === user.id) {
+        await clientManager.userChanged(changedUser)
+        for (const mod of moduleManager.all(user.id)) {
+          await mod.userChanged(changedUser)
+        }
+      }
+    })
   }
 
   webSocketServer.listen()

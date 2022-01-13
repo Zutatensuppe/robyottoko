@@ -118,6 +118,10 @@ class AvatarModule {
     this.data = this.reinit()
   }
 
+  async userChanged(user: User) {
+    this.user = user
+  }
+
   saveCommands() {
     // pass
   }
