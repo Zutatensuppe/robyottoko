@@ -121,71 +121,23 @@ export function arrayMove(arr: any[], oldIndex: number, newIndex: number) {
 }
 
 const doDummyReplacements = (text: string, str: string) => {
-  const replaces = [
-    {
-      regex: /\$args\((\d*)(:?)(\d*)\)/g,
-      replacer: (m0: string, m1: string) => {
-        return str
-      },
-    },
-    {
-      regex: /\$rand\(\s*(\d+)?\s*,\s*?(\d+)?\s*\)/g,
-      replacer: (m0: string, m1: string, m2: string) => {
-        return str
-      },
-    },
-    {
-      regex: /\$var\(([^)]+)\)/g,
-      replacer: (m0: string, m1: string) => {
-        return str
-      },
-    },
-    {
-      regex: /\$user\.name/g,
-      replacer: () => {
-        return str
-      },
-    },
-    {
-      regex: /\$([a-z][a-z0-9]*)(?!\()/g,
-      replacer: (m0: string, m1: string) => {
-        switch (m1) {
-          case 'args': str
-        }
-        return m0
-      }
-    },
-    {
-      regex: /\$customapi\(([^$\)]*)\)\[\'([A-Za-z0-9_ -]+)\'\]/g,
-      replacer: (m0: string, m1: string, m2: string) => {
-        return str
-      },
-    },
-    {
-      regex: /\$customapi\(([^$\)]*)\)/g,
-      replacer: (m0: string, m1: string) => {
-        return str
-      },
-    },
-    {
-      regex: /\$urlencode\(([^$\)]*)\)/g,
-      replacer: (m0: string, m1: string) => {
-        return str
-      },
-    },
-    {
-      regex: /\$calc\((\d+)([*/+-])(\d+)\)/g,
-      replacer: (m0: string, arg1: string, op: string, arg2: string) => {
-        return str
-      }
-    }
+  const regexes = [
+    // regexes must match the ones in src/fn.ts doReplaces function
+    /\$args\((\d*)(:?)(\d*)\)/g,
+    /\$rand\(\s*(\d+)?\s*,\s*?(\d+)?\s*\)/g,
+    /\$var\(([^)]+)\)/g,
+    /\$user\.name/g,
+    /\$customapi\(([^$\)]*)\)\[\'([A-Za-z0-9_ -]+)\'\]/g,
+    /\$customapi\(([^$\)]*)\)/g,
+    /\$urlencode\(([^$\)]*)\)/g,
+    /\$calc\((\d+)([*/+-])(\d+)\)/g,
   ]
   let replaced = text
   let orig
   do {
     orig = replaced
-    for (let replace of replaces) {
-      replaced = replaced.replace(replace.regex, replace.replacer)
+    for (let regex of regexes) {
+      replaced = replaced.replace(regex, str)
     }
   } while (orig !== replaced)
   return replaced
@@ -217,13 +169,13 @@ export const shuffle = (array: any[]) => {
   // While there are elements in the array
   while (counter > 0) {
     // Pick a random index
-    let index = Math.floor(Math.random() * counter);
+    const index = Math.floor(Math.random() * counter);
 
     // Decrease counter by 1
     counter--;
 
     // And swap the last element with it
-    let temp = array[counter];
+    const temp = array[counter];
     array[counter] = array[index];
     array[index] = temp;
   }

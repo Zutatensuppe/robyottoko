@@ -159,11 +159,11 @@ const shuffle = (array) => {
     // While there are elements in the array
     while (counter > 0) {
         // Pick a random index
-        let index = Math.floor(Math.random() * counter);
+        const index = Math.floor(Math.random() * counter);
         // Decrease counter by 1
         counter--;
         // And swap the last element with it
-        let temp = array[counter];
+        const temp = array[counter];
         array[counter] = array[index];
         array[index] = temp;
     }
@@ -286,6 +286,9 @@ const parseCommandFromCmdAndMessage = (msg, command, commandExact) => {
     }
     return null;
 };
+const _toInt = (value) => parseInt(`${value}`, 10);
+const _increase = (value, by) => (_toInt(value) + _toInt(by));
+const _decrease = (value, by) => (_toInt(value) - _toInt(by));
 const applyVariableChanges = async (cmdDef, contextModule, rawCmd, context) => {
     if (!cmdDef.variableChanges) {
         return;
@@ -302,12 +305,10 @@ const applyVariableChanges = async (cmdDef, contextModule, rawCmd, context) => {
                     cmdDef.variables[idx].value = value;
                 }
                 else if (op === 'increase_by') {
-                    cmdDef.variables[idx].value = (parseInt(cmdDef.variables[idx].value, 10)
-                        + parseInt(value, 10));
+                    cmdDef.variables[idx].value = _increase(cmdDef.variables[idx].value, value);
                 }
                 else if (op === 'decrease_by') {
-                    cmdDef.variables[idx].value = (parseInt(cmdDef.variables[idx].value, 10)
-                        - parseInt(value, 10));
+                    cmdDef.variables[idx].value = _decrease(cmdDef.variables[idx].value, value);
                 }
                 console.log(cmdDef.variables[idx].value);
                 //
@@ -321,12 +322,10 @@ const applyVariableChanges = async (cmdDef, contextModule, rawCmd, context) => {
                 contextModule.variables.set(name, value);
             }
             else if (op === 'increase_by') {
-                contextModule.variables.set(name, (parseInt(globalVars[idx].value, 10)
-                    + parseInt(value, 10)));
+                contextModule.variables.set(name, _increase(globalVars[idx].value, value));
             }
             else if (op === 'decrease_by') {
-                contextModule.variables.set(name, (parseInt(globalVars[idx].value, 10)
-                    - parseInt(value, 10)));
+                contextModule.variables.set(name, _decrease(globalVars[idx].value, value));
             }
             //
             continue;
@@ -421,20 +420,6 @@ const doReplacements = async (text, command, context, variables, originalCmd) =>
                 }
                 return context['display-name'];
             },
-        },
-        {
-            regex: /\$([a-z][a-z0-9]*)(?!\()/g,
-            replacer: async (m0, m1) => {
-                switch (m1) {
-                    case 'args': {
-                        if (!command) {
-                            return '';
-                        }
-                        return command.args.join(' ');
-                    }
-                }
-                return m0;
-            }
         },
         {
             regex: /\$customapi\(([^$\)]*)\)\[\'([A-Za-z0-9_ -]+)\'\]/g,

@@ -150,6 +150,13 @@ export const parseCommandFromCmdAndMessage = (
   return null
 }
 
+
+const _toInt = (value: any) => parseInt(`${value}`, 10)
+
+const _increase = (value: any, by: any) => (_toInt(value) + _toInt(by))
+
+const _decrease = (value: any, by: any) => (_toInt(value) - _toInt(by))
+
 const applyVariableChanges = async (
   cmdDef: FunctionCommand,
   contextModule: Module,
@@ -171,15 +178,9 @@ const applyVariableChanges = async (
         if (op === 'set') {
           cmdDef.variables[idx].value = value
         } else if (op === 'increase_by') {
-          cmdDef.variables[idx].value = (
-            parseInt(cmdDef.variables[idx].value, 10)
-            + parseInt(value, 10)
-          )
+          cmdDef.variables[idx].value = _increase(cmdDef.variables[idx].value, value)
         } else if (op === 'decrease_by') {
-          cmdDef.variables[idx].value = (
-            parseInt(cmdDef.variables[idx].value, 10)
-            - parseInt(value, 10)
-          )
+          cmdDef.variables[idx].value = _decrease(cmdDef.variables[idx].value, value)
         }
         console.log(cmdDef.variables[idx].value)
         //
@@ -193,15 +194,9 @@ const applyVariableChanges = async (
       if (op === 'set') {
         contextModule.variables.set(name, value)
       } else if (op === 'increase_by') {
-        contextModule.variables.set(name, (
-          parseInt(globalVars[idx].value, 10)
-          + parseInt(value, 10)
-        ))
+        contextModule.variables.set(name, _increase(globalVars[idx].value, value))
       } else if (op === 'decrease_by') {
-        contextModule.variables.set(name, (
-          parseInt(globalVars[idx].value, 10)
-          - parseInt(value, 10)
-        ))
+        contextModule.variables.set(name, _decrease(globalVars[idx].value, value))
       }
       //
       continue
@@ -317,20 +312,6 @@ const doReplacements = async (
         }
         return context['display-name']
       },
-    },
-    {
-      regex: /\$([a-z][a-z0-9]*)(?!\()/g,
-      replacer: async (m0: string, m1: string) => {
-        switch (m1) {
-          case 'args': {
-            if (!command) {
-              return ''
-            }
-            return command.args.join(' ')
-          }
-        }
-        return m0
-      }
     },
     {
       regex: /\$customapi\(([^$\)]*)\)\[\'([A-Za-z0-9_ -]+)\'\]/g,
