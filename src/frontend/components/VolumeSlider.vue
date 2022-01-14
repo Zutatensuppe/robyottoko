@@ -19,16 +19,17 @@ export default defineComponent({
       required: true,
     },
   },
+  emits: ["update:modelValue"],
   data: () => ({
     volume: 100,
   }),
   methods: {
     valChange() {
-      this.$emit("update:modelValue", this.volume);
+      this.$emit("update:modelValue", parseInt(`${this.volume}`, 10));
     },
   },
   created() {
-    this.volume = parseInt(this.modelValue, 10);
+    this.volume = parseInt(`${this.modelValue}`, 10);
   },
 });
 </script>

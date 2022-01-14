@@ -5,7 +5,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import fn from "../../common/fn.ts";
+import fn from "../../common/fn";
 
 export default defineComponent({
   props: {
@@ -16,7 +16,7 @@ export default defineComponent({
   computed: {
     tag() {
       try {
-        fn.mustParseHumanDuration(this.value);
+        fn.mustParseHumanDuration(`${this.value}`);
         return "span";
       } catch (e) {
         return "code";
@@ -24,7 +24,7 @@ export default defineComponent({
     },
     humanReadable() {
       try {
-        return fn.humanDuration(fn.mustParseHumanDuration(this.value));
+        return fn.humanDuration(fn.mustParseHumanDuration(`${this.value}`));
       } catch (e) {
         return this.value;
       }

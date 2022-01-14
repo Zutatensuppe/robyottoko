@@ -17,6 +17,11 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 
+interface ComponentData {
+  time: null | number;
+  timer: any; // number
+}
+
 export default defineComponent({
   emits: ["click", "doubleclick"],
   props: {
@@ -29,13 +34,13 @@ export default defineComponent({
       required: true,
     },
   },
-  data: () => ({
+  data: (): ComponentData => ({
     time: null,
     timer: null,
   }),
   computed: {
     indicatorStyle() {
-      if (this.timer === null) {
+      if (this.timer === null || this.time === null) {
         return {};
       }
       return {
@@ -44,13 +49,15 @@ export default defineComponent({
     },
   },
   methods: {
-    onClick(evt) {
+    onClick() {
       if (this.timer === null) {
         this.$emit("click");
         this.time = this.timeout;
         this.timer = setInterval(() => {
-          this.time -= 10;
-          if (this.time <= 0) {
+          if (this.time) {
+            this.time -= 10;
+          }
+          if (!this.time || this.time <= 0) {
             clearInterval(this.timer);
             this.timer = null;
             this.time = null;

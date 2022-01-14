@@ -3,7 +3,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import fn from "../../common/fn.ts";
+import fn from "../../common/fn";
 
 export default defineComponent({
   props: {
