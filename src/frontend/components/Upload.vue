@@ -18,7 +18,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import xhr from "../xhr";
+import api from "../api";
 
 export default defineComponent({
   name: "upload",
@@ -61,13 +61,8 @@ export default defineComponent({
         return;
       }
       this.uploading = true;
-      const formData = new FormData();
-      formData.append("file", file, file.name);
-      const res = await xhr.post("/api/upload", {
-        body: formData,
-        onUploadProgress: (evt: ProgressEvent<XMLHttpRequestEventTarget>) => {
-          this.progress = evt.loaded / evt.total;
-        },
+      const res = await api.upload(file, (progressEvt) => {
+        this.progress = progressEvt.loaded / progressEvt.total;
       });
       this.uploading = false;
       const j = await res.json();

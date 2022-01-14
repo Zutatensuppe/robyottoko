@@ -141,7 +141,6 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import WsClient from "../WsClient";
-import xhr from "../xhr";
 import {
   Command,
   CommandAction,
@@ -154,6 +153,7 @@ import {
 } from "../../mod/modules/SongrequestModule";
 import { useToast } from "vue-toastification";
 import util from "../util";
+import api from "../api";
 
 type TagInfo = { value: string; count: number };
 
@@ -351,9 +351,6 @@ export default defineComponent({
     togglePlayerButtonText(): string {
       return this.playerVisible ? "Hide Player" : "Show Player";
     },
-    importPlaylistUrl(): string {
-      return `${location.protocol}//${location.host}/api/sr/import`;
-    },
     exportPlaylistUrl(): string {
       return `${location.protocol}//${location.host}/api/sr/export`;
     },
@@ -379,13 +376,7 @@ export default defineComponent({
       this.sendCtrl("filter", [{ tag }]);
     },
     async doImportPlaylist() {
-      const res = await xhr.post(this.importPlaylistUrl, {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: this.importPlaylist,
-      });
+      const res = await api.importPlaylist(this.importPlaylist);
       if (res.status === 200) {
         this.tab = "playlist";
         this.toast.success("Import successful");

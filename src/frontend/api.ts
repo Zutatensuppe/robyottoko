@@ -1,27 +1,76 @@
-const _request = async (url: string, opts: any) => fetch(url, opts)
+interface RequestOptions {
+  headers?: Record<string, string>
+  body?: XMLHttpRequestBodyInit,
+  onUploadProgress?: (ev: ProgressEvent<XMLHttpRequestEventTarget>) => void,
+}
 
-const _get = async (url: string) => _request(url, undefined)
-const _post = async (url: string, data: any) => _request(url, {
-  method: "post", headers: {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-  }, body: JSON.stringify(data)
+export interface Response {
+  status: number
+  text: string
+  json: () => Promise<any>
+}
+
+const request = async (method: string, url: string, options: RequestOptions): Promise<Response> => {
+  return new Promise((resolve, reject) => {
+    const xhr = new window.XMLHttpRequest()
+    xhr.open(method, url, true)
+    xhr.withCredentials = true
+    const headers = options.headers || {}
+    for (const k in headers) {
+      xhr.setRequestHeader(k, headers[k])
+    }
+    xhr.addEventListener('load', function (ev) {
+      resolve({
+        status: this.status,
+        text: this.responseText,
+        json: async () => JSON.parse(this.responseText),
+      })
+    })
+    xhr.addEventListener('error', function (ev) {
+      reject(new Error('xhr error'))
+    })
+    if (xhr.upload && options.onUploadProgress) {
+      xhr.upload.addEventListener('progress', function (ev) {
+        // typescript complains without this extra check
+        if (options.onUploadProgress) {
+          options.onUploadProgress(ev)
+        }
+      })
+    }
+    xhr.send(options.body)
+  })
+}
+const get = async (url: string, options: RequestOptions = {}) => request('get', url, options)
+const post = async (url: string, options: RequestOptions = {}) => request('post', url, options)
+
+
+const postJsonStr = async (url: string, jsonStr: string) => request('post', url, {
+  headers: { Accept: "application/json", "Content-Type": "application/json" },
+  body: jsonStr,
 })
+const postJson = async (url: string, data: any) => postJsonStr(url, JSON.stringify(data))
 
 export default {
-  resendVerificationMail: async (data: { email: string }) => _post("/api/user/_resend_verification_mail", data),
-  requestPasswordReset: async (data: { email: string }) => _post("/api/user/_request_password_reset", data),
-  register: async (data: { user: string, pass: string, email: string }) => _post("/api/user/_register", data),
-  resetPassword: async (data: { pass: string, token: string | null }) => _post("/api/user/_reset_password", data),
-  handleToken: async (data: { token: string }) => _post("/api/_handle-token", data),
-  saveVariables: async (data: { variables: any }) => _post("/api/save-variables", data),
-  twitchUserIdByName: async (data: { name: string, client_id: string | null, client_secret: string | null }) => _post("/api/twitch/user-id-by-name", data),
-  saveUserSettings: async (data: { user: any, twitch_channels: any[] }) => _post("/api/save-settings", data),
-  getPageVariablesData: async () => _get("/api/page/variables"),
-  getPageIndexData: async () => _get("/api/page/index"),
-  getPageSettingsData: async () => _get("/api/page/settings"),
-  getMe: async () => _get("/api/user/me"),
-  logout: async () => _post("/api/logout", {}),
-  login: async (data: { user: string, pass: string }) => _post("/api/auth", data),
-  getConf: async () => _get("/api/conf"),
+  resendVerificationMail: async (data: { email: string }) => postJson("/api/user/_resend_verification_mail", data),
+  requestPasswordReset: async (data: { email: string }) => postJson("/api/user/_request_password_reset", data),
+  register: async (data: { user: string, pass: string, email: string }) => postJson("/api/user/_register", data),
+  resetPassword: async (data: { pass: string, token: string | null }) => postJson("/api/user/_reset_password", data),
+  handleToken: async (data: { token: string }) => postJson("/api/_handle-token", data),
+  saveVariables: async (data: { variables: any }) => postJson("/api/save-variables", data),
+  twitchUserIdByName: async (data: { name: string, client_id: string | null, client_secret: string | null }) => postJson("/api/twitch/user-id-by-name", data),
+  saveUserSettings: async (data: { user: any, twitch_channels: any[] }) => postJson("/api/save-settings", data),
+  getPageVariablesData: async () => get("/api/page/variables"),
+  getPageIndexData: async () => get("/api/page/index"),
+  getPageSettingsData: async () => get("/api/page/settings"),
+  getMe: async () => get("/api/user/me"),
+  logout: async () => post("/api/logout"),
+  login: async (data: { user: string, pass: string }) => postJson("/api/auth", data),
+  getConf: async () => get("/api/conf"),
+  upload: async (file: File, onUploadProgress: (evt: ProgressEvent<XMLHttpRequestEventTarget>) => void) => {
+    const body = new FormData();
+    body.append("file", file, file.name);
+    return request('post', "/api/upload", { body, onUploadProgress });
+  },
+  importPlaylist: async (playlistJsonString: string) => postJsonStr("/api/sr/import", playlistJsonString),
+  getDrawcastAllImages: async () => get("/api/drawcast/all-images/"),
 }

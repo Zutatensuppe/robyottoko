@@ -314,9 +314,9 @@
 import { defineComponent } from "vue";
 import { DrawcastSaveEventData } from "../../mod/modules/DrawcastModule";
 import { DrawcastData, DrawcastSettings, UploadedFile } from "../../types";
+import api from "../api";
 import util from "../util";
 import WsClient from "../WsClient";
-import xhr from "../xhr";
 
 interface ComponentData {
   unchangedJson: string;
@@ -360,7 +360,7 @@ export default defineComponent({
       this.unchangedJson = JSON.stringify(data.settings);
       this.drawUrl = data.drawUrl;
 
-      const res = await xhr.get("/api/drawcast/all-images/", {});
+      const res = await api.getDrawcastAllImages();
       this.favoriteSelection.items = await res.json();
     });
     this.ws.connect();
