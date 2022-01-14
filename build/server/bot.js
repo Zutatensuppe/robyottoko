@@ -2969,7 +2969,7 @@ const dictLookup = (lang, phrase, variables, originalCmd) => async (command, cli
 
 fn.logger('GeneralModule.ts');
 class GeneralModule {
-    constructor(db, user, twitchChannelRepo, variables, clientManager, storage, cache, ws, wss) {
+    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
         this.name = 'general';
         this.interval = null;
         this.db = db;
@@ -3352,7 +3352,7 @@ const default_commands = (list = null) => {
     ];
 };
 class SongrequestModule {
-    constructor(db, user, twitchChannelRepo, variables, clientManager, storage, cache, ws, wss) {
+    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
         this.name = 'sr';
         this.variables = variables;
         this.user = user;
@@ -4293,7 +4293,7 @@ class SongrequestModule {
 }
 
 class VoteModule {
-    constructor(db, user, twitchChannelRepo, variables, clientManager, storage, cache, ws, wss) {
+    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
         this.name = 'vote';
         this.variables = variables;
         this.storage = storage;
@@ -4415,7 +4415,7 @@ class VoteModule {
 }
 
 class SpeechToTextModule {
-    constructor(db, user, twitchChannelRepo, variables, clientManager, storage, cache, ws, wss) {
+    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
         this.name = 'speech-to-text';
         this.user = user;
         this.variables = variables;
@@ -4534,7 +4534,7 @@ class SpeechToTextModule {
 
 logger('DrawcastModule.ts');
 class DrawcastModule {
-    constructor(db, user, twitchChannelRepo, variables, clientManager, storage, cache, ws, wss) {
+    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
         this.name = 'drawcast';
         this.defaultSettings = {
             submitButtonText: 'Submit',
@@ -4699,7 +4699,7 @@ class DrawcastModule {
 
 logger('AvatarModule.ts');
 class AvatarModule {
-    constructor(db, user, twitchChannelRepo, variables, clientManager, storage, cache, ws, wss) {
+    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
         this.name = 'avatar';
         this.defaultSettings = {
             styles: {
@@ -4827,7 +4827,7 @@ const run = async () => {
         const variables = new Variables(db, user.id);
         const moduleStorage = new ModuleStorage(db, user.id);
         for (const moduleClass of modules) {
-            moduleManager.add(user.id, new moduleClass(db, user, twitchChannelRepo, variables, clientManager, moduleStorage, cache, webServer, webSocketServer));
+            moduleManager.add(user.id, new moduleClass(db, user, variables, clientManager, moduleStorage, cache, webServer, webSocketServer));
         }
         eventHub.on('user_changed', async (changedUser) => {
             if (changedUser.id === user.id) {

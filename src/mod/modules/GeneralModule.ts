@@ -6,7 +6,6 @@ import playMedia from '../../commands/playMedia'
 import fn from '../../fn'
 import chatters from '../../commands/chatters'
 import Db from '../../Db'
-import TwitchHelixClient from '../../services/TwitchHelixClient'
 import WebServer from '../../WebServer'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Madochan from '../../services/Madochan'
@@ -18,7 +17,6 @@ import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
 import dictLookup from '../../commands/dictLookup'
 import { newCommandTrigger } from '../../util'
-import TwitchChannels from '../../services/TwitchChannels'
 
 const log = fn.logger('GeneralModule.ts')
 
@@ -90,7 +88,6 @@ class GeneralModule {
   constructor(
     db: Db,
     user: User,
-    twitchChannelRepo: TwitchChannels,
     variables: Variables,
     clientManager: TwitchClientManager,
     storage: ModuleStorage,

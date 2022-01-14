@@ -9,7 +9,6 @@ import ModuleStorage from '../ModuleStorage'
 import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
 import { newCommandTrigger } from '../../util'
-import TwitchChannels from '../../services/TwitchChannels'
 
 interface VoteModuleData {
   votes: Record<string, Record<string, string>>
@@ -24,7 +23,6 @@ class VoteModule {
   constructor(
     db: Db,
     user: User,
-    twitchChannelRepo: TwitchChannels,
     variables: Variables,
     clientManager: TwitchClientManager,
     storage: ModuleStorage,

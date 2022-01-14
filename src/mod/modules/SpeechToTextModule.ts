@@ -4,7 +4,6 @@ import TwitchClientManager from '../../net/TwitchClientManager'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import { getText, asQueryArgs } from '../../net/xhr'
 import Cache from '../../services/Cache'
-import TwitchChannels from '../../services/TwitchChannels'
 import { User } from '../../services/Users'
 import Variables from '../../services/Variables'
 import { ChatMessageContext, RewardRedemptionContext } from '../../types'
@@ -98,7 +97,6 @@ class SpeechToTextModule {
   constructor(
     db: Db,
     user: User,
-    twitchChannelRepo: TwitchChannels,
     variables: Variables,
     clientManager: TwitchClientManager,
     storage: ModuleStorage,

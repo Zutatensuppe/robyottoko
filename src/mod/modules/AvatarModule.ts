@@ -9,7 +9,6 @@ import ModuleStorage from '../ModuleStorage'
 import { User } from '../../services/Users'
 import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
-import TwitchChannels from '../../services/TwitchChannels'
 
 const log = logger('AvatarModule.ts')
 
@@ -100,7 +99,6 @@ class AvatarModule {
   constructor(
     db: Db,
     user: User,
-    twitchChannelRepo: TwitchChannels,
     variables: Variables,
     clientManager: TwitchClientManager,
     storage: ModuleStorage,
