@@ -22,6 +22,7 @@ import DrawcastModule from './mod/modules/DrawcastModule'
 import AvatarModule from './mod/modules/AvatarModule'
 
 import { fileURLToPath } from 'url'
+import { Bot } from './types'
 
 const __filename = fileURLToPath(import.meta.url)
 
@@ -61,6 +62,14 @@ const webServer = new WebServer(
   auth
 )
 
+const bot: Bot = {
+  getDb: () => db,
+  getTokens: () => tokenRepo,
+  getCache: () => cache,
+  getWebServer: () => webServer,
+  getWebSocketServer: () => webSocketServer,
+}
+
 const run = async () => {
   // this function may only be called once per user!
   // changes to user will be handled by user_changed event
@@ -77,14 +86,11 @@ const run = async () => {
     const moduleStorage = new ModuleStorage(db, user.id)
     for (const moduleClass of modules) {
       moduleManager.add(user.id, new moduleClass(
-        db,
+        bot,
         user,
         variables,
         clientManager,
         moduleStorage,
-        cache,
-        webServer,
-        webSocketServer
       ))
     }
 

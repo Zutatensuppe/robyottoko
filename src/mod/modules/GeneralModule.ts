@@ -6,14 +6,12 @@ import playMedia from '../../commands/playMedia'
 import fn from '../../fn'
 import chatters from '../../commands/chatters'
 import Db from '../../Db'
-import WebServer from '../../WebServer'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Madochan from '../../services/Madochan'
 import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
-import { ChatMessageContext, Command, FunctionCommand, GlobalVariable, TwitchChatClient, TwitchChatContext, RawCommand, RewardRedemptionContext } from '../../types'
+import { ChatMessageContext, Command, FunctionCommand, GlobalVariable, TwitchChatClient, TwitchChatContext, RawCommand, RewardRedemptionContext, Bot } from '../../types'
 import ModuleStorage from '../ModuleStorage'
-import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
 import dictLookup from '../../commands/dictLookup'
 import { newCommandTrigger } from '../../util'
@@ -86,21 +84,18 @@ class GeneralModule {
   private interval: NodeJS.Timer | null = null
 
   constructor(
-    db: Db,
+    bot: Bot,
     user: User,
     variables: Variables,
     clientManager: TwitchClientManager,
     storage: ModuleStorage,
-    cache: Cache,
-    ws: WebServer,
-    wss: WebSocketServer,
   ) {
-    this.db = db
+    this.db = bot.getDb()
     this.user = user
     this.variables = variables
     this.clientManager = clientManager
     this.storage = storage
-    this.wss = wss
+    this.wss = bot.getWebSocketServer()
     const initData = this.reinit()
     this.data = initData.data
     this.commands = initData.commands

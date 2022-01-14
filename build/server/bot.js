@@ -2969,15 +2969,15 @@ const dictLookup = (lang, phrase, variables, originalCmd) => async (command, cli
 
 fn.logger('GeneralModule.ts');
 class GeneralModule {
-    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
+    constructor(bot, user, variables, clientManager, storage) {
         this.name = 'general';
         this.interval = null;
-        this.db = db;
+        this.db = bot.getDb();
         this.user = user;
         this.variables = variables;
         this.clientManager = clientManager;
         this.storage = storage;
-        this.wss = wss;
+        this.wss = bot.getWebSocketServer();
         const initData = this.reinit();
         this.data = initData.data;
         this.commands = initData.commands;
@@ -3352,13 +3352,13 @@ const default_commands = (list = null) => {
     ];
 };
 class SongrequestModule {
-    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
+    constructor(bot, user, variables, clientManager, storage) {
         this.name = 'sr';
         this.variables = variables;
         this.user = user;
-        this.cache = cache;
+        this.cache = bot.getCache();
         this.storage = storage;
-        this.wss = wss;
+        this.wss = bot.getWebSocketServer();
         const initData = this.reinit();
         this.data = {
             filter: initData.data.filter,
@@ -4293,7 +4293,7 @@ class SongrequestModule {
 }
 
 class VoteModule {
-    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
+    constructor(bot, user, variables, clientManager, storage) {
         this.name = 'vote';
         this.variables = variables;
         this.storage = storage;
@@ -4415,12 +4415,12 @@ class VoteModule {
 }
 
 class SpeechToTextModule {
-    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
+    constructor(bot, user, variables, clientManager, storage) {
         this.name = 'speech-to-text';
         this.user = user;
         this.variables = variables;
         this.storage = storage;
-        this.wss = wss;
+        this.wss = bot.getWebSocketServer();
         this.defaultSettings = {
             status: {
                 enabled: false,
@@ -4534,7 +4534,7 @@ class SpeechToTextModule {
 
 logger('DrawcastModule.ts');
 class DrawcastModule {
-    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
+    constructor(bot, user, variables, clientManager, storage) {
         this.name = 'drawcast';
         this.defaultSettings = {
             submitButtonText: 'Submit',
@@ -4561,10 +4561,10 @@ class DrawcastModule {
         };
         this.variables = variables;
         this.user = user;
-        this.wss = wss;
+        this.wss = bot.getWebSocketServer();
         this.storage = storage;
-        this.ws = ws;
-        this.tokens = new Tokens(db);
+        this.ws = bot.getWebServer();
+        this.tokens = bot.getTokens();
         this.data = this.reinit();
         this.images = this.loadAllImages().slice(0, 20);
     }
@@ -4699,7 +4699,7 @@ class DrawcastModule {
 
 logger('AvatarModule.ts');
 class AvatarModule {
-    constructor(db, user, variables, clientManager, storage, cache, ws, wss) {
+    constructor(bot, user, variables, clientManager, storage) {
         this.name = 'avatar';
         this.defaultSettings = {
             styles: {
@@ -4710,10 +4710,8 @@ class AvatarModule {
         };
         this.variables = variables;
         this.user = user;
-        this.wss = wss;
+        this.wss = bot.getWebSocketServer();
         this.storage = storage;
-        this.ws = ws;
-        this.tokens = new Tokens(db);
         this.data = this.reinit();
     }
     async userChanged(user) {
@@ -4818,6 +4816,13 @@ const eventHub = new EventHub();
 const moduleManager = new ModuleManager();
 const webSocketServer = new WebSocketServer(moduleManager, config.ws, auth);
 const webServer = new WebServer(eventHub, db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, config.http, config.twitch, webSocketServer, auth);
+const bot = {
+    getDb: () => db,
+    getTokens: () => tokenRepo,
+    getCache: () => cache,
+    getWebServer: () => webServer,
+    getWebSocketServer: () => webSocketServer,
+};
 const run = async () => {
     // this function may only be called once per user!
     // changes to user will be handled by user_changed event
@@ -4827,7 +4832,7 @@ const run = async () => {
         const variables = new Variables(db, user.id);
         const moduleStorage = new ModuleStorage(db, user.id);
         for (const moduleClass of modules) {
-            moduleManager.add(user.id, new moduleClass(db, user, variables, clientManager, moduleStorage, cache, webServer, webSocketServer));
+            moduleManager.add(user.id, new moduleClass(bot, user, variables, clientManager, moduleStorage));
         }
         eventHub.on('user_changed', async (changedUser) => {
             if (changedUser.id === user.id) {

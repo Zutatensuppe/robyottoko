@@ -1,13 +1,10 @@
 import config from '../../config'
-import Db from '../../Db'
 import TwitchClientManager from '../../net/TwitchClientManager'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import { getText, asQueryArgs } from '../../net/xhr'
-import Cache from '../../services/Cache'
 import { User } from '../../services/Users'
 import Variables from '../../services/Variables'
-import { ChatMessageContext, RewardRedemptionContext } from '../../types'
-import WebServer from '../../WebServer'
+import { Bot, ChatMessageContext, RewardRedemptionContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 
 export interface SpeechToTextModuleSettings {
@@ -95,19 +92,16 @@ class SpeechToTextModule {
   private data: SpeechToTextModuleData
 
   constructor(
-    db: Db,
+    bot: Bot,
     user: User,
     variables: Variables,
     clientManager: TwitchClientManager,
     storage: ModuleStorage,
-    cache: Cache,
-    ws: WebServer,
-    wss: WebSocketServer,
   ) {
     this.user = user
     this.variables = variables
     this.storage = storage
-    this.wss = wss
+    this.wss = bot.getWebSocketServer()
     this.defaultSettings = {
       status: {
         enabled: false,

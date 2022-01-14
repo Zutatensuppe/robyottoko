@@ -1,9 +1,12 @@
 // @ts-ignore
 import { Client } from 'tmi.js'
-import { Socket } from './net/WebSocketServer'
-import { Token } from './services/Tokens'
+import Db from './Db'
+import WebSocketServer, { Socket } from './net/WebSocketServer'
+import Cache from './services/Cache'
+import Tokens, { Token } from './services/Tokens'
 import { User } from './services/Users'
 import Variables from './services/Variables'
+import WebServer from './WebServer'
 
 type int = number
 
@@ -379,4 +382,12 @@ export interface MailServiceRegistrationData {
 export interface MailService {
   sendPasswordResetMail: (data: MailServicePasswordResetData) => any
   sendRegistrationMail: (data: MailServiceRegistrationData) => any
+}
+
+export interface Bot {
+  getDb: () => Db
+  getTokens: () => Tokens
+  getCache: () => Cache
+  getWebServer: () => WebServer
+  getWebSocketServer: () => WebSocketServer
 }

@@ -1,11 +1,9 @@
-import Db from '../../Db'
 import fn, { findIdxFuzzy, logger } from '../../fn'
-import WebServer from '../../WebServer'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
 import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
-import { ChatMessageContext, PlaylistItem, RawCommand, TwitchChatClient, TwitchChatContext, RewardRedemptionContext, FunctionCommand, Command, GlobalVariable } from '../../types'
+import { ChatMessageContext, PlaylistItem, RawCommand, TwitchChatClient, TwitchChatContext, RewardRedemptionContext, FunctionCommand, Command, GlobalVariable, Bot } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
@@ -167,20 +165,17 @@ class SongrequestModule {
   private commands: FunctionCommand[]
 
   constructor(
-    db: Db,
+    bot: Bot,
     user: User,
     variables: Variables,
     clientManager: TwitchClientManager,
     storage: ModuleStorage,
-    cache: Cache,
-    ws: WebServer,
-    wss: WebSocketServer
   ) {
     this.variables = variables
     this.user = user
-    this.cache = cache
+    this.cache = bot.getCache()
     this.storage = storage
-    this.wss = wss
+    this.wss = bot.getWebSocketServer()
 
     const initData = this.reinit()
     this.data = {

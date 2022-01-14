@@ -1,14 +1,12 @@
-import Db from '../../Db'
 import fn, { logger } from '../../fn'
 import fs from 'fs'
 import WebServer from '../../WebServer'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Tokens from '../../services/Tokens'
 import Variables from '../../services/Variables'
-import { ChatMessageContext, DrawcastSettings, RewardRedemptionContext } from '../../types'
+import { Bot, ChatMessageContext, DrawcastSettings, RewardRedemptionContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import { User } from '../../services/Users'
-import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
 
 const log = logger('DrawcastModule.ts')
@@ -63,22 +61,19 @@ class DrawcastModule {
   private images: string[]
 
   constructor(
-    db: Db,
+    bot: Bot,
     user: User,
     variables: Variables,
     clientManager: TwitchClientManager,
     storage: ModuleStorage,
-    cache: Cache,
-    ws: WebServer,
-    wss: WebSocketServer,
   ) {
     this.variables = variables
     this.user = user
-    this.wss = wss
+    this.wss = bot.getWebSocketServer()
     this.storage = storage
 
-    this.ws = ws
-    this.tokens = new Tokens(db)
+    this.ws = bot.getWebServer()
+    this.tokens = bot.getTokens()
     this.data = this.reinit()
 
     this.images = this.loadAllImages().slice(0, 20)

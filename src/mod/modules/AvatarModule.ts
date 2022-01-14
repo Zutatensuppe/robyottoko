@@ -1,13 +1,9 @@
-import Db from '../../Db'
 import { logger } from '../../fn'
-import WebServer from '../../WebServer'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
-import Tokens from '../../services/Tokens'
 import Variables from '../../services/Variables'
-import { ChatMessageContext, RewardRedemptionContext } from '../../types'
+import { Bot, ChatMessageContext, RewardRedemptionContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import { User } from '../../services/Users'
-import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
 
 const log = logger('AvatarModule.ts')
@@ -84,8 +80,6 @@ class AvatarModule {
   private user: User
   private wss: WebSocketServer
   private storage: ModuleStorage
-  private ws: WebServer
-  private tokens: Tokens
 
   private data: AvatarModuleData
   private defaultSettings: AvatarModuleSettings = {
@@ -97,22 +91,17 @@ class AvatarModule {
   }
 
   constructor(
-    db: Db,
+    bot: Bot,
     user: User,
     variables: Variables,
     clientManager: TwitchClientManager,
     storage: ModuleStorage,
-    cache: Cache,
-    ws: WebServer,
-    wss: WebSocketServer,
   ) {
     this.variables = variables
     this.user = user
-    this.wss = wss
+    this.wss = bot.getWebSocketServer()
     this.storage = storage
 
-    this.ws = ws
-    this.tokens = new Tokens(db)
     this.data = this.reinit()
   }
 

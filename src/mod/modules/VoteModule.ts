@@ -1,12 +1,8 @@
-import Db from '../../Db'
 import fn from '../../fn'
-import WebServer from '../../WebServer'
-import WebSocketServer from '../../net/WebSocketServer'
 import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
-import { ChatMessageContext, RawCommand, RewardRedemptionContext, TwitchChatClient, TwitchChatContext } from '../../types'
+import { Bot, ChatMessageContext, RawCommand, RewardRedemptionContext, TwitchChatClient, TwitchChatContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
-import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
 import { newCommandTrigger } from '../../util'
 
@@ -21,14 +17,11 @@ class VoteModule {
   private data: VoteModuleData
 
   constructor(
-    db: Db,
+    bot: Bot,
     user: User,
     variables: Variables,
     clientManager: TwitchClientManager,
     storage: ModuleStorage,
-    cache: Cache,
-    ws: WebServer,
-    wss: WebSocketServer,
   ) {
     this.variables = variables
     this.storage = storage
