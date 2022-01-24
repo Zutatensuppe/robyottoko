@@ -1,28 +1,63 @@
-name: "ci"
-on: push
+name: ci
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  RUN_ENV: ci
 
 jobs:
-  ci-js:
+  tests:
     runs-on: ${{ matrix.operating-system }}
     strategy:
       matrix:
-        operating-system: [ ubuntu-latest ]
-        node-version: [ '16.x' ]
-    name: ci js ${{ matrix.node-version }} ${{ matrix.operating-system }}
+        operating-system: [ubuntu-latest]
+        node-version: [16.x, 17.x]
+    name: "tests, node: ${{ matrix.node-version }}, os: ${{ matrix.operating-system }}"
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
 
-      - name: Install Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: ${{ matrix.node-version }}
+    - run: ./run install
+    - run: ./run tests
 
-      - name: Install dependencies (npm)
-        run: npm install
+  lint:
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        operating-system: [ubuntu-latest]
+        node-version: [16.x, 17.x]
+    name: "lint, node: ${{ matrix.node-version }}, os: ${{ matrix.operating-system }}"
 
-      - name: Run tests
-        run: ./run tests
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
 
-      - name: Run build
-        run: ./run build
+    - run: ./run install
+    - run: ./run lint
+
+  build:
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        operating-system: [ubuntu-latest]
+        node-version: [16.x, 17.x]
+    name: "build, node: ${{ matrix.node-version }}, os: ${{ matrix.operating-system }}"
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - run: ./run install
+    - run: ./run build

@@ -366,21 +366,21 @@ async function replaceAsync(str, regex, asyncFn) {
 const doReplacements = async (text, command, context, variables, originalCmd) => {
     const replaces = [
         {
-            regex: /\$args\((\d*)(:?)(\d*)\)/g,
+            regex: /\$args(?:\((\d*)(:?)(\d*)\))?/g,
             replacer: async (m0, m1, m2, m3) => {
                 if (!command) {
                     return '';
                 }
                 let from = 0;
                 let to = command.args.length;
-                if (m1 !== '') {
+                if (m1 !== '' && m1 !== undefined) {
                     from = parseInt(m1, 10);
                     to = from;
                 }
-                if (m2 !== '') {
+                if (m2 !== '' && m1 !== undefined) {
                     to = command.args.length - 1;
                 }
-                if (m3 !== '') {
+                if (m3 !== '' && m1 !== undefined) {
                     to = parseInt(m3, 10);
                 }
                 if (from === to) {
