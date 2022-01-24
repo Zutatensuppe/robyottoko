@@ -8,13 +8,15 @@ import {
   MINUTE,
   SECOND,
   MS,
+  doReplacements,
   parseHumanDuration,
   findIdxBySearchInOrder,
   findIdxBySearch,
   findIdxBySearchExactPart,
   parseCommandFromTriggerAndMessage,
 } from './fn'
-import { CommandTrigger } from './types'
+import Variables from './services/Variables'
+import { Command, CommandTrigger } from './types'
 
 test('joinIntoChunks', () => {
   let actual = joinIntoChunks(['hyottoko', 'van', 'megaport'], ', ', 12)
@@ -140,4 +142,85 @@ ${'!sr'}           | ${'!sr'}      | ${true}      | ${{ name: '!sr', args: [] }}
   const trigger = { type: 'command', data: { command, commandExact } } as CommandTrigger
   const actual = parseCommandFromTriggerAndMessage(msg, trigger)
   expect(actual).toStrictEqual(expected)
+})
+
+
+
+describe('fn.doReplacements', () => {
+  test.each([
+    {
+      text: 'lalala',
+      command: null,
+      context: null,
+      variables: {} as Variables,
+      originalCmd: {} as Command,
+      expected: 'lalala',
+    },
+    {
+      text: 'bla $user.name',
+      command: null,
+      context: null,
+      variables: {} as Variables,
+      originalCmd: {} as Command,
+      expected: 'bla ',
+    },
+    {
+      text: '$user.name',
+      command: null,
+      context: {
+        "room-id": "",
+        "user-id": "",
+        "display-name": "mondgesicht",
+        username: "bla",
+        mod: false,
+        subscriber: false,
+      },
+      variables: {} as Variables,
+      originalCmd: {} as Command,
+      expected: 'mondgesicht',
+    },
+    {
+      text: '$args',
+      command: { name: 'cmd', args: ['arg1', 'arg2', 'arg3', 'arg4', 'arg5'] },
+      context: null,
+      variables: {} as Variables,
+      originalCmd: {} as Command,
+      expected: 'arg1 arg2 arg3 arg4 arg5',
+    },
+    {
+      text: '$args()',
+      command: { name: 'cmd', args: ['arg1', 'arg2', 'arg3', 'arg4', 'arg5'] },
+      context: null,
+      variables: {} as Variables,
+      originalCmd: {} as Command,
+      expected: 'arg1 arg2 arg3 arg4 arg5',
+    },
+    {
+      text: '$args(1:)',
+      command: { name: 'cmd', args: ['arg1', 'arg2', 'arg3', 'arg4', 'arg5'] },
+      context: null,
+      variables: {} as Variables,
+      originalCmd: {} as Command,
+      expected: 'arg2 arg3 arg4 arg5',
+    },
+    {
+      text: '$args(2:3)',
+      command: { name: 'cmd', args: ['arg1', 'arg2', 'arg3', 'arg4', 'arg5'] },
+      context: null,
+      variables: {} as Variables,
+      originalCmd: {} as Command,
+      expected: 'arg3 arg4',
+    },
+    {
+      text: '$args(:2)',
+      command: { name: 'cmd', args: ['arg1', 'arg2', 'arg3', 'arg4', 'arg5'] },
+      context: null,
+      variables: {} as Variables,
+      originalCmd: {} as Command,
+      expected: 'arg1 arg2 arg3',
+    },
+  ])('doReplacements $text', async ({ text, command, context, variables, originalCmd, expected }) => {
+    const actual = await doReplacements(text, command, context, variables, originalCmd)
+    expect(actual).toBe(expected)
+  })
 })
