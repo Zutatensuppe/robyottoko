@@ -1,3 +1,5 @@
 #!/bin/sh
 
+cd "$RUN_DIR"
+
 npm ci
