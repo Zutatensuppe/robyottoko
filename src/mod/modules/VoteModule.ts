@@ -1,7 +1,7 @@
 import fn from '../../fn'
 import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
-import { Bot, ChatMessageContext, RawCommand, RewardRedemptionContext, TwitchChatClient, TwitchChatContext } from '../../types'
+import { Bot, ChatMessageContext, Module, RawCommand, RewardRedemptionContext, TwitchChatClient, TwitchChatContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import TwitchClientManager from '../../net/TwitchClientManager'
 import { newCommandTrigger } from '../../util'
@@ -10,7 +10,7 @@ interface VoteModuleData {
   votes: Record<string, Record<string, string>>
 }
 
-class VoteModule {
+class VoteModule implements Module {
   public name = 'vote'
   public variables: Variables
   private storage: ModuleStorage
@@ -28,7 +28,7 @@ class VoteModule {
     this.data = this.reinit()
   }
 
-  async userChanged(user: User) {
+  async userChanged(_user: User) {
     // pass
   }
 
@@ -80,7 +80,7 @@ class VoteModule {
     client: TwitchChatClient | null,
     target: string | null,
     context: TwitchChatContext | null,
-    msg: string | null,
+    _msg: string | null,
   ) {
     if (!client || !command || !context || !target) {
       return
@@ -102,7 +102,7 @@ class VoteModule {
     client: TwitchChatClient | null,
     target: string | null,
     context: TwitchChatContext | null,
-    msg: string | null,
+    _msg: string | null,
   ) {
     if (!client || !command || !context || !target) {
       return
@@ -175,10 +175,12 @@ class VoteModule {
     ]
   }
 
-  async onChatMsg(chatMessageContext: ChatMessageContext) {
+  async onChatMsg(_chatMessageContext: ChatMessageContext) {
+    // pass
   }
 
-  async onRewardRedemption(RewardRedemptionContext: RewardRedemptionContext) {
+  async onRewardRedemption(_RewardRedemptionContext: RewardRedemptionContext) {
+    // pass
   }
 }
 

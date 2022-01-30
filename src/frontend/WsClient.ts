@@ -1,9 +1,12 @@
-const log = (...args: any[]) => console.log('[WsClient.ts]', ...args)
-
+import { logger } from '../common/fn'
 import WsWrapper from './WsWrapper'
 
+const log = logger('WsClient.ts')
+
+type CallbackFn = (...args: any[]) => void
+
 export default class WsClient extends WsWrapper {
-  private _on: Record<string, Record<string, Function[]>> = {}
+  private _on: Record<string, Record<string, CallbackFn[]>> = {}
 
   constructor(
     addr: string,
@@ -15,10 +18,10 @@ export default class WsClient extends WsWrapper {
     }
     this.onmessage = (e) => {
       this._dispatch('socket', 'message', e)
-      if (!!this._on['message']) {
+      if (this._on['message']) {
         const d = this._parseMessageData(e.data)
         if (d.event) {
-          this._dispatch('message', d.event, d.data)
+          this._dispatch('message', `${d.event}`, d.data)
         }
       }
     }
@@ -27,15 +30,15 @@ export default class WsClient extends WsWrapper {
     }
   }
 
-  onSocket(tag: string | string[], callback: Function) {
+  onSocket(tag: string | string[], callback: CallbackFn) {
     this.addEventListener('socket', tag, callback)
   }
 
-  onMessage(tag: string | string[], callback: Function) {
+  onMessage(tag: string | string[], callback: CallbackFn) {
     this.addEventListener('message', tag, callback)
   }
 
-  addEventListener(type: string, tag: string | string[], callback: Function) {
+  addEventListener(type: string, tag: string | string[], callback: CallbackFn) {
     const tags = Array.isArray(tag) ? tag : [tag]
     this._on[type] = this._on[type] || {}
     for (const t of tags) {
@@ -50,7 +53,8 @@ export default class WsClient extends WsWrapper {
       if (d.event) {
         return { event: d.event, data: d.data || null }
       }
-    } catch {
+    } catch (e) {
+      log.info(e)
     }
     return { event: null, data: null }
   }
@@ -62,7 +66,7 @@ export default class WsClient extends WsWrapper {
       return
     }
 
-    log(`ws dispatch ${type} ${tag}`)
+    log.log(`ws dispatch ${type} ${tag}`)
     for (const callback of callbacks) {
       callback(...args)
     }

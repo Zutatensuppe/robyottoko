@@ -1,9 +1,10 @@
-import fn, { findIdxFuzzy, logger } from '../../fn'
+import fn, { findIdxFuzzy } from '../../fn'
+import { logger } from '../../common/fn'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
 import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
-import { ChatMessageContext, PlaylistItem, RawCommand, TwitchChatClient, TwitchChatContext, RewardRedemptionContext, FunctionCommand, Command, GlobalVariable, Bot } from '../../types'
+import { ChatMessageContext, PlaylistItem, RawCommand, TwitchChatClient, TwitchChatContext, RewardRedemptionContext, FunctionCommand, Command, GlobalVariable, Bot, CommandFunction, Module } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
@@ -152,7 +153,7 @@ const default_commands = (list: any = null) => {
   ]
 }
 
-class SongrequestModule {
+class SongrequestModule implements Module {
   public name = 'sr'
   public variables: Variables
 
@@ -168,7 +169,7 @@ class SongrequestModule {
     bot: Bot,
     user: User,
     variables: Variables,
-    clientManager: TwitchClientManager,
+    _clientManager: TwitchClientManager,
     storage: ModuleStorage,
   ) {
     this.variables = variables
@@ -223,7 +224,7 @@ class SongrequestModule {
   }
 
   initCommands(rawCommands: Command[]): FunctionCommand[] {
-    const map: Record<string, Function> = {
+    const map: Record<string, CommandFunction> = {
       sr_current: this.cmdSrCurrent,
       sr_undo: this.cmdSrUndo,
       sr_good: this.cmdSrGood,
@@ -251,7 +252,7 @@ class SongrequestModule {
       sr_preset: this.cmdSrPreset,
     }
     const commands: FunctionCommand[] = []
-    rawCommands.forEach((cmd: any) => {
+    rawCommands.forEach((cmd: Command) => {
       if (cmd.triggers.length === 0 || !map[cmd.action]) {
         return
       }
@@ -342,7 +343,7 @@ class SongrequestModule {
       'conn': (ws: Socket) => {
         this.updateClient('init', ws)
       },
-      'play': (ws: Socket, { id }: { id: number }) => {
+      'play': (_ws: Socket, { id }: { id: number }) => {
         const idx = this.data.playlist.findIndex(item => item.id === id)
         if (idx < 0) {
           return
@@ -357,7 +358,7 @@ class SongrequestModule {
         this.save()
         this.updateClients('playIdx')
       },
-      'ended': (ws: Socket) => {
+      'ended': (_ws: Socket) => {
         const item = this.data.playlist.shift()
         if (item) {
           this.data.playlist.push(item)
@@ -365,7 +366,7 @@ class SongrequestModule {
         this.save()
         this.updateClients('onEnded')
       },
-      'save': (ws: Socket, data: { commands: any[], settings: any }) => {
+      'save': (_ws: Socket, data: { commands: any[], settings: any }) => {
         this.data.commands = data.commands
         this.data.settings = data.settings
         this.save()
@@ -374,7 +375,7 @@ class SongrequestModule {
         this.commands = initData.commands
         this.updateClients('save')
       },
-      'ctrl': (ws: Socket, { ctrl, args }: { ctrl: string, args: any[] }) => {
+      'ctrl': (_ws: Socket, { ctrl, args }: { ctrl: string, args: any[] }) => {
         switch (ctrl) {
           case 'volume': this.volume(...args as [number]); break;
           case 'pause': this.pause(); break;
@@ -809,7 +810,7 @@ class SongrequestModule {
     client: TwitchChatClient | null,
     target: string | null,
     context: TwitchChatContext | null,
-    msg: string | null,
+    _msg: string | null,
   ) {
     if (!client || !command || !context) {
       return
@@ -829,7 +830,7 @@ class SongrequestModule {
     client: TwitchChatClient | null,
     target: string | null,
     context: TwitchChatContext | null,
-    msg: string | null,
+    _msg: string | null,
   ) {
     if (!client || !command || !context) {
       return
@@ -848,7 +849,7 @@ class SongrequestModule {
     client: TwitchChatClient | null,
     target: string | null,
     context: TwitchChatContext | null,
-    msg: string | null,
+    _msg: string | null,
   ) {
     if (!client || !command || !context) {
       return
@@ -871,21 +872,21 @@ class SongrequestModule {
   }
 
   async cmdSrGood(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-    msg: string | null,
+    _command: RawCommand | null,
+    _client: TwitchChatClient | null,
+    _target: string | null,
+    _context: TwitchChatContext | null,
+    _msg: string | null,
   ) {
     this.like()
   }
 
   async cmdSrBad(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-    msg: string | null,
+    _command: RawCommand | null,
+    _client: TwitchChatClient | null,
+    _target: string | null,
+    _context: TwitchChatContext | null,
+    _msg: string | null,
   ) {
     this.dislike()
   }
@@ -895,7 +896,7 @@ class SongrequestModule {
     client: TwitchChatClient | null,
     target: string | null,
     context: TwitchChatContext | null,
-    msg: string | null,
+    _msg: string | null,
   ) {
     if (!client || !command || !context) {
       return
@@ -918,81 +919,81 @@ class SongrequestModule {
   }
 
   async cmdSrPrev(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-    msg: string | null,
+    _command: RawCommand | null,
+    _client: TwitchChatClient | null,
+    _target: string | null,
+    _context: TwitchChatContext | null,
+    _msg: string | null,
   ) {
     this.prev()
   }
 
   async cmdSrNext(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-    msg: string | null,
+    _command: RawCommand | null,
+    _client: TwitchChatClient | null,
+    _target: string | null,
+    _context: TwitchChatContext | null,
+    _msg: string | null,
   ) {
     this.next()
   }
 
   async cmdSrJumpToNew(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-    msg: string | null,
+    _command: RawCommand | null,
+    _client: TwitchChatClient | null,
+    _target: string | null,
+    _context: TwitchChatContext | null,
+    _msg: string | null,
   ) {
     this.jumptonew()
   }
 
   async cmdSrClear(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-    msg: string | null,
+    _command: RawCommand | null,
+    _client: TwitchChatClient | null,
+    _target: string | null,
+    _context: TwitchChatContext | null,
+    _msg: string | null,
   ) {
     this.clear()
   }
 
   async cmdSrRm(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-    msg: string | null,
+    _command: RawCommand | null,
+    _client: TwitchChatClient | null,
+    _target: string | null,
+    _context: TwitchChatContext | null,
+    _msg: string | null,
   ) {
     this.remove()
   }
 
   async cmdSrShuffle(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-    msg: string | null,
+    _command: RawCommand | null,
+    _client: TwitchChatClient | null,
+    _target: string | null,
+    _context: TwitchChatContext | null,
+    _msg: string | null,
   ) {
     this.shuffle()
   }
 
   async cmdSrResetStats(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-    msg: string | null,
+    _command: RawCommand | null,
+    _client: TwitchChatClient | null,
+    _target: string | null,
+    _context: TwitchChatContext | null,
+    _msg: string | null,
   ) {
     this.resetStats()
   }
 
   async cmdSrLoop(
-    command: RawCommand | null,
+    _command: RawCommand | null,
     client: TwitchChatClient | null,
     target: string | null,
-    context: TwitchChatContext | null,
-    msg: string | null,
+    _context: TwitchChatContext | null,
+    _msg: string | null,
   ) {
     if (!client) {
       return
@@ -1003,11 +1004,11 @@ class SongrequestModule {
   }
 
   async cmdSrNoloop(
-    command: RawCommand | null,
+    _command: RawCommand | null,
     client: TwitchChatClient | null,
     target: string | null,
-    context: TwitchChatContext | null,
-    msg: string | null,
+    _context: TwitchChatContext | null,
+    _msg: string | null,
   ) {
     if (!client) {
       return
@@ -1021,8 +1022,8 @@ class SongrequestModule {
     command: RawCommand | null,
     client: TwitchChatClient | null,
     target: string | null,
-    context: TwitchChatContext | null,
-    msg: string | null,
+    _context: TwitchChatContext | null,
+    _msg: string | null,
   ) {
     if (!client || !command) {
       return
@@ -1040,8 +1041,8 @@ class SongrequestModule {
     command: RawCommand | null,
     client: TwitchChatClient | null,
     target: string | null,
-    context: TwitchChatContext | null,
-    msg: string | null,
+    _context: TwitchChatContext | null,
+    _msg: string | null,
   ) {
     if (!client || !command) {
       return
@@ -1056,21 +1057,21 @@ class SongrequestModule {
   }
 
   async cmdSrPause(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-    msg: string | null,
+    _command: RawCommand | null,
+    _client: TwitchChatClient | null,
+    _target: string | null,
+    _context: TwitchChatContext | null,
+    _msg: string | null,
   ) {
     this.pause()
   }
 
   async cmdSrUnpause(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-    msg: string | null,
+    _command: RawCommand | null,
+    _client: TwitchChatClient | null,
+    _target: string | null,
+    _context: TwitchChatContext | null,
+    _msg: string | null,
   ) {
     this.unpause()
   }
@@ -1079,8 +1080,8 @@ class SongrequestModule {
     command: RawCommand | null,
     client: TwitchChatClient | null,
     target: string | null,
-    context: TwitchChatContext | null,
-    msg: string | null,
+    _context: TwitchChatContext | null,
+    _msg: string | null,
   ) {
     if (!client || !command) {
       return
@@ -1096,11 +1097,11 @@ class SongrequestModule {
   }
 
   async cmdSrHidevideo(
-    command: RawCommand | null,
+    _command: RawCommand | null,
     client: TwitchChatClient | null,
     target: string | null,
-    context: TwitchChatContext | null,
-    msg: string | null,
+    _context: TwitchChatContext | null,
+    _msg: string | null,
   ) {
     if (!client) {
       return
@@ -1111,11 +1112,11 @@ class SongrequestModule {
   }
 
   async cmdSrShowvideo(
-    command: RawCommand | null,
+    _command: RawCommand | null,
     client: TwitchChatClient | null,
     target: string | null,
-    context: TwitchChatContext | null,
-    msg: string | null,
+    _context: TwitchChatContext | null,
+    _msg: string | null,
   ) {
     if (!client) {
       return
@@ -1130,7 +1131,7 @@ class SongrequestModule {
     client: TwitchChatClient | null,
     target: string | null,
     context: TwitchChatContext | null,
-    msg: string | null,
+    _msg: string | null,
   ) {
     if (!client || !command || !context) {
       return
@@ -1151,7 +1152,7 @@ class SongrequestModule {
     client: TwitchChatClient | null,
     target: string | null,
     context: TwitchChatContext | null,
-    msg: string | null,
+    _msg: string | null,
   ) {
     if (!client || !command || !context) {
       return
@@ -1182,7 +1183,7 @@ class SongrequestModule {
     client: TwitchChatClient | null,
     target: string | null,
     context: TwitchChatContext | null,
-    msg: string | null,
+    _msg: string | null,
   ) {
     if (!client || !command || !context) {
       return
@@ -1201,7 +1202,7 @@ class SongrequestModule {
   }
 
   async loadYoutubeData(youtubeId: string): Promise<YoutubeVideosResponseDataEntry> {
-    let key = `youtubeData_${youtubeId}_20210717_2`
+    const key = `youtubeData_${youtubeId}_20210717_2`
     let d = this.cache.get(key)
     if (!d) {
       d = await Youtube.fetchDataByYoutubeId(youtubeId)
@@ -1310,10 +1311,12 @@ class SongrequestModule {
     return this.commands
   }
 
-  async onChatMsg(chatMessageContext: ChatMessageContext) {
+  async onChatMsg(_chatMessageContext: ChatMessageContext) {
+    // pass
   }
 
-  async onRewardRedemption(RewardRedemptionContext: RewardRedemptionContext) {
+  async onRewardRedemption(_RewardRedemptionContext: RewardRedemptionContext) {
+    // pass
   }
 }
 

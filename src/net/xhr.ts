@@ -7,7 +7,7 @@ export type QueryArgsData = Record<string, string | number>
 export function withHeaders(headers: Record<string, string>, opts: RequestInit = {}) {
   const options = opts || {}
   options.headers = (options.headers || {}) as Record<string, string>
-  for (let k in headers) {
+  for (const k in headers) {
     options.headers[k] = headers[k]
   }
   return options
@@ -22,7 +22,7 @@ export function asJson(data: any): RequestInit {
 
 export function asQueryArgs(data: QueryArgsData) {
   const q = []
-  for (let k in data) {
+  for (const k in data) {
     const pair = [k, data[k]].map(encodeURIComponent)
     q.push(pair.join('='))
   }

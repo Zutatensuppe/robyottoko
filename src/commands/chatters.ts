@@ -1,7 +1,8 @@
 import Db from '../Db'
 import TwitchHelixClient from '../services/TwitchHelixClient'
 import { CommandFunction, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
-import fn, { logger } from './../fn'
+import fn from './../fn'
+import { logger } from './../common/fn'
 
 const log = logger('chatters.ts')
 

@@ -1,10 +1,11 @@
-import fn, { logger } from '../../fn'
+import fn from '../../fn'
+import { logger } from '../../common/fn'
 import fs from 'fs'
 import WebServer from '../../WebServer'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Tokens from '../../services/Tokens'
 import Variables from '../../services/Variables'
-import { Bot, ChatMessageContext, DrawcastSettings, RewardRedemptionContext } from '../../types'
+import { Bot, ChatMessageContext, DrawcastSettings, Module, RewardRedemptionContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import { User } from '../../services/Users'
 import TwitchClientManager from '../../net/TwitchClientManager'
@@ -23,7 +24,7 @@ export interface DrawcastSaveEventData {
   settings: DrawcastSettings
 }
 
-class DrawcastModule {
+class DrawcastModule implements Module {
   public name = 'drawcast'
   public variables: Variables
 
@@ -64,7 +65,7 @@ class DrawcastModule {
     bot: Bot,
     user: User,
     variables: Variables,
-    clientManager: TwitchClientManager,
+    _clientManager: TwitchClientManager,
     storage: ModuleStorage,
   ) {
     this.variables = variables
@@ -215,10 +216,12 @@ class DrawcastModule {
     return []
   }
 
-  async onChatMsg(chatMessageContext: ChatMessageContext) {
+  async onChatMsg(_chatMessageContext: ChatMessageContext) {
+    // pass
   }
 
-  async onRewardRedemption(RewardRedemptionContext: RewardRedemptionContext) {
+  async onRewardRedemption(_RewardRedemptionContext: RewardRedemptionContext) {
+    // pass
   }
 }
 

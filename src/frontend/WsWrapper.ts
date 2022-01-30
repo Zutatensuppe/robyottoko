@@ -1,5 +1,9 @@
+import { logger } from "../common/fn"
+
 const CODE_GOING_AWAY = 1001
 const CODE_CUSTOM_DISCONNECT = 4000
+
+const log = logger('WsWrapper.ts')
 
 /**
  * Wrapper around ws that
@@ -20,9 +24,15 @@ export default class WsWrapper {
 
   protocols: string
 
-  public onopen: (e: any) => void = () => { }
-  public onclose: (e: any) => void = () => { }
-  public onmessage: (e: any) => void = () => { }
+  public onopen: (e: Event) => void = () => {
+    // pass
+  }
+  public onclose: (e: CloseEvent) => void = () => {
+    // pass
+  }
+  public onmessage: (e: MessageEvent<any>) => void = () => {
+    // pass
+  }
 
   constructor(addr: string, protocols: string) {
     this.addr = addr
@@ -38,7 +48,7 @@ export default class WsWrapper {
   }
 
   connect() {
-    let ws = new WebSocket(this.addr, this.protocols)
+    const ws = new WebSocket(this.addr, this.protocols)
     ws.onopen = (e) => {
       if (this.reconnectTimeout) {
         clearTimeout(this.reconnectTimeout)
@@ -58,7 +68,10 @@ export default class WsWrapper {
     }
     ws.onclose = (e) => {
       this.handle = null
-      if (e.code === CODE_CUSTOM_DISCONNECT || e.code === CODE_GOING_AWAY) {
+      if (e.code === CODE_CUSTOM_DISCONNECT) {
+        log.info('custom disconnect, will not reconnect')
+      } else if (e.code === CODE_GOING_AWAY) {
+        log.info('going away, will not reconnect')
       } else {
         this.reconnectTimeout = setTimeout(() => { this.connect() }, 1000)
       }

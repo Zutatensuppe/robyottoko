@@ -2,16 +2,14 @@
 import tmi from 'tmi.js'
 import TwitchHelixClient from '../services/TwitchHelixClient'
 import fn from '../fn'
+import { logger, Logger } from '../common/fn'
 import Db from '../Db'
 import TwitchChannels, { TwitchChannel, TwitchChannelWithAccessToken } from '../services/TwitchChannels'
-import { fileURLToPath } from 'url'
 import { User } from '../services/Users'
 import ModuleManager from '../mod/ModuleManager'
 import { RawCommand, RewardRedemptionContext, TwitchChannelPointsEventMessage, TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
 import TwitchPubSubClient from '../services/TwitchPubSubClient'
-import { getUniqueCommandsByTrigger, newRewardRedemptionTrigger, newTrigger } from '../util'
-
-const __filename = fileURLToPath(import.meta.url)
+import { getUniqueCommandsByTrigger, newRewardRedemptionTrigger } from '../util'
 
 interface Identity {
   username: string
@@ -36,6 +34,8 @@ class TwitchClientManager {
   // channel_id => [] list of auth tokens that are bad
   private badAuthTokens: Record<string, string[]> = {}
 
+  private log: Logger
+
   constructor(
     cfg: TwitchConfig,
     db: Db,
@@ -46,6 +46,7 @@ class TwitchClientManager {
     this.cfg = cfg
     this.db = db
     this.user = user
+    this.log = logger('TwitchClientManager.ts', `${user.name}|`)
     this.twitchChannelRepo = twitchChannelRepo
     this.moduleManager = moduleManager
   }
@@ -60,7 +61,7 @@ class TwitchClientManager {
   }
 
   _addBadAuthToken(channelIds: string[], authToken: string) {
-    for (let channelId of channelIds) {
+    for (const channelId of channelIds) {
       if (!this.badAuthTokens[channelId]) {
         this.badAuthTokens[channelId] = []
       }
@@ -92,14 +93,14 @@ class TwitchClientManager {
     const twitchChannelRepo = this.twitchChannelRepo
     const moduleManager = this.moduleManager
 
-    const log = fn.logger(__filename, `${user.name}|`)
+    this.log = logger('TwitchClientManager.ts', `${user.name}|`)
 
     await this._disconnectChatClient()
     this._disconnectPubSubClient()
 
     const twitchChannels = twitchChannelRepo.allByUserId(user.id)
     if (twitchChannels.length === 0) {
-      log.info(`* No twitch channels configured at all`)
+      this.log.info(`* No twitch channels configured at all`)
       return
     }
 
@@ -148,7 +149,7 @@ class TwitchClientManager {
       if (fn.isBroadcaster(context)) {
         roles.push('B')
       }
-      log.info(`${context.username}[${roles.join('')}]@${target}: ${msg}`)
+      this.log.info(`${context.username}[${roles.join('')}]@${target}: ${msg}`)
 
       db.insert('chat_log', {
         created_at: `${new Date().toJSON()}`,
@@ -189,8 +190,8 @@ class TwitchClientManager {
 
     // Called every time the bot connects to Twitch chat
     chatClient.on('connected', (addr: string, port: number) => {
-      log.info(`* Connected to ${addr}:${port}`)
-      for (let channel of twitchChannels) {
+      this.log.info(`* Connected to ${addr}:${port}`)
+      for (const channel of twitchChannels) {
         if (!channel.bot_status_messages) {
           continue;
         }
@@ -221,10 +222,10 @@ class TwitchClientManager {
 
     // connect to PubSub websocket only when required
     // https://dev.twitch.tv/docs/pubsub#topics
-    log.info(`Initializing PubSub`)
+    this.log.info(`Initializing PubSub`)
     const pubsubChannels = this.determineRelevantPubSubChannels(twitchChannels)
     if (pubsubChannels.length === 0) {
-      log.info(`* No twitch channels configured with access_token and channel_id set`)
+      this.log.info(`* No twitch channels configured with access_token and channel_id set`)
     } else {
       this.pubSubClient = new TwitchPubSubClient()
       this.pubSubClient.on('open', async () => {
@@ -235,13 +236,13 @@ class TwitchClientManager {
         // listen for evts
         const pubsubChannels = this.determineRelevantPubSubChannels(twitchChannels)
         if (pubsubChannels.length === 0) {
-          log.info(`* No twitch channels configured with a valid access_token`)
+          this.log.info(`* No twitch channels configured with a valid access_token`)
           this._disconnectPubSubClient()
           return
         }
 
-        for (let channel of pubsubChannels) {
-          log.info(`${channel.channel_name} listen for channel point redemptions`)
+        for (const channel of pubsubChannels) {
+          this.log.info(`${channel.channel_name} listen for channel point redemptions`)
           this.pubSubClient.listen(
             `channel-points-channel-v1.${channel.channel_id}`,
             channel.access_token
@@ -259,7 +260,7 @@ class TwitchClientManager {
             // then disconnect, because we dont need the pubsub to be active
             const pubsubChannels = this.determineRelevantPubSubChannels(twitchChannels)
             if (pubsubChannels.length === 0) {
-              log.info(`* No twitch channels configured with a valid access_token`)
+              this.log.info(`* No twitch channels configured with a valid access_token`)
               this._disconnectPubSubClient()
               return
             }
@@ -275,7 +276,7 @@ class TwitchClientManager {
           }
 
           const redemptionMessage: TwitchChannelPointsEventMessage = messageData
-          log.debug(redemptionMessage.data.redemption)
+          this.log.debug(redemptionMessage.data.redemption)
           const redemption = redemptionMessage.data.redemption
 
           const twitchChannel = db.get('twitch_channel', { channel_id: redemption.channel_id })
@@ -339,7 +340,9 @@ class TwitchClientManager {
       try {
         await this.chatClient.disconnect()
         this.chatClient = null
-      } catch (e) { }
+      } catch (e) {
+        this.log.info(e)
+      }
     }
   }
 
@@ -349,7 +352,9 @@ class TwitchClientManager {
         this.pubSubClient.disconnect()
         this.pubSubClient = null
       }
-    } catch (e) { }
+    } catch (e) {
+      this.log.info(e)
+    }
     this._resetBadAuthTokens()
   }
 

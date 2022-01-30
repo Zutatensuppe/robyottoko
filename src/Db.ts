@@ -1,6 +1,6 @@
 import fs from 'fs'
 import bsqlite, { Database } from 'better-sqlite3'
-import { logger } from './fn'
+import { logger } from './common/fn'
 import { DbConfig } from './types'
 
 const log = logger('Db.ts')
@@ -8,6 +8,7 @@ const log = logger('Db.ts')
 export type Data = Record<string, any>
 export type Where = Record<string, any>
 export type OrderBy = Record<string, -1 | 1>[]
+type Params = any[]
 
 class Db {
   private conf: DbConfig
@@ -138,15 +139,15 @@ class Db {
     return sorts.length > 0 ? ' ORDER BY ' + sorts.join(', ') : ''
   }
 
-  _get(query: string, params: any[] = []) {
+  _get(query: string, params: Params = []) {
     return this.dbh.prepare(query).get(...params)
   }
 
-  run(query: string, params: any[] = []) {
+  run(query: string, params: Params = []) {
     return this.dbh.prepare(query).run(...params)
   }
 
-  _getMany(query: string, params: any[] = []) {
+  _getMany(query: string, params: Params = []) {
     return this.dbh.prepare(query).all(...params)
   }
 

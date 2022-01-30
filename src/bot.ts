@@ -5,7 +5,7 @@ import WebSocketServer from './net/WebSocketServer'
 import WebServer from './WebServer'
 import TwitchClientManager from './net/TwitchClientManager'
 import ModuleStorage from './mod/ModuleStorage'
-import { logger } from './fn'
+import { logger, setLogLevel } from './common/fn'
 import Users, { User } from './services/Users'
 import Tokens from './services/Tokens'
 import TwitchChannels from './services/TwitchChannels'
@@ -21,10 +21,10 @@ import SpeechToTextModule from './mod/modules/SpeechToTextModule'
 import DrawcastModule from './mod/modules/DrawcastModule'
 import AvatarModule from './mod/modules/AvatarModule'
 
-import { fileURLToPath } from 'url'
 import { Bot } from './types'
 
-const __filename = fileURLToPath(import.meta.url)
+setLogLevel(config.log.level)
+const log = logger('bot.ts')
 
 const modules = [
   GeneralModule,
@@ -119,7 +119,6 @@ const run = async () => {
 
 run()
 
-const log = logger(__filename)
 const gracefulShutdown = (signal: 'SIGUSR2' | 'SIGINT' | 'SIGTERM') => {
   log.info(`${signal} received...`)
 

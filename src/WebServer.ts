@@ -9,6 +9,7 @@ import Templates from './services/Templates'
 import http from 'http'
 import Db from './Db'
 import fn from './fn'
+import { logger } from './common/fn'
 import Tokens from './services/Tokens'
 import TwitchHelixClient from './services/TwitchHelixClient'
 import Users, { CreateUser, User } from './services/Users'
@@ -24,7 +25,7 @@ import EventHub from './EventHub'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-const log = fn.logger(__filename)
+const log = logger('WebServer.ts')
 
 const widgetTemplate = (widget: string) => {
   if (process.env.WIDGET_DUMMY) {
@@ -111,7 +112,7 @@ class WebServer {
     const app = express()
 
     const templates = new Templates(__dirname)
-    for (let widget of widgets) {
+    for (const widget of widgets) {
       await templates.add(widgetTemplate(widget))
     }
     await templates.add('templates/twitch_redirect_uri.html')

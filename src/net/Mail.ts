@@ -1,9 +1,12 @@
 // @ts-ignore
 import SibApiV3Sdk from 'sib-api-v3-sdk'
-import fn from '../fn';
+import { logger } from '../common/fn';
 import { MailConfig, MailServicePasswordResetData, MailServiceRegistrationData } from '../types';
 
-const log = fn.logger('Mail.ts')
+const log = logger('Mail.ts')
+
+type TransacEmailError = any
+type TransacEmailResponseData = any
 
 class Mail {
   private apiInstance: SibApiV3Sdk.TransactionalEmailsApi
@@ -60,9 +63,9 @@ class Mail {
   }
 
   send(mail: SibApiV3Sdk.SendSmtpEmail) {
-    this.apiInstance.sendTransacEmail(mail).then(function (data: any) {
+    this.apiInstance.sendTransacEmail(mail).then(function (data: TransacEmailResponseData) {
       log.info('API called successfully. Returned data: ' + JSON.stringify(data))
-    }, function (error: any) {
+    }, function (error: TransacEmailError) {
       log.error(error)
     });
   }

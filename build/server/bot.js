@@ -1,8 +1,8 @@
 import fs, { readFileSync, promises } from 'fs';
 import crypto from 'crypto';
-import path, { dirname } from 'path';
 import fetch from 'node-fetch';
 import WebSocket from 'ws';
+import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import express from 'express';
@@ -23,7 +23,7 @@ const config = init();
 function withHeaders(headers, opts = {}) {
     const options = opts || {};
     options.headers = (options.headers || {});
-    for (let k in headers) {
+    for (const k in headers) {
         options.headers[k] = headers[k];
     }
     return options;
@@ -36,7 +36,7 @@ function asJson(data) {
 }
 function asQueryArgs(data) {
     const q = [];
-    for (let k in data) {
+    for (const k in data) {
         const pair = [k, data[k]].map(encodeURIComponent);
         q.push(pair.join('='));
     }
@@ -75,6 +75,56 @@ const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 const MONTH = 30 * DAY;
 const YEAR = 365 * DAY;
+// error | info | log | debug
+let logEnabled = []; // always log errors
+const setLogLevel = (logLevel) => {
+    switch (logLevel) {
+        case 'error':
+            logEnabled = ['error'];
+            break;
+        case 'info':
+            logEnabled = ['error', 'info'];
+            break;
+        case 'log':
+            logEnabled = ['error', 'info', 'log'];
+            break;
+        case 'debug':
+            logEnabled = ['error', 'info', 'log', 'debug'];
+            break;
+    }
+};
+setLogLevel('info');
+const logger = (filename, ...pre) => {
+    const b = filename;
+    const fn = (t) => (...args) => {
+        if (logEnabled.includes(t)) {
+            console[t](dateformat('hh:mm:ss', new Date()), `[${b}]`, ...pre, ...args);
+        }
+    };
+    return {
+        log: fn('log'),
+        info: fn('info'),
+        debug: fn('debug'),
+        error: fn('error'),
+    };
+};
+const dateformat = (format, date) => {
+    return format.replace(/(hh|mm|ss)/g, (m0, m1) => {
+        switch (m1) {
+            case 'hh': return pad(date.getHours(), '00');
+            case 'mm': return pad(date.getMinutes(), '00');
+            case 'ss': return pad(date.getSeconds(), '00');
+            default: return m0;
+        }
+    });
+};
+const pad = (x, pad) => {
+    const str = `${x}`;
+    if (str.length >= pad.length) {
+        return str;
+    }
+    return pad.substr(0, pad.length - str.length) + str;
+};
 const mustParseHumanDuration = (duration) => {
     if (duration === '') {
         throw new Error("unable to parse duration");
@@ -133,7 +183,7 @@ const parseHumanDuration = (duration) => {
 };
 function arrayMove(arr, oldIndex, newIndex) {
     if (newIndex >= arr.length) {
-        var k = newIndex - arr.length + 1;
+        let k = newIndex - arr.length + 1;
         while (k--) {
             arr.push(undefined);
         }
@@ -170,38 +220,7 @@ const shuffle = (array) => {
     return array;
 };
 
-// error | info | log | debug
-const logLevel = config?.log?.level || 'info';
-let logEnabled = []; // always log errors
-switch (logLevel) {
-    case 'error':
-        logEnabled = ['error'];
-        break;
-    case 'info':
-        logEnabled = ['error', 'info'];
-        break;
-    case 'log':
-        logEnabled = ['error', 'info', 'log'];
-        break;
-    case 'debug':
-        logEnabled = ['error', 'info', 'log', 'debug'];
-        break;
-}
-const logger = (filename, ...pre) => {
-    const b = path.basename(filename);
-    const fn = (t) => (...args) => {
-        if (logEnabled.includes(t)) {
-            console[t](dateformat('hh:mm:ss', new Date()), `[${b}]`, ...pre, ...args);
-        }
-    };
-    return {
-        log: fn('log'),
-        info: fn('info'),
-        debug: fn('debug'),
-        error: fn('error'),
-    };
-};
-const log$a = logger('fn.ts');
+const log$b = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
         return mime.replace('image/', '');
@@ -209,7 +228,7 @@ function mimeToExt(mime) {
     return '';
 }
 function decodeBase64Image(base64Str) {
-    const matches = base64Str.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    const matches = base64Str.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
     if (!matches || matches.length !== 3) {
         throw new Error('Invalid base64 string');
     }
@@ -252,8 +271,10 @@ const sayFn = (client, target) => (msg) => {
         // TODO: fix this somewhere else?
         // client can only say things in lowercase channels
         t = t.toLowerCase();
-        log$a.info(`saying in ${t}: ${msg}`);
-        client.say(t, msg).catch((e) => { });
+        log$b.info(`saying in ${t}: ${msg}`);
+        client.say(t, msg).catch((e) => {
+            log$b.info(e);
+        });
     });
 };
 const mayExecute = (context, cmd) => {
@@ -339,14 +360,14 @@ const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, client, target,
         if (!mayExecute(context, cmdDef)) {
             continue;
         }
-        log$a.info(`${target}| * Executing ${rawCmd.name} command`);
+        log$b.info(`${target}| * Executing ${rawCmd.name} command`);
         const p = new Promise(async (resolve) => {
             await applyVariableChanges(cmdDef, contextModule, rawCmd, context);
             const r = await cmdDef.fn(rawCmd, client, target, context, msg);
             if (r) {
-                log$a.info(`${target}| * Returned: ${r}`);
+                log$b.info(`${target}| * Returned: ${r}`);
             }
-            log$a.info(`${target}| * Executed ${rawCmd.name} command`);
+            log$b.info(`${target}| * Executed ${rawCmd.name} command`);
             resolve(true);
         });
         promises.push(p);
@@ -360,8 +381,11 @@ async function replaceAsync(str, regex, asyncFn) {
         promises.push(promise);
         return match;
     });
+    if (!promises.length) {
+        return str;
+    }
     const data = await Promise.all(promises);
-    return str.replace(regex, () => data.shift());
+    return str.replace(regex, () => data.shift() || '');
 }
 const doReplacements = async (text, command, context, variables, originalCmd) => {
     const replaces = [
@@ -422,20 +446,20 @@ const doReplacements = async (text, command, context, variables, originalCmd) =>
             },
         },
         {
-            regex: /\$customapi\(([^$\)]*)\)\[\'([A-Za-z0-9_ -]+)\'\]/g,
+            regex: /\$customapi\(([^$)]*)\)\['([A-Za-z0-9_ -]+)'\]/g,
             replacer: async (m0, m1, m2) => {
                 const txt = await getText(await doReplacements(m1, command, context, variables, originalCmd));
                 return JSON.parse(txt)[m2];
             },
         },
         {
-            regex: /\$customapi\(([^$\)]*)\)/g,
+            regex: /\$customapi\(([^$)]*)\)/g,
             replacer: async (m0, m1) => {
                 return await getText(await doReplacements(m1, command, context, variables, originalCmd));
             },
         },
         {
-            regex: /\$urlencode\(([^$\)]*)\)/g,
+            regex: /\$urlencode\(([^$)]*)\)/g,
             replacer: async (m0, m1) => {
                 return encodeURIComponent(await doReplacements(m1, command, context, variables, originalCmd));
             },
@@ -447,13 +471,13 @@ const doReplacements = async (text, command, context, variables, originalCmd) =>
                 const arg2Int = parseInt(arg2, 10);
                 switch (op) {
                     case '+':
-                        return arg1Int + arg2Int;
+                        return `${(arg1Int + arg2Int)}`;
                     case '-':
-                        return arg1Int - arg2Int;
+                        return `${(arg1Int - arg2Int)}`;
                     case '/':
-                        return arg1Int / arg2Int;
+                        return `${(arg1Int / arg2Int)}`;
                     case '*':
-                        return arg1Int * arg2Int;
+                        return `${(arg1Int * arg2Int)}`;
                 }
                 return '';
             },
@@ -463,7 +487,7 @@ const doReplacements = async (text, command, context, variables, originalCmd) =>
     let orig;
     do {
         orig = replaced;
-        for (let replace of replaces) {
+        for (const replace of replaces) {
             replaced = await replaceAsync(replaced, replace.regex, replace.replacer);
         }
     } while (orig !== replaced);
@@ -483,23 +507,6 @@ const joinIntoChunks = (strings, glue, maxChunkLen) => {
     }
     chunks.push(chunk.join(glue));
     return chunks;
-};
-const dateformat = (format, date) => {
-    return format.replace(/(hh|mm|ss)/g, (m0, m1) => {
-        switch (m1) {
-            case 'hh': return pad(date.getHours(), '00');
-            case 'mm': return pad(date.getMinutes(), '00');
-            case 'ss': return pad(date.getSeconds(), '00');
-            default: return m0;
-        }
-    });
-};
-const pad = (x, pad) => {
-    const str = `${x}`;
-    if (str.length >= pad.length) {
-        return str;
-    }
-    return pad.substr(0, pad.length - str.length) + str;
 };
 const parseISO8601Duration = (duration) => {
     // P(n)Y(n)M(n)DT(n)H(n)M(n)S
@@ -609,7 +616,6 @@ var fn = {
     shuffle,
     sleep,
     fnRandom,
-    pad,
     parseISO8601Duration,
     parseHumanDuration,
     mustParseHumanDuration,
@@ -733,7 +739,7 @@ class ModuleManager {
     }
 }
 
-const log$9 = logger("WebSocketServer.ts");
+const log$a = logger("WebSocketServer.ts");
 class WebSocketServer {
     constructor(moduleManager, config, auth) {
         this.moduleManager = moduleManager;
@@ -751,14 +757,14 @@ class WebSocketServer {
             const token = socket.protocol;
             const tokenInfo = this.auth.wsTokenFromProtocol(token);
             if (!tokenInfo) {
-                log$9.info('not found token: ', token);
+                log$a.info('not found token: ', token);
                 socket.close();
                 return;
             }
             socket.user_id = tokenInfo.user_id;
             const pathname = new URL(this.connectstring()).pathname;
             if (request.url?.indexOf(pathname) !== 0) {
-                log$9.info('bad request url: ', request.url);
+                log$a.info('bad request url: ', request.url);
                 socket.close();
                 return;
             }
@@ -776,7 +782,7 @@ class WebSocketServer {
                 const evts = module.getWsEvents();
                 if (evts) {
                     socket.on('message', (data) => {
-                        log$9.info(`ws|${socket.user_id}| `, data);
+                        log$a.info(`ws|${socket.user_id}| `, data);
                         const unknownData = data;
                         const d = JSON.parse(unknownData);
                         if (!d.event) {
@@ -801,7 +807,9 @@ class WebSocketServer {
                     return socket.terminate();
                 }
                 socket.isAlive = false;
-                socket.ping(() => { });
+                socket.ping(() => {
+                    // pass
+                });
             });
         }, 30 * SECOND);
         this._websocketserver.on('close', () => {
@@ -816,13 +824,13 @@ class WebSocketServer {
             && socket.user_id
             && user_ids.includes(socket.user_id)
             && socket.module === moduleName) {
-            log$9.info(`notifying ${socket.user_id} (${data.event})`);
+            log$a.info(`notifying ${socket.user_id} (${data.event})`);
             socket.send(JSON.stringify(data));
         }
     }
     notifyAll(user_ids, moduleName, data) {
         if (!this._websocketserver) {
-            log$9.error(`tried to notifyAll, but _websocketserver is null`);
+            log$a.error(`tried to notifyAll, but _websocketserver is null`);
             return;
         }
         this._websocketserver.clients.forEach((socket) => {
@@ -853,7 +861,7 @@ class Templates {
     }
 }
 
-const log$8 = logger('TwitchHelixClient.ts');
+const log$9 = logger('TwitchHelixClient.ts');
 const API_BASE = 'https://api.twitch.tv/helix';
 class TwitchHelixClient {
     constructor(clientId, clientSecret) {
@@ -889,7 +897,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$8.error(json);
+            log$9.error(json);
             return null;
         }
     }
@@ -959,9 +967,9 @@ class Variables {
     }
 }
 
-const __filename$2 = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename$2);
-const log$7 = fn.logger(__filename$2);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const log$8 = logger('WebServer.ts');
 const widgetTemplate = (widget) => {
     if (process.env.WIDGET_DUMMY) {
         return process.env.WIDGET_DUMMY;
@@ -1016,7 +1024,7 @@ class WebServer {
         const hostname = this.hostname;
         const app = express();
         const templates = new Templates(__dirname);
-        for (let widget of widgets) {
+        for (const widget of widgets) {
             await templates.add(widgetTemplate(widget));
         }
         await templates.add('templates/twitch_redirect_uri.html');
@@ -1047,8 +1055,8 @@ class WebServer {
             hmac.update(msg);
             const expected = `sha256=${hmac.digest('hex')}`;
             if (req.headers['twitch-eventsub-message-signature'] !== expected) {
-                log$7.debug(req);
-                log$7.error('bad message signature', {
+                log$8.debug(req);
+                log$8.error('bad message signature', {
                     got: req.headers['twitch-eventsub-message-signature'],
                     expected,
                 });
@@ -1277,7 +1285,7 @@ class WebServer {
                     this.eventHub.trigger('user_registration_complete', user);
                 }
                 else {
-                    log$7.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`);
+                    log$8.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`);
                 }
                 return;
             }
@@ -1350,7 +1358,7 @@ class WebServer {
                 this.eventHub.trigger('user_changed', changedUser);
             }
             else {
-                log$7.error(`save-settings: user doesn't exist after saving it: ${user.id}`);
+                log$8.error(`save-settings: user doesn't exist after saving it: ${user.id}`);
             }
             res.send();
         });
@@ -1388,16 +1396,16 @@ class WebServer {
             }
         });
         app.post('/twitch/event-sub/', express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
-            log$7.debug(req.body);
-            log$7.debug(req.headers);
+            log$8.debug(req.body);
+            log$8.debug(req.headers);
             if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-                log$7.info(`got verification request, challenge: ${req.body.challenge}`);
+                log$8.info(`got verification request, challenge: ${req.body.challenge}`);
                 res.write(req.body.challenge);
                 res.send();
                 return;
             }
             if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-                log$7.info(`got notification request: ${req.body.subscription.type}`);
+                log$8.info(`got notification request: ${req.body.subscription.type}`);
                 if (req.body.subscription.type === 'stream.online') {
                     // insert new stream
                     this.db.insert('streams', {
@@ -1435,7 +1443,7 @@ class WebServer {
         app.post('/api/upload', requireLoginApi, (req, res) => {
             upload(req, res, (err) => {
                 if (err) {
-                    log$7.error(err);
+                    log$8.error(err);
                     res.status(400).send("Something went wrong!");
                 }
                 res.send(req.file);
@@ -1450,7 +1458,7 @@ class WebServer {
                 return;
             }
             const type = req.params.widget_type;
-            log$7.debug(`/widget/:widget_type/:widget_token/`, type, token);
+            log$8.debug(`/widget/:widget_type/:widget_token/`, type, token);
             if (widgets.includes(type)) {
                 res.send(templates.render(widgetTemplate(type), {
                     wsUrl: this.wss.connectstring(),
@@ -1481,7 +1489,7 @@ class WebServer {
             const indexFile = `${__dirname}/../../build/public/index.html`;
             res.sendFile(path.resolve(indexFile));
         });
-        this.handle = app.listen(port, hostname, () => log$7.info(`server running on http://${hostname}:${port}`));
+        this.handle = app.listen(port, hostname, () => log$8.info(`server running on http://${hostname}:${port}`));
     }
     close() {
         if (this.handle) {
@@ -1512,7 +1520,7 @@ const CODE_GOING_AWAY = 1001;
 const CODE_CUSTOM_DISCONNECT = 4000;
 const heartbeatInterval = 60 * SECOND; //ms between PING's
 const reconnectInterval = 3 * SECOND; //ms to wait before reconnect
-const log$6 = logger('TwitchPubSubClient.ts');
+const log$7 = logger('TwitchPubSubClient.ts');
 const PUBSUB_WS_ADDR = 'wss://pubsub-edge.twitch.tv';
 class TwitchPubSubClient {
     constructor() {
@@ -1558,12 +1566,12 @@ class TwitchPubSubClient {
     }
     connect() {
         this.handle = new WebSocket(PUBSUB_WS_ADDR);
-        this.handle.onopen = (e) => {
+        this.handle.onopen = (_e) => {
             if (!this.handle) {
                 return;
             }
             if (this.handle.readyState !== WebSocket.OPEN) {
-                log$6.error('ERR', `readyState is not OPEN (${WebSocket.OPEN})`);
+                log$7.error('ERR', `readyState is not OPEN (${WebSocket.OPEN})`);
                 return;
             }
             if (this.reconnectTimeout) {
@@ -1573,7 +1581,7 @@ class TwitchPubSubClient {
             while (this.sendBuffer.length > 0) {
                 this.handle.send(this.sendBuffer.shift());
             }
-            log$6.info('INFO', 'Socket Opened');
+            log$7.info('INFO', 'Socket Opened');
             this._heartbeat();
             if (this.heartbeatHandle) {
                 clearInterval(this.heartbeatHandle);
@@ -1591,13 +1599,13 @@ class TwitchPubSubClient {
             }
             // log.debug('RECV', JSON.stringify(message))
             if (message.type === 'RECONNECT') {
-                log$6.info('INFO', 'Reconnecting...');
+                log$7.info('INFO', 'Reconnecting...');
                 this.connect();
             }
             this.evts.trigger('message', message);
         };
         this.handle.onerror = (e) => {
-            log$6.error('ERR', e);
+            log$7.error('ERR', e);
             this.handle = null;
             this.reconnectTimeout = setTimeout(() => { this.connect(); }, reconnectInterval);
         };
@@ -1605,7 +1613,7 @@ class TwitchPubSubClient {
             this.handle = null;
             if (e.code === CODE_CUSTOM_DISCONNECT || e.code === CODE_GOING_AWAY) ;
             else {
-                log$6.info('INFO', 'Onclose...');
+                log$7.info('INFO', 'Onclose...');
                 this.reconnectTimeout = setTimeout(() => { this.connect(); }, reconnectInterval);
             }
             if (this.heartbeatHandle) {
@@ -1968,7 +1976,6 @@ const getUniqueCommandsByTrigger = (commands, trigger) => {
 };
 
 // @ts-ignore
-const __filename$1 = fileURLToPath(import.meta.url);
 class TwitchClientManager {
     constructor(cfg, db, user, twitchChannelRepo, moduleManager) {
         this.chatClient = null;
@@ -1981,6 +1988,7 @@ class TwitchClientManager {
         this.cfg = cfg;
         this.db = db;
         this.user = user;
+        this.log = logger('TwitchClientManager.ts', `${user.name}|`);
         this.twitchChannelRepo = twitchChannelRepo;
         this.moduleManager = moduleManager;
     }
@@ -1992,7 +2000,7 @@ class TwitchClientManager {
         this.badAuthTokens = {};
     }
     _addBadAuthToken(channelIds, authToken) {
-        for (let channelId of channelIds) {
+        for (const channelId of channelIds) {
             if (!this.badAuthTokens[channelId]) {
                 this.badAuthTokens[channelId] = [];
             }
@@ -2018,12 +2026,12 @@ class TwitchClientManager {
         const user = this.user;
         const twitchChannelRepo = this.twitchChannelRepo;
         const moduleManager = this.moduleManager;
-        const log = fn.logger(__filename$1, `${user.name}|`);
+        this.log = logger('TwitchClientManager.ts', `${user.name}|`);
         await this._disconnectChatClient();
         this._disconnectPubSubClient();
         const twitchChannels = twitchChannelRepo.allByUserId(user.id);
         if (twitchChannels.length === 0) {
-            log.info(`* No twitch channels configured at all`);
+            this.log.info(`* No twitch channels configured at all`);
             return;
         }
         const identity = (user.tmi_identity_username
@@ -2068,7 +2076,7 @@ class TwitchClientManager {
             if (fn.isBroadcaster(context)) {
                 roles.push('B');
             }
-            log.info(`${context.username}[${roles.join('')}]@${target}: ${msg}`);
+            this.log.info(`${context.username}[${roles.join('')}]@${target}: ${msg}`);
             db.insert('chat_log', {
                 created_at: `${new Date().toJSON()}`,
                 broadcaster_user_id: context['room-id'],
@@ -2106,8 +2114,8 @@ class TwitchClientManager {
         });
         // Called every time the bot connects to Twitch chat
         chatClient.on('connected', (addr, port) => {
-            log.info(`* Connected to ${addr}:${port}`);
-            for (let channel of twitchChannels) {
+            this.log.info(`* Connected to ${addr}:${port}`);
+            for (const channel of twitchChannels) {
                 if (!channel.bot_status_messages) {
                     continue;
                 }
@@ -2134,10 +2142,10 @@ class TwitchClientManager {
         this.helixClient = helixClient;
         // connect to PubSub websocket only when required
         // https://dev.twitch.tv/docs/pubsub#topics
-        log.info(`Initializing PubSub`);
+        this.log.info(`Initializing PubSub`);
         const pubsubChannels = this.determineRelevantPubSubChannels(twitchChannels);
         if (pubsubChannels.length === 0) {
-            log.info(`* No twitch channels configured with access_token and channel_id set`);
+            this.log.info(`* No twitch channels configured with access_token and channel_id set`);
         }
         else {
             this.pubSubClient = new TwitchPubSubClient();
@@ -2148,12 +2156,12 @@ class TwitchClientManager {
                 // listen for evts
                 const pubsubChannels = this.determineRelevantPubSubChannels(twitchChannels);
                 if (pubsubChannels.length === 0) {
-                    log.info(`* No twitch channels configured with a valid access_token`);
+                    this.log.info(`* No twitch channels configured with a valid access_token`);
                     this._disconnectPubSubClient();
                     return;
                 }
-                for (let channel of pubsubChannels) {
-                    log.info(`${channel.channel_name} listen for channel point redemptions`);
+                for (const channel of pubsubChannels) {
+                    this.log.info(`${channel.channel_name} listen for channel point redemptions`);
                     this.pubSubClient.listen(`channel-points-channel-v1.${channel.channel_id}`, channel.access_token);
                 }
                 // TODO: change any type
@@ -2166,7 +2174,7 @@ class TwitchClientManager {
                         // then disconnect, because we dont need the pubsub to be active
                         const pubsubChannels = this.determineRelevantPubSubChannels(twitchChannels);
                         if (pubsubChannels.length === 0) {
-                            log.info(`* No twitch channels configured with a valid access_token`);
+                            this.log.info(`* No twitch channels configured with a valid access_token`);
                             this._disconnectPubSubClient();
                             return;
                         }
@@ -2181,7 +2189,7 @@ class TwitchClientManager {
                         return;
                     }
                     const redemptionMessage = messageData;
-                    log.debug(redemptionMessage.data.redemption);
+                    this.log.debug(redemptionMessage.data.redemption);
                     const redemption = redemptionMessage.data.redemption;
                     const twitchChannel = db.get('twitch_channel', { channel_id: redemption.channel_id });
                     if (!twitchChannel) {
@@ -2239,7 +2247,9 @@ class TwitchClientManager {
                 await this.chatClient.disconnect();
                 this.chatClient = null;
             }
-            catch (e) { }
+            catch (e) {
+                this.log.info(e);
+            }
         }
     }
     _disconnectPubSubClient() {
@@ -2249,7 +2259,9 @@ class TwitchClientManager {
                 this.pubSubClient = null;
             }
         }
-        catch (e) { }
+        catch (e) {
+            this.log.info(e);
+        }
         this._resetBadAuthTokens();
     }
     getChatClient() {
@@ -2263,7 +2275,7 @@ class TwitchClientManager {
     }
 }
 
-const log$5 = logger('ModuleStorage.ts');
+const log$6 = logger('ModuleStorage.ts');
 const TABLE$4 = 'module';
 class ModuleStorage {
     constructor(db, userId) {
@@ -2278,7 +2290,7 @@ class ModuleStorage {
             return data ? Object.assign({}, def, data) : def;
         }
         catch (e) {
-            log$5.error(e);
+            log$6.error(e);
             return def;
         }
     }
@@ -2404,7 +2416,7 @@ class Cache {
     }
 }
 
-const log$4 = logger('Db.ts');
+const log$5 = logger('Db.ts');
 class Db {
     constructor(dbConf) {
         this.conf = dbConf;
@@ -2422,7 +2434,7 @@ class Db {
         for (const f of files) {
             if (patches.includes(f)) {
                 if (verbose) {
-                    log$4.info(`➡ skipping already applied db patch: ${f}`);
+                    log$5.info(`➡ skipping already applied db patch: ${f}`);
                 }
                 continue;
             }
@@ -2432,16 +2444,16 @@ class Db {
                 this.dbh.transaction((all) => {
                     for (const q of all) {
                         if (verbose) {
-                            log$4.info(`Running: ${q}`);
+                            log$5.info(`Running: ${q}`);
                         }
                         this.run(q);
                     }
                     this.insert('db_patches', { id: f });
                 })(all);
-                log$4.info(`✓ applied db patch: ${f}`);
+                log$5.info(`✓ applied db patch: ${f}`);
             }
             catch (e) {
-                log$4.error(`✖ unable to apply patch: ${f} ${e}`);
+                log$5.error(`✖ unable to apply patch: ${f} ${e}`);
                 return;
             }
         }
@@ -2579,7 +2591,7 @@ class Db {
 }
 
 // @ts-ignore
-const log$3 = fn.logger('Mail.ts');
+const log$4 = logger('Mail.ts');
 class Mail {
     constructor(cfg) {
         const defaultClient = SibApiV3Sdk.ApiClient.instance;
@@ -2631,14 +2643,14 @@ class Mail {
     }
     send(mail) {
         this.apiInstance.sendTransacEmail(mail).then(function (data) {
-            log$3.info('API called successfully. Returned data: ' + JSON.stringify(data));
+            log$4.info('API called successfully. Returned data: ' + JSON.stringify(data));
         }, function (error) {
-            log$3.error(error);
+            log$4.error(error);
         });
     }
 }
 
-const log$2 = fn.logger('countdown.ts');
+const log$3 = logger('countdown.ts');
 const countdown = (variables, wss, userId, originalCmd) => async (command, client, target, context, msg) => {
     if (!client) {
         return;
@@ -2698,7 +2710,7 @@ const countdown = (variables, wss, userId, originalCmd) => async (command, clien
                 duration = (await parseDuration(`${a.value}`)) || 0;
             }
             catch (e) {
-                log$2.error(e.message, a.value);
+                log$3.error(e.message, a.value);
                 return;
             }
             actions.push(async () => await fn.sleep(duration));
@@ -2766,13 +2778,13 @@ const playMedia = (wss, userId, originalCmd) => (command, client, target, contex
     });
 };
 
-const log$1 = logger('chatters.ts');
+const log$2 = logger('chatters.ts');
 const chatters = (db, helixClient) => async (command, client, target, context, msg) => {
     if (!client || !context || !helixClient) {
-        log$1.info('client', client);
-        log$1.info('context', context);
-        log$1.info('helixClient', helixClient);
-        log$1.info('unable to execute chattes command, client, context or helixClient missing');
+        log$2.info('client', client);
+        log$2.info('context', context);
+        log$2.info('helixClient', helixClient);
+        log$2.info('unable to execute chattes command, client, context or helixClient missing');
         return;
     }
     const say = fn.sayFn(client, target);
@@ -2835,7 +2847,7 @@ const extractInfo = (text) => {
         const m = text.match(regex);
         return m ? stringToArray(m[1]) : [];
     };
-    const m = text.match(/<link rel="canonical" href="https:\/\/[^\.]+\.dict\.cc\/\?s=([^"]+)">/);
+    const m = text.match(/<link rel="canonical" href="https:\/\/[^.]+\.dict\.cc\/\?s=([^"]+)">/);
     const words = m ? decodeURIComponent(m[1]).split('+') : [];
     if (!words.length) {
         return { words, arr1: [], arr2: [] };
@@ -2848,7 +2860,7 @@ const extractInfo = (text) => {
 };
 const parseResult = (text) => {
     const normalize = (str) => {
-        return str.toLowerCase().replace(/[\.\!\?]/, '');
+        return str.toLowerCase().replace(/[.!?]/, '');
     };
     const info = extractInfo(text);
     const matchedWords = info.words;
@@ -2877,7 +2889,7 @@ const parseResult = (text) => {
         searchWords = [matchedSentence];
     }
     else {
-        for (let matchedWord of matchedWords) {
+        for (const matchedWord of matchedWords) {
             if (arr1.includes(matchedWord)) {
                 fromArr = fromArrSearch = arr1;
                 toArr = arr2;
@@ -2890,7 +2902,7 @@ const parseResult = (text) => {
         searchWords = matchedWords;
     }
     const results = [];
-    for (let i in fromArr) {
+    for (const i in fromArr) {
         if (!fromArrSearch[i]) {
             continue;
         }
@@ -2938,7 +2950,7 @@ const jishoOrgLookup = async (phrase) => {
 const LANG_TO_FN = {
     ja: jishoOrgLookup,
 };
-for (let key of Object.keys(DictCc.LANG_TO_URL_MAP)) {
+for (const key of Object.keys(DictCc.LANG_TO_URL_MAP)) {
     LANG_TO_FN[key] = (phrase) => DictCc.searchWord(phrase, key);
 }
 const dictLookup = (lang, phrase, variables, originalCmd) => async (command, client, target, context, msg) => {
@@ -2962,12 +2974,11 @@ const dictLookup = (lang, phrase, variables, originalCmd) => async (command, cli
         say(`Sorry, I didn't find anything for "${tmpPhrase}" in language "${tmpLang}"`);
         return;
     }
-    for (let item of items) {
+    for (const item of items) {
         say(`Phrase "${item.from}": ${item.to.join(", ")}`);
     }
 };
 
-fn.logger('GeneralModule.ts');
 class GeneralModule {
     constructor(bot, user, variables, clientManager, storage) {
         this.name = 'general';
@@ -3078,6 +3089,7 @@ class GeneralModule {
                     cmdObj = Object.assign({}, cmd, {
                         fn: Array.isArray(cmd.data.text)
                             ? randomText(this.variables, cmd)
+                            // @ts-ignore
                             : text(this.variables, cmd)
                     });
                     break;
@@ -3183,7 +3195,7 @@ class GeneralModule {
         this.data.settings.volume = parseInt(`${vol}`, 10);
         this.saveSettings();
     }
-    async mediaVolumeCmd(command, client, target, context, msg) {
+    async mediaVolumeCmd(command, client, target, _context, _msg) {
         if (!client || !command) {
             return;
         }
@@ -3199,15 +3211,17 @@ class GeneralModule {
     getCommands() {
         return this.commands;
     }
-    async onChatMsg(chatMessageContext) {
+    async onChatMsg(_chatMessageContext) {
         this.timers.forEach(t => {
             t.lines++;
         });
     }
-    async onRewardRedemption(RewardRedemptionContext) {
+    async onRewardRedemption(_RewardRedemptionContext) {
+        // pass
     }
 }
 
+const log$1 = logger('Youtube.ts');
 const get = async (url, args) => {
     args.key = config.modules.sr.google.api_key;
     return await getJson(url + asQueryArgs(args));
@@ -3257,6 +3271,7 @@ const getYoutubeIdBySearch = async (searchterm) => {
             }
         }
         catch (e) {
+            log$1.info(e);
         }
     }
     return null;
@@ -3269,7 +3284,6 @@ var Youtube = {
     getUrlById,
 };
 
-logger('SongrequestModule.ts');
 const ADD_TYPE = {
     NOT_ADDED: 0,
     ADDED: 1,
@@ -3352,7 +3366,7 @@ const default_commands = (list = null) => {
     ];
 };
 class SongrequestModule {
-    constructor(bot, user, variables, clientManager, storage) {
+    constructor(bot, user, variables, _clientManager, storage) {
         this.name = 'sr';
         this.variables = variables;
         this.user = user;
@@ -3511,7 +3525,7 @@ class SongrequestModule {
             'conn': (ws) => {
                 this.updateClient('init', ws);
             },
-            'play': (ws, { id }) => {
+            'play': (_ws, { id }) => {
                 const idx = this.data.playlist.findIndex(item => item.id === id);
                 if (idx < 0) {
                     return;
@@ -3522,7 +3536,7 @@ class SongrequestModule {
                 this.save();
                 this.updateClients('playIdx');
             },
-            'ended': (ws) => {
+            'ended': (_ws) => {
                 const item = this.data.playlist.shift();
                 if (item) {
                     this.data.playlist.push(item);
@@ -3530,7 +3544,7 @@ class SongrequestModule {
                 this.save();
                 this.updateClients('onEnded');
             },
-            'save': (ws, data) => {
+            'save': (_ws, data) => {
                 this.data.commands = data.commands;
                 this.data.settings = data.settings;
                 this.save();
@@ -3539,7 +3553,7 @@ class SongrequestModule {
                 this.commands = initData.commands;
                 this.updateClients('save');
             },
-            'ctrl': (ws, { ctrl, args }) => {
+            'ctrl': (_ws, { ctrl, args }) => {
                 switch (ctrl) {
                     case 'volume':
                         this.volume(...args);
@@ -3975,7 +3989,7 @@ class SongrequestModule {
             return `Could not process that song request`;
         }
     }
-    async cmdSrCurrent(command, client, target, context, msg) {
+    async cmdSrCurrent(command, client, target, context, _msg) {
         if (!client || !command || !context) {
             return;
         }
@@ -3988,7 +4002,7 @@ class SongrequestModule {
         // todo: error handling, title output etc..
         say(`Currently playing: ${cur.title} (${Youtube.getUrlById(cur.yt)}, ${cur.plays}x plays, requested by ${cur.user})`);
     }
-    async cmdSrUndo(command, client, target, context, msg) {
+    async cmdSrUndo(command, client, target, context, _msg) {
         if (!client || !command || !context) {
             return;
         }
@@ -4001,7 +4015,7 @@ class SongrequestModule {
             say(`Removed "${undid.title}" from the playlist!`);
         }
     }
-    async cmdResr(command, client, target, context, msg) {
+    async cmdResr(command, client, target, context, _msg) {
         if (!client || !command || !context) {
             return;
         }
@@ -4019,13 +4033,13 @@ class SongrequestModule {
             say(`Song not found in playlist`);
         }
     }
-    async cmdSrGood(command, client, target, context, msg) {
+    async cmdSrGood(_command, _client, _target, _context, _msg) {
         this.like();
     }
-    async cmdSrBad(command, client, target, context, msg) {
+    async cmdSrBad(_command, _client, _target, _context, _msg) {
         this.dislike();
     }
-    async cmdSrStats(command, client, target, context, msg) {
+    async cmdSrStats(command, client, target, context, _msg) {
         if (!client || !command || !context) {
             return;
         }
@@ -4044,28 +4058,28 @@ class SongrequestModule {
         const durationStr = `The total duration of the playlist is ${stats.duration.human}.`;
         say([countStr, durationStr].join(' '));
     }
-    async cmdSrPrev(command, client, target, context, msg) {
+    async cmdSrPrev(_command, _client, _target, _context, _msg) {
         this.prev();
     }
-    async cmdSrNext(command, client, target, context, msg) {
+    async cmdSrNext(_command, _client, _target, _context, _msg) {
         this.next();
     }
-    async cmdSrJumpToNew(command, client, target, context, msg) {
+    async cmdSrJumpToNew(_command, _client, _target, _context, _msg) {
         this.jumptonew();
     }
-    async cmdSrClear(command, client, target, context, msg) {
+    async cmdSrClear(_command, _client, _target, _context, _msg) {
         this.clear();
     }
-    async cmdSrRm(command, client, target, context, msg) {
+    async cmdSrRm(_command, _client, _target, _context, _msg) {
         this.remove();
     }
-    async cmdSrShuffle(command, client, target, context, msg) {
+    async cmdSrShuffle(_command, _client, _target, _context, _msg) {
         this.shuffle();
     }
-    async cmdSrResetStats(command, client, target, context, msg) {
+    async cmdSrResetStats(_command, _client, _target, _context, _msg) {
         this.resetStats();
     }
-    async cmdSrLoop(command, client, target, context, msg) {
+    async cmdSrLoop(_command, client, target, _context, _msg) {
         if (!client) {
             return;
         }
@@ -4073,7 +4087,7 @@ class SongrequestModule {
         this.loop();
         say('Now looping the current song');
     }
-    async cmdSrNoloop(command, client, target, context, msg) {
+    async cmdSrNoloop(_command, client, target, _context, _msg) {
         if (!client) {
             return;
         }
@@ -4081,7 +4095,7 @@ class SongrequestModule {
         this.noloop();
         say('Stopped looping the current song');
     }
-    async cmdSrAddTag(command, client, target, context, msg) {
+    async cmdSrAddTag(command, client, target, _context, _msg) {
         if (!client || !command) {
             return;
         }
@@ -4093,7 +4107,7 @@ class SongrequestModule {
         this.addTag(tag);
         say(`Added tag "${tag}"`);
     }
-    async cmdSrRmTag(command, client, target, context, msg) {
+    async cmdSrRmTag(command, client, target, _context, _msg) {
         if (!client || !command) {
             return;
         }
@@ -4105,13 +4119,13 @@ class SongrequestModule {
         this.rmTag(tag);
         say(`Removed tag "${tag}"`);
     }
-    async cmdSrPause(command, client, target, context, msg) {
+    async cmdSrPause(_command, _client, _target, _context, _msg) {
         this.pause();
     }
-    async cmdSrUnpause(command, client, target, context, msg) {
+    async cmdSrUnpause(_command, _client, _target, _context, _msg) {
         this.unpause();
     }
-    async cmdSrVolume(command, client, target, context, msg) {
+    async cmdSrVolume(command, client, target, _context, _msg) {
         if (!client || !command) {
             return;
         }
@@ -4124,7 +4138,7 @@ class SongrequestModule {
             say(`New volume: ${this.data.settings.volume}`);
         }
     }
-    async cmdSrHidevideo(command, client, target, context, msg) {
+    async cmdSrHidevideo(_command, client, target, _context, _msg) {
         if (!client) {
             return;
         }
@@ -4132,7 +4146,7 @@ class SongrequestModule {
         this.videoVisibility(false);
         say(`Video is now hidden.`);
     }
-    async cmdSrShowvideo(command, client, target, context, msg) {
+    async cmdSrShowvideo(_command, client, target, _context, _msg) {
         if (!client) {
             return;
         }
@@ -4140,7 +4154,7 @@ class SongrequestModule {
         this.videoVisibility(true);
         say(`Video is now shown.`);
     }
-    async cmdSrFilter(command, client, target, context, msg) {
+    async cmdSrFilter(command, client, target, context, _msg) {
         if (!client || !command || !context) {
             return;
         }
@@ -4154,7 +4168,7 @@ class SongrequestModule {
             say(`Playing all songs`);
         }
     }
-    async cmdSrPreset(command, client, target, context, msg) {
+    async cmdSrPreset(command, client, target, context, _msg) {
         if (!client || !command || !context) {
             return;
         }
@@ -4180,7 +4194,7 @@ class SongrequestModule {
             this.updateClients('settings');
         }
     }
-    async cmdSr(command, client, target, context, msg) {
+    async cmdSr(command, client, target, context, _msg) {
         if (!client || !command || !context) {
             return;
         }
@@ -4194,7 +4208,7 @@ class SongrequestModule {
         say(await this.answerAddRequest(addType, idx));
     }
     async loadYoutubeData(youtubeId) {
-        let key = `youtubeData_${youtubeId}_20210717_2`;
+        const key = `youtubeData_${youtubeId}_20210717_2`;
         let d = this.cache.get(key);
         if (!d) {
             d = await Youtube.fetchDataByYoutubeId(youtubeId);
@@ -4286,9 +4300,11 @@ class SongrequestModule {
     getCommands() {
         return this.commands;
     }
-    async onChatMsg(chatMessageContext) {
+    async onChatMsg(_chatMessageContext) {
+        // pass
     }
-    async onRewardRedemption(RewardRedemptionContext) {
+    async onRewardRedemption(_RewardRedemptionContext) {
+        // pass
     }
 }
 
@@ -4299,7 +4315,7 @@ class VoteModule {
         this.storage = storage;
         this.data = this.reinit();
     }
-    async userChanged(user) {
+    async userChanged(_user) {
         // pass
     }
     reinit() {
@@ -4332,7 +4348,7 @@ class VoteModule {
         say(`Thanks ${context['display-name']}, registered your "${type}" vote: ${thing}`);
         this.save();
     }
-    async playCmd(command, client, target, context, msg) {
+    async playCmd(command, client, target, context, _msg) {
         if (!client || !command || !context || !target) {
             return;
         }
@@ -4345,7 +4361,7 @@ class VoteModule {
         const type = 'play';
         this.vote(type, thing, client, target, context);
     }
-    async voteCmd(command, client, target, context, msg) {
+    async voteCmd(command, client, target, context, _msg) {
         if (!client || !command || !context || !target) {
             return;
         }
@@ -4408,9 +4424,11 @@ class VoteModule {
             { triggers: [newCommandTrigger('!play')], fn: this.playCmd.bind(this) },
         ];
     }
-    async onChatMsg(chatMessageContext) {
+    async onChatMsg(_chatMessageContext) {
+        // pass
     }
-    async onRewardRedemption(RewardRedemptionContext) {
+    async onRewardRedemption(_RewardRedemptionContext) {
+        // pass
     }
 }
 
@@ -4526,15 +4544,16 @@ class SpeechToTextModule {
     getCommands() {
         return [];
     }
-    async onChatMsg(chatMessageContext) {
+    async onChatMsg(_chatMessageContext) {
+        // pass
     }
-    async onRewardRedemption(RewardRedemptionContext) {
+    async onRewardRedemption(_rewardRedemptionContext) {
+        // pass
     }
 }
 
-logger('DrawcastModule.ts');
 class DrawcastModule {
-    constructor(bot, user, variables, clientManager, storage) {
+    constructor(bot, user, variables, _clientManager, storage) {
         this.name = 'drawcast';
         this.defaultSettings = {
             submitButtonText: 'Submit',
@@ -4691,15 +4710,16 @@ class DrawcastModule {
     getCommands() {
         return [];
     }
-    async onChatMsg(chatMessageContext) {
+    async onChatMsg(_chatMessageContext) {
+        // pass
     }
-    async onRewardRedemption(RewardRedemptionContext) {
+    async onRewardRedemption(_RewardRedemptionContext) {
+        // pass
     }
 }
 
-logger('AvatarModule.ts');
 class AvatarModule {
-    constructor(bot, user, variables, clientManager, storage) {
+    constructor(bot, user, variables, _clientManager, storage) {
         this.name = 'avatar';
         this.defaultSettings = {
             styles: {
@@ -4731,15 +4751,15 @@ class AvatarModule {
             data.settings.styles.bgColor = this.defaultSettings.styles.bgColor;
         }
         // -start- fixes to old data structure
-        for (let avatarDef of data.settings.avatarDefinitions) {
+        for (const avatarDef of data.settings.avatarDefinitions) {
             if (typeof avatarDef.width === 'undefined') {
                 avatarDef.width = 64;
             }
             if (typeof avatarDef.height === 'undefined') {
                 avatarDef.height = 64;
             }
-            for (let slotDef of avatarDef.slotDefinitions) {
-                for (let item of slotDef.items) {
+            for (const slotDef of avatarDef.slotDefinitions) {
+                for (const _item of slotDef.items) {
                     // delete item.url
                     // item.states = item.animation
                     // delete item.animation
@@ -4773,13 +4793,13 @@ class AvatarModule {
             'conn': (ws) => {
                 this.updateClient(this.wsdata('init'), ws);
             },
-            'save': (ws, data) => {
+            'save': (_ws, data) => {
                 this.data.settings = data.settings;
                 this.storage.save(this.name, this.data);
                 this.data = this.reinit();
                 this.updateClients(this.wsdata('init'));
             },
-            'ctrl': (ws, data) => {
+            'ctrl': (_ws, data) => {
                 // just pass the ctrl on to the clients
                 this.updateClients({ event: 'ctrl', data });
             },
@@ -4788,13 +4808,16 @@ class AvatarModule {
     getCommands() {
         return [];
     }
-    async onChatMsg(chatMessageContext) {
+    async onChatMsg(_chatMessageContext) {
+        // pass
     }
-    async onRewardRedemption(RewardRedemptionContext) {
+    async onRewardRedemption(_RewardRedemptionContext) {
+        // pass
     }
 }
 
-const __filename = fileURLToPath(import.meta.url);
+setLogLevel(config.log.level);
+const log = logger('bot.ts');
 const modules = [
     GeneralModule,
     SongrequestModule,
@@ -4854,7 +4877,6 @@ const run = async () => {
     });
 };
 run();
-const log = logger(__filename);
 const gracefulShutdown = (signal) => {
     log.info(`${signal} received...`);
     log.info('shutting down webserver...');

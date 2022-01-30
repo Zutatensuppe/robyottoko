@@ -4,7 +4,7 @@ import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import { getText, asQueryArgs } from '../../net/xhr'
 import { User } from '../../services/Users'
 import Variables from '../../services/Variables'
-import { Bot, ChatMessageContext, RewardRedemptionContext } from '../../types'
+import { Bot, ChatMessageContext, Module, RewardRedemptionContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 
 export interface SpeechToTextModuleSettings {
@@ -81,7 +81,7 @@ export interface SpeechToTextSaveEventData {
 }
 
 
-class SpeechToTextModule {
+class SpeechToTextModule implements Module {
   public name = 'speech-to-text'
   public variables: Variables
 
@@ -165,8 +165,7 @@ class SpeechToTextModule {
   }
 
   widgets() {
-    return {
-    }
+    return {}
   }
 
   getRoutes() {
@@ -220,10 +219,12 @@ class SpeechToTextModule {
     return []
   }
 
-  async onChatMsg(chatMessageContext: ChatMessageContext) {
+  async onChatMsg(_chatMessageContext: ChatMessageContext) {
+    // pass
   }
 
-  async onRewardRedemption(RewardRedemptionContext: RewardRedemptionContext) {
+  async onRewardRedemption(_rewardRedemptionContext: RewardRedemptionContext) {
+    // pass
   }
 }
 
