@@ -93,6 +93,9 @@
             >
           </div>
           <div class="column">
+            <div>JSON:</div>
+            <textarea class="textarea mb-2" v-model="itemStr"></textarea>
+            <div>All images in use:</div>
             <div class="avatar-all-images" ref="allImagesDiv">
               <img
                 v-for="(img, idx) in allImages"
@@ -130,6 +133,7 @@ import {
 
 interface ComponentData {
   item: AvatarModuleAvatarDefinition | null;
+  itemStr: string;
   newState: string;
   newSlotDefinitionName: string;
 }
@@ -143,12 +147,14 @@ export default defineComponent({
   emits: ["update:modelValue", "cancel"],
   data: (): ComponentData => ({
     item: null,
+    itemStr: "null",
 
     newState: "",
     newSlotDefinitionName: "",
   }),
   mounted() {
-    this.item = JSON.parse(JSON.stringify(this.modelValue));
+    this.itemStr = JSON.stringify(this.modelValue);
+    this.item = JSON.parse(this.itemStr);
     this.adjustAllImagesDivSize();
     window.addEventListener("resize", this.adjustAllImagesDivSize);
   },
@@ -158,7 +164,26 @@ export default defineComponent({
   watch: {
     modelValue: {
       handler(v) {
-        this.item = JSON.parse(JSON.stringify(v));
+        this.item = JSON.parse(this.itemStr);
+      },
+    },
+    item: {
+      handler(v) {
+        this.itemStr = JSON.stringify(v);
+      },
+      deep: true,
+    },
+    itemStr: {
+      handler(v) {
+        const current = JSON.stringify(this.item);
+        try {
+          const updated = JSON.parse(v);
+          if (current !== updated) {
+            this.item = updated;
+          }
+        } catch (e) {
+          console.warn(e);
+        }
       },
     },
   },

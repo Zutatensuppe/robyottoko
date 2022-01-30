@@ -66,30 +66,49 @@ import { defineComponent } from "vue";
 import AvatarAnimation from "../../frontend/components/Avatar/AvatarAnimation.vue";
 import SoundMeter from "./soundmeter.js";
 import util from "../util";
+import WsClient from "../../frontend/WsClient";
+import {
+  AvatarModuleAvatarDefinition,
+  AvatarModuleAvatarSlotDefinition,
+  AvatarModuleSettings,
+  AvatarModuleWsInitData,
+} from "../../mod/modules/AvatarModule";
+import { logger } from "../../common/fn";
+
+const log = logger("Page.vue");
 
 const SPEAKING_THRESHOLD = 0.05;
 // in ff enable for usage with localhost (and no https):
 // media.devices.insecure.enabled
 // media.getusermedia.insecure.enabled
 
+interface ComponentData {
+  ws: null | WsClient;
+  speaking: boolean;
+  lockedState: string;
+  initialized: boolean;
+  audioInitialized: boolean;
+  tuber: {
+    slot: Record<string, any>;
+  };
+  tuberDef: null | AvatarModuleAvatarDefinition;
+  settings: null | AvatarModuleSettings;
+}
+
 export default defineComponent({
   components: {
     AvatarAnimation,
   },
-  data() {
+  data(): ComponentData {
     return {
       ws: null,
-
       speaking: false,
       lockedState: "default",
       initialized: false,
       audioInitialized: false,
-      tuber: {
-        slot: {},
-      },
+      tuber: { slot: {} },
       tuberDef: null,
       settings: null,
-      // tuberDefs: [ exampleTuberPara, exampleTuberHyottoko ],
     };
   },
   computed: {
@@ -100,42 +119,53 @@ export default defineComponent({
       return this.speaking ? "speaking" : "default";
     },
     animations() {
-      return this.tuberDef.slotDefinitions.map((slotDef) => {
-        const item = slotDef.items[this.tuber.slot[slotDef.slot]];
-        const stateDef = item.states.find(
-          ({ state }) => state === this.animationName
-        );
-        if (stateDef.frames.length > 0) {
-          return stateDef;
+      if (!this.tuberDef) {
+        return [];
+      }
+      return this.tuberDef.slotDefinitions.map(
+        (slotDef: AvatarModuleAvatarSlotDefinition) => {
+          const item = slotDef.items[this.tuber.slot[slotDef.slot]];
+          const stateDef = item.states.find(
+            ({ state }) => state === this.animationName
+          );
+          if (stateDef && stateDef.frames.length > 0) {
+            return stateDef;
+          }
+          return item.states.find(({ state }) => state === "default");
         }
-        return item.states.find(({ state }) => state === "default");
-      });
+      );
     },
   },
   methods: {
-    ctrl(ctrl, args) {
+    ctrl(ctrl: string, args: any[]) {
+      if (!this.ws) {
+        log.error("ctrl: this.ws not initialized");
+        return;
+      }
       this.ws.send(JSON.stringify({ event: "ctrl", data: { ctrl, args } }));
     },
-    setSlot(slotName, itemIdx) {
+    setSlot(slotName: string, itemIdx: number) {
       this.tuber.slot[slotName] = itemIdx;
       this.tuber.slot = Object.assign({}, this.tuber.slot);
       this.ctrl("setSlot", [slotName, itemIdx]);
     },
-    setSpeaking(speaking) {
+    setSpeaking(speaking: boolean) {
       if (this.speaking !== speaking) {
         this.speaking = speaking;
         this.ctrl("setSpeaking", [speaking]);
       }
     },
-    lockState(lockedState) {
+    lockState(lockedState: string) {
       if (this.lockedState !== lockedState) {
         this.lockedState = lockedState;
         this.ctrl("lockState", [lockedState]);
       }
     },
-    setTuber(tuber) {
+    setTuber(tuber: AvatarModuleAvatarDefinition) {
       this.tuber.slot = {};
-      this.tuberDef = JSON.parse(JSON.stringify(tuber));
+      this.tuberDef = JSON.parse(
+        JSON.stringify(tuber)
+      ) as AvatarModuleAvatarDefinition;
       this.tuberDef.slotDefinitions.forEach((slotDef) => {
         this.tuber.slot[slotDef.slot] = slotDef.defaultItemIndex;
       });
@@ -146,43 +176,43 @@ export default defineComponent({
         return;
       }
       this.audioInitialized = true;
-      if (!navigator.getUserMedia) {
-        navigator.getUserMedia =
-          navigator.getUserMedia ||
-          navigator.webkitGetUserMedia ||
-          navigator.mozGetUserMedia ||
-          navigator.msGetUserMedia;
-      }
-      if (!navigator.getUserMedia) {
-        alert("getUserMedia not supported in this browser.");
+      if (!navigator.mediaDevices.getUserMedia) {
+        alert(
+          "navigator.mediaDevices.getUserMedia not supported in this browser."
+        );
         return;
       }
 
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      const audioContext = new AudioContext();
+      const AudioContextClass =
+        window.AudioContext || window.webkitAudioContext;
+      const audioContext = new AudioContextClass();
       navigator.mediaDevices
         .getUserMedia({ audio: true })
         .then((stream) => {
           const soundMeter = new SoundMeter(audioContext);
           soundMeter.connectToSource(stream, (e) => {
             if (e) {
-              console.log(e);
+              log.error(e);
               return;
             }
             setInterval(() => {
               const threshold = this.speaking
                 ? SPEAKING_THRESHOLD / 2
                 : SPEAKING_THRESHOLD;
-              this.setSpeaking(soundMeter.instant.toFixed(2) > threshold);
+              this.setSpeaking(soundMeter.instant > threshold);
             }, 100);
           });
         })
         .catch((e) => {
-          console.log(e);
+          log.error(e);
           alert("Error capturing audio.");
         });
     },
     applyStyles() {
+      if (!this.settings) {
+        log.error("applyStyles: this.settings not initialized");
+        return;
+      }
       const styles = this.settings.styles;
 
       if (styles.bgColor != null) {
@@ -192,7 +222,7 @@ export default defineComponent({
   },
   mounted() {
     this.ws = util.wsClient("avatar");
-    this.ws.onMessage("init", (data) => {
+    this.ws.onMessage("init", (data: AvatarModuleWsInitData) => {
       this.settings = data.settings;
       this.$nextTick(() => {
         this.applyStyles();

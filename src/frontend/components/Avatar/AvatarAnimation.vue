@@ -49,14 +49,6 @@ export default defineComponent({
       idx: -1,
     };
   },
-  watch: {
-    frames: {
-      handler(newFrames, oldFrames) {
-        this.nextFrame();
-      },
-      deep: true,
-    },
-  },
   computed: {
     src(): string {
       if (this.idx >= 0 && this.idx < this.frames.length) {
@@ -86,6 +78,13 @@ export default defineComponent({
   },
   created() {
     this.nextFrame();
+    this.$watch(
+      "frames",
+      () => {
+        this.nextFrame();
+      },
+      { deep: true }
+    );
   },
   unmounted() {
     if (this.timeout) {
