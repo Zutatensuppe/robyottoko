@@ -1,5 +1,5 @@
 import Db from "../Db"
-import { GlobalVariable } from "../types"
+import { GlobalVariable, VariableValue } from "../types"
 
 const TABLE = 'variables'
 
@@ -15,7 +15,7 @@ class Variables {
     this.userId = userId
   }
 
-  set(name: string, value: any) {
+  set(name: string, value: VariableValue) {
     this.db.upsert(TABLE, {
       name,
       user_id: this.userId,
@@ -26,7 +26,7 @@ class Variables {
     })
   }
 
-  get(name: string): any {
+  get(name: string): VariableValue {
     const row = this.db.get(TABLE, { name, user_id: this.userId })
     return row ? JSON.parse(row.value) : null
   }

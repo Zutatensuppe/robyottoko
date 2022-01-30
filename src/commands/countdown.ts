@@ -2,8 +2,9 @@ import WebSocketServer from '../net/WebSocketServer'
 import Variables from '../services/Variables'
 import { CommandFunction, CountdownAction, CountdownCommand, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
 import fn from './../fn'
+import { logger } from './../common/fn'
 
-const log = fn.logger('countdown.ts')
+const log = logger('countdown.ts')
 
 const countdown = (
   variables: Variables,

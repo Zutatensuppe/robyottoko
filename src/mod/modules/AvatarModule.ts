@@ -1,7 +1,7 @@
-import { logger } from '../../fn'
+import { logger } from '../../common/fn'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Variables from '../../services/Variables'
-import { Bot, ChatMessageContext, RewardRedemptionContext } from '../../types'
+import { Bot, ChatMessageContext, Module, RewardRedemptionContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import { User } from '../../services/Users'
 import TwitchClientManager from '../../net/TwitchClientManager'
@@ -73,7 +73,17 @@ export interface AvatarModuleWsControlData {
 
 }
 
-class AvatarModule {
+interface WsModuleData {
+  event: string // this is always 'init' in this module
+  data: AvatarModuleData
+}
+
+interface WsControlData {
+  event: 'ctrl',
+  data: AvatarModuleWsControlData,
+}
+
+class AvatarModule implements Module {
   public name = 'avatar'
   public variables: Variables
 
@@ -94,7 +104,7 @@ class AvatarModule {
     bot: Bot,
     user: User,
     variables: Variables,
-    clientManager: TwitchClientManager,
+    _clientManager: TwitchClientManager,
     storage: ModuleStorage,
   ) {
     this.variables = variables
@@ -125,15 +135,15 @@ class AvatarModule {
     }
 
     // -start- fixes to old data structure
-    for (let avatarDef of data.settings.avatarDefinitions) {
+    for (const avatarDef of data.settings.avatarDefinitions) {
       if (typeof avatarDef.width === 'undefined') {
         avatarDef.width = 64
       }
       if (typeof avatarDef.height === 'undefined') {
         avatarDef.height = 64
       }
-      for (let slotDef of avatarDef.slotDefinitions) {
-        for (let item of slotDef.items) {
+      for (const slotDef of avatarDef.slotDefinitions) {
+        for (const _item of slotDef.items) {
           // delete item.url
           // item.states = item.animation
           // delete item.animation
@@ -157,16 +167,16 @@ class AvatarModule {
     return {}
   }
 
-  wsdata(event: string) {
-    const data = Object.assign({}, this.data, { defaultSettings: this.defaultSettings })
+  wsdata(event: string): WsModuleData {
+    const data: AvatarModuleData = Object.assign({}, this.data, { defaultSettings: this.defaultSettings })
     return { event, data }
   }
 
-  updateClient(data: Record<string, any>, ws: Socket) {
+  updateClient(data: WsModuleData, ws: Socket) {
     this.wss.notifyOne([this.user.id], this.name, data, ws)
   }
 
-  updateClients(data: Record<string, any>) {
+  updateClients(data: WsControlData | WsModuleData) {
     this.wss.notifyAll([this.user.id], this.name, data)
   }
 
@@ -175,13 +185,13 @@ class AvatarModule {
       'conn': (ws: Socket) => {
         this.updateClient(this.wsdata('init'), ws)
       },
-      'save': (ws: Socket, data: AvatarModuleWsSaveData) => {
+      'save': (_ws: Socket, data: AvatarModuleWsSaveData) => {
         this.data.settings = data.settings
         this.storage.save(this.name, this.data)
         this.data = this.reinit()
         this.updateClients(this.wsdata('init'))
       },
-      'ctrl': (ws: Socket, data: AvatarModuleWsControlData) => {
+      'ctrl': (_ws: Socket, data: AvatarModuleWsControlData) => {
         // just pass the ctrl on to the clients
         this.updateClients({ event: 'ctrl', data })
       },
@@ -192,10 +202,12 @@ class AvatarModule {
     return []
   }
 
-  async onChatMsg(chatMessageContext: ChatMessageContext) {
+  async onChatMsg(_chatMessageContext: ChatMessageContext) {
+    // pass
   }
 
-  async onRewardRedemption(RewardRedemptionContext: RewardRedemptionContext) {
+  async onRewardRedemption(_RewardRedemptionContext: RewardRedemptionContext) {
+    // pass
   }
 }
 

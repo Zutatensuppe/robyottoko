@@ -1,5 +1,5 @@
 import { RequestInit } from 'node-fetch'
-import { logger } from '../fn'
+import { logger } from '../common/fn'
 import { postJson, getJson, asJson, withHeaders, asQueryArgs, requestText } from '../net/xhr'
 
 const log = logger('TwitchHelixClient.ts')

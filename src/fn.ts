@@ -1,38 +1,12 @@
 import config from './config'
 import crypto from 'crypto'
-import path from 'path'
 import { getText } from './net/xhr'
-import { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove } from './common/fn'
+import { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove, logger } from './common/fn'
 
-import { Command, GlobalVariable, LogLevel, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module, CommandTrigger } from './types'
+import { Command, GlobalVariable, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module, CommandTrigger } from './types'
 import Variables from './services/Variables'
 
 export { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove }
-
-
-// error | info | log | debug
-const logLevel: LogLevel = config?.log?.level || 'info'
-let logEnabled: LogLevel[] = [] // always log errors
-switch (logLevel) {
-  case 'error': logEnabled = ['error']; break
-  case 'info': logEnabled = ['error', 'info']; break
-  case 'log': logEnabled = ['error', 'info', 'log']; break
-  case 'debug': logEnabled = ['error', 'info', 'log', 'debug']; break
-}
-export const logger = (filename: string, ...pre: string[]) => {
-  const b = path.basename(filename)
-  const fn = (t: LogLevel) => (...args: any[]) => {
-    if (logEnabled.includes(t)) {
-      console[t](dateformat('hh:mm:ss', new Date()), `[${b}]`, ...pre, ...args)
-    }
-  }
-  return {
-    log: fn('log'),
-    info: fn('info'),
-    debug: fn('debug'),
-    error: fn('error'),
-  }
-}
 
 const log = logger('fn.ts')
 
@@ -44,7 +18,7 @@ function mimeToExt(mime: string) {
 }
 
 function decodeBase64Image(base64Str: string) {
-  const matches = base64Str.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/)
+  const matches = base64Str.match(/^data:([A-Za-z-+/]+);base64,(.+)$/)
   if (!matches || matches.length !== 3) {
     throw new Error('Invalid base64 string')
   }
@@ -60,7 +34,7 @@ function getRandomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function getRandom(array: any[]) {
+function getRandom<T>(array: T[]): T {
   return array[getRandomInt(0, array.length - 1)]
 }
 
@@ -73,7 +47,7 @@ export function nonce(length: number) {
   return text
 }
 
-const fnRandom = (values: any[]) => () => getRandom(values)
+const fnRandom = <T>(values: T[]) => (): T => getRandom(values)
 
 const sleep = (ms: number) => {
   return new Promise((resolve, reject) => {
@@ -100,7 +74,9 @@ const sayFn = (
       // client can only say things in lowercase channels
       t = t.toLowerCase()
       log.info(`saying in ${t}: ${msg}`)
-      client.say(t, msg).catch((e: any) => { })
+      client.say(t, msg).catch((e: any) => {
+        log.info(e)
+      })
     })
   }
 
@@ -237,16 +213,19 @@ const tryExecuteCommand = async (
 async function replaceAsync(
   str: string,
   regex: RegExp,
-  asyncFn: (...args: string[]) => Promise<any>,
+  asyncFn: (...args: string[]) => Promise<string>,
 ): Promise<string> {
-  const promises: Promise<any>[] = [];
+  const promises: Promise<string>[] = []
   str.replace(regex, (match: string, ...args: string[]): string => {
-    const promise = asyncFn(match, ...args);
-    promises.push(promise);
+    const promise = asyncFn(match, ...args)
+    promises.push(promise)
     return match
-  });
-  const data = await Promise.all(promises);
-  return str.replace(regex, () => data.shift());
+  })
+  if (!promises.length) {
+    return str
+  }
+  const data = await Promise.all(promises)
+  return str.replace(regex, () => data.shift() || '')
 }
 
 export const doReplacements = async (
@@ -256,7 +235,7 @@ export const doReplacements = async (
   variables: Variables,
   originalCmd: Command | FunctionCommand,
 ) => {
-  const replaces: { regex: RegExp, replacer: (...args: string[]) => Promise<any> }[] = [
+  const replaces: { regex: RegExp, replacer: (...args: string[]) => Promise<string> }[] = [
     {
       regex: /\$args(?:\((\d*)(:?)(\d*)\))?/g,
       replacer: async (m0: string, m1: string, m2: string, m3: string) => {
@@ -314,20 +293,20 @@ export const doReplacements = async (
       },
     },
     {
-      regex: /\$customapi\(([^$\)]*)\)\[\'([A-Za-z0-9_ -]+)\'\]/g,
+      regex: /\$customapi\(([^$)]*)\)\['([A-Za-z0-9_ -]+)'\]/g,
       replacer: async (m0: string, m1: string, m2: string) => {
         const txt = await getText(await doReplacements(m1, command, context, variables, originalCmd))
         return JSON.parse(txt)[m2]
       },
     },
     {
-      regex: /\$customapi\(([^$\)]*)\)/g,
+      regex: /\$customapi\(([^$)]*)\)/g,
       replacer: async (m0: string, m1: string) => {
         return await getText(await doReplacements(m1, command, context, variables, originalCmd))
       },
     },
     {
-      regex: /\$urlencode\(([^$\)]*)\)/g,
+      regex: /\$urlencode\(([^$)]*)\)/g,
       replacer: async (m0: string, m1: string) => {
         return encodeURIComponent(await doReplacements(m1, command, context, variables, originalCmd))
       },
@@ -339,13 +318,13 @@ export const doReplacements = async (
         const arg2Int = parseInt(arg2, 10)
         switch (op) {
           case '+':
-            return arg1Int + arg2Int
+            return `${(arg1Int + arg2Int)}`
           case '-':
-            return arg1Int - arg2Int
+            return `${(arg1Int - arg2Int)}`
           case '/':
-            return arg1Int / arg2Int
+            return `${(arg1Int / arg2Int)}`
           case '*':
-            return arg1Int * arg2Int
+            return `${(arg1Int * arg2Int)}`
         }
         return ''
       },
@@ -355,7 +334,7 @@ export const doReplacements = async (
   let orig
   do {
     orig = replaced
-    for (let replace of replaces) {
+    for (const replace of replaces) {
       replaced = await replaceAsync(replaced, replace.regex, replace.replacer)
     }
   } while (orig !== replaced)
@@ -380,31 +359,6 @@ export const joinIntoChunks = (
   }
   chunks.push(chunk.join(glue))
   return chunks
-}
-
-const dateformat = (
-  format: string,
-  date: Date,
-): string => {
-  return format.replace(/(hh|mm|ss)/g, (m0: string, m1: string) => {
-    switch (m1) {
-      case 'hh': return pad(date.getHours(), '00')
-      case 'mm': return pad(date.getMinutes(), '00')
-      case 'ss': return pad(date.getSeconds(), '00')
-      default: return m0
-    }
-  })
-}
-
-const pad = (
-  x: number,
-  pad: string
-): string => {
-  const str = `${x}`
-  if (str.length >= pad.length) {
-    return str
-  }
-  return pad.substr(0, pad.length - str.length) + str
 }
 
 export const parseISO8601Duration = (
@@ -558,7 +512,6 @@ export default {
   shuffle,
   sleep,
   fnRandom,
-  pad,
   parseISO8601Duration,
   parseHumanDuration,
   mustParseHumanDuration,

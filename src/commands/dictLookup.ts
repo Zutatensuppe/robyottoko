@@ -26,7 +26,7 @@ const jishoOrgLookup = async (
 const LANG_TO_FN: Record<string, DictFn> = {
   ja: jishoOrgLookup,
 }
-for (let key of Object.keys(DictCc.LANG_TO_URL_MAP)) {
+for (const key of Object.keys(DictCc.LANG_TO_URL_MAP)) {
   LANG_TO_FN[key] = (phrase) => DictCc.searchWord(phrase, key)
 }
 
@@ -65,7 +65,7 @@ const dictLookup = (
       say(`Sorry, I didn't find anything for "${tmpPhrase}" in language "${tmpLang}"`)
       return
     }
-    for (let item of items) {
+    for (const item of items) {
       say(`Phrase "${item.from}": ${item.to.join(", ")}`)
     }
   }

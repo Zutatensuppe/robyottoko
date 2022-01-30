@@ -1,11 +1,14 @@
 import WebSocket from 'ws'
 import { IncomingMessage } from 'http'
-import { SECOND, logger } from '../fn'
+import { SECOND } from '../fn'
+import { logger } from '../common/fn'
 import ModuleManager from '../mod/ModuleManager'
 import { WsConfig } from '../types'
 import Auth from './Auth'
 
 const log = logger("WebSocketServer.ts")
+
+type WebSocketNotifyData = any
 
 export interface Socket extends WebSocket.WebSocket {
   user_id?: number
@@ -101,7 +104,9 @@ class WebSocketServer {
           return socket.terminate()
         }
         socket.isAlive = false
-        socket.ping(() => { })
+        socket.ping(() => {
+          // pass
+        })
       })
     }, 30 * SECOND)
 
@@ -113,7 +118,7 @@ class WebSocketServer {
     })
   }
 
-  notifyOne(user_ids: number[], moduleName: string, data: any, socket: Socket) {
+  notifyOne(user_ids: number[], moduleName: string, data: WebSocketNotifyData, socket: Socket) {
     if (
       socket.isAlive
       && socket.user_id
@@ -125,7 +130,7 @@ class WebSocketServer {
     }
   }
 
-  notifyAll(user_ids: number[], moduleName: string, data: any) {
+  notifyAll(user_ids: number[], moduleName: string, data: WebSocketNotifyData) {
     if (!this._websocketserver) {
       log.error(`tried to notifyAll, but _websocketserver is null`)
       return

@@ -1,5 +1,6 @@
 // @ts-ignore
 import { Client } from 'tmi.js'
+import { LogLevel } from './common/fn'
 import Db from './Db'
 import WebSocketServer, { Socket } from './net/WebSocketServer'
 import Cache from './services/Cache'
@@ -9,8 +10,6 @@ import Variables from './services/Variables'
 import WebServer from './WebServer'
 
 type int = number
-
-export type LogLevel = 'info' | 'debug' | 'error' | 'log'
 
 export interface DbConfig {
   file: string
@@ -131,9 +130,13 @@ export interface DrawcastData {
   images: any[]
 }
 
+export type CacheValue = any
+
+export type VariableValue = any
+
 export interface GlobalVariable {
   name: string
-  value: any
+  value: VariableValue
 }
 
 // TODO: use type definitions for tmi.js
@@ -228,6 +231,14 @@ export interface DictLookupCommand extends Command {
   }
 }
 
+export interface MadochanCommand extends Command {
+  action: "madochan_createword"
+  data: {
+    model: string
+    weirdness: string
+  }
+}
+
 export interface DictSearchResponseDataEntry {
   from: string
   to: string[]
@@ -240,8 +251,16 @@ export interface RandomTextCommand extends Command {
   }
 }
 
+export interface MediaVolumeCommand extends Command {
+  action: "media_volume"
+}
+
 export interface MediaCommand extends Command {
   action: "media"
+}
+
+export interface ChattersCommand extends Command {
+  action: "chatters"
 }
 
 export interface MediaCommandData {

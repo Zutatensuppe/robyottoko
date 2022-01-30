@@ -219,6 +219,14 @@ describe('fn.doReplacements', () => {
       originalCmd: {} as Command,
       expected: 'arg1 arg2 arg3',
     },
+    {
+      text: '$args(0) $args(1)',
+      command: { name: 'cmd', args: ['arg1', 'arg2', 'arg3', 'arg4', 'arg5'] },
+      context: null,
+      variables: {} as Variables,
+      originalCmd: {} as Command,
+      expected: 'arg1 arg2',
+    },
   ])('doReplacements $text', async ({ text, command, context, variables, originalCmd, expected }) => {
     const actual = await doReplacements(text, command, context, variables, originalCmd)
     expect(actual).toBe(expected)

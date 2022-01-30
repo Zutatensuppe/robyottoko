@@ -10,6 +10,11 @@ interface JishoSenseEntryLink {
   url: string
 }
 
+interface JishoSenseEntrySource {
+  language: string
+  word: string
+}
+
 interface JishoSenseEntry {
   english_definitions: string[]
   parts_of_speech: string[]
@@ -18,7 +23,7 @@ interface JishoSenseEntry {
   restrictions: string[]
   see_also: string[]
   antonyms: string[]
-  source: any[]
+  source: JishoSenseEntrySource[]
   info: string[]
 }
 

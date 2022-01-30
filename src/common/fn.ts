@@ -7,6 +7,69 @@ export const DAY = 24 * HOUR
 export const MONTH = 30 * DAY
 export const YEAR = 365 * DAY
 
+type LogFn = (...args: any[]) => void
+
+export type LogLevel = 'info' | 'debug' | 'error' | 'log'
+
+export interface Logger {
+  log: LogFn
+  info: LogFn
+  debug: LogFn
+  error: LogFn
+}
+
+// error | info | log | debug
+let logEnabled: LogLevel[] = [] // always log errors
+export const setLogLevel = (logLevel: LogLevel): void => {
+  switch (logLevel) {
+    case 'error': logEnabled = ['error']; break
+    case 'info': logEnabled = ['error', 'info']; break
+    case 'log': logEnabled = ['error', 'info', 'log']; break
+    case 'debug': logEnabled = ['error', 'info', 'log', 'debug']; break
+  }
+}
+setLogLevel('info')
+
+export const logger = (filename: string, ...pre: string[]): Logger => {
+  const b = filename
+  const fn = (t: LogLevel) => (...args: any[]): void => {
+    if (logEnabled.includes(t)) {
+      console[t](dateformat('hh:mm:ss', new Date()), `[${b}]`, ...pre, ...args)
+    }
+  }
+  return {
+    log: fn('log'),
+    info: fn('info'),
+    debug: fn('debug'),
+    error: fn('error'),
+  }
+}
+
+const dateformat = (
+  format: string,
+  date: Date,
+): string => {
+  return format.replace(/(hh|mm|ss)/g, (m0: string, m1: string) => {
+    switch (m1) {
+      case 'hh': return pad(date.getHours(), '00')
+      case 'mm': return pad(date.getMinutes(), '00')
+      case 'ss': return pad(date.getSeconds(), '00')
+      default: return m0
+    }
+  })
+}
+
+const pad = (
+  x: number,
+  pad: string
+): string => {
+  const str = `${x}`
+  if (str.length >= pad.length) {
+    return str
+  }
+  return pad.substr(0, pad.length - str.length) + str
+}
+
 export const mustParseHumanDuration = (
   duration: string | number
 ) => {
@@ -111,7 +174,7 @@ const humanDuration = (
 
 export function arrayMove(arr: any[], oldIndex: number, newIndex: number) {
   if (newIndex >= arr.length) {
-    var k = newIndex - arr.length + 1
+    let k = newIndex - arr.length + 1
     while (k--) {
       arr.push(undefined)
     }
@@ -123,20 +186,20 @@ export function arrayMove(arr: any[], oldIndex: number, newIndex: number) {
 const doDummyReplacements = (text: string, str: string) => {
   const regexes = [
     // regexes must match the ones in src/fn.ts doReplaces function
-    /\$args\((\d*)(:?)(\d*)\)/g,
+    /\$args(?:\((\d*)(:?)(\d*)\))?/g,
     /\$rand\(\s*(\d+)?\s*,\s*?(\d+)?\s*\)/g,
     /\$var\(([^)]+)\)/g,
     /\$user\.name/g,
-    /\$customapi\(([^$\)]*)\)\[\'([A-Za-z0-9_ -]+)\'\]/g,
-    /\$customapi\(([^$\)]*)\)/g,
-    /\$urlencode\(([^$\)]*)\)/g,
+    /\$customapi\(([^$)]*)\)\['([A-Za-z0-9_ -]+)'\]/g,
+    /\$customapi\(([^$)]*)\)/g,
+    /\$urlencode\(([^$)]*)\)/g,
     /\$calc\((\d+)([*/+-])(\d+)\)/g,
   ]
   let replaced = text
   let orig
   do {
     orig = replaced
-    for (let regex of regexes) {
+    for (const regex of regexes) {
       replaced = replaced.replace(regex, str)
     }
   } while (orig !== replaced)
@@ -163,7 +226,7 @@ export const split = (
   ]
 }
 
-export const shuffle = (array: any[]) => {
+export const shuffle = <T>(array: T[]): T[] => {
   let counter = array.length;
 
   // While there are elements in the array
@@ -191,4 +254,5 @@ export default {
   doDummyReplacements,
   split,
   shuffle,
+  pad,
 }

@@ -4,19 +4,26 @@ import text from '../../commands/text'
 import randomText from '../../commands/randomText'
 import playMedia from '../../commands/playMedia'
 import fn from '../../fn'
+import { logger } from '../../common/fn'
 import chatters from '../../commands/chatters'
 import Db from '../../Db'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Madochan from '../../services/Madochan'
 import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
-import { ChatMessageContext, Command, FunctionCommand, GlobalVariable, TwitchChatClient, TwitchChatContext, RawCommand, RewardRedemptionContext, Bot } from '../../types'
+import {
+  ChatMessageContext, Command, FunctionCommand,
+  GlobalVariable, TwitchChatClient, TwitchChatContext, RawCommand,
+  RewardRedemptionContext, Bot, Module,
+  MediaCommand, DictLookupCommand, CountdownCommand,
+  MadochanCommand, MediaVolumeCommand, ChattersCommand, RandomTextCommand
+} from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import TwitchClientManager from '../../net/TwitchClientManager'
 import dictLookup from '../../commands/dictLookup'
 import { newCommandTrigger } from '../../util'
 
-const log = fn.logger('GeneralModule.ts')
+const log = logger('GeneralModule.ts')
 
 export interface GeneralModuleSettings {
   volume: number
@@ -67,7 +74,7 @@ export interface GeneralSaveEventData {
   adminSettings: GeneralModuleAdminSettings;
 }
 
-class GeneralModule {
+class GeneralModule implements Module {
   public name = 'general'
   public variables: Variables
 
@@ -180,7 +187,7 @@ class GeneralModule {
     const commands: FunctionCommand[] = []
     const timers: GeneralModuleTimer[] = []
 
-    data.commands.forEach((cmd: any) => {
+    data.commands.forEach((cmd: MediaCommand | MediaVolumeCommand | MadochanCommand | DictLookupCommand | RandomTextCommand | CountdownCommand | ChattersCommand) => {
       if (cmd.triggers.length === 0) {
         return
       }
@@ -206,6 +213,7 @@ class GeneralModule {
           cmdObj = Object.assign({}, cmd, {
             fn: Array.isArray(cmd.data.text)
               ? randomText(this.variables, cmd)
+              // @ts-ignore
               : text(this.variables, cmd)
           })
           break;
@@ -325,8 +333,8 @@ class GeneralModule {
     command: RawCommand | null,
     client: TwitchChatClient | null,
     target: string | null,
-    context: TwitchChatContext | null,
-    msg: string | null,
+    _context: TwitchChatContext | null,
+    _msg: string | null,
   ) {
     if (!client || !command) {
       return
@@ -345,13 +353,14 @@ class GeneralModule {
     return this.commands
   }
 
-  async onChatMsg(chatMessageContext: ChatMessageContext) {
+  async onChatMsg(_chatMessageContext: ChatMessageContext) {
     this.timers.forEach(t => {
       t.lines++
     })
   }
 
-  async onRewardRedemption(RewardRedemptionContext: RewardRedemptionContext) {
+  async onRewardRedemption(_RewardRedemptionContext: RewardRedemptionContext) {
+    // pass
   }
 }
 

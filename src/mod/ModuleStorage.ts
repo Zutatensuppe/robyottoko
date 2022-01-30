@@ -1,5 +1,5 @@
 import Db from '../Db'
-import { logger } from '../fn'
+import { logger } from '../common/fn'
 
 const log = logger('ModuleStorage.ts')
 

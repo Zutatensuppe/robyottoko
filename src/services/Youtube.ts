@@ -1,5 +1,8 @@
 import config from '../config'
+import { logger } from '../common/fn'
 import { getJson, asQueryArgs, QueryArgsData } from '../net/xhr'
+
+const log = logger('Youtube.ts')
 
 interface YoutubeSearchResponseDataEntry {
   id: {
@@ -76,6 +79,7 @@ const getYoutubeIdBySearch = async (searchterm: string): Promise<string | null> 
         return res
       }
     } catch (e) {
+      log.info(e)
     }
   }
   return null

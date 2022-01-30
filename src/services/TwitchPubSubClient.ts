@@ -1,5 +1,6 @@
 import WebSocket from 'ws'
-import { nonce, SECOND, logger } from '../fn'
+import { nonce, SECOND } from '../fn'
+import { logger } from '../common/fn'
 import EventHub from '../EventHub'
 
 const CODE_GOING_AWAY = 1001
@@ -11,6 +12,21 @@ const reconnectInterval = 3 * SECOND //ms to wait before reconnect
 const log = logger('TwitchPubSubClient.ts')
 
 const PUBSUB_WS_ADDR = 'wss://pubsub-edge.twitch.tv'
+
+type CallbackFunction = (...args: any[]) => void
+
+interface ListenMessage {
+  type: 'LISTEN'
+  nonce: string
+  data: {
+    topics: string[]
+    auth_token: string
+  }
+}
+
+interface PingMessage {
+  type: 'PING'
+}
 
 class TwitchPubSubClient {
   evts: EventHub
@@ -25,13 +41,13 @@ class TwitchPubSubClient {
 
   heartbeatHandle: NodeJS.Timeout | null = null
 
-  nonceMessages: Record<string, any> = {}
+  nonceMessages: Record<string, ListenMessage> = {}
 
   constructor() {
     this.evts = new EventHub()
   }
 
-  _send(message: Record<string, any>) {
+  _send(message: ListenMessage | PingMessage) {
     const msgStr = JSON.stringify(message)
     // log.debug('SEND', msgStr)
     if (this.handle) {
@@ -51,7 +67,7 @@ class TwitchPubSubClient {
 
   listen(topic: string, authToken: string) {
     const n = nonce(15)
-    const message = {
+    const message: ListenMessage = {
       type: 'LISTEN',
       nonce: n,
       data: {
@@ -65,7 +81,7 @@ class TwitchPubSubClient {
 
   connect() {
     this.handle = new WebSocket(PUBSUB_WS_ADDR)
-    this.handle.onopen = (e) => {
+    this.handle.onopen = (_e: WebSocket.Event) => {
       if (!this.handle) {
         return
       }
@@ -130,7 +146,7 @@ class TwitchPubSubClient {
     }
   }
 
-  on(what: string, cb: Function): void {
+  on(what: string, cb: CallbackFunction): void {
     this.evts.on(what, cb)
   }
 }

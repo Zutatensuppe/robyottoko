@@ -31,7 +31,7 @@ const extractInfo = (
     return m ? stringToArray(m[1]) : []
   }
 
-  const m = text.match(/<link rel="canonical" href="https:\/\/[^\.]+\.dict\.cc\/\?s=([^"]+)">/)
+  const m = text.match(/<link rel="canonical" href="https:\/\/[^.]+\.dict\.cc\/\?s=([^"]+)">/)
   const words = m ? decodeURIComponent(m[1]).split('+') : []
   if (!words.length) {
     return { words, arr1: [], arr2: [] }
@@ -48,7 +48,7 @@ const parseResult = (
   text: string
 ): any[] => {
   const normalize = (str: string): string => {
-    return str.toLowerCase().replace(/[\.\!\?]/, '')
+    return str.toLowerCase().replace(/[.!?]/, '')
   }
   const info = extractInfo(text)
   const matchedWords = info.words
@@ -78,7 +78,7 @@ const parseResult = (
     toArr = arr1
     searchWords = [matchedSentence]
   } else {
-    for (let matchedWord of matchedWords) {
+    for (const matchedWord of matchedWords) {
       if (arr1.includes(matchedWord)) {
         fromArr = fromArrSearch = arr1
         toArr = arr2
@@ -91,7 +91,7 @@ const parseResult = (
   }
 
   const results = []
-  for (let i in fromArr) {
+  for (const i in fromArr) {
     if (!fromArrSearch[i]) {
       continue
     }
