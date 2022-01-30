@@ -103,7 +103,16 @@ export default defineComponent({
         this.lockedState = lockedState;
       }
     },
-    setTuber(tuber: AvatarModuleAvatarDefinition) {
+    setTuber(idx: number) {
+      if (!this.settings) {
+        log.error("setTuber: this.settings not initialized");
+        return;
+      }
+      if (idx < 0 || idx >= this.settings.avatarDefinitions.length) {
+        log.error("setTuber: index out of bounds");
+        return;
+      }
+      const tuber = this.settings.avatarDefinitions[idx];
       this.tuber.slot = {};
       this.tuberDef = JSON.parse(
         JSON.stringify(tuber)
@@ -131,7 +140,7 @@ export default defineComponent({
       this.$nextTick(() => {
         this.applyStyles();
       });
-      this.setTuber(this.settings.avatarDefinitions[0]);
+      this.setTuber(0);
       this.initialized = true;
     });
     this.ws.onMessage("ctrl", ({ data }) => {
