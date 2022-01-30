@@ -1,5 +1,6 @@
 // @ts-ignore
 import { Client } from 'tmi.js'
+import { LogLevel } from './common/fn'
 import Db from './Db'
 import WebSocketServer, { Socket } from './net/WebSocketServer'
 import Cache from './services/Cache'
