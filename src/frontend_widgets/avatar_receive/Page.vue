@@ -20,16 +20,39 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { logger } from "../../common/fn";
 
 import AvatarAnimation from "../../frontend/components/Avatar/AvatarAnimation.vue";
+import WsClient from "../../frontend/WsClient";
+import {
+  AvatarModuleAvatarDefinition,
+  AvatarModuleAvatarSlotDefinition,
+  AvatarModuleSettings,
+  AvatarModuleWsInitData,
+} from "../../mod/modules/AvatarModule";
 import util from "../util";
+
+const log = logger("Page.vue");
+
+interface ComponentData {
+  ws: null | WsClient;
+  speaking: boolean;
+  lockedState: string;
+  initialized: boolean;
+  tuber: {
+    slot: Record<string, any>;
+  };
+  tuberDef: null | AvatarModuleAvatarDefinition;
+  settings: null | AvatarModuleSettings;
+}
 
 export default defineComponent({
   components: {
     AvatarAnimation,
   },
-  data() {
+  data(): ComponentData {
     return {
+      ws: null,
       speaking: false,
       lockedState: "default",
       initialized: false,
@@ -48,41 +71,52 @@ export default defineComponent({
       return this.speaking ? "speaking" : "default";
     },
     animations() {
-      return this.tuberDef.slotDefinitions.map((slotDef) => {
-        const item = slotDef.items[this.tuber.slot[slotDef.slot]];
-        const stateDef = item.states.find(
-          ({ state }) => state === this.animationName
-        );
-        if (stateDef.frames.length > 0) {
-          return stateDef;
+      if (!this.tuberDef) {
+        return [];
+      }
+      return this.tuberDef.slotDefinitions.map(
+        (slotDef: AvatarModuleAvatarSlotDefinition) => {
+          const item = slotDef.items[this.tuber.slot[slotDef.slot]];
+          const stateDef = item.states.find(
+            ({ state }) => state === this.animationName
+          );
+          if (stateDef && stateDef.frames.length > 0) {
+            return stateDef;
+          }
+          return item.states.find(({ state }) => state === "default");
         }
-        return item.states.find(({ state }) => state === "default");
-      });
+      );
     },
   },
   methods: {
-    setSlot(slotName, itemIdx) {
+    setSlot(slotName: string, itemIdx: number) {
       this.tuber.slot[slotName] = itemIdx;
       this.tuber.slot = Object.assign({}, this.tuber.slot);
     },
-    setSpeaking(speaking) {
+    setSpeaking(speaking: boolean) {
       if (this.speaking !== speaking) {
         this.speaking = speaking;
       }
     },
-    lockState(lockedState) {
+    lockState(lockedState: string) {
       if (this.lockedState !== lockedState) {
         this.lockedState = lockedState;
       }
     },
-    setTuber(tuber) {
+    setTuber(tuber: AvatarModuleAvatarDefinition) {
       this.tuber.slot = {};
-      this.tuberDef = JSON.parse(JSON.stringify(tuber));
+      this.tuberDef = JSON.parse(
+        JSON.stringify(tuber)
+      ) as AvatarModuleAvatarDefinition;
       this.tuberDef.slotDefinitions.forEach((slotDef) => {
         this.tuber.slot[slotDef.slot] = slotDef.defaultItemIndex;
       });
     },
     applyStyles() {
+      if (!this.settings) {
+        log.error("applyStyles: this.settings not initialized");
+        return;
+      }
       const styles = this.settings.styles;
 
       if (styles.bgColor != null) {
@@ -92,7 +126,7 @@ export default defineComponent({
   },
   mounted() {
     this.ws = util.wsClient("avatar");
-    this.ws.onMessage("init", (data) => {
+    this.ws.onMessage("init", (data: AvatarModuleWsInitData) => {
       this.settings = data.settings;
       this.$nextTick(() => {
         this.applyStyles();
