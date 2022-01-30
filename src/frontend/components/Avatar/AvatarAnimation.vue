@@ -81,6 +81,8 @@ export default defineComponent({
     this.$watch(
       "frames",
       () => {
+        // reset to the first frame when frames change
+        this.idx = -1;
         this.nextFrame();
       },
       { deep: true }
