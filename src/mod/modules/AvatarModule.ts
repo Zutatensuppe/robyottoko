@@ -55,12 +55,20 @@ export interface AvatarModuleSettings {
   avatarDefinitions: AvatarModuleAvatarDefinition[]
 }
 
+export interface AvatarModuleState {
+  tuberIdx: number
+  slots: Record<SlotName, number>
+  lockedState: string
+}
+
 export interface AvatarModuleData {
   settings: AvatarModuleSettings
+  state: AvatarModuleState
 }
 
 export interface AvatarModuleWsInitData {
   settings: AvatarModuleSettings
+  state: AvatarModuleState
   defaultSettings: AvatarModuleSettings
 }
 
@@ -70,7 +78,11 @@ export interface AvatarModuleWsSaveData {
 }
 
 export interface AvatarModuleWsControlData {
-
+  event: 'ctrl'
+  data: {
+    ctrl: string
+    args: any[]
+  }
 }
 
 interface WsModuleData {
@@ -99,6 +111,11 @@ class AvatarModule implements Module {
     },
     avatarDefinitions: []
   }
+  private defaultState: AvatarModuleState = {
+    tuberIdx: -1,
+    slots: {},
+    lockedState: '',
+  }
 
   constructor(
     bot: Bot,
@@ -119,14 +136,23 @@ class AvatarModule implements Module {
     this.user = user
   }
 
+  save() {
+    log.info('saving', this.data.state)
+    this.storage.save(this.name, this.data)
+  }
+
   saveCommands() {
     // pass
   }
 
   reinit(): AvatarModuleData {
     const data = this.storage.load(this.name, {
-      settings: this.defaultSettings
+      settings: this.defaultSettings,
+      state: this.defaultState,
     })
+    if (!data.state) {
+      data.state = this.defaultState
+    }
     if (!data.settings.styles) {
       data.settings.styles = this.defaultSettings.styles
     }
@@ -152,9 +178,10 @@ class AvatarModule implements Module {
       }
     }
     // -end-   fixes to old data structure
-
+    log.info('inited', data.state)
     return {
-      settings: data.settings
+      settings: data.settings,
+      state: data.state,
     }
   }
 
@@ -187,11 +214,26 @@ class AvatarModule implements Module {
       },
       'save': (_ws: Socket, data: AvatarModuleWsSaveData) => {
         this.data.settings = data.settings
-        this.storage.save(this.name, this.data)
+        this.save()
         this.data = this.reinit()
         this.updateClients(this.wsdata('init'))
       },
       'ctrl': (_ws: Socket, data: AvatarModuleWsControlData) => {
+        if (data.data.ctrl === "setSlot") {
+          const slotName = data.data.args[0];
+          const itemIdx = data.data.args[1];
+          this.data.state.slots[slotName] = itemIdx
+          this.save()
+        } else if (data.data.ctrl === "lockState") {
+          const lockedState = data.data.args[0];
+          this.data.state.lockedState = lockedState
+          this.save()
+        } else if (data.data.ctrl === "setTuber") {
+          const tuberIdx = data.data.args[0];
+          this.data.state.tuberIdx = tuberIdx
+          this.save()
+        }
+
         // just pass the ctrl on to the clients
         this.updateClients({ event: 'ctrl', data })
       },

@@ -140,7 +140,11 @@ export default defineComponent({
       this.$nextTick(() => {
         this.applyStyles();
       });
-      this.setTuber(0);
+      this.setTuber(data.state.tuberIdx === -1 ? 0 : data.state.tuberIdx);
+      for (const slotName of Object.keys(data.state.slots)) {
+        this.setSlot(slotName, data.state.slots[slotName]);
+      }
+      this.lockState(data.state.lockedState);
       this.initialized = true;
     });
     this.ws.onMessage("ctrl", ({ data }) => {
