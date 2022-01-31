@@ -25,9 +25,10 @@
         <td>{{ def.slot }}:</td>
         <td>
           <button
-            @click="setSlot(def.slot, idx2, true)"
             v-for="(item, idx2) in def.items"
             :key="idx2"
+            @click="setSlot(def.slot, idx2, true)"
+            :class="{ active: tuber.slot[def.slot] === idx2 }"
           >
             {{ item.title }}
           </button>
@@ -40,6 +41,7 @@
             v-for="(def, idx) in tuberDef.stateDefinitions"
             :key="idx"
             @click="lockState(def.value, true)"
+            :class="{ active: lockedState === def.value }"
           >
             {{ def.value }}
           </button>
@@ -49,9 +51,10 @@
         <td>Tubers:</td>
         <td>
           <button
-            @click="setTuber(idx, true)"
             v-for="(avatarDef, idx) in settings.avatarDefinitions"
             :key="idx"
+            @click="setTuber(idx, true)"
+            :class="{ active: tuberIdx === idx }"
           >
             {{ avatarDef.name }}
           </button>
@@ -92,6 +95,7 @@ interface ComponentData {
     slot: Record<string, any>;
   };
   tuberDef: null | AvatarModuleAvatarDefinition;
+  tuberIdx: number;
   settings: null | AvatarModuleSettings;
 }
 
@@ -108,6 +112,7 @@ export default defineComponent({
       audioInitialized: false,
       tuber: { slot: {} },
       tuberDef: null,
+      tuberIdx: -1,
       settings: null,
     };
   },
@@ -187,6 +192,7 @@ export default defineComponent({
       if (tuberDefStr === thisTuberDefStr) {
         return;
       }
+      this.tuberIdx = idx;
       this.tuber.slot = {};
       this.tuberDef = JSON.parse(tuberDefStr) as AvatarModuleAvatarDefinition;
       this.tuberDef.slotDefinitions.forEach((slotDef) => {
