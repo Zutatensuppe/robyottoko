@@ -25,7 +25,7 @@
         <td>{{ def.slot }}:</td>
         <td>
           <button
-            @click="setSlot(def.slot, idx2)"
+            @click="setSlot(def.slot, idx2, true)"
             v-for="(item, idx2) in def.items"
             :key="idx2"
           >
@@ -39,7 +39,7 @@
           <button
             v-for="(def, idx) in tuberDef.stateDefinitions"
             :key="idx"
-            @click="lockState(def.value)"
+            @click="lockState(def.value, true)"
           >
             {{ def.value }}
           </button>
@@ -49,7 +49,7 @@
         <td>Tubers:</td>
         <td>
           <button
-            @click="setTuber(idx)"
+            @click="setTuber(idx, true)"
             v-for="(avatarDef, idx) in settings.avatarDefinitions"
             :key="idx"
           >
@@ -144,29 +144,35 @@ export default defineComponent({
       }
       this.ws.send(JSON.stringify({ event: "ctrl", data: { ctrl, args } }));
     },
-    setSlot(slotName: string, itemIdx: number) {
+    setSlot(slotName: string, itemIdx: number, sendCtrl: boolean = false) {
       if (this.tuber.slot[slotName] === itemIdx) {
         return;
       }
       this.tuber.slot[slotName] = itemIdx;
       this.tuber.slot = Object.assign({}, this.tuber.slot);
-      this.ctrl("setSlot", [slotName, itemIdx]);
+      if (sendCtrl) {
+        this.ctrl("setSlot", [slotName, itemIdx]);
+      }
     },
-    setSpeaking(speaking: boolean) {
+    setSpeaking(speaking: boolean, sendCtrl: boolean = false) {
       if (this.speaking === speaking) {
         return;
       }
       this.speaking = speaking;
-      this.ctrl("setSpeaking", [speaking]);
+      if (sendCtrl) {
+        this.ctrl("setSpeaking", [speaking]);
+      }
     },
-    lockState(lockedState: string) {
+    lockState(lockedState: string, sendCtrl: boolean = false) {
       if (this.lockedState === lockedState) {
         return;
       }
       this.lockedState = lockedState;
-      this.ctrl("lockState", [lockedState]);
+      if (sendCtrl) {
+        this.ctrl("lockState", [lockedState]);
+      }
     },
-    setTuber(idx: number) {
+    setTuber(idx: number, sendCtrl: boolean = false) {
       if (!this.settings) {
         log.error("setTuber: this.settings not initialized");
         return;
@@ -186,7 +192,9 @@ export default defineComponent({
       this.tuberDef.slotDefinitions.forEach((slotDef) => {
         this.tuber.slot[slotDef.slot] = slotDef.defaultItemIndex;
       });
-      this.ctrl("setTuber", [idx]);
+      if (sendCtrl) {
+        this.ctrl("setTuber", [idx]);
+      }
     },
     startMic() {
       if (this.audioInitialized) {
@@ -216,7 +224,7 @@ export default defineComponent({
               const threshold = this.speaking
                 ? SPEAKING_THRESHOLD / 2
                 : SPEAKING_THRESHOLD;
-              this.setSpeaking(soundMeter.instant > threshold);
+              this.setSpeaking(soundMeter.instant > threshold, true);
             }, 100);
           });
         })
@@ -244,7 +252,11 @@ export default defineComponent({
       this.$nextTick(() => {
         this.applyStyles();
       });
-      this.setTuber(0);
+      this.setTuber(data.state.tuberIdx === -1 ? 0 : data.state.tuberIdx);
+      for (const slotName of Object.keys(data.state.slots)) {
+        this.setSlot(slotName, data.state.slots[slotName]);
+      }
+      this.lockState(data.state.lockedState);
       this.initialized = true;
     });
     this.ws.onMessage("ctrl", ({ data }) => {
