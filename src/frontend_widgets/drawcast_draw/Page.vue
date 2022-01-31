@@ -174,18 +174,17 @@
         </div>
       </div>
       <div
+        v-for="(fav, idx) in favoriteListsFiltered"
+        :key="idx"
         class="drawings-panel favorite-drawings-panel"
-        v-if="favorites.length"
       >
         <div class="drawings_panel_title">
-          <span class="drawings_panel_title_inner">{{
-            favoriteImagesTitle
-          }}</span>
+          <span class="drawings_panel_title_inner">{{ fav.title || "Streamer's favorites:" }}</span>
         </div>
         <div class="drawing_panel_drawings" v-if="nonfavorites.length">
           <img
             class="image favorite clickable"
-            v-for="(img, idx) in favorites"
+            v-for="(img, idx) in fav.list"
             :key="idx"
             @click="modify(img)"
             :src="img"
@@ -239,6 +238,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
+import { DrawcastFavoriteList } from "../../types";
 import util from "../util";
 
 const translateCoords = (
@@ -294,7 +294,7 @@ export default defineComponent({
       palette: ["#000000"],
 
       images: [],
-      favorites: [],
+      favoriteLists: [] as DrawcastFavoriteList[],
 
       color: "#000000",
       sampleColor: "",
@@ -313,7 +313,6 @@ export default defineComponent({
       submitConfirm: "",
       customDescription: "",
       customProfileImageUrl: "",
-      favoriteImagesTitle: "",
       recentImagesTitle: "",
 
       stack: [],
@@ -321,6 +320,18 @@ export default defineComponent({
     };
   },
   computed: {
+    favoriteListsFiltered() {
+      return this.favoriteLists.filter(
+        (fav: DrawcastFavoriteList) => fav.list.length > 0
+      );
+    },
+    favorites() {
+      const favorites = [];
+      for (const fav of this.favoriteLists) {
+        favorites.push(...fav.list);
+      }
+      return favorites;
+    },
     currentColorStyle() {
       return {
         backgroundColor:
@@ -556,12 +567,10 @@ export default defineComponent({
         data.settings.customProfileImage.file
           ? "/uploads/" + data.settings.customProfileImage.file
           : "";
-      this.favoriteImagesTitle =
-        data.settings.favoriteImagesTitle || "Streamer's favorites:";
       this.recentImagesTitle =
         data.settings.recentImagesTitle || "Newest submitted:";
       this.palette = data.settings.palette || this.palette;
-      this.favorites = data.settings.favorites;
+      this.favoriteLists = data.settings.favoriteLists;
       this.color = this.palette[0];
       this.images = data.images;
 

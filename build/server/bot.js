@@ -4558,7 +4558,6 @@ class DrawcastModule {
         this.defaultSettings = {
             submitButtonText: 'Submit',
             submitConfirm: '',
-            favoriteImagesTitle: '',
             recentImagesTitle: '',
             canvasWidth: 720,
             canvasHeight: 405,
@@ -4576,7 +4575,7 @@ class DrawcastModule {
             displayLatestForever: false,
             displayLatestAutomatically: false,
             notificationSound: null,
-            favorites: [],
+            favoriteLists: [{ list: [], title: '' }],
         };
         this.variables = variables;
         this.user = user;
@@ -4632,14 +4631,16 @@ class DrawcastModule {
         if (!data.settings.displayLatestAutomatically) {
             data.settings.displayLatestAutomatically = this.defaultSettings.displayLatestAutomatically;
         }
-        if (typeof data.settings.favoriteImagesTitle === 'undefined') {
-            data.settings.favoriteImagesTitle = this.defaultSettings.favoriteImagesTitle;
-        }
         if (typeof data.settings.recentImagesTitle === 'undefined') {
             data.settings.recentImagesTitle = this.defaultSettings.recentImagesTitle;
         }
-        if (!data.settings.favorites) {
-            data.settings.favorites = [];
+        if (typeof data.settings.favoriteLists === 'undefined') {
+            data.settings.favoriteLists = [
+                {
+                    list: data.settings.favorites || [],
+                    title: data.settings.favoriteImagesTitle || '',
+                },
+            ];
         }
         return {
             settings: data.settings

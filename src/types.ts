@@ -99,12 +99,16 @@ export interface PlaylistItem {
   user: string
 }
 
+export interface DrawcastFavoriteList {
+  list: string[]
+  title: string
+}
+
 export interface DrawcastSettings {
   canvasWidth: int
   canvasHeight: int
   submitButtonText: string
   submitConfirm: string
-  favoriteImagesTitle: string
   recentImagesTitle: string
   customDescription: string
   customProfileImage: {
@@ -120,7 +124,7 @@ export interface DrawcastSettings {
     file: string
     volume: number
   } | null
-  favorites: string[]
+  favoriteLists: DrawcastFavoriteList[]
 }
 
 export interface DrawcastData {
