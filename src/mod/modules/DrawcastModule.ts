@@ -37,7 +37,6 @@ class DrawcastModule implements Module {
   private defaultSettings = {
     submitButtonText: 'Submit',
     submitConfirm: '', // leave empty to not require confirm
-    favoriteImagesTitle: '',
     recentImagesTitle: '',
     canvasWidth: 720,
     canvasHeight: 405,
@@ -56,7 +55,7 @@ class DrawcastModule implements Module {
     displayLatestForever: false,
     displayLatestAutomatically: false,
     notificationSound: null,
-    favorites: [],
+    favoriteLists: [{ list: [], title: '' }],
   }
   private data: { settings: DrawcastSettings }
   private images: string[]
@@ -127,14 +126,16 @@ class DrawcastModule implements Module {
     if (!data.settings.displayLatestAutomatically) {
       data.settings.displayLatestAutomatically = this.defaultSettings.displayLatestAutomatically
     }
-    if (typeof data.settings.favoriteImagesTitle === 'undefined') {
-      data.settings.favoriteImagesTitle = this.defaultSettings.favoriteImagesTitle
-    }
     if (typeof data.settings.recentImagesTitle === 'undefined') {
       data.settings.recentImagesTitle = this.defaultSettings.recentImagesTitle
     }
-    if (!data.settings.favorites) {
-      data.settings.favorites = []
+    if (typeof data.settings.favoriteLists === 'undefined') {
+      data.settings.favoriteLists = [
+        {
+          list: data.settings.favorites || [],
+          title: data.settings.favoriteImagesTitle || '',
+        },
+      ]
     }
     return {
       settings: data.settings

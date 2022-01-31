@@ -110,17 +110,6 @@
             </td>
           </tr>
           <tr>
-            <td><code>settings.favoriteImagesTitle</code></td>
-            <td>
-              <input
-                class="input is-small"
-                type="text"
-                v-model="settings.favoriteImagesTitle"
-              />
-            </td>
-            <td>Title for the favorites gallery.</td>
-          </tr>
-          <tr>
             <td><code>settings.recentImagesTitle</code></td>
             <td>
               <input
@@ -237,7 +226,12 @@
           </tr>
           <tr>
             <td>
-              <code>settings.favorites</code>
+              <div><code>settings.favoriteLists</code></div>
+              <div>
+                <span class="button is-small" @click="addFavoriteList"
+                  >Add a list</span
+                >
+              </div>
               <div class="preview">
                 <img
                   v-if="favoriteSelection.hovered"
@@ -246,59 +240,77 @@
               </div>
             </td>
             <td>
-              <div>Currently selected favorites:</div>
-              <div class="favorites">
-                <img
-                  :src="url"
-                  v-for="(url, idx) in settings.favorites"
-                  :key="idx"
-                  width="50"
-                  height="50"
-                  @click="toggleFavorite(url)"
-                  @mouseover="favoriteSelection.hovered = url"
-                  @mouseleave="favoriteSelection.hovered = ''"
-                  class="thumbnail is-favorited mr-1"
+              <div
+                v-for="(favoriteList, idx) in settings.favoriteLists"
+                :key="idx"
+              >
+                <div v-if="settings.favoriteLists.length > 1">
+                  <span class="button is-small" @click="removeFavoriteList(idx)"
+                    >Remove this list</span
+                  >
+                </div>
+                <div>Title:</div>
+                <input
+                  class="input is-small"
+                  type="text"
+                  v-model="favoriteList.title"
                 />
-              </div>
+                <div>Currently selected favorites:</div>
+                <div class="favorites">
+                  <img
+                    :src="url"
+                    v-for="(url, idx2) in favoriteList.list"
+                    :key="idx2"
+                    width="50"
+                    height="50"
+                    @click="toggleFavorite(idx, url)"
+                    @mouseover="favoriteSelection.hovered = url"
+                    @mouseleave="favoriteSelection.hovered = ''"
+                    class="thumbnail is-favorited mr-1"
+                  />
+                </div>
 
-              <div class="mt-2">Select favorites:</div>
-              <div class="favorites-select">
-                <img
-                  :src="url"
-                  v-for="(url, idx) in currentFavoriteSelectionItems"
-                  :key="idx"
-                  width="50"
-                  height="50"
-                  @click="toggleFavorite(url)"
-                  @mouseover="favoriteSelection.hovered = url"
-                  @mouseleave="favoriteSelection.hovered = ''"
-                  class="thumbnail mr-1"
-                  :class="{ 'is-favorited': settings.favorites.includes(url) }"
-                />
+                <div class="mt-2">Select favorites:</div>
+                <div class="favorites-select">
+                  <img
+                    :src="url"
+                    v-for="(url, idx2) in currentFavoriteSelectionItems"
+                    :key="idx2"
+                    width="50"
+                    height="50"
+                    @click="toggleFavorite(idx, url)"
+                    @mouseover="favoriteSelection.hovered = url"
+                    @mouseleave="favoriteSelection.hovered = ''"
+                    class="thumbnail mr-1"
+                    :class="{ 'is-favorited': favoriteList.list.includes(url) }"
+                  />
+                </div>
+                <span
+                  class="button is-small"
+                  @click="
+                    favoriteSelection.pagination.page =
+                      favoriteSelection.pagination.page - 1
+                  "
+                  :disabled="
+                    favoriteSelection.pagination.page > 1 ? null : true
+                  "
+                  >Prev</span
+                >
+                <span
+                  class="button is-small"
+                  @click="
+                    favoriteSelection.pagination.page =
+                      favoriteSelection.pagination.page + 1
+                  "
+                  :disabled="
+                    favoriteSelection.pagination.page <
+                    favoriteSelectionTotalPages
+                      ? null
+                      : true
+                  "
+                  >Next</span
+                >
               </div>
-              <span
-                class="button is-small"
-                @click="
-                  favoriteSelection.pagination.page =
-                    favoriteSelection.pagination.page - 1
-                "
-                :disabled="favoriteSelection.pagination.page > 1 ? null : true"
-                >Prev</span
-              >
-              <span
-                class="button is-small"
-                @click="
-                  favoriteSelection.pagination.page =
-                    favoriteSelection.pagination.page + 1
-                "
-                :disabled="
-                  favoriteSelection.pagination.page <
-                  favoriteSelectionTotalPages
-                    ? null
-                    : true
-                "
-                >Next</span
-              >
             </td>
             <td>
               The favorites will always be displayed at the beginning of the
@@ -313,7 +325,12 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { DrawcastSaveEventData } from "../../mod/modules/DrawcastModule";
-import { DrawcastData, DrawcastSettings, UploadedFile } from "../../types";
+import {
+  DrawcastData,
+  DrawcastFavoriteList,
+  DrawcastSettings,
+  UploadedFile,
+} from "../../types";
 import api from "../api";
 import util from "../util";
 import WsClient from "../WsClient";
@@ -404,17 +421,41 @@ export default defineComponent({
     },
   },
   methods: {
-    toggleFavorite(url: string) {
+    addFavoriteList() {
+      if (!this.settings) {
+        console.warn("addFavoriteList: this.settings not initialized");
+        return;
+      }
+      this.settings.favoriteLists.push({
+        list: [],
+        title: "",
+      });
+    },
+    removeFavoriteList(index: number) {
+      if (!this.settings) {
+        console.warn("removeFavoriteList: this.settings not initialized");
+        return;
+      }
+      const favLists: DrawcastFavoriteList[] = [];
+      for (let idx in this.settings.favoriteLists) {
+        if (parseInt(idx, 10) === parseInt(`${index}`, 10)) {
+          continue;
+        }
+        favLists.push(this.settings.favoriteLists[idx]);
+      }
+      this.settings.favoriteLists = favLists;
+    },
+    toggleFavorite(index: number, url: string) {
       if (!this.settings) {
         console.warn("toggleFavorite: this.settings not initialized");
         return;
       }
-      if (this.settings.favorites.includes(url)) {
-        this.settings.favorites = this.settings.favorites.filter(
-          (u: string) => u !== url
-        );
+      if (this.settings.favoriteLists[index].list.includes(url)) {
+        this.settings.favoriteLists[index].list = this.settings.favoriteLists[
+          index
+        ].list.filter((u: string) => u !== url);
       } else {
-        this.settings.favorites.push(url);
+        this.settings.favoriteLists[index].list.push(url);
       }
     },
     customProfileImageRemoved() {
@@ -461,7 +502,6 @@ export default defineComponent({
           canvasHeight: parseInt(`${this.settings.canvasHeight}`, 10) || 405,
           submitButtonText: this.settings.submitButtonText,
           submitConfirm: this.settings.submitConfirm,
-          favoriteImagesTitle: this.settings.favoriteImagesTitle,
           recentImagesTitle: this.settings.recentImagesTitle,
           customDescription: this.settings.customDescription,
           customProfileImage: this.settings.customProfileImage,
@@ -471,7 +511,7 @@ export default defineComponent({
           displayLatestForever: this.settings.displayLatestForever,
           displayLatestAutomatically: this.settings.displayLatestAutomatically,
           notificationSound: this.settings.notificationSound,
-          favorites: this.settings.favorites,
+          favoriteLists: this.settings.favoriteLists,
         },
       });
     },
