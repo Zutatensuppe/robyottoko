@@ -29,6 +29,7 @@ import ResponsiveImage from "./components/ResponsiveImage.vue";
 import Navbar from "./components/Navbar.vue";
 import Duration from "./components/Duration.vue";
 import DoubleclickButton from "./components/DoubleclickButton.vue";
+import DropdownButton from "./components/DropdownButton.vue";
 import Youtube from "./components/Youtube.vue";
 
 import CommandsCommandEditor from "./components/Commands/CommandEditor.vue";
@@ -155,6 +156,7 @@ const run = async () => {
   app.use(router)
   app.use(Toast, {})
   app.component('doubleclick-button', DoubleclickButton)
+  app.component('dropdown-button', DropdownButton)
   app.component('checkbox', Checkbox)
   app.component('draggable', draggable)
   app.component('duration-input', DurationInput)

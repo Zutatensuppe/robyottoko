@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="trigger-editor">
     <div class="field has-addons" v-if="value.type === 'command'">
       <div class="control has-icons-left mr-1">
         <input
@@ -68,7 +68,7 @@
     </div>
 
     <div v-if="value.type === 'timer'" class="timer-trigger">
-      <div class="control">
+      <div class="control remove-control">
         <button
           class="button is-small"
           :disabled="!removable"
@@ -77,45 +77,35 @@
           <i class="fa fa-remove" />
         </button>
       </div>
-      <div class="columns">
-        <div class="column is-one-third">
-          <label>Min. Lines</label>
+      <div class="timer-trigger-inner">
+        <label class="mr-1">Messages ≥</label>
+        <div class="control has-icons-left mr-1">
+          <input
+            class="input is-small"
+            v-model="value.data.minLines"
+            @update:modelValue="emitUpdate"
+          />
+          <span class="icon is-small is-left">
+            <i class="fa fa-comments-o"></i>
+          </span>
         </div>
-        <div class="column is-two-third">
-          <div class="control has-icons-left">
-            <input
-              class="input is-small spaceinput"
-              v-model="value.data.minLines"
-              @update:modelValue="emitUpdate"
-            />
-            <span class="icon is-small is-left">
-              <i class="fa fa-comments-o"></i>
-            </span>
-          </div>
-        </div>
-      </div>
-      <div class="columns">
-        <div class="column is-one-third">
-          <label>Min. Interval</label>
-        </div>
-        <div class="column is-two-third">
-          <div class="control has-icons-left has-icons-right">
-            <duration-input
-              :modelValue="value.data.minInterval"
-              @update:modelValue="
-                value.data.minInterval = $event;
-                emitUpdate();
-              "
-            />
-            <span class="icon is-small is-left">
-              <i class="fa fa-hourglass"></i>
-            </span>
-          </div>
+        <label class="mr-1">Interval ≥</label>
+        <div class="control has-icons-left has-icons-right mr-1">
+          <duration-input
+            :modelValue="value.data.minInterval"
+            @update:modelValue="
+              value.data.minInterval = $event;
+              emitUpdate();
+            "
+          />
+          <span class="icon is-small is-left">
+            <i class="fa fa-hourglass"></i>
+          </span>
         </div>
       </div>
       <p class="help">
-        Command will be triggered when at least min. lines chat messages arrived
-        AND time interval have passed.
+        Command will be triggered when at least <code>Messages</code> chat
+        messages arrived AND <code>Interval</code> have passed.
       </p>
     </div>
   </div>
@@ -170,3 +160,39 @@ export default defineComponent({
   },
 });
 </script>
+<style scoped>
+.timer-trigger {
+  border-radius: 4px;
+  color: var(--main-color);
+  padding: 6px 14px;
+  background-color: #fff;
+  border-style: solid;
+  border-width: 1px;
+  border-color: #dbdbdb;
+  position: relative;
+}
+.timer-trigger label {
+  line-height: 2;
+}
+.timer-trigger .remove-control:first-child {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  z-index: 10;
+}
+.timer-trigger .columns {
+  margin-top: -0.25rem;
+  margin-right: -0.25rem;
+  margin-top: -0.25rem;
+  margin-bottom: -0.25rem;
+}
+.timer-trigger .column {
+  padding: 0.25rem;
+}
+.timer-trigger-inner {
+  display: flex;
+}
+.timer-trigger-inner input {
+  width: 100px;
+}
+</style>
