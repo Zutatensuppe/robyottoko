@@ -25,25 +25,11 @@
                   @update:modelValue="item.triggers[idx2] = $event"
                   @remove="rmtrigger(idx2)"
                 />
-                <div class="field has-addons mr-1">
-                  <div class="control has-icons-left">
-                    <div
-                      v-if="item.action !== 'dict_lookup'"
-                      class="select is-small"
-                    >
-                      <select v-model="newtrigger">
-                        <option value="command">Command</option>
-                        <option value="reward_redemption">
-                          Reward Redemption
-                        </option>
-                        <option value="timer">Timer</option>
-                      </select>
-                    </div>
-                  </div>
-                  <button class="button is-small" @click="addtrigger()">
-                    <i class="fa fa-plus mr-1" /> Add
-                  </button>
-                </div>
+                <dropdown-button
+                  :actions="possibleTriggerActions"
+                  label="Add trigger"
+                  @click="addtrigger"
+                />
               </td>
             </tr>
             <tr v-if="actionDescriptions[item.action]">
@@ -450,7 +436,7 @@
 import { defineComponent, PropType } from "vue";
 
 import fn from "../../../common/fn";
-import { Command, UploadedFile } from "../../../types";
+import { Command, GlobalVariable, UploadedFile } from "../../../types";
 import {
   ACTION_DESCRIPTION_MAP,
   ACTION_NAME_MAP,
@@ -466,7 +452,6 @@ interface ComponentDataLang {
 
 interface ComponentData {
   item: Command | null;
-  newtrigger: "command" | "reward_redemption" | "timer";
   variableChangeFocusIdx: number;
   dictLangs: ComponentDataLang[];
 }
@@ -482,7 +467,7 @@ export default defineComponent({
       required: true,
     },
     globalVariables: {
-      type: Array,
+      type: Array as PropType<GlobalVariable[]>,
       required: true,
     },
     baseVolume: {
@@ -492,7 +477,6 @@ export default defineComponent({
   emits: ["update:modelValue", "cancel"],
   data: (): ComponentData => ({
     item: null,
-    newtrigger: "command",
     variableChangeFocusIdx: -1,
     dictLangs: [
       { value: "ja", flag: "🇯🇵", title: "Japanese" },
@@ -526,12 +510,12 @@ export default defineComponent({
       }
       this.item.data.text.push(newText());
     },
-    addtrigger() {
+    addtrigger(trigger: any) {
       if (!this.item) {
         console.warn("addtrigger: this.item not initialized");
         return;
       }
-      this.item.triggers.push(newTrigger(this.newtrigger));
+      this.item.triggers.push(newTrigger(trigger.type));
     },
     onAddVariableChange() {
       if (!this.item) {
@@ -648,6 +632,17 @@ export default defineComponent({
     },
   },
   computed: {
+    possibleTriggerActions() {
+      return [
+        { type: "command", label: "Add Command", title: "Command" },
+        {
+          type: "reward_redemption",
+          label: "Add Reward Redemption",
+          title: "Reward Redemption",
+        },
+        { type: "timer", label: "Add Timer", title: "Timer" },
+      ];
+    },
     valid() {
       if (!this.item) {
         return false;
@@ -708,33 +703,5 @@ export default defineComponent({
   position: absolute;
   right: -2px;
   top: 0;
-}
-.timer-trigger {
-  border-radius: 4px;
-  color: var(--main-color);
-  padding: 6px 14px;
-  background-color: #fff;
-  border-style: solid;
-  border-width: 1px;
-  border-color: #dbdbdb;
-  position: relative;
-}
-.timer-trigger label {
-  line-height: 2;
-}
-.timer-trigger > .control:first-child {
-  position: absolute;
-  top: -1px;
-  right: -1px;
-  z-index: 10;
-}
-.timer-trigger .columns {
-  margin-top: -0.25rem;
-  margin-right: -0.25rem;
-  margin-top: -0.25rem;
-  margin-bottom: -0.25rem;
-}
-.timer-trigger .column {
-  padding: 0.25rem;
 }
 </style>

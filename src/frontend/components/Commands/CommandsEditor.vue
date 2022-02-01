@@ -1,42 +1,11 @@
 <template>
   <div>
     <div class="actions">
-      <div
-        class="dropdown mr-1"
-        :class="{ 'is-active': addDropdownActive }"
-        ref="addDropdown"
-      >
-        <div class="dropdown-trigger">
-          <button
-            class="button is-small mr-1"
-            aria-haspopup="true"
-            aria-controls="dropdown-menu"
-            @click="openDropdown"
-          >
-            <span>Add command</span>
-            <span class="icon is-small">
-              <i class="fa fa-angle-down" aria-hidden="true"></i>
-            </span>
-          </button>
-        </div>
-        <div class="dropdown-menu" id="dropdown-menu" role="menu">
-          <div class="dropdown-content">
-            <a
-              href="#"
-              class="dropdown-item"
-              v-for="(action, idx) in possibleActions"
-              :key="idx"
-              @click="
-                closeDropdown();
-                add(action);
-              "
-              :title="actionDescription(action)"
-            >
-              Add {{ actionName(action) }}
-            </a>
-          </div>
-        </div>
-      </div>
+      <dropdown-button
+        :actions="possibleActionsMapped"
+        label="Add command"
+        @click="add"
+      />
       <div class="mr-1">Filter:</div>
       <div class="field has-addons mr-1 mb-0">
         <div class="control">
@@ -260,7 +229,6 @@ interface ComponentData {
   commands: Command[];
   editIdx: number | null;
   editCommand: Command | null;
-  addDropdownActive: boolean;
   filter: {
     search: string;
     actions: string[];
@@ -308,7 +276,6 @@ export default defineComponent({
       commands: [],
       editIdx: null,
       editCommand: null,
-      addDropdownActive: false,
       filter: {
         search: "",
         actions: [],
@@ -317,6 +284,13 @@ export default defineComponent({
     };
   },
   computed: {
+    possibleActionsMapped() {
+      return this.possibleActions.map((action) => ({
+        type: action,
+        title: this.actionDescription(action),
+        label: `Add ${this.actionName(action)}`,
+      }));
+    },
     actionDescriptions() {
       return ACTION_DESCRIPTION_MAP;
     },
@@ -374,8 +348,8 @@ export default defineComponent({
       this.commands = this.commands.filter((val, index) => index !== idx);
       this.emitChange();
     },
-    add(type: string) {
-      const cmd = newCmd(type);
+    add(mappedAction: any) {
+      const cmd = newCmd(mappedAction.type);
       if (!cmd) {
         return;
       }
@@ -399,22 +373,6 @@ export default defineComponent({
       this.editIdx = null;
       this.editCommand = null;
     },
-    openDropdown() {
-      this.addDropdownActive = true;
-    },
-    closeDropdown() {
-      this.addDropdownActive = false;
-    },
-    hideAddDropdown(e: Event) {
-      if (!this.$refs.addDropdown) {
-        return;
-      }
-      const el = this.$refs.addDropdown as HTMLDivElement;
-      if (el.contains(e.target as any)) {
-        return;
-      }
-      this.closeDropdown();
-    },
     dragEnd(evt: { oldIndex: number; newIndex: number }) {
       this.commands = fn.arrayMove(this.commands, evt.oldIndex, evt.newIndex);
       this.emitChange();
@@ -429,12 +387,6 @@ export default defineComponent({
   created() {
     this.commands = JSON.parse(JSON.stringify(this.modelValue));
     this.imagesVisible = this.showImages;
-  },
-  mounted() {
-    window.addEventListener("click", this.hideAddDropdown);
-  },
-  unmounted() {
-    window.removeEventListener("click", this.hideAddDropdown);
   },
 });
 </script>
