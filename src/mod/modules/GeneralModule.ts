@@ -6,6 +6,8 @@ import playMedia from '../../commands/playMedia'
 import fn from '../../fn'
 import { logger } from '../../common/fn'
 import chatters from '../../commands/chatters'
+import setChannelTitle from '../../commands/setChannelTitle'
+import setChannelGameId from '../../commands/setChannelGameId'
 import Db from '../../Db'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Madochan from '../../services/Madochan'
@@ -16,7 +18,7 @@ import {
   GlobalVariable, TwitchChatClient, TwitchChatContext, RawCommand,
   RewardRedemptionContext, Bot, Module,
   MediaCommand, DictLookupCommand, CountdownCommand,
-  MadochanCommand, MediaVolumeCommand, ChattersCommand, RandomTextCommand
+  MadochanCommand, MediaVolumeCommand, ChattersCommand, RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand
 } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import TwitchClientManager from '../../net/TwitchClientManager'
@@ -187,7 +189,9 @@ class GeneralModule implements Module {
     const commands: FunctionCommand[] = []
     const timers: GeneralModuleTimer[] = []
 
-    data.commands.forEach((cmd: MediaCommand | MediaVolumeCommand | MadochanCommand | DictLookupCommand | RandomTextCommand | CountdownCommand | ChattersCommand) => {
+    data.commands.forEach((cmd: MediaCommand | MediaVolumeCommand | MadochanCommand
+      | DictLookupCommand | RandomTextCommand | CountdownCommand | ChattersCommand
+      | SetChannelTitleCommand | SetChannelGameIdCommand) => {
       if (cmd.triggers.length === 0) {
         return
       }
@@ -225,6 +229,12 @@ class GeneralModule implements Module {
           break;
         case 'chatters':
           cmdObj = Object.assign({}, cmd, { fn: chatters(this.db, this.clientManager.getHelixClient()) })
+          break;
+        case 'set_channel_title':
+          cmdObj = Object.assign({}, cmd, { fn: setChannelTitle(cmd.data.title, this.clientManager.getHelixClient(), this.variables, cmd) })
+          break;
+        case 'set_channel_game_id':
+          cmdObj = Object.assign({}, cmd, { fn: setChannelGameId(cmd.data.game_id, this.clientManager.getHelixClient(), this.variables, cmd) })
           break;
       }
       if (!cmdObj) {

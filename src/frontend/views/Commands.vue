@@ -102,6 +102,8 @@ export default defineComponent({
       "dict_lookup",
       "madochan_createword",
       "chatters",
+      "set_channel_title",
+      "set_channel_game_id",
     ],
 
     tabDefinitions: [

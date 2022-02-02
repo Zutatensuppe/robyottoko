@@ -20,7 +20,7 @@ const chatters = (
       log.info('client', client)
       log.info('context', context)
       log.info('helixClient', helixClient)
-      log.info('unable to execute chattes command, client, context or helixClient missing')
+      log.info('unable to execute chatters command, client, context, or helixClient missing')
       return
     }
 
