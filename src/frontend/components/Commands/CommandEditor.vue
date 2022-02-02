@@ -36,6 +36,41 @@
               <td>Description:</td>
               <td v-html="actionDescriptions[item.action]"></td>
             </tr>
+            <tr v-if="requiresAccessToken">
+              <td>Attention:</td>
+              <td>
+                <div class="help">
+                  This requires <code>Access Token</code> to be set in the user
+                  settings.
+                </div>
+              </td>
+            </tr>
+            <tr v-if="item.action === 'set_channel_title'">
+              <td>Stream title:</td>
+              <td>
+                <input
+                  class="input is-small spaceinput mb-1"
+                  v-model="item.data.title"
+                />
+                <span class="button is-small mr-1" @click="item.data.title = ''"
+                  >All args</span
+                >
+              </td>
+            </tr>
+            <tr v-if="item.action === 'set_channel_game_id'">
+              <td>Stream category:</td>
+              <td>
+                <input
+                  class="input is-small spaceinput mb-1"
+                  v-model="item.data.game_id"
+                />
+                <span
+                  class="button is-small mr-1"
+                  @click="item.data.game_id = ''"
+                  >All args</span
+                >
+              </td>
+            </tr>
             <tr v-if="item.action === 'dict_lookup'">
               <td>Language:</td>
               <td>
@@ -632,6 +667,15 @@ export default defineComponent({
     },
   },
   computed: {
+    requiresAccessToken() {
+      if (!this.item) {
+        return false;
+      }
+      return (
+        this.item.action === "set_channel_title" ||
+        this.item.action === "set_channel_game_id"
+      );
+    },
     possibleTriggerActions() {
       return [
         { type: "command", label: "Add Command", title: "Command" },

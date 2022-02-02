@@ -511,7 +511,8 @@ class WebServer {
       }
 
       try {
-        const client = new TwitchHelixClient(clientId, clientSecret)
+        // todo: maybe fill twitchChannels instead of empty array
+        const client = new TwitchHelixClient(clientId, clientSecret, [])
         res.send({ id: await client.getUserIdByName(req.body.name) })
       } catch (e) {
         res.status(500).send("Something went wrong!");

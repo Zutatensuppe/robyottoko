@@ -1,6 +1,7 @@
 import { RequestInit } from 'node-fetch'
 import { logger } from '../common/fn'
-import { postJson, getJson, asJson, withHeaders, asQueryArgs, requestText } from '../net/xhr'
+import { postJson, getJson, asJson, withHeaders, asQueryArgs, requestText, request } from '../net/xhr'
+import { TwitchChannel } from './TwitchChannels'
 
 const log = logger('TwitchHelixClient.ts')
 
@@ -34,6 +35,16 @@ interface TwitchHelixUserSearchResponseData {
   data: TwitchHelixUserSearchResponseDataEntry[]
 }
 
+interface TwitchHelixGameSearchResponseDataEntry {
+  id: string
+  name: string
+  box_art_url: string
+}
+
+interface TwitchHelixGameSearchResponseData {
+  data: TwitchHelixGameSearchResponseDataEntry[]
+}
+
 interface TwitchHelixStreamSearchResponseDataEntry {
   id: string
   user_id: string
@@ -58,20 +69,30 @@ interface TwitchHelixStreamSearchResponseData {
   }
 }
 
+interface ModifyChannelInformationData {
+  game_id?: string
+  broadcaster_language?: string
+  title?: string
+  delay?: number
+}
+
 class TwitchHelixClient {
   private clientId: string
   private clientSecret: string
+  private twitchChannels: TwitchChannel[]
 
   constructor(
     clientId: string,
     clientSecret: string,
+    twitchChannels: TwitchChannel[],
   ) {
     this.clientId = clientId
     this.clientSecret = clientSecret
+    this.twitchChannels = twitchChannels
   }
 
-  async withAuthHeaders(opts = {}): Promise<RequestInit> {
-    const accessToken = await this.getAccessToken()
+  async withAuthHeaders(opts = {}, scopes: string[] = []): Promise<RequestInit> {
+    const accessToken = await this.getAccessToken(scopes)
     return withHeaders({
       'Client-ID': this.clientId,
       'Authorization': `Bearer ${accessToken}`,
@@ -139,6 +160,39 @@ class TwitchHelixClient {
   async createSubscription(subscription: TwitchHelixSubscription) {
     const url = this._url('/eventsub/subscriptions')
     return await postJson(url, await this.withAuthHeaders(asJson(subscription)))
+  }
+
+  // https://dev.twitch.tv/docs/api/reference#get-games
+  async getGameByName(name: string) {
+    const url = this._url(`/games${asQueryArgs({ name })}`)
+    const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixGameSearchResponseData
+    try {
+      return json.data[0]
+    } catch (e) {
+      log.error(json)
+      return null
+    }
+  }
+
+  // https://dev.twitch.tv/docs/api/reference#modify-channel-information
+  async modifyChannelInformation(broadcasterId: string, data: ModifyChannelInformationData) {
+    const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`)
+
+    let accessToken: string | null = null
+    for (const twitchChannel of this.twitchChannels) {
+      if (twitchChannel.channel_id === broadcasterId) {
+        accessToken = twitchChannel.access_token
+        break
+      }
+    }
+    if (!accessToken) {
+      return null
+    }
+
+    return await request('patch', url, withHeaders({
+      'Client-ID': this.clientId,
+      'Authorization': `Bearer ${accessToken}`,
+    }, asJson(data)))
   }
 }
 

@@ -203,6 +203,7 @@ export type CommandFunction = (
 export type CommandAction =
   // general
   'text' | 'media' | 'media_volume' | 'countdown' | 'dict_lookup' | 'madochan_createword' | 'chatters'
+  | 'set_channel_title' | 'set_channel_game_id'
   // song request
   | 'sr_current' | 'sr_undo' | 'sr_good' | 'sr_bad' | 'sr_stats' | 'sr_prev' | 'sr_next'
   | 'sr_jumptonew' | 'sr_clear' | 'sr_rm' | 'sr_shuffle' | 'sr_reset_stats' | 'sr_loop'
@@ -217,6 +218,20 @@ export interface Command {
   variables: CommandVariable[]
   variableChanges: CommandVariableChange[]
   data: CommandData
+}
+
+export interface SetChannelTitleCommand extends Command {
+  action: "set_channel_title"
+  data: {
+    title: string
+  }
+}
+
+export interface SetChannelGameIdCommand extends Command {
+  action: "set_channel_game_id"
+  data: {
+    game_id: string
+  }
 }
 
 // should not exist

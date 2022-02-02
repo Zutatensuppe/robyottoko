@@ -216,7 +216,8 @@ class TwitchClientManager {
     // @see https://dev.twitch.tv/docs/eventsub
     const helixClient = new TwitchHelixClient(
       identity.client_id,
-      identity.client_secret
+      identity.client_secret,
+      twitchChannels,
     )
     this.helixClient = helixClient
 

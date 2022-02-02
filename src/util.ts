@@ -60,6 +60,8 @@ export const ACTION_DESCRIPTION_MAP: Record<CommandAction, string> = {
   If no argument is given, just outputs the current volume`,
   countdown: "Add a countdown or messages spaced by time intervals",
   text: "Send a message to chat",
+  set_channel_title: "Change the stream title",
+  set_channel_game_id: "Change the stream category",
   sr_current: "Show what song is currently playing",
   sr_undo: "Remove the song that was last added by oneself.",
   sr_good: "Vote the current song up",
@@ -109,6 +111,8 @@ export const ACTION_NAME_MAP: Record<CommandAction, string> = {
   media_volume: "media volume command",
   countdown: "countdown",
   text: "command",
+  set_channel_title: "change stream title command",
+  set_channel_game_id: "change stream category command",
   sr_current: "sr_current",
   sr_undo: "sr_undo",
   sr_good: "sr_good",
@@ -203,6 +207,26 @@ export const newCmd = (type: string): Command | null => {
       variables: [],
       variableChanges: [],
       data: {},
+    }
+    case 'set_channel_title': return {
+      triggers: [newCommandTrigger()],
+      action: 'set_channel_title',
+      restrict_to: MOD_OR_ABOVE,
+      variables: [],
+      variableChanges: [],
+      data: {
+        title: ''
+      },
+    }
+    case 'set_channel_game_id': return {
+      triggers: [newCommandTrigger()],
+      action: 'set_channel_game_id',
+      restrict_to: MOD_OR_ABOVE,
+      variables: [],
+      variableChanges: [],
+      data: {
+        game_id: ''
+      },
     }
 
     // SONG REQUEST

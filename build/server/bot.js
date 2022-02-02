@@ -220,7 +220,7 @@ const shuffle = (array) => {
     return array;
 };
 
-const log$c = logger('fn.ts');
+const log$e = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
         return mime.replace('image/', '');
@@ -271,9 +271,9 @@ const sayFn = (client, target) => (msg) => {
         // TODO: fix this somewhere else?
         // client can only say things in lowercase channels
         t = t.toLowerCase();
-        log$c.info(`saying in ${t}: ${msg}`);
+        log$e.info(`saying in ${t}: ${msg}`);
         client.say(t, msg).catch((e) => {
-            log$c.info(e);
+            log$e.info(e);
         });
     });
 };
@@ -360,14 +360,14 @@ const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, client, target,
         if (!mayExecute(context, cmdDef)) {
             continue;
         }
-        log$c.info(`${target}| * Executing ${rawCmd.name} command`);
+        log$e.info(`${target}| * Executing ${rawCmd.name} command`);
         const p = new Promise(async (resolve) => {
             await applyVariableChanges(cmdDef, contextModule, rawCmd, context);
             const r = await cmdDef.fn(rawCmd, client, target, context, msg);
             if (r) {
-                log$c.info(`${target}| * Returned: ${r}`);
+                log$e.info(`${target}| * Returned: ${r}`);
             }
-            log$c.info(`${target}| * Executed ${rawCmd.name} command`);
+            log$e.info(`${target}| * Executed ${rawCmd.name} command`);
             resolve(true);
         });
         promises.push(p);
@@ -739,7 +739,7 @@ class ModuleManager {
     }
 }
 
-const log$b = logger("WebSocketServer.ts");
+const log$d = logger("WebSocketServer.ts");
 class WebSocketServer {
     constructor(moduleManager, config, auth) {
         this.moduleManager = moduleManager;
@@ -757,14 +757,14 @@ class WebSocketServer {
             const token = socket.protocol;
             const tokenInfo = this.auth.wsTokenFromProtocol(token);
             if (!tokenInfo) {
-                log$b.info('not found token: ', token);
+                log$d.info('not found token: ', token);
                 socket.close();
                 return;
             }
             socket.user_id = tokenInfo.user_id;
             const pathname = new URL(this.connectstring()).pathname;
             if (request.url?.indexOf(pathname) !== 0) {
-                log$b.info('bad request url: ', request.url);
+                log$d.info('bad request url: ', request.url);
                 socket.close();
                 return;
             }
@@ -782,7 +782,7 @@ class WebSocketServer {
                 const evts = module.getWsEvents();
                 if (evts) {
                     socket.on('message', (data) => {
-                        log$b.info(`ws|${socket.user_id}| `, data);
+                        log$d.info(`ws|${socket.user_id}| `, data);
                         const unknownData = data;
                         const d = JSON.parse(unknownData);
                         if (!d.event) {
@@ -824,13 +824,13 @@ class WebSocketServer {
             && socket.user_id
             && user_ids.includes(socket.user_id)
             && socket.module === moduleName) {
-            log$b.info(`notifying ${socket.user_id} (${data.event})`);
+            log$d.info(`notifying ${socket.user_id} (${data.event})`);
             socket.send(JSON.stringify(data));
         }
     }
     notifyAll(user_ids, moduleName, data) {
         if (!this._websocketserver) {
-            log$b.error(`tried to notifyAll, but _websocketserver is null`);
+            log$d.error(`tried to notifyAll, but _websocketserver is null`);
             return;
         }
         this._websocketserver.clients.forEach((socket) => {
@@ -861,15 +861,16 @@ class Templates {
     }
 }
 
-const log$a = logger('TwitchHelixClient.ts');
+const log$c = logger('TwitchHelixClient.ts');
 const API_BASE = 'https://api.twitch.tv/helix';
 class TwitchHelixClient {
-    constructor(clientId, clientSecret) {
+    constructor(clientId, clientSecret, twitchChannels) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
+        this.twitchChannels = twitchChannels;
     }
-    async withAuthHeaders(opts = {}) {
-        const accessToken = await this.getAccessToken();
+    async withAuthHeaders(opts = {}, scopes = []) {
+        const accessToken = await this.getAccessToken(scopes);
         return withHeaders({
             'Client-ID': this.clientId,
             'Authorization': `Bearer ${accessToken}`,
@@ -897,7 +898,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$a.error(json);
+            log$c.error(json);
             return null;
         }
     }
@@ -928,6 +929,36 @@ class TwitchHelixClient {
     async createSubscription(subscription) {
         const url = this._url('/eventsub/subscriptions');
         return await postJson(url, await this.withAuthHeaders(asJson(subscription)));
+    }
+    // https://dev.twitch.tv/docs/api/reference#get-games
+    async getGameByName(name) {
+        const url = this._url(`/games${asQueryArgs({ name })}`);
+        const json = await getJson(url, await this.withAuthHeaders());
+        try {
+            return json.data[0];
+        }
+        catch (e) {
+            log$c.error(json);
+            return null;
+        }
+    }
+    // https://dev.twitch.tv/docs/api/reference#modify-channel-information
+    async modifyChannelInformation(broadcasterId, data) {
+        const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`);
+        let accessToken = null;
+        for (const twitchChannel of this.twitchChannels) {
+            if (twitchChannel.channel_id === broadcasterId) {
+                accessToken = twitchChannel.access_token;
+                break;
+            }
+        }
+        if (!accessToken) {
+            return null;
+        }
+        return await request('patch', url, withHeaders({
+            'Client-ID': this.clientId,
+            'Authorization': `Bearer ${accessToken}`,
+        }, asJson(data)));
     }
 }
 
@@ -969,7 +1000,7 @@ class Variables {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const log$9 = logger('WebServer.ts');
+const log$b = logger('WebServer.ts');
 const widgetTemplate = (widget) => {
     if (process.env.WIDGET_DUMMY) {
         return process.env.WIDGET_DUMMY;
@@ -1055,8 +1086,8 @@ class WebServer {
             hmac.update(msg);
             const expected = `sha256=${hmac.digest('hex')}`;
             if (req.headers['twitch-eventsub-message-signature'] !== expected) {
-                log$9.debug(req);
-                log$9.error('bad message signature', {
+                log$b.debug(req);
+                log$b.error('bad message signature', {
                     got: req.headers['twitch-eventsub-message-signature'],
                     expected,
                 });
@@ -1285,7 +1316,7 @@ class WebServer {
                     this.eventHub.trigger('user_registration_complete', user);
                 }
                 else {
-                    log$9.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`);
+                    log$b.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`);
                 }
                 return;
             }
@@ -1358,7 +1389,7 @@ class WebServer {
                 this.eventHub.trigger('user_changed', changedUser);
             }
             else {
-                log$9.error(`save-settings: user doesn't exist after saving it: ${user.id}`);
+                log$b.error(`save-settings: user doesn't exist after saving it: ${user.id}`);
             }
             res.send();
         });
@@ -1388,7 +1419,8 @@ class WebServer {
                 return;
             }
             try {
-                const client = new TwitchHelixClient(clientId, clientSecret);
+                // todo: maybe fill twitchChannels instead of empty array
+                const client = new TwitchHelixClient(clientId, clientSecret, []);
                 res.send({ id: await client.getUserIdByName(req.body.name) });
             }
             catch (e) {
@@ -1396,16 +1428,16 @@ class WebServer {
             }
         });
         app.post('/twitch/event-sub/', express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
-            log$9.debug(req.body);
-            log$9.debug(req.headers);
+            log$b.debug(req.body);
+            log$b.debug(req.headers);
             if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-                log$9.info(`got verification request, challenge: ${req.body.challenge}`);
+                log$b.info(`got verification request, challenge: ${req.body.challenge}`);
                 res.write(req.body.challenge);
                 res.send();
                 return;
             }
             if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-                log$9.info(`got notification request: ${req.body.subscription.type}`);
+                log$b.info(`got notification request: ${req.body.subscription.type}`);
                 if (req.body.subscription.type === 'stream.online') {
                     // insert new stream
                     this.db.insert('streams', {
@@ -1443,7 +1475,7 @@ class WebServer {
         app.post('/api/upload', requireLoginApi, (req, res) => {
             upload(req, res, (err) => {
                 if (err) {
-                    log$9.error(err);
+                    log$b.error(err);
                     res.status(400).send("Something went wrong!");
                 }
                 res.send(req.file);
@@ -1458,7 +1490,7 @@ class WebServer {
                 return;
             }
             const type = req.params.widget_type;
-            log$9.debug(`/widget/:widget_type/:widget_token/`, type, token);
+            log$b.debug(`/widget/:widget_type/:widget_token/`, type, token);
             if (widgets.includes(type)) {
                 res.send(templates.render(widgetTemplate(type), {
                     wsUrl: this.wss.connectstring(),
@@ -1489,7 +1521,7 @@ class WebServer {
             const indexFile = `${__dirname}/../../build/public/index.html`;
             res.sendFile(path.resolve(indexFile));
         });
-        this.handle = app.listen(port, hostname, () => log$9.info(`server running on http://${hostname}:${port}`));
+        this.handle = app.listen(port, hostname, () => log$b.info(`server running on http://${hostname}:${port}`));
     }
     close() {
         if (this.handle) {
@@ -1520,7 +1552,7 @@ const CODE_GOING_AWAY = 1001;
 const CODE_CUSTOM_DISCONNECT = 4000;
 const heartbeatInterval = 60 * SECOND; //ms between PING's
 const reconnectInterval = 3 * SECOND; //ms to wait before reconnect
-const log$8 = logger('TwitchPubSubClient.ts');
+const log$a = logger('TwitchPubSubClient.ts');
 const PUBSUB_WS_ADDR = 'wss://pubsub-edge.twitch.tv';
 class TwitchPubSubClient {
     constructor() {
@@ -1571,7 +1603,7 @@ class TwitchPubSubClient {
                 return;
             }
             if (this.handle.readyState !== WebSocket.OPEN) {
-                log$8.error('ERR', `readyState is not OPEN (${WebSocket.OPEN})`);
+                log$a.error('ERR', `readyState is not OPEN (${WebSocket.OPEN})`);
                 return;
             }
             if (this.reconnectTimeout) {
@@ -1581,7 +1613,7 @@ class TwitchPubSubClient {
             while (this.sendBuffer.length > 0) {
                 this.handle.send(this.sendBuffer.shift());
             }
-            log$8.info('INFO', 'Socket Opened');
+            log$a.info('INFO', 'Socket Opened');
             this._heartbeat();
             if (this.heartbeatHandle) {
                 clearInterval(this.heartbeatHandle);
@@ -1599,13 +1631,13 @@ class TwitchPubSubClient {
             }
             // log.debug('RECV', JSON.stringify(message))
             if (message.type === 'RECONNECT') {
-                log$8.info('INFO', 'Reconnecting...');
+                log$a.info('INFO', 'Reconnecting...');
                 this.connect();
             }
             this.evts.trigger('message', message);
         };
         this.handle.onerror = (e) => {
-            log$8.error('ERR', e);
+            log$a.error('ERR', e);
             this.handle = null;
             this.reconnectTimeout = setTimeout(() => { this.connect(); }, reconnectInterval);
         };
@@ -1613,7 +1645,7 @@ class TwitchPubSubClient {
             this.handle = null;
             if (e.code === CODE_CUSTOM_DISCONNECT || e.code === CODE_GOING_AWAY) ;
             else {
-                log$8.info('INFO', 'Onclose...');
+                log$a.info('INFO', 'Onclose...');
                 this.reconnectTimeout = setTimeout(() => { this.connect(); }, reconnectInterval);
             }
             if (this.heartbeatHandle) {
@@ -1740,6 +1772,26 @@ const newCmd = (type) => {
             variables: [],
             variableChanges: [],
             data: {},
+        };
+        case 'set_channel_title': return {
+            triggers: [newCommandTrigger()],
+            action: 'set_channel_title',
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {
+                title: ''
+            },
+        };
+        case 'set_channel_game_id': return {
+            triggers: [newCommandTrigger()],
+            action: 'set_channel_game_id',
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {
+                game_id: ''
+            },
         };
         // SONG REQUEST
         case 'sr_current': return {
@@ -2138,7 +2190,7 @@ class TwitchClientManager {
         });
         // register EventSub
         // @see https://dev.twitch.tv/docs/eventsub
-        const helixClient = new TwitchHelixClient(identity.client_id, identity.client_secret);
+        const helixClient = new TwitchHelixClient(identity.client_id, identity.client_secret, twitchChannels);
         this.helixClient = helixClient;
         // connect to PubSub websocket only when required
         // https://dev.twitch.tv/docs/pubsub#topics
@@ -2275,7 +2327,7 @@ class TwitchClientManager {
     }
 }
 
-const log$7 = logger('ModuleStorage.ts');
+const log$9 = logger('ModuleStorage.ts');
 const TABLE$4 = 'module';
 class ModuleStorage {
     constructor(db, userId) {
@@ -2290,7 +2342,7 @@ class ModuleStorage {
             return data ? Object.assign({}, def, data) : def;
         }
         catch (e) {
-            log$7.error(e);
+            log$9.error(e);
             return def;
         }
     }
@@ -2416,7 +2468,7 @@ class Cache {
     }
 }
 
-const log$6 = logger('Db.ts');
+const log$8 = logger('Db.ts');
 class Db {
     constructor(dbConf) {
         this.conf = dbConf;
@@ -2434,7 +2486,7 @@ class Db {
         for (const f of files) {
             if (patches.includes(f)) {
                 if (verbose) {
-                    log$6.info(`➡ skipping already applied db patch: ${f}`);
+                    log$8.info(`➡ skipping already applied db patch: ${f}`);
                 }
                 continue;
             }
@@ -2444,16 +2496,16 @@ class Db {
                 this.dbh.transaction((all) => {
                     for (const q of all) {
                         if (verbose) {
-                            log$6.info(`Running: ${q}`);
+                            log$8.info(`Running: ${q}`);
                         }
                         this.run(q);
                     }
                     this.insert('db_patches', { id: f });
                 })(all);
-                log$6.info(`✓ applied db patch: ${f}`);
+                log$8.info(`✓ applied db patch: ${f}`);
             }
             catch (e) {
-                log$6.error(`✖ unable to apply patch: ${f} ${e}`);
+                log$8.error(`✖ unable to apply patch: ${f} ${e}`);
                 return;
             }
         }
@@ -2591,7 +2643,7 @@ class Db {
 }
 
 // @ts-ignore
-const log$5 = logger('Mail.ts');
+const log$7 = logger('Mail.ts');
 class Mail {
     constructor(cfg) {
         const defaultClient = SibApiV3Sdk.ApiClient.instance;
@@ -2643,14 +2695,14 @@ class Mail {
     }
     send(mail) {
         this.apiInstance.sendTransacEmail(mail).then(function (data) {
-            log$5.info('API called successfully. Returned data: ' + JSON.stringify(data));
+            log$7.info('API called successfully. Returned data: ' + JSON.stringify(data));
         }, function (error) {
-            log$5.error(error);
+            log$7.error(error);
         });
     }
 }
 
-const log$4 = logger('countdown.ts');
+const log$6 = logger('countdown.ts');
 const countdown = (variables, wss, userId, originalCmd) => async (command, client, target, context, msg) => {
     if (!client) {
         return;
@@ -2710,7 +2762,7 @@ const countdown = (variables, wss, userId, originalCmd) => async (command, clien
                 duration = (await parseDuration(`${a.value}`)) || 0;
             }
             catch (e) {
-                log$4.error(e.message, a.value);
+                log$6.error(e.message, a.value);
                 return;
             }
             actions.push(async () => await fn.sleep(duration));
@@ -2778,13 +2830,13 @@ const playMedia = (wss, userId, originalCmd) => (command, client, target, contex
     });
 };
 
-const log$3 = logger('chatters.ts');
+const log$5 = logger('chatters.ts');
 const chatters = (db, helixClient) => async (command, client, target, context, msg) => {
     if (!client || !context || !helixClient) {
-        log$3.info('client', client);
-        log$3.info('context', context);
-        log$3.info('helixClient', helixClient);
-        log$3.info('unable to execute chattes command, client, context or helixClient missing');
+        log$5.info('client', client);
+        log$5.info('context', context);
+        log$5.info('helixClient', helixClient);
+        log$5.info('unable to execute chatters command, client, context, or helixClient missing');
         return;
     }
     const say = fn.sayFn(client, target);
@@ -2807,6 +2859,63 @@ const chatters = (db, helixClient) => async (command, client, target, context, m
     fn.joinIntoChunks(userNames, ', ', 500).forEach(msg => {
         say(msg);
     });
+};
+
+const log$4 = logger('setChannelTitle.ts');
+const setChannelTitle = (title, helixClient, variables, originalCmd) => async (command, client, target, context, msg) => {
+    if (!client || !command || !context || !helixClient) {
+        log$4.info('client', client);
+        log$4.info('command', command);
+        log$4.info('context', context);
+        log$4.info('helixClient', helixClient);
+        log$4.info('unable to execute setChannelTitle, client, command, context, or helixClient missing');
+        return;
+    }
+    const say = fn.sayFn(client, target);
+    if (title === '') {
+        title = '$args()';
+    }
+    const tmpTitle = await fn.doReplacements(title, command, context, variables, originalCmd);
+    if (!tmpTitle) {
+        say(`Unable to change title to nothing.`);
+        return;
+    }
+    const resp = await helixClient.modifyChannelInformation(context['room-id'], { title: tmpTitle });
+    if (resp?.status === 204) {
+        say(`✨ Changed title to "${tmpTitle}".`);
+    }
+    else {
+        say('❌ Unable to change title.');
+    }
+};
+
+const log$3 = logger('setChannelGameId.ts');
+const setChannelGameId = (gameId, helixClient, variables, originalCmd) => async (command, client, target, context, msg) => {
+    if (!client || !command || !context || !helixClient) {
+        log$3.info('client', client);
+        log$3.info('command', command);
+        log$3.info('context', context);
+        log$3.info('helixClient', helixClient);
+        log$3.info('unable to execute setChannelGameId, client, command, context, or helixClient missing');
+        return;
+    }
+    const say = fn.sayFn(client, target);
+    if (gameId === '') {
+        gameId = '$args()';
+    }
+    const tmpGameId = await fn.doReplacements(gameId, command, context, variables, originalCmd);
+    const game = await helixClient.getGameByName(tmpGameId);
+    if (!game) {
+        say('🔎 Category not found.');
+        return;
+    }
+    const resp = await helixClient.modifyChannelInformation(context['room-id'], { game_id: game.id });
+    if (resp?.status === 204) {
+        say(`✨ Changed category to "${game.name}".`);
+    }
+    else {
+        say('❌ Unable to update category.');
+    }
 };
 
 const searchWord$1 = async (keyword, page = 1) => {
@@ -3101,6 +3210,12 @@ class GeneralModule {
                     break;
                 case 'chatters':
                     cmdObj = Object.assign({}, cmd, { fn: chatters(this.db, this.clientManager.getHelixClient()) });
+                    break;
+                case 'set_channel_title':
+                    cmdObj = Object.assign({}, cmd, { fn: setChannelTitle(cmd.data.title, this.clientManager.getHelixClient(), this.variables, cmd) });
+                    break;
+                case 'set_channel_game_id':
+                    cmdObj = Object.assign({}, cmd, { fn: setChannelGameId(cmd.data.game_id, this.clientManager.getHelixClient(), this.variables, cmd) });
                     break;
             }
             if (!cmdObj) {
