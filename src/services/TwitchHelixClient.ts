@@ -35,14 +35,14 @@ interface TwitchHelixUserSearchResponseData {
   data: TwitchHelixUserSearchResponseDataEntry[]
 }
 
-interface TwitchHelixGameSearchResponseDataEntry {
+interface TwitchHelixCategorySearchResponseDataEntry {
   id: string
   name: string
   box_art_url: string
 }
 
-interface TwitchHelixGameSearchResponseData {
-  data: TwitchHelixGameSearchResponseDataEntry[]
+interface TwitchHelixCategorySearchResponseData {
+  data: TwitchHelixCategorySearchResponseDataEntry[]
 }
 
 interface TwitchHelixStreamSearchResponseDataEntry {
@@ -74,6 +74,21 @@ interface ModifyChannelInformationData {
   broadcaster_language?: string
   title?: string
   delay?: number
+}
+
+interface TwitchHelixGetChannelInformationResponseDataEntry {
+  broadcaster_id: string
+  broadcaster_login: string
+  broadcaster_name: string
+  broadcaster_language: string
+  game_id: string
+  game_name: string
+  title: string
+  delay: number
+}
+
+interface TwitchHelixGetChannelInformationResponseData {
+  data: TwitchHelixGetChannelInformationResponseDataEntry[]
 }
 
 class TwitchHelixClient {
@@ -162,10 +177,22 @@ class TwitchHelixClient {
     return await postJson(url, await this.withAuthHeaders(asJson(subscription)))
   }
 
-  // https://dev.twitch.tv/docs/api/reference#get-games
-  async getGameByName(name: string) {
-    const url = this._url(`/games${asQueryArgs({ name })}`)
-    const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixGameSearchResponseData
+  // https://dev.twitch.tv/docs/api/reference#search-categories
+  async searchCategory(searchString: string) {
+    const url = this._url(`/search/categories${asQueryArgs({ query: searchString })}`)
+    const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixCategorySearchResponseData
+    try {
+      return json.data[0]
+    } catch (e) {
+      log.error(json)
+      return null
+    }
+  }
+
+  // https://dev.twitch.tv/docs/api/reference#get-channel-information
+  async getChannelInformation(broadcasterId: string) {
+    const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`)
+    const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixGetChannelInformationResponseData
     try {
       return json.data[0]
     } catch (e) {

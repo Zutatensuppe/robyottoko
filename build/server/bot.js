@@ -930,9 +930,21 @@ class TwitchHelixClient {
         const url = this._url('/eventsub/subscriptions');
         return await postJson(url, await this.withAuthHeaders(asJson(subscription)));
     }
-    // https://dev.twitch.tv/docs/api/reference#get-games
-    async getGameByName(name) {
-        const url = this._url(`/games${asQueryArgs({ name })}`);
+    // https://dev.twitch.tv/docs/api/reference#search-categories
+    async searchCategory(searchString) {
+        const url = this._url(`/search/categories${asQueryArgs({ query: searchString })}`);
+        const json = await getJson(url, await this.withAuthHeaders());
+        try {
+            return json.data[0];
+        }
+        catch (e) {
+            log$c.error(json);
+            return null;
+        }
+    }
+    // https://dev.twitch.tv/docs/api/reference#get-channel-information
+    async getChannelInformation(broadcasterId) {
+        const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`);
         const json = await getJson(url, await this.withAuthHeaders());
         try {
             return json.data[0];
@@ -2876,8 +2888,14 @@ const setChannelTitle = (title, helixClient, variables, originalCmd) => async (c
         title = '$args()';
     }
     const tmpTitle = await fn.doReplacements(title, command, context, variables, originalCmd);
-    if (!tmpTitle) {
-        say(`Unable to change title to nothing.`);
+    if (tmpTitle === '') {
+        const info = await helixClient.getChannelInformation(context['room-id']);
+        if (info) {
+            say(`Current title is "${info.title}".`);
+        }
+        else {
+            say(`❌ Unable to determine current title.`);
+        }
         return;
     }
     const resp = await helixClient.modifyChannelInformation(context['room-id'], { title: tmpTitle });
@@ -2904,14 +2922,24 @@ const setChannelGameId = (gameId, helixClient, variables, originalCmd) => async 
         gameId = '$args()';
     }
     const tmpGameId = await fn.doReplacements(gameId, command, context, variables, originalCmd);
-    const game = await helixClient.getGameByName(tmpGameId);
-    if (!game) {
+    if (tmpGameId === '') {
+        const info = await helixClient.getChannelInformation(context['room-id']);
+        if (info) {
+            say(`Current category is "${info.game_name}".`);
+        }
+        else {
+            say(`❌ Unable to determine current category.`);
+        }
+        return;
+    }
+    const category = await helixClient.searchCategory(tmpGameId);
+    if (!category) {
         say('🔎 Category not found.');
         return;
     }
-    const resp = await helixClient.modifyChannelInformation(context['room-id'], { game_id: game.id });
+    const resp = await helixClient.modifyChannelInformation(context['room-id'], { game_id: category.id });
     if (resp?.status === 204) {
-        say(`✨ Changed category to "${game.name}".`);
+        say(`✨ Changed category to "${category.name}".`);
     }
     else {
         say('❌ Unable to update category.');

@@ -31,18 +31,28 @@ const setChannelGameId = (
       gameId = '$args()'
     }
     const tmpGameId = await fn.doReplacements(gameId, command, context, variables, originalCmd)
-    const game = await helixClient.getGameByName(tmpGameId)
-    if (!game) {
+    if (tmpGameId === '') {
+      const info = await helixClient.getChannelInformation(context['room-id'])
+      if (info) {
+        say(`Current category is "${info.game_name}".`)
+      } else {
+        say(`❌ Unable to determine current category.`)
+      }
+      return
+    }
+
+    const category = await helixClient.searchCategory(tmpGameId)
+    if (!category) {
       say('🔎 Category not found.')
       return
     }
 
     const resp = await helixClient.modifyChannelInformation(
       context['room-id'],
-      { game_id: game.id }
+      { game_id: category.id }
     )
     if (resp?.status === 204) {
-      say(`✨ Changed category to "${game.name}".`)
+      say(`✨ Changed category to "${category.name}".`)
     } else {
       say('❌ Unable to update category.')
     }
