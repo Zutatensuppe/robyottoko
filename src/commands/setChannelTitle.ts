@@ -31,8 +31,13 @@ const setChannelTitle = (
       title = '$args()'
     }
     const tmpTitle = await fn.doReplacements(title, command, context, variables, originalCmd)
-    if (!tmpTitle) {
-      say(`Unable to change title to nothing.`)
+    if (tmpTitle === '') {
+      const info = await helixClient.getChannelInformation(context['room-id'])
+      if (info) {
+        say(`Current title is "${info.title}".`)
+      } else {
+        say(`❌ Unable to determine current title.`)
+      }
       return
     }
 
