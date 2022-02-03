@@ -1,6 +1,5 @@
 import countdown from '../../commands/countdown'
 import madochanCreateWord from '../../commands/madochanCreateWord'
-import text from '../../commands/text'
 import randomText from '../../commands/randomText'
 import playMedia from '../../commands/playMedia'
 import fn from '../../fn'
@@ -10,7 +9,6 @@ import setChannelTitle from '../../commands/setChannelTitle'
 import setChannelGameId from '../../commands/setChannelGameId'
 import Db from '../../Db'
 import WebSocketServer, { Socket } from '../../net/WebSocketServer'
-import Madochan from '../../services/Madochan'
 import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
 import {
@@ -68,7 +66,6 @@ interface WsData {
   data: GeneralModuleWsEventData
 }
 
-
 export interface GeneralSaveEventData {
   event: "save";
   commands: Command[];
@@ -95,15 +92,13 @@ class GeneralModule implements Module {
   constructor(
     bot: Bot,
     user: User,
-    variables: Variables,
     clientManager: TwitchClientManager,
-    storage: ModuleStorage,
   ) {
     this.db = bot.getDb()
     this.user = user
-    this.variables = variables
+    this.variables = bot.getUserVariables(user)
     this.clientManager = clientManager
-    this.storage = storage
+    this.storage = bot.getUserModuleStorage(user)
     this.wss = bot.getWebSocketServer()
     const initData = this.reinit()
     this.data = initData.data
@@ -149,6 +144,11 @@ class GeneralModule implements Module {
       }
       cmd.variables = cmd.variables || []
       cmd.variableChanges = cmd.variableChanges || []
+      if (cmd.action === 'text') {
+        if (!Array.isArray(cmd.data.text)) {
+          cmd.data.text = [cmd.data.text]
+        }
+      }
       if (cmd.action === 'media') {
         cmd.data.minDurationMs = cmd.data.minDurationMs || 0
         cmd.data.sound.volume = cmd.data.sound.volume || 100
@@ -198,43 +198,31 @@ class GeneralModule implements Module {
       let cmdObj = null
       switch (cmd.action) {
         case 'media_volume':
-          cmdObj = Object.assign({}, cmd, {
-            fn: this.mediaVolumeCmd.bind(this),
-          })
+          cmdObj = Object.assign({}, cmd, { fn: this.mediaVolumeCmd.bind(this) })
           break;
         case 'madochan_createword':
-          cmdObj = Object.assign({}, cmd, {
-            fn: madochanCreateWord(
-              `${cmd.data.model}` || Madochan.defaultModel,
-              parseInt(cmd.data.weirdness, 10) || Madochan.defaultWeirdness,
-            )
-          })
+          cmdObj = Object.assign({}, cmd, { fn: madochanCreateWord(cmd) })
           break;
         case 'dict_lookup':
-          cmdObj = Object.assign({}, cmd, { fn: dictLookup(cmd.data.lang, cmd.data.phrase, this.variables, cmd) })
+          cmdObj = Object.assign({}, cmd, { fn: dictLookup(cmd, this.variables) })
           break;
         case 'text':
-          cmdObj = Object.assign({}, cmd, {
-            fn: Array.isArray(cmd.data.text)
-              ? randomText(this.variables, cmd)
-              // @ts-ignore
-              : text(this.variables, cmd)
-          })
+          cmdObj = Object.assign({}, cmd, { fn: randomText(cmd, this.variables) })
           break;
         case 'media':
-          cmdObj = Object.assign({}, cmd, { fn: playMedia(this.wss, this.user.id, cmd) })
+          cmdObj = Object.assign({}, cmd, { fn: playMedia(cmd, this.wss, this.user.id) })
           break;
         case 'countdown':
-          cmdObj = Object.assign({}, cmd, { fn: countdown(this.variables, this.wss, this.user.id, cmd) })
+          cmdObj = Object.assign({}, cmd, { fn: countdown(cmd, this.variables, this.wss, this.user.id) })
           break;
         case 'chatters':
           cmdObj = Object.assign({}, cmd, { fn: chatters(this.db, this.clientManager.getHelixClient()) })
           break;
         case 'set_channel_title':
-          cmdObj = Object.assign({}, cmd, { fn: setChannelTitle(cmd.data.title, this.clientManager.getHelixClient(), this.variables, cmd) })
+          cmdObj = Object.assign({}, cmd, { fn: setChannelTitle(cmd, this.clientManager.getHelixClient(), this.variables) })
           break;
         case 'set_channel_game_id':
-          cmdObj = Object.assign({}, cmd, { fn: setChannelGameId(cmd.data.game_id, this.clientManager.getHelixClient(), this.variables, cmd) })
+          cmdObj = Object.assign({}, cmd, { fn: setChannelGameId(cmd, this.clientManager.getHelixClient(), this.variables) })
           break;
       }
       if (!cmdObj) {

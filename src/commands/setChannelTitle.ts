@@ -7,10 +7,9 @@ import Variables from '../services/Variables'
 const log = logger('setChannelTitle.ts')
 
 const setChannelTitle = (
-  title: string,
+  originalCmd: SetChannelTitleCommand,
   helixClient: TwitchHelixClient | null,
   variables: Variables,
-  originalCmd: SetChannelTitleCommand,
 ): CommandFunction => async (
   command: RawCommand | null,
   client: TwitchChatClient | null,
@@ -27,9 +26,7 @@ const setChannelTitle = (
       return
     }
     const say = fn.sayFn(client, target)
-    if (title === '') {
-      title = '$args()'
-    }
+    const title = originalCmd.data.title === '' ? '$args()' : originalCmd.data.title
     const tmpTitle = await fn.doReplacements(title, command, context, variables, originalCmd)
     if (tmpTitle === '') {
       const info = await helixClient.getChannelInformation(context['room-id'])

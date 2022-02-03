@@ -869,12 +869,23 @@ class TwitchHelixClient {
         this.clientSecret = clientSecret;
         this.twitchChannels = twitchChannels;
     }
-    async withAuthHeaders(opts = {}, scopes = []) {
-        const accessToken = await this.getAccessToken(scopes);
-        return withHeaders({
+    _authHeaders(accessToken) {
+        return {
             'Client-ID': this.clientId,
             'Authorization': `Bearer ${accessToken}`,
-        }, opts);
+        };
+    }
+    async withAuthHeaders(opts = {}, scopes = []) {
+        const accessToken = await this.getAccessToken(scopes);
+        return withHeaders(this._authHeaders(accessToken), opts);
+    }
+    _oauthAccessTokenByBroadcasterId(broadcasterId) {
+        for (const twitchChannel of this.twitchChannels) {
+            if (twitchChannel.channel_id === broadcasterId) {
+                return twitchChannel.access_token;
+            }
+        }
+        return null;
     }
     // https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/
     async getAccessToken(scopes = []) {
@@ -913,10 +924,16 @@ class TwitchHelixClient {
         return user ? user.id : '';
     }
     // https://dev.twitch.tv/docs/api/reference#get-streams
-    async getStreams(userId) {
+    async getStreamByUserId(userId) {
         const url = this._url(`/streams${asQueryArgs({ user_id: userId })}`);
         const json = await getJson(url, await this.withAuthHeaders());
-        return json;
+        try {
+            return json.data[0];
+        }
+        catch (e) {
+            log$c.error(json);
+            return null;
+        }
     }
     async getSubscriptions() {
         const url = this._url('/eventsub/subscriptions');
@@ -956,21 +973,12 @@ class TwitchHelixClient {
     }
     // https://dev.twitch.tv/docs/api/reference#modify-channel-information
     async modifyChannelInformation(broadcasterId, data) {
-        const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`);
-        let accessToken = null;
-        for (const twitchChannel of this.twitchChannels) {
-            if (twitchChannel.channel_id === broadcasterId) {
-                accessToken = twitchChannel.access_token;
-                break;
-            }
-        }
+        const accessToken = this._oauthAccessTokenByBroadcasterId(broadcasterId);
         if (!accessToken) {
             return null;
         }
-        return await request('patch', url, withHeaders({
-            'Client-ID': this.clientId,
-            'Authorization': `Bearer ${accessToken}`,
-        }, asJson(data)));
+        const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`);
+        return await request('patch', url, withHeaders(this._authHeaders(accessToken), asJson(data)));
     }
 }
 
@@ -2715,7 +2723,7 @@ class Mail {
 }
 
 const log$6 = logger('countdown.ts');
-const countdown = (variables, wss, userId, originalCmd) => async (command, client, target, context, msg) => {
+const countdown = (originalCmd, variables, wss, userId) => async (command, client, target, context, msg) => {
     if (!client) {
         return;
     }
@@ -2796,10 +2804,12 @@ var Madochan = {
     defaultWeirdness: 1,
 };
 
-const madochanCreateWord = (model, weirdness) => async (command, client, target, context, msg) => {
+const madochanCreateWord = (originalCmd) => async (command, client, target, context, msg) => {
     if (!client || !command) {
         return;
     }
+    const model = `${originalCmd.data.model}` || Madochan.defaultModel;
+    const weirdness = parseInt(originalCmd.data.weirdness, 10) || Madochan.defaultWeirdness;
     const say = fn.sayFn(client, target);
     const definition = command.args.join(' ');
     say(`Generating word for "${definition}"...`);
@@ -2816,16 +2826,7 @@ const madochanCreateWord = (model, weirdness) => async (command, client, target,
     }
 };
 
-const text = (variables, originalCmd) => async (command, client, target, context, msg) => {
-    if (!client) {
-        return;
-    }
-    const text = originalCmd.data.text;
-    const say = fn.sayFn(client, target);
-    say(await fn.doReplacements(text, command, context, variables, originalCmd));
-};
-
-const randomText = (variables, originalCmd) => async (command, client, target, context, msg) => {
+const randomText = (originalCmd, variables) => async (command, client, target, context, msg) => {
     if (!client) {
         return;
     }
@@ -2834,7 +2835,7 @@ const randomText = (variables, originalCmd) => async (command, client, target, c
     say(await fn.doReplacements(fn.getRandom(texts), command, context, variables, originalCmd));
 };
 
-const playMedia = (wss, userId, originalCmd) => (command, client, target, context, msg) => {
+const playMedia = (originalCmd, wss, userId) => (command, client, target, context, msg) => {
     const data = originalCmd.data;
     wss.notifyAll([userId], 'general', {
         event: 'playmedia',
@@ -2852,12 +2853,11 @@ const chatters = (db, helixClient) => async (command, client, target, context, m
         return;
     }
     const say = fn.sayFn(client, target);
-    const streams = await helixClient.getStreams(context['room-id']);
-    if (!streams || streams.data.length === 0) {
+    const stream = await helixClient.getStreamByUserId(context['room-id']);
+    if (!stream) {
         say(`It seems this channel is not live at the moment...`);
         return;
     }
-    const stream = streams.data[0];
     const [whereSql, whereValues] = db._buildWhere({
         broadcaster_user_id: context['room-id'],
         created_at: { '$gte': stream.started_at },
@@ -2874,7 +2874,7 @@ const chatters = (db, helixClient) => async (command, client, target, context, m
 };
 
 const log$4 = logger('setChannelTitle.ts');
-const setChannelTitle = (title, helixClient, variables, originalCmd) => async (command, client, target, context, msg) => {
+const setChannelTitle = (originalCmd, helixClient, variables) => async (command, client, target, context, msg) => {
     if (!client || !command || !context || !helixClient) {
         log$4.info('client', client);
         log$4.info('command', command);
@@ -2884,9 +2884,7 @@ const setChannelTitle = (title, helixClient, variables, originalCmd) => async (c
         return;
     }
     const say = fn.sayFn(client, target);
-    if (title === '') {
-        title = '$args()';
-    }
+    const title = originalCmd.data.title === '' ? '$args()' : originalCmd.data.title;
     const tmpTitle = await fn.doReplacements(title, command, context, variables, originalCmd);
     if (tmpTitle === '') {
         const info = await helixClient.getChannelInformation(context['room-id']);
@@ -2908,7 +2906,7 @@ const setChannelTitle = (title, helixClient, variables, originalCmd) => async (c
 };
 
 const log$3 = logger('setChannelGameId.ts');
-const setChannelGameId = (gameId, helixClient, variables, originalCmd) => async (command, client, target, context, msg) => {
+const setChannelGameId = (originalCmd, helixClient, variables) => async (command, client, target, context, msg) => {
     if (!client || !command || !context || !helixClient) {
         log$3.info('client', client);
         log$3.info('command', command);
@@ -2918,9 +2916,7 @@ const setChannelGameId = (gameId, helixClient, variables, originalCmd) => async 
         return;
     }
     const say = fn.sayFn(client, target);
-    if (gameId === '') {
-        gameId = '$args()';
-    }
+    const gameId = originalCmd.data.game_id === '' ? '$args()' : originalCmd.data.game_id;
     const tmpGameId = await fn.doReplacements(gameId, command, context, variables, originalCmd);
     if (tmpGameId === '') {
         const info = await helixClient.getChannelInformation(context['room-id']);
@@ -3090,21 +3086,19 @@ const LANG_TO_FN = {
 for (const key of Object.keys(DictCc.LANG_TO_URL_MAP)) {
     LANG_TO_FN[key] = (phrase) => DictCc.searchWord(phrase, key);
 }
-const dictLookup = (lang, phrase, variables, originalCmd) => async (command, client, target, context, msg) => {
+const dictLookup = (originalCmd, variables) => async (command, client, target, context, msg) => {
     if (!client || !command) {
         return [];
     }
     const say = fn.sayFn(client, target);
-    const tmpLang = await fn.doReplacements(lang, command, context, variables, originalCmd);
+    const tmpLang = await fn.doReplacements(originalCmd.data.lang, command, context, variables, originalCmd);
     const dictFn = LANG_TO_FN[tmpLang] || null;
     if (!dictFn) {
         say(`Sorry, language not supported: "${tmpLang}"`);
         return;
     }
     // if no phrase is setup, use all args given to command
-    if (phrase === '') {
-        phrase = '$args()';
-    }
+    const phrase = originalCmd.data.phrase === '' ? '$args()' : originalCmd.data.phrase;
     const tmpPhrase = await fn.doReplacements(phrase, command, context, variables, originalCmd);
     const items = await dictFn(tmpPhrase);
     if (items.length === 0) {
@@ -3117,14 +3111,14 @@ const dictLookup = (lang, phrase, variables, originalCmd) => async (command, cli
 };
 
 class GeneralModule {
-    constructor(bot, user, variables, clientManager, storage) {
+    constructor(bot, user, clientManager) {
         this.name = 'general';
         this.interval = null;
         this.db = bot.getDb();
         this.user = user;
-        this.variables = variables;
+        this.variables = bot.getUserVariables(user);
         this.clientManager = clientManager;
-        this.storage = storage;
+        this.storage = bot.getUserModuleStorage(user);
         this.wss = bot.getWebSocketServer();
         const initData = this.reinit();
         this.data = initData.data;
@@ -3166,6 +3160,11 @@ class GeneralModule {
             }
             cmd.variables = cmd.variables || [];
             cmd.variableChanges = cmd.variableChanges || [];
+            if (cmd.action === 'text') {
+                if (!Array.isArray(cmd.data.text)) {
+                    cmd.data.text = [cmd.data.text];
+                }
+            }
             if (cmd.action === 'media') {
                 cmd.data.minDurationMs = cmd.data.minDurationMs || 0;
                 cmd.data.sound.volume = cmd.data.sound.volume || 100;
@@ -3210,40 +3209,31 @@ class GeneralModule {
             let cmdObj = null;
             switch (cmd.action) {
                 case 'media_volume':
-                    cmdObj = Object.assign({}, cmd, {
-                        fn: this.mediaVolumeCmd.bind(this),
-                    });
+                    cmdObj = Object.assign({}, cmd, { fn: this.mediaVolumeCmd.bind(this) });
                     break;
                 case 'madochan_createword':
-                    cmdObj = Object.assign({}, cmd, {
-                        fn: madochanCreateWord(`${cmd.data.model}` || Madochan.defaultModel, parseInt(cmd.data.weirdness, 10) || Madochan.defaultWeirdness)
-                    });
+                    cmdObj = Object.assign({}, cmd, { fn: madochanCreateWord(cmd) });
                     break;
                 case 'dict_lookup':
-                    cmdObj = Object.assign({}, cmd, { fn: dictLookup(cmd.data.lang, cmd.data.phrase, this.variables, cmd) });
+                    cmdObj = Object.assign({}, cmd, { fn: dictLookup(cmd, this.variables) });
                     break;
                 case 'text':
-                    cmdObj = Object.assign({}, cmd, {
-                        fn: Array.isArray(cmd.data.text)
-                            ? randomText(this.variables, cmd)
-                            // @ts-ignore
-                            : text(this.variables, cmd)
-                    });
+                    cmdObj = Object.assign({}, cmd, { fn: randomText(cmd, this.variables) });
                     break;
                 case 'media':
-                    cmdObj = Object.assign({}, cmd, { fn: playMedia(this.wss, this.user.id, cmd) });
+                    cmdObj = Object.assign({}, cmd, { fn: playMedia(cmd, this.wss, this.user.id) });
                     break;
                 case 'countdown':
-                    cmdObj = Object.assign({}, cmd, { fn: countdown(this.variables, this.wss, this.user.id, cmd) });
+                    cmdObj = Object.assign({}, cmd, { fn: countdown(cmd, this.variables, this.wss, this.user.id) });
                     break;
                 case 'chatters':
                     cmdObj = Object.assign({}, cmd, { fn: chatters(this.db, this.clientManager.getHelixClient()) });
                     break;
                 case 'set_channel_title':
-                    cmdObj = Object.assign({}, cmd, { fn: setChannelTitle(cmd.data.title, this.clientManager.getHelixClient(), this.variables, cmd) });
+                    cmdObj = Object.assign({}, cmd, { fn: setChannelTitle(cmd, this.clientManager.getHelixClient(), this.variables) });
                     break;
                 case 'set_channel_game_id':
-                    cmdObj = Object.assign({}, cmd, { fn: setChannelGameId(cmd.data.game_id, this.clientManager.getHelixClient(), this.variables, cmd) });
+                    cmdObj = Object.assign({}, cmd, { fn: setChannelGameId(cmd, this.clientManager.getHelixClient(), this.variables) });
                     break;
             }
             if (!cmdObj) {
@@ -3509,12 +3499,12 @@ const default_commands = (list = null) => {
     ];
 };
 class SongrequestModule {
-    constructor(bot, user, variables, _clientManager, storage) {
+    constructor(bot, user, _clientManager) {
         this.name = 'sr';
-        this.variables = variables;
+        this.variables = bot.getUserVariables(user);
         this.user = user;
         this.cache = bot.getCache();
-        this.storage = storage;
+        this.storage = bot.getUserModuleStorage(user);
         this.wss = bot.getWebSocketServer();
         const initData = this.reinit();
         this.data = {
@@ -4452,10 +4442,10 @@ class SongrequestModule {
 }
 
 class VoteModule {
-    constructor(bot, user, variables, clientManager, storage) {
+    constructor(bot, user, clientManager) {
         this.name = 'vote';
-        this.variables = variables;
-        this.storage = storage;
+        this.variables = bot.getUserVariables(user);
+        this.storage = bot.getUserModuleStorage(user);
         this.data = this.reinit();
     }
     async userChanged(_user) {
@@ -4576,11 +4566,11 @@ class VoteModule {
 }
 
 class SpeechToTextModule {
-    constructor(bot, user, variables, clientManager, storage) {
+    constructor(bot, user, clientManager) {
         this.name = 'speech-to-text';
         this.user = user;
-        this.variables = variables;
-        this.storage = storage;
+        this.variables = bot.getUserVariables(user);
+        this.storage = bot.getUserModuleStorage(user);
         this.wss = bot.getWebSocketServer();
         this.defaultSettings = {
             status: {
@@ -4696,7 +4686,7 @@ class SpeechToTextModule {
 }
 
 class DrawcastModule {
-    constructor(bot, user, variables, _clientManager, storage) {
+    constructor(bot, user, _clientManager) {
         this.name = 'drawcast';
         this.defaultSettings = {
             submitButtonText: 'Submit',
@@ -4720,10 +4710,10 @@ class DrawcastModule {
             notificationSound: null,
             favoriteLists: [{ list: [], title: '' }],
         };
-        this.variables = variables;
+        this.variables = bot.getUserVariables(user);
         this.user = user;
         this.wss = bot.getWebSocketServer();
-        this.storage = storage;
+        this.storage = bot.getUserModuleStorage(user);
         this.ws = bot.getWebServer();
         this.tokens = bot.getTokens();
         this.data = this.reinit();
@@ -4864,7 +4854,7 @@ class DrawcastModule {
 
 const log$1 = logger('AvatarModule.ts');
 class AvatarModule {
-    constructor(bot, user, variables, _clientManager, storage) {
+    constructor(bot, user, _clientManager) {
         this.name = 'avatar';
         this.defaultSettings = {
             styles: {
@@ -4878,10 +4868,10 @@ class AvatarModule {
             slots: {},
             lockedState: '',
         };
-        this.variables = variables;
+        this.variables = bot.getUserVariables(user);
         this.user = user;
         this.wss = bot.getWebSocketServer();
-        this.storage = storage;
+        this.storage = bot.getUserModuleStorage(user);
         this.data = this.reinit();
     }
     async userChanged(user) {
@@ -5015,12 +5005,28 @@ const eventHub = new EventHub();
 const moduleManager = new ModuleManager();
 const webSocketServer = new WebSocketServer(moduleManager, config.ws, auth);
 const webServer = new WebServer(eventHub, db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, config.http, config.twitch, webSocketServer, auth);
+const userVariableInstances = {};
+const userModuleStorageInstances = {};
 const bot = {
     getDb: () => db,
     getTokens: () => tokenRepo,
     getCache: () => cache,
     getWebServer: () => webServer,
     getWebSocketServer: () => webSocketServer,
+    // user specific
+    // -----------------------------------------------------------------
+    getUserVariables: (user) => {
+        if (!userVariableInstances[user.id]) {
+            userVariableInstances[user.id] = new Variables(db, user.id);
+        }
+        return userVariableInstances[user.id];
+    },
+    getUserModuleStorage: (user) => {
+        if (!userModuleStorageInstances[user.id]) {
+            userModuleStorageInstances[user.id] = new ModuleStorage(db, user.id);
+        }
+        return userModuleStorageInstances[user.id];
+    },
 };
 const run = async () => {
     // this function may only be called once per user!
@@ -5028,10 +5034,8 @@ const run = async () => {
     const initForUser = async (user) => {
         const clientManager = new TwitchClientManager(config.twitch, db, user, twitchChannelRepo, moduleManager);
         await clientManager.init('init');
-        const variables = new Variables(db, user.id);
-        const moduleStorage = new ModuleStorage(db, user.id);
         for (const moduleClass of modules) {
-            moduleManager.add(user.id, new moduleClass(bot, user, variables, clientManager, moduleStorage));
+            moduleManager.add(user.id, new moduleClass(bot, user, clientManager));
         }
         eventHub.on('user_changed', async (changedUser) => {
             if (changedUser.id === user.id) {

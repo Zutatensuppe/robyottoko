@@ -94,13 +94,11 @@ class SpeechToTextModule implements Module {
   constructor(
     bot: Bot,
     user: User,
-    variables: Variables,
     clientManager: TwitchClientManager,
-    storage: ModuleStorage,
   ) {
     this.user = user
-    this.variables = variables
-    this.storage = storage
+    this.variables = bot.getUserVariables(user)
+    this.storage = bot.getUserModuleStorage(user)
     this.wss = bot.getWebSocketServer()
     this.defaultSettings = {
       status: {

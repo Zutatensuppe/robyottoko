@@ -2,9 +2,9 @@ import WebSocketServer from "../net/WebSocketServer"
 import { CommandFunction, MediaCommand, RawCommand, TwitchChatClient, TwitchChatContext } from "../types"
 
 const playMedia = (
+  originalCmd: MediaCommand,
   wss: WebSocketServer,
   userId: number,
-  originalCmd: MediaCommand,
 ): CommandFunction => (
   command: RawCommand | null,
   client: TwitchChatClient | null,

@@ -62,12 +62,30 @@ const webServer = new WebServer(
   auth
 )
 
+const userVariableInstances: Record<number, Variables> = {}
+const userModuleStorageInstances: Record<number, ModuleStorage> = {}
 const bot: Bot = {
   getDb: () => db,
   getTokens: () => tokenRepo,
   getCache: () => cache,
   getWebServer: () => webServer,
   getWebSocketServer: () => webSocketServer,
+
+  // user specific
+  // -----------------------------------------------------------------
+
+  getUserVariables: (user: User) => {
+    if (!userVariableInstances[user.id]) {
+      userVariableInstances[user.id] = new Variables(db, user.id)
+    }
+    return userVariableInstances[user.id]
+  },
+  getUserModuleStorage: (user: User) => {
+    if (!userModuleStorageInstances[user.id]) {
+      userModuleStorageInstances[user.id] = new ModuleStorage(db, user.id)
+    }
+    return userModuleStorageInstances[user.id]
+  },
 }
 
 const run = async () => {
@@ -82,16 +100,8 @@ const run = async () => {
       moduleManager,
     )
     await clientManager.init('init')
-    const variables = new Variables(db, user.id)
-    const moduleStorage = new ModuleStorage(db, user.id)
     for (const moduleClass of modules) {
-      moduleManager.add(user.id, new moduleClass(
-        bot,
-        user,
-        variables,
-        clientManager,
-        moduleStorage,
-      ))
+      moduleManager.add(user.id, new moduleClass(bot, user, clientManager))
     }
 
     eventHub.on('user_changed', async (changedUser: User) => {

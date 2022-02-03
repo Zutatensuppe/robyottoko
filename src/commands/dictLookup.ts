@@ -31,10 +31,8 @@ for (const key of Object.keys(DictCc.LANG_TO_URL_MAP)) {
 }
 
 const dictLookup = (
-  lang: string,
-  phrase: string,
-  variables: Variables,
   originalCmd: DictLookupCommand,
+  variables: Variables,
   // no params
 ): CommandFunction => async (
   command: RawCommand | null,
@@ -47,7 +45,7 @@ const dictLookup = (
       return []
     }
     const say = fn.sayFn(client, target)
-    const tmpLang = await fn.doReplacements(lang, command, context, variables, originalCmd)
+    const tmpLang = await fn.doReplacements(originalCmd.data.lang, command, context, variables, originalCmd)
     const dictFn = LANG_TO_FN[tmpLang] || null
     if (!dictFn) {
       say(`Sorry, language not supported: "${tmpLang}"`)
@@ -55,9 +53,7 @@ const dictLookup = (
     }
 
     // if no phrase is setup, use all args given to command
-    if (phrase === '') {
-      phrase = '$args()'
-    }
+    const phrase = originalCmd.data.phrase === '' ? '$args()' : originalCmd.data.phrase
     const tmpPhrase = await fn.doReplacements(phrase, command, context, variables, originalCmd)
 
     const items = await dictFn(tmpPhrase)

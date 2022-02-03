@@ -26,12 +26,11 @@ const chatters = (
 
     const say = fn.sayFn(client, target)
 
-    const streams = await helixClient.getStreams(context['room-id'])
-    if (!streams || streams.data.length === 0) {
+    const stream = await helixClient.getStreamByUserId(context['room-id'])
+    if (!stream) {
       say(`It seems this channel is not live at the moment...`)
       return
     }
-    const stream = streams.data[0]
 
     const [whereSql, whereValues] = db._buildWhere({
       broadcaster_user_id: context['room-id'],

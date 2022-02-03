@@ -168,14 +168,12 @@ class SongrequestModule implements Module {
   constructor(
     bot: Bot,
     user: User,
-    variables: Variables,
     _clientManager: TwitchClientManager,
-    storage: ModuleStorage,
   ) {
-    this.variables = variables
+    this.variables = bot.getUserVariables(user)
     this.user = user
     this.cache = bot.getCache()
-    this.storage = storage
+    this.storage = bot.getUserModuleStorage(user)
     this.wss = bot.getWebSocketServer()
 
     const initData = this.reinit()
