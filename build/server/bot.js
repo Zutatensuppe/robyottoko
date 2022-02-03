@@ -2042,6 +2042,14 @@ const newCmd = (type) => {
             variableChanges: [],
             data: {},
         };
+        case 'sr_queue': return {
+            action: 'sr_queue',
+            triggers: [newCommandTrigger('!sr queue')],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        };
         default: return null;
     }
 };
@@ -3524,6 +3532,7 @@ const default_commands = (list = null) => {
         newCmd('sr_volume'),
         newCmd('sr_filter'),
         newCmd('sr_preset'),
+        newCmd('sr_queue'),
     ];
 };
 class SongrequestModule {
@@ -3601,6 +3610,7 @@ class SongrequestModule {
             sr_volume: this.cmdSrVolume,
             sr_filter: this.cmdSrFilter,
             sr_preset: this.cmdSrPreset,
+            sr_queue: this.cmdSrQueue,
         };
         const commands = [];
         rawCommands.forEach((cmd) => {
@@ -4327,6 +4337,22 @@ class SongrequestModule {
         }
         else {
             say(`Playing all songs`);
+        }
+    }
+    async cmdSrQueue(_command, client, target, _context, _msg) {
+        if (!client) {
+            return;
+        }
+        const say = fn.sayFn(client, target);
+        const titles = this.data.playlist.slice(1, 4).map(item => item.title);
+        if (titles.length === 1) {
+            say(`${titles.length} song queued ("${titles.join('" → "')}").`);
+        }
+        else if (titles.length > 1) {
+            say(`${titles.length} songs queued ("${titles.join('" → "')}").`);
+        }
+        else {
+            say('No songs queued.');
         }
     }
     async cmdSrPreset(command, client, target, context, _msg) {

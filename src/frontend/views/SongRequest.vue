@@ -301,6 +301,7 @@ export default defineComponent({
       "sr_volume",
       "sr_filter",
       "sr_preset",
+      "sr_queue",
     ],
   }),
   computed: {

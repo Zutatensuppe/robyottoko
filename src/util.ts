@@ -101,6 +101,7 @@ export const ACTION_DESCRIPTION_MAP: Record<CommandAction, string> = {
   is given, play all songs.`,
   sr_preset: `Switches to the preset <code>&lt;PRESET&gt;</code> (argument to this command) if it exists.
   If no arguments are given, outputs all available presets.`,
+  sr_queue: `Shows the next 3 songs that will play.`,
 }
 
 export const ACTION_NAME_MAP: Record<CommandAction, string> = {
@@ -138,6 +139,7 @@ export const ACTION_NAME_MAP: Record<CommandAction, string> = {
   sr_volume: "sr_volume",
   sr_filter: "sr_filter",
   sr_preset: "sr_preset",
+  sr_queue: "sr_queue",
 }
 
 export const newCmd = (type: string): Command | null => {
@@ -426,6 +428,14 @@ export const newCmd = (type: string): Command | null => {
       action: 'sr_preset',
       triggers: [newCommandTrigger('!sr preset')],
       restrict_to: MOD_OR_ABOVE,
+      variables: [],
+      variableChanges: [],
+      data: {},
+    }
+    case 'sr_queue': return {
+      action: 'sr_queue',
+      triggers: [newCommandTrigger('!sr queue')],
+      restrict_to: [],
       variables: [],
       variableChanges: [],
       data: {},

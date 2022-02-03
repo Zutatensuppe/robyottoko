@@ -210,6 +210,7 @@ export type CommandAction =
   | 'sr_jumptonew' | 'sr_clear' | 'sr_rm' | 'sr_shuffle' | 'sr_reset_stats' | 'sr_loop'
   | 'sr_noloop' | 'sr_pause' | 'sr_unpause' | 'sr_hidevideo' | 'sr_showvideo' | 'sr_request'
   | 'sr_re_request' | 'sr_addtag' | 'sr_rmtag' | 'sr_volume' | 'sr_filter' | 'sr_preset'
+  | 'sr_queue'
 export type CommandRestrict = 'mod' | 'sub' | 'broadcaster'
 
 export interface Command {
