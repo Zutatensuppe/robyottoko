@@ -91,6 +91,38 @@ interface TwitchHelixGetChannelInformationResponseData {
   data: TwitchHelixGetChannelInformationResponseDataEntry[]
 }
 
+export function getBestEntryFromCategorySearchItems(
+  searchString: string,
+  resp: TwitchHelixCategorySearchResponseData,
+): TwitchHelixCategorySearchResponseDataEntry | null {
+  if (resp.data.length === 0) {
+    return null
+  }
+
+  const entriesStartingWithSearchterm: TwitchHelixCategorySearchResponseDataEntry[] = []
+  const entriesNotStartingWithSearchterm: TwitchHelixCategorySearchResponseDataEntry[] = []
+  for (const entry of resp.data) {
+    if (entry.name.toLowerCase() === searchString.toLowerCase()) {
+      return entry
+    }
+    if (entry.name.toLowerCase().startsWith(searchString.toLowerCase())) {
+      entriesStartingWithSearchterm.push(entry)
+    } else {
+      entriesNotStartingWithSearchterm.push(entry)
+    }
+  }
+  const entries = entriesStartingWithSearchterm.length
+    ? entriesStartingWithSearchterm
+    : entriesNotStartingWithSearchterm
+  entries.sort((a, b) => {
+    if (a.name.length === b.name.length) {
+      return 0
+    }
+    return a.name.length < b.name.length ? -1 : 1
+  })
+  return entries[0]
+}
+
 class TwitchHelixClient {
   private clientId: string
   private clientSecret: string
@@ -200,7 +232,7 @@ class TwitchHelixClient {
     const url = this._url(`/search/categories${asQueryArgs({ query: searchString })}`)
     const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixCategorySearchResponseData
     try {
-      return json.data[0]
+      return getBestEntryFromCategorySearchItems(searchString, json)
     } catch (e) {
       log.error(json)
       return null
