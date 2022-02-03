@@ -150,6 +150,7 @@ const default_commands = (list: any = null) => {
     newCmd('sr_volume'),
     newCmd('sr_filter'),
     newCmd('sr_preset'),
+    newCmd('sr_queue'),
   ]
 }
 
@@ -248,6 +249,7 @@ class SongrequestModule implements Module {
       sr_volume: this.cmdSrVolume,
       sr_filter: this.cmdSrFilter,
       sr_preset: this.cmdSrPreset,
+      sr_queue: this.cmdSrQueue,
     }
     const commands: FunctionCommand[] = []
     rawCommands.forEach((cmd: Command) => {
@@ -1142,6 +1144,29 @@ class SongrequestModule implements Module {
       say(`Playing only songs tagged with "${tag}"`)
     } else {
       say(`Playing all songs`)
+    }
+  }
+
+  async cmdSrQueue(
+    _command: RawCommand | null,
+    client: TwitchChatClient | null,
+    target: string | null,
+    _context: TwitchChatContext | null,
+    _msg: string | null,
+  ) {
+    if (!client) {
+      return
+    }
+
+    const say = fn.sayFn(client, target)
+
+    const titles = this.data.playlist.slice(1, 4).map(item => item.title)
+    if (titles.length === 1) {
+      say(`${titles.length} song queued ("${titles.join('" → "')}").`)
+    } else if (titles.length > 1) {
+      say(`${titles.length} songs queued ("${titles.join('" → "')}").`)
+    } else {
+      say('No songs queued.')
     }
   }
 
