@@ -1,6 +1,6 @@
 <template>
   <li class="item" :data-user="item.user" :data-yt="item.yt">
-    <div class="thumbnail" v-if="showThumbnails">
+    <div class="thumbnail" v-if="showThumbnails !== false">
       <div class="media-16-9">
         <img :src="thumbnail" />
       </div>
@@ -46,7 +46,6 @@ export default defineComponent({
       required: true,
     },
     showThumbnails: {
-      type: Boolean,
       required: true,
     },
   },

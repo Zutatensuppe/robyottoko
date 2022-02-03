@@ -62,7 +62,7 @@ export default defineComponent({
         customCssPresets: [],
         showProgressBar: false,
         initAutoplay: true,
-        showThumbnails: true,
+        showThumbnails: "left",
         maxItemsShown: -1,
       },
       progress: 0,
@@ -84,13 +84,22 @@ export default defineComponent({
     },
   },
   computed: {
-    classes() {
-      return [
-        this.settings.showThumbnails ? "with-thumbnails" : "without-thumbnails",
-        this.settings.showProgressBar
-          ? "with-progress-bar"
-          : "without-progress-bar",
-      ];
+    thumbnailClass(): string {
+      if (this.settings.showThumbnails === "left") {
+        return "with-thumbnails-left";
+      }
+      if (this.settings.showThumbnails === "right") {
+        return "with-thumbnails-right";
+      }
+      return "without-thumbnails";
+    },
+    progressBarClass(): string {
+      return this.settings.showProgressBar
+        ? "with-progress-bar"
+        : "without-progress-bar";
+    },
+    classes(): string[] {
+      return [this.thumbnailClass, this.progressBarClass];
     },
     player() {
       return this.$refs.youtube;

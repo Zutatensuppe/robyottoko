@@ -71,10 +71,16 @@ body {
   grid-template-columns: auto 150px;
 }
 
-.with-thumbnails .item {
+.with-thumbnails-left .item {
   grid-template-areas: "thumbnail title title"
                       "thumbnail meta-left meta-right";
   grid-template-columns: max-content auto 150px;
+}
+
+.with-thumbnails-right .item {
+  grid-template-areas: "title title thumbnail"
+                      "meta-left meta-right thumbnail";
+  grid-template-columns: auto 150px max-content;
 }
 
 .thumbnail {
