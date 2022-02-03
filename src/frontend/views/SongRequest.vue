@@ -215,7 +215,7 @@ export default defineComponent({
       initAutoplay: true,
       customCss: "",
       showProgressBar: false,
-      showThumbnails: true,
+      showThumbnails: "left",
       maxItemsShown: -1,
       customCssPresets: [],
     },

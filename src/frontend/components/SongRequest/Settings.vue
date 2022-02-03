@@ -59,7 +59,9 @@
         <tr>
           <td><code>settings.showThumbnails</code></td>
           <td>
-            <input type="checkbox" v-model="settings.showThumbnails" @update:modelValue="sendSettings" />
+            <label class="mr-1"><input class="mr-1" type="radio" v-model="settings.showThumbnails" :value="false" @update:modelValue="sendSettings"/>Off</label>
+            <label class="mr-1"><input class="mr-1" type="radio" v-model="settings.showThumbnails" :value="'left'" @update:modelValue="sendSettings"/>Left</label>
+            <label class="mr-1"><input class="mr-1" type="radio" v-model="settings.showThumbnails" :value="'right'" @update:modelValue="sendSettings"/>Right</label>
           </td>
           <td>Render video thumbnails in the widget.</td>
         </tr>

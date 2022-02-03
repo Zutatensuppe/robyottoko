@@ -23,7 +23,7 @@ interface SongrequestModuleCustomCssPreset {
   name: string
   css: string
   showProgressBar: boolean
-  showThumbnails: boolean
+  showThumbnails: string | false
   maxItemsShown: number
 }
 
@@ -37,7 +37,7 @@ export interface SongrequestModuleSettings {
   customCssPresets: SongrequestModuleCustomCssPreset[]
   initAutoplay: boolean
   showProgressBar: boolean
-  showThumbnails: boolean
+  showThumbnails: string | false
   maxItemsShown: number
 }
 
@@ -77,7 +77,7 @@ const default_custom_css_preset = (obj: any = null) => ({
   name: obj?.name || '',
   css: obj?.css || '',
   showProgressBar: typeof obj?.showProgressBar === 'undefined' ? false : obj.showProgressBar,
-  showThumbnails: typeof obj?.showThumbnails === 'undefined' ? true : obj.showThumbnails,
+  showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
   maxItemsShown: typeof obj?.maxItemsShown === 'undefined' ? -1 : obj.maxItemsShown,
 })
 
@@ -89,9 +89,10 @@ const default_settings = (obj: any = null) => ({
   },
   customCss: obj?.customCss || '',
   customCssPresets: typeof obj?.customCssPresets === 'undefined' ? [] : obj.customCssPresets.map(default_custom_css_preset),
+
   showProgressBar: typeof obj?.showProgressBar === 'undefined' ? false : obj.showProgressBar,
   initAutoplay: typeof obj?.initAutoplay === 'undefined' ? true : obj.initAutoplay,
-  showThumbnails: typeof obj?.showThumbnails === 'undefined' ? true : obj.showThumbnails,
+  showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
   maxItemsShown: typeof obj?.maxItemsShown === 'undefined' ? -1 : obj.maxItemsShown,
 })
 
