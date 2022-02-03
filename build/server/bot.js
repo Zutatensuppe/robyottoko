@@ -863,6 +863,34 @@ class Templates {
 
 const log$c = logger('TwitchHelixClient.ts');
 const API_BASE = 'https://api.twitch.tv/helix';
+function getBestEntryFromCategorySearchItems(searchString, resp) {
+    if (resp.data.length === 0) {
+        return null;
+    }
+    const entriesStartingWithSearchterm = [];
+    const entriesNotStartingWithSearchterm = [];
+    for (const entry of resp.data) {
+        if (entry.name.toLowerCase() === searchString.toLowerCase()) {
+            return entry;
+        }
+        if (entry.name.toLowerCase().startsWith(searchString.toLowerCase())) {
+            entriesStartingWithSearchterm.push(entry);
+        }
+        else {
+            entriesNotStartingWithSearchterm.push(entry);
+        }
+    }
+    const entries = entriesStartingWithSearchterm.length
+        ? entriesStartingWithSearchterm
+        : entriesNotStartingWithSearchterm;
+    entries.sort((a, b) => {
+        if (a.name.length === b.name.length) {
+            return 0;
+        }
+        return a.name.length < b.name.length ? -1 : 1;
+    });
+    return entries[0];
+}
 class TwitchHelixClient {
     constructor(clientId, clientSecret, twitchChannels) {
         this.clientId = clientId;
@@ -952,7 +980,7 @@ class TwitchHelixClient {
         const url = this._url(`/search/categories${asQueryArgs({ query: searchString })}`);
         const json = await getJson(url, await this.withAuthHeaders());
         try {
-            return json.data[0];
+            return getBestEntryFromCategorySearchItems(searchString, json);
         }
         catch (e) {
             log$c.error(json);
