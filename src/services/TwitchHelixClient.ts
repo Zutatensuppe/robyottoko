@@ -106,12 +106,25 @@ class TwitchHelixClient {
     this.twitchChannels = twitchChannels
   }
 
-  async withAuthHeaders(opts = {}, scopes: string[] = []): Promise<RequestInit> {
-    const accessToken = await this.getAccessToken(scopes)
-    return withHeaders({
+  _authHeaders(accessToken: string) {
+    return {
       'Client-ID': this.clientId,
       'Authorization': `Bearer ${accessToken}`,
-    }, opts)
+    }
+  }
+
+  async withAuthHeaders(opts = {}, scopes: string[] = []): Promise<RequestInit> {
+    const accessToken = await this.getAccessToken(scopes)
+    return withHeaders(this._authHeaders(accessToken), opts)
+  }
+
+  _oauthAccessTokenByBroadcasterId(broadcasterId: string): string | null {
+    for (const twitchChannel of this.twitchChannels) {
+      if (twitchChannel.channel_id === broadcasterId) {
+        return twitchChannel.access_token
+      }
+    }
+    return null
   }
 
   // https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/
@@ -156,10 +169,15 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/api/reference#get-streams
-  async getStreams(userId: string): Promise<TwitchHelixStreamSearchResponseData> {
+  async getStreamByUserId(userId: string) {
     const url = this._url(`/streams${asQueryArgs({ user_id: userId })}`)
     const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixStreamSearchResponseData
-    return json
+    try {
+      return json.data[0]
+    } catch (e) {
+      log.error(json)
+      return null
+    }
   }
 
   async getSubscriptions() {
@@ -203,23 +221,13 @@ class TwitchHelixClient {
 
   // https://dev.twitch.tv/docs/api/reference#modify-channel-information
   async modifyChannelInformation(broadcasterId: string, data: ModifyChannelInformationData) {
-    const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`)
-
-    let accessToken: string | null = null
-    for (const twitchChannel of this.twitchChannels) {
-      if (twitchChannel.channel_id === broadcasterId) {
-        accessToken = twitchChannel.access_token
-        break
-      }
-    }
+    const accessToken = this._oauthAccessTokenByBroadcasterId(broadcasterId)
     if (!accessToken) {
       return null
     }
 
-    return await request('patch', url, withHeaders({
-      'Client-ID': this.clientId,
-      'Authorization': `Bearer ${accessToken}`,
-    }, asJson(data)))
+    const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`)
+    return await request('patch', url, withHeaders(this._authHeaders(accessToken), asJson(data)))
   }
 }
 

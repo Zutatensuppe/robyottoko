@@ -7,10 +7,10 @@ import { logger } from './../common/fn'
 const log = logger('countdown.ts')
 
 const countdown = (
+  originalCmd: CountdownCommand,
   variables: Variables,
   wss: WebSocketServer,
   userId: number,
-  originalCmd: CountdownCommand,
 ): CommandFunction => async (
   command: RawCommand | null,
   client: TwitchChatClient | null,

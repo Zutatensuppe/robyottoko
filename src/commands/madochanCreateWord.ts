@@ -1,10 +1,9 @@
-import { CommandFunction, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import { CommandFunction, MadochanCommand, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
 import fn from './../fn'
 import Madochan from './../services/Madochan'
 
 const madochanCreateWord = (
-  model: string,
-  weirdness: number,
+  originalCmd: MadochanCommand,
 ): CommandFunction => async (
   command: RawCommand | null,
   client: TwitchChatClient | null,
@@ -15,6 +14,10 @@ const madochanCreateWord = (
     if (!client || !command) {
       return
     }
+
+    const model = `${originalCmd.data.model}` || Madochan.defaultModel
+    const weirdness = parseInt(originalCmd.data.weirdness, 10) || Madochan.defaultWeirdness
+
     const say = fn.sayFn(client, target)
     const definition = command.args.join(' ')
     say(`Generating word for "${definition}"...`)

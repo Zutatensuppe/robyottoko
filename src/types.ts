@@ -2,6 +2,7 @@
 import { Client } from 'tmi.js'
 import { LogLevel } from './common/fn'
 import Db from './Db'
+import ModuleStorage from './mod/ModuleStorage'
 import WebSocketServer, { Socket } from './net/WebSocketServer'
 import Cache from './services/Cache'
 import Tokens, { Token } from './services/Tokens'
@@ -234,14 +235,6 @@ export interface SetChannelGameIdCommand extends Command {
   }
 }
 
-// should not exist
-export interface TextCommand extends Command {
-  action: "text"
-  data: {
-    text: string
-  }
-}
-
 export interface DictLookupCommand extends Command {
   action: "dict_lookup"
   data: {
@@ -428,4 +421,7 @@ export interface Bot {
   getCache: () => Cache
   getWebServer: () => WebServer
   getWebSocketServer: () => WebSocketServer
+
+  getUserVariables: (user: User) => Variables
+  getUserModuleStorage: (user: User) => ModuleStorage
 }

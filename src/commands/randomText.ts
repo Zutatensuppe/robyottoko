@@ -3,8 +3,8 @@ import { CommandFunction, RandomTextCommand, RawCommand, TwitchChatClient, Twitc
 import fn from './../fn'
 
 const randomText = (
-  variables: Variables,
   originalCmd: RandomTextCommand,
+  variables: Variables,
 ): CommandFunction => async (
   command: RawCommand | null,
   client: TwitchChatClient | null,

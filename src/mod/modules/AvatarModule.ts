@@ -120,14 +120,12 @@ class AvatarModule implements Module {
   constructor(
     bot: Bot,
     user: User,
-    variables: Variables,
     _clientManager: TwitchClientManager,
-    storage: ModuleStorage,
   ) {
-    this.variables = variables
+    this.variables = bot.getUserVariables(user)
     this.user = user
     this.wss = bot.getWebSocketServer()
-    this.storage = storage
+    this.storage = bot.getUserModuleStorage(user)
 
     this.data = this.reinit()
   }
