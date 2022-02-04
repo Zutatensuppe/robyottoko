@@ -51,6 +51,7 @@ import AvatarAnimation from "./components/Avatar/AvatarAnimation.vue";
 import "./style.css"
 import conf from './conf'
 import user from './user'
+import wsstatus from './wsstatus'
 
 const run = async () => {
   const router = VueRouter.createRouter({
@@ -133,6 +134,7 @@ const run = async () => {
 
   await conf.init()
   await user.init()
+  wsstatus.init()
 
   router.beforeEach((to, from, next) => {
     if (to.meta.protected && !user.getMe()) {

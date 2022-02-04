@@ -66,6 +66,14 @@ class WebSocketServer {
       })
 
       const relpath = request.url.substr(pathname.length)
+      if (relpath === '/core') {
+        socket.module = 'core'
+        // log.info('/conn connected')
+        // not a module
+        // ... doesnt matter
+        return
+      }
+
       // module routing
       for (const module of this.moduleManager.all(socket.user_id)) {
         if ('/' + module.name !== relpath) {

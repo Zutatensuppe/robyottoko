@@ -773,6 +773,13 @@ class WebSocketServer {
                 socket.isAlive = true;
             });
             const relpath = request.url.substr(pathname.length);
+            if (relpath === '/core') {
+                socket.module = 'core';
+                // log.info('/conn connected')
+                // not a module
+                // ... doesnt matter
+                return;
+            }
             // module routing
             for (const module of this.moduleManager.all(socket.user_id)) {
                 if ('/' + module.name !== relpath) {
@@ -1007,6 +1014,17 @@ class TwitchHelixClient {
         }
         const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`);
         return await request('patch', url, withHeaders(this._authHeaders(accessToken), asJson(data)));
+    }
+    async validateOAuthToken(broadcasterId, accessToken) {
+        const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`);
+        const json = await getJson(url, withHeaders(this._authHeaders(accessToken)));
+        try {
+            return json.data[0] ? true : false;
+        }
+        catch (e) {
+            log$c.error(json);
+            return false;
+        }
     }
 }
 
@@ -5099,6 +5117,28 @@ const run = async () => {
                 }
             }
         });
+        const sendStatus = async () => {
+            const client = clientManager.getHelixClient();
+            if (!client) {
+                setTimeout(sendStatus, 5000);
+                return;
+            }
+            const problems = [];
+            const twitchChannels = twitchChannelRepo.allByUserId(user.id);
+            for (const twitchChannel of twitchChannels) {
+                if (!twitchChannel.access_token) {
+                    continue;
+                }
+                const valid = await client.validateOAuthToken(twitchChannel.channel_id, twitchChannel.access_token);
+                if (!valid) {
+                    problems.push(`Access token for channel ${twitchChannel.channel_name} is invalid.`);
+                }
+            }
+            const data = { event: 'status', data: { problems } };
+            webSocketServer.notifyAll([user.id], 'core', data);
+            setTimeout(sendStatus, 5000);
+        };
+        sendStatus();
     };
     webSocketServer.listen();
     await webServer.listen();
