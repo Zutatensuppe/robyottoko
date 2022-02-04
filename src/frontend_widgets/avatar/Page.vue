@@ -130,6 +130,9 @@ export default defineComponent({
       return this.tuberDef.slotDefinitions.map(
         (slotDef: AvatarModuleAvatarSlotDefinition) => {
           const item = slotDef.items[this.tuber.slot[slotDef.slot]];
+          if (!item) {
+            return { title: "", states: [] };
+          }
           const stateDef = item.states.find(
             ({ state }) => state === this.animationName
           );

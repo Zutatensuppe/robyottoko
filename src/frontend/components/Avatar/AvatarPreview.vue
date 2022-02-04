@@ -38,6 +38,9 @@ export default defineComponent({
     animations() {
       return this.avatar.slotDefinitions.map((slotDef) => {
         const item = slotDef.items[slotDef.defaultItemIndex];
+        if (!item) {
+          return { title: "", states: [] };
+        }
         return item.states.find(({ state }) => state === "default");
       });
     },
