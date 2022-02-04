@@ -41,6 +41,14 @@
         >
       </div>
       <div class="navbar-end">
+        <a
+          class="navbar-item has-text-danger"
+          v-if="problems.length"
+          :title="problems.join(' ---- ')"
+          ><i class="fa fa-warning mr-1" /> {{ problems.length }} Problem{{
+            problems.length > 1 ? "s" : ""
+          }}</a
+        >
         <a class="navbar-item" @click="onLogoutClick">Logout</a>
       </div>
     </div>
@@ -49,6 +57,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import user from "../user";
+import { eventBus } from "../wsstatus";
 
 export default defineComponent({
   name: "navbar",
@@ -59,6 +68,10 @@ export default defineComponent({
   },
   created() {
     this.$me = user.getMe();
+    eventBus.on("status", this.statusChanged);
+  },
+  beforeUnmount() {
+    eventBus.off("status", this.statusChanged);
   },
   data: () => ({
     $me: null,
@@ -96,9 +109,13 @@ export default defineComponent({
         text: "Settings",
       },
     ],
+    problems: [],
     burgerActive: false,
   }),
   methods: {
+    statusChanged(status: any) {
+      this.problems = status.problems;
+    },
     toggleBurgerMenu() {
       this.burgerActive = !this.burgerActive;
     },

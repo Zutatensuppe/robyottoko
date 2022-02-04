@@ -112,6 +112,36 @@ const run = async () => {
         }
       }
     })
+
+    const sendStatus = async () => {
+      const client = clientManager.getHelixClient()
+      if (!client) {
+        setTimeout(sendStatus, 5000)
+        return
+      }
+
+      const problems = []
+      const twitchChannels = twitchChannelRepo.allByUserId(user.id)
+      for (const twitchChannel of twitchChannels) {
+        if (!twitchChannel.access_token) {
+          continue;
+        }
+
+        const valid = await client.validateOAuthToken(
+          twitchChannel.channel_id,
+          twitchChannel.access_token,
+        )
+
+        if (!valid) {
+          problems.push(`Access token for channel ${twitchChannel.channel_name} is invalid.`)
+        }
+      }
+
+      const data = { event: 'status', data: { problems } }
+      webSocketServer.notifyAll([user.id], 'core', data)
+      setTimeout(sendStatus, 5000)
+    }
+    sendStatus()
   }
 
   webSocketServer.listen()

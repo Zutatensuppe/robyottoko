@@ -261,6 +261,17 @@ class TwitchHelixClient {
     const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`)
     return await request('patch', url, withHeaders(this._authHeaders(accessToken), asJson(data)))
   }
+
+  async validateOAuthToken(broadcasterId: string, accessToken: string): Promise<boolean> {
+    const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`)
+    const json = await getJson(url, withHeaders(this._authHeaders(accessToken))) as TwitchHelixGetChannelInformationResponseData
+    try {
+      return json.data[0] ? true : false
+    } catch (e) {
+      log.error(json)
+      return false
+    }
+  }
 }
 
 export default TwitchHelixClient
