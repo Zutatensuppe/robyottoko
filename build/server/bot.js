@@ -3250,10 +3250,10 @@ class GeneralModule {
                     if (typeof action.value === 'string') {
                         return action;
                     }
-                    if (!action.value.sound.urlpath && action.value.sound.file) {
+                    if (action.value.sound && !action.value.sound.urlpath && action.value.sound.file) {
                         action.value.sound.urlpath = `/uploads/${encodeURIComponent(action.value.sound.file)}`;
                     }
-                    if (!action.value.image.urlpath && action.value.image.file) {
+                    if (action.value.image && !action.value.image.urlpath && action.value.image.file) {
                         action.value.image.urlpath = `/uploads/${encodeURIComponent(action.value.image.file)}`;
                     }
                     return action;
