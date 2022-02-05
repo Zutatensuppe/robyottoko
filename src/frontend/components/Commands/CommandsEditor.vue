@@ -13,13 +13,16 @@
         </div>
       </div>
       <div class="field" v-if="showFilterActions">
-        <label class="mr-1" v-for="(action, idx) in possibleActions" :key="idx"
+        <label
+          class="mr-1"
+          v-for="(a, idx) in possibleActionsWithCount"
+          :key="idx"
           ><input
             class="mr-1"
             type="checkbox"
-            :value="action"
+            :value="a.action"
             v-model="filter.actions"
-          />{{ action }} ({{ commandCount(action) }})</label
+          />{{ a.action }} ({{ a.count }})</label
         >
       </div>
     </div>
@@ -113,7 +116,7 @@
                   >
                     <responsive-image
                       v-if="element.data.image.file && imagesVisible"
-                      :src="element.data.image.file"
+                      :src="element.data.image.urlpath"
                       :title="element.data.image.filename"
                       width="100px"
                       height="50px"
@@ -128,7 +131,7 @@
                       v-if="element.data.image.file && element.data.sound.file"
                     />
                     <player
-                      :src="element.data.sound.file"
+                      :src="element.data.sound.urlpath"
                       :name="element.data.sound.filename"
                       :volume="element.data.sound.volume"
                       :baseVolume="baseVolume"
@@ -290,6 +293,16 @@ export default defineComponent({
         title: this.actionDescription(action),
         label: `Add ${this.actionName(action)}`,
       }));
+    },
+    possibleActionsWithCount() {
+      return this.possibleActions
+        .map((action) => {
+          return {
+            action,
+            count: this.commandCount(action),
+          };
+        })
+        .filter((a) => a.count > 0);
     },
     actionDescriptions() {
       return ACTION_DESCRIPTION_MAP;

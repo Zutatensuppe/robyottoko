@@ -23,7 +23,7 @@ export default defineComponent({
       return {
         display: "inline-block",
         verticalAlign: "text-bottom",
-        backgroundImage: `url(/uploads/${encodeURIComponent(this.src)})`,
+        backgroundImage: `url(${this.src})`,
         backgroundRepeat: "no-repeat",
         backgroundSize: "contain",
         backgroundPosition: "center",

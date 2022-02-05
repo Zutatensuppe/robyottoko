@@ -330,7 +330,6 @@ class TwitchClientManager {
     //   }
     //   const subzz = await this.helixClient.getSubscriptions()
     //   for (const s of subzz.data) {
-    //     console.log(s.id)
     //     await this.helixClient.deleteSubscription(s.id)
     //   }
     // })()

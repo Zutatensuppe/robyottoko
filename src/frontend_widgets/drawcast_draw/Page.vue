@@ -179,7 +179,9 @@
         class="drawings-panel favorite-drawings-panel"
       >
         <div class="drawings_panel_title">
-          <span class="drawings_panel_title_inner">{{ fav.title || "Streamer's favorites:" }}</span>
+          <span class="drawings_panel_title_inner">{{
+            fav.title || "Streamer's favorites:"
+          }}</span>
         </div>
         <div class="drawing_panel_drawings" v-if="nonfavorites.length">
           <img
@@ -564,8 +566,8 @@ export default defineComponent({
       this.customDescription = data.settings.customDescription || "";
       this.customProfileImageUrl =
         data.settings.customProfileImage &&
-        data.settings.customProfileImage.file
-          ? "/uploads/" + data.settings.customProfileImage.file
+        data.settings.customProfileImage.urlpath
+          ? data.settings.customProfileImage.urlpath
           : "";
       this.recentImagesTitle =
         data.settings.recentImagesTitle || "Newest submitted:";
@@ -617,8 +619,6 @@ export default defineComponent({
         this.tool = "eraser";
       } else if (e.code === "KeyZ" && e.ctrlKey) {
         this.undo();
-      } else {
-        // console.log(e);
       }
     });
 

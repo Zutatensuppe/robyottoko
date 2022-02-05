@@ -94,8 +94,8 @@ const setLogLevel = (logLevel) => {
     }
 };
 setLogLevel('info');
-const logger = (filename, ...pre) => {
-    const b = filename;
+const logger = (prefix, ...pre) => {
+    const b = prefix;
     const fn = (t) => (...args) => {
         if (logEnabled.includes(t)) {
             console[t](dateformat('hh:mm:ss', new Date()), `[${b}]`, ...pre, ...args);
@@ -331,8 +331,6 @@ const applyVariableChanges = async (cmdDef, contextModule, rawCmd, context) => {
                 else if (op === 'decrease_by') {
                     cmdDef.variables[idx].value = _decrease(cmdDef.variables[idx].value, value);
                 }
-                console.log(cmdDef.variables[idx].value);
-                //
                 continue;
             }
         }
@@ -831,7 +829,7 @@ class WebSocketServer {
             && socket.user_id
             && user_ids.includes(socket.user_id)
             && socket.module === moduleName) {
-            log$d.info(`notifying ${socket.user_id} (${data.event})`);
+            log$d.info(`notifying ${socket.user_id} ${moduleName} (${data.event})`);
             socket.send(JSON.stringify(data));
         }
     }
@@ -1137,14 +1135,6 @@ class WebServer {
             }
             res.status(404).send();
         });
-        const uploadDir = './data/uploads';
-        const storage = multer.diskStorage({
-            destination: uploadDir,
-            filename: function (req, file, cb) {
-                cb(null, `${fn.nonce(6)}-${file.originalname}`);
-            }
-        });
-        const upload = multer({ storage }).single('file');
         const verifyTwitchSignature = (req, res, next) => {
             const body = Buffer.from(req.rawBody, 'utf8');
             const msg = `${req.headers['twitch-eventsub-message-id']}${req.headers['twitch-eventsub-message-timestamp']}${body}`;
@@ -1183,9 +1173,43 @@ class WebServer {
         };
         app.use(cookieParser());
         app.use(this.auth.addAuthInfoMiddleware());
-        app.use('/uploads', express.static(uploadDir));
         app.use('/', express.static('./build/public'));
         app.use('/static', express.static('./public/static'));
+        const uploadDir = './data/uploads';
+        const storage = multer.diskStorage({
+            destination: uploadDir,
+            filename: function (req, file, cb) {
+                cb(null, `${fn.nonce(6)}-${file.originalname}`);
+            }
+        });
+        const upload = multer({ storage }).single('file');
+        app.use('/uploads', express.static(uploadDir));
+        app.post('/api/upload', requireLoginApi, (req, res) => {
+            upload(req, res, (err) => {
+                if (err) {
+                    log$b.error(err);
+                    res.status(400).send("Something went wrong!");
+                    return;
+                }
+                if (!req.file) {
+                    log$b.error(err);
+                    res.status(400).send("Something went wrong!");
+                    return;
+                }
+                const uploadedFile = {
+                    fieldname: req.file.fieldname,
+                    originalname: req.file.originalname,
+                    encoding: req.file.encoding,
+                    mimetype: req.file.mimetype,
+                    destination: req.file.destination,
+                    filename: req.file.filename,
+                    filepath: req.file.path,
+                    size: req.file.size,
+                    urlpath: `/uploads/${encodeURIComponent(req.file.filename)}`,
+                };
+                res.send(uploadedFile);
+            });
+        });
         app.get('/api/conf', async (req, res) => {
             res.send({
                 wsBase: this.wss.connectstring(),
@@ -1493,7 +1517,7 @@ class WebServer {
                 res.status(500).send("Something went wrong!");
             }
         });
-        app.post('/twitch/event-sub/', express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
+        app.post('/twitch/event-sub/', express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
             log$b.debug(req.body);
             log$b.debug(req.headers);
             if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
@@ -1538,16 +1562,7 @@ class WebServer {
             res.cookie('x-token', token, { maxAge: 1 * fn.YEAR, httpOnly: true });
             res.send();
         });
-        app.post('/api/upload', requireLoginApi, (req, res) => {
-            upload(req, res, (err) => {
-                if (err) {
-                    log$b.error(err);
-                    res.status(400).send("Something went wrong!");
-                }
-                res.send(req.file);
-            });
-        });
-        app.get('/widget/:widget_type/:widget_token/', async (req, res, next) => {
+        app.get('/widget/:widget_type/:widget_token/', async (req, res, _next) => {
             const token = req.params.widget_token;
             const user = this.auth.userFromWidgetToken(token)
                 || this.auth.userFromPubToken(token);
@@ -1566,11 +1581,11 @@ class WebServer {
             }
             res.status(404).send();
         });
-        app.all('/login', async (req, res, next) => {
+        app.all('/login', async (_req, res, _next) => {
             const indexFile = `${__dirname}/../../build/public/index.html`;
             res.sendFile(path.resolve(indexFile));
         });
-        app.all('/password-reset', async (req, res, next) => {
+        app.all('/password-reset', async (_req, res, _next) => {
             const indexFile = `${__dirname}/../../build/public/index.html`;
             res.sendFile(path.resolve(indexFile));
         });
@@ -1735,11 +1750,13 @@ const newMedia = () => ({
     sound: {
         filename: '',
         file: '',
+        urlpath: '',
         volume: 100,
     },
     image: {
         filename: '',
         file: '',
+        urlpath: '',
     },
     minDurationMs: '1s',
 });
@@ -2362,7 +2379,6 @@ class TwitchClientManager {
         //   }
         //   const subzz = await this.helixClient.getSubscriptions()
         //   for (const s of subzz.data) {
-        //     console.log(s.id)
         //     await this.helixClient.deleteSubscription(s.id)
         //   }
         // })()
@@ -3222,6 +3238,26 @@ class GeneralModule {
             if (cmd.action === 'media') {
                 cmd.data.minDurationMs = cmd.data.minDurationMs || 0;
                 cmd.data.sound.volume = cmd.data.sound.volume || 100;
+                if (!cmd.data.sound.urlpath && cmd.data.sound.file) {
+                    cmd.data.sound.urlpath = `/uploads/${encodeURIComponent(cmd.data.sound.file)}`;
+                }
+                if (!cmd.data.image.urlpath && cmd.data.image.file) {
+                    cmd.data.image.urlpath = `/uploads/${encodeURIComponent(cmd.data.image.file)}`;
+                }
+            }
+            if (cmd.action === 'countdown') {
+                cmd.data.actions = cmd.data.actions.map((action) => {
+                    if (typeof action.value === 'string') {
+                        return action;
+                    }
+                    if (!action.value.sound.urlpath && action.value.sound.file) {
+                        action.value.sound.urlpath = `/uploads/${encodeURIComponent(action.value.sound.file)}`;
+                    }
+                    if (!action.value.image.urlpath && action.value.image.file) {
+                        action.value.image.urlpath = `/uploads/${encodeURIComponent(action.value.image.file)}`;
+                    }
+                    return action;
+                });
             }
             if (cmd.action === 'jisho_org_lookup') {
                 cmd.action = 'dict_lookup';
@@ -3471,12 +3507,6 @@ var Youtube = {
     getUrlById,
 };
 
-const ADD_TYPE = {
-    NOT_ADDED: 0,
-    ADDED: 1,
-    REQUEUED: 2,
-    EXISTED: 3,
-};
 const default_custom_css_preset = (obj = null) => ({
     name: obj?.name || '',
     css: obj?.css || '',
@@ -3484,11 +3514,12 @@ const default_custom_css_preset = (obj = null) => ({
     showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
     maxItemsShown: typeof obj?.maxItemsShown === 'undefined' ? -1 : obj.maxItemsShown,
 });
-const default_settings = (obj = null) => ({
+const default_settings$3 = (obj = null) => ({
     volume: typeof obj?.volume === 'undefined' ? 100 : obj.volume,
     hideVideoImage: {
         file: obj?.hideVideoImage?.file || '',
         filename: obj?.hideVideoImage?.filename || '',
+        urlpath: obj?.hideVideoImage?.urlpath ? obj.hideVideoImage.urlpath : (obj?.hideVideoImage?.file ? `/uploads/${encodeURIComponent(obj.hideVideoImage.file)}` : '')
     },
     customCss: obj?.customCss || '',
     customCssPresets: typeof obj?.customCssPresets === 'undefined' ? [] : obj.customCssPresets.map(default_custom_css_preset),
@@ -3497,6 +3528,13 @@ const default_settings = (obj = null) => ({
     showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
     maxItemsShown: typeof obj?.maxItemsShown === 'undefined' ? -1 : obj.maxItemsShown,
 });
+
+const ADD_TYPE = {
+    NOT_ADDED: 0,
+    ADDED: 1,
+    REQUEUED: 2,
+    EXISTED: 3,
+};
 const default_playlist_item = (item = null) => {
     return {
         id: item?.id || 0,
@@ -3579,7 +3617,7 @@ class SongrequestModule {
             filter: {
                 tag: '',
             },
-            settings: default_settings(),
+            settings: default_settings$3(),
             playlist: default_playlist(),
             commands: default_commands(),
             stacks: {},
@@ -3588,7 +3626,7 @@ class SongrequestModule {
         // needed by rest of the code
         // TODO: maybe use same code as in save function
         data.playlist = default_playlist(data.playlist);
-        data.settings = default_settings(data.settings);
+        data.settings = default_settings$3(data.settings);
         data.commands = default_commands(data.commands);
         return {
             data: {
@@ -3648,9 +3686,9 @@ class SongrequestModule {
     getRoutes() {
         return {
             post: {
-                '/api/sr/import': async (req, res, next) => {
+                '/api/sr/import': async (req, res, _next) => {
                     try {
-                        this.data.settings = default_settings(req.body.settings);
+                        this.data.settings = default_settings$3(req.body.settings);
                         this.data.playlist = default_playlist(req.body.playlist);
                         this.save();
                         this.updateClients('init');
@@ -3662,7 +3700,7 @@ class SongrequestModule {
                 },
             },
             get: {
-                '/api/sr/export': async (req, res, next) => {
+                '/api/sr/export': async (_req, res, _next) => {
                     res.send({
                         settings: this.data.settings,
                         playlist: this.data.playlist,
@@ -4514,7 +4552,7 @@ class SongrequestModule {
 }
 
 class VoteModule {
-    constructor(bot, user, clientManager) {
+    constructor(bot, user, _clientManager) {
         this.name = 'vote';
         this.variables = bot.getUserVariables(user);
         this.storage = bot.getUserModuleStorage(user);
@@ -4637,55 +4675,57 @@ class VoteModule {
     }
 }
 
+const default_settings$2 = () => ({
+    status: {
+        enabled: false,
+    },
+    styles: {
+        // page background color
+        bgColor: '#ff00ff',
+        // vertical align of text
+        vAlign: 'bottom',
+        // recognized text
+        recognition: {
+            fontFamily: 'sans-serif',
+            fontSize: '30',
+            fontWeight: '400',
+            strokeWidth: '8',
+            strokeColor: '#292929',
+            color: '#ffff00',
+        },
+        // translated text
+        translation: {
+            fontFamily: 'sans-serif',
+            fontSize: '30',
+            fontWeight: '400',
+            strokeWidth: '8',
+            strokeColor: '#292929',
+            color: '#cbcbcb',
+        }
+    },
+    recognition: {
+        display: true,
+        lang: 'ja',
+        synthesize: false,
+        synthesizeLang: '',
+    },
+    translation: {
+        enabled: true,
+        langSrc: 'ja',
+        langDst: 'en',
+        synthesize: false,
+        synthesizeLang: '',
+    },
+});
+
 class SpeechToTextModule {
-    constructor(bot, user, clientManager) {
+    constructor(bot, user, _clientManager) {
         this.name = 'speech-to-text';
         this.user = user;
         this.variables = bot.getUserVariables(user);
         this.storage = bot.getUserModuleStorage(user);
         this.wss = bot.getWebSocketServer();
-        this.defaultSettings = {
-            status: {
-                enabled: false,
-            },
-            styles: {
-                // page background color
-                bgColor: '#ff00ff',
-                // vertical align of text
-                vAlign: 'bottom',
-                // recognized text
-                recognition: {
-                    fontFamily: 'sans-serif',
-                    fontSize: '30',
-                    fontWeight: '400',
-                    strokeWidth: '8',
-                    strokeColor: '#292929',
-                    color: '#ffff00',
-                },
-                // translated text
-                translation: {
-                    fontFamily: 'sans-serif',
-                    fontSize: '30',
-                    fontWeight: '400',
-                    strokeWidth: '8',
-                    strokeColor: '#292929',
-                    color: '#cbcbcb',
-                }
-            },
-            recognition: {
-                display: true,
-                lang: 'ja',
-                synthesize: false,
-                synthesizeLang: '',
-            },
-            translation: {
-                enabled: true,
-                langSrc: 'ja',
-                langDst: 'en',
-                synthesize: false,
-                synthesizeLang: '',
-            },
-        };
+        this.defaultSettings = default_settings$2();
         this.data = this.reinit();
     }
     async userChanged(user) {
@@ -4709,7 +4749,7 @@ class SpeechToTextModule {
     wsdata(eventName) {
         return {
             event: eventName,
-            data: Object.assign({}, this.data, { defaultSettings: this.defaultSettings }),
+            data: this.data,
         };
     }
     updateClient(eventName, ws) {
@@ -4757,31 +4797,33 @@ class SpeechToTextModule {
     }
 }
 
+const default_settings$1 = () => ({
+    submitButtonText: 'Submit',
+    submitConfirm: '',
+    recentImagesTitle: '',
+    canvasWidth: 720,
+    canvasHeight: 405,
+    customDescription: '',
+    customProfileImage: null,
+    palette: [
+        // row 1
+        '#000000', '#808080', '#ff0000', '#ff8000', '#ffff00', '#00ff00',
+        '#00ffff', '#0000ff', '#ff00ff', '#ff8080', '#80ff80',
+        // row 2
+        '#ffffff', '#c0c0c0', '#800000', '#804000', '#808000', '#008000',
+        '#008080', '#000080', '#800080', '#8080ff', '#ffff80',
+    ],
+    displayDuration: 5000,
+    displayLatestForever: false,
+    displayLatestAutomatically: false,
+    notificationSound: null,
+    favoriteLists: [{ list: [], title: '' }],
+});
+
 class DrawcastModule {
     constructor(bot, user, _clientManager) {
         this.name = 'drawcast';
-        this.defaultSettings = {
-            submitButtonText: 'Submit',
-            submitConfirm: '',
-            recentImagesTitle: '',
-            canvasWidth: 720,
-            canvasHeight: 405,
-            customDescription: '',
-            customProfileImage: null,
-            palette: [
-                // row 1
-                '#000000', '#808080', '#ff0000', '#ff8000', '#ffff00', '#00ff00',
-                '#00ffff', '#0000ff', '#ff00ff', '#ff8080', '#80ff80',
-                // row 2
-                '#ffffff', '#c0c0c0', '#800000', '#804000', '#808000', '#008000',
-                '#008080', '#000080', '#800080', '#8080ff', '#ffff80',
-            ],
-            displayDuration: 5000,
-            displayLatestForever: false,
-            displayLatestAutomatically: false,
-            notificationSound: null,
-            favoriteLists: [{ list: [], title: '' }],
-        };
+        this.defaultSettings = default_settings$1();
         this.variables = bot.getUserVariables(user);
         this.user = user;
         this.wss = bot.getWebSocketServer();
@@ -4827,8 +4869,14 @@ class DrawcastModule {
         if (typeof data.settings.customProfileImage === 'undefined') {
             data.settings.customProfileImage = this.defaultSettings.customProfileImage;
         }
+        if (data.settings.customProfileImage && !data.settings.customProfileImage.urlpath && data.settings.customProfileImage.file) {
+            data.settings.customProfileImage.urlpath = `/uploads/${encodeURIComponent(data.settings.customProfileImage.file)}`;
+        }
         if (!data.settings.notificationSound) {
             data.settings.notificationSound = this.defaultSettings.notificationSound;
+        }
+        if (data.settings.notificationSound && !data.settings.notificationSound.urlpath && data.settings.notificationSound.file) {
+            data.settings.notificationSound.urlpath = `/uploads/${encodeURIComponent(data.settings.notificationSound.file)}`;
         }
         if (!data.settings.displayLatestForever) {
             data.settings.displayLatestForever = this.defaultSettings.displayLatestForever;
@@ -4857,7 +4905,7 @@ class DrawcastModule {
     getRoutes() {
         return {
             get: {
-                '/api/drawcast/all-images/': async (req, res, next) => {
+                '/api/drawcast/all-images/': async (_req, res, _next) => {
                     const images = this.loadAllImages();
                     res.send(images);
                 },
@@ -4872,7 +4920,6 @@ class DrawcastModule {
         return {
             event: eventName,
             data: Object.assign({}, this.data, {
-                defaultSettings: this.defaultSettings,
                 drawUrl: this.drawUrl(),
                 images: this.images
             }),
@@ -4924,17 +4971,19 @@ class DrawcastModule {
     }
 }
 
+const default_settings = () => ({
+    styles: {
+        // page background color
+        bgColor: '#80ff00',
+    },
+    avatarDefinitions: []
+});
+
 const log$1 = logger('AvatarModule.ts');
 class AvatarModule {
     constructor(bot, user, _clientManager) {
         this.name = 'avatar';
-        this.defaultSettings = {
-            styles: {
-                // page background color
-                bgColor: '#80ff00',
-            },
-            avatarDefinitions: []
-        };
+        this.defaultSettings = default_settings();
         this.defaultState = {
             tuberIdx: -1,
             slots: {},
@@ -4988,7 +5037,6 @@ class AvatarModule {
             }
         }
         // -end-   fixes to old data structure
-        log$1.info('inited', data.state);
         return {
             settings: data.settings,
             state: data.state,
@@ -5001,8 +5049,7 @@ class AvatarModule {
         return {};
     }
     wsdata(event) {
-        const data = Object.assign({}, this.data, { defaultSettings: this.defaultSettings });
-        return { event, data };
+        return { event, data: this.data };
     }
     updateClient(data, ws) {
         this.wss.notifyOne([this.user.id], this.name, data, ws);

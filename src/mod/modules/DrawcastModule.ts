@@ -9,6 +9,8 @@ import { Bot, ChatMessageContext, DrawcastSettings, Module, RewardRedemptionCont
 import ModuleStorage from '../ModuleStorage'
 import { User } from '../../services/Users'
 import TwitchClientManager from '../../net/TwitchClientManager'
+import { default_settings } from './DrawcastModuleCommon'
+import { NextFunction, Response } from 'express'
 
 const log = logger('DrawcastModule.ts')
 
@@ -17,11 +19,6 @@ interface PostEventData {
   data: {
     img: string
   }
-}
-
-export interface DrawcastSaveEventData {
-  event: "save"
-  settings: DrawcastSettings
 }
 
 class DrawcastModule implements Module {
@@ -34,29 +31,7 @@ class DrawcastModule implements Module {
   private ws: WebServer
   private tokens: Tokens
 
-  private defaultSettings = {
-    submitButtonText: 'Submit',
-    submitConfirm: '', // leave empty to not require confirm
-    recentImagesTitle: '',
-    canvasWidth: 720,
-    canvasHeight: 405,
-    customDescription: '',
-    customProfileImage: null,
-    palette: [
-      // row 1
-      '#000000', '#808080', '#ff0000', '#ff8000', '#ffff00', '#00ff00',
-      '#00ffff', '#0000ff', '#ff00ff', '#ff8080', '#80ff80',
-
-      // row 2
-      '#ffffff', '#c0c0c0', '#800000', '#804000', '#808000', '#008000',
-      '#008080', '#000080', '#800080', '#8080ff', '#ffff80',
-    ],
-    displayDuration: 5000,
-    displayLatestForever: false,
-    displayLatestAutomatically: false,
-    notificationSound: null,
-    favoriteLists: [{ list: [], title: '' }],
-  }
+  private defaultSettings: DrawcastSettings = default_settings()
   private data: { settings: DrawcastSettings }
   private images: string[]
 
@@ -115,8 +90,14 @@ class DrawcastModule implements Module {
     if (typeof data.settings.customProfileImage === 'undefined') {
       data.settings.customProfileImage = this.defaultSettings.customProfileImage
     }
+    if (data.settings.customProfileImage && !data.settings.customProfileImage.urlpath && data.settings.customProfileImage.file) {
+      data.settings.customProfileImage.urlpath = `/uploads/${encodeURIComponent(data.settings.customProfileImage.file)}`
+    }
     if (!data.settings.notificationSound) {
       data.settings.notificationSound = this.defaultSettings.notificationSound
+    }
+    if (data.settings.notificationSound && !data.settings.notificationSound.urlpath && data.settings.notificationSound.file) {
+      data.settings.notificationSound.urlpath = `/uploads/${encodeURIComponent(data.settings.notificationSound.file)}`
     }
     if (!data.settings.displayLatestForever) {
       data.settings.displayLatestForever = this.defaultSettings.displayLatestForever
@@ -141,14 +122,13 @@ class DrawcastModule implements Module {
   }
 
   widgets() {
-    return {
-    }
+    return {}
   }
 
   getRoutes() {
     return {
       get: {
-        '/api/drawcast/all-images/': async (req: any, res: any, next: Function) => {
+        '/api/drawcast/all-images/': async (_req: any, res: Response, _next: NextFunction) => {
           const images = this.loadAllImages()
           res.send(images)
         },
@@ -165,7 +145,6 @@ class DrawcastModule implements Module {
     return {
       event: eventName,
       data: Object.assign({}, this.data, {
-        defaultSettings: this.defaultSettings,
         drawUrl: this.drawUrl(),
         images: this.images
       }),

@@ -148,9 +148,10 @@ import {
   PlaylistItem,
 } from "../../types";
 import {
+  default_settings,
   SongrequestModuleSettings,
   SongrequestModuleWsEventData,
-} from "../../mod/modules/SongrequestModule";
+} from "../../mod/modules/SongrequestModuleCommon";
 import { useToast } from "vue-toastification";
 import util from "../util";
 import api from "../api";
@@ -206,19 +207,7 @@ export default defineComponent({
     playlist: [],
     commands: [],
     globalVariables: [],
-    settings: {
-      volume: 100,
-      hideVideoImage: {
-        file: "",
-        filename: "",
-      },
-      initAutoplay: true,
-      customCss: "",
-      showProgressBar: false,
-      showThumbnails: "left",
-      maxItemsShown: -1,
-      customCssPresets: [],
-    },
+    settings: default_settings(),
     filter: { tag: "" },
     ws: null,
     resrinput: "",

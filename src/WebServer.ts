@@ -2,7 +2,7 @@ import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 import cookieParser from 'cookie-parser'
 import crypto from 'crypto'
-import express from 'express'
+import express, { NextFunction, Response } from 'express'
 import multer from 'multer'
 import path from 'path'
 import Templates from './services/Templates'
@@ -15,7 +15,7 @@ import TwitchHelixClient from './services/TwitchHelixClient'
 import Users, { CreateUser, User } from './services/Users'
 import Variables from './services/Variables'
 import WebSocketServer from './net/WebSocketServer'
-import { HttpConfig, MailService, TwitchConfig } from './types'
+import { HttpConfig, MailService, TwitchConfig, UploadedFile } from './types'
 import TwitchChannels, { TwitchChannel } from './services/TwitchChannels'
 import ModuleManager from './mod/ModuleManager'
 import Auth from './net/Auth'
@@ -130,17 +130,7 @@ class WebServer {
       res.status(404).send()
     })
 
-    const uploadDir = './data/uploads'
-    const storage = multer.diskStorage({
-      destination: uploadDir,
-      filename: function (req, file, cb) {
-        cb(null, `${fn.nonce(6)}-${file.originalname}`);
-      }
-    })
-
-    const upload = multer({ storage }).single('file');
-
-    const verifyTwitchSignature = (req: any, res: any, next: Function) => {
+    const verifyTwitchSignature = (req: any, res: any, next: NextFunction) => {
       const body = Buffer.from(req.rawBody, 'utf8')
       const msg = `${req.headers['twitch-eventsub-message-id']}${req.headers['twitch-eventsub-message-timestamp']}${body}`
       const hmac = crypto.createHmac('sha256', this.configTwitch.eventSub.transport.secret)
@@ -159,7 +149,7 @@ class WebServer {
       return next()
     }
 
-    const requireLoginApi = (req: any, res: any, next: Function) => {
+    const requireLoginApi = (req: any, res: any, next: NextFunction) => {
       if (!req.token) {
         res.status(401).send({})
         return
@@ -167,7 +157,7 @@ class WebServer {
       return next()
     }
 
-    const requireLogin = (req: any, res: any, next: Function) => {
+    const requireLogin = (req: any, res: any, next: NextFunction) => {
       if (!req.token) {
         if (req.method === 'GET') {
           res.redirect(302, '/login')
@@ -181,18 +171,53 @@ class WebServer {
 
     app.use(cookieParser())
     app.use(this.auth.addAuthInfoMiddleware())
-    app.use('/uploads', express.static(uploadDir))
     app.use('/', express.static('./build/public'))
     app.use('/static', express.static('./public/static'))
 
+    const uploadDir = './data/uploads'
+    const storage = multer.diskStorage({
+      destination: uploadDir,
+      filename: function (req, file, cb) {
+        cb(null, `${fn.nonce(6)}-${file.originalname}`);
+      }
+    })
+    const upload = multer({ storage }).single('file');
+    app.use('/uploads', express.static(uploadDir))
+    app.post('/api/upload', requireLoginApi, (req, res: Response) => {
+      upload(req, res, (err) => {
+        if (err) {
+          log.error(err)
+          res.status(400).send("Something went wrong!");
+          return
+        }
+        if (!req.file) {
+          log.error(err)
+          res.status(400).send("Something went wrong!");
+          return
+        }
 
-    app.get('/api/conf', async (req, res) => {
+        const uploadedFile: UploadedFile = {
+          fieldname: req.file.fieldname,
+          originalname: req.file.originalname,
+          encoding: req.file.encoding,
+          mimetype: req.file.mimetype,
+          destination: req.file.destination,
+          filename: req.file.filename,
+          filepath: req.file.path,
+          size: req.file.size,
+          urlpath: `/uploads/${encodeURIComponent(req.file.filename)}`,
+        }
+        res.send(uploadedFile)
+      })
+    })
+
+    app.get('/api/conf', async (req, res: Response) => {
       res.send({
         wsBase: this.wss.connectstring(),
       })
     })
 
-    app.get('/api/user/me', requireLoginApi, async (req: any, res) => {
+    app.get('/api/user/me', requireLoginApi, async (req: any, res: Response) => {
       res.send({
         user: req.user,
         widgetToken: req.userWidgetToken,
@@ -201,7 +226,7 @@ class WebServer {
       })
     })
 
-    app.post('/api/logout', requireLoginApi, async (req: any, res) => {
+    app.post('/api/logout', requireLoginApi, async (req: any, res: Response) => {
       if (req.token) {
         this.auth.destroyToken(req.token)
         res.clearCookie("x-token")
@@ -209,7 +234,7 @@ class WebServer {
       res.send({ success: true })
     })
 
-    app.get('/api/page/index', requireLoginApi, async (req: any, res) => {
+    app.get('/api/page/index', requireLoginApi, async (req: any, res: Response) => {
       res.send({
         widgets: [
           {
@@ -406,18 +431,18 @@ class WebServer {
       return
     })
 
-    app.get('/api/page/variables', requireLoginApi, async (req: any, res) => {
+    app.get('/api/page/variables', requireLoginApi, async (req: any, res: Response) => {
       const variables = new Variables(this.db, req.user.id)
       res.send({ variables: variables.all() })
     })
 
-    app.post('/api/save-variables', requireLoginApi, express.json(), async (req: any, res) => {
+    app.post('/api/save-variables', requireLoginApi, express.json(), async (req: any, res: Response) => {
       const variables = new Variables(this.db, req.user.id)
       variables.replace(req.body.variables || [])
       res.send()
     })
 
-    app.get('/api/page/settings', requireLoginApi, async (req: any, res) => {
+    app.get('/api/page/settings', requireLoginApi, async (req: any, res: Response) => {
       const user = this.userRepo.getById(req.user.id) as User
       res.send({
         user: {
@@ -436,7 +461,7 @@ class WebServer {
       })
     })
 
-    app.post('/api/save-settings', requireLoginApi, express.json(), async (req: any, res) => {
+    app.post('/api/save-settings', requireLoginApi, express.json(), async (req: any, res: Response) => {
       if (!req.user.groups.includes('admin')) {
         if (req.user.id !== req.body.user.id) {
           // editing other user than self
@@ -487,10 +512,10 @@ class WebServer {
 
     // twitch calls this url after auth
     // from here we render a js that reads the token and shows it to the user
-    app.get('/twitch/redirect_uri', async (req, res) => {
+    app.get('/twitch/redirect_uri', async (req, res: Response) => {
       res.send(templates.render('templates/twitch_redirect_uri.html', {}))
     })
-    app.post('/api/twitch/user-id-by-name', requireLoginApi, express.json(), async (req: any, res) => {
+    app.post('/api/twitch/user-id-by-name', requireLoginApi, express.json(), async (req: any, res: Response) => {
       let clientId
       let clientSecret
       if (!req.user.groups.includes('admin')) {
@@ -521,7 +546,7 @@ class WebServer {
 
     app.post(
       '/twitch/event-sub/',
-      express.json({ verify: (req: any, res, buf) => { req.rawBody = buf } }),
+      express.json({ verify: (req: any, _res: Response, buf) => { req.rawBody = buf } }),
       verifyTwitchSignature,
       async (req, res) => {
         log.debug(req.body)
@@ -564,7 +589,7 @@ class WebServer {
         res.status(400).send({ reason: 'unhandled sub type' })
       })
 
-    app.post('/api/auth', express.json(), async (req, res) => {
+    app.post('/api/auth', express.json(), async (req, res: Response) => {
       const user = this.auth.getUserByNameAndPass(req.body.user, req.body.pass)
       if (!user) {
         res.status(401).send({ reason: 'bad credentials' })
@@ -576,17 +601,7 @@ class WebServer {
       res.send()
     })
 
-    app.post('/api/upload', requireLoginApi, (req, res) => {
-      upload(req, res, (err) => {
-        if (err) {
-          log.error(err)
-          res.status(400).send("Something went wrong!");
-        }
-        res.send(req.file)
-      })
-    })
-
-    app.get('/widget/:widget_type/:widget_token/', async (req, res, next) => {
+    app.get('/widget/:widget_type/:widget_token/', async (req, res: Response, _next: NextFunction) => {
       const token = req.params.widget_token
       const user = this.auth.userFromWidgetToken(token)
         || this.auth.userFromPubToken(token)
@@ -606,17 +621,17 @@ class WebServer {
       res.status(404).send()
     })
 
-    app.all('/login', async (req: any, res, next) => {
+    app.all('/login', async (_req, res: Response, _next: NextFunction) => {
       const indexFile = `${__dirname}/../../build/public/index.html`
       res.sendFile(path.resolve(indexFile));
     })
 
-    app.all('/password-reset', async (req: any, res, next) => {
+    app.all('/password-reset', async (_req, res: Response, _next: NextFunction) => {
       const indexFile = `${__dirname}/../../build/public/index.html`
       res.sendFile(path.resolve(indexFile));
     })
 
-    app.all('*', requireLogin, express.json({ limit: '50mb' }), async (req: any, res, next) => {
+    app.all('*', requireLogin, express.json({ limit: '50mb' }), async (req: any, res: Response, next: NextFunction) => {
       const method = req.method.toLowerCase()
       const key = req.url
       for (const m of this.moduleManager.all(req.user.id)) {

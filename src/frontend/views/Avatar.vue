@@ -11,7 +11,7 @@
         >
       </div>
     </div>
-    <div id="main" ref="main" v-if="settings">
+    <div id="main" ref="main" v-if="inited">
       <div class="tabs">
         <ul>
           <li
@@ -127,7 +127,8 @@ import {
   AvatarModuleSettings,
   AvatarModuleWsInitData,
   AvatarModuleWsSaveData,
-} from "../../mod/modules/AvatarModule";
+  default_settings,
+} from "../../mod/modules/AvatarModuleCommon";
 import util from "../util";
 import WsClient from "../WsClient";
 
@@ -142,9 +143,11 @@ interface ComponentData {
 
   unchangedJson: string;
   changedJson: string;
-  settings: AvatarModuleSettings | null;
-  defaultSettings: AvatarModuleSettings | null;
+  settings: AvatarModuleSettings;
+  defaultSettings: AvatarModuleSettings;
   ws: WsClient | null;
+
+  inited: boolean;
 
   tabDefinitions: TabDefinition[];
   tab: "settings" | "avatars";
@@ -157,10 +160,10 @@ export default defineComponent({
 
     unchangedJson: "{}",
     changedJson: "{}",
-    settings: null,
-    defaultSettings: null,
+    settings: default_settings(),
+    defaultSettings: default_settings(),
     ws: null,
-
+    inited: false,
     tabDefinitions: [
       { tab: "avatars", title: "Avatars" },
       { tab: "settings", title: "Settings" },
@@ -273,8 +276,8 @@ export default defineComponent({
     this.ws = util.wsClient("avatar");
     this.ws.onMessage("init", (data: AvatarModuleWsInitData) => {
       this.settings = data.settings;
-      this.defaultSettings = data.defaultSettings;
       this.unchangedJson = JSON.stringify(data.settings);
+      this.inited = true;
     });
     this.ws.connect();
   },

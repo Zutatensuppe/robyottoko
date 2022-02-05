@@ -13,25 +13,19 @@ import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
 import {
   ChatMessageContext, Command, FunctionCommand,
-  GlobalVariable, TwitchChatClient, TwitchChatContext, RawCommand,
+  TwitchChatClient, TwitchChatContext, RawCommand,
   RewardRedemptionContext, Bot, Module,
   MediaCommand, DictLookupCommand, CountdownCommand,
-  MadochanCommand, MediaVolumeCommand, ChattersCommand, RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand
+  MadochanCommand, MediaVolumeCommand, ChattersCommand,
+  RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand, CountdownAction
 } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import TwitchClientManager from '../../net/TwitchClientManager'
 import dictLookup from '../../commands/dictLookup'
 import { newCommandTrigger } from '../../util'
+import { GeneralModuleAdminSettings, GeneralModuleSettings, GeneralModuleWsEventData, GeneralSaveEventData } from './GeneralModuleCommon'
 
 const log = logger('GeneralModule.ts')
-
-export interface GeneralModuleSettings {
-  volume: number
-}
-
-export interface GeneralModuleAdminSettings {
-  showImages: boolean
-}
 
 interface GeneralModuleData {
   commands: Command[]
@@ -54,23 +48,9 @@ interface GeneralModuleInitData {
   timers: GeneralModuleTimer[]
 }
 
-export interface GeneralModuleWsEventData {
-  commands: Command[]
-  settings: GeneralModuleSettings
-  adminSettings: GeneralModuleAdminSettings
-  globalVariables: GlobalVariable[]
-}
-
 interface WsData {
   event: string
   data: GeneralModuleWsEventData
-}
-
-export interface GeneralSaveEventData {
-  event: "save";
-  commands: Command[];
-  settings: GeneralModuleSettings;
-  adminSettings: GeneralModuleAdminSettings;
 }
 
 class GeneralModule implements Module {
@@ -152,6 +132,29 @@ class GeneralModule implements Module {
       if (cmd.action === 'media') {
         cmd.data.minDurationMs = cmd.data.minDurationMs || 0
         cmd.data.sound.volume = cmd.data.sound.volume || 100
+
+        if (!cmd.data.sound.urlpath && cmd.data.sound.file) {
+          cmd.data.sound.urlpath = `/uploads/${encodeURIComponent(cmd.data.sound.file)}`
+        }
+
+        if (!cmd.data.image.urlpath && cmd.data.image.file) {
+          cmd.data.image.urlpath = `/uploads/${encodeURIComponent(cmd.data.image.file)}`
+        }
+      }
+      if (cmd.action === 'countdown') {
+        cmd.data.actions = cmd.data.actions.map((action: CountdownAction) => {
+          if (typeof action.value === 'string') {
+            return action
+          }
+          if (!action.value.sound.urlpath && action.value.sound.file) {
+            action.value.sound.urlpath = `/uploads/${encodeURIComponent(action.value.sound.file)}`
+          }
+
+          if (!action.value.image.urlpath && action.value.image.file) {
+            action.value.image.urlpath = `/uploads/${encodeURIComponent(action.value.image.file)}`
+          }
+          return action
+        })
       }
       if (cmd.action === 'jisho_org_lookup') {
         cmd.action = 'dict_lookup'
@@ -257,13 +260,11 @@ class GeneralModule implements Module {
   }
 
   widgets() {
-    return {
-    }
+    return {}
   }
 
   getRoutes() {
-    return {
-    }
+    return {}
   }
 
   wsdata(eventName: string): WsData {

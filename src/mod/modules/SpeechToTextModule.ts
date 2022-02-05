@@ -6,80 +6,7 @@ import { User } from '../../services/Users'
 import Variables from '../../services/Variables'
 import { Bot, ChatMessageContext, Module, RewardRedemptionContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
-
-export interface SpeechToTextModuleSettings {
-  status: {
-    enabled: boolean
-  }
-  styles: {
-    // page background color
-    bgColor: string
-    // vertical align of text
-    vAlign: 'bottom' | 'top' | 'bottom'
-
-    // recognized text
-    recognition: {
-      fontFamily: string
-      fontSize: string
-      fontWeight: string
-      strokeWidth: string
-      strokeColor: string
-      color: string
-    }
-
-    // translated text
-    translation: {
-      fontFamily: string
-      fontSize: string
-      fontWeight: string
-      strokeWidth: string
-      strokeColor: string
-      color: string
-    }
-  }
-
-  recognition: {
-    display: boolean
-    lang: string
-    synthesize: boolean
-    synthesizeLang: string
-  }
-
-  translation: {
-    enabled: boolean
-    langSrc: string
-    langDst: string
-    synthesize: boolean
-    synthesizeLang: string
-  }
-}
-
-interface SpeechToTextModuleData {
-  settings: SpeechToTextModuleSettings
-}
-
-interface SpeechToTextTranslateEventData {
-  text: string
-  src: string
-  dst: string
-}
-
-export interface SpeechToTextWsInitData {
-  settings: SpeechToTextModuleSettings
-  defaultSettings: SpeechToTextModuleSettings
-}
-
-interface SpeechToTextWsData {
-  event: string
-  data: SpeechToTextWsInitData
-}
-
-
-export interface SpeechToTextSaveEventData {
-  event: "save"
-  settings: SpeechToTextModuleSettings
-}
-
+import { default_settings, SpeechToTextModuleData, SpeechToTextModuleSettings, SpeechToTextTranslateEventData, SpeechToTextWsData } from './SpeechToTextModuleCommon'
 
 class SpeechToTextModule implements Module {
   public name = 'speech-to-text'
@@ -94,56 +21,13 @@ class SpeechToTextModule implements Module {
   constructor(
     bot: Bot,
     user: User,
-    clientManager: TwitchClientManager,
+    _clientManager: TwitchClientManager,
   ) {
     this.user = user
     this.variables = bot.getUserVariables(user)
     this.storage = bot.getUserModuleStorage(user)
     this.wss = bot.getWebSocketServer()
-    this.defaultSettings = {
-      status: {
-        enabled: false,
-      },
-      styles: {
-        // page background color
-        bgColor: '#ff00ff',
-        // vertical align of text
-        vAlign: 'bottom', // top|bottom
-
-        // recognized text
-        recognition: {
-          fontFamily: 'sans-serif',
-          fontSize: '30',
-          fontWeight: '400',
-          strokeWidth: '8',
-          strokeColor: '#292929',
-          color: '#ffff00',
-        },
-
-        // translated text
-        translation: {
-          fontFamily: 'sans-serif',
-          fontSize: '30',
-          fontWeight: '400',
-          strokeWidth: '8',
-          strokeColor: '#292929',
-          color: '#cbcbcb',
-        }
-      },
-      recognition: {
-        display: true,
-        lang: 'ja',
-        synthesize: false,
-        synthesizeLang: '',
-      },
-      translation: {
-        enabled: true,
-        langSrc: 'ja',
-        langDst: 'en',
-        synthesize: false,
-        synthesizeLang: '',
-      },
-    }
+    this.defaultSettings = default_settings()
     this.data = this.reinit()
   }
 
@@ -173,7 +57,7 @@ class SpeechToTextModule implements Module {
   wsdata(eventName: string): SpeechToTextWsData {
     return {
       event: eventName,
-      data: Object.assign({}, this.data, { defaultSettings: this.defaultSettings }),
+      data: this.data,
     };
   }
 

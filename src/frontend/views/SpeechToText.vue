@@ -16,7 +16,7 @@
       </div>
     </div>
     <div id="main" ref="main">
-      <table class="table is-striped" ref="table" v-if="settings">
+      <table class="table is-striped" ref="table" v-if="inited">
         <tbody>
           <tr>
             <td colspan="3">General</td>
@@ -628,27 +628,30 @@
 import { defineComponent } from "vue";
 import WsClient from "../WsClient";
 import {
+  default_settings,
   SpeechToTextModuleSettings,
   SpeechToTextSaveEventData,
   SpeechToTextWsInitData,
-} from "../../mod/modules/SpeechToTextModule";
+} from "../../mod/modules/SpeechToTextModuleCommon";
 import util from "../util";
 
 interface ComponentData {
   unchangedJson: string;
   changedJson: string;
-  settings: SpeechToTextModuleSettings | null;
-  defaultSettings: SpeechToTextModuleSettings | null;
+  settings: SpeechToTextModuleSettings;
+  defaultSettings: SpeechToTextModuleSettings;
   ws: WsClient | null;
+  inited: boolean;
 }
 
 export default defineComponent({
   data: (): ComponentData => ({
     unchangedJson: "{}",
     changedJson: "{}",
-    settings: null,
-    defaultSettings: null,
+    settings: default_settings(),
+    defaultSettings: default_settings(),
     ws: null,
+    inited: false,
   }),
   watch: {
     settings: {
@@ -686,8 +689,8 @@ export default defineComponent({
     this.ws = util.wsClient("speech-to-text");
     this.ws.onMessage("init", (data: SpeechToTextWsInitData) => {
       this.settings = data.settings;
-      this.defaultSettings = data.defaultSettings;
       this.unchangedJson = JSON.stringify(data.settings);
+      this.inited = true;
     });
     this.ws.connect();
   },

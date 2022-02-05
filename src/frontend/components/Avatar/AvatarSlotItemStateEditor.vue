@@ -58,7 +58,7 @@ import { defineComponent, PropType } from "vue";
 import {
   AvatarModuleSlotItemStateDefinition,
   AvatarModuleAnimationFrameDefinition,
-} from "../../../mod/modules/AvatarModule";
+} from "../../../mod/modules/AvatarModuleCommon";
 import { UploadedFile } from "../../../types";
 
 export default defineComponent({
@@ -102,7 +102,7 @@ export default defineComponent({
       this.editing = false;
     },
     imageUploaded(index: number, file: UploadedFile) {
-      this.modelValue.frames[index].url = `/uploads/${file.filename}`;
+      this.modelValue.frames[index].url = file.urlpath;
     },
     removeFrame(idx: number) {
       this.modelValue.frames = this.modelValue.frames.filter(

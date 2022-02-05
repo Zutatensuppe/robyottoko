@@ -100,9 +100,7 @@ export default defineComponent({
         this.imgstyle = "";
       }
       if (this.notificationSound) {
-        this.notificationSoundAudio = new Audio(
-          `/uploads/${encodeURIComponent(this.notificationSound.file)}`
-        );
+        this.notificationSoundAudio = new Audio(this.notificationSound.urlpath);
         this.notificationSoundAudio.volume =
           this.notificationSound.volume / 100.0;
       }

@@ -25,11 +25,9 @@ export default defineComponent({
       return new Promise(async (resolve) => {
         const promises = [];
         if (media.image && media.image.file) {
-          await this.prepareImage(media.image.file);
+          await this.prepareImage(media.image.urlpath);
           this.imgstyle = {
-            backgroundImage: `url(/uploads/${encodeURIComponent(
-              media.image.file
-            )})`,
+            backgroundImage: `url(${media.image.urlpath})`,
             backgroundRepeat: "no-repeat",
             backgroundSize: "contain",
             backgroundPosition: "center",
@@ -95,10 +93,10 @@ export default defineComponent({
       };
       this.worker = setTimeout(next, TIME_BETWEEN_MEDIA);
     },
-    async prepareImage(img) {
+    async prepareImage(urlpath: string) {
       return new Promise((resolve) => {
         const imgLoad = new Image();
-        imgLoad.src = "/uploads/" + encodeURIComponent(img);
+        imgLoad.src = urlpath;
         this.$nextTick(() => {
           if (imgLoad.loaded) {
             resolve();

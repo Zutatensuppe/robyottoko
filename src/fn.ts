@@ -158,8 +158,6 @@ const applyVariableChanges = async (
         } else if (op === 'decrease_by') {
           cmdDef.variables[idx].value = _decrease(cmdDef.variables[idx].value, value)
         }
-        console.log(cmdDef.variables[idx].value)
-        //
         continue
       }
     }

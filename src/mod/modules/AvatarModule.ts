@@ -5,76 +5,13 @@ import { Bot, ChatMessageContext, Module, RewardRedemptionContext } from '../../
 import ModuleStorage from '../ModuleStorage'
 import { User } from '../../services/Users'
 import TwitchClientManager from '../../net/TwitchClientManager'
+import { AvatarModuleSettings, AvatarModuleState, AvatarModuleWsSaveData, default_settings } from './AvatarModuleCommon'
 
 const log = logger('AvatarModule.ts')
-
-type int = number
-type SlotName = string
-type SlotUrl = string
-type StateValue = string
-
-export interface AvatarModuleAnimationFrameDefinition {
-  url: SlotUrl
-  duration: int
-}
-
-export interface AvatarModuleSlotItemStateDefinition {
-  state: StateValue
-  frames: AvatarModuleAnimationFrameDefinition[]
-}
-
-export interface AvatarModuleAvatarSlotItem {
-  title: string
-  states: AvatarModuleSlotItemStateDefinition[]
-}
-
-export interface AvatarModuleAvatarSlotDefinition {
-  slot: SlotName
-  defaultItemIndex: int
-  items: AvatarModuleAvatarSlotItem[]
-}
-
-export interface AvatarModuleAvatarStateDefinition {
-  value: StateValue
-  deletable: boolean
-}
-
-export interface AvatarModuleAvatarDefinition {
-  name: string
-  width: int
-  height: int
-  stateDefinitions: AvatarModuleAvatarStateDefinition[]
-  slotDefinitions: AvatarModuleAvatarSlotDefinition[]
-}
-
-export interface AvatarModuleSettings {
-  styles: {
-    // page background color
-    bgColor: string,
-  },
-  avatarDefinitions: AvatarModuleAvatarDefinition[]
-}
-
-export interface AvatarModuleState {
-  tuberIdx: number
-  slots: Record<SlotName, number>
-  lockedState: string
-}
 
 export interface AvatarModuleData {
   settings: AvatarModuleSettings
   state: AvatarModuleState
-}
-
-export interface AvatarModuleWsInitData {
-  settings: AvatarModuleSettings
-  state: AvatarModuleState
-  defaultSettings: AvatarModuleSettings
-}
-
-export interface AvatarModuleWsSaveData {
-  event: 'save'
-  settings: AvatarModuleSettings
 }
 
 export interface AvatarModuleWsControlData {
@@ -104,13 +41,7 @@ class AvatarModule implements Module {
   private storage: ModuleStorage
 
   private data: AvatarModuleData
-  private defaultSettings: AvatarModuleSettings = {
-    styles: {
-      // page background color
-      bgColor: '#80ff00',
-    },
-    avatarDefinitions: []
-  }
+  private defaultSettings: AvatarModuleSettings = default_settings()
   private defaultState: AvatarModuleState = {
     tuberIdx: -1,
     slots: {},
@@ -176,7 +107,6 @@ class AvatarModule implements Module {
       }
     }
     // -end-   fixes to old data structure
-    log.info('inited', data.state)
     return {
       settings: data.settings,
       state: data.state,
@@ -184,8 +114,7 @@ class AvatarModule implements Module {
   }
 
   widgets() {
-    return {
-    }
+    return {}
   }
 
   getRoutes() {
@@ -193,8 +122,7 @@ class AvatarModule implements Module {
   }
 
   wsdata(event: string): WsModuleData {
-    const data: AvatarModuleData = Object.assign({}, this.data, { defaultSettings: this.defaultSettings })
-    return { event, data }
+    return { event, data: this.data }
   }
 
   updateClient(data: WsModuleData, ws: Socket) {
