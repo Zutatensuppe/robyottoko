@@ -1,8 +1,10 @@
 <template>
   <div
     class="avatar-slot-item-state-editor card"
+    :class="{ 'dragging-over': draggingOver }"
     @dragover="onDragOver"
     @dragenter="onDragEnter"
+    @dragleave="onDragLeave"
     @drop="onDrop"
   >
     <div class="avatar-slot-item-state-editor-title">
@@ -23,23 +25,10 @@
         v-for="(frame, idx) in modelValue.frames"
         :key="idx"
       >
-        <span class="avatar-animation-frame">
-          <div class="avatar-animation-frame-remove">
-            <span class="button is-small" @click="removeFrame(idx)">
-              <i class="fa fa-trash"></i>
-            </span>
-          </div>
-          <img v-if="frame.url" :src="frame.url" width="64" height="64" />
-
-          <upload
-            v-else
-            @uploaded="imageUploaded(idx, $event)"
-            accept="image/*"
-            label=""
-            class="avatar-animation-frame-upload"
-          />
-          <input class="input is-small" type="text" v-model="frame.duration" />
-        </span>
+        <avatar-frame-upload
+          :modelValue="frame"
+          @update:modelValue="frameChanged(idx, $event)"
+        />
       </div>
 
       <div class="avatar-animation-card mr-1">
@@ -50,6 +39,14 @@
         </span>
       </div>
     </div>
+
+    <upload
+      v-show="false"
+      @uploaded="onUploaded"
+      accept="image/*"
+      label=""
+      ref="uploadComponent"
+    />
   </div>
 </template>
 
@@ -59,7 +56,7 @@ import {
   AvatarModuleSlotItemStateDefinition,
   AvatarModuleAnimationFrameDefinition,
 } from "../../../mod/modules/AvatarModuleCommon";
-import { UploadedFile } from "../../../types";
+import { MediaFile } from "../../../types";
 
 export default defineComponent({
   props: {
@@ -74,40 +71,81 @@ export default defineComponent({
   },
   data() {
     return {
+      draggingOver: false,
       editing: false,
     };
   },
   methods: {
-    onDragOver($evt) {
-      if ($evt.dataTransfer.getData("avatar-image-url")) {
-        $evt.preventDefault();
+    onDragOver(e: any) {
+      this.draggingOver = true;
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    },
+    onDragLeave(e: any) {
+      this.draggingOver = false;
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    },
+    onDragEnter(e: any) {
+      if (e.dataTransfer.getData("avatar-image-url")) {
+        e.preventDefault();
       }
     },
-    onDragEnter($evt) {
-      if ($evt.dataTransfer.getData("avatar-image-url")) {
-        $evt.preventDefault();
-      }
-    },
-    onDrop($evt) {
-      if ($evt.dataTransfer.getData("avatar-image-url")) {
-        $evt.preventDefault();
+    onDrop(e: any) {
+      if (e.dataTransfer.getData("avatar-image-url")) {
+        e.preventDefault();
         const frame: AvatarModuleAnimationFrameDefinition = {
-          url: $evt.dataTransfer.getData("avatar-image-url"),
+          url: e.dataTransfer.getData("avatar-image-url"),
           duration: 100,
         };
         this.modelValue.frames.push(frame);
+      } else {
+        this.draggingOver = false;
+        e.preventDefault();
+        e.stopPropagation();
+
+        let file = null;
+        if (e.dataTransfer.items) {
+          // Use DataTransferItemList interface to access the file(s)
+          for (var i = 0; i < e.dataTransfer.items.length; i++) {
+            // If dropped items aren't files, reject them
+            if (e.dataTransfer.items[i].kind === "file") {
+              file = e.dataTransfer.items[i].getAsFile();
+              break;
+            }
+          }
+        } else {
+          // Use DataTransfer interface to access the file(s)
+          for (var i = 0; i < e.dataTransfer.files.length; i++) {
+            file = e.dataTransfer.files[i];
+            break;
+          }
+        }
+        if (file) {
+          this.$refs.uploadComponent.uploadFile(file);
+        }
+        return false;
       }
+    },
+    onUploaded(file: MediaFile) {
+      this.modelValue.frames.push({
+        url: file.urlpath,
+        duration: 100,
+      });
     },
     onOverlayClick() {
       this.editing = false;
     },
-    imageUploaded(index: number, file: UploadedFile) {
-      this.modelValue.frames[index].url = file.urlpath;
-    },
-    removeFrame(idx: number) {
-      this.modelValue.frames = this.modelValue.frames.filter(
-        (val, index) => index !== idx
-      );
+    frameChanged(idx: number, frame: AvatarModuleAnimationFrameDefinition) {
+      if (frame.url === "") {
+        this.modelValue.frames = this.modelValue.frames.filter(
+          (val, index) => index !== idx
+        );
+      } else {
+        this.modelValue.frames[idx] = frame;
+      }
     },
     addFrame() {
       const frame: AvatarModuleAnimationFrameDefinition = {
@@ -123,6 +161,10 @@ export default defineComponent({
 .avatar-slot-item-state-editor {
   display: inline-block;
   border: solid 1px hsl(0, 0%, 86%);
+}
+.avatar-slot-item-state-editor.dragging-over {
+  border-style: dashed;
+  border-color: #444;
 }
 .avatar-slot-item-state-editor-title {
   text-align: center;
@@ -146,7 +188,7 @@ export default defineComponent({
 .avatar-animation-frame-upload {
   width: 64px;
   height: 64px;
-  display: flex !important;
+  display: flex;
   align-items: center;
   text-align: center;
   z-index: 1;

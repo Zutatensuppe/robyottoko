@@ -22,27 +22,13 @@
         <tr>
           <td><code>settings.hideVideoImage</code></td>
           <td>
-            <div v-if="settings.hideVideoImage.file" class="mb-1">
-              <responsive-image
-                :src="settings.hideVideoImage.urlpath"
-                :title="settings.hideVideoImage.filename"
-                width="100px"
-                height="50px"
-                style="display: inline-block"
+            <image-upload
+              v-model="settings.hideVideoImage"
+              @update:modelValue="hideVideoImageChanged"
+              width="100px"
+              height="50px"
+              class="mb-1"
               />
-              <br />
-              <button
-                class="button is-small"
-                @click="hideVideoImageRemoved"
-              >
-                <i class="fa fa-remove mr-1" /> Remove Image
-              </button>
-            </div>
-            <upload
-              @uploaded="hideVideoImageUploaded"
-              accept="image/*"
-              label="Upload Image"
-            />
           </td>
           <td>Image to display when a video is hidden.</td>
         </tr>
@@ -126,7 +112,7 @@
 import { defineComponent, PropType } from "vue";
 import { mediaFileFromUploadedFile } from "../../../common/fn";
 import { SongrequestModuleSettings } from "../../../mod/modules/SongrequestModule";
-import { UploadedFile } from "../../../types";
+import { MediaFile, UploadedFile } from "../../../types";
 
 interface ComponentData {
   settings: SongrequestModuleSettings;
@@ -195,15 +181,8 @@ export default defineComponent({
       }
       this.sendSettings();
     },
-    hideVideoImageRemoved() {
-      this.settings.hideVideoImage = {
-        filename: "",
-        file: "",
-      };
-      this.sendSettings();
-    },
-    hideVideoImageUploaded(file: UploadedFile) {
-      this.settings.hideVideoImage = mediaFileFromUploadedFile(file);
+    hideVideoImageChanged(file: MediaFile) {
+      this.settings.hideVideoImage = file;
       this.sendSettings();
     },
     sendSettings() {

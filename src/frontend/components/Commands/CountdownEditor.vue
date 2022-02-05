@@ -73,58 +73,19 @@
                 <tr>
                   <td>Image:</td>
                   <td>
-                    <responsive-image
-                      v-if="element.value.image.file"
-                      :src="element.value.image.urlpath"
-                      :title="element.value.image.filename"
-                      width="100%"
-                      height="90px"
-                      style="display: block"
-                    />
-                    <button
-                      v-if="element.value.image.file"
-                      class="button is-small"
-                      @click="element.value.image.file = null"
-                    >
-                      <i class="fa fa-remove mr-1" /> Remove
-                    </button>
-                    <br v-if="element.value.image.file" />
-                    <upload
-                      @uploaded="mediaImgUploaded(index, $event)"
-                      accept="image/*"
-                      label="Upload Image"
-                      :class="{ 'mt-1': element.value.image.file }"
+                    <image-upload
+                      v-model="element.value.image"
+                      @update:modelValue="mediaImgChanged(index, $event)"
                     />
                   </td>
                 </tr>
                 <tr>
                   <td>Sound:</td>
                   <td>
-                    <player
-                      v-if="element.value.sound.file"
-                      :src="element.value.sound.urlpath"
-                      :name="element.value.sound.filename"
-                      :volume="element.value.sound.volume"
+                    <sound-upload
+                      v-model="element.value.sound"
+                      @update:modelValue="mediaSndChanged(index, $event)"
                       :baseVolume="baseVolume"
-                      class="button is-small"
-                    />
-                    <volume-slider
-                      v-if="element.value.sound.file"
-                      v-model="element.value.sound.volume"
-                    />
-                    <button
-                      v-if="element.value.sound.file"
-                      class="button is-small"
-                      @click="element.value.sound.file = null"
-                    >
-                      <i class="fa fa-remove mr-1" /> Remove
-                    </button>
-                    <br v-if="element.value.sound.file" />
-                    <upload
-                      @uploaded="mediaSndUploaded(index, $event)"
-                      accept="audio/*"
-                      label="Upload Sound"
-                      :class="{ 'mt-1': element.value.sound.file }"
                     />
                   </td>
                 </tr>
@@ -169,11 +130,8 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import fn, {
-  mediaFileFromUploadedFile,
-  soundMediaFileFromUploadedFile,
-} from "../../../common/fn";
-import { CountdownAction, UploadedFile } from "../../../types";
+import fn from "../../../common/fn";
+import { CountdownAction, MediaFile, SoundMediaFile } from "../../../types";
 import { newMedia, newText } from "../../../util";
 
 export default defineComponent({
@@ -223,12 +181,11 @@ export default defineComponent({
         (val, index) => index !== idx
       );
     },
-    mediaSndUploaded(idx: number, file: UploadedFile) {
-      this.countdown.actions[idx].value.sound =
-        soundMediaFileFromUploadedFile(file);
+    mediaSndChanged(idx: number, file: SoundMediaFile) {
+      this.countdown.actions[idx].value.sound = file;
     },
-    mediaImgUploaded(idx: number, file: UploadedFile) {
-      this.countdown.actions[idx].value.image = mediaFileFromUploadedFile(file);
+    mediaImgChanged(idx: number, file: MediaFile) {
+      this.countdown.actions[idx].value.image = file;
     },
   },
   created() {
