@@ -3,17 +3,45 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
+import WsClient from "../../frontend/WsClient";
+import { MediaFile, SoundMediaFile } from "../../types";
 import util from "../util";
 
+interface Media {
+  image: {
+    url: string;
+  };
+}
+
+interface QueueItem {
+  media: Media;
+  playsound: boolean;
+}
+
+interface ComponentData {
+  ws: WsClient | null;
+  queue: QueueItem[];
+  worker: any; // null | number (setInterval)
+  imgstyle: null | Record<string, string>;
+  displayDuration: number;
+  displayLatestForever: boolean;
+  displayLatestAutomatically: boolean;
+  notificationSound: SoundMediaFile | null;
+  notificationSoundAudio: any;
+  latestResolved: boolean;
+  images: any[];
+}
+
 export default defineComponent({
-  data() {
+  data(): ComponentData {
     return {
       ws: null,
       queue: [],
       worker: null,
-      imgstyle: "",
+      imgstyle: null,
       displayDuration: 5000,
       displayLatestForever: false,
+      displayLatestAutomatically: false,
 
       notificationSound: null,
       notificationSoundAudio: null,
@@ -23,33 +51,33 @@ export default defineComponent({
     };
   },
   methods: {
-    async playone({ media, playsound }) {
+    async playone(item: QueueItem): Promise<void> {
       return new Promise(async (resolve) => {
         this.latestResolved = false;
-        await this.prepareImage(media.image.url);
+        await this.prepareImage(item.media.image.url);
 
         this.imgstyle = {
-          backgroundImage: `url(${media.image.url})`,
+          backgroundImage: `url(${item.media.image.url})`,
           backgroundRepeat: "no-repeat",
           backgroundSize: "contain",
           backgroundPosition: "center",
           height: "100%",
         };
 
-        if (playsound && this.notificationSoundAudio) {
+        if (item.playsound && this.notificationSoundAudio) {
           this.notificationSoundAudio.play();
         }
 
         setTimeout(() => {
           if (!this.displayLatestForever) {
-            this.imgstyle = "";
+            this.imgstyle = null;
           }
           this.latestResolved = true;
           resolve();
         }, this.displayDuration);
       });
     },
-    addQueue(media, playsound) {
+    addQueue(media: Media, playsound: boolean) {
       this.queue.push({ media, playsound });
       if (this.worker) {
         return;
@@ -61,15 +89,21 @@ export default defineComponent({
           this.worker = null;
           return;
         }
-        await this.playone(this.queue.shift());
+        const item = this.queue.shift();
+        if (!item) {
+          clearInterval(this.worker);
+          this.worker = null;
+          return;
+        }
+        await this.playone(item);
         this.worker = setTimeout(next, 500); // this much time in between media
       };
       this.worker = setTimeout(next, 500);
     },
-    async prepareImage(img) {
+    async prepareImage(urlpath: string): Promise<void> {
       return new Promise((resolve) => {
         const imgLoad = new Image();
-        imgLoad.src = img;
+        imgLoad.src = urlpath;
         this.$nextTick(() => {
           if (imgLoad.loaded) {
             resolve();
@@ -79,7 +113,7 @@ export default defineComponent({
         });
       });
     },
-    playmedia(media, playsound) {
+    playmedia(media: Media, playsound: boolean) {
       this.addQueue(media, playsound);
     },
   },
@@ -97,7 +131,7 @@ export default defineComponent({
       // if previously set to 'display forever' and something is
       // currently displaying because of that, hide it
       if (!this.displayLatestForever && this.latestResolved) {
-        this.imgstyle = "";
+        this.imgstyle = null;
       }
       if (this.notificationSound) {
         this.notificationSoundAudio = new Audio(this.notificationSound.urlpath);

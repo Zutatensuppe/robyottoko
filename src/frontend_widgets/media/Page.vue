@@ -6,24 +6,36 @@ import { defineComponent } from "vue";
 import util from "../util";
 
 import fn from "../../common/fn";
+import { MediaCommandData, MediaFile, SoundMediaFile } from "../../types";
+import WsClient from "../../frontend/WsClient";
+import {
+  GeneralModuleSettings,
+  default_settings,
+} from "../../mod/modules/GeneralModuleCommon";
 const TIME_BETWEEN_MEDIA = 100;
 
+interface ComponentData {
+  ws: WsClient | null;
+  queue: MediaCommandData[];
+  worker: any; // null | number (setInterval)
+  imgstyle: null | Record<string, string>;
+  settings: GeneralModuleSettings;
+}
+
 export default defineComponent({
-  data() {
+  data(): ComponentData {
     return {
       ws: null,
       queue: [],
       worker: null,
-      imgstyle: "",
-      settings: {
-        volume: 100,
-      },
+      imgstyle: null,
+      settings: default_settings(),
     };
   },
   methods: {
-    async playone(media) {
+    async playone(media: MediaCommandData): Promise<void> {
       return new Promise(async (resolve) => {
-        const promises = [];
+        const promises: Promise<void>[] = [];
         if (media.image && media.image.file) {
           await this.prepareImage(media.image.urlpath);
           this.imgstyle = {
@@ -46,9 +58,7 @@ export default defineComponent({
         if (media.sound && media.sound.file) {
           promises.push(
             new Promise((res) => {
-              const audio = new Audio(
-                `/uploads/${encodeURIComponent(media.sound.file)}`
-              );
+              const audio = new Audio(media.sound.urlpath);
               audio.addEventListener("ended", () => {
                 res();
               });
@@ -71,12 +81,12 @@ export default defineComponent({
         }
 
         Promise.all(promises).then((_) => {
-          this.imgstyle = "";
+          this.imgstyle = null;
           resolve();
         });
       });
     },
-    addQueue(media) {
+    addQueue(media: MediaCommandData) {
       this.queue.push(media);
       if (this.worker) {
         return;
@@ -88,12 +98,18 @@ export default defineComponent({
           this.worker = null;
           return;
         }
-        await this.playone(this.queue.shift());
+        const media = this.queue.shift();
+        if (!media) {
+          clearInterval(this.worker);
+          this.worker = null;
+          return;
+        }
+        await this.playone(media);
         this.worker = setTimeout(next, TIME_BETWEEN_MEDIA); // this much time in between media
       };
       this.worker = setTimeout(next, TIME_BETWEEN_MEDIA);
     },
-    async prepareImage(urlpath: string) {
+    async prepareImage(urlpath: string): Promise<void> {
       return new Promise((resolve) => {
         const imgLoad = new Image();
         imgLoad.src = urlpath;
@@ -106,7 +122,7 @@ export default defineComponent({
         });
       });
     },
-    playmedia(media) {
+    playmedia(media: MediaCommandData) {
       this.addQueue(media);
     },
   },
