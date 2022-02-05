@@ -8,11 +8,13 @@ export const newMedia = (): MediaCommandData => ({
   sound: {
     filename: '',
     file: '',
+    urlpath: '',
     volume: 100,
   },
   image: {
     filename: '',
     file: '',
+    urlpath: '',
   },
   minDurationMs: '1s',
 })

@@ -24,7 +24,7 @@
           <td>
             <div v-if="settings.hideVideoImage.file" class="mb-1">
               <responsive-image
-                :src="settings.hideVideoImage.file"
+                :src="settings.hideVideoImage.urlpath"
                 :title="settings.hideVideoImage.filename"
                 width="100px"
                 height="50px"
@@ -124,6 +124,7 @@
 </template>
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
+import { mediaFileFromUploadedFile } from "../../../common/fn";
 import { SongrequestModuleSettings } from "../../../mod/modules/SongrequestModule";
 import { UploadedFile } from "../../../types";
 
@@ -202,10 +203,7 @@ export default defineComponent({
       this.sendSettings();
     },
     hideVideoImageUploaded(file: UploadedFile) {
-      this.settings.hideVideoImage = {
-        filename: file.originalname,
-        file: file.filename,
-      };
+      this.settings.hideVideoImage = mediaFileFromUploadedFile(file);
       this.sendSettings();
     },
     sendSettings() {
@@ -221,6 +219,9 @@ export default defineComponent({
         file: "",
         filename: "",
       },
+      initAutoplay: true,
+      showThumbnails: false,
+      maxItemsShown: 0,
       showProgressBar: false,
       customCssPresets: [],
       customCss: "",

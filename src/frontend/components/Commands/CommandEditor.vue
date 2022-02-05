@@ -211,7 +211,7 @@
               <td>
                 <responsive-image
                   v-if="item.data.image.file"
-                  :src="item.data.image.file"
+                  :src="item.data.image.urlpath"
                   :title="item.data.image.filename"
                   width="100%"
                   height="90px"
@@ -238,7 +238,7 @@
               <td>
                 <player
                   v-if="item.data.sound.file"
-                  :src="item.data.sound.file"
+                  :src="item.data.sound.urlpath"
                   :name="item.data.sound.filename"
                   :volume="item.data.sound.volume"
                   :baseVolume="baseVolume"
@@ -470,7 +470,10 @@
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
 
-import fn from "../../../common/fn";
+import fn, {
+  mediaFileFromUploadedFile,
+  soundMediaFileFromUploadedFile,
+} from "../../../common/fn";
 import { Command, GlobalVariable, UploadedFile } from "../../../types";
 import {
   ACTION_DESCRIPTION_MAP,
@@ -603,21 +606,19 @@ export default defineComponent({
     onOverlayClick() {
       this.$emit("cancel");
     },
-    mediaSndUploaded(data: UploadedFile) {
+    mediaSndUploaded(file: UploadedFile) {
       if (!this.item) {
         console.warn("mediaSndUploaded: this.item not initialized");
         return;
       }
-      this.item.data.sound.filename = data.originalname;
-      this.item.data.sound.file = data.filename;
+      this.item.data.sound = soundMediaFileFromUploadedFile(file);
     },
-    mediaImgUploaded(data: UploadedFile) {
+    mediaImgUploaded(file: UploadedFile) {
       if (!this.item) {
         console.warn("mediaImgUploaded: this.item not initialized");
         return;
       }
-      this.item.data.image.filename = data.originalname;
-      this.item.data.image.file = data.filename;
+      this.item.data.image = mediaFileFromUploadedFile(file);
     },
     rmtxt(idx: number) {
       if (!this.item) {

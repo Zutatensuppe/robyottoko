@@ -18,6 +18,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { UploadedFile } from "../../types";
 import api from "../api";
 
 export default defineComponent({
@@ -65,8 +66,8 @@ export default defineComponent({
         this.progress = progressEvt.loaded / progressEvt.total;
       });
       this.uploading = false;
-      const j = await res.json();
-      this.$emit("uploaded", j);
+      const uploadedFile: UploadedFile = await res.json();
+      this.$emit("uploaded", uploadedFile);
     },
   },
 });

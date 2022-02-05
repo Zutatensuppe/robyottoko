@@ -133,7 +133,7 @@ class WebSocketServer {
       && user_ids.includes(socket.user_id)
       && socket.module === moduleName
     ) {
-      log.info(`notifying ${socket.user_id} (${data.event})`)
+      log.info(`notifying ${socket.user_id} ${moduleName} (${data.event})`)
       socket.send(JSON.stringify(data))
     }
   }

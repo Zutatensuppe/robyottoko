@@ -75,7 +75,7 @@
                   <td>
                     <responsive-image
                       v-if="element.value.image.file"
-                      :src="element.value.image.file"
+                      :src="element.value.image.urlpath"
                       :title="element.value.image.filename"
                       width="100%"
                       height="90px"
@@ -102,7 +102,7 @@
                   <td>
                     <player
                       v-if="element.value.sound.file"
-                      :src="element.value.sound.file"
+                      :src="element.value.sound.urlpath"
                       :name="element.value.sound.filename"
                       :volume="element.value.sound.volume"
                       :baseVolume="baseVolume"
@@ -169,8 +169,11 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import fn from "../../../common/fn";
-import { CountdownAction } from "../../../types";
+import fn, {
+  mediaFileFromUploadedFile,
+  soundMediaFileFromUploadedFile,
+} from "../../../common/fn";
+import { CountdownAction, UploadedFile } from "../../../types";
 import { newMedia, newText } from "../../../util";
 
 export default defineComponent({
@@ -220,13 +223,12 @@ export default defineComponent({
         (val, index) => index !== idx
       );
     },
-    mediaSndUploaded(idx: number, data) {
-      this.countdown.actions[idx].value.sound.filename = data.originalname;
-      this.countdown.actions[idx].value.sound.file = data.filename;
+    mediaSndUploaded(idx: number, file: UploadedFile) {
+      this.countdown.actions[idx].value.sound =
+        soundMediaFileFromUploadedFile(file);
     },
-    mediaImgUploaded(idx: number, data) {
-      this.countdown.actions[idx].value.image.filename = data.originalname;
-      this.countdown.actions[idx].value.image.file = data.filename;
+    mediaImgUploaded(idx: number, file: UploadedFile) {
+      this.countdown.actions[idx].value.image = mediaFileFromUploadedFile(file);
     },
   },
   created() {

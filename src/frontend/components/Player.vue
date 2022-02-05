@@ -51,7 +51,7 @@ export default defineComponent({
         this.audio.pause();
         this.audio = null;
       }
-      this.audio = new Audio("/uploads/" + this.src);
+      this.audio = new Audio(this.src);
       this.audio.addEventListener("ended", () => {
         this.playing = false;
       });

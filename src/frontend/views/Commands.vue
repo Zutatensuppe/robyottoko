@@ -57,11 +57,13 @@ import { defineComponent } from "vue";
 
 import WsClient from "../WsClient";
 import {
+  default_admin_settings,
+  default_settings,
   GeneralModuleAdminSettings,
   GeneralModuleSettings,
   GeneralModuleWsEventData,
   GeneralSaveEventData,
-} from "../../mod/modules/GeneralModule";
+} from "../../mod/modules/GeneralModuleCommon";
 import { Command, CommandAction, GlobalVariable } from "../../types";
 import util from "../util";
 
@@ -85,12 +87,8 @@ interface ComponentData {
 export default defineComponent({
   data: (): ComponentData => ({
     commands: [],
-    settings: {
-      volume: 100,
-    },
-    adminSettings: {
-      showImages: true,
-    },
+    settings: default_settings(),
+    adminSettings: default_admin_settings(),
     globalVariables: [],
     ws: null,
 

@@ -1,3 +1,4 @@
+import { MediaFile, SoundMediaFile, UploadedFile } from "../types"
 
 export const MS = 1
 export const SECOND = 1000 * MS
@@ -30,8 +31,8 @@ export const setLogLevel = (logLevel: LogLevel): void => {
 }
 setLogLevel('info')
 
-export const logger = (filename: string, ...pre: string[]): Logger => {
-  const b = filename
+export const logger = (prefix: string, ...pre: string[]): Logger => {
+  const b = prefix
   const fn = (t: LogLevel) => (...args: any[]): void => {
     if (logEnabled.includes(t)) {
       console[t](dateformat('hh:mm:ss', new Date()), `[${b}]`, ...pre, ...args)
@@ -246,6 +247,23 @@ export const shuffle = <T>(array: T[]): T[] => {
   return array;
 }
 
+export function mediaFileFromUploadedFile(file: UploadedFile): MediaFile {
+  return {
+    filename: file.originalname,
+    file: file.filename,
+    urlpath: file.urlpath,
+  }
+}
+
+export function soundMediaFileFromUploadedFile(file: UploadedFile): SoundMediaFile {
+  return {
+    filename: file.originalname,
+    file: file.filename,
+    urlpath: file.urlpath,
+    volume: 100,
+  };
+}
+
 export default {
   arrayMove,
   humanDuration,
@@ -255,4 +273,6 @@ export default {
   split,
   shuffle,
   pad,
+  mediaFileFromUploadedFile,
+  soundMediaFileFromUploadedFile,
 }

@@ -4,11 +4,17 @@ import WebSocketServer, { Socket } from '../../net/WebSocketServer'
 import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
 import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
-import { ChatMessageContext, PlaylistItem, RawCommand, TwitchChatClient, TwitchChatContext, RewardRedemptionContext, FunctionCommand, Command, GlobalVariable, Bot, CommandFunction, Module } from '../../types'
+import {
+  ChatMessageContext, PlaylistItem, RawCommand, TwitchChatClient,
+  TwitchChatContext, RewardRedemptionContext, FunctionCommand, Command,
+  Bot, CommandFunction, Module
+} from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import Cache from '../../services/Cache'
 import TwitchClientManager from '../../net/TwitchClientManager'
 import { newCmd } from '../../util'
+import { default_settings, SongerquestModuleInitData, SongrequestModuleData, SongrequestModuleSettings, SongrequestModuleWsEventData } from './SongrequestModuleCommon'
+import { NextFunction, Response } from 'express'
 
 const log = logger('SongrequestModule.ts')
 
@@ -19,82 +25,10 @@ const ADD_TYPE = {
   EXISTED: 3,
 }
 
-interface SongrequestModuleCustomCssPreset {
-  name: string
-  css: string
-  showProgressBar: boolean
-  showThumbnails: string | false
-  maxItemsShown: number
-}
-
-export interface SongrequestModuleSettings {
-  volume: number
-  hideVideoImage: {
-    file: string
-    filename: string
-  }
-  customCss: string
-  customCssPresets: SongrequestModuleCustomCssPreset[]
-  initAutoplay: boolean
-  showProgressBar: boolean
-  showThumbnails: string | false
-  maxItemsShown: number
-}
-
-export interface SongRequestModuleFilter {
-  tag: string
-}
-
-interface SongrequestModuleData {
-  filter: SongRequestModuleFilter
-  settings: SongrequestModuleSettings
-  playlist: PlaylistItem[]
-  commands: Command[],
-  stacks: Record<string, string[]>
-}
-
-interface SongerquestModuleInitData {
-  data: SongrequestModuleData
-  commands: FunctionCommand[]
-}
-
-export interface SongrequestModuleWsEventData {
-  filter: {
-    tag: string
-  },
-  playlist: PlaylistItem[],
-  commands: Command[],
-  globalVariables: GlobalVariable[],
-  settings: SongrequestModuleSettings,
-}
-
 interface WsData {
   event: string
   data: SongrequestModuleWsEventData
 }
-
-const default_custom_css_preset = (obj: any = null) => ({
-  name: obj?.name || '',
-  css: obj?.css || '',
-  showProgressBar: typeof obj?.showProgressBar === 'undefined' ? false : obj.showProgressBar,
-  showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
-  maxItemsShown: typeof obj?.maxItemsShown === 'undefined' ? -1 : obj.maxItemsShown,
-})
-
-const default_settings = (obj: any = null) => ({
-  volume: typeof obj?.volume === 'undefined' ? 100 : obj.volume,
-  hideVideoImage: {
-    file: obj?.hideVideoImage?.file || '',
-    filename: obj?.hideVideoImage?.filename || '',
-  },
-  customCss: obj?.customCss || '',
-  customCssPresets: typeof obj?.customCssPresets === 'undefined' ? [] : obj.customCssPresets.map(default_custom_css_preset),
-
-  showProgressBar: typeof obj?.showProgressBar === 'undefined' ? false : obj.showProgressBar,
-  initAutoplay: typeof obj?.initAutoplay === 'undefined' ? true : obj.initAutoplay,
-  showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
-  maxItemsShown: typeof obj?.maxItemsShown === 'undefined' ? -1 : obj.maxItemsShown,
-})
 
 const default_playlist_item = (item: any = null): PlaylistItem => {
   return {
@@ -267,14 +201,13 @@ class SongrequestModule implements Module {
   }
 
   widgets() {
-    return {
-    }
+    return {}
   }
 
   getRoutes() {
     return {
       post: {
-        '/api/sr/import': async (req: any, res: any, next: Function) => {
+        '/api/sr/import': async (req: any, res: Response, _next: NextFunction) => {
           try {
             this.data.settings = default_settings(req.body.settings)
             this.data.playlist = default_playlist(req.body.playlist)
@@ -287,7 +220,7 @@ class SongrequestModule implements Module {
         },
       },
       get: {
-        '/api/sr/export': async (req: any, res: any, next: Function) => {
+        '/api/sr/export': async (_req: any, res: Response, _next: NextFunction) => {
           res.send({
             settings: this.data.settings,
             playlist: this.data.playlist,
@@ -367,7 +300,7 @@ class SongrequestModule implements Module {
         this.save()
         this.updateClients('onEnded')
       },
-      'save': (_ws: Socket, data: { commands: any[], settings: any }) => {
+      'save': (_ws: Socket, data: { commands: Command[], settings: SongrequestModuleSettings }) => {
         this.data.commands = data.commands
         this.data.settings = data.settings
         this.save()

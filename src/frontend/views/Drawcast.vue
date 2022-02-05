@@ -17,7 +17,7 @@
       </div>
     </div>
     <div id="main" ref="main">
-      <table class="table is-striped" ref="table" v-if="settings">
+      <table class="table is-striped" ref="table" v-if="inited">
         <tbody>
           <tr>
             <td colspan="3">General</td>
@@ -138,7 +138,7 @@
                 v-if="settings.customProfileImage"
               >
                 <responsive-image
-                  :src="settings.customProfileImage.file"
+                  :src="settings.customProfileImage.urlpath"
                   :title="settings.customProfileImage.filename"
                   width="100px"
                   height="50px"
@@ -200,7 +200,7 @@
                 v-if="settings.notificationSound"
               >
                 <player
-                  :src="settings.notificationSound.file"
+                  :src="settings.notificationSound.urlpath"
                   :name="settings.notificationSound.filename"
                   :volume="settings.notificationSound.volume"
                   class="button is-small"
@@ -324,7 +324,14 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import { DrawcastSaveEventData } from "../../mod/modules/DrawcastModule";
+import {
+  mediaFileFromUploadedFile,
+  soundMediaFileFromUploadedFile,
+} from "../../common/fn";
+import {
+  default_settings,
+  DrawcastSaveEventData,
+} from "../../mod/modules/DrawcastModuleCommon";
 import {
   DrawcastData,
   DrawcastFavoriteList,
@@ -338,8 +345,9 @@ import WsClient from "../WsClient";
 interface ComponentData {
   unchangedJson: string;
   changedJson: string;
-  settings: DrawcastSettings | null;
-  defaultSettings: any | null; // TODO: change any
+  inited: boolean;
+  settings: DrawcastSettings;
+  defaultSettings: DrawcastSettings;
   ws: WsClient | null;
   drawUrl: string;
   favoriteSelection: {
@@ -356,8 +364,9 @@ export default defineComponent({
   data: (): ComponentData => ({
     unchangedJson: "{}",
     changedJson: "{}",
-    settings: null,
-    defaultSettings: null,
+    inited: false,
+    settings: default_settings(),
+    defaultSettings: default_settings(),
     ws: null,
     drawUrl: "",
     favoriteSelection: {
@@ -373,12 +382,12 @@ export default defineComponent({
     this.ws = util.wsClient("drawcast");
     this.ws.onMessage("init", async (data: DrawcastData) => {
       this.settings = data.settings;
-      this.defaultSettings = data.defaultSettings;
       this.unchangedJson = JSON.stringify(data.settings);
       this.drawUrl = data.drawUrl;
 
       const res = await api.getDrawcastAllImages();
       this.favoriteSelection.items = await res.json();
+      this.inited = true;
     });
     this.ws.connect();
   },
@@ -474,21 +483,14 @@ export default defineComponent({
         );
         return;
       }
-      this.settings.customProfileImage = {
-        filename: file.originalname,
-        file: file.filename,
-      };
+      this.settings.customProfileImage = mediaFileFromUploadedFile(file);
     },
     soundUploaded(file: UploadedFile) {
       if (!this.settings) {
         console.warn("soundUploaded: this.settings not initialized");
         return;
       }
-      this.settings.notificationSound = {
-        filename: file.originalname,
-        file: file.filename,
-        volume: 100,
-      };
+      this.settings.notificationSound = soundMediaFileFromUploadedFile(file);
     },
     sendSave() {
       if (!this.settings) {

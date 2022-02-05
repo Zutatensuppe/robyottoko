@@ -19,7 +19,7 @@ class VoteModule implements Module {
   constructor(
     bot: Bot,
     user: User,
-    clientManager: TwitchClientManager,
+    _clientManager: TwitchClientManager,
   ) {
     this.variables = bot.getUserVariables(user)
     this.storage = bot.getUserModuleStorage(user)

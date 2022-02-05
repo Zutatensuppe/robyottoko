@@ -75,7 +75,8 @@ import {
   AvatarModuleAvatarSlotDefinition,
   AvatarModuleSettings,
   AvatarModuleWsInitData,
-} from "../../mod/modules/AvatarModule";
+  default_settings,
+} from "../../mod/modules/AvatarModuleCommon";
 import { logger } from "../../common/fn";
 
 const log = logger("Page.vue");
@@ -96,7 +97,7 @@ interface ComponentData {
   };
   tuberDef: null | AvatarModuleAvatarDefinition;
   tuberIdx: number;
-  settings: null | AvatarModuleSettings;
+  settings: AvatarModuleSettings;
 }
 
 export default defineComponent({
@@ -113,7 +114,7 @@ export default defineComponent({
       tuber: { slot: {} },
       tuberDef: null,
       tuberIdx: -1,
-      settings: null,
+      settings: default_settings(),
     };
   },
   computed: {

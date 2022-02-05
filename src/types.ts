@@ -1,3 +1,4 @@
+import { NextFunction, Response } from 'express'
 // @ts-ignore
 import { Client } from 'tmi.js'
 import { LogLevel } from './common/fn'
@@ -75,6 +76,16 @@ export interface Config {
   }
 }
 
+export interface MediaFile {
+  file: string
+  filename: string
+  urlpath: string,
+}
+
+export interface SoundMediaFile extends MediaFile {
+  volume: number
+}
+
 export interface UploadedFile {
   fieldname: string
   originalname: string
@@ -82,8 +93,10 @@ export interface UploadedFile {
   mimetype: string
   destination: string
   filename: string
-  path: string
+  filepath: string // on disk
   size: number
+
+  urlpath: string
 }
 
 export interface PlaylistItem {
@@ -112,25 +125,17 @@ export interface DrawcastSettings {
   submitConfirm: string
   recentImagesTitle: string
   customDescription: string
-  customProfileImage: {
-    file: string
-    filename: string
-  } | null
-  palette: string
+  customProfileImage: MediaFile | null
+  palette: string[]
   displayDuration: int
-  displayLatestForever: string
-  displayLatestAutomatically: string
-  notificationSound: {
-    filename: string
-    file: string
-    volume: number
-  } | null
+  displayLatestForever: boolean
+  displayLatestAutomatically: boolean
+  notificationSound: SoundMediaFile | null
   favoriteLists: DrawcastFavoriteList[]
 }
 
 export interface DrawcastData {
   settings: DrawcastSettings
-  defaultSettings: any
   drawUrl: string
   images: any[]
 }
@@ -277,15 +282,8 @@ export interface ChattersCommand extends Command {
 }
 
 export interface MediaCommandData {
-  sound: {
-    filename: string
-    file: string
-    volume: number
-  },
-  image: {
-    filename: string
-    file: string
-  },
+  sound: SoundMediaFile,
+  image: MediaFile,
   minDurationMs: string | number
 }
 
@@ -389,8 +387,8 @@ export interface Module {
   userChanged: (user: User) => Promise<void>
   saveCommands: () => void
   getWsEvents: () => Record<string, (ws: Socket, data?: any) => any>
-  widgets: () => Record<string, (req: any, res: any, next: Function) => Record<string, string>>
-  getRoutes: () => Record<string, Record<string, (req: any, res: any, next: Function) => Promise<any>>>
+  widgets: () => Record<string, (req: any, res: Response, next: NextFunction) => Record<string, string>>
+  getRoutes: () => Record<string, Record<string, (req: any, res: Response, next: NextFunction) => Promise<any>>>
   getCommands: () => FunctionCommand[]
   onChatMsg: (chatMessageContext: ChatMessageContext) => Promise<void>
   onRewardRedemption: (rewardRedemptionContext: RewardRedemptionContext) => Promise<void>

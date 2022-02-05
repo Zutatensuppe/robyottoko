@@ -4,7 +4,7 @@
       <responsive-image
         class="hide-video"
         v-if="hidevideo && settings.hideVideoImage.file"
-        :src="settings.hideVideoImage.file"
+        :src="settings.hideVideoImage.urlpath"
       />
       <div class="hide-video" v-else-if="hidevideo"></div>
       <div class="progress" v-if="settings.showProgressBar">
@@ -30,7 +30,8 @@ import WsClient from "../../frontend/WsClient";
 import {
   SongRequestModuleFilter,
   SongrequestModuleSettings,
-} from "../../mod/modules/SongrequestModule";
+  default_settings,
+} from "../../mod/modules/SongrequestModuleCommon";
 import { PlaylistItem } from "../../types";
 import util from "../util";
 
@@ -52,19 +53,7 @@ export default defineComponent({
       filter: { tag: "" },
       hasPlayed: false,
       playlist: [],
-      settings: {
-        volume: 100,
-        hideVideoImage: {
-          file: "",
-          filename: "",
-        },
-        customCss: "",
-        customCssPresets: [],
-        showProgressBar: false,
-        initAutoplay: true,
-        showThumbnails: "left",
-        maxItemsShown: -1,
-      },
+      settings: default_settings(),
       progress: 0,
       progressInterval: null,
 
