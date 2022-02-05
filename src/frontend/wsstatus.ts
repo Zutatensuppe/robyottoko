@@ -21,7 +21,15 @@ function init() {
   client.connect()
 }
 
+function stop() {
+  if (client) {
+    client.disconnect()
+    client = null
+  }
+}
+
 export default {
   init,
+  stop,
   eventBus,
 }

@@ -1,10 +1,16 @@
+import mitt from "mitt";
 import api from "./api";
 
 let me: any = null;
 
+export const eventBus = mitt()
+
 async function init() {
   const res = await api.getMe();
   me = res.status === 200 ? (await res.json()) : null
+  if (me) {
+    eventBus.emit('login')
+  }
 }
 
 async function logout() {
@@ -12,6 +18,7 @@ async function logout() {
   const data = await res.json();
   if (data.success) {
     me = null
+    eventBus.emit('logout')
     return { error: false }
   } else {
     return { error: "[2021-09-25 18:36]" }
@@ -32,6 +39,7 @@ async function login(user: string, pass: string) {
 
 export default {
   getMe: () => me,
+  eventBus,
   logout,
   login,
   init,

@@ -132,9 +132,15 @@ const run = async () => {
     ],
   })
 
+  user.eventBus.on('login', () => {
+    wsstatus.init()
+  })
+  user.eventBus.on('logout', () => {
+    wsstatus.stop()
+  })
+
   await conf.init()
   await user.init()
-  wsstatus.init()
 
   router.beforeEach((to, from, next) => {
     if (to.meta.protected && !user.getMe()) {
