@@ -9,7 +9,8 @@ const widgetUrl = (widget: string) => {
 
 const wsClient = (path: string) => {
   const cfg = conf.getConf()
-  return new WsClient(`${cfg.wsBase}/${path}`, user.getMe().token);
+  const me = user.getMe()
+  return new WsClient(`${cfg.wsBase}/${path}`, me ? me.token : '');
 }
 
 
