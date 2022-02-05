@@ -20,6 +20,8 @@ import ForgotPassword from './views/ForgotPassword.vue'
 
 import draggable from "vuedraggable";
 import Upload from "./components/Upload.vue";
+import ImageUpload from './components/ImageUpload.vue'
+import SoundUpload from './components/SoundUpload.vue'
 import DurationInput from "./components/DurationInput.vue";
 import Checkbox from "./components/Checkbox.vue";
 import Player from "./components/Player.vue";
@@ -46,6 +48,7 @@ import AvatarSlotDefinitionEditor from "./components/Avatar/AvatarSlotDefinition
 import AvatarSlotItemEditor from "./components/Avatar/AvatarSlotItemEditor.vue";
 import AvatarPreview from "./components/Avatar/AvatarPreview.vue";
 import AvatarSlotItemStateEditor from "./components/Avatar/AvatarSlotItemStateEditor.vue";
+import AvatarFrameUpload from "./components/Avatar/AvatarFrameUpload.vue";
 import AvatarAnimation from "./components/Avatar/AvatarAnimation.vue";
 
 import "./style.css"
@@ -174,6 +177,8 @@ const run = async () => {
   app.component('responsive-image', ResponsiveImage)
   app.component('slider', Slider)
   app.component('upload', Upload)
+  app.component('image-upload', ImageUpload)
+  app.component('sound-upload', SoundUpload)
   app.component('volume-slider', VolumeSlider)
   app.component('youtube', Youtube)
   app.component('commands-editor', CommandsCommandsEditor)
@@ -190,6 +195,7 @@ const run = async () => {
   app.component('avatar-slot-item-editor', AvatarSlotItemEditor)
   app.component('avatar-preview', AvatarPreview)
   app.component('avatar-slot-item-state-editor', AvatarSlotItemStateEditor)
+  app.component('avatar-frame-upload', AvatarFrameUpload)
   app.component('avatar-animation', AvatarAnimation)
   app.mount('#app')
 }

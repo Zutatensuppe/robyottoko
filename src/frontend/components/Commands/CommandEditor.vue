@@ -209,58 +209,19 @@
             <tr v-if="item.action === 'media'">
               <td>Image:</td>
               <td>
-                <responsive-image
-                  v-if="item.data.image.file"
-                  :src="item.data.image.urlpath"
-                  :title="item.data.image.filename"
-                  width="100%"
-                  height="90px"
-                  style="display: block"
-                />
-                <button
-                  v-if="item.data.image.file"
-                  class="button is-small"
-                  @click="item.data.image.file = null"
-                >
-                  <i class="fa fa-remove mr-1" /> Remove
-                </button>
-                <br v-if="item.data.image.file" />
-                <upload
-                  @uploaded="mediaImgUploaded"
-                  accept="image/*"
-                  label="Upload Image"
-                  :class="{ 'mt-1': item.data.image.file }"
+                <image-upload
+                  v-model="item.data.image"
+                  @update:modelValue="mediaImgChanged"
                 />
               </td>
             </tr>
             <tr v-if="item.action === 'media'">
               <td>Sound:</td>
               <td>
-                <player
-                  v-if="item.data.sound.file"
-                  :src="item.data.sound.urlpath"
-                  :name="item.data.sound.filename"
-                  :volume="item.data.sound.volume"
+                <sound-upload
+                  v-model="item.data.sound"
                   :baseVolume="baseVolume"
-                  class="button is-small"
-                />
-                <volume-slider
-                  v-if="item.data.sound.file"
-                  v-model="item.data.sound.volume"
-                />
-                <button
-                  v-if="item.data.sound.file"
-                  class="button is-small"
-                  @click="item.data.sound.file = null"
-                >
-                  <i class="fa fa-remove mr-1" /> Remove
-                </button>
-                <br v-if="item.data.sound.file" />
-                <upload
-                  @uploaded="mediaSndUploaded"
-                  accept="audio/*"
-                  label="Upload Sound"
-                  :class="{ 'mt-1': item.data.sound.file }"
+                  @update:modelValue="mediaSndChanged"
                 />
               </td>
             </tr>
@@ -470,11 +431,13 @@
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
 
-import fn, {
-  mediaFileFromUploadedFile,
-  soundMediaFileFromUploadedFile,
-} from "../../../common/fn";
-import { Command, GlobalVariable, UploadedFile } from "../../../types";
+import fn from "../../../common/fn";
+import {
+  Command,
+  GlobalVariable,
+  MediaFile,
+  SoundMediaFile,
+} from "../../../types";
 import {
   ACTION_DESCRIPTION_MAP,
   ACTION_NAME_MAP,
@@ -606,19 +569,19 @@ export default defineComponent({
     onOverlayClick() {
       this.$emit("cancel");
     },
-    mediaSndUploaded(file: UploadedFile) {
+    mediaSndChanged(file: SoundMediaFile) {
       if (!this.item) {
-        console.warn("mediaSndUploaded: this.item not initialized");
+        console.warn("mediaSndChanged: this.item not initialized");
         return;
       }
-      this.item.data.sound = soundMediaFileFromUploadedFile(file);
+      this.item.data.sound = file;
     },
-    mediaImgUploaded(file: UploadedFile) {
+    mediaImgChanged(file: MediaFile) {
       if (!this.item) {
         console.warn("mediaImgUploaded: this.item not initialized");
         return;
       }
-      this.item.data.image = mediaFileFromUploadedFile(file);
+      this.item.data.image = file;
     },
     rmtxt(idx: number) {
       if (!this.item) {

@@ -56,11 +56,7 @@ export default defineComponent({
     },
   },
   methods: {
-    async upload(evt) {
-      const file = evt.target.files[0];
-      if (!file) {
-        return;
-      }
+    async uploadFile(file: File) {
       this.uploading = true;
       const res = await api.upload(file, (progressEvt) => {
         this.progress = progressEvt.loaded / progressEvt.total;
@@ -68,6 +64,13 @@ export default defineComponent({
       this.uploading = false;
       const uploadedFile: UploadedFile = await res.json();
       this.$emit("uploaded", uploadedFile);
+    },
+    async upload(evt) {
+      const file = evt.target.files[0];
+      if (!file) {
+        return;
+      }
+      this.uploadFile(file);
     },
   },
 });

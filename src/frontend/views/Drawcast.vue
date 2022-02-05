@@ -133,29 +133,12 @@
           <tr>
             <td><code>settings.customProfileImage</code></td>
             <td>
-              <div
+              <image-upload
+                v-model="settings.customProfileImage"
+                @update:modelValue="customProfileImageChanged"
+                width="100px"
+                height="50px"
                 class="spacerow media-holder"
-                v-if="settings.customProfileImage"
-              >
-                <responsive-image
-                  :src="settings.customProfileImage.urlpath"
-                  :title="settings.customProfileImage.filename"
-                  width="100px"
-                  height="50px"
-                  style="display: inline-block"
-                />
-                <br />
-                <button
-                  class="button is-small"
-                  @click="customProfileImageRemoved"
-                >
-                  <i class="fa fa-remove mr-1" /> Remove Image
-                </button>
-              </div>
-              <upload
-                @uploaded="customProfileImageUploaded"
-                accept="image/*"
-                label="Upload Image"
               />
             </td>
             <td>
@@ -195,28 +178,10 @@
           <tr>
             <td><code>settings.notificationSound</code></td>
             <td>
-              <div
+              <sound-upload
+                v-model="settings.notificationSound"
+                @update:modelValue="notificationSoundChanged"
                 class="spacerow media-holder"
-                v-if="settings.notificationSound"
-              >
-                <player
-                  :src="settings.notificationSound.urlpath"
-                  :name="settings.notificationSound.filename"
-                  :volume="settings.notificationSound.volume"
-                  class="button is-small"
-                />
-                <volume-slider v-model="settings.notificationSound.volume" />
-                <button
-                  class="button is-small"
-                  @click="settings.notificationSound = null"
-                >
-                  <i class="fa fa-remove" />
-                </button>
-              </div>
-              <upload
-                @uploaded="soundUploaded"
-                accept="audio/*"
-                label="Upload Audio"
               />
             </td>
             <td>
@@ -336,6 +301,8 @@ import {
   DrawcastData,
   DrawcastFavoriteList,
   DrawcastSettings,
+  MediaFile,
+  SoundMediaFile,
   UploadedFile,
 } from "../../types";
 import api from "../api";
@@ -467,30 +434,21 @@ export default defineComponent({
         this.settings.favoriteLists[index].list.push(url);
       }
     },
-    customProfileImageRemoved() {
+    customProfileImageChanged(file: MediaFile) {
       if (!this.settings) {
         console.warn(
-          "customProfileImageRemoved: this.settings not initialized"
+          "customProfileImageChanged: this.settings not initialized"
         );
         return;
       }
-      this.settings.customProfileImage = null;
+      this.settings.customProfileImage = file.file ? file : null;
     },
-    customProfileImageUploaded(file: UploadedFile) {
+    notificationSoundChanged(file: SoundMediaFile) {
       if (!this.settings) {
-        console.warn(
-          "customProfileImageUploaded: this.settings not initialized"
-        );
+        console.warn("notificationSoundChanged: this.settings not initialized");
         return;
       }
-      this.settings.customProfileImage = mediaFileFromUploadedFile(file);
-    },
-    soundUploaded(file: UploadedFile) {
-      if (!this.settings) {
-        console.warn("soundUploaded: this.settings not initialized");
-        return;
-      }
-      this.settings.notificationSound = soundMediaFileFromUploadedFile(file);
+      this.settings.notificationSound = file.file ? file : null;
     },
     sendSave() {
       if (!this.settings) {

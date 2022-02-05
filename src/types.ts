@@ -79,7 +79,7 @@ export interface Config {
 export interface MediaFile {
   file: string
   filename: string
-  urlpath: string,
+  urlpath: string
 }
 
 export interface SoundMediaFile extends MediaFile {
