@@ -35,6 +35,7 @@ export interface AvatarModuleAvatarDefinition {
   height: int
   stateDefinitions: AvatarModuleAvatarStateDefinition[]
   slotDefinitions: AvatarModuleAvatarSlotDefinition[]
+  state: AvatarModuleAvatarState
 }
 
 export interface AvatarModuleSettings {
@@ -43,6 +44,19 @@ export interface AvatarModuleSettings {
     bgColor: string,
   },
   avatarDefinitions: AvatarModuleAvatarDefinition[]
+}
+
+export const default_avatar_definition = (def: any = null): AvatarModuleAvatarDefinition => {
+  const get = (obj: any, prop: string, val: any) => (obj ? (typeof obj[prop] === 'undefined' ? val : obj[prop]) : val)
+
+  return {
+    name: get(def, 'name', ''),
+    width: get(def, 'width', 64),
+    height: get(def, 'height', 64),
+    stateDefinitions: get(def, 'stateDefinitions', []),
+    slotDefinitions: get(def, 'slotDefinitions', []),
+    state: get(def, 'state', { slots: {}, lockedState: '' })
+  }
 }
 
 export const default_settings = (): AvatarModuleSettings => ({
@@ -55,6 +69,9 @@ export const default_settings = (): AvatarModuleSettings => ({
 
 export interface AvatarModuleState {
   tuberIdx: number
+}
+
+export interface AvatarModuleAvatarState {
   slots: Record<SlotName, number>
   lockedState: string
 }

@@ -65,7 +65,7 @@ import {
   AvatarModuleAvatarDefinition,
   AvatarModuleAvatarSlotDefinition,
   AvatarModuleAvatarSlotItem,
-} from "../../../mod/modules/AvatarModule";
+} from "../../../mod/modules/AvatarModuleCommon";
 
 export default defineComponent({
   props: {

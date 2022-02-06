@@ -16,10 +16,29 @@
       />
     </div>
 
-    <table>
+    <table v-if="controls">
+      <tr v-if="!this.avatarFixed">
+        <td>Tubers:</td>
+        <td>
+          <button
+            v-for="(avatarDef, idx) in settings.avatarDefinitions"
+            :key="idx"
+            @click="setTuber(idx, true)"
+            :class="{ active: tuberIdx === idx }"
+          >
+            {{ avatarDef.name }}
+          </button>
+        </td>
+      </tr>
+      <tr v-if="!this.avatarFixed">
+        <td colspan="2"><hr /></td>
+      </tr>
       <tr>
         <td>Start Mic</td>
         <td><button @click="startMic">Start</button></td>
+      </tr>
+      <tr>
+        <td colspan="2"><hr /></td>
       </tr>
       <tr v-for="(def, idx) in tuberDef.slotDefinitions" :key="idx">
         <td>{{ def.slot }}:</td>
@@ -28,7 +47,7 @@
             v-for="(item, idx2) in def.items"
             :key="idx2"
             @click="setSlot(def.slot, idx2, true)"
-            :class="{ active: tuber.slot[def.slot] === idx2 }"
+            :class="{ active: slots[def.slot] === idx2 }"
           >
             {{ item.title }}
           </button>
@@ -47,19 +66,6 @@
           </button>
         </td>
       </tr>
-      <tr>
-        <td>Tubers:</td>
-        <td>
-          <button
-            v-for="(avatarDef, idx) in settings.avatarDefinitions"
-            :key="idx"
-            @click="setTuber(idx, true)"
-            :class="{ active: tuberIdx === idx }"
-          >
-            {{ avatarDef.name }}
-          </button>
-        </td>
-      </tr>
     </table>
   </div>
 </template>
@@ -71,7 +77,6 @@ import SoundMeter from "./soundmeter.js";
 import util from "../util";
 import WsClient from "../../frontend/WsClient";
 import {
-  AvatarModuleAvatarDefinition,
   AvatarModuleAvatarSlotDefinition,
   AvatarModuleSettings,
   AvatarModuleWsInitData,
@@ -89,14 +94,10 @@ const SPEAKING_THRESHOLD = 0.05;
 interface ComponentData {
   ws: null | WsClient;
   speaking: boolean;
-  lockedState: string;
   initialized: boolean;
   audioInitialized: boolean;
-  tuber: {
-    slot: Record<string, any>;
-  };
-  tuberDef: null | AvatarModuleAvatarDefinition;
   tuberIdx: number;
+  avatarFixed: string;
   settings: AvatarModuleSettings;
 }
 
@@ -104,20 +105,38 @@ export default defineComponent({
   components: {
     AvatarAnimation,
   },
+  props: {
+    controls: { type: Boolean, required: true },
+  },
   data(): ComponentData {
     return {
       ws: null,
       speaking: false,
-      lockedState: "default",
       initialized: false,
       audioInitialized: false,
-      tuber: { slot: {} },
-      tuberDef: null,
       tuberIdx: -1,
+      avatarFixed: "",
       settings: default_settings(),
     };
   },
   computed: {
+    tuberDef() {
+      if (
+        this.tuberIdx < 0 ||
+        this.tuberIdx >= this.settings.avatarDefinitions.length
+      ) {
+        return null;
+      }
+      return this.settings.avatarDefinitions[this.tuberIdx];
+    },
+    slots() {
+      const tuberDef = this.tuberDef;
+      return tuberDef ? tuberDef.state.slots : {};
+    },
+    lockedState() {
+      const tuberDef = this.tuberDef;
+      return tuberDef ? tuberDef.state.lockedState : "default";
+    },
     animationName() {
       if (this.lockedState !== "default") {
         return this.lockedState;
@@ -130,7 +149,8 @@ export default defineComponent({
       }
       return this.tuberDef.slotDefinitions.map(
         (slotDef: AvatarModuleAvatarSlotDefinition) => {
-          const item = slotDef.items[this.tuber.slot[slotDef.slot]];
+          const itemIdx = this.slots[slotDef.slot] || slotDef.defaultItemIndex;
+          const item = slotDef.items[itemIdx];
           if (!item) {
             return { title: "", states: [] };
           }
@@ -154,13 +174,13 @@ export default defineComponent({
       this.ws.send(JSON.stringify({ event: "ctrl", data: { ctrl, args } }));
     },
     setSlot(slotName: string, itemIdx: number, sendCtrl: boolean = false) {
-      if (this.tuber.slot[slotName] === itemIdx) {
+      if (this.slots[slotName] === itemIdx) {
         return;
       }
-      this.tuber.slot[slotName] = itemIdx;
-      this.tuber.slot = Object.assign({}, this.tuber.slot);
+      this.settings.avatarDefinitions[this.tuberIdx].state.slots[slotName] =
+        itemIdx;
       if (sendCtrl) {
-        this.ctrl("setSlot", [slotName, itemIdx]);
+        this.ctrl("setSlot", [this.tuberIdx, slotName, itemIdx]);
       }
     },
     setSpeaking(speaking: boolean, sendCtrl: boolean = false) {
@@ -169,41 +189,46 @@ export default defineComponent({
       }
       this.speaking = speaking;
       if (sendCtrl) {
-        this.ctrl("setSpeaking", [speaking]);
+        this.ctrl("setSpeaking", [this.tuberIdx, speaking]);
       }
     },
     lockState(lockedState: string, sendCtrl: boolean = false) {
       if (this.lockedState === lockedState) {
         return;
       }
-      this.lockedState = lockedState;
+      this.settings.avatarDefinitions[this.tuberIdx].state.lockedState =
+        lockedState;
       if (sendCtrl) {
-        this.ctrl("lockState", [lockedState]);
+        this.ctrl("lockState", [this.tuberIdx, lockedState]);
       }
     },
-    setTuber(idx: number, sendCtrl: boolean = false) {
+    setTuber(tuberIdx: number, sendCtrl: boolean = false) {
       if (!this.settings) {
         log.error("setTuber: this.settings not initialized");
         return;
       }
-      if (idx < 0 || idx >= this.settings.avatarDefinitions.length) {
-        log.error("setTuber: index out of bounds", idx);
+      if (this.avatarFixed) {
+        tuberIdx = this.settings.avatarDefinitions.findIndex(
+          (def) => def.name === this.avatarFixed
+        );
+      }
+      if (tuberIdx >= this.settings.avatarDefinitions.length) {
+        log.info("setTuber: index out of bounds. using index 0");
+        tuberIdx = 0;
+      }
+      if (tuberIdx < 0 || tuberIdx >= this.settings.avatarDefinitions.length) {
+        log.error("setTuber: index out of bounds");
         return;
       }
-      const tuber = this.settings.avatarDefinitions[idx];
-      const tuberDefStr = JSON.stringify(tuber);
+      const newTuber = this.settings.avatarDefinitions[tuberIdx];
+      const newTuberDefStr = JSON.stringify(newTuber);
       const thisTuberDefStr = JSON.stringify(this.tuberDef);
-      if (tuberDefStr === thisTuberDefStr) {
+      if (newTuberDefStr === thisTuberDefStr) {
         return;
       }
-      this.tuberIdx = idx;
-      this.tuber.slot = {};
-      this.tuberDef = JSON.parse(tuberDefStr) as AvatarModuleAvatarDefinition;
-      this.tuberDef.slotDefinitions.forEach((slotDef) => {
-        this.tuber.slot[slotDef.slot] = slotDef.defaultItemIndex;
-      });
+      this.tuberIdx = tuberIdx;
       if (sendCtrl) {
-        this.ctrl("setTuber", [idx]);
+        this.ctrl("setTuber", [this.tuberIdx]);
       }
     },
     startMic() {
@@ -255,6 +280,14 @@ export default defineComponent({
       }
     },
   },
+  created() {
+    const params = new Proxy(new URLSearchParams(window.location.search), {
+      get: (searchParams, prop: string) => searchParams.get(prop),
+    });
+    if (params.avatar) {
+      this.avatarFixed = `${params.avatar}`;
+    }
+  },
   mounted() {
     this.ws = util.wsClient("avatar");
     this.ws.onMessage("init", (data: AvatarModuleWsInitData) => {
@@ -262,24 +295,35 @@ export default defineComponent({
       this.$nextTick(() => {
         this.applyStyles();
       });
-      this.setTuber(data.state.tuberIdx === -1 ? 0 : data.state.tuberIdx);
-      for (const slotName of Object.keys(data.state.slots)) {
-        this.setSlot(slotName, data.state.slots[slotName]);
+      let tuberIdx = data.state.tuberIdx;
+      if (this.avatarFixed) {
+        tuberIdx = this.settings.avatarDefinitions.findIndex(
+          (def) => def.name === this.avatarFixed
+        );
       }
-      this.lockState(data.state.lockedState);
+      this.setTuber(tuberIdx === -1 ? 0 : tuberIdx);
       this.initialized = true;
     });
     this.ws.onMessage("ctrl", ({ data }) => {
       if (data.ctrl === "setSlot") {
-        const slotName = data.args[0];
-        const itemIdx = data.args[1];
-        this.setSlot(slotName, itemIdx);
+        const tuberIdx = data.args[0];
+        if (this.tuberIdx === tuberIdx) {
+          const slotName = data.args[1];
+          const itemIdx = data.args[2];
+          this.setSlot(slotName, itemIdx);
+        }
       } else if (data.ctrl === "setSpeaking") {
-        const speaking = data.args[0];
-        this.setSpeaking(speaking);
+        const tuberIdx = data.args[0];
+        if (this.tuberIdx === tuberIdx) {
+          const speaking = data.args[1];
+          this.setSpeaking(speaking);
+        }
       } else if (data.ctrl === "lockState") {
-        const lockedState = data.args[0];
-        this.lockState(lockedState);
+        const tuberIdx = data.args[0];
+        if (this.tuberIdx === tuberIdx) {
+          const lockedState = data.args[1];
+          this.lockState(lockedState);
+        }
       } else if (data.ctrl === "setTuber") {
         const tuberIdx = data.args[0];
         this.setTuber(tuberIdx);

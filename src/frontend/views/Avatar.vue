@@ -63,7 +63,7 @@
               <th></th>
               <th>Preview</th>
               <th>Name</th>
-              <th></th>
+              <th>Actions</th>
             </tr>
           </thead>
           <draggable
@@ -97,9 +97,24 @@
                     @doubleclick="remove(index)"
                     ><i class="fa fa-trash"
                   /></doubleclick-button>
-                  <button class="button is-small" @click="duplicate(index)">
+                  <button
+                    class="button is-small mr-1"
+                    @click="duplicate(index)"
+                  >
                     <i class="fa fa-clone" />
                   </button>
+                  <a
+                    class="button is-small mr-1"
+                    :href="controlWidgetUrl + '?avatar=' + element.name"
+                    target="_blank"
+                    ><i class="fa fa-external-link mr-1" /> Control widget</a
+                  >
+                  <a
+                    class="button is-small"
+                    :href="displayWidgetUrl + '?avatar=' + element.name"
+                    target="_blank"
+                    ><i class="fa fa-external-link mr-1" /> Display widget</a
+                  >
                 </td>
               </tr>
             </template>

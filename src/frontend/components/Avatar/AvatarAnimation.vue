@@ -19,7 +19,7 @@
 </template>
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import { AvatarModuleAnimationFrameDefinition } from "../../../mod/modules/AvatarModule";
+import { AvatarModuleAnimationFrameDefinition } from "../../../mod/modules/AvatarModuleCommon";
 
 interface ComponentData {
   timeout: NodeJS.Timeout | null;

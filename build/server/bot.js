@@ -4971,6 +4971,17 @@ class DrawcastModule {
     }
 }
 
+const default_avatar_definition = (def = null) => {
+    const get = (obj, prop, val) => (obj ? (typeof obj[prop] === 'undefined' ? val : obj[prop]) : val);
+    return {
+        name: get(def, 'name', ''),
+        width: get(def, 'width', 64),
+        height: get(def, 'height', 64),
+        stateDefinitions: get(def, 'stateDefinitions', []),
+        slotDefinitions: get(def, 'slotDefinitions', []),
+        state: get(def, 'state', { slots: {}, lockedState: '' })
+    };
+};
 const default_settings = () => ({
     styles: {
         // page background color
@@ -4984,11 +4995,7 @@ class AvatarModule {
     constructor(bot, user, _clientManager) {
         this.name = 'avatar';
         this.defaultSettings = default_settings();
-        this.defaultState = {
-            tuberIdx: -1,
-            slots: {},
-            lockedState: '',
-        };
+        this.defaultState = { tuberIdx: -1 };
         this.variables = bot.getUserVariables(user);
         this.user = user;
         this.wss = bot.getWebSocketServer();
@@ -4999,7 +5006,6 @@ class AvatarModule {
         this.user = user;
     }
     save() {
-        log$1.info('saving', this.data.state);
         this.storage.save(this.name, this.data);
     }
     saveCommands() {
@@ -5019,24 +5025,9 @@ class AvatarModule {
         if (!data.settings.styles.bgColor) {
             data.settings.styles.bgColor = this.defaultSettings.styles.bgColor;
         }
-        // -start- fixes to old data structure
-        for (const avatarDef of data.settings.avatarDefinitions) {
-            if (typeof avatarDef.width === 'undefined') {
-                avatarDef.width = 64;
-            }
-            if (typeof avatarDef.height === 'undefined') {
-                avatarDef.height = 64;
-            }
-            for (const slotDef of avatarDef.slotDefinitions) {
-                for (const _item of slotDef.items) {
-                    // delete item.url
-                    // item.states = item.animation
-                    // delete item.animation
-                    // avatarDef.stateDefinitions.map((stateDefinition: AvatarModuleAvatarStateDefinition) => ({state: stateDefinition.value, frames: [] }))
-                }
-            }
-        }
-        // -end-   fixes to old data structure
+        data.settings.avatarDefinitions = data.settings.avatarDefinitions.map((def) => {
+            return default_avatar_definition(def);
+        });
         return {
             settings: data.settings,
             state: data.state,
@@ -5070,15 +5061,27 @@ class AvatarModule {
             },
             'ctrl': (_ws, data) => {
                 if (data.data.ctrl === "setSlot") {
-                    const slotName = data.data.args[0];
-                    const itemIdx = data.data.args[1];
-                    this.data.state.slots[slotName] = itemIdx;
-                    this.save();
+                    const tuberIdx = data.data.args[0];
+                    const slotName = data.data.args[1];
+                    const itemIdx = data.data.args[2];
+                    try {
+                        this.data.settings.avatarDefinitions[tuberIdx].state.slots[slotName] = itemIdx;
+                        this.save();
+                    }
+                    catch (e) {
+                        log$1.error('ws ctrl: unable to setSlot', tuberIdx, slotName, itemIdx);
+                    }
                 }
                 else if (data.data.ctrl === "lockState") {
-                    const lockedState = data.data.args[0];
-                    this.data.state.lockedState = lockedState;
-                    this.save();
+                    const tuberIdx = data.data.args[0];
+                    const lockedState = data.data.args[1];
+                    try {
+                        this.data.settings.avatarDefinitions[tuberIdx].state.lockedState = lockedState;
+                        this.save();
+                    }
+                    catch (e) {
+                        log$1.error('ws ctrl: unable to lockState', tuberIdx, lockedState);
+                    }
                 }
                 else if (data.data.ctrl === "setTuber") {
                     const tuberIdx = data.data.args[0];
