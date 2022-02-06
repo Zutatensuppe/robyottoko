@@ -50,6 +50,8 @@ export interface TwitchConfig {
       password: string
     }
   }
+  auto_tags: { id: string, name: string }[]
+  manual_tags: { id: string, name: string }[]
 }
 
 export interface Config {
@@ -210,6 +212,7 @@ export type CommandAction =
   // general
   'text' | 'media' | 'media_volume' | 'countdown' | 'dict_lookup' | 'madochan_createword' | 'chatters'
   | 'set_channel_title' | 'set_channel_game_id'
+  | 'add_stream_tags' | 'remove_stream_tags'
   // song request
   | 'sr_current' | 'sr_undo' | 'sr_good' | 'sr_bad' | 'sr_stats' | 'sr_prev' | 'sr_next'
   | 'sr_jumptonew' | 'sr_clear' | 'sr_rm' | 'sr_shuffle' | 'sr_reset_stats' | 'sr_loop'
@@ -231,6 +234,20 @@ export interface SetChannelTitleCommand extends Command {
   action: "set_channel_title"
   data: {
     title: string
+  }
+}
+
+export interface AddStreamTagCommand extends Command {
+  action: 'add_stream_tags'
+  data: {
+    tag: string
+  }
+}
+
+export interface RemoveStreamTagCommand extends Command {
+  action: 'remove_stream_tags'
+  data: {
+    tag: string
   }
 }
 

@@ -444,7 +444,13 @@ export const findIdxFuzzy = <T>(
   search: string,
   keyFn: (item: T) => string = ((item) => String(item))
 ) => {
-  let idx = findIdxBySearchExactPart(array, search, keyFn)
+  let idx = findIdxBySearchExact(array, search, keyFn)
+  if (idx === -1) {
+    idx = findIdxBySearchExactWord(array, search, keyFn)
+  }
+  if (idx === -1) {
+    idx = findIdxBySearchExactPart(array, search, keyFn)
+  }
   if (idx === -1) {
     idx = findIdxBySearchInOrder(array, search, keyFn)
   }
@@ -452,6 +458,24 @@ export const findIdxFuzzy = <T>(
     idx = findIdxBySearch(array, search, keyFn)
   }
   return idx
+}
+
+export const findIdxBySearchExact = <T>(
+  array: T[],
+  search: string,
+  keyFn: (item: T) => string = ((item) => String(item))
+) => {
+  const searchLower = search.toLowerCase()
+  return array.findIndex(item => keyFn(item).toLowerCase() === searchLower)
+}
+
+export const findIdxBySearchExactWord = <T>(
+  array: T[],
+  search: string,
+  keyFn: (item: T) => string = ((item) => String(item))
+) => {
+  const searchLower = search.toLowerCase()
+  return array.findIndex(item => keyFn(item).toLowerCase().split(/\W+/).includes(searchLower))
 }
 
 export const findIdxBySearchExactPart = <T>(

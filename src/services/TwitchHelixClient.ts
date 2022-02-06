@@ -91,6 +91,20 @@ interface TwitchHelixGetChannelInformationResponseData {
   data: TwitchHelixGetChannelInformationResponseDataEntry[]
 }
 
+interface TwitchHelixGetStreamTagsResponseDataEntry {
+  tag_id: string
+  is_auto: boolean
+  localization_names: Record<string, string>
+  localization_descriptions: Record<string, string>
+}
+
+interface TwitchHelixGetStreamTagsResponseData {
+  data: TwitchHelixGetStreamTagsResponseDataEntry[]
+  pagination: {
+    cursor: string
+  }
+}
+
 export function getBestEntryFromCategorySearchItems(
   searchString: string,
   resp: TwitchHelixCategorySearchResponseData,
@@ -260,6 +274,40 @@ class TwitchHelixClient {
 
     const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`)
     return await request('patch', url, withHeaders(this._authHeaders(accessToken), asJson(data)))
+  }
+
+  async getAllTags() {
+    const allTags: TwitchHelixGetStreamTagsResponseDataEntry[] = []
+    let cursor: any = null
+    const first = 100
+    do {
+      const url = cursor
+        ? this._url(`/tags/streams${asQueryArgs({ after: cursor, first })}`)
+        : this._url(`/tags/streams${asQueryArgs({ first })}`)
+      const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixGetStreamTagsResponseData
+      const entries = json.data
+      allTags.push(...entries)
+      cursor = json.pagination.cursor // is undefined when there are no more pages
+    } while (cursor)
+    return allTags
+  }
+
+  // https://dev.twitch.tv/docs/api/reference#get-stream-tags
+  async getStreamTags(broadcasterId: string) {
+    const url = this._url(`/streams/tags${asQueryArgs({ broadcaster_id: broadcasterId })}`)
+    const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixGetStreamTagsResponseData
+    return json
+  }
+
+  // https://dev.twitch.tv/docs/api/reference#replace-stream-tags
+  async replaceStreamTags(broadcasterId: string, tagIds: string[]) {
+    const accessToken = this._oauthAccessTokenByBroadcasterId(broadcasterId)
+    if (!accessToken) {
+      return null
+    }
+
+    const url = this._url(`/streams/tags${asQueryArgs({ broadcaster_id: broadcasterId })}`)
+    return await request('put', url, withHeaders(this._authHeaders(accessToken), asJson({ tag_ids: tagIds })))
   }
 
   async validateOAuthToken(broadcasterId: string, accessToken: string): Promise<boolean> {

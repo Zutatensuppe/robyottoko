@@ -5,6 +5,7 @@ rm build/* -rf
 # server build
 npm run rollup -- -c rollup.server.config.js
 cp -r src/templates build/server/
+cp -r src/config_data build/server/
 
 # frontend build
 npm run vite -- build --config vite.config.js

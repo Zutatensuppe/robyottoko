@@ -16,7 +16,10 @@ const init = () => {
     if (configFile === '') {
         process.exit(2);
     }
-    return JSON.parse(String(readFileSync(configFile)));
+    const config = JSON.parse(String(readFileSync(configFile)));
+    config.twitch.auto_tags = JSON.parse(String(readFileSync(new URL('./config_data/tags_auto.json', import.meta.url))));
+    config.twitch.manual_tags = JSON.parse(String(readFileSync(new URL('./config_data/tags_manual.json', import.meta.url))));
+    return config;
 };
 const config = init();
 
@@ -220,7 +223,7 @@ const shuffle = (array) => {
     return array;
 };
 
-const log$e = logger('fn.ts');
+const log$g = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
         return mime.replace('image/', '');
@@ -271,9 +274,9 @@ const sayFn = (client, target) => (msg) => {
         // TODO: fix this somewhere else?
         // client can only say things in lowercase channels
         t = t.toLowerCase();
-        log$e.info(`saying in ${t}: ${msg}`);
+        log$g.info(`saying in ${t}: ${msg}`);
         client.say(t, msg).catch((e) => {
-            log$e.info(e);
+            log$g.info(e);
         });
     });
 };
@@ -358,14 +361,14 @@ const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, client, target,
         if (!mayExecute(context, cmdDef)) {
             continue;
         }
-        log$e.info(`${target}| * Executing ${rawCmd.name} command`);
+        log$g.info(`${target}| * Executing ${rawCmd.name} command`);
         const p = new Promise(async (resolve) => {
             await applyVariableChanges(cmdDef, contextModule, rawCmd, context);
             const r = await cmdDef.fn(rawCmd, client, target, context, msg);
             if (r) {
-                log$e.info(`${target}| * Returned: ${r}`);
+                log$g.info(`${target}| * Returned: ${r}`);
             }
-            log$e.info(`${target}| * Executed ${rawCmd.name} command`);
+            log$g.info(`${target}| * Executed ${rawCmd.name} command`);
             resolve(true);
         });
         promises.push(p);
@@ -564,7 +567,13 @@ const passwordHash = (plainPass, salt) => {
     return hash.digest('hex');
 };
 const findIdxFuzzy = (array, search, keyFn = ((item) => String(item))) => {
-    let idx = findIdxBySearchExactPart(array, search, keyFn);
+    let idx = findIdxBySearchExact(array, search, keyFn);
+    if (idx === -1) {
+        idx = findIdxBySearchExactWord(array, search, keyFn);
+    }
+    if (idx === -1) {
+        idx = findIdxBySearchExactPart(array, search, keyFn);
+    }
     if (idx === -1) {
         idx = findIdxBySearchInOrder(array, search, keyFn);
     }
@@ -572,6 +581,14 @@ const findIdxFuzzy = (array, search, keyFn = ((item) => String(item))) => {
         idx = findIdxBySearch(array, search, keyFn);
     }
     return idx;
+};
+const findIdxBySearchExact = (array, search, keyFn = ((item) => String(item))) => {
+    const searchLower = search.toLowerCase();
+    return array.findIndex(item => keyFn(item).toLowerCase() === searchLower);
+};
+const findIdxBySearchExactWord = (array, search, keyFn = ((item) => String(item))) => {
+    const searchLower = search.toLowerCase();
+    return array.findIndex(item => keyFn(item).toLowerCase().split(/\W+/).includes(searchLower));
 };
 const findIdxBySearchExactPart = (array, search, keyFn = ((item) => String(item))) => {
     const searchLower = search.toLowerCase();
@@ -737,7 +754,7 @@ class ModuleManager {
     }
 }
 
-const log$d = logger("WebSocketServer.ts");
+const log$f = logger("WebSocketServer.ts");
 class WebSocketServer {
     constructor(moduleManager, config, auth) {
         this.moduleManager = moduleManager;
@@ -755,14 +772,14 @@ class WebSocketServer {
             const token = socket.protocol;
             const tokenInfo = this.auth.wsTokenFromProtocol(token);
             if (!tokenInfo) {
-                log$d.info('not found token: ', token);
+                log$f.info('not found token: ', token);
                 socket.close();
                 return;
             }
             socket.user_id = tokenInfo.user_id;
             const pathname = new URL(this.connectstring()).pathname;
             if (request.url?.indexOf(pathname) !== 0) {
-                log$d.info('bad request url: ', request.url);
+                log$f.info('bad request url: ', request.url);
                 socket.close();
                 return;
             }
@@ -787,7 +804,7 @@ class WebSocketServer {
                 const evts = module.getWsEvents();
                 if (evts) {
                     socket.on('message', (data) => {
-                        log$d.info(`ws|${socket.user_id}| `, data);
+                        log$f.info(`ws|${socket.user_id}| `, data);
                         const unknownData = data;
                         const d = JSON.parse(unknownData);
                         if (!d.event) {
@@ -829,13 +846,13 @@ class WebSocketServer {
             && socket.user_id
             && user_ids.includes(socket.user_id)
             && socket.module === moduleName) {
-            log$d.info(`notifying ${socket.user_id} ${moduleName} (${data.event})`);
+            log$f.info(`notifying ${socket.user_id} ${moduleName} (${data.event})`);
             socket.send(JSON.stringify(data));
         }
     }
     notifyAll(user_ids, moduleName, data) {
         if (!this._websocketserver) {
-            log$d.error(`tried to notifyAll, but _websocketserver is null`);
+            log$f.error(`tried to notifyAll, but _websocketserver is null`);
             return;
         }
         this._websocketserver.clients.forEach((socket) => {
@@ -866,7 +883,7 @@ class Templates {
     }
 }
 
-const log$c = logger('TwitchHelixClient.ts');
+const log$e = logger('TwitchHelixClient.ts');
 const API_BASE = 'https://api.twitch.tv/helix';
 function getBestEntryFromCategorySearchItems(searchString, resp) {
     if (resp.data.length === 0) {
@@ -942,7 +959,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$c.error(json);
+            log$e.error(json);
             return null;
         }
     }
@@ -964,7 +981,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$c.error(json);
+            log$e.error(json);
             return null;
         }
     }
@@ -988,7 +1005,7 @@ class TwitchHelixClient {
             return getBestEntryFromCategorySearchItems(searchString, json);
         }
         catch (e) {
-            log$c.error(json);
+            log$e.error(json);
             return null;
         }
     }
@@ -1000,7 +1017,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$c.error(json);
+            log$e.error(json);
             return null;
         }
     }
@@ -1013,6 +1030,36 @@ class TwitchHelixClient {
         const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`);
         return await request('patch', url, withHeaders(this._authHeaders(accessToken), asJson(data)));
     }
+    async getAllTags() {
+        const allTags = [];
+        let cursor = null;
+        const first = 100;
+        do {
+            const url = cursor
+                ? this._url(`/tags/streams${asQueryArgs({ after: cursor, first })}`)
+                : this._url(`/tags/streams${asQueryArgs({ first })}`);
+            const json = await getJson(url, await this.withAuthHeaders());
+            const entries = json.data;
+            allTags.push(...entries);
+            cursor = json.pagination.cursor; // is undefined when there are no more pages
+        } while (cursor);
+        return allTags;
+    }
+    // https://dev.twitch.tv/docs/api/reference#get-stream-tags
+    async getStreamTags(broadcasterId) {
+        const url = this._url(`/streams/tags${asQueryArgs({ broadcaster_id: broadcasterId })}`);
+        const json = await getJson(url, await this.withAuthHeaders());
+        return json;
+    }
+    // https://dev.twitch.tv/docs/api/reference#replace-stream-tags
+    async replaceStreamTags(broadcasterId, tagIds) {
+        const accessToken = this._oauthAccessTokenByBroadcasterId(broadcasterId);
+        if (!accessToken) {
+            return null;
+        }
+        const url = this._url(`/streams/tags${asQueryArgs({ broadcaster_id: broadcasterId })}`);
+        return await request('put', url, withHeaders(this._authHeaders(accessToken), asJson({ tag_ids: tagIds })));
+    }
     async validateOAuthToken(broadcasterId, accessToken) {
         const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`);
         const json = await getJson(url, withHeaders(this._authHeaders(accessToken)));
@@ -1020,7 +1067,7 @@ class TwitchHelixClient {
             return json.data[0] ? true : false;
         }
         catch (e) {
-            log$c.error(json);
+            log$e.error(json);
             return false;
         }
     }
@@ -1064,7 +1111,7 @@ class Variables {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const log$b = logger('WebServer.ts');
+const log$d = logger('WebServer.ts');
 const widgetTemplate = (widget) => {
     if (process.env.WIDGET_DUMMY) {
         return process.env.WIDGET_DUMMY;
@@ -1142,8 +1189,8 @@ class WebServer {
             hmac.update(msg);
             const expected = `sha256=${hmac.digest('hex')}`;
             if (req.headers['twitch-eventsub-message-signature'] !== expected) {
-                log$b.debug(req);
-                log$b.error('bad message signature', {
+                log$d.debug(req);
+                log$d.error('bad message signature', {
                     got: req.headers['twitch-eventsub-message-signature'],
                     expected,
                 });
@@ -1187,12 +1234,12 @@ class WebServer {
         app.post('/api/upload', requireLoginApi, (req, res) => {
             upload(req, res, (err) => {
                 if (err) {
-                    log$b.error(err);
+                    log$d.error(err);
                     res.status(400).send("Something went wrong!");
                     return;
                 }
                 if (!req.file) {
-                    log$b.error(err);
+                    log$d.error(err);
                     res.status(400).send("Something went wrong!");
                     return;
                 }
@@ -1406,7 +1453,7 @@ class WebServer {
                     this.eventHub.emit('user_registration_complete', user);
                 }
                 else {
-                    log$b.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`);
+                    log$d.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`);
                 }
                 return;
             }
@@ -1479,7 +1526,7 @@ class WebServer {
                 this.eventHub.emit('user_changed', changedUser);
             }
             else {
-                log$b.error(`save-settings: user doesn't exist after saving it: ${user.id}`);
+                log$d.error(`save-settings: user doesn't exist after saving it: ${user.id}`);
             }
             res.send();
         });
@@ -1518,16 +1565,16 @@ class WebServer {
             }
         });
         app.post('/twitch/event-sub/', express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
-            log$b.debug(req.body);
-            log$b.debug(req.headers);
+            log$d.debug(req.body);
+            log$d.debug(req.headers);
             if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-                log$b.info(`got verification request, challenge: ${req.body.challenge}`);
+                log$d.info(`got verification request, challenge: ${req.body.challenge}`);
                 res.write(req.body.challenge);
                 res.send();
                 return;
             }
             if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-                log$b.info(`got notification request: ${req.body.subscription.type}`);
+                log$d.info(`got notification request: ${req.body.subscription.type}`);
                 if (req.body.subscription.type === 'stream.online') {
                     // insert new stream
                     this.db.insert('streams', {
@@ -1571,7 +1618,7 @@ class WebServer {
                 return;
             }
             const type = req.params.widget_type;
-            log$b.debug(`/widget/:widget_type/:widget_token/`, type, token);
+            log$d.debug(`/widget/:widget_type/:widget_token/`, type, token);
             if (widgets.includes(type)) {
                 res.send(templates.render(widgetTemplate(type), {
                     wsUrl: this.wss.connectstring(),
@@ -1602,7 +1649,7 @@ class WebServer {
             const indexFile = `${__dirname}/../../build/public/index.html`;
             res.sendFile(path.resolve(indexFile));
         });
-        this.handle = app.listen(port, hostname, () => log$b.info(`server running on http://${hostname}:${port}`));
+        this.handle = app.listen(port, hostname, () => log$d.info(`server running on http://${hostname}:${port}`));
     }
     close() {
         if (this.handle) {
@@ -1617,7 +1664,7 @@ const CODE_GOING_AWAY = 1001;
 const CODE_CUSTOM_DISCONNECT = 4000;
 const heartbeatInterval = 60 * SECOND; //ms between PING's
 const reconnectInterval = 3 * SECOND; //ms to wait before reconnect
-const log$a = logger('TwitchPubSubClient.ts');
+const log$c = logger('TwitchPubSubClient.ts');
 const PUBSUB_WS_ADDR = 'wss://pubsub-edge.twitch.tv';
 class TwitchPubSubClient {
     constructor() {
@@ -1668,7 +1715,7 @@ class TwitchPubSubClient {
                 return;
             }
             if (this.handle.readyState !== WebSocket.OPEN) {
-                log$a.error('ERR', `readyState is not OPEN (${WebSocket.OPEN})`);
+                log$c.error('ERR', `readyState is not OPEN (${WebSocket.OPEN})`);
                 return;
             }
             if (this.reconnectTimeout) {
@@ -1678,7 +1725,7 @@ class TwitchPubSubClient {
             while (this.sendBuffer.length > 0) {
                 this.handle.send(this.sendBuffer.shift());
             }
-            log$a.info('INFO', 'Socket Opened');
+            log$c.info('INFO', 'Socket Opened');
             this._heartbeat();
             if (this.heartbeatHandle) {
                 clearInterval(this.heartbeatHandle);
@@ -1696,13 +1743,13 @@ class TwitchPubSubClient {
             }
             // log.debug('RECV', JSON.stringify(message))
             if (message.type === 'RECONNECT') {
-                log$a.info('INFO', 'Reconnecting...');
+                log$c.info('INFO', 'Reconnecting...');
                 this.connect();
             }
             this.evts.emit('message', message);
         };
         this.handle.onerror = (e) => {
-            log$a.error('ERR', e);
+            log$c.error('ERR', e);
             this.handle = null;
             this.reconnectTimeout = setTimeout(() => { this.connect(); }, reconnectInterval);
         };
@@ -1710,7 +1757,7 @@ class TwitchPubSubClient {
             this.handle = null;
             if (e.code === CODE_CUSTOM_DISCONNECT || e.code === CODE_GOING_AWAY) ;
             else {
-                log$a.info('INFO', 'Onclose...');
+                log$c.info('INFO', 'Onclose...');
                 this.reconnectTimeout = setTimeout(() => { this.connect(); }, reconnectInterval);
             }
             if (this.heartbeatHandle) {
@@ -1858,6 +1905,26 @@ const newCmd = (type) => {
             variableChanges: [],
             data: {
                 game_id: ''
+            },
+        };
+        case "add_stream_tags": return {
+            triggers: [newCommandTrigger()],
+            action: 'add_stream_tags',
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {
+                tag: ''
+            },
+        };
+        case "remove_stream_tags": return {
+            triggers: [newCommandTrigger()],
+            action: 'remove_stream_tags',
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {
+                tag: ''
             },
         };
         // SONG REQUEST
@@ -2401,7 +2468,7 @@ class TwitchClientManager {
     }
 }
 
-const log$9 = logger('ModuleStorage.ts');
+const log$b = logger('ModuleStorage.ts');
 const TABLE$4 = 'module';
 class ModuleStorage {
     constructor(db, userId) {
@@ -2416,7 +2483,7 @@ class ModuleStorage {
             return data ? Object.assign({}, def, data) : def;
         }
         catch (e) {
-            log$9.error(e);
+            log$b.error(e);
             return def;
         }
     }
@@ -2542,7 +2609,7 @@ class Cache {
     }
 }
 
-const log$8 = logger('Db.ts');
+const log$a = logger('Db.ts');
 class Db {
     constructor(dbConf) {
         this.conf = dbConf;
@@ -2560,7 +2627,7 @@ class Db {
         for (const f of files) {
             if (patches.includes(f)) {
                 if (verbose) {
-                    log$8.info(`➡ skipping already applied db patch: ${f}`);
+                    log$a.info(`➡ skipping already applied db patch: ${f}`);
                 }
                 continue;
             }
@@ -2570,16 +2637,16 @@ class Db {
                 this.dbh.transaction((all) => {
                     for (const q of all) {
                         if (verbose) {
-                            log$8.info(`Running: ${q}`);
+                            log$a.info(`Running: ${q}`);
                         }
                         this.run(q);
                     }
                     this.insert('db_patches', { id: f });
                 })(all);
-                log$8.info(`✓ applied db patch: ${f}`);
+                log$a.info(`✓ applied db patch: ${f}`);
             }
             catch (e) {
-                log$8.error(`✖ unable to apply patch: ${f} ${e}`);
+                log$a.error(`✖ unable to apply patch: ${f} ${e}`);
                 return;
             }
         }
@@ -2717,7 +2784,7 @@ class Db {
 }
 
 // @ts-ignore
-const log$7 = logger('Mail.ts');
+const log$9 = logger('Mail.ts');
 class Mail {
     constructor(cfg) {
         const defaultClient = SibApiV3Sdk.ApiClient.instance;
@@ -2769,14 +2836,14 @@ class Mail {
     }
     send(mail) {
         this.apiInstance.sendTransacEmail(mail).then(function (data) {
-            log$7.info('API called successfully. Returned data: ' + JSON.stringify(data));
+            log$9.info('API called successfully. Returned data: ' + JSON.stringify(data));
         }, function (error) {
-            log$7.error(error);
+            log$9.error(error);
         });
     }
 }
 
-const log$6 = logger('countdown.ts');
+const log$8 = logger('countdown.ts');
 const countdown = (originalCmd, variables, wss, userId) => async (command, client, target, context, msg) => {
     if (!client) {
         return;
@@ -2836,7 +2903,7 @@ const countdown = (originalCmd, variables, wss, userId) => async (command, clien
                 duration = (await parseDuration(`${a.value}`)) || 0;
             }
             catch (e) {
-                log$6.error(e.message, a.value);
+                log$8.error(e.message, a.value);
                 return;
             }
             actions.push(async () => await fn.sleep(duration));
@@ -2897,13 +2964,13 @@ const playMedia = (originalCmd, wss, userId) => (command, client, target, contex
     });
 };
 
-const log$5 = logger('chatters.ts');
+const log$7 = logger('chatters.ts');
 const chatters = (db, helixClient) => async (command, client, target, context, msg) => {
     if (!client || !context || !helixClient) {
-        log$5.info('client', client);
-        log$5.info('context', context);
-        log$5.info('helixClient', helixClient);
-        log$5.info('unable to execute chatters command, client, context, or helixClient missing');
+        log$7.info('client', client);
+        log$7.info('context', context);
+        log$7.info('helixClient', helixClient);
+        log$7.info('unable to execute chatters command, client, context, or helixClient missing');
         return;
     }
     const say = fn.sayFn(client, target);
@@ -2927,14 +2994,14 @@ const chatters = (db, helixClient) => async (command, client, target, context, m
     });
 };
 
-const log$4 = logger('setChannelTitle.ts');
+const log$6 = logger('setChannelTitle.ts');
 const setChannelTitle = (originalCmd, helixClient, variables) => async (command, client, target, context, msg) => {
     if (!client || !command || !context || !helixClient) {
-        log$4.info('client', client);
-        log$4.info('command', command);
-        log$4.info('context', context);
-        log$4.info('helixClient', helixClient);
-        log$4.info('unable to execute setChannelTitle, client, command, context, or helixClient missing');
+        log$6.info('client', client);
+        log$6.info('command', command);
+        log$6.info('context', context);
+        log$6.info('helixClient', helixClient);
+        log$6.info('unable to execute setChannelTitle, client, command, context, or helixClient missing');
         return;
     }
     const say = fn.sayFn(client, target);
@@ -2959,14 +3026,14 @@ const setChannelTitle = (originalCmd, helixClient, variables) => async (command,
     }
 };
 
-const log$3 = logger('setChannelGameId.ts');
+const log$5 = logger('setChannelGameId.ts');
 const setChannelGameId = (originalCmd, helixClient, variables) => async (command, client, target, context, msg) => {
     if (!client || !command || !context || !helixClient) {
-        log$3.info('client', client);
-        log$3.info('command', command);
-        log$3.info('context', context);
-        log$3.info('helixClient', helixClient);
-        log$3.info('unable to execute setChannelGameId, client, command, context, or helixClient missing');
+        log$5.info('client', client);
+        log$5.info('command', command);
+        log$5.info('context', context);
+        log$5.info('helixClient', helixClient);
+        log$5.info('unable to execute setChannelGameId, client, command, context, or helixClient missing');
         return;
     }
     const say = fn.sayFn(client, target);
@@ -3164,6 +3231,92 @@ const dictLookup = (originalCmd, variables) => async (command, client, target, c
     }
 };
 
+const log$4 = logger('setStreamTags.ts');
+const addStreamTags = (originalCmd, helixClient, variables) => async (command, client, target, context, msg) => {
+    if (!client || !command || !context || !helixClient) {
+        log$4.info('client', client);
+        log$4.info('command', command);
+        log$4.info('context', context);
+        log$4.info('helixClient', helixClient);
+        log$4.info('unable to execute addStreamTags, client, command, context, or helixClient missing');
+        return;
+    }
+    const say = fn.sayFn(client, target);
+    const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag;
+    const tmpTag = await fn.doReplacements(tag, command, context, variables, originalCmd);
+    const tagsResponse = await helixClient.getStreamTags(context['room-id']);
+    if (tmpTag === '') {
+        const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
+        say(`Current tags: ${names.join(', ')}`);
+        return;
+    }
+    const idx = findIdxFuzzy(config.twitch.manual_tags, tmpTag, (item) => item.name);
+    if (idx === -1) {
+        say(`❌ No such tag: ${tmpTag}`);
+        return;
+    }
+    const tagEntry = config.twitch.manual_tags[idx];
+    const newTagIds = tagsResponse.data.map(entry => entry.tag_id);
+    if (newTagIds.includes(tagEntry.id)) {
+        const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
+        say(`✨ Tag ${tagEntry.name} already exists, current tags: ${names.join(', ')}`);
+        return;
+    }
+    if (newTagIds.length >= 5) {
+        const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
+        say(`❌ Too many tags already exist, current tags: ${names.join(', ')}`);
+        return;
+    }
+    newTagIds.push(tagEntry.id);
+    const resp = await helixClient.replaceStreamTags(context['room-id'], newTagIds);
+    if (!resp || resp.status < 200 || resp.status >= 300) {
+        say(`❌ Unable to add tag: ${tagEntry.name}`);
+        return;
+    }
+    say(`✨ Added tag: ${tagEntry.name}`);
+};
+
+const log$3 = logger('setStreamTags.ts');
+const removeStreamTags = (originalCmd, helixClient, variables) => async (command, client, target, context, msg) => {
+    if (!client || !command || !context || !helixClient) {
+        log$3.info('client', client);
+        log$3.info('command', command);
+        log$3.info('context', context);
+        log$3.info('helixClient', helixClient);
+        log$3.info('unable to execute removeStreamTags, client, command, context, or helixClient missing');
+        return;
+    }
+    const say = fn.sayFn(client, target);
+    const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag;
+    const tmpTag = await fn.doReplacements(tag, command, context, variables, originalCmd);
+    const tagsResponse = await helixClient.getStreamTags(context['room-id']);
+    if (tmpTag === '') {
+        const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
+        say(`Current tags: ${names.join(', ')}`);
+        return;
+    }
+    const manualTags = tagsResponse.data.filter(entry => !entry.is_auto);
+    const idx = findIdxFuzzy(manualTags, tmpTag, (item) => item.localization_names['en-us']);
+    if (idx === -1) {
+        const autoTags = tagsResponse.data.filter(entry => entry.is_auto);
+        const idx = findIdxFuzzy(autoTags, tmpTag, (item) => item.localization_names['en-us']);
+        if (idx === -1) {
+            say(`❌ No such tag is currently set: ${tmpTag}`);
+        }
+        else {
+            say(`❌ Unable to remove automatic tag: ${autoTags[idx].localization_names['en-us']}`);
+        }
+        return;
+    }
+    const newTagIds = manualTags.filter((_value, index) => index !== idx).map(entry => entry.tag_id);
+    const resp = await helixClient.replaceStreamTags(context['room-id'], newTagIds);
+    if (!resp || resp.status < 200 || resp.status >= 300) {
+        say(`❌ Unable to remove tag: ${manualTags[idx].localization_names['en-us']}`);
+        return;
+    }
+    say(`✨ Removed tag: ${manualTags[idx].localization_names['en-us']}`);
+};
+
 class GeneralModule {
     constructor(bot, user, clientManager) {
         this.name = 'general';
@@ -3308,6 +3461,12 @@ class GeneralModule {
                     break;
                 case 'set_channel_game_id':
                     cmdObj = Object.assign({}, cmd, { fn: setChannelGameId(cmd, this.clientManager.getHelixClient(), this.variables) });
+                    break;
+                case 'add_stream_tags':
+                    cmdObj = Object.assign({}, cmd, { fn: addStreamTags(cmd, this.clientManager.getHelixClient(), this.variables) });
+                    break;
+                case 'remove_stream_tags':
+                    cmdObj = Object.assign({}, cmd, { fn: removeStreamTags(cmd, this.clientManager.getHelixClient(), this.variables) });
                     break;
             }
             if (!cmdObj) {

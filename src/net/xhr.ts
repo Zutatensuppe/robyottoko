@@ -1,6 +1,6 @@
 import fetch, { RequestInit } from 'node-fetch'
 
-type RequestMethod = 'get' | 'post' | 'get' | 'delete' | 'patch'
+type RequestMethod = 'get' | 'post' | 'get' | 'delete' | 'patch' | 'put'
 
 export type QueryArgsData = Record<string, string | number>
 
