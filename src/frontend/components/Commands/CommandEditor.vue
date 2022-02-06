@@ -71,6 +71,30 @@
                 >
               </td>
             </tr>
+            <tr v-if="item.action === 'add_stream_tags'">
+              <td>Tag to add:</td>
+              <td>
+                <input
+                  class="input is-small spaceinput mb-1"
+                  v-model="item.data.tag"
+                />
+                <span class="button is-small mr-1" @click="item.data.tag = ''"
+                  >All args</span
+                >
+              </td>
+            </tr>
+            <tr v-if="item.action === 'remove_stream_tags'">
+              <td>Tag to remove:</td>
+              <td>
+                <input
+                  class="input is-small spaceinput mb-1"
+                  v-model="item.data.tag"
+                />
+                <span class="button is-small mr-1" @click="item.data.tag = ''"
+                  >All args</span
+                >
+              </td>
+            </tr>
             <tr v-if="item.action === 'dict_lookup'">
               <td>Language:</td>
               <td>
@@ -637,7 +661,9 @@ export default defineComponent({
       }
       return (
         this.item.action === "set_channel_title" ||
-        this.item.action === "set_channel_game_id"
+        this.item.action === "set_channel_game_id" ||
+        this.item.action === "add_stream_tags" ||
+        this.item.action === "remove_stream_tags"
       );
     },
     possibleTriggerActions() {
