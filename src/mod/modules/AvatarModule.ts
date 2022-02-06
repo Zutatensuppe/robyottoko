@@ -5,7 +5,7 @@ import { Bot, ChatMessageContext, Module, RewardRedemptionContext } from '../../
 import ModuleStorage from '../ModuleStorage'
 import { User } from '../../services/Users'
 import TwitchClientManager from '../../net/TwitchClientManager'
-import { AvatarModuleSettings, AvatarModuleState, AvatarModuleWsSaveData, default_settings } from './AvatarModuleCommon'
+import { AvatarModuleSettings, AvatarModuleState, AvatarModuleWsSaveData, default_avatar_definition, default_settings } from './AvatarModuleCommon'
 
 const log = logger('AvatarModule.ts')
 
@@ -42,11 +42,7 @@ class AvatarModule implements Module {
 
   private data: AvatarModuleData
   private defaultSettings: AvatarModuleSettings = default_settings()
-  private defaultState: AvatarModuleState = {
-    tuberIdx: -1,
-    slots: {},
-    lockedState: '',
-  }
+  private defaultState: AvatarModuleState = { tuberIdx: -1 }
 
   constructor(
     bot: Bot,
@@ -66,7 +62,6 @@ class AvatarModule implements Module {
   }
 
   save() {
-    log.info('saving', this.data.state)
     this.storage.save(this.name, this.data)
   }
 
@@ -89,24 +84,10 @@ class AvatarModule implements Module {
       data.settings.styles.bgColor = this.defaultSettings.styles.bgColor
     }
 
-    // -start- fixes to old data structure
-    for (const avatarDef of data.settings.avatarDefinitions) {
-      if (typeof avatarDef.width === 'undefined') {
-        avatarDef.width = 64
-      }
-      if (typeof avatarDef.height === 'undefined') {
-        avatarDef.height = 64
-      }
-      for (const slotDef of avatarDef.slotDefinitions) {
-        for (const _item of slotDef.items) {
-          // delete item.url
-          // item.states = item.animation
-          // delete item.animation
-          // avatarDef.stateDefinitions.map((stateDefinition: AvatarModuleAvatarStateDefinition) => ({state: stateDefinition.value, frames: [] }))
-        }
-      }
-    }
-    // -end-   fixes to old data structure
+    data.settings.avatarDefinitions = data.settings.avatarDefinitions.map((def: any) => {
+      return default_avatar_definition(def)
+    })
+
     return {
       settings: data.settings,
       state: data.state,
@@ -146,14 +127,24 @@ class AvatarModule implements Module {
       },
       'ctrl': (_ws: Socket, data: AvatarModuleWsControlData) => {
         if (data.data.ctrl === "setSlot") {
-          const slotName = data.data.args[0];
-          const itemIdx = data.data.args[1];
-          this.data.state.slots[slotName] = itemIdx
-          this.save()
+          const tuberIdx = data.data.args[0];
+          const slotName = data.data.args[1];
+          const itemIdx = data.data.args[2];
+          try {
+            this.data.settings.avatarDefinitions[tuberIdx].state.slots[slotName] = itemIdx
+            this.save()
+          } catch (e) {
+            log.error('ws ctrl: unable to setSlot', tuberIdx, slotName, itemIdx)
+          }
         } else if (data.data.ctrl === "lockState") {
-          const lockedState = data.data.args[0];
-          this.data.state.lockedState = lockedState
-          this.save()
+          const tuberIdx = data.data.args[0];
+          const lockedState = data.data.args[1];
+          try {
+            this.data.settings.avatarDefinitions[tuberIdx].state.lockedState = lockedState
+            this.save()
+          } catch (e) {
+            log.error('ws ctrl: unable to lockState', tuberIdx, lockedState)
+          }
         } else if (data.data.ctrl === "setTuber") {
           const tuberIdx = data.data.args[0];
           this.data.state.tuberIdx = tuberIdx

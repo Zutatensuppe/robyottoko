@@ -54,7 +54,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import { AvatarModuleAvatarSlotItem } from "../../../mod/modules/AvatarModule";
+import { AvatarModuleAvatarSlotItem } from "../../../mod/modules/AvatarModuleCommon";
 
 export default defineComponent({
   props: {

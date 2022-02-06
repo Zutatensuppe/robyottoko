@@ -129,7 +129,8 @@ import {
   AvatarModuleAvatarDefinition,
   AvatarModuleAvatarSlotDefinition,
   AvatarModuleAvatarStateDefinition,
-} from "../../../mod/modules/AvatarModule";
+  default_avatar_definition,
+} from "../../../mod/modules/AvatarModuleCommon";
 
 interface ComponentData {
   item: AvatarModuleAvatarDefinition | null;
@@ -251,13 +252,17 @@ export default defineComponent({
         console.warn("emitUpdate: this.item not initialized");
         return;
       }
-      this.$emit("update:modelValue", {
-        name: this.item.name,
-        width: parseInt(`${this.item.width}`, 10),
-        height: parseInt(`${this.item.height}`, 10),
-        stateDefinitions: this.item.stateDefinitions,
-        slotDefinitions: this.item.slotDefinitions,
-      });
+      this.$emit(
+        "update:modelValue",
+        default_avatar_definition({
+          name: this.item.name,
+          width: parseInt(`${this.item.width}`, 10),
+          height: parseInt(`${this.item.height}`, 10),
+          stateDefinitions: this.item.stateDefinitions,
+          slotDefinitions: this.item.slotDefinitions,
+          state: this.item.state,
+        })
+      );
     },
     onSaveClick() {
       this.emitUpdate();
