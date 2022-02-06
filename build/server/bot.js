@@ -1403,7 +1403,7 @@ class WebServer {
                 // so that bot doesnt need to be restarted :O
                 const user = this.userRepo.getById(tokenObj.user_id);
                 if (user) {
-                    this.eventHub.trigger('user_registration_complete', user);
+                    this.eventHub.emit('user_registration_complete', user);
                 }
                 else {
                     log$b.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`);
@@ -1476,7 +1476,7 @@ class WebServer {
             this.twitchChannelRepo.saveUserChannels(user.id, twitch_channels);
             const changedUser = this.userRepo.getById(user.id);
             if (changedUser) {
-                this.eventHub.trigger('user_changed', changedUser);
+                this.eventHub.emit('user_changed', changedUser);
             }
             else {
                 log$b.error(`save-settings: user doesn't exist after saving it: ${user.id}`);
@@ -1611,23 +1611,7 @@ class WebServer {
     }
 }
 
-class EventHub {
-    constructor() {
-        this.cbs = {};
-    }
-    on(what, cb) {
-        this.cbs[what] = this.cbs[what] || [];
-        this.cbs[what].push(cb);
-    }
-    trigger(what, data) {
-        if (!this.cbs[what]) {
-            return;
-        }
-        for (const cb of this.cbs[what]) {
-            cb(data);
-        }
-    }
-}
+function mitt(n){return {all:n=n||new Map,on:function(t,e){var i=n.get(t);i?i.push(e):n.set(t,[e]);},off:function(t,e){var i=n.get(t);i&&(e?i.splice(i.indexOf(e)>>>0,1):n.set(t,[]));},emit:function(t,e){var i=n.get(t);i&&i.slice().map(function(n){n(e);}),(i=n.get("*"))&&i.slice().map(function(n){n(t,e);});}}}
 
 const CODE_GOING_AWAY = 1001;
 const CODE_CUSTOM_DISCONNECT = 4000;
@@ -1644,7 +1628,7 @@ class TwitchPubSubClient {
         this.sendBuffer = [];
         this.heartbeatHandle = null;
         this.nonceMessages = {};
-        this.evts = new EventHub();
+        this.evts = mitt();
     }
     _send(message) {
         const msgStr = JSON.stringify(message);
@@ -1702,7 +1686,7 @@ class TwitchPubSubClient {
             this.heartbeatHandle = setInterval(() => {
                 this._heartbeat();
             }, heartbeatInterval);
-            this.evts.trigger('open', {});
+            this.evts.emit('open', {});
         };
         this.handle.onmessage = (e) => {
             const message = JSON.parse(`${e.data}`);
@@ -1715,7 +1699,7 @@ class TwitchPubSubClient {
                 log$a.info('INFO', 'Reconnecting...');
                 this.connect();
             }
-            this.evts.trigger('message', message);
+            this.evts.emit('message', message);
         };
         this.handle.onerror = (e) => {
             log$a.error('ERR', e);
@@ -5123,7 +5107,7 @@ const twitchChannelRepo = new TwitchChannels(db);
 const cache = new Cache(db);
 const auth = new Auth(userRepo, tokenRepo);
 const mail = new Mail(config.mail);
-const eventHub = new EventHub();
+const eventHub = mitt();
 const moduleManager = new ModuleManager();
 const webSocketServer = new WebSocketServer(moduleManager, config.ws, auth);
 const webServer = new WebServer(eventHub, db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, config.http, config.twitch, webSocketServer, auth);
@@ -5159,7 +5143,7 @@ const run = async () => {
         for (const moduleClass of modules) {
             moduleManager.add(user.id, new moduleClass(bot, user, clientManager));
         }
-        eventHub.on('user_changed', async (changedUser) => {
+        eventHub.on('user_changed', async (changedUser /* User */) => {
             if (changedUser.id === user.id) {
                 await clientManager.userChanged(changedUser);
                 for (const mod of moduleManager.all(user.id)) {
@@ -5196,7 +5180,7 @@ const run = async () => {
     for (const user of userRepo.all()) {
         await initForUser(user);
     }
-    eventHub.on('user_registration_complete', async (user) => {
+    eventHub.on('user_registration_complete', async (user /* User */) => {
         await initForUser(user);
     });
 };
