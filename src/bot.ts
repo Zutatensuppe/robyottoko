@@ -13,7 +13,7 @@ import Cache from './services/Cache'
 import Db from './Db'
 import Variables from './services/Variables'
 import Mail from './net/Mail'
-import EventHub from './EventHub'
+import mitt from 'mitt'
 import GeneralModule from './mod/modules/GeneralModule'
 import SongrequestModule from './mod/modules/SongrequestModule'
 import VoteModule from './mod/modules/VoteModule'
@@ -45,7 +45,7 @@ const cache = new Cache(db)
 const auth = new Auth(userRepo, tokenRepo)
 const mail = new Mail(config.mail)
 
-const eventHub = new EventHub()
+const eventHub = mitt()
 const moduleManager = new ModuleManager()
 const webSocketServer = new WebSocketServer(moduleManager, config.ws, auth)
 const webServer = new WebServer(
@@ -104,7 +104,7 @@ const run = async () => {
       moduleManager.add(user.id, new moduleClass(bot, user, clientManager))
     }
 
-    eventHub.on('user_changed', async (changedUser: User) => {
+    eventHub.on('user_changed', async (changedUser: any /* User */) => {
       if (changedUser.id === user.id) {
         await clientManager.userChanged(changedUser)
         for (const mod of moduleManager.all(user.id)) {
@@ -152,7 +152,7 @@ const run = async () => {
     await initForUser(user)
   }
 
-  eventHub.on('user_registration_complete', async (user: User) => {
+  eventHub.on('user_registration_complete', async (user: any /* User */) => {
     await initForUser(user)
   })
 }

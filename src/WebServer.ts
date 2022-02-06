@@ -20,7 +20,7 @@ import TwitchChannels, { TwitchChannel } from './services/TwitchChannels'
 import ModuleManager from './mod/ModuleManager'
 import Auth from './net/Auth'
 import { UpdateUser } from './services/Users'
-import EventHub from './EventHub'
+import { Emitter, EventType } from 'mitt'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -45,7 +45,7 @@ const widgets: string[] = [
 
 class WebServer {
   private handle: http.Server | null
-  private eventHub: EventHub
+  private eventHub: Emitter<Record<EventType, unknown>>
   private db: Db
   private userRepo: Users
   private tokenRepo: Tokens
@@ -60,7 +60,7 @@ class WebServer {
   private auth: Auth
 
   constructor(
-    eventHub: EventHub,
+    eventHub: Emitter<Record<EventType, unknown>>,
     db: Db,
     userRepo: Users,
     tokenRepo: Tokens,
@@ -420,7 +420,7 @@ class WebServer {
         // so that bot doesnt need to be restarted :O
         const user = this.userRepo.getById(tokenObj.user_id)
         if (user) {
-          this.eventHub.trigger('user_registration_complete', user)
+          this.eventHub.emit('user_registration_complete', user)
         } else {
           log.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`)
         }
@@ -503,7 +503,7 @@ class WebServer {
 
       const changedUser = this.userRepo.getById(user.id)
       if (changedUser) {
-        this.eventHub.trigger('user_changed', changedUser)
+        this.eventHub.emit('user_changed', changedUser)
       } else {
         log.error(`save-settings: user doesn't exist after saving it: ${user.id}`)
       }

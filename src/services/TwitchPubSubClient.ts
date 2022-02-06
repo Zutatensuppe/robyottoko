@@ -1,7 +1,7 @@
 import WebSocket from 'ws'
 import { nonce, SECOND } from '../fn'
 import { logger } from '../common/fn'
-import EventHub from '../EventHub'
+import mitt, { Emitter, EventType } from 'mitt'
 
 const CODE_GOING_AWAY = 1001
 const CODE_CUSTOM_DISCONNECT = 4000
@@ -29,7 +29,7 @@ interface PingMessage {
 }
 
 class TwitchPubSubClient {
-  evts: EventHub
+  evts: Emitter<Record<EventType, unknown>>
 
   handle: WebSocket | null = null
 
@@ -44,7 +44,7 @@ class TwitchPubSubClient {
   nonceMessages: Record<string, ListenMessage> = {}
 
   constructor() {
-    this.evts = new EventHub()
+    this.evts = mitt()
   }
 
   _send(message: ListenMessage | PingMessage) {
@@ -104,7 +104,7 @@ class TwitchPubSubClient {
       this.heartbeatHandle = setInterval(() => {
         this._heartbeat()
       }, heartbeatInterval)
-      this.evts.trigger('open', {})
+      this.evts.emit('open', {})
     }
     this.handle.onmessage = (e) => {
       const message = JSON.parse(`${e.data}`)
@@ -119,7 +119,7 @@ class TwitchPubSubClient {
         this.connect()
       }
 
-      this.evts.trigger('message', message)
+      this.evts.emit('message', message)
     }
     this.handle.onerror = (e) => {
       log.error('ERR', e)
