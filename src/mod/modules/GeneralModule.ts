@@ -17,13 +17,15 @@ import {
   RewardRedemptionContext, Bot, Module,
   MediaCommand, DictLookupCommand, CountdownCommand,
   MadochanCommand, MediaVolumeCommand, ChattersCommand,
-  RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand, CountdownAction
+  RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand, CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand
 } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import TwitchClientManager from '../../net/TwitchClientManager'
 import dictLookup from '../../commands/dictLookup'
 import { newCommandTrigger } from '../../util'
 import { GeneralModuleAdminSettings, GeneralModuleSettings, GeneralModuleWsEventData, GeneralSaveEventData } from './GeneralModuleCommon'
+import addStreamTags from '../../commands/addStreamTags'
+import removeStreamTags from '../../commands/removeStreamTags'
 
 const log = logger('GeneralModule.ts')
 
@@ -194,7 +196,8 @@ class GeneralModule implements Module {
 
     data.commands.forEach((cmd: MediaCommand | MediaVolumeCommand | MadochanCommand
       | DictLookupCommand | RandomTextCommand | CountdownCommand | ChattersCommand
-      | SetChannelTitleCommand | SetChannelGameIdCommand) => {
+      | SetChannelTitleCommand | SetChannelGameIdCommand
+      | AddStreamTagCommand | RemoveStreamTagCommand) => {
       if (cmd.triggers.length === 0) {
         return
       }
@@ -226,6 +229,12 @@ class GeneralModule implements Module {
           break;
         case 'set_channel_game_id':
           cmdObj = Object.assign({}, cmd, { fn: setChannelGameId(cmd, this.clientManager.getHelixClient(), this.variables) })
+          break;
+        case 'add_stream_tags':
+          cmdObj = Object.assign({}, cmd, { fn: addStreamTags(cmd, this.clientManager.getHelixClient(), this.variables) })
+          break;
+        case 'remove_stream_tags':
+          cmdObj = Object.assign({}, cmd, { fn: removeStreamTags(cmd, this.clientManager.getHelixClient(), this.variables) })
           break;
       }
       if (!cmdObj) {

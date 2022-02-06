@@ -102,6 +102,8 @@ export default defineComponent({
       "chatters",
       "set_channel_title",
       "set_channel_game_id",
+      "add_stream_tags",
+      "remove_stream_tags",
     ],
 
     tabDefinitions: [

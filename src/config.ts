@@ -6,7 +6,15 @@ const init = (): Config => {
   if (configFile === '') {
     process.exit(2)
   }
-  return JSON.parse(String(readFileSync(configFile)))
+  const config: Config = JSON.parse(String(readFileSync(configFile)))
+
+  config.twitch.auto_tags = JSON.parse(
+    String(readFileSync(new URL('./config_data/tags_auto.json', import.meta.url)))
+  );
+  config.twitch.manual_tags = JSON.parse(
+    String(readFileSync(new URL('./config_data/tags_manual.json', import.meta.url)))
+  );
+  return config
 }
 const config: Config = init()
 

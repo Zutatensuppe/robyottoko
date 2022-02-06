@@ -64,6 +64,8 @@ export const ACTION_DESCRIPTION_MAP: Record<CommandAction, string> = {
   text: "Send a message to chat",
   set_channel_title: "Change the stream title",
   set_channel_game_id: "Change the stream category",
+  add_stream_tags: 'Add streamtag',
+  remove_stream_tags: 'Remove streamtag',
   sr_current: "Show what song is currently playing",
   sr_undo: "Remove the song that was last added by oneself.",
   sr_good: "Vote the current song up",
@@ -116,6 +118,8 @@ export const ACTION_NAME_MAP: Record<CommandAction, string> = {
   text: "command",
   set_channel_title: "change stream title command",
   set_channel_game_id: "change stream category command",
+  add_stream_tags: 'add_stream_tags command',
+  remove_stream_tags: 'remove_stream_tags command',
   sr_current: "sr_current",
   sr_undo: "sr_undo",
   sr_good: "sr_good",
@@ -230,6 +234,28 @@ export const newCmd = (type: string): Command | null => {
       variableChanges: [],
       data: {
         game_id: ''
+      },
+    }
+
+    case "add_stream_tags": return {
+      triggers: [newCommandTrigger()],
+      action: 'add_stream_tags',
+      restrict_to: MOD_OR_ABOVE,
+      variables: [],
+      variableChanges: [],
+      data: {
+        tag: ''
+      },
+    }
+
+    case "remove_stream_tags": return {
+      triggers: [newCommandTrigger()],
+      action: 'remove_stream_tags',
+      restrict_to: MOD_OR_ABOVE,
+      variables: [],
+      variableChanges: [],
+      data: {
+        tag: ''
       },
     }
 
