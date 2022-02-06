@@ -57,11 +57,21 @@ export default defineComponent({
     };
   },
   created() {
-    if (this.modelValue !== null) {
-      this.value = JSON.parse(JSON.stringify(this.modelValue));
-    }
+    this.applyValue();
+  },
+  watch: {
+    modelValue() {
+      this.applyValue();
+    },
   },
   methods: {
+    applyValue() {
+      if (this.modelValue !== null) {
+        this.value = JSON.parse(JSON.stringify(this.modelValue));
+      } else {
+        this.value = { url: "", duration: 100 };
+      }
+    },
     emitUpdate() {
       this.$emit("update:modelValue", JSON.parse(JSON.stringify(this.value)));
     },

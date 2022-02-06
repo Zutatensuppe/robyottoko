@@ -94,18 +94,16 @@ export default defineComponent({
       }
     },
     onDrop(e: any) {
+      this.draggingOver = false;
+      e.preventDefault();
+      e.stopPropagation();
       if (e.dataTransfer.getData("avatar-image-url")) {
-        e.preventDefault();
         const frame: AvatarModuleAnimationFrameDefinition = {
           url: e.dataTransfer.getData("avatar-image-url"),
           duration: 100,
         };
         this.modelValue.frames.push(frame);
       } else {
-        this.draggingOver = false;
-        e.preventDefault();
-        e.stopPropagation();
-
         let file = null;
         if (e.dataTransfer.items) {
           // Use DataTransferItemList interface to access the file(s)
@@ -126,8 +124,8 @@ export default defineComponent({
         if (file) {
           this.$refs.uploadComponent.uploadFile(file);
         }
-        return false;
       }
+      return false;
     },
     onUploaded(file: MediaFile) {
       this.modelValue.frames.push({
