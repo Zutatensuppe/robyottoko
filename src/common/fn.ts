@@ -264,6 +264,21 @@ export function soundMediaFileFromUploadedFile(file: UploadedFile): SoundMediaFi
   };
 }
 
+export const calculateOptimalSubtitleDisplayTimeMs = (text: string): number => {
+  // how long to display subtitles?
+  // did some testing in aegisub:
+  // - by default CPS >= 16 becomes red
+  // - for CPS calculation spaces do not count
+  // - for a 5 second time frame 79 chars are ok, 80 are not
+  //
+  // this means:
+  // - CPS < 16 is OK
+  // - CPS ~ 12 is optimal? we dont know that yet
+  // each character can be displayed
+  const readableCharacters = text.replace(/\W/g, '')
+  return Math.floor(readableCharacters.length * 1000 / 12)
+}
+
 export default {
   arrayMove,
   humanDuration,

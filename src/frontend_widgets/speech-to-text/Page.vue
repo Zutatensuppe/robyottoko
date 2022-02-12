@@ -1,6 +1,17 @@
 <template>
   <div class="big" ref="result_text" v-if="settings">
-    <div v-if="settings.status.enabled">{{ status }}</div>
+    <div v-if="settings.status.enabled">
+      {{ status }}
+      <div v-if="errors.length > 0">
+        <div>Latest errors:</div>
+        <ul>
+          <li v-for="(error, idx) in errors" :key="idx">{{ error }}</li>
+        </ul>
+      </div>
+    </div>
+    <button @click="initSpeech" v-if="wantsSpeech && !initedSpeech">
+      Enable Speech Synthesis
+    </button>
     <table ref="text_table" class="btm_table">
       <tr>
         <td align="center" valign="bottom">
@@ -55,17 +66,23 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import util from "../util";
+import { calculateOptimalSubtitleDisplayTimeMs, logger } from "../../common/fn";
+const log = logger("speech-to-text/Page.vue");
+
+// in brave treat insecure as secure to allow mic locally:
+//   brave://flags/#unsafely-treat-insecure-origin-as-secure
 
 export default defineComponent({
   data() {
     return {
       ws: null,
       status: "",
-      textTimeoutMs: 10000,
+      errors: [] as string[],
+
+      initedSpeech: false,
 
       // prevent doing things twice
-      lastUtterance: null,
-      lastRecognizedText: null,
+      lastUtterance: "",
 
       recognition: {
         interimResults: false,
@@ -73,47 +90,99 @@ export default defineComponent({
       },
 
       // texts
-      recognizedText: "",
-      translatedText: "",
+      texts: [] as { recognized: string; translated: string; ready: boolean }[],
+      timeout: null, // null | number
 
-      // timeout objects to hide text after time
-      recognizedTextTimeout: null,
-      translatedTextTimeout: null,
+      // // timeout objects to hide text after time
+      // recognizedTextTimeout: null,
+      // translatedTextTimeout: null,
 
       // settings (overwritten from data ws)
       settings: null,
+
+      srObj: null as any,
     };
   },
-  watch: {
-    recognizedText(newVal, oldVal) {
-      if (newVal) {
-        if (this.recognizedTextTimeout) {
-          clearTimeout(this.recognizedTextTimeout);
-        }
-        this.recognizedTextTimeout = setTimeout(() => {
-          this.recognizedText = "";
-        }, this.textTimeoutMs);
+  computed: {
+    recognizedText() {
+      if (this.texts.length === 0 || !this.texts[0].ready) {
+        return "";
       }
+      return this.texts[0].recognized;
     },
-    translatedText(newVal, oldVal) {
-      if (newVal) {
-        if (this.translatedTextTimeout) {
-          clearTimeout(this.translatedTextTimeout);
-        }
-        this.translatedTextTimeout = setTimeout(() => {
-          this.translatedText = "";
-        }, this.textTimeoutMs);
+    translatedText() {
+      if (this.texts.length === 0 || !this.texts[0].ready) {
+        return "";
       }
+      return this.texts[0].translated;
+    },
+    lastRecognizedText() {
+      if (this.texts.length === 0) {
+        return "";
+      }
+      this.texts[this.texts.length - 1].recognized;
+    },
+    wantsSpeech() {
+      return (
+        this.settings.recognition.synthesize ||
+        this.settings.translation.synthesize
+      );
     },
   },
   methods: {
-    synthesize(text, lang) {
+    initSpeech() {
+      log.log(speechSynthesis);
+      speechSynthesis.cancel();
+      speechSynthesis.resume();
+      this.initedSpeech = true;
+    },
+    _next() {
+      if (this.timeout) {
+        log.info("_next(): timeout still active");
+        return;
+      }
+      if (!this.recognizedText && !this.translatedText) {
+        log.info("_next(): recognizedText and translatedText empty");
+        return;
+      }
+
+      // TODO: queue synthesizations
+      if (this.recognizedText && this.settings.recognition.synthesize) {
+        log.info("synthesizing recognized text");
+        this.synthesize(
+          this.recognizedText,
+          this.settings.recognition.synthesizeLang
+        );
+      }
+      if (this.translatedText && this.settings.translation.synthesize) {
+        log.info("synthesizing translated text");
+        this.synthesize(
+          this.translatedText,
+          this.settings.translation.synthesizeLang
+        );
+      }
+
+      this.timeout = setTimeout(() => {
+        this.texts.shift();
+        this.timeout = null;
+        this._next();
+      }, this.calculateSubtitleDisplayTime(`${this.recognizedText} ${this.translatedText}`));
+    },
+    calculateSubtitleDisplayTime(text: string) {
+      const durationMs = calculateOptimalSubtitleDisplayTimeMs(text);
+      // clamp duration between 1s and 10s
+      return Math.min(10000, Math.max(2000, durationMs));
+    },
+    synthesize(text: string, lang: string): void {
+      log.info("synthesize", this.lastUtterance, text, lang);
       if (this.lastUtterance !== text) {
+        log.info("speechSynthesis", speechSynthesis);
         this.lastUtterance = text;
-        let utterance = new SpeechSynthesisUtterance(this.lastUtterance);
+        let utterance = new SpeechSynthesisUtterance(`${this.lastUtterance}`);
         if (lang) {
           utterance.lang = lang;
         }
+        speechSynthesis.cancel();
         speechSynthesis.speak(utterance);
       }
     },
@@ -188,92 +257,108 @@ export default defineComponent({
     },
     initVoiceRecognition() {
       const r = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!r) {
+        alert(
+          "This widget does not work in this browser. Try a chrome based browser."
+        );
+        return;
+      }
+      if (this.srObj) {
+        this.srObj.abort();
+        this.srObj.stop();
+      }
 
-      var srObj = new r();
-      srObj.lang = this.settings.recognition.lang;
-      srObj.interimResults = this.recognition.interimResults;
-      srObj.continuous = this.recognition.continuous;
+      this.srObj = new r();
+      this.srObj.lang = this.settings.recognition.lang;
+      this.srObj.interimResults = this.recognition.interimResults;
+      this.srObj.continuous = this.recognition.continuous;
 
-      srObj.onsoundstart = () => {
+      this.srObj.onsoundstart = () => {
         this.status = "Sound started";
       };
-      srObj.onnomatch = () => {
+      this.srObj.onnomatch = () => {
         this.status = "No match";
       };
-      srObj.onerror = () => {
+      this.srObj.onerror = (evt: any) => {
         this.status = "Error";
-        srObj.stop();
+        this.errors.unshift(evt.error);
+        this.errors = this.errors.slice(0, 10);
         this.initVoiceRecognition();
       };
-      srObj.onsoundend = () => {
+      this.srObj.onsoundend = () => {
         this.status = "Sound ended";
-        srObj.stop();
         this.initVoiceRecognition();
       };
-      srObj.onspeechend = () => {
+      this.srObj.onspeechend = () => {
         this.status = "Speech ended";
-        srObj.stop();
         this.initVoiceRecognition();
       };
-
-      srObj.onresult = async (evt) => {
+      this.srObj.onresult = async (evt: any) => {
         this.onVoiceResult(evt);
-        srObj.stop();
         this.initVoiceRecognition();
       };
-      srObj.start();
+      this.srObj.start();
     },
-    onVoiceResult(event) {
-      var results = event.results;
-      for (var i = event.resultIndex; i < results.length; i++) {
-        const recognizedText = results[i][0].transcript;
+    onVoiceResult(evt: any) {
+      let results = evt.results;
+      log.info("onVoiceResult()", evt);
+      for (var i = evt.resultIndex; i < results.length; i++) {
         if (!results[i].isFinal) {
-          this.recognizedText = "<<" + recognizedText + ">>";
-          this.translatedText = "<<...>>";
+          // recognizedText = "<<" + _recognizedText + ">>";
+          // translatedText = "<<...>>";
           continue;
         }
 
-        if (this.lastRecognizedText === recognizedText) {
+        const _recognizedText = results[i][0].transcript;
+        if (this.lastRecognizedText === _recognizedText) {
           continue;
         }
-        this.lastRecognizedText = recognizedText;
 
-        if (this.settings.recognition.synthesize) {
-          this.synthesize(
-            recognizedText,
-            this.settings.recognition.synthesizeLang
+        if (this.settings.translation.enabled) {
+          this.texts.push({
+            recognized: _recognizedText,
+            translated: "",
+            ready: false,
+          });
+          log.info(
+            `added ${_recognizedText} at index: ${this.texts.length - 1}`
           );
-        }
 
-        this.recognizedText = this.lastRecognizedText;
-        if (!this.settings.translation.enabled) {
-          this.translatedText = "...";
-          continue;
+          this.ws.send(
+            JSON.stringify({
+              event: "translate",
+              text: _recognizedText,
+              src: this.settings.translation.langSrc,
+              dst: this.settings.translation.langDst,
+            })
+          );
+        } else {
+          this.texts.push({
+            recognized: _recognizedText,
+            translated: "",
+            ready: true,
+          });
+          log.info(
+            `added ${_recognizedText} at index: ${this.texts.length - 1}`
+          );
+          this._next();
         }
-
-        this.translatedText = "???";
-        this.ws.send(
-          JSON.stringify({
-            event: "translate",
-            text: recognizedText,
-            src: this.settings.translation.langSrc,
-            dst: this.settings.translation.langDst,
-          })
-        );
+        break;
       }
     },
   },
   mounted() {
     this.ws = util.wsClient("speech-to-text");
     this.ws.onMessage("translated", (data) => {
-      this.recognizedText = data.in;
-      this.translatedText = data.out;
-      if (this.settings.translation.synthesize) {
-        this.synthesize(
-          this.translatedText,
-          this.settings.translation.synthesizeLang
-        );
-      }
+      log.info(`ws onMessage(translated)`, data);
+      this.texts = this.texts.map((item) => {
+        if (item.recognized === data.in) {
+          item.translated = data.out;
+          item.ready = true;
+        }
+        return item;
+      });
+      this._next();
     });
     this.ws.onMessage("init", (data) => {
       this.settings = data.settings;

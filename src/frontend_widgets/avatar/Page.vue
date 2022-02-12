@@ -88,8 +88,9 @@ const log = logger("Page.vue");
 
 const SPEAKING_THRESHOLD = 0.05;
 // in ff enable for usage with localhost (and no https):
-// media.devices.insecure.enabled
-// media.getusermedia.insecure.enabled
+// about:config
+//   media.devices.insecure.enabled
+//   media.getusermedia.insecure.enabled
 
 interface ComponentData {
   ws: null | WsClient;
