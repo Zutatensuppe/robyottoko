@@ -105,6 +105,11 @@ interface TwitchHelixGetStreamTagsResponseData {
   }
 }
 
+interface ValidateOAuthTokenResponse {
+  valid: boolean
+  data: any // raw data
+}
+
 export function getBestEntryFromCategorySearchItems(
   searchString: string,
   resp: TwitchHelixCategorySearchResponseData,
@@ -310,14 +315,13 @@ class TwitchHelixClient {
     return await request('put', url, withHeaders(this._authHeaders(accessToken), asJson({ tag_ids: tagIds })))
   }
 
-  async validateOAuthToken(broadcasterId: string, accessToken: string): Promise<boolean> {
+  async validateOAuthToken(broadcasterId: string, accessToken: string): Promise<ValidateOAuthTokenResponse> {
     const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`)
     const json = await getJson(url, withHeaders(this._authHeaders(accessToken))) as TwitchHelixGetChannelInformationResponseData
     try {
-      return json.data[0] ? true : false
+      return { valid: json.data[0] ? true : false, data: json }
     } catch (e) {
-      log.error(json)
-      return false
+      return { valid: false, data: json }
     }
   }
 }
