@@ -126,13 +126,13 @@ const run = async () => {
         if (!twitchChannel.access_token) {
           continue;
         }
-
-        const valid = await client.validateOAuthToken(
+        const resp = await client.validateOAuthToken(
           twitchChannel.channel_id,
           twitchChannel.access_token,
         )
-
-        if (!valid) {
+        if (!resp.valid) {
+          log.error(`Unable to validate OAuth token. user: ${user.name}: channel ${twitchChannel.channel_name}`)
+          log.error(resp.data)
           problems.push(`Access token for channel ${twitchChannel.channel_name} is invalid.`)
         }
       }
