@@ -8,7 +8,7 @@ import {
   TwitchChatContext, RewardRedemptionContext, FunctionCommand, Command,
   Bot, CommandFunction, Module
 } from '../../types'
-import { newCmd } from '../../util'
+import { commands } from '../../common/commands'
 import { default_settings, SongerquestModuleInitData, SongrequestModuleData, SongrequestModuleSettings, SongrequestModuleWsEventData } from './SongrequestModuleCommon'
 import { NextFunction, Response } from 'express'
 
@@ -56,32 +56,32 @@ const default_commands = (list: any = null) => {
   }
   return [
     // default commands for song request
-    newCmd('sr_current'),
-    newCmd('sr_undo'),
-    newCmd('sr_good'),
-    newCmd('sr_bad'),
-    newCmd('sr_stats'),
-    newCmd('sr_prev'),
-    newCmd('sr_next'),
-    newCmd('sr_jumptonew'),
-    newCmd('sr_clear'),
-    newCmd('sr_rm'),
-    newCmd('sr_shuffle'),
-    newCmd('sr_reset_stats'),
-    newCmd('sr_loop'),
-    newCmd('sr_noloop'),
-    newCmd('sr_pause'),
-    newCmd('sr_unpause'),
-    newCmd('sr_hidevideo'),
-    newCmd('sr_showvideo'),
-    newCmd('sr_request'),
-    newCmd('sr_re_request'),
-    newCmd('sr_addtag'),
-    newCmd('sr_rmtag'),
-    newCmd('sr_volume'),
-    newCmd('sr_filter'),
-    newCmd('sr_preset'),
-    newCmd('sr_queue'),
+    commands.sr_current.NewCommand(),
+    commands.sr_undo.NewCommand(),
+    commands.sr_good.NewCommand(),
+    commands.sr_bad.NewCommand(),
+    commands.sr_stats.NewCommand(),
+    commands.sr_prev.NewCommand(),
+    commands.sr_next.NewCommand(),
+    commands.sr_jumptonew.NewCommand(),
+    commands.sr_clear.NewCommand(),
+    commands.sr_rm.NewCommand(),
+    commands.sr_shuffle.NewCommand(),
+    commands.sr_reset_stats.NewCommand(),
+    commands.sr_loop.NewCommand(),
+    commands.sr_noloop.NewCommand(),
+    commands.sr_pause.NewCommand(),
+    commands.sr_unpause.NewCommand(),
+    commands.sr_hidevideo.NewCommand(),
+    commands.sr_showvideo.NewCommand(),
+    commands.sr_request.NewCommand(),
+    commands.sr_re_request.NewCommand(),
+    commands.sr_addtag.NewCommand(),
+    commands.sr_rmtag.NewCommand(),
+    commands.sr_volume.NewCommand(),
+    commands.sr_filter.NewCommand(),
+    commands.sr_preset.NewCommand(),
+    commands.sr_queue.NewCommand(),
   ]
 }
 

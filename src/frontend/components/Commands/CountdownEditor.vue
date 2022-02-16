@@ -132,7 +132,7 @@
 import { defineComponent } from "vue";
 import fn from "../../../common/fn";
 import { CountdownAction, MediaFile, SoundMediaFile } from "../../../types";
-import { newMedia, newText } from "../../../util";
+import { newMedia, newText } from "../../../common/commands";
 
 export default defineComponent({
   name: "countdown-edit",

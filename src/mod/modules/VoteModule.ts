@@ -2,7 +2,7 @@ import fn from '../../fn'
 import { User } from '../../services/Users'
 import { Bot, ChatMessageContext, Module, RawCommand, RewardRedemptionContext, TwitchChatClient, TwitchChatContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
-import { newCommandTrigger } from '../../util'
+import { newCommandTrigger } from '../../common/commands'
 
 interface VoteModuleData {
   votes: Record<string, Record<string, string>>

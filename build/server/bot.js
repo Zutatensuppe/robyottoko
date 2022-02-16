@@ -1798,158 +1798,6 @@ class TwitchPubSubClient {
     }
 }
 
-var addStreamTagsCommon = {
-    Name: () => "add_stream_tags command",
-    Description: () => "Add streamtag",
-    NewCommand: () => ({
-        triggers: [newCommandTrigger()],
-        action: 'add_stream_tags',
-        restrict_to: MOD_OR_ABOVE,
-        variables: [],
-        variableChanges: [],
-        data: {
-            tag: ''
-        },
-    }),
-};
-
-var chattersCommon = {
-    Name: () => "chatters command",
-    Description: () => "Outputs the people who chatted during the stream.",
-    NewCommand: () => ({
-        triggers: [newCommandTrigger()],
-        action: 'chatters',
-        restrict_to: [],
-        variables: [],
-        variableChanges: [],
-        data: {},
-    }),
-};
-
-var countdownCommon = {
-    Name: () => "countdown",
-    Description: () => "Add a countdown or messages spaced by time intervals.",
-    NewCommand: () => ({
-        triggers: [newCommandTrigger()],
-        action: 'countdown',
-        restrict_to: [],
-        variables: [],
-        variableChanges: [],
-        data: {
-            steps: 3,
-            interval: '1s',
-            intro: 'Starting countdown...',
-            outro: 'Done!'
-        },
-    }),
-};
-
-var dictLookupCommon = {
-    Name: () => "dictionary lookup",
-    Description: () => "Outputs the translation for the searched word.",
-    NewCommand: () => ({
-        triggers: [newCommandTrigger()],
-        action: 'dict_lookup',
-        restrict_to: [],
-        variables: [],
-        variableChanges: [],
-        data: {
-            lang: 'ja',
-            phrase: '',
-        },
-    }),
-};
-
-var madochanCreateWordCommon = {
-    Name: () => "madochan",
-    Description: () => "Creates a word for a definition.",
-    NewCommand: () => ({
-        triggers: [newCommandTrigger()],
-        action: 'madochan_createword',
-        restrict_to: [],
-        variables: [],
-        variableChanges: [],
-        data: {
-            // TODO: use from same resource as server
-            model: '100epochs800lenhashingbidirectional.h5',
-            weirdness: 1,
-        },
-    }),
-};
-
-var playMediaCommon = {
-    Name: () => "media command",
-    Description: () => "Display an image and/or play a sound.",
-    NewCommand: () => ({
-        triggers: [newCommandTrigger()],
-        action: 'media',
-        restrict_to: [],
-        variables: [],
-        variableChanges: [],
-        data: newMedia(),
-    }),
-};
-
-var randomTextCommon = {
-    Name: () => "command",
-    Description: () => "Send a message to chat",
-    NewCommand: () => ({
-        triggers: [newCommandTrigger()],
-        action: 'text',
-        restrict_to: [],
-        variables: [],
-        variableChanges: [],
-        data: {
-            text: [newText()],
-        },
-    }),
-};
-
-var removeStreamTagsCommon = {
-    Name: () => "remove_stream_tags command",
-    Description: () => "Remove streamtag",
-    NewCommand: () => ({
-        triggers: [newCommandTrigger()],
-        action: 'remove_stream_tags',
-        restrict_to: MOD_OR_ABOVE,
-        variables: [],
-        variableChanges: [],
-        data: {
-            tag: ''
-        },
-    }),
-};
-
-var setChannelGameIdCommon = {
-    Name: () => "change stream category command",
-    Description: () => "Change the stream category",
-    NewCommand: () => ({
-        triggers: [newCommandTrigger()],
-        action: 'set_channel_game_id',
-        restrict_to: MOD_OR_ABOVE,
-        variables: [],
-        variableChanges: [],
-        data: {
-            game_id: ''
-        },
-    }),
-};
-
-var setChannelTitleCommon = {
-    Name: () => "change stream title command",
-    Description: () => "Change the stream title",
-    NewCommand: () => ({
-        triggers: [newCommandTrigger()],
-        action: 'set_channel_title',
-        restrict_to: MOD_OR_ABOVE,
-        variables: [],
-        variableChanges: [],
-        data: {
-            title: ''
-        },
-    }),
-};
-
 const MOD_OR_ABOVE = ["mod", "broadcaster"];
 const newText = () => '';
 const newMedia = () => ({
@@ -1988,239 +1836,6 @@ const newCommandTrigger = (command = '', commandExact = false) => {
     trigger.data.commandExact = commandExact;
     return trigger;
 };
-const newCmd = (type) => {
-    switch (type) {
-        // GENERAL
-        case 'text': return randomTextCommon.NewCommand();
-        case 'media': return playMediaCommon.NewCommand();
-        case 'media_volume': return {
-            triggers: [newCommandTrigger()],
-            action: 'media_volume',
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'countdown': return countdownCommon.NewCommand();
-        case 'dict_lookup': return dictLookupCommon.NewCommand();
-        case 'madochan_createword': return madochanCreateWordCommon.NewCommand();
-        case 'chatters': return chattersCommon.NewCommand();
-        case 'set_channel_title': return setChannelTitleCommon.NewCommand();
-        case 'set_channel_game_id': return setChannelGameIdCommon.NewCommand();
-        case "add_stream_tags": return addStreamTagsCommon.NewCommand();
-        case "remove_stream_tags": return removeStreamTagsCommon.NewCommand();
-        // SONG REQUEST
-        case 'sr_current': return {
-            action: 'sr_current',
-            triggers: [newCommandTrigger('!sr current', true)],
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_undo': return {
-            action: 'sr_undo',
-            triggers: [newCommandTrigger('!sr undo', true)],
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_good': return {
-            action: 'sr_good',
-            triggers: [newCommandTrigger('!sr good', true)],
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_bad': return {
-            action: 'sr_bad',
-            triggers: [newCommandTrigger('!sr bad', true)],
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_stats': return {
-            action: 'sr_stats',
-            triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)],
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_prev': return {
-            action: 'sr_prev',
-            triggers: [newCommandTrigger('!sr prev', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_next': return {
-            action: 'sr_next',
-            triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_jumptonew': return {
-            action: 'sr_jumptonew',
-            triggers: [newCommandTrigger('!sr jumptonew', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_clear': return {
-            action: 'sr_clear',
-            triggers: [newCommandTrigger('!sr clear', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_rm': return {
-            action: 'sr_rm',
-            triggers: [newCommandTrigger('!sr rm', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_shuffle': return {
-            action: 'sr_shuffle',
-            triggers: [newCommandTrigger('!sr shuffle', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_reset_stats': return {
-            action: 'sr_reset_stats',
-            triggers: [newCommandTrigger('!sr resetStats', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_loop': return {
-            action: 'sr_loop',
-            triggers: [newCommandTrigger('!sr loop', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_noloop': return {
-            action: 'sr_noloop',
-            triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_pause': return {
-            action: 'sr_pause',
-            triggers: [newCommandTrigger('!sr pause', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_unpause': return {
-            action: 'sr_unpause',
-            triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_hidevideo': return {
-            action: 'sr_hidevideo',
-            triggers: [newCommandTrigger('!sr hidevideo', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_showvideo': return {
-            action: 'sr_showvideo',
-            triggers: [newCommandTrigger('!sr showvideo', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_request': return {
-            action: 'sr_request',
-            triggers: [newCommandTrigger('!sr')],
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_re_request': return {
-            action: 'sr_re_request',
-            triggers: [newCommandTrigger('!resr')],
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_addtag': return {
-            action: 'sr_addtag',
-            triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_rmtag': return {
-            action: 'sr_rmtag',
-            triggers: [newCommandTrigger('!sr rmtag')],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_volume': return {
-            action: 'sr_volume',
-            triggers: [newCommandTrigger('!sr volume')],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_filter': return {
-            action: 'sr_filter',
-            triggers: [newCommandTrigger('!sr filter')],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_preset': return {
-            action: 'sr_preset',
-            triggers: [newCommandTrigger('!sr preset')],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'sr_queue': return {
-            action: 'sr_queue',
-            triggers: [newCommandTrigger('!sr queue')],
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        default: return null;
-    }
-};
 const commandHasTrigger = (command, trigger) => {
     for (const cmdTrigger of command.triggers) {
         if (cmdTrigger.type !== trigger.type) {
@@ -2249,6 +1864,490 @@ const commandHasTrigger = (command, trigger) => {
 const getUniqueCommandsByTrigger = (commands, trigger) => {
     const tmp = commands.filter((command) => commandHasTrigger(command, trigger));
     return tmp.filter((item, i, ar) => ar.indexOf(item) === i);
+};
+const commands = {
+    add_stream_tags: {
+        Name: () => "add_stream_tags command",
+        Description: () => "Add streamtag",
+        NewCommand: () => ({
+            triggers: [newCommandTrigger()],
+            action: 'add_stream_tags',
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {
+                tag: ''
+            },
+        })
+    },
+    chatters: {
+        Name: () => "chatters command",
+        Description: () => "Outputs the people who chatted during the stream.",
+        NewCommand: () => ({
+            triggers: [newCommandTrigger()],
+            action: 'chatters',
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        })
+    },
+    countdown: {
+        Name: () => "countdown",
+        Description: () => "Add a countdown or messages spaced by time intervals.",
+        NewCommand: () => ({
+            triggers: [newCommandTrigger()],
+            action: 'countdown',
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {
+                steps: 3,
+                interval: '1s',
+                intro: 'Starting countdown...',
+                outro: 'Done!'
+            },
+        }),
+    },
+    dict_lookup: {
+        Name: () => "dictionary lookup",
+        Description: () => "Outputs the translation for the searched word.",
+        NewCommand: () => ({
+            triggers: [newCommandTrigger()],
+            action: 'dict_lookup',
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {
+                lang: 'ja',
+                phrase: '',
+            },
+        }),
+    },
+    madochan_createword: {
+        Name: () => "madochan",
+        Description: () => "Creates a word for a definition.",
+        NewCommand: () => ({
+            triggers: [newCommandTrigger()],
+            action: 'madochan_createword',
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {
+                // TODO: use from same resource as server
+                model: '100epochs800lenhashingbidirectional.h5',
+                weirdness: 1,
+            },
+        }),
+    },
+    media: {
+        Name: () => "media command",
+        Description: () => "Display an image and/or play a sound.",
+        NewCommand: () => ({
+            triggers: [newCommandTrigger()],
+            action: 'media',
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: newMedia(),
+        }),
+    },
+    media_volume: {
+        Name: () => "media volume command",
+        Description: () => `Sets the media volume to <code>&lt;VOLUME&gt;</code> (argument to this command, min 0, max 100).
+    <br />
+    If no argument is given, just outputs the current volume`,
+        NewCommand: () => ({
+            triggers: [newCommandTrigger()],
+            action: 'media_volume',
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        })
+    },
+    text: {
+        Name: () => "command",
+        Description: () => "Send a message to chat",
+        NewCommand: () => ({
+            triggers: [newCommandTrigger()],
+            action: 'text',
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {
+                text: [newText()],
+            },
+        }),
+    },
+    remove_stream_tags: {
+        Name: () => "remove_stream_tags command",
+        Description: () => "Remove streamtag",
+        NewCommand: () => ({
+            triggers: [newCommandTrigger()],
+            action: 'remove_stream_tags',
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {
+                tag: ''
+            },
+        }),
+    },
+    set_channel_game_id: {
+        Name: () => "change stream category command",
+        Description: () => "Change the stream category",
+        NewCommand: () => ({
+            triggers: [newCommandTrigger()],
+            action: 'set_channel_game_id',
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {
+                game_id: ''
+            },
+        }),
+    },
+    set_channel_title: {
+        Name: () => "change stream title command",
+        Description: () => "Change the stream title",
+        NewCommand: () => ({
+            triggers: [newCommandTrigger()],
+            action: 'set_channel_title',
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {
+                title: ''
+            },
+        }),
+    },
+    sr_current: {
+        Name: () => "sr_current",
+        Description: () => "Show what song is currently playing",
+        NewCommand: () => ({
+            action: 'sr_current',
+            triggers: [newCommandTrigger('!sr current', true)],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_undo: {
+        Name: () => "sr_undo",
+        Description: () => "Remove the song that was last added by oneself.",
+        NewCommand: () => ({
+            action: 'sr_undo',
+            triggers: [newCommandTrigger('!sr undo', true)],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_good: {
+        Name: () => "sr_good",
+        Description: () => "Vote the current song up",
+        NewCommand: () => ({
+            action: 'sr_good',
+            triggers: [newCommandTrigger('!sr good', true)],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_bad: {
+        Name: () => "sr_bad",
+        Description: () => "Vote the current song down",
+        NewCommand: () => ({
+            action: 'sr_bad',
+            triggers: [newCommandTrigger('!sr bad', true)],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_stats: {
+        Name: () => "sr_stats",
+        Description: () => "Show stats about the playlist",
+        NewCommand: () => ({
+            action: 'sr_stats',
+            triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_prev: {
+        Name: () => "sr_prev",
+        Description: () => "Skip to the previous song",
+        NewCommand: () => ({
+            action: 'sr_prev',
+            triggers: [newCommandTrigger('!sr prev', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_next: {
+        Name: () => "sr_next",
+        Description: () => "Skip to the next song",
+        NewCommand: () => ({
+            action: 'sr_next',
+            triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_jumptonew: {
+        Name: () => "sr_jumptonew",
+        Description: () => "Jump to the next unplayed song",
+        NewCommand: () => ({
+            action: 'sr_jumptonew',
+            triggers: [newCommandTrigger('!sr jumptonew', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_clear: {
+        Name: () => "sr_clear",
+        Description: () => "Clear the playlist",
+        NewCommand: () => ({
+            action: 'sr_clear',
+            triggers: [newCommandTrigger('!sr clear', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_rm: {
+        Name: () => "sr_rm",
+        Description: () => "Remove the current song from the playlist",
+        NewCommand: () => ({
+            action: 'sr_rm',
+            triggers: [newCommandTrigger('!sr rm', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_shuffle: {
+        Name: () => "sr_shuffle",
+        Description: () => `Shuffle the playlist (current song unaffected).
+    <br />
+    Non-played and played songs will be shuffled separately and non-played
+    songs will be put after currently playing song.`,
+        NewCommand: () => ({
+            action: 'sr_shuffle',
+            triggers: [newCommandTrigger('!sr shuffle', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_reset_stats: {
+        Name: () => "sr_reset_stats",
+        Description: () => "Reset all statistics of all songs",
+        NewCommand: () => ({
+            action: 'sr_reset_stats',
+            triggers: [newCommandTrigger('!sr resetStats', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_loop: {
+        Name: () => "sr_loop",
+        Description: () => "Loop the current song",
+        NewCommand: () => ({
+            action: 'sr_loop',
+            triggers: [newCommandTrigger('!sr loop', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_noloop: {
+        Name: () => "sr_noloop",
+        Description: () => "Stop looping the current song",
+        NewCommand: () => ({
+            action: 'sr_noloop',
+            triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_pause: {
+        Name: () => "sr_pause",
+        Description: () => "Pause currently playing song",
+        NewCommand: () => ({
+            action: 'sr_pause',
+            triggers: [newCommandTrigger('!sr pause', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_unpause: {
+        Name: () => "sr_unpause",
+        Description: () => "Unpause currently paused song",
+        NewCommand: () => ({
+            action: 'sr_unpause',
+            triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_hidevideo: {
+        Name: () => "sr_hidevideo",
+        Description: () => "Hide video for current song",
+        NewCommand: () => ({
+            action: 'sr_hidevideo',
+            triggers: [newCommandTrigger('!sr hidevideo', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_showvideo: {
+        Name: () => "sr_showvideo",
+        Description: () => "Show video for current song",
+        NewCommand: () => ({
+            action: 'sr_showvideo',
+            triggers: [newCommandTrigger('!sr showvideo', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_request: {
+        Name: () => "sr_request",
+        Description: () => `
+    Search for <code>&lt;SEARCH&gt;</code> (argument to this command)
+    at youtube (by id or by title)
+    and queue the first result in the playlist (after the first found
+    batch of unplayed songs).`,
+        NewCommand: () => ({
+            action: 'sr_request',
+            triggers: [newCommandTrigger('!sr')],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_re_request: {
+        Name: () => "sr_re_request",
+        Description: () => `
+    Search for <code>&lt;SEARCH&gt;</code> (argument to this command)
+    in the current playlist and queue the first result in the playlist
+    (after the first found batch of unplayed songs).`,
+        NewCommand: () => ({
+            action: 'sr_re_request',
+            triggers: [newCommandTrigger('!resr')],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_addtag: {
+        Name: () => "sr_addtag",
+        Description: () => "Add tag <code>&lt;TAG&gt;</code> (argument to this command) to the current song",
+        NewCommand: () => ({
+            action: 'sr_addtag',
+            triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_rmtag: {
+        Name: () => "sr_rmtag",
+        Description: () => "Remove tag <code>&lt;TAG&gt;</code> (argument to this command) from the current song",
+        NewCommand: () => ({
+            action: 'sr_rmtag',
+            triggers: [newCommandTrigger('!sr rmtag')],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_volume: {
+        Name: () => "sr_volume",
+        Description: () => `Sets the song request volume to <code>&lt;VOLUME&gt;</code> (argument to this command, min 0, max 100).
+    <br />
+    If no argument is given, just outputs the current volume`,
+        NewCommand: () => ({
+            action: 'sr_volume',
+            triggers: [newCommandTrigger('!sr volume')],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_filter: {
+        Name: () => "sr_filter",
+        Description: () => `Play only songs with the given tag <code>&lt;TAG&gt;</code> (argument to this command). If no tag
+  is given, play all songs.`,
+        NewCommand: () => ({
+            action: 'sr_filter',
+            triggers: [newCommandTrigger('!sr filter')],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_preset: {
+        Name: () => "sr_preset",
+        Description: () => `Switches to the preset <code>&lt;PRESET&gt;</code> (argument to this command) if it exists.
+  If no arguments are given, outputs all available presets.`,
+        NewCommand: () => ({
+            action: 'sr_preset',
+            triggers: [newCommandTrigger('!sr preset')],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
+    sr_queue: {
+        Name: () => "sr_queue",
+        Description: () => `Shows the next 3 songs that will play.`,
+        NewCommand: () => ({
+            action: 'sr_queue',
+            triggers: [newCommandTrigger('!sr queue')],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+    },
 };
 
 // @ts-ignore
@@ -3794,32 +3893,32 @@ const default_commands = (list = null) => {
     }
     return [
         // default commands for song request
-        newCmd('sr_current'),
-        newCmd('sr_undo'),
-        newCmd('sr_good'),
-        newCmd('sr_bad'),
-        newCmd('sr_stats'),
-        newCmd('sr_prev'),
-        newCmd('sr_next'),
-        newCmd('sr_jumptonew'),
-        newCmd('sr_clear'),
-        newCmd('sr_rm'),
-        newCmd('sr_shuffle'),
-        newCmd('sr_reset_stats'),
-        newCmd('sr_loop'),
-        newCmd('sr_noloop'),
-        newCmd('sr_pause'),
-        newCmd('sr_unpause'),
-        newCmd('sr_hidevideo'),
-        newCmd('sr_showvideo'),
-        newCmd('sr_request'),
-        newCmd('sr_re_request'),
-        newCmd('sr_addtag'),
-        newCmd('sr_rmtag'),
-        newCmd('sr_volume'),
-        newCmd('sr_filter'),
-        newCmd('sr_preset'),
-        newCmd('sr_queue'),
+        commands.sr_current.NewCommand(),
+        commands.sr_undo.NewCommand(),
+        commands.sr_good.NewCommand(),
+        commands.sr_bad.NewCommand(),
+        commands.sr_stats.NewCommand(),
+        commands.sr_prev.NewCommand(),
+        commands.sr_next.NewCommand(),
+        commands.sr_jumptonew.NewCommand(),
+        commands.sr_clear.NewCommand(),
+        commands.sr_rm.NewCommand(),
+        commands.sr_shuffle.NewCommand(),
+        commands.sr_reset_stats.NewCommand(),
+        commands.sr_loop.NewCommand(),
+        commands.sr_noloop.NewCommand(),
+        commands.sr_pause.NewCommand(),
+        commands.sr_unpause.NewCommand(),
+        commands.sr_hidevideo.NewCommand(),
+        commands.sr_showvideo.NewCommand(),
+        commands.sr_request.NewCommand(),
+        commands.sr_re_request.NewCommand(),
+        commands.sr_addtag.NewCommand(),
+        commands.sr_rmtag.NewCommand(),
+        commands.sr_volume.NewCommand(),
+        commands.sr_filter.NewCommand(),
+        commands.sr_preset.NewCommand(),
+        commands.sr_queue.NewCommand(),
     ];
 };
 class SongrequestModule {
