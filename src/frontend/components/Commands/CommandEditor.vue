@@ -409,7 +409,11 @@
             <tr>
               <td>Permissions:</td>
               <td>
-                <label v-for="(perm, idx) in possiblePermissions" :key="idx">
+                <label
+                  v-for="(perm, idx) in possiblePermissions"
+                  :key="idx"
+                  class="mr-1"
+                >
                   <input
                     type="checkbox"
                     v-model="item.restrict_to"
