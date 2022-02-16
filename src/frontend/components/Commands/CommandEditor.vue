@@ -154,10 +154,6 @@
             </template>
             <template v-if="item.action === 'madochan_createword'">
               <tr>
-                <td>Response:</td>
-                <td>Creates a word for a definition.</td>
-              </tr>
-              <tr>
                 <td>Model:</td>
                 <td>
                   <div class="control">
