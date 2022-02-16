@@ -138,6 +138,31 @@ class WebSocketServer {
     }
   }
 
+  sockets(user_ids: number[], moduleName: string | null = null): Socket[] {
+    if (!this._websocketserver) {
+      log.error(`sockets(): _websocketserver is null`)
+      return []
+    }
+
+    const sockets: Socket[] = []
+    this._websocketserver.clients.forEach((socket: Socket) => {
+      if (!socket.isAlive) {
+        // dont add non alive sockets
+        return
+      }
+      if (!socket.user_id || !user_ids.includes(socket.user_id)) {
+        // dont add sockets not belonging to user
+        return
+      }
+      if (moduleName !== null && socket.module !== moduleName) {
+        // dont add sockets not belonging to module
+        return
+      }
+      sockets.push(socket)
+    })
+    return sockets
+  }
+
   notifyAll(user_ids: number[], moduleName: string, data: WebSocketNotifyData) {
     if (!this._websocketserver) {
       log.error(`tried to notifyAll, but _websocketserver is null`)

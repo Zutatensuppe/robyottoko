@@ -850,6 +850,29 @@ class WebSocketServer {
             socket.send(JSON.stringify(data));
         }
     }
+    sockets(user_ids, moduleName = null) {
+        if (!this._websocketserver) {
+            log$f.error(`sockets(): _websocketserver is null`);
+            return [];
+        }
+        const sockets = [];
+        this._websocketserver.clients.forEach((socket) => {
+            if (!socket.isAlive) {
+                // dont add non alive sockets
+                return;
+            }
+            if (!socket.user_id || !user_ids.includes(socket.user_id)) {
+                // dont add sockets not belonging to user
+                return;
+            }
+            if (moduleName !== null && socket.module !== moduleName) {
+                // dont add sockets not belonging to module
+                return;
+            }
+            sockets.push(socket);
+        });
+        return sockets;
+    }
     notifyAll(user_ids, moduleName, data) {
         if (!this._websocketserver) {
             log$f.error(`tried to notifyAll, but _websocketserver is null`);
@@ -5312,6 +5335,12 @@ const run = async () => {
         const sendStatus = async () => {
             const client = clientManager.getHelixClient();
             if (!client) {
+                setTimeout(sendStatus, 5000);
+                return;
+            }
+            // if the user is not connected through a websocket atm, dont
+            // try to validate oauth tokens
+            if (webSocketServer.sockets([user.id]).length === 0) {
                 setTimeout(sendStatus, 5000);
                 return;
             }
