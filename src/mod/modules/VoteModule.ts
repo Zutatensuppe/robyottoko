@@ -3,6 +3,7 @@ import { User } from '../../services/Users'
 import { Bot, ChatMessageContext, Module, RawCommand, RewardRedemptionContext, TwitchChatClient, TwitchChatContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import { newCommandTrigger } from '../../common/commands'
+import { isBroadcaster, isMod } from '../../common/permissions'
 
 interface VoteModuleData {
   votes: Record<string, Record<string, string>>
@@ -110,7 +111,8 @@ class VoteModule implements Module {
 
     // maybe open up for everyone, but for now use dedicated
     // commands like !play THING
-    if (!fn.isMod(context) && !fn.isBroadcaster(context)) {
+
+    if (!isMod(context) && !isBroadcaster(context)) {
       say('Not allowed to execute !vote command')
     }
 
@@ -148,7 +150,7 @@ class VoteModule implements Module {
     }
 
     if (command.args[0] === 'clear') {
-      if (!fn.isBroadcaster(context)) {
+      if (!isBroadcaster(context)) {
         say('Not allowed to execute !vote clear')
       }
       const type = command.args[1]

@@ -1,10 +1,10 @@
-import { Command, CommandAction, CommandTrigger, CommandRestrict, CommandTriggerType, FunctionCommand, MediaCommandData } from "../types"
-
-export const MOD_OR_ABOVE: CommandRestrict[] = ["mod", "broadcaster"]
+import { mustParseHumanDuration } from "../common/fn"
+import { Command, CommandAction, CommandTrigger, CommandTriggerType, FunctionCommand, MediaCommandData } from "../types"
+import { MOD_OR_ABOVE } from './permissions'
 
 export const newText = () => ''
 
-export const newMedia = (): MediaCommandData => ({
+const newMedia = (): MediaCommandData => ({
   sound: {
     filename: '',
     file: '',
@@ -18,6 +18,10 @@ export const newMedia = (): MediaCommandData => ({
   },
   minDurationMs: '1s',
 })
+
+export const newCountdownDelay = () => ({ type: "delay", value: "1s" })
+export const newCountdownText = () => ({ type: "text", value: newText() })
+export const newCountdownMedia = () => ({ type: "media", value: newMedia() })
 
 export const newTrigger = (type: CommandTriggerType): CommandTrigger => ({
   type,
@@ -80,6 +84,30 @@ export const getUniqueCommandsByTrigger = (
 ) => {
   const tmp = commands.filter((command) => commandHasTrigger(command, trigger))
   return tmp.filter((item, i, ar) => ar.indexOf(item) === i)
+}
+
+export const isValidTrigger = (trigger: CommandTrigger) => {
+  if (trigger.type === "command") {
+    if (!trigger.data.command) {
+      return false;
+    }
+    return true;
+  }
+
+  if (trigger.type === "timer") {
+    try {
+      mustParseHumanDuration(trigger.data.minInterval);
+    } catch (e) {
+      return false;
+    }
+    const l = parseInt(`${trigger.data.minLines}`, 10);
+    if (isNaN(l)) {
+      return false;
+    }
+    return true;
+  }
+
+  return true;
 }
 
 interface CommandDef {

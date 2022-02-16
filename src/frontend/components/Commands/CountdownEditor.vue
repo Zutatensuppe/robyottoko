@@ -132,7 +132,11 @@
 import { defineComponent } from "vue";
 import fn from "../../../common/fn";
 import { CountdownAction, MediaFile, SoundMediaFile } from "../../../types";
-import { newMedia, newText } from "../../../common/commands";
+import {
+  newCountdownDelay,
+  newCountdownText,
+  newCountdownMedia,
+} from "../../../common/commands";
 
 export default defineComponent({
   name: "countdown-edit",
@@ -168,13 +172,13 @@ export default defineComponent({
       );
     },
     onAddDelay() {
-      this.countdown.actions.push({ type: "delay", value: "1s" });
+      this.countdown.actions.push(newCountdownDelay());
     },
     onAddText() {
-      this.countdown.actions.push({ type: "text", value: newText() });
+      this.countdown.actions.push(newCountdownText());
     },
     onAddMedia() {
-      this.countdown.actions.push({ type: "media", value: newMedia() });
+      this.countdown.actions.push(newCountdownMedia());
     },
     rmaction(idx: number) {
       this.countdown.actions = this.countdown.actions.filter(

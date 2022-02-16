@@ -8,6 +8,7 @@ import { User } from '../services/Users'
 import { Bot, RawCommand, RewardRedemptionContext, TwitchChannelPointsEventMessage, TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
 import TwitchPubSubClient from '../services/TwitchPubSubClient'
 import { getUniqueCommandsByTrigger, newRewardRedemptionTrigger } from '../common/commands'
+import { isBroadcaster, isMod, isSubscriber } from '../common/permissions'
 
 interface Identity {
   username: string
@@ -133,13 +134,13 @@ class TwitchClientManager {
 
       // log.debug(context)
       const roles = []
-      if (fn.isMod(context)) {
+      if (isMod(context)) {
         roles.push('M')
       }
-      if (fn.isSubscriber(context)) {
+      if (isSubscriber(context)) {
         roles.push('S')
       }
-      if (fn.isBroadcaster(context)) {
+      if (isBroadcaster(context)) {
         roles.push('B')
       }
       this.log.info(`${context.username}[${roles.join('')}]@${target}: ${msg}`)

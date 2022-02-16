@@ -2,6 +2,7 @@ import { NextFunction, Response } from 'express'
 // @ts-ignore
 import { Client } from 'tmi.js'
 import { LogLevel } from './common/fn'
+import { CommandRestrict } from './common/permissions'
 import Db from './Db'
 import ModuleManager from './mod/ModuleManager'
 import ModuleStorage from './mod/ModuleStorage'
@@ -221,7 +222,6 @@ export type CommandAction =
   | 'sr_noloop' | 'sr_pause' | 'sr_unpause' | 'sr_hidevideo' | 'sr_showvideo' | 'sr_request'
   | 'sr_re_request' | 'sr_addtag' | 'sr_rmtag' | 'sr_volume' | 'sr_filter' | 'sr_preset'
   | 'sr_queue'
-export type CommandRestrict = 'mod' | 'sub' | 'broadcaster'
 
 export interface Command {
   triggers: CommandTrigger[]
