@@ -225,6 +225,7 @@
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
 import { Command, CommandAction, GlobalVariable } from "../../../types";
+import { permissionsStr } from "../../../common/permissions";
 import { commands } from "../../../common/commands";
 import fn from "../../../common/fn";
 
@@ -339,20 +340,7 @@ export default defineComponent({
       );
     },
     permissionsStr(item: Command) {
-      if (!item.restrict_to || item.restrict_to.length === 0) {
-        return "Everyone";
-      }
-      const parts = [];
-      if (item.restrict_to.includes("broadcaster")) {
-        parts.push("Broadcaster");
-      }
-      if (item.restrict_to.includes("mod")) {
-        parts.push("Moderators");
-      }
-      if (item.restrict_to.includes("sub")) {
-        parts.push("Subscribers");
-      }
-      return parts.join(", ");
+      return permissionsStr(item.restrict_to);
     },
     remove(idx: number) {
       this.commands = this.commands.filter((val, index) => index !== idx);

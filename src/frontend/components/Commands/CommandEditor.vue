@@ -443,8 +443,13 @@
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
 
-import { commands, newText, newTrigger } from "../../../common/commands";
-import fn from "../../../common/fn";
+import { permissions } from "../../../common/permissions";
+import {
+  commands,
+  isValidTrigger,
+  newText,
+  newTrigger,
+} from "../../../common/commands";
 import {
   Command,
   GlobalVariable,
@@ -501,11 +506,7 @@ export default defineComponent({
       { value: "it", flag: "🇮🇹", title: "Italian" },
       { value: "pt", flag: "🇵🇹/🇧🇷", title: "Portuguese" },
     ],
-    possiblePermissions: [
-      { value: "broadcaster", label: "Broadcaster" },
-      { value: "mod", label: "Moderators" },
-      { value: "sub", label: "Subscribers" },
-    ],
+    possiblePermissions: permissions,
   }),
   mounted() {
     this.item = JSON.parse(JSON.stringify(this.modelValue));
@@ -653,12 +654,7 @@ export default defineComponent({
       if (!this.item) {
         return false;
       }
-      return (
-        this.item.action === "set_channel_title" ||
-        this.item.action === "set_channel_game_id" ||
-        this.item.action === "add_stream_tags" ||
-        this.item.action === "remove_stream_tags"
-      );
+      return commands[this.item.action].RequiresAccessToken();
     },
     possibleTriggerActions() {
       return [
@@ -678,20 +674,8 @@ export default defineComponent({
 
       // check if all triggers are correct
       for (const trigger of this.item.triggers) {
-        if (trigger.type === "command") {
-          if (!trigger.data.command) {
-            return false;
-          }
-        } else if (trigger.type === "timer") {
-          try {
-            fn.mustParseHumanDuration(trigger.data.minInterval);
-          } catch (e) {
-            return false;
-          }
-          const l = parseInt(`${trigger.data.minLines}`, 10);
-          if (isNaN(l)) {
-            return false;
-          }
+        if (!isValidTrigger(trigger)) {
+          return false;
         }
       }
 

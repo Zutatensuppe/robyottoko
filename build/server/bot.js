@@ -223,6 +223,40 @@ const shuffle = (array) => {
     return array;
 };
 
+var CommandRestrict;
+(function (CommandRestrict) {
+    CommandRestrict["MOD"] = "mod";
+    CommandRestrict["SUB"] = "sub";
+    CommandRestrict["BROADCASTER"] = "broadcaster";
+})(CommandRestrict || (CommandRestrict = {}));
+const MOD_OR_ABOVE = [
+    CommandRestrict.MOD,
+    CommandRestrict.BROADCASTER,
+];
+[
+    { value: CommandRestrict.BROADCASTER, label: "Broadcaster" },
+    { value: CommandRestrict.MOD, label: "Moderators" },
+    { value: CommandRestrict.SUB, label: "Subscribers" },
+];
+const isBroadcaster = (ctx) => ctx['room-id'] === ctx['user-id'];
+const isMod = (ctx) => !!ctx.mod;
+const isSubscriber = (ctx) => !!ctx.subscriber;
+const mayExecute = (context, cmd) => {
+    if (!cmd.restrict_to || cmd.restrict_to.length === 0) {
+        return true;
+    }
+    if (cmd.restrict_to.includes(CommandRestrict.MOD) && isMod(context)) {
+        return true;
+    }
+    if (cmd.restrict_to.includes(CommandRestrict.SUB) && isSubscriber(context)) {
+        return true;
+    }
+    if (cmd.restrict_to.includes(CommandRestrict.BROADCASTER) && isBroadcaster(context)) {
+        return true;
+    }
+    return false;
+};
+
 const log$g = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
@@ -262,9 +296,6 @@ const sleep = (ms) => {
         setTimeout(resolve, ms);
     });
 };
-const isBroadcaster = (ctx) => ctx['room-id'] === ctx['user-id'];
-const isMod = (ctx) => !!ctx.mod;
-const isSubscriber = (ctx) => !!ctx.subscriber;
 const sayFn = (client, target) => (msg) => {
     // in case no target is given we use the configured channels
     // we should be able to use client.channels or client.getChannels()
@@ -279,21 +310,6 @@ const sayFn = (client, target) => (msg) => {
             log$g.info(e);
         });
     });
-};
-const mayExecute = (context, cmd) => {
-    if (!cmd.restrict_to || cmd.restrict_to.length === 0) {
-        return true;
-    }
-    if (cmd.restrict_to.includes('mod') && isMod(context)) {
-        return true;
-    }
-    if (cmd.restrict_to.includes('sub') && isSubscriber(context)) {
-        return true;
-    }
-    if (cmd.restrict_to.includes('broadcaster') && isBroadcaster(context)) {
-        return true;
-    }
-    return false;
 };
 const parseCommandFromTriggerAndMessage = (msg, trigger) => {
     if (trigger.type !== 'command') {
@@ -621,7 +637,6 @@ var fn = {
     mimeToExt,
     decodeBase64Image,
     sayFn,
-    mayExecute,
     parseCommandFromTriggerAndMessage,
     parseCommandFromCmdAndMessage,
     passwordSalt,
@@ -636,9 +651,6 @@ var fn = {
     parseHumanDuration,
     mustParseHumanDuration,
     humanDuration,
-    isBroadcaster,
-    isMod,
-    isSubscriber,
     doReplacements,
     nonce,
     split,
@@ -1798,7 +1810,6 @@ class TwitchPubSubClient {
     }
 }
 
-const MOD_OR_ABOVE = ["mod", "broadcaster"];
 const newText = () => '';
 const newMedia = () => ({
     sound: {
@@ -1878,7 +1889,8 @@ const commands = {
             data: {
                 tag: ''
             },
-        })
+        }),
+        RequiresAccessToken: () => true,
     },
     chatters: {
         Name: () => "chatters command",
@@ -1890,7 +1902,8 @@ const commands = {
             variables: [],
             variableChanges: [],
             data: {},
-        })
+        }),
+        RequiresAccessToken: () => false,
     },
     countdown: {
         Name: () => "countdown",
@@ -1908,6 +1921,7 @@ const commands = {
                 outro: 'Done!'
             },
         }),
+        RequiresAccessToken: () => false,
     },
     dict_lookup: {
         Name: () => "dictionary lookup",
@@ -1923,6 +1937,7 @@ const commands = {
                 phrase: '',
             },
         }),
+        RequiresAccessToken: () => false,
     },
     madochan_createword: {
         Name: () => "madochan",
@@ -1939,6 +1954,7 @@ const commands = {
                 weirdness: 1,
             },
         }),
+        RequiresAccessToken: () => false,
     },
     media: {
         Name: () => "media command",
@@ -1951,6 +1967,7 @@ const commands = {
             variableChanges: [],
             data: newMedia(),
         }),
+        RequiresAccessToken: () => false,
     },
     media_volume: {
         Name: () => "media volume command",
@@ -1964,7 +1981,8 @@ const commands = {
             variables: [],
             variableChanges: [],
             data: {},
-        })
+        }),
+        RequiresAccessToken: () => false,
     },
     text: {
         Name: () => "command",
@@ -1979,6 +1997,7 @@ const commands = {
                 text: [newText()],
             },
         }),
+        RequiresAccessToken: () => false,
     },
     remove_stream_tags: {
         Name: () => "remove_stream_tags command",
@@ -1993,6 +2012,7 @@ const commands = {
                 tag: ''
             },
         }),
+        RequiresAccessToken: () => true,
     },
     set_channel_game_id: {
         Name: () => "change stream category command",
@@ -2007,6 +2027,7 @@ const commands = {
                 game_id: ''
             },
         }),
+        RequiresAccessToken: () => true,
     },
     set_channel_title: {
         Name: () => "change stream title command",
@@ -2021,6 +2042,7 @@ const commands = {
                 title: ''
             },
         }),
+        RequiresAccessToken: () => true,
     },
     sr_current: {
         Name: () => "sr_current",
@@ -2033,6 +2055,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_undo: {
         Name: () => "sr_undo",
@@ -2045,6 +2068,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_good: {
         Name: () => "sr_good",
@@ -2057,6 +2081,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_bad: {
         Name: () => "sr_bad",
@@ -2069,6 +2094,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_stats: {
         Name: () => "sr_stats",
@@ -2081,6 +2107,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_prev: {
         Name: () => "sr_prev",
@@ -2093,6 +2120,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_next: {
         Name: () => "sr_next",
@@ -2105,6 +2133,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_jumptonew: {
         Name: () => "sr_jumptonew",
@@ -2117,6 +2146,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_clear: {
         Name: () => "sr_clear",
@@ -2129,6 +2159,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_rm: {
         Name: () => "sr_rm",
@@ -2141,6 +2172,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_shuffle: {
         Name: () => "sr_shuffle",
@@ -2156,6 +2188,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_reset_stats: {
         Name: () => "sr_reset_stats",
@@ -2168,6 +2201,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_loop: {
         Name: () => "sr_loop",
@@ -2180,6 +2214,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_noloop: {
         Name: () => "sr_noloop",
@@ -2192,6 +2227,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_pause: {
         Name: () => "sr_pause",
@@ -2204,6 +2240,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_unpause: {
         Name: () => "sr_unpause",
@@ -2216,6 +2253,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_hidevideo: {
         Name: () => "sr_hidevideo",
@@ -2228,6 +2266,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_showvideo: {
         Name: () => "sr_showvideo",
@@ -2240,6 +2279,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_request: {
         Name: () => "sr_request",
@@ -2256,6 +2296,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_re_request: {
         Name: () => "sr_re_request",
@@ -2271,6 +2312,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_addtag: {
         Name: () => "sr_addtag",
@@ -2283,6 +2325,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_rmtag: {
         Name: () => "sr_rmtag",
@@ -2295,6 +2338,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_volume: {
         Name: () => "sr_volume",
@@ -2309,6 +2353,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_filter: {
         Name: () => "sr_filter",
@@ -2322,6 +2367,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_preset: {
         Name: () => "sr_preset",
@@ -2335,6 +2381,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
     sr_queue: {
         Name: () => "sr_queue",
@@ -2347,6 +2394,7 @@ const commands = {
             variableChanges: [],
             data: {},
         }),
+        RequiresAccessToken: () => false,
     },
 };
 
@@ -2439,13 +2487,13 @@ class TwitchClientManager {
             } // Ignore messages from the bot
             // log.debug(context)
             const roles = [];
-            if (fn.isMod(context)) {
+            if (isMod(context)) {
                 roles.push('M');
             }
-            if (fn.isSubscriber(context)) {
+            if (isSubscriber(context)) {
                 roles.push('S');
             }
-            if (fn.isBroadcaster(context)) {
+            if (isBroadcaster(context)) {
                 roles.push('B');
             }
             this.log.info(`${context.username}[${roles.join('')}]@${target}: ${msg}`);
@@ -4939,7 +4987,7 @@ class VoteModule {
         const say = fn.sayFn(client, target);
         // maybe open up for everyone, but for now use dedicated
         // commands like !play THING
-        if (!fn.isMod(context) && !fn.isBroadcaster(context)) {
+        if (!isMod(context) && !isBroadcaster(context)) {
             say('Not allowed to execute !vote command');
         }
         if (command.args.length < 2) {
@@ -4973,7 +5021,7 @@ class VoteModule {
             return;
         }
         if (command.args[0] === 'clear') {
-            if (!fn.isBroadcaster(context)) {
+            if (!isBroadcaster(context)) {
                 say('Not allowed to execute !vote clear');
             }
             const type = command.args[1];

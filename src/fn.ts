@@ -5,6 +5,7 @@ import { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustPar
 
 import { Command, GlobalVariable, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module, CommandTrigger } from './types'
 import Variables from './services/Variables'
+import { mayExecute } from './common/permissions'
 
 export { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove }
 
@@ -55,10 +56,6 @@ const sleep = (ms: number) => {
   })
 }
 
-const isBroadcaster = (ctx: TwitchChatContext) => ctx['room-id'] === ctx['user-id']
-const isMod = (ctx: TwitchChatContext) => !!ctx.mod
-const isSubscriber = (ctx: TwitchChatContext) => !!ctx.subscriber
-
 const sayFn = (
   client: TwitchChatClient,
   target: string | null,
@@ -79,22 +76,6 @@ const sayFn = (
       })
     })
   }
-
-const mayExecute = (context: TwitchChatContext, cmd: Command | FunctionCommand) => {
-  if (!cmd.restrict_to || cmd.restrict_to.length === 0) {
-    return true
-  }
-  if (cmd.restrict_to.includes('mod') && isMod(context)) {
-    return true
-  }
-  if (cmd.restrict_to.includes('sub') && isSubscriber(context)) {
-    return true
-  }
-  if (cmd.restrict_to.includes('broadcaster') && isBroadcaster(context)) {
-    return true
-  }
-  return false
-}
 
 export const parseCommandFromTriggerAndMessage = (
   msg: string,
@@ -524,7 +505,6 @@ export default {
   mimeToExt,
   decodeBase64Image,
   sayFn,
-  mayExecute,
   parseCommandFromTriggerAndMessage,
   parseCommandFromCmdAndMessage,
   passwordSalt,
@@ -539,9 +519,6 @@ export default {
   parseHumanDuration,
   mustParseHumanDuration,
   humanDuration,
-  isBroadcaster,
-  isMod,
-  isSubscriber,
   doReplacements,
   nonce,
   split,

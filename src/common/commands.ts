@@ -1,10 +1,10 @@
-import { Command, CommandAction, CommandTrigger, CommandRestrict, CommandTriggerType, FunctionCommand, MediaCommandData } from "../types"
-
-export const MOD_OR_ABOVE: CommandRestrict[] = ["mod", "broadcaster"]
+import { mustParseHumanDuration } from "../common/fn"
+import { Command, CommandAction, CommandTrigger, CommandTriggerType, FunctionCommand, MediaCommandData } from "../types"
+import { MOD_OR_ABOVE } from './permissions'
 
 export const newText = () => ''
 
-export const newMedia = (): MediaCommandData => ({
+const newMedia = (): MediaCommandData => ({
   sound: {
     filename: '',
     file: '',
@@ -18,6 +18,10 @@ export const newMedia = (): MediaCommandData => ({
   },
   minDurationMs: '1s',
 })
+
+export const newCountdownDelay = () => ({ type: "delay", value: "1s" })
+export const newCountdownText = () => ({ type: "text", value: newText() })
+export const newCountdownMedia = () => ({ type: "media", value: newMedia() })
 
 export const newTrigger = (type: CommandTriggerType): CommandTrigger => ({
   type,
@@ -82,10 +86,35 @@ export const getUniqueCommandsByTrigger = (
   return tmp.filter((item, i, ar) => ar.indexOf(item) === i)
 }
 
+export const isValidTrigger = (trigger: CommandTrigger) => {
+  if (trigger.type === "command") {
+    if (!trigger.data.command) {
+      return false;
+    }
+    return true;
+  }
+
+  if (trigger.type === "timer") {
+    try {
+      mustParseHumanDuration(trigger.data.minInterval);
+    } catch (e) {
+      return false;
+    }
+    const l = parseInt(`${trigger.data.minLines}`, 10);
+    if (isNaN(l)) {
+      return false;
+    }
+    return true;
+  }
+
+  return true;
+}
+
 interface CommandDef {
   Name: () => string
   Description: () => string
   NewCommand: () => Command
+  RequiresAccessToken: () => boolean
 }
 
 export const commands: Record<CommandAction, CommandDef> = {
@@ -101,7 +130,8 @@ export const commands: Record<CommandAction, CommandDef> = {
       data: {
         tag: ''
       },
-    })
+    }),
+    RequiresAccessToken: () => true,
   },
   chatters: {
     Name: () => "chatters command",
@@ -113,7 +143,8 @@ export const commands: Record<CommandAction, CommandDef> = {
       variables: [],
       variableChanges: [],
       data: {},
-    })
+    }),
+    RequiresAccessToken: () => false,
   },
   countdown: {
     Name: () => "countdown",
@@ -131,6 +162,7 @@ export const commands: Record<CommandAction, CommandDef> = {
         outro: 'Done!'
       },
     }),
+    RequiresAccessToken: () => false,
   },
   dict_lookup: {
     Name: () => "dictionary lookup",
@@ -146,6 +178,7 @@ export const commands: Record<CommandAction, CommandDef> = {
         phrase: '',
       },
     }),
+    RequiresAccessToken: () => false,
   },
   madochan_createword: {
     Name: () => "madochan",
@@ -162,6 +195,7 @@ export const commands: Record<CommandAction, CommandDef> = {
         weirdness: 1,
       },
     }),
+    RequiresAccessToken: () => false,
   },
   media: {
     Name: () => "media command",
@@ -174,6 +208,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: newMedia(),
     }),
+    RequiresAccessToken: () => false,
   },
   media_volume: {
     Name: () => "media volume command",
@@ -187,7 +222,8 @@ export const commands: Record<CommandAction, CommandDef> = {
       variables: [],
       variableChanges: [],
       data: {},
-    })
+    }),
+    RequiresAccessToken: () => false,
   },
   text: {
     Name: () => "command",
@@ -202,6 +238,7 @@ export const commands: Record<CommandAction, CommandDef> = {
         text: [newText()],
       },
     }),
+    RequiresAccessToken: () => false,
   },
   remove_stream_tags: {
     Name: () => "remove_stream_tags command",
@@ -216,6 +253,7 @@ export const commands: Record<CommandAction, CommandDef> = {
         tag: ''
       },
     }),
+    RequiresAccessToken: () => true,
   },
   set_channel_game_id: {
     Name: () => "change stream category command",
@@ -230,6 +268,7 @@ export const commands: Record<CommandAction, CommandDef> = {
         game_id: ''
       },
     }),
+    RequiresAccessToken: () => true,
   },
   set_channel_title: {
     Name: () => "change stream title command",
@@ -244,6 +283,7 @@ export const commands: Record<CommandAction, CommandDef> = {
         title: ''
       },
     }),
+    RequiresAccessToken: () => true,
   },
   sr_current: {
     Name: () => "sr_current",
@@ -256,6 +296,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_undo: {
     Name: () => "sr_undo",
@@ -268,6 +309,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_good: {
     Name: () => "sr_good",
@@ -280,6 +322,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_bad: {
     Name: () => "sr_bad",
@@ -292,6 +335,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_stats: {
     Name: () => "sr_stats",
@@ -304,6 +348,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_prev: {
     Name: () => "sr_prev",
@@ -316,6 +361,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_next: {
     Name: () => "sr_next",
@@ -328,6 +374,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_jumptonew: {
     Name: () => "sr_jumptonew",
@@ -340,6 +387,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_clear: {
     Name: () => "sr_clear",
@@ -352,6 +400,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_rm: {
     Name: () => "sr_rm",
@@ -364,6 +413,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_shuffle: {
     Name: () => "sr_shuffle",
@@ -379,6 +429,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_reset_stats: {
     Name: () => "sr_reset_stats",
@@ -391,6 +442,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_loop: {
     Name: () => "sr_loop",
@@ -403,6 +455,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_noloop: {
     Name: () => "sr_noloop",
@@ -415,6 +468,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_pause: {
     Name: () => "sr_pause",
@@ -427,6 +481,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_unpause: {
     Name: () => "sr_unpause",
@@ -439,6 +494,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_hidevideo: {
     Name: () => "sr_hidevideo",
@@ -451,6 +507,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_showvideo: {
     Name: () => "sr_showvideo",
@@ -463,6 +520,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_request: {
     Name: () => "sr_request",
@@ -479,6 +537,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_re_request: {
     Name: () => "sr_re_request",
@@ -494,6 +553,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_addtag: {
     Name: () => "sr_addtag",
@@ -506,6 +566,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_rmtag: {
     Name: () => "sr_rmtag",
@@ -518,6 +579,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_volume: {
     Name: () => "sr_volume",
@@ -532,6 +594,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_filter: {
     Name: () => "sr_filter",
@@ -545,6 +608,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_preset: {
     Name: () => "sr_preset",
@@ -558,6 +622,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
   sr_queue: {
     Name: () => "sr_queue",
@@ -570,6 +635,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       variableChanges: [],
       data: {},
     }),
+    RequiresAccessToken: () => false,
   },
 }
 
