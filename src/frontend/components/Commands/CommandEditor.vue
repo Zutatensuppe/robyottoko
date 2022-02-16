@@ -653,12 +653,7 @@ export default defineComponent({
       if (!this.item) {
         return false;
       }
-      return (
-        this.item.action === "set_channel_title" ||
-        this.item.action === "set_channel_game_id" ||
-        this.item.action === "add_stream_tags" ||
-        this.item.action === "remove_stream_tags"
-      );
+      return commands[this.item.action].RequiresAccessToken()
     },
     possibleTriggerActions() {
       return [
