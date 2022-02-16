@@ -1,16 +1,14 @@
-import WebSocketServer from '../net/WebSocketServer'
-import Variables from '../services/Variables'
-import { CommandFunction, CountdownAction, CountdownCommand, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import { Bot, CommandFunction, CountdownAction, CountdownCommand, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
 import fn from './../fn'
 import { logger } from './../common/fn'
+import { User } from '../services/Users'
 
 const log = logger('countdown.ts')
 
 const countdown = (
   originalCmd: CountdownCommand,
-  variables: Variables,
-  wss: WebSocketServer,
-  userId: number,
+  bot: Bot,
+  user: User,
 ): CommandFunction => async (
   command: RawCommand | null,
   client: TwitchChatClient | null,
@@ -21,6 +19,8 @@ const countdown = (
     if (!client) {
       return
     }
+
+    const variables = bot.getUserVariables(user)
 
     const sayFn = fn.sayFn(client, target)
     const doReplacements = async (text: string) => {
@@ -70,7 +70,7 @@ const countdown = (
         actions.push(async () => say(`${a.value}`))
       } else if (a.type === 'media') {
         actions.push(async () => {
-          wss.notifyAll([userId], 'general', {
+          bot.getWebSocketServer().notifyAll([user.id], 'general', {
             event: 'playmedia',
             data: a.value,
           })

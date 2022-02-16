@@ -1,14 +1,9 @@
 import fn from '../../fn'
 import { logger } from '../../common/fn'
 import fs from 'fs'
-import WebServer from '../../WebServer'
-import WebSocketServer, { Socket } from '../../net/WebSocketServer'
-import Tokens from '../../services/Tokens'
-import Variables from '../../services/Variables'
+import { Socket } from '../../net/WebSocketServer'
 import { Bot, ChatMessageContext, DrawcastSettings, Module, RewardRedemptionContext } from '../../types'
-import ModuleStorage from '../ModuleStorage'
 import { User } from '../../services/Users'
-import TwitchClientManager from '../../net/TwitchClientManager'
 import { default_settings } from './DrawcastModuleCommon'
 import { NextFunction, Response } from 'express'
 
@@ -23,13 +18,9 @@ interface PostEventData {
 
 class DrawcastModule implements Module {
   public name = 'drawcast'
-  public variables: Variables
 
-  private user: User
-  private wss: WebSocketServer
-  private storage: ModuleStorage
-  private ws: WebServer
-  private tokens: Tokens
+  public bot: Bot
+  public user: User
 
   private defaultSettings: DrawcastSettings = default_settings()
   private data: { settings: DrawcastSettings }
@@ -38,15 +29,10 @@ class DrawcastModule implements Module {
   constructor(
     bot: Bot,
     user: User,
-    _clientManager: TwitchClientManager,
   ) {
-    this.variables = bot.getUserVariables(user)
+    this.bot = bot
     this.user = user
-    this.wss = bot.getWebSocketServer()
-    this.storage = bot.getUserModuleStorage(user)
 
-    this.ws = bot.getWebServer()
-    this.tokens = bot.getTokens()
     this.data = this.reinit()
 
     this.images = this.loadAllImages().slice(0, 20)
@@ -78,7 +64,7 @@ class DrawcastModule implements Module {
   }
 
   reinit() {
-    const data = this.storage.load(this.name, {
+    const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
       settings: this.defaultSettings
     })
     if (!data.settings.palette) {
@@ -137,8 +123,8 @@ class DrawcastModule implements Module {
   }
 
   drawUrl() {
-    const pubToken = this.tokens.getPubTokenForUserId(this.user.id).token
-    return this.ws.pubUrl(this.ws.widgetUrl('drawcast_draw', pubToken))
+    const pubToken = this.bot.getTokens().getPubTokenForUserId(this.user.id).token
+    return this.bot.getWebServer().pubUrl(this.bot.getWebServer().widgetUrl('drawcast_draw', pubToken))
   }
 
   wsdata(eventName: string) {
@@ -152,11 +138,11 @@ class DrawcastModule implements Module {
   }
 
   updateClient(eventName: string, ws: Socket) {
-    this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
+    this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
   }
 
   updateClients(eventName: string) {
-    this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName))
+    this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, this.wsdata(eventName))
   }
 
   getWsEvents() {
@@ -176,14 +162,14 @@ class DrawcastModule implements Module {
         this.images.unshift(imgurl)
         this.images = this.images.slice(0, 20)
 
-        this.wss.notifyAll([this.user.id], this.name, {
+        this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
           event: data.event,
           data: { img: imgurl },
         })
       },
       'save': (ws: Socket, { settings }: { settings: DrawcastSettings }) => {
         this.data.settings = settings
-        this.storage.save(this.name, this.data)
+        this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
         this.data = this.reinit()
         this.updateClients('init')
       },

@@ -1,8 +1,8 @@
-import Variables from '../services/Variables'
-import { CommandFunction, DictLookupCommand, DictSearchResponseDataEntry, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import { Bot, CommandFunction, DictLookupCommand, DictSearchResponseDataEntry, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
 import JishoOrg from './../services/JishoOrg'
 import DictCc from './../services/DictCc'
 import fn from './../fn'
+import { User } from '../services/Users'
 
 type DictFn = (phrase: string) => Promise<DictSearchResponseDataEntry[]>
 
@@ -32,7 +32,8 @@ for (const key of Object.keys(DictCc.LANG_TO_URL_MAP)) {
 
 const dictLookup = (
   originalCmd: DictLookupCommand,
-  variables: Variables,
+  bot: Bot,
+  user: User,
   // no params
 ): CommandFunction => async (
   command: RawCommand | null,
@@ -44,6 +45,7 @@ const dictLookup = (
     if (!client || !command) {
       return []
     }
+    const variables = bot.getUserVariables(user)
     const say = fn.sayFn(client, target)
     const tmpLang = await fn.doReplacements(originalCmd.data.lang, command, context, variables, originalCmd)
     const dictFn = LANG_TO_FN[tmpLang] || null

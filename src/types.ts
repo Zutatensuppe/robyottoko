@@ -3,7 +3,9 @@ import { NextFunction, Response } from 'express'
 import { Client } from 'tmi.js'
 import { LogLevel } from './common/fn'
 import Db from './Db'
+import ModuleManager from './mod/ModuleManager'
 import ModuleStorage from './mod/ModuleStorage'
+import TwitchClientManager from './net/TwitchClientManager'
 import WebSocketServer, { Socket } from './net/WebSocketServer'
 import Cache from './services/Cache'
 import Tokens, { Token } from './services/Tokens'
@@ -400,7 +402,8 @@ export interface TwitchChannelPointsRedemption {
 
 export interface Module {
   name: string
-  variables: Variables
+  bot: Bot
+  user: User
   userChanged: (user: User) => Promise<void>
   saveCommands: () => void
   getWsEvents: () => Record<string, (ws: Socket, data?: any) => any>
@@ -432,6 +435,7 @@ export interface MailService {
 }
 
 export interface Bot {
+  getModuleManager: () => ModuleManager
   getDb: () => Db
   getTokens: () => Tokens
   getCache: () => Cache
@@ -440,4 +444,5 @@ export interface Bot {
 
   getUserVariables: (user: User) => Variables
   getUserModuleStorage: (user: User) => ModuleStorage
+  getUserTwitchClientManager: (user: User) => TwitchClientManager
 }

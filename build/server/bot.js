@@ -317,10 +317,11 @@ const applyVariableChanges = async (cmdDef, contextModule, rawCmd, context) => {
     if (!cmdDef.variableChanges) {
         return;
     }
+    const variables = contextModule.bot.getUserVariables(contextModule.user);
     for (const variableChange of cmdDef.variableChanges) {
         const op = variableChange.change;
-        const name = await doReplacements(variableChange.name, rawCmd, context, contextModule.variables, cmdDef);
-        const value = await doReplacements(variableChange.value, rawCmd, context, contextModule.variables, cmdDef);
+        const name = await doReplacements(variableChange.name, rawCmd, context, variables, cmdDef);
+        const value = await doReplacements(variableChange.value, rawCmd, context, variables, cmdDef);
         // check if there is a local variable for the change
         if (cmdDef.variables) {
             const idx = cmdDef.variables.findIndex(v => (v.name === name));
@@ -337,17 +338,17 @@ const applyVariableChanges = async (cmdDef, contextModule, rawCmd, context) => {
                 continue;
             }
         }
-        const globalVars = contextModule.variables.all();
+        const globalVars = variables.all();
         const idx = globalVars.findIndex(v => (v.name === name));
         if (idx !== -1) {
             if (op === 'set') {
-                contextModule.variables.set(name, value);
+                variables.set(name, value);
             }
             else if (op === 'increase_by') {
-                contextModule.variables.set(name, _increase(globalVars[idx].value, value));
+                variables.set(name, _increase(globalVars[idx].value, value));
             }
             else if (op === 'decrease_by') {
-                contextModule.variables.set(name, _decrease(globalVars[idx].value, value));
+                variables.set(name, _decrease(globalVars[idx].value, value));
             }
             //
             continue;
@@ -1797,6 +1798,158 @@ class TwitchPubSubClient {
     }
 }
 
+var addStreamTagsCommon = {
+    Name: () => "add_stream_tags command",
+    Description: () => "Add streamtag",
+    NewCommand: () => ({
+        triggers: [newCommandTrigger()],
+        action: 'add_stream_tags',
+        restrict_to: MOD_OR_ABOVE,
+        variables: [],
+        variableChanges: [],
+        data: {
+            tag: ''
+        },
+    }),
+};
+
+var chattersCommon = {
+    Name: () => "chatters command",
+    Description: () => "Outputs the people who chatted during the stream.",
+    NewCommand: () => ({
+        triggers: [newCommandTrigger()],
+        action: 'chatters',
+        restrict_to: [],
+        variables: [],
+        variableChanges: [],
+        data: {},
+    }),
+};
+
+var countdownCommon = {
+    Name: () => "countdown",
+    Description: () => "Add a countdown or messages spaced by time intervals.",
+    NewCommand: () => ({
+        triggers: [newCommandTrigger()],
+        action: 'countdown',
+        restrict_to: [],
+        variables: [],
+        variableChanges: [],
+        data: {
+            steps: 3,
+            interval: '1s',
+            intro: 'Starting countdown...',
+            outro: 'Done!'
+        },
+    }),
+};
+
+var dictLookupCommon = {
+    Name: () => "dictionary lookup",
+    Description: () => "Outputs the translation for the searched word.",
+    NewCommand: () => ({
+        triggers: [newCommandTrigger()],
+        action: 'dict_lookup',
+        restrict_to: [],
+        variables: [],
+        variableChanges: [],
+        data: {
+            lang: 'ja',
+            phrase: '',
+        },
+    }),
+};
+
+var madochanCreateWordCommon = {
+    Name: () => "madochan",
+    Description: () => "Creates a word for a definition.",
+    NewCommand: () => ({
+        triggers: [newCommandTrigger()],
+        action: 'madochan_createword',
+        restrict_to: [],
+        variables: [],
+        variableChanges: [],
+        data: {
+            // TODO: use from same resource as server
+            model: '100epochs800lenhashingbidirectional.h5',
+            weirdness: 1,
+        },
+    }),
+};
+
+var playMediaCommon = {
+    Name: () => "media command",
+    Description: () => "Display an image and/or play a sound.",
+    NewCommand: () => ({
+        triggers: [newCommandTrigger()],
+        action: 'media',
+        restrict_to: [],
+        variables: [],
+        variableChanges: [],
+        data: newMedia(),
+    }),
+};
+
+var randomTextCommon = {
+    Name: () => "command",
+    Description: () => "Send a message to chat",
+    NewCommand: () => ({
+        triggers: [newCommandTrigger()],
+        action: 'text',
+        restrict_to: [],
+        variables: [],
+        variableChanges: [],
+        data: {
+            text: [newText()],
+        },
+    }),
+};
+
+var removeStreamTagsCommon = {
+    Name: () => "remove_stream_tags command",
+    Description: () => "Remove streamtag",
+    NewCommand: () => ({
+        triggers: [newCommandTrigger()],
+        action: 'remove_stream_tags',
+        restrict_to: MOD_OR_ABOVE,
+        variables: [],
+        variableChanges: [],
+        data: {
+            tag: ''
+        },
+    }),
+};
+
+var setChannelGameIdCommon = {
+    Name: () => "change stream category command",
+    Description: () => "Change the stream category",
+    NewCommand: () => ({
+        triggers: [newCommandTrigger()],
+        action: 'set_channel_game_id',
+        restrict_to: MOD_OR_ABOVE,
+        variables: [],
+        variableChanges: [],
+        data: {
+            game_id: ''
+        },
+    }),
+};
+
+var setChannelTitleCommon = {
+    Name: () => "change stream title command",
+    Description: () => "Change the stream title",
+    NewCommand: () => ({
+        triggers: [newCommandTrigger()],
+        action: 'set_channel_title',
+        restrict_to: MOD_OR_ABOVE,
+        variables: [],
+        variableChanges: [],
+        data: {
+            title: ''
+        },
+    }),
+};
+
 const MOD_OR_ABOVE = ["mod", "broadcaster"];
 const newText = () => '';
 const newMedia = () => ({
@@ -1812,12 +1965,6 @@ const newMedia = () => ({
         urlpath: '',
     },
     minDurationMs: '1s',
-});
-const newCountdown = () => ({
-    steps: 3,
-    interval: '1s',
-    intro: 'Starting countdown...',
-    outro: 'Done!'
 });
 const newTrigger = (type) => ({
     type,
@@ -1844,24 +1991,8 @@ const newCommandTrigger = (command = '', commandExact = false) => {
 const newCmd = (type) => {
     switch (type) {
         // GENERAL
-        case 'text': return {
-            triggers: [newCommandTrigger()],
-            action: 'text',
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {
-                text: [newText()],
-            },
-        };
-        case 'media': return {
-            triggers: [newCommandTrigger()],
-            action: 'media',
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: newMedia(),
-        };
+        case 'text': return randomTextCommon.NewCommand();
+        case 'media': return playMediaCommon.NewCommand();
         case 'media_volume': return {
             triggers: [newCommandTrigger()],
             action: 'media_volume',
@@ -1870,85 +2001,14 @@ const newCmd = (type) => {
             variableChanges: [],
             data: {},
         };
-        case 'countdown': return {
-            triggers: [newCommandTrigger()],
-            action: 'countdown',
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: newCountdown(),
-        };
-        case 'dict_lookup': return {
-            triggers: [newCommandTrigger()],
-            action: 'dict_lookup',
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {
-                lang: 'ja',
-                phrase: '',
-            },
-        };
-        case 'madochan_createword': return {
-            triggers: [newCommandTrigger()],
-            action: 'madochan_createword',
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {
-                // TODO: use from same resource as server
-                model: '100epochs800lenhashingbidirectional.h5',
-                weirdness: 1,
-            },
-        };
-        case 'chatters': return {
-            triggers: [newCommandTrigger()],
-            action: 'chatters',
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {},
-        };
-        case 'set_channel_title': return {
-            triggers: [newCommandTrigger()],
-            action: 'set_channel_title',
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {
-                title: ''
-            },
-        };
-        case 'set_channel_game_id': return {
-            triggers: [newCommandTrigger()],
-            action: 'set_channel_game_id',
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {
-                game_id: ''
-            },
-        };
-        case "add_stream_tags": return {
-            triggers: [newCommandTrigger()],
-            action: 'add_stream_tags',
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {
-                tag: ''
-            },
-        };
-        case "remove_stream_tags": return {
-            triggers: [newCommandTrigger()],
-            action: 'remove_stream_tags',
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {
-                tag: ''
-            },
-        };
+        case 'countdown': return countdownCommon.NewCommand();
+        case 'dict_lookup': return dictLookupCommon.NewCommand();
+        case 'madochan_createword': return madochanCreateWordCommon.NewCommand();
+        case 'chatters': return chattersCommon.NewCommand();
+        case 'set_channel_title': return setChannelTitleCommon.NewCommand();
+        case 'set_channel_game_id': return setChannelGameIdCommon.NewCommand();
+        case "add_stream_tags": return addStreamTagsCommon.NewCommand();
+        case "remove_stream_tags": return removeStreamTagsCommon.NewCommand();
         // SONG REQUEST
         case 'sr_current': return {
             action: 'sr_current',
@@ -2193,7 +2253,7 @@ const getUniqueCommandsByTrigger = (commands, trigger) => {
 
 // @ts-ignore
 class TwitchClientManager {
-    constructor(cfg, db, user, twitchChannelRepo, moduleManager) {
+    constructor(bot, user, cfg, twitchChannelRepo) {
         this.chatClient = null;
         this.helixClient = null;
         this.identity = null;
@@ -2201,12 +2261,11 @@ class TwitchClientManager {
         // this should probably be handled in the pub sub client code?
         // channel_id => [] list of auth tokens that are bad
         this.badAuthTokens = {};
-        this.cfg = cfg;
-        this.db = db;
+        this.bot = bot;
         this.user = user;
+        this.cfg = cfg;
         this.log = logger('TwitchClientManager.ts', `${user.name}|`);
         this.twitchChannelRepo = twitchChannelRepo;
-        this.moduleManager = moduleManager;
     }
     async userChanged(user) {
         this.user = user;
@@ -2238,10 +2297,8 @@ class TwitchClientManager {
     async init(reason) {
         let connectReason = reason;
         const cfg = this.cfg;
-        const db = this.db;
         const user = this.user;
         const twitchChannelRepo = this.twitchChannelRepo;
-        const moduleManager = this.moduleManager;
         this.log = logger('TwitchClientManager.ts', `${user.name}|`);
         await this._disconnectChatClient();
         this._disconnectPubSubClient();
@@ -2293,7 +2350,7 @@ class TwitchClientManager {
                 roles.push('B');
             }
             this.log.info(`${context.username}[${roles.join('')}]@${target}: ${msg}`);
-            db.insert('chat_log', {
+            this.bot.getDb().insert('chat_log', {
                 created_at: `${new Date().toJSON()}`,
                 broadcaster_user_id: context['room-id'],
                 user_name: context.username,
@@ -2301,7 +2358,7 @@ class TwitchClientManager {
                 message: msg,
             });
             const chatMessageContext = { client: chatClient, target, context, msg };
-            for (const m of moduleManager.all(user.id)) {
+            for (const m of this.bot.getModuleManager().all(user.id)) {
                 const commands = m.getCommands() || [];
                 let triggers = [];
                 for (const command of commands) {
@@ -2407,7 +2464,7 @@ class TwitchClientManager {
                     const redemptionMessage = messageData;
                     this.log.debug(redemptionMessage.data.redemption);
                     const redemption = redemptionMessage.data.redemption;
-                    const twitchChannel = db.get('twitch_channel', { channel_id: redemption.channel_id });
+                    const twitchChannel = this.bot.getDb().get('twitch_channel', { channel_id: redemption.channel_id });
                     if (!twitchChannel) {
                         return;
                     }
@@ -2422,7 +2479,7 @@ class TwitchClientManager {
                     };
                     const msg = redemption.reward.title;
                     const rewardRedemptionContext = { client: chatClient, target, context, redemption };
-                    for (const m of moduleManager.all(user.id)) {
+                    for (const m of this.bot.getModuleManager().all(user.id)) {
                         // reward redemption should all have exact key/name of the reward,
                         // no sorting required
                         const commands = m.getCommands();
@@ -2866,10 +2923,11 @@ class Mail {
 }
 
 const log$8 = logger('countdown.ts');
-const countdown = (originalCmd, variables, wss, userId) => async (command, client, target, context, msg) => {
+const countdown = (originalCmd, bot, user) => async (command, client, target, context, msg) => {
     if (!client) {
         return;
     }
+    const variables = bot.getUserVariables(user);
     const sayFn = fn.sayFn(client, target);
     const doReplacements = async (text) => {
         return await fn.doReplacements(text, command, context, variables, originalCmd);
@@ -2913,7 +2971,7 @@ const countdown = (originalCmd, variables, wss, userId) => async (command, clien
         }
         else if (a.type === 'media') {
             actions.push(async () => {
-                wss.notifyAll([userId], 'general', {
+                bot.getWebSocketServer().notifyAll([user.id], 'general', {
                     event: 'playmedia',
                     data: a.value,
                 });
@@ -2969,25 +3027,27 @@ const madochanCreateWord = (originalCmd) => async (command, client, target, cont
     }
 };
 
-const randomText = (originalCmd, variables) => async (command, client, target, context, msg) => {
+const randomText = (originalCmd, bot, user) => async (command, client, target, context, msg) => {
     if (!client) {
         return;
     }
+    const variables = bot.getUserVariables(user);
     const texts = originalCmd.data.text;
     const say = fn.sayFn(client, target);
     say(await fn.doReplacements(fn.getRandom(texts), command, context, variables, originalCmd));
 };
 
-const playMedia = (originalCmd, wss, userId) => (command, client, target, context, msg) => {
+const playMedia = (originalCmd, bot, user) => (command, client, target, context, msg) => {
     const data = originalCmd.data;
-    wss.notifyAll([userId], 'general', {
+    bot.getWebSocketServer().notifyAll([user.id], 'general', {
         event: 'playmedia',
         data: data,
     });
 };
 
 const log$7 = logger('chatters.ts');
-const chatters = (db, helixClient) => async (command, client, target, context, msg) => {
+const chatters = (bot, user) => async (command, client, target, context, msg) => {
+    const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!client || !context || !helixClient) {
         log$7.info('client', client);
         log$7.info('context', context);
@@ -3001,6 +3061,7 @@ const chatters = (db, helixClient) => async (command, client, target, context, m
         say(`It seems this channel is not live at the moment...`);
         return;
     }
+    const db = bot.getDb();
     const [whereSql, whereValues] = db._buildWhere({
         broadcaster_user_id: context['room-id'],
         created_at: { '$gte': stream.started_at },
@@ -3017,7 +3078,8 @@ const chatters = (db, helixClient) => async (command, client, target, context, m
 };
 
 const log$6 = logger('setChannelTitle.ts');
-const setChannelTitle = (originalCmd, helixClient, variables) => async (command, client, target, context, msg) => {
+const setChannelTitle = (originalCmd, bot, user) => async (command, client, target, context, msg) => {
+    const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!client || !command || !context || !helixClient) {
         log$6.info('client', client);
         log$6.info('command', command);
@@ -3026,6 +3088,7 @@ const setChannelTitle = (originalCmd, helixClient, variables) => async (command,
         log$6.info('unable to execute setChannelTitle, client, command, context, or helixClient missing');
         return;
     }
+    const variables = bot.getUserVariables(user);
     const say = fn.sayFn(client, target);
     const title = originalCmd.data.title === '' ? '$args()' : originalCmd.data.title;
     const tmpTitle = await fn.doReplacements(title, command, context, variables, originalCmd);
@@ -3049,7 +3112,8 @@ const setChannelTitle = (originalCmd, helixClient, variables) => async (command,
 };
 
 const log$5 = logger('setChannelGameId.ts');
-const setChannelGameId = (originalCmd, helixClient, variables) => async (command, client, target, context, msg) => {
+const setChannelGameId = (originalCmd, bot, user) => async (command, client, target, context, msg) => {
+    const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!client || !command || !context || !helixClient) {
         log$5.info('client', client);
         log$5.info('command', command);
@@ -3058,6 +3122,7 @@ const setChannelGameId = (originalCmd, helixClient, variables) => async (command
         log$5.info('unable to execute setChannelGameId, client, command, context, or helixClient missing');
         return;
     }
+    const variables = bot.getUserVariables(user);
     const say = fn.sayFn(client, target);
     const gameId = originalCmd.data.game_id === '' ? '$args()' : originalCmd.data.game_id;
     const tmpGameId = await fn.doReplacements(gameId, command, context, variables, originalCmd);
@@ -3229,10 +3294,11 @@ const LANG_TO_FN = {
 for (const key of Object.keys(DictCc.LANG_TO_URL_MAP)) {
     LANG_TO_FN[key] = (phrase) => DictCc.searchWord(phrase, key);
 }
-const dictLookup = (originalCmd, variables) => async (command, client, target, context, msg) => {
+const dictLookup = (originalCmd, bot, user) => async (command, client, target, context, msg) => {
     if (!client || !command) {
         return [];
     }
+    const variables = bot.getUserVariables(user);
     const say = fn.sayFn(client, target);
     const tmpLang = await fn.doReplacements(originalCmd.data.lang, command, context, variables, originalCmd);
     const dictFn = LANG_TO_FN[tmpLang] || null;
@@ -3254,7 +3320,8 @@ const dictLookup = (originalCmd, variables) => async (command, client, target, c
 };
 
 const log$4 = logger('setStreamTags.ts');
-const addStreamTags = (originalCmd, helixClient, variables) => async (command, client, target, context, msg) => {
+const addStreamTags = (originalCmd, bot, user) => async (command, client, target, context, msg) => {
+    const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!client || !command || !context || !helixClient) {
         log$4.info('client', client);
         log$4.info('command', command);
@@ -3263,6 +3330,7 @@ const addStreamTags = (originalCmd, helixClient, variables) => async (command, c
         log$4.info('unable to execute addStreamTags, client, command, context, or helixClient missing');
         return;
     }
+    const variables = bot.getUserVariables(user);
     const say = fn.sayFn(client, target);
     const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag;
     const tmpTag = await fn.doReplacements(tag, command, context, variables, originalCmd);
@@ -3299,7 +3367,8 @@ const addStreamTags = (originalCmd, helixClient, variables) => async (command, c
 };
 
 const log$3 = logger('setStreamTags.ts');
-const removeStreamTags = (originalCmd, helixClient, variables) => async (command, client, target, context, msg) => {
+const removeStreamTags = (originalCmd, bot, user) => async (command, client, target, context, msg) => {
+    const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!client || !command || !context || !helixClient) {
         log$3.info('client', client);
         log$3.info('command', command);
@@ -3308,6 +3377,7 @@ const removeStreamTags = (originalCmd, helixClient, variables) => async (command
         log$3.info('unable to execute removeStreamTags, client, command, context, or helixClient missing');
         return;
     }
+    const variables = bot.getUserVariables(user);
     const say = fn.sayFn(client, target);
     const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag;
     const tmpTag = await fn.doReplacements(tag, command, context, variables, originalCmd);
@@ -3340,15 +3410,11 @@ const removeStreamTags = (originalCmd, helixClient, variables) => async (command
 };
 
 class GeneralModule {
-    constructor(bot, user, clientManager) {
+    constructor(bot, user) {
         this.name = 'general';
         this.interval = null;
-        this.db = bot.getDb();
+        this.bot = bot;
         this.user = user;
-        this.variables = bot.getUserVariables(user);
-        this.clientManager = clientManager;
-        this.storage = bot.getUserModuleStorage(user);
-        this.wss = bot.getWebSocketServer();
         const initData = this.reinit();
         this.data = initData.data;
         this.commands = initData.commands;
@@ -3369,7 +3435,7 @@ class GeneralModule {
                 if (t.lines >= t.minLines && now > t.next) {
                     const cmdDef = t.command;
                     const rawCmd = null;
-                    const client = this.clientManager.getChatClient();
+                    const client = this.bot.getUserTwitchClientManager(this.user).getChatClient();
                     const target = null;
                     const context = null;
                     const msg = null;
@@ -3433,7 +3499,7 @@ class GeneralModule {
         });
     }
     reinit() {
-        const data = this.storage.load(this.name, {
+        const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
             commands: [],
             settings: {
                 volume: 100,
@@ -3464,31 +3530,31 @@ class GeneralModule {
                     cmdObj = Object.assign({}, cmd, { fn: madochanCreateWord(cmd) });
                     break;
                 case 'dict_lookup':
-                    cmdObj = Object.assign({}, cmd, { fn: dictLookup(cmd, this.variables) });
+                    cmdObj = Object.assign({}, cmd, { fn: dictLookup(cmd, this.bot, this.user) });
                     break;
                 case 'text':
-                    cmdObj = Object.assign({}, cmd, { fn: randomText(cmd, this.variables) });
+                    cmdObj = Object.assign({}, cmd, { fn: randomText(cmd, this.bot, this.user) });
                     break;
                 case 'media':
-                    cmdObj = Object.assign({}, cmd, { fn: playMedia(cmd, this.wss, this.user.id) });
+                    cmdObj = Object.assign({}, cmd, { fn: playMedia(cmd, this.bot, this.user) });
                     break;
                 case 'countdown':
-                    cmdObj = Object.assign({}, cmd, { fn: countdown(cmd, this.variables, this.wss, this.user.id) });
+                    cmdObj = Object.assign({}, cmd, { fn: countdown(cmd, this.bot, this.user) });
                     break;
                 case 'chatters':
-                    cmdObj = Object.assign({}, cmd, { fn: chatters(this.db, this.clientManager.getHelixClient()) });
+                    cmdObj = Object.assign({}, cmd, { fn: chatters(this.bot, this.user) });
                     break;
                 case 'set_channel_title':
-                    cmdObj = Object.assign({}, cmd, { fn: setChannelTitle(cmd, this.clientManager.getHelixClient(), this.variables) });
+                    cmdObj = Object.assign({}, cmd, { fn: setChannelTitle(cmd, this.bot, this.user) });
                     break;
                 case 'set_channel_game_id':
-                    cmdObj = Object.assign({}, cmd, { fn: setChannelGameId(cmd, this.clientManager.getHelixClient(), this.variables) });
+                    cmdObj = Object.assign({}, cmd, { fn: setChannelGameId(cmd, this.bot, this.user) });
                     break;
                 case 'add_stream_tags':
-                    cmdObj = Object.assign({}, cmd, { fn: addStreamTags(cmd, this.clientManager.getHelixClient(), this.variables) });
+                    cmdObj = Object.assign({}, cmd, { fn: addStreamTags(cmd, this.bot, this.user) });
                     break;
                 case 'remove_stream_tags':
-                    cmdObj = Object.assign({}, cmd, { fn: removeStreamTags(cmd, this.clientManager.getHelixClient(), this.variables) });
+                    cmdObj = Object.assign({}, cmd, { fn: removeStreamTags(cmd, this.bot, this.user) });
                     break;
             }
             if (!cmdObj) {
@@ -3536,24 +3602,24 @@ class GeneralModule {
                 commands: this.data.commands,
                 settings: this.data.settings,
                 adminSettings: this.data.adminSettings,
-                globalVariables: this.variables.all(),
+                globalVariables: this.bot.getUserVariables(this.user).all(),
             },
         };
     }
     updateClient(eventName, ws) {
-        this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws);
+        this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, this.wsdata(eventName), ws);
     }
     updateClients(eventName) {
-        this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName));
+        this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, this.wsdata(eventName));
     }
     saveSettings() {
-        this.storage.save(this.name, this.data);
+        this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
         // no need for calling reinit, that would also recreate timers and stuff
         // but updating settings shouldnt mess with those
         this.updateClients('init');
     }
     saveCommands() {
-        this.storage.save(this.name, this.data);
+        this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
         const initData = this.reinit();
         this.data = initData.data;
         this.commands = initData.commands;
@@ -3757,13 +3823,10 @@ const default_commands = (list = null) => {
     ];
 };
 class SongrequestModule {
-    constructor(bot, user, _clientManager) {
+    constructor(bot, user) {
         this.name = 'sr';
-        this.variables = bot.getUserVariables(user);
+        this.bot = bot;
         this.user = user;
-        this.cache = bot.getCache();
-        this.storage = bot.getUserModuleStorage(user);
-        this.wss = bot.getWebSocketServer();
         const initData = this.reinit();
         this.data = {
             filter: initData.data.filter,
@@ -3778,7 +3841,7 @@ class SongrequestModule {
         this.user = user;
     }
     reinit() {
-        const data = this.storage.load(this.name, {
+        const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
             filter: {
                 tag: '',
             },
@@ -3875,7 +3938,7 @@ class SongrequestModule {
         };
     }
     save() {
-        this.storage.save(this.name, {
+        this.bot.getUserModuleStorage(this.user).save(this.name, {
             filter: this.data.filter,
             playlist: this.data.playlist.map(item => {
                 item.title = item.title || '';
@@ -3902,15 +3965,15 @@ class SongrequestModule {
                 playlist: this.data.playlist,
                 settings: this.data.settings,
                 commands: this.data.commands,
-                globalVariables: this.variables.all(),
+                globalVariables: this.bot.getUserVariables(this.user).all(),
             }
         };
     }
     updateClient(eventName, ws) {
-        this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws);
+        this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, this.wsdata(eventName), ws);
     }
     updateClients(eventName) {
-        this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName));
+        this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, this.wsdata(eventName));
     }
     getWsEvents() {
         return {
@@ -4617,10 +4680,10 @@ class SongrequestModule {
     }
     async loadYoutubeData(youtubeId) {
         const key = `youtubeData_${youtubeId}_20210717_2`;
-        let d = this.cache.get(key);
+        let d = this.bot.getCache().get(key);
         if (!d) {
             d = await Youtube.fetchDataByYoutubeId(youtubeId);
-            this.cache.set(key, d);
+            this.bot.getCache().set(key, d);
         }
         return d;
     }
@@ -4717,9 +4780,10 @@ class SongrequestModule {
 }
 
 class VoteModule {
-    constructor(bot, user, _clientManager) {
+    constructor(bot, user) {
         this.name = 'vote';
-        this.variables = bot.getUserVariables(user);
+        this.bot = bot;
+        this.user = user;
         this.storage = bot.getUserModuleStorage(user);
         this.data = this.reinit();
     }
@@ -4884,12 +4948,10 @@ const default_settings$2 = () => ({
 });
 
 class SpeechToTextModule {
-    constructor(bot, user, _clientManager) {
+    constructor(bot, user) {
         this.name = 'speech-to-text';
+        this.bot = bot;
         this.user = user;
-        this.variables = bot.getUserVariables(user);
-        this.storage = bot.getUserModuleStorage(user);
-        this.wss = bot.getWebSocketServer();
         this.defaultSettings = default_settings$2();
         this.data = this.reinit();
     }
@@ -4897,7 +4959,7 @@ class SpeechToTextModule {
         this.user = user;
     }
     reinit() {
-        const data = this.storage.load(this.name, {
+        const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
             settings: this.defaultSettings
         });
         return data;
@@ -4918,10 +4980,10 @@ class SpeechToTextModule {
         };
     }
     updateClient(eventName, ws) {
-        this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws);
+        this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, this.wsdata(eventName), ws);
     }
     updateClients(eventName) {
-        this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName));
+        this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, this.wsdata(eventName));
     }
     getWsEvents() {
         return {
@@ -4933,7 +4995,7 @@ class SpeechToTextModule {
                     target: dst,
                 });
                 const respText = await getText(query);
-                this.wss.notifyOne([this.user.id], this.name, {
+                this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, {
                     event: 'translated', data: {
                         in: text,
                         out: respText,
@@ -4945,7 +5007,7 @@ class SpeechToTextModule {
             },
             'save': (ws, { settings }) => {
                 this.data.settings = settings;
-                this.storage.save(this.name, this.data);
+                this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
                 this.reinit();
                 this.updateClients('init');
             },
@@ -4986,15 +5048,11 @@ const default_settings$1 = () => ({
 });
 
 class DrawcastModule {
-    constructor(bot, user, _clientManager) {
+    constructor(bot, user) {
         this.name = 'drawcast';
         this.defaultSettings = default_settings$1();
-        this.variables = bot.getUserVariables(user);
+        this.bot = bot;
         this.user = user;
-        this.wss = bot.getWebSocketServer();
-        this.storage = bot.getUserModuleStorage(user);
-        this.ws = bot.getWebServer();
-        this.tokens = bot.getTokens();
         this.data = this.reinit();
         this.images = this.loadAllImages().slice(0, 20);
     }
@@ -5022,7 +5080,7 @@ class DrawcastModule {
         // pass
     }
     reinit() {
-        const data = this.storage.load(this.name, {
+        const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
             settings: this.defaultSettings
         });
         if (!data.settings.palette) {
@@ -5078,8 +5136,8 @@ class DrawcastModule {
         };
     }
     drawUrl() {
-        const pubToken = this.tokens.getPubTokenForUserId(this.user.id).token;
-        return this.ws.pubUrl(this.ws.widgetUrl('drawcast_draw', pubToken));
+        const pubToken = this.bot.getTokens().getPubTokenForUserId(this.user.id).token;
+        return this.bot.getWebServer().pubUrl(this.bot.getWebServer().widgetUrl('drawcast_draw', pubToken));
     }
     wsdata(eventName) {
         return {
@@ -5091,10 +5149,10 @@ class DrawcastModule {
         };
     }
     updateClient(eventName, ws) {
-        this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws);
+        this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, this.wsdata(eventName), ws);
     }
     updateClients(eventName) {
-        this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName));
+        this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, this.wsdata(eventName));
     }
     getWsEvents() {
         return {
@@ -5112,14 +5170,14 @@ class DrawcastModule {
                 fs.writeFileSync(imgpath, img.data);
                 this.images.unshift(imgurl);
                 this.images = this.images.slice(0, 20);
-                this.wss.notifyAll([this.user.id], this.name, {
+                this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
                     event: data.event,
                     data: { img: imgurl },
                 });
             },
             'save': (ws, { settings }) => {
                 this.data.settings = settings;
-                this.storage.save(this.name, this.data);
+                this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
                 this.data = this.reinit();
                 this.updateClients('init');
             },
@@ -5157,27 +5215,25 @@ const default_settings = () => ({
 
 const log$1 = logger('AvatarModule.ts');
 class AvatarModule {
-    constructor(bot, user, _clientManager) {
+    constructor(bot, user) {
         this.name = 'avatar';
         this.defaultSettings = default_settings();
         this.defaultState = { tuberIdx: -1 };
-        this.variables = bot.getUserVariables(user);
+        this.bot = bot;
         this.user = user;
-        this.wss = bot.getWebSocketServer();
-        this.storage = bot.getUserModuleStorage(user);
         this.data = this.reinit();
     }
     async userChanged(user) {
         this.user = user;
     }
     save() {
-        this.storage.save(this.name, this.data);
+        this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
     }
     saveCommands() {
         // pass
     }
     reinit() {
-        const data = this.storage.load(this.name, {
+        const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
             settings: this.defaultSettings,
             state: this.defaultState,
         });
@@ -5208,10 +5264,10 @@ class AvatarModule {
         return { event, data: this.data };
     }
     updateClient(data, ws) {
-        this.wss.notifyOne([this.user.id], this.name, data, ws);
+        this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, data, ws);
     }
     updateClients(data) {
-        this.wss.notifyAll([this.user.id], this.name, data);
+        this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, data);
     }
     getWsEvents() {
         return {
@@ -5292,37 +5348,49 @@ const eventHub = mitt();
 const moduleManager = new ModuleManager();
 const webSocketServer = new WebSocketServer(moduleManager, config.ws, auth);
 const webServer = new WebServer(eventHub, db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, config.http, config.twitch, webSocketServer, auth);
-const userVariableInstances = {};
-const userModuleStorageInstances = {};
-const bot = {
-    getDb: () => db,
-    getTokens: () => tokenRepo,
-    getCache: () => cache,
-    getWebServer: () => webServer,
-    getWebSocketServer: () => webSocketServer,
+class BotImpl {
+    constructor() {
+        this.userVariableInstances = {};
+        this.userModuleStorageInstances = {};
+        this.userTwitchClientManagerInstances = {};
+        // pass
+    }
+    getModuleManager() { return moduleManager; }
+    getDb() { return db; }
+    getTokens() { return tokenRepo; }
+    getCache() { return cache; }
+    getWebServer() { return webServer; }
+    getWebSocketServer() { return webSocketServer; }
     // user specific
     // -----------------------------------------------------------------
-    getUserVariables: (user) => {
-        if (!userVariableInstances[user.id]) {
-            userVariableInstances[user.id] = new Variables(db, user.id);
+    getUserVariables(user) {
+        if (!this.userVariableInstances[user.id]) {
+            this.userVariableInstances[user.id] = new Variables(this.getDb(), user.id);
         }
-        return userVariableInstances[user.id];
-    },
-    getUserModuleStorage: (user) => {
-        if (!userModuleStorageInstances[user.id]) {
-            userModuleStorageInstances[user.id] = new ModuleStorage(db, user.id);
+        return this.userVariableInstances[user.id];
+    }
+    getUserModuleStorage(user) {
+        if (!this.userModuleStorageInstances[user.id]) {
+            this.userModuleStorageInstances[user.id] = new ModuleStorage(this.getDb(), user.id);
         }
-        return userModuleStorageInstances[user.id];
-    },
-};
+        return this.userModuleStorageInstances[user.id];
+    }
+    getUserTwitchClientManager(user) {
+        if (!this.userTwitchClientManagerInstances[user.id]) {
+            this.userTwitchClientManagerInstances[user.id] = new TwitchClientManager(this, user, config.twitch, twitchChannelRepo);
+        }
+        return this.userTwitchClientManagerInstances[user.id];
+    }
+}
+const bot = new BotImpl();
 const run = async () => {
     // this function may only be called once per user!
     // changes to user will be handled by user_changed event
     const initForUser = async (user) => {
-        const clientManager = new TwitchClientManager(config.twitch, db, user, twitchChannelRepo, moduleManager);
+        const clientManager = bot.getUserTwitchClientManager(user);
         await clientManager.init('init');
         for (const moduleClass of modules) {
-            moduleManager.add(user.id, new moduleClass(bot, user, clientManager));
+            moduleManager.add(user.id, new moduleClass(bot, user));
         }
         eventHub.on('user_changed', async (changedUser /* User */) => {
             if (changedUser.id === user.id) {

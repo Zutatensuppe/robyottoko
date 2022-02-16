@@ -3,11 +3,9 @@ import tmi from 'tmi.js'
 import TwitchHelixClient from '../services/TwitchHelixClient'
 import fn from '../fn'
 import { logger, Logger } from '../common/fn'
-import Db from '../Db'
 import TwitchChannels, { TwitchChannel, TwitchChannelWithAccessToken } from '../services/TwitchChannels'
 import { User } from '../services/Users'
-import ModuleManager from '../mod/ModuleManager'
-import { RawCommand, RewardRedemptionContext, TwitchChannelPointsEventMessage, TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
+import { Bot, RawCommand, RewardRedemptionContext, TwitchChannelPointsEventMessage, TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
 import TwitchPubSubClient from '../services/TwitchPubSubClient'
 import { getUniqueCommandsByTrigger, newRewardRedemptionTrigger } from '../util'
 
@@ -19,11 +17,10 @@ interface Identity {
 }
 
 class TwitchClientManager {
+  private bot: Bot
   private cfg: TwitchConfig
-  private db: Db
   private user: User
   private twitchChannelRepo: TwitchChannels
-  private moduleManager: ModuleManager
 
   private chatClient: TwitchChatClient | null = null
   private helixClient: TwitchHelixClient | null = null
@@ -37,18 +34,16 @@ class TwitchClientManager {
   private log: Logger
 
   constructor(
-    cfg: TwitchConfig,
-    db: Db,
+    bot: Bot,
     user: User,
+    cfg: TwitchConfig,
     twitchChannelRepo: TwitchChannels,
-    moduleManager: ModuleManager,
   ) {
-    this.cfg = cfg
-    this.db = db
+    this.bot = bot
     this.user = user
+    this.cfg = cfg
     this.log = logger('TwitchClientManager.ts', `${user.name}|`)
     this.twitchChannelRepo = twitchChannelRepo
-    this.moduleManager = moduleManager
   }
 
   async userChanged(user: User) {
@@ -88,10 +83,8 @@ class TwitchClientManager {
   async init(reason: string) {
     let connectReason = reason
     const cfg = this.cfg
-    const db = this.db
     const user = this.user
     const twitchChannelRepo = this.twitchChannelRepo
-    const moduleManager = this.moduleManager
 
     this.log = logger('TwitchClientManager.ts', `${user.name}|`)
 
@@ -151,7 +144,7 @@ class TwitchClientManager {
       }
       this.log.info(`${context.username}[${roles.join('')}]@${target}: ${msg}`)
 
-      db.insert('chat_log', {
+      this.bot.getDb().insert('chat_log', {
         created_at: `${new Date().toJSON()}`,
         broadcaster_user_id: context['room-id'],
         user_name: context.username,
@@ -160,7 +153,7 @@ class TwitchClientManager {
       })
       const chatMessageContext = { client: chatClient, target, context, msg }
 
-      for (const m of moduleManager.all(user.id)) {
+      for (const m of this.bot.getModuleManager().all(user.id)) {
         const commands = m.getCommands() || []
         let triggers = []
         for (const command of commands) {
@@ -280,7 +273,7 @@ class TwitchClientManager {
           this.log.debug(redemptionMessage.data.redemption)
           const redemption = redemptionMessage.data.redemption
 
-          const twitchChannel = db.get('twitch_channel', { channel_id: redemption.channel_id })
+          const twitchChannel = this.bot.getDb().get('twitch_channel', { channel_id: redemption.channel_id })
           if (!twitchChannel) {
             return
           }
@@ -297,7 +290,7 @@ class TwitchClientManager {
           const msg = redemption.reward.title
           const rewardRedemptionContext: RewardRedemptionContext = { client: chatClient, target, context, redemption }
 
-          for (const m of moduleManager.all(user.id)) {
+          for (const m of this.bot.getModuleManager().all(user.id)) {
             // reward redemption should all have exact key/name of the reward,
             // no sorting required
             const commands = m.getCommands()

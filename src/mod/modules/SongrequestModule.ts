@@ -1,17 +1,13 @@
 import fn, { findIdxFuzzy } from '../../fn'
 import { logger } from '../../common/fn'
-import WebSocketServer, { Socket } from '../../net/WebSocketServer'
+import { Socket } from '../../net/WebSocketServer'
 import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
-import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
 import {
   ChatMessageContext, PlaylistItem, RawCommand, TwitchChatClient,
   TwitchChatContext, RewardRedemptionContext, FunctionCommand, Command,
   Bot, CommandFunction, Module
 } from '../../types'
-import ModuleStorage from '../ModuleStorage'
-import Cache from '../../services/Cache'
-import TwitchClientManager from '../../net/TwitchClientManager'
 import { newCmd } from '../../util'
 import { default_settings, SongerquestModuleInitData, SongrequestModuleData, SongrequestModuleSettings, SongrequestModuleWsEventData } from './SongrequestModuleCommon'
 import { NextFunction, Response } from 'express'
@@ -91,12 +87,9 @@ const default_commands = (list: any = null) => {
 
 class SongrequestModule implements Module {
   public name = 'sr'
-  public variables: Variables
 
-  private user: User
-  private cache: Cache
-  private storage: ModuleStorage
-  private wss: WebSocketServer
+  public bot: Bot
+  public user: User
   private data: SongrequestModuleData
 
   private commands: FunctionCommand[]
@@ -104,13 +97,9 @@ class SongrequestModule implements Module {
   constructor(
     bot: Bot,
     user: User,
-    _clientManager: TwitchClientManager,
   ) {
-    this.variables = bot.getUserVariables(user)
+    this.bot = bot
     this.user = user
-    this.cache = bot.getCache()
-    this.storage = bot.getUserModuleStorage(user)
-    this.wss = bot.getWebSocketServer()
 
     const initData = this.reinit()
     this.data = {
@@ -128,7 +117,7 @@ class SongrequestModule implements Module {
   }
 
   reinit(): SongerquestModuleInitData {
-    const data = this.storage.load(this.name, {
+    const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
       filter: {
         tag: '',
       },
@@ -231,7 +220,7 @@ class SongrequestModule implements Module {
   }
 
   save() {
-    this.storage.save(this.name, {
+    this.bot.getUserModuleStorage(this.user).save(this.name, {
       filter: this.data.filter,
       playlist: this.data.playlist.map(item => {
         item.title = item.title || ''
@@ -259,17 +248,17 @@ class SongrequestModule implements Module {
         playlist: this.data.playlist,
         settings: this.data.settings,
         commands: this.data.commands,
-        globalVariables: this.variables.all(),
+        globalVariables: this.bot.getUserVariables(this.user).all(),
       }
     };
   }
 
   updateClient(eventName: string, ws: Socket) {
-    this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
+    this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
   }
 
   updateClients(eventName: string) {
-    this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName))
+    this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, this.wsdata(eventName))
   }
 
   getWsEvents() {
@@ -1160,10 +1149,10 @@ class SongrequestModule implements Module {
 
   async loadYoutubeData(youtubeId: string): Promise<YoutubeVideosResponseDataEntry> {
     const key = `youtubeData_${youtubeId}_20210717_2`
-    let d = this.cache.get(key)
+    let d = this.bot.getCache().get(key)
     if (!d) {
       d = await Youtube.fetchDataByYoutubeId(youtubeId)
-      this.cache.set(key, d)
+      this.bot.getCache().set(key, d)
     }
     return d
   }

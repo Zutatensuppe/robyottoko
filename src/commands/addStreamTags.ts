@@ -1,16 +1,15 @@
-import TwitchHelixClient from '../services/TwitchHelixClient'
-import { CommandFunction, RawCommand, AddStreamTagCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import { CommandFunction, RawCommand, AddStreamTagCommand, TwitchChatClient, TwitchChatContext, Bot } from '../types'
 import fn, { findIdxFuzzy } from './../fn'
 import { logger } from './../common/fn'
-import Variables from '../services/Variables'
 import config from '../config'
+import { User } from '../services/Users'
 
 const log = logger('setStreamTags.ts')
 
 const addStreamTags = (
   originalCmd: AddStreamTagCommand,
-  helixClient: TwitchHelixClient | null,
-  variables: Variables,
+  bot: Bot,
+  user: User,
 ): CommandFunction => async (
   command: RawCommand | null,
   client: TwitchChatClient | null,
@@ -18,6 +17,7 @@ const addStreamTags = (
   context: TwitchChatContext | null,
   msg: string | null,
   ) => {
+    const helixClient = bot.getUserTwitchClientManager(user).getHelixClient()
     if (!client || !command || !context || !helixClient) {
       log.info('client', client)
       log.info('command', command)
@@ -26,6 +26,7 @@ const addStreamTags = (
       log.info('unable to execute addStreamTags, client, command, context, or helixClient missing')
       return
     }
+    const variables = bot.getUserVariables(user)
     const say = fn.sayFn(client, target)
     const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag
     const tmpTag = await fn.doReplacements(tag, command, context, variables, originalCmd)

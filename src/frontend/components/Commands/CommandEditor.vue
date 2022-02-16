@@ -17,13 +17,13 @@
               <td>Triggers:</td>
               <td>
                 <trigger-editor
-                  v-for="(trigger, idx2) in item.triggers"
-                  :key="idx2"
+                  v-for="(trigger, idx) in item.triggers"
+                  :key="idx"
                   class="spacerow"
                   :modelValue="trigger"
                   :removable="item.triggers.length > 1"
-                  @update:modelValue="item.triggers[idx2] = $event"
-                  @remove="rmtrigger(idx2)"
+                  @update:modelValue="item.triggers[idx] = $event"
+                  @remove="rmtrigger(idx)"
                 />
                 <dropdown-button
                   :actions="possibleTriggerActions"
@@ -95,99 +95,103 @@
                 >
               </td>
             </tr>
-            <tr v-if="item.action === 'dict_lookup'">
-              <td>Language:</td>
-              <td>
-                <input
-                  class="input is-small spaceinput mb-1"
-                  v-model="item.data.lang"
-                />
-                <span
-                  v-for="(lang, idx) in dictLangs"
-                  :key="idx"
-                  class="button is-small mr-1"
-                  @click="item.data.lang = lang.value"
-                  :title="lang.title"
-                  >{{ lang.flag }}</span
-                >
-                <span
-                  class="button is-small mr-1"
-                  @click="item.data.lang = '$args(0)'"
-                  ><code>$args(0)</code></span
-                >
-              </td>
-            </tr>
-            <tr v-if="item.action === 'dict_lookup'">
-              <td>Phrase:</td>
-              <td>
-                <input
-                  class="input is-small spaceinput mb-1"
-                  v-model="item.data.phrase"
-                />
-                <span
-                  class="button is-small mr-1"
-                  @click="item.data.phrase = ''"
-                  >All args</span
-                >
-                <span
-                  class="button is-small mr-1"
-                  @click="item.data.phrase = '$args(1:)'"
-                  ><code>$args(1:)</code></span
-                >
-              </td>
-            </tr>
-            <tr v-if="item.action === 'dict_lookup'">
-              <td>Response:</td>
-              <td>
-                <div class="help">
-                  Outputs the translation for the input phrase. The translation
-                  is always from/to english. <br />
-                  To let the user decide on the language use
-                  <code>$args(0)</code> as language, and
-                  <code>$args(1:)</code> as phrase. <br />
-                  If phrase is left empty, all arguments to the command will be
-                  used as the phrase.
-                </div>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'madochan_createword'">
-              <td>Response:</td>
-              <td>Creates a word for a definition.</td>
-            </tr>
-            <tr v-if="item.action === 'madochan_createword'">
-              <td>Model:</td>
-              <td>
-                <div class="control">
+            <template v-if="item.action === 'dict_lookup'">
+              <tr>
+                <td>Language:</td>
+                <td>
                   <input
-                    class="input is-small spaceinput"
-                    v-model="item.data.model"
+                    class="input is-small spaceinput mb-1"
+                    v-model="item.data.lang"
                   />
-                </div>
-                <div class="help">
-                  For possible values refer to
-                  <a href="https://madochan.hyottoko.club/" target="_blank"
-                    >madochan</a
+                  <span
+                    v-for="(lang, idx) in dictLangs"
+                    :key="idx"
+                    class="button is-small mr-1"
+                    @click="item.data.lang = lang.value"
+                    :title="lang.title"
+                    >{{ lang.flag }}</span
                   >
-                </div>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'madochan_createword'">
-              <td>Weirdness:</td>
-              <td>
-                <div class="control">
+                  <span
+                    class="button is-small mr-1"
+                    @click="item.data.lang = '$args(0)'"
+                    ><code>$args(0)</code></span
+                  >
+                </td>
+              </tr>
+              <tr>
+                <td>Phrase:</td>
+                <td>
                   <input
-                    class="input is-small spaceinput"
-                    v-model="item.data.weirdness"
+                    class="input is-small spaceinput mb-1"
+                    v-model="item.data.phrase"
                   />
-                </div>
-                <div class="help">
-                  For possible values refer to
-                  <a href="https://madochan.hyottoko.club/" target="_blank"
-                    >madochan</a
+                  <span
+                    class="button is-small mr-1"
+                    @click="item.data.phrase = ''"
+                    >All args</span
                   >
-                </div>
-              </td>
-            </tr>
+                  <span
+                    class="button is-small mr-1"
+                    @click="item.data.phrase = '$args(1:)'"
+                    ><code>$args(1:)</code></span
+                  >
+                </td>
+              </tr>
+              <tr>
+                <td>Response:</td>
+                <td>
+                  <div class="help">
+                    Outputs the translation for the input phrase. The
+                    translation is always from/to english. <br />
+                    To let the user decide on the language use
+                    <code>$args(0)</code> as language, and
+                    <code>$args(1:)</code> as phrase. <br />
+                    If phrase is left empty, all arguments to the command will
+                    be used as the phrase.
+                  </div>
+                </td>
+              </tr>
+            </template>
+            <template v-if="item.action === 'madochan_createword'">
+              <tr>
+                <td>Response:</td>
+                <td>Creates a word for a definition.</td>
+              </tr>
+              <tr>
+                <td>Model:</td>
+                <td>
+                  <div class="control">
+                    <input
+                      class="input is-small spaceinput"
+                      v-model="item.data.model"
+                    />
+                  </div>
+                  <div class="help">
+                    For possible values refer to
+                    <a href="https://madochan.hyottoko.club/" target="_blank"
+                      >madochan</a
+                    >
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>Weirdness:</td>
+                <td>
+                  <div class="control">
+                    <input
+                      class="input is-small spaceinput"
+                      v-model="item.data.weirdness"
+                    />
+                  </div>
+                  <div class="help">
+                    For possible values refer to
+                    <a href="https://madochan.hyottoko.club/" target="_blank"
+                      >madochan</a
+                    >
+                  </div>
+                </td>
+              </tr>
+            </template>
             <tr v-if="item.action === 'chatters'">
               <td>Response:</td>
               <td>Outputs the people who chatted during the stream.</td>
@@ -196,23 +200,23 @@
               <td>Response:</td>
               <td>
                 <div
-                  v-for="(txt, idx2) in item.data.text"
-                  :key="idx2"
+                  v-for="(txt, idx) in item.data.text"
+                  :key="idx"
                   class="field textarea-holder"
                 >
                   <textarea
                     class="textarea"
                     type="text"
-                    v-model="item.data.text[idx2]"
+                    v-model="item.data.text[idx]"
                     :class="{
-                      'has-background-danger-light': !item.data.text[idx2],
-                      'has-text-danger-dark': !item.data.text[idx2],
+                      'has-background-danger-light': !item.data.text[idx],
+                      'has-text-danger-dark': !item.data.text[idx],
                     }"
                   />
                   <button
                     class="button is-small"
                     :disabled="item.data.text.length <= 1"
-                    @click="rmtxt(idx2)"
+                    @click="rmtxt(idx)"
                   >
                     <i class="fa fa-remove" />
                   </button>
@@ -409,29 +413,13 @@
             <tr>
               <td>Permissions:</td>
               <td>
-                <label>
+                <label v-for="(perm, idx) in possiblePermissions" :key="idx">
                   <input
                     type="checkbox"
                     v-model="item.restrict_to"
-                    value="broadcaster"
+                    :value="perm.value"
                   />
-                  Broadcaster
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    v-model="item.restrict_to"
-                    value="mod"
-                  />
-                  Moderators
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    v-model="item.restrict_to"
-                    value="sub"
-                  />
-                  Subscribers
+                  {{ perm.label }}
                 </label>
               </td>
             </tr>
@@ -475,10 +463,16 @@ interface ComponentDataLang {
   title: string;
 }
 
+interface ComponentDataPermission {
+  value: string;
+  label: string;
+}
+
 interface ComponentData {
   item: Command | null;
   variableChangeFocusIdx: number;
   dictLangs: ComponentDataLang[];
+  possiblePermissions: ComponentDataPermission[];
 }
 
 export default defineComponent({
@@ -511,6 +505,11 @@ export default defineComponent({
       { value: "fr", flag: "🇫🇷", title: "French" },
       { value: "it", flag: "🇮🇹", title: "Italian" },
       { value: "pt", flag: "🇵🇹/🇧🇷", title: "Portuguese" },
+    ],
+    possiblePermissions: [
+      { value: "broadcaster", label: "Broadcaster" },
+      { value: "mod", label: "Moderators" },
+      { value: "sub", label: "Subscribers" },
     ],
   }),
   mounted() {
