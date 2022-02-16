@@ -120,6 +120,13 @@ const run = async () => {
         return
       }
 
+      // if the user is not connected through a websocket atm, dont
+      // try to validate oauth tokens
+      if (webSocketServer.sockets([user.id]).length === 0) {
+        setTimeout(sendStatus, 5000)
+        return
+      }
+
       const problems = []
       const twitchChannels = twitchChannelRepo.allByUserId(user.id)
       for (const twitchChannel of twitchChannels) {
