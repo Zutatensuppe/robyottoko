@@ -32,9 +32,9 @@
                 />
               </td>
             </tr>
-            <tr v-if="actionDescriptions[item.action]">
+            <tr v-if="actionDescription">
               <td>Description:</td>
-              <td v-html="actionDescriptions[item.action]"></td>
+              <td v-html="actionDescription"></td>
             </tr>
             <tr v-if="requiresAccessToken">
               <td>Attention:</td>
@@ -443,6 +443,7 @@
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
 
+import { commands, newText, newTrigger } from "../../../common/commands";
 import fn from "../../../common/fn";
 import {
   Command,
@@ -450,12 +451,6 @@ import {
   MediaFile,
   SoundMediaFile,
 } from "../../../types";
-import {
-  ACTION_DESCRIPTION_MAP,
-  ACTION_NAME_MAP,
-  newText,
-  newTrigger,
-} from "../../../util";
 
 interface ComponentDataLang {
   value: string;
@@ -711,8 +706,11 @@ export default defineComponent({
 
       return true;
     },
-    actionDescriptions() {
-      return ACTION_DESCRIPTION_MAP;
+    actionDescription() {
+      if (!this.item) {
+        return "";
+      }
+      return commands[this.item.action].Description();
     },
     title() {
       if (!this.item) {
@@ -722,7 +720,7 @@ export default defineComponent({
         create: "Create new ",
         edit: "Edit ",
       };
-      return `${verb[this.mode]}${ACTION_NAME_MAP[this.item.action]}`;
+      return `${verb[this.mode]}${commands[this.item.action].Name()}`;
     },
   },
 });

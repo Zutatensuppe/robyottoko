@@ -7,7 +7,7 @@ import TwitchChannels, { TwitchChannel, TwitchChannelWithAccessToken } from '../
 import { User } from '../services/Users'
 import { Bot, RawCommand, RewardRedemptionContext, TwitchChannelPointsEventMessage, TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
 import TwitchPubSubClient from '../services/TwitchPubSubClient'
-import { getUniqueCommandsByTrigger, newRewardRedemptionTrigger } from '../util'
+import { getUniqueCommandsByTrigger, newRewardRedemptionTrigger } from '../common/commands'
 
 interface Identity {
   username: string

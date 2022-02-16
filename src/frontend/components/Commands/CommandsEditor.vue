@@ -182,8 +182,8 @@
                   </div>
                 </div>
                 <div
-                  v-else-if="actionDescriptions[element.action]"
-                  v-html="actionDescriptions[element.action]"
+                  v-else-if="actionDescription(element.action)"
+                  v-html="actionDescription(element.action)"
                 ></div>
               </td>
               <td>
@@ -225,7 +225,7 @@
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
 import { Command, CommandAction, GlobalVariable } from "../../../types";
-import { ACTION_DESCRIPTION_MAP, ACTION_NAME_MAP, newCmd } from "../../../util";
+import { commands } from "../../../common/commands";
 import fn from "../../../common/fn";
 
 interface ComponentData {
@@ -304,9 +304,6 @@ export default defineComponent({
         })
         .filter((a) => a.count > 0);
     },
-    actionDescriptions() {
-      return ACTION_DESCRIPTION_MAP;
-    },
   },
   methods: {
     onImageVisibleChange() {
@@ -362,12 +359,9 @@ export default defineComponent({
       this.emitChange();
     },
     add(mappedAction: any) {
-      const cmd = newCmd(mappedAction.type);
-      if (!cmd) {
-        return;
-      }
+      const type: CommandAction = mappedAction.type;
       this.editIdx = this.commands.length;
-      this.editCommand = cmd;
+      this.editCommand = commands[type].NewCommand();
     },
     edit(idx: number) {
       this.editIdx = idx;
@@ -391,10 +385,10 @@ export default defineComponent({
       this.emitChange();
     },
     actionDescription(action: CommandAction) {
-      return ACTION_DESCRIPTION_MAP[action];
+      return commands[action].Description();
     },
     actionName(action: CommandAction) {
-      return ACTION_NAME_MAP[action];
+      return commands[action].Name();
     },
   },
   created() {

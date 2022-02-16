@@ -18,7 +18,7 @@ import {
   RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand, CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand
 } from '../../types'
 import dictLookup from '../../commands/dictLookup'
-import { newCommandTrigger } from '../../util'
+import { newCommandTrigger } from '../../common/commands'
 import { GeneralModuleAdminSettings, GeneralModuleSettings, GeneralModuleWsEventData, GeneralSaveEventData } from './GeneralModuleCommon'
 import addStreamTags from '../../commands/addStreamTags'
 import removeStreamTags from '../../commands/removeStreamTags'
