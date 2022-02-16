@@ -1,9 +1,7 @@
 import fn from '../../fn'
-import Variables from '../../services/Variables'
 import { User } from '../../services/Users'
 import { Bot, ChatMessageContext, Module, RawCommand, RewardRedemptionContext, TwitchChatClient, TwitchChatContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
-import TwitchClientManager from '../../net/TwitchClientManager'
 import { newCommandTrigger } from '../../util'
 
 interface VoteModuleData {
@@ -12,16 +10,18 @@ interface VoteModuleData {
 
 class VoteModule implements Module {
   public name = 'vote'
-  public variables: Variables
+
+  public bot: Bot
+  public user: User
   private storage: ModuleStorage
   private data: VoteModuleData
 
   constructor(
     bot: Bot,
     user: User,
-    _clientManager: TwitchClientManager,
   ) {
-    this.variables = bot.getUserVariables(user)
+    this.bot = bot
+    this.user = user
     this.storage = bot.getUserModuleStorage(user)
     this.data = this.reinit()
   }

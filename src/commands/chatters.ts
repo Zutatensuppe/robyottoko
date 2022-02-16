@@ -1,14 +1,13 @@
-import Db from '../Db'
-import TwitchHelixClient from '../services/TwitchHelixClient'
-import { CommandFunction, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import { Bot, CommandFunction, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
 import fn from './../fn'
 import { logger } from './../common/fn'
+import { User } from '../services/Users'
 
 const log = logger('chatters.ts')
 
 const chatters = (
-  db: Db,
-  helixClient: TwitchHelixClient | null
+  bot: Bot,
+  user: User
 ): CommandFunction => async (
   command: RawCommand | null,
   client: TwitchChatClient | null,
@@ -16,6 +15,7 @@ const chatters = (
   context: TwitchChatContext | null,
   msg: string | null,
   ) => {
+    const helixClient = bot.getUserTwitchClientManager(user).getHelixClient()
     if (!client || !context || !helixClient) {
       log.info('client', client)
       log.info('context', context)
@@ -32,6 +32,7 @@ const chatters = (
       return
     }
 
+    const db = bot.getDb()
     const [whereSql, whereValues] = db._buildWhere({
       broadcaster_user_id: context['room-id'],
       created_at: { '$gte': stream.started_at },

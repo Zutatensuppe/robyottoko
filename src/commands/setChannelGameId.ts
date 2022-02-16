@@ -1,15 +1,14 @@
-import TwitchHelixClient from '../services/TwitchHelixClient'
-import { CommandFunction, RawCommand, SetChannelGameIdCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import { Bot, CommandFunction, RawCommand, SetChannelGameIdCommand, TwitchChatClient, TwitchChatContext } from '../types'
 import fn from './../fn'
 import { logger } from './../common/fn'
-import Variables from '../services/Variables'
+import { User } from '../services/Users'
 
 const log = logger('setChannelGameId.ts')
 
 const setChannelGameId = (
   originalCmd: SetChannelGameIdCommand,
-  helixClient: TwitchHelixClient | null,
-  variables: Variables,
+  bot: Bot,
+  user: User,
 ): CommandFunction => async (
   command: RawCommand | null,
   client: TwitchChatClient | null,
@@ -17,6 +16,7 @@ const setChannelGameId = (
   context: TwitchChatContext | null,
   msg: string | null,
   ) => {
+    const helixClient = bot.getUserTwitchClientManager(user).getHelixClient()
     if (!client || !command || !context || !helixClient) {
       log.info('client', client)
       log.info('command', command)
@@ -25,6 +25,7 @@ const setChannelGameId = (
       log.info('unable to execute setChannelGameId, client, command, context, or helixClient missing')
       return
     }
+    const variables = bot.getUserVariables(user)
     const say = fn.sayFn(client, target)
     const gameId = originalCmd.data.game_id === '' ? '$args()' : originalCmd.data.game_id
     const tmpGameId = await fn.doReplacements(gameId, command, context, variables, originalCmd)

@@ -1,6 +1,16 @@
+import addStreamTagsCommon from "./commands/addStreamTagsCommon"
+import chattersCommon from "./commands/chattersCommon"
+import countdownCommon from "./commands/countdownCommon"
+import dictLookupCommon from "./commands/dictLookupCommon"
+import madochanCreateWordCommon from "./commands/madochanCreateWordCommon"
+import playMediaCommon from "./commands/playMediaCommon"
+import randomTextCommon from "./commands/randomTextCommon"
+import removeStreamTagsCommon from "./commands/removeStreamTagsCommon"
+import setChannelGameIdCommon from "./commands/setChannelGameIdCommon"
+import setChannelTitleCommon from "./commands/setChannelTitleCommon"
 import { Command, CommandTrigger, CommandRestrict, CommandTriggerType, FunctionCommand, MediaCommandData, CommandAction } from "./types"
 
-const MOD_OR_ABOVE: CommandRestrict[] = ["mod", "broadcaster"]
+export const MOD_OR_ABOVE: CommandRestrict[] = ["mod", "broadcaster"]
 
 export const newText = () => ''
 
@@ -17,13 +27,6 @@ export const newMedia = (): MediaCommandData => ({
     urlpath: '',
   },
   minDurationMs: '1s',
-})
-
-export const newCountdown = () => ({
-  steps: 3,
-  interval: '1s',
-  intro: 'Starting countdown...',
-  outro: 'Done!'
 })
 
 export const newTrigger = (type: CommandTriggerType): CommandTrigger => ({
@@ -53,19 +56,19 @@ export const newCommandTrigger = (command: string = '', commandExact: boolean = 
 }
 
 export const ACTION_DESCRIPTION_MAP: Record<CommandAction, string> = {
-  dict_lookup: "Outputs the translation for the searched word.",
-  madochan_createword: "Creates a word for a definition.",
-  chatters: "Outputs the people who chatted during the stream.",
-  media: "Display an image and/or play a sound",
+  dict_lookup: dictLookupCommon.Description(),
+  madochan_createword: madochanCreateWordCommon.Description(),
+  chatters: chattersCommon.Description(),
+  media: playMediaCommon.Description(),
   media_volume: `Sets the media volume to <code>&lt;VOLUME&gt;</code> (argument to this command, min 0, max 100).
   <br />
   If no argument is given, just outputs the current volume`,
-  countdown: "Add a countdown or messages spaced by time intervals",
-  text: "Send a message to chat",
-  set_channel_title: "Change the stream title",
-  set_channel_game_id: "Change the stream category",
-  add_stream_tags: 'Add streamtag',
-  remove_stream_tags: 'Remove streamtag',
+  countdown: countdownCommon.Description(),
+  text: randomTextCommon.Description(),
+  set_channel_title: setChannelTitleCommon.Description(),
+  set_channel_game_id: setChannelGameIdCommon.Description(),
+  add_stream_tags: addStreamTagsCommon.Description(),
+  remove_stream_tags: removeStreamTagsCommon.Description(),
   sr_current: "Show what song is currently playing",
   sr_undo: "Remove the song that was last added by oneself.",
   sr_good: "Vote the current song up",
@@ -109,17 +112,17 @@ export const ACTION_DESCRIPTION_MAP: Record<CommandAction, string> = {
 }
 
 export const ACTION_NAME_MAP: Record<CommandAction, string> = {
-  dict_lookup: "dictionary lookup",
-  madochan_createword: "madochan",
-  chatters: "chatters command",
-  media: "media command",
+  dict_lookup: dictLookupCommon.Name(),
+  madochan_createword: madochanCreateWordCommon.Name(),
+  chatters: chattersCommon.Name(),
+  media: playMediaCommon.Name(),
   media_volume: "media volume command",
-  countdown: "countdown",
-  text: "command",
-  set_channel_title: "change stream title command",
-  set_channel_game_id: "change stream category command",
-  add_stream_tags: 'add_stream_tags command',
-  remove_stream_tags: 'remove_stream_tags command',
+  countdown: countdownCommon.Name(),
+  text: randomTextCommon.Name(),
+  set_channel_title: setChannelTitleCommon.Name(),
+  set_channel_game_id: setChannelGameIdCommon.Name(),
+  add_stream_tags: addStreamTagsCommon.Name(),
+  remove_stream_tags: removeStreamTagsCommon.Name(),
   sr_current: "sr_current",
   sr_undo: "sr_undo",
   sr_good: "sr_good",
@@ -151,24 +154,8 @@ export const ACTION_NAME_MAP: Record<CommandAction, string> = {
 export const newCmd = (type: string): Command | null => {
   switch (type) {
     // GENERAL
-    case 'text': return {
-      triggers: [newCommandTrigger()],
-      action: 'text',
-      restrict_to: [],
-      variables: [],
-      variableChanges: [],
-      data: {
-        text: [newText()],
-      },
-    }
-    case 'media': return {
-      triggers: [newCommandTrigger()],
-      action: 'media',
-      restrict_to: [],
-      variables: [],
-      variableChanges: [],
-      data: newMedia(),
-    }
+    case 'text': return randomTextCommon.NewCommand()
+    case 'media': return playMediaCommon.NewCommand()
     case 'media_volume': return {
       triggers: [newCommandTrigger()],
       action: 'media_volume',
@@ -177,87 +164,14 @@ export const newCmd = (type: string): Command | null => {
       variableChanges: [],
       data: {},
     }
-    case 'countdown': return {
-      triggers: [newCommandTrigger()],
-      action: 'countdown',
-      restrict_to: [],
-      variables: [],
-      variableChanges: [],
-      data: newCountdown(),
-    }
-    case 'dict_lookup': return {
-      triggers: [newCommandTrigger()],
-      action: 'dict_lookup',
-      restrict_to: [],
-      variables: [],
-      variableChanges: [],
-      data: {
-        lang: 'ja',
-        phrase: '',
-      },
-    }
-    case 'madochan_createword': return {
-      triggers: [newCommandTrigger()],
-      action: 'madochan_createword',
-      restrict_to: [],
-      variables: [],
-      variableChanges: [],
-      data: {
-        // TODO: use from same resource as server
-        model: '100epochs800lenhashingbidirectional.h5',
-        weirdness: 1,
-      },
-    }
-    case 'chatters': return {
-      triggers: [newCommandTrigger()],
-      action: 'chatters',
-      restrict_to: [],
-      variables: [],
-      variableChanges: [],
-      data: {},
-    }
-    case 'set_channel_title': return {
-      triggers: [newCommandTrigger()],
-      action: 'set_channel_title',
-      restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      variableChanges: [],
-      data: {
-        title: ''
-      },
-    }
-    case 'set_channel_game_id': return {
-      triggers: [newCommandTrigger()],
-      action: 'set_channel_game_id',
-      restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      variableChanges: [],
-      data: {
-        game_id: ''
-      },
-    }
-
-    case "add_stream_tags": return {
-      triggers: [newCommandTrigger()],
-      action: 'add_stream_tags',
-      restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      variableChanges: [],
-      data: {
-        tag: ''
-      },
-    }
-
-    case "remove_stream_tags": return {
-      triggers: [newCommandTrigger()],
-      action: 'remove_stream_tags',
-      restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      variableChanges: [],
-      data: {
-        tag: ''
-      },
-    }
+    case 'countdown': return countdownCommon.NewCommand()
+    case 'dict_lookup': return dictLookupCommon.NewCommand()
+    case 'madochan_createword': return madochanCreateWordCommon.NewCommand()
+    case 'chatters': return chattersCommon.NewCommand()
+    case 'set_channel_title': return setChannelTitleCommon.NewCommand()
+    case 'set_channel_game_id': return setChannelGameIdCommon.NewCommand()
+    case "add_stream_tags": return addStreamTagsCommon.NewCommand()
+    case "remove_stream_tags": return removeStreamTagsCommon.NewCommand()
 
     // SONG REQUEST
     case 'sr_current': return {

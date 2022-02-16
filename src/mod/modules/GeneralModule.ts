@@ -7,9 +7,7 @@ import { logger } from '../../common/fn'
 import chatters from '../../commands/chatters'
 import setChannelTitle from '../../commands/setChannelTitle'
 import setChannelGameId from '../../commands/setChannelGameId'
-import Db from '../../Db'
-import WebSocketServer, { Socket } from '../../net/WebSocketServer'
-import Variables from '../../services/Variables'
+import { Socket } from '../../net/WebSocketServer'
 import { User } from '../../services/Users'
 import {
   ChatMessageContext, Command, FunctionCommand,
@@ -19,8 +17,6 @@ import {
   MadochanCommand, MediaVolumeCommand, ChattersCommand,
   RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand, CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand
 } from '../../types'
-import ModuleStorage from '../ModuleStorage'
-import TwitchClientManager from '../../net/TwitchClientManager'
 import dictLookup from '../../commands/dictLookup'
 import { newCommandTrigger } from '../../util'
 import { GeneralModuleAdminSettings, GeneralModuleSettings, GeneralModuleWsEventData, GeneralSaveEventData } from './GeneralModuleCommon'
@@ -57,13 +53,9 @@ interface WsData {
 
 class GeneralModule implements Module {
   public name = 'general'
-  public variables: Variables
 
-  private db: Db
-  private user: User
-  private clientManager: TwitchClientManager
-  private storage: ModuleStorage
-  private wss: WebSocketServer
+  public bot: Bot
+  public user: User
 
   private data: GeneralModuleData
   private commands: FunctionCommand[]
@@ -74,14 +66,9 @@ class GeneralModule implements Module {
   constructor(
     bot: Bot,
     user: User,
-    clientManager: TwitchClientManager,
   ) {
-    this.db = bot.getDb()
+    this.bot = bot
     this.user = user
-    this.variables = bot.getUserVariables(user)
-    this.clientManager = clientManager
-    this.storage = bot.getUserModuleStorage(user)
-    this.wss = bot.getWebSocketServer()
     const initData = this.reinit()
     this.data = initData.data
     this.commands = initData.commands
@@ -105,7 +92,7 @@ class GeneralModule implements Module {
         if (t.lines >= t.minLines && now > t.next) {
           const cmdDef = t.command
           const rawCmd = null
-          const client = this.clientManager.getChatClient()
+          const client = this.bot.getUserTwitchClientManager(this.user).getChatClient()
           const target = null
           const context = null
           const msg = null
@@ -174,7 +161,7 @@ class GeneralModule implements Module {
   }
 
   reinit(): GeneralModuleInitData {
-    const data = this.storage.load(this.name, {
+    const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
       commands: [],
       settings: {
         volume: 100,
@@ -210,31 +197,31 @@ class GeneralModule implements Module {
           cmdObj = Object.assign({}, cmd, { fn: madochanCreateWord(cmd) })
           break;
         case 'dict_lookup':
-          cmdObj = Object.assign({}, cmd, { fn: dictLookup(cmd, this.variables) })
+          cmdObj = Object.assign({}, cmd, { fn: dictLookup(cmd, this.bot, this.user) })
           break;
         case 'text':
-          cmdObj = Object.assign({}, cmd, { fn: randomText(cmd, this.variables) })
+          cmdObj = Object.assign({}, cmd, { fn: randomText(cmd, this.bot, this.user) })
           break;
         case 'media':
-          cmdObj = Object.assign({}, cmd, { fn: playMedia(cmd, this.wss, this.user.id) })
+          cmdObj = Object.assign({}, cmd, { fn: playMedia(cmd, this.bot, this.user) })
           break;
         case 'countdown':
-          cmdObj = Object.assign({}, cmd, { fn: countdown(cmd, this.variables, this.wss, this.user.id) })
+          cmdObj = Object.assign({}, cmd, { fn: countdown(cmd, this.bot, this.user) })
           break;
         case 'chatters':
-          cmdObj = Object.assign({}, cmd, { fn: chatters(this.db, this.clientManager.getHelixClient()) })
+          cmdObj = Object.assign({}, cmd, { fn: chatters(this.bot, this.user) })
           break;
         case 'set_channel_title':
-          cmdObj = Object.assign({}, cmd, { fn: setChannelTitle(cmd, this.clientManager.getHelixClient(), this.variables) })
+          cmdObj = Object.assign({}, cmd, { fn: setChannelTitle(cmd, this.bot, this.user) })
           break;
         case 'set_channel_game_id':
-          cmdObj = Object.assign({}, cmd, { fn: setChannelGameId(cmd, this.clientManager.getHelixClient(), this.variables) })
+          cmdObj = Object.assign({}, cmd, { fn: setChannelGameId(cmd, this.bot, this.user) })
           break;
         case 'add_stream_tags':
-          cmdObj = Object.assign({}, cmd, { fn: addStreamTags(cmd, this.clientManager.getHelixClient(), this.variables) })
+          cmdObj = Object.assign({}, cmd, { fn: addStreamTags(cmd, this.bot, this.user) })
           break;
         case 'remove_stream_tags':
-          cmdObj = Object.assign({}, cmd, { fn: removeStreamTags(cmd, this.clientManager.getHelixClient(), this.variables) })
+          cmdObj = Object.assign({}, cmd, { fn: removeStreamTags(cmd, this.bot, this.user) })
           break;
       }
       if (!cmdObj) {
@@ -283,28 +270,28 @@ class GeneralModule implements Module {
         commands: this.data.commands,
         settings: this.data.settings,
         adminSettings: this.data.adminSettings,
-        globalVariables: this.variables.all(),
+        globalVariables: this.bot.getUserVariables(this.user).all(),
       },
     }
   }
 
   updateClient(eventName: string, ws: Socket) {
-    this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
+    this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
   }
 
   updateClients(eventName: string) {
-    this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName))
+    this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, this.wsdata(eventName))
   }
 
   saveSettings() {
-    this.storage.save(this.name, this.data)
+    this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
     // no need for calling reinit, that would also recreate timers and stuff
     // but updating settings shouldnt mess with those
     this.updateClients('init')
   }
 
   saveCommands() {
-    this.storage.save(this.name, this.data)
+    this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
     const initData = this.reinit()
     this.data = initData.data
     this.commands = initData.commands

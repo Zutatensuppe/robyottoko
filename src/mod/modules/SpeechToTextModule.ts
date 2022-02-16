@@ -1,32 +1,24 @@
 import config from '../../config'
-import TwitchClientManager from '../../net/TwitchClientManager'
-import WebSocketServer, { Socket } from '../../net/WebSocketServer'
+import { Socket } from '../../net/WebSocketServer'
 import { getText, asQueryArgs } from '../../net/xhr'
 import { User } from '../../services/Users'
-import Variables from '../../services/Variables'
 import { Bot, ChatMessageContext, Module, RewardRedemptionContext } from '../../types'
-import ModuleStorage from '../ModuleStorage'
 import { default_settings, SpeechToTextModuleData, SpeechToTextModuleSettings, SpeechToTextTranslateEventData, SpeechToTextWsData } from './SpeechToTextModuleCommon'
 
 class SpeechToTextModule implements Module {
   public name = 'speech-to-text'
-  public variables: Variables
 
-  private user: User
-  private storage: ModuleStorage
-  private wss: WebSocketServer
+  public bot: Bot
+  public user: User
   private defaultSettings: SpeechToTextModuleSettings
   private data: SpeechToTextModuleData
 
   constructor(
     bot: Bot,
     user: User,
-    _clientManager: TwitchClientManager,
   ) {
+    this.bot = bot
     this.user = user
-    this.variables = bot.getUserVariables(user)
-    this.storage = bot.getUserModuleStorage(user)
-    this.wss = bot.getWebSocketServer()
     this.defaultSettings = default_settings()
     this.data = this.reinit()
   }
@@ -36,7 +28,7 @@ class SpeechToTextModule implements Module {
   }
 
   reinit() {
-    const data = this.storage.load(this.name, {
+    const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
       settings: this.defaultSettings
     })
     return data as SpeechToTextModuleData
@@ -62,11 +54,11 @@ class SpeechToTextModule implements Module {
   }
 
   updateClient(eventName: string, ws: Socket) {
-    this.wss.notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
+    this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
   }
 
   updateClients(eventName: string) {
-    this.wss.notifyAll([this.user.id], this.name, this.wsdata(eventName))
+    this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, this.wsdata(eventName))
   }
 
   getWsEvents() {
@@ -79,7 +71,7 @@ class SpeechToTextModule implements Module {
           target: dst,
         })
         const respText = await getText(query)
-        this.wss.notifyOne([this.user.id], this.name, {
+        this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, {
           event: 'translated', data: {
             in: text,
             out: respText,
@@ -91,7 +83,7 @@ class SpeechToTextModule implements Module {
       },
       'save': (ws: Socket, { settings }: { settings: SpeechToTextModuleSettings }) => {
         this.data.settings = settings
-        this.storage.save(this.name, this.data)
+        this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
         this.reinit()
         this.updateClients('init')
       },

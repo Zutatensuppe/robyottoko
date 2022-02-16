@@ -62,46 +62,62 @@ const webServer = new WebServer(
   auth
 )
 
-const userVariableInstances: Record<number, Variables> = {}
-const userModuleStorageInstances: Record<number, ModuleStorage> = {}
-const bot: Bot = {
-  getDb: () => db,
-  getTokens: () => tokenRepo,
-  getCache: () => cache,
-  getWebServer: () => webServer,
-  getWebSocketServer: () => webSocketServer,
+class BotImpl implements Bot {
+  private userVariableInstances: Record<number, Variables> = {}
+  private userModuleStorageInstances: Record<number, ModuleStorage> = {}
+  private userTwitchClientManagerInstances: Record<number, TwitchClientManager> = {}
+
+  constructor() {
+    // pass
+  }
+
+  getModuleManager() { return moduleManager }
+  getDb() { return db }
+  getTokens() { return tokenRepo }
+  getCache() { return cache }
+  getWebServer() { return webServer }
+  getWebSocketServer() { return webSocketServer }
 
   // user specific
   // -----------------------------------------------------------------
 
-  getUserVariables: (user: User) => {
-    if (!userVariableInstances[user.id]) {
-      userVariableInstances[user.id] = new Variables(db, user.id)
+  getUserVariables(user: User) {
+    if (!this.userVariableInstances[user.id]) {
+      this.userVariableInstances[user.id] = new Variables(this.getDb(), user.id)
     }
-    return userVariableInstances[user.id]
-  },
-  getUserModuleStorage: (user: User) => {
-    if (!userModuleStorageInstances[user.id]) {
-      userModuleStorageInstances[user.id] = new ModuleStorage(db, user.id)
+    return this.userVariableInstances[user.id]
+  }
+
+  getUserModuleStorage(user: User) {
+    if (!this.userModuleStorageInstances[user.id]) {
+      this.userModuleStorageInstances[user.id] = new ModuleStorage(this.getDb(), user.id)
     }
-    return userModuleStorageInstances[user.id]
-  },
+    return this.userModuleStorageInstances[user.id]
+  }
+
+  getUserTwitchClientManager(user: User) {
+    if (!this.userTwitchClientManagerInstances[user.id]) {
+      this.userTwitchClientManagerInstances[user.id] = new TwitchClientManager(
+        this,
+        user,
+        config.twitch,
+        twitchChannelRepo,
+      )
+    }
+    return this.userTwitchClientManagerInstances[user.id]
+  }
 }
+
+const bot = new BotImpl()
 
 const run = async () => {
   // this function may only be called once per user!
   // changes to user will be handled by user_changed event
   const initForUser = async (user: User) => {
-    const clientManager = new TwitchClientManager(
-      config.twitch,
-      db,
-      user,
-      twitchChannelRepo,
-      moduleManager,
-    )
+    const clientManager = bot.getUserTwitchClientManager(user)
     await clientManager.init('init')
     for (const moduleClass of modules) {
-      moduleManager.add(user.id, new moduleClass(bot, user, clientManager))
+      moduleManager.add(user.id, new moduleClass(bot, user))
     }
 
     eventHub.on('user_changed', async (changedUser: any /* User */) => {

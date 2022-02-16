@@ -1,10 +1,10 @@
-import WebSocketServer from "../net/WebSocketServer"
-import { CommandFunction, MediaCommand, RawCommand, TwitchChatClient, TwitchChatContext } from "../types"
+import { User } from "../services/Users"
+import { Bot, CommandFunction, MediaCommand, RawCommand, TwitchChatClient, TwitchChatContext } from "../types"
 
 const playMedia = (
   originalCmd: MediaCommand,
-  wss: WebSocketServer,
-  userId: number,
+  bot: Bot,
+  user: User,
 ): CommandFunction => (
   command: RawCommand | null,
   client: TwitchChatClient | null,
@@ -13,7 +13,7 @@ const playMedia = (
   msg: string | null,
   ) => {
     const data = originalCmd.data
-    wss.notifyAll([userId], 'general', {
+    bot.getWebSocketServer().notifyAll([user.id], 'general', {
       event: 'playmedia',
       data: data,
     })

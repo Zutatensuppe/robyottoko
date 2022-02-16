@@ -142,10 +142,11 @@ const applyVariableChanges = async (
   if (!cmdDef.variableChanges) {
     return
   }
+  const variables = contextModule.bot.getUserVariables(contextModule.user)
   for (const variableChange of cmdDef.variableChanges) {
     const op = variableChange.change
-    const name = await doReplacements(variableChange.name, rawCmd, context, contextModule.variables, cmdDef)
-    const value = await doReplacements(variableChange.value, rawCmd, context, contextModule.variables, cmdDef)
+    const name = await doReplacements(variableChange.name, rawCmd, context, variables, cmdDef)
+    const value = await doReplacements(variableChange.value, rawCmd, context, variables, cmdDef)
 
     // check if there is a local variable for the change
     if (cmdDef.variables) {
@@ -162,15 +163,15 @@ const applyVariableChanges = async (
       }
     }
 
-    const globalVars: GlobalVariable[] = contextModule.variables.all()
+    const globalVars: GlobalVariable[] = variables.all()
     const idx = globalVars.findIndex(v => (v.name === name))
     if (idx !== -1) {
       if (op === 'set') {
-        contextModule.variables.set(name, value)
+        variables.set(name, value)
       } else if (op === 'increase_by') {
-        contextModule.variables.set(name, _increase(globalVars[idx].value, value))
+        variables.set(name, _increase(globalVars[idx].value, value))
       } else if (op === 'decrease_by') {
-        contextModule.variables.set(name, _decrease(globalVars[idx].value, value))
+        variables.set(name, _decrease(globalVars[idx].value, value))
       }
       //
       continue

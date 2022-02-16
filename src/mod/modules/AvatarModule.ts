@@ -1,10 +1,7 @@
 import { logger } from '../../common/fn'
-import WebSocketServer, { Socket } from '../../net/WebSocketServer'
-import Variables from '../../services/Variables'
+import { Socket } from '../../net/WebSocketServer'
 import { Bot, ChatMessageContext, Module, RewardRedemptionContext } from '../../types'
-import ModuleStorage from '../ModuleStorage'
 import { User } from '../../services/Users'
-import TwitchClientManager from '../../net/TwitchClientManager'
 import { AvatarModuleSettings, AvatarModuleState, AvatarModuleWsSaveData, default_avatar_definition, default_settings } from './AvatarModuleCommon'
 
 const log = logger('AvatarModule.ts')
@@ -34,11 +31,9 @@ interface WsControlData {
 
 class AvatarModule implements Module {
   public name = 'avatar'
-  public variables: Variables
 
-  private user: User
-  private wss: WebSocketServer
-  private storage: ModuleStorage
+  public bot: Bot
+  public user: User
 
   private data: AvatarModuleData
   private defaultSettings: AvatarModuleSettings = default_settings()
@@ -47,12 +42,9 @@ class AvatarModule implements Module {
   constructor(
     bot: Bot,
     user: User,
-    _clientManager: TwitchClientManager,
   ) {
-    this.variables = bot.getUserVariables(user)
+    this.bot = bot
     this.user = user
-    this.wss = bot.getWebSocketServer()
-    this.storage = bot.getUserModuleStorage(user)
 
     this.data = this.reinit()
   }
@@ -62,7 +54,7 @@ class AvatarModule implements Module {
   }
 
   save() {
-    this.storage.save(this.name, this.data)
+    this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
   }
 
   saveCommands() {
@@ -70,7 +62,7 @@ class AvatarModule implements Module {
   }
 
   reinit(): AvatarModuleData {
-    const data = this.storage.load(this.name, {
+    const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
       settings: this.defaultSettings,
       state: this.defaultState,
     })
@@ -107,11 +99,11 @@ class AvatarModule implements Module {
   }
 
   updateClient(data: WsModuleData, ws: Socket) {
-    this.wss.notifyOne([this.user.id], this.name, data, ws)
+    this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, data, ws)
   }
 
   updateClients(data: WsControlData | WsModuleData) {
-    this.wss.notifyAll([this.user.id], this.name, data)
+    this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, data)
   }
 
   getWsEvents() {
