@@ -108,7 +108,8 @@
                       @click="opt('canvasBg', 'transparent')"
                       class="visual_background_button bg-transparent clickable"
                       :class="{
-                        'is-current': canvasBg !== 'white',
+                        'is-current':
+                          canvasBg !== 'white' && canvasBg !== 'black',
                       }"
                     ></div>
                     <div
@@ -116,6 +117,13 @@
                       class="visual_background_button bg-white clickable"
                       :class="{
                         'is-current': canvasBg === 'white',
+                      }"
+                    ></div>
+                    <div
+                      @click="opt('canvasBg', 'black')"
+                      class="visual_background_button bg-black clickable"
+                      :class="{
+                        'is-current': canvasBg === 'black',
                       }"
                     ></div>
                   </div>
@@ -347,14 +355,12 @@ export default defineComponent({
       return this.images.filter((url) => !this.favorites.includes(url));
     },
     canvasBg() {
-      const bg = this.opts.canvasBg || "transparent";
-      return bg === "transparent" ? "transparent" : "white";
+      return ["transparent", "white", "black"].includes(this.opts.canvasBg)
+        ? this.opts.canvasBg
+        : "transparent";
     },
     canvasClasses() {
-      if (this.canvasBg === "white") {
-        return ["bg-white"];
-      }
-      return ["bg-transparent"];
+      return [`bg-${this.canvasBg}`];
     },
     halfSize() {
       return Math.round(this.size / 2);
