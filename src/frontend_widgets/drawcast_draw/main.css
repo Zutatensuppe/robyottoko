@@ -195,6 +195,9 @@ body {
 .bg-white {
   background: white;
 }
+.bg-black {
+  background: #111;
+}
 .bg-transparent {
   background-image:
   linear-gradient(to right, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)),
