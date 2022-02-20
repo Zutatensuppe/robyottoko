@@ -659,6 +659,7 @@ export default defineComponent({
     possibleTriggerActions() {
       return [
         { type: "command", label: "Add Command", title: "Command" },
+        { type: "first_chat", label: "Add First Chat", title: "First Chat" },
         {
           type: "reward_redemption",
           label: "Add Reward Redemption",

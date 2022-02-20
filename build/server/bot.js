@@ -412,14 +412,14 @@ const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, client, target,
         if (!mayExecute(context, cmdDef)) {
             continue;
         }
-        log$g.info(`${target}| * Executing ${rawCmd.name} command`);
+        log$g.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`);
         const p = new Promise(async (resolve) => {
             await applyVariableChanges(cmdDef, contextModule, rawCmd, context);
             const r = await cmdDef.fn(rawCmd, client, target, context, msg);
             if (r) {
                 log$g.info(`${target}| * Returned: ${r}`);
             }
-            log$g.info(`${target}| * Executed ${rawCmd.name} command`);
+            log$g.info(`${target}| * Executed ${rawCmd?.name || '<unknown>'} command`);
             resolve(true);
         });
         promises.push(p);
@@ -1851,6 +1851,8 @@ const newTrigger = (type) => ({
         // for trigger type "timer" (todo: should only exist if type is timer, not always)
         minInterval: 0,
         minLines: 0,
+        // for trigger type "first_chat"
+        since: 'stream',
     },
 });
 const newRewardRedemptionTrigger = (command = '') => {
@@ -1864,33 +1866,39 @@ const newCommandTrigger = (command = '', commandExact = false) => {
     trigger.data.commandExact = commandExact;
     return trigger;
 };
-const commandHasTrigger = (command, trigger) => {
+const commandHasAnyTrigger = (command, triggers) => {
     for (const cmdTrigger of command.triggers) {
-        if (cmdTrigger.type !== trigger.type) {
-            continue;
-        }
-        if (cmdTrigger.type === 'command') {
-            if (cmdTrigger.data.command === trigger.data.command) {
-                // no need to check for commandExact here (i think^^)
-                return true;
+        for (const trigger of triggers) {
+            if (cmdTrigger.type !== trigger.type) {
+                continue;
             }
-        }
-        else if (cmdTrigger.type === 'reward_redemption') {
-            if (cmdTrigger.data.command === trigger.data.command) {
-                return true;
+            if (cmdTrigger.type === 'command') {
+                if (cmdTrigger.data.command === trigger.data.command) {
+                    // no need to check for commandExact here (i think^^)
+                    return true;
+                }
             }
-        }
-        else if (cmdTrigger.type === 'timer') {
-            if (cmdTrigger.data.minInterval === trigger.data.minInterval
-                && cmdTrigger.data.minLines === trigger.data.minLines) {
+            else if (cmdTrigger.type === 'reward_redemption') {
+                if (cmdTrigger.data.command === trigger.data.command) {
+                    return true;
+                }
+            }
+            else if (cmdTrigger.type === 'timer') {
+                if (cmdTrigger.data.minInterval === trigger.data.minInterval
+                    && cmdTrigger.data.minLines === trigger.data.minLines) {
+                    return true;
+                }
+            }
+            else if (cmdTrigger.type === 'first_chat') {
                 return true;
             }
         }
     }
     return false;
 };
-const getUniqueCommandsByTrigger = (commands, trigger) => {
-    const tmp = commands.filter((command) => commandHasTrigger(command, trigger));
+const getUniqueCommandsByTriggers = (commands, triggers) => {
+    //
+    const tmp = commands.filter((command) => commandHasAnyTrigger(command, triggers));
     return tmp.filter((item, i, ar) => ar.indexOf(item) === i);
 };
 const commands = {
@@ -2521,14 +2529,56 @@ class TwitchClientManager {
                 display_name: context['display-name'],
                 message: msg,
             });
+            const countChatMessages = (where) => {
+                const db = this.bot.getDb();
+                const [whereSql, whereValues] = db._buildWhere(where);
+                const row = db._get(`select COUNT(*) as c from chat_log ${whereSql}`, whereValues);
+                return row.c;
+            };
+            let _isFirstChatAlltime = null;
+            let _isFirstChatStream = null;
+            const isFirstChatAlltime = async () => {
+                if (_isFirstChatAlltime === null) {
+                    _isFirstChatAlltime = countChatMessages({
+                        broadcaster_user_id: context['room-id'],
+                        user_name: context.username,
+                    }) === 1;
+                }
+                return _isFirstChatAlltime;
+            };
+            const isFirstChatStream = async () => {
+                if (_isFirstChatStream === null) {
+                    const stream = await helixClient.getStreamByUserId(context['room-id']);
+                    if (!stream) {
+                        _isFirstChatStream = false;
+                    }
+                    else {
+                        _isFirstChatStream = countChatMessages({
+                            broadcaster_user_id: context['room-id'],
+                            created_at: { '$gte': stream.started_at },
+                            user_name: context.username,
+                        }) === 1;
+                    }
+                }
+                return _isFirstChatStream;
+            };
             const chatMessageContext = { client: chatClient, target, context, msg };
             for (const m of this.bot.getModuleManager().all(user.id)) {
                 const commands = m.getCommands() || [];
                 let triggers = [];
+                const relevantTriggers = [];
                 for (const command of commands) {
                     for (const trigger of command.triggers) {
                         if (trigger.type === 'command') {
                             triggers.push(trigger);
+                        }
+                        else if (trigger.type === 'first_chat') {
+                            if (trigger.data.since === 'alltime' && await isFirstChatAlltime()) {
+                                relevantTriggers.push(trigger);
+                            }
+                            else if (trigger.data.since === 'stream' && await isFirstChatStream()) {
+                                relevantTriggers.push(trigger);
+                            }
                         }
                     }
                 }
@@ -2537,14 +2587,18 @@ class TwitchClientManager {
                 // and `!draw bad` is written in chat, that command only will be
                 // executed and not also `!draw`
                 triggers = triggers.sort((a, b) => b.data.command.length - a.data.command.length);
+                let rawCmd = null;
                 for (const trigger of triggers) {
-                    const rawCmd = fn.parseCommandFromTriggerAndMessage(chatMessageContext.msg, trigger);
+                    rawCmd = fn.parseCommandFromTriggerAndMessage(chatMessageContext.msg, trigger);
                     if (!rawCmd) {
                         continue;
                     }
-                    const cmdDefs = getUniqueCommandsByTrigger(commands, trigger);
-                    await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg);
+                    relevantTriggers.push(trigger);
                     break;
+                }
+                if (relevantTriggers.length > 0) {
+                    const cmdDefs = getUniqueCommandsByTriggers(commands, relevantTriggers);
+                    await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg);
                 }
                 await m.onChatMsg(chatMessageContext);
             }
@@ -2653,7 +2707,7 @@ class TwitchClientManager {
                             name: redemption.reward.title,
                             args: redemption.user_input ? [redemption.user_input] : [],
                         };
-                        const cmdDefs = getUniqueCommandsByTrigger(commands, trigger);
+                        const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger]);
                         await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg);
                         await m.onRewardRedemption(rewardRedemptionContext);
                     }
@@ -3725,7 +3779,10 @@ class GeneralModule {
                 return;
             }
             for (const trigger of cmd.triggers) {
-                if (trigger.type === 'command') {
+                if (trigger.type === 'first_chat') {
+                    commands.push(cmdObj);
+                }
+                else if (trigger.type === 'command') {
                     // TODO: check why this if is required, maybe for protection against '' command?
                     if (trigger.data.command) {
                         commands.push(cmdObj);

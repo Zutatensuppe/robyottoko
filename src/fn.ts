@@ -163,7 +163,7 @@ const applyVariableChanges = async (
 
 const tryExecuteCommand = async (
   contextModule: Module,
-  rawCmd: RawCommand,
+  rawCmd: RawCommand | null,
   cmdDefs: FunctionCommand[],
   client: TwitchChatClient,
   target: string,
@@ -175,14 +175,14 @@ const tryExecuteCommand = async (
     if (!mayExecute(context, cmdDef)) {
       continue
     }
-    log.info(`${target}| * Executing ${rawCmd.name} command`)
+    log.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`)
     const p = new Promise(async (resolve) => {
       await applyVariableChanges(cmdDef, contextModule, rawCmd, context)
       const r = await cmdDef.fn(rawCmd, client, target, context, msg)
       if (r) {
         log.info(`${target}| * Returned: ${r}`)
       }
-      log.info(`${target}| * Executed ${rawCmd.name} command`)
+      log.info(`${target}| * Executed ${rawCmd?.name || '<unknown>'} command`)
       resolve(true)
     })
     promises.push(p)
