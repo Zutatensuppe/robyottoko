@@ -1,5 +1,39 @@
 <template>
   <div class="trigger-editor">
+    <div class="field has-addons" v-if="value.type === 'first_chat'">
+      <span class="mr-1">First chat by user</span>
+      <div class="control">
+        <label class="mr-1">
+          <input
+            type="radio"
+            class="checkbox mr-1"
+            v-model="value.data.since"
+            :value="'alltime'"
+            @update:modelValue="emitUpdate"
+          />
+          Alltime
+        </label>
+        <label class="mr-1">
+          <input
+            type="radio"
+            class="checkbox mr-1"
+            v-model="value.data.since"
+            :value="'stream'"
+            @update:modelValue="emitUpdate"
+          />
+          Current Stream
+        </label>
+      </div>
+      <div class="control">
+        <button
+          class="button is-small"
+          :disabled="!removable"
+          @click="emitRemove"
+        >
+          <i class="fa fa-remove" />
+        </button>
+      </div>
+    </div>
     <div class="field has-addons" v-if="value.type === 'command'">
       <div class="control has-icons-left mr-1">
         <input

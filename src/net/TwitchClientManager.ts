@@ -7,8 +7,9 @@ import TwitchChannels, { TwitchChannel, TwitchChannelWithAccessToken } from '../
 import { User } from '../services/Users'
 import { Bot, RawCommand, RewardRedemptionContext, TwitchChannelPointsEventMessage, TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
 import TwitchPubSubClient from '../services/TwitchPubSubClient'
-import { getUniqueCommandsByTrigger, newRewardRedemptionTrigger } from '../common/commands'
+import { getUniqueCommandsByTriggers, newRewardRedemptionTrigger } from '../common/commands'
 import { isBroadcaster, isMod, isSubscriber } from '../common/permissions'
+import { Where } from '../Db'
 
 interface Identity {
   username: string
@@ -152,31 +153,80 @@ class TwitchClientManager {
         display_name: context['display-name'],
         message: msg,
       })
+
+      const countChatMessages = (where: Where) => {
+        const db = this.bot.getDb()
+        const [whereSql, whereValues] = db._buildWhere(where)
+        const row = db._get(
+          `select COUNT(*) as c from chat_log ${whereSql}`,
+          whereValues
+        )
+        return row.c
+      }
+      let _isFirstChatAlltime: null | boolean = null
+      let _isFirstChatStream: null | boolean = null
+      const isFirstChatAlltime = async () => {
+        if (_isFirstChatAlltime === null) {
+          _isFirstChatAlltime = countChatMessages({
+            broadcaster_user_id: context['room-id'],
+            user_name: context.username,
+          }) === 1
+        }
+        return _isFirstChatAlltime
+      }
+      const isFirstChatStream = async () => {
+        if (_isFirstChatStream === null) {
+          const stream = await helixClient.getStreamByUserId(context['room-id'])
+          if (!stream) {
+            _isFirstChatStream = false
+          } else {
+            _isFirstChatStream = countChatMessages({
+              broadcaster_user_id: context['room-id'],
+              created_at: { '$gte': stream.started_at },
+              user_name: context.username,
+            }) === 1
+          }
+        }
+        return _isFirstChatStream
+      }
       const chatMessageContext = { client: chatClient, target, context, msg }
 
       for (const m of this.bot.getModuleManager().all(user.id)) {
         const commands = m.getCommands() || []
         let triggers = []
+        const relevantTriggers = []
         for (const command of commands) {
           for (const trigger of command.triggers) {
             if (trigger.type === 'command') {
               triggers.push(trigger)
+            } else if (trigger.type === 'first_chat') {
+              if (trigger.data.since === 'alltime' && await isFirstChatAlltime()) {
+                relevantTriggers.push(trigger)
+              } else if (trigger.data.since === 'stream' && await isFirstChatStream()) {
+                relevantTriggers.push(trigger)
+              }
             }
           }
         }
+
         // make sure longest commands are found first
         // so that in case commands `!draw` and `!draw bad` are set up
         // and `!draw bad` is written in chat, that command only will be
         // executed and not also `!draw`
         triggers = triggers.sort((a, b) => b.data.command.length - a.data.command.length)
+        let rawCmd = null
         for (const trigger of triggers) {
-          const rawCmd = fn.parseCommandFromTriggerAndMessage(chatMessageContext.msg, trigger)
+          rawCmd = fn.parseCommandFromTriggerAndMessage(chatMessageContext.msg, trigger)
           if (!rawCmd) {
             continue
           }
-          const cmdDefs = getUniqueCommandsByTrigger(commands, trigger)
-          await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg)
+          relevantTriggers.push(trigger)
           break
+        }
+
+        if (relevantTriggers.length > 0) {
+          const cmdDefs = getUniqueCommandsByTriggers(commands, relevantTriggers)
+          await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg)
         }
         await m.onChatMsg(chatMessageContext);
       }
@@ -302,7 +352,7 @@ class TwitchClientManager {
               name: redemption.reward.title,
               args: redemption.user_input ? [redemption.user_input] : [],
             }
-            const cmdDefs = getUniqueCommandsByTrigger(commands, trigger)
+            const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger])
             await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg)
             await m.onRewardRedemption(rewardRedemptionContext)
           }

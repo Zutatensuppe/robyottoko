@@ -33,6 +33,9 @@ export const newTrigger = (type: CommandTriggerType): CommandTrigger => ({
     // for trigger type "timer" (todo: should only exist if type is timer, not always)
     minInterval: 0, // duration in ms or something parsable (eg 1s, 10m, ....)
     minLines: 0,
+
+    // for trigger type "first_chat"
+    since: 'stream',
   },
 })
 
@@ -49,40 +52,50 @@ export const newCommandTrigger = (command: string = '', commandExact: boolean = 
   return trigger
 }
 
-export const commandHasTrigger = (
+export const newFirstChatTrigger = (since: 'alltime' | 'stream'): CommandTrigger => {
+  const trigger = newTrigger('first_chat')
+  trigger.data.since = since
+  return trigger
+}
+
+export const commandHasAnyTrigger = (
   command: FunctionCommand,
-  trigger: CommandTrigger,
+  triggers: CommandTrigger[],
 ) => {
   for (const cmdTrigger of command.triggers) {
-    if (cmdTrigger.type !== trigger.type) {
-      continue
-    }
-    if (cmdTrigger.type === 'command') {
-      if (cmdTrigger.data.command === trigger.data.command) {
-        // no need to check for commandExact here (i think^^)
-        return true
+    for (const trigger of triggers) {
+      if (cmdTrigger.type !== trigger.type) {
+        continue
       }
-    } else if (cmdTrigger.type === 'reward_redemption') {
-      if (cmdTrigger.data.command === trigger.data.command) {
-        return true
-      }
-    } else if (cmdTrigger.type === 'timer') {
-      if (
-        cmdTrigger.data.minInterval === trigger.data.minInterval
-        && cmdTrigger.data.minLines === trigger.data.minLines
-      ) {
-        return true
+      if (cmdTrigger.type === 'command') {
+        if (cmdTrigger.data.command === trigger.data.command) {
+          // no need to check for commandExact here (i think^^)
+          return true
+        }
+      } else if (cmdTrigger.type === 'reward_redemption') {
+        if (cmdTrigger.data.command === trigger.data.command) {
+          return true
+        }
+      } else if (cmdTrigger.type === 'timer') {
+        if (
+          cmdTrigger.data.minInterval === trigger.data.minInterval
+          && cmdTrigger.data.minLines === trigger.data.minLines
+        ) {
+          return true
+        }
+      } else if (cmdTrigger.type === 'first_chat') {
+        return true;
       }
     }
   }
   return false
 }
 
-export const getUniqueCommandsByTrigger = (
+export const getUniqueCommandsByTriggers = (
   commands: FunctionCommand[],
-  trigger: CommandTrigger,
+  triggers: CommandTrigger[],
 ) => {
-  const tmp = commands.filter((command) => commandHasTrigger(command, trigger))
+  const tmp = commands.filter((command) => commandHasAnyTrigger(command, triggers))
   return tmp.filter((item, i, ar) => ar.indexOf(item) === i)
 }
 

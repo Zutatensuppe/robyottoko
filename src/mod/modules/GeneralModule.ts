@@ -228,7 +228,9 @@ class GeneralModule implements Module {
         return
       }
       for (const trigger of cmd.triggers) {
-        if (trigger.type === 'command') {
+        if (trigger.type === 'first_chat') {
+          commands.push(cmdObj)
+        } else if (trigger.type === 'command') {
           // TODO: check why this if is required, maybe for protection against '' command?
           if (trigger.data.command) {
             commands.push(cmdObj)

@@ -74,6 +74,15 @@
                   :key="idx2"
                   class="spacerow"
                 >
+                  <div v-if="element.triggers[idx2].type === 'first_chat'">
+                    First chat:
+                    <code v-if="element.triggers[idx2].data.since === 'alltime'"
+                      >alltime</code
+                    >
+                    <code v-if="element.triggers[idx2].data.since === 'stream'"
+                      >current stream</code
+                    >
+                  </div>
                   <div v-if="element.triggers[idx2].type === 'command'">
                     <code>{{ element.triggers[idx2].data.command }}</code>
                   </div>
