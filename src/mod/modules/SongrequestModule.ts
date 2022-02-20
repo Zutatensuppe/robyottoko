@@ -1,5 +1,5 @@
 import fn, { findIdxFuzzy } from '../../fn'
-import { logger } from '../../common/fn'
+import { logger, humanDuration } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
 import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
 import { User } from '../../services/Users'
@@ -187,10 +187,6 @@ class SongrequestModule implements Module {
 
   saveCommands() {
     // pass
-  }
-
-  widgets() {
-    return {}
   }
 
   getRoutes() {
@@ -438,7 +434,7 @@ class SongrequestModule implements Module {
         total: countTotal,
       },
       duration: {
-        human: fn.humanDuration(durationTotal),
+        human: humanDuration(durationTotal),
       },
     }
   }
@@ -713,7 +709,7 @@ class SongrequestModule implements Module {
       const diffMs = last_play ? (new Date().getTime() - last_play) : 0
       const diff = Math.round(diffMs / 1000) * 1000
       const durationMs = await this.durationUntilIndex(idx) - diff
-      const timePrediction = durationMs <= 0 ? '' : `, will play in ~${fn.humanDuration(durationMs)}`
+      const timePrediction = durationMs <= 0 ? '' : `, will play in ~${humanDuration(durationMs)}`
       info = `[Position ${idx + 1}${timePrediction}]`
     }
 

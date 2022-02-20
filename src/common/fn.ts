@@ -72,7 +72,8 @@ const pad = (
 }
 
 export const mustParseHumanDuration = (
-  duration: string | number
+  duration: string | number,
+  allowNegative: boolean = false,
 ) => {
   if (duration === '') {
     throw new Error("unable to parse duration")
@@ -81,10 +82,17 @@ export const mustParseHumanDuration = (
   if (!d) {
     throw new Error("unable to parse duration")
   }
-  if (d.match(/^\d+$/)) {
-    return parseInt(d, 10)
+  const checkNegative = (val: number) => {
+    if (val < 0 && !allowNegative) {
+      throw new Error("negative value not allowed")
+    }
+    return val
   }
-  const m1 = d.match(/^((?:\d*)\.(?:\d*))(d|h|m|s)$/)
+
+  if (d.match(/^-?\d+$/)) {
+    return checkNegative(parseInt(d, 10))
+  }
+  const m1 = d.match(/^(-?(?:\d*)\.(?:\d*))(d|h|m|s)$/)
   if (m1) {
     const value = parseFloat(m1[1])
     if (isNaN(value)) {
@@ -101,41 +109,44 @@ export const mustParseHumanDuration = (
     } else if (unit === 's') {
       ms = value * SECOND
     }
-    return Math.round(ms)
+    return checkNegative(Math.round(ms))
   }
 
-  const m = d.match(/^(?:(\d+)d)?\s?(?:(\d+)h)?\s?(?:(\d+)m)?\s?(?:(\d+)s)?\s?(?:(\d+)ms)?$/)
+  const m = d.match(/^(-?)(?:(\d+)d)?\s?(?:(\d+)h)?\s?(?:(\d+)m)?\s?(?:(\d+)s)?\s?(?:(\d+)ms)?$/)
   if (!m) {
     throw new Error("unable to parse duration")
   }
 
-  const D = m[1] ? parseInt(m[1], 10) : 0
-  const H = m[2] ? parseInt(m[2], 10) : 0
-  const M = m[3] ? parseInt(m[3], 10) : 0
-  const S = m[4] ? parseInt(m[4], 10) : 0
-  const MS = m[5] ? parseInt(m[5], 10) : 0
+  const neg = m[1] ? -1 : 1;
+  const D = m[2] ? parseInt(m[2], 10) : 0
+  const H = m[3] ? parseInt(m[3], 10) : 0
+  const M = m[4] ? parseInt(m[4], 10) : 0
+  const S = m[5] ? parseInt(m[5], 10) : 0
+  const MS = m[6] ? parseInt(m[6], 10) : 0
 
-  return (
+  return checkNegative(neg * (
     (S * SECOND)
     + (M * MINUTE)
     + (H * HOUR)
     + (D * DAY)
     + (MS)
-  )
+  ))
 }
 
 export const parseHumanDuration = (
-  duration: string | number
+  duration: string | number,
+  allowNegative: boolean = false,
 ) => {
   try {
-    return mustParseHumanDuration(duration)
+    return mustParseHumanDuration(duration, allowNegative)
   } catch (e) {
     return 0
   }
 }
 
-const humanDuration = (
-  durationMs: number
+export const humanDuration = (
+  durationMs: number,
+  units: string[] = ['ms', 's', 'm', 'h', 'd'],
 ) => {
   let duration = durationMs
 
@@ -153,7 +164,6 @@ const humanDuration = (
 
   const ms = duration
 
-  const units = ['ms', 's', 'm', 'h', 'd']
   const rawparts = [ms, s, m, h, d]
 
   // remove leading and trailing empty values

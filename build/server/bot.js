@@ -128,7 +128,7 @@ const pad = (x, pad) => {
     }
     return pad.substr(0, pad.length - str.length) + str;
 };
-const mustParseHumanDuration = (duration) => {
+const mustParseHumanDuration = (duration, allowNegative = false) => {
     if (duration === '') {
         throw new Error("unable to parse duration");
     }
@@ -136,10 +136,16 @@ const mustParseHumanDuration = (duration) => {
     if (!d) {
         throw new Error("unable to parse duration");
     }
-    if (d.match(/^\d+$/)) {
-        return parseInt(d, 10);
+    const checkNegative = (val) => {
+        if (val < 0 && !allowNegative) {
+            throw new Error("negative value not allowed");
+        }
+        return val;
+    };
+    if (d.match(/^-?\d+$/)) {
+        return checkNegative(parseInt(d, 10));
     }
-    const m1 = d.match(/^((?:\d*)\.(?:\d*))(d|h|m|s)$/);
+    const m1 = d.match(/^(-?(?:\d*)\.(?:\d*))(d|h|m|s)$/);
     if (m1) {
         const value = parseFloat(m1[1]);
         if (isNaN(value)) {
@@ -159,30 +165,58 @@ const mustParseHumanDuration = (duration) => {
         else if (unit === 's') {
             ms = value * SECOND;
         }
-        return Math.round(ms);
+        return checkNegative(Math.round(ms));
     }
-    const m = d.match(/^(?:(\d+)d)?\s?(?:(\d+)h)?\s?(?:(\d+)m)?\s?(?:(\d+)s)?\s?(?:(\d+)ms)?$/);
+    const m = d.match(/^(-?)(?:(\d+)d)?\s?(?:(\d+)h)?\s?(?:(\d+)m)?\s?(?:(\d+)s)?\s?(?:(\d+)ms)?$/);
     if (!m) {
         throw new Error("unable to parse duration");
     }
-    const D = m[1] ? parseInt(m[1], 10) : 0;
-    const H = m[2] ? parseInt(m[2], 10) : 0;
-    const M = m[3] ? parseInt(m[3], 10) : 0;
-    const S = m[4] ? parseInt(m[4], 10) : 0;
-    const MS = m[5] ? parseInt(m[5], 10) : 0;
-    return ((S * SECOND)
+    const neg = m[1] ? -1 : 1;
+    const D = m[2] ? parseInt(m[2], 10) : 0;
+    const H = m[3] ? parseInt(m[3], 10) : 0;
+    const M = m[4] ? parseInt(m[4], 10) : 0;
+    const S = m[5] ? parseInt(m[5], 10) : 0;
+    const MS = m[6] ? parseInt(m[6], 10) : 0;
+    return checkNegative(neg * ((S * SECOND)
         + (M * MINUTE)
         + (H * HOUR)
         + (D * DAY)
-        + (MS));
+        + (MS)));
 };
-const parseHumanDuration = (duration) => {
+const parseHumanDuration = (duration, allowNegative = false) => {
     try {
-        return mustParseHumanDuration(duration);
+        return mustParseHumanDuration(duration, allowNegative);
     }
     catch (e) {
         return 0;
     }
+};
+const humanDuration = (durationMs, units = ['ms', 's', 'm', 'h', 'd']) => {
+    let duration = durationMs;
+    const d = Math.floor(duration / DAY);
+    duration = duration % DAY;
+    const h = Math.floor(duration / HOUR);
+    duration = duration % HOUR;
+    const m = Math.floor(duration / MINUTE);
+    duration = duration % MINUTE;
+    const s = Math.floor(duration / SECOND);
+    duration = duration % SECOND;
+    const ms = duration;
+    const rawparts = [ms, s, m, h, d];
+    // remove leading and trailing empty values
+    let start = 0;
+    while (start < rawparts.length && rawparts[start] === 0) {
+        start++;
+    }
+    let end = rawparts.length - 1;
+    while (end >= 0 && rawparts[end] === 0) {
+        end--;
+    }
+    const parts = [];
+    for (let i = start; i <= end; i++) {
+        parts.unshift(`${rawparts[i]}${units[i]}`);
+    }
+    return parts.join(' ');
 };
 function arrayMove(arr, oldIndex, newIndex) {
     if (newIndex >= arr.length) {
@@ -446,7 +480,7 @@ const doReplacements = async (text, command, context, variables, originalCmd) =>
         {
             regex: /\$var\(([^)]+)\)/g,
             replacer: async (m0, m1) => {
-                if (!originalCmd.variables) {
+                if (!originalCmd || !originalCmd.variables) {
                     return '';
                 }
                 const v = originalCmd.variables.find(v => v.name === m1);
@@ -547,34 +581,6 @@ const parseISO8601Duration = (duration) => {
         + (Mo * MONTH)
         + (Y * YEAR));
 };
-const humanDuration = (durationMs) => {
-    let duration = durationMs;
-    const d = Math.floor(duration / DAY);
-    duration = duration % DAY;
-    const h = Math.floor(duration / HOUR);
-    duration = duration % HOUR;
-    const m = Math.floor(duration / MINUTE);
-    duration = duration % MINUTE;
-    const s = Math.floor(duration / SECOND);
-    duration = duration % SECOND;
-    const ms = duration;
-    const units = ['ms', 's', 'm', 'h', 'd'];
-    const rawparts = [ms, s, m, h, d];
-    // remove leading and trailing empty values
-    let start = 0;
-    while (start < rawparts.length && rawparts[start] === 0) {
-        start++;
-    }
-    let end = rawparts.length - 1;
-    while (end >= 0 && rawparts[end] === 0) {
-        end--;
-    }
-    const parts = [];
-    for (let i = start; i <= end; i++) {
-        parts.unshift(`${rawparts[i]}${units[i]}`);
-    }
-    return parts.join(' ');
-};
 const passwordSalt = () => {
     return nonce(10);
 };
@@ -650,7 +656,6 @@ var fn = {
     parseISO8601Duration,
     parseHumanDuration,
     mustParseHumanDuration,
-    humanDuration,
     doReplacements,
     nonce,
     split,
@@ -1154,13 +1159,54 @@ const widgetTemplate = (widget) => {
     return '../public/static/widgets/' + widget + '/index.html';
 };
 const widgets = [
-    'drawcast_draw',
-    'drawcast_receive',
-    'sr',
-    'media',
-    'speech-to-text',
-    'avatar',
-    'avatar_receive',
+    {
+        type: 'sr',
+        title: 'Song Request',
+        hint: 'Browser source, or open in browser and capture window',
+        pub: false,
+    },
+    {
+        type: 'media',
+        title: 'Media',
+        hint: 'Browser source, or open in browser and capture window',
+        pub: false,
+    },
+    {
+        type: 'speech-to-text',
+        title: 'Speech-to-Text',
+        hint: 'Google Chrome + window capture',
+        pub: false,
+    },
+    {
+        type: 'avatar',
+        title: 'Avatar (control)',
+        hint: '???',
+        pub: false,
+    },
+    {
+        type: 'avatar_receive',
+        title: 'Avatar (receive)',
+        hint: 'Browser source, or open in browser and capture window',
+        pub: false,
+    },
+    {
+        type: 'drawcast_receive',
+        title: 'Drawcast (Overlay)',
+        hint: 'Browser source, or open in browser and capture window',
+        pub: false,
+    },
+    {
+        type: 'drawcast_draw',
+        title: 'Drawcast (Draw)',
+        hint: 'Open this to draw (or give to viewers to let them draw)',
+        pub: true,
+    },
+    {
+        type: 'pomo',
+        title: 'Pomo',
+        hint: 'Browser source, or open in browser and capture window',
+        pub: false,
+    },
 ];
 class WebServer {
     constructor(eventHub, db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, configHttp, configTwitch, wss, auth) {
@@ -1202,7 +1248,7 @@ class WebServer {
         const app = express();
         const templates = new Templates(__dirname);
         for (const widget of widgets) {
-            await templates.add(widgetTemplate(widget));
+            await templates.add(widgetTemplate(widget.type));
         }
         await templates.add('templates/twitch_redirect_uri.html');
         app.get('/pub/:id', (req, res, next) => {
@@ -1314,43 +1360,14 @@ class WebServer {
         });
         app.get('/api/page/index', requireLoginApi, async (req, res) => {
             res.send({
-                widgets: [
-                    {
-                        title: 'Song Request',
-                        hint: 'Browser source, or open in browser and capture window',
-                        url: this.widgetUrl('sr', req.userWidgetToken),
-                    },
-                    {
-                        title: 'Media',
-                        hint: 'Browser source, or open in browser and capture window',
-                        url: this.widgetUrl('media', req.userWidgetToken),
-                    },
-                    {
-                        title: 'Speech-to-Text',
-                        hint: 'Google Chrome + window capture',
-                        url: this.widgetUrl('speech-to-text', req.userWidgetToken),
-                    },
-                    {
-                        title: 'Avatar (control)',
-                        hint: '???',
-                        url: this.widgetUrl('avatar', req.userWidgetToken),
-                    },
-                    {
-                        title: 'Avatar (receive)',
-                        hint: 'Browser source, or open in browser and capture window',
-                        url: this.widgetUrl('avatar_receive', req.userWidgetToken),
-                    },
-                    {
-                        title: 'Drawcast (Overlay)',
-                        hint: 'Browser source, or open in browser and capture window',
-                        url: this.widgetUrl('drawcast_receive', req.userWidgetToken),
-                    },
-                    {
-                        title: 'Drawcast (Draw)',
-                        hint: 'Open this to draw (or give to viewers to let them draw)',
-                        url: this.pubUrl(this.widgetUrl('drawcast_draw', req.userPubToken)),
-                    },
-                ]
+                widgets: widgets.map(w => {
+                    const url = this.widgetUrl(w.type, req.userPubToken);
+                    return {
+                        title: w.title,
+                        hint: w.hint,
+                        url: w.pub ? this.pubUrl(url) : url,
+                    };
+                })
             });
         });
         app.post('/api/user/_reset_password', express.json(), async (req, res) => {
@@ -1654,7 +1671,7 @@ class WebServer {
             }
             const type = req.params.widget_type;
             log$d.debug(`/widget/:widget_type/:widget_token/`, type, token);
-            if (widgets.includes(type)) {
+            if (widgets.findIndex(w => w.type === type) !== -1) {
                 res.send(templates.render(widgetTemplate(type), {
                     wsUrl: this.wss.connectstring(),
                     widgetToken: token,
@@ -3736,9 +3753,6 @@ class GeneralModule {
         });
         return { data, commands, timers };
     }
-    widgets() {
-        return {};
-    }
     getRoutes() {
         return {};
     }
@@ -3892,7 +3906,7 @@ const default_custom_css_preset = (obj = null) => ({
     showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
     maxItemsShown: typeof obj?.maxItemsShown === 'undefined' ? -1 : obj.maxItemsShown,
 });
-const default_settings$3 = (obj = null) => ({
+const default_settings$4 = (obj = null) => ({
     volume: typeof obj?.volume === 'undefined' ? 100 : obj.volume,
     hideVideoImage: {
         file: obj?.hideVideoImage?.file || '',
@@ -3992,7 +4006,7 @@ class SongrequestModule {
             filter: {
                 tag: '',
             },
-            settings: default_settings$3(),
+            settings: default_settings$4(),
             playlist: default_playlist(),
             commands: default_commands(),
             stacks: {},
@@ -4001,7 +4015,7 @@ class SongrequestModule {
         // needed by rest of the code
         // TODO: maybe use same code as in save function
         data.playlist = default_playlist(data.playlist);
-        data.settings = default_settings$3(data.settings);
+        data.settings = default_settings$4(data.settings);
         data.commands = default_commands(data.commands);
         return {
             data: {
@@ -4055,15 +4069,12 @@ class SongrequestModule {
     saveCommands() {
         // pass
     }
-    widgets() {
-        return {};
-    }
     getRoutes() {
         return {
             post: {
                 '/api/sr/import': async (req, res, _next) => {
                     try {
-                        this.data.settings = default_settings$3(req.body.settings);
+                        this.data.settings = default_settings$4(req.body.settings);
                         this.data.playlist = default_playlist(req.body.playlist);
                         this.save();
                         this.updateClients('init');
@@ -4335,7 +4346,7 @@ class SongrequestModule {
                 total: countTotal,
             },
             duration: {
-                human: fn.humanDuration(durationTotal),
+                human: humanDuration(durationTotal),
             },
         };
     }
@@ -4575,7 +4586,7 @@ class SongrequestModule {
             const diffMs = last_play ? (new Date().getTime() - last_play) : 0;
             const diff = Math.round(diffMs / 1000) * 1000;
             const durationMs = await this.durationUntilIndex(idx) - diff;
-            const timePrediction = durationMs <= 0 ? '' : `, will play in ~${fn.humanDuration(durationMs)}`;
+            const timePrediction = durationMs <= 0 ? '' : `, will play in ~${humanDuration(durationMs)}`;
             info = `[Position ${idx + 1}${timePrediction}]`;
         }
         if (addType === ADD_TYPE.ADDED) {
@@ -4948,9 +4959,6 @@ class VoteModule {
             votes: this.data.votes,
         });
     }
-    widgets() {
-        return {};
-    }
     getRoutes() {
         return {};
     }
@@ -5051,7 +5059,7 @@ class VoteModule {
     }
 }
 
-const default_settings$2 = () => ({
+const default_settings$3 = () => ({
     status: {
         enabled: false,
     },
@@ -5099,7 +5107,7 @@ class SpeechToTextModule {
         this.name = 'speech-to-text';
         this.bot = bot;
         this.user = user;
-        this.defaultSettings = default_settings$2();
+        this.defaultSettings = default_settings$3();
         this.data = this.reinit();
     }
     async userChanged(user) {
@@ -5113,9 +5121,6 @@ class SpeechToTextModule {
     }
     saveCommands() {
         // pass
-    }
-    widgets() {
-        return {};
     }
     getRoutes() {
         return {};
@@ -5171,7 +5176,7 @@ class SpeechToTextModule {
     }
 }
 
-const default_settings$1 = () => ({
+const default_settings$2 = () => ({
     submitButtonText: 'Submit',
     submitConfirm: '',
     recentImagesTitle: '',
@@ -5197,7 +5202,7 @@ const default_settings$1 = () => ({
 class DrawcastModule {
     constructor(bot, user) {
         this.name = 'drawcast';
-        this.defaultSettings = default_settings$1();
+        this.defaultSettings = default_settings$2();
         this.bot = bot;
         this.user = user;
         this.data = this.reinit();
@@ -5268,9 +5273,6 @@ class DrawcastModule {
         return {
             settings: data.settings
         };
-    }
-    widgets() {
-        return {};
     }
     getRoutes() {
         return {
@@ -5352,7 +5354,7 @@ const default_avatar_definition = (def = null) => {
         state: get(def, 'state', { slots: {}, lockedState: '' })
     };
 };
-const default_settings = () => ({
+const default_settings$1 = () => ({
     styles: {
         // page background color
         bgColor: '#80ff00',
@@ -5364,7 +5366,7 @@ const log$1 = logger('AvatarModule.ts');
 class AvatarModule {
     constructor(bot, user) {
         this.name = 'avatar';
-        this.defaultSettings = default_settings();
+        this.defaultSettings = default_settings$1();
         this.defaultState = { tuberIdx: -1 };
         this.bot = bot;
         this.user = user;
@@ -5400,9 +5402,6 @@ class AvatarModule {
             settings: data.settings,
             state: data.state,
         };
-    }
-    widgets() {
-        return {};
     }
     getRoutes() {
         return {};
@@ -5472,6 +5471,216 @@ class AvatarModule {
     }
 }
 
+const default_effect = (obj = null) => ({
+    chatMessage: (!obj || typeof obj.chatMessage === 'undefined') ? '' : obj.chatMessage,
+    sound: (!obj || typeof obj.sound === 'undefined') ? { file: '', filename: '', urlpath: '', volume: 100 } : obj.sound,
+});
+const default_notification = (obj = null) => ({
+    effect: (!obj || typeof obj.effect === 'undefined') ? default_effect() : default_effect(obj.effect),
+    offsetMs: (!obj || typeof obj.offsetMs === 'undefined') ? '' : obj.offsetMs,
+});
+const default_settings = (obj = null) => ({
+    fontFamily: (!obj || typeof obj.fontFamily === 'undefined') ? '' : obj.fontFamily,
+    fontSize: (!obj || typeof obj.fontSize === 'undefined') ? '72px' : obj.fontSize,
+    color: (!obj || typeof obj.color === 'undefined') ? '' : obj.color,
+    timerFormat: (!obj || typeof obj.timerFormat === 'undefined') ? '{mm}:{ss}' : obj.timerFormat,
+    showTimerWhenFinished: (!obj || typeof obj.showTimerWhenFinished === 'undefined') ? true : obj.showTimerWhenFinished,
+    finishedText: (!obj || typeof obj.finishedText === 'undefined') ? '' : obj.finishedText,
+    startEffect: (!obj || typeof obj.startEffect === 'undefined') ? default_effect() : default_effect(obj.startEffect),
+    endEffect: (!obj || typeof obj.endEffect === 'undefined') ? default_effect() : default_effect(obj.endEffect),
+    stopEffect: (!obj || typeof obj.stopEffect === 'undefined') ? default_effect() : default_effect(obj.stopEffect),
+    notifications: (!obj || typeof obj.notifications === 'undefined') ? [] : obj.notifications.map(default_notification),
+});
+const default_state = (obj = null) => ({
+    running: (!obj || typeof obj.running === 'undefined') ? false : obj.running,
+    durationMs: (!obj || typeof obj.durationMs === 'undefined') ? (25 * 60 * 1000) : obj.durationMs,
+    startTs: (!obj || typeof obj.startTs === 'undefined') ? '' : obj.startTs,
+    doneTs: (!obj || typeof obj.doneTs === 'undefined') ? '' : obj.doneTs,
+    name: (!obj || typeof obj.name === 'undefined') ? '' : obj.name,
+});
+
+class PomoModule {
+    constructor(bot, user) {
+        this.name = 'pomo';
+        this.timeout = null;
+        this.bot = bot;
+        this.user = user;
+        this.data = this.reinit();
+        this.tick(null, null);
+        this.commands = [
+            {
+                triggers: [newCommandTrigger('!pomo')],
+                restrict_to: MOD_OR_ABOVE,
+                fn: this.cmdPomoStart.bind(this),
+            },
+            {
+                triggers: [newCommandTrigger('!pomo exit', true)],
+                restrict_to: MOD_OR_ABOVE,
+                fn: this.cmdPomoEnd.bind(this),
+            },
+        ];
+    }
+    tick(command, context) {
+        if (this.timeout) {
+            clearTimeout(this.timeout);
+            this.timeout = null;
+        }
+        const replaceText = async (text) => {
+            const variables = this.bot.getUserVariables(this.user);
+            text = await doReplacements(text, command, context, variables, null);
+            text = text.replace(/\$pomo\.duration/g, humanDuration(this.data.state.durationMs, [' ms', ' s', ' min', ' hours', ' days']));
+            text = text.replace(/\$pomo\.name/g, this.data.state.name);
+            return text;
+        };
+        this.timeout = setTimeout(async () => {
+            if (!this.data || !this.data.state.startTs) {
+                return null;
+            }
+            const client = this.bot.getUserTwitchClientManager(this.user).getChatClient();
+            if (!client) {
+                return;
+            }
+            const dateStarted = new Date(JSON.parse(this.data.state.startTs));
+            const dateEnd = new Date(dateStarted.getTime() + this.data.state.durationMs);
+            const say = fn.sayFn(client, null);
+            const doneDate = this.data.state.doneTs ? new Date(JSON.parse(this.data.state.doneTs)) : dateStarted;
+            const now = new Date();
+            let anyNotificationsLeft = false;
+            for (const n of this.data.settings.notifications) {
+                const nDateEnd = new Date(dateEnd.getTime() + parseHumanDuration(`${n.offsetMs}`, true));
+                if (nDateEnd < now) {
+                    // is over and should maybe be triggered!
+                    if (!doneDate || nDateEnd > doneDate) {
+                        if (n.effect.chatMessage) {
+                            say(await replaceText(n.effect.chatMessage));
+                        }
+                        this.updateClients({ event: 'effect', data: n.effect });
+                    }
+                }
+                else {
+                    anyNotificationsLeft = true;
+                }
+            }
+            if (dateEnd < now) {
+                // is over and should maybe be triggered!
+                if (!doneDate || dateEnd > doneDate) {
+                    if (this.data.settings.endEffect.chatMessage) {
+                        say(await replaceText(this.data.settings.endEffect.chatMessage));
+                    }
+                    this.updateClients({ event: 'effect', data: this.data.settings.endEffect });
+                }
+            }
+            else {
+                anyNotificationsLeft = true;
+            }
+            this.data.state.doneTs = JSON.stringify(now);
+            this.save();
+            if (anyNotificationsLeft && this.data.state.running) {
+                this.tick(command, context);
+            }
+        }, 1000);
+    }
+    async cmdPomoStart(command, client, target, context, _msg) {
+        if (!client) {
+            return;
+        }
+        const replaceText = async (text) => {
+            const variables = this.bot.getUserVariables(this.user);
+            text = await doReplacements(text, command, context, variables, null);
+            text = text.replace(/\$pomo\.duration/g, humanDuration(this.data.state.durationMs, [' ms', ' sec', ' min', ' hours', ' days']));
+            text = text.replace(/\$pomo\.name/g, this.data.state.name);
+            return text;
+        };
+        const say = fn.sayFn(client, target);
+        this.data.state.running = true;
+        this.data.state.startTs = JSON.stringify(new Date());
+        this.data.state.doneTs = this.data.state.startTs;
+        // todo: parse args and use that
+        this.data.state.name = command?.args.slice(1).join(' ') || '';
+        let duration = command?.args[0] || '25m';
+        duration = duration.match(/^\d+$/) ? `${duration}m` : duration;
+        this.data.state.durationMs = parseHumanDuration(duration);
+        this.save();
+        this.tick(command, context);
+        this.updateClients(this.wsdata('init'));
+        if (this.data.settings.startEffect.chatMessage) {
+            say(await replaceText(this.data.settings.startEffect.chatMessage));
+        }
+        this.updateClients({ event: 'effect', data: this.data.settings.startEffect });
+    }
+    async cmdPomoEnd(command, client, target, context, _msg) {
+        if (!client) {
+            return;
+        }
+        const replaceText = async (text) => {
+            const variables = this.bot.getUserVariables(this.user);
+            text = await doReplacements(text, command, context, variables, null);
+            text = text.replace(/\$pomo\.duration/g, humanDuration(this.data.state.durationMs, [' ms', ' sec', ' min', ' hours', ' days']));
+            text = text.replace(/\$pomo\.name/g, this.data.state.name);
+            return text;
+        };
+        const say = fn.sayFn(client, target);
+        this.data.state.running = false;
+        this.save();
+        this.tick(command, context);
+        this.updateClients(this.wsdata('init'));
+        if (this.data.settings.stopEffect.chatMessage) {
+            say(await replaceText(this.data.settings.stopEffect.chatMessage));
+        }
+        this.updateClients({ event: 'effect', data: this.data.settings.stopEffect });
+    }
+    async userChanged(user) {
+        this.user = user;
+    }
+    save() {
+        this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
+    }
+    saveCommands() {
+        // pass
+    }
+    reinit() {
+        const data = this.bot.getUserModuleStorage(this.user).load(this.name, {});
+        return {
+            settings: default_settings(data.settings),
+            state: default_state(data.state),
+        };
+    }
+    getRoutes() {
+        return {};
+    }
+    wsdata(event) {
+        return { event, data: this.data };
+    }
+    updateClient(data, ws) {
+        this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, data, ws);
+    }
+    updateClients(data) {
+        this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, data);
+    }
+    getWsEvents() {
+        return {
+            'conn': (ws) => {
+                this.updateClient(this.wsdata('init'), ws);
+            },
+            'save': (_ws, data) => {
+                this.data.settings = data.settings;
+                this.save();
+                this.data = this.reinit();
+                this.updateClients(this.wsdata('init'));
+            },
+        };
+    }
+    getCommands() {
+        return this.commands;
+    }
+    async onChatMsg(_chatMessageContext) {
+        // pass
+    }
+    async onRewardRedemption(_RewardRedemptionContext) {
+        // pass
+    }
+}
+
 setLogLevel(config.log.level);
 const log = logger('bot.ts');
 const modules = [
@@ -5481,6 +5690,7 @@ const modules = [
     SpeechToTextModule,
     DrawcastModule,
     AvatarModule,
+    PomoModule,
 ];
 const db = new Db(config.db);
 // make sure we are always on latest db version

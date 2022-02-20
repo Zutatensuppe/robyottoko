@@ -6,7 +6,7 @@ import { defineComponent } from "vue";
 import util from "../util";
 
 import fn from "../../common/fn";
-import { MediaCommandData, MediaFile, SoundMediaFile } from "../../types";
+import { MediaCommandData } from "../../types";
 import WsClient from "../../frontend/WsClient";
 import {
   GeneralModuleSettings,

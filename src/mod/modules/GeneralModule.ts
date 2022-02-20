@@ -255,10 +255,6 @@ class GeneralModule implements Module {
     return { data, commands, timers } as GeneralModuleInitData
   }
 
-  widgets() {
-    return {}
-  }
-
   getRoutes() {
     return {}
   }

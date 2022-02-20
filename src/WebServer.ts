@@ -33,14 +33,63 @@ const widgetTemplate = (widget: string) => {
   }
   return '../public/static/widgets/' + widget + '/index.html'
 }
-const widgets: string[] = [
-  'drawcast_draw',
-  'drawcast_receive',
-  'sr',
-  'media',
-  'speech-to-text',
-  'avatar',
-  'avatar_receive',
+
+interface WidgetDefinition {
+  type: string
+  title: string
+  hint: string
+  pub: boolean
+}
+
+const widgets: WidgetDefinition[] = [
+  {
+    type: 'sr',
+    title: 'Song Request',
+    hint: 'Browser source, or open in browser and capture window',
+    pub: false,
+  },
+  {
+    type: 'media',
+    title: 'Media',
+    hint: 'Browser source, or open in browser and capture window',
+    pub: false,
+  },
+  {
+    type: 'speech-to-text',
+    title: 'Speech-to-Text',
+    hint: 'Google Chrome + window capture',
+    pub: false,
+  },
+  {
+    type: 'avatar',
+    title: 'Avatar (control)',
+    hint: '???',
+    pub: false,
+  },
+  {
+    type: 'avatar_receive',
+    title: 'Avatar (receive)',
+    hint: 'Browser source, or open in browser and capture window',
+    pub: false,
+  },
+  {
+    type: 'drawcast_receive',
+    title: 'Drawcast (Overlay)',
+    hint: 'Browser source, or open in browser and capture window',
+    pub: false,
+  },
+  {
+    type: 'drawcast_draw',
+    title: 'Drawcast (Draw)',
+    hint: 'Open this to draw (or give to viewers to let them draw)',
+    pub: true,
+  },
+  {
+    type: 'pomo',
+    title: 'Pomo',
+    hint: 'Browser source, or open in browser and capture window',
+    pub: false,
+  },
 ]
 
 class WebServer {
@@ -113,7 +162,7 @@ class WebServer {
 
     const templates = new Templates(__dirname)
     for (const widget of widgets) {
-      await templates.add(widgetTemplate(widget))
+      await templates.add(widgetTemplate(widget.type))
     }
     await templates.add('templates/twitch_redirect_uri.html')
 
@@ -236,43 +285,14 @@ class WebServer {
 
     app.get('/api/page/index', requireLoginApi, async (req: any, res: Response) => {
       res.send({
-        widgets: [
-          {
-            title: 'Song Request',
-            hint: 'Browser source, or open in browser and capture window',
-            url: this.widgetUrl('sr', req.userWidgetToken),
-          },
-          {
-            title: 'Media',
-            hint: 'Browser source, or open in browser and capture window',
-            url: this.widgetUrl('media', req.userWidgetToken),
-          },
-          {
-            title: 'Speech-to-Text',
-            hint: 'Google Chrome + window capture',
-            url: this.widgetUrl('speech-to-text', req.userWidgetToken),
-          },
-          {
-            title: 'Avatar (control)',
-            hint: '???',
-            url: this.widgetUrl('avatar', req.userWidgetToken),
-          },
-          {
-            title: 'Avatar (receive)',
-            hint: 'Browser source, or open in browser and capture window',
-            url: this.widgetUrl('avatar_receive', req.userWidgetToken),
-          },
-          {
-            title: 'Drawcast (Overlay)',
-            hint: 'Browser source, or open in browser and capture window',
-            url: this.widgetUrl('drawcast_receive', req.userWidgetToken),
-          },
-          {
-            title: 'Drawcast (Draw)',
-            hint: 'Open this to draw (or give to viewers to let them draw)',
-            url: this.pubUrl(this.widgetUrl('drawcast_draw', req.userPubToken)),
-          },
-        ]
+        widgets: widgets.map(w => {
+          const url = this.widgetUrl(w.type, req.userPubToken)
+          return {
+            title: w.title,
+            hint: w.hint,
+            url: w.pub ? this.pubUrl(url) : url,
+          }
+        })
       })
     })
 
@@ -611,7 +631,7 @@ class WebServer {
       }
       const type = req.params.widget_type
       log.debug(`/widget/:widget_type/:widget_token/`, type, token)
-      if (widgets.includes(type)) {
+      if (widgets.findIndex(w => w.type === type) !== -1) {
         res.send(templates.render(widgetTemplate(type), {
           wsUrl: this.wss.connectstring(),
           widgetToken: token,

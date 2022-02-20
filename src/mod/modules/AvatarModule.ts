@@ -86,10 +86,6 @@ class AvatarModule implements Module {
     }
   }
 
-  widgets() {
-    return {}
-  }
-
   getRoutes() {
     return {}
   }

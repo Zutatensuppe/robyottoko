@@ -4,7 +4,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import WsClient from "../../frontend/WsClient";
-import { MediaFile, SoundMediaFile } from "../../types";
+import { SoundMediaFile } from "../../types";
 import util from "../util";
 
 interface Media {
