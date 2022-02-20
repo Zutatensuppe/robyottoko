@@ -291,7 +291,7 @@ const mayExecute = (context, cmd) => {
     return false;
 };
 
-const log$g = logger('fn.ts');
+const log$h = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
         return mime.replace('image/', '');
@@ -339,9 +339,9 @@ const sayFn = (client, target) => (msg) => {
         // TODO: fix this somewhere else?
         // client can only say things in lowercase channels
         t = t.toLowerCase();
-        log$g.info(`saying in ${t}: ${msg}`);
+        log$h.info(`saying in ${t}: ${msg}`);
         client.say(t, msg).catch((e) => {
-            log$g.info(e);
+            log$h.info(e);
         });
     });
 };
@@ -412,14 +412,14 @@ const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, client, target,
         if (!mayExecute(context, cmdDef)) {
             continue;
         }
-        log$g.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`);
+        log$h.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`);
         const p = new Promise(async (resolve) => {
             await applyVariableChanges(cmdDef, contextModule, rawCmd, context);
             const r = await cmdDef.fn(rawCmd, client, target, context, msg);
             if (r) {
-                log$g.info(`${target}| * Returned: ${r}`);
+                log$h.info(`${target}| * Returned: ${r}`);
             }
-            log$g.info(`${target}| * Executed ${rawCmd?.name || '<unknown>'} command`);
+            log$h.info(`${target}| * Executed ${rawCmd?.name || '<unknown>'} command`);
             resolve(true);
         });
         promises.push(p);
@@ -772,7 +772,7 @@ class ModuleManager {
     }
 }
 
-const log$f = logger("WebSocketServer.ts");
+const log$g = logger("WebSocketServer.ts");
 class WebSocketServer {
     constructor(moduleManager, config, auth) {
         this.moduleManager = moduleManager;
@@ -790,14 +790,14 @@ class WebSocketServer {
             const token = socket.protocol;
             const tokenInfo = this.auth.wsTokenFromProtocol(token);
             if (!tokenInfo) {
-                log$f.info('not found token: ', token);
+                log$g.info('not found token: ', token);
                 socket.close();
                 return;
             }
             socket.user_id = tokenInfo.user_id;
             const pathname = new URL(this.connectstring()).pathname;
             if (request.url?.indexOf(pathname) !== 0) {
-                log$f.info('bad request url: ', request.url);
+                log$g.info('bad request url: ', request.url);
                 socket.close();
                 return;
             }
@@ -822,7 +822,7 @@ class WebSocketServer {
                 const evts = module.getWsEvents();
                 if (evts) {
                     socket.on('message', (data) => {
-                        log$f.info(`ws|${socket.user_id}| `, data);
+                        log$g.info(`ws|${socket.user_id}| `, data);
                         const unknownData = data;
                         const d = JSON.parse(unknownData);
                         if (!d.event) {
@@ -864,13 +864,13 @@ class WebSocketServer {
             && socket.user_id
             && user_ids.includes(socket.user_id)
             && socket.module === moduleName) {
-            log$f.info(`notifying ${socket.user_id} ${moduleName} (${data.event})`);
+            log$g.info(`notifying ${socket.user_id} ${moduleName} (${data.event})`);
             socket.send(JSON.stringify(data));
         }
     }
     sockets(user_ids, moduleName = null) {
         if (!this._websocketserver) {
-            log$f.error(`sockets(): _websocketserver is null`);
+            log$g.error(`sockets(): _websocketserver is null`);
             return [];
         }
         const sockets = [];
@@ -893,7 +893,7 @@ class WebSocketServer {
     }
     notifyAll(user_ids, moduleName, data) {
         if (!this._websocketserver) {
-            log$f.error(`tried to notifyAll, but _websocketserver is null`);
+            log$g.error(`tried to notifyAll, but _websocketserver is null`);
             return;
         }
         this._websocketserver.clients.forEach((socket) => {
@@ -924,7 +924,7 @@ class Templates {
     }
 }
 
-const log$e = logger('TwitchHelixClient.ts');
+const log$f = logger('TwitchHelixClient.ts');
 const API_BASE = 'https://api.twitch.tv/helix';
 function getBestEntryFromCategorySearchItems(searchString, resp) {
     if (resp.data.length === 0) {
@@ -1000,7 +1000,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$e.error(json);
+            log$f.error(json);
             return null;
         }
     }
@@ -1022,7 +1022,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$e.error(json);
+            log$f.error(json);
             return null;
         }
     }
@@ -1046,7 +1046,7 @@ class TwitchHelixClient {
             return getBestEntryFromCategorySearchItems(searchString, json);
         }
         catch (e) {
-            log$e.error(json);
+            log$f.error(json);
             return null;
         }
     }
@@ -1058,7 +1058,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$e.error(json);
+            log$f.error(json);
             return null;
         }
     }
@@ -1151,7 +1151,7 @@ class Variables {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const log$d = logger('WebServer.ts');
+const log$e = logger('WebServer.ts');
 const widgetTemplate = (widget) => {
     if (process.env.WIDGET_DUMMY) {
         return process.env.WIDGET_DUMMY;
@@ -1270,8 +1270,8 @@ class WebServer {
             hmac.update(msg);
             const expected = `sha256=${hmac.digest('hex')}`;
             if (req.headers['twitch-eventsub-message-signature'] !== expected) {
-                log$d.debug(req);
-                log$d.error('bad message signature', {
+                log$e.debug(req);
+                log$e.error('bad message signature', {
                     got: req.headers['twitch-eventsub-message-signature'],
                     expected,
                 });
@@ -1315,12 +1315,12 @@ class WebServer {
         app.post('/api/upload', requireLoginApi, (req, res) => {
             upload(req, res, (err) => {
                 if (err) {
-                    log$d.error(err);
+                    log$e.error(err);
                     res.status(400).send("Something went wrong!");
                     return;
                 }
                 if (!req.file) {
-                    log$d.error(err);
+                    log$e.error(err);
                     res.status(400).send("Something went wrong!");
                     return;
                 }
@@ -1505,7 +1505,7 @@ class WebServer {
                     this.eventHub.emit('user_registration_complete', user);
                 }
                 else {
-                    log$d.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`);
+                    log$e.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`);
                 }
                 return;
             }
@@ -1578,7 +1578,7 @@ class WebServer {
                 this.eventHub.emit('user_changed', changedUser);
             }
             else {
-                log$d.error(`save-settings: user doesn't exist after saving it: ${user.id}`);
+                log$e.error(`save-settings: user doesn't exist after saving it: ${user.id}`);
             }
             res.send();
         });
@@ -1617,16 +1617,16 @@ class WebServer {
             }
         });
         app.post('/twitch/event-sub/', express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
-            log$d.debug(req.body);
-            log$d.debug(req.headers);
+            log$e.debug(req.body);
+            log$e.debug(req.headers);
             if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-                log$d.info(`got verification request, challenge: ${req.body.challenge}`);
+                log$e.info(`got verification request, challenge: ${req.body.challenge}`);
                 res.write(req.body.challenge);
                 res.send();
                 return;
             }
             if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-                log$d.info(`got notification request: ${req.body.subscription.type}`);
+                log$e.info(`got notification request: ${req.body.subscription.type}`);
                 if (req.body.subscription.type === 'stream.online') {
                     // insert new stream
                     this.db.insert('streams', {
@@ -1670,7 +1670,7 @@ class WebServer {
                 return;
             }
             const type = req.params.widget_type;
-            log$d.debug(`/widget/:widget_type/:widget_token/`, type, token);
+            log$e.debug(`/widget/:widget_type/:widget_token/`, type, token);
             if (widgets.findIndex(w => w.type === type) !== -1) {
                 res.send(templates.render(widgetTemplate(type), {
                     wsUrl: this.wss.connectstring(),
@@ -1701,7 +1701,7 @@ class WebServer {
             const indexFile = `${__dirname}/../../build/public/index.html`;
             res.sendFile(path.resolve(indexFile));
         });
-        this.handle = app.listen(port, hostname, () => log$d.info(`server running on http://${hostname}:${port}`));
+        this.handle = app.listen(port, hostname, () => log$e.info(`server running on http://${hostname}:${port}`));
     }
     close() {
         if (this.handle) {
@@ -1716,7 +1716,7 @@ const CODE_GOING_AWAY = 1001;
 const CODE_CUSTOM_DISCONNECT = 4000;
 const heartbeatInterval = 60 * SECOND; //ms between PING's
 const reconnectInterval = 3 * SECOND; //ms to wait before reconnect
-const log$c = logger('TwitchPubSubClient.ts');
+const log$d = logger('TwitchPubSubClient.ts');
 const PUBSUB_WS_ADDR = 'wss://pubsub-edge.twitch.tv';
 class TwitchPubSubClient {
     constructor() {
@@ -1767,7 +1767,7 @@ class TwitchPubSubClient {
                 return;
             }
             if (this.handle.readyState !== WebSocket.OPEN) {
-                log$c.error('ERR', `readyState is not OPEN (${WebSocket.OPEN})`);
+                log$d.error('ERR', `readyState is not OPEN (${WebSocket.OPEN})`);
                 return;
             }
             if (this.reconnectTimeout) {
@@ -1777,7 +1777,7 @@ class TwitchPubSubClient {
             while (this.sendBuffer.length > 0) {
                 this.handle.send(this.sendBuffer.shift());
             }
-            log$c.info('INFO', 'Socket Opened');
+            log$d.info('INFO', 'Socket Opened');
             this._heartbeat();
             if (this.heartbeatHandle) {
                 clearInterval(this.heartbeatHandle);
@@ -1795,13 +1795,13 @@ class TwitchPubSubClient {
             }
             // log.debug('RECV', JSON.stringify(message))
             if (message.type === 'RECONNECT') {
-                log$c.info('INFO', 'Reconnecting...');
+                log$d.info('INFO', 'Reconnecting...');
                 this.connect();
             }
             this.evts.emit('message', message);
         };
         this.handle.onerror = (e) => {
-            log$c.error('ERR', e);
+            log$d.error('ERR', e);
             this.handle = null;
             this.reconnectTimeout = setTimeout(() => { this.connect(); }, reconnectInterval);
         };
@@ -1809,7 +1809,7 @@ class TwitchPubSubClient {
             this.handle = null;
             if (e.code === CODE_CUSTOM_DISCONNECT || e.code === CODE_GOING_AWAY) ;
             else {
-                log$c.info('INFO', 'Onclose...');
+                log$d.info('INFO', 'Onclose...');
                 this.reconnectTimeout = setTimeout(() => { this.connect(); }, reconnectInterval);
             }
             if (this.heartbeatHandle) {
@@ -1897,7 +1897,6 @@ const commandHasAnyTrigger = (command, triggers) => {
     return false;
 };
 const getUniqueCommandsByTriggers = (commands, triggers) => {
-    //
     const tmp = commands.filter((command) => commandHasAnyTrigger(command, triggers));
     return tmp.filter((item, i, ar) => ar.indexOf(item) === i);
 };
@@ -2424,6 +2423,7 @@ const commands = {
 };
 
 // @ts-ignore
+const log$c = logger('TwitchClientManager.ts');
 class TwitchClientManager {
     constructor(bot, user, cfg, twitchChannelRepo) {
         this.chatClient = null;
@@ -2550,7 +2550,13 @@ class TwitchClientManager {
                 if (_isFirstChatStream === null) {
                     const stream = await helixClient.getStreamByUserId(context['room-id']);
                     if (!stream) {
-                        _isFirstChatStream = false;
+                        const fakeStartDate = `${new Date(new Date().getTime() - (5 * MINUTE)).toJSON()}`;
+                        log$c.info(`No stream is running atm for channel ${context['room-id']}. Using fake start date ${fakeStartDate}.`);
+                        _isFirstChatStream = countChatMessages({
+                            broadcaster_user_id: context['room-id'],
+                            created_at: { '$gte': fakeStartDate },
+                            user_name: context.username,
+                        }) === 1;
                     }
                     else {
                         _isFirstChatStream = countChatMessages({

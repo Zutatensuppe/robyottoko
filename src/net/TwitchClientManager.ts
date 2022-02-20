@@ -1,7 +1,7 @@
 // @ts-ignore
 import tmi from 'tmi.js'
 import TwitchHelixClient from '../services/TwitchHelixClient'
-import fn from '../fn'
+import fn, { MINUTE } from '../fn'
 import { logger, Logger } from '../common/fn'
 import TwitchChannels, { TwitchChannel, TwitchChannelWithAccessToken } from '../services/TwitchChannels'
 import { User } from '../services/Users'
@@ -10,6 +10,8 @@ import TwitchPubSubClient from '../services/TwitchPubSubClient'
 import { getUniqueCommandsByTriggers, newRewardRedemptionTrigger } from '../common/commands'
 import { isBroadcaster, isMod, isSubscriber } from '../common/permissions'
 import { Where } from '../Db'
+
+const log = logger('TwitchClientManager.ts')
 
 interface Identity {
   username: string
@@ -178,7 +180,13 @@ class TwitchClientManager {
         if (_isFirstChatStream === null) {
           const stream = await helixClient.getStreamByUserId(context['room-id'])
           if (!stream) {
-            _isFirstChatStream = false
+            const fakeStartDate = `${new Date(new Date().getTime() - (5 * MINUTE)).toJSON()}`
+            log.info(`No stream is running atm for channel ${context['room-id']}. Using fake start date ${fakeStartDate}.`)
+            _isFirstChatStream = countChatMessages({
+              broadcaster_user_id: context['room-id'],
+              created_at: { '$gte': fakeStartDate },
+              user_name: context.username,
+            }) === 1
           } else {
             _isFirstChatStream = countChatMessages({
               broadcaster_user_id: context['room-id'],
