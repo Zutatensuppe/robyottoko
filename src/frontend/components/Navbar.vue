@@ -105,6 +105,10 @@ export default defineComponent({
         text: "Drawcast",
       },
       {
+        to: { name: "pomo" },
+        text: "Pomo",
+      },
+      {
         to: { name: "settings" },
         text: "Settings",
       },

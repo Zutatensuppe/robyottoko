@@ -20,6 +20,7 @@ import VoteModule from './mod/modules/VoteModule'
 import SpeechToTextModule from './mod/modules/SpeechToTextModule'
 import DrawcastModule from './mod/modules/DrawcastModule'
 import AvatarModule from './mod/modules/AvatarModule'
+import PomoModule from './mod/modules/PomoModule'
 
 import { Bot } from './types'
 
@@ -33,6 +34,7 @@ const modules = [
   SpeechToTextModule,
   DrawcastModule,
   AvatarModule,
+  PomoModule,
 ]
 
 const db = new Db(config.db)

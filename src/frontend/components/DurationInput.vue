@@ -10,6 +10,10 @@ export default defineComponent({
     modelValue: {
       required: true,
     },
+    allowNegative: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ["update:modelValue"],
   data: () => ({
@@ -32,7 +36,7 @@ export default defineComponent({
       handler(v) {
         try {
           const r = fn.doDummyReplacements(v, "0");
-          fn.mustParseHumanDuration(r);
+          fn.mustParseHumanDuration(r, this.allowNegative);
           this.valid = true;
         } catch (e) {
           this.valid = false;

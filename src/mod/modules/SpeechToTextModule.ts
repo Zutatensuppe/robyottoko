@@ -38,10 +38,6 @@ class SpeechToTextModule implements Module {
     // pass
   }
 
-  widgets() {
-    return {}
-  }
-
   getRoutes() {
     return {}
   }

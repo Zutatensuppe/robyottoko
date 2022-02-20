@@ -213,7 +213,7 @@ export const doReplacements = async (
   command: RawCommand | null,
   context: TwitchChatContext | null,
   variables: Variables,
-  originalCmd: Command | FunctionCommand,
+  originalCmd: Command | FunctionCommand | null,
 ) => {
   const replaces: { regex: RegExp, replacer: (...args: string[]) => Promise<string> }[] = [
     {
@@ -255,7 +255,7 @@ export const doReplacements = async (
     {
       regex: /\$var\(([^)]+)\)/g,
       replacer: async (m0: string, m1: string) => {
-        if (!originalCmd.variables) {
+        if (!originalCmd || !originalCmd.variables) {
           return ''
         }
         const v = originalCmd.variables.find(v => v.name === m1)
@@ -369,45 +369,6 @@ export const parseISO8601Duration = (
   )
 }
 
-export const humanDuration = (
-  durationMs: number
-): string => {
-  let duration = durationMs
-
-  const d = Math.floor(duration / DAY)
-  duration = duration % DAY
-
-  const h = Math.floor(duration / HOUR)
-  duration = duration % HOUR
-
-  const m = Math.floor(duration / MINUTE)
-  duration = duration % MINUTE
-
-  const s = Math.floor(duration / SECOND)
-  duration = duration % SECOND
-
-  const ms = duration
-
-  const units = ['ms', 's', 'm', 'h', 'd']
-  const rawparts = [ms, s, m, h, d]
-
-  // remove leading and trailing empty values
-  let start = 0
-  while (start < rawparts.length && rawparts[start] === 0) {
-    start++
-  }
-  let end = rawparts.length - 1
-  while (end >= 0 && rawparts[end] === 0) {
-    end--
-  }
-
-  const parts = []
-  for (let i = start; i <= end; i++) {
-    parts.unshift(`${rawparts[i]}${units[i]}`)
-  }
-  return parts.join(' ')
-}
-
 export const passwordSalt = () => {
   return nonce(10)
 }
@@ -518,7 +479,6 @@ export default {
   parseISO8601Duration,
   parseHumanDuration,
   mustParseHumanDuration,
-  humanDuration,
   doReplacements,
   nonce,
   split,

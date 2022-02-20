@@ -107,10 +107,6 @@ class DrawcastModule implements Module {
     }
   }
 
-  widgets() {
-    return {}
-  }
-
   getRoutes() {
     return {
       get: {

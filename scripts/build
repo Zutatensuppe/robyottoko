@@ -18,3 +18,4 @@ WIDGET=media            npm run vite -- build --config widget.vite.config.js
 WIDGET=speech-to-text   npm run vite -- build --config widget.vite.config.js
 WIDGET=avatar           npm run vite -- build --config widget.vite.config.js
 WIDGET=avatar_receive   npm run vite -- build --config widget.vite.config.js
+WIDGET=pomo             npm run vite -- build --config widget.vite.config.js

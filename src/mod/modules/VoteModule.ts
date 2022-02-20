@@ -44,10 +44,6 @@ class VoteModule implements Module {
     })
   }
 
-  widgets() {
-    return {}
-  }
-
   getRoutes() {
     return {}
   }

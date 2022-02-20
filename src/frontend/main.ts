@@ -17,6 +17,7 @@ import SpeechToText from './views/SpeechToText.vue'
 import Avatar from './views/Avatar.vue'
 import PasswordReset from './views/PasswordReset.vue'
 import ForgotPassword from './views/ForgotPassword.vue'
+import PomoModuleView from './views/PomoModuleView.vue'
 
 import draggable from "vuedraggable";
 import Upload from "./components/Upload.vue";
@@ -33,6 +34,7 @@ import Duration from "./components/Duration.vue";
 import DoubleclickButton from "./components/DoubleclickButton.vue";
 import DropdownButton from "./components/DropdownButton.vue";
 import Youtube from "./components/Youtube.vue";
+import MediaCommandDataInput from "./components/MediaCommandDataInput.vue";
 
 import CommandsCommandEditor from "./components/Commands/CommandEditor.vue";
 import CommandsCommandsEditor from "./components/Commands/CommandsEditor.vue";
@@ -117,6 +119,12 @@ const run = async () => {
       {
         name: 'avatar', path: '/avatar/', component: Avatar, meta: {
           title: 'Avatar',
+          protected: true,
+        }
+      },
+      {
+        name: 'pomo', path: '/pomo/', component: PomoModuleView, meta: {
+          title: 'Pomo',
           protected: true,
         }
       },

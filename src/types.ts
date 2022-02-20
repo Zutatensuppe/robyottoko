@@ -407,7 +407,6 @@ export interface Module {
   userChanged: (user: User) => Promise<void>
   saveCommands: () => void
   getWsEvents: () => Record<string, (ws: Socket, data?: any) => any>
-  widgets: () => Record<string, (req: any, res: Response, next: NextFunction) => Record<string, string>>
   getRoutes: () => Record<string, Record<string, (req: any, res: Response, next: NextFunction) => Promise<any>>>
   getCommands: () => FunctionCommand[]
   onChatMsg: (chatMessageContext: ChatMessageContext) => Promise<void>
