@@ -14,7 +14,14 @@
       :baseVolume="baseVolume"
       class="button is-small"
     />
-    <volume-slider v-if="value.file" v-model="value.volume" />
+    <volume-slider
+      v-if="value.file"
+      :modelValue="value.volume"
+      @update:modelValue="
+        value.volume = $event;
+        this.emitUpdate();
+      "
+    />
     <button v-if="value.file" class="button is-small" @click="onRemove">
       <i class="fa fa-remove mr-1" /> Remove
     </button>
