@@ -66,12 +66,10 @@ class PomoModule implements Module {
         return null;
       }
       const client = this.bot.getUserTwitchClientManager(this.user).getChatClient()
-      if (!client) {
-        return
-      }
+      const say = client ? fn.sayFn(client, null) : ((msg: string) => { log.info('say(), client not set, msg', msg) })
+
       const dateStarted = new Date(JSON.parse(this.data.state.startTs));
       const dateEnd = new Date(dateStarted.getTime() + this.data.state.durationMs);
-      const say = fn.sayFn(client, null)
       const doneDate = this.data.state.doneTs ? new Date(JSON.parse(this.data.state.doneTs)) : dateStarted
       const now = new Date();
 
@@ -119,9 +117,7 @@ class PomoModule implements Module {
     context: TwitchChatContext | null,
     _msg: string | null,
   ) {
-    if (!client) {
-      return
-    }
+    const say = client ? fn.sayFn(client, target) : ((msg: string) => { log.info('say(), client not set, msg', msg) })
 
     const replaceText = async (text: string) => {
       const variables = this.bot.getUserVariables(this.user)
@@ -131,7 +127,6 @@ class PomoModule implements Module {
       return text
     };
 
-    const say = fn.sayFn(client, target)
     this.data.state.running = true
     this.data.state.startTs = JSON.stringify(new Date())
     this.data.state.doneTs = this.data.state.startTs
@@ -158,9 +153,7 @@ class PomoModule implements Module {
     context: TwitchChatContext | null,
     _msg: string | null,
   ) {
-    if (!client) {
-      return
-    }
+    const say = client ? fn.sayFn(client, target) : ((msg: string) => { log.info('say(), client not set, msg', msg) })
 
     const replaceText = async (text: string) => {
       const variables = this.bot.getUserVariables(this.user)
@@ -170,7 +163,6 @@ class PomoModule implements Module {
       return text
     };
 
-    const say = fn.sayFn(client, target)
     this.data.state.running = false
     this.save()
     this.tick(command, context)
