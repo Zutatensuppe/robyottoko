@@ -45,6 +45,18 @@ class PomoModule implements Module {
     ];
   }
 
+  async replaceText(
+    text: string,
+    command: RawCommand | null,
+    context: TwitchChatContext | null,
+  ): Promise<string> {
+    const variables = this.bot.getUserVariables(this.user)
+    text = await doReplacements(text, command, context, variables, null)
+    text = text.replace(/\$pomo\.duration/g, humanDuration(this.data.state.durationMs, [' ms', ' s', ' min', ' hours', ' days']))
+    text = text.replace(/\$pomo\.name/g, this.data.state.name)
+    return text
+  }
+
   tick(
     command: RawCommand | null,
     context: TwitchChatContext | null,
@@ -53,13 +65,6 @@ class PomoModule implements Module {
       clearTimeout(this.timeout);
       this.timeout = null;
     }
-    const replaceText = async (text: string) => {
-      const variables = this.bot.getUserVariables(this.user)
-      text = await doReplacements(text, command, context, variables, null)
-      text = text.replace(/\$pomo\.duration/g, humanDuration(this.data.state.durationMs, [' ms', ' s', ' min', ' hours', ' days']))
-      text = text.replace(/\$pomo\.name/g, this.data.state.name)
-      return text
-    };
 
     this.timeout = setTimeout(async () => {
       if (!this.data || !this.data.state.startTs) {
@@ -80,7 +85,7 @@ class PomoModule implements Module {
           // is over and should maybe be triggered!
           if (!doneDate || nDateEnd > doneDate) {
             if (n.effect.chatMessage) {
-              say(await replaceText(n.effect.chatMessage))
+              say(await this.replaceText(n.effect.chatMessage, command, context))
             }
             this.updateClients({ event: 'effect', data: n.effect })
           }
@@ -93,7 +98,7 @@ class PomoModule implements Module {
         // is over and should maybe be triggered!
         if (!doneDate || dateEnd > doneDate) {
           if (this.data.settings.endEffect.chatMessage) {
-            say(await replaceText(this.data.settings.endEffect.chatMessage))
+            say(await this.replaceText(this.data.settings.endEffect.chatMessage, command, context))
           }
           this.updateClients({ event: 'effect', data: this.data.settings.endEffect })
         }
@@ -119,14 +124,6 @@ class PomoModule implements Module {
   ) {
     const say = client ? fn.sayFn(client, target) : ((msg: string) => { log.info('say(), client not set, msg', msg) })
 
-    const replaceText = async (text: string) => {
-      const variables = this.bot.getUserVariables(this.user)
-      text = await doReplacements(text, command, context, variables, null)
-      text = text.replace(/\$pomo\.duration/g, humanDuration(this.data.state.durationMs, [' ms', ' sec', ' min', ' hours', ' days']))
-      text = text.replace(/\$pomo\.name/g, this.data.state.name)
-      return text
-    };
-
     this.data.state.running = true
     this.data.state.startTs = JSON.stringify(new Date())
     this.data.state.doneTs = this.data.state.startTs
@@ -141,7 +138,7 @@ class PomoModule implements Module {
     this.updateClients(this.wsdata('init'))
 
     if (this.data.settings.startEffect.chatMessage) {
-      say(await replaceText(this.data.settings.startEffect.chatMessage))
+      say(await this.replaceText(this.data.settings.startEffect.chatMessage, command, context))
     }
     this.updateClients({ event: 'effect', data: this.data.settings.startEffect })
   }
@@ -155,21 +152,13 @@ class PomoModule implements Module {
   ) {
     const say = client ? fn.sayFn(client, target) : ((msg: string) => { log.info('say(), client not set, msg', msg) })
 
-    const replaceText = async (text: string) => {
-      const variables = this.bot.getUserVariables(this.user)
-      text = await doReplacements(text, command, context, variables, null)
-      text = text.replace(/\$pomo\.duration/g, humanDuration(this.data.state.durationMs, [' ms', ' sec', ' min', ' hours', ' days']))
-      text = text.replace(/\$pomo\.name/g, this.data.state.name)
-      return text
-    };
-
     this.data.state.running = false
     this.save()
     this.tick(command, context)
     this.updateClients(this.wsdata('init'))
 
     if (this.data.settings.stopEffect.chatMessage) {
-      say(await replaceText(this.data.settings.stopEffect.chatMessage))
+      say(await this.replaceText(this.data.settings.stopEffect.chatMessage, command, context))
     }
     this.updateClients({ event: 'effect', data: this.data.settings.stopEffect })
   }
