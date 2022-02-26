@@ -223,6 +223,7 @@
     <command-editor
       v-if="editCommand"
       :globalVariables="globalVariables"
+      :channelPointsCustomRewards="channelPointsCustomRewards"
       :modelValue="editCommand"
       :mode="editIdx >= commands.length ? 'create' : 'edit'"
       :baseVolume="baseVolume"
@@ -253,6 +254,10 @@ export default defineComponent({
   props: {
     globalVariables: {
       type: Array as PropType<GlobalVariable[]>,
+      required: true,
+    },
+    channelPointsCustomRewards: {
+      type: Object as PropType<Record<string, string[]>>,
       required: true,
     },
     possibleActions: {

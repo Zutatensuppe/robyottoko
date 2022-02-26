@@ -131,6 +131,7 @@
         v-model="commands"
         @update:modelValue="sendSave"
         :globalVariables="globalVariables"
+        :channelPointsCustomRewards="channelPointsCustomRewards"
         :possibleActions="possibleActions"
         :baseVolume="100"
       />
@@ -188,6 +189,7 @@ interface ComponentData {
   controlDefinitions: ControlDefinition[];
   tabDefinitions: TabDefinition[];
   globalVariables: GlobalVariable[];
+  channelPointsCustomRewards: Record<string, string[]>;
   possibleActions: CommandAction[];
 }
 
@@ -207,6 +209,7 @@ export default defineComponent({
     playlist: [],
     commands: [],
     globalVariables: [],
+    channelPointsCustomRewards: {},
     settings: default_settings(),
     filter: { tag: "" },
     ws: null,
@@ -443,6 +446,7 @@ export default defineComponent({
         this.settings = data.settings;
         this.commands = data.commands;
         this.globalVariables = data.globalVariables;
+        this.channelPointsCustomRewards = data.channelPointsCustomRewards;
       });
       this.ws.onMessage(["pause"], (data: SongrequestModuleWsEventData) => {
         if (this.player.playing()) {
@@ -466,6 +470,7 @@ export default defineComponent({
           this.settings = data.settings;
           this.commands = data.commands;
           this.globalVariables = data.globalVariables;
+          this.channelPointsCustomRewards = data.channelPointsCustomRewards;
           const oldId =
             this.filteredPlaylist.length > 0
               ? this.filteredPlaylist[0].id
@@ -485,6 +490,7 @@ export default defineComponent({
         this.settings = data.settings;
         this.commands = data.commands;
         this.globalVariables = data.globalVariables;
+        this.channelPointsCustomRewards = data.channelPointsCustomRewards;
         const oldId =
           this.filteredPlaylist.length > 0 ? this.filteredPlaylist[0].id : null;
         this.filter = data.filter;
@@ -500,6 +506,7 @@ export default defineComponent({
           this.settings = data.settings;
           this.commands = data.commands;
           this.globalVariables = data.globalVariables;
+          this.channelPointsCustomRewards = data.channelPointsCustomRewards;
           this.filter = data.filter;
           this.playlist = data.playlist;
         }
@@ -510,6 +517,7 @@ export default defineComponent({
           this.settings = data.settings;
           this.commands = data.commands;
           this.globalVariables = data.globalVariables;
+          this.channelPointsCustomRewards = data.channelPointsCustomRewards;
           this.filter = data.filter;
           this.playlist = data.playlist;
           if (!this.inited && !this.player.playing()) {

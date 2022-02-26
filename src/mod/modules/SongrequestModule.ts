@@ -94,6 +94,8 @@ class SongrequestModule implements Module {
 
   private commands: FunctionCommand[]
 
+  private channelPointsCustomRewards: Record<string, string[]> = {}
+
   constructor(
     bot: Bot,
     user: User,
@@ -245,6 +247,7 @@ class SongrequestModule implements Module {
         settings: this.data.settings,
         commands: this.data.commands,
         globalVariables: this.bot.getUserVariables(this.user).all(),
+        channelPointsCustomRewards: this.channelPointsCustomRewards,
       }
     };
   }
@@ -257,9 +260,18 @@ class SongrequestModule implements Module {
     this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, this.wsdata(eventName))
   }
 
+  async _channelPointsCustomRewards(): Promise<Record<string, string[]>> {
+    const helixClient = this.bot.getUserTwitchClientManager(this.user).getHelixClient()
+    if (helixClient) {
+      return await helixClient.getAllChannelPointsCustomRewards()
+    }
+    return {}
+  }
+
   getWsEvents() {
     return {
-      'conn': (ws: Socket) => {
+      'conn': async (ws: Socket) => {
+        this.channelPointsCustomRewards = await this._channelPointsCustomRewards()
         this.updateClient('init', ws)
       },
       'play': (_ws: Socket, { id }: { id: number }) => {

@@ -15,16 +15,15 @@
     </div>
     <div class="dropdown-menu" id="dropdown-menu" role="menu">
       <div class="dropdown-content">
-        <a
-          href="#"
-          class="dropdown-item"
+        <span
+          class="dropdown-item is-clickable"
           v-for="(action, idx) in actions"
           :key="idx"
           @click="onActionClick(action)"
           :title="action.title"
         >
           {{ action.label }}
-        </a>
+        </span>
       </div>
     </div>
   </div>
@@ -73,3 +72,8 @@ export default defineComponent({
   },
 });
 </script>
+<style scoped>
+.dropdown-item {
+  white-space: nowrap;
+}
+</style>

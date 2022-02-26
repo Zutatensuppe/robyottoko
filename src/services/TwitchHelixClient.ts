@@ -105,6 +105,46 @@ interface TwitchHelixGetStreamTagsResponseData {
   }
 }
 
+interface TwitchHelixGetChannelPointsCustomRewardsResponseDataEntry {
+  broadcaster_name: string
+  broadcaster_login: string
+  broadcaster_id: string
+  id: string
+  image: any
+  background_color: string
+  is_enabled: boolean
+  cost: number
+  title: string
+  prompt: string
+  is_user_input_required: boolean
+  max_per_stream_setting: {
+    is_enabled: boolean
+    max_per_stream: number
+  }
+  max_per_user_per_stream_setting: {
+    is_enabled: boolean
+    max_per_user_per_stream: number
+  }
+  global_cooldown_setting: {
+    is_enabled: boolean
+    global_cooldown_seconds: number
+  }
+  is_paused: boolean
+  is_in_stock: boolean
+  default_image: {
+    url_1x: string
+    url_2x: string
+    url_4x: string
+  }
+  should_redemptions_skip_request_queue: boolean
+  redemptions_redeemed_current_stream: any
+  cooldown_expires_at: any
+}
+
+interface TwitchHelixGetChannelPointsCustomRewardsResponseData {
+  data: TwitchHelixGetChannelPointsCustomRewardsResponseDataEntry[]
+}
+
 interface ValidateOAuthTokenResponse {
   valid: boolean
   data: any // raw data
@@ -302,6 +342,32 @@ class TwitchHelixClient {
     const url = this._url(`/streams/tags${asQueryArgs({ broadcaster_id: broadcasterId })}`)
     const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixGetStreamTagsResponseData
     return json
+  }
+
+  // https://dev.twitch.tv/docs/api/reference#get-custom-reward
+  async getChannelPointsCustomRewards(broadcasterId: string) {
+    const accessToken = this._oauthAccessTokenByBroadcasterId(broadcasterId)
+    if (!accessToken) {
+      return null
+    }
+
+    const url = this._url(`/channel_points/custom_rewards${asQueryArgs({ broadcaster_id: broadcasterId })}`)
+    const json = await getJson(url, withHeaders(this._authHeaders(accessToken))) as any
+    if (json.error) {
+      return null
+    }
+    return json as TwitchHelixGetChannelPointsCustomRewardsResponseData
+  }
+
+  async getAllChannelPointsCustomRewards() {
+    const rewards: Record<string, string[]> = {}
+    for (const twitchChannel of this.twitchChannels) {
+      const res = await this.getChannelPointsCustomRewards(twitchChannel.channel_id)
+      if (res) {
+        rewards[twitchChannel.channel_name] = res.data.map(entry => entry.title);
+      }
+    }
+    return rewards
   }
 
   // https://dev.twitch.tv/docs/api/reference#replace-stream-tags

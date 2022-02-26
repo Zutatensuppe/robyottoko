@@ -43,6 +43,7 @@ export interface SongrequestModuleWsEventData {
   playlist: PlaylistItem[],
   commands: Command[],
   globalVariables: GlobalVariable[],
+  channelPointsCustomRewards: Record<string, string[]>,
   settings: SongrequestModuleSettings,
 }
 

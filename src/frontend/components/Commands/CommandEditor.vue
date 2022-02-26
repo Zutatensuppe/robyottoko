@@ -21,6 +21,7 @@
                   :key="idx"
                   class="spacerow"
                   :modelValue="trigger"
+                  :channelPointsCustomRewards="channelPointsCustomRewards"
                   :removable="item.triggers.length > 1"
                   @update:modelValue="item.triggers[idx] = $event"
                   @remove="rmtrigger(idx)"
@@ -489,6 +490,10 @@ export default defineComponent({
       type: Array as PropType<GlobalVariable[]>,
       required: true,
     },
+    channelPointsCustomRewards: {
+      type: Object as PropType<Record<string, string[]>>,
+      required: true,
+    },
     baseVolume: {
       default: 100,
     },
@@ -719,5 +724,11 @@ export default defineComponent({
   position: absolute;
   right: -2px;
   top: 0;
+}
+</style>
+<style>
+.modal-card-body .dropdown-content {
+  max-height: 300px;
+  overflow: scroll;
 }
 </style>
