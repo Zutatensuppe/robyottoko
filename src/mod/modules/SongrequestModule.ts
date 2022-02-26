@@ -187,7 +187,7 @@ class SongrequestModule implements Module {
     return commands
   }
 
-  async saveCommands() {
+  saveCommands() {
     // pass
   }
 

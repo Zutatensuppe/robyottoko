@@ -4163,7 +4163,7 @@ class SongrequestModule {
         });
         return commands;
     }
-    async saveCommands() {
+    saveCommands() {
         // pass
     }
     getRoutes() {
