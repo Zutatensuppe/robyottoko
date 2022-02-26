@@ -26,6 +26,7 @@
         v-model="commands"
         @update:modelValue="sendSave"
         :globalVariables="globalVariables"
+        :channelPointsCustomRewards="channelPointsCustomRewards"
         :possibleActions="possibleActions"
         :baseVolume="baseVolume"
         :showToggleImages="true"
@@ -77,6 +78,7 @@ interface ComponentData {
   settings: GeneralModuleSettings;
   adminSettings: GeneralModuleAdminSettings;
   globalVariables: GlobalVariable[];
+  channelPointsCustomRewards: Record<string, string[]>;
   ws: WsClient | null;
   inited: boolean;
   possibleActions: CommandAction[];
@@ -90,6 +92,7 @@ export default defineComponent({
     settings: default_settings(),
     adminSettings: default_admin_settings(),
     globalVariables: [],
+    channelPointsCustomRewards: {},
     ws: null,
 
     possibleActions: [
@@ -151,6 +154,7 @@ export default defineComponent({
       this.settings = data.settings;
       this.adminSettings = data.adminSettings;
       this.globalVariables = data.globalVariables;
+      this.channelPointsCustomRewards = data.channelPointsCustomRewards;
       this.inited = true;
     });
     this.ws.connect();

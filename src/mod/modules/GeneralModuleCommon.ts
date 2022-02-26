@@ -21,6 +21,7 @@ export interface GeneralModuleWsEventData {
   settings: GeneralModuleSettings
   adminSettings: GeneralModuleAdminSettings
   globalVariables: GlobalVariable[]
+  channelPointsCustomRewards: Record<string, string[]>
 }
 
 export interface GeneralSaveEventData {

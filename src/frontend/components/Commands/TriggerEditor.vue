@@ -86,6 +86,15 @@
           v-model="value.data.command"
           @update:modelValue="emitUpdate"
         />
+        <dropdown-button
+          v-if="rewardRedemptionActions.length"
+          label="Pick a reward"
+          :actions="rewardRedemptionActions"
+          @click="
+            value.data.command = $event.type;
+            emitUpdate();
+          "
+        />
         <span class="icon is-small is-left">
           <i class="fa fa-bullseye"></i>
         </span>
@@ -100,7 +109,6 @@
         </button>
       </div>
     </div>
-
     <div v-if="value.type === 'timer'" class="timer-trigger">
       <div class="control remove-control">
         <button
@@ -158,6 +166,10 @@ export default defineComponent({
       type: Boolean,
       required: true,
     },
+    channelPointsCustomRewards: {
+      type: Object as PropType<Record<string, string[]>>,
+      required: true,
+    },
   },
   emits: ["update:modelValue", "remove"],
   data() {
@@ -175,6 +187,24 @@ export default defineComponent({
   },
   created() {
     this.apply(this.modelValue);
+  },
+  computed: {
+    rewardRedemptionActions() {
+      const actions = [];
+      for (let key in this.channelPointsCustomRewards) {
+        actions.push(
+          ...this.channelPointsCustomRewards[key].map((r) => ({
+            type: r,
+            title: r,
+            label: r,
+          }))
+        );
+      }
+      actions.sort((a, b) =>
+        a.title === b.title ? 0 : a.title < b.title ? -1 : 1
+      );
+      return actions;
+    },
   },
   methods: {
     emitRemove() {

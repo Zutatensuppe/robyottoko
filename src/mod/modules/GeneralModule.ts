@@ -63,6 +63,8 @@ class GeneralModule implements Module {
 
   private interval: NodeJS.Timer | null = null
 
+  private channelPointsCustomRewards: Record<string, string[]> = {}
+
   constructor(
     bot: Bot,
     user: User,
@@ -261,6 +263,14 @@ class GeneralModule implements Module {
     return {}
   }
 
+  async _channelPointsCustomRewards(): Promise<Record<string, string[]>> {
+    const helixClient = this.bot.getUserTwitchClientManager(this.user).getHelixClient()
+    if (helixClient) {
+      return await helixClient.getAllChannelPointsCustomRewards()
+    }
+    return {}
+  }
+
   wsdata(eventName: string): WsData {
     return {
       event: eventName,
@@ -269,6 +279,7 @@ class GeneralModule implements Module {
         settings: this.data.settings,
         adminSettings: this.data.adminSettings,
         globalVariables: this.bot.getUserVariables(this.user).all(),
+        channelPointsCustomRewards: this.channelPointsCustomRewards,
       },
     }
   }
@@ -299,7 +310,8 @@ class GeneralModule implements Module {
 
   getWsEvents() {
     return {
-      'conn': (ws: Socket) => {
+      'conn': async (ws: Socket) => {
+        this.channelPointsCustomRewards = await this._channelPointsCustomRewards()
         this.updateClient('init', ws)
       },
       'save': (ws: Socket, data: GeneralSaveEventData) => {

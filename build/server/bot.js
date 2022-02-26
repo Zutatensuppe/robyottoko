@@ -1092,6 +1092,29 @@ class TwitchHelixClient {
         const json = await getJson(url, await this.withAuthHeaders());
         return json;
     }
+    // https://dev.twitch.tv/docs/api/reference#get-custom-reward
+    async getChannelPointsCustomRewards(broadcasterId) {
+        const accessToken = this._oauthAccessTokenByBroadcasterId(broadcasterId);
+        if (!accessToken) {
+            return null;
+        }
+        const url = this._url(`/channel_points/custom_rewards${asQueryArgs({ broadcaster_id: broadcasterId })}`);
+        const json = await getJson(url, withHeaders(this._authHeaders(accessToken)));
+        if (json.error) {
+            return null;
+        }
+        return json;
+    }
+    async getAllChannelPointsCustomRewards() {
+        const rewards = {};
+        for (const twitchChannel of this.twitchChannels) {
+            const res = await this.getChannelPointsCustomRewards(twitchChannel.channel_id);
+            if (res) {
+                rewards[twitchChannel.channel_name] = res.data.map(entry => entry.title);
+            }
+        }
+        return rewards;
+    }
     // https://dev.twitch.tv/docs/api/reference#replace-stream-tags
     async replaceStreamTags(broadcasterId, tagIds) {
         const accessToken = this._oauthAccessTokenByBroadcasterId(broadcasterId);
@@ -3637,6 +3660,7 @@ class GeneralModule {
     constructor(bot, user) {
         this.name = 'general';
         this.interval = null;
+        this.channelPointsCustomRewards = {};
         this.bot = bot;
         this.user = user;
         const initData = this.reinit();
@@ -3819,6 +3843,13 @@ class GeneralModule {
     getRoutes() {
         return {};
     }
+    async _channelPointsCustomRewards() {
+        const helixClient = this.bot.getUserTwitchClientManager(this.user).getHelixClient();
+        if (helixClient) {
+            return await helixClient.getAllChannelPointsCustomRewards();
+        }
+        return {};
+    }
     wsdata(eventName) {
         return {
             event: eventName,
@@ -3827,6 +3858,7 @@ class GeneralModule {
                 settings: this.data.settings,
                 adminSettings: this.data.adminSettings,
                 globalVariables: this.bot.getUserVariables(this.user).all(),
+                channelPointsCustomRewards: this.channelPointsCustomRewards,
             },
         };
     }
@@ -3852,7 +3884,8 @@ class GeneralModule {
     }
     getWsEvents() {
         return {
-            'conn': (ws) => {
+            'conn': async (ws) => {
+                this.channelPointsCustomRewards = await this._channelPointsCustomRewards();
                 this.updateClient('init', ws);
             },
             'save': (ws, data) => {
@@ -4049,6 +4082,7 @@ const default_commands = (list = null) => {
 class SongrequestModule {
     constructor(bot, user) {
         this.name = 'sr';
+        this.channelPointsCustomRewards = {};
         this.bot = bot;
         this.user = user;
         const initData = this.reinit();
@@ -4129,7 +4163,7 @@ class SongrequestModule {
         });
         return commands;
     }
-    saveCommands() {
+    async saveCommands() {
         // pass
     }
     getRoutes() {
@@ -4187,6 +4221,7 @@ class SongrequestModule {
                 settings: this.data.settings,
                 commands: this.data.commands,
                 globalVariables: this.bot.getUserVariables(this.user).all(),
+                channelPointsCustomRewards: this.channelPointsCustomRewards,
             }
         };
     }
@@ -4196,9 +4231,17 @@ class SongrequestModule {
     updateClients(eventName) {
         this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, this.wsdata(eventName));
     }
+    async _channelPointsCustomRewards() {
+        const helixClient = this.bot.getUserTwitchClientManager(this.user).getHelixClient();
+        if (helixClient) {
+            return await helixClient.getAllChannelPointsCustomRewards();
+        }
+        return {};
+    }
     getWsEvents() {
         return {
-            'conn': (ws) => {
+            'conn': async (ws) => {
+                this.channelPointsCustomRewards = await this._channelPointsCustomRewards();
                 this.updateClient('init', ws);
             },
             'play': (_ws, { id }) => {
