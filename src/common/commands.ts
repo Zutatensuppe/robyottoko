@@ -577,7 +577,9 @@ export const commands: Record<CommandAction, CommandDef> = {
       restrict_to: MOD_OR_ABOVE,
       variables: [],
       variableChanges: [],
-      data: {},
+      data: {
+        tag: "",
+      },
     }),
     RequiresAccessToken: () => false,
   },

@@ -96,6 +96,18 @@
                 >
               </td>
             </tr>
+            <tr v-if="item.action === 'sr_addtag'">
+              <td>Tag:</td>
+              <td>
+                <input
+                  class="input is-small spaceinput mb-1"
+                  v-model="item.data.tag"
+                />
+                <span class="button is-small mr-1" @click="item.data.tag = ''"
+                  >All args</span
+                >
+              </td>
+            </tr>
             <template v-if="item.action === 'dict_lookup'">
               <tr>
                 <td>Language:</td>

@@ -9,7 +9,10 @@ import {
   Bot, CommandFunction, Module
 } from '../../types'
 import { commands } from '../../common/commands'
-import { default_settings, SongerquestModuleInitData, SongrequestModuleData, SongrequestModuleSettings, SongrequestModuleWsEventData } from './SongrequestModuleCommon'
+import {
+  default_settings, SongerquestModuleInitData, SongrequestModuleData,
+  SongrequestModuleSettings, SongrequestModuleWsEventData
+} from './SongrequestModuleCommon'
 import { NextFunction, Response } from 'express'
 
 const log = logger('SongrequestModule.ts')
@@ -149,40 +152,40 @@ class SongrequestModule implements Module {
   }
 
   initCommands(rawCommands: Command[]): FunctionCommand[] {
-    const map: Record<string, CommandFunction> = {
-      sr_current: this.cmdSrCurrent,
-      sr_undo: this.cmdSrUndo,
-      sr_good: this.cmdSrGood,
-      sr_bad: this.cmdSrBad,
-      sr_stats: this.cmdSrStats,
-      sr_prev: this.cmdSrPrev,
-      sr_next: this.cmdSrNext,
-      sr_jumptonew: this.cmdSrJumpToNew,
-      sr_clear: this.cmdSrClear,
-      sr_rm: this.cmdSrRm,
-      sr_shuffle: this.cmdSrShuffle,
-      sr_reset_stats: this.cmdSrResetStats,
-      sr_loop: this.cmdSrLoop,
-      sr_noloop: this.cmdSrNoloop,
-      sr_pause: this.cmdSrPause,
-      sr_unpause: this.cmdSrUnpause,
-      sr_hidevideo: this.cmdSrHidevideo,
-      sr_showvideo: this.cmdSrShowvideo,
-      sr_request: this.cmdSr,
-      sr_re_request: this.cmdResr,
-      sr_addtag: this.cmdSrAddTag,
-      sr_rmtag: this.cmdSrRmTag,
-      sr_volume: this.cmdSrVolume,
-      sr_filter: this.cmdSrFilter,
-      sr_preset: this.cmdSrPreset,
-      sr_queue: this.cmdSrQueue,
+    const map: Record<string, ((originalCmd: any) => CommandFunction)> = {
+      sr_current: this.cmdSrCurrent.bind(this),
+      sr_undo: this.cmdSrUndo.bind(this),
+      sr_good: this.cmdSrGood.bind(this),
+      sr_bad: this.cmdSrBad.bind(this),
+      sr_stats: this.cmdSrStats.bind(this),
+      sr_prev: this.cmdSrPrev.bind(this),
+      sr_next: this.cmdSrNext.bind(this),
+      sr_jumptonew: this.cmdSrJumpToNew.bind(this),
+      sr_clear: this.cmdSrClear.bind(this),
+      sr_rm: this.cmdSrRm.bind(this),
+      sr_shuffle: this.cmdSrShuffle.bind(this),
+      sr_reset_stats: this.cmdSrResetStats.bind(this),
+      sr_loop: this.cmdSrLoop.bind(this),
+      sr_noloop: this.cmdSrNoloop.bind(this),
+      sr_pause: this.cmdSrPause.bind(this),
+      sr_unpause: this.cmdSrUnpause.bind(this),
+      sr_hidevideo: this.cmdSrHidevideo.bind(this),
+      sr_showvideo: this.cmdSrShowvideo.bind(this),
+      sr_request: this.cmdSr.bind(this),
+      sr_re_request: this.cmdResr.bind(this),
+      sr_addtag: this.cmdSrAddTag.bind(this),
+      sr_rmtag: this.cmdSrRmTag.bind(this),
+      sr_volume: this.cmdSrVolume.bind(this),
+      sr_filter: this.cmdSrFilter.bind(this),
+      sr_preset: this.cmdSrPreset.bind(this),
+      sr_queue: this.cmdSrQueue.bind(this),
     }
     const commands: FunctionCommand[] = []
     rawCommands.forEach((cmd: Command) => {
       if (cmd.triggers.length === 0 || !map[cmd.action]) {
         return
       }
-      commands.push(Object.assign({}, cmd, { fn: map[cmd.action].bind(this) }))
+      commands.push(Object.assign({}, cmd, { fn: map[cmd.action](cmd) }))
     })
     return commands
   }
@@ -736,423 +739,480 @@ class SongrequestModule implements Module {
     }
   }
 
-  async cmdSrCurrent(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    if (!client || !command || !context) {
-      return
-    }
-    const say = fn.sayFn(client, target)
-    if (this.data.playlist.length === 0) {
-      say(`Playlist is empty`)
-      return
-    }
-    const cur = this.data.playlist[0]
-    // todo: error handling, title output etc..
-    say(`Currently playing: ${cur.title} (${Youtube.getUrlById(cur.yt)}, ${cur.plays}x plays, requested by ${cur.user})`)
-  }
-
-  async cmdSrUndo(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    if (!client || !command || !context) {
-      return
-    }
-    const say = fn.sayFn(client, target)
-    const undid = this.undo(context['display-name'])
-    if (!undid) {
-      say(`Could not undo anything`)
-    } else {
-      say(`Removed "${undid.title}" from the playlist!`)
+  cmdSrCurrent(_originalCommand: any) {
+    return async (
+      command: RawCommand | null,
+      client: TwitchChatClient | null,
+      target: string | null,
+      context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      if (!client || !command || !context) {
+        return
+      }
+      const say = fn.sayFn(client, target)
+      if (this.data.playlist.length === 0) {
+        say(`Playlist is empty`)
+        return
+      }
+      const cur = this.data.playlist[0]
+      // todo: error handling, title output etc..
+      say(`Currently playing: ${cur.title} (${Youtube.getUrlById(cur.yt)}, ${cur.plays}x plays, requested by ${cur.user})`)
     }
   }
 
-  async cmdResr(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    if (!client || !command || !context) {
-      return
+  cmdSrUndo(_originalCommand: any) {
+    return async (
+      command: RawCommand | null,
+      client: TwitchChatClient | null,
+      target: string | null,
+      context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      if (!client || !command || !context) {
+        return
+      }
+      const say = fn.sayFn(client, target)
+      const undid = this.undo(context['display-name'])
+      if (!undid) {
+        say(`Could not undo anything`)
+      } else {
+        say(`Removed "${undid.title}" from the playlist!`)
+      }
     }
+  }
 
-    const say = fn.sayFn(client, target)
+  cmdResr(_originalCommand: any) {
+    return async (
+      command: RawCommand | null,
+      client: TwitchChatClient | null,
+      target: string | null,
+      context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      if (!client || !command || !context) {
+        return
+      }
 
-    if (command.args.length === 0) {
-      say(`Usage: !resr SEARCH`)
-      return
+      const say = fn.sayFn(client, target)
+
+      if (command.args.length === 0) {
+        say(`Usage: !resr SEARCH`)
+        return
+      }
+
+      const searchterm = command.args.join(' ')
+      const { addType, idx } = await this.resr(searchterm)
+      if (idx >= 0) {
+        say(await this.answerAddRequest(addType, idx))
+      } else {
+        say(`Song not found in playlist`)
+      }
     }
+  }
 
-    const searchterm = command.args.join(' ')
-    const { addType, idx } = await this.resr(searchterm)
-    if (idx >= 0) {
+  cmdSrGood(_originalCommand: any) {
+    return async (
+      _command: RawCommand | null,
+      _client: TwitchChatClient | null,
+      _target: string | null,
+      _context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      this.like()
+    }
+  }
+
+  cmdSrBad(_originalCommand: any) {
+    return async (
+      _command: RawCommand | null,
+      _client: TwitchChatClient | null,
+      _target: string | null,
+      _context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      this.dislike()
+    }
+  }
+
+  cmdSrStats(_originalCommand: any) {
+    return async (
+      command: RawCommand | null,
+      client: TwitchChatClient | null,
+      target: string | null,
+      context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      if (!client || !command || !context) {
+        return
+      }
+
+      const say = fn.sayFn(client, target)
+
+      const stats = await this.stats(context['display-name'])
+      let number = `${stats.count.byUser}`
+      const verb = stats.count.byUser === 1 ? 'was' : 'were'
+      if (stats.count.byUser === 1) {
+        number = 'one'
+      } else if (stats.count.byUser === 0) {
+        number = 'none'
+      }
+      const countStr = `There are ${stats.count.total} songs in the playlist, `
+        + `${number} of which ${verb} requested by ${context['display-name']}.`
+      const durationStr = `The total duration of the playlist is ${stats.duration.human}.`
+      say([countStr, durationStr].join(' '))
+    }
+  }
+
+  cmdSrPrev(_originalCommand: any) {
+    return async (
+      _command: RawCommand | null,
+      _client: TwitchChatClient | null,
+      _target: string | null,
+      _context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      this.prev()
+    }
+  }
+
+  cmdSrNext(_originalCommand: any) {
+    return async (
+      _command: RawCommand | null,
+      _client: TwitchChatClient | null,
+      _target: string | null,
+      _context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      this.next()
+    }
+  }
+
+  cmdSrJumpToNew(_originalCommand: any) {
+    return async (
+      _command: RawCommand | null,
+      _client: TwitchChatClient | null,
+      _target: string | null,
+      _context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      this.jumptonew()
+    }
+  }
+
+  cmdSrClear(_originalCommand: any) {
+    return async (
+      _command: RawCommand | null,
+      _client: TwitchChatClient | null,
+      _target: string | null,
+      _context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      this.clear()
+    }
+  }
+
+  cmdSrRm(_originalCommand: any) {
+    return async (
+      _command: RawCommand | null,
+      _client: TwitchChatClient | null,
+      _target: string | null,
+      _context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      this.remove()
+    }
+  }
+
+  cmdSrShuffle(_originalCommand: any) {
+    return async (
+      _command: RawCommand | null,
+      _client: TwitchChatClient | null,
+      _target: string | null,
+      _context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      this.shuffle()
+    }
+  }
+
+  cmdSrResetStats(_originalCommand: any) {
+    return async (
+      _command: RawCommand | null,
+      _client: TwitchChatClient | null,
+      _target: string | null,
+      _context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      this.resetStats()
+    }
+  }
+
+  cmdSrLoop(_originalCommand: any) {
+    return async (
+      _command: RawCommand | null,
+      client: TwitchChatClient | null,
+      target: string | null,
+      _context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      if (!client) {
+        return
+      }
+      const say = fn.sayFn(client, target)
+      this.loop()
+      say('Now looping the current song')
+    }
+  }
+
+  cmdSrNoloop(_originalCommand: any) {
+    return async (
+      _command: RawCommand | null,
+      client: TwitchChatClient | null,
+      target: string | null,
+      _context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      if (!client) {
+        return
+      }
+      const say = fn.sayFn(client, target)
+      this.noloop()
+      say('Stopped looping the current song')
+    }
+  }
+
+  cmdSrAddTag(originalCmd: any) {
+    return async (
+      command: RawCommand | null,
+      client: TwitchChatClient | null,
+      target: string | null,
+      context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      if (!client || !command) {
+        return
+      }
+      const variables = this.bot.getUserVariables(this.user)
+      let tag = await fn.doReplacements(originalCmd.data.tag, command, context, variables, originalCmd)
+      if (tag === "") {
+        tag = command.args.join(' ')
+      }
+      if (tag === "") {
+        return
+      }
+
+      const say = fn.sayFn(client, target)
+      this.addTag(tag)
+      say(`Added tag "${tag}"`)
+    }
+  }
+
+  cmdSrRmTag(_originalCommand: any) {
+    return async (
+      command: RawCommand | null,
+      client: TwitchChatClient | null,
+      target: string | null,
+      _context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      if (!client || !command) {
+        return
+      }
+      if (!command.args.length) {
+        return
+      }
+      const say = fn.sayFn(client, target)
+      const tag = command.args.join(' ')
+      this.rmTag(tag)
+      say(`Removed tag "${tag}"`)
+    }
+  }
+
+  cmdSrPause(_originalCommand: any) {
+    return async (
+      _command: RawCommand | null,
+      _client: TwitchChatClient | null,
+      _target: string | null,
+      _context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      this.pause()
+    }
+  }
+
+  cmdSrUnpause(_originalCommand: any) {
+    return async (
+      _command: RawCommand | null,
+      _client: TwitchChatClient | null,
+      _target: string | null,
+      _context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      this.unpause()
+    }
+  }
+
+  cmdSrVolume(_originalCommand: any) {
+    return async (
+      command: RawCommand | null,
+      client: TwitchChatClient | null,
+      target: string | null,
+      _context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      if (!client || !command) {
+        return
+      }
+
+      const say = fn.sayFn(client, target)
+      if (command.args.length === 0) {
+        say(`Current volume: ${this.data.settings.volume}`)
+      } else {
+        this.volume(parseInt(command.args[0], 10))
+        say(`New volume: ${this.data.settings.volume}`)
+      }
+    }
+  }
+
+  cmdSrHidevideo(_originalCommand: any) {
+    return async (
+      _command: RawCommand | null,
+      client: TwitchChatClient | null,
+      target: string | null,
+      _context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      if (!client) {
+        return
+      }
+      const say = fn.sayFn(client, target)
+      this.videoVisibility(false)
+      say(`Video is now hidden.`)
+    }
+  }
+
+  cmdSrShowvideo(_originalCommand: any) {
+    return async (
+      _command: RawCommand | null,
+      client: TwitchChatClient | null,
+      target: string | null,
+      _context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      if (!client) {
+        return
+      }
+      const say = fn.sayFn(client, target)
+      this.videoVisibility(true)
+      say(`Video is now shown.`)
+    }
+  }
+
+  cmdSrFilter(_originalCommand: any) {
+    return async (
+      command: RawCommand | null,
+      client: TwitchChatClient | null,
+      target: string | null,
+      context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      if (!client || !command || !context) {
+        return
+      }
+
+      const say = fn.sayFn(client, target)
+      const tag = command.args.join(' ')
+      this.filter({ tag })
+      if (tag !== '') {
+        say(`Playing only songs tagged with "${tag}"`)
+      } else {
+        say(`Playing all songs`)
+      }
+    }
+  }
+
+  cmdSrQueue(_originalCommand: any) {
+    return async (
+      _command: RawCommand | null,
+      client: TwitchChatClient | null,
+      target: string | null,
+      _context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      if (!client) {
+        return
+      }
+
+      const say = fn.sayFn(client, target)
+
+      const titles = this.data.playlist.slice(1, 4).map(item => item.title)
+      if (titles.length === 1) {
+        say(`${titles.length} song queued ("${titles.join('" → "')}").`)
+      } else if (titles.length > 1) {
+        say(`${titles.length} songs queued ("${titles.join('" → "')}").`)
+      } else {
+        say('No songs queued.')
+      }
+    }
+  }
+
+  cmdSrPreset(_originalCommand: any) {
+    return async (
+      command: RawCommand | null,
+      client: TwitchChatClient | null,
+      target: string | null,
+      context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      if (!client || !command || !context) {
+        return
+      }
+
+      const say = fn.sayFn(client, target)
+      const presetName = command.args.join(' ')
+      if (presetName === '') {
+        if (this.data.settings.customCssPresets.length) {
+          say(`Presets: ${this.data.settings.customCssPresets.map(preset => preset.name).join(', ')}`)
+        } else {
+          say(`No presets configured`)
+        }
+      } else {
+        const preset = this.data.settings.customCssPresets.find(preset => preset.name === presetName)
+        if (preset) {
+          this.data.settings.customCss = preset.css
+          say(`Switched to preset: ${presetName}`)
+        } else {
+          say(`Preset does not exist: ${presetName}`)
+        }
+        this.updateClients('settings')
+      }
+    }
+  }
+
+  cmdSr(_originalCommand: any) {
+    return async (
+      command: RawCommand | null,
+      client: TwitchChatClient | null,
+      target: string | null,
+      context: TwitchChatContext | null,
+      _msg: string | null,
+    ) => {
+      if (!client || !command || !context) {
+        return
+      }
+
+      const say = fn.sayFn(client, target)
+
+      if (command.args.length === 0) {
+        say(`Usage: !sr YOUTUBE-URL`)
+        return
+      }
+
+      const str = command.args.join(' ')
+      const { addType, idx } = await this.add(str, context['display-name'])
       say(await this.answerAddRequest(addType, idx))
-    } else {
-      say(`Song not found in playlist`)
     }
-  }
-
-  async cmdSrGood(
-    _command: RawCommand | null,
-    _client: TwitchChatClient | null,
-    _target: string | null,
-    _context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    this.like()
-  }
-
-  async cmdSrBad(
-    _command: RawCommand | null,
-    _client: TwitchChatClient | null,
-    _target: string | null,
-    _context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    this.dislike()
-  }
-
-  async cmdSrStats(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    if (!client || !command || !context) {
-      return
-    }
-
-    const say = fn.sayFn(client, target)
-
-    const stats = await this.stats(context['display-name'])
-    let number = `${stats.count.byUser}`
-    const verb = stats.count.byUser === 1 ? 'was' : 'were'
-    if (stats.count.byUser === 1) {
-      number = 'one'
-    } else if (stats.count.byUser === 0) {
-      number = 'none'
-    }
-    const countStr = `There are ${stats.count.total} songs in the playlist, `
-      + `${number} of which ${verb} requested by ${context['display-name']}.`
-    const durationStr = `The total duration of the playlist is ${stats.duration.human}.`
-    say([countStr, durationStr].join(' '))
-  }
-
-  async cmdSrPrev(
-    _command: RawCommand | null,
-    _client: TwitchChatClient | null,
-    _target: string | null,
-    _context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    this.prev()
-  }
-
-  async cmdSrNext(
-    _command: RawCommand | null,
-    _client: TwitchChatClient | null,
-    _target: string | null,
-    _context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    this.next()
-  }
-
-  async cmdSrJumpToNew(
-    _command: RawCommand | null,
-    _client: TwitchChatClient | null,
-    _target: string | null,
-    _context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    this.jumptonew()
-  }
-
-  async cmdSrClear(
-    _command: RawCommand | null,
-    _client: TwitchChatClient | null,
-    _target: string | null,
-    _context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    this.clear()
-  }
-
-  async cmdSrRm(
-    _command: RawCommand | null,
-    _client: TwitchChatClient | null,
-    _target: string | null,
-    _context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    this.remove()
-  }
-
-  async cmdSrShuffle(
-    _command: RawCommand | null,
-    _client: TwitchChatClient | null,
-    _target: string | null,
-    _context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    this.shuffle()
-  }
-
-  async cmdSrResetStats(
-    _command: RawCommand | null,
-    _client: TwitchChatClient | null,
-    _target: string | null,
-    _context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    this.resetStats()
-  }
-
-  async cmdSrLoop(
-    _command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    _context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    if (!client) {
-      return
-    }
-    const say = fn.sayFn(client, target)
-    this.loop()
-    say('Now looping the current song')
-  }
-
-  async cmdSrNoloop(
-    _command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    _context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    if (!client) {
-      return
-    }
-    const say = fn.sayFn(client, target)
-    this.noloop()
-    say('Stopped looping the current song')
-  }
-
-  async cmdSrAddTag(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    _context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    if (!client || !command) {
-      return
-    }
-    if (!command.args.length) {
-      return
-    }
-    const say = fn.sayFn(client, target)
-    const tag = command.args.join(' ')
-    this.addTag(tag)
-    say(`Added tag "${tag}"`)
-  }
-
-  async cmdSrRmTag(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    _context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    if (!client || !command) {
-      return
-    }
-    if (!command.args.length) {
-      return
-    }
-    const say = fn.sayFn(client, target)
-    const tag = command.args.join(' ')
-    this.rmTag(tag)
-    say(`Removed tag "${tag}"`)
-  }
-
-  async cmdSrPause(
-    _command: RawCommand | null,
-    _client: TwitchChatClient | null,
-    _target: string | null,
-    _context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    this.pause()
-  }
-
-  async cmdSrUnpause(
-    _command: RawCommand | null,
-    _client: TwitchChatClient | null,
-    _target: string | null,
-    _context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    this.unpause()
-  }
-
-  async cmdSrVolume(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    _context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    if (!client || !command) {
-      return
-    }
-
-    const say = fn.sayFn(client, target)
-    if (command.args.length === 0) {
-      say(`Current volume: ${this.data.settings.volume}`)
-    } else {
-      this.volume(parseInt(command.args[0], 10))
-      say(`New volume: ${this.data.settings.volume}`)
-    }
-  }
-
-  async cmdSrHidevideo(
-    _command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    _context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    if (!client) {
-      return
-    }
-    const say = fn.sayFn(client, target)
-    this.videoVisibility(false)
-    say(`Video is now hidden.`)
-  }
-
-  async cmdSrShowvideo(
-    _command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    _context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    if (!client) {
-      return
-    }
-    const say = fn.sayFn(client, target)
-    this.videoVisibility(true)
-    say(`Video is now shown.`)
-  }
-
-  async cmdSrFilter(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    if (!client || !command || !context) {
-      return
-    }
-
-    const say = fn.sayFn(client, target)
-    const tag = command.args.join(' ')
-    this.filter({ tag })
-    if (tag !== '') {
-      say(`Playing only songs tagged with "${tag}"`)
-    } else {
-      say(`Playing all songs`)
-    }
-  }
-
-  async cmdSrQueue(
-    _command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    _context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    if (!client) {
-      return
-    }
-
-    const say = fn.sayFn(client, target)
-
-    const titles = this.data.playlist.slice(1, 4).map(item => item.title)
-    if (titles.length === 1) {
-      say(`${titles.length} song queued ("${titles.join('" → "')}").`)
-    } else if (titles.length > 1) {
-      say(`${titles.length} songs queued ("${titles.join('" → "')}").`)
-    } else {
-      say('No songs queued.')
-    }
-  }
-
-  async cmdSrPreset(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    if (!client || !command || !context) {
-      return
-    }
-
-    const say = fn.sayFn(client, target)
-    const presetName = command.args.join(' ')
-    if (presetName === '') {
-      if (this.data.settings.customCssPresets.length) {
-        say(`Presets: ${this.data.settings.customCssPresets.map(preset => preset.name).join(', ')}`)
-      } else {
-        say(`No presets configured`)
-      }
-    } else {
-      const preset = this.data.settings.customCssPresets.find(preset => preset.name === presetName)
-      if (preset) {
-        this.data.settings.customCss = preset.css
-        say(`Switched to preset: ${presetName}`)
-      } else {
-        say(`Preset does not exist: ${presetName}`)
-      }
-      this.updateClients('settings')
-    }
-  }
-
-  async cmdSr(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-    _msg: string | null,
-  ) {
-    if (!client || !command || !context) {
-      return
-    }
-
-    const say = fn.sayFn(client, target)
-
-    if (command.args.length === 0) {
-      say(`Usage: !sr YOUTUBE-URL`)
-      return
-    }
-
-    const str = command.args.join(' ')
-    const { addType, idx } = await this.add(str, context['display-name'])
-    say(await this.answerAddRequest(addType, idx))
   }
 
   async loadYoutubeData(youtubeId: string): Promise<YoutubeVideosResponseDataEntry> {
