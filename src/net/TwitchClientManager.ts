@@ -146,7 +146,7 @@ class TwitchClientManager {
       if (isBroadcaster(context)) {
         roles.push('B')
       }
-      this.log.info(`${context.username}[${roles.join('')}]@${target}: ${msg}`)
+      this.log.debug(`${context.username}[${roles.join('')}]@${target}: ${msg}`)
 
       this.bot.getDb().insert('chat_log', {
         created_at: `${new Date().toJSON()}`,
