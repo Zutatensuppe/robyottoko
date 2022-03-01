@@ -48,13 +48,16 @@ const addStreamTags = (
       say(`✨ Tag ${tagEntry.name} already exists, current tags: ${names.join(', ')}`)
       return
     }
-    if (newTagIds.length >= 5) {
+
+    newTagIds.push(tagEntry.id)
+    const newSettableTagIds: string[] = newTagIds.filter(tagId => !config.twitch.auto_tags.find(t => t.id === tagId))
+    if (newSettableTagIds.length > 5) {
       const names = tagsResponse.data.map(entry => entry.localization_names['en-us'])
       say(`❌ Too many tags already exist, current tags: ${names.join(', ')}`)
       return
     }
-    newTagIds.push(tagEntry.id)
-    const resp = await helixClient.replaceStreamTags(context['room-id'], newTagIds)
+
+    const resp = await helixClient.replaceStreamTags(context['room-id'], newSettableTagIds)
     if (!resp || resp.status < 200 || resp.status >= 300) {
       log.error(resp)
       say(`❌ Unable to add tag: ${tagEntry.name}`)

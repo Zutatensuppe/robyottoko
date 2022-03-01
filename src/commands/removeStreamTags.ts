@@ -1,6 +1,7 @@
 import { Bot, CommandFunction, RawCommand, RemoveStreamTagCommand, TwitchChatClient, TwitchChatContext } from '../types'
 import fn, { findIdxFuzzy } from './../fn'
 import { logger } from './../common/fn'
+import config from '../config'
 import { User } from '../services/Users'
 
 const log = logger('setStreamTags.ts')
@@ -48,7 +49,8 @@ const removeStreamTags = (
       return
     }
     const newTagIds = manualTags.filter((_value, index) => index !== idx).map(entry => entry.tag_id)
-    const resp = await helixClient.replaceStreamTags(context['room-id'], newTagIds)
+    const newSettableTagIds: string[] = newTagIds.filter(tagId => config.twitch.auto_tags.find(t => t.id === tagId))
+    const resp = await helixClient.replaceStreamTags(context['room-id'], newSettableTagIds)
     if (!resp || resp.status < 200 || resp.status >= 300) {
       say(`❌ Unable to remove tag: ${manualTags[idx].localization_names['en-us']}`)
       return
