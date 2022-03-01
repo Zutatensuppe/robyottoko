@@ -3601,13 +3601,14 @@ const addStreamTags = (originalCmd, bot, user) => async (command, client, target
         say(`✨ Tag ${tagEntry.name} already exists, current tags: ${names.join(', ')}`);
         return;
     }
-    if (newTagIds.length >= 5) {
+    newTagIds.push(tagEntry.id);
+    const newSettableTagIds = newTagIds.filter(tagId => !config.twitch.auto_tags.find(t => t.id === tagId));
+    if (newSettableTagIds.length > 5) {
         const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
         say(`❌ Too many tags already exist, current tags: ${names.join(', ')}`);
         return;
     }
-    newTagIds.push(tagEntry.id);
-    const resp = await helixClient.replaceStreamTags(context['room-id'], newTagIds);
+    const resp = await helixClient.replaceStreamTags(context['room-id'], newSettableTagIds);
     if (!resp || resp.status < 200 || resp.status >= 300) {
         log$5.error(resp);
         say(`❌ Unable to add tag: ${tagEntry.name}`);
@@ -3651,7 +3652,8 @@ const removeStreamTags = (originalCmd, bot, user) => async (command, client, tar
         return;
     }
     const newTagIds = manualTags.filter((_value, index) => index !== idx).map(entry => entry.tag_id);
-    const resp = await helixClient.replaceStreamTags(context['room-id'], newTagIds);
+    const newSettableTagIds = newTagIds.filter(tagId => !config.twitch.auto_tags.find(t => t.id === tagId));
+    const resp = await helixClient.replaceStreamTags(context['room-id'], newSettableTagIds);
     if (!resp || resp.status < 200 || resp.status >= 300) {
         say(`❌ Unable to remove tag: ${manualTags[idx].localization_names['en-us']}`);
         return;
