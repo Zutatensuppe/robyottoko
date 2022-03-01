@@ -3609,6 +3609,7 @@ const addStreamTags = (originalCmd, bot, user) => async (command, client, target
     newTagIds.push(tagEntry.id);
     const resp = await helixClient.replaceStreamTags(context['room-id'], newTagIds);
     if (!resp || resp.status < 200 || resp.status >= 300) {
+        log$5.error(resp);
         say(`❌ Unable to add tag: ${tagEntry.name}`);
         return;
     }
