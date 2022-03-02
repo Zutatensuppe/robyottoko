@@ -135,6 +135,7 @@ export interface DrawcastSettings {
   displayDuration: int
   displayLatestForever: boolean
   displayLatestAutomatically: boolean
+  autofillLatest: boolean
   notificationSound: SoundMediaFile | null
   favoriteLists: DrawcastFavoriteList[]
 }

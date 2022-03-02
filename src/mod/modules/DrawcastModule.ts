@@ -22,7 +22,6 @@ class DrawcastModule implements Module {
   public bot: Bot
   public user: User
 
-  private defaultSettings: DrawcastSettings = default_settings()
   private data: { settings: DrawcastSettings }
   private images: string[]
 
@@ -64,46 +63,9 @@ class DrawcastModule implements Module {
   }
 
   reinit() {
-    const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
-      settings: this.defaultSettings
-    })
-    if (!data.settings.palette) {
-      data.settings.palette = this.defaultSettings.palette
-    }
-    if (!data.settings.displayDuration) {
-      data.settings.displayDuration = this.defaultSettings.displayDuration
-    }
-    if (typeof data.settings.customProfileImage === 'undefined') {
-      data.settings.customProfileImage = this.defaultSettings.customProfileImage
-    }
-    if (data.settings.customProfileImage && !data.settings.customProfileImage.urlpath && data.settings.customProfileImage.file) {
-      data.settings.customProfileImage.urlpath = `/uploads/${encodeURIComponent(data.settings.customProfileImage.file)}`
-    }
-    if (!data.settings.notificationSound) {
-      data.settings.notificationSound = this.defaultSettings.notificationSound
-    }
-    if (data.settings.notificationSound && !data.settings.notificationSound.urlpath && data.settings.notificationSound.file) {
-      data.settings.notificationSound.urlpath = `/uploads/${encodeURIComponent(data.settings.notificationSound.file)}`
-    }
-    if (!data.settings.displayLatestForever) {
-      data.settings.displayLatestForever = this.defaultSettings.displayLatestForever
-    }
-    if (!data.settings.displayLatestAutomatically) {
-      data.settings.displayLatestAutomatically = this.defaultSettings.displayLatestAutomatically
-    }
-    if (typeof data.settings.recentImagesTitle === 'undefined') {
-      data.settings.recentImagesTitle = this.defaultSettings.recentImagesTitle
-    }
-    if (typeof data.settings.favoriteLists === 'undefined') {
-      data.settings.favoriteLists = [
-        {
-          list: data.settings.favorites || [],
-          title: data.settings.favoriteImagesTitle || '',
-        },
-      ]
-    }
+    const data = this.bot.getUserModuleStorage(this.user).load(this.name, {})
     return {
-      settings: data.settings
+      settings: default_settings(data.settings),
     }
   }
 
