@@ -1,5 +1,6 @@
 import { RequestInit } from 'node-fetch'
 import { logger } from '../common/fn'
+import { findIdxFuzzy } from '../fn'
 import { postJson, getJson, asJson, withHeaders, asQueryArgs, requestText, request } from '../net/xhr'
 import { TwitchChannel } from './TwitchChannels'
 
@@ -154,32 +155,8 @@ export function getBestEntryFromCategorySearchItems(
   searchString: string,
   resp: TwitchHelixCategorySearchResponseData,
 ): TwitchHelixCategorySearchResponseDataEntry | null {
-  if (resp.data.length === 0) {
-    return null
-  }
-
-  const entriesStartingWithSearchterm: TwitchHelixCategorySearchResponseDataEntry[] = []
-  const entriesNotStartingWithSearchterm: TwitchHelixCategorySearchResponseDataEntry[] = []
-  for (const entry of resp.data) {
-    if (entry.name.toLowerCase() === searchString.toLowerCase()) {
-      return entry
-    }
-    if (entry.name.toLowerCase().startsWith(searchString.toLowerCase())) {
-      entriesStartingWithSearchterm.push(entry)
-    } else {
-      entriesNotStartingWithSearchterm.push(entry)
-    }
-  }
-  const entries = entriesStartingWithSearchterm.length
-    ? entriesStartingWithSearchterm
-    : entriesNotStartingWithSearchterm
-  entries.sort((a, b) => {
-    if (a.name.length === b.name.length) {
-      return 0
-    }
-    return a.name.length < b.name.length ? -1 : 1
-  })
-  return entries[0]
+  const idx = findIdxFuzzy(resp.data, searchString, (item) => item.name)
+  return idx === -1 ? null : resp.data[idx]
 }
 
 class TwitchHelixClient {
@@ -290,6 +267,7 @@ class TwitchHelixClient {
   async searchCategory(searchString: string) {
     const url = this._url(`/search/categories${asQueryArgs({ query: searchString })}`)
     const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixCategorySearchResponseData
+    console.log(json)
     try {
       return getBestEntryFromCategorySearchItems(searchString, json)
     } catch (e) {
