@@ -86,6 +86,16 @@
             </td>
           </tr>
           <tr>
+            <td><code>settings.autofillLatest</code></td>
+            <td>
+              <input type="checkbox" v-model="settings.autofillLatest" />
+            </td>
+            <td>
+              Fill the latest submitted drawing into the draw panel when opening
+              the draw page.
+            </td>
+          </tr>
+          <tr>
             <td><code>settings.submitButtonText</code></td>
             <td>
               <input
@@ -470,6 +480,7 @@ export default defineComponent({
             parseInt(`${this.settings.displayDuration}`, 10) || 5000,
           displayLatestForever: this.settings.displayLatestForever,
           displayLatestAutomatically: this.settings.displayLatestAutomatically,
+          autofillLatest: this.settings.autofillLatest,
           notificationSound: this.settings.notificationSound,
           favoriteLists: this.settings.favoriteLists,
         },

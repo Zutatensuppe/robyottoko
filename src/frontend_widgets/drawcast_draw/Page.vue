@@ -558,6 +558,9 @@ export default defineComponent({
     },
   },
   mounted() {
+    this.canvas = this.$refs.canvas;
+    this.ctx = this.canvas.getContext("2d");
+
     this.ws = util.wsClient("drawcast");
 
     const opts = window.localStorage.getItem("drawcastOpts");
@@ -581,6 +584,9 @@ export default defineComponent({
       this.favoriteLists = data.settings.favoriteLists;
       this.color = this.palette[0];
       this.images = data.images;
+      if (this.images.length > 0 && data.settings.autofillLatest) {
+        this.modify(this.images[0])
+      }
 
       // test data
       // this.submitButtonText = "Send this image to the striiim";
@@ -595,9 +601,6 @@ export default defineComponent({
       this.images = this.images.slice(0, 20);
     });
     this.ws.connect();
-
-    this.canvas = this.$refs.canvas;
-    this.ctx = this.canvas.getContext("2d");
 
     window.addEventListener("keyup", (e) => {
       if (e.code === "Digit1") {
