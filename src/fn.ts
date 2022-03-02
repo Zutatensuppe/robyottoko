@@ -403,13 +403,36 @@ export const findIdxFuzzy = <T>(
   return idx
 }
 
+export const findShortestIdx = <T>(
+  array: T[],
+  indexes: number[],
+  keyFn: (item: T) => string
+) => {
+  let shortestIdx = -1;
+  let shortest = 0;
+  array.forEach((item, idx) => {
+    const len = keyFn(item).length
+    if (indexes.includes(idx) && (shortestIdx === -1 || len < shortest)) {
+      shortest = len
+      shortestIdx = idx
+    }
+  })
+  return shortestIdx
+}
+
 export const findIdxBySearchExact = <T>(
   array: T[],
   search: string,
   keyFn: (item: T) => string = ((item) => String(item))
 ) => {
   const searchLower = search.toLowerCase()
-  return array.findIndex(item => keyFn(item).toLowerCase() === searchLower)
+  const indexes: number[] = []
+  array.forEach((item, index) => {
+    if (keyFn(item).toLowerCase() === searchLower) {
+      indexes.push(index)
+    }
+  })
+  return findShortestIdx(array, indexes, keyFn)
 }
 
 export const findIdxBySearchExactWord = <T>(
@@ -418,7 +441,13 @@ export const findIdxBySearchExactWord = <T>(
   keyFn: (item: T) => string = ((item) => String(item))
 ) => {
   const searchLower = search.toLowerCase()
-  return array.findIndex(item => keyFn(item).toLowerCase().split(/\W+/).includes(searchLower))
+  const indexes: number[] = []
+  array.forEach((item, index) => {
+    if (keyFn(item).toLowerCase().split(/\W+/).includes(searchLower)) {
+      indexes.push(index)
+    }
+  })
+  return findShortestIdx(array, indexes, keyFn)
 }
 
 export const findIdxBySearchExactPart = <T>(
@@ -427,7 +456,13 @@ export const findIdxBySearchExactPart = <T>(
   keyFn: (item: T) => string = ((item) => String(item))
 ) => {
   const searchLower = search.toLowerCase()
-  return array.findIndex(item => keyFn(item).toLowerCase().indexOf(searchLower) !== -1)
+  const indexes: number[] = []
+  array.forEach((item, index) => {
+    if (keyFn(item).toLowerCase().indexOf(searchLower) !== -1) {
+      indexes.push(index)
+    }
+  })
+  return findShortestIdx(array, indexes, keyFn)
 }
 
 export const findIdxBySearchInOrder = <T>(
@@ -438,7 +473,13 @@ export const findIdxBySearchInOrder = <T>(
   const split = search.split(/\s+/)
   const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
   const regex = new RegExp(regexArgs.join('.*'), 'i')
-  return array.findIndex(item => keyFn(item).match(regex))
+  const indexes: number[] = []
+  array.forEach((item, index) => {
+    if (keyFn(item).match(regex)) {
+      indexes.push(index)
+    }
+  })
+  return findShortestIdx(array, indexes, keyFn)
 }
 
 export const findIdxBySearch = <T>(

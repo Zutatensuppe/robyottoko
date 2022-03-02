@@ -39,18 +39,81 @@ test.each([
         { name: 'other', id: '1', box_art_url: '' },
       ]
     },
-    expected: { name: 'retho', id: '1', box_art_url: '' },
+    expected: { name: 'some others stuff', id: '1', box_art_url: '' },
   },
   {
-    searchString: 'oth',
+    searchString: 'osu',
     resp: {
       data: [
-        { name: 'other stuff', id: '1', box_art_url: '' },
-        { name: 'some other stuff', id: '1', box_art_url: '' },
-        { name: 'other', id: '1', box_art_url: '' },
+        {
+          box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/243-52x72.jpg',
+          id: '243',
+          name: 'Moero! Nekketsu Rhythm Damashii Osu! Tatakae! Ouendan 2',
+        },
+        {
+          box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/5878-52x72.jpg',
+          id: '5878',
+          name: 'Tamagotchi: Osutchi & Mesutchi',
+        },
+        {
+          box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/6436_IGDB-52x72.jpg',
+          id: '6436',
+          name: 'Osu! Tatakae! Ouendan',
+        },
+        {
+          box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/21465_IGDB-52x72.jpg',
+          id: '21465',
+          name: 'osu!',
+        },
+        {
+          box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/27234_IGDB-52x72.jpg',
+          id: '27234',
+          name: 'Osu!! Karate Bu',
+        },
+        {
+          box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/67815_IGDB-52x72.jpg',
+          id: '67815',
+          name: "Ronnie O'Sullivan's Snooker",
+        },
+        {
+          box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/505020-52x72.jpg',
+          id: '505020',
+          name: 'Henshin Inma Shoujo Karin: Midara na Akuma wa H ga Osuki',
+        }
       ]
     },
-    expected: { name: 'other', id: '1', box_art_url: '' },
+    expected: {
+      box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/21465_IGDB-52x72.jpg',
+      id: '21465',
+      name: 'osu!',
+    },
+  },
+  {
+    searchString: 'food drink',
+    resp: {
+      data: [
+        {
+          box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/509567-52x72.jpg',
+          id: '509567',
+          name: 'Food Drive',
+        },
+        {
+          box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/509667-52x72.jpg',
+          id: '509667',
+          name: 'Food & Drink',
+        },
+        {
+          box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/696400368_IGDB-52x72.jpg',
+          id: '696400368',
+          name: "Food Girls - Bubbles' Drink Stand VR",
+        },
+      ],
+    },
+    expected: {
+      box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/509667-52x72.jpg',
+      id: '509667',
+      name: 'Food & Drink',
+    },
   },
 ])('getBestEntryFromCategorySearchItems', ({ searchString, resp, expected }) => {
   const actual = getBestEntryFromCategorySearchItems(searchString, resp)

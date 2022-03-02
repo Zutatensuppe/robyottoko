@@ -93,7 +93,7 @@ test.each`
 array             | search   | expected
 ${['abc', 'lel']} | ${'lel'} | ${1}
 ${['Trio Da Da Da Official Video', 'Panda! Go Panda! (Panda Kopanda) intro theme']} | ${'da da da'} | ${0}
-${['Panda! Go Panda! (Panda Kopanda) intro theme', 'Trio Da Da Da Official Video']} | ${'da da da'} | ${0}
+${['Panda! Go Panda! (Panda Kopanda) intro theme', 'Trio Da Da Da Official Video']} | ${'da da da'} | ${1}
 `('findIdxBySearchInOrder', ({ array, search, expected }) => {
   const actual = findIdxBySearchInOrder(array, search)
   expect(actual).toStrictEqual(expected)
