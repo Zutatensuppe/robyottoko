@@ -5357,18 +5357,28 @@ class SpeechToTextModule {
 }
 
 // todo: fallbacks for file and filename
-const default_profile_image = (obj) => ({
-    file: obj.file,
-    filename: obj.filename,
-    urlpath: !obj.urlpath && obj.file ? `/uploads/${encodeURIComponent(obj.file)}` : obj.urlpath,
-});
+const default_profile_image = (obj) => {
+    if (!obj) {
+        return null;
+    }
+    return {
+        file: obj.file,
+        filename: obj.filename,
+        urlpath: (!obj.urlpath && obj.file) ? `/uploads/${encodeURIComponent(obj.file)}` : obj.urlpath,
+    };
+};
 // todo: fallbacks for file, filename and volume
-const default_notification_sound = (obj) => ({
-    file: obj.file,
-    filename: obj.filename,
-    urlpath: !obj.urlpath && obj.file ? `/uploads/${encodeURIComponent(obj.file)}` : obj.urlpath,
-    volume: obj.volume,
-});
+const default_notification_sound = (obj) => {
+    if (!obj) {
+        return null;
+    }
+    return {
+        file: obj.file,
+        filename: obj.filename,
+        urlpath: (!obj.urlpath && obj.file) ? `/uploads/${encodeURIComponent(obj.file)}` : obj.urlpath,
+        volume: obj.volume,
+    };
+};
 const default_settings$2 = (obj = null) => ({
     submitButtonText: (!obj || typeof obj.submitButtonText === 'undefined') ? 'Submit' : obj.submitButtonText,
     // leave empty to not require confirm

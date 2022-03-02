@@ -7,20 +7,30 @@ export interface DrawcastSaveEventData {
 
 
 // todo: fallbacks for file and filename
-const default_profile_image = (obj: any): MediaFile => ({
-  file: obj.file,
-  filename: obj.filename,
-  urlpath: !obj.urlpath && obj.file ? `/uploads/${encodeURIComponent(obj.file)}` : obj.urlpath,
-})
+const default_profile_image = (obj: any): MediaFile | null => {
+  if (!obj) {
+    return null
+  }
+  return {
+    file: obj.file,
+    filename: obj.filename,
+    urlpath: (!obj.urlpath && obj.file) ? `/uploads/${encodeURIComponent(obj.file)}` : obj.urlpath,
+  }
+}
 
 
 // todo: fallbacks for file, filename and volume
-const default_notification_sound = (obj: any): SoundMediaFile => ({
-  file: obj.file,
-  filename: obj.filename,
-  urlpath: !obj.urlpath && obj.file ? `/uploads/${encodeURIComponent(obj.file)}` : obj.urlpath,
-  volume: obj.volume,
-})
+const default_notification_sound = (obj: any): SoundMediaFile | null => {
+  if (!obj) {
+    return null
+  }
+  return {
+    file: obj.file,
+    filename: obj.filename,
+    urlpath: (!obj.urlpath && obj.file) ? `/uploads/${encodeURIComponent(obj.file)}` : obj.urlpath,
+    volume: obj.volume,
+  }
+}
 
 export const default_settings = (obj: any = null): DrawcastSettings => ({
   submitButtonText: (!obj || typeof obj.submitButtonText === 'undefined') ? 'Submit' : obj.submitButtonText,
