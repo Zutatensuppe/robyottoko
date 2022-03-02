@@ -605,23 +605,59 @@ const findIdxFuzzy = (array, search, keyFn = ((item) => String(item))) => {
     }
     return idx;
 };
+const findShortestIdx = (array, indexes, keyFn) => {
+    let shortestIdx = -1;
+    let shortest = 0;
+    array.forEach((item, idx) => {
+        const len = keyFn(item).length;
+        if (indexes.includes(idx) && (shortestIdx === -1 || len < shortest)) {
+            shortest = len;
+            shortestIdx = idx;
+        }
+    });
+    return shortestIdx;
+};
 const findIdxBySearchExact = (array, search, keyFn = ((item) => String(item))) => {
     const searchLower = search.toLowerCase();
-    return array.findIndex(item => keyFn(item).toLowerCase() === searchLower);
+    const indexes = [];
+    array.forEach((item, index) => {
+        if (keyFn(item).toLowerCase() === searchLower) {
+            indexes.push(index);
+        }
+    });
+    return findShortestIdx(array, indexes, keyFn);
 };
 const findIdxBySearchExactWord = (array, search, keyFn = ((item) => String(item))) => {
     const searchLower = search.toLowerCase();
-    return array.findIndex(item => keyFn(item).toLowerCase().split(/\W+/).includes(searchLower));
+    const indexes = [];
+    array.forEach((item, index) => {
+        if (keyFn(item).toLowerCase().split(/\W+/).includes(searchLower)) {
+            indexes.push(index);
+        }
+    });
+    return findShortestIdx(array, indexes, keyFn);
 };
 const findIdxBySearchExactPart = (array, search, keyFn = ((item) => String(item))) => {
     const searchLower = search.toLowerCase();
-    return array.findIndex(item => keyFn(item).toLowerCase().indexOf(searchLower) !== -1);
+    const indexes = [];
+    array.forEach((item, index) => {
+        if (keyFn(item).toLowerCase().indexOf(searchLower) !== -1) {
+            indexes.push(index);
+        }
+    });
+    return findShortestIdx(array, indexes, keyFn);
 };
 const findIdxBySearchInOrder = (array, search, keyFn = ((item) => String(item))) => {
     const split = search.split(/\s+/);
     const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
     const regex = new RegExp(regexArgs.join('.*'), 'i');
-    return array.findIndex(item => keyFn(item).match(regex));
+    const indexes = [];
+    array.forEach((item, index) => {
+        if (keyFn(item).match(regex)) {
+            indexes.push(index);
+        }
+    });
+    return findShortestIdx(array, indexes, keyFn);
 };
 const findIdxBySearch = (array, search, keyFn = ((item) => String(item))) => {
     const split = search.split(/\s+/);
@@ -927,32 +963,8 @@ class Templates {
 const log$g = logger('TwitchHelixClient.ts');
 const API_BASE = 'https://api.twitch.tv/helix';
 function getBestEntryFromCategorySearchItems(searchString, resp) {
-    if (resp.data.length === 0) {
-        return null;
-    }
-    const entriesStartingWithSearchterm = [];
-    const entriesNotStartingWithSearchterm = [];
-    for (const entry of resp.data) {
-        if (entry.name.toLowerCase() === searchString.toLowerCase()) {
-            return entry;
-        }
-        if (entry.name.toLowerCase().startsWith(searchString.toLowerCase())) {
-            entriesStartingWithSearchterm.push(entry);
-        }
-        else {
-            entriesNotStartingWithSearchterm.push(entry);
-        }
-    }
-    const entries = entriesStartingWithSearchterm.length
-        ? entriesStartingWithSearchterm
-        : entriesNotStartingWithSearchterm;
-    entries.sort((a, b) => {
-        if (a.name.length === b.name.length) {
-            return 0;
-        }
-        return a.name.length < b.name.length ? -1 : 1;
-    });
-    return entries[0];
+    const idx = findIdxFuzzy(resp.data, searchString, (item) => item.name);
+    return idx === -1 ? null : resp.data[idx];
 }
 class TwitchHelixClient {
     constructor(clientId, clientSecret, twitchChannels) {
@@ -1042,6 +1054,7 @@ class TwitchHelixClient {
     async searchCategory(searchString) {
         const url = this._url(`/search/categories${asQueryArgs({ query: searchString })}`);
         const json = await getJson(url, await this.withAuthHeaders());
+        console.log(json);
         try {
             return getBestEntryFromCategorySearchItems(searchString, json);
         }
