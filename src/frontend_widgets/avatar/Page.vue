@@ -135,8 +135,7 @@ export default defineComponent({
       return tuberDef ? tuberDef.state.slots : {};
     },
     lockedState() {
-      const tuberDef = this.tuberDef;
-      return tuberDef ? tuberDef.state.lockedState : "default";
+      return this.tuberDef?.state.lockedState || "default";
     },
     animationName() {
       if (this.lockedState !== "default") {
