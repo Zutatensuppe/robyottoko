@@ -443,9 +443,20 @@ export const findIdxBySearchExactWord = <T>(
   const searchLower = search.toLowerCase()
   const indexes: number[] = []
   array.forEach((item, index) => {
-    if (keyFn(item).toLowerCase().split(/\W+/).includes(searchLower)) {
-      indexes.push(index)
+    const keyLower = keyFn(item).toLowerCase()
+    const idx = keyLower.indexOf(searchLower)
+    if (idx === -1) {
+      return
     }
+    const idxBefore = idx - 1
+    if (idxBefore >= 0 && keyLower[idxBefore].match(/\w/)) {
+      return
+    }
+    const idxAfter = idx + searchLower.length
+    if (idxAfter < keyLower.length && keyLower[idxAfter].match(/\w/)) {
+      return
+    }
+    indexes.push(index)
   })
   return findShortestIdx(array, indexes, keyFn)
 }

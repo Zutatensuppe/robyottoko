@@ -115,6 +115,16 @@ test.each([
       name: 'Food & Drink',
     },
   },
+  {
+    searchString: '4-2',
+    resp: {
+      data: [
+        { name: 'В мире животных — заставка (1974-2000) [480p]', id: '1', box_art_url: '' },
+        { name: 'Ninja Gaiden 4-2: Unbreakable Determination (piano cover)', id: '2', box_art_url: '' },
+      ],
+    },
+    expected: { name: 'Ninja Gaiden 4-2: Unbreakable Determination (piano cover)', id: '2', box_art_url: '' },
+  },
 ])('getBestEntryFromCategorySearchItems', ({ searchString, resp, expected }) => {
   const actual = getBestEntryFromCategorySearchItems(searchString, resp)
   expect(actual).toStrictEqual(expected)
