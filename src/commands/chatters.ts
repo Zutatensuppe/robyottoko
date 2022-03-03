@@ -9,11 +9,11 @@ const chatters = (
   bot: Bot,
   user: User
 ): CommandFunction => async (
-  command: RawCommand | null,
+  _command: RawCommand | null,
   client: TwitchChatClient | null,
   target: string | null,
   context: TwitchChatContext | null,
-  msg: string | null,
+  _msg: string | null,
   ) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient()
     if (!client || !context || !helixClient) {

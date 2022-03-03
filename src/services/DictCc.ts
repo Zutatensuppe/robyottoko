@@ -1,6 +1,11 @@
 import { getText, asQueryArgs } from '../net/xhr'
 import { DictSearchResponseDataEntry } from '../types'
 
+interface DictCCParseResultEntry {
+  from: string
+  to: string[]
+}
+
 export const LANG_TO_URL_MAP: Record<string, string> = {
   de: 'https://www.dict.cc/',
   ru: 'https://enru.dict.cc/',
@@ -46,7 +51,7 @@ const extractInfo = (
 
 const parseResult = (
   text: string
-): any[] => {
+): DictCCParseResultEntry[] => {
   const normalize = (str: string): string => {
     return str.toLowerCase().replace(/[.!?]/, '')
   }
@@ -90,7 +95,7 @@ const parseResult = (
     searchWords = matchedWords
   }
 
-  const results = []
+  const results: DictCCParseResultEntry[] = []
   for (const i in fromArr) {
     if (!fromArrSearch[i]) {
       continue

@@ -1,3 +1,4 @@
+import { NextFunction, Response } from "express"
 import { passwordHash } from "../fn"
 import Tokens from "../services/Tokens"
 import Users from "../services/Users"
@@ -39,7 +40,7 @@ class Auth {
   }
 
   addAuthInfoMiddleware() {
-    return (req: any, res: any, next: Function) => {
+    return (req: any, _res: Response, next: NextFunction) => {
       const token = req.cookies['x-token'] || null
       const tokenInfo = this.getTokenInfo(token)
       if (tokenInfo && ['auth'].includes(tokenInfo.type)) {
