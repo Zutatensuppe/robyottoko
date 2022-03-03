@@ -6,11 +6,11 @@ const playMedia = (
   bot: Bot,
   user: User,
 ): CommandFunction => (
-  command: RawCommand | null,
-  client: TwitchChatClient | null,
-  target: string | null,
-  context: TwitchChatContext | null,
-  msg: string | null,
+  _command: RawCommand | null,
+  _client: TwitchChatClient | null,
+  _target: string | null,
+  _context: TwitchChatContext | null,
+  _msg: string | null,
   ) => {
     const data = originalCmd.data
     bot.getWebSocketServer().notifyAll([user.id], 'general', {

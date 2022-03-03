@@ -11,7 +11,7 @@ const randomText = (
   client: TwitchChatClient | null,
   target: string | null,
   context: TwitchChatContext | null,
-  msg: string | null,
+  _msg: string | null,
   ) => {
     if (!client) {
       return

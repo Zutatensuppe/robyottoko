@@ -745,7 +745,7 @@ class Auth {
         return this.tokenRepo.delete(token);
     }
     addAuthInfoMiddleware() {
-        return (req, res, next) => {
+        return (req, _res, next) => {
             const token = req.cookies['x-token'] || null;
             const tokenInfo = this.getTokenInfo(token);
             if (tokenInfo && ['auth'].includes(tokenInfo.type)) {
@@ -3196,7 +3196,7 @@ class Mail {
 }
 
 const log$9 = logger('countdown.ts');
-const countdown = (originalCmd, bot, user) => async (command, client, target, context, msg) => {
+const countdown = (originalCmd, bot, user) => async (command, client, target, context, _msg) => {
     if (!client) {
         return;
     }
@@ -3278,7 +3278,7 @@ var Madochan = {
     defaultWeirdness: 1,
 };
 
-const madochanCreateWord = (originalCmd) => async (command, client, target, context, msg) => {
+const madochanCreateWord = (originalCmd) => async (command, client, target, _context, _msg) => {
     if (!client || !command) {
         return;
     }
@@ -3300,7 +3300,7 @@ const madochanCreateWord = (originalCmd) => async (command, client, target, cont
     }
 };
 
-const randomText = (originalCmd, bot, user) => async (command, client, target, context, msg) => {
+const randomText = (originalCmd, bot, user) => async (command, client, target, context, _msg) => {
     if (!client) {
         return;
     }
@@ -3310,7 +3310,7 @@ const randomText = (originalCmd, bot, user) => async (command, client, target, c
     say(await fn.doReplacements(fn.getRandom(texts), command, context, variables, originalCmd));
 };
 
-const playMedia = (originalCmd, bot, user) => (command, client, target, context, msg) => {
+const playMedia = (originalCmd, bot, user) => (_command, _client, _target, _context, _msg) => {
     const data = originalCmd.data;
     bot.getWebSocketServer().notifyAll([user.id], 'general', {
         event: 'playmedia',
@@ -3319,7 +3319,7 @@ const playMedia = (originalCmd, bot, user) => (command, client, target, context,
 };
 
 const log$8 = logger('chatters.ts');
-const chatters = (bot, user) => async (command, client, target, context, msg) => {
+const chatters = (bot, user) => async (_command, client, target, context, _msg) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!client || !context || !helixClient) {
         log$8.info('client', client);
@@ -3351,7 +3351,7 @@ const chatters = (bot, user) => async (command, client, target, context, msg) =>
 };
 
 const log$7 = logger('setChannelTitle.ts');
-const setChannelTitle = (originalCmd, bot, user) => async (command, client, target, context, msg) => {
+const setChannelTitle = (originalCmd, bot, user) => async (command, client, target, context, _msg) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!client || !command || !context || !helixClient) {
         log$7.info('client', client);
@@ -3385,7 +3385,7 @@ const setChannelTitle = (originalCmd, bot, user) => async (command, client, targ
 };
 
 const log$6 = logger('setChannelGameId.ts');
-const setChannelGameId = (originalCmd, bot, user) => async (command, client, target, context, msg) => {
+const setChannelGameId = (originalCmd, bot, user) => async (command, client, target, context, _msg) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!client || !command || !context || !helixClient) {
         log$6.info('client', client);
@@ -3567,7 +3567,7 @@ const LANG_TO_FN = {
 for (const key of Object.keys(DictCc.LANG_TO_URL_MAP)) {
     LANG_TO_FN[key] = (phrase) => DictCc.searchWord(phrase, key);
 }
-const dictLookup = (originalCmd, bot, user) => async (command, client, target, context, msg) => {
+const dictLookup = (originalCmd, bot, user) => async (command, client, target, context, _msg) => {
     if (!client || !command) {
         return [];
     }
@@ -3593,7 +3593,7 @@ const dictLookup = (originalCmd, bot, user) => async (command, client, target, c
 };
 
 const log$5 = logger('setStreamTags.ts');
-const addStreamTags = (originalCmd, bot, user) => async (command, client, target, context, msg) => {
+const addStreamTags = (originalCmd, bot, user) => async (command, client, target, context, _msg) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!client || !command || !context || !helixClient) {
         log$5.info('client', client);
@@ -3642,7 +3642,7 @@ const addStreamTags = (originalCmd, bot, user) => async (command, client, target
 };
 
 const log$4 = logger('setStreamTags.ts');
-const removeStreamTags = (originalCmd, bot, user) => async (command, client, target, context, msg) => {
+const removeStreamTags = (originalCmd, bot, user) => async (command, client, target, context, _msg) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!client || !command || !context || !helixClient) {
         log$4.info('client', client);

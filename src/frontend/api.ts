@@ -19,14 +19,14 @@ const request = async (method: string, url: string, options: RequestOptions): Pr
     for (const k in headers) {
       xhr.setRequestHeader(k, headers[k])
     }
-    xhr.addEventListener('load', function (ev) {
+    xhr.addEventListener('load', function (_ev) {
       resolve({
         status: this.status,
         text: this.responseText,
         json: async () => JSON.parse(this.responseText),
       })
     })
-    xhr.addEventListener('error', function (ev) {
+    xhr.addEventListener('error', function (_ev) {
       reject(new Error('xhr error'))
     })
     if (xhr.upload && options.onUploadProgress) {
