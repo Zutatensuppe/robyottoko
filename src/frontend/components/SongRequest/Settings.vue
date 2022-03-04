@@ -33,6 +33,36 @@
           <td>Image to display when a video is hidden.</td>
         </tr>
         <tr>
+          <td><code>settings.maxSongLength.viewer</code></td>
+          <td>
+            <duration-input
+              v-model="settings.maxSongLength.viewer"
+              @update:modelValue="sendSettings"
+              />
+          </td>
+          <td>Max. length of songs that viewers can add/request. (0 = unlimited)</td>
+        </tr>
+        <tr>
+          <td><code>settings.maxSongLength.mod</code></td>
+          <td>
+            <duration-input
+              v-model="settings.maxSongLength.mod"
+              @update:modelValue="sendSettings"
+              />
+          </td>
+          <td>Max. length of songs that mods can add/request. (0 = unlimited)</td>
+        </tr>
+        <tr>
+          <td><code>settings.maxSongLength.sub</code></td>
+          <td>
+            <duration-input
+              v-model="settings.maxSongLength.sub"
+              @update:modelValue="sendSettings"
+              />
+          </td>
+          <td>Max. length of songs that subs can add/request. (0 = unlimited)</td>
+        </tr>
+        <tr>
           <td colspan="3">Visuals</td>
         </tr>
         <tr>
