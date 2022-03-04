@@ -589,7 +589,7 @@ const passwordHash = (plainPass, salt) => {
     hash.update(`${salt}${plainPass}`);
     return hash.digest('hex');
 };
-const findIdxFuzzy = (array, search, keyFn = ((item) => String(item))) => {
+const findIdxFuzzy = (array, search, keyFn = String) => {
     let idx = findIdxBySearchExact(array, search, keyFn);
     if (idx === -1) {
         idx = findIdxBySearchExactStartsWith(array, search, keyFn);
@@ -620,7 +620,7 @@ const findShortestIdx = (array, indexes, keyFn) => {
     });
     return shortestIdx;
 };
-const findIdxBySearchExact = (array, search, keyFn = ((item) => String(item))) => {
+const findIdxBySearchExact = (array, search, keyFn = String) => {
     const searchLower = search.toLowerCase();
     const indexes = [];
     array.forEach((item, index) => {
@@ -630,7 +630,7 @@ const findIdxBySearchExact = (array, search, keyFn = ((item) => String(item))) =
     });
     return findShortestIdx(array, indexes, keyFn);
 };
-const findIdxBySearchExactStartsWith = (array, search, keyFn = ((item) => String(item))) => {
+const findIdxBySearchExactStartsWith = (array, search, keyFn = String) => {
     const searchLower = search.toLowerCase();
     const indexes = [];
     array.forEach((item, index) => {
@@ -640,7 +640,7 @@ const findIdxBySearchExactStartsWith = (array, search, keyFn = ((item) => String
     });
     return findShortestIdx(array, indexes, keyFn);
 };
-const findIdxBySearchExactWord = (array, search, keyFn = ((item) => String(item))) => {
+const findIdxBySearchExactWord = (array, search, keyFn = String) => {
     const searchLower = search.toLowerCase();
     const indexes = [];
     array.forEach((item, index) => {
@@ -661,7 +661,7 @@ const findIdxBySearchExactWord = (array, search, keyFn = ((item) => String(item)
     });
     return findShortestIdx(array, indexes, keyFn);
 };
-const findIdxBySearchExactPart = (array, search, keyFn = ((item) => String(item))) => {
+const findIdxBySearchExactPart = (array, search, keyFn = String) => {
     const searchLower = search.toLowerCase();
     const indexes = [];
     array.forEach((item, index) => {
@@ -671,7 +671,7 @@ const findIdxBySearchExactPart = (array, search, keyFn = ((item) => String(item)
     });
     return findShortestIdx(array, indexes, keyFn);
 };
-const findIdxBySearchInOrder = (array, search, keyFn = ((item) => String(item))) => {
+const findIdxBySearchInOrder = (array, search, keyFn = String) => {
     const split = search.split(/\s+/);
     const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
     const regex = new RegExp(regexArgs.join('.*'), 'i');
@@ -683,7 +683,7 @@ const findIdxBySearchInOrder = (array, search, keyFn = ((item) => String(item)))
     });
     return findShortestIdx(array, indexes, keyFn);
 };
-const findIdxBySearch = (array, search, keyFn = ((item) => String(item))) => {
+const findIdxBySearch = (array, search, keyFn = String) => {
     const split = search.split(/\s+/);
     const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
     const regexes = regexArgs.map(arg => new RegExp(arg, 'i'));

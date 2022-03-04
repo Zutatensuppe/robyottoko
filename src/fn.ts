@@ -385,7 +385,7 @@ export const passwordHash = (
 export const findIdxFuzzy = <T>(
   array: T[],
   search: string,
-  keyFn: (item: T) => string = ((item) => String(item))
+  keyFn: (item: T) => string = String
 ) => {
   let idx = findIdxBySearchExact(array, search, keyFn)
   if (idx === -1) {
@@ -426,7 +426,7 @@ export const findShortestIdx = <T>(
 export const findIdxBySearchExact = <T>(
   array: T[],
   search: string,
-  keyFn: (item: T) => string = ((item) => String(item))
+  keyFn: (item: T) => string = String
 ) => {
   const searchLower = search.toLowerCase()
   const indexes: number[] = []
@@ -441,7 +441,7 @@ export const findIdxBySearchExact = <T>(
 export const findIdxBySearchExactStartsWith = <T>(
   array: T[],
   search: string,
-  keyFn: (item: T) => string = ((item) => String(item))
+  keyFn: (item: T) => string = String
 ) => {
   const searchLower = search.toLowerCase()
   const indexes: number[] = []
@@ -456,7 +456,7 @@ export const findIdxBySearchExactStartsWith = <T>(
 export const findIdxBySearchExactWord = <T>(
   array: T[],
   search: string,
-  keyFn: (item: T) => string = ((item) => String(item))
+  keyFn: (item: T) => string = String
 ) => {
   const searchLower = search.toLowerCase()
   const indexes: number[] = []
@@ -482,7 +482,7 @@ export const findIdxBySearchExactWord = <T>(
 export const findIdxBySearchExactPart = <T>(
   array: T[],
   search: string,
-  keyFn: (item: T) => string = ((item) => String(item))
+  keyFn: (item: T) => string = String
 ) => {
   const searchLower = search.toLowerCase()
   const indexes: number[] = []
@@ -497,7 +497,7 @@ export const findIdxBySearchExactPart = <T>(
 export const findIdxBySearchInOrder = <T>(
   array: T[],
   search: string,
-  keyFn: (item: T) => string = ((item) => String(item))
+  keyFn: (item: T) => string = String
 ) => {
   const split = search.split(/\s+/)
   const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
@@ -514,7 +514,7 @@ export const findIdxBySearchInOrder = <T>(
 export const findIdxBySearch = <T>(
   array: T[],
   search: string,
-  keyFn: (item: T) => string = ((item) => String(item))
+  keyFn: (item: T) => string = String
 ) => {
   const split = search.split(/\s+/)
   const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
