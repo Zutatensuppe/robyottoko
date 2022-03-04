@@ -61,11 +61,12 @@ const extractYoutubeId = (str: string): string | null => {
   return null
 }
 
-const getYoutubeIdBySearch = async (searchterm: string): Promise<string | null> => {
+const getYoutubeIdsBySearch = async (searchterm: string): Promise<string[]> => {
   const searches = [
     `"${searchterm}"`,
     searchterm,
   ]
+  const ids: string[] = []
   for (const q of searches) {
     const json = await get('https://www.googleapis.com/youtube/v3/search', {
       part: 'snippet',
@@ -74,15 +75,14 @@ const getYoutubeIdBySearch = async (searchterm: string): Promise<string | null> 
       videoEmbeddable: 'true',
     }) as YoutubeSearchResponseData
     try {
-      const res = json.items[0]['id']['videoId'] || null
-      if (res) {
-        return res
+      for (const item of json.items) {
+        ids.push(item.id.videoId)
       }
     } catch (e) {
       log.info(e)
     }
   }
-  return null
+  return ids
 }
 
 const getUrlById = (id: string) => `https://youtu.be/${id}`
@@ -90,6 +90,6 @@ const getUrlById = (id: string) => `https://youtu.be/${id}`
 export default {
   fetchDataByYoutubeId,
   extractYoutubeId,
-  getYoutubeIdBySearch,
+  getYoutubeIdsBySearch,
   getUrlById,
 }

@@ -1,4 +1,4 @@
-import fn, { findIdxFuzzy } from '../../fn'
+import fn, { findIdxFuzzy, parseHumanDuration } from '../../fn'
 import { logger, humanDuration } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
 import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
@@ -14,6 +14,7 @@ import {
   SongrequestModuleSettings, SongrequestModuleWsEventData
 } from './SongrequestModuleCommon'
 import { NextFunction, Response } from 'express'
+import { isBroadcaster, isMod, isSubscriber } from '../../common/permissions'
 
 const log = logger('SongrequestModule.ts')
 
@@ -342,17 +343,43 @@ class SongrequestModule implements Module {
     }
   }
 
-  async add(str: string, userName: string) {
+  async add(str: string, userName: string, maxLenMs: number) {
+    const isTooLong = (ytData: YoutubeVideosResponseDataEntry) => {
+      if (maxLenMs > 0) {
+        const songLenMs = fn.parseISO8601Duration(ytData.contentDetails.duration)
+        if (maxLenMs < songLenMs) {
+          return true
+        }
+      }
+      return false
+    }
     const youtubeUrl = str.trim()
-    let youtubeId = Youtube.extractYoutubeId(youtubeUrl)
+
+    let youtubeId = null
     let youtubeData = null
-    if (youtubeId) {
-      youtubeData = await this.loadYoutubeData(youtubeId)
+
+    const tmpYoutubeId = Youtube.extractYoutubeId(youtubeUrl)
+    if (tmpYoutubeId) {
+      const tmpYoutubeData = await this.loadYoutubeData(tmpYoutubeId)
+      if (isTooLong(tmpYoutubeData)) {
+        return { addType: ADD_TYPE.NOT_ADDED, idx: -1 }
+      }
+      youtubeId = tmpYoutubeId
+      youtubeData = tmpYoutubeData
     }
     if (!youtubeData) {
-      youtubeId = await Youtube.getYoutubeIdBySearch(youtubeUrl)
-      if (youtubeId) {
-        youtubeData = await this.loadYoutubeData(youtubeId)
+      const youtubeIds = await Youtube.getYoutubeIdsBySearch(youtubeUrl)
+      for (const tmpYoutubeId of youtubeIds) {
+        const tmpYoutubeData = await this.loadYoutubeData(tmpYoutubeId)
+        if (!tmpYoutubeData) {
+          continue
+        }
+        if (isTooLong(tmpYoutubeData)) {
+          continue
+        }
+        youtubeId = tmpYoutubeId
+        youtubeData = tmpYoutubeData
+        break
       }
     }
     if (!youtubeId || !youtubeData) {
@@ -507,7 +534,9 @@ class SongrequestModule implements Module {
   }
 
   async request(str: string) {
-    await this.add(str, this.user.name)
+    // this comes from backend, always unlimited length
+    const maxLen = 0
+    await this.add(str, this.user.name, maxLen)
   }
 
   findSongIdxByYoutubeId(youtubeId: string) {
@@ -1220,7 +1249,19 @@ class SongrequestModule implements Module {
       }
 
       const str = command.args.join(' ')
-      const { addType, idx } = await this.add(str, context['display-name'])
+
+      let maxLenMs: number
+      if (isBroadcaster(context)) {
+        maxLenMs = 0
+      } else if (isMod(context)) {
+        maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.mod)
+      } else if (isSubscriber(context)) {
+        maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.sub)
+      } else {
+        maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.viewer)
+      }
+
+      const { addType, idx } = await this.add(str, context['display-name'], maxLenMs)
       say(await this.answerAddRequest(addType, idx))
     }
   }

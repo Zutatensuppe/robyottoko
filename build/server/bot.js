@@ -4004,11 +4004,12 @@ const extractYoutubeId = (str) => {
     }
     return null;
 };
-const getYoutubeIdBySearch = async (searchterm) => {
+const getYoutubeIdsBySearch = async (searchterm) => {
     const searches = [
         `"${searchterm}"`,
         searchterm,
     ];
+    const ids = [];
     for (const q of searches) {
         const json = await get('https://www.googleapis.com/youtube/v3/search', {
             part: 'snippet',
@@ -4017,22 +4018,21 @@ const getYoutubeIdBySearch = async (searchterm) => {
             videoEmbeddable: 'true',
         });
         try {
-            const res = json.items[0]['id']['videoId'] || null;
-            if (res) {
-                return res;
+            for (const item of json.items) {
+                ids.push(item.id.videoId);
             }
         }
         catch (e) {
             log$3.info(e);
         }
     }
-    return null;
+    return ids;
 };
 const getUrlById = (id) => `https://youtu.be/${id}`;
 var Youtube = {
     fetchDataByYoutubeId,
     extractYoutubeId,
-    getYoutubeIdBySearch,
+    getYoutubeIdsBySearch,
     getUrlById,
 };
 
@@ -4045,15 +4045,20 @@ const default_custom_css_preset = (obj = null) => ({
 });
 const default_settings$4 = (obj = null) => ({
     volume: typeof obj?.volume === 'undefined' ? 100 : obj.volume,
+    initAutoplay: typeof obj?.initAutoplay === 'undefined' ? true : obj.initAutoplay,
     hideVideoImage: {
         file: obj?.hideVideoImage?.file || '',
         filename: obj?.hideVideoImage?.filename || '',
         urlpath: obj?.hideVideoImage?.urlpath ? obj.hideVideoImage.urlpath : (obj?.hideVideoImage?.file ? `/uploads/${encodeURIComponent(obj.hideVideoImage.file)}` : '')
     },
+    maxSongLength: {
+        viewer: typeof obj?.maxSongLength === 'undefined' ? 0 : obj?.maxSongLength.viewer,
+        mod: typeof obj?.maxSongLength === 'undefined' ? 0 : obj?.maxSongLength.mod,
+        sub: typeof obj?.maxSongLength === 'undefined' ? 0 : obj?.maxSongLength.sub,
+    },
     customCss: obj?.customCss || '',
     customCssPresets: typeof obj?.customCssPresets === 'undefined' ? [] : obj.customCssPresets.map(default_custom_css_preset),
     showProgressBar: typeof obj?.showProgressBar === 'undefined' ? false : obj.showProgressBar,
-    initAutoplay: typeof obj?.initAutoplay === 'undefined' ? true : obj.initAutoplay,
     showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
     maxItemsShown: typeof obj?.maxItemsShown === 'undefined' ? -1 : obj.maxItemsShown,
 });
@@ -4397,17 +4402,41 @@ class SongrequestModule {
             },
         };
     }
-    async add(str, userName) {
+    async add(str, userName, maxLenMs) {
+        const isTooLong = (ytData) => {
+            if (maxLenMs > 0) {
+                const songLenMs = fn.parseISO8601Duration(ytData.contentDetails.duration);
+                if (maxLenMs < songLenMs) {
+                    return true;
+                }
+            }
+            return false;
+        };
         const youtubeUrl = str.trim();
-        let youtubeId = Youtube.extractYoutubeId(youtubeUrl);
+        let youtubeId = null;
         let youtubeData = null;
-        if (youtubeId) {
-            youtubeData = await this.loadYoutubeData(youtubeId);
+        const tmpYoutubeId = Youtube.extractYoutubeId(youtubeUrl);
+        if (tmpYoutubeId) {
+            const tmpYoutubeData = await this.loadYoutubeData(tmpYoutubeId);
+            if (isTooLong(tmpYoutubeData)) {
+                return { addType: ADD_TYPE.NOT_ADDED, idx: -1 };
+            }
+            youtubeId = tmpYoutubeId;
+            youtubeData = tmpYoutubeData;
         }
         if (!youtubeData) {
-            youtubeId = await Youtube.getYoutubeIdBySearch(youtubeUrl);
-            if (youtubeId) {
-                youtubeData = await this.loadYoutubeData(youtubeId);
+            const youtubeIds = await Youtube.getYoutubeIdsBySearch(youtubeUrl);
+            for (const tmpYoutubeId of youtubeIds) {
+                const tmpYoutubeData = await this.loadYoutubeData(tmpYoutubeId);
+                if (!tmpYoutubeData) {
+                    continue;
+                }
+                if (isTooLong(tmpYoutubeData)) {
+                    continue;
+                }
+                youtubeId = tmpYoutubeId;
+                youtubeData = tmpYoutubeData;
+                break;
             }
         }
         if (!youtubeId || !youtubeData) {
@@ -4547,7 +4576,9 @@ class SongrequestModule {
         this.updateClients('dislike');
     }
     async request(str) {
-        await this.add(str, this.user.name);
+        // this comes from backend, always unlimited length
+        const maxLen = 0;
+        await this.add(str, this.user.name, maxLen);
     }
     findSongIdxByYoutubeId(youtubeId) {
         return this.data.playlist.findIndex(item => item.yt === youtubeId);
@@ -5046,7 +5077,20 @@ class SongrequestModule {
                 return;
             }
             const str = command.args.join(' ');
-            const { addType, idx } = await this.add(str, context['display-name']);
+            let maxLenMs;
+            if (isBroadcaster(context)) {
+                maxLenMs = 0;
+            }
+            else if (isMod(context)) {
+                maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.mod);
+            }
+            else if (isSubscriber(context)) {
+                maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.sub);
+            }
+            else {
+                maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.viewer);
+            }
+            const { addType, idx } = await this.add(str, context['display-name'], maxLenMs);
             say(await this.answerAddRequest(addType, idx));
         };
     }
