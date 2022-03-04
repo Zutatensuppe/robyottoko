@@ -389,6 +389,9 @@ export const findIdxFuzzy = <T>(
 ) => {
   let idx = findIdxBySearchExact(array, search, keyFn)
   if (idx === -1) {
+    idx = findIdxBySearchExactStartsWith(array, search, keyFn)
+  }
+  if (idx === -1) {
     idx = findIdxBySearchExactWord(array, search, keyFn)
   }
   if (idx === -1) {
@@ -429,6 +432,21 @@ export const findIdxBySearchExact = <T>(
   const indexes: number[] = []
   array.forEach((item, index) => {
     if (keyFn(item).toLowerCase() === searchLower) {
+      indexes.push(index)
+    }
+  })
+  return findShortestIdx(array, indexes, keyFn)
+}
+
+export const findIdxBySearchExactStartsWith = <T>(
+  array: T[],
+  search: string,
+  keyFn: (item: T) => string = ((item) => String(item))
+) => {
+  const searchLower = search.toLowerCase()
+  const indexes: number[] = []
+  array.forEach((item, index) => {
+    if (keyFn(item).toLowerCase().startsWith(searchLower)) {
       indexes.push(index)
     }
   })
