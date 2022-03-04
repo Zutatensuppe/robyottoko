@@ -125,6 +125,43 @@ test.each([
     },
     expected: { name: 'Ninja Gaiden 4-2: Unbreakable Determination (piano cover)', id: '2', box_art_url: '' },
   },
+  {
+    searchString: 'other',
+    resp: {
+      data: [
+        {
+          box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/5316-52x72.jpg',
+          id: '5316',
+          name: 'Other Worlds'
+        },
+        {
+          box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/21713-52x72.jpg',
+          id: '21713',
+          name: 'Otherland'
+        },
+        {
+          box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/509354-52x72.jpg',
+          id: '509354',
+          name: 'Otherworld: Shades of Fall'
+        },
+        {
+          box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/511910_IGDB-52x72.jpg',
+          id: '511910',
+          name: 'Othercide'
+        },
+        {
+          box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/512354-52x72.jpg',
+          id: '512354',
+          name: 'Others'
+        },
+      ],
+    },
+    expected: {
+      box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/512354-52x72.jpg',
+      id: '512354',
+      name: 'Others',
+    },
+  },
 ])('getBestEntryFromCategorySearchItems', ({ searchString, resp, expected }) => {
   const actual = getBestEntryFromCategorySearchItems(searchString, resp)
   expect(actual).toStrictEqual(expected)

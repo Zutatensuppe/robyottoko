@@ -267,7 +267,6 @@ class TwitchHelixClient {
   async searchCategory(searchString: string) {
     const url = this._url(`/search/categories${asQueryArgs({ query: searchString })}`)
     const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixCategorySearchResponseData
-    console.log(json)
     try {
       return getBestEntryFromCategorySearchItems(searchString, json)
     } catch (e) {

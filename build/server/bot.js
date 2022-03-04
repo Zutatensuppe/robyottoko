@@ -592,6 +592,9 @@ const passwordHash = (plainPass, salt) => {
 const findIdxFuzzy = (array, search, keyFn = ((item) => String(item))) => {
     let idx = findIdxBySearchExact(array, search, keyFn);
     if (idx === -1) {
+        idx = findIdxBySearchExactStartsWith(array, search, keyFn);
+    }
+    if (idx === -1) {
         idx = findIdxBySearchExactWord(array, search, keyFn);
     }
     if (idx === -1) {
@@ -622,6 +625,16 @@ const findIdxBySearchExact = (array, search, keyFn = ((item) => String(item))) =
     const indexes = [];
     array.forEach((item, index) => {
         if (keyFn(item).toLowerCase() === searchLower) {
+            indexes.push(index);
+        }
+    });
+    return findShortestIdx(array, indexes, keyFn);
+};
+const findIdxBySearchExactStartsWith = (array, search, keyFn = ((item) => String(item))) => {
+    const searchLower = search.toLowerCase();
+    const indexes = [];
+    array.forEach((item, index) => {
+        if (keyFn(item).toLowerCase().startsWith(searchLower)) {
             indexes.push(index);
         }
     });
@@ -1065,7 +1078,6 @@ class TwitchHelixClient {
     async searchCategory(searchString) {
         const url = this._url(`/search/categories${asQueryArgs({ query: searchString })}`);
         const json = await getJson(url, await this.withAuthHeaders());
-        console.log(json);
         try {
             return getBestEntryFromCategorySearchItems(searchString, json);
         }
