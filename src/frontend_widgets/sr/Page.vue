@@ -201,7 +201,7 @@ export default defineComponent({
       this.applySettings(data.settings);
     });
     this.ws.onMessage(
-      ["onEnded", "prev", "skip", "remove", "clear", "move", "tags"],
+      ["onEnded", "prev", "skip", "remove", "move", "tags"],
       (data) => {
         this.applySettings(data.settings);
         const oldId =
