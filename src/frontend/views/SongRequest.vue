@@ -16,6 +16,14 @@
         <button
           class="button is-small mr-1"
           :disabled="inited ? null : true"
+          @click="sendCtrl('setAllToPlayed', [])"
+          title="Sets all songs to at least 1x played"
+        >
+          <span class="txt">Set all to played</span>
+        </button>
+        <button
+          class="button is-small mr-1"
+          :disabled="inited ? null : true"
           @click="togglePlayer"
           :title="togglePlayerButtonText"
         >
@@ -465,7 +473,7 @@ export default defineComponent({
         this.player.setLoop(false);
       });
       this.ws.onMessage(
-        ["onEnded", "prev", "skip", "remove", "clear", "move", "tags"],
+        ["onEnded", "prev", "skip", "remove", "move", "tags"],
         (data: SongrequestModuleWsEventData) => {
           this.settings = data.settings;
           this.commands = data.commands;

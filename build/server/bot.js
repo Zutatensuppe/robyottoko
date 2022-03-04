@@ -4390,6 +4390,9 @@ class SongrequestModule {
                     case 'videoVisibility':
                         this.videoVisibility(...args);
                         break;
+                    case 'setAllToPlayed':
+                        this.setAllToPlayed();
+                        break;
                 }
             },
         };
@@ -4665,7 +4668,15 @@ class SongrequestModule {
     clear() {
         this.data.playlist = [];
         this.save();
-        this.updateClients('clear');
+        this.updateClients('init');
+    }
+    setAllToPlayed() {
+        this.data.playlist = this.data.playlist.map(item => {
+            item.plays = item.plays || 1;
+            return item;
+        });
+        this.save();
+        this.updateClients('init');
     }
     shuffle() {
         if (this.data.playlist.length < 3) {

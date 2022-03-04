@@ -336,6 +336,7 @@ class SongrequestModule implements Module {
           case 'updatetag': this.updateTag(...args as [string, string]); break;
           case 'filter': this.filter(...args as [{ tag: string }]); break;
           case 'videoVisibility': this.videoVisibility(...args as [boolean, number]); break;
+          case 'setAllToPlayed': this.setAllToPlayed(); break;
         }
       },
     }
@@ -645,7 +646,16 @@ class SongrequestModule implements Module {
   clear() {
     this.data.playlist = []
     this.save()
-    this.updateClients('clear')
+    this.updateClients('init')
+  }
+
+  setAllToPlayed() {
+    this.data.playlist = this.data.playlist.map(item => {
+      item.plays = item.plays || 1
+      return item
+    })
+    this.save()
+    this.updateClients('init')
   }
 
   shuffle() {
