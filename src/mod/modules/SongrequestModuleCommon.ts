@@ -1,4 +1,5 @@
 import { Command, FunctionCommand, GlobalVariable, MediaFile, PlaylistItem } from "../../types"
+import { commands } from '../../common/commands'
 
 interface SongrequestModuleCustomCssPreset {
   name: string
@@ -30,6 +31,11 @@ export interface SongrequestModuleSettings {
     mod: number | string
     sub: number | string
   }
+  maxSongsQueued: {
+    viewer: number
+    mod: number
+    sub: number
+  }
   customCss: string
   customCssPresets: SongrequestModuleCustomCssPreset[]
   showProgressBar: boolean
@@ -60,6 +66,42 @@ const default_custom_css_preset = (obj: any = null): SongrequestModuleCustomCssP
   maxItemsShown: typeof obj?.maxItemsShown === 'undefined' ? -1 : obj.maxItemsShown,
 })
 
+export const default_commands = (list: any = null) => {
+  if (Array.isArray(list)) {
+    // TODO: sanitize items
+    return list
+  }
+  return [
+    // default commands for song request
+    commands.sr_current.NewCommand(),
+    commands.sr_undo.NewCommand(),
+    commands.sr_good.NewCommand(),
+    commands.sr_bad.NewCommand(),
+    commands.sr_stats.NewCommand(),
+    commands.sr_prev.NewCommand(),
+    commands.sr_next.NewCommand(),
+    commands.sr_jumptonew.NewCommand(),
+    commands.sr_clear.NewCommand(),
+    commands.sr_rm.NewCommand(),
+    commands.sr_shuffle.NewCommand(),
+    commands.sr_reset_stats.NewCommand(),
+    commands.sr_loop.NewCommand(),
+    commands.sr_noloop.NewCommand(),
+    commands.sr_pause.NewCommand(),
+    commands.sr_unpause.NewCommand(),
+    commands.sr_hidevideo.NewCommand(),
+    commands.sr_showvideo.NewCommand(),
+    commands.sr_request.NewCommand(),
+    commands.sr_re_request.NewCommand(),
+    commands.sr_addtag.NewCommand(),
+    commands.sr_rmtag.NewCommand(),
+    commands.sr_volume.NewCommand(),
+    commands.sr_filter.NewCommand(),
+    commands.sr_preset.NewCommand(),
+    commands.sr_queue.NewCommand(),
+  ]
+}
+
 export const default_settings = (obj: any = null): SongrequestModuleSettings => ({
   volume: typeof obj?.volume === 'undefined' ? 100 : obj.volume,
   initAutoplay: typeof obj?.initAutoplay === 'undefined' ? true : obj.initAutoplay,
@@ -74,6 +116,11 @@ export const default_settings = (obj: any = null): SongrequestModuleSettings => 
     viewer: typeof obj?.maxSongLength === 'undefined' ? 0 : obj?.maxSongLength.viewer,
     mod: typeof obj?.maxSongLength === 'undefined' ? 0 : obj?.maxSongLength.mod,
     sub: typeof obj?.maxSongLength === 'undefined' ? 0 : obj?.maxSongLength.sub,
+  },
+  maxSongsQueued: {
+    viewer: typeof obj?.maxSongsQueued === 'undefined' ? 0 : parseInt(obj?.maxSongsQueued.viewer, 10),
+    mod: typeof obj?.maxSongsQueued === 'undefined' ? 0 : parseInt(obj?.maxSongsQueued.mod, 10),
+    sub: typeof obj?.maxSongsQueued === 'undefined' ? 0 : parseInt(obj?.maxSongsQueued.sub, 10),
   },
 
   customCss: obj?.customCss || '',

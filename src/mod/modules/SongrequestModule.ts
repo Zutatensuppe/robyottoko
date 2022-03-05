@@ -8,8 +8,8 @@ import {
   TwitchChatContext, RewardRedemptionContext, FunctionCommand, Command,
   Bot, CommandFunction, Module
 } from '../../types'
-import { commands } from '../../common/commands'
 import {
+  default_commands,
   default_settings, SongerquestModuleInitData, SongrequestModuleData,
   SongrequestModuleSettings, SongrequestModuleWsEventData
 } from './SongrequestModuleCommon'
@@ -23,6 +23,19 @@ const ADD_TYPE = {
   ADDED: 1,
   REQUEUED: 2,
   EXISTED: 3,
+}
+
+const NOT_ADDED_REASON = {
+  TOO_MANY_QUEUED: 0,
+  TOO_LONG: 1,
+  NOT_FOUND_IN_PLAYLIST: 2,
+  NOT_FOUND: 3,
+}
+
+interface AddResponseData {
+  addType: number
+  idx: number
+  reason: number
 }
 
 interface WsData {
@@ -51,42 +64,6 @@ const default_playlist = (list: any = null): PlaylistItem[] => {
     return list.map(item => default_playlist_item(item))
   }
   return []
-}
-
-const default_commands = (list: any = null) => {
-  if (Array.isArray(list)) {
-    // TODO: sanitize items
-    return list
-  }
-  return [
-    // default commands for song request
-    commands.sr_current.NewCommand(),
-    commands.sr_undo.NewCommand(),
-    commands.sr_good.NewCommand(),
-    commands.sr_bad.NewCommand(),
-    commands.sr_stats.NewCommand(),
-    commands.sr_prev.NewCommand(),
-    commands.sr_next.NewCommand(),
-    commands.sr_jumptonew.NewCommand(),
-    commands.sr_clear.NewCommand(),
-    commands.sr_rm.NewCommand(),
-    commands.sr_shuffle.NewCommand(),
-    commands.sr_reset_stats.NewCommand(),
-    commands.sr_loop.NewCommand(),
-    commands.sr_noloop.NewCommand(),
-    commands.sr_pause.NewCommand(),
-    commands.sr_unpause.NewCommand(),
-    commands.sr_hidevideo.NewCommand(),
-    commands.sr_showvideo.NewCommand(),
-    commands.sr_request.NewCommand(),
-    commands.sr_re_request.NewCommand(),
-    commands.sr_addtag.NewCommand(),
-    commands.sr_rmtag.NewCommand(),
-    commands.sr_volume.NewCommand(),
-    commands.sr_filter.NewCommand(),
-    commands.sr_preset.NewCommand(),
-    commands.sr_queue.NewCommand(),
-  ]
 }
 
 class SongrequestModule implements Module {
@@ -343,7 +320,8 @@ class SongrequestModule implements Module {
     }
   }
 
-  async add(str: string, userName: string, maxLenMs: number) {
+  async add(str: string, userName: string, maxLenMs: number, maxQueued: number): Promise<AddResponseData> {
+    const countQueuedSongsByUser = () => this.data.playlist.filter(item => item.user === userName && item.plays === 0).length
     const isTooLong = (ytData: YoutubeVideosResponseDataEntry) => {
       if (maxLenMs > 0) {
         const songLenMs = fn.parseISO8601Duration(ytData.contentDetails.duration)
@@ -353,6 +331,11 @@ class SongrequestModule implements Module {
       }
       return false
     }
+
+    if (maxQueued > 0 && countQueuedSongsByUser() >= maxQueued) {
+      return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_MANY_QUEUED }
+    }
+
     const youtubeUrl = str.trim()
 
     let youtubeId = null
@@ -362,37 +345,46 @@ class SongrequestModule implements Module {
     if (tmpYoutubeId) {
       const tmpYoutubeData = await this.loadYoutubeData(tmpYoutubeId)
       if (isTooLong(tmpYoutubeData)) {
-        return { addType: ADD_TYPE.NOT_ADDED, idx: -1 }
+        return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_LONG }
       }
       youtubeId = tmpYoutubeId
       youtubeData = tmpYoutubeData
     }
     if (!youtubeData) {
       const youtubeIds = await Youtube.getYoutubeIdsBySearch(youtubeUrl)
-      for (const tmpYoutubeId of youtubeIds) {
-        const tmpYoutubeData = await this.loadYoutubeData(tmpYoutubeId)
-        if (!tmpYoutubeData) {
-          continue
+      if (youtubeIds) {
+        const reasons = []
+        for (const tmpYoutubeId of youtubeIds) {
+          const tmpYoutubeData = await this.loadYoutubeData(tmpYoutubeId)
+          if (!tmpYoutubeData) {
+            continue
+          }
+          if (isTooLong(tmpYoutubeData)) {
+            reasons.push(NOT_ADDED_REASON.TOO_LONG)
+            continue
+          }
+          youtubeId = tmpYoutubeId
+          youtubeData = tmpYoutubeData
+          break
         }
-        if (isTooLong(tmpYoutubeData)) {
-          continue
+        if (!youtubeId || !youtubeData) {
+          if (reasons.includes(NOT_ADDED_REASON.TOO_LONG)) {
+            return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_LONG }
+          }
         }
-        youtubeId = tmpYoutubeId
-        youtubeData = tmpYoutubeData
-        break
       }
     }
     if (!youtubeId || !youtubeData) {
-      return { addType: ADD_TYPE.NOT_ADDED, idx: -1 }
+      return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.NOT_FOUND }
     }
 
     const tmpItem = this.createItem(youtubeId, youtubeData, userName)
-    const { addType, idx } = await this.addToPlaylist(tmpItem)
+    const { addType, idx, reason } = await this.addToPlaylist(tmpItem)
     if (addType === ADD_TYPE.ADDED) {
       this.data.stacks[userName] = this.data.stacks[userName] || []
       this.data.stacks[userName].push(youtubeId)
     }
-    return { addType, idx }
+    return { addType, idx, reason }
   }
 
   determinePrevIndex() {
@@ -536,7 +528,8 @@ class SongrequestModule implements Module {
   async request(str: string) {
     // this comes from backend, always unlimited length
     const maxLen = 0
-    await this.add(str, this.user.name, maxLen)
+    const maxQueued = 0
+    await this.add(str, this.user.name, maxLen, maxQueued)
   }
 
   findSongIdxByYoutubeId(youtubeId: string) {
@@ -748,7 +741,25 @@ class SongrequestModule implements Module {
     return item
   }
 
-  async answerAddRequest(addType: number, idx: number) {
+  async answerAddRequest(addResponseData: AddResponseData) {
+    const idx = addResponseData.idx
+    const reason = addResponseData.reason
+    const addType = addResponseData.addType
+
+    if (addType === ADD_TYPE.NOT_ADDED) {
+      if (reason === NOT_ADDED_REASON.NOT_FOUND) {
+        return `No song found`
+      } else if (reason === NOT_ADDED_REASON.NOT_FOUND_IN_PLAYLIST) {
+        return `Song not found in playlist`
+      } else if (reason === NOT_ADDED_REASON.TOO_LONG) {
+        return `Song too long`
+      } else if (reason === NOT_ADDED_REASON.TOO_MANY_QUEUED) {
+        return `Too many songs queued`
+      } else {
+        return `Could not process that song request`
+      }
+    }
+
     const item = idx >= 0 ? this.data.playlist[idx] : null
     if (!item) {
       return `Could not process that song request`
@@ -841,12 +852,8 @@ class SongrequestModule implements Module {
       }
 
       const searchterm = command.args.join(' ')
-      const { addType, idx } = await this.resr(searchterm)
-      if (idx >= 0) {
-        say(await this.answerAddRequest(addType, idx))
-      } else {
-        say(`Song not found in playlist`)
-      }
+      const addResponseData = await this.resr(searchterm)
+      say(await this.answerAddRequest(addResponseData))
     }
   }
 
@@ -1251,18 +1258,23 @@ class SongrequestModule implements Module {
       const str = command.args.join(' ')
 
       let maxLenMs: number
+      let maxQueued: number
       if (isBroadcaster(context)) {
         maxLenMs = 0
+        maxQueued = 0
       } else if (isMod(context)) {
         maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.mod)
+        maxQueued = this.data.settings.maxSongsQueued.mod
       } else if (isSubscriber(context)) {
         maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.sub)
+        maxQueued = this.data.settings.maxSongsQueued.sub
       } else {
         maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.viewer)
+        maxQueued = this.data.settings.maxSongsQueued.viewer
       }
 
-      const { addType, idx } = await this.add(str, context['display-name'], maxLenMs)
-      say(await this.answerAddRequest(addType, idx))
+      const addResponseData = await this.add(str, context['display-name'], maxLenMs, maxQueued)
+      say(await this.answerAddRequest(addResponseData))
     }
   }
 
@@ -1307,7 +1319,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  async addToPlaylist(tmpItem: PlaylistItem): Promise<{ addType: number, idx: number }> {
+  async addToPlaylist(tmpItem: PlaylistItem): Promise<AddResponseData> {
     const idx = this.findSongIdxByYoutubeId(tmpItem.yt)
     let insertIndex = this.findInsertIndex()
 
@@ -1318,6 +1330,7 @@ class SongrequestModule implements Module {
       return {
         addType: ADD_TYPE.ADDED,
         idx: insertIndex,
+        reason: -1,
       }
     }
 
@@ -1329,6 +1342,7 @@ class SongrequestModule implements Module {
       return {
         addType: ADD_TYPE.EXISTED,
         idx: insertIndex,
+        reason: -1,
       }
     }
 
@@ -1338,15 +1352,17 @@ class SongrequestModule implements Module {
     return {
       addType: ADD_TYPE.REQUEUED,
       idx: insertIndex,
+      reason: -1,
     }
   }
 
-  async resr(str: string) {
+  async resr(str: string): Promise<AddResponseData> {
     const idx = findIdxFuzzy(this.data.playlist, str, (item) => item.title)
     if (idx < 0) {
       return {
         addType: ADD_TYPE.NOT_ADDED,
         idx: -1,
+        reason: NOT_ADDED_REASON.NOT_FOUND_IN_PLAYLIST,
       }
     }
 
@@ -1360,6 +1376,7 @@ class SongrequestModule implements Module {
       return {
         addType: ADD_TYPE.EXISTED,
         idx: insertIndex,
+        reason: -1,
       }
     }
 
@@ -1369,6 +1386,7 @@ class SongrequestModule implements Module {
     return {
       addType: ADD_TYPE.REQUEUED,
       idx: insertIndex,
+      reason: -1,
     }
   }
 
