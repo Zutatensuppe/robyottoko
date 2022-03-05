@@ -48,5 +48,6 @@
         "scriptId": ""
       }
     }
-  }
+  },
+  "youtubeDlBinary": "yt-dlp"
 }

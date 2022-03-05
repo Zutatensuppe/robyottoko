@@ -28,7 +28,7 @@ const setChannelGameId = (
     const variables = bot.getUserVariables(user)
     const say = fn.sayFn(client, target)
     const gameId = originalCmd.data.game_id === '' ? '$args()' : originalCmd.data.game_id
-    const tmpGameId = await fn.doReplacements(gameId, command, context, variables, originalCmd)
+    const tmpGameId = await fn.doReplacements(gameId, command, context, variables, originalCmd, bot, user)
     if (tmpGameId === '') {
       const info = await helixClient.getChannelInformation(context['room-id'])
       if (info) {

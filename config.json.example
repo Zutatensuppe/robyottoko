@@ -56,5 +56,6 @@
         "scriptId": ""
       }
     }
-  }
+  },
+  "youtubeDlBinary": "yt-dlp"
 }

@@ -28,7 +28,7 @@ const setChannelTitle = (
     const variables = bot.getUserVariables(user)
     const say = fn.sayFn(client, target)
     const title = originalCmd.data.title === '' ? '$args()' : originalCmd.data.title
-    const tmpTitle = await fn.doReplacements(title, command, context, variables, originalCmd)
+    const tmpTitle = await fn.doReplacements(title, command, context, variables, originalCmd, bot, user)
     if (tmpTitle === '') {
       const info = await helixClient.getChannelInformation(context['room-id'])
       if (info) {

@@ -19,7 +19,7 @@ const randomText = (
     const variables = bot.getUserVariables(user)
     const texts = originalCmd.data.text
     const say = fn.sayFn(client, target)
-    say(await fn.doReplacements(fn.getRandom(texts), command, context, variables, originalCmd))
+    say(await fn.doReplacements(fn.getRandom(texts), command, context, variables, originalCmd, bot, user))
   }
 
 export default randomText

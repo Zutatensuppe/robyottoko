@@ -10,6 +10,7 @@ import multer from 'multer';
 import tmi from 'tmi.js';
 import bsqlite from 'better-sqlite3';
 import SibApiV3Sdk from 'sib-api-v3-sdk';
+import childProcess from 'child_process';
 
 const init = () => {
     const configFile = process.env.APP_CONFIG || '';
@@ -218,6 +219,15 @@ const humanDuration = (durationMs, units = ['ms', 's', 'm', 'h', 'd']) => {
     }
     return parts.join(' ');
 };
+const hash = (str) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const chr = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + chr;
+        hash |= 0; // Convert to 32bit integer
+    }
+    return hash;
+};
 function arrayMove(arr, oldIndex, newIndex) {
     if (newIndex >= arr.length) {
         let k = newIndex - arr.length + 1;
@@ -370,8 +380,8 @@ const applyVariableChanges = async (cmdDef, contextModule, rawCmd, context) => {
     const variables = contextModule.bot.getUserVariables(contextModule.user);
     for (const variableChange of cmdDef.variableChanges) {
         const op = variableChange.change;
-        const name = await doReplacements(variableChange.name, rawCmd, context, variables, cmdDef);
-        const value = await doReplacements(variableChange.value, rawCmd, context, variables, cmdDef);
+        const name = await doReplacements(variableChange.name, rawCmd, context, variables, cmdDef, contextModule.bot, contextModule.user);
+        const value = await doReplacements(variableChange.value, rawCmd, context, variables, cmdDef, contextModule.bot, contextModule.user);
         // check if there is a local variable for the change
         if (cmdDef.variables) {
             const idx = cmdDef.variables.findIndex(v => (v.name === name));
@@ -439,7 +449,7 @@ async function replaceAsync(str, regex, asyncFn) {
     const data = await Promise.all(promises);
     return str.replace(regex, () => data.shift() || '');
 }
-const doReplacements = async (text, command, context, variables, originalCmd) => {
+const doReplacements = async (text, command, context, variables, originalCmd, bot, user) => {
     const replaces = [
         {
             regex: /\$args(?:\((\d*)(:?)(\d*)\))?/g,
@@ -489,31 +499,50 @@ const doReplacements = async (text, command, context, variables, originalCmd) =>
             },
         },
         {
-            regex: /\$user\.name/g,
-            replacer: async () => {
-                if (!context) {
+            regex: /\$user(?:\(([^)]+)\)|())\.(name|profile_image_url|last_clip_url)/g,
+            replacer: async (m0, m1, m2, m3) => {
+                if (!bot || !user || !context) {
                     return '';
                 }
-                return context['display-name'];
+                const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
+                if (!helixClient) {
+                    return '';
+                }
+                const username = m1 || m2 || context.username;
+                const twitchUser = await helixClient.getUserByName(username);
+                if (!twitchUser) {
+                    return '';
+                }
+                if (m3 === 'name') {
+                    return twitchUser.display_name;
+                }
+                if (m3 === 'profile_image_url') {
+                    return twitchUser.profile_image_url;
+                }
+                if (m3 === 'last_clip_url') {
+                    const clip = await helixClient.getClipByUserId(twitchUser.id);
+                    return clip?.embed_url || '';
+                }
+                return '';
             },
         },
         {
             regex: /\$customapi\(([^$)]*)\)\['([A-Za-z0-9_ -]+)'\]/g,
             replacer: async (m0, m1, m2) => {
-                const txt = await getText(await doReplacements(m1, command, context, variables, originalCmd));
+                const txt = await getText(await doReplacements(m1, command, context, variables, originalCmd, bot, user));
                 return JSON.parse(txt)[m2];
             },
         },
         {
             regex: /\$customapi\(([^$)]*)\)/g,
             replacer: async (m0, m1) => {
-                return await getText(await doReplacements(m1, command, context, variables, originalCmd));
+                return await getText(await doReplacements(m1, command, context, variables, originalCmd, bot, user));
             },
         },
         {
             regex: /\$urlencode\(([^$)]*)\)/g,
             replacer: async (m0, m1) => {
-                return encodeURIComponent(await doReplacements(m1, command, context, variables, originalCmd));
+                return encodeURIComponent(await doReplacements(m1, command, context, variables, originalCmd, bot, user));
             },
         },
         {
@@ -1049,6 +1078,18 @@ class TwitchHelixClient {
     async getUserIdByName(userName) {
         const user = await this.getUserByName(userName);
         return user ? user.id : '';
+    }
+    // https://dev.twitch.tv/docs/api/reference#get-clips
+    async getClipByUserId(userId) {
+        const url = this._url(`/clips${asQueryArgs({ broadcaster_id: userId })}`);
+        const json = await getJson(url, await this.withAuthHeaders());
+        try {
+            return json.data[0];
+        }
+        catch (e) {
+            log$g.error(json);
+            return null;
+        }
     }
     // https://dev.twitch.tv/docs/api/reference#get-streams
     async getStreamByUserId(userId) {
@@ -1899,6 +1940,8 @@ const newMedia = () => ({
         file: '',
         urlpath: '',
     },
+    image_url: '',
+    clip_url: '',
     minDurationMs: '1s',
 });
 const newTrigger = (type) => ({
@@ -3215,7 +3258,7 @@ const countdown = (originalCmd, bot, user) => async (command, client, target, co
     const variables = bot.getUserVariables(user);
     const sayFn = fn.sayFn(client, target);
     const doReplacements = async (text) => {
-        return await fn.doReplacements(text, command, context, variables, originalCmd);
+        return await fn.doReplacements(text, command, context, variables, originalCmd, bot, user);
     };
     const say = async (text) => {
         return sayFn(await doReplacements(text));
@@ -3319,11 +3362,33 @@ const randomText = (originalCmd, bot, user) => async (command, client, target, c
     const variables = bot.getUserVariables(user);
     const texts = originalCmd.data.text;
     const say = fn.sayFn(client, target);
-    say(await fn.doReplacements(fn.getRandom(texts), command, context, variables, originalCmd));
+    say(await fn.doReplacements(fn.getRandom(texts), command, context, variables, originalCmd, bot, user));
 };
 
-const playMedia = (originalCmd, bot, user) => (_command, _client, _target, _context, _msg) => {
+const playMedia = (originalCmd, bot, user) => async (command, _client, _target, context, _msg) => {
     const data = originalCmd.data;
+    const variables = bot.getUserVariables(user);
+    data.image_url = await fn.doReplacements(data.image_url, command, context, variables, originalCmd, bot, user);
+    data.clip_url = await fn.doReplacements(data.clip_url, command, context, variables, originalCmd, bot, user);
+    if (data.clip_url) {
+        const filename = `${hash(data.clip_url)}-clip.mp4`;
+        const outfile = `./data/uploads/${filename}`;
+        if (!fs.existsSync(outfile)) {
+            console.log(`downloading the clip to ${outfile}`);
+            const child = childProcess.execFile('yt-dlp', [
+                data.clip_url,
+                '-o',
+                outfile,
+            ]);
+            await new Promise((resolve) => {
+                child.on('close', resolve);
+            });
+        }
+        else {
+            console.log(`clip exists at ${outfile}`);
+        }
+        data.clip_url = `/uploads/${filename}`;
+    }
     bot.getWebSocketServer().notifyAll([user.id], 'general', {
         event: 'playmedia',
         data: data,
@@ -3376,7 +3441,7 @@ const setChannelTitle = (originalCmd, bot, user) => async (command, client, targ
     const variables = bot.getUserVariables(user);
     const say = fn.sayFn(client, target);
     const title = originalCmd.data.title === '' ? '$args()' : originalCmd.data.title;
-    const tmpTitle = await fn.doReplacements(title, command, context, variables, originalCmd);
+    const tmpTitle = await fn.doReplacements(title, command, context, variables, originalCmd, bot, user);
     if (tmpTitle === '') {
         const info = await helixClient.getChannelInformation(context['room-id']);
         if (info) {
@@ -3410,7 +3475,7 @@ const setChannelGameId = (originalCmd, bot, user) => async (command, client, tar
     const variables = bot.getUserVariables(user);
     const say = fn.sayFn(client, target);
     const gameId = originalCmd.data.game_id === '' ? '$args()' : originalCmd.data.game_id;
-    const tmpGameId = await fn.doReplacements(gameId, command, context, variables, originalCmd);
+    const tmpGameId = await fn.doReplacements(gameId, command, context, variables, originalCmd, bot, user);
     if (tmpGameId === '') {
         const info = await helixClient.getChannelInformation(context['room-id']);
         if (info) {
@@ -3585,7 +3650,7 @@ const dictLookup = (originalCmd, bot, user) => async (command, client, target, c
     }
     const variables = bot.getUserVariables(user);
     const say = fn.sayFn(client, target);
-    const tmpLang = await fn.doReplacements(originalCmd.data.lang, command, context, variables, originalCmd);
+    const tmpLang = await fn.doReplacements(originalCmd.data.lang, command, context, variables, originalCmd, bot, user);
     const dictFn = LANG_TO_FN[tmpLang] || null;
     if (!dictFn) {
         say(`Sorry, language not supported: "${tmpLang}"`);
@@ -3593,7 +3658,7 @@ const dictLookup = (originalCmd, bot, user) => async (command, client, target, c
     }
     // if no phrase is setup, use all args given to command
     const phrase = originalCmd.data.phrase === '' ? '$args()' : originalCmd.data.phrase;
-    const tmpPhrase = await fn.doReplacements(phrase, command, context, variables, originalCmd);
+    const tmpPhrase = await fn.doReplacements(phrase, command, context, variables, originalCmd, bot, user);
     const items = await dictFn(tmpPhrase);
     if (items.length === 0) {
         say(`Sorry, I didn't find anything for "${tmpPhrase}" in language "${tmpLang}"`);
@@ -3618,7 +3683,7 @@ const addStreamTags = (originalCmd, bot, user) => async (command, client, target
     const variables = bot.getUserVariables(user);
     const say = fn.sayFn(client, target);
     const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag;
-    const tmpTag = await fn.doReplacements(tag, command, context, variables, originalCmd);
+    const tmpTag = await fn.doReplacements(tag, command, context, variables, originalCmd, bot, user);
     const tagsResponse = await helixClient.getStreamTags(context['room-id']);
     if (tmpTag === '') {
         const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
@@ -3667,7 +3732,7 @@ const removeStreamTags = (originalCmd, bot, user) => async (command, client, tar
     const variables = bot.getUserVariables(user);
     const say = fn.sayFn(client, target);
     const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag;
-    const tmpTag = await fn.doReplacements(tag, command, context, variables, originalCmd);
+    const tmpTag = await fn.doReplacements(tag, command, context, variables, originalCmd, bot, user);
     const tagsResponse = await helixClient.getStreamTags(context['room-id']);
     if (tmpTag === '') {
         const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
@@ -4991,7 +5056,7 @@ class SongrequestModule {
                 return;
             }
             const variables = this.bot.getUserVariables(this.user);
-            let tag = await fn.doReplacements(originalCmd.data.tag, command, context, variables, originalCmd);
+            let tag = await fn.doReplacements(originalCmd.data.tag, command, context, variables, originalCmd, this.bot, this.user);
             if (tag === "") {
                 tag = command.args.join(' ');
             }
@@ -5842,7 +5907,7 @@ class PomoModule {
     }
     async replaceText(text, command, context) {
         const variables = this.bot.getUserVariables(this.user);
-        text = await doReplacements(text, command, context, variables, null);
+        text = await doReplacements(text, command, context, variables, null, this.bot, this.user);
         text = text.replace(/\$pomo\.duration/g, humanDuration(this.data.state.durationMs, [' ms', ' s', ' min', ' hours', ' days']));
         text = text.replace(/\$pomo\.name/g, this.data.state.name);
         return text;

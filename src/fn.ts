@@ -3,9 +3,10 @@ import crypto from 'crypto'
 import { getText } from './net/xhr'
 import { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove, logger } from './common/fn'
 
-import { Command, GlobalVariable, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module, CommandTrigger } from './types'
+import { Command, GlobalVariable, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module, CommandTrigger, Bot } from './types'
 import Variables from './services/Variables'
 import { mayExecute } from './common/permissions'
+import { User } from './services/Users'
 
 export { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove }
 
@@ -126,8 +127,8 @@ const applyVariableChanges = async (
   const variables = contextModule.bot.getUserVariables(contextModule.user)
   for (const variableChange of cmdDef.variableChanges) {
     const op = variableChange.change
-    const name = await doReplacements(variableChange.name, rawCmd, context, variables, cmdDef)
-    const value = await doReplacements(variableChange.value, rawCmd, context, variables, cmdDef)
+    const name = await doReplacements(variableChange.name, rawCmd, context, variables, cmdDef, contextModule.bot, contextModule.user)
+    const value = await doReplacements(variableChange.value, rawCmd, context, variables, cmdDef, contextModule.bot, contextModule.user)
 
     // check if there is a local variable for the change
     if (cmdDef.variables) {
@@ -214,6 +215,8 @@ export const doReplacements = async (
   context: TwitchChatContext | null,
   variables: Variables,
   originalCmd: Command | FunctionCommand | null,
+  bot: Bot | null,
+  user: User | null,
 ) => {
   const replaces: { regex: RegExp, replacer: (...args: string[]) => Promise<string> }[] = [
     {
@@ -264,31 +267,50 @@ export const doReplacements = async (
       },
     },
     {
-      regex: /\$user\.name/g,
-      replacer: async () => {
-        if (!context) {
+      regex: /\$user(?:\(([^)]+)\)|())\.(name|profile_image_url|last_clip_url)/g,
+      replacer: async (m0: string, m1: string, m2: string, m3) => {
+        if (!bot || !user || !context) {
           return ''
         }
-        return context['display-name']
+        const helixClient = bot.getUserTwitchClientManager(user).getHelixClient()
+        if (!helixClient) {
+          return ''
+        }
+        const username = m1 || m2 || context.username
+        const twitchUser = await helixClient.getUserByName(username)
+        if (!twitchUser) {
+          return ''
+        }
+        if (m3 === 'name') {
+          return twitchUser.display_name
+        }
+        if (m3 === 'profile_image_url') {
+          return twitchUser.profile_image_url
+        }
+        if (m3 === 'last_clip_url') {
+          const clip = await helixClient.getClipByUserId(twitchUser.id)
+          return clip?.embed_url || ''
+        }
+        return ''
       },
     },
     {
       regex: /\$customapi\(([^$)]*)\)\['([A-Za-z0-9_ -]+)'\]/g,
       replacer: async (m0: string, m1: string, m2: string) => {
-        const txt = await getText(await doReplacements(m1, command, context, variables, originalCmd))
+        const txt = await getText(await doReplacements(m1, command, context, variables, originalCmd, bot, user))
         return JSON.parse(txt)[m2]
       },
     },
     {
       regex: /\$customapi\(([^$)]*)\)/g,
       replacer: async (m0: string, m1: string) => {
-        return await getText(await doReplacements(m1, command, context, variables, originalCmd))
+        return await getText(await doReplacements(m1, command, context, variables, originalCmd, bot, user))
       },
     },
     {
       regex: /\$urlencode\(([^$)]*)\)/g,
       replacer: async (m0: string, m1: string) => {
-        return encodeURIComponent(await doReplacements(m1, command, context, variables, originalCmd))
+        return encodeURIComponent(await doReplacements(m1, command, context, variables, originalCmd, bot, user))
       },
     },
     {

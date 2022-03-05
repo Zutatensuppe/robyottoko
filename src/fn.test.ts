@@ -207,7 +207,7 @@ describe('fn.doReplacements', () => {
       expected: 'arg1 arg2',
     },
   ])('doReplacements $text', async ({ text, command, context, variables, originalCmd, expected }) => {
-    const actual = await doReplacements(text, command, context, variables, originalCmd)
+    const actual = await doReplacements(text, command, context, variables, originalCmd, null, null)
     expect(actual).toBe(expected)
   })
 })
