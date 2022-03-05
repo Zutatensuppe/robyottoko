@@ -175,7 +175,7 @@ class Db {
     return !!this.get(table, where)
   }
 
-  upsert(table: string, data: Data, check: Where, idcol = null) {
+  upsert(table: string, data: Data, check: Where, idcol: any = null) {
     if (!this.exists(table, check)) {
       return this.insert(table, data)
     }
