@@ -1,6 +1,6 @@
 <template>
   <div id="drawcast">
-    <div class="drawcast_body">
+    <div class="drawcast_body" :class="{ blurred: dialog }">
       <div
         class="streamer_info"
         v-if="customDescription"
@@ -78,7 +78,7 @@
                   <div
                     class="draw_tools_tool_button clickable tool-clear"
                     title="Clear the canvas"
-                    @click="clearClick"
+                    @click="dialog = 'clear'"
                   >
                     <icon-clear />
                   </div>
@@ -171,8 +171,8 @@
             <div></div>
             <div class="drawing_panel_bottom_right">
               <div
-                class="button-primary send_button clickable"
-                @click="submitImage"
+                class="button button-primary send_button clickable"
+                @click="prepareSubmitImage"
               >
                 <icon-send />
                 <span class="send_button_text">{{ submitButtonText }}</span>
@@ -196,7 +196,7 @@
             class="image favorite clickable"
             v-for="(img, idx) in fav.list"
             :key="idx"
-            @click="modify(img)"
+            @click="prepareModify(img)"
             :src="img"
             height="190"
           />
@@ -213,7 +213,7 @@
             class="image clickable"
             v-for="(img, idx) in nonfavorites"
             :key="idx"
-            @click="modify(img)"
+            @click="prepareModify(img)"
             :src="img"
             height="190"
           />
@@ -222,7 +222,7 @@
       </div>
     </div>
 
-    <div class="drawcast_footer">
+    <div class="drawcast_footer" :class="{ blurred: dialog }">
       <span class="drawcast_footer_left"
         >Hyottoko.club | Developed by
         <a href="https://github.com/zutatensuppe" target="_blank">para</a>. UI
@@ -243,6 +243,72 @@
           >Jigsaw Puzzle Multiplayer</a
         ></span
       >
+    </div>
+
+    <div class="dialog success-dialog" v-if="dialog === 'success'">
+      <div class="dialog-bg"></div>
+      <div class="dialog-container">
+        <div class="dialog-title">Success!</div>
+        <div class="dialog-body">Your drawing was sent to the stream.</div>
+        <div class="dialog-footer">
+          <div class="button button-ok clickable" @click="dialogClose">
+            Draw another one
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dialog confirm-dialog" v-if="dialog === 'replace'">
+      <div class="dialog-bg"></div>
+      <div class="dialog-container">
+        <div class="dialog-body">
+          If you click this, your current drawing will be erased and replaced by
+          the drawing you just clicked on. <br />
+          <br />
+          Do you want to proceed?
+        </div>
+        <div class="dialog-footer">
+          <div class="button button-no-button clickable" @click="dialogClose">
+            Cancel
+          </div>
+          <div class="button button-danger clickable" @click="dialogConfirm">
+            Replace image
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dialog confirm-dialog" v-if="dialog === 'confirm-submit'">
+      <div class="dialog-bg"></div>
+      <div class="dialog-container">
+        <div class="dialog-body">
+          {{ submitConfirm }}
+        </div>
+        <div class="dialog-footer">
+          <div class="button button-no-button clickable" @click="dialogClose">
+            Cancel
+          </div>
+          <div class="button button-danger clickable" @click="dialogConfirm">
+            Send
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dialog confirm-dialog" v-if="dialog === 'clear'">
+      <div class="dialog-bg"></div>
+      <div class="dialog-container">
+        <div class="dialog-body">
+          If you click this, your current drawing will be erased. <br />
+          <br />
+          Do you want to proceed?
+        </div>
+        <div class="dialog-footer">
+          <div class="button button-no-button clickable" @click="dialogClose">
+            Cancel
+          </div>
+          <div class="button button-danger clickable" @click="dialogConfirm">
+            Clear
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -331,6 +397,9 @@ export default defineComponent({
 
       stack: [] as ImageData[],
       currentPath: [],
+
+      dialog: "",
+      modifyImageUrl: "",
     };
   },
   computed: {
@@ -557,6 +626,13 @@ export default defineComponent({
       this.stack = [];
       this.currentPath = [];
     },
+    prepareSubmitImage() {
+      if (this.submitConfirm) {
+        this.dialog = "confirm-submit";
+        return;
+      }
+      this.submitImage();
+    },
     submitImage() {
       if (!this.canvas) {
         log.error("submitImage: this.canvas not set");
@@ -564,9 +640,6 @@ export default defineComponent({
       }
       if (!this.ws) {
         log.error("submitImage: this.ws not set");
-        return;
-      }
-      if (this.submitConfirm && !confirm(this.submitConfirm)) {
         return;
       }
       this.ws.send(
@@ -577,6 +650,26 @@ export default defineComponent({
           },
         })
       );
+      this.dialog = "success";
+    },
+    prepareModify(imageUrl: string) {
+      this.modifyImageUrl = imageUrl;
+      this.dialog = "replace";
+    },
+    dialogClose() {
+      this.dialog = "";
+    },
+    dialogConfirm() {
+      if (this.dialog === "confirm-submit") {
+        this.dialog = "";
+        this.submitImage();
+      } else if (this.dialog === "clear") {
+        this.dialog = "";
+        this.clearClick();
+      } else if (this.dialog === "replace") {
+        this.dialog = "";
+        this.modify(this.modifyImageUrl);
+      }
     },
     getColor(pt) {
       if (!this.ctx) {

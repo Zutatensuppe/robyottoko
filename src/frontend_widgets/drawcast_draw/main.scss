@@ -1,0 +1,503 @@
+$cardBackground: rgba(255,252,252,1);
+$textColor: rgba(170,162,166,1);
+$colorButtonShadow: 1px 1px 1px rgba(0,0,0,.2);
+$lightShadow: 3px 3px 1px rgba(0,0,0,.15);
+$boxShadow_1: 2px 2px 1px rgba(0, 0, 0, 0.25);
+$boxShadowStreamerAvatar: 0 5px 1px rgba(0, 0, 0, 0.12);
+$buttonTextColor: #fffcfc;
+$buttonTextColorOk: $buttonTextColor;
+$buttonTextColorDanger: $buttonTextColor;
+
+.clickable {
+  cursor: pointer;
+}
+
+/* exported from figma and adjusted */
+
+* {
+  box-sizing: border-box;
+}
+html {
+  margin: 0;
+}
+body {
+  margin: 0;
+  font-size: 14px;
+  background: url("./assets/bgPlaceholderSmall.png");
+  background-size: 58px 58px;
+  font-family: Roboto;
+}
+a {
+  text-decoration: none;
+  color: #786DAF;
+
+  &:visited {
+    color: #92465A;
+  }
+}
+
+.drawcast_body {
+  width: 100%;
+  padding: 25px 75px;
+  position: relative;
+}
+
+@import "./style/streamer_info.scss";
+
+.draw_panel {
+  width: fit-content;
+  height: fit-content;
+  background: rgba(255,255,255,1);
+  padding: 20px 20px;
+  position: relative;
+  left: 50%;
+  transform: translate(-50%, 0);
+  border-radius: 8px;
+  box-shadow: 3px 3px 2px rgba(0, 0, 0, 0.20);
+  overflow: hidden;
+}
+.draw_panel_inner {
+  display: grid;
+  grid-template-areas: "top"
+    "bottom";
+}
+.draw_panel_left {
+  grid-area: left;
+  position: relative;
+  padding: 20px;
+}
+.draw_panel_right {
+  grid-area: right;
+  position: relative;
+  padding: 15px 20px 20px 20px;
+}
+
+.draw_panel_top {
+  grid-area: top;
+  position: relative;
+  padding: 20px 20px 10px 20px;
+
+  display: grid;
+  grid-template-areas: "top_left top_right";
+  grid-template-columns: max-content auto;
+  grid-gap: 40px;
+}
+
+.draw_panel_bottom {
+  grid-area: bottom;
+  position: relative;
+  padding: 0 20px 20px 20px;
+
+  display: grid;
+  grid-template-areas: "bottom_left nothing bottom_right";
+  grid-template-columns: max-content auto max-content;
+  grid-gap: 10px;
+}
+.drawing_panel_bottom_right {
+  grid-area: bottom_right;
+  align-self: end;
+}
+
+.draw_canvas_holder_inner {
+  border: 2px solid rgba(170,162,166,1);
+  box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.25);
+  display: inline-block;
+}
+.draw_colors {
+  display: grid;
+  width: fit-content;
+  grid-template-areas: "current palette";
+  grid-template-columns: min-content 270px;
+  grid-gap: 4px;
+  background: $cardBackground;
+  padding: 8px 9px 8px 8px; /* :P probably 8 everywhere is good ^^ */
+  border-radius: 4px;
+  box-shadow: $boxShadow_1;
+}
+.draw_colors_current {
+  grid-area: current;
+  width: 45px;
+  height: 45px;
+  background: white;
+  position: relative;
+  box-shadow: $colorButtonShadow;
+}
+.draw_colors_current_inner {
+  width: 45px;
+  height: 45px;
+  display: inline-block;
+  position: relative;
+  border: 1px solid rgb(83, 83, 83);
+  border-radius: 4px;
+}
+
+.visual_background_title {
+  padding: 7px 0 0 7px;
+}
+.visual_background_colors {
+  padding: 7px;
+}
+.visual_background_button {
+  display: inline-block;
+  position: relative;
+  margin: 0 3px 0 0;
+  width: 32px;
+  height: 32px;
+  padding: 5px 4px;
+  border-radius: 5px;
+  border-style: solid;
+  border-width: 1px;
+  color: #C4BCC0;
+  border-color: #C4BCC0;
+
+  &.is-current:after {
+    position: absolute;
+    display: block;
+    content: "";
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 5px;
+    background: transparent;
+    border-width: 2px;
+    border-style: solid;
+    border-color: rgb(165, 165, 165);
+  }
+}
+.bg-white {
+  background: white;
+}
+.bg-black {
+  background: #111;
+}
+.bg-transparent {
+  background-image:
+  linear-gradient(to right, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)),
+  linear-gradient(to right, black 50%, white 50%),
+  linear-gradient(to bottom, black 50%, white 50%);
+  background-blend-mode: normal, difference, normal;
+  background-size: 1.5em 1.5em;
+}
+
+.draw_colors_current_label {
+  width: 45px;
+  height: 45px;
+  display: inline-block;
+
+  input[type="color"] {
+    display: none;
+  }
+}
+.draw_colors_current_icon {
+  width: 16px;
+  height: 16px;
+  background: rgba(223,215,218,1);
+  padding: 3px 3px;
+  position: absolute;
+  top: 28px;
+  left: 28px;
+  border-radius: 2px;
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+}
+.draw_colors_palette {
+  grid-area: palette;
+}
+.palette_color {
+  display: inline-block;
+  border: 1px solid rgba(88,72,84,1);
+  border-radius: 4px;
+  width: 20px;
+  height: 19px;
+  margin: 0 5px 6px 0;
+  box-shadow: $colorButtonShadow;
+
+  &:nth-child(11n) {
+    margin: 0 0 6px 0;
+  }
+  &:nth-child(n+12) {
+    margin: 0 5px 0 0;
+  }
+  &:nth-child(11n):nth-child(n+12) {
+    margin: 0;
+  }
+}
+
+.v355_1274 {
+  height: 307px;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+}
+
+.card {
+  background: $cardBackground;
+  border-radius: 4px;
+  box-shadow: $boxShadow_1;
+}
+.draw_tools_panel {
+  color: $textColor;
+  width: 186px;
+  position: relative;
+}
+.draw_tools_tool_buttons {
+  position: relative;
+  padding: 7px 0 0 7px;
+}
+.draw_tools_tool_button {
+  display: inline-block;
+  position: relative;
+  margin: 0 3px 0 0;
+  width: 32px;
+  height: 32px;
+  padding: 5px 4px;
+  border-radius: 5px;
+  border-style: solid;
+  border-width: 1px;
+  background: rgba(250,242,245,1);
+  color: #C4BCC0;
+  border-color: #C4BCC0;
+
+  &.is-current:after {
+    position: absolute;
+    display: block;
+    content: "";
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 5px;
+    background: transparent;
+    border-width: 2px;
+    border-style: solid;
+    border-color: rgb(165, 165, 165);
+  }
+  &:last-child {
+    margin: 0;
+  }
+
+  &:not(.tool-current):hover {
+    color: #DFD7DA;
+    border-color: #DFD7DA;
+  }
+
+  /* CLEAR-BUTTON */
+  &.tool-clear {
+    background: rgba(212,71,68,1);
+    border-color: rgb(99, 29, 29);
+    padding: 6px 6px;
+    color: #FAF2F5;
+
+    &:hover {
+      background: #F16358;
+      border-color: #D44744;
+      color: #fffcfc;
+    }
+
+    &:active {
+      background: #AA4557;
+      border-color: #794658;
+      color: #DFD7DA;
+    }
+  }
+
+  /* UNDO-BUTTON */
+  &.tool-undo {
+    background: #BBBEE6;
+    border-color: #969BD6;
+    padding: 6px 6px;
+    color: #FAF2F5;
+
+    &:hover {
+      background: #CDD0EE;
+      border-color: #BBBEE6;
+      color: #fffcfc;
+    }
+    &:active {
+      background: #8489CE;
+      border-color: #78649A;
+      color: #DFD7DA;
+    }
+  }
+
+  svg {
+    position: absolute;
+  }
+
+  &.tool-pen svg {
+    width: 19px;
+    height: 25px;
+    top: 3px;
+    left: 5px;
+  }
+  &.tool-eraser svg {
+    width: 24px;
+    height: 23px;
+    left: 4px;
+    top: 4px;
+  }
+  &.tool-eyedropper svg {
+    width: 21px;
+    height: 23px;
+    top: 3px;
+    left: 5px;
+  }
+  &.tool-undo svg {
+    width: 24px;
+    height: 23px;
+    top: 3px;
+    left: 3px;
+  }
+  &.tool-clear svg {
+    width: 20px;
+    height: 20px;
+    top: 5px;
+    left: 5px;
+  }
+}
+
+.size_slider {
+  width: 186px;
+  height: 34px;
+  padding: 5px 5px;
+  position: relative;
+}
+.v355_1289 {
+  width: 20px;
+  height: 20px;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  padding: 8px 8px;
+  position: absolute;
+  top: 7px;
+  left: 12px;
+  overflow: hidden;
+}
+.v355_1290 {
+  width: 4px;
+  height: 4px;
+  background: rgba(74,67,71,1);
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  border-radius: 50%;
+}
+.v355_1291 {
+  width: 110px;
+  height: 24px;
+  padding: 10px 10px;
+  position: absolute;
+  top: 6px;
+  left: 35px;
+  input {
+    width: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+}
+.v355_1292 {
+  width: 110px;
+  height: 6px;
+  background: rgba(223,215,218,1);
+  position: absolute;
+  top: 9px;
+  left: 0px;
+}
+.v355_1293 {
+  width: 15px;
+  height: 15px;
+  background: rgba(170,162,166,1);
+  position: absolute;
+  top: 4px;
+  left: 58px;
+}
+.v355_1294 {
+  width: 20px;
+  height: 20px;
+  padding: 1px 1px;
+  position: absolute;
+  top: 7px;
+  right: 12px;
+  overflow: hidden;
+}
+.v355_1295 {
+  width: 18px;
+  height: 18px;
+  background: rgba(74,67,71,1);
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  border-radius: 50%;
+}
+.hotkey-help {
+  width: 186px;
+  margin-top: 20px;
+  padding-left: 10px;
+  border-radius: 4px;
+}
+.hotkey-help-title {
+  color: rgba(145,137,141,1);
+  font-weight: Bold;
+  font-size: 20px;
+}
+.hotkey-help-item {
+  color: $textColor;
+  font-family: Roboto;
+  font-weight: Regular;
+  font-size: 18px;
+}
+.drawings-panel {
+  width: fit-content;
+  margin: 20px auto 0;
+  background: $cardBackground;
+  padding: 10px 10px;
+  border-radius: 8px;
+  box-shadow: $boxShadow_1;
+}
+.drawings_panel_title {
+  background: rgba(250,242,245,1);
+  padding: 15px 15px;
+}
+.drawings_panel_title_inner {
+  color: $textColor;
+  font-weight: Bold;
+  font-size: 28px;
+}
+
+.drawing_panel_drawings {
+  padding: 7px 15px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  .image {
+    height: 190px;
+    display: inline-block;
+    box-shadow: $lightShadow;
+  }
+
+  .dotdotdot {
+    background-image: url("./assets/HyottokoDotDotDot.svg");
+    height: 190px;
+    width: 190px;
+    display: inline-block;
+    background-position: center center;
+    background-repeat: no-repeat;
+  }
+}
+
+.blurred {
+  filter: blur(4px);
+}
+
+@import "./style/footer.scss";
+@import "./style/button.scss";
+@import "./style/slider.scss";
+@import "./style/dialog.scss";
