@@ -78,7 +78,7 @@
                   <div
                     class="draw_tools_tool_button clickable tool-clear"
                     title="Clear the canvas"
-                    @click="dialog = 'clear'"
+                    @click="showClearDialog"
                   >
                     <icon-clear />
                   </div>
@@ -248,6 +248,9 @@
     <div class="dialog success-dialog" v-if="dialog === 'success'">
       <div class="dialog-bg"></div>
       <div class="dialog-container">
+        <div class="dialog-image">
+          <div class="responsive-image" :style="successImageUrlStyle"></div>
+        </div>
         <div class="dialog-title">Success!</div>
         <div class="dialog-body">Your drawing was sent to the stream.</div>
         <div class="dialog-footer">
@@ -292,9 +295,12 @@
         </div>
       </div>
     </div>
-    <div class="dialog confirm-dialog" v-if="dialog === 'clear'">
+    <div class="dialog clear-dialog" v-if="dialog === 'clear'">
       <div class="dialog-bg"></div>
       <div class="dialog-container">
+        <div class="dialog-image">
+          <div class="responsive-image" :style="clearImageUrlStyle"></div>
+        </div>
         <div class="dialog-body">
           If you click this, your current drawing will be erased. <br />
           <br />
@@ -400,6 +406,8 @@ export default defineComponent({
 
       dialog: "",
       modifyImageUrl: "",
+      successImageUrlStyle: null,
+      clearImageUrlStyle: null,
     };
   },
   computed: {
@@ -650,7 +658,24 @@ export default defineComponent({
           },
         })
       );
+
+      this.successImageUrlStyle = {
+        backgroundImage: `url(${this.canvas.toDataURL()})`,
+      };
       this.dialog = "success";
+    },
+    showClearDialog() {
+      const w = 100;
+      const h = Math.round((w * this.canvasHeight) / this.canvasWidth);
+
+      this.clearImageUrlStyle = {
+        backgroundImage: `url(${this.canvas.toDataURL()})`,
+        backgroundSize: "contain",
+        backgroundRepeat: "no-repeat",
+        width: w + "px",
+        height: h + "px",
+      };
+      this.dialog = "clear";
     },
     prepareModify(imageUrl: string) {
       this.modifyImageUrl = imageUrl;
