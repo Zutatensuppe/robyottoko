@@ -246,7 +246,7 @@
     </div>
 
     <div class="dialog success-dialog" v-if="dialog === 'success'">
-      <div class="dialog-bg"></div>
+      <div class="dialog-bg" @click="dialogClose"></div>
       <div class="dialog-container">
         <div class="dialog-image">
           <div class="responsive-image" :style="successImageUrlStyle"></div>
@@ -261,7 +261,7 @@
       </div>
     </div>
     <div class="dialog confirm-dialog" v-if="dialog === 'replace'">
-      <div class="dialog-bg"></div>
+      <div class="dialog-bg" @click="dialogClose"></div>
       <div class="dialog-container">
         <div class="dialog-body">
           If you click this, your current drawing will be erased and replaced by
@@ -280,7 +280,7 @@
       </div>
     </div>
     <div class="dialog confirm-dialog" v-if="dialog === 'confirm-submit'">
-      <div class="dialog-bg"></div>
+      <div class="dialog-bg" @click="dialogClose"></div>
       <div class="dialog-container">
         <div class="dialog-body">
           {{ submitConfirm }}
@@ -289,14 +289,14 @@
           <div class="button button-no-button clickable" @click="dialogClose">
             Cancel
           </div>
-          <div class="button button-danger clickable" @click="dialogConfirm">
+          <div class="button button-ok clickable" @click="dialogConfirm">
             Send
           </div>
         </div>
       </div>
     </div>
     <div class="dialog clear-dialog" v-if="dialog === 'clear'">
-      <div class="dialog-bg"></div>
+      <div class="dialog-bg" @click="dialogClose"></div>
       <div class="dialog-container">
         <div class="dialog-image">
           <div class="responsive-image" :style="clearImageUrlStyle"></div>
@@ -670,8 +670,6 @@ export default defineComponent({
 
       this.clearImageUrlStyle = {
         backgroundImage: `url(${this.canvas.toDataURL()})`,
-        backgroundSize: "contain",
-        backgroundRepeat: "no-repeat",
         width: w + "px",
         height: h + "px",
       };

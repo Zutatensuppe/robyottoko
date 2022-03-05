@@ -33,6 +33,12 @@
     font-family:Roboto;
     text-align:center;
     font-size:18px;
+
+    .dialog-footer {
+      .button:not(:first-child) {
+        margin-left: 25px;
+      }
+    }
   }
 }
 .success-dialog {
@@ -112,10 +118,6 @@
         left: 50%;
       }
     }
-
-    .button-danger {
-      margin-left: 25px;
-    }
   }
 }
 
@@ -125,9 +127,13 @@
 
     .dialog-image {
       .responsive-image {
+        background-size: contain;
+        background-repeat: no-repeat;
         position: relative;
         margin-bottom: 75px;
         transform: translate(50%, 0);
+        border: solid 3px;
+
         &:before {
           content: "";
           display: block;
@@ -136,19 +142,19 @@
           height: calc(259px /3);
           background-size: cover;
           position: absolute;
-          top: 70%;
-          left: 100%;
+          top: calc(100% - 10px);
+          left: calc(100% - 10px);
         }
         &:after {
           content: "";
           display: block;
           background-image: url('./assets/hyottokoFlame.png');
-          width: calc(148px / 5);
-          height: calc(241px /5);
+          width: calc(148px / 4);
+          height: calc(241px /4);
           background-size: cover;
           position: absolute;
-          top: 35%;
-          left: 85%;
+          top: calc(100% - 52px);
+          left: calc(100% - 23px);
           transform: rotate(-20deg);
         }
       }
@@ -156,10 +162,6 @@
     .dialog-body {
       padding: 15px 10px 15px;
       position: relative;
-    }
-
-    .button-danger {
-      margin-left: 25px;
     }
   }
 }
