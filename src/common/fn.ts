@@ -211,7 +211,7 @@ const doDummyReplacements = (text: string, str: string) => {
     /\$args(?:\((\d*)(:?)(\d*)\))?/g,
     /\$rand\(\s*(\d+)?\s*,\s*?(\d+)?\s*\)/g,
     /\$var\(([^)]+)\)/g,
-    /\$user\.name/g,
+    /\$user(?:\(([^)]+)\)|())\.(name|profile_image_url|last_clip_url)/g,
     /\$customapi\(([^$)]*)\)\['([A-Za-z0-9_ -]+)'\]/g,
     /\$customapi\(([^$)]*)\)/g,
     /\$urlencode\(([^$)]*)\)/g,

@@ -269,14 +269,23 @@ export const doReplacements = async (
     {
       regex: /\$user(?:\(([^)]+)\)|())\.(name|profile_image_url|last_clip_url)/g,
       replacer: async (m0: string, m1: string, m2: string, m3) => {
-        if (!bot || !user || !context) {
+        if (!context) {
+          return ''
+        }
+
+        const username = m1 || m2 || context.username
+        if (username === context.username && m3 === 'name') {
+          return context['display-name']
+        }
+
+        if (!bot || !user) {
           return ''
         }
         const helixClient = bot.getUserTwitchClientManager(user).getHelixClient()
         if (!helixClient) {
           return ''
         }
-        const username = m1 || m2 || context.username
+
         const twitchUser = await helixClient.getUserByName(username)
         if (!twitchUser) {
           return ''

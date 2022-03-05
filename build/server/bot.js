@@ -501,14 +501,20 @@ const doReplacements = async (text, command, context, variables, originalCmd, bo
         {
             regex: /\$user(?:\(([^)]+)\)|())\.(name|profile_image_url|last_clip_url)/g,
             replacer: async (m0, m1, m2, m3) => {
-                if (!bot || !user || !context) {
+                if (!context) {
+                    return '';
+                }
+                const username = m1 || m2 || context.username;
+                if (username === context.username && m3 === 'name') {
+                    return context['display-name'];
+                }
+                if (!bot || !user) {
                     return '';
                 }
                 const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
                 if (!helixClient) {
                     return '';
                 }
-                const username = m1 || m2 || context.username;
                 const twitchUser = await helixClient.getUserByName(username);
                 if (!twitchUser) {
                     return '';
@@ -3375,7 +3381,7 @@ const playMedia = (originalCmd, bot, user) => async (command, _client, _target, 
         const outfile = `./data/uploads/${filename}`;
         if (!fs.existsSync(outfile)) {
             console.log(`downloading the clip to ${outfile}`);
-            const child = childProcess.execFile('yt-dlp', [
+            const child = childProcess.execFile(config.youtubeDlBinary, [
                 data.clip_url,
                 '-o',
                 outfile,
