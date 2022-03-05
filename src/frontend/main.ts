@@ -53,7 +53,7 @@ import AvatarSlotItemStateEditor from "./components/Avatar/AvatarSlotItemStateEd
 import AvatarFrameUpload from "./components/Avatar/AvatarFrameUpload.vue";
 import AvatarAnimation from "./components/Avatar/AvatarAnimation.vue";
 
-import "./style.css"
+import "./style.scss"
 import conf from './conf'
 import user from './user'
 import wsstatus from './wsstatus'
@@ -148,6 +148,13 @@ const run = async () => {
   })
   user.eventBus.on('logout', () => {
     wsstatus.stop()
+  })
+  user.eventBus.on('darkmode', (darkmode) => {
+    if (darkmode) {
+      document.documentElement.classList.add('darkmode')
+    } else {
+      document.documentElement.classList.remove('darkmode')
+    }
   })
 
   await conf.init()

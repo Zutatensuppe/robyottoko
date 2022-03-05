@@ -5,7 +5,18 @@ let me: any = null;
 
 export const eventBus = mitt()
 
+export const isDarkmode = () => {
+  return localStorage.getItem('darkmode') === '1'
+}
+
+export const setDarkmode = (darkmode: boolean) => {
+  localStorage.setItem('darkmode', darkmode ? '1' : '0')
+  eventBus.emit('darkmode', darkmode)
+}
+
 async function init() {
+  eventBus.emit('darkmode', isDarkmode())
+
   const res = await api.getMe();
   me = res.status === 200 ? (await res.json()) : null
   if (me) {
@@ -39,6 +50,8 @@ async function login(user: string, pass: string) {
 
 export default {
   getMe: () => me,
+  isDarkmode,
+  setDarkmode,
   eventBus,
   logout,
   login,
