@@ -3,8 +3,9 @@
 import config from '../src/config'
 import Db from '../src/Db'
 import readline from 'readline'
+import { passwordHash, passwordSalt } from '../src/fn'
 
-const question = (q) => new Promise((resolve, reject) => {
+const question = (q: any) => new Promise((resolve, reject) => {
   const cl = readline.createInterface(process.stdin, process.stdout)
   cl.question(q, answer => {
     cl.close()
@@ -20,12 +21,14 @@ const log = console.log
 
     log('Please enter credentials for the new user.')
 
-    const username = await question('Username: ')
-    const password = await question('Password: ')
+    const username: string = `${await question('Username: ')}`
+    const password: string = `${await question('Password: ')}`
 
+    const salt = passwordSalt()
     const user = {
       name: username,
-      pass: password,
+      pass: passwordHash(password, salt),
+      salt: salt,
 
       // for tmi in general, see: https://dev.twitch.tv/docs/irc/#building-the-bot
       // this data is editable in the backend after logging in, so

@@ -47,7 +47,7 @@ features you have to provide an api key directly in the config atm.
 The rest of the settings can be changed via the bot admin ui.
 
     ```
-    ./run create-user
+    ./run ts scripts/create-user.ts
     ```
 
 4. Run the bot
