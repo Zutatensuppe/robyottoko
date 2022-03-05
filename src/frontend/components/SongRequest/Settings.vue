@@ -40,7 +40,10 @@
               @update:modelValue="sendSettings"
               />
           </td>
-          <td>Max. length of songs that viewers can add/request. (0 = unlimited)</td>
+          <td>
+            Limits the maximum duration of songs that viewers can add/request.
+            (<code>0</code> = unlimited, for example: <code>5m</code>, <code>1h</code>, ...)
+          </td>
         </tr>
         <tr>
           <td><code>settings.maxSongLength.mod</code></td>
@@ -50,7 +53,10 @@
               @update:modelValue="sendSettings"
               />
           </td>
-          <td>Max. length of songs that mods can add/request. (0 = unlimited)</td>
+          <td>
+            Limits the maximum duration of songs that mods can add/request.
+            (<code>0</code> = unlimited, for example: <code>5m</code>, <code>1h</code>, ...)
+          </td>
         </tr>
         <tr>
           <td><code>settings.maxSongLength.sub</code></td>
@@ -60,7 +66,40 @@
               @update:modelValue="sendSettings"
               />
           </td>
-          <td>Max. length of songs that subs can add/request. (0 = unlimited)</td>
+          <td>
+            Limits the maximum duration of songs that subscribers can add/request.
+            (<code>0</code> = unlimited, for example: <code>5m</code>, <code>1h</code>, ...)
+          </td>
+        </tr>
+        <tr>
+          <td><code>settings.maxSongsQueued.viewer</code></td>
+          <td>
+            <input class="input is-small" type="number"
+              v-model="settings.maxSongsQueued.viewer"
+              @update:modelValue="sendSettings"
+              />
+          </td>
+          <td>Number of new songs that viewers can request. (0 = unlimited)</td>
+        </tr>
+        <tr>
+          <td><code>settings.maxSongsQueued.mod</code></td>
+          <td>
+            <input class="input is-small" type="number"
+              v-model="settings.maxSongsQueued.mod"
+              @update:modelValue="sendSettings"
+              />
+          </td>
+          <td>Number of new songs that mods can request. (0 = unlimited)</td>
+        </tr>
+        <tr>
+          <td><code>settings.maxSongsQueued.sub</code></td>
+          <td>
+            <input class="input is-small" type="number"
+              v-model="settings.maxSongsQueued.sub"
+              @update:modelValue="sendSettings"
+              />
+          </td>
+          <td>Number of new songs that subscribers can request. (0 = unlimited)</td>
         </tr>
         <tr>
           <td colspan="3">Visuals</td>
@@ -140,9 +179,11 @@
 </template>
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import { mediaFileFromUploadedFile } from "../../../common/fn";
-import { SongrequestModuleSettings } from "../../../mod/modules/SongrequestModule";
-import { MediaFile, UploadedFile } from "../../../types";
+import {
+  default_settings,
+  SongrequestModuleSettings,
+} from "../../../mod/modules/SongrequestModuleCommon";
+import { MediaFile } from "../../../types";
 
 interface ComponentData {
   settings: SongrequestModuleSettings;
@@ -222,19 +263,7 @@ export default defineComponent({
   data: (): ComponentData => ({
     cssPresetName: "",
     cssPresetDropdownActive: false,
-    settings: {
-      volume: 100,
-      hideVideoImage: {
-        file: "",
-        filename: "",
-      },
-      initAutoplay: true,
-      showThumbnails: false,
-      maxItemsShown: 0,
-      showProgressBar: false,
-      customCssPresets: [],
-      customCss: "",
-    },
+    settings: default_settings(),
     css: {
       classExamples: [
         { class: ".wrapper", desc: "Wrapper for everything" },

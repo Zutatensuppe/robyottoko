@@ -4043,53 +4043,6 @@ const default_custom_css_preset = (obj = null) => ({
     showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
     maxItemsShown: typeof obj?.maxItemsShown === 'undefined' ? -1 : obj.maxItemsShown,
 });
-const default_settings$4 = (obj = null) => ({
-    volume: typeof obj?.volume === 'undefined' ? 100 : obj.volume,
-    initAutoplay: typeof obj?.initAutoplay === 'undefined' ? true : obj.initAutoplay,
-    hideVideoImage: {
-        file: obj?.hideVideoImage?.file || '',
-        filename: obj?.hideVideoImage?.filename || '',
-        urlpath: obj?.hideVideoImage?.urlpath ? obj.hideVideoImage.urlpath : (obj?.hideVideoImage?.file ? `/uploads/${encodeURIComponent(obj.hideVideoImage.file)}` : '')
-    },
-    maxSongLength: {
-        viewer: typeof obj?.maxSongLength === 'undefined' ? 0 : obj?.maxSongLength.viewer,
-        mod: typeof obj?.maxSongLength === 'undefined' ? 0 : obj?.maxSongLength.mod,
-        sub: typeof obj?.maxSongLength === 'undefined' ? 0 : obj?.maxSongLength.sub,
-    },
-    customCss: obj?.customCss || '',
-    customCssPresets: typeof obj?.customCssPresets === 'undefined' ? [] : obj.customCssPresets.map(default_custom_css_preset),
-    showProgressBar: typeof obj?.showProgressBar === 'undefined' ? false : obj.showProgressBar,
-    showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
-    maxItemsShown: typeof obj?.maxItemsShown === 'undefined' ? -1 : obj.maxItemsShown,
-});
-
-const ADD_TYPE = {
-    NOT_ADDED: 0,
-    ADDED: 1,
-    REQUEUED: 2,
-    EXISTED: 3,
-};
-const default_playlist_item = (item = null) => {
-    return {
-        id: item?.id || 0,
-        tags: item?.tags || [],
-        yt: item?.yt || '',
-        title: item?.title || '',
-        timestamp: item?.timestamp || 0,
-        hidevideo: !!(item?.hidevideo),
-        last_play: item?.last_play || 0,
-        plays: item?.plays || 0,
-        goods: item?.goods || 0,
-        bads: item?.bads || 0,
-        user: item?.user || '',
-    };
-};
-const default_playlist = (list = null) => {
-    if (Array.isArray(list)) {
-        return list.map(item => default_playlist_item(item));
-    }
-    return [];
-};
 const default_commands = (list = null) => {
     if (Array.isArray(list)) {
         // TODO: sanitize items
@@ -4124,6 +4077,64 @@ const default_commands = (list = null) => {
         commands.sr_preset.NewCommand(),
         commands.sr_queue.NewCommand(),
     ];
+};
+const default_settings$4 = (obj = null) => ({
+    volume: typeof obj?.volume === 'undefined' ? 100 : obj.volume,
+    initAutoplay: typeof obj?.initAutoplay === 'undefined' ? true : obj.initAutoplay,
+    hideVideoImage: {
+        file: obj?.hideVideoImage?.file || '',
+        filename: obj?.hideVideoImage?.filename || '',
+        urlpath: obj?.hideVideoImage?.urlpath ? obj.hideVideoImage.urlpath : (obj?.hideVideoImage?.file ? `/uploads/${encodeURIComponent(obj.hideVideoImage.file)}` : '')
+    },
+    maxSongLength: {
+        viewer: typeof obj?.maxSongLength === 'undefined' ? 0 : obj?.maxSongLength.viewer,
+        mod: typeof obj?.maxSongLength === 'undefined' ? 0 : obj?.maxSongLength.mod,
+        sub: typeof obj?.maxSongLength === 'undefined' ? 0 : obj?.maxSongLength.sub,
+    },
+    maxSongsQueued: {
+        viewer: typeof obj?.maxSongsQueued === 'undefined' ? 0 : parseInt(obj?.maxSongsQueued.viewer, 10),
+        mod: typeof obj?.maxSongsQueued === 'undefined' ? 0 : parseInt(obj?.maxSongsQueued.mod, 10),
+        sub: typeof obj?.maxSongsQueued === 'undefined' ? 0 : parseInt(obj?.maxSongsQueued.sub, 10),
+    },
+    customCss: obj?.customCss || '',
+    customCssPresets: typeof obj?.customCssPresets === 'undefined' ? [] : obj.customCssPresets.map(default_custom_css_preset),
+    showProgressBar: typeof obj?.showProgressBar === 'undefined' ? false : obj.showProgressBar,
+    showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
+    maxItemsShown: typeof obj?.maxItemsShown === 'undefined' ? -1 : obj.maxItemsShown,
+});
+
+const ADD_TYPE = {
+    NOT_ADDED: 0,
+    ADDED: 1,
+    REQUEUED: 2,
+    EXISTED: 3,
+};
+const NOT_ADDED_REASON = {
+    TOO_MANY_QUEUED: 0,
+    TOO_LONG: 1,
+    NOT_FOUND_IN_PLAYLIST: 2,
+    NOT_FOUND: 3,
+};
+const default_playlist_item = (item = null) => {
+    return {
+        id: item?.id || 0,
+        tags: item?.tags || [],
+        yt: item?.yt || '',
+        title: item?.title || '',
+        timestamp: item?.timestamp || 0,
+        hidevideo: !!(item?.hidevideo),
+        last_play: item?.last_play || 0,
+        plays: item?.plays || 0,
+        goods: item?.goods || 0,
+        bads: item?.bads || 0,
+        user: item?.user || '',
+    };
+};
+const default_playlist = (list = null) => {
+    if (Array.isArray(list)) {
+        return list.map(item => default_playlist_item(item));
+    }
+    return [];
 };
 class SongrequestModule {
     constructor(bot, user) {
@@ -4402,7 +4413,8 @@ class SongrequestModule {
             },
         };
     }
-    async add(str, userName, maxLenMs) {
+    async add(str, userName, maxLenMs, maxQueued) {
+        const countQueuedSongsByUser = () => this.data.playlist.filter(item => item.user === userName && item.plays === 0).length;
         const isTooLong = (ytData) => {
             if (maxLenMs > 0) {
                 const songLenMs = fn.parseISO8601Duration(ytData.contentDetails.duration);
@@ -4412,6 +4424,9 @@ class SongrequestModule {
             }
             return false;
         };
+        if (maxQueued > 0 && countQueuedSongsByUser() >= maxQueued) {
+            return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_MANY_QUEUED };
+        }
         const youtubeUrl = str.trim();
         let youtubeId = null;
         let youtubeData = null;
@@ -4419,36 +4434,45 @@ class SongrequestModule {
         if (tmpYoutubeId) {
             const tmpYoutubeData = await this.loadYoutubeData(tmpYoutubeId);
             if (isTooLong(tmpYoutubeData)) {
-                return { addType: ADD_TYPE.NOT_ADDED, idx: -1 };
+                return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_LONG };
             }
             youtubeId = tmpYoutubeId;
             youtubeData = tmpYoutubeData;
         }
         if (!youtubeData) {
             const youtubeIds = await Youtube.getYoutubeIdsBySearch(youtubeUrl);
-            for (const tmpYoutubeId of youtubeIds) {
-                const tmpYoutubeData = await this.loadYoutubeData(tmpYoutubeId);
-                if (!tmpYoutubeData) {
-                    continue;
+            if (youtubeIds) {
+                const reasons = [];
+                for (const tmpYoutubeId of youtubeIds) {
+                    const tmpYoutubeData = await this.loadYoutubeData(tmpYoutubeId);
+                    if (!tmpYoutubeData) {
+                        continue;
+                    }
+                    if (isTooLong(tmpYoutubeData)) {
+                        reasons.push(NOT_ADDED_REASON.TOO_LONG);
+                        continue;
+                    }
+                    youtubeId = tmpYoutubeId;
+                    youtubeData = tmpYoutubeData;
+                    break;
                 }
-                if (isTooLong(tmpYoutubeData)) {
-                    continue;
+                if (!youtubeId || !youtubeData) {
+                    if (reasons.includes(NOT_ADDED_REASON.TOO_LONG)) {
+                        return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_LONG };
+                    }
                 }
-                youtubeId = tmpYoutubeId;
-                youtubeData = tmpYoutubeData;
-                break;
             }
         }
         if (!youtubeId || !youtubeData) {
-            return { addType: ADD_TYPE.NOT_ADDED, idx: -1 };
+            return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.NOT_FOUND };
         }
         const tmpItem = this.createItem(youtubeId, youtubeData, userName);
-        const { addType, idx } = await this.addToPlaylist(tmpItem);
+        const { addType, idx, reason } = await this.addToPlaylist(tmpItem);
         if (addType === ADD_TYPE.ADDED) {
             this.data.stacks[userName] = this.data.stacks[userName] || [];
             this.data.stacks[userName].push(youtubeId);
         }
-        return { addType, idx };
+        return { addType, idx, reason };
     }
     determinePrevIndex() {
         let index = -1;
@@ -4578,7 +4602,8 @@ class SongrequestModule {
     async request(str) {
         // this comes from backend, always unlimited length
         const maxLen = 0;
-        await this.add(str, this.user.name, maxLen);
+        const maxQueued = 0;
+        await this.add(str, this.user.name, maxLen, maxQueued);
     }
     findSongIdxByYoutubeId(youtubeId) {
         return this.data.playlist.findIndex(item => item.yt === youtubeId);
@@ -4758,7 +4783,27 @@ class SongrequestModule {
         this.rmIdx(idx);
         return item;
     }
-    async answerAddRequest(addType, idx) {
+    async answerAddRequest(addResponseData) {
+        const idx = addResponseData.idx;
+        const reason = addResponseData.reason;
+        const addType = addResponseData.addType;
+        if (addType === ADD_TYPE.NOT_ADDED) {
+            if (reason === NOT_ADDED_REASON.NOT_FOUND) {
+                return `No song found`;
+            }
+            else if (reason === NOT_ADDED_REASON.NOT_FOUND_IN_PLAYLIST) {
+                return `Song not found in playlist`;
+            }
+            else if (reason === NOT_ADDED_REASON.TOO_LONG) {
+                return `Song too long`;
+            }
+            else if (reason === NOT_ADDED_REASON.TOO_MANY_QUEUED) {
+                return `Too many songs queued`;
+            }
+            else {
+                return `Could not process that song request`;
+            }
+        }
         const item = idx >= 0 ? this.data.playlist[idx] : null;
         if (!item) {
             return `Could not process that song request`;
@@ -4832,13 +4877,8 @@ class SongrequestModule {
                 return;
             }
             const searchterm = command.args.join(' ');
-            const { addType, idx } = await this.resr(searchterm);
-            if (idx >= 0) {
-                say(await this.answerAddRequest(addType, idx));
-            }
-            else {
-                say(`Song not found in playlist`);
-            }
+            const addResponseData = await this.resr(searchterm);
+            say(await this.answerAddRequest(addResponseData));
         };
     }
     cmdSrGood(_originalCommand) {
@@ -5078,20 +5118,25 @@ class SongrequestModule {
             }
             const str = command.args.join(' ');
             let maxLenMs;
+            let maxQueued;
             if (isBroadcaster(context)) {
                 maxLenMs = 0;
+                maxQueued = 0;
             }
             else if (isMod(context)) {
                 maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.mod);
+                maxQueued = this.data.settings.maxSongsQueued.mod;
             }
             else if (isSubscriber(context)) {
                 maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.sub);
+                maxQueued = this.data.settings.maxSongsQueued.sub;
             }
             else {
                 maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.viewer);
+                maxQueued = this.data.settings.maxSongsQueued.viewer;
             }
-            const { addType, idx } = await this.add(str, context['display-name'], maxLenMs);
-            say(await this.answerAddRequest(addType, idx));
+            const addResponseData = await this.add(str, context['display-name'], maxLenMs, maxQueued);
+            say(await this.answerAddRequest(addResponseData));
         };
     }
     async loadYoutubeData(youtubeId) {
@@ -5139,6 +5184,7 @@ class SongrequestModule {
             return {
                 addType: ADD_TYPE.ADDED,
                 idx: insertIndex,
+                reason: -1,
             };
         }
         if (insertIndex > idx) {
@@ -5148,6 +5194,7 @@ class SongrequestModule {
             return {
                 addType: ADD_TYPE.EXISTED,
                 idx: insertIndex,
+                reason: -1,
             };
         }
         this.data.playlist = fn.arrayMove(this.data.playlist, idx, insertIndex);
@@ -5156,6 +5203,7 @@ class SongrequestModule {
         return {
             addType: ADD_TYPE.REQUEUED,
             idx: insertIndex,
+            reason: -1,
         };
     }
     async resr(str) {
@@ -5164,6 +5212,7 @@ class SongrequestModule {
             return {
                 addType: ADD_TYPE.NOT_ADDED,
                 idx: -1,
+                reason: NOT_ADDED_REASON.NOT_FOUND_IN_PLAYLIST,
             };
         }
         let insertIndex = this.findInsertIndex();
@@ -5174,6 +5223,7 @@ class SongrequestModule {
             return {
                 addType: ADD_TYPE.EXISTED,
                 idx: insertIndex,
+                reason: -1,
             };
         }
         this.data.playlist = fn.arrayMove(this.data.playlist, idx, insertIndex);
@@ -5182,6 +5232,7 @@ class SongrequestModule {
         return {
             addType: ADD_TYPE.REQUEUED,
             idx: insertIndex,
+            reason: -1,
         };
     }
     getCommands() {
