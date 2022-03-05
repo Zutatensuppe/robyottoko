@@ -299,6 +299,7 @@ class SongrequestModule implements Module {
           case 'prev': this.prev(); break;
           case 'skip': this.next(); break;
           case 'resetStats': this.resetStats(); break;
+          case 'resetStatIdx': this.resetStatIdx(...args as [string, number]); break;
           case 'clear': this.clear(); break;
           case 'rm': this.remove(); break;
           case 'shuffle': this.shuffle(); break;
@@ -482,7 +483,7 @@ class SongrequestModule implements Module {
       return item
     })
     this.save()
-    this.updateClients('resetStats')
+    this.updateClients('stats')
   }
 
   playIdx(idx: number) {
@@ -513,16 +514,30 @@ class SongrequestModule implements Module {
     }
   }
 
+  resetStatIdx(stat: string, idx: number) {
+    if (idx >= 0 && idx < this.data.playlist.length) {
+      if (stat === 'plays') {
+        this.data.playlist[idx].plays = 0
+      } else if (stat === 'goods') {
+        this.data.playlist[idx].goods = 0
+      } else if (stat === 'bads') {
+        this.data.playlist[idx].bads = 0
+      }
+    }
+    this.save()
+    this.updateClients('stats')
+  }
+
   goodIdx(idx: number) {
     this.incStat('goods', idx)
     this.save()
-    this.updateClients('like')
+    this.updateClients('stats')
   }
 
   badIdx(idx: number) {
     this.incStat('bads', idx)
     this.save()
-    this.updateClients('dislike')
+    this.updateClients('stats')
   }
 
   async request(str: string) {
@@ -539,7 +554,7 @@ class SongrequestModule implements Module {
   like() {
     this.incStat('goods')
     this.save()
-    this.updateClients('like')
+    this.updateClients('stats')
   }
 
   filter(filter: { tag: string }) {
@@ -622,7 +637,7 @@ class SongrequestModule implements Module {
   dislike() {
     this.incStat('bads')
     this.save()
-    this.updateClients('dislike')
+    this.updateClients('stats')
   }
 
   settings(settings: SongrequestModuleSettings) {

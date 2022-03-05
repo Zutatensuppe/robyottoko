@@ -113,7 +113,16 @@
               </div>
             </td>
             <td>{{ element.user }}</td>
-            <td>{{ element.plays }}x</td>
+            <td>
+              {{ element.plays }}x
+              <button
+                class="button is-small ml-1"
+                @click="sendCtrl('resetStatIdx', ['plays', index])"
+                title="Reset plays"
+              >
+                <i class="fa fa-eraser" />
+              </button>
+            </td>
             <td>
               <button
                 class="button is-small"
@@ -136,6 +145,13 @@
               >
                 <i class="fa fa-thumbs-up mr-1" /> {{ element.goods }}
               </button>
+              <button
+                class="button is-small ml-1"
+                @click="sendCtrl('resetStatIdx', ['goods', index])"
+                title="Reset upvotes"
+              >
+                <i class="fa fa-eraser" />
+              </button>
             </td>
             <td>
               <button
@@ -143,6 +159,13 @@
                 @click="sendCtrl('badIdx', [index])"
               >
                 <i class="fa fa-thumbs-down mr-1" /> {{ element.bads }}
+              </button>
+              <button
+                class="button is-small ml-1"
+                @click="sendCtrl('resetStatIdx', ['bads', index])"
+                title="Reset downvotes"
+              >
+                <i class="fa fa-eraser" />
               </button>
             </td>
             <td>

@@ -246,14 +246,11 @@ export default defineComponent({
     this.ws.onMessage(["noloop"], (data) => {
       this.player.setLoop(false);
     });
-    this.ws.onMessage(
-      ["dislike", "like", "video", "playIdx", "resetStats", "shuffle"],
-      (data) => {
-        this.applySettings(data.settings);
-        this.filter = data.filter;
-        this.playlist = data.playlist;
-      }
-    );
+    this.ws.onMessage(["stats", "video", "playIdx", "shuffle"], (data) => {
+      this.applySettings(data.settings);
+      this.filter = data.filter;
+      this.playlist = data.playlist;
+    });
     this.ws.onMessage(["add", "init"], (data) => {
       this.applySettings(data.settings);
       this.filter = data.filter;

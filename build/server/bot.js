@@ -4361,6 +4361,9 @@ class SongrequestModule {
                     case 'resetStats':
                         this.resetStats();
                         break;
+                    case 'resetStatIdx':
+                        this.resetStatIdx(...args);
+                        break;
                     case 'clear':
                         this.clear();
                         break;
@@ -4561,7 +4564,7 @@ class SongrequestModule {
             return item;
         });
         this.save();
-        this.updateClients('resetStats');
+        this.updateClients('stats');
     }
     playIdx(idx) {
         if (this.data.playlist.length === 0) {
@@ -4589,15 +4592,30 @@ class SongrequestModule {
             this.updateClients('init');
         }
     }
+    resetStatIdx(stat, idx) {
+        if (idx >= 0 && idx < this.data.playlist.length) {
+            if (stat === 'plays') {
+                this.data.playlist[idx].plays = 0;
+            }
+            else if (stat === 'goods') {
+                this.data.playlist[idx].goods = 0;
+            }
+            else if (stat === 'bads') {
+                this.data.playlist[idx].bads = 0;
+            }
+        }
+        this.save();
+        this.updateClients('stats');
+    }
     goodIdx(idx) {
         this.incStat('goods', idx);
         this.save();
-        this.updateClients('like');
+        this.updateClients('stats');
     }
     badIdx(idx) {
         this.incStat('bads', idx);
         this.save();
-        this.updateClients('dislike');
+        this.updateClients('stats');
     }
     async request(str) {
         // this comes from backend, always unlimited length
@@ -4611,7 +4629,7 @@ class SongrequestModule {
     like() {
         this.incStat('goods');
         this.save();
-        this.updateClients('like');
+        this.updateClients('stats');
     }
     filter(filter) {
         this.data.filter = filter;
@@ -4684,7 +4702,7 @@ class SongrequestModule {
     dislike() {
         this.incStat('bads');
         this.save();
-        this.updateClients('dislike');
+        this.updateClients('stats');
     }
     settings(settings) {
         this.data.settings = settings;
