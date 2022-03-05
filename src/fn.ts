@@ -267,7 +267,7 @@ export const doReplacements = async (
       },
     },
     {
-      regex: /\$user(?:\(([^)]+)\)|())\.(name|profile_image_url|last_clip_url|last_stream_category)/g,
+      regex: /\$user(?:\(([^)]+)\)|())\.(name|profile_image_url|recent_clip_url|last_stream_category)/g,
       replacer: async (m0: string, m1: string, m2: string, m3) => {
         if (!context) {
           return ''
@@ -296,8 +296,15 @@ export const doReplacements = async (
         if (m3 === 'profile_image_url') {
           return twitchUser.profile_image_url
         }
-        if (m3 === 'last_clip_url') {
-          const clip = await helixClient.getClipByUserId(twitchUser.id)
+        if (m3 === 'recent_clip_url') {
+          const end = new Date()
+          const start = new Date(end.getTime() - 30 * DAY)
+
+          const clip = await helixClient.getClipByUserId(
+            twitchUser.id,
+            start.toISOString(),
+            end.toISOString()
+          )
           return clip?.embed_url || ''
         }
         if (m3 === 'last_stream_category') {

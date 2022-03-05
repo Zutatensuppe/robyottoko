@@ -297,13 +297,13 @@
                 <div>
                   <span
                     class="button is-small"
-                    @click="item.data.clip_url = '$user($args).last_clip_url'"
-                    >A clip of user given by args</span
+                    @click="item.data.clip_url = '$user($args).recent_clip_url'"
+                    >A recent clip of user given by args</span
                   >
                   <span
                     class="button is-small"
-                    @click="item.data.clip_url = '$user.last_clip_url'"
-                    >A clip of user who executes the command</span
+                    @click="item.data.clip_url = '$user.recent_clip_url'"
+                    >A recent clip of user who executes the command</span
                   >
                 </div>
               </td>
