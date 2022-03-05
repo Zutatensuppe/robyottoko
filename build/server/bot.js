@@ -499,7 +499,7 @@ const doReplacements = async (text, command, context, variables, originalCmd, bo
             },
         },
         {
-            regex: /\$user(?:\(([^)]+)\)|())\.(name|profile_image_url|last_clip_url)/g,
+            regex: /\$user(?:\(([^)]+)\)|())\.(name|profile_image_url|last_clip_url|last_stream_category)/g,
             replacer: async (m0, m1, m2, m3) => {
                 if (!context) {
                     return '';
@@ -528,6 +528,10 @@ const doReplacements = async (text, command, context, variables, originalCmd, bo
                 if (m3 === 'last_clip_url') {
                     const clip = await helixClient.getClipByUserId(twitchUser.id);
                     return clip?.embed_url || '';
+                }
+                if (m3 === 'last_stream_category') {
+                    const channelInfo = await helixClient.getChannelInformation(twitchUser.id);
+                    return channelInfo?.game_name || '';
                 }
                 return '';
             },

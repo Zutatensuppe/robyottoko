@@ -267,7 +267,7 @@ export const doReplacements = async (
       },
     },
     {
-      regex: /\$user(?:\(([^)]+)\)|())\.(name|profile_image_url|last_clip_url)/g,
+      regex: /\$user(?:\(([^)]+)\)|())\.(name|profile_image_url|last_clip_url|last_stream_category)/g,
       replacer: async (m0: string, m1: string, m2: string, m3) => {
         if (!context) {
           return ''
@@ -299,6 +299,10 @@ export const doReplacements = async (
         if (m3 === 'last_clip_url') {
           const clip = await helixClient.getClipByUserId(twitchUser.id)
           return clip?.embed_url || ''
+        }
+        if (m3 === 'last_stream_category') {
+          const channelInfo = await helixClient.getChannelInformation(twitchUser.id)
+          return channelInfo?.game_name || '';
         }
         return ''
       },
