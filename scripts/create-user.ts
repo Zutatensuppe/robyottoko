@@ -30,6 +30,8 @@ const log = console.log
       pass: passwordHash(password, salt),
       salt: salt,
 
+      status: 'verified',
+
       // for tmi in general, see: https://dev.twitch.tv/docs/irc/#building-the-bot
       // this data is editable in the backend after logging in, so
       // no need to ask for it now
