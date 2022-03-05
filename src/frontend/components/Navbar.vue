@@ -49,6 +49,16 @@
             problems.length > 1 ? "s" : ""
           }}</a
         >
+        <span class="navbar-item">
+          <input
+            type="checkbox"
+            id="darkmode-switch"
+            class="mr-1"
+            v-model="darkmode"
+            @change="onDarkmodeSwitch"
+          />
+          <label for="darkmode-switch">Switch dark/light mode</label>
+        </span>
         <a class="navbar-item" @click="onLogoutClick">Logout</a>
       </div>
     </div>
@@ -68,6 +78,7 @@ export default defineComponent({
   },
   created() {
     this.$me = user.getMe();
+    this.darkmode = user.isDarkmode();
     eventBus.on("status", this.statusChanged);
   },
   beforeUnmount() {
@@ -115,8 +126,12 @@ export default defineComponent({
     ],
     problems: [],
     burgerActive: false,
+    darkmode: false,
   }),
   methods: {
+    onDarkmodeSwitch() {
+      user.setDarkmode(this.darkmode);
+    },
     statusChanged(status: any) {
       this.problems = status.problems;
     },

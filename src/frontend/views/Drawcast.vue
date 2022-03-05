@@ -508,6 +508,7 @@ export default defineComponent({
   padding: 1px;
   border: solid 2px #ccc;
   cursor: pointer;
+  line-height: 0;
 }
 .square .square-inner {
   display: inline-block;
