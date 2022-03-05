@@ -1,0 +1,95 @@
+.dialog {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  z-index: 10;
+
+  .dialog-bg {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,.5);
+  }
+  .dialog-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.dialog {
+  .dialog-container {
+    box-shadow:3px 3px 1px rgba(145, 137, 141, 0.25);
+    background-color:rgba(250, 242, 245, 1);
+    border-radius:4px;
+
+    padding: 30px 10px;
+
+    color:rgba(145, 137, 141, 1);
+    text-align: center;
+    padding-top: 30px;
+    font-family:Roboto;
+    text-align:center;
+    font-size:18px;
+  }
+}
+.success-dialog {
+  .dialog-container {
+    max-width: 255px;
+
+    .dialog-title {
+      color:rgba(120, 109, 175, 1);
+      font-family:Roboto;
+      font-size:28px;
+      font-weight: bolder;
+      position: relative;
+      margin-top: 20px;
+
+      &:before {
+        content: "";
+        display: block;
+        background-image: url('./assets/hyottokoSuccess.png');
+        width: calc(511px / 3);
+        height: calc(376px /3);
+        background-size: cover;
+        top: -130px;
+        position: absolute;
+        transform: translate(-50%);
+        left: 50%;
+      }
+    }
+    .dialog-body {
+      padding: 10px 10px 15px;
+    }
+  }
+}
+
+.confirm-dialog {
+  .dialog-container {
+    max-width: 330px;
+
+    .dialog-body {
+      padding: 100px 10px 15px;
+      position: relative;
+
+      &:before {
+        content: "";
+        display: block;
+        background-image: url('./assets/hyottokoQuestion.png');
+        width: calc(283px / 3);
+        height: calc(256px /3);
+        background-size: cover;
+        top: -5px;
+        position: absolute;
+        transform: translate(-50%);
+        left: 50%;
+      }
+    }
+
+    .button-danger {
+      margin-left: 25px;
+    }
+  }
+}

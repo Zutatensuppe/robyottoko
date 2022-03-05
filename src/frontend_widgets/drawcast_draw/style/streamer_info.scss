@@ -1,0 +1,41 @@
+.streamer_info {
+  max-width: 634px;
+  width: fit-content;
+  left: 50%;
+  transform: translate(-50%, 0);
+  padding: 5px 5px;
+  position: relative;
+  display: grid;
+  grid-template-areas: "avatar message";
+  grid-template-columns: min-content auto;
+  grid-gap: 10px;
+  margin-bottom: 10px;
+
+  &.no-avatar {
+    grid-template-areas: "message";
+    grid-template-columns: auto;
+  }
+}
+.streamer_avatar {
+  grid-area: avatar;
+  width: 60px;
+  height: 60px;
+  border-radius: 60px;
+  margin-top: 9px;
+  box-shadow: $boxShadowStreamerAvatar;
+  background-size: contain;
+}
+.streamer_message {
+  grid-area: message;
+  background: rgba(250,242,245,1);
+  padding: 10px 10px;
+  border-radius: 4px;
+  box-shadow: $lightShadow;
+}
+.streamer_message_inner {
+  color: $textColor;
+  font-family: Roboto;
+  font-weight: Medium;
+  font-size: 20px;
+  text-align: left;
+}

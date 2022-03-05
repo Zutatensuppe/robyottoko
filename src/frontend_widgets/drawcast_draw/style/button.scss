@@ -1,0 +1,48 @@
+.button {
+  border-radius:4px;
+  padding: 12px 10px;
+  display: inline-block;
+  text-align: center;
+  user-select: none;
+
+  &-primary {
+    background: rgba(197,164,208,1);
+    color: $buttonTextColor;
+    box-shadow: $lightShadow;
+    &:hover {
+      background: #D7B6D6;
+    }
+    &:active {
+      background: #AF94CC;
+    }
+  }
+
+  &-ok {
+    box-shadow:3px 3px 1px rgba(145, 137, 141, 0.25);
+    background-color:rgba(148, 133, 200, 1);
+    color: $buttonTextColorOk;
+  }
+  &-danger {
+    background-color:#d44744;
+    color: $buttonTextColorDanger;
+  }
+}
+
+/* SEND BUTTON */
+.send_button {
+  position: relative;
+  min-width: 170px;
+}
+.send_button svg {
+  width: 25px;
+  height: 25px;
+  display: inline-block;
+  margin-right: 8px;
+  vertical-align: sub;
+}
+.send_button_text {
+  font-family: Roboto;
+  font-weight: Bold;
+  font-size: 28px;
+  text-align: right;
+}

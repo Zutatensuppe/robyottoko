@@ -1,0 +1,20 @@
+.drawcast_footer {
+  font-family: Roboto;
+  font-weight: Light;
+  font-size: 14px;
+  width: 100%;
+  height: 66px;
+  background: rgba(244,245,253,1);
+  color: #605A5F;
+  padding: 25px 25px;
+  display: grid;
+  grid-template-areas: "footer_left footer_right";
+}
+.drawcast_footer_left {
+  grid-area: "footer_left";
+  justify-self: left;
+}
+.drawcast_footer_right {
+  grid-area: "footer_right";
+  justify-self: right;
+}
