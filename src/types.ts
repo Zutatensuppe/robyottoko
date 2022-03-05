@@ -78,7 +78,8 @@ export interface Config {
         scriptId: string
       }
     }
-  }
+  },
+  youtubeDlBinary: string,
 }
 
 export interface MediaFile {
@@ -298,6 +299,7 @@ export interface MediaVolumeCommand extends Command {
 
 export interface MediaCommand extends Command {
   action: "media"
+  data: MediaCommandData
 }
 
 export interface ChattersCommand extends Command {
@@ -307,6 +309,8 @@ export interface ChattersCommand extends Command {
 export interface MediaCommandData {
   sound: SoundMediaFile,
   image: MediaFile,
+  clip_url: string,
+  image_url: string,
   minDurationMs: string | number
 }
 

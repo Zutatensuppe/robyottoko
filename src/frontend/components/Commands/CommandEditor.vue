@@ -263,6 +263,52 @@
               </td>
             </tr>
             <tr v-if="item.action === 'media'">
+              <td>Image (by URL):</td>
+              <td>
+                <input
+                  type="text"
+                  class="input is-small"
+                  v-model="item.data.image_url"
+                />
+                <div>
+                  <span
+                    class="button is-small"
+                    @click="
+                      item.data.image_url = '$user($args).profile_image_url'
+                    "
+                    >Profile image of user given by args</span
+                  >
+                  <span
+                    class="button is-small"
+                    @click="item.data.image_url = '$user.profile_image_url'"
+                    >Profile image of user who executes the command</span
+                  >
+                </div>
+              </td>
+            </tr>
+            <tr v-if="item.action === 'media'">
+              <td>Twitch clip (by URL):</td>
+              <td>
+                <input
+                  type="text"
+                  class="input is-small"
+                  v-model="item.data.clip_url"
+                />
+                <div>
+                  <span
+                    class="button is-small"
+                    @click="item.data.clip_url = '$user($args).recent_clip_url'"
+                    >A recent clip of user given by args</span
+                  >
+                  <span
+                    class="button is-small"
+                    @click="item.data.clip_url = '$user.recent_clip_url'"
+                    >A recent clip of user who executes the command</span
+                  >
+                </div>
+              </td>
+            </tr>
+            <tr v-if="item.action === 'media'">
               <td>Duration:</td>
               <td>
                 <div class="control has-icons-left">

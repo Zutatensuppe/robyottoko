@@ -70,6 +70,31 @@ interface TwitchHelixStreamSearchResponseData {
   }
 }
 
+interface TwitchHelixClipSearchResponseDataEntry {
+  id: string
+  url: string
+  embed_url: string
+  broadcaster_id: string
+  broadcaster_name: string
+  creator_id: string
+  creator_name: string
+  video_id: string
+  game_id: string
+  language: string
+  title: string
+  view_count: number
+  created_at: string
+  thumbnail_url: string
+  duration: number
+}
+
+interface TwitchHelixClipSearchResponseData {
+  data: TwitchHelixClipSearchResponseDataEntry[]
+  pagination: {
+    cursor: string
+  }
+}
+
 interface ModifyChannelInformationData {
   game_id?: string
   broadcaster_language?: string
@@ -234,6 +259,22 @@ class TwitchHelixClient {
   async getUserIdByName(userName: string): Promise<string> {
     const user = await this.getUserByName(userName)
     return user ? user.id : ''
+  }
+
+  // https://dev.twitch.tv/docs/api/reference#get-clips
+  async getClipByUserId(userId: string, startedAtRfc3339: string, endedAtRfc3339: string) {
+    const url = this._url(`/clips${asQueryArgs({
+      broadcaster_id: userId,
+      started_at: startedAtRfc3339,
+      ended_at: endedAtRfc3339,
+    })}`)
+    const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixClipSearchResponseData
+    try {
+      return json.data[0]
+    } catch (e) {
+      log.error(json)
+      return null
+    }
   }
 
   // https://dev.twitch.tv/docs/api/reference#get-streams

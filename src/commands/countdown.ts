@@ -24,7 +24,7 @@ const countdown = (
 
     const sayFn = fn.sayFn(client, target)
     const doReplacements = async (text: string) => {
-      return await fn.doReplacements(text, command, context, variables, originalCmd)
+      return await fn.doReplacements(text, command, context, variables, originalCmd, bot, user)
     }
     const say = async (text: string) => {
       return sayFn(await doReplacements(text))

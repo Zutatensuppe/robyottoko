@@ -47,7 +47,7 @@ const dictLookup = (
     }
     const variables = bot.getUserVariables(user)
     const say = fn.sayFn(client, target)
-    const tmpLang = await fn.doReplacements(originalCmd.data.lang, command, context, variables, originalCmd)
+    const tmpLang = await fn.doReplacements(originalCmd.data.lang, command, context, variables, originalCmd, bot, user)
     const dictFn = LANG_TO_FN[tmpLang] || null
     if (!dictFn) {
       say(`Sorry, language not supported: "${tmpLang}"`)
@@ -56,7 +56,7 @@ const dictLookup = (
 
     // if no phrase is setup, use all args given to command
     const phrase = originalCmd.data.phrase === '' ? '$args()' : originalCmd.data.phrase
-    const tmpPhrase = await fn.doReplacements(phrase, command, context, variables, originalCmd)
+    const tmpPhrase = await fn.doReplacements(phrase, command, context, variables, originalCmd, bot, user)
 
     const items = await dictFn(tmpPhrase)
     if (items.length === 0) {
