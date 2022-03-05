@@ -1,6 +1,6 @@
 <template>
   <div id="drawcast">
-    <div class="drawcast_body" :class="{blurred: dialog}">
+    <div class="drawcast_body" :class="{ blurred: dialog }">
       <div
         class="streamer_info"
         v-if="customDescription"
@@ -222,7 +222,7 @@
       </div>
     </div>
 
-    <div class="drawcast_footer">
+    <div class="drawcast_footer" :class="{ blurred: dialog }">
       <span class="drawcast_footer_left"
         >Hyottoko.club | Developed by
         <a href="https://github.com/zutatensuppe" target="_blank">para</a>. UI
