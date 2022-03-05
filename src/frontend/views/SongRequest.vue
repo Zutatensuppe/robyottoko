@@ -509,7 +509,7 @@ export default defineComponent({
         }
       });
       this.ws.onMessage(
-        ["dislike", "like", "video", "playIdx", "resetStats", "shuffle"],
+        ["stats", "video", "playIdx", "shuffle"],
         (data: SongrequestModuleWsEventData) => {
           this.settings = data.settings;
           this.commands = data.commands;
