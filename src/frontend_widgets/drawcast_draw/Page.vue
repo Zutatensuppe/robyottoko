@@ -248,8 +248,12 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
+import { logger } from "../../common/fn";
+import WsClient from "../../frontend/WsClient";
 import { DrawcastFavoriteList } from "../../types";
 import util from "../util";
+
+const log = logger("Page.vue");
 
 const translateCoords = (
   canvas: HTMLCanvasElement,
@@ -299,7 +303,7 @@ const hexIsLight = (color: string) => {
 export default defineComponent({
   data() {
     return {
-      ws: null,
+      ws: null as WsClient | null,
       opts: {},
       palette: ["#000000"],
 
@@ -312,8 +316,8 @@ export default defineComponent({
       tool: "pen", // 'pen'|'eraser'|'color-sampler'
       sizes: [1, 2, 5, 10, 30, 60, 100],
       sizeIdx: 2,
-      canvas: null,
-      ctx: null,
+      canvas: null as HTMLCanvasElement | null,
+      ctx: null as CanvasRenderingContext2D | null,
 
       last: null,
 
@@ -325,7 +329,7 @@ export default defineComponent({
       customProfileImageUrl: "",
       recentImagesTitle: "",
 
-      stack: [],
+      stack: [] as ImageData[],
       currentPath: [],
     };
   },
@@ -407,34 +411,39 @@ export default defineComponent({
           this.img(image);
           this.stack = [];
           this.currentPath = [];
-          this.stack.push({
-            type: "image",
-            data: await createImageBitmap(image),
-          });
+          this.stack.push(this.getImageData());
         };
       });
     },
-    undo() {
+    async undo() {
       this.stack.pop();
       this.clear();
-      const stack = this.stack.slice();
-      this.stack = [];
       this.currentPath = [];
-      stack.forEach((item) => {
-        if (item.type === "path") {
-          item.data.forEach((obj) => {
-            this.drawPathPart(obj);
-          });
-        } else if (item.type === "image") {
-          this.img(item.data);
-        } else {
-          // unknown item.
-        }
-        this.stack.push(item);
-        this.currentPath = [];
-      });
+      if (this.stack.length > 0) {
+        this.putImageData(this.stack[this.stack.length - 1]);
+      }
+    },
+    getImageData(): ImageData {
+      if (!this.ctx) {
+        throw new Error("getImageData: this.ctx not set");
+      }
+      if (!this.canvas) {
+        throw new Error("getImageData: this.canvas not set");
+      }
+      return this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+    },
+    putImageData(imageData: ImageData) {
+      if (!this.ctx) {
+        log.error("putImageData: this.ctx not set");
+        return;
+      }
+      this.ctx.putImageData(imageData, 0, 0);
     },
     img(imageObject) {
+      if (!this.ctx) {
+        log.error("img: this.ctx not set");
+        return;
+      }
       this.clear();
       const tmp = this.ctx.globalCompositeOperation;
       this.ctx.globalCompositeOperation = "source-over";
@@ -442,6 +451,10 @@ export default defineComponent({
       this.ctx.globalCompositeOperation = tmp;
     },
     drawPathPart(obj) {
+      if (!this.ctx) {
+        log.error("drawPathPart: this.ctx not set");
+        return;
+      }
       this.currentPath.push(obj);
       const { pts, color, tool, size, halfSize } = obj;
       if (pts.length === 0) {
@@ -485,7 +498,7 @@ export default defineComponent({
     },
 
     cancelDraw(e) {
-      this.stack.push({ type: "path", data: this.currentPath });
+      this.stack.push(this.getImageData());
       this.currentPath = [];
       this.last = null;
     },
@@ -529,6 +542,14 @@ export default defineComponent({
     },
 
     clear() {
+      if (!this.ctx) {
+        log.error("clear: this.ctx not set");
+        return;
+      }
+      if (!this.canvas) {
+        log.error("clear: this.canvas not set");
+        return;
+      }
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     },
     clearClick() {
@@ -537,6 +558,14 @@ export default defineComponent({
       this.currentPath = [];
     },
     submitImage() {
+      if (!this.canvas) {
+        log.error("submitImage: this.canvas not set");
+        return;
+      }
+      if (!this.ws) {
+        log.error("submitImage: this.ws not set");
+        return;
+      }
       if (this.submitConfirm && !confirm(this.submitConfirm)) {
         return;
       }
@@ -550,6 +579,10 @@ export default defineComponent({
       );
     },
     getColor(pt) {
+      if (!this.ctx) {
+        log.error("getColor: this.ctx not set");
+        return "";
+      }
       const [r, g, b, a] = this.ctx.getImageData(pt.x, pt.y, 1, 1).data;
       const pad = (v, p) => p.substr(0, p.length - v.length) + v;
       const hex = (v) => pad(v.toString(16), "00");
@@ -559,6 +592,10 @@ export default defineComponent({
   },
   mounted() {
     this.canvas = this.$refs.canvas;
+    if (!this.canvas) {
+      log.error("mounted: $refs.canvas not found");
+      return;
+    }
     this.ctx = this.canvas.getContext("2d");
 
     this.ws = util.wsClient("drawcast");
@@ -585,7 +622,7 @@ export default defineComponent({
       this.color = this.palette[0];
       this.images = data.images;
       if (this.images.length > 0 && data.settings.autofillLatest) {
-        this.modify(this.images[0])
+        this.modify(this.images[0]);
       }
 
       // test data
