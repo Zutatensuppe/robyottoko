@@ -1,9 +1,7 @@
 import {
-  arrayMove,
   joinIntoChunks,
   parseISO8601Duration,
   doReplacements,
-  parseHumanDuration,
   findIdxBySearchInOrder,
   findIdxBySearch,
   findIdxBySearchExactPart,
@@ -47,35 +45,6 @@ ${'PT4M3S'}         | ${243000}
 `('parseISO8601Duration $duration', ({ duration, expected }) => {
   // P(n)Y(n)M(n)DT(n)H(n)M(n)S
   const actual = parseISO8601Duration(duration)
-  expect(actual).toStrictEqual(expected)
-})
-
-test.each`
-duration     | expected
-${'1d'}      | ${24 * 3600000}
-${'1h'}      | ${3600000}
-${'1m'}      | ${60000}
-${'1s'}      | ${1000}
-${'3m14s'}   | ${194000}
-${'3m 14s'}  | ${194000}
-${'3m 15s'}  | ${195000}
-${'3m27s'}   | ${207000}
-${'1000'}    | ${1000}
-${'50ms'}    | ${50}
-${'1s 50ms'} | ${1050}
-${'1.5s'}    | ${1500}
-`('parseHumanDuration $duration', ({ duration, expected }) => {
-  const actual = parseHumanDuration(duration)
-  expect(actual).toStrictEqual(expected)
-})
-
-
-test.each`
-arr                     | from | to   | expected
-${['a', 'b', 'c', 'd']} | ${2} | ${0} | ${['c', 'a', 'b', 'd']}
-${['a', 'b', 'c', 'd']} | ${0} | ${2} | ${['b', 'c', 'a', 'd']}
-`('arrayMove', ({ arr, from, to, expected }) => {
-  const actual = arrayMove(arr, from, to)
   expect(actual).toStrictEqual(expected)
 })
 
