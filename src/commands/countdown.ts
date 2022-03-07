@@ -1,6 +1,6 @@
 import { Bot, CommandFunction, CountdownAction, CountdownCommand, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
 import fn from './../fn'
-import { logger } from './../common/fn'
+import { logger, mustParseHumanDuration } from './../common/fn'
 import { User } from '../services/Users'
 
 const log = logger('countdown.ts')
@@ -30,7 +30,7 @@ const countdown = (
       return sayFn(await doReplacements(text))
     }
     const parseDuration = async (str: string) => {
-      return fn.mustParseHumanDuration(await doReplacements(str))
+      return mustParseHumanDuration(await doReplacements(str))
     }
 
     const settings = originalCmd.data

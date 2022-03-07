@@ -3267,7 +3267,7 @@ const countdown = (originalCmd, bot, user) => async (command, client, target, co
         return sayFn(await doReplacements(text));
     };
     const parseDuration = async (str) => {
-        return fn.mustParseHumanDuration(await doReplacements(str));
+        return mustParseHumanDuration(await doReplacements(str));
     };
     const settings = originalCmd.data;
     const t = (settings.type || 'auto');
