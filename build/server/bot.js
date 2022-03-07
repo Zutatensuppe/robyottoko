@@ -5488,18 +5488,18 @@ const default_settings$3 = () => ({
         // recognized text
         recognition: {
             fontFamily: 'sans-serif',
-            fontSize: '30',
+            fontSize: '30pt',
             fontWeight: '400',
-            strokeWidth: '8',
+            strokeWidth: '8pt',
             strokeColor: '#292929',
             color: '#ffff00',
         },
         // translated text
         translation: {
             fontFamily: 'sans-serif',
-            fontSize: '30',
+            fontSize: '30pt',
             fontWeight: '400',
-            strokeWidth: '8',
+            strokeWidth: '8pt',
             strokeColor: '#292929',
             color: '#cbcbcb',
         }

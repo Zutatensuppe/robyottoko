@@ -211,8 +211,8 @@ export default defineComponent({
           imb.style.webkitTextStrokeColor = bgColor;
         }
         if (styles.strokeWidth != null) {
-          imb.style.webkitTextStrokeWidth = styles.strokeWidth + "pt";
-          bg.style.webkitTextStrokeWidth = styles.strokeWidth + "pt";
+          imb.style.webkitTextStrokeWidth = styles.strokeWidth;
+          bg.style.webkitTextStrokeWidth = styles.strokeWidth;
         }
 
         if (styles.strokeColor != null) {
@@ -225,9 +225,9 @@ export default defineComponent({
           bg.style.fontFamily = styles.fontFamily;
         }
         if (styles.fontSize != null) {
-          imb.style.fontSize = styles.fontSize + "pt";
-          fg.style.fontSize = styles.fontSize + "pt";
-          bg.style.fontSize = styles.fontSize + "pt";
+          imb.style.fontSize = styles.fontSize;
+          fg.style.fontSize = styles.fontSize;
+          bg.style.fontSize = styles.fontSize;
         }
         if (styles.fontWeight != null) {
           imb.style.fontWeight = styles.fontWeight;
