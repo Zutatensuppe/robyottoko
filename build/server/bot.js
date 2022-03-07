@@ -1299,6 +1299,12 @@ const widgets = [
         pub: false,
     },
     {
+        type: 'speech-to-text_receive',
+        title: 'Speech-to-Text (receive)',
+        hint: 'Browser source, or open in browser and capture window',
+        pub: false,
+    },
+    {
         type: 'avatar',
         title: 'Avatar (control)',
         hint: '???',
@@ -5482,18 +5488,18 @@ const default_settings$3 = () => ({
         // recognized text
         recognition: {
             fontFamily: 'sans-serif',
-            fontSize: '30',
+            fontSize: '30pt',
             fontWeight: '400',
-            strokeWidth: '8',
+            strokeWidth: '8pt',
             strokeColor: '#292929',
             color: '#ffff00',
         },
         // translated text
         translation: {
             fontFamily: 'sans-serif',
-            fontSize: '30',
+            fontSize: '30pt',
             fontWeight: '400',
-            strokeWidth: '8',
+            strokeWidth: '8pt',
             strokeColor: '#292929',
             color: '#cbcbcb',
         }
@@ -5550,20 +5556,24 @@ class SpeechToTextModule {
     }
     getWsEvents() {
         return {
-            'translate': async (ws, { text, src, dst }) => {
-                const scriptId = config.modules.speechToText.google.scriptId;
-                const query = `https://script.google.com/macros/s/${scriptId}/exec` + asQueryArgs({
-                    text: text,
-                    source: src,
-                    target: dst,
+            'onVoiceResult': async (ws, { text }) => {
+                let translated = '';
+                if (this.data.settings.translation.enabled) {
+                    const scriptId = config.modules.speechToText.google.scriptId;
+                    const query = `https://script.google.com/macros/s/${scriptId}/exec` + asQueryArgs({
+                        text: text,
+                        source: this.data.settings.translation.langSrc,
+                        target: this.data.settings.translation.langDst,
+                    });
+                    translated = await getText(query);
+                }
+                this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
+                    event: 'text',
+                    data: {
+                        recognized: text,
+                        translated: translated,
+                    },
                 });
-                const respText = await getText(query);
-                this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, {
-                    event: 'translated', data: {
-                        in: text,
-                        out: respText,
-                    }
-                }, ws);
             },
             'conn': (ws) => {
                 this.updateClient('init', ws);

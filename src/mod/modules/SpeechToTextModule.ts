@@ -3,7 +3,7 @@ import { Socket } from '../../net/WebSocketServer'
 import { getText, asQueryArgs } from '../../net/xhr'
 import { User } from '../../services/Users'
 import { Bot, ChatMessageContext, Module, RewardRedemptionContext } from '../../types'
-import { default_settings, SpeechToTextModuleData, SpeechToTextModuleSettings, SpeechToTextTranslateEventData, SpeechToTextWsData } from './SpeechToTextModuleCommon'
+import { default_settings, SpeechToTextModuleData, SpeechToTextModuleSettings, SpeechToTextWsData } from './SpeechToTextModuleCommon'
 
 class SpeechToTextModule implements Module {
   public name = 'speech-to-text'
@@ -59,20 +59,24 @@ class SpeechToTextModule implements Module {
 
   getWsEvents() {
     return {
-      'translate': async (ws: Socket, { text, src, dst }: SpeechToTextTranslateEventData) => {
-        const scriptId = config.modules.speechToText.google.scriptId
-        const query = `https://script.google.com/macros/s/${scriptId}/exec` + asQueryArgs({
-          text: text,
-          source: src,
-          target: dst,
+      'onVoiceResult': async (ws: Socket, { text }: { text: string }) => {
+        let translated = ''
+        if (this.data.settings.translation.enabled) {
+          const scriptId = config.modules.speechToText.google.scriptId
+          const query = `https://script.google.com/macros/s/${scriptId}/exec` + asQueryArgs({
+            text: text,
+            source: this.data.settings.translation.langSrc,
+            target: this.data.settings.translation.langDst,
+          })
+          translated = await getText(query)
+        }
+        this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
+          event: 'text',
+          data: {
+            recognized: text,
+            translated: translated,
+          },
         })
-        const respText = await getText(query)
-        this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, {
-          event: 'translated', data: {
-            in: text,
-            out: respText,
-          }
-        }, ws)
       },
       'conn': (ws: Socket) => {
         this.updateClient('init', ws)

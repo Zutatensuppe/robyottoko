@@ -49,12 +49,6 @@ export interface SpeechToTextModuleData {
   settings: SpeechToTextModuleSettings
 }
 
-export interface SpeechToTextTranslateEventData {
-  text: string
-  src: string
-  dst: string
-}
-
 export interface SpeechToTextWsInitData {
   settings: SpeechToTextModuleSettings
 }
@@ -63,7 +57,6 @@ export interface SpeechToTextWsData {
   event: string
   data: SpeechToTextWsInitData
 }
-
 
 export interface SpeechToTextSaveEventData {
   event: "save"
@@ -83,9 +76,9 @@ export const default_settings = (): SpeechToTextModuleSettings => ({
     // recognized text
     recognition: {
       fontFamily: 'sans-serif',
-      fontSize: '30',
+      fontSize: '30pt',
       fontWeight: '400',
-      strokeWidth: '8',
+      strokeWidth: '8pt',
       strokeColor: '#292929',
       color: '#ffff00',
     },
@@ -93,9 +86,9 @@ export const default_settings = (): SpeechToTextModuleSettings => ({
     // translated text
     translation: {
       fontFamily: 'sans-serif',
-      fontSize: '30',
+      fontSize: '30pt',
       fontWeight: '400',
-      strokeWidth: '8',
+      strokeWidth: '8pt',
       strokeColor: '#292929',
       color: '#cbcbcb',
     }

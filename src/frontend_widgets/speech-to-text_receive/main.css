@@ -1,0 +1,42 @@
+html {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+
+table.btm_table {
+  width: 100%;
+  position:absolute;
+}
+
+table td {
+  overflow-wrap : break-word;
+}
+
+/* prepare the selectors to add a stroke to */
+.stroke-single-imb {
+  left: 0;
+  right: 0;
+  margin: 0;
+}
+
+.stroke-single-bg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: auto;
+}
+
+/* add a single stroke */
+.stroke-single-fg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: auto;
+}
