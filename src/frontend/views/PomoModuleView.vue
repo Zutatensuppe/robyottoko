@@ -30,6 +30,7 @@
                 v-model="settings.color"
               />
             </td>
+            <td>The text color in the widget.</td>
           </tr>
           <tr>
             <td><code>settings.fontFamily</code></td>
@@ -40,6 +41,7 @@
                 v-model="settings.fontFamily"
               />
             </td>
+            <td>The font in the widget.</td>
           </tr>
           <tr>
             <td><code>settings.fontSize</code></td>
@@ -49,6 +51,10 @@
                 type="text"
                 v-model="settings.fontSize"
               />
+            </td>
+            <td>
+              The text size in the widget, for example <code>12px</code>,
+              <code>20pt</code>.
             </td>
           </tr>
           <tr>
@@ -60,6 +66,12 @@
                 v-model="settings.timerFormat"
               />
             </td>
+            <td>
+              Format of the timer, you can use the following placeholders:
+              <code v-html="'{{hh}}'" /> for hours,
+              <code v-html="'{{mm}}'" /> for minutes,
+              <code v-html="'{{ss}}'" /> for seconds.
+            </td>
           </tr>
           <tr>
             <td><code>settings.finishedText</code></td>
@@ -70,6 +82,7 @@
                 v-model="settings.finishedText"
               />
             </td>
+            <td>Text that is displayed when the timer reaches 0.</td>
           </tr>
           <tr>
             <td><code>settings.showTimerWhenFinished</code></td>
@@ -79,6 +92,9 @@
                 type="checkbox"
                 v-model="settings.showTimerWhenFinished"
               />
+            </td>
+            <td>
+              If enabled, the timer will be displayed even when it reached 0.
             </td>
           </tr>
           <tr>
@@ -90,6 +106,7 @@
                 v-model="settings.startEffect.chatMessage"
               />
             </td>
+            <td>Chat message that is sent when pomo is started.</td>
           </tr>
           <tr>
             <td><code>settings.startEffect.sound</code></td>
@@ -99,6 +116,7 @@
                 :baseVolume="100"
               />
             </td>
+            <td>Sound that will be displayed when pomo is started.</td>
           </tr>
           <tr>
             <td><code>settings.endEffect.chatMessage</code></td>
@@ -109,6 +127,7 @@
                 v-model="settings.endEffect.chatMessage"
               />
             </td>
+            <td>Chat message that is sent when pomo reaches 0.</td>
           </tr>
           <tr>
             <td><code>settings.endEffect.sound</code></td>
@@ -118,6 +137,7 @@
                 :baseVolume="100"
               />
             </td>
+            <td>Sound that will be displayed when pomo reaches 0.</td>
           </tr>
           <tr>
             <td><code>settings.stopEffect.chatMessage</code></td>
@@ -128,6 +148,9 @@
                 v-model="settings.stopEffect.chatMessage"
               />
             </td>
+            <td>
+              Chat message that is sent when pomo is stopped (via pomo exit).
+            </td>
           </tr>
           <tr>
             <td><code>settings.stopEffect.sound</code></td>
@@ -136,6 +159,9 @@
                 v-model="settings.stopEffect.sound"
                 :baseVolume="100"
               />
+            </td>
+            <td>
+              Sound that will be displayed when pomo is stopped (via pomo exit).
             </td>
           </tr>
           <tr>
@@ -159,6 +185,10 @@
                         :allowNegative="true"
                       />
                     </td>
+                    <td>
+                      Offset to the end of pomo. Negative offset means time
+                      before end of pomo.
+                    </td>
                   </tr>
                   <tr>
                     <td><code>chatMessage</code></td>
@@ -169,6 +199,7 @@
                         v-model="n.effect.chatMessage"
                       />
                     </td>
+                    <td>Chat message sent at the set offset.</td>
                   </tr>
                   <tr>
                     <td><code>sound</code></td>
@@ -178,6 +209,7 @@
                         :baseVolume="100"
                       />
                     </td>
+                    <td>Sound played at the set offset.</td>
                   </tr>
                 </table>
               </div>
