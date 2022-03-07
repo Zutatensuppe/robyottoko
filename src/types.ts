@@ -309,7 +309,10 @@ export interface ChattersCommand extends Command {
 export interface MediaCommandData {
   sound: SoundMediaFile,
   image: MediaFile,
-  clip_url: string,
+  twitch_clip: {
+    url: string,
+    volume: number, // 0 - 100
+  },
   image_url: string,
   minDurationMs: string | number
 }

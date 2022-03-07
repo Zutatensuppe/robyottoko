@@ -515,7 +515,8 @@ const doReplacements = async (text, command, context, variables, originalCmd, bo
                 if (m3 === 'recent_clip_url') {
                     const end = new Date();
                     const start = new Date(end.getTime() - 30 * DAY);
-                    const clip = await helixClient.getClipByUserId(twitchUser.id, start.toISOString(), end.toISOString());
+                    const maxDurationSeconds = 20;
+                    const clip = await helixClient.getClipByUserId(twitchUser.id, start.toISOString(), end.toISOString(), maxDurationSeconds);
                     return String(clip?.embed_url || '');
                 }
                 if (m3 === 'last_stream_category') {
@@ -1073,7 +1074,7 @@ class TwitchHelixClient {
         return user ? user.id : '';
     }
     // https://dev.twitch.tv/docs/api/reference#get-clips
-    async getClipByUserId(userId, startedAtRfc3339, endedAtRfc3339) {
+    async getClipByUserId(userId, startedAtRfc3339, endedAtRfc3339, maxDurationSeconds) {
         const url = this._url(`/clips${asQueryArgs({
             broadcaster_id: userId,
             started_at: startedAtRfc3339,
@@ -1081,7 +1082,8 @@ class TwitchHelixClient {
         })}`);
         const json = await getJson(url, await this.withAuthHeaders());
         try {
-            return json.data[0];
+            const filtered = json.data.filter(item => item.duration <= maxDurationSeconds);
+            return filtered[0];
         }
         catch (e) {
             log$g.error(json);
@@ -1944,7 +1946,10 @@ const newMedia = () => ({
         urlpath: '',
     },
     image_url: '',
-    clip_url: '',
+    twitch_clip: {
+        url: '',
+        volume: 100,
+    },
     minDurationMs: '1s',
 });
 const newTrigger = (type) => ({
@@ -3372,14 +3377,14 @@ const playMedia = (originalCmd, bot, user) => async (command, _client, _target, 
     const data = originalCmd.data;
     const variables = bot.getUserVariables(user);
     data.image_url = await fn.doReplacements(data.image_url, command, context, variables, originalCmd, bot, user);
-    data.clip_url = await fn.doReplacements(data.clip_url, command, context, variables, originalCmd, bot, user);
-    if (data.clip_url) {
-        const filename = `${hash(data.clip_url)}-clip.mp4`;
+    data.twitch_clip.url = await fn.doReplacements(data.twitch_clip.url, command, context, variables, originalCmd, bot, user);
+    if (data.twitch_clip.url) {
+        const filename = `${hash(data.twitch_clip.url)}-clip.mp4`;
         const outfile = `./data/uploads/${filename}`;
         if (!fs.existsSync(outfile)) {
             console.log(`downloading the clip to ${outfile}`);
             const child = childProcess.execFile(config.youtubeDlBinary, [
-                data.clip_url,
+                data.twitch_clip.url,
                 '-o',
                 outfile,
             ]);
@@ -3390,7 +3395,7 @@ const playMedia = (originalCmd, bot, user) => async (command, _client, _target, 
         else {
             console.log(`clip exists at ${outfile}`);
         }
-        data.clip_url = `/uploads/${filename}`;
+        data.twitch_clip.url = `/uploads/${filename}`;
     }
     bot.getWebSocketServer().notifyAll([user.id], 'general', {
         event: 'playmedia',
@@ -3825,6 +3830,12 @@ class GeneralModule {
                 }
                 if (!cmd.data.image.urlpath && cmd.data.image.file) {
                     cmd.data.image.urlpath = `/uploads/${encodeURIComponent(cmd.data.image.file)}`;
+                }
+                if (!cmd.data.twitch_clip) {
+                    cmd.data.twitch_clip = {
+                        url: cmd.data.clip_url || '',
+                        volume: 100,
+                    };
                 }
             }
             if (cmd.action === 'countdown') {

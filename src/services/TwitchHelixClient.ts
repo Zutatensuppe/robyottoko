@@ -262,7 +262,12 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/api/reference#get-clips
-  async getClipByUserId(userId: string, startedAtRfc3339: string, endedAtRfc3339: string) {
+  async getClipByUserId(
+    userId: string,
+    startedAtRfc3339: string,
+    endedAtRfc3339: string,
+    maxDurationSeconds: number,
+  ) {
     const url = this._url(`/clips${asQueryArgs({
       broadcaster_id: userId,
       started_at: startedAtRfc3339,
@@ -270,7 +275,8 @@ class TwitchHelixClient {
     })}`)
     const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixClipSearchResponseData
     try {
-      return json.data[0]
+      const filtered = json.data.filter(item => item.duration <= maxDurationSeconds)
+      return filtered[0]
     } catch (e) {
       log.error(json)
       return null

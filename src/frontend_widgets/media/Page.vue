@@ -43,11 +43,14 @@ export default defineComponent({
     async playone(media: MediaCommandData): Promise<void> {
       return new Promise(async (resolve) => {
         const promises: Promise<void>[] = [];
-        if (media.clip_url) {
-          this.videosrc = media.clip_url;
+        if (media.twitch_clip.url) {
+          this.videosrc = media.twitch_clip.url;
           promises.push(
             new Promise((res) => {
               this.$nextTick(() => {
+                this.$refs.video.volume = !media.twitch_clip.volume
+                  ? 0
+                  : 100 / media.twitch_clip.volume;
                 this.$refs.video.addEventListener("ended", () => {
                   res();
                 });

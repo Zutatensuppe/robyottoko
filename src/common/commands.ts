@@ -17,7 +17,10 @@ const newMedia = (): MediaCommandData => ({
     urlpath: '',
   },
   image_url: '', // image identified by url only
-  clip_url: '', // twitch clip identified by url
+  twitch_clip: {
+    url: '', // twitch clip identified by url
+    volume: 100,
+  },
   minDurationMs: '1s',
 })
 
