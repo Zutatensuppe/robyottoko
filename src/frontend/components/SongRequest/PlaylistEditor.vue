@@ -27,160 +27,176 @@
         >
       </div>
     </div>
-    <table class="table is-striped" v-if="playlist.length > 0">
-      <thead>
-        <tr>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th>Title</th>
-          <th>User</th>
-          <th>Plays</th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-        </tr>
-      </thead>
-      <draggable
-        :modelValue="enhancedPlaylist"
-        @end="dragEnd"
-        tag="tbody"
-        handle=".handle"
-        item-key="id"
-      >
-        <template #item="{ element, index }">
-          <tr v-show="!hideFilteredOut || !element.filteredOut">
-            <td class="pt-4 handle">
-              <i class="fa fa-arrows"></i>
-            </td>
-            <td>{{ index + 1 }}</td>
-            <td>
-              <button
-                v-if="index !== firstIndex"
-                class="button is-small"
-                :disabled="element.filteredOut ? true : null"
-                @click="sendCtrl('playIdx', [index])"
-                title="Play"
-              >
-                <i class="fa fa-play" />
-              </button>
-            </td>
-            <td>
-              <a
-                :href="'https://www.youtube.com/watch?v=' + element.yt"
-                target="_blank"
-              >
-                {{ element.title || element.yt }}
-                <i class="fa fa-external-link" />
-              </a>
-              <div>
-                <span
-                  v-for="(tag, idx2) in element.tags"
-                  :key="idx2"
-                  class="tag"
-                  @click="sendCtrl('rmtag', [tag, index])"
-                >
-                  {{ tag }} <i class="fa fa-remove ml-1" />
-                </span>
-                <span class="button is-small" @click="startAddTag(index)"
-                  ><i class="fa fa-plus"
-                /></span>
-              </div>
-              <div class="field has-addons" v-if="tagInputIdx === index">
-                <div class="control">
-                  <input
-                    class="input is-small filter-tag-input"
-                    type="text"
-                    v-model="tagInput"
-                    @keyup.enter="
-                      sendCtrl('addtag', [tagInput, index]);
-                      tagInput = '';
-                    "
-                  />
-                </div>
-                <div class="control">
-                  <span
-                    class="button is-small"
-                    :disabled="tagInput ? null : true"
-                    @click="
-                      sendCtrl('addtag', [tagInput, index]);
-                      tagInput = '';
-                    "
-                    >Add tag</span
-                  >
-                </div>
-              </div>
-            </td>
-            <td>{{ element.user }}</td>
-            <td>
-              {{ element.plays }}x
-              <button
-                class="button is-small ml-1"
-                @click="sendCtrl('resetStatIdx', ['plays', index])"
-                title="Reset plays"
-              >
-                <i class="fa fa-eraser" />
-              </button>
-            </td>
-            <td>
-              <button
-                class="button is-small"
-                @click="toggleVisibility(element, index)"
-                :title="element.hidevideo ? 'Video hidden' : 'Video visible'"
-              >
-                <i
-                  class="fa mr-1"
-                  :class="{
-                    'fa-eye': !element.hidevideo,
-                    'fa-eye-slash': element.hidevideo,
-                  }"
-                />
-              </button>
-            </td>
-            <td>
-              <button
-                class="button is-small"
-                @click="sendCtrl('goodIdx', [index])"
-              >
-                <i class="fa fa-thumbs-up mr-1" /> {{ element.goods }}
-              </button>
-              <button
-                class="button is-small ml-1"
-                @click="sendCtrl('resetStatIdx', ['goods', index])"
-                title="Reset upvotes"
-              >
-                <i class="fa fa-eraser" />
-              </button>
-            </td>
-            <td>
-              <button
-                class="button is-small"
-                @click="sendCtrl('badIdx', [index])"
-              >
-                <i class="fa fa-thumbs-down mr-1" /> {{ element.bads }}
-              </button>
-              <button
-                class="button is-small ml-1"
-                @click="sendCtrl('resetStatIdx', ['bads', index])"
-                title="Reset downvotes"
-              >
-                <i class="fa fa-eraser" />
-              </button>
-            </td>
-            <td>
-              <button
-                class="button is-small"
-                @click="sendCtrl('rmIdx', [index])"
-                title="Remove"
-              >
-                <i class="fa fa-trash" />
-              </button>
-            </td>
+    <div v-if="playlist.length > 0">
+      <table class="table is-striped">
+        <thead>
+          <tr>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th>Title</th>
+            <th>User</th>
+            <th>Plays</th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
           </tr>
-        </template>
-      </draggable>
-    </table>
+        </thead>
+        <draggable
+          :modelValue="enhancedPlaylist"
+          @end="dragEnd"
+          tag="tbody"
+          handle=".handle"
+          item-key="id"
+        >
+          <template #item="{ element, index }">
+            <tr v-show="!hideFilteredOut || !element.filteredOut">
+              <td class="pt-4 handle">
+                <i class="fa fa-arrows"></i>
+              </td>
+              <td>{{ index + 1 }}</td>
+              <td>
+                <button
+                  v-if="index !== firstIndex"
+                  class="button is-small"
+                  :disabled="element.filteredOut ? true : null"
+                  @click="sendCtrl('playIdx', [index])"
+                  title="Play"
+                >
+                  <i class="fa fa-play" />
+                </button>
+              </td>
+              <td>
+                <a
+                  :href="'https://www.youtube.com/watch?v=' + element.yt"
+                  target="_blank"
+                >
+                  {{ element.title || element.yt }}
+                  <i class="fa fa-external-link" />
+                </a>
+                <div>
+                  <span
+                    v-for="(tag, idx2) in element.tags"
+                    :key="idx2"
+                    class="tag"
+                    @click="sendCtrl('rmtag', [tag, index])"
+                  >
+                    {{ tag }} <i class="fa fa-remove ml-1" />
+                  </span>
+                  <span class="button is-small" @click="startAddTag(index)"
+                    ><i class="fa fa-plus"
+                  /></span>
+                </div>
+                <div class="field has-addons" v-if="tagInputIdx === index">
+                  <div class="control">
+                    <input
+                      class="input is-small filter-tag-input"
+                      type="text"
+                      v-model="tagInput"
+                      @keyup.enter="
+                        sendCtrl('addtag', [tagInput, index]);
+                        tagInput = '';
+                      "
+                    />
+                  </div>
+                  <div class="control">
+                    <span
+                      class="button is-small"
+                      :disabled="tagInput ? null : true"
+                      @click="
+                        sendCtrl('addtag', [tagInput, index]);
+                        tagInput = '';
+                      "
+                      >Add tag</span
+                    >
+                  </div>
+                </div>
+              </td>
+              <td>{{ element.user }}</td>
+              <td>
+                {{ element.plays }}x
+                <button
+                  class="button is-small ml-1"
+                  @click="sendCtrl('resetStatIdx', ['plays', index])"
+                  title="Reset plays"
+                >
+                  <i class="fa fa-eraser" />
+                </button>
+              </td>
+              <td>
+                <button
+                  class="button is-small"
+                  @click="toggleVisibility(element, index)"
+                  :title="element.hidevideo ? 'Video hidden' : 'Video visible'"
+                >
+                  <i
+                    class="fa mr-1"
+                    :class="{
+                      'fa-eye': !element.hidevideo,
+                      'fa-eye-slash': element.hidevideo,
+                    }"
+                  />
+                </button>
+              </td>
+              <td>
+                <button
+                  class="button is-small"
+                  @click="sendCtrl('goodIdx', [index])"
+                >
+                  <i class="fa fa-thumbs-up mr-1" /> {{ element.goods }}
+                </button>
+                <button
+                  class="button is-small ml-1"
+                  @click="sendCtrl('resetStatIdx', ['goods', index])"
+                  title="Reset upvotes"
+                >
+                  <i class="fa fa-eraser" />
+                </button>
+              </td>
+              <td>
+                <button
+                  class="button is-small"
+                  @click="sendCtrl('badIdx', [index])"
+                >
+                  <i class="fa fa-thumbs-down mr-1" /> {{ element.bads }}
+                </button>
+                <button
+                  class="button is-small ml-1"
+                  @click="sendCtrl('resetStatIdx', ['bads', index])"
+                  title="Reset downvotes"
+                >
+                  <i class="fa fa-eraser" />
+                </button>
+              </td>
+              <td>
+                <button
+                  class="button is-small"
+                  @click="sendCtrl('rmIdx', [index])"
+                  title="Remove"
+                >
+                  <i class="fa fa-trash" />
+                </button>
+              </td>
+            </tr>
+          </template>
+        </draggable>
+      </table>
+      <div>
+        <span
+          class="button is-small mr-1"
+          @click="itemsDisplayed += 20"
+          v-if="itemsDisplayed < playlist.length"
+          >Show more (+20)</span
+        >
+        <span
+          class="button is-small"
+          @click="itemsDisplayed = playlist.length"
+          v-if="itemsDisplayed < playlist.length"
+          >Show all ({{ playlist.length }})</span
+        >
+      </div>
+    </div>
     <div v-else>Playlist is empty</div>
   </div>
 </template>
@@ -198,14 +214,12 @@ export default defineComponent({
     filterTagInput: "",
     tagInput: "",
     tagInputIdx: -1,
+    itemsDisplayed: 20,
   }),
   methods: {
     toggleVisibility(item, idx) {
-      if (item.hidevideo) {
-        this.sendCtrl("videoVisibility", [true, idx]);
-      } else {
-        this.sendCtrl("videoVisibility", [false, idx]);
-      }
+      const visible = !!item.hidevideo;
+      this.sendCtrl("videoVisibility", [visible, idx]);
     },
     dragEnd(evt) {
       this.sendCtrl("move", [evt.oldIndex, evt.newIndex]);
@@ -228,10 +242,12 @@ export default defineComponent({
   },
   computed: {
     enhancedPlaylist() {
-      return this.playlist.map((item) => {
-        item.filteredOut = this.isFilteredOut(item);
-        return item;
-      });
+      return this.playlist
+        .map((item) => {
+          item.filteredOut = this.isFilteredOut(item);
+          return item;
+        })
+        .slice(0, this.itemsDisplayed);
     },
     firstIndex() {
       if (this.filter.tag === "") {
