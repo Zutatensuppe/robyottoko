@@ -24,13 +24,6 @@
                   ref="canvas"
                   :width="canvasWidth"
                   :height="canvasHeight"
-                  @touchstart.prevent="touchstart"
-                  @touchmove.prevent="touchmove"
-                  @mousemove="mousemove"
-                  @mousedown="mousedown"
-                  @mouseup="cancelDraw"
-                  @touchend.prevent="cancelDraw"
-                  @touchcancel.prevent="cancelDraw"
                   :style="styles"
                 ></canvas>
               </div>
@@ -337,40 +330,17 @@ import util from "../util";
 
 const log = logger("Page.vue");
 
-const translateCoords = (
-  canvas: HTMLCanvasElement,
-  clientX: number,
-  clientY: number
-) => {
-  // dimensions of canvas element (top-left with respect to border-box)
+const touchPoint = (canvas: HTMLCanvasElement, evt: TouchEvent) => {
   const bcr = canvas.getBoundingClientRect();
-  // offsets from border and padding
-  const sideWidth = { left: 0, top: 0, right: 0, bottom: 0 };
-  // ratio of internal canvas resolution to canvas displayed dimensions
-  const scaleX =
-    canvas.width / (bcr.width - (sideWidth.left + sideWidth.right));
-  const scaleY =
-    canvas.height / (bcr.height - (sideWidth.top + sideWidth.bottom));
-  // translate and scale screen coords to canvas internal coords
-  const x = clientX * scaleX;
-  const y = clientY * scaleY;
-  return { x, y };
+  return {
+    x: evt.targetTouches[0].clientX - bcr.x,
+    y: evt.targetTouches[0].clientY - bcr.y,
+  };
 };
 
-const touchPoint = (evt: TouchEvent) => {
-  const canvas = evt.target as HTMLCanvasElement;
+const mousePoint = (canvas: HTMLCanvasElement, evt: MouseEvent) => {
   const bcr = canvas.getBoundingClientRect();
-  const coords = translateCoords(
-    canvas,
-    evt.targetTouches[0].clientX - bcr.x,
-    evt.targetTouches[0].clientY - bcr.y
-  );
-  return coords;
-};
-const mousePoint = (evt: MouseEvent) => {
-  const canvas = evt.target as HTMLCanvasElement;
-  const coords = translateCoords(canvas, evt.offsetX, evt.offsetY);
-  return coords;
+  return { x: evt.clientX - bcr.x, y: evt.clientY - bcr.y };
 };
 
 const hexIsLight = (color: string) => {
@@ -597,12 +567,27 @@ export default defineComponent({
 
     startDraw(pt) {
       if (this.tool === "color-sampler") {
-        this.color = this.getColor(pt);
+        if (
+          pt.x >= 0 &&
+          pt.y >= 0 &&
+          pt.x < this.canvasWidth &&
+          pt.y < this.canvasHeight
+        ) {
+          this.color = this.getColor(pt);
+        }
         return;
       }
-      const cur = pt;
-      this.redraw(cur);
-      this.last = cur;
+
+      if (
+        pt.x >= -this.size &&
+        pt.y >= -this.size &&
+        pt.x < this.canvasWidth + this.size &&
+        pt.y < this.canvasHeight + this.size
+      ) {
+        const cur = pt;
+        this.redraw(cur);
+        this.last = cur;
+      }
     },
 
     continueDraw(pt) {
@@ -618,19 +603,31 @@ export default defineComponent({
     },
 
     touchstart(e) {
+      if (!this.$refs.canvas) {
+        return;
+      }
       e.preventDefault();
-      this.startDraw(touchPoint(e));
+      this.startDraw(touchPoint(this.$refs.canvas, e));
     },
     mousedown(e) {
-      this.startDraw(mousePoint(e));
+      if (!this.$refs.canvas) {
+        return;
+      }
+      this.startDraw(mousePoint(this.$refs.canvas, e));
     },
 
     touchmove(e) {
+      if (!this.$refs.canvas) {
+        return;
+      }
       e.preventDefault();
-      this.continueDraw(touchPoint(e));
+      this.continueDraw(touchPoint(this.$refs.canvas, e));
     },
     mousemove(e) {
-      this.continueDraw(mousePoint(e));
+      if (!this.$refs.canvas) {
+        return;
+      }
+      this.continueDraw(mousePoint(this.$refs.canvas, e));
     },
 
     clear() {
@@ -726,6 +723,34 @@ export default defineComponent({
       // when selecting transparent color, instead use first color in palette
       return a ? `#${hex(r)}${hex(g)}${hex(b)}` : this.palette[0];
     },
+    keyup(e) {
+      if (e.code === "Digit1") {
+        this.sizeIdx = 0;
+      } else if (e.code === "Digit2") {
+        this.sizeIdx = 1;
+      } else if (e.code === "Digit3") {
+        this.sizeIdx = 2;
+      } else if (e.code === "Digit4") {
+        this.sizeIdx = 3;
+      } else if (e.code === "Digit5") {
+        this.sizeIdx = 4;
+      } else if (e.code === "Digit6") {
+        this.sizeIdx = 5;
+      } else if (e.code === "Digit7") {
+        this.sizeIdx = 6;
+      } else if (e.code === "KeyB") {
+        // pencil
+        this.tool = "pen";
+      } else if (e.code === "KeyS") {
+        // color Sampler
+        this.tool = "color-sampler";
+      } else if (e.code === "KeyE") {
+        // eraser
+        this.tool = "eraser";
+      } else if (e.code === "KeyZ" && e.ctrlKey) {
+        this.undo();
+      }
+    },
   },
   mounted() {
     this.canvas = this.$refs.canvas;
@@ -800,43 +825,30 @@ export default defineComponent({
     });
     this.ws.connect();
 
-    window.addEventListener("keyup", (e) => {
-      if (e.code === "Digit1") {
-        this.sizeIdx = 0;
-      } else if (e.code === "Digit2") {
-        this.sizeIdx = 1;
-      } else if (e.code === "Digit3") {
-        this.sizeIdx = 2;
-      } else if (e.code === "Digit4") {
-        this.sizeIdx = 3;
-      } else if (e.code === "Digit5") {
-        this.sizeIdx = 4;
-      } else if (e.code === "Digit6") {
-        this.sizeIdx = 5;
-      } else if (e.code === "Digit7") {
-        this.sizeIdx = 6;
-      } else if (e.code === "KeyB") {
-        // pencil
-        this.tool = "pen";
-      } else if (e.code === "KeyS") {
-        // color Sampler
-        this.tool = "color-sampler";
-      } else if (e.code === "KeyE") {
-        // eraser
-        this.tool = "eraser";
-      } else if (e.code === "KeyZ" && e.ctrlKey) {
-        this.undo();
-      }
-    });
-
-    // on window, in case left canvas and mouse up outside
-    window.addEventListener("mouseup", () => {
-      this.last = null;
-    });
+    window.addEventListener("touchstart", this.touchstart);
+    window.addEventListener("touchmove", this.touchmove);
+    window.addEventListener("touchmove", this.touchmove);
+    window.addEventListener("mousemove", this.mousemove);
+    window.addEventListener("mousedown", this.mousedown);
+    window.addEventListener("mouseup", this.cancelDraw);
+    window.addEventListener("touchend", this.cancelDraw);
+    window.addEventListener("touchcancel", this.cancelDraw);
+    window.addEventListener("keyup", this.keyup);
 
     this.$watch("color", () => {
       this.tool = "pen";
     });
+  },
+  unmounted() {
+    window.removeEventListener("touchstart", this.touchstart);
+    window.removeEventListener("touchmove", this.touchmove);
+    window.removeEventListener("touchmove", this.touchmove);
+    window.removeEventListener("mousemove", this.mousemove);
+    window.removeEventListener("mousedown", this.mousedown);
+    window.removeEventListener("mouseup", this.cancelDraw);
+    window.removeEventListener("touchend", this.cancelDraw);
+    window.removeEventListener("touchcancel", this.cancelDraw);
+    window.removeEventListener("keyup", this.keyup);
   },
 });
 </script>
