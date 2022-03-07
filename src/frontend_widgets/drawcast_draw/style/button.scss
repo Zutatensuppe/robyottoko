@@ -21,10 +21,25 @@
     box-shadow:3px 3px 1px rgba(145, 137, 141, 0.25);
     background-color:rgba(148, 133, 200, 1);
     color: $buttonTextColorOk;
+    &:hover {
+      background: #aea5ce;
+    }
+    &:active {
+      background: #7a76b1;
+    }
   }
+
   &-danger {
-    background-color:#d44744;
-    color: $buttonTextColorDanger;
+    background: $dangerBackground;
+    color: $dangerForeground;
+    &:hover {
+      background: $dangerBackgroundHover;
+      color: $dangerForegroundHover;
+    }
+    &:active {
+      background: $dangerBackgroundActive;
+      color: $dangerForegroundActive;
+    }
   }
 }
 

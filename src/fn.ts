@@ -1,7 +1,7 @@
 import config from './config'
 import crypto from 'crypto'
 import { getText } from './net/xhr'
-import { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove, logger } from './common/fn'
+import { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove, logger, nonce } from './common/fn'
 
 import { Command, GlobalVariable, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module, CommandTrigger, Bot } from './types'
 import Variables from './services/Variables'
@@ -38,15 +38,6 @@ function getRandomInt(min: number, max: number) {
 
 function getRandom<T>(array: T[]): T {
   return array[getRandomInt(0, array.length - 1)]
-}
-
-export function nonce(length: number) {
-  let text = "";
-  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-  for (let i = 0; i < length; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length))
-  }
-  return text
 }
 
 const fnRandom = <T>(values: T[]) => (): T => getRandom(values)
@@ -592,7 +583,6 @@ export default {
   parseHumanDuration,
   mustParseHumanDuration,
   doReplacements,
-  nonce,
   split,
   joinIntoChunks,
   arrayMove,

@@ -8,6 +8,13 @@ $buttonTextColor: #fffcfc;
 $buttonTextColorOk: $buttonTextColor;
 $buttonTextColorDanger: $buttonTextColor;
 
+$dangerBackground: rgba(212,71,68,1);
+$dangerForeground: #FAF2F5;
+$dangerBackgroundHover: #F16358;
+$dangerForegroundHover: #fffcfc;
+$dangerBackgroundActive: #AA4557;
+$dangerForegroundActive: #DFD7DA;
+
 .clickable {
   cursor: pointer;
 }
@@ -287,21 +294,21 @@ a {
 
   /* CLEAR-BUTTON */
   &.tool-clear {
-    background: rgba(212,71,68,1);
+    background: $dangerBackground;
+    color: $dangerForeground;
     border-color: rgb(99, 29, 29);
     padding: 6px 6px;
-    color: #FAF2F5;
 
     &:hover {
-      background: #F16358;
+      background: $dangerBackgroundHover;
+      color: $dangerForegroundHover;
       border-color: #D44744;
-      color: #fffcfc;
     }
 
     &:active {
-      background: #AA4557;
+      background: $dangerBackgroundActive;
+      color: $dangerForegroundActive;
       border-color: #794658;
-      color: #DFD7DA;
     }
   }
 

@@ -9,7 +9,7 @@ import Templates from './services/Templates'
 import http from 'http'
 import Db from './Db'
 import fn from './fn'
-import { logger } from './common/fn'
+import { nonce, logger } from './common/fn'
 import Tokens from './services/Tokens'
 import TwitchHelixClient from './services/TwitchHelixClient'
 import Users, { CreateUser, User } from './services/Users'
@@ -142,7 +142,7 @@ class WebServer {
     let id
     if (!row) {
       do {
-        id = fn.nonce(6)
+        id = nonce(6)
       } while (this.db.get('pub', { id }))
       this.db.insert('pub', { id, target })
     } else {
@@ -227,7 +227,7 @@ class WebServer {
     const storage = multer.diskStorage({
       destination: uploadDir,
       filename: function (req, file, cb) {
-        cb(null, `${fn.nonce(6)}-${file.originalname}`);
+        cb(null, `${nonce(6)}-${file.originalname}`);
       }
     })
     const upload = multer({ storage }).single('file');
