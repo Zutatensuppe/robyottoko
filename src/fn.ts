@@ -212,7 +212,7 @@ export const doReplacements = async (
   const replaces: { regex: RegExp, replacer: (...args: string[]) => Promise<string> }[] = [
     {
       regex: /\$args(?:\((\d*)(:?)(\d*)\))?/g,
-      replacer: async (m0: string, m1: string, m2: string, m3: string) => {
+      replacer: async (m0: string, m1: string, m2: string, m3: string): Promise<string> => {
         if (!command) {
           return ''
         }
@@ -240,7 +240,7 @@ export const doReplacements = async (
     },
     {
       regex: /\$rand\(\s*(\d+)?\s*,\s*?(\d+)?\s*\)/g,
-      replacer: async (m0: string, m1: string, m2: string) => {
+      replacer: async (m0: string, m1: string, m2: string): Promise<string> => {
         const min = typeof m1 === 'undefined' ? 1 : parseInt(m1, 10)
         const max = typeof m2 === 'undefined' ? 100 : parseInt(m2, 10)
         return `${getRandomInt(min, max)}`
@@ -248,25 +248,25 @@ export const doReplacements = async (
     },
     {
       regex: /\$var\(([^)]+)\)/g,
-      replacer: async (m0: string, m1: string) => {
+      replacer: async (m0: string, m1: string): Promise<string> => {
         if (!originalCmd || !originalCmd.variables) {
           return ''
         }
         const v = originalCmd.variables.find(v => v.name === m1)
         const val = v ? v.value : variables.get(m1)
-        return val === null ? '' : val
+        return val === null ? '' : String(val)
       },
     },
     {
       regex: /\$user(?:\(([^)]+)\)|())\.(name|profile_image_url|recent_clip_url|last_stream_category)/g,
-      replacer: async (m0: string, m1: string, m2: string, m3) => {
+      replacer: async (m0: string, m1: string, m2: string, m3): Promise<string> => {
         if (!context) {
           return ''
         }
 
         const username = m1 || m2 || context.username
         if (username === context.username && m3 === 'name') {
-          return context['display-name']
+          return String(context['display-name'])
         }
 
         if (!bot || !user) {
@@ -282,10 +282,10 @@ export const doReplacements = async (
           return ''
         }
         if (m3 === 'name') {
-          return twitchUser.display_name
+          return String(twitchUser.display_name)
         }
         if (m3 === 'profile_image_url') {
-          return twitchUser.profile_image_url
+          return String(twitchUser.profile_image_url)
         }
         if (m3 === 'recent_clip_url') {
           const end = new Date()
@@ -296,37 +296,42 @@ export const doReplacements = async (
             start.toISOString(),
             end.toISOString()
           )
-          return clip?.embed_url || ''
+          return String(clip?.embed_url || '')
         }
         if (m3 === 'last_stream_category') {
           const channelInfo = await helixClient.getChannelInformation(twitchUser.id)
-          return channelInfo?.game_name || '';
+          return String(channelInfo?.game_name || '');
         }
         return ''
       },
     },
     {
       regex: /\$customapi\(([^$)]*)\)\['([A-Za-z0-9_ -]+)'\]/g,
-      replacer: async (m0: string, m1: string, m2: string) => {
+      replacer: async (m0: string, m1: string, m2: string): Promise<string> => {
         const txt = await getText(await doReplacements(m1, command, context, variables, originalCmd, bot, user))
-        return JSON.parse(txt)[m2]
+        try {
+          return String(JSON.parse(txt)[m2])
+        } catch (e: any) {
+          log.error(e)
+          return ''
+        }
       },
     },
     {
       regex: /\$customapi\(([^$)]*)\)/g,
-      replacer: async (m0: string, m1: string) => {
+      replacer: async (m0: string, m1: string): Promise<string> => {
         return await getText(await doReplacements(m1, command, context, variables, originalCmd, bot, user))
       },
     },
     {
       regex: /\$urlencode\(([^$)]*)\)/g,
-      replacer: async (m0: string, m1: string) => {
+      replacer: async (m0: string, m1: string): Promise<string> => {
         return encodeURIComponent(await doReplacements(m1, command, context, variables, originalCmd, bot, user))
       },
     },
     {
       regex: /\$calc\((\d+)([*/+-])(\d+)\)/g,
-      replacer: async (m0: string, arg1: string, op: string, arg2: string) => {
+      replacer: async (m0: string, arg1: string, op: string, arg2: string): Promise<string> => {
         const arg1Int = parseInt(arg1, 10)
         const arg2Int = parseInt(arg2, 10)
         switch (op) {
@@ -343,12 +348,16 @@ export const doReplacements = async (
       },
     },
   ]
-  let replaced = text
+  let replaced = String(text)
   let orig
   do {
     orig = replaced
     for (const replace of replaces) {
-      replaced = await replaceAsync(replaced, replace.regex, replace.replacer)
+      replaced = await replaceAsync(
+        replaced,
+        replace.regex,
+        replace.replacer
+      )
     }
   } while (orig !== replaced)
   return replaced
