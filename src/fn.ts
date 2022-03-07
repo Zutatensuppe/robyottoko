@@ -1,14 +1,12 @@
 import config from './config'
 import crypto from 'crypto'
 import { getText } from './net/xhr'
-import { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove, logger, nonce } from './common/fn'
+import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, nonce } from './common/fn'
 
 import { Command, GlobalVariable, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module, CommandTrigger, Bot } from './types'
 import Variables from './services/Variables'
 import { mayExecute } from './common/permissions'
 import { User } from './services/Users'
-
-export { MS, SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, parseHumanDuration, mustParseHumanDuration, split, shuffle, arrayMove }
 
 const log = logger('fn.ts')
 
@@ -585,24 +583,13 @@ export default {
   tryExecuteCommand,
   getRandomInt,
   getRandom,
-  shuffle,
   sleep,
   fnRandom,
   parseISO8601Duration,
-  parseHumanDuration,
-  mustParseHumanDuration,
   doReplacements,
-  split,
   joinIntoChunks,
-  arrayMove,
   findIdxFuzzy,
   findIdxBySearchExactPart,
   findIdxBySearchInOrder,
   findIdxBySearch,
-  MS,
-  SECOND,
-  MINUTE,
-  HOUR,
-  DAY,
-  YEAR,
 }

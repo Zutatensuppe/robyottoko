@@ -9,7 +9,7 @@ import Templates from './services/Templates'
 import http from 'http'
 import Db from './Db'
 import fn from './fn'
-import { nonce, logger } from './common/fn'
+import { nonce, logger, YEAR } from './common/fn'
 import Tokens from './services/Tokens'
 import TwitchHelixClient from './services/TwitchHelixClient'
 import Users, { CreateUser, User } from './services/Users'
@@ -623,7 +623,7 @@ class WebServer {
       }
 
       const token = this.auth.getUserAuthToken(user.id)
-      res.cookie('x-token', token, { maxAge: 1 * fn.YEAR, httpOnly: true })
+      res.cookie('x-token', token, { maxAge: 1 * YEAR, httpOnly: true })
       res.send()
     })
 

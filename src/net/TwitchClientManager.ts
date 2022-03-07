@@ -1,8 +1,8 @@
 // @ts-ignore
 import tmi from 'tmi.js'
 import TwitchHelixClient from '../services/TwitchHelixClient'
-import fn, { MINUTE } from '../fn'
-import { logger, Logger } from '../common/fn'
+import fn from '../fn'
+import { logger, Logger, MINUTE } from '../common/fn'
 import TwitchChannels, { TwitchChannel, TwitchChannelWithAccessToken } from '../services/TwitchChannels'
 import { User } from '../services/Users'
 import { Bot, RawCommand, RewardRedemptionContext, TwitchChannelPointsEventMessage, TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'

@@ -246,19 +246,6 @@ function arrayMove(arr, oldIndex, newIndex) {
     arr.splice(newIndex, 0, arr.splice(oldIndex, 1)[0]);
     return arr; // return, but array is also modified in place
 }
-const split = (str, delimiter = ',', maxparts = -1) => {
-    const split = str.split(delimiter);
-    if (maxparts === -1) {
-        return split;
-    }
-    if (split.length <= maxparts) {
-        return split;
-    }
-    return [
-        ...split.slice(0, maxparts - 1),
-        split.slice(maxparts - 1).join(delimiter),
-    ];
-};
 const shuffle = (array) => {
     let counter = array.length;
     // While there are elements in the array
@@ -757,26 +744,15 @@ var fn = {
     tryExecuteCommand,
     getRandomInt,
     getRandom,
-    shuffle,
     sleep,
     fnRandom,
     parseISO8601Duration,
-    parseHumanDuration,
-    mustParseHumanDuration,
     doReplacements,
-    split,
     joinIntoChunks,
-    arrayMove,
     findIdxFuzzy,
     findIdxBySearchExactPart,
     findIdxBySearchInOrder,
     findIdxBySearch,
-    MS,
-    SECOND,
-    MINUTE,
-    HOUR,
-    DAY,
-    YEAR,
 };
 
 class Auth {
@@ -1785,7 +1761,7 @@ class WebServer {
                 return;
             }
             const token = this.auth.getUserAuthToken(user.id);
-            res.cookie('x-token', token, { maxAge: 1 * fn.YEAR, httpOnly: true });
+            res.cookie('x-token', token, { maxAge: 1 * YEAR, httpOnly: true });
             res.send();
         });
         app.get('/widget/:widget_type/:widget_token/', async (req, res, _next) => {
@@ -4851,8 +4827,8 @@ class SongrequestModule {
         const rest = this.data.playlist.slice(1);
         this.data.playlist = [
             this.data.playlist[0],
-            ...fn.shuffle(rest.filter(item => item.plays === 0)),
-            ...fn.shuffle(rest.filter(item => item.plays > 0)),
+            ...shuffle(rest.filter(item => item.plays === 0)),
+            ...shuffle(rest.filter(item => item.plays > 0)),
         ];
         this.save();
         this.updateClients('shuffle');
@@ -4864,7 +4840,7 @@ class SongrequestModule {
         if (newIndex >= this.data.playlist.length) {
             return;
         }
-        this.data.playlist = fn.arrayMove(this.data.playlist, oldIndex, newIndex);
+        this.data.playlist = arrayMove(this.data.playlist, oldIndex, newIndex);
         this.save();
         this.updateClients('move');
     }
@@ -5305,7 +5281,7 @@ class SongrequestModule {
                 reason: -1,
             };
         }
-        this.data.playlist = fn.arrayMove(this.data.playlist, idx, insertIndex);
+        this.data.playlist = arrayMove(this.data.playlist, idx, insertIndex);
         this.save();
         this.updateClients('add');
         return {
@@ -5334,7 +5310,7 @@ class SongrequestModule {
                 reason: -1,
             };
         }
-        this.data.playlist = fn.arrayMove(this.data.playlist, idx, insertIndex);
+        this.data.playlist = arrayMove(this.data.playlist, idx, insertIndex);
         this.save();
         this.updateClients('add');
         return {
