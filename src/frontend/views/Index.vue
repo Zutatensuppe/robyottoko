@@ -1,5 +1,5 @@
 <template>
-  <div id="app" v-if="widgets">
+  <div class="view" v-if="widgets">
     <div id="top" ref="top">
       <navbar />
     </div>
