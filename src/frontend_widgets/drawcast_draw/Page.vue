@@ -389,7 +389,7 @@ export default defineComponent({
       opts: {},
       palette: ["#000000"],
 
-      images: [],
+      images: [] as string[],
       favoriteLists: [] as DrawcastFavoriteList[],
 
       color: "#000000",
@@ -770,7 +770,7 @@ export default defineComponent({
       //           screen!~ Click any of the drawings in the gallery to continue
       //           drawing on them!`;
     });
-    this.ws.onMessage("post", (data) => {
+    this.ws.onMessage("post", (data: { nonce: string; img: string }) => {
       if (
         this.sending.date &&
         this.sending.nonce &&
