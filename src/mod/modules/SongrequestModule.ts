@@ -1,5 +1,5 @@
-import fn, { findIdxFuzzy, parseHumanDuration } from '../../fn'
-import { logger, humanDuration } from '../../common/fn'
+import fn, { findIdxFuzzy } from '../../fn'
+import { shuffle, arrayMove, logger, humanDuration, parseHumanDuration } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
 import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
 import { User } from '../../services/Users'
@@ -703,8 +703,8 @@ class SongrequestModule implements Module {
     const rest = this.data.playlist.slice(1)
     this.data.playlist = [
       this.data.playlist[0],
-      ...fn.shuffle(rest.filter(item => item.plays === 0)),
-      ...fn.shuffle(rest.filter(item => item.plays > 0)),
+      ...shuffle(rest.filter(item => item.plays === 0)),
+      ...shuffle(rest.filter(item => item.plays > 0)),
     ]
 
     this.save()
@@ -719,7 +719,7 @@ class SongrequestModule implements Module {
       return
     }
 
-    this.data.playlist = fn.arrayMove(
+    this.data.playlist = arrayMove(
       this.data.playlist,
       oldIndex,
       newIndex
@@ -1359,7 +1359,7 @@ class SongrequestModule implements Module {
       }
     }
 
-    this.data.playlist = fn.arrayMove(this.data.playlist, idx, insertIndex)
+    this.data.playlist = arrayMove(this.data.playlist, idx, insertIndex)
     this.save()
     this.updateClients('add')
     return {
@@ -1393,7 +1393,7 @@ class SongrequestModule implements Module {
       }
     }
 
-    this.data.playlist = fn.arrayMove(this.data.playlist, idx, insertIndex)
+    this.data.playlist = arrayMove(this.data.playlist, idx, insertIndex)
     this.save()
     this.updateClients('add')
     return {

@@ -1,9 +1,9 @@
-import { logger, humanDuration } from '../../common/fn'
+import { logger, humanDuration, parseHumanDuration } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
 import { Bot, ChatMessageContext, FunctionCommand, Module, RawCommand, RewardRedemptionContext, TwitchChatClient, TwitchChatContext } from '../../types'
 import { User } from '../../services/Users'
 import { default_settings, default_state, PomoModuleData, PomoModuleWsData, PomoModuleWsEffectData, PomoModuleWsSaveData } from './PomoModuleCommon'
-import fn, { doReplacements, parseHumanDuration } from '../../fn'
+import fn, { doReplacements } from '../../fn'
 import { newCommandTrigger } from '../../common/commands'
 import { MOD_OR_ABOVE } from '../../common/permissions'
 

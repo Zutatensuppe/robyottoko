@@ -1,7 +1,6 @@
 import WebSocket from 'ws'
 import { IncomingMessage } from 'http'
-import { SECOND } from '../fn'
-import { logger } from '../common/fn'
+import { logger, SECOND } from '../common/fn'
 import ModuleManager from '../mod/ModuleManager'
 import { WsConfig } from '../types'
 import Auth from './Auth'
