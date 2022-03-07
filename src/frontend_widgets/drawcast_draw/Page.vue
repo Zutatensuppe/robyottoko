@@ -171,11 +171,21 @@
             <div></div>
             <div class="drawing_panel_bottom_right">
               <div
+                v-if="sending.nonce"
+                class="button button-primary send_button"
+                @click="prepareSubmitImage"
+              >
+                <span class="send_button_text">⏳ Sending...</span>
+              </div>
+              <div
+                v-else
                 class="button button-primary send_button clickable"
                 @click="prepareSubmitImage"
               >
                 <icon-send />
-                <span class="send_button_text">{{ submitButtonText }}</span>
+                <span class="send_button_text">
+                  {{ submitButtonText }}
+                </span>
               </div>
             </div>
           </div>
@@ -320,7 +330,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import { logger } from "../../common/fn";
+import { nonce, logger } from "../../common/fn";
 import WsClient from "../../frontend/WsClient";
 import { DrawcastFavoriteList } from "../../types";
 import util from "../util";
@@ -408,6 +418,11 @@ export default defineComponent({
       modifyImageUrl: "",
       successImageUrlStyle: null,
       clearImageUrlStyle: null,
+
+      sending: {
+        date: null as null | Date,
+        nonce: "",
+      },
     };
   },
   computed: {
@@ -650,19 +665,25 @@ export default defineComponent({
         log.error("submitImage: this.ws not set");
         return;
       }
+
+      if (this.sending.nonce) {
+        // we are already sending something
+        log.error("submitImage: nonce not empty");
+        return;
+      }
+
+      this.sending.date = new Date();
+      this.sending.nonce = nonce(10);
       this.ws.send(
         JSON.stringify({
           event: "post",
           data: {
+            nonce: this.sending.nonce,
             img: this.canvas.toDataURL(),
           },
         })
       );
-
-      this.successImageUrlStyle = {
-        backgroundImage: `url(${this.canvas.toDataURL()})`,
-      };
-      this.dialog = "success";
+      // success will be handled in onMessage('post') below
     },
     showClearDialog() {
       const w = 100;
@@ -750,8 +771,32 @@ export default defineComponent({
       //           drawing on them!`;
     });
     this.ws.onMessage("post", (data) => {
-      this.images.unshift(data.img);
-      this.images = this.images.slice(0, 20);
+      if (
+        this.sending.date &&
+        this.sending.nonce &&
+        data.nonce === this.sending.nonce
+      ) {
+        // we want to have the 'sending' state for at least minMs ms
+        // for images that we have just sent, for other images they may
+        // be added immediately
+        const minMs = 500;
+        const now = new Date();
+        const timeoutMs = this.sending.date.getTime() + minMs - now.getTime();
+        setTimeout(() => {
+          this.successImageUrlStyle = {
+            backgroundImage: `url(${data.img})`,
+          };
+          this.dialog = "success";
+          this.sending.nonce = "";
+          this.sending.date = null;
+
+          this.images.unshift(data.img);
+          this.images = this.images.slice(0, 20);
+        }, Math.max(0, timeoutMs));
+      } else {
+        this.images.unshift(data.img);
+        this.images = this.images.slice(0, 20);
+      }
     });
     this.ws.connect();
 

@@ -1,6 +1,6 @@
 import WebSocket from 'ws'
-import { nonce, SECOND } from '../fn'
-import { logger } from '../common/fn'
+import { SECOND } from '../fn'
+import { nonce, logger } from '../common/fn'
 import mitt, { Emitter, EventType } from 'mitt'
 
 const CODE_GOING_AWAY = 1001

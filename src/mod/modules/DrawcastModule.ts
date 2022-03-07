@@ -1,5 +1,5 @@
 import fn from '../../fn'
-import { logger } from '../../common/fn'
+import { nonce, logger } from '../../common/fn'
 import fs from 'fs'
 import { Socket } from '../../net/WebSocketServer'
 import { Bot, ChatMessageContext, DrawcastSettings, Module, RewardRedemptionContext } from '../../types'
@@ -12,6 +12,7 @@ const log = logger('DrawcastModule.ts')
 interface PostEventData {
   event: 'post'
   data: {
+    nonce: string
     img: string
   }
 }
@@ -111,7 +112,7 @@ class DrawcastModule implements Module {
       'post': (ws: Socket, data: PostEventData) => {
         const rel = `/uploads/drawcast/${this.user.id}`
         const img = fn.decodeBase64Image(data.data.img)
-        const name = `${(new Date()).toJSON()}-${fn.nonce(6)}.${fn.mimeToExt(img.type)}`
+        const name = `${(new Date()).toJSON()}-${nonce(6)}.${fn.mimeToExt(img.type)}`
         const path = `./data${rel}`
         const imgpath = `${path}/${name}`
         const imgurl = `${rel}/${name}`
@@ -122,7 +123,7 @@ class DrawcastModule implements Module {
 
         this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
           event: data.event,
-          data: { img: imgurl },
+          data: { nonce: data.data.nonce, img: imgurl },
         })
       },
       'save': (ws: Socket, { settings }: { settings: DrawcastSettings }) => {

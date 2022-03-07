@@ -129,6 +129,14 @@ const pad = (x, pad) => {
     }
     return pad.substr(0, pad.length - str.length) + str;
 };
+function nonce(length) {
+    let text = "";
+    const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    for (let i = 0; i < length; i++) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
+}
 const mustParseHumanDuration = (duration, allowNegative = false) => {
     if (duration === '') {
         throw new Error("unable to parse duration");
@@ -325,14 +333,6 @@ function getRandomInt(min, max) {
 }
 function getRandom(array) {
     return array[getRandomInt(0, array.length - 1)];
-}
-function nonce(length) {
-    let text = "";
-    const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    for (let i = 0; i < length; i++) {
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return text;
 }
 const fnRandom = (values) => () => getRandom(values);
 const sleep = (ms) => {
@@ -758,7 +758,6 @@ var fn = {
     parseHumanDuration,
     mustParseHumanDuration,
     doReplacements,
-    nonce,
     split,
     joinIntoChunks,
     arrayMove,
@@ -1346,7 +1345,7 @@ class WebServer {
         let id;
         if (!row) {
             do {
-                id = fn.nonce(6);
+                id = nonce(6);
             } while (this.db.get('pub', { id }));
             this.db.insert('pub', { id, target });
         }
@@ -1423,7 +1422,7 @@ class WebServer {
         const storage = multer.diskStorage({
             destination: uploadDir,
             filename: function (req, file, cb) {
-                cb(null, `${fn.nonce(6)}-${file.originalname}`);
+                cb(null, `${nonce(6)}-${file.originalname}`);
             }
         });
         const upload = multer({ storage }).single('file');
@@ -5709,7 +5708,7 @@ class DrawcastModule {
             'post': (ws, data) => {
                 const rel = `/uploads/drawcast/${this.user.id}`;
                 const img = fn.decodeBase64Image(data.data.img);
-                const name = `${(new Date()).toJSON()}-${fn.nonce(6)}.${fn.mimeToExt(img.type)}`;
+                const name = `${(new Date()).toJSON()}-${nonce(6)}.${fn.mimeToExt(img.type)}`;
                 const path = `./data${rel}`;
                 const imgpath = `${path}/${name}`;
                 const imgurl = `${rel}/${name}`;
@@ -5719,7 +5718,7 @@ class DrawcastModule {
                 this.images = this.images.slice(0, 20);
                 this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
                     event: data.event,
-                    data: { img: imgurl },
+                    data: { nonce: data.data.nonce, img: imgurl },
                 });
             },
             'save': (ws, { settings }) => {
