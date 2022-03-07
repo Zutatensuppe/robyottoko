@@ -49,12 +49,6 @@ export interface SpeechToTextModuleData {
   settings: SpeechToTextModuleSettings
 }
 
-export interface SpeechToTextTranslateEventData {
-  text: string
-  src: string
-  dst: string
-}
-
 export interface SpeechToTextWsInitData {
   settings: SpeechToTextModuleSettings
 }
@@ -63,7 +57,6 @@ export interface SpeechToTextWsData {
   event: string
   data: SpeechToTextWsInitData
 }
-
 
 export interface SpeechToTextSaveEventData {
   event: "save"

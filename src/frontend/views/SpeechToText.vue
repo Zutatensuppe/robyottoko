@@ -10,8 +10,11 @@
         >
           Save
         </button>
-        <a class="button is-small" :href="widgetUrl" target="_blank"
-          >Open widget</a
+        <a class="button is-small" :href="controlWidgetUrl" target="_blank"
+          >Open control widget</a
+        >
+        <a class="button is-small mr-1" :href="displayWidgetUrl" target="_blank"
+          >Open display widget</a
         >
       </div>
     </div>
@@ -665,8 +668,11 @@ export default defineComponent({
     changed(): boolean {
       return this.unchangedJson !== this.changedJson;
     },
-    widgetUrl(): string {
+    controlWidgetUrl(): string {
       return util.widgetUrl("speech-to-text");
+    },
+    displayWidgetUrl(): string {
+      return util.widgetUrl("speech-to-text_receive");
     },
   },
   methods: {

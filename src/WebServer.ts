@@ -61,6 +61,12 @@ const widgets: WidgetDefinition[] = [
     pub: false,
   },
   {
+    type: 'speech-to-text_receive',
+    title: 'Speech-to-Text (receive)',
+    hint: 'Browser source, or open in browser and capture window',
+    pub: false,
+  },
+  {
     type: 'avatar',
     title: 'Avatar (control)',
     hint: '???',

@@ -9,7 +9,7 @@
         </ul>
       </div>
     </div>
-    <button @click="initSpeech" v-if="wantsSpeech && !initedSpeech">
+    <button @click="initSpeech" v-if="controls && wantsSpeech && !initedSpeech">
       Enable Speech Synthesis
     </button>
     <table ref="text_table" class="btm_table">
@@ -73,6 +73,9 @@ const log = logger("speech-to-text/Page.vue");
 //   brave://flags/#unsafely-treat-insecure-origin-as-secure
 
 export default defineComponent({
+  props: {
+    controls: { type: Boolean, required: true },
+  },
   data() {
     return {
       ws: null,
@@ -256,6 +259,9 @@ export default defineComponent({
       }
     },
     initVoiceRecognition() {
+      if (!this.controls) {
+        return;
+      }
       const r = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!r) {
         alert(
@@ -314,49 +320,23 @@ export default defineComponent({
           continue;
         }
 
-        if (this.settings.translation.enabled) {
-          this.texts.push({
-            recognized: _recognizedText,
-            translated: "",
-            ready: false,
-          });
-          log.info(
-            `added ${_recognizedText} at index: ${this.texts.length - 1}`
-          );
-
-          this.ws.send(
-            JSON.stringify({
-              event: "translate",
-              text: _recognizedText,
-              src: this.settings.translation.langSrc,
-              dst: this.settings.translation.langDst,
-            })
-          );
-        } else {
-          this.texts.push({
-            recognized: _recognizedText,
-            translated: "",
-            ready: true,
-          });
-          log.info(
-            `added ${_recognizedText} at index: ${this.texts.length - 1}`
-          );
-          this._next();
-        }
+        this.ws.send(
+          JSON.stringify({
+            event: "onVoiceResult",
+            text: _recognizedText,
+          })
+        );
         break;
       }
     },
   },
   mounted() {
     this.ws = util.wsClient("speech-to-text");
-    this.ws.onMessage("translated", (data) => {
-      log.info(`ws onMessage(translated)`, data);
-      this.texts = this.texts.map((item) => {
-        if (item.recognized === data.in) {
-          item.translated = data.out;
-          item.ready = true;
-        }
-        return item;
+    this.ws.onMessage("text", (data) => {
+      this.texts.push({
+        recognized: data.recognized,
+        translated: data.translated,
+        ready: true,
       });
       this._next();
     });
