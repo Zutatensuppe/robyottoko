@@ -21,17 +21,17 @@ const playMedia = (
 
     const variables = bot.getUserVariables(user)
     data.image_url = await fn.doReplacements(data.image_url, command, context, variables, originalCmd, bot, user)
-    data.clip_url = await fn.doReplacements(data.clip_url, command, context, variables, originalCmd, bot, user)
+    data.twitch_clip.url = await fn.doReplacements(data.twitch_clip.url, command, context, variables, originalCmd, bot, user)
 
-    if (data.clip_url) {
-      const filename = `${hash(data.clip_url)}-clip.mp4`
+    if (data.twitch_clip.url) {
+      const filename = `${hash(data.twitch_clip.url)}-clip.mp4`
       const outfile = `./data/uploads/${filename}`
       if (!fs.existsSync(outfile)) {
         console.log(`downloading the clip to ${outfile}`)
         const child = childProcess.execFile(
           config.youtubeDlBinary,
           [
-            data.clip_url,
+            data.twitch_clip.url,
             '-o',
             outfile,
           ]
@@ -42,7 +42,7 @@ const playMedia = (
       } else {
         console.log(`clip exists at ${outfile}`)
       }
-      data.clip_url = `/uploads/${filename}`
+      data.twitch_clip.url = `/uploads/${filename}`
     }
 
     bot.getWebSocketServer().notifyAll([user.id], 'general', {

@@ -131,6 +131,13 @@ class GeneralModule implements Module {
         if (!cmd.data.image.urlpath && cmd.data.image.file) {
           cmd.data.image.urlpath = `/uploads/${encodeURIComponent(cmd.data.image.file)}`
         }
+
+        if (!cmd.data.twitch_clip) {
+          cmd.data.twitch_clip = {
+            url: cmd.data.clip_url || '',
+            volume: 100,
+          }
+        }
       }
       if (cmd.action === 'countdown') {
         cmd.data.actions = cmd.data.actions.map((action: CountdownAction) => {

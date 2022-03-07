@@ -287,22 +287,37 @@
               </td>
             </tr>
             <tr v-if="item.action === 'media'">
-              <td>Twitch clip (by URL):</td>
+              <td>Twitch clip:</td>
               <td>
-                <input
-                  type="text"
-                  class="input is-small"
-                  v-model="item.data.clip_url"
-                />
+                <table>
+                  <tr>
+                    <td>Url:</td>
+                    <td>
+                      <input
+                        type="text"
+                        class="input is-small"
+                        v-model="item.data.twitch_clip.url"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Volume:</td>
+                    <td>
+                      <volume-slider v-model="item.data.twitch_clip.volume" />
+                    </td>
+                  </tr>
+                </table>
                 <div>
                   <span
                     class="button is-small"
-                    @click="item.data.clip_url = '$user($args).recent_clip_url'"
+                    @click="
+                      item.data.twitch_clip.url = '$user($args).recent_clip_url'
+                    "
                     >A recent clip of user given by args</span
                   >
                   <span
                     class="button is-small"
-                    @click="item.data.clip_url = '$user.recent_clip_url'"
+                    @click="item.data.twitch_clip.url = '$user.recent_clip_url'"
                     >A recent clip of user who executes the command</span
                   >
                 </div>
