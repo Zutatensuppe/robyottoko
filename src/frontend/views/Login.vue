@@ -1,5 +1,5 @@
 <template>
-  <div class="center-screen">
+  <div class="view center-screen">
     <h1 class="title is-6">Hyottoko.club</h1>
     <form>
       <div

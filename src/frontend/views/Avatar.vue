@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div class="view">
     <div id="top" ref="top">
       <navbar />
       <div id="actionbar" class="p-1">
