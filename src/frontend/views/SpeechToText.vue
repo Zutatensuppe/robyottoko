@@ -10,7 +10,7 @@
         >
           Save
         </button>
-        <a class="button is-small" :href="controlWidgetUrl" target="_blank"
+        <a class="button is-small mr-1" :href="controlWidgetUrl" target="_blank"
           >Open control widget</a
         >
         <a class="button is-small mr-1" :href="displayWidgetUrl" target="_blank"
