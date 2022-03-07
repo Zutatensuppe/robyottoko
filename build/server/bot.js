@@ -3802,7 +3802,7 @@ class GeneralModule {
                     t.next = now + t.minInterval;
                 }
             });
-        }, 1 * fn.SECOND);
+        }, 1 * SECOND);
     }
     fix(commands) {
         return (commands || []).map((cmd) => {
@@ -3934,7 +3934,7 @@ class GeneralModule {
                     }
                 }
                 else if (trigger.type === 'timer') {
-                    const interval = fn.parseHumanDuration(trigger.data.minInterval);
+                    const interval = parseHumanDuration(trigger.data.minInterval);
                     if (trigger.data.minLines || interval) {
                         timers.push({
                             lines: 0,

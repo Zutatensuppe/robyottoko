@@ -3,7 +3,7 @@ import madochanCreateWord from '../../commands/madochanCreateWord'
 import randomText from '../../commands/randomText'
 import playMedia from '../../commands/playMedia'
 import fn from '../../fn'
-import { logger } from '../../common/fn'
+import { logger, parseHumanDuration, SECOND } from '../../common/fn'
 import chatters from '../../commands/chatters'
 import setChannelTitle from '../../commands/setChannelTitle'
 import setChannelGameId from '../../commands/setChannelGameId'
@@ -104,7 +104,7 @@ class GeneralModule implements Module {
           t.next = now + t.minInterval
         }
       })
-    }, 1 * fn.SECOND)
+    }, 1 * SECOND)
   }
 
   fix(commands: any[]): Command[] {
@@ -243,7 +243,7 @@ class GeneralModule implements Module {
             commands.push(cmdObj)
           }
         } else if (trigger.type === 'timer') {
-          const interval = fn.parseHumanDuration(trigger.data.minInterval)
+          const interval = parseHumanDuration(trigger.data.minInterval)
           if (trigger.data.minLines || interval) {
             timers.push({
               lines: 0,
