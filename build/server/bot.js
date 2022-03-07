@@ -495,7 +495,7 @@ const doReplacements = async (text, command, context, variables, originalCmd, bo
                 }
                 const v = originalCmd.variables.find(v => v.name === m1);
                 const val = v ? v.value : variables.get(m1);
-                return val === null ? '' : val;
+                return val === null ? '' : String(val);
             },
         },
         {
@@ -506,7 +506,7 @@ const doReplacements = async (text, command, context, variables, originalCmd, bo
                 }
                 const username = m1 || m2 || context.username;
                 if (username === context.username && m3 === 'name') {
-                    return context['display-name'];
+                    return String(context['display-name']);
                 }
                 if (!bot || !user) {
                     return '';
@@ -520,20 +520,20 @@ const doReplacements = async (text, command, context, variables, originalCmd, bo
                     return '';
                 }
                 if (m3 === 'name') {
-                    return twitchUser.display_name;
+                    return String(twitchUser.display_name);
                 }
                 if (m3 === 'profile_image_url') {
-                    return twitchUser.profile_image_url;
+                    return String(twitchUser.profile_image_url);
                 }
                 if (m3 === 'recent_clip_url') {
                     const end = new Date();
                     const start = new Date(end.getTime() - 30 * DAY);
                     const clip = await helixClient.getClipByUserId(twitchUser.id, start.toISOString(), end.toISOString());
-                    return clip?.embed_url || '';
+                    return String(clip?.embed_url || '');
                 }
                 if (m3 === 'last_stream_category') {
                     const channelInfo = await helixClient.getChannelInformation(twitchUser.id);
-                    return channelInfo?.game_name || '';
+                    return String(channelInfo?.game_name || '');
                 }
                 return '';
             },
@@ -542,7 +542,13 @@ const doReplacements = async (text, command, context, variables, originalCmd, bo
             regex: /\$customapi\(([^$)]*)\)\['([A-Za-z0-9_ -]+)'\]/g,
             replacer: async (m0, m1, m2) => {
                 const txt = await getText(await doReplacements(m1, command, context, variables, originalCmd, bot, user));
-                return JSON.parse(txt)[m2];
+                try {
+                    return String(JSON.parse(txt)[m2]);
+                }
+                catch (e) {
+                    log$i.error(e);
+                    return '';
+                }
             },
         },
         {
@@ -576,7 +582,7 @@ const doReplacements = async (text, command, context, variables, originalCmd, bo
             },
         },
     ];
-    let replaced = text;
+    let replaced = String(text);
     let orig;
     do {
         orig = replaced;
