@@ -132,6 +132,9 @@ class GeneralModule implements Module {
           cmd.data.image.urlpath = `/uploads/${encodeURIComponent(cmd.data.image.file)}`
         }
 
+        if (!cmd.data.image_url || cmd.data.image_url === 'undefined') {
+          cmd.data.image_url = ''
+        }
         if (!cmd.data.twitch_clip) {
           cmd.data.twitch_clip = {
             url: cmd.data.clip_url || '',
