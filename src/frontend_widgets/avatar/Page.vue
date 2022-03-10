@@ -78,13 +78,20 @@ import util from "../util";
 import WsClient from "../../frontend/WsClient";
 import {
   AvatarModuleAvatarSlotDefinition,
+  AvatarModuleAvatarSlotItem,
   AvatarModuleSettings,
+  AvatarModuleSlotItemStateDefinition,
   AvatarModuleWsInitData,
   default_settings,
 } from "../../mod/modules/AvatarModuleCommon";
 import { logger } from "../../common/fn";
 
 const log = logger("Page.vue");
+
+const DEFAULT_STATE = "default";
+const SPEAKING_STATE = "speaking";
+
+const DEFAULT_ITEM_STATE_DEFINITION = { state: DEFAULT_STATE, frames: [] };
 
 const SPEAKING_THRESHOLD = 0.05;
 // in ff enable for usage with localhost (and no https):
@@ -135,37 +142,55 @@ export default defineComponent({
       return tuberDef ? tuberDef.state.slots : {};
     },
     lockedState() {
-      return this.tuberDef?.state.lockedState || "default";
+      return this.tuberDef?.state.lockedState || DEFAULT_STATE;
     },
     animationName() {
-      if (this.lockedState !== "default") {
+      if (this.lockedState !== DEFAULT_STATE) {
         return this.lockedState;
       }
-      return this.speaking ? "speaking" : "default";
+      return this.speaking ? SPEAKING_STATE : DEFAULT_STATE;
     },
     animations() {
       if (!this.tuberDef) {
         return [];
       }
-      return this.tuberDef.slotDefinitions.map(
-        (slotDef: AvatarModuleAvatarSlotDefinition) => {
-          const itemIdx = this.slots[slotDef.slot] || slotDef.defaultItemIndex;
-          const item = slotDef.items[itemIdx];
-          if (!item) {
-            return { title: "", states: [] };
-          }
-          const stateDef = item.states.find(
-            ({ state }) => state === this.animationName
-          );
-          if (stateDef && stateDef.frames.length > 0) {
-            return stateDef;
-          }
-          return item.states.find(({ state }) => state === "default");
-        }
-      );
+      return this.tuberDef.slotDefinitions.map(this.getSlotStateDefinition);
     },
   },
   methods: {
+    getSlotStateDefinition(
+      slotDef: AvatarModuleAvatarSlotDefinition
+    ): AvatarModuleSlotItemStateDefinition {
+      const item = this.getItem(slotDef);
+      if (!item) {
+        return DEFAULT_ITEM_STATE_DEFINITION;
+      }
+      const stateDef = item.states.find(
+        ({ state }) => state === this.animationName
+      );
+      if (stateDef && stateDef.frames.length > 0) {
+        return stateDef;
+      }
+      return (
+        item.states.find(({ state }) => state === DEFAULT_STATE) ||
+        DEFAULT_ITEM_STATE_DEFINITION
+      );
+    },
+    getItem(
+      slotDef: AvatarModuleAvatarSlotDefinition
+    ): AvatarModuleAvatarSlotItem | null {
+      if (slotDef.items.length === 0) {
+        return null;
+      }
+      let itemIdx = this.slots[slotDef.slot];
+      if (typeof itemIdx === "undefined") {
+        itemIdx = slotDef.defaultItemIndex;
+      }
+      if (itemIdx < 0 || itemIdx >= slotDef.items.length) {
+        itemIdx = 0;
+      }
+      return slotDef.items[itemIdx];
+    },
     ctrl(ctrl: string, args: any[]) {
       if (!this.ws) {
         log.error("ctrl: this.ws not initialized");
