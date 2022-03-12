@@ -112,6 +112,9 @@ const logger = (prefix, ...pre) => {
         error: fn('error'),
     };
 };
+const unicodeLength = (str) => {
+    return [...str].length;
+};
 const dateformat = (format, date) => {
     return format.replace(/(hh|mm|ss)/g, (m0, m1) => {
         switch (m1) {
@@ -3458,6 +3461,13 @@ const setChannelTitle = (originalCmd, bot, user) => async (command, client, targ
         else {
             say(`❌ Unable to determine current title.`);
         }
+        return;
+    }
+    // helix api returns 204 status code even if the title is too long and
+    // cant actually be set. but there is no error returned in that case :(
+    const len = unicodeLength(tmpTitle);
+    if (len > 140) {
+        say(`❌ Unable to change title because it is longer than 140 characters.`);
         return;
     }
     const resp = await helixClient.modifyChannelInformation(context['room-id'], { title: tmpTitle });

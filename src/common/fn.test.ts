@@ -3,6 +3,7 @@ import {
   calculateOptimalSubtitleDisplayTimeMs,
   humanDuration,
   parseHumanDuration,
+  unicodeLength,
   DAY,
   HOUR,
   MINUTE,
@@ -76,4 +77,23 @@ ${2163000} | ${'36m 3s'}
 `('humanDuration $expected', ({ duration, expected }) => {
   const actual = humanDuration(duration)
   expect(actual).toStrictEqual(expected)
+})
+
+
+test.each([
+  {
+    str: '💙💛',
+    expected: 2,
+  },
+  {
+    str: '💙 !puckfutin ♡ translating my fox-girl visual novel to russian while kirinokirino distracts me by learning ukranian on duolingo ♡ !sr add 💙💙',
+    expected: 140,
+  },
+  {
+    str: 'hello',
+    expected: 5,
+  },
+])('unicodeLenth', ({ str, expected }) => {
+  const actual = unicodeLength(str)
+  expect(actual).toBe(expected)
 })

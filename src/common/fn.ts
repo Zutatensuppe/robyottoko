@@ -46,6 +46,10 @@ export const logger = (prefix: string, ...pre: string[]): Logger => {
   }
 }
 
+export const unicodeLength = (str: string): number => {
+  return [...str].length
+}
+
 const dateformat = (
   format: string,
   date: Date,
@@ -310,6 +314,7 @@ export const calculateOptimalSubtitleDisplayTimeMs = (text: string): number => {
 }
 
 export default {
+  unicodeLength,
   arrayMove,
   humanDuration,
   parseHumanDuration,

@@ -1,6 +1,6 @@
 import { Bot, CommandFunction, RawCommand, SetChannelTitleCommand, TwitchChatClient, TwitchChatContext } from '../types'
 import fn from './../fn'
-import { logger } from './../common/fn'
+import { logger, unicodeLength } from './../common/fn'
 import { User } from '../services/Users'
 
 const log = logger('setChannelTitle.ts')
@@ -36,6 +36,14 @@ const setChannelTitle = (
       } else {
         say(`❌ Unable to determine current title.`)
       }
+      return
+    }
+
+    // helix api returns 204 status code even if the title is too long and
+    // cant actually be set. but there is no error returned in that case :(
+    const len = unicodeLength(tmpTitle)
+    if (len > 140) {
+      say(`❌ Unable to change title because it is longer than 140 characters.`)
       return
     }
 
