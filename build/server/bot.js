@@ -5475,46 +5475,47 @@ class VoteModule {
     }
 }
 
-const default_settings$3 = () => ({
+const default_settings$3 = (obj = null) => ({
     status: {
-        enabled: false,
+        enabled: typeof obj?.status?.enabled !== 'undefined' ? obj.status.enabled : false,
     },
     styles: {
         // page background color
-        bgColor: '#ff00ff',
+        bgColor: typeof obj?.styles?.bgColor !== 'undefined' ? obj.styles.bgColor : '#ff00ff',
+        bgColorEnabled: typeof obj?.styles?.bgColorEnabled !== 'undefined' ? obj.styles.bgColorEnabled : true,
         // vertical align of text
-        vAlign: 'bottom',
+        vAlign: typeof obj?.styles?.vAlign !== 'undefined' ? obj.styles.vAlign : 'bottom',
         // recognized text
         recognition: {
-            fontFamily: 'sans-serif',
-            fontSize: '30pt',
-            fontWeight: '400',
-            strokeWidth: '8pt',
-            strokeColor: '#292929',
-            color: '#ffff00',
+            fontFamily: typeof obj?.styles?.recognition?.fontFamily !== 'undefined' ? obj.styles.recognition.fontFamily : 'sans-serif',
+            fontSize: typeof obj?.styles?.recognition?.fontSize !== 'undefined' ? obj.styles.recognition.fontSize : '30pt',
+            fontWeight: typeof obj?.styles?.recognition?.fontWeight !== 'undefined' ? obj.styles.recognition.fontWeight : '400',
+            strokeWidth: typeof obj?.styles?.recognition?.strokeWidth !== 'undefined' ? obj.styles.recognition.strokeWidth : '8pt',
+            strokeColor: typeof obj?.styles?.recognition?.strokeColor !== 'undefined' ? obj.styles.recognition.strokeColor : '#292929',
+            color: typeof obj?.styles?.recognition?.color !== 'undefined' ? obj.styles.recognition.color : '#ffff00',
         },
         // translated text
         translation: {
-            fontFamily: 'sans-serif',
-            fontSize: '30pt',
-            fontWeight: '400',
-            strokeWidth: '8pt',
-            strokeColor: '#292929',
-            color: '#cbcbcb',
+            fontFamily: typeof obj?.styles?.translation?.fontFamily !== 'undefined' ? obj.styles.translation.fontFamily : 'sans-serif',
+            fontSize: typeof obj?.styles?.translation?.fontSize !== 'undefined' ? obj.styles.translation.fontSize : '30pt',
+            fontWeight: typeof obj?.styles?.translation?.fontWeight !== 'undefined' ? obj.styles.translation.fontWeight : '400',
+            strokeWidth: typeof obj?.styles?.translation?.strokeWidth !== 'undefined' ? obj.styles.translation.strokeWidth : '8pt',
+            strokeColor: typeof obj?.styles?.translation?.strokeColor !== 'undefined' ? obj.styles.translation.strokeColor : '#292929',
+            color: typeof obj?.styles?.translation?.color !== 'undefined' ? obj.styles.translation.color : '#cbcbcb',
         }
     },
     recognition: {
-        display: true,
-        lang: 'ja',
-        synthesize: false,
-        synthesizeLang: '',
+        display: typeof obj?.recognition?.display !== 'undefined' ? obj.recognition.display : true,
+        lang: typeof obj?.recognition?.lang !== 'undefined' ? obj.recognition.lang : 'ja',
+        synthesize: typeof obj?.recognition?.synthesize !== 'undefined' ? obj.recognition.synthesize : false,
+        synthesizeLang: typeof obj?.recognition?.synthesizeLang !== 'undefined' ? obj.recognition.synthesizeLang : '',
     },
     translation: {
-        enabled: true,
-        langSrc: 'ja',
-        langDst: 'en',
-        synthesize: false,
-        synthesizeLang: '',
+        enabled: typeof obj?.translation?.enabled !== 'undefined' ? obj.translation.enabled : true,
+        langSrc: typeof obj?.translation?.langSrc !== 'undefined' ? obj.translation.langSrc : 'ja',
+        langDst: typeof obj?.translation?.langDst !== 'undefined' ? obj.translation.langDst : 'en',
+        synthesize: typeof obj?.translation?.synthesize !== 'undefined' ? obj.translation.synthesize : false,
+        synthesizeLang: typeof obj?.translation?.synthesizeLang !== 'undefined' ? obj.translation.synthesizeLang : '',
     },
 });
 
@@ -5523,17 +5524,16 @@ class SpeechToTextModule {
         this.name = 'speech-to-text';
         this.bot = bot;
         this.user = user;
-        this.defaultSettings = default_settings$3();
         this.data = this.reinit();
     }
     async userChanged(user) {
         this.user = user;
     }
     reinit() {
-        const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
-            settings: this.defaultSettings
-        });
-        return data;
+        const data = this.bot.getUserModuleStorage(this.user).load(this.name, {});
+        return {
+            settings: default_settings$3(data.settings),
+        };
     }
     saveCommands() {
         // pass
@@ -5766,20 +5766,22 @@ const default_avatar_definition = (def = null) => {
         state: get(def, 'state', { slots: {}, lockedState: '' })
     };
 };
-const default_settings$1 = () => ({
+const default_state$1 = (obj = null) => ({
+    tuberIdx: typeof obj?.tuberIdx !== 'undefined' ? obj.tuberIdx : -1,
+});
+const default_settings$1 = (obj = null) => ({
     styles: {
         // page background color
-        bgColor: '#80ff00',
+        bgColor: typeof obj?.styles?.bgColor !== 'undefined' ? obj.styles.bgColor : '#80ff00',
+        bgColorEnabled: typeof obj?.styles?.bgColorEnabled !== 'undefined' ? obj.styles.bgColorEnabled : true,
     },
-    avatarDefinitions: []
+    avatarDefinitions: typeof obj?.avatarDefinitions !== 'undefined' ? obj.avatarDefinitions.map(default_avatar_definition) : []
 });
 
 const log$2 = logger('AvatarModule.ts');
 class AvatarModule {
     constructor(bot, user) {
         this.name = 'avatar';
-        this.defaultSettings = default_settings$1();
-        this.defaultState = { tuberIdx: -1 };
         this.bot = bot;
         this.user = user;
         this.data = this.reinit();
@@ -5794,25 +5796,10 @@ class AvatarModule {
         // pass
     }
     reinit() {
-        const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
-            settings: this.defaultSettings,
-            state: this.defaultState,
-        });
-        if (!data.state) {
-            data.state = this.defaultState;
-        }
-        if (!data.settings.styles) {
-            data.settings.styles = this.defaultSettings.styles;
-        }
-        if (!data.settings.styles.bgColor) {
-            data.settings.styles.bgColor = this.defaultSettings.styles.bgColor;
-        }
-        data.settings.avatarDefinitions = data.settings.avatarDefinitions.map((def) => {
-            return default_avatar_definition(def);
-        });
+        const data = this.bot.getUserModuleStorage(this.user).load(this.name, {});
         return {
-            settings: data.settings,
-            state: data.state,
+            settings: default_settings$1(data.settings),
+            state: default_state$1(data.state),
         };
     }
     getRoutes() {

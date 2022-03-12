@@ -2,7 +2,7 @@ import { logger } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
 import { Bot, ChatMessageContext, Module, RewardRedemptionContext } from '../../types'
 import { User } from '../../services/Users'
-import { AvatarModuleSettings, AvatarModuleState, AvatarModuleWsSaveData, default_avatar_definition, default_settings } from './AvatarModuleCommon'
+import { AvatarModuleSettings, AvatarModuleState, AvatarModuleWsSaveData, default_settings, default_state } from './AvatarModuleCommon'
 
 const log = logger('AvatarModule.ts')
 
@@ -36,8 +36,6 @@ class AvatarModule implements Module {
   public user: User
 
   private data: AvatarModuleData
-  private defaultSettings: AvatarModuleSettings = default_settings()
-  private defaultState: AvatarModuleState = { tuberIdx: -1 }
 
   constructor(
     bot: Bot,
@@ -62,27 +60,10 @@ class AvatarModule implements Module {
   }
 
   reinit(): AvatarModuleData {
-    const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
-      settings: this.defaultSettings,
-      state: this.defaultState,
-    })
-    if (!data.state) {
-      data.state = this.defaultState
-    }
-    if (!data.settings.styles) {
-      data.settings.styles = this.defaultSettings.styles
-    }
-    if (!data.settings.styles.bgColor) {
-      data.settings.styles.bgColor = this.defaultSettings.styles.bgColor
-    }
-
-    data.settings.avatarDefinitions = data.settings.avatarDefinitions.map((def: any) => {
-      return default_avatar_definition(def)
-    })
-
+    const data = this.bot.getUserModuleStorage(this.user).load(this.name, {})
     return {
-      settings: data.settings,
-      state: data.state,
+      settings: default_settings(data.settings),
+      state: default_state(data.state),
     }
   }
 
