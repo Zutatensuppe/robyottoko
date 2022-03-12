@@ -121,7 +121,9 @@ class VoteModule implements Module {
       const type = command.args[1]
       if (!this.data.votes[type]) {
         say(`No votes for "${type}".`)
+        return
       }
+
       const usersByValues: Record<string, string[]> = {}
       for (const user of Object.keys(this.data.votes[type])) {
         const val = this.data.votes[type][user]
