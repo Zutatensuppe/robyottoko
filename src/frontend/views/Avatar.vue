@@ -49,8 +49,18 @@
                   settings.styles.bgColor = defaultSettings.styles.bgColor
                 "
               >
-                <i class="fa fa-remove"></i>
+                Reset to default
               </button>
+            </td>
+          </tr>
+          <tr>
+            <td><code>settings.style.bgColorEnabled</code></td>
+            <td>
+              <input
+                type="checkbox"
+                v-model="settings.styles.bgColorEnabled"
+                @update:modelValue="sendSave"
+              />
             </td>
           </tr>
         </tbody>

@@ -10,7 +10,6 @@ class SpeechToTextModule implements Module {
 
   public bot: Bot
   public user: User
-  private defaultSettings: SpeechToTextModuleSettings
   private data: SpeechToTextModuleData
 
   constructor(
@@ -19,7 +18,6 @@ class SpeechToTextModule implements Module {
   ) {
     this.bot = bot
     this.user = user
-    this.defaultSettings = default_settings()
     this.data = this.reinit()
   }
 
@@ -28,10 +26,10 @@ class SpeechToTextModule implements Module {
   }
 
   reinit() {
-    const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
-      settings: this.defaultSettings
-    })
-    return data as SpeechToTextModuleData
+    const data = this.bot.getUserModuleStorage(this.user).load(this.name, {})
+    return {
+      settings: default_settings(data.settings),
+    }
   }
 
   saveCommands() {

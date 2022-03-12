@@ -48,6 +48,12 @@
             </td>
           </tr>
           <tr>
+            <td><code>settings.style.bgColorEnabled</code></td>
+            <td>
+              <input type="checkbox" v-model="settings.styles.bgColorEnabled" />
+            </td>
+          </tr>
+          <tr>
             <td><code>settings.style.vAlign</code></td>
             <td>
               <div class="select is-small">

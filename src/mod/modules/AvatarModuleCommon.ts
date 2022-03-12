@@ -42,6 +42,7 @@ export interface AvatarModuleSettings {
   styles: {
     // page background color
     bgColor: string,
+    bgColorEnabled: boolean,
   },
   avatarDefinitions: AvatarModuleAvatarDefinition[]
 }
@@ -58,13 +59,17 @@ export const default_avatar_definition = (def: any = null): AvatarModuleAvatarDe
     state: get(def, 'state', { slots: {}, lockedState: '' })
   }
 }
+export const default_state = (obj: any = null): AvatarModuleState => ({
+  tuberIdx: typeof obj?.tuberIdx !== 'undefined' ? obj.tuberIdx : -1,
+})
 
-export const default_settings = (): AvatarModuleSettings => ({
+export const default_settings = (obj: any = null): AvatarModuleSettings => ({
   styles: {
     // page background color
-    bgColor: '#80ff00',
+    bgColor: typeof obj?.styles?.bgColor !== 'undefined' ? obj.styles.bgColor : '#80ff00',
+    bgColorEnabled: typeof obj?.styles?.bgColorEnabled !== 'undefined' ? obj.styles.bgColorEnabled : true,
   },
-  avatarDefinitions: []
+  avatarDefinitions: typeof obj?.avatarDefinitions !== 'undefined' ? obj.avatarDefinitions.map(default_avatar_definition) : []
 })
 
 export interface AvatarModuleState {

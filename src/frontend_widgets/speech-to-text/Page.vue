@@ -192,8 +192,10 @@ export default defineComponent({
     applyStyles() {
       const styles = this.settings.styles;
 
-      if (styles.bgColor != null) {
-        document.bgColor = styles.bgColor;
+      if (styles.bgColorEnabled && styles.bgColor != null) {
+        document.body.style.backgroundColor = styles.bgColor;
+      } else {
+        document.body.style.backgroundColor = "";
       }
 
       if (styles.vAlign === "top") {
