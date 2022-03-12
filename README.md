@@ -28,10 +28,8 @@ Features are:
   - The included example "Hyottoko-Chan" is made by [LisadiKaprio](https://www.artstation.com/lisadikaprio). Thank you!
 
 Note: You will need your own bot account on twitch.tv for using
-robyottoko. Alternatively you can ask in
-the [discord channel](https://discord.gg/jrPSmmHhbE)
-for an account on [hyottoko.club](https://hyottoko.club), which
-would let you use all the features without setting anything up yourself.
+robyottoko, or use the [hyottoko.club](https://hyottoko.club) website,
+which lets you use the features without setting the bot up yourself.
 
 ## Getting Started
 

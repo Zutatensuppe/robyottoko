@@ -78,6 +78,103 @@ export default {
       ]
     },
     {
+      "slot": "Mouth",
+      "defaultItemIndex": 0,
+      "items": [
+        {
+          "title": "Confused",
+          "states": [
+            {
+              "state": "default",
+              "frames": [
+                {
+                  "url": "https://hyottoko.club/uploads/GkDE45-mouth-confused-open.png",
+                  "duration": 100
+                }
+              ]
+            },
+            {
+              "state": "speaking",
+              "frames": [
+                {
+                  "url": "https://hyottoko.club/uploads/snKSAf-mouth-open.png",
+                  "duration": 100
+                }
+              ]
+            },
+            {
+              "state": "brb",
+              "frames": [
+                {
+                  "url": "",
+                  "duration": 100
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Mild Smile",
+          "states": [
+            {
+              "state": "default",
+              "frames": [
+                {
+                  "url": "https://hyottoko.club/uploads/TTeOCx-mouth-mild-smile.png",
+                  "duration": 100
+                }
+              ]
+            },
+            {
+              "state": "speaking",
+              "frames": [
+                {
+                  "url": "https://hyottoko.club/uploads/gjs4vW-mouth-open.png",
+                  "duration": 100
+                }
+              ]
+            },
+            {
+              "state": "brb",
+              "frames": [
+                {
+                  "url": "",
+                  "duration": 100
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Focused",
+          "states": [
+            {
+              "state": "default",
+              "frames": [
+                {
+                  "url": "https://hyottoko.club/uploads/bbpNaD-mouth-focused.png",
+                  "duration": 100
+                }
+              ]
+            },
+            {
+              "state": "speaking",
+              "frames": []
+            },
+            {
+              "state": "brb",
+              "frames": [
+                {
+                  "url": "",
+                  "duration": 100
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "slot": "Eyes",
       "defaultItemIndex": 1,
       "items": [
@@ -169,103 +266,6 @@ export default {
               "frames": [
                 {
                   "url": "https://hyottoko.club/uploads/LQkiXq-eyes-down-focused.png",
-                  "duration": 100
-                }
-              ]
-            },
-            {
-              "state": "speaking",
-              "frames": []
-            },
-            {
-              "state": "brb",
-              "frames": [
-                {
-                  "url": "",
-                  "duration": 100
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "slot": "Mouth",
-      "defaultItemIndex": 0,
-      "items": [
-        {
-          "title": "Confused",
-          "states": [
-            {
-              "state": "default",
-              "frames": [
-                {
-                  "url": "https://hyottoko.club/uploads/GkDE45-mouth-confused-open.png",
-                  "duration": 100
-                }
-              ]
-            },
-            {
-              "state": "speaking",
-              "frames": [
-                {
-                  "url": "https://hyottoko.club/uploads/snKSAf-mouth-open.png",
-                  "duration": 100
-                }
-              ]
-            },
-            {
-              "state": "brb",
-              "frames": [
-                {
-                  "url": "",
-                  "duration": 100
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "title": "Mild Smile",
-          "states": [
-            {
-              "state": "default",
-              "frames": [
-                {
-                  "url": "https://hyottoko.club/uploads/TTeOCx-mouth-mild-smile.png",
-                  "duration": 100
-                }
-              ]
-            },
-            {
-              "state": "speaking",
-              "frames": [
-                {
-                  "url": "https://hyottoko.club/uploads/gjs4vW-mouth-open.png",
-                  "duration": 100
-                }
-              ]
-            },
-            {
-              "state": "brb",
-              "frames": [
-                {
-                  "url": "",
-                  "duration": 100
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "title": "Focused",
-          "states": [
-            {
-              "state": "default",
-              "frames": [
-                {
-                  "url": "https://hyottoko.club/uploads/bbpNaD-mouth-focused.png",
                   "duration": 100
                 }
               ]
@@ -423,5 +423,14 @@ export default {
         }
       ]
     }
-  ]
+  ],
+  "state": {
+    "slots": {
+      "Mouth": 1,
+      "Eyes": 1,
+      "Base": 1,
+      "Hands + Table": 1
+    },
+    "lockedState": "default"
+  }
 }

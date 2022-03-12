@@ -272,6 +272,10 @@ export default defineComponent({
           { value: "speaking", deletable: false },
         ],
         slotDefinitions: [],
+        state: {
+          slots: {},
+          lockedState: "default",
+        },
       };
       this.editIdx = this.settings.avatarDefinitions.length;
       this.editEntity = avatar;
