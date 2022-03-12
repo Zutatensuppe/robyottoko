@@ -489,6 +489,30 @@ const doReplacements = async (text, command, context, variables, originalCmd, bo
             },
         },
         {
+            regex: /\$bot\.(version|date|website|github|features)/g,
+            replacer: async (m0, m1) => {
+                if (!bot) {
+                    return '';
+                }
+                if (m1 === 'version') {
+                    return bot.getBuildVersion();
+                }
+                if (m1 === 'date') {
+                    return bot.getBuildDate();
+                }
+                if (m1 === 'website') {
+                    return 'https://hyottoko.club';
+                }
+                if (m1 === 'github') {
+                    return 'https://github.com/zutatensuppe/robyottoko';
+                }
+                if (m1 === 'features') {
+                    return 'this twitch bot has commands, media commands, timers, translation commands, user-submitted drawings widget, png-tuber, song requests, captions (speech-to-text)!';
+                }
+                return '';
+            },
+        },
+        {
             regex: /\$user(?:\(([^)]+)\)|())\.(name|profile_image_url|recent_clip_url|last_stream_category)/g,
             replacer: async (m0, m1, m2, m3) => {
                 if (!context) {
@@ -3792,6 +3816,9 @@ class GeneralModule {
         this.data = initData.data;
         this.commands = initData.commands;
         this.timers = initData.timers;
+        if (initData.shouldSave) {
+            this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
+        }
         this.inittimers();
     }
     async userChanged(user) {
@@ -3881,6 +3908,7 @@ class GeneralModule {
         });
     }
     reinit() {
+        let shouldSave = false;
         const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
             commands: [],
             settings: {
@@ -3888,6 +3916,7 @@ class GeneralModule {
             },
             adminSettings: {
                 showImages: true,
+                autocommands: []
             },
         });
         data.commands = this.fix(data.commands);
@@ -3897,7 +3926,18 @@ class GeneralModule {
         if (typeof data.adminSettings.showImages === 'undefined') {
             data.adminSettings.showImages = true;
         }
-        const commands = [];
+        if (typeof data.adminSettings.autocommands === 'undefined') {
+            data.adminSettings.autocommands = [];
+        }
+        if (!data.adminSettings.autocommands.includes('!bot')) {
+            const txtCommand = commands.text.NewCommand();
+            txtCommand.triggers = [newCommandTrigger('!bot')];
+            txtCommand.data.text = ['Version $bot.version $bot.website < - $bot.features - Source code at $bot.github'];
+            data.commands.push(txtCommand);
+            data.adminSettings.autocommands.push('!bot');
+            shouldSave = true;
+        }
+        const commands$1 = [];
         const timers = [];
         data.commands.forEach((cmd) => {
             if (cmd.triggers.length === 0) {
@@ -3944,18 +3984,18 @@ class GeneralModule {
             }
             for (const trigger of cmd.triggers) {
                 if (trigger.type === 'first_chat') {
-                    commands.push(cmdObj);
+                    commands$1.push(cmdObj);
                 }
                 else if (trigger.type === 'command') {
                     // TODO: check why this if is required, maybe for protection against '' command?
                     if (trigger.data.command) {
-                        commands.push(cmdObj);
+                        commands$1.push(cmdObj);
                     }
                 }
                 else if (trigger.type === 'reward_redemption') {
                     // TODO: check why this if is required, maybe for protection against '' command?
                     if (trigger.data.command) {
-                        commands.push(cmdObj);
+                        commands$1.push(cmdObj);
                     }
                 }
                 else if (trigger.type === 'timer') {
@@ -3972,7 +4012,7 @@ class GeneralModule {
                 }
             }
         });
-        return { data, commands, timers };
+        return { data, commands: commands$1, timers, shouldSave };
     }
     getRoutes() {
         return {};
@@ -6069,6 +6109,13 @@ class PomoModule {
     }
 }
 
+var buildEnv = {
+    // @ts-ignore
+    buildDate: "2022-03-12T18:24:34.455Z",
+    // @ts-ignore
+    buildVersion: "1.0.1",
+};
+
 setLogLevel(config.log.level);
 const log = logger('bot.ts');
 const modules = [
@@ -6100,6 +6147,8 @@ class BotImpl {
         this.userTwitchClientManagerInstances = {};
         // pass
     }
+    getBuildVersion() { return buildEnv.buildVersion; }
+    getBuildDate() { return buildEnv.buildDate; }
     getModuleManager() { return moduleManager; }
     getDb() { return db; }
     getTokens() { return tokenRepo; }

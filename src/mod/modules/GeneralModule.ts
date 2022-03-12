@@ -5,6 +5,7 @@ import playMedia from '../../commands/playMedia'
 import fn from '../../fn'
 import { logger, parseHumanDuration, SECOND } from '../../common/fn'
 import chatters from '../../commands/chatters'
+import { commands as commonCommands, getUniqueCommandsByTriggers, newCommandTrigger } from '../../common/commands'
 import setChannelTitle from '../../commands/setChannelTitle'
 import setChannelGameId from '../../commands/setChannelGameId'
 import { Socket } from '../../net/WebSocketServer'
@@ -18,7 +19,6 @@ import {
   RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand, CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand
 } from '../../types'
 import dictLookup from '../../commands/dictLookup'
-import { newCommandTrigger } from '../../common/commands'
 import { GeneralModuleAdminSettings, GeneralModuleSettings, GeneralModuleWsEventData, GeneralSaveEventData } from './GeneralModuleCommon'
 import addStreamTags from '../../commands/addStreamTags'
 import removeStreamTags from '../../commands/removeStreamTags'
@@ -44,6 +44,7 @@ interface GeneralModuleInitData {
   commands: FunctionCommand[]
   redemptions: FunctionCommand[]
   timers: GeneralModuleTimer[]
+  shouldSave: boolean
 }
 
 interface WsData {
@@ -75,6 +76,9 @@ class GeneralModule implements Module {
     this.data = initData.data
     this.commands = initData.commands
     this.timers = initData.timers
+    if (initData.shouldSave) {
+      this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
+    }
     this.inittimers()
   }
 
@@ -173,6 +177,7 @@ class GeneralModule implements Module {
   }
 
   reinit(): GeneralModuleInitData {
+    let shouldSave = false
     const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
       commands: [],
       settings: {
@@ -180,6 +185,7 @@ class GeneralModule implements Module {
       },
       adminSettings: {
         showImages: true,
+        autocommands: []
       },
     })
     data.commands = this.fix(data.commands)
@@ -188,6 +194,17 @@ class GeneralModule implements Module {
     }
     if (typeof data.adminSettings.showImages === 'undefined') {
       data.adminSettings.showImages = true
+    }
+    if (typeof data.adminSettings.autocommands === 'undefined') {
+      data.adminSettings.autocommands = []
+    }
+    if (!data.adminSettings.autocommands.includes('!bot')) {
+      const txtCommand = commonCommands.text.NewCommand() as RandomTextCommand
+      txtCommand.triggers = [newCommandTrigger('!bot')]
+      txtCommand.data.text = ['Version $bot.version $bot.website < - $bot.features - Source code at $bot.github']
+      data.commands.push(txtCommand)
+      data.adminSettings.autocommands.push('!bot')
+      shouldSave = true
     }
 
     const commands: FunctionCommand[] = []
@@ -266,7 +283,7 @@ class GeneralModule implements Module {
         }
       }
     })
-    return { data, commands, timers } as GeneralModuleInitData
+    return { data, commands, timers, shouldSave } as GeneralModuleInitData
   }
 
   getRoutes() {
