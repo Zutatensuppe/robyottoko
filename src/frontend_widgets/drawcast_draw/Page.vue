@@ -25,6 +25,10 @@
                   :width="canvasWidth"
                   :height="canvasHeight"
                   :style="styles"
+                  @touchstart.prevent="touchstart"
+                  @touchmove.prevent="touchmove"
+                  @mousemove="mousemove"
+                  @mousedown="mousedown"
                 ></canvas>
               </div>
             </div>
@@ -825,11 +829,6 @@ export default defineComponent({
     });
     this.ws.connect();
 
-    window.addEventListener("touchstart", this.touchstart);
-    window.addEventListener("touchmove", this.touchmove);
-    window.addEventListener("touchmove", this.touchmove);
-    window.addEventListener("mousemove", this.mousemove);
-    window.addEventListener("mousedown", this.mousedown);
     window.addEventListener("mouseup", this.cancelDraw);
     window.addEventListener("touchend", this.cancelDraw);
     window.addEventListener("touchcancel", this.cancelDraw);
@@ -840,11 +839,6 @@ export default defineComponent({
     });
   },
   unmounted() {
-    window.removeEventListener("touchstart", this.touchstart);
-    window.removeEventListener("touchmove", this.touchmove);
-    window.removeEventListener("touchmove", this.touchmove);
-    window.removeEventListener("mousemove", this.mousemove);
-    window.removeEventListener("mousedown", this.mousedown);
     window.removeEventListener("mouseup", this.cancelDraw);
     window.removeEventListener("touchend", this.cancelDraw);
     window.removeEventListener("touchcancel", this.cancelDraw);
