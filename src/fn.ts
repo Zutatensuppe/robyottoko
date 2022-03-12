@@ -256,6 +256,30 @@ export const doReplacements = async (
       },
     },
     {
+      regex: /\$bot\.(version|date|website|github|features)/g,
+      replacer: async (m0: string, m1: string): Promise<string> => {
+        if (!bot) {
+          return ''
+        }
+        if (m1 === 'version') {
+          return bot.getBuildVersion()
+        }
+        if (m1 === 'date') {
+          return bot.getBuildDate()
+        }
+        if (m1 === 'website') {
+          return 'https://hyottoko.club'
+        }
+        if (m1 === 'github') {
+          return 'https://github.com/zutatensuppe/robyottoko'
+        }
+        if (m1 === 'features') {
+          return 'this twitch bot has commands, media commands, timers, translation commands, user-submitted drawings widget, png-tuber, song requests, captions (speech-to-text)!'
+        }
+        return '';
+      },
+    },
+    {
       regex: /\$user(?:\(([^)]+)\)|())\.(name|profile_image_url|recent_clip_url|last_stream_category)/g,
       replacer: async (m0: string, m1: string, m2: string, m3): Promise<string> => {
         if (!context) {

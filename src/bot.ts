@@ -21,6 +21,7 @@ import SpeechToTextModule from './mod/modules/SpeechToTextModule'
 import DrawcastModule from './mod/modules/DrawcastModule'
 import AvatarModule from './mod/modules/AvatarModule'
 import PomoModule from './mod/modules/PomoModule'
+import buildEnv from './buildEnv'
 
 import { Bot } from './types'
 
@@ -73,6 +74,8 @@ class BotImpl implements Bot {
     // pass
   }
 
+  getBuildVersion() { return buildEnv.buildVersion }
+  getBuildDate() { return buildEnv.buildDate }
   getModuleManager() { return moduleManager }
   getDb() { return db }
   getTokens() { return tokenRepo }

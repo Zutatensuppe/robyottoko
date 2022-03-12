@@ -445,6 +445,8 @@ export interface MailService {
 }
 
 export interface Bot {
+  getBuildVersion: () => string
+  getBuildDate: () => string
   getModuleManager: () => ModuleManager
   getDb: () => Db
   getTokens: () => Tokens

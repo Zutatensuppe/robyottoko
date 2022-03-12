@@ -6,6 +6,7 @@ export interface GeneralModuleSettings {
 
 export interface GeneralModuleAdminSettings {
   showImages: boolean
+  autocommands: string[]
 }
 
 export const default_settings = (): GeneralModuleSettings => ({
@@ -14,6 +15,7 @@ export const default_settings = (): GeneralModuleSettings => ({
 
 export const default_admin_settings = (): GeneralModuleAdminSettings => ({
   showImages: true,
+  autocommands: [],
 })
 
 export interface GeneralModuleWsEventData {
