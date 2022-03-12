@@ -138,7 +138,12 @@
           @cancel="editEntity = null"
         />
 
-        <span class="button is-small" @click="addAvatar">Add avatar</span>
+        <span class="button is-small mr-1" @click="addAvatar"
+          >Add new avatar</span
+        >
+        <span class="button is-small" @click="addExampleAvatar"
+          >Add example avatar (Hyottoko-Chan)</span
+        >
       </div>
     </div>
   </div>
@@ -156,6 +161,8 @@ import {
 } from "../../mod/modules/AvatarModuleCommon";
 import util from "../util";
 import WsClient from "../WsClient";
+
+import hyottokoChan from "./avatar_hyottoko_chan.js";
 
 interface TabDefinition {
   tab: string;
@@ -266,6 +273,14 @@ export default defineComponent({
         ],
         slotDefinitions: [],
       };
+      this.editIdx = this.settings.avatarDefinitions.length;
+      this.editEntity = avatar;
+    },
+
+    addExampleAvatar() {
+      const avatar = JSON.parse(
+        JSON.stringify(hyottokoChan)
+      ) as AvatarModuleAvatarDefinition;
       this.editIdx = this.settings.avatarDefinitions.length;
       this.editEntity = avatar;
     },

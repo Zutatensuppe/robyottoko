@@ -5,15 +5,17 @@
 Robyottoko provides an interface for your twitch bots.
 
 Features are:
-- Respond to twitch chat with:
+- Respond to twitch chat or channel reward redemptions with:
   - static text
   - countdown
   - playing a sound
+  - playing a twitch clip
   - showing an image
   - translation of words (via dict.cc and jisho.org)
   - text returned from custom api
 - Song requests via youtube
   - up/down vote per song
+  - styleable via custom css
   - songs skippable, removable via chat or via interface
 - Speech to text, which can turn your voice into combinations of:
   - subtitles
@@ -21,6 +23,9 @@ Features are:
   - synthesized voice
   - synthesized translated voice
 - Let viewers draw on stream (requires a public url)
+- Pomodoro widget
+- Create customizable avatars/PNG-Tubers that move the mouth when you speak
+  - The included example "Hyottoko-Chan" is made by [LisadiKaprio](https://www.artstation.com/lisadikaprio). Thank you!
 
 Note: You will need your own bot account on twitch.tv for using
 robyottoko. Alternatively you can ask in
