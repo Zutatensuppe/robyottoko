@@ -3466,8 +3466,9 @@ const setChannelTitle = (originalCmd, bot, user) => async (command, client, targ
     // helix api returns 204 status code even if the title is too long and
     // cant actually be set. but there is no error returned in that case :(
     const len = unicodeLength(tmpTitle);
-    if (len > 140) {
-        say(`❌ Unable to change title because it is longer than 140 characters.`);
+    const max = 140;
+    if (len > max) {
+        say(`❌ Unable to change title because it is too long (${len}/${max} characters).`);
         return;
     }
     const resp = await helixClient.modifyChannelInformation(context['room-id'], { title: tmpTitle });
