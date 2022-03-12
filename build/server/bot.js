@@ -4860,11 +4860,12 @@ class SongrequestModule {
     }
     remove() {
         if (this.data.playlist.length === 0) {
-            return;
+            return null;
         }
-        this.data.playlist.shift();
+        const removedItem = this.data.playlist.shift();
         this.save();
         this.updateClients('remove');
+        return removedItem || null;
     }
     undo(username) {
         if (this.data.playlist.length === 0) {
@@ -5033,8 +5034,15 @@ class SongrequestModule {
         };
     }
     cmdSrRm(_originalCommand) {
-        return async (_command, _client, _target, _context, _msg) => {
-            this.remove();
+        return async (_command, client, target, _context, _msg) => {
+            if (!client || !target) {
+                return;
+            }
+            const removedItem = this.remove();
+            if (removedItem) {
+                const say = fn.sayFn(client, target);
+                say(`Removed "${removedItem.title}" from the playlist.`);
+            }
         };
     }
     cmdSrShuffle(_originalCommand) {

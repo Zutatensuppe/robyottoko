@@ -729,13 +729,14 @@ class SongrequestModule implements Module {
     this.updateClients('move')
   }
 
-  remove() {
+  remove(): PlaylistItem | null {
     if (this.data.playlist.length === 0) {
-      return
+      return null
     }
-    this.data.playlist.shift()
+    const removedItem = this.data.playlist.shift()
     this.save()
     this.updateClients('remove')
+    return removedItem || null
   }
 
   undo(username: string) {
@@ -976,12 +977,19 @@ class SongrequestModule implements Module {
   cmdSrRm(_originalCommand: any) {
     return async (
       _command: RawCommand | null,
-      _client: TwitchChatClient | null,
-      _target: string | null,
+      client: TwitchChatClient | null,
+      target: string | null,
       _context: TwitchChatContext | null,
       _msg: string | null,
     ) => {
-      this.remove()
+      if (!client || !target) {
+        return
+      }
+      const removedItem = this.remove()
+      if (removedItem) {
+        const say = fn.sayFn(client, target)
+        say(`Removed "${removedItem.title}" from the playlist.`)
+      }
     }
   }
 
