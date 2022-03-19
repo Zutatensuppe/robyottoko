@@ -5,7 +5,7 @@ import playMedia from '../../commands/playMedia'
 import fn from '../../fn'
 import { logger, parseHumanDuration, SECOND } from '../../common/fn'
 import chatters from '../../commands/chatters'
-import { commands as commonCommands, getUniqueCommandsByTriggers, newCommandTrigger } from '../../common/commands'
+import { commands as commonCommands, newCommandTrigger } from '../../common/commands'
 import setChannelTitle from '../../commands/setChannelTitle'
 import setChannelGameId from '../../commands/setChannelGameId'
 import { Socket } from '../../net/WebSocketServer'
@@ -101,9 +101,8 @@ class GeneralModule implements Module {
           const client = this.bot.getUserTwitchClientManager(this.user).getChatClient()
           const target = null
           const context = null
-          const msg = null
           await fn.applyVariableChanges(cmdDef, this, rawCmd, context)
-          await cmdDef.fn(rawCmd, client, target, context, msg)
+          await cmdDef.fn(rawCmd, client, target, context)
           t.lines = 0
           t.next = now + t.minInterval
         }
@@ -366,7 +365,6 @@ class GeneralModule implements Module {
     client: TwitchChatClient | null,
     target: string | null,
     _context: TwitchChatContext | null,
-    _msg: string | null,
   ) {
     if (!client || !command) {
       return

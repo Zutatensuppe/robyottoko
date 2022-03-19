@@ -9,7 +9,6 @@ const madochanCreateWord = (
   client: TwitchChatClient | null,
   target: string | null,
   _context: TwitchChatContext | null,
-  _msg: string | null,
   ) => {
     if (!client || !command) {
       return

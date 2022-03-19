@@ -406,7 +406,8 @@ const applyVariableChanges = async (cmdDef, contextModule, rawCmd, context) => {
     }
     contextModule.saveCommands();
 };
-const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, client, target, context, msg) => {
+const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, target, context) => {
+    const client = contextModule.bot.getUserTwitchClientManager(contextModule.user).getChatClient();
     const promises = [];
     for (const cmdDef of cmdDefs) {
         if (!mayExecute(context, cmdDef)) {
@@ -415,7 +416,7 @@ const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, client, target,
         log$j.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`);
         const p = new Promise(async (resolve) => {
             await applyVariableChanges(cmdDef, contextModule, rawCmd, context);
-            const r = await cmdDef.fn(rawCmd, client, target, context, msg);
+            const r = await cmdDef.fn(rawCmd, client, target, context);
             if (r) {
                 log$j.info(`${target}| * Returned: ${r}`);
             }
@@ -2746,7 +2747,7 @@ class TwitchClientManager {
                 }
                 if (relevantTriggers.length > 0) {
                     const cmdDefs = getUniqueCommandsByTriggers(commands, relevantTriggers);
-                    await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg);
+                    await fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context);
                 }
                 await m.onChatMsg(chatMessageContext);
             }
@@ -2843,7 +2844,6 @@ class TwitchClientManager {
                         mod: false,
                         subscriber: redemption.reward.is_sub_only, // this does not really tell us if the user is sub or not, just if the redemption was sub only
                     };
-                    const msg = redemption.reward.title;
                     const rewardRedemptionContext = { client: chatClient, target, context, redemption };
                     for (const m of this.bot.getModuleManager().all(user.id)) {
                         // reward redemption should all have exact key/name of the reward,
@@ -2856,7 +2856,7 @@ class TwitchClientManager {
                             args: redemption.user_input ? [redemption.user_input] : [],
                         };
                         const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger]);
-                        await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg);
+                        await fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context);
                         await m.onRewardRedemption(rewardRedemptionContext);
                     }
                 });
@@ -3289,7 +3289,7 @@ class Mail {
 }
 
 const log$a = logger('countdown.ts');
-const countdown = (originalCmd, bot, user) => async (command, client, target, context, _msg) => {
+const countdown = (originalCmd, bot, user) => async (command, client, target, context) => {
     if (!client) {
         return;
     }
@@ -3370,7 +3370,7 @@ var Madochan = {
     defaultWeirdness: 1,
 };
 
-const madochanCreateWord = (originalCmd) => async (command, client, target, _context, _msg) => {
+const madochanCreateWord = (originalCmd) => async (command, client, target, _context) => {
     if (!client || !command) {
         return;
     }
@@ -3392,7 +3392,7 @@ const madochanCreateWord = (originalCmd) => async (command, client, target, _con
     }
 };
 
-const randomText = (originalCmd, bot, user) => async (command, client, target, context, _msg) => {
+const randomText = (originalCmd, bot, user) => async (command, client, target, context) => {
     if (!client) {
         return;
     }
@@ -3401,7 +3401,7 @@ const randomText = (originalCmd, bot, user) => async (command, client, target, c
     say(await fn.doReplacements(fn.getRandom(texts), command, context, originalCmd, bot, user));
 };
 
-const playMedia = (originalCmd, bot, user) => async (command, _client, _target, context, _msg) => {
+const playMedia = (originalCmd, bot, user) => async (command, _client, _target, context) => {
     const data = originalCmd.data;
     data.image_url = await fn.doReplacements(data.image_url, command, context, originalCmd, bot, user);
     data.twitch_clip.url = await fn.doReplacements(data.twitch_clip.url, command, context, originalCmd, bot, user);
@@ -3431,7 +3431,7 @@ const playMedia = (originalCmd, bot, user) => async (command, _client, _target, 
 };
 
 const log$9 = logger('chatters.ts');
-const chatters = (bot, user) => async (_command, client, target, context, _msg) => {
+const chatters = (bot, user) => async (_command, client, target, context) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!client || !context || !helixClient) {
         log$9.info('client', client);
@@ -3463,7 +3463,7 @@ const chatters = (bot, user) => async (_command, client, target, context, _msg) 
 };
 
 const log$8 = logger('setChannelTitle.ts');
-const setChannelTitle = (originalCmd, bot, user) => async (command, client, target, context, _msg) => {
+const setChannelTitle = (originalCmd, bot, user) => async (command, client, target, context) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!client || !command || !context || !helixClient) {
         log$8.info('client', client);
@@ -3504,7 +3504,7 @@ const setChannelTitle = (originalCmd, bot, user) => async (command, client, targ
 };
 
 const log$7 = logger('setChannelGameId.ts');
-const setChannelGameId = (originalCmd, bot, user) => async (command, client, target, context, _msg) => {
+const setChannelGameId = (originalCmd, bot, user) => async (command, client, target, context) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!client || !command || !context || !helixClient) {
         log$7.info('client', client);
@@ -3685,7 +3685,7 @@ const LANG_TO_FN = {
 for (const key of Object.keys(DictCc.LANG_TO_URL_MAP)) {
     LANG_TO_FN[key] = (phrase) => DictCc.searchWord(phrase, key);
 }
-const dictLookup = (originalCmd, bot, user) => async (command, client, target, context, _msg) => {
+const dictLookup = (originalCmd, bot, user) => async (command, client, target, context) => {
     if (!client || !command) {
         return [];
     }
@@ -3710,7 +3710,7 @@ const dictLookup = (originalCmd, bot, user) => async (command, client, target, c
 };
 
 const log$6 = logger('setStreamTags.ts');
-const addStreamTags = (originalCmd, bot, user) => async (command, client, target, context, _msg) => {
+const addStreamTags = (originalCmd, bot, user) => async (command, client, target, context) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!client || !command || !context || !helixClient) {
         log$6.info('client', client);
@@ -3758,7 +3758,7 @@ const addStreamTags = (originalCmd, bot, user) => async (command, client, target
 };
 
 const log$5 = logger('setStreamTags.ts');
-const removeStreamTags = (originalCmd, bot, user) => async (command, client, target, context, _msg) => {
+const removeStreamTags = (originalCmd, bot, user) => async (command, client, target, context) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!client || !command || !context || !helixClient) {
         log$5.info('client', client);
@@ -3833,9 +3833,8 @@ class GeneralModule {
                     const client = this.bot.getUserTwitchClientManager(this.user).getChatClient();
                     const target = null;
                     const context = null;
-                    const msg = null;
                     await fn.applyVariableChanges(cmdDef, this, rawCmd, context);
-                    await cmdDef.fn(rawCmd, client, target, context, msg);
+                    await cmdDef.fn(rawCmd, client, target, context);
                     t.lines = 0;
                     t.next = now + t.minInterval;
                 }
@@ -4075,7 +4074,7 @@ class GeneralModule {
         this.data.settings.volume = parseInt(`${vol}`, 10);
         this.saveSettings();
     }
-    async mediaVolumeCmd(command, client, target, _context, _msg) {
+    async mediaVolumeCmd(command, client, target, _context) {
         if (!client || !command) {
             return;
         }
@@ -4984,7 +4983,7 @@ class SongrequestModule {
         }
     }
     cmdSrCurrent(_originalCommand) {
-        return async (command, client, target, context, _msg) => {
+        return async (command, client, target, context) => {
             if (!client || !command || !context) {
                 return;
             }
@@ -4999,7 +4998,7 @@ class SongrequestModule {
         };
     }
     cmdSrUndo(_originalCommand) {
-        return async (command, client, target, context, _msg) => {
+        return async (command, client, target, context) => {
             if (!client || !command || !context) {
                 return;
             }
@@ -5014,7 +5013,7 @@ class SongrequestModule {
         };
     }
     cmdResr(_originalCommand) {
-        return async (command, client, target, context, _msg) => {
+        return async (command, client, target, context) => {
             if (!client || !command || !context) {
                 return;
             }
@@ -5029,17 +5028,17 @@ class SongrequestModule {
         };
     }
     cmdSrGood(_originalCommand) {
-        return async (_command, _client, _target, _context, _msg) => {
+        return async (_command, _client, _target, _context) => {
             this.like();
         };
     }
     cmdSrBad(_originalCommand) {
-        return async (_command, _client, _target, _context, _msg) => {
+        return async (_command, _client, _target, _context) => {
             this.dislike();
         };
     }
     cmdSrStats(_originalCommand) {
-        return async (command, client, target, context, _msg) => {
+        return async (command, client, target, context) => {
             if (!client || !command || !context) {
                 return;
             }
@@ -5060,27 +5059,27 @@ class SongrequestModule {
         };
     }
     cmdSrPrev(_originalCommand) {
-        return async (_command, _client, _target, _context, _msg) => {
+        return async (_command, _client, _target, _context) => {
             this.prev();
         };
     }
     cmdSrNext(_originalCommand) {
-        return async (_command, _client, _target, _context, _msg) => {
+        return async (_command, _client, _target, _context) => {
             this.next();
         };
     }
     cmdSrJumpToNew(_originalCommand) {
-        return async (_command, _client, _target, _context, _msg) => {
+        return async (_command, _client, _target, _context) => {
             this.jumptonew();
         };
     }
     cmdSrClear(_originalCommand) {
-        return async (_command, _client, _target, _context, _msg) => {
+        return async (_command, _client, _target, _context) => {
             this.clear();
         };
     }
     cmdSrRm(_originalCommand) {
-        return async (_command, client, target, _context, _msg) => {
+        return async (_command, client, target, _context) => {
             if (!client || !target) {
                 return;
             }
@@ -5092,17 +5091,17 @@ class SongrequestModule {
         };
     }
     cmdSrShuffle(_originalCommand) {
-        return async (_command, _client, _target, _context, _msg) => {
+        return async (_command, _client, _target, _context) => {
             this.shuffle();
         };
     }
     cmdSrResetStats(_originalCommand) {
-        return async (_command, _client, _target, _context, _msg) => {
+        return async (_command, _client, _target, _context) => {
             this.resetStats();
         };
     }
     cmdSrLoop(_originalCommand) {
-        return async (_command, client, target, _context, _msg) => {
+        return async (_command, client, target, _context) => {
             if (!client) {
                 return;
             }
@@ -5112,7 +5111,7 @@ class SongrequestModule {
         };
     }
     cmdSrNoloop(_originalCommand) {
-        return async (_command, client, target, _context, _msg) => {
+        return async (_command, client, target, _context) => {
             if (!client) {
                 return;
             }
@@ -5122,7 +5121,7 @@ class SongrequestModule {
         };
     }
     cmdSrAddTag(originalCmd) {
-        return async (command, client, target, context, _msg) => {
+        return async (command, client, target, context) => {
             if (!client || !command) {
                 return;
             }
@@ -5137,7 +5136,7 @@ class SongrequestModule {
         };
     }
     cmdSrRmTag(_originalCommand) {
-        return async (command, client, target, _context, _msg) => {
+        return async (command, client, target, _context) => {
             if (!client || !command) {
                 return;
             }
@@ -5151,17 +5150,17 @@ class SongrequestModule {
         };
     }
     cmdSrPause(_originalCommand) {
-        return async (_command, _client, _target, _context, _msg) => {
+        return async (_command, _client, _target, _context) => {
             this.pause();
         };
     }
     cmdSrUnpause(_originalCommand) {
-        return async (_command, _client, _target, _context, _msg) => {
+        return async (_command, _client, _target, _context) => {
             this.unpause();
         };
     }
     cmdSrVolume(_originalCommand) {
-        return async (command, client, target, _context, _msg) => {
+        return async (command, client, target, _context) => {
             if (!client || !command) {
                 return;
             }
@@ -5176,7 +5175,7 @@ class SongrequestModule {
         };
     }
     cmdSrHidevideo(_originalCommand) {
-        return async (_command, client, target, _context, _msg) => {
+        return async (_command, client, target, _context) => {
             if (!client) {
                 return;
             }
@@ -5186,7 +5185,7 @@ class SongrequestModule {
         };
     }
     cmdSrShowvideo(_originalCommand) {
-        return async (_command, client, target, _context, _msg) => {
+        return async (_command, client, target, _context) => {
             if (!client) {
                 return;
             }
@@ -5196,7 +5195,7 @@ class SongrequestModule {
         };
     }
     cmdSrFilter(_originalCommand) {
-        return async (command, client, target, context, _msg) => {
+        return async (command, client, target, context) => {
             if (!client || !command || !context) {
                 return;
             }
@@ -5212,7 +5211,7 @@ class SongrequestModule {
         };
     }
     cmdSrQueue(_originalCommand) {
-        return async (_command, client, target, _context, _msg) => {
+        return async (_command, client, target, _context) => {
             if (!client) {
                 return;
             }
@@ -5230,7 +5229,7 @@ class SongrequestModule {
         };
     }
     cmdSrPreset(_originalCommand) {
-        return async (command, client, target, context, _msg) => {
+        return async (command, client, target, context) => {
             if (!client || !command || !context) {
                 return;
             }
@@ -5258,7 +5257,7 @@ class SongrequestModule {
         };
     }
     cmdSr(_originalCommand) {
-        return async (command, client, target, context, _msg) => {
+        return async (command, client, target, context) => {
             if (!client || !command || !context) {
                 return;
             }
@@ -5435,7 +5434,7 @@ class VoteModule {
         say(`Thanks ${context['display-name']}, registered your "${type}" vote: ${thing}`);
         this.save();
     }
-    async playCmd(command, client, target, context, _msg) {
+    async playCmd(command, client, target, context) {
         if (!client || !command || !context || !target) {
             return;
         }
@@ -5448,7 +5447,7 @@ class VoteModule {
         const type = 'play';
         this.vote(type, thing, client, target, context);
     }
-    async voteCmd(command, client, target, context, _msg) {
+    async voteCmd(command, client, target, context) {
         if (!client || !command || !context || !target) {
             return;
         }
@@ -6079,7 +6078,7 @@ class PomoModule {
             }
         }, 1000);
     }
-    async cmdPomoStart(command, client, target, context, _msg) {
+    async cmdPomoStart(command, client, target, context) {
         const say = client ? fn.sayFn(client, target) : ((msg) => { log$1.info('say(), client not set, msg', msg); });
         this.data.state.running = true;
         this.data.state.startTs = JSON.stringify(new Date());
@@ -6097,7 +6096,7 @@ class PomoModule {
         }
         this.updateClients({ event: 'effect', data: this.data.settings.startEffect });
     }
-    async cmdPomoEnd(command, client, target, context, _msg) {
+    async cmdPomoEnd(command, client, target, context) {
         const say = client ? fn.sayFn(client, target) : ((msg) => { log$1.info('say(), client not set, msg', msg); });
         this.data.state.running = false;
         this.save();
@@ -6162,9 +6161,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-03-19T17:03:47.419Z",
+    buildDate: "2022-03-19T17:30:55.632Z",
     // @ts-ignore
-    buildVersion: "1.0.2",
+    buildVersion: "1.1.1",
 };
 
 setLogLevel(config.log.level);

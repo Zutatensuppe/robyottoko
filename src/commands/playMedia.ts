@@ -15,7 +15,6 @@ const playMedia = (
   _client: TwitchChatClient | null,
   _target: string | null,
   context: TwitchChatContext | null,
-  _msg: string | null,
   ) => {
     const data = originalCmd.data
     data.image_url = await fn.doReplacements(data.image_url, command, context, originalCmd, bot, user)

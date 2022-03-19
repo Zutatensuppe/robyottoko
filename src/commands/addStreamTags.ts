@@ -15,7 +15,6 @@ const addStreamTags = (
   client: TwitchChatClient | null,
   target: string | null,
   context: TwitchChatContext | null,
-  _msg: string | null,
   ) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient()
     if (!client || !command || !context || !helixClient) {

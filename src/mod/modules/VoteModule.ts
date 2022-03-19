@@ -75,7 +75,6 @@ class VoteModule implements Module {
     client: TwitchChatClient | null,
     target: string | null,
     context: TwitchChatContext | null,
-    _msg: string | null,
   ) {
     if (!client || !command || !context || !target) {
       return
@@ -97,7 +96,6 @@ class VoteModule implements Module {
     client: TwitchChatClient | null,
     target: string | null,
     context: TwitchChatContext | null,
-    _msg: string | null,
   ) {
     if (!client || !command || !context || !target) {
       return

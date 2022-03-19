@@ -811,7 +811,6 @@ class SongrequestModule implements Module {
       client: TwitchChatClient | null,
       target: string | null,
       context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       if (!client || !command || !context) {
         return
@@ -833,7 +832,6 @@ class SongrequestModule implements Module {
       client: TwitchChatClient | null,
       target: string | null,
       context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       if (!client || !command || !context) {
         return
@@ -854,7 +852,6 @@ class SongrequestModule implements Module {
       client: TwitchChatClient | null,
       target: string | null,
       context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       if (!client || !command || !context) {
         return
@@ -879,7 +876,6 @@ class SongrequestModule implements Module {
       _client: TwitchChatClient | null,
       _target: string | null,
       _context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       this.like()
     }
@@ -891,7 +887,6 @@ class SongrequestModule implements Module {
       _client: TwitchChatClient | null,
       _target: string | null,
       _context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       this.dislike()
     }
@@ -903,7 +898,6 @@ class SongrequestModule implements Module {
       client: TwitchChatClient | null,
       target: string | null,
       context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       if (!client || !command || !context) {
         return
@@ -932,7 +926,6 @@ class SongrequestModule implements Module {
       _client: TwitchChatClient | null,
       _target: string | null,
       _context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       this.prev()
     }
@@ -944,7 +937,6 @@ class SongrequestModule implements Module {
       _client: TwitchChatClient | null,
       _target: string | null,
       _context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       this.next()
     }
@@ -956,7 +948,6 @@ class SongrequestModule implements Module {
       _client: TwitchChatClient | null,
       _target: string | null,
       _context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       this.jumptonew()
     }
@@ -968,7 +959,6 @@ class SongrequestModule implements Module {
       _client: TwitchChatClient | null,
       _target: string | null,
       _context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       this.clear()
     }
@@ -980,7 +970,6 @@ class SongrequestModule implements Module {
       client: TwitchChatClient | null,
       target: string | null,
       _context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       if (!client || !target) {
         return
@@ -999,7 +988,6 @@ class SongrequestModule implements Module {
       _client: TwitchChatClient | null,
       _target: string | null,
       _context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       this.shuffle()
     }
@@ -1011,7 +999,6 @@ class SongrequestModule implements Module {
       _client: TwitchChatClient | null,
       _target: string | null,
       _context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       this.resetStats()
     }
@@ -1023,7 +1010,6 @@ class SongrequestModule implements Module {
       client: TwitchChatClient | null,
       target: string | null,
       _context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       if (!client) {
         return
@@ -1040,7 +1026,6 @@ class SongrequestModule implements Module {
       client: TwitchChatClient | null,
       target: string | null,
       _context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       if (!client) {
         return
@@ -1057,7 +1042,6 @@ class SongrequestModule implements Module {
       client: TwitchChatClient | null,
       target: string | null,
       context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       if (!client || !command) {
         return
@@ -1080,7 +1064,6 @@ class SongrequestModule implements Module {
       client: TwitchChatClient | null,
       target: string | null,
       _context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       if (!client || !command) {
         return
@@ -1101,7 +1084,6 @@ class SongrequestModule implements Module {
       _client: TwitchChatClient | null,
       _target: string | null,
       _context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       this.pause()
     }
@@ -1113,7 +1095,6 @@ class SongrequestModule implements Module {
       _client: TwitchChatClient | null,
       _target: string | null,
       _context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       this.unpause()
     }
@@ -1125,7 +1106,6 @@ class SongrequestModule implements Module {
       client: TwitchChatClient | null,
       target: string | null,
       _context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       if (!client || !command) {
         return
@@ -1147,7 +1127,6 @@ class SongrequestModule implements Module {
       client: TwitchChatClient | null,
       target: string | null,
       _context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       if (!client) {
         return
@@ -1164,7 +1143,6 @@ class SongrequestModule implements Module {
       client: TwitchChatClient | null,
       target: string | null,
       _context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       if (!client) {
         return
@@ -1181,7 +1159,6 @@ class SongrequestModule implements Module {
       client: TwitchChatClient | null,
       target: string | null,
       context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       if (!client || !command || !context) {
         return
@@ -1204,7 +1181,6 @@ class SongrequestModule implements Module {
       client: TwitchChatClient | null,
       target: string | null,
       _context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       if (!client) {
         return
@@ -1229,7 +1205,6 @@ class SongrequestModule implements Module {
       client: TwitchChatClient | null,
       target: string | null,
       context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       if (!client || !command || !context) {
         return
@@ -1262,7 +1237,6 @@ class SongrequestModule implements Module {
       client: TwitchChatClient | null,
       target: string | null,
       context: TwitchChatContext | null,
-      _msg: string | null,
     ) => {
       if (!client || !command || !context) {
         return

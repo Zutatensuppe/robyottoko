@@ -219,7 +219,6 @@ export type CommandFunction = (
   client: TwitchChatClient | null,
   target: string | null,
   context: TwitchChatContext | null,
-  msg: string | null,
 ) => any
 
 export type CommandAction =

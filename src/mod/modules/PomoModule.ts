@@ -119,7 +119,6 @@ class PomoModule implements Module {
     client: TwitchChatClient | null,
     target: string | null,
     context: TwitchChatContext | null,
-    _msg: string | null,
   ) {
     const say = client ? fn.sayFn(client, target) : ((msg: string) => { log.info('say(), client not set, msg', msg) })
 
@@ -147,7 +146,6 @@ class PomoModule implements Module {
     client: TwitchChatClient | null,
     target: string | null,
     context: TwitchChatContext | null,
-    _msg: string | null,
   ) {
     const say = client ? fn.sayFn(client, target) : ((msg: string) => { log.info('say(), client not set, msg', msg) })
 
