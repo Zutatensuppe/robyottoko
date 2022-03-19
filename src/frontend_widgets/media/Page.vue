@@ -1,5 +1,12 @@
 <template>
-  <div v-if="!videosrc && imgstyle" :style="imgstyle"></div>
+  <div
+    :style="imgstyle"
+    class="image-container"
+    :class="{
+      'm-fadeIn': showimage,
+      'm-fadeOut': !showimage,
+    }"
+  ></div>
   <div v-if="videosrc" class="video-container">
     <div class="video-16-9">
       <video :src="videosrc" ref="video" autoplay />
@@ -17,12 +24,13 @@ import {
   GeneralModuleSettings,
   default_settings,
 } from "../../mod/modules/GeneralModuleCommon";
-const TIME_BETWEEN_MEDIA = 100;
+const TIME_BETWEEN_MEDIA = 400;
 
 interface ComponentData {
   ws: WsClient | null;
   queue: MediaCommandData[];
   worker: any; // null | number (setInterval)
+  showimage: boolean;
   imgstyle: null | Record<string, string>;
   settings: GeneralModuleSettings;
   videosrc: string;
@@ -34,6 +42,7 @@ export default defineComponent({
       ws: null,
       queue: [],
       worker: null,
+      showimage: false,
       imgstyle: null,
       settings: default_settings(),
       videosrc: "",
@@ -58,23 +67,16 @@ export default defineComponent({
             })
           );
         }
-
         if (media.image_url) {
+          this.showimage = true;
           this.imgstyle = {
             backgroundImage: `url(${media.image_url})`,
-            backgroundRepeat: "no-repeat",
-            backgroundSize: "contain",
-            backgroundPosition: "center",
-            height: "100%",
           };
         } else if (media.image && media.image.file) {
           await this.prepareImage(media.image.urlpath);
+          this.showimage = true;
           this.imgstyle = {
             backgroundImage: `url(${media.image.urlpath})`,
-            backgroundRepeat: "no-repeat",
-            backgroundSize: "contain",
-            backgroundPosition: "center",
-            height: "100%",
           };
         }
 
@@ -112,7 +114,7 @@ export default defineComponent({
         }
 
         Promise.all(promises).then((_) => {
-          this.imgstyle = null;
+          this.showimage = false;
           this.videosrc = "";
           resolve();
         });
@@ -165,34 +167,9 @@ export default defineComponent({
       this.settings = data.settings;
     });
     this.ws.onMessage("playmedia", (data) => {
-      console.log(data);
       this.playmedia(data);
     });
     this.ws.connect();
   },
 });
 </script>
-<style>
-.video-container {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-}
-.video-container .video-16-9 {
-  position: relative;
-  padding-top: 56.25%;
-  width: 100%;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-.video-container .video-16-9 video {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
-}
-</style>
