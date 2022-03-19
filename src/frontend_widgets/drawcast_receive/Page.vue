@@ -4,6 +4,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import WsClient from "../../frontend/WsClient";
+import { DrawcastImage } from "../../mod/modules/DrawcastModuleCommon";
 import { SoundMediaFile } from "../../types";
 import util from "../util";
 
@@ -138,7 +139,7 @@ export default defineComponent({
         this.notificationSoundAudio.volume =
           this.notificationSound.volume / 100.0;
       }
-      this.images = data.images;
+      this.images = data.images.map((image: DrawcastImage) => image.path);
 
       if (this.displayLatestAutomatically && this.images.length > 0) {
         this.playmedia(
@@ -149,16 +150,19 @@ export default defineComponent({
         );
       }
     });
-    this.ws.onMessage("post", (data) => {
-      this.images.unshift(data.img);
-      this.images = this.images.slice(0, 20);
-      this.playmedia(
-        {
-          image: { url: data.img },
-        },
-        true
-      );
-    });
+    this.ws.onMessage(
+      "approved_image_received",
+      (data: { nonce: string; img: string; mayNotify: boolean }) => {
+        this.images.unshift(data.img);
+        this.images = this.images.slice(0, 20);
+        this.playmedia(
+          {
+            image: { url: data.img },
+          },
+          data.mayNotify
+        );
+      }
+    );
     this.ws.connect();
   },
 });

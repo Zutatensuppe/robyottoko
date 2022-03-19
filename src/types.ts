@@ -138,8 +138,14 @@ export interface DrawcastSettings {
   displayLatestAutomatically: boolean
   autofillLatest: boolean
   notificationSound: SoundMediaFile | null
+  requireManualApproval: boolean
   favoriteLists: DrawcastFavoriteList[]
 }
+
+// DRAW              SERVER                              -> RECEIVE/DRAW
+// {image, nonce} -> [].push({ image, approved: false }) -> { image_received, nonce }
+//
+//                                                          { image, approved: true }
 
 export interface DrawcastData {
   settings: DrawcastSettings

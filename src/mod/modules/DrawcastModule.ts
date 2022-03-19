@@ -4,7 +4,7 @@ import fs from 'fs'
 import { Socket } from '../../net/WebSocketServer'
 import { Bot, ChatMessageContext, DrawcastSettings, Module, RewardRedemptionContext } from '../../types'
 import { User } from '../../services/Users'
-import { default_settings } from './DrawcastModuleCommon'
+import { default_settings, default_images, DrawcastModuleData, DrawcastImage, DrawcastModuleWsData } from './DrawcastModuleCommon'
 import { NextFunction, Response } from 'express'
 
 const log = logger('DrawcastModule.ts')
@@ -23,8 +23,7 @@ class DrawcastModule implements Module {
   public bot: Bot
   public user: User
 
-  private data: { settings: DrawcastSettings }
-  private images: string[]
+  private data: DrawcastModuleData
 
   constructor(
     bot: Bot,
@@ -34,15 +33,13 @@ class DrawcastModule implements Module {
     this.user = user
 
     this.data = this.reinit()
-
-    this.images = this.loadAllImages().slice(0, 20)
   }
 
   async userChanged(user: User) {
     this.user = user
   }
 
-  loadAllImages() {
+  _loadAllImages(): DrawcastImage[] {
     try {
       // todo: probably better to store latest x images in db
       const rel = `/uploads/drawcast/${this.user.id}`
@@ -53,7 +50,10 @@ class DrawcastModule implements Module {
           time: fs.statSync(path + '/' + name).mtime.getTime()
         }))
         .sort((a, b) => b.time - a.time)
-        .map((v) => `${rel}/${v.name}`)
+        .map((v) => ({
+          path: `${rel}/${v.name}`,
+          approved: true,
+        }))
     } catch (e) {
       return []
     }
@@ -63,19 +63,26 @@ class DrawcastModule implements Module {
     // pass
   }
 
-  reinit() {
+  reinit(): DrawcastModuleData {
     const data = this.bot.getUserModuleStorage(this.user).load(this.name, {})
+    if (!data.images) {
+      data.images = this._loadAllImages()
+    }
     return {
       settings: default_settings(data.settings),
+      images: default_images(data.images),
     }
+  }
+
+  save(): void {
+    this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
   }
 
   getRoutes() {
     return {
       get: {
         '/api/drawcast/all-images/': async (_req: any, res: Response, _next: NextFunction) => {
-          const images = this.loadAllImages()
-          res.send(images)
+          res.send(this.data.images)
         },
       },
     }
@@ -86,51 +93,94 @@ class DrawcastModule implements Module {
     return this.bot.getWebServer().pubUrl(this.bot.getWebServer().widgetUrl('drawcast_draw', pubToken))
   }
 
-  wsdata(eventName: string) {
+  wsdata(eventName: string): DrawcastModuleWsData {
     return {
       event: eventName,
-      data: Object.assign({}, this.data, {
+      data: {
+        settings: this.data.settings,
+        images: this.data.images, // lots of images! maybe limit to 20 images
         drawUrl: this.drawUrl(),
-        images: this.images
-      }),
+      },
     };
-  }
-
-  updateClient(eventName: string, ws: Socket) {
-    this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
-  }
-
-  updateClients(eventName: string) {
-    this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, this.wsdata(eventName))
   }
 
   getWsEvents() {
     return {
       'conn': (ws: Socket) => {
-        this.updateClient('init', ws)
+        this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, {
+          event: 'init',
+          data: {
+            settings: this.data.settings,
+            images: this.data.images.filter(image => image.approved).slice(0, 20),
+            drawUrl: this.drawUrl(),
+          }
+        }, ws)
+      },
+      'approve_image': (ws: Socket, { path }: { path: string }) => {
+        const image = this.data.images.find(item => item.path === path)
+        if (!image) {
+          // should not happen
+          log.error(`approve_image: image not found: ${path}`)
+          return
+        }
+        image.approved = true
+        this.data.images = this.data.images.filter(item => item.path !== image.path)
+        this.data.images.unshift(image)
+        this.save()
+        this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
+          event: 'approved_image_received',
+          data: { nonce: '', img: image.path, mayNotify: false },
+        })
+      },
+      'deny_image': (ws: Socket, { path }: { path: string }) => {
+        const image = this.data.images.find(item => item.path === path)
+        if (!image) {
+          // should not happen
+          log.error(`deny_image: image not found: ${path}`)
+          return
+        }
+        this.data.images = this.data.images.filter(item => item.path !== image.path)
+        this.save()
+        this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
+          event: 'denied_image_received',
+          data: { nonce: '', img: image.path, mayNotify: false },
+        })
       },
       'post': (ws: Socket, data: PostEventData) => {
         const rel = `/uploads/drawcast/${this.user.id}`
         const img = fn.decodeBase64Image(data.data.img)
         const name = `${(new Date()).toJSON()}-${nonce(6)}.${fn.mimeToExt(img.type)}`
-        const path = `./data${rel}`
-        const imgpath = `${path}/${name}`
-        const imgurl = `${rel}/${name}`
-        fs.mkdirSync(path, { recursive: true })
-        fs.writeFileSync(imgpath, img.data)
-        this.images.unshift(imgurl)
-        this.images = this.images.slice(0, 20)
 
+        const dirPath = `./data${rel}`
+        const filePath = `${dirPath}/${name}`
+        const urlPath = `${rel}/${name}`
+
+        fs.mkdirSync(dirPath, { recursive: true })
+        fs.writeFileSync(filePath, img.data)
+
+        const approved = this.data.settings.requireManualApproval ? false : true
+
+        this.data.images.unshift({ path: urlPath, approved })
+        this.save()
+
+        const event = approved ? 'approved_image_received' : 'image_received'
         this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
-          event: data.event,
-          data: { nonce: data.data.nonce, img: imgurl },
+          event: event,
+          data: { nonce: data.data.nonce, img: urlPath, mayNotify: true },
         })
       },
       'save': (ws: Socket, { settings }: { settings: DrawcastSettings }) => {
         this.data.settings = settings
-        this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
+        this.save()
         this.data = this.reinit()
-        this.updateClients('init')
+        this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
+          event: 'init',
+          data: {
+            settings: this.data.settings,
+            images: this.data.images.filter(image => image.approved).slice(0, 20),
+            drawUrl: this.drawUrl(),
+          }
+        })
       },
     }
   }
