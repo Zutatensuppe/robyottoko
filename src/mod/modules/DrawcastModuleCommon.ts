@@ -1,10 +1,25 @@
 import { DrawcastSettings, MediaFile, SoundMediaFile } from "../../types";
 
+export interface DrawcastModuleWsData {
+  event: string
+  data: DrawcastModuleWsDataData
+}
+
+export interface DrawcastModuleWsDataData {
+  settings: DrawcastSettings
+  images: DrawcastImage[]
+  drawUrl: string
+}
+
+export interface DrawcastModuleData {
+  settings: DrawcastSettings
+  images: DrawcastImage[]
+}
+
 export interface DrawcastSaveEventData {
   event: "save"
   settings: DrawcastSettings
 }
-
 
 // todo: fallbacks for file and filename
 const default_profile_image = (obj: any): MediaFile | null => {
@@ -55,6 +70,7 @@ export const default_settings = (obj: any = null): DrawcastSettings => ({
   displayLatestAutomatically: (!obj || typeof obj.displayLatestAutomatically === 'undefined') ? false : obj.displayLatestAutomatically,
   autofillLatest: (!obj || typeof obj.autofillLatest === 'undefined') ? false : obj.autofillLatest,
   notificationSound: (!obj || typeof obj.notificationSound === 'undefined') ? null : default_notification_sound(obj.notificationSound),
+  requireManualApproval: (!obj || typeof obj.requireManualApproval === 'undefined') ? false : obj.requireManualApproval,
   favoriteLists: (!obj || typeof obj.favoriteLists === 'undefined')
     ? [{
       list: ((obj && obj.favorites) ? obj.favorites : []),
@@ -62,3 +78,16 @@ export const default_settings = (obj: any = null): DrawcastSettings => ({
     }]
     : obj.favoriteLists,
 })
+
+export interface DrawcastImage {
+  path: string
+  approved: boolean
+}
+
+export const default_images = (list: any = null): DrawcastImage[] => {
+  if (Array.isArray(list)) {
+    // TODO: sanitize
+    return list
+  }
+  return []
+}

@@ -27,7 +27,6 @@
                   :style="styles"
                   @touchstart.prevent="touchstart"
                   @touchmove.prevent="touchmove"
-                  @mousemove="mousemove"
                   @mousedown="mousedown"
                 ></canvas>
               </div>
@@ -259,7 +258,7 @@
           <div class="responsive-image" :style="successImageUrlStyle"></div>
         </div>
         <div class="dialog-title">Success!</div>
-        <div class="dialog-body">Your drawing was sent to the stream.</div>
+        <div class="dialog-body" v-html="dialogBody"></div>
         <div class="dialog-footer">
           <div class="button button-ok clickable" @click="dialogClose">
             Draw another one
@@ -270,12 +269,7 @@
     <div class="dialog confirm-dialog" v-if="dialog === 'replace'">
       <div class="dialog-bg" @click="dialogClose"></div>
       <div class="dialog-container">
-        <div class="dialog-body">
-          If you click this, your current drawing will be erased and replaced by
-          the drawing you just clicked on. <br />
-          <br />
-          Do you want to proceed?
-        </div>
+        <div class="dialog-body" v-html="dialogBody"></div>
         <div class="dialog-footer">
           <div class="button button-no-button clickable" @click="dialogClose">
             Cancel
@@ -289,9 +283,7 @@
     <div class="dialog confirm-dialog" v-if="dialog === 'confirm-submit'">
       <div class="dialog-bg" @click="dialogClose"></div>
       <div class="dialog-container">
-        <div class="dialog-body">
-          {{ submitConfirm }}
-        </div>
+        <div class="dialog-body" v-html="dialogBody"></div>
         <div class="dialog-footer">
           <div class="button button-no-button clickable" @click="dialogClose">
             Cancel
@@ -308,11 +300,7 @@
         <div class="dialog-image">
           <div class="responsive-image" :style="clearImageUrlStyle"></div>
         </div>
-        <div class="dialog-body">
-          If you click this, your current drawing will be erased. <br />
-          <br />
-          Do you want to proceed?
-        </div>
+        <div class="dialog-body" v-html="dialogBody"></div>
         <div class="dialog-footer">
           <div class="button button-no-button clickable" @click="dialogClose">
             Cancel
@@ -331,6 +319,7 @@ import { nonce, logger } from "../../common/fn";
 import WsClient from "../../frontend/WsClient";
 import { DrawcastFavoriteList } from "../../types";
 import util from "../util";
+import { DrawcastModuleWsDataData } from "../../mod/modules/DrawcastModuleCommon";
 
 const log = logger("Page.vue");
 
@@ -389,6 +378,7 @@ export default defineComponent({
       currentPath: [],
 
       dialog: "",
+      dialogBody: "",
       modifyImageUrl: "",
       successImageUrlStyle: null,
       clearImageUrlStyle: null,
@@ -481,7 +471,7 @@ export default defineComponent({
         };
       });
     },
-    async undo() {
+    undo() {
       this.stack.pop();
       this.clear();
       this.currentPath = [];
@@ -563,7 +553,11 @@ export default defineComponent({
       });
     },
 
-    cancelDraw(e) {
+    cancelDraw() {
+      if (!this.currentPath.length) {
+        return;
+      }
+
       this.stack.push(this.getImageData());
       this.currentPath = [];
       this.last = null;
@@ -653,6 +647,7 @@ export default defineComponent({
     prepareSubmitImage() {
       if (this.submitConfirm) {
         this.dialog = "confirm-submit";
+        this.dialogBody = this.submitConfirm;
         return;
       }
       this.submitImage();
@@ -696,13 +691,23 @@ export default defineComponent({
         height: h + "px",
       };
       this.dialog = "clear";
+      this.dialogBody = `
+        If you click this, your current drawing will be erased. <br />
+        <br />
+        Do you want to proceed?`;
     },
     prepareModify(imageUrl: string) {
       this.modifyImageUrl = imageUrl;
       this.dialog = "replace";
+      this.dialogBody = `
+        If you click this, your current drawing will be erased and replaced by
+        the drawing you just clicked on. <br />
+        <br />
+        Do you want to proceed?`;
     },
     dialogClose() {
       this.dialog = "";
+      this.dialogBody = "";
     },
     dialogConfirm() {
       if (this.dialog === "confirm-submit") {
@@ -769,7 +774,7 @@ export default defineComponent({
     const opts = window.localStorage.getItem("drawcastOpts");
     this.opts = opts ? JSON.parse(opts) : { canvasBg: "transparent" };
 
-    this.ws.onMessage("init", (data) => {
+    this.ws.onMessage("init", (data: DrawcastModuleWsDataData) => {
       // submit button may not be empty
       this.submitButtonText = data.settings.submitButtonText || "Send";
       this.submitConfirm = data.settings.submitConfirm;
@@ -786,7 +791,8 @@ export default defineComponent({
       this.palette = data.settings.palette || this.palette;
       this.favoriteLists = data.settings.favoriteLists;
       this.color = this.palette[0];
-      this.images = data.images;
+      this.images = data.images.map((image) => image.path);
+
       if (this.images.length > 0 && data.settings.autofillLatest) {
         this.modify(this.images[0]);
       }
@@ -799,36 +805,67 @@ export default defineComponent({
       //           screen!~ Click any of the drawings in the gallery to continue
       //           drawing on them!`;
     });
-    this.ws.onMessage("post", (data: { nonce: string; img: string }) => {
-      if (
-        this.sending.date &&
-        this.sending.nonce &&
-        data.nonce === this.sending.nonce
-      ) {
-        // we want to have the 'sending' state for at least minMs ms
-        // for images that we have just sent, for other images they may
-        // be added immediately
-        const minMs = 500;
-        const now = new Date();
-        const timeoutMs = this.sending.date.getTime() + minMs - now.getTime();
-        setTimeout(() => {
-          this.successImageUrlStyle = {
-            backgroundImage: `url(${data.img})`,
-          };
-          this.dialog = "success";
-          this.sending.nonce = "";
-          this.sending.date = null;
+    this.ws.onMessage(
+      "image_received",
+      (data: { nonce: string; img: string }) => {
+        if (
+          this.sending.date &&
+          this.sending.nonce &&
+          data.nonce === this.sending.nonce
+        ) {
+          // we want to have the 'sending' state for at least minMs ms
+          // for images that we have just sent, for other images they may
+          // be added immediately
+          const minMs = 500;
+          const now = new Date();
+          const timeoutMs = this.sending.date.getTime() + minMs - now.getTime();
+          setTimeout(() => {
+            this.successImageUrlStyle = {
+              backgroundImage: `url(${data.img})`,
+            };
+            this.dialog = "success";
+            this.dialogBody = "Your drawing was sent and is pending approval.";
+            this.sending.nonce = "";
+            this.sending.date = null;
+          }, Math.max(0, timeoutMs));
+        }
+      }
+    );
+    this.ws.onMessage(
+      "approved_image_received",
+      (data: { nonce: string; img: string }) => {
+        if (
+          this.sending.date &&
+          this.sending.nonce &&
+          data.nonce === this.sending.nonce
+        ) {
+          // we want to have the 'sending' state for at least minMs ms
+          // for images that we have just sent, for other images they may
+          // be added immediately
+          const minMs = 500;
+          const now = new Date();
+          const timeoutMs = this.sending.date.getTime() + minMs - now.getTime();
+          setTimeout(() => {
+            this.successImageUrlStyle = {
+              backgroundImage: `url(${data.img})`,
+            };
+            this.dialog = "success";
+            this.dialogBody = "Your drawing was sent to the stream.";
+            this.sending.nonce = "";
+            this.sending.date = null;
 
+            this.images.unshift(data.img);
+            this.images = this.images.slice(0, 20);
+          }, Math.max(0, timeoutMs));
+        } else {
           this.images.unshift(data.img);
           this.images = this.images.slice(0, 20);
-        }, Math.max(0, timeoutMs));
-      } else {
-        this.images.unshift(data.img);
-        this.images = this.images.slice(0, 20);
+        }
       }
-    });
+    );
     this.ws.connect();
 
+    window.addEventListener("mousemove", this.mousemove);
     window.addEventListener("mouseup", this.cancelDraw);
     window.addEventListener("touchend", this.cancelDraw);
     window.addEventListener("touchcancel", this.cancelDraw);
@@ -839,6 +876,7 @@ export default defineComponent({
     });
   },
   unmounted() {
+    window.removeEventListener("mousemove", this.mousemove);
     window.removeEventListener("mouseup", this.cancelDraw);
     window.removeEventListener("touchend", this.cancelDraw);
     window.removeEventListener("touchcancel", this.cancelDraw);

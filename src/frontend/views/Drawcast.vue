@@ -66,6 +66,47 @@
             </td>
           </tr>
           <tr>
+            <td>
+              <code>settings.requireManualApproval</code>
+            </td>
+            <td>
+              <input type="checkbox" v-model="settings.requireManualApproval" />
+            </td>
+            <td>
+              If checked, new drawings need to be approved before being
+              displayed for anyone.
+            </td>
+          </tr>
+          <tr>
+            <td>Pending approval</td>
+            <td>
+              <div
+                class="image-to-approve card mr-1"
+                v-for="(url, idx2) in manualApproval.items"
+                :key="idx2"
+              >
+                <div class="card-body">
+                  <img :src="url" width="250" class="thumbnail mr-1" />
+                </div>
+                <div class="card-footer">
+                  <span
+                    class="card-footer-item button is-small is-success is-light"
+                    @click="approveImage(url)"
+                  >
+                    Approve!
+                  </span>
+                  <span
+                    class="card-footer-item button is-small is-danger is-light"
+                    @click="denyImage(url)"
+                  >
+                    Deny!
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td></td>
+          </tr>
+          <tr>
             <td><code>settings.displayLatestForever</code></td>
             <td>
               <input type="checkbox" v-model="settings.displayLatestForever" />
@@ -196,7 +237,9 @@
             </td>
             <td>
               Add a sound here that plays when new drawings arrive. <br />
-              Note: Not played in drawing window, only in widget.
+              This is played in this window, if approval is necessary, otherwise
+              it will play in the display widget. It won't play in the draw
+              widget.
             </td>
           </tr>
           <tr>
@@ -300,12 +343,8 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import {
-  mediaFileFromUploadedFile,
-  soundMediaFileFromUploadedFile,
-} from "../../common/fn";
-import {
   default_settings,
-  DrawcastSaveEventData,
+  DrawcastImage,
 } from "../../mod/modules/DrawcastModuleCommon";
 import {
   DrawcastData,
@@ -313,7 +352,6 @@ import {
   DrawcastSettings,
   MediaFile,
   SoundMediaFile,
-  UploadedFile,
 } from "../../types";
 import api from "../api";
 import util from "../util";
@@ -327,6 +365,11 @@ interface ComponentData {
   defaultSettings: DrawcastSettings;
   ws: WsClient | null;
   drawUrl: string;
+  notificationSoundAudio: any;
+  manualApproval: {
+    hovered: string;
+    items: string[];
+  };
   favoriteSelection: {
     hovered: string;
     items: string[];
@@ -346,6 +389,11 @@ export default defineComponent({
     defaultSettings: default_settings(),
     ws: null,
     drawUrl: "",
+    notificationSoundAudio: null,
+    manualApproval: {
+      hovered: "",
+      items: [],
+    },
     favoriteSelection: {
       hovered: "",
       items: [],
@@ -363,9 +411,70 @@ export default defineComponent({
       this.drawUrl = data.drawUrl;
 
       const res = await api.getDrawcastAllImages();
-      this.favoriteSelection.items = await res.json();
+      const images = await res.json();
+      this.favoriteSelection.items = images.map(
+        (item: DrawcastImage) => item.path
+      );
+
+      if (this.settings.notificationSound) {
+        this.notificationSoundAudio = new Audio(
+          this.settings.notificationSound.urlpath
+        );
+        this.notificationSoundAudio.volume =
+          this.settings.notificationSound.volume / 100.0;
+      }
+
+      this.manualApproval.items = images
+        .filter((item: DrawcastImage) => !item.approved)
+        .map((item: DrawcastImage) => item.path);
       this.inited = true;
     });
+    this.ws.onMessage(
+      "approved_image_received",
+      (data: { nonce: string; img: string; mayNotify: boolean }) => {
+        this.favoriteSelection.items = this.favoriteSelection.items.filter(
+          (img) => img !== data.img
+        );
+        this.manualApproval.items = this.manualApproval.items.filter(
+          (img) => img !== data.img
+        );
+
+        this.favoriteSelection.items.unshift(data.img);
+        this.favoriteSelection.items = this.favoriteSelection.items.slice();
+      }
+    );
+    this.ws.onMessage(
+      "denied_image_received",
+      (data: { nonce: string; img: string; mayNotify: boolean }) => {
+        this.favoriteSelection.items = this.favoriteSelection.items.filter(
+          (img) => img !== data.img
+        );
+        this.manualApproval.items = this.manualApproval.items.filter(
+          (img) => img !== data.img
+        );
+      }
+    );
+    this.ws.onMessage(
+      "image_received",
+      (data: { nonce: string; img: string; mayNotify: boolean }) => {
+        this.favoriteSelection.items = this.favoriteSelection.items.filter(
+          (img) => img !== data.img
+        );
+        this.manualApproval.items = this.manualApproval.items.filter(
+          (img) => img !== data.img
+        );
+
+        this.favoriteSelection.items.unshift(data.img);
+        this.favoriteSelection.items = this.favoriteSelection.items.slice();
+
+        this.manualApproval.items.push(data.img);
+        this.manualApproval.items = this.manualApproval.items.slice();
+
+        if (data.mayNotify && this.notificationSoundAudio) {
+          this.notificationSoundAudio.play();
+        }
+      }
+    );
     this.ws.connect();
   },
   watch: {
@@ -407,6 +516,12 @@ export default defineComponent({
     },
   },
   methods: {
+    approveImage(path: string) {
+      this.sendMsg({ event: "approve_image", path });
+    },
+    denyImage(path: string) {
+      this.sendMsg({ event: "deny_image", path });
+    },
     addFavoriteList() {
       if (!this.settings) {
         console.warn("addFavoriteList: this.settings not initialized");
@@ -481,12 +596,13 @@ export default defineComponent({
           displayLatestForever: this.settings.displayLatestForever,
           displayLatestAutomatically: this.settings.displayLatestAutomatically,
           autofillLatest: this.settings.autofillLatest,
+          requireManualApproval: this.settings.requireManualApproval,
           notificationSound: this.settings.notificationSound,
           favoriteLists: this.settings.favoriteLists,
         },
       });
     },
-    sendMsg(data: DrawcastSaveEventData) {
+    sendMsg(data: any) {
       if (!this.ws) {
         console.warn("sendMsg: this.ws not initialized");
         return;
@@ -533,5 +649,8 @@ export default defineComponent({
 .is-favorited,
 .favorites-select img.is-favorited {
   border: solid 1px black;
+}
+.image-to-approve {
+  display: inline-block;
 }
 </style>
