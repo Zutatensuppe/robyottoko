@@ -406,7 +406,8 @@ const applyVariableChanges = async (cmdDef, contextModule, rawCmd, context) => {
     }
     contextModule.saveCommands();
 };
-const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, client, target, context) => {
+const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, target, context) => {
+    const client = contextModule.bot.getUserTwitchClientManager(contextModule.user).getChatClient();
     const promises = [];
     for (const cmdDef of cmdDefs) {
         if (!mayExecute(context, cmdDef)) {
@@ -2746,7 +2747,7 @@ class TwitchClientManager {
                 }
                 if (relevantTriggers.length > 0) {
                     const cmdDefs = getUniqueCommandsByTriggers(commands, relevantTriggers);
-                    await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context);
+                    await fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context);
                 }
                 await m.onChatMsg(chatMessageContext);
             }
@@ -2855,7 +2856,7 @@ class TwitchClientManager {
                             args: redemption.user_input ? [redemption.user_input] : [],
                         };
                         const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger]);
-                        await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context);
+                        await fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context);
                         await m.onRewardRedemption(rewardRedemptionContext);
                     }
                 });
@@ -6160,9 +6161,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-03-19T17:15:59.848Z",
+    buildDate: "2022-03-19T17:30:55.632Z",
     // @ts-ignore
-    buildVersion: "1.1.0",
+    buildVersion: "1.1.1",
 };
 
 setLogLevel(config.log.level);

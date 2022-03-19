@@ -234,7 +234,7 @@ class TwitchClientManager {
 
         if (relevantTriggers.length > 0) {
           const cmdDefs = getUniqueCommandsByTriggers(commands, relevantTriggers)
-          await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context)
+          await fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context)
         }
         await m.onChatMsg(chatMessageContext);
       }
@@ -360,7 +360,7 @@ class TwitchClientManager {
               args: redemption.user_input ? [redemption.user_input] : [],
             }
             const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger])
-            await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context)
+            await fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context)
             await m.onRewardRedemption(rewardRedemptionContext)
           }
         })

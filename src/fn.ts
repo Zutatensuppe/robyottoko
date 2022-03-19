@@ -4,7 +4,6 @@ import { getText } from './net/xhr'
 import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, nonce } from './common/fn'
 
 import { Command, GlobalVariable, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module, CommandTrigger, Bot } from './types'
-import Variables from './services/Variables'
 import { mayExecute } from './common/permissions'
 import { User } from './services/Users'
 
@@ -155,10 +154,10 @@ const tryExecuteCommand = async (
   contextModule: Module,
   rawCmd: RawCommand | null,
   cmdDefs: FunctionCommand[],
-  client: TwitchChatClient,
   target: string,
   context: TwitchChatContext
 ) => {
+  const client = contextModule.bot.getUserTwitchClientManager(contextModule.user).getChatClient()
   const promises = []
   for (const cmdDef of cmdDefs) {
     if (!mayExecute(context, cmdDef)) {
