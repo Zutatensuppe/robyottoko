@@ -62,7 +62,9 @@ export default defineComponent({
   },
 });
 </script>
-<style scoped>
+<style lang="scss" scoped>
+@import "../vars.scss";
+
 input[type="range"]::-webkit-slider-thumb {
   height: 16px;
   width: 16px;
@@ -79,21 +81,21 @@ input[type="range"]::-webkit-slider-thumb {
 
 .slider.control.has-icons-left .icon,
 .slider.control.has-icons-right .icon {
-  color: var(--main-color);
+  color: $main_color;
 }
 
 .slider input[type="range"]::-ms-track {
-  background: var(--link-color);
+  background: $slider_color;
   height: 2px;
 }
 
 .slider input[type="range"]::-moz-range-track {
-  background: var(--link-color);
+  background: $slider_color;
   height: 2px;
 }
 
 .slider input[type="range"]::-webkit-slider-runnable-track {
-  background: var(--link-color);
+  background: $slider_color;
   height: 2px;
 }
 </style>

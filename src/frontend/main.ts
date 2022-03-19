@@ -34,7 +34,6 @@ import Duration from "./components/Duration.vue";
 import DoubleclickButton from "./components/DoubleclickButton.vue";
 import DropdownButton from "./components/DropdownButton.vue";
 import Youtube from "./components/Youtube.vue";
-import MediaCommandDataInput from "./components/MediaCommandDataInput.vue";
 
 import CommandsCommandEditor from "./components/Commands/CommandEditor.vue";
 import CommandsCommandsEditor from "./components/Commands/CommandsEditor.vue";
@@ -54,6 +53,7 @@ import AvatarFrameUpload from "./components/Avatar/AvatarFrameUpload.vue";
 import AvatarAnimation from "./components/Avatar/AvatarAnimation.vue";
 
 import "./style.scss"
+import global from './global'
 import conf from './conf'
 import user from './user'
 import wsstatus from './wsstatus'
@@ -157,6 +157,7 @@ const run = async () => {
     }
   })
 
+  await global.init()
   await conf.init()
   await user.init()
 

@@ -62,6 +62,7 @@ export default {
   getPageVariablesData: async () => get("/api/page/variables"),
   getPageIndexData: async () => get("/api/page/index"),
   getPageSettingsData: async () => get("/api/page/settings"),
+  getDataGlobal: async () => get("/api/data/global"),
   getMe: async () => get("/api/user/me"),
   logout: async () => post("/api/logout"),
   login: async (data: { user: string, pass: string }) => postJson("/api/auth", data),
