@@ -100,7 +100,6 @@ describe('fn.doReplacements', () => {
       text: 'lalala',
       command: null,
       context: null,
-      variables: {} as Variables,
       originalCmd: {} as Command,
       expected: 'lalala',
     },
@@ -108,7 +107,6 @@ describe('fn.doReplacements', () => {
       text: 'bla $user.name',
       command: null,
       context: null,
-      variables: {} as Variables,
       originalCmd: {} as Command,
       expected: 'bla ',
     },
@@ -123,7 +121,6 @@ describe('fn.doReplacements', () => {
         mod: false,
         subscriber: false,
       },
-      variables: {} as Variables,
       originalCmd: {} as Command,
       expected: 'mondgesicht',
     },
@@ -131,7 +128,6 @@ describe('fn.doReplacements', () => {
       text: '$args',
       command: { name: 'cmd', args: ['arg1', 'arg2', 'arg3', 'arg4', 'arg5'] },
       context: null,
-      variables: {} as Variables,
       originalCmd: {} as Command,
       expected: 'arg1 arg2 arg3 arg4 arg5',
     },
@@ -139,7 +135,6 @@ describe('fn.doReplacements', () => {
       text: '$args()',
       command: { name: 'cmd', args: ['arg1', 'arg2', 'arg3', 'arg4', 'arg5'] },
       context: null,
-      variables: {} as Variables,
       originalCmd: {} as Command,
       expected: 'arg1 arg2 arg3 arg4 arg5',
     },
@@ -147,7 +142,6 @@ describe('fn.doReplacements', () => {
       text: '$args(1:)',
       command: { name: 'cmd', args: ['arg1', 'arg2', 'arg3', 'arg4', 'arg5'] },
       context: null,
-      variables: {} as Variables,
       originalCmd: {} as Command,
       expected: 'arg2 arg3 arg4 arg5',
     },
@@ -155,7 +149,6 @@ describe('fn.doReplacements', () => {
       text: '$args(2:3)',
       command: { name: 'cmd', args: ['arg1', 'arg2', 'arg3', 'arg4', 'arg5'] },
       context: null,
-      variables: {} as Variables,
       originalCmd: {} as Command,
       expected: 'arg3 arg4',
     },
@@ -163,7 +156,6 @@ describe('fn.doReplacements', () => {
       text: '$args(:2)',
       command: { name: 'cmd', args: ['arg1', 'arg2', 'arg3', 'arg4', 'arg5'] },
       context: null,
-      variables: {} as Variables,
       originalCmd: {} as Command,
       expected: 'arg1 arg2 arg3',
     },
@@ -171,12 +163,11 @@ describe('fn.doReplacements', () => {
       text: '$args(0) $args(1)',
       command: { name: 'cmd', args: ['arg1', 'arg2', 'arg3', 'arg4', 'arg5'] },
       context: null,
-      variables: {} as Variables,
       originalCmd: {} as Command,
       expected: 'arg1 arg2',
     },
-  ])('doReplacements $text', async ({ text, command, context, variables, originalCmd, expected }) => {
-    const actual = await doReplacements(text, command, context, variables, originalCmd, null, null)
+  ])('doReplacements $text', async ({ text, command, context, originalCmd, expected }) => {
+    const actual = await doReplacements(text, command, context, originalCmd, null, null)
     expect(actual).toBe(expected)
   })
 })

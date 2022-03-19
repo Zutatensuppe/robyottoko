@@ -18,10 +18,8 @@ const playMedia = (
   _msg: string | null,
   ) => {
     const data = originalCmd.data
-
-    const variables = bot.getUserVariables(user)
-    data.image_url = await fn.doReplacements(data.image_url, command, context, variables, originalCmd, bot, user)
-    data.twitch_clip.url = await fn.doReplacements(data.twitch_clip.url, command, context, variables, originalCmd, bot, user)
+    data.image_url = await fn.doReplacements(data.image_url, command, context, originalCmd, bot, user)
+    data.twitch_clip.url = await fn.doReplacements(data.twitch_clip.url, command, context, originalCmd, bot, user)
 
     if (data.twitch_clip.url) {
       const filename = `${hash(data.twitch_clip.url)}-clip.mp4`
