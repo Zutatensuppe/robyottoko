@@ -101,9 +101,8 @@ class GeneralModule implements Module {
           const client = this.bot.getUserTwitchClientManager(this.user).getChatClient()
           const target = null
           const context = null
-          const msg = null
           await fn.applyVariableChanges(cmdDef, this, rawCmd, context)
-          await cmdDef.fn(rawCmd, client, target, context, msg)
+          await cmdDef.fn(rawCmd, client, target, context)
           t.lines = 0
           t.next = now + t.minInterval
         }
@@ -366,7 +365,6 @@ class GeneralModule implements Module {
     client: TwitchChatClient | null,
     target: string | null,
     _context: TwitchChatContext | null,
-    _msg: string | null,
   ) {
     if (!client || !command) {
       return

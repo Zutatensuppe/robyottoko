@@ -157,8 +157,7 @@ const tryExecuteCommand = async (
   cmdDefs: FunctionCommand[],
   client: TwitchChatClient,
   target: string,
-  context: TwitchChatContext,
-  msg: string
+  context: TwitchChatContext
 ) => {
   const promises = []
   for (const cmdDef of cmdDefs) {
@@ -168,7 +167,7 @@ const tryExecuteCommand = async (
     log.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`)
     const p = new Promise(async (resolve) => {
       await applyVariableChanges(cmdDef, contextModule, rawCmd, context)
-      const r = await cmdDef.fn(rawCmd, client, target, context, msg)
+      const r = await cmdDef.fn(rawCmd, client, target, context)
       if (r) {
         log.info(`${target}| * Returned: ${r}`)
       }

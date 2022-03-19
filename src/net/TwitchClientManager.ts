@@ -234,7 +234,7 @@ class TwitchClientManager {
 
         if (relevantTriggers.length > 0) {
           const cmdDefs = getUniqueCommandsByTriggers(commands, relevantTriggers)
-          await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg)
+          await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context)
         }
         await m.onChatMsg(chatMessageContext);
       }
@@ -346,7 +346,6 @@ class TwitchClientManager {
             mod: false, // no way to tell without further looking up user somehow
             subscriber: redemption.reward.is_sub_only, // this does not really tell us if the user is sub or not, just if the redemption was sub only
           }
-          const msg = redemption.reward.title
           const rewardRedemptionContext: RewardRedemptionContext = { client: chatClient, target, context, redemption }
 
           for (const m of this.bot.getModuleManager().all(user.id)) {
@@ -361,7 +360,7 @@ class TwitchClientManager {
               args: redemption.user_input ? [redemption.user_input] : [],
             }
             const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger])
-            await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context, msg)
+            await fn.tryExecuteCommand(m, rawCmd, cmdDefs, chatClient, target, context)
             await m.onRewardRedemption(rewardRedemptionContext)
           }
         })
