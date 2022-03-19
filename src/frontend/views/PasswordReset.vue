@@ -1,6 +1,6 @@
 <template>
-  <div class="view center-screen">
-    <h1 class="title is-6">Hyottoko.club</h1>
+  <div class="view center-screen mt-2">
+    <h1 class="title is-4">Hyottoko.club</h1>
 
     <div
       class="field has-background-success-light has-text-success-dark"
@@ -20,21 +20,21 @@
       <div class="field">
         <div class="control has-icons-left">
           <input
-            class="input is-small"
+            class="input"
             type="password"
             placeholder="New Password"
             v-model="pass"
             @keyup="error = ''"
             @keyup.enter="submit"
           />
-          <span class="icon is-small is-left">
+          <span class="icon is-left">
             <i class="fa fa-lock"></i>
           </span>
         </div>
       </div>
       <div class="field">
         <button
-          class="button is-small is-primary"
+          class="button is-primary is-fullwidth"
           :disabled="canSubmit ? null : true"
           @click="submit"
         >

@@ -1,6 +1,6 @@
 <template>
-  <div class="view center-screen">
-    <h1 class="title is-6">Hyottoko.club</h1>
+  <div class="view center-screen mt-2">
+    <h1 class="title is-4">Hyottoko.club</h1>
     <form>
       <div
         class="field has-background-success-light has-text-success-dark"
@@ -17,13 +17,13 @@
       <div class="field">
         <div class="control has-icons-left">
           <input
-            class="input is-small"
+            class="input"
             type="text"
             placeholder="User"
             v-model="user"
             @keyup="error = ''"
           />
-          <span class="icon is-small is-left">
+          <span class="icon is-left">
             <i class="fa fa-user"></i>
           </span>
         </div>
@@ -31,20 +31,22 @@
       <div class="field">
         <div class="control has-icons-left">
           <input
-            class="input is-small"
+            class="input"
             type="password"
             placeholder="Password"
             v-model="pass"
             @keyup="error = ''"
             @keyup.enter="submit"
           />
-          <span class="icon is-small is-left">
+          <span class="icon is-left">
             <i class="fa fa-lock"></i>
           </span>
         </div>
       </div>
       <div class="field">
-        <span class="button is-small is-primary" @click="submit">Login</span>
+        <span class="button is-primary is-fullwidth" @click="submit"
+          >Login</span
+        >
       </div>
       <div class="field">
         <router-link :to="{ name: 'register' }"
@@ -55,6 +57,10 @@
           >Forgot password?</router-link
         >
       </div>
+      <div class="field has-text-grey-light">
+        There are currently {{ data.registeredUserCount }} streamers registered
+        ✨.
+      </div>
     </form>
   </div>
 </template>
@@ -62,6 +68,7 @@
 import { defineComponent } from "vue";
 import api from "../api";
 import user from "../user";
+import global from "../global";
 
 export default defineComponent({
   data: () => ({
@@ -69,6 +76,8 @@ export default defineComponent({
     pass: "",
     error: "",
     success: "",
+
+    data: global.getData(),
   }),
   // TODO: move token handling to general place
   async mounted() {

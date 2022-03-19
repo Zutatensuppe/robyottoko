@@ -85,7 +85,7 @@ export default defineComponent({
   position: absolute;
   right: 100%;
   margin-right: 1em;
-  background: var(--main-background-color);
+  background: #fff;
   border-style: solid;
   border-color: #dbdbdb;
   border-width: 1px;

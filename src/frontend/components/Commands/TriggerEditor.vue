@@ -224,10 +224,12 @@ export default defineComponent({
   },
 });
 </script>
-<style scoped>
+<style lang="scss" scoped>
+@import "../../vars.scss";
+
 .timer-trigger {
-  border-radius: 4px;
-  color: var(--main-color);
+  border-radius: $radius;
+  color: $main_color;
   padding: 6px 14px;
   background-color: #fff;
   border-style: solid;

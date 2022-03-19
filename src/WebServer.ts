@@ -468,6 +468,13 @@ class WebServer {
       res.send()
     })
 
+    app.get('/api/data/global', async (req: any, res: Response) => {
+      const users = this.userRepo.all()
+      res.send({
+        registeredUserCount: users.filter(u => u.status === 'verified').length,
+      })
+    })
+
     app.get('/api/page/settings', requireLoginApi, async (req: any, res: Response) => {
       const user = this.userRepo.getById(req.user.id) as User
       res.send({

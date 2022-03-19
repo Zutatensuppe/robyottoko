@@ -76,7 +76,9 @@ export default defineComponent({
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@import "../vars.scss";
+
 .upload {
   position: relative;
   display: inline-block;
@@ -89,6 +91,6 @@ export default defineComponent({
   left: 1px;
   right: 1px;
   display: block;
-  border-radius: 0 0 var(--button-border-radius) var(--button-border-radius);
+  border-radius: 0 0 $radius $radius;
 }
 </style>

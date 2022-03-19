@@ -1657,6 +1657,12 @@ class WebServer {
             variables.replace(req.body.variables || []);
             res.send();
         });
+        app.get('/api/data/global', async (req, res) => {
+            const users = this.userRepo.all();
+            res.send({
+                registeredUserCount: users.filter(u => u.status === 'verified').length,
+            });
+        });
         app.get('/api/page/settings', requireLoginApi, async (req, res) => {
             const user = this.userRepo.getById(req.user.id);
             res.send({
@@ -6161,7 +6167,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-03-19T17:30:55.632Z",
+    buildDate: "2022-03-19T19:17:03.209Z",
     // @ts-ignore
     buildVersion: "1.1.1",
 };

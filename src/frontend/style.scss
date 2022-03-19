@@ -1,19 +1,6 @@
-@import "bulma/css/bulma.css";
+@import "./vars.scss";
+
 @import "font-awesome/css/font-awesome.min.css";
-
-:root {
-  --main-color: #363636;
-  --main-background-color: #fff;
-
-  --link-color: #808db0;
-  --link-hover-color: #c5cfeb;
-  --highlight-color: #dd7e7e;
-
-  --border-color: black;
-  --border-radius: 4px;
-
-  --button-border-radius: var(--border-radius);
-}
 
 html { height: 100% }
 body { min-height: 100%; margin: 0; }
@@ -33,9 +20,9 @@ code {
 .fa { vertical-align: middle; }
 
 a {
-  color: var(--link-color);
+  color: $link_color;
   text-decoration: none;
-  &:hover { color: var(--link-hover-color); }
+  &:hover { color: $link_hover_color; }
 }
 
 .center-screen {
@@ -84,7 +71,7 @@ a {
 }
 
 #actionbar {
-  background: var(--main-background-color);
+  background: #fff;
   flex-wrap: wrap;
 
   > *:not(:last-child) {
@@ -93,7 +80,7 @@ a {
 }
 
 body {
-  color: var(--main-color);
+  color: $main_color;
   font-size: 15px;
   font-family: Verdana, Arial, Helvetica, sans-serif;
 }
@@ -116,8 +103,8 @@ body {
 #player { margin-bottom: .5em; }
 
 .media-holder {
-  border-radius: 4px;
-  color: var(--main-color);
+  border-radius: $radius;
+  color: $main_color;
   padding: 6px 10px;
   background-color: #fff;
   border-style: solid;
