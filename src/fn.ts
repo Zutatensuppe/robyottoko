@@ -116,8 +116,8 @@ const applyVariableChanges = async (
   const variables = contextModule.bot.getUserVariables(contextModule.user)
   for (const variableChange of cmdDef.variableChanges) {
     const op = variableChange.change
-    const name = await doReplacements(variableChange.name, rawCmd, context, variables, cmdDef, contextModule.bot, contextModule.user)
-    const value = await doReplacements(variableChange.value, rawCmd, context, variables, cmdDef, contextModule.bot, contextModule.user)
+    const name = await doReplacements(variableChange.name, rawCmd, context, cmdDef, contextModule.bot, contextModule.user)
+    const value = await doReplacements(variableChange.value, rawCmd, context, cmdDef, contextModule.bot, contextModule.user)
 
     // check if there is a local variable for the change
     if (cmdDef.variables) {
@@ -202,7 +202,6 @@ export const doReplacements = async (
   text: string,
   command: RawCommand | null,
   context: TwitchChatContext | null,
-  variables: Variables,
   originalCmd: Command | FunctionCommand | null,
   bot: Bot | null,
   user: User | null,
@@ -250,8 +249,11 @@ export const doReplacements = async (
         if (!originalCmd || !originalCmd.variables) {
           return ''
         }
+        if (!bot || !user) {
+          return ''
+        }
         const v = originalCmd.variables.find(v => v.name === m1)
-        const val = v ? v.value : variables.get(m1)
+        const val = v ? v.value : bot.getUserVariables(user).get(m1)
         return val === null ? '' : String(val)
       },
     },
@@ -332,7 +334,7 @@ export const doReplacements = async (
     {
       regex: /\$customapi\(([^$)]*)\)\['([A-Za-z0-9_ -]+)'\]/g,
       replacer: async (m0: string, m1: string, m2: string): Promise<string> => {
-        const txt = await getText(await doReplacements(m1, command, context, variables, originalCmd, bot, user))
+        const txt = await getText(await doReplacements(m1, command, context, originalCmd, bot, user))
         try {
           return String(JSON.parse(txt)[m2])
         } catch (e: any) {
@@ -344,13 +346,13 @@ export const doReplacements = async (
     {
       regex: /\$customapi\(([^$)]*)\)/g,
       replacer: async (m0: string, m1: string): Promise<string> => {
-        return await getText(await doReplacements(m1, command, context, variables, originalCmd, bot, user))
+        return await getText(await doReplacements(m1, command, context, originalCmd, bot, user))
       },
     },
     {
       regex: /\$urlencode\(([^$)]*)\)/g,
       replacer: async (m0: string, m1: string): Promise<string> => {
-        return encodeURIComponent(await doReplacements(m1, command, context, variables, originalCmd, bot, user))
+        return encodeURIComponent(await doReplacements(m1, command, context, originalCmd, bot, user))
       },
     },
     {

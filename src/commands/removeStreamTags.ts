@@ -26,10 +26,9 @@ const removeStreamTags = (
       log.info('unable to execute removeStreamTags, client, command, context, or helixClient missing')
       return
     }
-    const variables = bot.getUserVariables(user)
     const say = fn.sayFn(client, target)
     const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag
-    const tmpTag = await fn.doReplacements(tag, command, context, variables, originalCmd, bot, user)
+    const tmpTag = await fn.doReplacements(tag, command, context, originalCmd, bot, user)
     const tagsResponse = await helixClient.getStreamTags(context['room-id'])
     if (tmpTag === '') {
       const names = tagsResponse.data.map(entry => entry.localization_names['en-us'])

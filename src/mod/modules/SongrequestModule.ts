@@ -1062,9 +1062,8 @@ class SongrequestModule implements Module {
       if (!client || !command) {
         return
       }
-      const variables = this.bot.getUserVariables(this.user)
       let tag = originalCmd.data?.tag || '$args'
-      tag = await fn.doReplacements(tag, command, context, variables, originalCmd, this.bot, this.user)
+      tag = await fn.doReplacements(tag, command, context, originalCmd, this.bot, this.user)
       if (tag === "") {
         return
       }

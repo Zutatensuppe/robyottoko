@@ -50,8 +50,7 @@ class PomoModule implements Module {
     command: RawCommand | null,
     context: TwitchChatContext | null,
   ): Promise<string> {
-    const variables = this.bot.getUserVariables(this.user)
-    text = await doReplacements(text, command, context, variables, null, this.bot, this.user)
+    text = await doReplacements(text, command, context, null, this.bot, this.user)
     text = text.replace(/\$pomo\.duration/g, humanDuration(this.data.state.durationMs, [' ms', ' s', ' min', ' hours', ' days']))
     text = text.replace(/\$pomo\.name/g, this.data.state.name)
     return text
