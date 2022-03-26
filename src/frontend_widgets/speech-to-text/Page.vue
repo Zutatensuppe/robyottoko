@@ -66,7 +66,12 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import util from "../util";
-import { calculateOptimalSubtitleDisplayTimeMs, logger } from "../../common/fn";
+import {
+  calculateOptimalSubtitleDisplayTimeMs,
+  logger,
+  toNumberUnitString,
+} from "../../common/fn";
+import WsClient from "../../frontend/WsClient";
 const log = logger("speech-to-text/Page.vue");
 
 // in brave treat insecure as secure to allow mic locally:
@@ -78,7 +83,7 @@ export default defineComponent({
   },
   data() {
     return {
-      ws: null,
+      ws: null as WsClient | null,
       status: "",
       errors: [] as string[],
 
@@ -213,8 +218,9 @@ export default defineComponent({
           imb.style.webkitTextStrokeColor = bgColor;
         }
         if (styles.strokeWidth != null) {
-          imb.style.webkitTextStrokeWidth = styles.strokeWidth;
-          bg.style.webkitTextStrokeWidth = styles.strokeWidth;
+          const strokeWidth = toNumberUnitString(styles.strokeWidth);
+          imb.style.webkitTextStrokeWidth = strokeWidth;
+          bg.style.webkitTextStrokeWidth = strokeWidth;
         }
 
         if (styles.strokeColor != null) {
@@ -227,9 +233,10 @@ export default defineComponent({
           bg.style.fontFamily = styles.fontFamily;
         }
         if (styles.fontSize != null) {
-          imb.style.fontSize = styles.fontSize;
-          fg.style.fontSize = styles.fontSize;
-          bg.style.fontSize = styles.fontSize;
+          const fontSize = toNumberUnitString(styles.fontSize);
+          imb.style.fontSize = fontSize;
+          fg.style.fontSize = fontSize;
+          bg.style.fontSize = fontSize;
         }
         if (styles.fontWeight != null) {
           imb.style.fontWeight = styles.fontWeight;
@@ -308,6 +315,10 @@ export default defineComponent({
       this.srObj.start();
     },
     onVoiceResult(evt: any) {
+      if (!this.ws) {
+        log.error("onVoiceResult: this.ws not set");
+        return;
+      }
       let results = evt.results;
       log.info("onVoiceResult()", evt);
       for (var i = evt.resultIndex; i < results.length; i++) {

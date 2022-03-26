@@ -313,6 +313,14 @@ export const calculateOptimalSubtitleDisplayTimeMs = (text: string): number => {
   return Math.floor(readableCharacters.length * 1000 / 12)
 }
 
+export const toNumberUnitString = (value: string | number, unit: string = 'pt') => {
+  const valueStr = `${value}`;
+  if (valueStr.match(/^\d+$/)) {
+    return `${valueStr}${unit}`;
+  }
+  return valueStr;
+};
+
 export default {
   unicodeLength,
   arrayMove,
