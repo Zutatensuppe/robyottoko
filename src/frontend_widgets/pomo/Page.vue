@@ -13,13 +13,14 @@ import util from "../util";
 import fn from "../../common/fn";
 import { SoundMediaFile } from "../../types";
 import { PomoEffect } from "../../mod/modules/PomoModuleCommon";
+import WsClient from "../../frontend/WsClient";
 
 const TIME_BETWEEN_MEDIA = 100;
 
 export default defineComponent({
   data() {
     return {
-      ws: null,
+      ws: null as WsClient | null,
       queue: [],
       worker: null,
       imgstyle: null,

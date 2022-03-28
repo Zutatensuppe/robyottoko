@@ -1,6 +1,7 @@
 import {
   arrayMove,
   calculateOptimalSubtitleDisplayTimeMs,
+  toNumberUnitString,
   humanDuration,
   parseHumanDuration,
   unicodeLength,
@@ -95,5 +96,32 @@ test.each([
   },
 ])('unicodeLenth', ({ str, expected }) => {
   const actual = unicodeLength(str)
+  expect(actual).toBe(expected)
+})
+
+
+test.each([
+  {
+    number: '400',
+    unit: 'px',
+    expected: '400px',
+  },
+  {
+    number: 400,
+    unit: 'px',
+    expected: '400px',
+  },
+  {
+    number: '400px',
+    unit: 'pt',
+    expected: '400px',
+  },
+  {
+    number: '400em',
+    unit: 'px',
+    expected: '400em',
+  },
+])('toNumberUnitString', ({ number, unit, expected }) => {
+  const actual = toNumberUnitString(number, unit)
   expect(actual).toBe(expected)
 })
