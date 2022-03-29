@@ -703,7 +703,4 @@ export default defineComponent({
 .image-to-approve {
   display: inline-block;
 }
-.favorite-list-edit {
-  border: solid 2px #ccc;
-}
 </style>
