@@ -6,24 +6,23 @@
       <span v-if="finishedText">{{ finishedText }}</span>
     </div>
   </div>
+  <media-queue-element ref="q" :timeBetweenMediaMs="100" />
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
 import util from "../util";
 import fn from "../../common/fn";
-import { SoundMediaFile } from "../../types";
 import { PomoEffect } from "../../mod/modules/PomoModuleCommon";
 import WsClient from "../../frontend/WsClient";
-
-const TIME_BETWEEN_MEDIA = 100;
+import MediaQueueElement from "../MediaQueueElement.vue";
 
 export default defineComponent({
+  components: {
+    MediaQueueElement,
+  },
   data() {
     return {
       ws: null as WsClient | null,
-      queue: [],
-      worker: null,
-      imgstyle: null,
       data: null,
       timeout: null,
       now: null,
@@ -107,67 +106,6 @@ export default defineComponent({
         }
       }, 1000);
     },
-    async playone(sound: SoundMediaFile): Promise<void> {
-      return new Promise(async (resolve) => {
-        const promises: Promise<void>[] = [];
-
-        if (sound.file) {
-          promises.push(
-            new Promise((res) => {
-              const audio = new Audio(sound.urlpath);
-              audio.addEventListener("ended", () => {
-                res();
-              });
-              const maxVolume = 100 / 100.0;
-              const soundVolume = sound.volume / 100.0;
-              audio.volume = maxVolume * soundVolume;
-              audio.play();
-            })
-          );
-        }
-
-        if (promises.length === 0) {
-          // show images at least 1 sek by default (only if there
-          // are no other conditions)
-          promises.push(
-            new Promise((resolve1) => {
-              setTimeout(resolve1, 1000);
-            })
-          );
-        }
-
-        Promise.all(promises).then((_) => {
-          this.imgstyle = null;
-          resolve();
-        });
-      });
-    },
-    addQueue(sound: SoundMediaFile) {
-      this.queue.push(sound);
-      if (this.worker) {
-        return;
-      }
-
-      const next = async () => {
-        if (this.queue.length === 0) {
-          clearInterval(this.worker);
-          this.worker = null;
-          return;
-        }
-        const sound = this.queue.shift();
-        if (!sound) {
-          clearInterval(this.worker);
-          this.worker = null;
-          return;
-        }
-        await this.playone(sound);
-        this.worker = setTimeout(next, TIME_BETWEEN_MEDIA); // this much time in between media
-      };
-      this.worker = setTimeout(next, TIME_BETWEEN_MEDIA);
-    },
-    playsound(sound: SoundMediaFile) {
-      this.addQueue(sound);
-    },
   },
   mounted() {
     this.ws = util.wsClient("pomo");
@@ -176,8 +114,17 @@ export default defineComponent({
       this.tick();
     });
     this.ws.onMessage("effect", (data: PomoEffect) => {
-      console.log(data);
-      this.playsound(data.sound);
+      this.$refs["q"].playmedia({
+        sound: data.sound,
+        image: {
+          file: "",
+          filename: "",
+          urlpath: "",
+        },
+        twitch_clip: { url: "", volume: 100 },
+        image_url: "",
+        minDurationMs: 0,
+      });
     });
     this.ws.connect();
   },
