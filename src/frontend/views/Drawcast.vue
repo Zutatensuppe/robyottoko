@@ -259,75 +259,107 @@
             </td>
             <td>
               <div
+                class="card p-2 mb-2"
                 v-for="(favoriteList, idx) in settings.favoriteLists"
                 :key="idx"
               >
                 <div v-if="settings.favoriteLists.length > 1">
-                  <span class="button is-small" @click="removeFavoriteList(idx)"
-                    >Remove this list</span
-                  >
+                  <span
+                    class="button is-small ml-1"
+                    @click="moveFavoriteListUp(idx)"
+                    :class="{ 'is-disabled': idx > 0 }"
+                    ><i class="fa fa-chevron-up"
+                  /></span>
+                  <span
+                    class="button is-small ml-1"
+                    @click="moveFavoriteListDown(idx)"
+                    :class="{
+                      'is-disabled': idx < settings.favoriteLists.length - 1,
+                    }"
+                    ><i class="fa fa-chevron-down"
+                  /></span>
+                  <span
+                    class="button is-small ml-1"
+                    @click="removeFavoriteList(idx)"
+                    ><i class="fa fa-trash"
+                  /></span>
                 </div>
-                <div>Title:</div>
-                <input
-                  class="input is-small"
-                  type="text"
-                  v-model="favoriteList.title"
-                />
-                <div>Currently selected favorites:</div>
-                <div class="favorites">
-                  <img
-                    :src="url"
-                    v-for="(url, idx2) in favoriteList.list"
-                    :key="idx2"
-                    width="50"
-                    height="50"
-                    @click="toggleFavorite(idx, url)"
-                    @mouseover="favoriteSelection.hovered = url"
-                    @mouseleave="favoriteSelection.hovered = ''"
-                    class="thumbnail is-favorited mr-1"
-                  />
-                </div>
-
-                <div class="mt-2">Select favorites:</div>
-                <div class="favorites-select">
-                  <img
-                    :src="url"
-                    v-for="(url, idx2) in currentFavoriteSelectionItems"
-                    :key="idx2"
-                    width="50"
-                    height="50"
-                    @click="toggleFavorite(idx, url)"
-                    @mouseover="favoriteSelection.hovered = url"
-                    @mouseleave="favoriteSelection.hovered = ''"
-                    class="thumbnail mr-1"
-                    :class="{ 'is-favorited': favoriteList.list.includes(url) }"
-                  />
-                </div>
-                <span
-                  class="button is-small"
-                  @click="
-                    favoriteSelection.pagination.page =
-                      favoriteSelection.pagination.page - 1
-                  "
-                  :disabled="
-                    favoriteSelection.pagination.page > 1 ? null : true
-                  "
-                  >Prev</span
-                >
-                <span
-                  class="button is-small"
-                  @click="
-                    favoriteSelection.pagination.page =
-                      favoriteSelection.pagination.page + 1
-                  "
-                  :disabled="
-                    favoriteSelection.pagination.page <
-                    favoriteSelectionTotalPages
-                      ? null
-                      : true
-                  "
-                  >Next</span
-                >
+                <table>
+                  <tr>
+                    <td>Title:</td>
+                    <td>
+                      <input
+                        class="input is-small"
+                        type="text"
+                        v-model="favoriteList.title"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Currently selected favorites:</td>
+                    <td>
+                      <div class="favorites">
+                        <img
+                          :src="url"
+                          v-for="(url, idx2) in favoriteList.list"
+                          :key="idx2"
+                          width="50"
+                          height="50"
+                          @click="toggleFavorite(idx, url)"
+                          @mouseover="favoriteSelection.hovered = url"
+                          @mouseleave="favoriteSelection.hovered = ''"
+                          class="thumbnail is-favorited mr-1"
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Select favorites:</td>
+                    <td>
+                      <div class="favorites-select">
+                        <img
+                          :src="url"
+                          v-for="(url, idx2) in currentFavoriteSelectionItems"
+                          :key="idx2"
+                          width="50"
+                          height="50"
+                          @click="toggleFavorite(idx, url)"
+                          @mouseover="favoriteSelection.hovered = url"
+                          @mouseleave="favoriteSelection.hovered = ''"
+                          class="thumbnail mr-1"
+                          :class="{
+                            'is-favorited': favoriteList.list.includes(url),
+                          }"
+                        />
+                      </div>
+                      <span
+                        class="button is-small mr-1"
+                        @click="
+                          favoriteSelection.pagination.page =
+                            favoriteSelection.pagination.page - 1
+                        "
+                        :disabled="
+                          favoriteSelection.pagination.page > 1 ? null : true
+                        "
+                        >Prev</span
+                      >
+                      <span
+                        class="button is-small"
+                        @click="
+                          favoriteSelection.pagination.page =
+                            favoriteSelection.pagination.page + 1
+                        "
+                        :disabled="
+                          favoriteSelection.pagination.page <
+                          favoriteSelectionTotalPages
+                            ? null
+                            : true
+                        "
+                        >Next</span
+                      >
+                    </td>
+                  </tr>
+                </table>
               </div>
             </td>
             <td>
@@ -531,6 +563,24 @@ export default defineComponent({
         list: [],
         title: "",
       });
+    },
+    moveFavoriteListUp(idx: number) {
+      this.swapItems(idx - 1, idx);
+    },
+    moveFavoriteListDown(idx: number) {
+      this.swapItems(idx + 1, idx);
+    },
+    swapItems(idx1: number, idx2: number) {
+      if (idx1 < 0 || idx1 > this.settings.favoriteLists.length - 1) {
+        return;
+      }
+      if (idx2 < 0 || idx2 > this.settings.favoriteLists.length - 1) {
+        return;
+      }
+      const tmp = this.settings.favoriteLists[idx1];
+      this.settings.favoriteLists[idx1] = this.settings.favoriteLists[idx2];
+      this.settings.favoriteLists[idx2] = tmp;
+      this.settings.favoriteLists = this.settings.favoriteLists.slice();
     },
     removeFavoriteList(index: number) {
       if (!this.settings) {
