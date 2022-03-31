@@ -88,9 +88,16 @@ class DrawcastModule implements Module {
     }
   }
 
-  drawUrl() {
-    const pubToken = this.bot.getTokens().getPubTokenForUserId(this.user.id).token
-    return this.bot.getWebServer().pubUrl(this.bot.getWebServer().widgetUrl('drawcast_draw', pubToken))
+  drawUrl(): string {
+    return this.bot.getWebServer().getPublicWidgetUrl('drawcast_draw', this.user.id)
+  }
+
+  receiveUrl(): string {
+    return this.bot.getWebServer().getWidgetUrl('drawcast_receive', this.user.id)
+  }
+
+  controlUrl(): string {
+    return this.bot.getWebServer().getWidgetUrl('drawcast_control', this.user.id)
   }
 
   wsdata(eventName: string): DrawcastModuleWsData {
@@ -100,6 +107,8 @@ class DrawcastModule implements Module {
         settings: this.data.settings,
         images: this.data.images, // lots of images! maybe limit to 20 images
         drawUrl: this.drawUrl(),
+        controlWidgetUrl: this.controlUrl(),
+        receiveWidgetUrl: this.receiveUrl(),
       },
     };
   }
@@ -113,6 +122,8 @@ class DrawcastModule implements Module {
             settings: this.data.settings,
             images: this.data.images.filter(image => image.approved).slice(0, 20),
             drawUrl: this.drawUrl(),
+            controlWidgetUrl: this.controlUrl(),
+            receiveWidgetUrl: this.receiveUrl(),
           }
         }, ws)
       },
@@ -179,6 +190,8 @@ class DrawcastModule implements Module {
             settings: this.data.settings,
             images: this.data.images.filter(image => image.approved).slice(0, 20),
             drawUrl: this.drawUrl(),
+            controlWidgetUrl: this.controlUrl(),
+            receiveWidgetUrl: this.receiveUrl(),
           }
         })
       },

@@ -183,6 +183,9 @@ interface ComponentData {
 
   tabDefinitions: TabDefinition[];
   tab: "settings" | "avatars";
+
+  controlWidgetUrl: string;
+  displayWidgetUrl: string;
 }
 
 export default defineComponent({
@@ -201,6 +204,8 @@ export default defineComponent({
       { tab: "settings", title: "Settings" },
     ],
     tab: "avatars",
+    controlWidgetUrl: "",
+    displayWidgetUrl: "",
   }),
   watch: {
     settings: {
@@ -213,12 +218,6 @@ export default defineComponent({
   computed: {
     changed(): boolean {
       return this.unchangedJson !== this.changedJson;
-    },
-    controlWidgetUrl(): string {
-      return util.widgetUrl("avatar");
-    },
-    displayWidgetUrl(): string {
-      return util.widgetUrl("avatar_receive");
     },
   },
   methods: {
@@ -321,6 +320,8 @@ export default defineComponent({
     this.ws.onMessage("init", (data: AvatarModuleWsInitData) => {
       this.settings = data.settings;
       this.unchangedJson = JSON.stringify(data.settings);
+      this.controlWidgetUrl = data.controlWidgetUrl;
+      this.displayWidgetUrl = data.displayWidgetUrl;
       this.inited = true;
     });
     this.ws.connect();

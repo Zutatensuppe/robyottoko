@@ -27,7 +27,7 @@ export default defineComponent({
     };
   },
   mounted() {
-    this.ws = util.wsClient("general");
+    this.ws = util.wsClient("media");
     this.ws.onMessage("init", (data) => {
       this.settings = data.settings;
     });

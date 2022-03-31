@@ -150,6 +150,8 @@ export interface DrawcastSettings {
 export interface DrawcastData {
   settings: DrawcastSettings
   drawUrl: string
+  controlWidgetUrl: string
+  receiveWidgetUrl: string
   images: any[]
 }
 

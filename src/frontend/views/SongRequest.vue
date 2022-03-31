@@ -193,6 +193,8 @@ interface ComponentData {
   tab: "playlist" | "commands" | "import" | "tags";
   importPlaylist: string;
 
+  widgetUrl: string;
+
   toast: any;
   controlDefinitions: ControlDefinition[];
   tabDefinitions: TabDefinition[];
@@ -228,6 +230,8 @@ export default defineComponent({
 
     tab: "playlist", // playlist|import|tags
     importPlaylist: "",
+
+    widgetUrl: "",
 
     toast: useToast(),
     controlDefinitions: [
@@ -355,9 +359,6 @@ export default defineComponent({
     exportPlaylistUrl(): string {
       return `${location.protocol}//${location.host}/api/sr/export`;
     },
-    widgetUrl(): string {
-      return util.widgetUrl("sr");
-    },
   },
   methods: {
     sendSave() {
@@ -452,6 +453,7 @@ export default defineComponent({
       this.ws = util.wsClient("sr");
       this.ws.onMessage("save", (data: SongrequestModuleWsEventData) => {
         this.settings = data.settings;
+        this.widgetUrl = data.widgetUrl;
         this.commands = data.commands;
         this.globalVariables = data.globalVariables;
         this.channelPointsCustomRewards = data.channelPointsCustomRewards;
@@ -523,6 +525,7 @@ export default defineComponent({
         ["add", "init"],
         (data: SongrequestModuleWsEventData) => {
           this.settings = data.settings;
+          this.widgetUrl = data.widgetUrl;
           this.commands = data.commands;
           this.globalVariables = data.globalVariables;
           this.channelPointsCustomRewards = data.channelPointsCustomRewards;

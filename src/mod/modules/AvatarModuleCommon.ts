@@ -84,6 +84,8 @@ export interface AvatarModuleAvatarState {
 export interface AvatarModuleWsInitData {
   settings: AvatarModuleSettings
   state: AvatarModuleState
+  controlWidgetUrl: string
+  displayWidgetUrl: string
 }
 
 export interface AvatarModuleWsSaveData {

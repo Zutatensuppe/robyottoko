@@ -11,6 +11,13 @@ export interface AvatarModuleData {
   state: AvatarModuleState
 }
 
+export interface AvatarModuleWsData {
+  settings: AvatarModuleSettings
+  state: AvatarModuleState
+  controlWidgetUrl: string
+  displayWidgetUrl: string
+}
+
 export interface AvatarModuleWsControlData {
   event: 'ctrl'
   data: {
@@ -21,7 +28,7 @@ export interface AvatarModuleWsControlData {
 
 interface WsModuleData {
   event: string // this is always 'init' in this module
-  data: AvatarModuleData
+  data: AvatarModuleWsData
 }
 
 interface WsControlData {
@@ -72,7 +79,15 @@ class AvatarModule implements Module {
   }
 
   wsdata(event: string): WsModuleData {
-    return { event, data: this.data }
+    return {
+      event,
+      data: {
+        settings: this.data.settings,
+        state: this.data.state,
+        controlWidgetUrl: this.bot.getWebServer().getWidgetUrl('avatar', this.user.id),
+        displayWidgetUrl: this.bot.getWebServer().getWidgetUrl('avatar_receive', this.user.id),
+      }
+    }
   }
 
   updateClient(data: WsModuleData, ws: Socket) {

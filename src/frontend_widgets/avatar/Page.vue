@@ -115,6 +115,7 @@ export default defineComponent({
   },
   props: {
     controls: { type: Boolean, required: true },
+    widget: { type: String, required: true },
   },
   data(): ComponentData {
     return {
@@ -316,7 +317,7 @@ export default defineComponent({
     }
   },
   mounted() {
-    this.ws = util.wsClient("avatar");
+    this.ws = util.wsClient(this.widget);
     this.ws.onMessage("init", (data: AvatarModuleWsInitData) => {
       this.settings = data.settings;
       this.$nextTick(() => {

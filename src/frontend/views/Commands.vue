@@ -84,6 +84,7 @@ interface ComponentData {
   possibleActions: CommandAction[];
   tabDefinitions: TabDefinition[];
   tab: "commands" | "settings";
+  widgetUrl: string;
 }
 
 export default defineComponent({
@@ -117,13 +118,12 @@ export default defineComponent({
     inited: false,
 
     tab: "commands",
+
+    widgetUrl: "",
   }),
   computed: {
     baseVolume() {
       return this.settings.volume;
-    },
-    widgetUrl(): string {
-      return util.widgetUrl("media");
     },
   },
   methods: {
@@ -152,6 +152,7 @@ export default defineComponent({
     this.ws.onMessage("init", (data: GeneralModuleWsEventData) => {
       this.commands = data.commands;
       this.settings = data.settings;
+      this.widgetUrl = data.mediaWidgetUrl;
       this.adminSettings = data.adminSettings;
       this.globalVariables = data.globalVariables;
       this.channelPointsCustomRewards = data.channelPointsCustomRewards;

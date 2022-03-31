@@ -186,7 +186,14 @@ class PomoModule implements Module {
   }
 
   wsdata(event: string): PomoModuleWsData {
-    return { event, data: this.data }
+    return {
+      event,
+      data: {
+        settings: this.data.settings,
+        state: this.data.state,
+        widgetUrl: this.bot.getWebServer().getWidgetUrl('pomo', this.user.id),
+      }
+    }
   }
 
   updateClient(data: PomoModuleWsData, ws: Socket) {

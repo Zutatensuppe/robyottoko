@@ -8,5 +8,5 @@ const wsUrl = v("wsUrl", import.meta.env.VITE_WIDGET_WS_URL);
 const token = v("widgetToken", import.meta.env.VITE_WIDGET_TOKEN);
 
 export default {
-  wsClient: (widget: string) => new WsClient(wsUrl + '/' + widget, token)
+  wsClient: (type: string) => new WsClient(wsUrl + '/widget_' + type, token)
 }

@@ -74,4 +74,5 @@ export default {
   },
   importPlaylist: async (playlistJsonString: string) => postJsonStr("/api/sr/import", playlistJsonString),
   getDrawcastAllImages: async () => get("/api/drawcast/all-images/"),
+  createWidgetUrl: async (data: { type: string, pub: boolean }) => postJson("/api/widget/create_url", data),
 }

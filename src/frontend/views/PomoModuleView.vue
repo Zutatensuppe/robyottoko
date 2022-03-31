@@ -224,7 +224,7 @@
 import { defineComponent } from "vue";
 import util from "../util";
 import {
-  PomoModuleData,
+  PomoModuleWsDataData,
   PomoModuleWsSaveData,
   default_settings,
   default_notification,
@@ -238,6 +238,7 @@ export default defineComponent({
     settings: default_settings(),
     inited: false,
     ws: null as WsClient | null,
+    widgetUrl: "",
   }),
   watch: {
     settings: {
@@ -250,9 +251,6 @@ export default defineComponent({
   computed: {
     changed(): boolean {
       return this.unchangedJson !== this.changedJson;
-    },
-    widgetUrl(): string {
-      return util.widgetUrl("pomo");
     },
   },
   methods: {
@@ -288,9 +286,10 @@ export default defineComponent({
   },
   async mounted() {
     this.ws = util.wsClient("pomo");
-    this.ws.onMessage("init", (data: PomoModuleData) => {
+    this.ws.onMessage("init", (data: PomoModuleWsDataData) => {
       this.settings = data.settings;
       this.unchangedJson = JSON.stringify(data.settings);
+      this.widgetUrl = data.widgetUrl;
       this.inited = true;
     });
     this.ws.connect();
