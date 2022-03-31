@@ -1,5 +1,6 @@
 import {
   arrayMove,
+  arraySwap,
   calculateOptimalSubtitleDisplayTimeMs,
   toNumberUnitString,
   humanDuration,
@@ -38,6 +39,59 @@ ${['a', 'b', 'c', 'd']} | ${0} | ${2} | ${['b', 'c', 'a', 'd']}
 `('arrayMove', ({ arr, from, to, expected }) => {
   const actual = arrayMove(arr, from, to)
   expect(actual).toStrictEqual(expected)
+})
+
+test.each([
+  {
+    arr: ['a', 'b', 'c', 'd'],
+    idx1: 0,
+    idx2: 2,
+    expected: ['c', 'b', 'a', 'd'],
+  },
+  {
+    arr: ['a', 'b', 'c', 'd'],
+    idx1: 3,
+    idx2: 0,
+    expected: ['d', 'b', 'c', 'a'],
+  },
+  {
+    arr: ['a', 'b', 'c', 'd'],
+    idx1: 0,
+    idx2: 0,
+    expected: null, // means that the array should not be modified
+  },
+  {
+    arr: ['a', 'b', 'c', 'd'],
+    idx1: 0,
+    idx2: -1,
+    expected: null, // means that the array should not be modified
+  },
+  {
+    arr: ['a', 'b', 'c', 'd'],
+    idx1: -1,
+    idx2: 0,
+    expected: null, // means that the array should not be modified
+  },
+  {
+    arr: ['a', 'b', 'c', 'd'],
+    idx1: 0,
+    idx2: 4,
+    expected: null, // means that the array should not be modified
+  },
+  {
+    arr: ['a', 'b', 'c', 'd'],
+    idx1: 4,
+    idx2: 0,
+    expected: null, // means that the array should not be modified
+  },
+])('arraySwap', ({ arr, idx1, idx2, expected }) => {
+  const actual = arraySwap(arr, idx1, idx2)
+  if (expected === null) {
+    expect(actual).toBe(false)
+  } else {
+    expect(arr).toStrictEqual(expected)
+    expect(actual).toBe(true)
+  }
 })
 
 describe('fn.calculateOptimalSubtitleDisplayTimeMs', () => {

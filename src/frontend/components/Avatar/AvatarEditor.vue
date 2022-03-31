@@ -125,6 +125,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
+import { arraySwap } from "../../../common/fn";
 import {
   AvatarModuleAvatarDefinition,
   AvatarModuleAvatarSlotDefinition,
@@ -360,28 +361,17 @@ export default defineComponent({
       this.item.slotDefinitions.push(slotDefinition);
     },
     moveSlotUp(idx: number) {
-      if (!this.item) {
-        console.warn("moveSlotUp: this.item not initialized");
-        return;
-      }
-      if (idx <= 0) {
-        return;
-      }
-      const tmp = this.item.slotDefinitions[idx - 1];
-      this.item.slotDefinitions[idx - 1] = this.item.slotDefinitions[idx];
-      this.item.slotDefinitions[idx] = tmp;
+      this.swapItems(idx - 1, idx);
     },
     moveSlotDown(idx: number) {
+      this.swapItems(idx + 1, idx);
+    },
+    swapItems(idx1: number, idx2: number) {
       if (!this.item) {
-        console.warn("moveSlotDown: this.item not initialized");
+        console.warn("swapItems: this.item not initialized");
         return;
       }
-      if (idx >= this.item.slotDefinitions.length - 1) {
-        return;
-      }
-      const tmp = this.item.slotDefinitions[idx + 1];
-      this.item.slotDefinitions[idx + 1] = this.item.slotDefinitions[idx];
-      this.item.slotDefinitions[idx] = tmp;
+      arraySwap(this.item.slotDefinitions, idx1, idx2);
     },
   },
 });

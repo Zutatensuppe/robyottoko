@@ -61,6 +61,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
+import { arraySwap } from "../../../common/fn";
 import {
   AvatarModuleAvatarDefinition,
   AvatarModuleAvatarSlotDefinition,
@@ -155,21 +156,13 @@ export default defineComponent({
       this.swapItems(idx + 1, idx);
     },
     swapItems(idx1: number, idx2: number) {
-      if (idx1 < 0 || idx1 > this.modelValue.items.length - 1) {
-        return;
+      if (arraySwap(this.modelValue.items, idx1, idx2)) {
+        if (this.modelValue.defaultItemIndex === idx1) {
+          this.modelValue.defaultItemIndex = idx2;
+        } else if (this.modelValue.defaultItemIndex === idx2) {
+          this.modelValue.defaultItemIndex = idx1;
+        }
       }
-      if (idx2 < 0 || idx2 > this.modelValue.items.length - 1) {
-        return;
-      }
-      const tmp = this.modelValue.items[idx1];
-      this.modelValue.items[idx1] = this.modelValue.items[idx2];
-      this.modelValue.items[idx2] = tmp;
-      if (this.modelValue.defaultItemIndex === idx1) {
-        this.modelValue.defaultItemIndex = idx2;
-      } else if (this.modelValue.defaultItemIndex === idx2) {
-        this.modelValue.defaultItemIndex = idx1;
-      }
-      this.modelValue.items = this.modelValue.items.slice();
     },
   },
 });
