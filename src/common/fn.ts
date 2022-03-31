@@ -218,6 +218,27 @@ export function arrayMove(arr: any[], oldIndex: number, newIndex: number) {
   return arr // return, but array is also modified in place
 }
 
+/**
+ * Swaps two items in array by index.
+ *
+ * Returns true if anything was swapped, otherwise false
+ */
+export const arraySwap = <T>(arr: T[], idx1: number, idx2: number): boolean => {
+  if (idx1 === idx2) {
+    return false
+  }
+  if (idx1 < 0 || idx1 > arr.length - 1) {
+    return false
+  }
+  if (idx2 < 0 || idx2 > arr.length - 1) {
+    return false
+  }
+  const tmp = arr[idx1]
+  arr[idx1] = arr[idx2]
+  arr[idx2] = tmp
+  return true
+}
+
 const doDummyReplacements = (text: string, str: string) => {
   const regexes = [
     // regexes must match the ones in src/fn.ts doReplaces function
@@ -324,6 +345,7 @@ export const toNumberUnitString = (value: string | number, unit: string = 'pt') 
 export default {
   unicodeLength,
   arrayMove,
+  arraySwap,
   humanDuration,
   parseHumanDuration,
   mustParseHumanDuration,
@@ -333,4 +355,5 @@ export default {
   pad,
   mediaFileFromUploadedFile,
   soundMediaFileFromUploadedFile,
+  toNumberUnitString,
 }

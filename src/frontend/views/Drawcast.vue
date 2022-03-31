@@ -374,6 +374,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
+import { arraySwap } from "../../common/fn";
 import {
   default_settings,
   DrawcastImage,
@@ -571,16 +572,7 @@ export default defineComponent({
       this.swapItems(idx + 1, idx);
     },
     swapItems(idx1: number, idx2: number) {
-      if (idx1 < 0 || idx1 > this.settings.favoriteLists.length - 1) {
-        return;
-      }
-      if (idx2 < 0 || idx2 > this.settings.favoriteLists.length - 1) {
-        return;
-      }
-      const tmp = this.settings.favoriteLists[idx1];
-      this.settings.favoriteLists[idx1] = this.settings.favoriteLists[idx2];
-      this.settings.favoriteLists[idx2] = tmp;
-      this.settings.favoriteLists = this.settings.favoriteLists.slice();
+      arraySwap(this.settings.favoriteLists, idx1, idx2);
     },
     removeFavoriteList(index: number) {
       if (!this.settings) {
