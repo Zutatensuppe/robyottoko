@@ -64,7 +64,7 @@ const dateformat = (
   })
 }
 
-const pad = (
+export const pad = (
   x: number,
   pad: string
 ): string => {
