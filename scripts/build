@@ -13,6 +13,7 @@ npm run vite -- build --config vite.config.js
 # widgets build
 WIDGET=drawcast_draw          npm run vite -- build --config widget.vite.config.js
 WIDGET=drawcast_receive       npm run vite -- build --config widget.vite.config.js
+WIDGET=drawcast_control       npm run vite -- build --config widget.vite.config.js
 WIDGET=sr                     npm run vite -- build --config widget.vite.config.js
 WIDGET=media                  npm run vite -- build --config widget.vite.config.js
 WIDGET=speech-to-text         npm run vite -- build --config widget.vite.config.js

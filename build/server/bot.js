@@ -1338,6 +1338,12 @@ const widgets = [
         pub: true,
     },
     {
+        type: 'drawcast_control',
+        title: 'Drawcast (Control)',
+        hint: 'Open this to control certain actions of draw (for example permit drawings)',
+        pub: false,
+    },
+    {
         type: 'pomo',
         title: 'Pomo',
         hint: 'Browser source, or open in browser and capture window',
@@ -6167,7 +6173,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-03-31T18:11:33.547Z",
+    buildDate: "2022-03-31T19:02:58.426Z",
     // @ts-ignore
     buildVersion: "1.4.0",
 };

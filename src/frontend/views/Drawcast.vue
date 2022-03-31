@@ -78,30 +78,49 @@
             </td>
           </tr>
           <tr>
-            <td>Pending approval</td>
             <td>
-              <div
-                class="image-to-approve card mr-1"
-                v-for="(url, idx2) in manualApproval.items"
-                :key="idx2"
+              Pending approval
+              <br />
+              <a class="button is-small mr-1" :href="controlUrl" target="_blank"
+                >Open in separate tab</a
               >
-                <div class="card-body">
-                  <img :src="url" width="250" class="thumbnail mr-1" />
+            </td>
+            <td>
+              <div v-if="manualApproval.items.length">
+                <div
+                  class="image-to-approve card mr-1"
+                  v-for="(url, idx2) in manualApproval.items"
+                  :key="idx2"
+                >
+                  <div class="card-body">
+                    <img :src="url" width="250" class="thumbnail mr-1" />
+                  </div>
+                  <div class="card-footer">
+                    <span
+                      class="
+                        card-footer-item
+                        button
+                        is-small is-success is-light
+                      "
+                      @click="approveImage(url)"
+                    >
+                      Approve!
+                    </span>
+                    <span
+                      class="
+                        card-footer-item
+                        button
+                        is-small is-danger is-light
+                      "
+                      @click="denyImage(url)"
+                    >
+                      Deny!
+                    </span>
+                  </div>
                 </div>
-                <div class="card-footer">
-                  <span
-                    class="card-footer-item button is-small is-success is-light"
-                    @click="approveImage(url)"
-                  >
-                    Approve!
-                  </span>
-                  <span
-                    class="card-footer-item button is-small is-danger is-light"
-                    @click="denyImage(url)"
-                  >
-                    Deny!
-                  </span>
-                </div>
+              </div>
+              <div v-else>
+                Currently there are no drawings awaiting approval.
               </div>
             </td>
             <td></td>
@@ -524,6 +543,9 @@ export default defineComponent({
     },
     receiveUrl(): string {
       return util.widgetUrl("drawcast_receive");
+    },
+    controlUrl(): string {
+      return util.widgetUrl("drawcast_control");
     },
     favoriteSelectionTotalPages() {
       return (
