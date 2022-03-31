@@ -91,6 +91,12 @@ const widgets: WidgetDefinition[] = [
     pub: true,
   },
   {
+    type: 'drawcast_control',
+    title: 'Drawcast (Control)',
+    hint: 'Open this to control certain actions of draw (for example permit drawings)',
+    pub: false,
+  },
+  {
     type: 'pomo',
     title: 'Pomo',
     hint: 'Browser source, or open in browser and capture window',
