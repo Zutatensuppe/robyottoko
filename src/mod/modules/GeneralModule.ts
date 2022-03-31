@@ -306,6 +306,7 @@ class GeneralModule implements Module {
         adminSettings: this.data.adminSettings,
         globalVariables: this.bot.getUserVariables(this.user).all(),
         channelPointsCustomRewards: this.channelPointsCustomRewards,
+        mediaWidgetUrl: this.bot.getWebServer().getWidgetUrl('media', this.user.id),
       },
     }
   }

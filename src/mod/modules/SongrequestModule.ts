@@ -229,6 +229,7 @@ class SongrequestModule implements Module {
         commands: this.data.commands,
         globalVariables: this.bot.getUserVariables(this.user).all(),
         channelPointsCustomRewards: this.channelPointsCustomRewards,
+        widgetUrl: this.bot.getWebServer().getWidgetUrl('sr', this.user.id),
       }
     };
   }

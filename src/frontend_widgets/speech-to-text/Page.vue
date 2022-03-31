@@ -80,6 +80,7 @@ const log = logger("speech-to-text/Page.vue");
 export default defineComponent({
   props: {
     controls: { type: Boolean, required: true },
+    widget: { type: String, required: true },
   },
   data() {
     return {
@@ -344,7 +345,7 @@ export default defineComponent({
     },
   },
   mounted() {
-    this.ws = util.wsClient("speech-to-text");
+    this.ws = util.wsClient(this.widget);
     this.ws.onMessage("text", (data) => {
       this.texts.push({
         recognized: data.recognized,

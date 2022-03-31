@@ -792,8 +792,8 @@ class Auth {
         this.userRepo = userRepo;
         this.tokenRepo = tokenRepo;
     }
-    getTokenInfo(token) {
-        return this.tokenRepo.getByToken(token);
+    getTokenInfoByTokenAndType(token, type) {
+        return this.tokenRepo.getByTokenAndType(token, type);
     }
     getUserById(id) {
         return this.userRepo.get({ id, status: 'verified' });
@@ -814,8 +814,8 @@ class Auth {
     addAuthInfoMiddleware() {
         return (req, _res, next) => {
             const token = req.cookies['x-token'] || null;
-            const tokenInfo = this.getTokenInfo(token);
-            if (tokenInfo && ['auth'].includes(tokenInfo.type)) {
+            const tokenInfo = this.getTokenInfoByTokenAndType(token, 'auth');
+            if (tokenInfo) {
                 const user = this.userRepo.getById(tokenInfo.user_id);
                 if (user) {
                     req.token = tokenInfo.token;
@@ -841,21 +841,21 @@ class Auth {
             next();
         };
     }
-    userFromWidgetToken(token) {
-        const tokenInfo = this.getTokenInfo(token);
-        if (tokenInfo && ['widget'].includes(tokenInfo.type)) {
+    userFromWidgetToken(token, type) {
+        const tokenInfo = this.getTokenInfoByTokenAndType(token, `widget_${type}`);
+        if (tokenInfo) {
             return this.getUserById(tokenInfo.user_id);
         }
         return null;
     }
     userFromPubToken(token) {
-        const tokenInfo = this.getTokenInfo(token);
-        if (tokenInfo && ['pub'].includes(tokenInfo.type)) {
+        const tokenInfo = this.getTokenInfoByTokenAndType(token, 'pub');
+        if (tokenInfo) {
             return this.getUserById(tokenInfo.user_id);
         }
         return null;
     }
-    wsTokenFromProtocol(protocol) {
+    wsTokenFromProtocol(protocol, tokenType) {
         let proto = Array.isArray(protocol) && protocol.length === 2
             ? protocol[1]
             : protocol;
@@ -865,8 +865,19 @@ class Auth {
         if (Array.isArray(proto)) {
             return null;
         }
-        const tokenInfo = this.getTokenInfo(proto);
-        if (tokenInfo && ['auth', 'widget', 'pub'].includes(tokenInfo.type)) {
+        if (tokenType) {
+            const tokenInfo = this.getTokenInfoByTokenAndType(proto, tokenType);
+            if (tokenInfo) {
+                return tokenInfo;
+            }
+            return null;
+        }
+        let tokenInfo = this.getTokenInfoByTokenAndType(proto, 'auth');
+        if (tokenInfo) {
+            return tokenInfo;
+        }
+        tokenInfo = this.getTokenInfoByTokenAndType(proto, 'pub');
+        if (tokenInfo) {
             return tokenInfo;
         }
         return null;
@@ -901,26 +912,41 @@ class WebSocketServer {
     listen() {
         this._websocketserver = new WebSocket.Server(this.config);
         this._websocketserver.on('connection', (socket, request) => {
-            const token = socket.protocol;
-            const tokenInfo = this.auth.wsTokenFromProtocol(token);
-            if (!tokenInfo) {
-                log$i.info('not found token: ', token);
-                socket.close();
-                return;
-            }
-            socket.user_id = tokenInfo.user_id;
             const pathname = new URL(this.connectstring()).pathname;
             if (request.url?.indexOf(pathname) !== 0) {
                 log$i.info('bad request url: ', request.url);
                 socket.close();
                 return;
             }
+            const token = socket.protocol;
+            const relpathfull = request.url.substr(pathname.length);
+            const widget_path_to_module_map = {
+                widget_avatar: 'avatar',
+                widget_avatar_receive: 'avatar',
+                widget_drawcast_control: 'drawcast',
+                widget_drawcast_draw: 'drawcast',
+                widget_drawcast_receive: 'drawcast',
+                widget_media: 'general',
+                widget_pomo: 'pomo',
+                'widget_speech-to-text': 'speech-to-text',
+                'widget_speech-to-text_receive': 'speech-to-text',
+                widget_sr: 'sr',
+            };
+            const relpath = relpathfull.startsWith('/') ? relpathfull.substring(1) : relpathfull;
+            const widgetModule = widget_path_to_module_map[relpath];
+            const token_type = widgetModule ? relpath : null;
+            const tokenInfo = this.auth.wsTokenFromProtocol(token, token_type);
+            if (!tokenInfo) {
+                log$i.info('not found token: ', token, relpath);
+                socket.close();
+                return;
+            }
+            socket.user_id = tokenInfo.user_id;
             socket.isAlive = true;
             socket.on('pong', function () {
                 socket.isAlive = true;
             });
-            const relpath = request.url.substr(pathname.length);
-            if (relpath === '/core') {
+            if (relpath === 'core') {
                 socket.module = 'core';
                 // log.info('/conn connected')
                 // not a module
@@ -929,7 +955,7 @@ class WebSocketServer {
             }
             // module routing
             for (const module of this.moduleManager.all(socket.user_id)) {
-                if ('/' + module.name !== relpath) {
+                if (module.name !== relpath && module.name !== widgetModule) {
                     continue;
                 }
                 socket.module = module.name;
@@ -1367,7 +1393,14 @@ class WebServer {
         this.auth = auth;
         this.handle = null;
     }
-    pubUrl(target) {
+    getWidgetUrl(widgetType, userId) {
+        return this._widgetUrlByTypeAndUserId(widgetType, userId);
+    }
+    getPublicWidgetUrl(widgetType, userId) {
+        const url = this._widgetUrlByTypeAndUserId(widgetType, userId);
+        return this._pubUrl(url);
+    }
+    _pubUrl(target) {
         const row = this.db.get('pub', { target });
         let id;
         if (!row) {
@@ -1381,8 +1414,23 @@ class WebServer {
         }
         return `${this.url}/pub/${id}`;
     }
-    widgetUrl(type, token) {
+    _widgetUrl(type, token) {
         return `${this.url}/widget/${type}/${token}/`;
+    }
+    _createWidgetUrl(type, userId) {
+        let t = this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`);
+        if (t) {
+            this.tokenRepo.delete(t.token);
+        }
+        t = this.tokenRepo.createToken(userId, `widget_${type}`);
+        return `${this.url}/widget/${type}/${t.token}`;
+    }
+    _widgetUrlByTypeAndUserId(type, userId) {
+        const t = this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`);
+        if (t) {
+            return this._widgetUrl(type, t.token);
+        }
+        return this._createWidgetUrl(type, userId);
     }
     async listen() {
         const port = this.port;
@@ -1480,6 +1528,14 @@ class WebServer {
                 res.send(uploadedFile);
             });
         });
+        app.post('/api/widget/create_url', requireLoginApi, express.json(), async (req, res) => {
+            const type = req.body.type;
+            const pub = req.body.pub;
+            const url = this._createWidgetUrl(type, req.user.id);
+            res.send({
+                url: pub ? this._pubUrl(url) : url
+            });
+        });
         app.get('/api/conf', async (req, res) => {
             res.send({
                 wsBase: this.wss.connectstring(),
@@ -1503,11 +1559,13 @@ class WebServer {
         app.get('/api/page/index', requireLoginApi, async (req, res) => {
             res.send({
                 widgets: widgets.map(w => {
-                    const url = this.widgetUrl(w.type, req.userPubToken);
+                    const url = this._widgetUrlByTypeAndUserId(w.type, req.user.id);
                     return {
+                        type: w.type,
+                        pub: w.pub,
                         title: w.title,
                         hint: w.hint,
-                        url: w.pub ? this.pubUrl(url) : url,
+                        url: w.pub ? this._pubUrl(url) : url,
                     };
                 })
             });
@@ -1519,7 +1577,7 @@ class WebServer {
                 res.status(400).send({ reason: 'bad request' });
                 return;
             }
-            const tokenObj = this.tokenRepo.getByToken(token);
+            const tokenObj = this.tokenRepo.getByTokenAndType(token, 'password_reset');
             if (!tokenObj) {
                 res.status(400).send({ reason: 'bad request' });
                 return;
@@ -1631,27 +1689,23 @@ class WebServer {
                 res.status(400).send({ reason: 'invalid_token' });
                 return;
             }
-            const tokenObj = this.tokenRepo.getByToken(token);
+            const tokenObj = this.tokenRepo.getByTokenAndType(token, 'registration');
             if (!tokenObj) {
                 res.status(400).send({ reason: 'invalid_token' });
                 return;
             }
-            if (tokenObj.type === 'registration') {
-                this.userRepo.save({ status: 'verified', id: tokenObj.user_id });
-                this.tokenRepo.delete(tokenObj.token);
-                res.send({ type: 'registration-verified' });
-                // new user was registered. module manager should be notified about this
-                // so that bot doesnt need to be restarted :O
-                const user = this.userRepo.getById(tokenObj.user_id);
-                if (user) {
-                    this.eventHub.emit('user_registration_complete', user);
-                }
-                else {
-                    log$g.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`);
-                }
-                return;
+            this.userRepo.save({ status: 'verified', id: tokenObj.user_id });
+            this.tokenRepo.delete(tokenObj.token);
+            res.send({ type: 'registration-verified' });
+            // new user was registered. module manager should be notified about this
+            // so that bot doesnt need to be restarted :O
+            const user = this.userRepo.getById(tokenObj.user_id);
+            if (user) {
+                this.eventHub.emit('user_registration_complete', user);
             }
-            res.status(400).send({ reason: 'invalid_token' });
+            else {
+                log$g.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`);
+            }
             return;
         });
         app.get('/api/page/variables', requireLoginApi, async (req, res) => {
@@ -1810,14 +1864,14 @@ class WebServer {
             res.send();
         });
         app.get('/widget/:widget_type/:widget_token/', async (req, res, _next) => {
+            const type = req.params.widget_type;
             const token = req.params.widget_token;
-            const user = this.auth.userFromWidgetToken(token)
+            const user = this.auth.userFromWidgetToken(token, type)
                 || this.auth.userFromPubToken(token);
             if (!user) {
                 res.status(404).send();
                 return;
             }
-            const type = req.params.widget_type;
             log$g.debug(`/widget/:widget_type/:widget_token/`, type, token);
             if (widgets.findIndex(w => w.type === type) !== -1) {
                 res.send(templates.render(widgetTemplate(type), {
@@ -3010,8 +3064,8 @@ class Tokens {
     getOrCreateToken(user_id, type) {
         return this.getByUserIdAndType(user_id, type) || this.createToken(user_id, type);
     }
-    getByToken(token) {
-        return this.db.get(TABLE$2, { token }) || null;
+    getByTokenAndType(token, type) {
+        return this.db.get(TABLE$2, { token, type }) || null;
     }
     delete(token) {
         return this.db.delete(TABLE$2, { token });
@@ -4039,6 +4093,7 @@ class GeneralModule {
                 adminSettings: this.data.adminSettings,
                 globalVariables: this.bot.getUserVariables(this.user).all(),
                 channelPointsCustomRewards: this.channelPointsCustomRewards,
+                mediaWidgetUrl: this.bot.getWebServer().getWidgetUrl('media', this.user.id),
             },
         };
     }
@@ -4418,6 +4473,7 @@ class SongrequestModule {
                 commands: this.data.commands,
                 globalVariables: this.bot.getUserVariables(this.user).all(),
                 channelPointsCustomRewards: this.channelPointsCustomRewards,
+                widgetUrl: this.bot.getWebServer().getWidgetUrl('sr', this.user.id),
             }
         };
     }
@@ -5600,7 +5656,11 @@ class SpeechToTextModule {
     wsdata(eventName) {
         return {
             event: eventName,
-            data: this.data,
+            data: {
+                settings: this.data.settings,
+                controlWidgetUrl: this.bot.getWebServer().getWidgetUrl('speech-to-text', this.user.id),
+                displayWidgetUrl: this.bot.getWebServer().getWidgetUrl('speech-to-text_receive', this.user.id),
+            }
         };
     }
     updateClient(eventName, ws) {
@@ -5770,8 +5830,13 @@ class DrawcastModule {
         };
     }
     drawUrl() {
-        const pubToken = this.bot.getTokens().getPubTokenForUserId(this.user.id).token;
-        return this.bot.getWebServer().pubUrl(this.bot.getWebServer().widgetUrl('drawcast_draw', pubToken));
+        return this.bot.getWebServer().getPublicWidgetUrl('drawcast_draw', this.user.id);
+    }
+    receiveUrl() {
+        return this.bot.getWebServer().getWidgetUrl('drawcast_receive', this.user.id);
+    }
+    controlUrl() {
+        return this.bot.getWebServer().getWidgetUrl('drawcast_control', this.user.id);
     }
     wsdata(eventName) {
         return {
@@ -5780,6 +5845,8 @@ class DrawcastModule {
                 settings: this.data.settings,
                 images: this.data.images,
                 drawUrl: this.drawUrl(),
+                controlWidgetUrl: this.controlUrl(),
+                receiveWidgetUrl: this.receiveUrl(),
             },
         };
     }
@@ -5792,6 +5859,8 @@ class DrawcastModule {
                         settings: this.data.settings,
                         images: this.data.images.filter(image => image.approved).slice(0, 20),
                         drawUrl: this.drawUrl(),
+                        controlWidgetUrl: this.controlUrl(),
+                        receiveWidgetUrl: this.receiveUrl(),
                     }
                 }, ws);
             },
@@ -5853,6 +5922,8 @@ class DrawcastModule {
                         settings: this.data.settings,
                         images: this.data.images.filter(image => image.approved).slice(0, 20),
                         drawUrl: this.drawUrl(),
+                        controlWidgetUrl: this.controlUrl(),
+                        receiveWidgetUrl: this.receiveUrl(),
                     }
                 });
             },
@@ -5920,7 +5991,15 @@ class AvatarModule {
         return {};
     }
     wsdata(event) {
-        return { event, data: this.data };
+        return {
+            event,
+            data: {
+                settings: this.data.settings,
+                state: this.data.state,
+                controlWidgetUrl: this.bot.getWebServer().getWidgetUrl('avatar', this.user.id),
+                displayWidgetUrl: this.bot.getWebServer().getWidgetUrl('avatar_receive', this.user.id),
+            }
+        };
     }
     updateClient(data, ws) {
         this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, data, ws);
@@ -6139,7 +6218,14 @@ class PomoModule {
         return {};
     }
     wsdata(event) {
-        return { event, data: this.data };
+        return {
+            event,
+            data: {
+                settings: this.data.settings,
+                state: this.data.state,
+                widgetUrl: this.bot.getWebServer().getWidgetUrl('pomo', this.user.id),
+            }
+        };
     }
     updateClient(data, ws) {
         this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, data, ws);
@@ -6173,7 +6259,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-03-31T19:11:45.614Z",
+    buildDate: "2022-03-31T22:20:03.388Z",
     // @ts-ignore
     buildVersion: "1.5.0",
 };

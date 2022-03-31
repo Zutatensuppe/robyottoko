@@ -43,7 +43,11 @@ class SpeechToTextModule implements Module {
   wsdata(eventName: string): SpeechToTextWsData {
     return {
       event: eventName,
-      data: this.data,
+      data: {
+        settings: this.data.settings,
+        controlWidgetUrl: this.bot.getWebServer().getWidgetUrl('speech-to-text', this.user.id),
+        displayWidgetUrl: this.bot.getWebServer().getWidgetUrl('speech-to-text_receive', this.user.id),
+      }
     };
   }
 

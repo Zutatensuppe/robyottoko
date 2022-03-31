@@ -78,7 +78,7 @@ export default defineComponent({
     },
   },
   mounted() {
-    this.ws = util.wsClient("drawcast");
+    this.ws = util.wsClient("drawcast_control");
     this.ws.onMessage("init", async (data: DrawcastData) => {
       const res = await api.getDrawcastAllImages();
       const images = await res.json();

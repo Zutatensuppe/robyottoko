@@ -651,6 +651,8 @@ interface ComponentData {
   defaultSettings: SpeechToTextModuleSettings;
   ws: WsClient | null;
   inited: boolean;
+  controlWidgetUrl: string
+  displayWidgetUrl: string
 }
 
 export default defineComponent({
@@ -661,6 +663,8 @@ export default defineComponent({
     defaultSettings: default_settings(),
     ws: null,
     inited: false,
+    controlWidgetUrl: '',
+    displayWidgetUrl: '',
   }),
   watch: {
     settings: {
@@ -673,12 +677,6 @@ export default defineComponent({
   computed: {
     changed(): boolean {
       return this.unchangedJson !== this.changedJson;
-    },
-    controlWidgetUrl(): string {
-      return util.widgetUrl("speech-to-text");
-    },
-    displayWidgetUrl(): string {
-      return util.widgetUrl("speech-to-text_receive");
     },
   },
   methods: {
@@ -702,6 +700,8 @@ export default defineComponent({
     this.ws.onMessage("init", (data: SpeechToTextWsInitData) => {
       this.settings = data.settings;
       this.unchangedJson = JSON.stringify(data.settings);
+      this.controlWidgetUrl = data.controlWidgetUrl
+      this.displayWidgetUrl = data.displayWidgetUrl
       this.inited = true;
     });
     this.ws.connect();

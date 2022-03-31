@@ -51,8 +51,8 @@ class Tokens {
     return this.getByUserIdAndType(user_id, type) || this.createToken(user_id, type)
   }
 
-  getByToken(token: string): Token | null {
-    return this.db.get(TABLE, { token }) || null
+  getByTokenAndType(token: string, type: string): Token | null {
+    return this.db.get(TABLE, { token, type }) || null
   }
 
   delete(token: string) {

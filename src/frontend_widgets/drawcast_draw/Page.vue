@@ -779,7 +779,7 @@ export default defineComponent({
       "2d"
     ) as CanvasRenderingContext2D;
 
-    this.ws = util.wsClient("drawcast");
+    this.ws = util.wsClient("drawcast_draw");
 
     const opts = window.localStorage.getItem("drawcastOpts");
     this.opts = opts ? JSON.parse(opts) : { canvasBg: "transparent" };

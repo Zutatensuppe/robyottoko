@@ -35,7 +35,7 @@ export default defineComponent({
     };
   },
   mounted() {
-    this.ws = util.wsClient("drawcast");
+    this.ws = util.wsClient("drawcast_receive");
 
     this.ws.onMessage("init", (data) => {
       // submit button may not be empty

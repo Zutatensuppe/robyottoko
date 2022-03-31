@@ -24,6 +24,7 @@ export interface GeneralModuleWsEventData {
   adminSettings: GeneralModuleAdminSettings
   globalVariables: GlobalVariable[]
   channelPointsCustomRewards: Record<string, string[]>
+  mediaWidgetUrl: string
 }
 
 export interface GeneralSaveEventData {

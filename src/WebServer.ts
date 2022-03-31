@@ -149,7 +149,16 @@ class WebServer {
     this.handle = null
   }
 
-  pubUrl(target: string) {
+  getWidgetUrl(widgetType: string, userId: number) {
+    return this._widgetUrlByTypeAndUserId(widgetType, userId)
+  }
+
+  getPublicWidgetUrl(widgetType: string, userId: number) {
+    const url = this._widgetUrlByTypeAndUserId(widgetType, userId)
+    return this._pubUrl(url)
+  }
+
+  _pubUrl(target: string) {
     const row = this.db.get('pub', { target })
     let id
     if (!row) {
@@ -163,8 +172,25 @@ class WebServer {
     return `${this.url}/pub/${id}`
   }
 
-  widgetUrl(type: string, token: string) {
+  _widgetUrl(type: string, token: string): string {
     return `${this.url}/widget/${type}/${token}/`
+  }
+
+  _createWidgetUrl(type: string, userId: number) {
+    let t = this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`)
+    if (t) {
+      this.tokenRepo.delete(t.token)
+    }
+    t = this.tokenRepo.createToken(userId, `widget_${type}`)
+    return `${this.url}/widget/${type}/${t.token}`
+  }
+
+  _widgetUrlByTypeAndUserId(type: string, userId: number) {
+    const t = this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`)
+    if (t) {
+      return this._widgetUrl(type, t.token)
+    }
+    return this._createWidgetUrl(type, userId)
   }
 
   async listen() {
@@ -272,6 +298,15 @@ class WebServer {
       })
     })
 
+    app.post('/api/widget/create_url', requireLoginApi, express.json(), async (req: any, res: Response) => {
+      const type = req.body.type
+      const pub = req.body.pub
+      const url = this._createWidgetUrl(type, req.user.id)
+      res.send({
+        url: pub ? this._pubUrl(url) : url
+      })
+    })
+
     app.get('/api/conf', async (req, res: Response) => {
       res.send({
         wsBase: this.wss.connectstring(),
@@ -298,11 +333,13 @@ class WebServer {
     app.get('/api/page/index', requireLoginApi, async (req: any, res: Response) => {
       res.send({
         widgets: widgets.map(w => {
-          const url = this.widgetUrl(w.type, req.userPubToken)
+          const url = this._widgetUrlByTypeAndUserId(w.type, req.user.id)
           return {
+            type: w.type,
+            pub: w.pub,
             title: w.title,
             hint: w.hint,
-            url: w.pub ? this.pubUrl(url) : url,
+            url: w.pub ? this._pubUrl(url) : url,
           }
         })
       })
@@ -316,7 +353,7 @@ class WebServer {
         return
       }
 
-      const tokenObj = this.tokenRepo.getByToken(token)
+      const tokenObj = this.tokenRepo.getByTokenAndType(token, 'password_reset')
       if (!tokenObj) {
         res.status(400).send({ reason: 'bad request' })
         return
@@ -438,28 +475,23 @@ class WebServer {
         res.status(400).send({ reason: 'invalid_token' })
         return
       }
-      const tokenObj = this.tokenRepo.getByToken(token)
+      const tokenObj = this.tokenRepo.getByTokenAndType(token, 'registration')
       if (!tokenObj) {
         res.status(400).send({ reason: 'invalid_token' })
         return
       }
-      if (tokenObj.type === 'registration') {
-        this.userRepo.save({ status: 'verified', id: tokenObj.user_id })
-        this.tokenRepo.delete(tokenObj.token)
-        res.send({ type: 'registration-verified' })
+      this.userRepo.save({ status: 'verified', id: tokenObj.user_id })
+      this.tokenRepo.delete(tokenObj.token)
+      res.send({ type: 'registration-verified' })
 
-        // new user was registered. module manager should be notified about this
-        // so that bot doesnt need to be restarted :O
-        const user = this.userRepo.getById(tokenObj.user_id)
-        if (user) {
-          this.eventHub.emit('user_registration_complete', user)
-        } else {
-          log.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`)
-        }
-        return
+      // new user was registered. module manager should be notified about this
+      // so that bot doesnt need to be restarted :O
+      const user = this.userRepo.getById(tokenObj.user_id)
+      if (user) {
+        this.eventHub.emit('user_registration_complete', user)
+      } else {
+        log.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`)
       }
-
-      res.status(400).send({ reason: 'invalid_token' })
       return
     })
 
@@ -641,14 +673,14 @@ class WebServer {
     })
 
     app.get('/widget/:widget_type/:widget_token/', async (req, res: Response, _next: NextFunction) => {
+      const type = req.params.widget_type
       const token = req.params.widget_token
-      const user = this.auth.userFromWidgetToken(token)
+      const user = this.auth.userFromWidgetToken(token, type)
         || this.auth.userFromPubToken(token)
       if (!user) {
         res.status(404).send()
         return
       }
-      const type = req.params.widget_type
       log.debug(`/widget/:widget_type/:widget_token/`, type, token)
       if (widgets.findIndex(w => w.type === type) !== -1) {
         res.send(templates.render(widgetTemplate(type), {

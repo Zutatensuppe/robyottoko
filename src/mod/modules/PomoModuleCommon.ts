@@ -43,9 +43,15 @@ export interface PomoModuleData {
   state: PomoModuleState
 }
 
+export interface PomoModuleWsDataData {
+  settings: PomoModuleSettings
+  state: PomoModuleState
+  widgetUrl: string
+}
+
 export interface PomoModuleWsData {
   event: string
-  data: PomoModuleData
+  data: PomoModuleWsDataData
 }
 
 export interface PomoModuleWsEffectData {

@@ -15,8 +15,8 @@ class Auth {
     this.tokenRepo = tokenRepo
   }
 
-  getTokenInfo(token: string) {
-    return this.tokenRepo.getByToken(token)
+  getTokenInfoByTokenAndType(token: string, type: string) {
+    return this.tokenRepo.getByTokenAndType(token, type)
   }
 
   getUserById(id: number) {
@@ -42,8 +42,8 @@ class Auth {
   addAuthInfoMiddleware() {
     return (req: any, _res: Response, next: NextFunction) => {
       const token = req.cookies['x-token'] || null
-      const tokenInfo = this.getTokenInfo(token)
-      if (tokenInfo && ['auth'].includes(tokenInfo.type)) {
+      const tokenInfo = this.getTokenInfoByTokenAndType(token, 'auth')
+      if (tokenInfo) {
         const user = this.userRepo.getById(tokenInfo.user_id)
         if (user) {
           req.token = tokenInfo.token
@@ -68,23 +68,23 @@ class Auth {
     }
   }
 
-  userFromWidgetToken(token: string) {
-    const tokenInfo = this.getTokenInfo(token)
-    if (tokenInfo && ['widget'].includes(tokenInfo.type)) {
+  userFromWidgetToken(token: string, type: string) {
+    const tokenInfo = this.getTokenInfoByTokenAndType(token, `widget_${type}`)
+    if (tokenInfo) {
       return this.getUserById(tokenInfo.user_id)
     }
     return null
   }
 
   userFromPubToken(token: string) {
-    const tokenInfo = this.getTokenInfo(token)
-    if (tokenInfo && ['pub'].includes(tokenInfo.type)) {
+    const tokenInfo = this.getTokenInfoByTokenAndType(token, 'pub')
+    if (tokenInfo) {
       return this.getUserById(tokenInfo.user_id)
     }
     return null
   }
 
-  wsTokenFromProtocol(protocol: string | string[]) {
+  wsTokenFromProtocol(protocol: string | string[], tokenType: string | null) {
     let proto = Array.isArray(protocol) && protocol.length === 2
       ? protocol[1]
       : protocol
@@ -94,8 +94,21 @@ class Auth {
     if (Array.isArray(proto)) {
       return null
     }
-    const tokenInfo = this.getTokenInfo(proto)
-    if (tokenInfo && ['auth', 'widget', 'pub'].includes(tokenInfo.type)) {
+
+    if (tokenType) {
+      const tokenInfo = this.getTokenInfoByTokenAndType(proto, tokenType)
+      if (tokenInfo) {
+        return tokenInfo
+      }
+      return null
+    }
+
+    let tokenInfo = this.getTokenInfoByTokenAndType(proto, 'auth')
+    if (tokenInfo) {
+      return tokenInfo
+    }
+    tokenInfo = this.getTokenInfoByTokenAndType(proto, 'pub')
+    if (tokenInfo) {
       return tokenInfo
     }
     return null

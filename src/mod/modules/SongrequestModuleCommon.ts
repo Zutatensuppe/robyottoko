@@ -56,6 +56,7 @@ export interface SongrequestModuleWsEventData {
   globalVariables: GlobalVariable[],
   channelPointsCustomRewards: Record<string, string[]>,
   settings: SongrequestModuleSettings,
+  widgetUrl: string,
 }
 
 const default_custom_css_preset = (obj: any = null): SongrequestModuleCustomCssPreset => ({

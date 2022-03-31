@@ -52,6 +52,8 @@ export interface SpeechToTextModuleData {
 
 export interface SpeechToTextWsInitData {
   settings: SpeechToTextModuleSettings
+  controlWidgetUrl: string
+  displayWidgetUrl: string
 }
 
 export interface SpeechToTextWsData {

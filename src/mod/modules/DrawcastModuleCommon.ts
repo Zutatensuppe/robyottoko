@@ -9,6 +9,8 @@ export interface DrawcastModuleWsDataData {
   settings: DrawcastSettings
   images: DrawcastImage[]
   drawUrl: string
+  controlWidgetUrl: string
+  receiveWidgetUrl: string
 }
 
 export interface DrawcastModuleData {

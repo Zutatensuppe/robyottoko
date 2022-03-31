@@ -10,7 +10,7 @@
         >
           Save
         </button>
-        <a class="button is-small mr-1" :href="receiveUrl" target="_blank"
+        <a class="button is-small mr-1" :href="receiveWidgetUrl" target="_blank"
           >Open widget</a
         >
         <a class="button is-small" :href="drawUrl" target="_blank">Open draw</a>
@@ -81,7 +81,10 @@
             <td>
               Pending approval
               <br />
-              <a class="button is-small mr-1" :href="controlUrl" target="_blank"
+              <a
+                class="button is-small mr-1"
+                :href="controlWidgetUrl"
+                target="_blank"
                 >Open in separate tab</a
               >
             </td>
@@ -430,6 +433,8 @@ interface ComponentData {
       perPage: number;
     };
   };
+  controlWidgetUrl: string;
+  receiveWidgetUrl: string;
 }
 
 export default defineComponent({
@@ -454,6 +459,8 @@ export default defineComponent({
         perPage: 20,
       },
     },
+    controlWidgetUrl: "",
+    receiveWidgetUrl: "",
   }),
   async created() {
     this.ws = util.wsClient("drawcast");
@@ -461,6 +468,8 @@ export default defineComponent({
       this.settings = data.settings;
       this.unchangedJson = JSON.stringify(data.settings);
       this.drawUrl = data.drawUrl;
+      this.controlWidgetUrl = data.controlWidgetUrl;
+      this.receiveWidgetUrl = data.receiveWidgetUrl;
 
       const res = await api.getDrawcastAllImages();
       const images = await res.json();
@@ -540,12 +549,6 @@ export default defineComponent({
   computed: {
     changed() {
       return this.unchangedJson !== this.changedJson;
-    },
-    receiveUrl(): string {
-      return util.widgetUrl("drawcast_receive");
-    },
-    controlUrl(): string {
-      return util.widgetUrl("drawcast_control");
     },
     favoriteSelectionTotalPages() {
       return (

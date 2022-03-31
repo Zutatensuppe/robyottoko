@@ -42,16 +42,6 @@ class WebSocketServer {
   listen() {
     this._websocketserver = new WebSocket.Server(this.config)
     this._websocketserver.on('connection', (socket: Socket, request: IncomingMessage) => {
-      const token = socket.protocol
-      const tokenInfo = this.auth.wsTokenFromProtocol(token)
-      if (!tokenInfo) {
-        log.info('not found token: ', token)
-        socket.close()
-        return
-      }
-
-      socket.user_id = tokenInfo.user_id
-
       const pathname = new URL(this.connectstring()).pathname
       if (request.url?.indexOf(pathname) !== 0) {
         log.info('bad request url: ', request.url)
@@ -59,13 +49,38 @@ class WebSocketServer {
         return
       }
 
+      const token = socket.protocol
+      const relpathfull = request.url.substr(pathname.length)
+      const widget_path_to_module_map: Record<string, string> = {
+        widget_avatar: 'avatar',
+        widget_avatar_receive: 'avatar',
+        widget_drawcast_control: 'drawcast',
+        widget_drawcast_draw: 'drawcast',
+        widget_drawcast_receive: 'drawcast',
+        widget_media: 'general',
+        widget_pomo: 'pomo',
+        'widget_speech-to-text': 'speech-to-text',
+        'widget_speech-to-text_receive': 'speech-to-text',
+        widget_sr: 'sr',
+      }
+      const relpath = relpathfull.startsWith('/') ? relpathfull.substring(1) : relpathfull
+      const widgetModule = widget_path_to_module_map[relpath]
+      const token_type = widgetModule ? relpath : null
+
+      const tokenInfo = this.auth.wsTokenFromProtocol(token, token_type)
+      if (!tokenInfo) {
+        log.info('not found token: ', token, relpath)
+        socket.close()
+        return
+      }
+
+      socket.user_id = tokenInfo.user_id
       socket.isAlive = true
       socket.on('pong', function () {
         socket.isAlive = true;
       })
 
-      const relpath = request.url.substr(pathname.length)
-      if (relpath === '/core') {
+      if (relpath === 'core') {
         socket.module = 'core'
         // log.info('/conn connected')
         // not a module
@@ -75,7 +90,7 @@ class WebSocketServer {
 
       // module routing
       for (const module of this.moduleManager.all(socket.user_id)) {
-        if ('/' + module.name !== relpath) {
+        if (module.name !== relpath && module.name !== widgetModule) {
           continue
         }
         socket.module = module.name
