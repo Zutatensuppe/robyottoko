@@ -19,9 +19,19 @@
         <div class="draw_panel_inner">
           <div class="draw_panel_top">
             <div class="draw_canvas_holder">
-              <div class="draw_canvas_holder_inner" :class="canvasClasses">
+              <div
+                class="draw_canvas_holder_inner"
+                :class="canvasClasses"
+                :style="{ width: canvasWidth + 4, height: canvasHeight + 4 }"
+              >
                 <canvas
-                  ref="canvas"
+                  ref="finalcanvas"
+                  :width="canvasWidth"
+                  :height="canvasHeight"
+                  :style="styles"
+                ></canvas>
+                <canvas
+                  ref="draftcanvas"
                   :width="canvasWidth"
                   :height="canvasHeight"
                   :style="styles"
@@ -79,11 +89,11 @@
                     <icon-clear />
                   </div>
                 </div>
-                <div class="size_slider">
-                  <div class="v355_1289">
-                    <div class="v355_1290"></div>
+                <div class="slider">
+                  <div class="bubble bubble-left">
+                    <div class="bubble-small bubble-dark"></div>
                   </div>
-                  <div class="v355_1291">
+                  <div class="slider-input-holder">
                     <input
                       v-model="sizeIdx"
                       type="range"
@@ -92,8 +102,26 @@
                       step="1"
                     />
                   </div>
-                  <div class="v355_1294">
-                    <div class="v355_1295"></div>
+                  <div class="bubble bubble-right">
+                    <div class="bubble-big bubble-dark"></div>
+                  </div>
+                </div>
+                <div class="slider">
+                  <div class="bubble bubble-left">
+                    <div class="bubble-big bubble-light"></div>
+                  </div>
+                  <div class="slider-input-holder">
+                    <input
+                      v-model="transparencyIdx"
+                      type="range"
+                      min="0"
+                      :max="transparencies.length - 1"
+                      step="1"
+                      @update:modelValue="updateTransparency"
+                    />
+                  </div>
+                  <div class="bubble bubble-right">
+                    <div class="bubble-big bubble-dark"></div>
                   </div>
                 </div>
 
@@ -315,7 +343,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import { nonce, logger } from "../../common/fn";
+import { nonce, logger, pad } from "../../common/fn";
 import WsClient from "../../frontend/WsClient";
 import { DrawcastFavoriteList } from "../../types";
 import util from "../util";
@@ -349,7 +377,7 @@ export default defineComponent({
   data() {
     return {
       ws: null as WsClient | null,
-      opts: {},
+      opts: {} as Record<string, string>,
       palette: ["#000000"],
 
       images: [] as string[],
@@ -361,8 +389,10 @@ export default defineComponent({
       tool: "pen", // 'pen'|'eraser'|'color-sampler'
       sizes: [1, 2, 5, 10, 30, 60, 100],
       sizeIdx: 2,
-      canvas: null as HTMLCanvasElement | null,
-      ctx: null as CanvasRenderingContext2D | null,
+      transparencies: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+      transparencyIdx: 9,
+      ctx: {} as CanvasRenderingContext2D,
+      finalctx: {} as CanvasRenderingContext2D,
 
       last: null,
 
@@ -375,13 +405,13 @@ export default defineComponent({
       recentImagesTitle: "",
 
       stack: [] as ImageData[],
-      currentPath: [],
+      drawing: false,
 
       dialog: "",
       dialogBody: "",
       modifyImageUrl: "",
-      successImageUrlStyle: null,
-      clearImageUrlStyle: null,
+      successImageUrlStyle: {},
+      clearImageUrlStyle: {},
 
       sending: {
         date: null as null | Date,
@@ -390,6 +420,12 @@ export default defineComponent({
     };
   },
   computed: {
+    finalcanvas() {
+      return this.$refs.finalcanvas as HTMLCanvasElement;
+    },
+    draftcanvas() {
+      return this.$refs.draftcanvas as HTMLCanvasElement;
+    },
     favoriteListsFiltered() {
       return this.favoriteLists.filter(
         (fav: DrawcastFavoriteList) => fav.list.length > 0
@@ -411,8 +447,11 @@ export default defineComponent({
     size() {
       return this.sizes[this.sizeIdx];
     },
+    transparency() {
+      return this.transparencies[this.transparencyIdx];
+    },
     nonfavorites() {
-      return this.images.filter((url) => !this.favorites.includes(url));
+      return this.images.filter((url: string) => !this.favorites.includes(url));
     },
     canvasBg() {
       return ["transparent", "white", "black"].includes(this.opts.canvasBg)
@@ -455,6 +494,9 @@ export default defineComponent({
     },
   },
   methods: {
+    updateTransparency() {
+      this.draftcanvas.style.opacity = `${this.transparency / 100}`;
+    },
     opt(option: string, value: string) {
       this.opts[option] = value;
       window.localStorage.setItem("drawcastOpts", JSON.stringify(this.opts));
@@ -466,7 +508,7 @@ export default defineComponent({
         image.onload = async (ev) => {
           this.img(image);
           this.stack = [];
-          this.currentPath = [];
+          this.drawing = false;
           this.stack.push(this.getImageData());
         };
       });
@@ -474,92 +516,85 @@ export default defineComponent({
     undo() {
       this.stack.pop();
       this.clear();
-      this.currentPath = [];
+      this.drawing = false;
       if (this.stack.length > 0) {
         this.putImageData(this.stack[this.stack.length - 1]);
       }
     },
     getImageData(): ImageData {
-      if (!this.ctx) {
-        throw new Error("getImageData: this.ctx not set");
-      }
-      if (!this.canvas) {
-        throw new Error("getImageData: this.canvas not set");
-      }
-      return this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+      return this.finalctx.getImageData(
+        0,
+        0,
+        this.finalcanvas.width,
+        this.finalcanvas.height
+      );
     },
     putImageData(imageData: ImageData) {
-      if (!this.ctx) {
-        log.error("putImageData: this.ctx not set");
-        return;
-      }
-      this.ctx.putImageData(imageData, 0, 0);
+      this.finalctx.putImageData(imageData, 0, 0);
     },
-    img(imageObject) {
-      if (!this.ctx) {
-        log.error("img: this.ctx not set");
-        return;
-      }
+    img(imageObject: CanvasImageSource) {
       this.clear();
-      const tmp = this.ctx.globalCompositeOperation;
-      this.ctx.globalCompositeOperation = "source-over";
-      this.ctx.drawImage(imageObject, 0, 0);
-      this.ctx.globalCompositeOperation = tmp;
+      const tmp = this.finalctx.globalCompositeOperation;
+      this.finalctx.globalCompositeOperation = "source-over";
+      this.finalctx.drawImage(imageObject, 0, 0);
+      this.finalctx.globalCompositeOperation = tmp;
     },
-    drawPathPart(obj) {
-      if (!this.ctx) {
-        log.error("drawPathPart: this.ctx not set");
-        return;
-      }
-      this.currentPath.push(obj);
-      const { pts, color, tool, size, halfSize } = obj;
+    drawPathPart(pts) {
+      this.drawing = true;
+      const color = this.color;
+      const size = this.size;
+      const halfSize = this.halfSize;
       if (pts.length === 0) {
         return;
       }
 
-      if (tool === "eraser") {
-        this.ctx.globalCompositeOperation = "destination-out";
-      } else {
-        this.ctx.globalCompositeOperation = "source-over";
-      }
+      const fillpath = (ctx: CanvasRenderingContext2D) => {
+        if (pts.length === 1) {
+          ctx.beginPath();
+          ctx.fillStyle = color;
+          ctx.arc(pts[0].x, pts[0].y, halfSize, 0, 2 * Math.PI);
+          ctx.closePath();
+          ctx.fill();
+          return;
+        }
 
-      if (pts.length === 1) {
-        this.ctx.beginPath();
-        this.ctx.fillStyle = color;
-        this.ctx.arc(pts[0].x, pts[0].y, halfSize, 0, 2 * Math.PI);
-        this.ctx.closePath();
-        this.ctx.fill();
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = size;
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length; i++) {
+          ctx.lineTo(pts[i].x, pts[i].y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      };
+
+      if (this.tool === "eraser") {
+        this.finalctx.globalCompositeOperation = "destination-out";
+        fillpath(this.finalctx);
         return;
       }
 
-      this.ctx.lineJoin = "round";
-      this.ctx.beginPath();
-      this.ctx.strokeStyle = color;
-      this.ctx.lineWidth = size;
-      this.ctx.moveTo(pts[0].x, pts[0].y);
-      for (let i = 1; i < pts.length; i++) {
-        this.ctx.lineTo(pts[i].x, pts[i].y);
-      }
-      this.ctx.closePath();
-      this.ctx.stroke();
-    },
-    redraw(...pts) {
-      this.drawPathPart({
-        pts,
-        tool: this.tool,
-        color: this.color,
-        size: this.size,
-        halfSize: this.halfSize,
-      });
+      this.finalctx.globalCompositeOperation = "source-over";
+      fillpath(this.ctx);
     },
 
     cancelDraw() {
-      if (!this.currentPath.length) {
+      if (!this.drawing) {
         return;
       }
 
+      if (this.tool !== "eraser") {
+        this.finalctx.globalAlpha = this.transparency / 100;
+        this.finalctx.drawImage(this.draftcanvas, 0, 0);
+        this.finalctx.globalAlpha = 1;
+
+        this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+      }
+
       this.stack.push(this.getImageData());
-      this.currentPath = [];
+      this.drawing = false;
       this.last = null;
     },
 
@@ -583,7 +618,7 @@ export default defineComponent({
         pt.y < this.canvasHeight + this.size
       ) {
         const cur = pt;
-        this.redraw(cur);
+        this.drawPathPart([cur]);
         this.last = cur;
       }
     },
@@ -596,53 +631,39 @@ export default defineComponent({
         return;
       }
       const cur = pt;
-      this.redraw(this.last, cur);
+      this.drawPathPart([this.last, cur]);
       this.last = cur;
     },
 
-    touchstart(e) {
-      if (!this.$refs.canvas) {
-        return;
-      }
+    touchstart(e: TouchEvent) {
       e.preventDefault();
-      this.startDraw(touchPoint(this.$refs.canvas, e));
+      this.startDraw(touchPoint(this.draftcanvas, e));
     },
-    mousedown(e) {
-      if (!this.$refs.canvas) {
-        return;
-      }
-      this.startDraw(mousePoint(this.$refs.canvas, e));
+    mousedown(e: MouseEvent) {
+      this.startDraw(mousePoint(this.draftcanvas, e));
     },
 
-    touchmove(e) {
-      if (!this.$refs.canvas) {
-        return;
-      }
+    touchmove(e: TouchEvent) {
       e.preventDefault();
-      this.continueDraw(touchPoint(this.$refs.canvas, e));
+      this.continueDraw(touchPoint(this.draftcanvas, e));
     },
-    mousemove(e) {
-      if (!this.$refs.canvas) {
-        return;
-      }
-      this.continueDraw(mousePoint(this.$refs.canvas, e));
+    mousemove(e: MouseEvent) {
+      this.continueDraw(mousePoint(this.draftcanvas, e));
     },
 
     clear() {
-      if (!this.ctx) {
-        log.error("clear: this.ctx not set");
-        return;
-      }
-      if (!this.canvas) {
-        log.error("clear: this.canvas not set");
-        return;
-      }
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.ctx.clearRect(0, 0, this.draftcanvas.width, this.draftcanvas.height);
+      this.finalctx.clearRect(
+        0,
+        0,
+        this.finalcanvas.width,
+        this.finalcanvas.height
+      );
     },
     clearClick() {
       this.clear();
       this.stack = [];
-      this.currentPath = [];
+      this.drawing = false;
     },
     prepareSubmitImage() {
       if (this.submitConfirm) {
@@ -653,10 +674,6 @@ export default defineComponent({
       this.submitImage();
     },
     submitImage() {
-      if (!this.canvas) {
-        log.error("submitImage: this.canvas not set");
-        return;
-      }
       if (!this.ws) {
         log.error("submitImage: this.ws not set");
         return;
@@ -675,7 +692,7 @@ export default defineComponent({
           event: "post",
           data: {
             nonce: this.sending.nonce,
-            img: this.canvas.toDataURL(),
+            img: this.finalcanvas.toDataURL(),
           },
         })
       );
@@ -686,7 +703,7 @@ export default defineComponent({
       const h = Math.round((w * this.canvasHeight) / this.canvasWidth);
 
       this.clearImageUrlStyle = {
-        backgroundImage: `url(${this.canvas.toDataURL()})`,
+        backgroundImage: `url(${this.finalcanvas.toDataURL()})`,
         width: w + "px",
         height: h + "px",
       };
@@ -722,12 +739,7 @@ export default defineComponent({
       }
     },
     getColor(pt) {
-      if (!this.ctx) {
-        log.error("getColor: this.ctx not set");
-        return "";
-      }
-      const [r, g, b, a] = this.ctx.getImageData(pt.x, pt.y, 1, 1).data;
-      const pad = (v, p) => p.substr(0, p.length - v.length) + v;
+      const [r, g, b, a] = this.finalctx.getImageData(pt.x, pt.y, 1, 1).data;
       const hex = (v) => pad(v.toString(16), "00");
       // when selecting transparent color, instead use first color in palette
       return a ? `#${hex(r)}${hex(g)}${hex(b)}` : this.palette[0];
@@ -762,12 +774,10 @@ export default defineComponent({
     },
   },
   mounted() {
-    this.canvas = this.$refs.canvas;
-    if (!this.canvas) {
-      log.error("mounted: $refs.canvas not found");
-      return;
-    }
-    this.ctx = this.canvas.getContext("2d");
+    this.ctx = this.draftcanvas.getContext("2d") as CanvasRenderingContext2D;
+    this.finalctx = this.finalcanvas.getContext(
+      "2d"
+    ) as CanvasRenderingContext2D;
 
     this.ws = util.wsClient("drawcast");
 
