@@ -1,7 +1,7 @@
 import { NextFunction, Response } from "express"
 import { passwordHash } from "../fn"
-import Tokens from "../services/Tokens"
-import Users from "../services/Users"
+import Tokens, { Token } from "../services/Tokens"
+import Users, { User } from "../services/Users"
 
 class Auth {
   private userRepo: Users
@@ -15,36 +15,36 @@ class Auth {
     this.tokenRepo = tokenRepo
   }
 
-  getTokenInfoByTokenAndType(token: string, type: string) {
-    return this.tokenRepo.getByTokenAndType(token, type)
+  async getTokenInfoByTokenAndType(token: string, type: string): Promise<Token | null> {
+    return await this.tokenRepo.getByTokenAndType(token, type)
   }
 
-  getUserById(id: number) {
-    return this.userRepo.get({ id, status: 'verified' })
+  async getUserById(id: number): Promise<User | null> {
+    return await this.userRepo.get({ id, status: 'verified' })
   }
 
-  getUserByNameAndPass(name: string, plainPass: string) {
-    const user = this.userRepo.get({ name, status: 'verified' })
+  async getUserByNameAndPass(name: string, plainPass: string): Promise<User | null> {
+    const user = await this.userRepo.get({ name, status: 'verified' })
     if (!user || user.pass !== passwordHash(plainPass, user.salt)) {
       return null
     }
     return user
   }
 
-  getUserAuthToken(user_id: number) {
-    return this.tokenRepo.generateAuthTokenForUserId(user_id).token
+  async getUserAuthToken(user_id: number): Promise<string> {
+    return (await this.tokenRepo.generateAuthTokenForUserId(user_id)).token
   }
 
-  destroyToken(token: string) {
-    return this.tokenRepo.delete(token)
+  async destroyToken(token: string): Promise<any> {
+    return await this.tokenRepo.delete(token)
   }
 
   addAuthInfoMiddleware() {
-    return (req: any, _res: Response, next: NextFunction) => {
+    return async (req: any, _res: Response, next: NextFunction) => {
       const token = req.cookies['x-token'] || null
-      const tokenInfo = this.getTokenInfoByTokenAndType(token, 'auth')
+      const tokenInfo = await this.getTokenInfoByTokenAndType(token, 'auth')
       if (tokenInfo) {
-        const user = this.userRepo.getById(tokenInfo.user_id)
+        const user = await this.userRepo.getById(tokenInfo.user_id)
         if (user) {
           req.token = tokenInfo.token
           req.user = {
@@ -54,8 +54,6 @@ class Auth {
             status: user.status,
             groups: this.userRepo.getGroups(user.id)
           }
-          req.userWidgetToken = this.tokenRepo.getWidgetTokenForUserId(tokenInfo.user_id).token
-          req.userPubToken = this.tokenRepo.getPubTokenForUserId(tokenInfo.user_id).token
         } else {
           req.token = null
           req.user = null
@@ -68,23 +66,23 @@ class Auth {
     }
   }
 
-  userFromWidgetToken(token: string, type: string) {
-    const tokenInfo = this.getTokenInfoByTokenAndType(token, `widget_${type}`)
+  async userFromWidgetToken(token: string, type: string): Promise<User | null> {
+    const tokenInfo = await this.getTokenInfoByTokenAndType(token, `widget_${type}`)
     if (tokenInfo) {
-      return this.getUserById(tokenInfo.user_id)
+      return await this.getUserById(tokenInfo.user_id)
     }
     return null
   }
 
-  userFromPubToken(token: string) {
-    const tokenInfo = this.getTokenInfoByTokenAndType(token, 'pub')
+  async userFromPubToken(token: string): Promise<User | null> {
+    const tokenInfo = await this.getTokenInfoByTokenAndType(token, 'pub')
     if (tokenInfo) {
-      return this.getUserById(tokenInfo.user_id)
+      return await this.getUserById(tokenInfo.user_id)
     }
     return null
   }
 
-  wsTokenFromProtocol(protocol: string | string[], tokenType: string | null) {
+  async wsTokenFromProtocol(protocol: string | string[], tokenType: string | null): Promise<Token | null> {
     let proto = Array.isArray(protocol) && protocol.length === 2
       ? protocol[1]
       : protocol
@@ -96,18 +94,18 @@ class Auth {
     }
 
     if (tokenType) {
-      const tokenInfo = this.getTokenInfoByTokenAndType(proto, tokenType)
+      const tokenInfo = await this.getTokenInfoByTokenAndType(proto, tokenType)
       if (tokenInfo) {
         return tokenInfo
       }
       return null
     }
 
-    let tokenInfo = this.getTokenInfoByTokenAndType(proto, 'auth')
+    let tokenInfo = await this.getTokenInfoByTokenAndType(proto, 'auth')
     if (tokenInfo) {
       return tokenInfo
     }
-    tokenInfo = this.getTokenInfoByTokenAndType(proto, 'pub')
+    tokenInfo = await this.getTokenInfoByTokenAndType(proto, 'pub')
     if (tokenInfo) {
       return tokenInfo
     }

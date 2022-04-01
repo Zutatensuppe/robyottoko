@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  postgres:
+    image: 'postgres:14.0'
+    ports:
+      - "${POSTGRES_PORT:?}:5432"
+    environment:
+      POSTGRES_PASSWORD: robyottoko
+      POSTGRES_USER: robyottoko
+      POSTGRES_DB: robyottoko
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+volumes:
+  pgdata:

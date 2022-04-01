@@ -12,11 +12,13 @@ const log = logger('PomoModule.ts')
 class PomoModule implements Module {
   public name = 'pomo'
 
+  // @ts-ignore
   public bot: Bot
+  // @ts-ignore
   public user: User
-
+  // @ts-ignore
   private data: PomoModuleData
-
+  // @ts-ignore
   private commands: FunctionCommand[]
 
   private timeout: NodeJS.Timeout | null = null;
@@ -25,24 +27,28 @@ class PomoModule implements Module {
     bot: Bot,
     user: User,
   ) {
-    this.bot = bot
-    this.user = user
+    // @ts-ignore
+    return (async () => {
+      this.bot = bot
+      this.user = user
 
-    this.data = this.reinit()
-    this.tick(null, null)
+      this.data = await this.reinit()
+      this.tick(null, null)
 
-    this.commands = [
-      {
-        triggers: [newCommandTrigger('!pomo')],
-        restrict_to: MOD_OR_ABOVE,
-        fn: this.cmdPomoStart.bind(this),
-      },
-      {
-        triggers: [newCommandTrigger('!pomo exit', true)],
-        restrict_to: MOD_OR_ABOVE,
-        fn: this.cmdPomoEnd.bind(this),
-      },
-    ];
+      this.commands = [
+        {
+          triggers: [newCommandTrigger('!pomo')],
+          restrict_to: MOD_OR_ABOVE,
+          fn: this.cmdPomoStart.bind(this),
+        },
+        {
+          triggers: [newCommandTrigger('!pomo exit', true)],
+          restrict_to: MOD_OR_ABOVE,
+          fn: this.cmdPomoEnd.bind(this),
+        },
+      ];
+      return this;
+    })();
   }
 
   async replaceText(
@@ -106,7 +112,7 @@ class PomoModule implements Module {
       }
 
       this.data.state.doneTs = JSON.stringify(now)
-      this.save()
+      await this.save()
 
       if (anyNotificationsLeft && this.data.state.running) {
         this.tick(command, context);
@@ -131,9 +137,9 @@ class PomoModule implements Module {
     let duration = command?.args[0] || '25m'
     duration = duration.match(/^\d+$/) ? `${duration}m` : duration
     this.data.state.durationMs = parseHumanDuration(duration)
-    this.save()
+    await this.save()
     this.tick(command, context)
-    this.updateClients(this.wsdata('init'))
+    this.updateClients(await this.wsdata('init'))
 
     if (this.data.settings.startEffect.chatMessage) {
       say(await this.replaceText(this.data.settings.startEffect.chatMessage, command, context))
@@ -150,9 +156,9 @@ class PomoModule implements Module {
     const say = client ? fn.sayFn(client, target) : ((msg: string) => { log.info('say(), client not set, msg', msg) })
 
     this.data.state.running = false
-    this.save()
+    await this.save()
     this.tick(command, context)
-    this.updateClients(this.wsdata('init'))
+    this.updateClients(await this.wsdata('init'))
 
     if (this.data.settings.stopEffect.chatMessage) {
       say(await this.replaceText(this.data.settings.stopEffect.chatMessage, command, context))
@@ -164,16 +170,16 @@ class PomoModule implements Module {
     this.user = user
   }
 
-  save() {
-    this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
+  async save(): Promise<void> {
+    await this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
   }
 
   saveCommands() {
     // pass
   }
 
-  reinit(): PomoModuleData {
-    const data = this.bot.getUserModuleStorage(this.user).load(this.name, {})
+  async reinit(): Promise<PomoModuleData> {
+    const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {})
 
     return {
       settings: default_settings(data.settings),
@@ -185,13 +191,13 @@ class PomoModule implements Module {
     return {}
   }
 
-  wsdata(event: string): PomoModuleWsData {
+  async wsdata(event: string): Promise<PomoModuleWsData> {
     return {
       event,
       data: {
         settings: this.data.settings,
         state: this.data.state,
-        widgetUrl: this.bot.getWebServer().getWidgetUrl('pomo', this.user.id),
+        widgetUrl: await this.bot.getWebServer().getWidgetUrl('pomo', this.user.id),
       }
     }
   }
@@ -206,14 +212,14 @@ class PomoModule implements Module {
 
   getWsEvents() {
     return {
-      'conn': (ws: Socket) => {
-        this.updateClient(this.wsdata('init'), ws)
+      'conn': async (ws: Socket) => {
+        this.updateClient(await this.wsdata('init'), ws)
       },
-      'save': (_ws: Socket, data: PomoModuleWsSaveData) => {
+      'save': async (_ws: Socket, data: PomoModuleWsSaveData) => {
         this.data.settings = data.settings
-        this.save()
-        this.data = this.reinit()
-        this.updateClients(this.wsdata('init'))
+        await this.save()
+        this.data = await this.reinit()
+        this.updateClients(await this.wsdata('init'))
       },
     }
   }

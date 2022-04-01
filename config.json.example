@@ -39,6 +39,7 @@
     "connectstring": "ws://localhost:1338/ws"
   },
   "db": {
+    "connectStr": "postgresql://robyottoko:robyottoko@localhost:5434/robyottoko",
     "file": "PATH_TO_DATABASE_SQLITE_FILE",
     "patchesDir": "PATH_TO_DATABASE_PATCHES_DIR"
   },

@@ -69,10 +69,13 @@ const default_playlist = (list: any = null): PlaylistItem[] => {
 class SongrequestModule implements Module {
   public name = 'sr'
 
+  // @ts-ignore
   public bot: Bot
+  // @ts-ignore
   public user: User
+  // @ts-ignore
   private data: SongrequestModuleData
-
+  // @ts-ignore
   private commands: FunctionCommand[]
 
   private channelPointsCustomRewards: Record<string, string[]> = {}
@@ -81,26 +84,30 @@ class SongrequestModule implements Module {
     bot: Bot,
     user: User,
   ) {
-    this.bot = bot
-    this.user = user
+    // @ts-ignore
+    return (async () => {
+      this.bot = bot
+      this.user = user
 
-    const initData = this.reinit()
-    this.data = {
-      filter: initData.data.filter,
-      playlist: initData.data.playlist,
-      commands: initData.data.commands,
-      settings: initData.data.settings,
-      stacks: initData.data.stacks,
-    }
-    this.commands = initData.commands
+      const initData = await this.reinit()
+      this.data = {
+        filter: initData.data.filter,
+        playlist: initData.data.playlist,
+        commands: initData.data.commands,
+        settings: initData.data.settings,
+        stacks: initData.data.stacks,
+      }
+      this.commands = initData.commands
+      return this;
+    })();
   }
 
   async userChanged(user: User) {
     this.user = user
   }
 
-  reinit(): SongerquestModuleInitData {
-    const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
+  async reinit(): Promise<SongerquestModuleInitData> {
+    const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {
       filter: {
         tag: '',
       },
@@ -198,8 +205,8 @@ class SongrequestModule implements Module {
     }
   }
 
-  save() {
-    this.bot.getUserModuleStorage(this.user).save(this.name, {
+  async save(): Promise<void> {
+    await this.bot.getUserModuleStorage(this.user).save(this.name, {
       filter: this.data.filter,
       playlist: this.data.playlist.map(item => {
         item.title = item.title || ''
@@ -218,7 +225,7 @@ class SongrequestModule implements Module {
     })
   }
 
-  wsdata(eventName: string): WsData {
+  async wsdata(eventName: string): Promise<WsData> {
     return {
       event: eventName,
       data: {
@@ -227,19 +234,19 @@ class SongrequestModule implements Module {
         playlist: this.data.playlist,
         settings: this.data.settings,
         commands: this.data.commands,
-        globalVariables: this.bot.getUserVariables(this.user).all(),
+        globalVariables: await this.bot.getUserVariables(this.user).all(),
         channelPointsCustomRewards: this.channelPointsCustomRewards,
-        widgetUrl: this.bot.getWebServer().getWidgetUrl('sr', this.user.id),
+        widgetUrl: await this.bot.getWebServer().getWidgetUrl('sr', this.user.id),
       }
     };
   }
 
-  updateClient(eventName: string, ws: Socket) {
-    this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
+  async updateClient(eventName: string, ws: Socket): Promise<void> {
+    this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, await this.wsdata(eventName), ws)
   }
 
-  updateClients(eventName: string) {
-    this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, this.wsdata(eventName))
+  async updateClients(eventName: string): Promise<void> {
+    this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, await this.wsdata(eventName))
   }
 
   async _channelPointsCustomRewards(): Promise<Record<string, string[]>> {
@@ -254,9 +261,9 @@ class SongrequestModule implements Module {
     return {
       'conn': async (ws: Socket) => {
         this.channelPointsCustomRewards = await this._channelPointsCustomRewards()
-        this.updateClient('init', ws)
+        await this.updateClient('init', ws)
       },
-      'play': (_ws: Socket, { id }: { id: number }) => {
+      'play': async (_ws: Socket, { id }: { id: number }) => {
         const idx = this.data.playlist.findIndex(item => item.id === id)
         if (idx < 0) {
           return
@@ -268,27 +275,27 @@ class SongrequestModule implements Module {
         this.incStat('plays')
         this.data.playlist[idx].last_play = new Date().getTime()
 
-        this.save()
-        this.updateClients('playIdx')
+        await this.save()
+        await this.updateClients('playIdx')
       },
-      'ended': (_ws: Socket) => {
+      'ended': async (_ws: Socket) => {
         const item = this.data.playlist.shift()
         if (item) {
           this.data.playlist.push(item)
         }
-        this.save()
-        this.updateClients('onEnded')
+        await this.save()
+        await this.updateClients('onEnded')
       },
-      'save': (_ws: Socket, data: { commands: Command[], settings: SongrequestModuleSettings }) => {
+      'save': async (_ws: Socket, data: { commands: Command[], settings: SongrequestModuleSettings }) => {
         this.data.commands = data.commands
         this.data.settings = data.settings
-        this.save()
-        const initData = this.reinit()
+        await this.save()
+        const initData = await this.reinit()
         this.data = initData.data
         this.commands = initData.commands
-        this.updateClients('save')
+        await this.updateClients('save')
       },
-      'ctrl': (_ws: Socket, { ctrl, args }: { ctrl: string, args: any[] }) => {
+      'ctrl': async (_ws: Socket, { ctrl, args }: { ctrl: string, args: any[] }) => {
         switch (ctrl) {
           case 'volume': this.volume(...args as [number]); break;
           case 'pause': this.pause(); break;
@@ -297,9 +304,9 @@ class SongrequestModule implements Module {
           case 'noloop': this.noloop(); break;
           case 'good': this.like(); break;
           case 'bad': this.dislike(); break;
-          case 'prev': this.prev(); break;
-          case 'skip': this.next(); break;
-          case 'resetStats': this.resetStats(); break;
+          case 'prev': await this.prev(); break;
+          case 'skip': await this.next(); break;
+          case 'resetStats': await this.resetStats(); break;
           case 'resetStatIdx': this.resetStatIdx(...args as [string, number]); break;
           case 'clear': this.clear(); break;
           case 'rm': this.remove(); break;
@@ -315,7 +322,7 @@ class SongrequestModule implements Module {
           case 'addtag': this.addTag(...args as [string, number]); break;
           case 'updatetag': this.updateTag(...args as [string, string]); break;
           case 'filter': this.filter(...args as [{ tag: string }]); break;
-          case 'videoVisibility': this.videoVisibility(...args as [boolean, number]); break;
+          case 'videoVisibility': await this.videoVisibility(...args as [boolean, number]); break;
           case 'setAllToPlayed': this.setAllToPlayed(); break;
         }
       },
@@ -429,7 +436,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  videoVisibility(visible: boolean, idx = -1) {
+  async videoVisibility(visible: boolean, idx = -1) {
     if (idx === -1) {
       idx = this.determineFirstIndex()
     }
@@ -439,8 +446,8 @@ class SongrequestModule implements Module {
     if (this.data.playlist.length > idx) {
       this.data.playlist[idx].hidevideo = visible ? false : true
     }
-    this.save()
-    this.updateClients('video')
+    await this.save()
+    await this.updateClients('video')
   }
 
   async durationUntilIndex(idx: number) {
@@ -476,18 +483,18 @@ class SongrequestModule implements Module {
     }
   }
 
-  resetStats() {
+  async resetStats() {
     this.data.playlist = this.data.playlist.map(item => {
       item.plays = 0
       item.goods = 0
       item.bads = 0
       return item
     })
-    this.save()
-    this.updateClients('stats')
+    await this.save()
+    await this.updateClients('stats')
   }
 
-  playIdx(idx: number) {
+  async playIdx(idx: number) {
     if (this.data.playlist.length === 0) {
       return
     }
@@ -498,24 +505,24 @@ class SongrequestModule implements Module {
       }
     }
 
-    this.save()
-    this.updateClients('skip')
+    await this.save()
+    await this.updateClients('skip')
   }
 
-  rmIdx(idx: number) {
+  async rmIdx(idx: number) {
     if (this.data.playlist.length === 0) {
       return
     }
     this.data.playlist.splice(idx, 1)
-    this.save()
+    await this.save()
     if (idx === 0) {
-      this.updateClients('remove')
+      await this.updateClients('remove')
     } else {
-      this.updateClients('init')
+      await this.updateClients('init')
     }
   }
 
-  resetStatIdx(stat: string, idx: number) {
+  async resetStatIdx(stat: string, idx: number) {
     if (idx >= 0 && idx < this.data.playlist.length) {
       if (stat === 'plays') {
         this.data.playlist[idx].plays = 0
@@ -525,20 +532,20 @@ class SongrequestModule implements Module {
         this.data.playlist[idx].bads = 0
       }
     }
-    this.save()
-    this.updateClients('stats')
+    await this.save()
+    await this.updateClients('stats')
   }
 
-  goodIdx(idx: number) {
+  async goodIdx(idx: number) {
     this.incStat('goods', idx)
-    this.save()
-    this.updateClients('stats')
+    await this.save()
+    await this.updateClients('stats')
   }
 
-  badIdx(idx: number) {
+  async badIdx(idx: number) {
     this.incStat('bads', idx)
-    this.save()
-    this.updateClients('stats')
+    await this.save()
+    await this.updateClients('stats')
   }
 
   async request(str: string) {
@@ -552,19 +559,19 @@ class SongrequestModule implements Module {
     return this.data.playlist.findIndex(item => item.yt === youtubeId)
   }
 
-  like() {
+  async like() {
     this.incStat('goods')
-    this.save()
-    this.updateClients('stats')
+    await this.save()
+    await this.updateClients('stats')
   }
 
-  filter(filter: { tag: string }) {
+  async filter(filter: { tag: string }) {
     this.data.filter = filter
-    this.save()
-    this.updateClients('filter')
+    await this.save()
+    await this.updateClients('filter')
   }
 
-  addTag(tag: string, idx = -1) {
+  async addTag(tag: string, idx = -1) {
     if (idx === -1) {
       idx = this.determineFirstIndex()
     }
@@ -574,24 +581,24 @@ class SongrequestModule implements Module {
     if (this.data.playlist.length > idx) {
       if (!this.data.playlist[idx].tags.includes(tag)) {
         this.data.playlist[idx].tags.push(tag)
-        this.save()
-        this.updateClients('tags')
+        await this.save()
+        await this.updateClients('tags')
       }
     }
   }
 
-  updateTag(oldTag: string, newTag: string) {
+  async updateTag(oldTag: string, newTag: string) {
     this.data.playlist = this.data.playlist.map(item => {
       item.tags = [...new Set(item.tags.map(tag => {
         return tag === oldTag ? newTag : tag
       }))]
       return item
     })
-    this.save()
-    this.updateClients('tags')
+    await this.save()
+    await this.updateClients('tags')
   }
 
-  rmTag(tag: string, idx = -1) {
+  async rmTag(tag: string, idx = -1) {
     if (idx === -1) {
       idx = this.determineFirstIndex()
     }
@@ -601,13 +608,13 @@ class SongrequestModule implements Module {
     if (this.data.playlist.length > idx) {
       if (this.data.playlist[idx].tags.includes(tag)) {
         this.data.playlist[idx].tags = this.data.playlist[idx].tags.filter(t => t !== tag)
-        this.save()
-        this.updateClients('tags')
+        await this.save()
+        await this.updateClients('tags')
       }
     }
   }
 
-  volume(vol: number) {
+  async volume(vol: number) {
     if (vol < 0) {
       vol = 0
     }
@@ -615,53 +622,53 @@ class SongrequestModule implements Module {
       vol = 100
     }
     this.data.settings.volume = parseInt(`${vol}`, 10)
-    this.save()
-    this.updateClients('settings')
+    await this.save()
+    await this.updateClients('settings')
   }
 
-  pause() {
-    this.updateClients('pause')
+  async pause() {
+    await this.updateClients('pause')
   }
 
-  unpause() {
-    this.updateClients('unpause')
+  async unpause() {
+    await this.updateClients('unpause')
   }
 
-  loop() {
-    this.updateClients('loop')
+  async loop() {
+    await this.updateClients('loop')
   }
 
-  noloop() {
-    this.updateClients('noloop')
+  async noloop() {
+    await this.updateClients('noloop')
   }
 
-  dislike() {
+  async dislike() {
     this.incStat('bads')
-    this.save()
-    this.updateClients('stats')
+    await this.save()
+    await this.updateClients('stats')
   }
 
-  settings(settings: SongrequestModuleSettings) {
+  async settings(settings: SongrequestModuleSettings) {
     this.data.settings = settings
-    this.save()
-    this.updateClients('settings')
+    await this.save()
+    await this.updateClients('settings')
   }
 
-  prev() {
+  async prev() {
     const index = this.determinePrevIndex()
     if (index >= 0) {
-      this.playIdx(index)
+      await this.playIdx(index)
     }
   }
 
-  next() {
+  async next() {
     const index = this.determineNextIndex()
     if (index >= 0) {
-      this.playIdx(index)
+      await this.playIdx(index)
     }
   }
 
-  jumptonew() {
+  async jumptonew() {
     if (this.data.playlist.length === 0) {
       return
     }
@@ -677,26 +684,26 @@ class SongrequestModule implements Module {
       }
     }
 
-    this.save()
-    this.updateClients('skip')
+    await this.save()
+    await this.updateClients('skip')
   }
 
-  clear() {
+  async clear() {
     this.data.playlist = []
-    this.save()
-    this.updateClients('init')
+    await this.save()
+    await this.updateClients('init')
   }
 
-  setAllToPlayed() {
+  async setAllToPlayed() {
     this.data.playlist = this.data.playlist.map(item => {
       item.plays = item.plays || 1
       return item
     })
-    this.save()
-    this.updateClients('init')
+    await this.save()
+    await this.updateClients('init')
   }
 
-  shuffle() {
+  async shuffle() {
     if (this.data.playlist.length < 3) {
       return
     }
@@ -708,11 +715,11 @@ class SongrequestModule implements Module {
       ...shuffle(rest.filter(item => item.plays > 0)),
     ]
 
-    this.save()
-    this.updateClients('shuffle')
+    await this.save()
+    await this.updateClients('shuffle')
   }
 
-  move(oldIndex: number, newIndex: number) {
+  async move(oldIndex: number, newIndex: number) {
     if (oldIndex >= this.data.playlist.length) {
       return
     }
@@ -726,21 +733,21 @@ class SongrequestModule implements Module {
       newIndex
     )
 
-    this.save()
-    this.updateClients('move')
+    await this.save()
+    await this.updateClients('move')
   }
 
-  remove(): PlaylistItem | null {
+  async remove(): Promise<PlaylistItem | null> {
     if (this.data.playlist.length === 0) {
       return null
     }
     const removedItem = this.data.playlist.shift()
-    this.save()
-    this.updateClients('remove')
+    await this.save()
+    await this.updateClients('remove')
     return removedItem || null
   }
 
-  undo(username: string) {
+  async undo(username: string) {
     if (this.data.playlist.length === 0) {
       return false
     }
@@ -754,7 +761,7 @@ class SongrequestModule implements Module {
       return false
     }
     const item = this.data.playlist[idx]
-    this.rmIdx(idx)
+    await this.rmIdx(idx)
     return item
   }
 
@@ -838,7 +845,7 @@ class SongrequestModule implements Module {
         return
       }
       const say = fn.sayFn(client, target)
-      const undid = this.undo(context['display-name'])
+      const undid = await this.undo(context['display-name'])
       if (!undid) {
         say(`Could not undo anything`)
       } else {
@@ -878,7 +885,7 @@ class SongrequestModule implements Module {
       _target: string | null,
       _context: TwitchChatContext | null,
     ) => {
-      this.like()
+      await this.like()
     }
   }
 
@@ -889,7 +896,7 @@ class SongrequestModule implements Module {
       _target: string | null,
       _context: TwitchChatContext | null,
     ) => {
-      this.dislike()
+      await this.dislike()
     }
   }
 
@@ -928,7 +935,7 @@ class SongrequestModule implements Module {
       _target: string | null,
       _context: TwitchChatContext | null,
     ) => {
-      this.prev()
+      await this.prev()
     }
   }
 
@@ -939,7 +946,7 @@ class SongrequestModule implements Module {
       _target: string | null,
       _context: TwitchChatContext | null,
     ) => {
-      this.next()
+      await this.next()
     }
   }
 
@@ -950,7 +957,7 @@ class SongrequestModule implements Module {
       _target: string | null,
       _context: TwitchChatContext | null,
     ) => {
-      this.jumptonew()
+      await this.jumptonew()
     }
   }
 
@@ -961,7 +968,7 @@ class SongrequestModule implements Module {
       _target: string | null,
       _context: TwitchChatContext | null,
     ) => {
-      this.clear()
+      await this.clear()
     }
   }
 
@@ -975,7 +982,7 @@ class SongrequestModule implements Module {
       if (!client || !target) {
         return
       }
-      const removedItem = this.remove()
+      const removedItem = await this.remove()
       if (removedItem) {
         const say = fn.sayFn(client, target)
         say(`Removed "${removedItem.title}" from the playlist.`)
@@ -990,7 +997,7 @@ class SongrequestModule implements Module {
       _target: string | null,
       _context: TwitchChatContext | null,
     ) => {
-      this.shuffle()
+      await this.shuffle()
     }
   }
 
@@ -1001,7 +1008,7 @@ class SongrequestModule implements Module {
       _target: string | null,
       _context: TwitchChatContext | null,
     ) => {
-      this.resetStats()
+      await this.resetStats()
     }
   }
 
@@ -1016,7 +1023,7 @@ class SongrequestModule implements Module {
         return
       }
       const say = fn.sayFn(client, target)
-      this.loop()
+      await this.loop()
       say('Now looping the current song')
     }
   }
@@ -1032,7 +1039,7 @@ class SongrequestModule implements Module {
         return
       }
       const say = fn.sayFn(client, target)
-      this.noloop()
+      await this.noloop()
       say('Stopped looping the current song')
     }
   }
@@ -1054,7 +1061,7 @@ class SongrequestModule implements Module {
       }
 
       const say = fn.sayFn(client, target)
-      this.addTag(tag)
+      await this.addTag(tag)
       say(`Added tag "${tag}"`)
     }
   }
@@ -1074,7 +1081,7 @@ class SongrequestModule implements Module {
       }
       const say = fn.sayFn(client, target)
       const tag = command.args.join(' ')
-      this.rmTag(tag)
+      await this.rmTag(tag)
       say(`Removed tag "${tag}"`)
     }
   }
@@ -1086,7 +1093,7 @@ class SongrequestModule implements Module {
       _target: string | null,
       _context: TwitchChatContext | null,
     ) => {
-      this.pause()
+      await this.pause()
     }
   }
 
@@ -1097,7 +1104,7 @@ class SongrequestModule implements Module {
       _target: string | null,
       _context: TwitchChatContext | null,
     ) => {
-      this.unpause()
+      await this.unpause()
     }
   }
 
@@ -1116,7 +1123,7 @@ class SongrequestModule implements Module {
       if (command.args.length === 0) {
         say(`Current volume: ${this.data.settings.volume}`)
       } else {
-        this.volume(parseInt(command.args[0], 10))
+        await this.volume(parseInt(command.args[0], 10))
         say(`New volume: ${this.data.settings.volume}`)
       }
     }
@@ -1133,7 +1140,7 @@ class SongrequestModule implements Module {
         return
       }
       const say = fn.sayFn(client, target)
-      this.videoVisibility(false)
+      await this.videoVisibility(false)
       say(`Video is now hidden.`)
     }
   }
@@ -1149,7 +1156,7 @@ class SongrequestModule implements Module {
         return
       }
       const say = fn.sayFn(client, target)
-      this.videoVisibility(true)
+      await this.videoVisibility(true)
       say(`Video is now shown.`)
     }
   }
@@ -1167,7 +1174,7 @@ class SongrequestModule implements Module {
 
       const say = fn.sayFn(client, target)
       const tag = command.args.join(' ')
-      this.filter({ tag })
+      await this.filter({ tag })
       if (tag !== '') {
         say(`Playing only songs tagged with "${tag}"`)
       } else {
@@ -1227,7 +1234,8 @@ class SongrequestModule implements Module {
         } else {
           say(`Preset does not exist: ${presetName}`)
         }
-        this.updateClients('settings')
+        // TODO: is a save missing here?
+        await this.updateClients('settings')
       }
     }
   }
@@ -1275,10 +1283,10 @@ class SongrequestModule implements Module {
 
   async loadYoutubeData(youtubeId: string): Promise<YoutubeVideosResponseDataEntry> {
     const key = `youtubeData_${youtubeId}_20210717_2`
-    let d = this.bot.getCache().get(key)
+    let d = await this.bot.getCache().get(key)
     if (!d) {
       d = await Youtube.fetchDataByYoutubeId(youtubeId)
-      this.bot.getCache().set(key, d)
+      await this.bot.getCache().set(key, d)
     }
     return d
   }
@@ -1320,8 +1328,8 @@ class SongrequestModule implements Module {
 
     if (idx < 0) {
       this.data.playlist.splice(insertIndex, 0, tmpItem)
-      this.save()
-      this.updateClients('add')
+      await this.save()
+      await this.updateClients('add')
       return {
         addType: ADD_TYPE.ADDED,
         idx: insertIndex,
@@ -1342,8 +1350,8 @@ class SongrequestModule implements Module {
     }
 
     this.data.playlist = arrayMove(this.data.playlist, idx, insertIndex)
-    this.save()
-    this.updateClients('add')
+    await this.save()
+    await this.updateClients('add')
     return {
       addType: ADD_TYPE.REQUEUED,
       idx: insertIndex,
@@ -1376,8 +1384,8 @@ class SongrequestModule implements Module {
     }
 
     this.data.playlist = arrayMove(this.data.playlist, idx, insertIndex)
-    this.save()
-    this.updateClients('add')
+    await this.save()
+    await this.updateClients('add')
     return {
       addType: ADD_TYPE.REQUEUED,
       idx: insertIndex,

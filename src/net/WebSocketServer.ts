@@ -41,7 +41,7 @@ class WebSocketServer {
 
   listen() {
     this._websocketserver = new WebSocket.Server(this.config)
-    this._websocketserver.on('connection', (socket: Socket, request: IncomingMessage) => {
+    this._websocketserver.on('connection', async (socket: Socket, request: IncomingMessage) => {
       const pathname = new URL(this.connectstring()).pathname
       if (request.url?.indexOf(pathname) !== 0) {
         log.info('bad request url: ', request.url)
@@ -67,7 +67,7 @@ class WebSocketServer {
       const widgetModule = widget_path_to_module_map[relpath]
       const token_type = widgetModule ? relpath : null
 
-      const tokenInfo = this.auth.wsTokenFromProtocol(token, token_type)
+      const tokenInfo = await this.auth.wsTokenFromProtocol(token, token_type)
       if (!tokenInfo) {
         log.info('not found token: ', token, relpath)
         socket.close()

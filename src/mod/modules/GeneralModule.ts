@@ -55,11 +55,15 @@ interface WsData {
 class GeneralModule implements Module {
   public name = 'general'
 
+  // @ts-ignore
   public bot: Bot
+  // @ts-ignore
   public user: User
-
+  // @ts-ignore
   private data: GeneralModuleData
+  // @ts-ignore
   private commands: FunctionCommand[]
+  // @ts-ignore
   private timers: GeneralModuleTimer[]
 
   private interval: NodeJS.Timer | null = null
@@ -70,16 +74,20 @@ class GeneralModule implements Module {
     bot: Bot,
     user: User,
   ) {
-    this.bot = bot
-    this.user = user
-    const initData = this.reinit()
-    this.data = initData.data
-    this.commands = initData.commands
-    this.timers = initData.timers
-    if (initData.shouldSave) {
-      this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
-    }
-    this.inittimers()
+    // @ts-ignore
+    return (async () => {
+      this.bot = bot
+      this.user = user
+      const initData = await this.reinit()
+      this.data = initData.data
+      this.commands = initData.commands
+      this.timers = initData.timers
+      if (initData.shouldSave) {
+        await this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
+      }
+      this.inittimers()
+      return this;
+    })();
   }
 
   async userChanged(user: User) {
@@ -175,9 +183,9 @@ class GeneralModule implements Module {
     })
   }
 
-  reinit(): GeneralModuleInitData {
+  async reinit(): Promise<GeneralModuleInitData> {
     let shouldSave = false
-    const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
+    const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {
       commands: [],
       settings: {
         volume: 100,
@@ -297,60 +305,60 @@ class GeneralModule implements Module {
     return {}
   }
 
-  wsdata(eventName: string): WsData {
+  async wsdata(eventName: string): Promise<WsData> {
     return {
       event: eventName,
       data: {
         commands: this.data.commands,
         settings: this.data.settings,
         adminSettings: this.data.adminSettings,
-        globalVariables: this.bot.getUserVariables(this.user).all(),
+        globalVariables: await this.bot.getUserVariables(this.user).all(),
         channelPointsCustomRewards: this.channelPointsCustomRewards,
-        mediaWidgetUrl: this.bot.getWebServer().getWidgetUrl('media', this.user.id),
+        mediaWidgetUrl: await this.bot.getWebServer().getWidgetUrl('media', this.user.id),
       },
     }
   }
 
-  updateClient(eventName: string, ws: Socket) {
-    this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
+  async updateClient(eventName: string, ws: Socket): Promise<void> {
+    this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, await this.wsdata(eventName), ws)
   }
 
-  updateClients(eventName: string) {
-    this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, this.wsdata(eventName))
+  async updateClients(eventName: string): Promise<void> {
+    this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, await this.wsdata(eventName))
   }
 
-  saveSettings() {
-    this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
+  async saveSettings(): Promise<void> {
+    await this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
     // no need for calling reinit, that would also recreate timers and stuff
     // but updating settings shouldnt mess with those
-    this.updateClients('init')
+    await this.updateClients('init')
   }
 
-  saveCommands() {
-    this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
-    const initData = this.reinit()
+  async saveCommands(): Promise<void> {
+    await this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
+    const initData = await this.reinit()
     this.data = initData.data
     this.commands = initData.commands
     this.timers = initData.timers
-    this.updateClients('init')
+    await this.updateClients('init')
   }
 
   getWsEvents() {
     return {
       'conn': async (ws: Socket) => {
         this.channelPointsCustomRewards = await this._channelPointsCustomRewards()
-        this.updateClient('init', ws)
+        await this.updateClient('init', ws)
       },
-      'save': (ws: Socket, data: GeneralSaveEventData) => {
+      'save': async (ws: Socket, data: GeneralSaveEventData) => {
         this.data.commands = this.fix(data.commands)
         this.data.settings = data.settings
         this.data.adminSettings = data.adminSettings
-        this.saveCommands()
+        await this.saveCommands()
       },
     }
   }
 
-  volume(vol: number) {
+  async volume(vol: number) {
     if (vol < 0) {
       vol = 0
     }
@@ -358,7 +366,7 @@ class GeneralModule implements Module {
       vol = 100
     }
     this.data.settings.volume = parseInt(`${vol}`, 10)
-    this.saveSettings()
+    await this.saveSettings()
   }
 
   async mediaVolumeCmd(
@@ -375,7 +383,7 @@ class GeneralModule implements Module {
     if (command.args.length === 0) {
       say(`Current volume: ${this.data.settings.volume}`)
     } else {
-      this.volume(parseInt(command.args[0], 10))
+      await this.volume(parseInt(command.args[0], 10))
       say(`New volume: ${this.data.settings.volume}`)
     }
   }

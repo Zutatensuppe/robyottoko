@@ -1,4 +1,4 @@
-import Db, { Where } from "../Db"
+import Db, { WhereRaw } from "../DbPostgres"
 
 const TABLE = 'user'
 
@@ -46,31 +46,31 @@ class Users {
     this.db = db
   }
 
-  get(by: Where): User | null {
-    return this.db.get(TABLE, by) || null
+  async get(by: WhereRaw): Promise<User | null> {
+    return await this.db.get(TABLE, by) || null
   }
 
-  all(): User[] {
-    return this.db.getMany(TABLE)
+  async all(): Promise<User[]> {
+    return await this.db.getMany(TABLE)
   }
 
-  getById(id: number): User | null {
-    return this.get({ id })
+  async getById(id: number): Promise<User | null> {
+    return await this.get({ id })
   }
 
-  save(user: UpdateUser) {
-    return this.db.upsert(TABLE, user, { id: user.id })
+  async save(user: UpdateUser): Promise<any> {
+    return await this.db.upsert(TABLE, user, { id: user.id })
   }
 
-  getGroups(id: number): string[] {
-    const rows = this.db._getMany(`
+  async getGroups(id: number): Promise<string[]> {
+    const rows: { name: string }[] = await this.db._getMany(`
 select g.name from user_group g inner join user_x_user_group x
 where x.user_id = ?`, [id])
     return rows.map(r => r.name)
   }
 
-  createUser(user: CreateUser) {
-    return this.db.insert(TABLE, user) as number
+  async createUser(user: CreateUser): Promise<number> {
+    return (await this.db.insert(TABLE, user)) as number
   }
 }
 

@@ -133,15 +133,15 @@ const applyVariableChanges = async (
       }
     }
 
-    const globalVars: GlobalVariable[] = variables.all()
+    const globalVars: GlobalVariable[] = await variables.all()
     const idx = globalVars.findIndex(v => (v.name === name))
     if (idx !== -1) {
       if (op === 'set') {
-        variables.set(name, value)
+        await variables.set(name, value)
       } else if (op === 'increase_by') {
-        variables.set(name, _increase(globalVars[idx].value, value))
+        await variables.set(name, _increase(globalVars[idx].value, value))
       } else if (op === 'decrease_by') {
-        variables.set(name, _decrease(globalVars[idx].value, value))
+        await variables.set(name, _decrease(globalVars[idx].value, value))
       }
       //
       continue
@@ -251,7 +251,7 @@ export const doReplacements = async (
           return ''
         }
         const v = originalCmd.variables.find(v => v.name === m1)
-        const val = v ? v.value : bot.getUserVariables(user).get(m1)
+        const val = v ? v.value : (await bot.getUserVariables(user).get(m1))
         return val === null ? '' : String(val)
       },
     },

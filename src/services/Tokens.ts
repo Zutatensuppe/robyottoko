@@ -1,4 +1,4 @@
-import Db from "../Db"
+import Db from "../DbPostgres"
 
 const TABLE = 'token'
 
@@ -32,43 +32,36 @@ class Tokens {
     this.db = db
   }
 
-  getByUserIdAndType(user_id: number, type: string): Token {
-    return this.db.get(TABLE, { user_id, type })
+  async getByUserIdAndType(user_id: number, type: string): Promise<Token> {
+    return await this.db.get(TABLE, { user_id, type })
   }
 
-  insert(tokenInfo: UpdateToken) {
-    return this.db.insert(TABLE, tokenInfo)
+  async insert(tokenInfo: UpdateToken): Promise<number | bigint> {
+    return await this.db.insert(TABLE, tokenInfo)
   }
 
-  createToken(user_id: number, type: string): Token {
+  async createToken(user_id: number, type: string): Promise<Token> {
     const token = generateToken(32)
     const tokenObj: Token = { user_id, type, token }
-    this.insert(tokenObj)
+    await this.insert(tokenObj)
     return tokenObj
   }
 
-  getOrCreateToken(user_id: number, type: string): Token {
-    return this.getByUserIdAndType(user_id, type) || this.createToken(user_id, type)
+  async getOrCreateToken(user_id: number, type: string): Promise<Token> {
+    return (await this.getByUserIdAndType(user_id, type))
+      || (await this.createToken(user_id, type))
   }
 
-  getByTokenAndType(token: string, type: string): Token | null {
-    return this.db.get(TABLE, { token, type }) || null
+  async getByTokenAndType(token: string, type: string): Promise<Token | null> {
+    return (await this.db.get(TABLE, { token, type })) || null
   }
 
-  delete(token: string) {
-    return this.db.delete(TABLE, { token })
+  async delete(token: string): Promise<any> {
+    return await this.db.delete(TABLE, { token })
   }
 
-  getWidgetTokenForUserId(user_id: number): Token {
-    return this.getOrCreateToken(user_id, 'widget')
-  }
-
-  getPubTokenForUserId(user_id: number): Token {
-    return this.getOrCreateToken(user_id, 'pub')
-  }
-
-  generateAuthTokenForUserId(user_id: number): Token {
-    return this.createToken(user_id, 'auth')
+  async generateAuthTokenForUserId(user_id: number): Promise<Token> {
+    return await this.createToken(user_id, 'auth')
   }
 }
 

@@ -12,34 +12,42 @@ interface VoteModuleData {
 class VoteModule implements Module {
   public name = 'vote'
 
+  // @ts-ignore
   public bot: Bot
+  // @ts-ignore
   public user: User
+  // @ts-ignore
   private storage: ModuleStorage
+  // @ts-ignore
   private data: VoteModuleData
 
   constructor(
     bot: Bot,
     user: User,
   ) {
-    this.bot = bot
-    this.user = user
-    this.storage = bot.getUserModuleStorage(user)
-    this.data = this.reinit()
+    // @ts-ignore
+    return (async () => {
+      this.bot = bot
+      this.user = user
+      this.storage = bot.getUserModuleStorage(user)
+      this.data = await this.reinit()
+      return this;
+    })();
   }
 
   async userChanged(_user: User) {
     // pass
   }
 
-  reinit() {
-    const data = this.storage.load(this.name, {
+  async reinit(): Promise<VoteModuleData> {
+    const data = await this.storage.load(this.name, {
       votes: {},
     })
     return data as VoteModuleData
   }
 
-  save() {
-    this.storage.save(this.name, {
+  async save(): Promise<void> {
+    await this.storage.save(this.name, {
       votes: this.data.votes,
     })
   }
@@ -56,18 +64,18 @@ class VoteModule implements Module {
     return {}
   }
 
-  vote(
+  async vote(
     type: string,
     thing: string,
     client: TwitchChatClient,
     target: string,
     context: TwitchChatContext,
-  ) {
+  ): Promise<void> {
     const say = fn.sayFn(client, target)
     this.data.votes[type] = this.data.votes[type] || {}
     this.data.votes[type][context['display-name']] = thing
     say(`Thanks ${context['display-name']}, registered your "${type}" vote: ${thing}`)
-    this.save()
+    await this.save()
   }
 
   async playCmd(
@@ -88,7 +96,7 @@ class VoteModule implements Module {
 
     const thing = command.args.join(' ')
     const type = 'play'
-    this.vote(type, thing, client, target, context)
+    await this.vote(type, thing, client, target, context)
   }
 
   async voteCmd(
@@ -96,7 +104,7 @@ class VoteModule implements Module {
     client: TwitchChatClient | null,
     target: string | null,
     context: TwitchChatContext | null,
-  ) {
+  ): Promise<void> {
     if (!client || !command || !context || !target) {
       return
     }
@@ -153,14 +161,14 @@ class VoteModule implements Module {
       if (this.data.votes[type]) {
         delete this.data.votes[type]
       }
-      this.save()
+      await this.save()
       say(`Cleared votes for "${type}". ✨`)
       return
     }
 
     const type = command.args[0]
     const thing = command.args.slice(1).join(' ')
-    this.vote(type, thing, client, target, context)
+    await this.vote(type, thing, client, target, context)
   }
 
   getCommands() {
