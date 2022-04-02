@@ -34,7 +34,7 @@
     "connectstring": "ws://localhost:1338/ws"
   },
   "db": {
-    "file": "PATH_TO_DATABASE_SQLITE_FILE",
+    "connectStr": "POSTGRES_CONNECT_STRING",
     "patchesDir": "PATH_TO_DATABASE_PATCHES_DIR"
   },
   "modules": {

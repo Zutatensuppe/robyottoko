@@ -3,6 +3,5 @@ node_modules
 *.swp
 *.data.json
 data/uploads
-*.sqlite
 *.local
 .env.development
