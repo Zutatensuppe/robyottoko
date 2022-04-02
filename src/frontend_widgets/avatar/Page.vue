@@ -16,7 +16,7 @@
       />
     </div>
 
-    <table v-if="controls">
+    <table v-if="controls && showControls">
       <tr v-if="!this.avatarFixed">
         <td>Tubers:</td>
         <td>
@@ -67,6 +67,9 @@
         </td>
       </tr>
     </table>
+    <div class="toggle-controls" v-if="controls">
+      <button @click="showControls = !showControls">Toggle controls</button>
+    </div>
   </div>
 </template>
 <script lang="ts">
@@ -107,6 +110,7 @@ interface ComponentData {
   tuberIdx: number;
   avatarFixed: string;
   settings: AvatarModuleSettings;
+  showControls: boolean;
 }
 
 export default defineComponent({
@@ -126,6 +130,7 @@ export default defineComponent({
       tuberIdx: -1,
       avatarFixed: "",
       settings: default_settings(),
+      showControls: true,
     };
   },
   computed: {
@@ -304,7 +309,7 @@ export default defineComponent({
       if (styles.bgColorEnabled && styles.bgColor != null) {
         document.body.style.backgroundColor = styles.bgColor;
       } else {
-        document.body.style.backgroundColor = '';
+        document.body.style.backgroundColor = "";
       }
     },
   },
