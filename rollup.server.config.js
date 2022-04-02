@@ -21,7 +21,6 @@ export default {
     "cookie-parser",
     "tmi.js",
     "twing",
-    "better-sqlite3",
     "sib-api-v3-sdk",
     "node-fetch",
   ],

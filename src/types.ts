@@ -18,7 +18,6 @@ type int = number
 
 export interface DbConfig {
   connectStr: string
-  file: string // deprecated (only used for sqlite)
   patchesDir: string
 }
 

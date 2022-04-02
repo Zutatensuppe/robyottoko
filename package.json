@@ -11,7 +11,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "better-sqlite3": "^7.4.3",
     "bulma": "^0.9.3",
     "cookie-parser": "^1.4.5",
     "express": "^4.17.1",
@@ -31,7 +30,6 @@
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^13.0.6",
     "@rollup/plugin-replace": "^4.0.0",
-    "@types/better-sqlite3": "^7.4.1",
     "@types/cookie-parser": "^1.4.2",
     "@types/jest": "^27.0.2",
     "@types/multer": "^1.4.7",
