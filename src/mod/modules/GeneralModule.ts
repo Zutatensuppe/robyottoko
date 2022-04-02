@@ -3,7 +3,7 @@ import madochanCreateWord from '../../commands/madochanCreateWord'
 import randomText from '../../commands/randomText'
 import playMedia from '../../commands/playMedia'
 import fn from '../../fn'
-import { logger, parseHumanDuration, SECOND } from '../../common/fn'
+import { logger, nonce, parseHumanDuration, SECOND } from '../../common/fn'
 import chatters from '../../commands/chatters'
 import { commands as commonCommands, newCommandTrigger } from '../../common/commands'
 import setChannelTitle from '../../commands/setChannelTitle'
@@ -132,6 +132,7 @@ class GeneralModule implements Module {
         }
       }
       if (cmd.action === 'media') {
+        cmd.data.excludeFromGlobalWidget = typeof cmd.data.excludeFromGlobalWidget === 'undefined' ? false : cmd.data.excludeFromGlobalWidget
         cmd.data.minDurationMs = cmd.data.minDurationMs || 0
         cmd.data.sound.volume = cmd.data.sound.volume || 100
 
@@ -196,6 +197,14 @@ class GeneralModule implements Module {
       },
     })
     data.commands = this.fix(data.commands)
+    // add ids to commands that dont have one yet
+    for (const command of data.commands) {
+      if (!command.id) {
+        command.id = nonce(10)
+        shouldSave = true
+      }
+    }
+
     if (!data.adminSettings) {
       data.adminSettings = {}
     }

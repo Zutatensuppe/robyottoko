@@ -31,6 +31,7 @@
         :baseVolume="baseVolume"
         :showToggleImages="true"
         :showFilterActions="true"
+        :widgetUrl="widgetUrl"
         :showImages="adminSettings.showImages"
         @showImagesChange="updateShowImages"
       />

@@ -21,7 +21,7 @@ export default class WsClient extends WsWrapper {
       if (this._on['message']) {
         const d = this._parseMessageData(e.data)
         if (d.event) {
-          this._dispatch('message', `${d.event}`, d.data)
+          this._dispatch('message', `${d.event}`, d.data, d)
         }
       }
     }
@@ -51,7 +51,8 @@ export default class WsClient extends WsWrapper {
     try {
       const d = JSON.parse(data)
       if (d.event) {
-        return { event: d.event, data: d.data || null }
+        d.data = d.data || null
+        return d
       }
     } catch (e) {
       log.info(e)

@@ -1,10 +1,11 @@
-import { mustParseHumanDuration } from "../common/fn"
+import { mustParseHumanDuration, nonce } from "../common/fn"
 import { Command, CommandAction, CommandTrigger, CommandTriggerType, FunctionCommand, MediaCommandData } from "../types"
 import { MOD_OR_ABOVE } from './permissions'
 
 export const newText = () => ''
 
 const newMedia = (): MediaCommandData => ({
+  excludeFromGlobalWidget: false,
   sound: {
     filename: '',
     file: '',
@@ -140,6 +141,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "add_stream_tags command",
     Description: () => "Add streamtag",
     NewCommand: (): Command => ({
+      id: nonce(10),
       triggers: [newCommandTrigger()],
       action: 'add_stream_tags',
       restrict_to: MOD_OR_ABOVE,
@@ -155,6 +157,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "chatters command",
     Description: () => "Outputs the people who chatted during the stream.",
     NewCommand: (): Command => ({
+      id: nonce(10),
       triggers: [newCommandTrigger()],
       action: 'chatters',
       restrict_to: [],
@@ -168,6 +171,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "countdown",
     Description: () => "Add a countdown or messages spaced by time intervals.",
     NewCommand: (): Command => ({
+      id: nonce(10),
       triggers: [newCommandTrigger()],
       action: 'countdown',
       restrict_to: [],
@@ -186,6 +190,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "dictionary lookup",
     Description: () => "Outputs the translation for the searched word.",
     NewCommand: (): Command => ({
+      id: nonce(10),
       triggers: [newCommandTrigger()],
       action: 'dict_lookup',
       restrict_to: [],
@@ -202,6 +207,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "madochan",
     Description: () => "Creates a word for a definition.",
     NewCommand: (): Command => ({
+      id: nonce(10),
       triggers: [newCommandTrigger()],
       action: 'madochan_createword',
       restrict_to: [],
@@ -219,6 +225,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "media command",
     Description: () => "Display an image and/or play a sound.",
     NewCommand: (): Command => ({
+      id: nonce(10),
       triggers: [newCommandTrigger()],
       action: 'media',
       restrict_to: [],
@@ -234,6 +241,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     <br />
     If no argument is given, just outputs the current volume`,
     NewCommand: (): Command => ({
+      id: nonce(10),
       triggers: [newCommandTrigger()],
       action: 'media_volume',
       restrict_to: MOD_OR_ABOVE,
@@ -247,6 +255,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "command",
     Description: () => "Send a message to chat",
     NewCommand: (): Command => ({
+      id: nonce(10),
       triggers: [newCommandTrigger()],
       action: 'text',
       restrict_to: [],
@@ -262,6 +271,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "remove_stream_tags command",
     Description: () => "Remove streamtag",
     NewCommand: (): Command => ({
+      id: nonce(10),
       triggers: [newCommandTrigger()],
       action: 'remove_stream_tags',
       restrict_to: MOD_OR_ABOVE,
@@ -277,6 +287,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "change stream category command",
     Description: () => "Change the stream category",
     NewCommand: (): Command => ({
+      id: nonce(10),
       triggers: [newCommandTrigger()],
       action: 'set_channel_game_id',
       restrict_to: MOD_OR_ABOVE,
@@ -292,6 +303,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "change stream title command",
     Description: () => "Change the stream title",
     NewCommand: (): Command => ({
+      id: nonce(10),
       triggers: [newCommandTrigger()],
       action: 'set_channel_title',
       restrict_to: MOD_OR_ABOVE,
@@ -307,6 +319,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "sr_current",
     Description: () => "Show what song is currently playing",
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_current',
       triggers: [newCommandTrigger('!sr current', true)],
       restrict_to: [],
@@ -320,6 +333,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "sr_undo",
     Description: () => "Remove the song that was last added by oneself.",
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_undo',
       triggers: [newCommandTrigger('!sr undo', true)],
       restrict_to: [],
@@ -333,6 +347,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "sr_good",
     Description: () => "Vote the current song up",
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_good',
       triggers: [newCommandTrigger('!sr good', true)],
       restrict_to: [],
@@ -346,6 +361,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "sr_bad",
     Description: () => "Vote the current song down",
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_bad',
       triggers: [newCommandTrigger('!sr bad', true)],
       restrict_to: [],
@@ -359,6 +375,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "sr_stats",
     Description: () => "Show stats about the playlist",
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_stats',
       triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)],
       restrict_to: [],
@@ -372,6 +389,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "sr_prev",
     Description: () => "Skip to the previous song",
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_prev',
       triggers: [newCommandTrigger('!sr prev', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -385,6 +403,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "sr_next",
     Description: () => "Skip to the next song",
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_next',
       triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -398,6 +417,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "sr_jumptonew",
     Description: () => "Jump to the next unplayed song",
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_jumptonew',
       triggers: [newCommandTrigger('!sr jumptonew', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -411,6 +431,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "sr_clear",
     Description: () => "Clear the playlist",
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_clear',
       triggers: [newCommandTrigger('!sr clear', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -424,6 +445,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "sr_rm",
     Description: () => "Remove the current song from the playlist",
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_rm',
       triggers: [newCommandTrigger('!sr rm', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -440,6 +462,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Non-played and played songs will be shuffled separately and non-played
     songs will be put after currently playing song.`,
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_shuffle',
       triggers: [newCommandTrigger('!sr shuffle', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -453,6 +476,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "sr_reset_stats",
     Description: () => "Reset all statistics of all songs",
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_reset_stats',
       triggers: [newCommandTrigger('!sr resetStats', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -466,6 +490,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "sr_loop",
     Description: () => "Loop the current song",
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_loop',
       triggers: [newCommandTrigger('!sr loop', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -479,6 +504,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "sr_noloop",
     Description: () => "Stop looping the current song",
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_noloop',
       triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -492,6 +518,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "sr_pause",
     Description: () => "Pause currently playing song",
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_pause',
       triggers: [newCommandTrigger('!sr pause', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -505,6 +532,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "sr_unpause",
     Description: () => "Unpause currently paused song",
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_unpause',
       triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -518,6 +546,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "sr_hidevideo",
     Description: () => "Hide video for current song",
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_hidevideo',
       triggers: [newCommandTrigger('!sr hidevideo', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -531,6 +560,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "sr_showvideo",
     Description: () => "Show video for current song",
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_showvideo',
       triggers: [newCommandTrigger('!sr showvideo', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -548,6 +578,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     and queue the first result in the playlist (after the first found
     batch of unplayed songs).`,
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_request',
       triggers: [newCommandTrigger('!sr')],
       restrict_to: [],
@@ -564,6 +595,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     in the current playlist and queue the first result in the playlist
     (after the first found batch of unplayed songs).`,
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_re_request',
       triggers: [newCommandTrigger('!resr')],
       restrict_to: [],
@@ -577,6 +609,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "sr_addtag",
     Description: () => "Add tag <code>&lt;TAG&gt;</code> (argument to this command) to the current song",
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_addtag',
       triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')],
       restrict_to: MOD_OR_ABOVE,
@@ -592,6 +625,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "sr_rmtag",
     Description: () => "Remove tag <code>&lt;TAG&gt;</code> (argument to this command) from the current song",
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_rmtag',
       triggers: [newCommandTrigger('!sr rmtag')],
       restrict_to: MOD_OR_ABOVE,
@@ -607,6 +641,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     <br />
     If no argument is given, just outputs the current volume`,
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_volume',
       triggers: [newCommandTrigger('!sr volume')],
       restrict_to: MOD_OR_ABOVE,
@@ -621,6 +656,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => `Play only songs with the given tag <code>&lt;TAG&gt;</code> (argument to this command). If no tag
   is given, play all songs.`,
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_filter',
       triggers: [newCommandTrigger('!sr filter')],
       restrict_to: MOD_OR_ABOVE,
@@ -635,6 +671,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => `Switches to the preset <code>&lt;PRESET&gt;</code> (argument to this command) if it exists.
   If no arguments are given, outputs all available presets.`,
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_preset',
       triggers: [newCommandTrigger('!sr preset')],
       restrict_to: MOD_OR_ABOVE,
@@ -648,6 +685,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Name: () => "sr_queue",
     Description: () => `Shows the next 3 songs that will play.`,
     NewCommand: (): Command => ({
+      id: nonce(10),
       action: 'sr_queue',
       triggers: [newCommandTrigger('!sr queue')],
       restrict_to: [],

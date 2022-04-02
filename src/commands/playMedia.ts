@@ -45,6 +45,7 @@ const playMedia = (
     bot.getWebSocketServer().notifyAll([user.id], 'general', {
       event: 'playmedia',
       data: data,
+      id: originalCmd.id
     })
   }
 
