@@ -8,7 +8,6 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 import multer from 'multer';
 import tmi from 'tmi.js';
-import bsqlite from 'better-sqlite3';
 import SibApiV3Sdk from 'sib-api-v3-sdk';
 import childProcess from 'child_process';
 
@@ -388,17 +387,17 @@ const applyVariableChanges = async (cmdDef, contextModule, rawCmd, context) => {
                 continue;
             }
         }
-        const globalVars = variables.all();
+        const globalVars = await variables.all();
         const idx = globalVars.findIndex(v => (v.name === name));
         if (idx !== -1) {
             if (op === 'set') {
-                variables.set(name, value);
+                await variables.set(name, value);
             }
             else if (op === 'increase_by') {
-                variables.set(name, _increase(globalVars[idx].value, value));
+                await variables.set(name, _increase(globalVars[idx].value, value));
             }
             else if (op === 'decrease_by') {
-                variables.set(name, _decrease(globalVars[idx].value, value));
+                await variables.set(name, _decrease(globalVars[idx].value, value));
             }
             //
             continue;
@@ -488,7 +487,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
                     return '';
                 }
                 const v = originalCmd.variables.find(v => v.name === m1);
-                const val = v ? v.value : bot.getUserVariables(user).get(m1);
+                const val = v ? v.value : (await bot.getUserVariables(user).get(m1));
                 return val === null ? '' : String(val);
             },
         },
@@ -792,31 +791,31 @@ class Auth {
         this.userRepo = userRepo;
         this.tokenRepo = tokenRepo;
     }
-    getTokenInfoByTokenAndType(token, type) {
-        return this.tokenRepo.getByTokenAndType(token, type);
+    async getTokenInfoByTokenAndType(token, type) {
+        return await this.tokenRepo.getByTokenAndType(token, type);
     }
-    getUserById(id) {
-        return this.userRepo.get({ id, status: 'verified' });
+    async getUserById(id) {
+        return await this.userRepo.get({ id, status: 'verified' });
     }
-    getUserByNameAndPass(name, plainPass) {
-        const user = this.userRepo.get({ name, status: 'verified' });
+    async getUserByNameAndPass(name, plainPass) {
+        const user = await this.userRepo.get({ name, status: 'verified' });
         if (!user || user.pass !== passwordHash(plainPass, user.salt)) {
             return null;
         }
         return user;
     }
-    getUserAuthToken(user_id) {
-        return this.tokenRepo.generateAuthTokenForUserId(user_id).token;
+    async getUserAuthToken(user_id) {
+        return (await this.tokenRepo.generateAuthTokenForUserId(user_id)).token;
     }
-    destroyToken(token) {
-        return this.tokenRepo.delete(token);
+    async destroyToken(token) {
+        return await this.tokenRepo.delete(token);
     }
     addAuthInfoMiddleware() {
-        return (req, _res, next) => {
+        return async (req, _res, next) => {
             const token = req.cookies['x-token'] || null;
-            const tokenInfo = this.getTokenInfoByTokenAndType(token, 'auth');
+            const tokenInfo = await this.getTokenInfoByTokenAndType(token, 'auth');
             if (tokenInfo) {
-                const user = this.userRepo.getById(tokenInfo.user_id);
+                const user = await this.userRepo.getById(tokenInfo.user_id);
                 if (user) {
                     req.token = tokenInfo.token;
                     req.user = {
@@ -826,8 +825,6 @@ class Auth {
                         status: user.status,
                         groups: this.userRepo.getGroups(user.id)
                     };
-                    req.userWidgetToken = this.tokenRepo.getWidgetTokenForUserId(tokenInfo.user_id).token;
-                    req.userPubToken = this.tokenRepo.getPubTokenForUserId(tokenInfo.user_id).token;
                 }
                 else {
                     req.token = null;
@@ -841,21 +838,21 @@ class Auth {
             next();
         };
     }
-    userFromWidgetToken(token, type) {
-        const tokenInfo = this.getTokenInfoByTokenAndType(token, `widget_${type}`);
+    async userFromWidgetToken(token, type) {
+        const tokenInfo = await this.getTokenInfoByTokenAndType(token, `widget_${type}`);
         if (tokenInfo) {
-            return this.getUserById(tokenInfo.user_id);
+            return await this.getUserById(tokenInfo.user_id);
         }
         return null;
     }
-    userFromPubToken(token) {
-        const tokenInfo = this.getTokenInfoByTokenAndType(token, 'pub');
+    async userFromPubToken(token) {
+        const tokenInfo = await this.getTokenInfoByTokenAndType(token, 'pub');
         if (tokenInfo) {
-            return this.getUserById(tokenInfo.user_id);
+            return await this.getUserById(tokenInfo.user_id);
         }
         return null;
     }
-    wsTokenFromProtocol(protocol, tokenType) {
+    async wsTokenFromProtocol(protocol, tokenType) {
         let proto = Array.isArray(protocol) && protocol.length === 2
             ? protocol[1]
             : protocol;
@@ -866,17 +863,17 @@ class Auth {
             return null;
         }
         if (tokenType) {
-            const tokenInfo = this.getTokenInfoByTokenAndType(proto, tokenType);
+            const tokenInfo = await this.getTokenInfoByTokenAndType(proto, tokenType);
             if (tokenInfo) {
                 return tokenInfo;
             }
             return null;
         }
-        let tokenInfo = this.getTokenInfoByTokenAndType(proto, 'auth');
+        let tokenInfo = await this.getTokenInfoByTokenAndType(proto, 'auth');
         if (tokenInfo) {
             return tokenInfo;
         }
-        tokenInfo = this.getTokenInfoByTokenAndType(proto, 'pub');
+        tokenInfo = await this.getTokenInfoByTokenAndType(proto, 'pub');
         if (tokenInfo) {
             return tokenInfo;
         }
@@ -911,7 +908,7 @@ class WebSocketServer {
     }
     listen() {
         this._websocketserver = new WebSocket.Server(this.config);
-        this._websocketserver.on('connection', (socket, request) => {
+        this._websocketserver.on('connection', async (socket, request) => {
             const pathname = new URL(this.connectstring()).pathname;
             if (request.url?.indexOf(pathname) !== 0) {
                 log$i.info('bad request url: ', request.url);
@@ -935,7 +932,7 @@ class WebSocketServer {
             const relpath = relpathfull.startsWith('/') ? relpathfull.substring(1) : relpathfull;
             const widgetModule = widget_path_to_module_map[relpath];
             const token_type = widgetModule ? relpath : null;
-            const tokenInfo = this.auth.wsTokenFromProtocol(token, token_type);
+            const tokenInfo = await this.auth.wsTokenFromProtocol(token, token_type);
             if (!tokenInfo) {
                 log$i.info('not found token: ', token, relpath);
                 socket.close();
@@ -1269,14 +1266,14 @@ class TwitchHelixClient {
     }
 }
 
-const TABLE$5 = 'variables';
+const TABLE$5 = 'robyottoko.variables';
 class Variables {
     constructor(db, userId) {
         this.db = db;
         this.userId = userId;
     }
-    set(name, value) {
-        this.db.upsert(TABLE$5, {
+    async set(name, value) {
+        await this.db.upsert(TABLE$5, {
             name,
             user_id: this.userId,
             value: JSON.stringify(value),
@@ -1285,23 +1282,23 @@ class Variables {
             user_id: this.userId,
         });
     }
-    get(name) {
-        const row = this.db.get(TABLE$5, { name, user_id: this.userId });
+    async get(name) {
+        const row = await this.db.get(TABLE$5, { name, user_id: this.userId });
         return row ? JSON.parse(row.value) : null;
     }
-    all() {
-        const rows = this.db.getMany(TABLE$5, { user_id: this.userId });
+    async all() {
+        const rows = await this.db.getMany(TABLE$5, { user_id: this.userId });
         return rows.map(row => ({
             name: row.name,
             value: JSON.parse(row.value),
         }));
     }
-    replace(variables) {
+    async replace(variables) {
         const names = variables.map(v => v.name);
-        this.db.delete(TABLE$5, { user_id: this.userId, name: { '$nin': names } });
-        variables.forEach(({ name, value }) => {
-            this.set(name, value);
-        });
+        await this.db.delete(TABLE$5, { user_id: this.userId, name: { '$nin': names } });
+        for (const { name, value } of variables) {
+            await this.set(name, value);
+        }
     }
 }
 
@@ -1393,21 +1390,21 @@ class WebServer {
         this.auth = auth;
         this.handle = null;
     }
-    getWidgetUrl(widgetType, userId) {
-        return this._widgetUrlByTypeAndUserId(widgetType, userId);
+    async getWidgetUrl(widgetType, userId) {
+        return await this._widgetUrlByTypeAndUserId(widgetType, userId);
     }
-    getPublicWidgetUrl(widgetType, userId) {
-        const url = this._widgetUrlByTypeAndUserId(widgetType, userId);
-        return this._pubUrl(url);
+    async getPublicWidgetUrl(widgetType, userId) {
+        const url = await this._widgetUrlByTypeAndUserId(widgetType, userId);
+        return await this._pubUrl(url);
     }
-    _pubUrl(target) {
-        const row = this.db.get('pub', { target });
+    async _pubUrl(target) {
+        const row = await this.db.get('robyottoko.pub', { target });
         let id;
         if (!row) {
             do {
                 id = nonce(6);
-            } while (this.db.get('pub', { id }));
-            this.db.insert('pub', { id, target });
+            } while (await this.db.get('robyottoko.pub', { id }));
+            await this.db.insert('robyottoko.pub', { id, target });
         }
         else {
             id = row.id;
@@ -1417,20 +1414,20 @@ class WebServer {
     _widgetUrl(type, token) {
         return `${this.url}/widget/${type}/${token}/`;
     }
-    _createWidgetUrl(type, userId) {
-        let t = this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`);
+    async _createWidgetUrl(type, userId) {
+        let t = await this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`);
         if (t) {
-            this.tokenRepo.delete(t.token);
+            await this.tokenRepo.delete(t.token);
         }
-        t = this.tokenRepo.createToken(userId, `widget_${type}`);
+        t = await this.tokenRepo.createToken(userId, `widget_${type}`);
         return `${this.url}/widget/${type}/${t.token}`;
     }
-    _widgetUrlByTypeAndUserId(type, userId) {
-        const t = this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`);
+    async _widgetUrlByTypeAndUserId(type, userId) {
+        const t = await this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`);
         if (t) {
             return this._widgetUrl(type, t.token);
         }
-        return this._createWidgetUrl(type, userId);
+        return await this._createWidgetUrl(type, userId);
     }
     async listen() {
         const port = this.port;
@@ -1441,8 +1438,8 @@ class WebServer {
             await templates.add(widgetTemplate(widget.type));
         }
         await templates.add('templates/twitch_redirect_uri.html');
-        app.get('/pub/:id', (req, res, next) => {
-            const row = this.db.get('pub', {
+        app.get('/pub/:id', async (req, res, _next) => {
+            const row = await this.db.get('robyottoko.pub', {
                 id: req.params.id,
             });
             if (row && row.target) {
@@ -1531,9 +1528,9 @@ class WebServer {
         app.post('/api/widget/create_url', requireLoginApi, express.json(), async (req, res) => {
             const type = req.body.type;
             const pub = req.body.pub;
-            const url = this._createWidgetUrl(type, req.user.id);
+            const url = await this._createWidgetUrl(type, req.user.id);
             res.send({
-                url: pub ? this._pubUrl(url) : url
+                url: pub ? (await this._pubUrl(url)) : url
             });
         });
         app.get('/api/conf', async (req, res) => {
@@ -1544,31 +1541,29 @@ class WebServer {
         app.get('/api/user/me', requireLoginApi, async (req, res) => {
             res.send({
                 user: req.user,
-                widgetToken: req.userWidgetToken,
-                pubToken: req.userPubToken,
                 token: req.cookies['x-token'],
             });
         });
         app.post('/api/logout', requireLoginApi, async (req, res) => {
             if (req.token) {
-                this.auth.destroyToken(req.token);
+                await this.auth.destroyToken(req.token);
                 res.clearCookie("x-token");
             }
             res.send({ success: true });
         });
         app.get('/api/page/index', requireLoginApi, async (req, res) => {
-            res.send({
-                widgets: widgets.map(w => {
-                    const url = this._widgetUrlByTypeAndUserId(w.type, req.user.id);
-                    return {
-                        type: w.type,
-                        pub: w.pub,
-                        title: w.title,
-                        hint: w.hint,
-                        url: w.pub ? this._pubUrl(url) : url,
-                    };
-                })
-            });
+            const mappedWidgets = [];
+            for (const w of widgets) {
+                const url = await this._widgetUrlByTypeAndUserId(w.type, req.user.id);
+                mappedWidgets.push({
+                    type: w.type,
+                    pub: w.pub,
+                    title: w.title,
+                    hint: w.hint,
+                    url: w.pub ? (await this._pubUrl(url)) : url,
+                });
+            }
+            res.send({ widgets: mappedWidgets });
         });
         app.post('/api/user/_reset_password', express.json(), async (req, res) => {
             const plainPass = req.body.pass || null;
@@ -1577,20 +1572,20 @@ class WebServer {
                 res.status(400).send({ reason: 'bad request' });
                 return;
             }
-            const tokenObj = this.tokenRepo.getByTokenAndType(token, 'password_reset');
+            const tokenObj = await this.tokenRepo.getByTokenAndType(token, 'password_reset');
             if (!tokenObj) {
                 res.status(400).send({ reason: 'bad request' });
                 return;
             }
-            const originalUser = this.userRepo.getById(tokenObj.user_id);
+            const originalUser = await this.userRepo.getById(tokenObj.user_id);
             if (!originalUser) {
                 res.status(404).send({ reason: 'user_does_not_exist' });
                 return;
             }
             const pass = fn.passwordHash(plainPass, originalUser.salt);
             const user = { id: originalUser.id, pass };
-            this.userRepo.save(user);
-            this.tokenRepo.delete(tokenObj.token);
+            await this.userRepo.save(user);
+            await this.tokenRepo.delete(tokenObj.token);
             res.send({ success: true });
         });
         app.post('/api/user/_request_password_reset', express.json(), async (req, res) => {
@@ -1599,12 +1594,12 @@ class WebServer {
                 res.status(400).send({ reason: 'bad request' });
                 return;
             }
-            const user = this.userRepo.get({ email, status: 'verified' });
+            const user = await this.userRepo.get({ email, status: 'verified' });
             if (!user) {
                 res.status(404).send({ reason: 'user not found' });
                 return;
             }
-            const token = this.tokenRepo.createToken(user.id, 'password_reset');
+            const token = await this.tokenRepo.createToken(user.id, 'password_reset');
             this.mail.sendPasswordResetMail({
                 user: user,
                 token: token,
@@ -1617,7 +1612,7 @@ class WebServer {
                 res.status(400).send({ reason: 'bad request' });
                 return;
             }
-            const user = this.db.get('user', { email });
+            const user = await this.db.get('robyottoko.user', { email });
             if (!user) {
                 res.status(404).send({ reason: 'email not found' });
                 return;
@@ -1626,7 +1621,7 @@ class WebServer {
                 res.status(400).send({ reason: 'already verified' });
                 return;
             }
-            const token = this.tokenRepo.createToken(user.id, 'registration');
+            const token = await this.tokenRepo.createToken(user.id, 'registration');
             this.mail.sendRegistrationMail({
                 user: user,
                 token: token,
@@ -1647,7 +1642,7 @@ class WebServer {
                 tmi_identity_client_secret: '',
             };
             let tmpUser;
-            tmpUser = this.db.get('user', { email: user.email });
+            tmpUser = await this.db.get('robyottoko.user', { email: user.email });
             if (tmpUser) {
                 if (tmpUser.status === 'verified') {
                     // user should use password reset function
@@ -1659,7 +1654,7 @@ class WebServer {
                 }
                 return;
             }
-            tmpUser = this.db.get('user', { name: user.name });
+            tmpUser = await this.db.get('robyottoko.user', { name: user.name });
             if (tmpUser) {
                 if (tmpUser.status === 'verified') {
                     // user should use password reset function
@@ -1671,12 +1666,12 @@ class WebServer {
                 }
                 return;
             }
-            const userId = this.userRepo.createUser(user);
+            const userId = await this.userRepo.createUser(user);
             if (!userId) {
                 res.status(400).send({ reason: 'unable to create user' });
                 return;
             }
-            const token = this.tokenRepo.createToken(userId, 'registration');
+            const token = await this.tokenRepo.createToken(userId, 'registration');
             this.mail.sendRegistrationMail({
                 user: user,
                 token: token,
@@ -1689,17 +1684,17 @@ class WebServer {
                 res.status(400).send({ reason: 'invalid_token' });
                 return;
             }
-            const tokenObj = this.tokenRepo.getByTokenAndType(token, 'registration');
+            const tokenObj = await this.tokenRepo.getByTokenAndType(token, 'registration');
             if (!tokenObj) {
                 res.status(400).send({ reason: 'invalid_token' });
                 return;
             }
-            this.userRepo.save({ status: 'verified', id: tokenObj.user_id });
-            this.tokenRepo.delete(tokenObj.token);
+            await this.userRepo.save({ status: 'verified', id: tokenObj.user_id });
+            await this.tokenRepo.delete(tokenObj.token);
             res.send({ type: 'registration-verified' });
             // new user was registered. module manager should be notified about this
             // so that bot doesnt need to be restarted :O
-            const user = this.userRepo.getById(tokenObj.user_id);
+            const user = await this.userRepo.getById(tokenObj.user_id);
             if (user) {
                 this.eventHub.emit('user_registration_complete', user);
             }
@@ -1710,21 +1705,21 @@ class WebServer {
         });
         app.get('/api/page/variables', requireLoginApi, async (req, res) => {
             const variables = new Variables(this.db, req.user.id);
-            res.send({ variables: variables.all() });
+            res.send({ variables: await variables.all() });
         });
         app.post('/api/save-variables', requireLoginApi, express.json(), async (req, res) => {
             const variables = new Variables(this.db, req.user.id);
-            variables.replace(req.body.variables || []);
+            await variables.replace(req.body.variables || []);
             res.send();
         });
         app.get('/api/data/global', async (req, res) => {
-            const users = this.userRepo.all();
+            const users = await this.userRepo.all();
             res.send({
                 registeredUserCount: users.filter(u => u.status === 'verified').length,
             });
         });
         app.get('/api/page/settings', requireLoginApi, async (req, res) => {
-            const user = this.userRepo.getById(req.user.id);
+            const user = await this.userRepo.getById(req.user.id);
             res.send({
                 user: {
                     id: user.id,
@@ -1736,9 +1731,9 @@ class WebServer {
                     tmi_identity_password: user.tmi_identity_password,
                     tmi_identity_client_id: user.tmi_identity_client_id,
                     tmi_identity_client_secret: user.tmi_identity_client_secret,
-                    groups: this.userRepo.getGroups(user.id)
+                    groups: await this.userRepo.getGroups(user.id)
                 },
-                twitchChannels: this.twitchChannelRepo.allByUserId(req.user.id),
+                twitchChannels: await this.twitchChannelRepo.allByUserId(req.user.id),
             });
         });
         app.post('/api/save-settings', requireLoginApi, express.json(), async (req, res) => {
@@ -1749,7 +1744,7 @@ class WebServer {
                     return;
                 }
             }
-            const originalUser = this.userRepo.getById(req.body.user.id);
+            const originalUser = await this.userRepo.getById(req.body.user.id);
             if (!originalUser) {
                 res.status(404).send({ reason: 'user_does_not_exist' });
                 return;
@@ -1773,9 +1768,9 @@ class WebServer {
                 channel.user_id = user.id;
                 return channel;
             });
-            this.userRepo.save(user);
-            this.twitchChannelRepo.saveUserChannels(user.id, twitch_channels);
-            const changedUser = this.userRepo.getById(user.id);
+            await this.userRepo.save(user);
+            await this.twitchChannelRepo.saveUserChannels(user.id, twitch_channels);
+            const changedUser = await this.userRepo.getById(user.id);
             if (changedUser) {
                 this.eventHub.emit('user_changed', changedUser);
             }
@@ -1793,7 +1788,7 @@ class WebServer {
             let clientId;
             let clientSecret;
             if (!req.user.groups.includes('admin')) {
-                const u = this.userRepo.getById(req.user.id);
+                const u = await this.userRepo.getById(req.user.id);
                 clientId = u.tmi_identity_client_id || this.configTwitch.tmi.identity.client_id;
                 clientSecret = u.tmi_identity_client_secret || this.configTwitch.tmi.identity.client_secret;
             }
@@ -1831,20 +1826,20 @@ class WebServer {
                 log$g.info(`got notification request: ${req.body.subscription.type}`);
                 if (req.body.subscription.type === 'stream.online') {
                     // insert new stream
-                    this.db.insert('streams', {
+                    await this.db.insert('robyottoko.streams', {
                         broadcaster_user_id: req.body.event.broadcaster_user_id,
-                        started_at: req.body.event.started_at,
+                        started_at: new Date(req.body.event.started_at),
                     });
                 }
                 else if (req.body.subscription.type === 'stream.offline') {
                     // get last started stream for broadcaster
                     // if it exists and it didnt end yet set ended_at date
-                    const stream = this.db.get('streams', {
+                    const stream = await this.db.get('robyottoko.streams', {
                         broadcaster_user_id: req.body.event.broadcaster_user_id,
                     }, [{ started_at: -1 }]);
                     if (!stream.ended_at) {
-                        this.db.update('streams', {
-                            ended_at: `${new Date().toJSON()}`,
+                        await this.db.update('robyottoko.streams', {
+                            ended_at: new Date(),
                         }, { id: stream.id });
                     }
                 }
@@ -1854,20 +1849,20 @@ class WebServer {
             res.status(400).send({ reason: 'unhandled sub type' });
         });
         app.post('/api/auth', express.json(), async (req, res) => {
-            const user = this.auth.getUserByNameAndPass(req.body.user, req.body.pass);
+            const user = await this.auth.getUserByNameAndPass(req.body.user, req.body.pass);
             if (!user) {
                 res.status(401).send({ reason: 'bad credentials' });
                 return;
             }
-            const token = this.auth.getUserAuthToken(user.id);
+            const token = await this.auth.getUserAuthToken(user.id);
             res.cookie('x-token', token, { maxAge: 1 * YEAR, httpOnly: true });
             res.send();
         });
         app.get('/widget/:widget_type/:widget_token/', async (req, res, _next) => {
             const type = req.params.widget_type;
             const token = req.params.widget_token;
-            const user = this.auth.userFromWidgetToken(token, type)
-                || this.auth.userFromPubToken(token);
+            const user = (await this.auth.userFromWidgetToken(token, type))
+                || (await this.auth.userFromPubToken(token));
             if (!user) {
                 res.status(404).send();
                 return;
@@ -2683,7 +2678,7 @@ class TwitchClientManager {
         this.log = logger('TwitchClientManager.ts', `${user.name}|`);
         await this._disconnectChatClient();
         this._disconnectPubSubClient();
-        const twitchChannels = twitchChannelRepo.allByUserId(user.id);
+        const twitchChannels = await twitchChannelRepo.allByUserId(user.id);
         if (twitchChannels.length === 0) {
             this.log.info(`* No twitch channels configured at all`);
             return;
@@ -2731,24 +2726,24 @@ class TwitchClientManager {
                 roles.push('B');
             }
             this.log.debug(`${context.username}[${roles.join('')}]@${target}: ${msg}`);
-            this.bot.getDb().insert('chat_log', {
-                created_at: `${new Date().toJSON()}`,
+            await this.bot.getDb().insert('robyottoko.chat_log', {
+                created_at: new Date(),
                 broadcaster_user_id: context['room-id'],
                 user_name: context.username,
                 display_name: context['display-name'],
                 message: msg,
             });
-            const countChatMessages = (where) => {
+            const countChatMessages = async (where) => {
                 const db = this.bot.getDb();
-                const [whereSql, whereValues] = db._buildWhere(where);
-                const row = db._get(`select COUNT(*) as c from chat_log ${whereSql}`, whereValues);
-                return row.c;
+                const whereObject = db._buildWhere(where);
+                const row = await db._get(`select COUNT(*) as c from robyottoko.chat_log ${whereObject.sql}`, whereObject.values);
+                return parseInt(`${row.c}`, 10);
             };
             let _isFirstChatAlltime = null;
             let _isFirstChatStream = null;
             const isFirstChatAlltime = async () => {
                 if (_isFirstChatAlltime === null) {
-                    _isFirstChatAlltime = countChatMessages({
+                    _isFirstChatAlltime = await countChatMessages({
                         broadcaster_user_id: context['room-id'],
                         user_name: context.username,
                     }) === 1;
@@ -2761,14 +2756,14 @@ class TwitchClientManager {
                     if (!stream) {
                         const fakeStartDate = `${new Date(new Date().getTime() - (5 * MINUTE)).toJSON()}`;
                         log$e.info(`No stream is running atm for channel ${context['room-id']}. Using fake start date ${fakeStartDate}.`);
-                        _isFirstChatStream = countChatMessages({
+                        _isFirstChatStream = await countChatMessages({
                             broadcaster_user_id: context['room-id'],
                             created_at: { '$gte': fakeStartDate },
                             user_name: context.username,
                         }) === 1;
                     }
                     else {
-                        _isFirstChatStream = countChatMessages({
+                        _isFirstChatStream = await countChatMessages({
                             broadcaster_user_id: context['room-id'],
                             created_at: { '$gte': stream.started_at },
                             user_name: context.username,
@@ -2897,7 +2892,7 @@ class TwitchClientManager {
                     const redemptionMessage = messageData;
                     this.log.debug(redemptionMessage.data.redemption);
                     const redemption = redemptionMessage.data.redemption;
-                    const twitchChannel = this.bot.getDb().get('twitch_channel', { channel_id: redemption.channel_id });
+                    const twitchChannel = await this.bot.getDb().get('robyottoko.twitch_channel', { channel_id: redemption.channel_id });
                     if (!twitchChannel) {
                         return;
                     }
@@ -2980,16 +2975,16 @@ class TwitchClientManager {
 }
 
 const log$d = logger('ModuleStorage.ts');
-const TABLE$4 = 'module';
+const TABLE$4 = 'robyottoko.module';
 class ModuleStorage {
     constructor(db, userId) {
         this.db = db;
         this.userId = userId;
     }
-    load(key, def) {
+    async load(key, def) {
         try {
             const where = { user_id: this.userId, key };
-            const row = this.db.get(TABLE$4, where);
+            const row = await this.db.get(TABLE$4, where);
             const data = row ? JSON.parse('' + row.data) : null;
             return data ? Object.assign({}, def, data) : def;
         }
@@ -2998,43 +2993,44 @@ class ModuleStorage {
             return def;
         }
     }
-    save(key, rawData) {
+    async save(key, rawData) {
         const where = { user_id: this.userId, key };
         const data = JSON.stringify(rawData);
         const dbData = Object.assign({}, where, { data });
-        this.db.upsert(TABLE$4, dbData, where);
+        await this.db.upsert(TABLE$4, dbData, where);
     }
 }
 
-const TABLE$3 = 'user';
+const TABLE$3 = 'robyottoko.user';
 class Users {
     constructor(db) {
         this.db = db;
     }
-    get(by) {
-        return this.db.get(TABLE$3, by) || null;
+    async get(by) {
+        return await this.db.get(TABLE$3, by) || null;
     }
-    all() {
-        return this.db.getMany(TABLE$3);
+    async all() {
+        return await this.db.getMany(TABLE$3);
     }
-    getById(id) {
-        return this.get({ id });
+    async getById(id) {
+        return await this.get({ id });
     }
-    save(user) {
-        return this.db.upsert(TABLE$3, user, { id: user.id });
+    async save(user) {
+        return await this.db.upsert(TABLE$3, user, { id: user.id });
     }
-    getGroups(id) {
-        const rows = this.db._getMany(`
-select g.name from user_group g inner join user_x_user_group x
-where x.user_id = ?`, [id]);
+    async getGroups(id) {
+        const rows = await this.db._getMany(`
+select g.name from robyottoko.user_group g
+inner join robyottoko.user_x_user_group x on x.user_group_id = g.id
+where x.user_id = $1`, [id]);
         return rows.map(r => r.name);
     }
-    createUser(user) {
-        return this.db.insert(TABLE$3, user);
+    async createUser(user) {
+        return (await this.db.insert(TABLE$3, user));
     }
 }
 
-const TABLE$2 = 'token';
+const TABLE$2 = 'robyottoko.token';
 function generateToken(length) {
     // edit the token allowed characters
     const a = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'.split('');
@@ -3049,92 +3045,144 @@ class Tokens {
     constructor(db) {
         this.db = db;
     }
-    getByUserIdAndType(user_id, type) {
-        return this.db.get(TABLE$2, { user_id, type });
+    async getByUserIdAndType(user_id, type) {
+        return await this.db.get(TABLE$2, { user_id, type });
     }
-    insert(tokenInfo) {
-        return this.db.insert(TABLE$2, tokenInfo);
+    async insert(tokenInfo) {
+        return await this.db.insert(TABLE$2, tokenInfo);
     }
-    createToken(user_id, type) {
+    async createToken(user_id, type) {
         const token = generateToken(32);
         const tokenObj = { user_id, type, token };
-        this.insert(tokenObj);
+        await this.insert(tokenObj);
         return tokenObj;
     }
-    getOrCreateToken(user_id, type) {
-        return this.getByUserIdAndType(user_id, type) || this.createToken(user_id, type);
+    async getOrCreateToken(user_id, type) {
+        return (await this.getByUserIdAndType(user_id, type))
+            || (await this.createToken(user_id, type));
     }
-    getByTokenAndType(token, type) {
-        return this.db.get(TABLE$2, { token, type }) || null;
+    async getByTokenAndType(token, type) {
+        return (await this.db.get(TABLE$2, { token, type })) || null;
     }
-    delete(token) {
-        return this.db.delete(TABLE$2, { token });
+    async delete(token) {
+        return await this.db.delete(TABLE$2, { token });
     }
-    getWidgetTokenForUserId(user_id) {
-        return this.getOrCreateToken(user_id, 'widget');
-    }
-    getPubTokenForUserId(user_id) {
-        return this.getOrCreateToken(user_id, 'pub');
-    }
-    generateAuthTokenForUserId(user_id) {
-        return this.createToken(user_id, 'auth');
+    async generateAuthTokenForUserId(user_id) {
+        return await this.createToken(user_id, 'auth');
     }
 }
 
-const TABLE$1 = 'twitch_channel';
+const TABLE$1 = 'robyottoko.twitch_channel';
 class TwitchChannels {
     constructor(db) {
         this.db = db;
     }
-    save(channel) {
-        return this.db.upsert(TABLE$1, channel, {
+    async save(channel) {
+        return await this.db.upsert(TABLE$1, channel, {
             user_id: channel.user_id,
             channel_name: channel.channel_name,
         });
     }
-    allByUserId(user_id) {
-        return this.db.getMany(TABLE$1, { user_id });
+    async allByUserId(user_id) {
+        return await this.db.getMany(TABLE$1, { user_id });
     }
-    saveUserChannels(user_id, channels) {
+    async saveUserChannels(user_id, channels) {
         for (const channel of channels) {
-            this.save(channel);
+            await this.save(channel);
         }
-        this.db.delete(TABLE$1, {
+        await this.db.delete(TABLE$1, {
             user_id: user_id,
             channel_name: { '$nin': channels.map(c => c.channel_name) }
         });
     }
 }
 
-const TABLE = 'cache';
+const TABLE = 'robyottoko.cache';
 class Cache {
     constructor(db) {
         this.db = db;
     }
-    set(key, value) {
-        this.db.upsert(TABLE, { key, value: JSON.stringify(value) }, { key });
+    async set(key, value) {
+        await this.db.upsert(TABLE, { key, value: JSON.stringify(value) }, { key });
     }
-    get(key) {
-        const row = this.db.get(TABLE, { key });
+    async get(key) {
+        const row = await this.db.get(TABLE, { key });
         return row ? JSON.parse(row.value) : null;
     }
 }
 
+var Client$1 = require('./client');
+var defaults = require('./defaults');
+var Connection = require('./connection');
+var Pool = require('pg-pool');
+const { DatabaseError } = require('pg-protocol');
+
+const poolFactory = (Client) => {
+  return class BoundPool extends Pool {
+    constructor(options) {
+      super(options, Client);
+    }
+  }
+};
+
+var PG = function (clientConstructor) {
+  this.defaults = defaults;
+  this.Client = clientConstructor;
+  this.Query = this.Client.Query;
+  this.Pool = poolFactory(this.Client);
+  this._pools = [];
+  this.Connection = Connection;
+  this.types = require('pg-types');
+  this.DatabaseError = DatabaseError;
+};
+
+if (typeof process.env.NODE_PG_FORCE_NATIVE !== 'undefined') {
+  module.exports = new PG(require('./native'));
+} else {
+  module.exports = new PG(Client$1);
+
+  // lazy require native module...the native module may not have installed
+  Object.defineProperty(module.exports, 'native', {
+    configurable: true,
+    enumerable: false,
+    get() {
+      var native = null;
+      try {
+        native = new PG(require('./native'));
+      } catch (err) {
+        if (err.code !== 'MODULE_NOT_FOUND') {
+          throw err
+        }
+      }
+
+      // overwrite module.exports.native so that getter is never called again
+      Object.defineProperty(module.exports, 'native', {
+        value: native,
+      });
+
+      return native
+    },
+  });
+}
+
+// @ts-ignore
+const { Client } = undefined;
 const log$c = logger('Db.ts');
 class Db {
-    constructor(dbConf) {
-        this.conf = dbConf;
-        this.dbh = bsqlite(this.conf.file);
+    constructor(connectStr, patchesDir) {
+        this.patchesDir = patchesDir;
+        this.dbh = new Client(connectStr);
     }
-    close() {
-        this.dbh.close();
+    async connect() {
+        await this.dbh.connect();
     }
-    patch(verbose = true) {
-        if (!this.get('sqlite_master', { type: 'table', name: 'db_patches' })) {
-            this.run('CREATE TABLE db_patches ( id TEXT PRIMARY KEY);', []);
-        }
-        const files = fs.readdirSync(this.conf.patchesDir);
-        const patches = (this.getMany('db_patches')).map(row => row.id);
+    async close() {
+        await this.dbh.end();
+    }
+    async patch(verbose = true) {
+        await this.run('CREATE TABLE IF NOT EXISTS public.db_patches ( id TEXT PRIMARY KEY);', []);
+        const files = fs.readdirSync(this.patchesDir);
+        const patches = (await this.getMany('public.db_patches')).map(row => row.id);
         for (const f of files) {
             if (patches.includes(f)) {
                 if (verbose) {
@@ -3142,18 +3190,21 @@ class Db {
                 }
                 continue;
             }
-            const contents = fs.readFileSync(`${this.conf.patchesDir}/${f}`, 'utf-8');
+            const contents = fs.readFileSync(`${this.patchesDir}/${f}`, 'utf-8');
             const all = contents.split(';').map(s => s.trim()).filter(s => !!s);
             try {
-                this.dbh.transaction((all) => {
+                try {
+                    await this.run('BEGIN');
                     for (const q of all) {
-                        if (verbose) {
-                            log$c.info(`Running: ${q}`);
-                        }
-                        this.run(q);
+                        await this.run(q);
                     }
-                    this.insert('db_patches', { id: f });
-                })(all);
+                    await this.run('COMMIT');
+                }
+                catch (e) {
+                    await this.run('ROLLBACK');
+                    throw e;
+                }
+                await this.insert('public.db_patches', { id: f });
                 log$c.info(`✓ applied db patch: ${f}`);
             }
             catch (e) {
@@ -3162,7 +3213,7 @@ class Db {
             }
         }
     }
-    _buildWhere(where) {
+    _buildWhere(where, $i = 1) {
         const wheres = [];
         const values = [];
         for (const k of Object.keys(where)) {
@@ -3174,7 +3225,7 @@ class Db {
                 let prop = '$nin';
                 if (where[k][prop]) {
                     if (where[k][prop].length > 0) {
-                        wheres.push(k + ' NOT IN (' + where[k][prop].map((_) => '?') + ')');
+                        wheres.push(k + ' NOT IN (' + where[k][prop].map(() => `$${$i++}`) + ')');
                         values.push(...where[k][prop]);
                     }
                     continue;
@@ -3182,51 +3233,22 @@ class Db {
                 prop = '$in';
                 if (where[k][prop]) {
                     if (where[k][prop].length > 0) {
-                        wheres.push(k + ' IN (' + where[k][prop].map((_) => '?') + ')');
+                        wheres.push(k + ' IN (' + where[k][prop].map(() => `$${$i++}`) + ')');
                         values.push(...where[k][prop]);
                     }
-                    continue;
-                }
-                prop = '$gte';
-                if (where[k][prop]) {
-                    wheres.push(k + ' >= ?');
-                    values.push(where[k][prop]);
-                    continue;
-                }
-                prop = '$lte';
-                if (where[k][prop]) {
-                    wheres.push(k + ' <= ?');
-                    values.push(where[k][prop]);
-                    continue;
-                }
-                prop = '$gt';
-                if (where[k][prop]) {
-                    wheres.push(k + ' > ?');
-                    values.push(where[k][prop]);
-                    continue;
-                }
-                prop = '$lt';
-                if (where[k][prop]) {
-                    wheres.push(k + ' < ?');
-                    values.push(where[k][prop]);
-                    continue;
-                }
-                prop = '$ne';
-                if (where[k][prop]) {
-                    wheres.push(k + ' != ?');
-                    values.push(where[k][prop]);
                     continue;
                 }
                 // TODO: implement rest of mongo like query args ($eq, $lte, $in...)
                 throw new Error('not implemented: ' + JSON.stringify(where[k]));
             }
-            wheres.push(k + ' = ?');
+            wheres.push(k + ` = $${$i++}`);
             values.push(where[k]);
         }
-        return [
-            wheres.length > 0 ? ' WHERE ' + wheres.join(' AND ') : '',
+        return {
+            sql: wheres.length > 0 ? ' WHERE ' + wheres.join(' AND ') : '',
             values,
-        ];
+            $i,
+        };
     }
     _buildOrderBy(orderBy) {
         const sorts = [];
@@ -3236,61 +3258,91 @@ class Db {
         }
         return sorts.length > 0 ? ' ORDER BY ' + sorts.join(', ') : '';
     }
-    _get(query, params = []) {
-        return this.dbh.prepare(query).get(...params);
-    }
-    run(query, params = []) {
-        return this.dbh.prepare(query).run(...params);
-    }
-    _getMany(query, params = []) {
-        return this.dbh.prepare(query).all(...params);
-    }
-    get(table, where = {}, orderBy = []) {
-        const [whereSql, values] = this._buildWhere(where);
-        const orderBySql = this._buildOrderBy(orderBy);
-        const sql = 'SELECT * FROM ' + table + whereSql + orderBySql;
-        return this._get(sql, values);
-    }
-    getMany(table, where = {}, orderBy = []) {
-        const [whereSql, values] = this._buildWhere(where);
-        const orderBySql = this._buildOrderBy(orderBy);
-        const sql = 'SELECT * FROM ' + table + whereSql + orderBySql;
-        return this._getMany(sql, values);
-    }
-    delete(table, where = {}) {
-        const [whereSql, values] = this._buildWhere(where);
-        const sql = 'DELETE FROM ' + table + whereSql;
-        return this.run(sql, values);
-    }
-    exists(table, where) {
-        return !!this.get(table, where);
-    }
-    upsert(table, data, check, idcol = null) {
-        if (!this.exists(table, check)) {
-            return this.insert(table, data);
+    async _get(query, params = []) {
+        try {
+            return (await this.dbh.query(query, params)).rows[0] || null;
         }
-        this.update(table, data, check);
+        catch (e) {
+            log$c.info('_get', query, params);
+            console.error(e);
+            throw e;
+        }
+    }
+    async run(query, params = []) {
+        try {
+            return await this.dbh.query(query, params);
+        }
+        catch (e) {
+            log$c.info('run', query, params);
+            console.error(e);
+            throw e;
+        }
+    }
+    async _getMany(query, params = []) {
+        try {
+            return (await this.dbh.query(query, params)).rows || [];
+        }
+        catch (e) {
+            log$c.info('_getMany', query, params);
+            console.error(e);
+            throw e;
+        }
+    }
+    async get(table, whereRaw = {}, orderBy = []) {
+        const where = this._buildWhere(whereRaw);
+        const orderBySql = this._buildOrderBy(orderBy);
+        const sql = 'SELECT * FROM ' + table + where.sql + orderBySql;
+        return await this._get(sql, where.values);
+    }
+    async getMany(table, whereRaw = {}, orderBy = []) {
+        const where = this._buildWhere(whereRaw);
+        const orderBySql = this._buildOrderBy(orderBy);
+        const sql = 'SELECT * FROM ' + table + where.sql + orderBySql;
+        return await this._getMany(sql, where.values);
+    }
+    async delete(table, whereRaw = {}) {
+        const where = this._buildWhere(whereRaw);
+        const sql = 'DELETE FROM ' + table + where.sql;
+        return await this.run(sql, where.values);
+    }
+    async exists(table, whereRaw) {
+        return !!await this.get(table, whereRaw);
+    }
+    async upsert(table, data, check, idcol = null) {
+        if (!await this.exists(table, check)) {
+            return await this.insert(table, data, idcol);
+        }
+        await this.update(table, data, check);
         if (idcol === null) {
             return 0; // dont care about id
         }
-        return this.get(table, check)[idcol]; // get id manually
+        return (await this.get(table, check))[idcol]; // get id manually
     }
-    insert(table, data) {
+    async insert(table, data, idcol = null) {
         const keys = Object.keys(data);
         const values = keys.map(k => data[k]);
-        const sql = 'INSERT INTO ' + table + ' (' + keys.join(',') + ') VALUES (' + keys.map(k => '?').join(',') + ')';
-        return this.run(sql, values).lastInsertRowid;
+        let $i = 1;
+        let sql = 'INSERT INTO ' + table
+            + ' (' + keys.join(',') + ')'
+            + ' VALUES (' + keys.map(() => `$${$i++}`).join(',') + ')';
+        if (idcol) {
+            sql += ` RETURNING ${idcol}`;
+            return (await this.run(sql, values)).rows[0][idcol];
+        }
+        await this.run(sql, values);
+        return 0;
     }
-    update(table, data, where = {}) {
+    async update(table, data, whereRaw = {}) {
         const keys = Object.keys(data);
         if (keys.length === 0) {
             return;
         }
+        let $i = 1;
         const values = keys.map(k => data[k]);
-        const setSql = ' SET ' + keys.join(' = ?,') + ' = ?';
-        const [whereSql, whereValues] = this._buildWhere(where);
-        const sql = 'UPDATE ' + table + setSql + whereSql;
-        this.run(sql, [...values, ...whereValues]);
+        const setSql = ' SET ' + keys.map((k) => `${k} = $${$i++}`).join(',');
+        const where = this._buildWhere(whereRaw, $i);
+        const sql = 'UPDATE ' + table + setSql + where.sql;
+        await this.run(sql, [...values, ...where.values]);
     }
 }
 
@@ -3513,11 +3565,11 @@ const chatters = (bot, user) => async (_command, client, target, context) => {
         return;
     }
     const db = bot.getDb();
-    const [whereSql, whereValues] = db._buildWhere({
+    const whereObject = db._buildWhere({
         broadcaster_user_id: context['room-id'],
         created_at: { '$gte': stream.started_at },
     });
-    const userNames = db._getMany(`select display_name from chat_log ${whereSql} group by user_name`, whereValues).map(r => r.display_name);
+    const userNames = (await db._getMany(`select display_name from robyottoko.chat_log ${whereObject.sql} group by user_name`, whereObject.values)).map(r => r.display_name);
     if (userNames.length === 0) {
         say(`It seems nobody chatted? :(`);
         return;
@@ -3871,16 +3923,20 @@ class GeneralModule {
         this.name = 'general';
         this.interval = null;
         this.channelPointsCustomRewards = {};
-        this.bot = bot;
-        this.user = user;
-        const initData = this.reinit();
-        this.data = initData.data;
-        this.commands = initData.commands;
-        this.timers = initData.timers;
-        if (initData.shouldSave) {
-            this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
-        }
-        this.inittimers();
+        // @ts-ignore
+        return (async () => {
+            this.bot = bot;
+            this.user = user;
+            const initData = await this.reinit();
+            this.data = initData.data;
+            this.commands = initData.commands;
+            this.timers = initData.timers;
+            if (initData.shouldSave) {
+                await this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
+            }
+            this.inittimers();
+            return this;
+        })();
     }
     async userChanged(user) {
         this.user = user;
@@ -3967,9 +4023,9 @@ class GeneralModule {
             return cmd;
         });
     }
-    reinit() {
+    async reinit() {
         let shouldSave = false;
-        const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
+        const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {
             commands: [],
             settings: {
                 volume: 100,
@@ -4084,54 +4140,54 @@ class GeneralModule {
         }
         return {};
     }
-    wsdata(eventName) {
+    async wsdata(eventName) {
         return {
             event: eventName,
             data: {
                 commands: this.data.commands,
                 settings: this.data.settings,
                 adminSettings: this.data.adminSettings,
-                globalVariables: this.bot.getUserVariables(this.user).all(),
+                globalVariables: await this.bot.getUserVariables(this.user).all(),
                 channelPointsCustomRewards: this.channelPointsCustomRewards,
-                mediaWidgetUrl: this.bot.getWebServer().getWidgetUrl('media', this.user.id),
+                mediaWidgetUrl: await this.bot.getWebServer().getWidgetUrl('media', this.user.id),
             },
         };
     }
-    updateClient(eventName, ws) {
-        this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, this.wsdata(eventName), ws);
+    async updateClient(eventName, ws) {
+        this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, await this.wsdata(eventName), ws);
     }
-    updateClients(eventName) {
-        this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, this.wsdata(eventName));
+    async updateClients(eventName) {
+        this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, await this.wsdata(eventName));
     }
-    saveSettings() {
-        this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
+    async saveSettings() {
+        await this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
         // no need for calling reinit, that would also recreate timers and stuff
         // but updating settings shouldnt mess with those
-        this.updateClients('init');
+        await this.updateClients('init');
     }
-    saveCommands() {
-        this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
-        const initData = this.reinit();
+    async saveCommands() {
+        await this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
+        const initData = await this.reinit();
         this.data = initData.data;
         this.commands = initData.commands;
         this.timers = initData.timers;
-        this.updateClients('init');
+        await this.updateClients('init');
     }
     getWsEvents() {
         return {
             'conn': async (ws) => {
                 this.channelPointsCustomRewards = await this._channelPointsCustomRewards();
-                this.updateClient('init', ws);
+                await this.updateClient('init', ws);
             },
-            'save': (ws, data) => {
+            'save': async (ws, data) => {
                 this.data.commands = this.fix(data.commands);
                 this.data.settings = data.settings;
                 this.data.adminSettings = data.adminSettings;
-                this.saveCommands();
+                await this.saveCommands();
             },
         };
     }
-    volume(vol) {
+    async volume(vol) {
         if (vol < 0) {
             vol = 0;
         }
@@ -4139,7 +4195,7 @@ class GeneralModule {
             vol = 100;
         }
         this.data.settings.volume = parseInt(`${vol}`, 10);
-        this.saveSettings();
+        await this.saveSettings();
     }
     async mediaVolumeCmd(command, client, target, _context) {
         if (!client || !command) {
@@ -4150,7 +4206,7 @@ class GeneralModule {
             say(`Current volume: ${this.data.settings.volume}`);
         }
         else {
-            this.volume(parseInt(command.args[0], 10));
+            await this.volume(parseInt(command.args[0], 10));
             say(`New volume: ${this.data.settings.volume}`);
         }
     }
@@ -4334,23 +4390,27 @@ class SongrequestModule {
     constructor(bot, user) {
         this.name = 'sr';
         this.channelPointsCustomRewards = {};
-        this.bot = bot;
-        this.user = user;
-        const initData = this.reinit();
-        this.data = {
-            filter: initData.data.filter,
-            playlist: initData.data.playlist,
-            commands: initData.data.commands,
-            settings: initData.data.settings,
-            stacks: initData.data.stacks,
-        };
-        this.commands = initData.commands;
+        // @ts-ignore
+        return (async () => {
+            this.bot = bot;
+            this.user = user;
+            const initData = await this.reinit();
+            this.data = {
+                filter: initData.data.filter,
+                playlist: initData.data.playlist,
+                commands: initData.data.commands,
+                settings: initData.data.settings,
+                stacks: initData.data.stacks,
+            };
+            this.commands = initData.commands;
+            return this;
+        })();
     }
     async userChanged(user) {
         this.user = user;
     }
-    reinit() {
-        const data = this.bot.getUserModuleStorage(this.user).load(this.name, {
+    async reinit() {
+        const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {
             filter: {
                 tag: '',
             },
@@ -4443,8 +4503,8 @@ class SongrequestModule {
             },
         };
     }
-    save() {
-        this.bot.getUserModuleStorage(this.user).save(this.name, {
+    async save() {
+        await this.bot.getUserModuleStorage(this.user).save(this.name, {
             filter: this.data.filter,
             playlist: this.data.playlist.map(item => {
                 item.title = item.title || '';
@@ -4462,7 +4522,7 @@ class SongrequestModule {
             stacks: this.data.stacks,
         });
     }
-    wsdata(eventName) {
+    async wsdata(eventName) {
         return {
             event: eventName,
             data: {
@@ -4471,17 +4531,17 @@ class SongrequestModule {
                 playlist: this.data.playlist,
                 settings: this.data.settings,
                 commands: this.data.commands,
-                globalVariables: this.bot.getUserVariables(this.user).all(),
+                globalVariables: await this.bot.getUserVariables(this.user).all(),
                 channelPointsCustomRewards: this.channelPointsCustomRewards,
-                widgetUrl: this.bot.getWebServer().getWidgetUrl('sr', this.user.id),
+                widgetUrl: await this.bot.getWebServer().getWidgetUrl('sr', this.user.id),
             }
         };
     }
-    updateClient(eventName, ws) {
-        this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, this.wsdata(eventName), ws);
+    async updateClient(eventName, ws) {
+        this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, await this.wsdata(eventName), ws);
     }
-    updateClients(eventName) {
-        this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, this.wsdata(eventName));
+    async updateClients(eventName) {
+        this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, await this.wsdata(eventName));
     }
     async _channelPointsCustomRewards() {
         const helixClient = this.bot.getUserTwitchClientManager(this.user).getHelixClient();
@@ -4494,9 +4554,9 @@ class SongrequestModule {
         return {
             'conn': async (ws) => {
                 this.channelPointsCustomRewards = await this._channelPointsCustomRewards();
-                this.updateClient('init', ws);
+                await this.updateClient('init', ws);
             },
-            'play': (_ws, { id }) => {
+            'play': async (_ws, { id }) => {
                 const idx = this.data.playlist.findIndex(item => item.id === id);
                 if (idx < 0) {
                     return;
@@ -4504,27 +4564,27 @@ class SongrequestModule {
                 this.data.playlist = [].concat(this.data.playlist.slice(idx), this.data.playlist.slice(0, idx));
                 this.incStat('plays');
                 this.data.playlist[idx].last_play = new Date().getTime();
-                this.save();
-                this.updateClients('playIdx');
+                await this.save();
+                await this.updateClients('playIdx');
             },
-            'ended': (_ws) => {
+            'ended': async (_ws) => {
                 const item = this.data.playlist.shift();
                 if (item) {
                     this.data.playlist.push(item);
                 }
-                this.save();
-                this.updateClients('onEnded');
+                await this.save();
+                await this.updateClients('onEnded');
             },
-            'save': (_ws, data) => {
+            'save': async (_ws, data) => {
                 this.data.commands = data.commands;
                 this.data.settings = data.settings;
-                this.save();
-                const initData = this.reinit();
+                await this.save();
+                const initData = await this.reinit();
                 this.data = initData.data;
                 this.commands = initData.commands;
-                this.updateClients('save');
+                await this.updateClients('save');
             },
-            'ctrl': (_ws, { ctrl, args }) => {
+            'ctrl': async (_ws, { ctrl, args }) => {
                 switch (ctrl) {
                     case 'volume':
                         this.volume(...args);
@@ -4548,13 +4608,13 @@ class SongrequestModule {
                         this.dislike();
                         break;
                     case 'prev':
-                        this.prev();
+                        await this.prev();
                         break;
                     case 'skip':
-                        this.next();
+                        await this.next();
                         break;
                     case 'resetStats':
-                        this.resetStats();
+                        await this.resetStats();
                         break;
                     case 'resetStatIdx':
                         this.resetStatIdx(...args);
@@ -4602,7 +4662,7 @@ class SongrequestModule {
                         this.filter(...args);
                         break;
                     case 'videoVisibility':
-                        this.videoVisibility(...args);
+                        await this.videoVisibility(...args);
                         break;
                     case 'setAllToPlayed':
                         this.setAllToPlayed();
@@ -4708,7 +4768,7 @@ class SongrequestModule {
             this.data.playlist[idx][stat]++;
         }
     }
-    videoVisibility(visible, idx = -1) {
+    async videoVisibility(visible, idx = -1) {
         if (idx === -1) {
             idx = this.determineFirstIndex();
         }
@@ -4718,8 +4778,8 @@ class SongrequestModule {
         if (this.data.playlist.length > idx) {
             this.data.playlist[idx].hidevideo = visible ? false : true;
         }
-        this.save();
-        this.updateClients('video');
+        await this.save();
+        await this.updateClients('video');
     }
     async durationUntilIndex(idx) {
         if (idx <= 0) {
@@ -4751,17 +4811,17 @@ class SongrequestModule {
             },
         };
     }
-    resetStats() {
+    async resetStats() {
         this.data.playlist = this.data.playlist.map(item => {
             item.plays = 0;
             item.goods = 0;
             item.bads = 0;
             return item;
         });
-        this.save();
-        this.updateClients('stats');
+        await this.save();
+        await this.updateClients('stats');
     }
-    playIdx(idx) {
+    async playIdx(idx) {
         if (this.data.playlist.length === 0) {
             return;
         }
@@ -4771,23 +4831,23 @@ class SongrequestModule {
                 this.data.playlist.push(item);
             }
         }
-        this.save();
-        this.updateClients('skip');
+        await this.save();
+        await this.updateClients('skip');
     }
-    rmIdx(idx) {
+    async rmIdx(idx) {
         if (this.data.playlist.length === 0) {
             return;
         }
         this.data.playlist.splice(idx, 1);
-        this.save();
+        await this.save();
         if (idx === 0) {
-            this.updateClients('remove');
+            await this.updateClients('remove');
         }
         else {
-            this.updateClients('init');
+            await this.updateClients('init');
         }
     }
-    resetStatIdx(stat, idx) {
+    async resetStatIdx(stat, idx) {
         if (idx >= 0 && idx < this.data.playlist.length) {
             if (stat === 'plays') {
                 this.data.playlist[idx].plays = 0;
@@ -4799,18 +4859,18 @@ class SongrequestModule {
                 this.data.playlist[idx].bads = 0;
             }
         }
-        this.save();
-        this.updateClients('stats');
+        await this.save();
+        await this.updateClients('stats');
     }
-    goodIdx(idx) {
+    async goodIdx(idx) {
         this.incStat('goods', idx);
-        this.save();
-        this.updateClients('stats');
+        await this.save();
+        await this.updateClients('stats');
     }
-    badIdx(idx) {
+    async badIdx(idx) {
         this.incStat('bads', idx);
-        this.save();
-        this.updateClients('stats');
+        await this.save();
+        await this.updateClients('stats');
     }
     async request(str) {
         // this comes from backend, always unlimited length
@@ -4821,17 +4881,17 @@ class SongrequestModule {
     findSongIdxByYoutubeId(youtubeId) {
         return this.data.playlist.findIndex(item => item.yt === youtubeId);
     }
-    like() {
+    async like() {
         this.incStat('goods');
-        this.save();
-        this.updateClients('stats');
+        await this.save();
+        await this.updateClients('stats');
     }
-    filter(filter) {
+    async filter(filter) {
         this.data.filter = filter;
-        this.save();
-        this.updateClients('filter');
+        await this.save();
+        await this.updateClients('filter');
     }
-    addTag(tag, idx = -1) {
+    async addTag(tag, idx = -1) {
         if (idx === -1) {
             idx = this.determineFirstIndex();
         }
@@ -4841,22 +4901,22 @@ class SongrequestModule {
         if (this.data.playlist.length > idx) {
             if (!this.data.playlist[idx].tags.includes(tag)) {
                 this.data.playlist[idx].tags.push(tag);
-                this.save();
-                this.updateClients('tags');
+                await this.save();
+                await this.updateClients('tags');
             }
         }
     }
-    updateTag(oldTag, newTag) {
+    async updateTag(oldTag, newTag) {
         this.data.playlist = this.data.playlist.map(item => {
             item.tags = [...new Set(item.tags.map(tag => {
                     return tag === oldTag ? newTag : tag;
                 }))];
             return item;
         });
-        this.save();
-        this.updateClients('tags');
+        await this.save();
+        await this.updateClients('tags');
     }
-    rmTag(tag, idx = -1) {
+    async rmTag(tag, idx = -1) {
         if (idx === -1) {
             idx = this.determineFirstIndex();
         }
@@ -4866,12 +4926,12 @@ class SongrequestModule {
         if (this.data.playlist.length > idx) {
             if (this.data.playlist[idx].tags.includes(tag)) {
                 this.data.playlist[idx].tags = this.data.playlist[idx].tags.filter(t => t !== tag);
-                this.save();
-                this.updateClients('tags');
+                await this.save();
+                await this.updateClients('tags');
             }
         }
     }
-    volume(vol) {
+    async volume(vol) {
         if (vol < 0) {
             vol = 0;
         }
@@ -4879,44 +4939,44 @@ class SongrequestModule {
             vol = 100;
         }
         this.data.settings.volume = parseInt(`${vol}`, 10);
-        this.save();
-        this.updateClients('settings');
+        await this.save();
+        await this.updateClients('settings');
     }
-    pause() {
-        this.updateClients('pause');
+    async pause() {
+        await this.updateClients('pause');
     }
-    unpause() {
-        this.updateClients('unpause');
+    async unpause() {
+        await this.updateClients('unpause');
     }
-    loop() {
-        this.updateClients('loop');
+    async loop() {
+        await this.updateClients('loop');
     }
-    noloop() {
-        this.updateClients('noloop');
+    async noloop() {
+        await this.updateClients('noloop');
     }
-    dislike() {
+    async dislike() {
         this.incStat('bads');
-        this.save();
-        this.updateClients('stats');
+        await this.save();
+        await this.updateClients('stats');
     }
-    settings(settings) {
+    async settings(settings) {
         this.data.settings = settings;
-        this.save();
-        this.updateClients('settings');
+        await this.save();
+        await this.updateClients('settings');
     }
-    prev() {
+    async prev() {
         const index = this.determinePrevIndex();
         if (index >= 0) {
-            this.playIdx(index);
+            await this.playIdx(index);
         }
     }
-    next() {
+    async next() {
         const index = this.determineNextIndex();
         if (index >= 0) {
-            this.playIdx(index);
+            await this.playIdx(index);
         }
     }
-    jumptonew() {
+    async jumptonew() {
         if (this.data.playlist.length === 0) {
             return;
         }
@@ -4931,23 +4991,23 @@ class SongrequestModule {
                 this.data.playlist.push(item);
             }
         }
-        this.save();
-        this.updateClients('skip');
+        await this.save();
+        await this.updateClients('skip');
     }
-    clear() {
+    async clear() {
         this.data.playlist = [];
-        this.save();
-        this.updateClients('init');
+        await this.save();
+        await this.updateClients('init');
     }
-    setAllToPlayed() {
+    async setAllToPlayed() {
         this.data.playlist = this.data.playlist.map(item => {
             item.plays = item.plays || 1;
             return item;
         });
-        this.save();
-        this.updateClients('init');
+        await this.save();
+        await this.updateClients('init');
     }
-    shuffle() {
+    async shuffle() {
         if (this.data.playlist.length < 3) {
             return;
         }
@@ -4957,10 +5017,10 @@ class SongrequestModule {
             ...shuffle(rest.filter(item => item.plays === 0)),
             ...shuffle(rest.filter(item => item.plays > 0)),
         ];
-        this.save();
-        this.updateClients('shuffle');
+        await this.save();
+        await this.updateClients('shuffle');
     }
-    move(oldIndex, newIndex) {
+    async move(oldIndex, newIndex) {
         if (oldIndex >= this.data.playlist.length) {
             return;
         }
@@ -4968,19 +5028,19 @@ class SongrequestModule {
             return;
         }
         this.data.playlist = arrayMove(this.data.playlist, oldIndex, newIndex);
-        this.save();
-        this.updateClients('move');
+        await this.save();
+        await this.updateClients('move');
     }
-    remove() {
+    async remove() {
         if (this.data.playlist.length === 0) {
             return null;
         }
         const removedItem = this.data.playlist.shift();
-        this.save();
-        this.updateClients('remove');
+        await this.save();
+        await this.updateClients('remove');
         return removedItem || null;
     }
-    undo(username) {
+    async undo(username) {
         if (this.data.playlist.length === 0) {
             return false;
         }
@@ -4994,7 +5054,7 @@ class SongrequestModule {
             return false;
         }
         const item = this.data.playlist[idx];
-        this.rmIdx(idx);
+        await this.rmIdx(idx);
         return item;
     }
     async answerAddRequest(addResponseData) {
@@ -5071,7 +5131,7 @@ class SongrequestModule {
                 return;
             }
             const say = fn.sayFn(client, target);
-            const undid = this.undo(context['display-name']);
+            const undid = await this.undo(context['display-name']);
             if (!undid) {
                 say(`Could not undo anything`);
             }
@@ -5097,12 +5157,12 @@ class SongrequestModule {
     }
     cmdSrGood(_originalCommand) {
         return async (_command, _client, _target, _context) => {
-            this.like();
+            await this.like();
         };
     }
     cmdSrBad(_originalCommand) {
         return async (_command, _client, _target, _context) => {
-            this.dislike();
+            await this.dislike();
         };
     }
     cmdSrStats(_originalCommand) {
@@ -5128,22 +5188,22 @@ class SongrequestModule {
     }
     cmdSrPrev(_originalCommand) {
         return async (_command, _client, _target, _context) => {
-            this.prev();
+            await this.prev();
         };
     }
     cmdSrNext(_originalCommand) {
         return async (_command, _client, _target, _context) => {
-            this.next();
+            await this.next();
         };
     }
     cmdSrJumpToNew(_originalCommand) {
         return async (_command, _client, _target, _context) => {
-            this.jumptonew();
+            await this.jumptonew();
         };
     }
     cmdSrClear(_originalCommand) {
         return async (_command, _client, _target, _context) => {
-            this.clear();
+            await this.clear();
         };
     }
     cmdSrRm(_originalCommand) {
@@ -5151,7 +5211,7 @@ class SongrequestModule {
             if (!client || !target) {
                 return;
             }
-            const removedItem = this.remove();
+            const removedItem = await this.remove();
             if (removedItem) {
                 const say = fn.sayFn(client, target);
                 say(`Removed "${removedItem.title}" from the playlist.`);
@@ -5160,12 +5220,12 @@ class SongrequestModule {
     }
     cmdSrShuffle(_originalCommand) {
         return async (_command, _client, _target, _context) => {
-            this.shuffle();
+            await this.shuffle();
         };
     }
     cmdSrResetStats(_originalCommand) {
         return async (_command, _client, _target, _context) => {
-            this.resetStats();
+            await this.resetStats();
         };
     }
     cmdSrLoop(_originalCommand) {
@@ -5174,7 +5234,7 @@ class SongrequestModule {
                 return;
             }
             const say = fn.sayFn(client, target);
-            this.loop();
+            await this.loop();
             say('Now looping the current song');
         };
     }
@@ -5184,7 +5244,7 @@ class SongrequestModule {
                 return;
             }
             const say = fn.sayFn(client, target);
-            this.noloop();
+            await this.noloop();
             say('Stopped looping the current song');
         };
     }
@@ -5199,7 +5259,7 @@ class SongrequestModule {
                 return;
             }
             const say = fn.sayFn(client, target);
-            this.addTag(tag);
+            await this.addTag(tag);
             say(`Added tag "${tag}"`);
         };
     }
@@ -5213,18 +5273,18 @@ class SongrequestModule {
             }
             const say = fn.sayFn(client, target);
             const tag = command.args.join(' ');
-            this.rmTag(tag);
+            await this.rmTag(tag);
             say(`Removed tag "${tag}"`);
         };
     }
     cmdSrPause(_originalCommand) {
         return async (_command, _client, _target, _context) => {
-            this.pause();
+            await this.pause();
         };
     }
     cmdSrUnpause(_originalCommand) {
         return async (_command, _client, _target, _context) => {
-            this.unpause();
+            await this.unpause();
         };
     }
     cmdSrVolume(_originalCommand) {
@@ -5237,7 +5297,7 @@ class SongrequestModule {
                 say(`Current volume: ${this.data.settings.volume}`);
             }
             else {
-                this.volume(parseInt(command.args[0], 10));
+                await this.volume(parseInt(command.args[0], 10));
                 say(`New volume: ${this.data.settings.volume}`);
             }
         };
@@ -5248,7 +5308,7 @@ class SongrequestModule {
                 return;
             }
             const say = fn.sayFn(client, target);
-            this.videoVisibility(false);
+            await this.videoVisibility(false);
             say(`Video is now hidden.`);
         };
     }
@@ -5258,7 +5318,7 @@ class SongrequestModule {
                 return;
             }
             const say = fn.sayFn(client, target);
-            this.videoVisibility(true);
+            await this.videoVisibility(true);
             say(`Video is now shown.`);
         };
     }
@@ -5269,7 +5329,7 @@ class SongrequestModule {
             }
             const say = fn.sayFn(client, target);
             const tag = command.args.join(' ');
-            this.filter({ tag });
+            await this.filter({ tag });
             if (tag !== '') {
                 say(`Playing only songs tagged with "${tag}"`);
             }
@@ -5320,7 +5380,8 @@ class SongrequestModule {
                 else {
                     say(`Preset does not exist: ${presetName}`);
                 }
-                this.updateClients('settings');
+                // TODO: is a save missing here?
+                await this.updateClients('settings');
             }
         };
     }
@@ -5359,10 +5420,10 @@ class SongrequestModule {
     }
     async loadYoutubeData(youtubeId) {
         const key = `youtubeData_${youtubeId}_20210717_2`;
-        let d = this.bot.getCache().get(key);
+        let d = await this.bot.getCache().get(key);
         if (!d) {
             d = await Youtube.fetchDataByYoutubeId(youtubeId);
-            this.bot.getCache().set(key, d);
+            await this.bot.getCache().set(key, d);
         }
         return d;
     }
@@ -5397,8 +5458,8 @@ class SongrequestModule {
         let insertIndex = this.findInsertIndex();
         if (idx < 0) {
             this.data.playlist.splice(insertIndex, 0, tmpItem);
-            this.save();
-            this.updateClients('add');
+            await this.save();
+            await this.updateClients('add');
             return {
                 addType: ADD_TYPE.ADDED,
                 idx: insertIndex,
@@ -5416,8 +5477,8 @@ class SongrequestModule {
             };
         }
         this.data.playlist = arrayMove(this.data.playlist, idx, insertIndex);
-        this.save();
-        this.updateClients('add');
+        await this.save();
+        await this.updateClients('add');
         return {
             addType: ADD_TYPE.REQUEUED,
             idx: insertIndex,
@@ -5445,8 +5506,8 @@ class SongrequestModule {
             };
         }
         this.data.playlist = arrayMove(this.data.playlist, idx, insertIndex);
-        this.save();
-        this.updateClients('add');
+        await this.save();
+        await this.updateClients('add');
         return {
             addType: ADD_TYPE.REQUEUED,
             idx: insertIndex,
@@ -5467,22 +5528,26 @@ class SongrequestModule {
 class VoteModule {
     constructor(bot, user) {
         this.name = 'vote';
-        this.bot = bot;
-        this.user = user;
-        this.storage = bot.getUserModuleStorage(user);
-        this.data = this.reinit();
+        // @ts-ignore
+        return (async () => {
+            this.bot = bot;
+            this.user = user;
+            this.storage = bot.getUserModuleStorage(user);
+            this.data = await this.reinit();
+            return this;
+        })();
     }
     async userChanged(_user) {
         // pass
     }
-    reinit() {
-        const data = this.storage.load(this.name, {
+    async reinit() {
+        const data = await this.storage.load(this.name, {
             votes: {},
         });
         return data;
     }
-    save() {
-        this.storage.save(this.name, {
+    async save() {
+        await this.storage.save(this.name, {
             votes: this.data.votes,
         });
     }
@@ -5495,12 +5560,12 @@ class VoteModule {
     getWsEvents() {
         return {};
     }
-    vote(type, thing, client, target, context) {
+    async vote(type, thing, client, target, context) {
         const say = fn.sayFn(client, target);
         this.data.votes[type] = this.data.votes[type] || {};
         this.data.votes[type][context['display-name']] = thing;
         say(`Thanks ${context['display-name']}, registered your "${type}" vote: ${thing}`);
-        this.save();
+        await this.save();
     }
     async playCmd(command, client, target, context) {
         if (!client || !command || !context || !target) {
@@ -5513,7 +5578,7 @@ class VoteModule {
         }
         const thing = command.args.join(' ');
         const type = 'play';
-        this.vote(type, thing, client, target, context);
+        await this.vote(type, thing, client, target, context);
     }
     async voteCmd(command, client, target, context) {
         if (!client || !command || !context || !target) {
@@ -5564,13 +5629,13 @@ class VoteModule {
             if (this.data.votes[type]) {
                 delete this.data.votes[type];
             }
-            this.save();
+            await this.save();
             say(`Cleared votes for "${type}". ✨`);
             return;
         }
         const type = command.args[0];
         const thing = command.args.slice(1).join(' ');
-        this.vote(type, thing, client, target, context);
+        await this.vote(type, thing, client, target, context);
     }
     getCommands() {
         return [
@@ -5634,15 +5699,19 @@ const default_settings$3 = (obj = null) => ({
 class SpeechToTextModule {
     constructor(bot, user) {
         this.name = 'speech-to-text';
-        this.bot = bot;
-        this.user = user;
-        this.data = this.reinit();
+        // @ts-ignore
+        return (async () => {
+            this.bot = bot;
+            this.user = user;
+            this.data = await this.reinit();
+            return this;
+        })();
     }
     async userChanged(user) {
         this.user = user;
     }
-    reinit() {
-        const data = this.bot.getUserModuleStorage(this.user).load(this.name, {});
+    async reinit() {
+        const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {});
         return {
             settings: default_settings$3(data.settings),
         };
@@ -5653,21 +5722,21 @@ class SpeechToTextModule {
     getRoutes() {
         return {};
     }
-    wsdata(eventName) {
+    async wsdata(eventName) {
         return {
             event: eventName,
             data: {
                 settings: this.data.settings,
-                controlWidgetUrl: this.bot.getWebServer().getWidgetUrl('speech-to-text', this.user.id),
-                displayWidgetUrl: this.bot.getWebServer().getWidgetUrl('speech-to-text_receive', this.user.id),
+                controlWidgetUrl: await this.bot.getWebServer().getWidgetUrl('speech-to-text', this.user.id),
+                displayWidgetUrl: await this.bot.getWebServer().getWidgetUrl('speech-to-text_receive', this.user.id),
             }
         };
     }
-    updateClient(eventName, ws) {
-        this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, this.wsdata(eventName), ws);
+    async updateClient(eventName, ws) {
+        this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, await this.wsdata(eventName), ws);
     }
-    updateClients(eventName) {
-        this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, this.wsdata(eventName));
+    async updateClients(eventName) {
+        this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, await this.wsdata(eventName));
     }
     getWsEvents() {
         return {
@@ -5690,14 +5759,14 @@ class SpeechToTextModule {
                     },
                 });
             },
-            'conn': (ws) => {
-                this.updateClient('init', ws);
+            'conn': async (ws) => {
+                await this.updateClient('init', ws);
             },
-            'save': (ws, { settings }) => {
+            'save': async (ws, { settings }) => {
                 this.data.settings = settings;
                 this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
-                this.reinit();
-                this.updateClients('init');
+                await this.reinit();
+                await this.updateClients('init');
             },
         };
     }
@@ -5777,9 +5846,13 @@ const log$3 = logger('DrawcastModule.ts');
 class DrawcastModule {
     constructor(bot, user) {
         this.name = 'drawcast';
-        this.bot = bot;
-        this.user = user;
-        this.data = this.reinit();
+        // @ts-ignore
+        return (async () => {
+            this.bot = bot;
+            this.user = user;
+            this.data = await this.reinit();
+            return this;
+        })();
     }
     async userChanged(user) {
         this.user = user;
@@ -5807,8 +5880,8 @@ class DrawcastModule {
     saveCommands() {
         // pass
     }
-    reinit() {
-        const data = this.bot.getUserModuleStorage(this.user).load(this.name, {});
+    async reinit() {
+        const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {});
         if (!data.images) {
             data.images = this._loadAllImages();
         }
@@ -5817,8 +5890,8 @@ class DrawcastModule {
             images: default_images(data.images),
         };
     }
-    save() {
-        this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
+    async save() {
+        await this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
     }
     getRoutes() {
         return {
@@ -5829,42 +5902,42 @@ class DrawcastModule {
             },
         };
     }
-    drawUrl() {
-        return this.bot.getWebServer().getPublicWidgetUrl('drawcast_draw', this.user.id);
+    async drawUrl() {
+        return await this.bot.getWebServer().getPublicWidgetUrl('drawcast_draw', this.user.id);
     }
-    receiveUrl() {
-        return this.bot.getWebServer().getWidgetUrl('drawcast_receive', this.user.id);
+    async receiveUrl() {
+        return await this.bot.getWebServer().getWidgetUrl('drawcast_receive', this.user.id);
     }
-    controlUrl() {
-        return this.bot.getWebServer().getWidgetUrl('drawcast_control', this.user.id);
+    async controlUrl() {
+        return await this.bot.getWebServer().getWidgetUrl('drawcast_control', this.user.id);
     }
-    wsdata(eventName) {
+    async wsdata(eventName) {
         return {
             event: eventName,
             data: {
                 settings: this.data.settings,
                 images: this.data.images,
-                drawUrl: this.drawUrl(),
-                controlWidgetUrl: this.controlUrl(),
-                receiveWidgetUrl: this.receiveUrl(),
+                drawUrl: await this.drawUrl(),
+                controlWidgetUrl: await this.controlUrl(),
+                receiveWidgetUrl: await this.receiveUrl(),
             },
         };
     }
     getWsEvents() {
         return {
-            'conn': (ws) => {
+            'conn': async (ws) => {
                 this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, {
                     event: 'init',
                     data: {
                         settings: this.data.settings,
                         images: this.data.images.filter(image => image.approved).slice(0, 20),
-                        drawUrl: this.drawUrl(),
-                        controlWidgetUrl: this.controlUrl(),
-                        receiveWidgetUrl: this.receiveUrl(),
+                        drawUrl: await this.drawUrl(),
+                        controlWidgetUrl: await this.controlUrl(),
+                        receiveWidgetUrl: await this.receiveUrl(),
                     }
                 }, ws);
             },
-            'approve_image': (ws, { path }) => {
+            'approve_image': async (ws, { path }) => {
                 const image = this.data.images.find(item => item.path === path);
                 if (!image) {
                     // should not happen
@@ -5874,13 +5947,13 @@ class DrawcastModule {
                 image.approved = true;
                 this.data.images = this.data.images.filter(item => item.path !== image.path);
                 this.data.images.unshift(image);
-                this.save();
+                await this.save();
                 this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
                     event: 'approved_image_received',
                     data: { nonce: '', img: image.path, mayNotify: false },
                 });
             },
-            'deny_image': (ws, { path }) => {
+            'deny_image': async (ws, { path }) => {
                 const image = this.data.images.find(item => item.path === path);
                 if (!image) {
                     // should not happen
@@ -5888,13 +5961,13 @@ class DrawcastModule {
                     return;
                 }
                 this.data.images = this.data.images.filter(item => item.path !== image.path);
-                this.save();
+                await this.save();
                 this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
                     event: 'denied_image_received',
                     data: { nonce: '', img: image.path, mayNotify: false },
                 });
             },
-            'post': (ws, data) => {
+            'post': async (ws, data) => {
                 const rel = `/uploads/drawcast/${this.user.id}`;
                 const img = fn.decodeBase64Image(data.data.img);
                 const name = `${(new Date()).toJSON()}-${nonce(6)}.${fn.mimeToExt(img.type)}`;
@@ -5905,25 +5978,25 @@ class DrawcastModule {
                 fs.writeFileSync(filePath, img.data);
                 const approved = this.data.settings.requireManualApproval ? false : true;
                 this.data.images.unshift({ path: urlPath, approved });
-                this.save();
+                await this.save();
                 const event = approved ? 'approved_image_received' : 'image_received';
                 this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
                     event: event,
                     data: { nonce: data.data.nonce, img: urlPath, mayNotify: true },
                 });
             },
-            'save': (ws, { settings }) => {
+            'save': async (ws, { settings }) => {
                 this.data.settings = settings;
-                this.save();
-                this.data = this.reinit();
+                await this.save();
+                this.data = await this.reinit();
                 this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
                     event: 'init',
                     data: {
                         settings: this.data.settings,
                         images: this.data.images.filter(image => image.approved).slice(0, 20),
-                        drawUrl: this.drawUrl(),
-                        controlWidgetUrl: this.controlUrl(),
-                        receiveWidgetUrl: this.receiveUrl(),
+                        drawUrl: await this.drawUrl(),
+                        controlWidgetUrl: await this.controlUrl(),
+                        receiveWidgetUrl: await this.receiveUrl(),
                     }
                 });
             },
@@ -5967,21 +6040,25 @@ const log$2 = logger('AvatarModule.ts');
 class AvatarModule {
     constructor(bot, user) {
         this.name = 'avatar';
-        this.bot = bot;
-        this.user = user;
-        this.data = this.reinit();
+        // @ts-ignore
+        return (async () => {
+            this.bot = bot;
+            this.user = user;
+            this.data = await this.reinit();
+            return this;
+        })();
     }
     async userChanged(user) {
         this.user = user;
     }
-    save() {
-        this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
+    async save() {
+        await this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
     }
     saveCommands() {
         // pass
     }
-    reinit() {
-        const data = this.bot.getUserModuleStorage(this.user).load(this.name, {});
+    async reinit() {
+        const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {});
         return {
             settings: default_settings$1(data.settings),
             state: default_state$1(data.state),
@@ -5990,14 +6067,14 @@ class AvatarModule {
     getRoutes() {
         return {};
     }
-    wsdata(event) {
+    async wsdata(event) {
         return {
             event,
             data: {
                 settings: this.data.settings,
                 state: this.data.state,
-                controlWidgetUrl: this.bot.getWebServer().getWidgetUrl('avatar', this.user.id),
-                displayWidgetUrl: this.bot.getWebServer().getWidgetUrl('avatar_receive', this.user.id),
+                controlWidgetUrl: await this.bot.getWebServer().getWidgetUrl('avatar', this.user.id),
+                displayWidgetUrl: await this.bot.getWebServer().getWidgetUrl('avatar_receive', this.user.id),
             }
         };
     }
@@ -6009,23 +6086,23 @@ class AvatarModule {
     }
     getWsEvents() {
         return {
-            'conn': (ws) => {
-                this.updateClient(this.wsdata('init'), ws);
+            'conn': async (ws) => {
+                this.updateClient(await this.wsdata('init'), ws);
             },
-            'save': (_ws, data) => {
+            'save': async (_ws, data) => {
                 this.data.settings = data.settings;
-                this.save();
-                this.data = this.reinit();
-                this.updateClients(this.wsdata('init'));
+                await this.save();
+                this.data = await this.reinit();
+                this.updateClients(await this.wsdata('init'));
             },
-            'ctrl': (_ws, data) => {
+            'ctrl': async (_ws, data) => {
                 if (data.data.ctrl === "setSlot") {
                     const tuberIdx = data.data.args[0];
                     const slotName = data.data.args[1];
                     const itemIdx = data.data.args[2];
                     try {
                         this.data.settings.avatarDefinitions[tuberIdx].state.slots[slotName] = itemIdx;
-                        this.save();
+                        await this.save();
                     }
                     catch (e) {
                         log$2.error('ws ctrl: unable to setSlot', tuberIdx, slotName, itemIdx);
@@ -6036,7 +6113,7 @@ class AvatarModule {
                     const lockedState = data.data.args[1];
                     try {
                         this.data.settings.avatarDefinitions[tuberIdx].state.lockedState = lockedState;
-                        this.save();
+                        await this.save();
                     }
                     catch (e) {
                         log$2.error('ws ctrl: unable to lockState', tuberIdx, lockedState);
@@ -6045,7 +6122,7 @@ class AvatarModule {
                 else if (data.data.ctrl === "setTuber") {
                     const tuberIdx = data.data.args[0];
                     this.data.state.tuberIdx = tuberIdx;
-                    this.save();
+                    await this.save();
                 }
                 // just pass the ctrl on to the clients
                 this.updateClients({ event: 'ctrl', data });
@@ -6096,22 +6173,26 @@ class PomoModule {
     constructor(bot, user) {
         this.name = 'pomo';
         this.timeout = null;
-        this.bot = bot;
-        this.user = user;
-        this.data = this.reinit();
-        this.tick(null, null);
-        this.commands = [
-            {
-                triggers: [newCommandTrigger('!pomo')],
-                restrict_to: MOD_OR_ABOVE,
-                fn: this.cmdPomoStart.bind(this),
-            },
-            {
-                triggers: [newCommandTrigger('!pomo exit', true)],
-                restrict_to: MOD_OR_ABOVE,
-                fn: this.cmdPomoEnd.bind(this),
-            },
-        ];
+        // @ts-ignore
+        return (async () => {
+            this.bot = bot;
+            this.user = user;
+            this.data = await this.reinit();
+            this.tick(null, null);
+            this.commands = [
+                {
+                    triggers: [newCommandTrigger('!pomo')],
+                    restrict_to: MOD_OR_ABOVE,
+                    fn: this.cmdPomoStart.bind(this),
+                },
+                {
+                    triggers: [newCommandTrigger('!pomo exit', true)],
+                    restrict_to: MOD_OR_ABOVE,
+                    fn: this.cmdPomoEnd.bind(this),
+                },
+            ];
+            return this;
+        })();
     }
     async replaceText(text, command, context) {
         text = await doReplacements(text, command, context, null, this.bot, this.user);
@@ -6163,7 +6244,7 @@ class PomoModule {
                 anyNotificationsLeft = true;
             }
             this.data.state.doneTs = JSON.stringify(now);
-            this.save();
+            await this.save();
             if (anyNotificationsLeft && this.data.state.running) {
                 this.tick(command, context);
             }
@@ -6179,9 +6260,9 @@ class PomoModule {
         let duration = command?.args[0] || '25m';
         duration = duration.match(/^\d+$/) ? `${duration}m` : duration;
         this.data.state.durationMs = parseHumanDuration(duration);
-        this.save();
+        await this.save();
         this.tick(command, context);
-        this.updateClients(this.wsdata('init'));
+        this.updateClients(await this.wsdata('init'));
         if (this.data.settings.startEffect.chatMessage) {
             say(await this.replaceText(this.data.settings.startEffect.chatMessage, command, context));
         }
@@ -6190,9 +6271,9 @@ class PomoModule {
     async cmdPomoEnd(command, client, target, context) {
         const say = client ? fn.sayFn(client, target) : ((msg) => { log$1.info('say(), client not set, msg', msg); });
         this.data.state.running = false;
-        this.save();
+        await this.save();
         this.tick(command, context);
-        this.updateClients(this.wsdata('init'));
+        this.updateClients(await this.wsdata('init'));
         if (this.data.settings.stopEffect.chatMessage) {
             say(await this.replaceText(this.data.settings.stopEffect.chatMessage, command, context));
         }
@@ -6201,14 +6282,14 @@ class PomoModule {
     async userChanged(user) {
         this.user = user;
     }
-    save() {
-        this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
+    async save() {
+        await this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
     }
     saveCommands() {
         // pass
     }
-    reinit() {
-        const data = this.bot.getUserModuleStorage(this.user).load(this.name, {});
+    async reinit() {
+        const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {});
         return {
             settings: default_settings(data.settings),
             state: default_state(data.state),
@@ -6217,13 +6298,13 @@ class PomoModule {
     getRoutes() {
         return {};
     }
-    wsdata(event) {
+    async wsdata(event) {
         return {
             event,
             data: {
                 settings: this.data.settings,
                 state: this.data.state,
-                widgetUrl: this.bot.getWebServer().getWidgetUrl('pomo', this.user.id),
+                widgetUrl: await this.bot.getWebServer().getWidgetUrl('pomo', this.user.id),
             }
         };
     }
@@ -6235,14 +6316,14 @@ class PomoModule {
     }
     getWsEvents() {
         return {
-            'conn': (ws) => {
-                this.updateClient(this.wsdata('init'), ws);
+            'conn': async (ws) => {
+                this.updateClient(await this.wsdata('init'), ws);
             },
-            'save': (_ws, data) => {
+            'save': async (_ws, data) => {
                 this.data.settings = data.settings;
-                this.save();
-                this.data = this.reinit();
-                this.updateClients(this.wsdata('init'));
+                await this.save();
+                this.data = await this.reinit();
+                this.updateClients(await this.wsdata('init'));
             },
         };
     }
@@ -6259,9 +6340,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-03-31T22:23:45.042Z",
+    buildDate: "2022-04-02T10:13:26.085Z",
     // @ts-ignore
-    buildVersion: "1.6.0",
+    buildVersion: "1.7.0",
 };
 
 setLogLevel(config.log.level);
@@ -6275,64 +6356,67 @@ const modules = [
     AvatarModule,
     PomoModule,
 ];
-const db = new Db(config.db);
-// make sure we are always on latest db version
-db.patch(false);
-const userRepo = new Users(db);
-const tokenRepo = new Tokens(db);
-const twitchChannelRepo = new TwitchChannels(db);
-const cache = new Cache(db);
-const auth = new Auth(userRepo, tokenRepo);
-const mail = new Mail(config.mail);
-const eventHub = mitt();
-const moduleManager = new ModuleManager();
-const webSocketServer = new WebSocketServer(moduleManager, config.ws, auth);
-const webServer = new WebServer(eventHub, db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, config.http, config.twitch, webSocketServer, auth);
-class BotImpl {
-    constructor() {
-        this.userVariableInstances = {};
-        this.userModuleStorageInstances = {};
-        this.userTwitchClientManagerInstances = {};
-        // pass
-    }
-    getBuildVersion() { return buildEnv.buildVersion; }
-    getBuildDate() { return buildEnv.buildDate; }
-    getModuleManager() { return moduleManager; }
-    getDb() { return db; }
-    getTokens() { return tokenRepo; }
-    getCache() { return cache; }
-    getWebServer() { return webServer; }
-    getWebSocketServer() { return webSocketServer; }
-    // user specific
-    // -----------------------------------------------------------------
-    getUserVariables(user) {
-        if (!this.userVariableInstances[user.id]) {
-            this.userVariableInstances[user.id] = new Variables(this.getDb(), user.id);
-        }
-        return this.userVariableInstances[user.id];
-    }
-    getUserModuleStorage(user) {
-        if (!this.userModuleStorageInstances[user.id]) {
-            this.userModuleStorageInstances[user.id] = new ModuleStorage(this.getDb(), user.id);
-        }
-        return this.userModuleStorageInstances[user.id];
-    }
-    getUserTwitchClientManager(user) {
-        if (!this.userTwitchClientManagerInstances[user.id]) {
-            this.userTwitchClientManagerInstances[user.id] = new TwitchClientManager(this, user, config.twitch, twitchChannelRepo);
-        }
-        return this.userTwitchClientManagerInstances[user.id];
-    }
-}
-const bot = new BotImpl();
 const run = async () => {
+    const db = new Db(config.db.connectStr, config.db.patchesDir);
+    await db.connect();
+    await db.patch();
+    // const db = new Db(config.db)
+    // // make sure we are always on latest db version
+    // db.patch(false)
+    const userRepo = new Users(db);
+    const tokenRepo = new Tokens(db);
+    const twitchChannelRepo = new TwitchChannels(db);
+    const cache = new Cache(db);
+    const auth = new Auth(userRepo, tokenRepo);
+    const mail = new Mail(config.mail);
+    const eventHub = mitt();
+    const moduleManager = new ModuleManager();
+    const webSocketServer = new WebSocketServer(moduleManager, config.ws, auth);
+    const webServer = new WebServer(eventHub, db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, config.http, config.twitch, webSocketServer, auth);
+    class BotImpl {
+        constructor() {
+            this.userVariableInstances = {};
+            this.userModuleStorageInstances = {};
+            this.userTwitchClientManagerInstances = {};
+            // pass
+        }
+        getBuildVersion() { return buildEnv.buildVersion; }
+        getBuildDate() { return buildEnv.buildDate; }
+        getModuleManager() { return moduleManager; }
+        getDb() { return db; }
+        getTokens() { return tokenRepo; }
+        getCache() { return cache; }
+        getWebServer() { return webServer; }
+        getWebSocketServer() { return webSocketServer; }
+        // user specific
+        // -----------------------------------------------------------------
+        getUserVariables(user) {
+            if (!this.userVariableInstances[user.id]) {
+                this.userVariableInstances[user.id] = new Variables(this.getDb(), user.id);
+            }
+            return this.userVariableInstances[user.id];
+        }
+        getUserModuleStorage(user) {
+            if (!this.userModuleStorageInstances[user.id]) {
+                this.userModuleStorageInstances[user.id] = new ModuleStorage(this.getDb(), user.id);
+            }
+            return this.userModuleStorageInstances[user.id];
+        }
+        getUserTwitchClientManager(user) {
+            if (!this.userTwitchClientManagerInstances[user.id]) {
+                this.userTwitchClientManagerInstances[user.id] = new TwitchClientManager(this, user, config.twitch, twitchChannelRepo);
+            }
+            return this.userTwitchClientManagerInstances[user.id];
+        }
+    }
+    const bot = new BotImpl();
     // this function may only be called once per user!
     // changes to user will be handled by user_changed event
     const initForUser = async (user) => {
         const clientManager = bot.getUserTwitchClientManager(user);
         await clientManager.init('init');
         for (const moduleClass of modules) {
-            moduleManager.add(user.id, new moduleClass(bot, user));
+            moduleManager.add(user.id, await new moduleClass(bot, user));
         }
         eventHub.on('user_changed', async (changedUser /* User */) => {
             if (changedUser.id === user.id) {
@@ -6355,7 +6439,7 @@ const run = async () => {
                 return;
             }
             const problems = [];
-            const twitchChannels = twitchChannelRepo.allByUserId(user.id);
+            const twitchChannels = await twitchChannelRepo.allByUserId(user.id);
             for (const twitchChannel of twitchChannels) {
                 if (!twitchChannel.access_token) {
                     continue;
@@ -6376,30 +6460,30 @@ const run = async () => {
     webSocketServer.listen();
     await webServer.listen();
     // one for each user
-    for (const user of userRepo.all()) {
+    for (const user of await userRepo.all()) {
         await initForUser(user);
     }
     eventHub.on('user_registration_complete', async (user /* User */) => {
         await initForUser(user);
     });
+    const gracefulShutdown = (signal) => {
+        log.info(`${signal} received...`);
+        log.info('shutting down webserver...');
+        webServer.close();
+        log.info('shutting down websocketserver...');
+        webSocketServer.close();
+        log.info('shutting down...');
+        process.exit();
+    };
+    // used by nodemon
+    process.once('SIGUSR2', function () {
+        gracefulShutdown('SIGUSR2');
+    });
+    process.once('SIGINT', function (code) {
+        gracefulShutdown('SIGINT');
+    });
+    process.once('SIGTERM', function (code) {
+        gracefulShutdown('SIGTERM');
+    });
 };
 run();
-const gracefulShutdown = (signal) => {
-    log.info(`${signal} received...`);
-    log.info('shutting down webserver...');
-    webServer.close();
-    log.info('shutting down websocketserver...');
-    webSocketServer.close();
-    log.info('shutting down...');
-    process.exit();
-};
-// used by nodemon
-process.once('SIGUSR2', function () {
-    gracefulShutdown('SIGUSR2');
-});
-process.once('SIGINT', function (code) {
-    gracefulShutdown('SIGINT');
-});
-process.once('SIGTERM', function (code) {
-    gracefulShutdown('SIGTERM');
-});
