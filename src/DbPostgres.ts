@@ -106,6 +106,48 @@ class Db {
           continue
         }
 
+        prop = "$gte"
+        if (where[k][prop]) {
+          wheres.push(k + ` >= $${$i++}`)
+          values.push(where[k][prop])
+          continue
+        }
+
+        prop = "$lte"
+        if (where[k][prop]) {
+          wheres.push(k + ` <= $${$i++}`)
+          values.push(where[k][prop])
+          continue
+        }
+
+        prop = "$lte"
+        if (where[k][prop]) {
+          wheres.push(k + ` <= $${$i++}`)
+          values.push(where[k][prop])
+          continue
+        }
+
+        prop = '$gt'
+        if (where[k][prop]) {
+          wheres.push(k + ` > $${$i++}`)
+          values.push(where[k][prop])
+          continue
+        }
+
+        prop = '$lt'
+        if (where[k][prop]) {
+          wheres.push(k + ` < $${$i++}`)
+          values.push(where[k][prop])
+          continue
+        }
+
+        prop = '$ne'
+        if (where[k][prop]) {
+          wheres.push(k + ` != $${$i++}`)
+          values.push(where[k][prop])
+          continue
+        }
+
         // TODO: implement rest of mongo like query args ($eq, $lte, $in...)
         throw new Error('not implemented: ' + JSON.stringify(where[k]))
       }
