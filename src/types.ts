@@ -3,7 +3,7 @@ import { NextFunction, Response } from 'express'
 import { Client } from 'tmi.js'
 import { LogLevel } from './common/fn'
 import { CommandRestrict } from './common/permissions'
-import Db from './Db'
+import Db from './DbPostgres'
 import ModuleManager from './mod/ModuleManager'
 import ModuleStorage from './mod/ModuleStorage'
 import TwitchClientManager from './net/TwitchClientManager'
@@ -17,7 +17,8 @@ import WebServer from './WebServer'
 type int = number
 
 export interface DbConfig {
-  file: string
+  connectStr: string
+  file: string // deprecated (only used for sqlite)
   patchesDir: string
 }
 

@@ -20,19 +20,24 @@ interface PostEventData {
 class DrawcastModule implements Module {
   public name = 'drawcast'
 
+  // @ts-ignore
   public bot: Bot
+  // @ts-ignore
   public user: User
-
+  // @ts-ignore
   private data: DrawcastModuleData
 
   constructor(
     bot: Bot,
     user: User,
   ) {
-    this.bot = bot
-    this.user = user
-
-    this.data = this.reinit()
+    // @ts-ignore
+    return (async () => {
+      this.bot = bot
+      this.user = user
+      this.data = await this.reinit()
+      return this;
+    })();
   }
 
   async userChanged(user: User) {
@@ -63,8 +68,8 @@ class DrawcastModule implements Module {
     // pass
   }
 
-  reinit(): DrawcastModuleData {
-    const data = this.bot.getUserModuleStorage(this.user).load(this.name, {})
+  async reinit(): Promise<DrawcastModuleData> {
+    const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {})
     if (!data.images) {
       data.images = this._loadAllImages()
     }
@@ -74,8 +79,8 @@ class DrawcastModule implements Module {
     }
   }
 
-  save(): void {
-    this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
+  async save(): Promise<void> {
+    await this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
   }
 
   getRoutes() {
@@ -88,46 +93,46 @@ class DrawcastModule implements Module {
     }
   }
 
-  drawUrl(): string {
-    return this.bot.getWebServer().getPublicWidgetUrl('drawcast_draw', this.user.id)
+  async drawUrl(): Promise<string> {
+    return await this.bot.getWebServer().getPublicWidgetUrl('drawcast_draw', this.user.id)
   }
 
-  receiveUrl(): string {
-    return this.bot.getWebServer().getWidgetUrl('drawcast_receive', this.user.id)
+  async receiveUrl(): Promise<string> {
+    return await this.bot.getWebServer().getWidgetUrl('drawcast_receive', this.user.id)
   }
 
-  controlUrl(): string {
-    return this.bot.getWebServer().getWidgetUrl('drawcast_control', this.user.id)
+  async controlUrl(): Promise<string> {
+    return await this.bot.getWebServer().getWidgetUrl('drawcast_control', this.user.id)
   }
 
-  wsdata(eventName: string): DrawcastModuleWsData {
+  async wsdata(eventName: string): Promise<DrawcastModuleWsData> {
     return {
       event: eventName,
       data: {
         settings: this.data.settings,
         images: this.data.images, // lots of images! maybe limit to 20 images
-        drawUrl: this.drawUrl(),
-        controlWidgetUrl: this.controlUrl(),
-        receiveWidgetUrl: this.receiveUrl(),
+        drawUrl: await this.drawUrl(),
+        controlWidgetUrl: await this.controlUrl(),
+        receiveWidgetUrl: await this.receiveUrl(),
       },
     };
   }
 
   getWsEvents() {
     return {
-      'conn': (ws: Socket) => {
+      'conn': async (ws: Socket) => {
         this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, {
           event: 'init',
           data: {
             settings: this.data.settings,
             images: this.data.images.filter(image => image.approved).slice(0, 20),
-            drawUrl: this.drawUrl(),
-            controlWidgetUrl: this.controlUrl(),
-            receiveWidgetUrl: this.receiveUrl(),
+            drawUrl: await this.drawUrl(),
+            controlWidgetUrl: await this.controlUrl(),
+            receiveWidgetUrl: await this.receiveUrl(),
           }
         }, ws)
       },
-      'approve_image': (ws: Socket, { path }: { path: string }) => {
+      'approve_image': async (ws: Socket, { path }: { path: string }) => {
         const image = this.data.images.find(item => item.path === path)
         if (!image) {
           // should not happen
@@ -137,13 +142,13 @@ class DrawcastModule implements Module {
         image.approved = true
         this.data.images = this.data.images.filter(item => item.path !== image.path)
         this.data.images.unshift(image)
-        this.save()
+        await this.save()
         this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
           event: 'approved_image_received',
           data: { nonce: '', img: image.path, mayNotify: false },
         })
       },
-      'deny_image': (ws: Socket, { path }: { path: string }) => {
+      'deny_image': async (ws: Socket, { path }: { path: string }) => {
         const image = this.data.images.find(item => item.path === path)
         if (!image) {
           // should not happen
@@ -151,13 +156,13 @@ class DrawcastModule implements Module {
           return
         }
         this.data.images = this.data.images.filter(item => item.path !== image.path)
-        this.save()
+        await this.save()
         this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
           event: 'denied_image_received',
           data: { nonce: '', img: image.path, mayNotify: false },
         })
       },
-      'post': (ws: Socket, data: PostEventData) => {
+      'post': async (ws: Socket, data: PostEventData) => {
         const rel = `/uploads/drawcast/${this.user.id}`
         const img = fn.decodeBase64Image(data.data.img)
         const name = `${(new Date()).toJSON()}-${nonce(6)}.${fn.mimeToExt(img.type)}`
@@ -172,7 +177,7 @@ class DrawcastModule implements Module {
         const approved = this.data.settings.requireManualApproval ? false : true
 
         this.data.images.unshift({ path: urlPath, approved })
-        this.save()
+        await this.save()
 
         const event = approved ? 'approved_image_received' : 'image_received'
         this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
@@ -180,18 +185,18 @@ class DrawcastModule implements Module {
           data: { nonce: data.data.nonce, img: urlPath, mayNotify: true },
         })
       },
-      'save': (ws: Socket, { settings }: { settings: DrawcastSettings }) => {
+      'save': async (ws: Socket, { settings }: { settings: DrawcastSettings }) => {
         this.data.settings = settings
-        this.save()
-        this.data = this.reinit()
+        await this.save()
+        this.data = await this.reinit()
         this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
           event: 'init',
           data: {
             settings: this.data.settings,
             images: this.data.images.filter(image => image.approved).slice(0, 20),
-            drawUrl: this.drawUrl(),
-            controlWidgetUrl: this.controlUrl(),
-            receiveWidgetUrl: this.receiveUrl(),
+            drawUrl: await this.drawUrl(),
+            controlWidgetUrl: await this.controlUrl(),
+            receiveWidgetUrl: await this.receiveUrl(),
           }
         })
       },

@@ -9,7 +9,7 @@ import { Bot, RawCommand, RewardRedemptionContext, TwitchChannelPointsEventMessa
 import TwitchPubSubClient from '../services/TwitchPubSubClient'
 import { getUniqueCommandsByTriggers, newRewardRedemptionTrigger } from '../common/commands'
 import { isBroadcaster, isMod, isSubscriber } from '../common/permissions'
-import { Where } from '../Db'
+import { WhereRaw } from '../DbPostgres'
 
 const log = logger('TwitchClientManager.ts')
 
@@ -95,7 +95,7 @@ class TwitchClientManager {
     await this._disconnectChatClient()
     this._disconnectPubSubClient()
 
-    const twitchChannels = twitchChannelRepo.allByUserId(user.id)
+    const twitchChannels = await twitchChannelRepo.allByUserId(user.id)
     if (twitchChannels.length === 0) {
       this.log.info(`* No twitch channels configured at all`)
       return
@@ -148,28 +148,28 @@ class TwitchClientManager {
       }
       this.log.debug(`${context.username}[${roles.join('')}]@${target}: ${msg}`)
 
-      this.bot.getDb().insert('chat_log', {
-        created_at: `${new Date().toJSON()}`,
+      await this.bot.getDb().insert('robyottoko.chat_log', {
+        created_at: new Date(),
         broadcaster_user_id: context['room-id'],
         user_name: context.username,
         display_name: context['display-name'],
         message: msg,
       })
 
-      const countChatMessages = (where: Where) => {
+      const countChatMessages = async (where: WhereRaw): Promise<number> => {
         const db = this.bot.getDb()
-        const [whereSql, whereValues] = db._buildWhere(where)
-        const row = db._get(
-          `select COUNT(*) as c from chat_log ${whereSql}`,
-          whereValues
+        const whereObject = db._buildWhere(where)
+        const row = await db._get(
+          `select COUNT(*) as c from robyottoko.chat_log ${whereObject.sql}`,
+          whereObject.values
         )
-        return row.c
+        return parseInt(`${row.c}`, 10)
       }
       let _isFirstChatAlltime: null | boolean = null
       let _isFirstChatStream: null | boolean = null
       const isFirstChatAlltime = async () => {
         if (_isFirstChatAlltime === null) {
-          _isFirstChatAlltime = countChatMessages({
+          _isFirstChatAlltime = await countChatMessages({
             broadcaster_user_id: context['room-id'],
             user_name: context.username,
           }) === 1
@@ -182,13 +182,13 @@ class TwitchClientManager {
           if (!stream) {
             const fakeStartDate = `${new Date(new Date().getTime() - (5 * MINUTE)).toJSON()}`
             log.info(`No stream is running atm for channel ${context['room-id']}. Using fake start date ${fakeStartDate}.`)
-            _isFirstChatStream = countChatMessages({
+            _isFirstChatStream = await countChatMessages({
               broadcaster_user_id: context['room-id'],
               created_at: { '$gte': fakeStartDate },
               user_name: context.username,
             }) === 1
           } else {
-            _isFirstChatStream = countChatMessages({
+            _isFirstChatStream = await countChatMessages({
               broadcaster_user_id: context['room-id'],
               created_at: { '$gte': stream.started_at },
               user_name: context.username,
@@ -332,7 +332,7 @@ class TwitchClientManager {
           this.log.debug(redemptionMessage.data.redemption)
           const redemption = redemptionMessage.data.redemption
 
-          const twitchChannel = this.bot.getDb().get('twitch_channel', { channel_id: redemption.channel_id })
+          const twitchChannel = await this.bot.getDb().get('robyottoko.twitch_channel', { channel_id: redemption.channel_id })
           if (!twitchChannel) {
             return
           }

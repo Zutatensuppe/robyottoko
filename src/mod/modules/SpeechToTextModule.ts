@@ -8,25 +8,32 @@ import { default_settings, SpeechToTextModuleData, SpeechToTextModuleSettings, S
 class SpeechToTextModule implements Module {
   public name = 'speech-to-text'
 
+  // @ts-ignore
   public bot: Bot
+  // @ts-ignore
   public user: User
+  // @ts-ignore
   private data: SpeechToTextModuleData
 
   constructor(
     bot: Bot,
     user: User,
   ) {
-    this.bot = bot
-    this.user = user
-    this.data = this.reinit()
+    // @ts-ignore
+    return (async () => {
+      this.bot = bot
+      this.user = user
+      this.data = await this.reinit()
+      return this;
+    })();
   }
 
   async userChanged(user: User) {
     this.user = user
   }
 
-  reinit() {
-    const data = this.bot.getUserModuleStorage(this.user).load(this.name, {})
+  async reinit() {
+    const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {})
     return {
       settings: default_settings(data.settings),
     }
@@ -40,23 +47,23 @@ class SpeechToTextModule implements Module {
     return {}
   }
 
-  wsdata(eventName: string): SpeechToTextWsData {
+  async wsdata(eventName: string): Promise<SpeechToTextWsData> {
     return {
       event: eventName,
       data: {
         settings: this.data.settings,
-        controlWidgetUrl: this.bot.getWebServer().getWidgetUrl('speech-to-text', this.user.id),
-        displayWidgetUrl: this.bot.getWebServer().getWidgetUrl('speech-to-text_receive', this.user.id),
+        controlWidgetUrl: await this.bot.getWebServer().getWidgetUrl('speech-to-text', this.user.id),
+        displayWidgetUrl: await this.bot.getWebServer().getWidgetUrl('speech-to-text_receive', this.user.id),
       }
     };
   }
 
-  updateClient(eventName: string, ws: Socket) {
-    this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, this.wsdata(eventName), ws)
+  async updateClient(eventName: string, ws: Socket): Promise<void> {
+    this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, await this.wsdata(eventName), ws)
   }
 
-  updateClients(eventName: string) {
-    this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, this.wsdata(eventName))
+  async updateClients(eventName: string): Promise<void> {
+    this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, await this.wsdata(eventName))
   }
 
   getWsEvents() {
@@ -80,14 +87,14 @@ class SpeechToTextModule implements Module {
           },
         })
       },
-      'conn': (ws: Socket) => {
-        this.updateClient('init', ws)
+      'conn': async (ws: Socket) => {
+        await this.updateClient('init', ws)
       },
-      'save': (ws: Socket, { settings }: { settings: SpeechToTextModuleSettings }) => {
+      'save': async (ws: Socket, { settings }: { settings: SpeechToTextModuleSettings }) => {
         this.data.settings = settings
         this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
-        this.reinit()
-        this.updateClients('init')
+        await this.reinit()
+        await this.updateClients('init')
       },
     }
   }

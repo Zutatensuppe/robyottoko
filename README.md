@@ -33,27 +33,32 @@ which lets you use the features without setting the bot up yourself.
 
 ## Getting Started
 
-1. Create a `config.json`. The example can be copied, for some
+1. Launch the database. By default the database will be exposed on localhost port 5434.
+    ```
+    docker-compose up
+    ```
+
+2. Create a `config.json`. The example can be copied, for some
 features you have to provide an api key directly in the config atm.
 
     ```
     cp config.json.example config.json
     ```
 
-2. Install the dependencies
+3. Install the dependencies
 
     ```
     npm install
     ```
 
-3. Create a user. You will be asked for a user name and password.
+4. Create a user. You will be asked for a user name and password.
 The rest of the settings can be changed via the bot admin ui.
 
     ```
     ./run ts scripts/create-user.ts
     ```
 
-4. Run the bot
+5. Run the bot
 
     ```
     ./run bot

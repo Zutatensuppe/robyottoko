@@ -1,6 +1,6 @@
-import Db from "../Db"
+import Db from "../DbPostgres"
 
-const TABLE = 'twitch_channel'
+const TABLE = 'robyottoko.twitch_channel'
 
 export interface TwitchChannel {
   user_id: number
@@ -33,22 +33,22 @@ class TwitchChannels {
     this.db = db
   }
 
-  save(channel: UpdateTwitchChannel) {
-    return this.db.upsert(TABLE, channel, {
+  async save(channel: UpdateTwitchChannel): Promise<void> {
+    return await this.db.upsert(TABLE, channel, {
       user_id: channel.user_id,
       channel_name: channel.channel_name,
     })
   }
 
-  allByUserId(user_id: number): TwitchChannel[] {
-    return this.db.getMany(TABLE, { user_id })
+  async allByUserId(user_id: number): Promise<TwitchChannel[]> {
+    return await this.db.getMany(TABLE, { user_id })
   }
 
-  saveUserChannels(user_id: number, channels: UpdateTwitchChannel[]) {
+  async saveUserChannels(user_id: number, channels: UpdateTwitchChannel[]): Promise<void> {
     for (const channel of channels) {
-      this.save(channel)
+      await this.save(channel)
     }
-    this.db.delete(TABLE, {
+    await this.db.delete(TABLE, {
       user_id: user_id,
       channel_name: { '$nin': channels.map(c => c.channel_name) }
     })

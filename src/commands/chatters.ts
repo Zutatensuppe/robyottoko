@@ -32,14 +32,14 @@ const chatters = (
     }
 
     const db = bot.getDb()
-    const [whereSql, whereValues] = db._buildWhere({
+    const whereObject = db._buildWhere({
       broadcaster_user_id: context['room-id'],
       created_at: { '$gte': stream.started_at },
     })
-    const userNames = db._getMany(
-      `select display_name from chat_log ${whereSql} group by user_name`,
-      whereValues
-    ).map(r => r.display_name)
+    const userNames = (await db._getMany(
+      `select display_name from robyottoko.chat_log ${whereObject.sql} group by user_name`,
+      whereObject.values
+    )).map(r => r.display_name)
     if (userNames.length === 0) {
       say(`It seems nobody chatted? :(`)
       return

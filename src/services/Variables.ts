@@ -1,7 +1,7 @@
-import Db from "../Db"
+import Db from "../DbPostgres"
 import { GlobalVariable, VariableValue } from "../types"
 
-const TABLE = 'variables'
+const TABLE = 'robyottoko.variables'
 
 class Variables {
   private db: Db
@@ -15,8 +15,8 @@ class Variables {
     this.userId = userId
   }
 
-  set(name: string, value: VariableValue) {
-    this.db.upsert(TABLE, {
+  async set(name: string, value: VariableValue): Promise<void> {
+    await this.db.upsert(TABLE, {
       name,
       user_id: this.userId,
       value: JSON.stringify(value),
@@ -26,25 +26,25 @@ class Variables {
     })
   }
 
-  get(name: string): VariableValue {
-    const row = this.db.get(TABLE, { name, user_id: this.userId })
+  async get(name: string): Promise<VariableValue> {
+    const row = await this.db.get(TABLE, { name, user_id: this.userId })
     return row ? JSON.parse(row.value) : null
   }
 
-  all(): GlobalVariable[] {
-    const rows = this.db.getMany(TABLE, { user_id: this.userId })
+  async all(): Promise<GlobalVariable[]> {
+    const rows = await this.db.getMany(TABLE, { user_id: this.userId })
     return rows.map(row => ({
       name: row.name,
       value: JSON.parse(row.value),
     }))
   }
 
-  replace(variables: GlobalVariable[]) {
+  async replace(variables: GlobalVariable[]): Promise<void> {
     const names = variables.map(v => v.name)
-    this.db.delete(TABLE, { user_id: this.userId, name: { '$nin': names } })
-    variables.forEach(({ name, value }) => {
-      this.set(name, value)
-    })
+    await this.db.delete(TABLE, { user_id: this.userId, name: { '$nin': names } })
+    for (const { name, value } of variables) {
+      await this.set(name, value)
+    }
   }
 }
 

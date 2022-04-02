@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import config from '../src/config'
-import Db from '../src/Db'
+import Db from '../src/DbPostgres'
 import readline from 'readline'
 import { passwordHash, passwordSalt } from '../src/fn'
 
@@ -16,8 +16,9 @@ const question = (q: any) => new Promise((resolve, reject) => {
 const log = console.log
 
   ; (async () => {
-    const db = new Db(config.db)
-    db.patch(false)
+    const db = new Db(config.db.connectStr, config.db.patchesDir)
+    await db.connect()
+    await db.patch()
 
     log('Please enter credentials for the new user.')
 
@@ -41,7 +42,7 @@ const log = console.log
       tmi_identity_client_secret: '', // bot app client secret
     }
 
-    const user_id = db.upsert('user', user, { name: user.name }, 'id')
+    const user_id = await db.upsert('user', user, { name: user.name }, 'id')
     log('user created/updated: ' + user_id)
-    db.close()
+    await db.close()
   })()

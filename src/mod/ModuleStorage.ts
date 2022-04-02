@@ -1,9 +1,9 @@
-import Db from '../Db'
+import Db from '../DbPostgres'
 import { logger } from '../common/fn'
 
 const log = logger('ModuleStorage.ts')
 
-const TABLE = 'module'
+const TABLE = 'robyottoko.module'
 
 class ModuleStorage {
   private db: Db
@@ -14,10 +14,10 @@ class ModuleStorage {
     this.userId = userId
   }
 
-  load(key: string, def: Record<string, any>): Record<string, any> {
+  async load(key: string, def: Record<string, any>): Promise<Record<string, any>> {
     try {
       const where = { user_id: this.userId, key }
-      const row = this.db.get(TABLE, where)
+      const row = await this.db.get(TABLE, where)
       const data = row ? JSON.parse('' + row.data) : null
       return data ? Object.assign({}, def, data) : def
     } catch (e) {
@@ -26,11 +26,11 @@ class ModuleStorage {
     }
   }
 
-  save(key: string, rawData: Record<string, any>) {
+  async save(key: string, rawData: Record<string, any>): Promise<void> {
     const where = { user_id: this.userId, key }
     const data = JSON.stringify(rawData)
     const dbData = Object.assign({}, where, { data })
-    this.db.upsert(TABLE, dbData, where)
+    await this.db.upsert(TABLE, dbData, where)
   }
 }
 

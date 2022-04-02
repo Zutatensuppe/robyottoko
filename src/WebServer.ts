@@ -7,7 +7,7 @@ import multer from 'multer'
 import path from 'path'
 import Templates from './services/Templates'
 import http from 'http'
-import Db from './Db'
+import Db from './DbPostgres'
 import fn from './fn'
 import { nonce, logger, YEAR } from './common/fn'
 import Tokens from './services/Tokens'
@@ -149,23 +149,23 @@ class WebServer {
     this.handle = null
   }
 
-  getWidgetUrl(widgetType: string, userId: number) {
-    return this._widgetUrlByTypeAndUserId(widgetType, userId)
+  async getWidgetUrl(widgetType: string, userId: number): Promise<string> {
+    return await this._widgetUrlByTypeAndUserId(widgetType, userId)
   }
 
-  getPublicWidgetUrl(widgetType: string, userId: number) {
-    const url = this._widgetUrlByTypeAndUserId(widgetType, userId)
-    return this._pubUrl(url)
+  async getPublicWidgetUrl(widgetType: string, userId: number): Promise<string> {
+    const url = await this._widgetUrlByTypeAndUserId(widgetType, userId)
+    return await this._pubUrl(url)
   }
 
-  _pubUrl(target: string) {
-    const row = this.db.get('pub', { target })
+  async _pubUrl(target: string): Promise<string> {
+    const row = await this.db.get('robyottoko.pub', { target })
     let id
     if (!row) {
       do {
         id = nonce(6)
-      } while (this.db.get('pub', { id }))
-      this.db.insert('pub', { id, target })
+      } while (await this.db.get('robyottoko.pub', { id }))
+      await this.db.insert('robyottoko.pub', { id, target })
     } else {
       id = row.id
     }
@@ -176,21 +176,21 @@ class WebServer {
     return `${this.url}/widget/${type}/${token}/`
   }
 
-  _createWidgetUrl(type: string, userId: number) {
-    let t = this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`)
+  async _createWidgetUrl(type: string, userId: number): Promise<string> {
+    let t = await this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`)
     if (t) {
-      this.tokenRepo.delete(t.token)
+      await this.tokenRepo.delete(t.token)
     }
-    t = this.tokenRepo.createToken(userId, `widget_${type}`)
+    t = await this.tokenRepo.createToken(userId, `widget_${type}`)
     return `${this.url}/widget/${type}/${t.token}`
   }
 
-  _widgetUrlByTypeAndUserId(type: string, userId: number) {
-    const t = this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`)
+  async _widgetUrlByTypeAndUserId(type: string, userId: number): Promise<string> {
+    const t = await this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`)
     if (t) {
       return this._widgetUrl(type, t.token)
     }
-    return this._createWidgetUrl(type, userId)
+    return await this._createWidgetUrl(type, userId)
   }
 
   async listen() {
@@ -204,8 +204,8 @@ class WebServer {
     }
     await templates.add('templates/twitch_redirect_uri.html')
 
-    app.get('/pub/:id', (req, res, next) => {
-      const row = this.db.get('pub', {
+    app.get('/pub/:id', async (req, res, _next) => {
+      const row = await this.db.get('robyottoko.pub', {
         id: req.params.id,
       })
       if (row && row.target) {
@@ -301,9 +301,9 @@ class WebServer {
     app.post('/api/widget/create_url', requireLoginApi, express.json(), async (req: any, res: Response) => {
       const type = req.body.type
       const pub = req.body.pub
-      const url = this._createWidgetUrl(type, req.user.id)
+      const url = await this._createWidgetUrl(type, req.user.id)
       res.send({
-        url: pub ? this._pubUrl(url) : url
+        url: pub ? (await this._pubUrl(url)) : url
       })
     })
 
@@ -316,33 +316,31 @@ class WebServer {
     app.get('/api/user/me', requireLoginApi, async (req: any, res: Response) => {
       res.send({
         user: req.user,
-        widgetToken: req.userWidgetToken,
-        pubToken: req.userPubToken,
         token: req.cookies['x-token'],
       })
     })
 
     app.post('/api/logout', requireLoginApi, async (req: any, res: Response) => {
       if (req.token) {
-        this.auth.destroyToken(req.token)
+        await this.auth.destroyToken(req.token)
         res.clearCookie("x-token")
       }
       res.send({ success: true })
     })
 
     app.get('/api/page/index', requireLoginApi, async (req: any, res: Response) => {
-      res.send({
-        widgets: widgets.map(w => {
-          const url = this._widgetUrlByTypeAndUserId(w.type, req.user.id)
-          return {
-            type: w.type,
-            pub: w.pub,
-            title: w.title,
-            hint: w.hint,
-            url: w.pub ? this._pubUrl(url) : url,
-          }
+      const mappedWidgets = []
+      for (const w of widgets) {
+        const url = await this._widgetUrlByTypeAndUserId(w.type, req.user.id)
+        mappedWidgets.push({
+          type: w.type,
+          pub: w.pub,
+          title: w.title,
+          hint: w.hint,
+          url: w.pub ? (await this._pubUrl(url)) : url,
         })
-      })
+      }
+      res.send({ widgets: mappedWidgets })
     })
 
     app.post('/api/user/_reset_password', express.json(), async (req, res) => {
@@ -353,13 +351,13 @@ class WebServer {
         return
       }
 
-      const tokenObj = this.tokenRepo.getByTokenAndType(token, 'password_reset')
+      const tokenObj = await this.tokenRepo.getByTokenAndType(token, 'password_reset')
       if (!tokenObj) {
         res.status(400).send({ reason: 'bad request' })
         return
       }
 
-      const originalUser = this.userRepo.getById(tokenObj.user_id)
+      const originalUser = await this.userRepo.getById(tokenObj.user_id)
       if (!originalUser) {
         res.status(404).send({ reason: 'user_does_not_exist' })
         return
@@ -367,8 +365,8 @@ class WebServer {
 
       const pass = fn.passwordHash(plainPass, originalUser.salt)
       const user = { id: originalUser.id, pass }
-      this.userRepo.save(user)
-      this.tokenRepo.delete(tokenObj.token)
+      await this.userRepo.save(user)
+      await this.tokenRepo.delete(tokenObj.token)
       res.send({ success: true })
     })
 
@@ -379,13 +377,13 @@ class WebServer {
         return
       }
 
-      const user = this.userRepo.get({ email, status: 'verified' })
+      const user = await this.userRepo.get({ email, status: 'verified' })
       if (!user) {
         res.status(404).send({ reason: 'user not found' })
         return
       }
 
-      const token = this.tokenRepo.createToken(user.id, 'password_reset')
+      const token = await this.tokenRepo.createToken(user.id, 'password_reset')
       this.mail.sendPasswordResetMail({
         user: user,
         token: token,
@@ -400,7 +398,7 @@ class WebServer {
         return
       }
 
-      const user = this.db.get('user', { email })
+      const user = await this.db.get('robyottoko.user', { email })
       if (!user) {
         res.status(404).send({ reason: 'email not found' })
         return
@@ -411,7 +409,7 @@ class WebServer {
         return
       }
 
-      const token = this.tokenRepo.createToken(user.id, 'registration')
+      const token = await this.tokenRepo.createToken(user.id, 'registration')
       this.mail.sendRegistrationMail({
         user: user,
         token: token,
@@ -433,7 +431,7 @@ class WebServer {
         tmi_identity_client_secret: '',
       }
       let tmpUser
-      tmpUser = this.db.get('user', { email: user.email })
+      tmpUser = await this.db.get('robyottoko.user', { email: user.email })
       if (tmpUser) {
         if (tmpUser.status === 'verified') {
           // user should use password reset function
@@ -444,7 +442,7 @@ class WebServer {
         }
         return
       }
-      tmpUser = this.db.get('user', { name: user.name })
+      tmpUser = await this.db.get('robyottoko.user', { name: user.name })
       if (tmpUser) {
         if (tmpUser.status === 'verified') {
           // user should use password reset function
@@ -456,12 +454,12 @@ class WebServer {
         return
       }
 
-      const userId = this.userRepo.createUser(user)
+      const userId = await this.userRepo.createUser(user)
       if (!userId) {
         res.status(400).send({ reason: 'unable to create user' })
         return
       }
-      const token = this.tokenRepo.createToken(userId, 'registration')
+      const token = await this.tokenRepo.createToken(userId, 'registration')
       this.mail.sendRegistrationMail({
         user: user,
         token: token,
@@ -475,18 +473,18 @@ class WebServer {
         res.status(400).send({ reason: 'invalid_token' })
         return
       }
-      const tokenObj = this.tokenRepo.getByTokenAndType(token, 'registration')
+      const tokenObj = await this.tokenRepo.getByTokenAndType(token, 'registration')
       if (!tokenObj) {
         res.status(400).send({ reason: 'invalid_token' })
         return
       }
-      this.userRepo.save({ status: 'verified', id: tokenObj.user_id })
-      this.tokenRepo.delete(tokenObj.token)
+      await this.userRepo.save({ status: 'verified', id: tokenObj.user_id })
+      await this.tokenRepo.delete(tokenObj.token)
       res.send({ type: 'registration-verified' })
 
       // new user was registered. module manager should be notified about this
       // so that bot doesnt need to be restarted :O
-      const user = this.userRepo.getById(tokenObj.user_id)
+      const user = await this.userRepo.getById(tokenObj.user_id)
       if (user) {
         this.eventHub.emit('user_registration_complete', user)
       } else {
@@ -497,24 +495,24 @@ class WebServer {
 
     app.get('/api/page/variables', requireLoginApi, async (req: any, res: Response) => {
       const variables = new Variables(this.db, req.user.id)
-      res.send({ variables: variables.all() })
+      res.send({ variables: await variables.all() })
     })
 
     app.post('/api/save-variables', requireLoginApi, express.json(), async (req: any, res: Response) => {
       const variables = new Variables(this.db, req.user.id)
-      variables.replace(req.body.variables || [])
+      await variables.replace(req.body.variables || [])
       res.send()
     })
 
     app.get('/api/data/global', async (req: any, res: Response) => {
-      const users = this.userRepo.all()
+      const users = await this.userRepo.all()
       res.send({
         registeredUserCount: users.filter(u => u.status === 'verified').length,
       })
     })
 
     app.get('/api/page/settings', requireLoginApi, async (req: any, res: Response) => {
-      const user = this.userRepo.getById(req.user.id) as User
+      const user = await this.userRepo.getById(req.user.id) as User
       res.send({
         user: {
           id: user.id,
@@ -526,9 +524,9 @@ class WebServer {
           tmi_identity_password: user.tmi_identity_password,
           tmi_identity_client_id: user.tmi_identity_client_id,
           tmi_identity_client_secret: user.tmi_identity_client_secret,
-          groups: this.userRepo.getGroups(user.id)
+          groups: await this.userRepo.getGroups(user.id)
         },
-        twitchChannels: this.twitchChannelRepo.allByUserId(req.user.id),
+        twitchChannels: await this.twitchChannelRepo.allByUserId(req.user.id),
       })
     })
 
@@ -541,7 +539,7 @@ class WebServer {
         }
       }
 
-      const originalUser = this.userRepo.getById(req.body.user.id)
+      const originalUser = await this.userRepo.getById(req.body.user.id)
       if (!originalUser) {
         res.status(404).send({ reason: 'user_does_not_exist' })
         return
@@ -568,11 +566,11 @@ class WebServer {
         return channel
       })
 
-      this.userRepo.save(user)
-      this.twitchChannelRepo.saveUserChannels(user.id, twitch_channels)
+      await this.userRepo.save(user)
+      await this.twitchChannelRepo.saveUserChannels(user.id, twitch_channels)
 
 
-      const changedUser = this.userRepo.getById(user.id)
+      const changedUser = await this.userRepo.getById(user.id)
       if (changedUser) {
         this.eventHub.emit('user_changed', changedUser)
       } else {
@@ -590,7 +588,7 @@ class WebServer {
       let clientId
       let clientSecret
       if (!req.user.groups.includes('admin')) {
-        const u = this.userRepo.getById(req.user.id) as User
+        const u = await this.userRepo.getById(req.user.id) as User
         clientId = u.tmi_identity_client_id || this.configTwitch.tmi.identity.client_id
         clientSecret = u.tmi_identity_client_secret || this.configTwitch.tmi.identity.client_secret
       } else {
@@ -636,19 +634,19 @@ class WebServer {
 
           if (req.body.subscription.type === 'stream.online') {
             // insert new stream
-            this.db.insert('streams', {
+            await this.db.insert('robyottoko.streams', {
               broadcaster_user_id: req.body.event.broadcaster_user_id,
-              started_at: req.body.event.started_at,
+              started_at: new Date(req.body.event.started_at),
             })
           } else if (req.body.subscription.type === 'stream.offline') {
             // get last started stream for broadcaster
             // if it exists and it didnt end yet set ended_at date
-            const stream = this.db.get('streams', {
+            const stream = await this.db.get('robyottoko.streams', {
               broadcaster_user_id: req.body.event.broadcaster_user_id,
             }, [{ started_at: -1 }])
             if (!stream.ended_at) {
-              this.db.update('streams', {
-                ended_at: `${new Date().toJSON()}`,
+              await this.db.update('robyottoko.streams', {
+                ended_at: new Date(),
               }, { id: stream.id })
             }
           }
@@ -661,13 +659,13 @@ class WebServer {
       })
 
     app.post('/api/auth', express.json(), async (req, res: Response) => {
-      const user = this.auth.getUserByNameAndPass(req.body.user, req.body.pass)
+      const user = await this.auth.getUserByNameAndPass(req.body.user, req.body.pass)
       if (!user) {
         res.status(401).send({ reason: 'bad credentials' })
         return
       }
 
-      const token = this.auth.getUserAuthToken(user.id)
+      const token = await this.auth.getUserAuthToken(user.id)
       res.cookie('x-token', token, { maxAge: 1 * YEAR, httpOnly: true })
       res.send()
     })
@@ -675,8 +673,8 @@ class WebServer {
     app.get('/widget/:widget_type/:widget_token/', async (req, res: Response, _next: NextFunction) => {
       const type = req.params.widget_type
       const token = req.params.widget_token
-      const user = this.auth.userFromWidgetToken(token, type)
-        || this.auth.userFromPubToken(token)
+      const user = (await this.auth.userFromWidgetToken(token, type))
+        || (await this.auth.userFromPubToken(token))
       if (!user) {
         res.status(404).send()
         return

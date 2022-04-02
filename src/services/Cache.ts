@@ -1,7 +1,7 @@
-import Db from "../Db"
+import Db from "../DbPostgres"
 import { CacheValue } from "../types"
 
-const TABLE = 'cache'
+const TABLE = 'robyottoko.cache'
 
 class Cache {
   private db: Db
@@ -9,12 +9,13 @@ class Cache {
   constructor(db: Db) {
     this.db = db
   }
-  set(key: string, value: CacheValue) {
-    this.db.upsert(TABLE, { key, value: JSON.stringify(value) }, { key })
+
+  async set(key: string, value: CacheValue): Promise<void> {
+    await this.db.upsert(TABLE, { key, value: JSON.stringify(value) }, { key })
   }
 
-  get(key: string): CacheValue {
-    const row = this.db.get(TABLE, { key })
+  async get(key: string): Promise<CacheValue> {
+    const row = await this.db.get(TABLE, { key })
     return row ? JSON.parse(row.value) : null
   }
 }

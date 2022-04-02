@@ -10,7 +10,7 @@ import Users, { User } from './services/Users'
 import Tokens from './services/Tokens'
 import TwitchChannels from './services/TwitchChannels'
 import Cache from './services/Cache'
-import Db from './Db'
+import Db from './DbPostgres'
 import Variables from './services/Variables'
 import Mail from './net/Mail'
 import mitt from 'mitt'
@@ -38,91 +38,94 @@ const modules = [
   PomoModule,
 ]
 
-const db = new Db(config.db)
-// make sure we are always on latest db version
-db.patch(false)
-const userRepo = new Users(db)
-const tokenRepo = new Tokens(db)
-const twitchChannelRepo = new TwitchChannels(db)
-const cache = new Cache(db)
-const auth = new Auth(userRepo, tokenRepo)
-const mail = new Mail(config.mail)
-
-const eventHub = mitt()
-const moduleManager = new ModuleManager()
-const webSocketServer = new WebSocketServer(moduleManager, config.ws, auth)
-const webServer = new WebServer(
-  eventHub,
-  db,
-  userRepo,
-  tokenRepo,
-  mail,
-  twitchChannelRepo,
-  moduleManager,
-  config.http,
-  config.twitch,
-  webSocketServer,
-  auth
-)
-
-class BotImpl implements Bot {
-  private userVariableInstances: Record<number, Variables> = {}
-  private userModuleStorageInstances: Record<number, ModuleStorage> = {}
-  private userTwitchClientManagerInstances: Record<number, TwitchClientManager> = {}
-
-  constructor() {
-    // pass
-  }
-
-  getBuildVersion() { return buildEnv.buildVersion }
-  getBuildDate() { return buildEnv.buildDate }
-  getModuleManager() { return moduleManager }
-  getDb() { return db }
-  getTokens() { return tokenRepo }
-  getCache() { return cache }
-  getWebServer() { return webServer }
-  getWebSocketServer() { return webSocketServer }
-
-  // user specific
-  // -----------------------------------------------------------------
-
-  getUserVariables(user: User) {
-    if (!this.userVariableInstances[user.id]) {
-      this.userVariableInstances[user.id] = new Variables(this.getDb(), user.id)
-    }
-    return this.userVariableInstances[user.id]
-  }
-
-  getUserModuleStorage(user: User) {
-    if (!this.userModuleStorageInstances[user.id]) {
-      this.userModuleStorageInstances[user.id] = new ModuleStorage(this.getDb(), user.id)
-    }
-    return this.userModuleStorageInstances[user.id]
-  }
-
-  getUserTwitchClientManager(user: User) {
-    if (!this.userTwitchClientManagerInstances[user.id]) {
-      this.userTwitchClientManagerInstances[user.id] = new TwitchClientManager(
-        this,
-        user,
-        config.twitch,
-        twitchChannelRepo,
-      )
-    }
-    return this.userTwitchClientManagerInstances[user.id]
-  }
-}
-
-const bot = new BotImpl()
-
 const run = async () => {
+  const db = new Db(config.db.connectStr, config.db.patchesDir)
+  await db.connect()
+  await db.patch()
+
+  // const db = new Db(config.db)
+  // // make sure we are always on latest db version
+  // db.patch(false)
+  const userRepo = new Users(db)
+  const tokenRepo = new Tokens(db)
+  const twitchChannelRepo = new TwitchChannels(db)
+  const cache = new Cache(db)
+  const auth = new Auth(userRepo, tokenRepo)
+  const mail = new Mail(config.mail)
+
+  const eventHub = mitt()
+  const moduleManager = new ModuleManager()
+  const webSocketServer = new WebSocketServer(moduleManager, config.ws, auth)
+  const webServer = new WebServer(
+    eventHub,
+    db,
+    userRepo,
+    tokenRepo,
+    mail,
+    twitchChannelRepo,
+    moduleManager,
+    config.http,
+    config.twitch,
+    webSocketServer,
+    auth
+  )
+
+  class BotImpl implements Bot {
+    private userVariableInstances: Record<number, Variables> = {}
+    private userModuleStorageInstances: Record<number, ModuleStorage> = {}
+    private userTwitchClientManagerInstances: Record<number, TwitchClientManager> = {}
+
+    constructor() {
+      // pass
+    }
+
+    getBuildVersion() { return buildEnv.buildVersion }
+    getBuildDate() { return buildEnv.buildDate }
+    getModuleManager() { return moduleManager }
+    getDb() { return db }
+    getTokens() { return tokenRepo }
+    getCache() { return cache }
+    getWebServer() { return webServer }
+    getWebSocketServer() { return webSocketServer }
+
+    // user specific
+    // -----------------------------------------------------------------
+
+    getUserVariables(user: User) {
+      if (!this.userVariableInstances[user.id]) {
+        this.userVariableInstances[user.id] = new Variables(this.getDb(), user.id)
+      }
+      return this.userVariableInstances[user.id]
+    }
+
+    getUserModuleStorage(user: User) {
+      if (!this.userModuleStorageInstances[user.id]) {
+        this.userModuleStorageInstances[user.id] = new ModuleStorage(this.getDb(), user.id)
+      }
+      return this.userModuleStorageInstances[user.id]
+    }
+
+    getUserTwitchClientManager(user: User) {
+      if (!this.userTwitchClientManagerInstances[user.id]) {
+        this.userTwitchClientManagerInstances[user.id] = new TwitchClientManager(
+          this,
+          user,
+          config.twitch,
+          twitchChannelRepo,
+        )
+      }
+      return this.userTwitchClientManagerInstances[user.id]
+    }
+  }
+  const bot = new BotImpl()
+
   // this function may only be called once per user!
   // changes to user will be handled by user_changed event
   const initForUser = async (user: User) => {
     const clientManager = bot.getUserTwitchClientManager(user)
     await clientManager.init('init')
     for (const moduleClass of modules) {
-      moduleManager.add(user.id, new moduleClass(bot, user))
+      moduleManager.add(user.id, await new moduleClass(bot, user))
     }
 
     eventHub.on('user_changed', async (changedUser: any /* User */) => {
@@ -149,7 +152,7 @@ const run = async () => {
       }
 
       const problems = []
-      const twitchChannels = twitchChannelRepo.allByUserId(user.id)
+      const twitchChannels = await twitchChannelRepo.allByUserId(user.id)
       for (const twitchChannel of twitchChannels) {
         if (!twitchChannel.access_token) {
           continue;
@@ -176,39 +179,39 @@ const run = async () => {
   await webServer.listen()
 
   // one for each user
-  for (const user of userRepo.all()) {
+  for (const user of await userRepo.all()) {
     await initForUser(user)
   }
 
   eventHub.on('user_registration_complete', async (user: any /* User */) => {
     await initForUser(user)
   })
+
+  const gracefulShutdown = (signal: 'SIGUSR2' | 'SIGINT' | 'SIGTERM') => {
+    log.info(`${signal} received...`)
+
+    log.info('shutting down webserver...')
+    webServer.close()
+
+    log.info('shutting down websocketserver...')
+    webSocketServer.close()
+
+    log.info('shutting down...')
+    process.exit()
+  }
+
+  // used by nodemon
+  process.once('SIGUSR2', function () {
+    gracefulShutdown('SIGUSR2')
+  });
+
+  process.once('SIGINT', function (code) {
+    gracefulShutdown('SIGINT')
+  });
+
+  process.once('SIGTERM', function (code) {
+    gracefulShutdown('SIGTERM')
+  });
 }
 
 run()
-
-const gracefulShutdown = (signal: 'SIGUSR2' | 'SIGINT' | 'SIGTERM') => {
-  log.info(`${signal} received...`)
-
-  log.info('shutting down webserver...')
-  webServer.close()
-
-  log.info('shutting down websocketserver...')
-  webSocketServer.close()
-
-  log.info('shutting down...')
-  process.exit()
-}
-
-// used by nodemon
-process.once('SIGUSR2', function () {
-  gracefulShutdown('SIGUSR2')
-});
-
-process.once('SIGINT', function (code) {
-  gracefulShutdown('SIGINT')
-});
-
-process.once('SIGTERM', function (code) {
-  gracefulShutdown('SIGTERM')
-});
