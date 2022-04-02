@@ -19,3 +19,9 @@ button.active {
   color: #000;
   font-weight: bold;
 }
+.toggle-controls {
+  position: fixed;
+  padding: .5em;
+  bottom: 0;
+  left: 0;
+}
