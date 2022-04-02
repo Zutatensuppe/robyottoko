@@ -1,7 +1,7 @@
 import Db from "../DbPostgres"
 import { CacheValue } from "../types"
 
-const TABLE = 'cache'
+const TABLE = 'robyottoko.cache'
 
 class Cache {
   private db: Db

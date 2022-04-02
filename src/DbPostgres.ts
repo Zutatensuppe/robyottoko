@@ -44,10 +44,10 @@ class Db {
   }
 
   async patch(verbose: boolean = true): Promise<void> {
-    await this.run('CREATE TABLE IF NOT EXISTS db_patches ( id TEXT PRIMARY KEY);', [])
+    await this.run('CREATE TABLE IF NOT EXISTS public.db_patches ( id TEXT PRIMARY KEY);', [])
 
     const files = fs.readdirSync(this.patchesDir)
-    const patches = (await this.getMany('db_patches')).map(row => row.id)
+    const patches = (await this.getMany('public.db_patches')).map(row => row.id)
 
     for (const f of files) {
       if (patches.includes(f)) {
@@ -70,7 +70,7 @@ class Db {
           await this.run('ROLLBACK')
           throw e
         }
-        await this.insert('db_patches', { id: f })
+        await this.insert('public.db_patches', { id: f })
         log.info(`✓ applied db patch: ${f}`)
       } catch (e) {
         log.error(`✖ unable to apply patch: ${f} ${e}`)

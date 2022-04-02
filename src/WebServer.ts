@@ -159,13 +159,13 @@ class WebServer {
   }
 
   async _pubUrl(target: string): Promise<string> {
-    const row = await this.db.get('pub', { target })
+    const row = await this.db.get('robyottoko.pub', { target })
     let id
     if (!row) {
       do {
         id = nonce(6)
-      } while (await this.db.get('pub', { id }))
-      await this.db.insert('pub', { id, target })
+      } while (await this.db.get('robyottoko.pub', { id }))
+      await this.db.insert('robyottoko.pub', { id, target })
     } else {
       id = row.id
     }
@@ -204,8 +204,8 @@ class WebServer {
     }
     await templates.add('templates/twitch_redirect_uri.html')
 
-    app.get('/pub/:id', async (req, res, next) => {
-      const row = await this.db.get('pub', {
+    app.get('/pub/:id', async (req, res, _next) => {
+      const row = await this.db.get('robyottoko.pub', {
         id: req.params.id,
       })
       if (row && row.target) {
@@ -398,7 +398,7 @@ class WebServer {
         return
       }
 
-      const user = await this.db.get('user', { email })
+      const user = await this.db.get('robyottoko.user', { email })
       if (!user) {
         res.status(404).send({ reason: 'email not found' })
         return
@@ -431,7 +431,7 @@ class WebServer {
         tmi_identity_client_secret: '',
       }
       let tmpUser
-      tmpUser = await this.db.get('user', { email: user.email })
+      tmpUser = await this.db.get('robyottoko.user', { email: user.email })
       if (tmpUser) {
         if (tmpUser.status === 'verified') {
           // user should use password reset function
@@ -442,7 +442,7 @@ class WebServer {
         }
         return
       }
-      tmpUser = await this.db.get('user', { name: user.name })
+      tmpUser = await this.db.get('robyottoko.user', { name: user.name })
       if (tmpUser) {
         if (tmpUser.status === 'verified') {
           // user should use password reset function
@@ -634,19 +634,19 @@ class WebServer {
 
           if (req.body.subscription.type === 'stream.online') {
             // insert new stream
-            await this.db.insert('streams', {
+            await this.db.insert('robyottoko.streams', {
               broadcaster_user_id: req.body.event.broadcaster_user_id,
-              started_at: req.body.event.started_at,
+              started_at: new Date(req.body.event.started_at),
             })
           } else if (req.body.subscription.type === 'stream.offline') {
             // get last started stream for broadcaster
             // if it exists and it didnt end yet set ended_at date
-            const stream = await this.db.get('streams', {
+            const stream = await this.db.get('robyottoko.streams', {
               broadcaster_user_id: req.body.event.broadcaster_user_id,
             }, [{ started_at: -1 }])
             if (!stream.ended_at) {
-              await this.db.update('streams', {
-                ended_at: `${new Date().toJSON()}`,
+              await this.db.update('robyottoko.streams', {
+                ended_at: new Date(),
               }, { id: stream.id })
             }
           }

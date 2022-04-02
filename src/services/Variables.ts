@@ -1,7 +1,7 @@
 import Db from "../DbPostgres"
 import { GlobalVariable, VariableValue } from "../types"
 
-const TABLE = 'variables'
+const TABLE = 'robyottoko.variables'
 
 class Variables {
   private db: Db

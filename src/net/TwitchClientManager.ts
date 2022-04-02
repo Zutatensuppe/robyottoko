@@ -148,8 +148,8 @@ class TwitchClientManager {
       }
       this.log.debug(`${context.username}[${roles.join('')}]@${target}: ${msg}`)
 
-      await this.bot.getDb().insert('chat_log', {
-        created_at: `${new Date().toJSON()}`,
+      await this.bot.getDb().insert('robyottoko.chat_log', {
+        created_at: new Date(),
         broadcaster_user_id: context['room-id'],
         user_name: context.username,
         display_name: context['display-name'],
@@ -160,7 +160,7 @@ class TwitchClientManager {
         const db = this.bot.getDb()
         const whereObject = db._buildWhere(where)
         const row = await db._get(
-          `select COUNT(*) as c from chat_log ${whereObject.sql}`,
+          `select COUNT(*) as c from robyottoko.chat_log ${whereObject.sql}`,
           whereObject.values
         )
         return parseInt(`${row.c}`, 10)
@@ -332,7 +332,7 @@ class TwitchClientManager {
           this.log.debug(redemptionMessage.data.redemption)
           const redemption = redemptionMessage.data.redemption
 
-          const twitchChannel = await this.bot.getDb().get('twitch_channel', { channel_id: redemption.channel_id })
+          const twitchChannel = await this.bot.getDb().get('robyottoko.twitch_channel', { channel_id: redemption.channel_id })
           if (!twitchChannel) {
             return
           }

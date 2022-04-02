@@ -1,6 +1,6 @@
 import Db from "../DbPostgres"
 
-const TABLE = 'token'
+const TABLE = 'robyottoko.token'
 
 export interface Token {
   user_id: number

@@ -1,6 +1,6 @@
 import Db from "../DbPostgres"
 
-const TABLE = 'twitch_channel'
+const TABLE = 'robyottoko.twitch_channel'
 
 export interface TwitchChannel {
   user_id: number

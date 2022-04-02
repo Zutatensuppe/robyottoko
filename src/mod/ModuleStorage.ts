@@ -3,7 +3,7 @@ import { logger } from '../common/fn'
 
 const log = logger('ModuleStorage.ts')
 
-const TABLE = 'module'
+const TABLE = 'robyottoko.module'
 
 class ModuleStorage {
   private db: Db

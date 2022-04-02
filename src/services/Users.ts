@@ -1,6 +1,6 @@
 import Db, { WhereRaw } from "../DbPostgres"
 
-const TABLE = 'user'
+const TABLE = 'robyottoko.user'
 
 export interface User {
   id: number
@@ -64,8 +64,9 @@ class Users {
 
   async getGroups(id: number): Promise<string[]> {
     const rows: { name: string }[] = await this.db._getMany(`
-select g.name from user_group g inner join user_x_user_group x
-where x.user_id = ?`, [id])
+select g.name from robyottoko.user_group g
+inner join robyottoko.user_x_user_group x on x.user_group_id = g.id
+where x.user_id = $1`, [id])
     return rows.map(r => r.name)
   }
 

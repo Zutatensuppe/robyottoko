@@ -179,7 +179,7 @@ const run = async () => {
   await webServer.listen()
 
   // one for each user
-  for (const user of userRepo.all()) {
+  for (const user of await userRepo.all()) {
     await initForUser(user)
   }
 
