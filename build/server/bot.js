@@ -2755,7 +2755,7 @@ class TwitchClientManager {
                 if (_isFirstChatStream === null) {
                     const stream = await helixClient.getStreamByUserId(context['room-id']);
                     if (!stream) {
-                        const fakeStartDate = `${new Date(new Date().getTime() - (5 * MINUTE)).toJSON()}`;
+                        const fakeStartDate = new Date(new Date().getTime() - (5 * MINUTE));
                         log$e.info(`No stream is running atm for channel ${context['room-id']}. Using fake start date ${fakeStartDate}.`);
                         _isFirstChatStream = await countChatMessages({
                             broadcaster_user_id: context['room-id'],
@@ -2766,7 +2766,7 @@ class TwitchClientManager {
                     else {
                         _isFirstChatStream = await countChatMessages({
                             broadcaster_user_id: context['room-id'],
-                            created_at: { '$gte': stream.started_at },
+                            created_at: { '$gte': new Date(stream.started_at) },
                             user_name: context.username,
                         }) === 1;
                     }
@@ -6287,9 +6287,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-02T10:36:10.975Z",
+    buildDate: "2022-04-02T10:58:41.299Z",
     // @ts-ignore
-    buildVersion: "1.7.0",
+    buildVersion: "1.7.1",
 };
 
 setLogLevel(config.log.level);
