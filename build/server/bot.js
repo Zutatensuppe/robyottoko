@@ -3185,6 +3185,42 @@ class Db {
                     }
                     continue;
                 }
+                prop = "$gte";
+                if (where[k][prop]) {
+                    wheres.push(k + ` >= $${$i++}`);
+                    values.push(where[k][prop]);
+                    continue;
+                }
+                prop = "$lte";
+                if (where[k][prop]) {
+                    wheres.push(k + ` <= $${$i++}`);
+                    values.push(where[k][prop]);
+                    continue;
+                }
+                prop = "$lte";
+                if (where[k][prop]) {
+                    wheres.push(k + ` <= $${$i++}`);
+                    values.push(where[k][prop]);
+                    continue;
+                }
+                prop = '$gt';
+                if (where[k][prop]) {
+                    wheres.push(k + ` > $${$i++}`);
+                    values.push(where[k][prop]);
+                    continue;
+                }
+                prop = '$lt';
+                if (where[k][prop]) {
+                    wheres.push(k + ` < $${$i++}`);
+                    values.push(where[k][prop]);
+                    continue;
+                }
+                prop = '$ne';
+                if (where[k][prop]) {
+                    wheres.push(k + ` != $${$i++}`);
+                    values.push(where[k][prop]);
+                    continue;
+                }
                 // TODO: implement rest of mongo like query args ($eq, $lte, $in...)
                 throw new Error('not implemented: ' + JSON.stringify(where[k]));
             }
@@ -6287,9 +6323,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-02T10:58:41.299Z",
+    buildDate: "2022-04-02T11:18:55.832Z",
     // @ts-ignore
-    buildVersion: "1.7.1",
+    buildVersion: "1.7.2",
 };
 
 setLogLevel(config.log.level);
