@@ -824,7 +824,7 @@ class Auth {
                         name: user.name,
                         email: user.email,
                         status: user.status,
-                        groups: this.userRepo.getGroups(user.id)
+                        groups: await this.userRepo.getGroups(user.id)
                     };
                 }
                 else {
@@ -6370,7 +6370,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-02T13:29:31.660Z",
+    buildDate: "2022-04-02T21:42:37.908Z",
     // @ts-ignore
     buildVersion: "1.8.0",
 };
