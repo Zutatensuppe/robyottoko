@@ -244,6 +244,26 @@
               </td>
             </tr>
             <tr v-if="item.action === 'media'">
+              <td>Exclude from global widget:</td>
+              <td>
+                <input
+                  type="checkbox"
+                  v-model="item.data.excludeFromGlobalWidget"
+                />
+                <a
+                  class="button is-small ml-1"
+                  v-if="item.data.excludeFromGlobalWidget"
+                  :href="`${widgetUrl}?id=${item.id}`"
+                  >Open widget</a
+                >
+                <div class="help">
+                  If this checkbox is checked, the media will not be played in
+                  the regular media widget. A button will appear with a special
+                  widget URL that will only display media from THIS command.
+                </div>
+              </td>
+            </tr>
+            <tr v-if="item.action === 'media'">
               <td>Image:</td>
               <td>
                 <image-upload
@@ -569,6 +589,11 @@ export default defineComponent({
     },
     baseVolume: {
       default: 100,
+    },
+    widgetUrl: {
+      type: String,
+      required: false,
+      default: "",
     },
   },
   emits: ["update:modelValue", "cancel"],

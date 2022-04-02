@@ -227,6 +227,7 @@
       :modelValue="editCommand"
       :mode="editIdx >= commands.length ? 'create' : 'edit'"
       :baseVolume="baseVolume"
+      :widgetUrl="widgetUrl"
       @update:modelValue="editedCommand"
       @cancel="editCommand = null"
     />
@@ -286,6 +287,11 @@ export default defineComponent({
       type: Boolean,
       required: false,
       default: false,
+    },
+    widgetUrl: {
+      type: String,
+      required: false,
+      default: "",
     },
   },
   emits: ["update:modelValue", "showImagesChange"],

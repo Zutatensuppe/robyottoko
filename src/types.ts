@@ -236,6 +236,7 @@ export type CommandAction =
   | 'sr_queue'
 
 export interface Command {
+  id?: string
   triggers: CommandTrigger[]
   action: CommandAction
   restrict_to: CommandRestrict[]
@@ -314,6 +315,7 @@ export interface ChattersCommand extends Command {
 }
 
 export interface MediaCommandData {
+  excludeFromGlobalWidget: boolean,
   sound: SoundMediaFile,
   image: MediaFile,
   twitch_clip: {

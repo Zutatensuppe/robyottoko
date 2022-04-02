@@ -14,6 +14,7 @@ import {
 interface ComponentData {
   ws: WsClient | null;
   settings: GeneralModuleSettings;
+  commandId: string | null;
 }
 
 export default defineComponent({
@@ -24,15 +25,30 @@ export default defineComponent({
     return {
       ws: null,
       settings: default_settings(),
+      commandId: null,
     };
+  },
+  created() {
+    const params = new Proxy(new URLSearchParams(window.location.search), {
+      get: (searchParams, prop: string) => searchParams.get(prop),
+    });
+    if (params.id) {
+      this.commandId = `${params.id}`;
+    }
   },
   mounted() {
     this.ws = util.wsClient("media");
     this.ws.onMessage("init", (data) => {
       this.settings = data.settings;
     });
-    this.ws.onMessage("playmedia", (data) => {
-      this.$refs["q"].playmedia(data);
+    this.ws.onMessage("playmedia", (data, origData) => {
+      if (!this.commandId && data.excludeFromGlobalWidget) {
+        // skipping this because it should not be displayed in global widget
+      } else if (this.commandId && this.commandId !== origData.id) {
+        // skipping this, as it isn't coming from right command
+      } else {
+        this.$refs["q"].playmedia(data);
+      }
     });
     this.ws.connect();
   },
