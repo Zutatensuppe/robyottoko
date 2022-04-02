@@ -52,7 +52,7 @@ class Auth {
             name: user.name,
             email: user.email,
             status: user.status,
-            groups: this.userRepo.getGroups(user.id)
+            groups: await this.userRepo.getGroups(user.id)
           }
         } else {
           req.token = null
