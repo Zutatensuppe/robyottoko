@@ -15,6 +15,7 @@ export default {
   },
   external: [
     "ws",
+    "pg",
     "multer",
     "express",
     "cookie-parser",
