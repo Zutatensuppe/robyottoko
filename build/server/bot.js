@@ -3581,7 +3581,6 @@ const chatters = (bot, user) => async (_command, client, target, context) => {
         return;
     }
     const say = fn.sayFn(client, target);
-    context['room-id'] = '26851026';
     const stream = await helixClient.getStreamByUserId(context['room-id']);
     if (!stream) {
         say(`It seems this channel is not live at the moment...`);
@@ -6371,7 +6370,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-07T21:17:01.634Z",
+    buildDate: "2022-04-07T21:35:50.074Z",
     // @ts-ignore
     buildVersion: "1.8.1",
 };
