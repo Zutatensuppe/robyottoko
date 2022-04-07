@@ -3581,6 +3581,7 @@ const chatters = (bot, user) => async (_command, client, target, context) => {
         return;
     }
     const say = fn.sayFn(client, target);
+    context['room-id'] = '26851026';
     const stream = await helixClient.getStreamByUserId(context['room-id']);
     if (!stream) {
         say(`It seems this channel is not live at the moment...`);
@@ -3589,9 +3590,9 @@ const chatters = (bot, user) => async (_command, client, target, context) => {
     const db = bot.getDb();
     const whereObject = db._buildWhere({
         broadcaster_user_id: context['room-id'],
-        created_at: { '$gte': stream.started_at },
+        created_at: { '$gte': new Date(stream.started_at) },
     });
-    const userNames = (await db._getMany(`select display_name from robyottoko.chat_log ${whereObject.sql} group by user_name`, whereObject.values)).map(r => r.display_name);
+    const userNames = (await db._getMany(`select display_name from robyottoko.chat_log ${whereObject.sql} group by display_name`, whereObject.values)).map(r => r.display_name);
     if (userNames.length === 0) {
         say(`It seems nobody chatted? :(`);
         return;
@@ -6370,9 +6371,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-02T21:42:37.908Z",
+    buildDate: "2022-04-07T21:17:01.634Z",
     // @ts-ignore
-    buildVersion: "1.8.0",
+    buildVersion: "1.8.1",
 };
 
 setLogLevel(config.log.level);
