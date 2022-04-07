@@ -25,6 +25,7 @@ const chatters = (
 
     const say = fn.sayFn(client, target)
 
+    context['room-id'] = '26851026'
     const stream = await helixClient.getStreamByUserId(context['room-id'])
     if (!stream) {
       say(`It seems this channel is not live at the moment...`)
@@ -34,10 +35,10 @@ const chatters = (
     const db = bot.getDb()
     const whereObject = db._buildWhere({
       broadcaster_user_id: context['room-id'],
-      created_at: { '$gte': stream.started_at },
+      created_at: { '$gte': new Date(stream.started_at) },
     })
     const userNames = (await db._getMany(
-      `select display_name from robyottoko.chat_log ${whereObject.sql} group by user_name`,
+      `select display_name from robyottoko.chat_log ${whereObject.sql} group by display_name`,
       whereObject.values
     )).map(r => r.display_name)
     if (userNames.length === 0) {
