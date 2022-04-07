@@ -25,7 +25,6 @@ const chatters = (
 
     const say = fn.sayFn(client, target)
 
-    context['room-id'] = '26851026'
     const stream = await helixClient.getStreamByUserId(context['room-id'])
     if (!stream) {
       say(`It seems this channel is not live at the moment...`)
