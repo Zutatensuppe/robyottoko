@@ -222,6 +222,9 @@
                       'has-text-danger-dark': !item.data.text[idx],
                     }"
                   />
+                  <div class="help">
+                    <macro-select @selected="insertMacro(idx, $event)" />
+                  </div>
                   <button
                     class="button is-small"
                     :disabled="item.data.text.length <= 1"
@@ -722,6 +725,13 @@ export default defineComponent({
       this.item.triggers = this.item.triggers.filter(
         (val, index) => index !== idx
       );
+    },
+    insertMacro(idx: number, macro: { value: string; title: string }) {
+      if (!this.item) {
+        console.warn("insertMacro: this.item not initialized");
+        return;
+      }
+      this.item.data.text[idx] += macro.value;
     },
     autocompletableVariables(start: string) {
       if (!this.item) {

@@ -332,8 +332,10 @@ export const doReplacements = async (
     {
       regex: /\$customapi\(([^$)]*)\)\['([A-Za-z0-9_ -]+)'\]/g,
       replacer: async (m0: string, m1: string, m2: string): Promise<string> => {
-        const txt = await getText(await doReplacements(m1, command, context, originalCmd, bot, user))
         try {
+          const url = await doReplacements(m1, command, context, originalCmd, bot, user)
+          // both of getText and JSON.parse can fail, so everything in a single try catch
+          const txt = await getText(url)
           return String(JSON.parse(txt)[m2])
         } catch (e: any) {
           log.error(e)
@@ -344,13 +346,20 @@ export const doReplacements = async (
     {
       regex: /\$customapi\(([^$)]*)\)/g,
       replacer: async (m0: string, m1: string): Promise<string> => {
-        return await getText(await doReplacements(m1, command, context, originalCmd, bot, user))
+        try {
+          const url = await doReplacements(m1, command, context, originalCmd, bot, user)
+          return await getText(url)
+        } catch (e: any) {
+          log.error(e)
+          return ''
+        }
       },
     },
     {
       regex: /\$urlencode\(([^$)]*)\)/g,
       replacer: async (m0: string, m1: string): Promise<string> => {
-        return encodeURIComponent(await doReplacements(m1, command, context, originalCmd, bot, user))
+        const value = await doReplacements(m1, command, context, originalCmd, bot, user)
+        return encodeURIComponent(value)
       },
     },
     {

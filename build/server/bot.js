@@ -560,8 +560,10 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
         {
             regex: /\$customapi\(([^$)]*)\)\['([A-Za-z0-9_ -]+)'\]/g,
             replacer: async (m0, m1, m2) => {
-                const txt = await getText(await doReplacements(m1, command, context, originalCmd, bot, user));
                 try {
+                    const url = await doReplacements(m1, command, context, originalCmd, bot, user);
+                    // both of getText and JSON.parse can fail, so everything in a single try catch
+                    const txt = await getText(url);
                     return String(JSON.parse(txt)[m2]);
                 }
                 catch (e) {
@@ -573,13 +575,21 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
         {
             regex: /\$customapi\(([^$)]*)\)/g,
             replacer: async (m0, m1) => {
-                return await getText(await doReplacements(m1, command, context, originalCmd, bot, user));
+                try {
+                    const url = await doReplacements(m1, command, context, originalCmd, bot, user);
+                    return await getText(url);
+                }
+                catch (e) {
+                    log$j.error(e);
+                    return '';
+                }
             },
         },
         {
             regex: /\$urlencode\(([^$)]*)\)/g,
             replacer: async (m0, m1) => {
-                return encodeURIComponent(await doReplacements(m1, command, context, originalCmd, bot, user));
+                const value = await doReplacements(m1, command, context, originalCmd, bot, user);
+                return encodeURIComponent(value);
             },
         },
         {
@@ -6370,9 +6380,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-07T21:35:50.074Z",
+    buildDate: "2022-04-08T07:09:15.803Z",
     // @ts-ignore
-    buildVersion: "1.8.1",
+    buildVersion: "1.8.2",
 };
 
 setLogLevel(config.log.level);

@@ -29,6 +29,7 @@ import Player from "./components/Player.vue";
 import Slider from "./components/Slider.vue";
 import VolumeSlider from "./components/VolumeSlider.vue";
 import ResponsiveImage from "./components/ResponsiveImage.vue";
+import MacroSelect from "./components/MacroSelect.vue";
 import Navbar from "./components/Navbar.vue";
 import Duration from "./components/Duration.vue";
 import DoubleclickButton from "./components/DoubleclickButton.vue";
@@ -188,6 +189,7 @@ const run = async () => {
   app.component('draggable', draggable)
   app.component('duration-input', DurationInput)
   app.component('duration', Duration)
+  app.component('macro-select', MacroSelect)
   app.component('navbar', Navbar)
   app.component('player', Player)
   app.component('responsive-image', ResponsiveImage)

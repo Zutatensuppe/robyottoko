@@ -2,8 +2,14 @@
 
 @import "font-awesome/css/font-awesome.min.css";
 
-html { height: 100% }
-body { min-height: 100%; margin: 0; }
+html {
+  height: 100%
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+}
 
 code {
   white-space: pre;
@@ -17,12 +23,17 @@ code {
 }
 
 /* * { vertical-align: text-bottom; } */
-.fa { vertical-align: middle; }
+.fa {
+  vertical-align: middle;
+}
 
 a {
   color: $link_color;
   text-decoration: none;
-  &:hover { color: $link_hover_color; }
+
+  &:hover {
+    color: $link_hover_color;
+  }
 }
 
 .center-screen {
@@ -34,15 +45,27 @@ a {
   min-height: 40vh;
 }
 
-.player { display: inline-block; }
+.player {
+  display: inline-block;
+}
 
 .spacerow {
   margin-bottom: 5px;
-  .spacelabel { display: inline-block; width: 120px; }
-  .spaceinput { display: inline-block; width: 200px; }
+
+  .spacelabel {
+    display: inline-block;
+    width: 120px;
+  }
+
+  .spaceinput {
+    display: inline-block;
+    width: 200px;
+  }
 }
 
-.flip-horizontal { transform: scaleX(-1); }
+.flip-horizontal {
+  transform: scaleX(-1);
+}
 
 .video-16-9 {
   position: relative;
@@ -74,7 +97,7 @@ a {
   background: #fff;
   flex-wrap: wrap;
 
-  > *:not(:last-child) {
+  >*:not(:last-child) {
     margin-bottom: 0;
   }
 }
@@ -93,14 +116,19 @@ body {
   right: 0;
   z-index: 10;
 
-  > div {
+  >div {
     display: flex;
   }
 }
 
-#main { padding: .5em; padding-bottom: 10em; }
+#main {
+  padding: .5em;
+  padding-bottom: 10em;
+}
 
-#player { margin-bottom: .5em; }
+#player {
+  margin-bottom: .5em;
+}
 
 .media-holder {
   border-radius: $radius;
@@ -114,7 +142,7 @@ body {
 
 .media-holder-inline {
   display: flex;
-  align-items:center;
+  align-items: center;
   padding: 0;
   border: 0;
 
@@ -127,11 +155,22 @@ body {
   width: 100%;
 }
 
-input[type="color"] { min-width: 100px; }
+input[type="color"] {
+  min-width: 100px;
+}
 
-.number-input { width: 100px; display: inline-block; }
+.number-input {
+  width: 100px;
+  display: inline-block;
+}
 
-
+.macro-select {
+  .table-holder {
+    max-height: 300px;
+    overflow-y: scroll;
+    overscroll-behavior: contain;
+  }
+}
 
 html.darkmode {
   filter: invert(86%) hue-rotate(180deg) brightness(105%) contrast(105%);
@@ -145,7 +184,11 @@ html.darkmode {
   span[role="img"] {
     filter: invert(100%) hue-rotate(180deg) brightness(105%) contrast(105%);
   }
-  img, svg, iframe, .emoji-common-emoji-sprite {
+
+  img,
+  svg,
+  iframe,
+  .emoji-common-emoji-sprite {
     filter: invert(100%) hue-rotate(180deg) brightness(105%) contrast(105%);
   }
 
@@ -153,12 +196,12 @@ html.darkmode {
     filter: invert(100%) hue-rotate(180deg) brightness(105%) contrast(105%);
   }
 
-  div[style^="background-image:"]{
+  div[style^="background-image:"] {
     filter: invert(100%) hue-rotate(180deg) brightness(105%) contrast(105%);
   }
 
   /* Fix scroll background problems */
-  [data-testid="Content"] > div:first-child {
+  [data-testid="Content"]>div:first-child {
     background: white;
   }
 }
