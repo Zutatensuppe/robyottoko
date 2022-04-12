@@ -228,8 +228,14 @@ class TwitchHelixClient {
       grant_type: 'client_credentials',
       scope: scopes.join(' '),
     })
-    const json = (await postJson(url)) as TwitchHelixOauthTokenResponseData
-    return json.access_token
+    let json
+    try {
+      json = await postJson(url) as TwitchHelixOauthTokenResponseData
+      return json.access_token
+    } catch (e) {
+      log.error(url, json, e)
+      return ''
+    }
   }
 
   _url(path: string): string {
@@ -239,11 +245,12 @@ class TwitchHelixClient {
   // https://dev.twitch.tv/docs/api/reference#get-users
   async _getUserBy(query: any): Promise<TwitchHelixUserSearchResponseDataEntry | null> {
     const url = this._url(`/users${asQueryArgs(query)}`)
-    const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixUserSearchResponseData
+    let json
     try {
+      json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixUserSearchResponseData
       return json.data[0]
     } catch (e) {
-      log.error(json)
+      log.error(url, json, e)
       return null
     }
   }
@@ -273,12 +280,13 @@ class TwitchHelixClient {
       started_at: startedAtRfc3339,
       ended_at: endedAtRfc3339,
     })}`)
-    const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixClipSearchResponseData
+    let json
     try {
+      json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixClipSearchResponseData
       const filtered = json.data.filter(item => item.duration <= maxDurationSeconds)
       return filtered[0]
     } catch (e) {
-      log.error(json)
+      log.error(url, json, e)
       return null
     }
   }
@@ -286,38 +294,55 @@ class TwitchHelixClient {
   // https://dev.twitch.tv/docs/api/reference#get-streams
   async getStreamByUserId(userId: string) {
     const url = this._url(`/streams${asQueryArgs({ user_id: userId })}`)
-    const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixStreamSearchResponseData
+    let json
     try {
+      json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixStreamSearchResponseData
       return json.data[0]
     } catch (e) {
-      log.error(json)
+      log.error(url, json, e)
       return null
     }
   }
 
   async getSubscriptions() {
     const url = this._url('/eventsub/subscriptions')
-    return await getJson(url, await this.withAuthHeaders())
+    try {
+      return await getJson(url, await this.withAuthHeaders())
+    } catch (e) {
+      log.error(url, e)
+      return null
+    }
   }
 
   async deleteSubscription(id: string) {
     const url = this._url(`/eventsub/subscriptions${asQueryArgs({ id: id })}`)
-    return await requestText('delete', url, await this.withAuthHeaders())
+    try {
+      return await requestText('delete', url, await this.withAuthHeaders())
+    } catch (e) {
+      log.error(url, e)
+      return null
+    }
   }
 
   async createSubscription(subscription: TwitchHelixSubscription) {
     const url = this._url('/eventsub/subscriptions')
-    return await postJson(url, await this.withAuthHeaders(asJson(subscription)))
+    try {
+      return await postJson(url, await this.withAuthHeaders(asJson(subscription)))
+    } catch (e) {
+      log.error(url, e)
+      return null
+    }
   }
 
   // https://dev.twitch.tv/docs/api/reference#search-categories
   async searchCategory(searchString: string) {
     const url = this._url(`/search/categories${asQueryArgs({ query: searchString })}`)
-    const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixCategorySearchResponseData
+    let json
     try {
+      json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixCategorySearchResponseData
       return getBestEntryFromCategorySearchItems(searchString, json)
     } catch (e) {
-      log.error(json)
+      log.error(url, json)
       return null
     }
   }
@@ -325,11 +350,12 @@ class TwitchHelixClient {
   // https://dev.twitch.tv/docs/api/reference#get-channel-information
   async getChannelInformation(broadcasterId: string) {
     const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`)
-    const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixGetChannelInformationResponseData
+    let json
     try {
+      json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixGetChannelInformationResponseData
       return json.data[0]
     } catch (e) {
-      log.error(json)
+      log.error(url, json)
       return null
     }
   }
@@ -342,7 +368,12 @@ class TwitchHelixClient {
     }
 
     const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`)
-    return await request('patch', url, withHeaders(this._authHeaders(accessToken), asJson(data)))
+    try {
+      return await request('patch', url, withHeaders(this._authHeaders(accessToken), asJson(data)))
+    } catch (e) {
+      log.error(url, e)
+      return null
+    }
   }
 
   async getAllTags() {
@@ -364,8 +395,12 @@ class TwitchHelixClient {
   // https://dev.twitch.tv/docs/api/reference#get-stream-tags
   async getStreamTags(broadcasterId: string) {
     const url = this._url(`/streams/tags${asQueryArgs({ broadcaster_id: broadcasterId })}`)
-    const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixGetStreamTagsResponseData
-    return json
+    try {
+      return await getJson(url, await this.withAuthHeaders()) as TwitchHelixGetStreamTagsResponseData
+    } catch (e) {
+      log.error(url, e)
+      return null
+    }
   }
 
   // https://dev.twitch.tv/docs/api/reference#get-custom-reward
@@ -376,11 +411,16 @@ class TwitchHelixClient {
     }
 
     const url = this._url(`/channel_points/custom_rewards${asQueryArgs({ broadcaster_id: broadcasterId })}`)
-    const json = await getJson(url, withHeaders(this._authHeaders(accessToken))) as any
-    if (json.error) {
+    try {
+      const json = await getJson(url, withHeaders(this._authHeaders(accessToken))) as any
+      if (json.error) {
+        return null
+      }
+      return json as TwitchHelixGetChannelPointsCustomRewardsResponseData
+    } catch (e) {
+      console.log(url, e)
       return null
     }
-    return json as TwitchHelixGetChannelPointsCustomRewardsResponseData
   }
 
   async getAllChannelPointsCustomRewards() {
@@ -402,13 +442,19 @@ class TwitchHelixClient {
     }
 
     const url = this._url(`/streams/tags${asQueryArgs({ broadcaster_id: broadcasterId })}`)
-    return await request('put', url, withHeaders(this._authHeaders(accessToken), asJson({ tag_ids: tagIds })))
+    try {
+      return await request('put', url, withHeaders(this._authHeaders(accessToken), asJson({ tag_ids: tagIds })))
+    } catch (e) {
+      console.log(url, e)
+      return null
+    }
   }
 
   async validateOAuthToken(broadcasterId: string, accessToken: string): Promise<ValidateOAuthTokenResponse> {
     const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`)
-    const json = await getJson(url, withHeaders(this._authHeaders(accessToken))) as TwitchHelixGetChannelInformationResponseData
+    let json
     try {
+      json = await getJson(url, withHeaders(this._authHeaders(accessToken))) as TwitchHelixGetChannelInformationResponseData
       return { valid: json.data[0] ? true : false, data: json }
     } catch (e) {
       return { valid: false, data: json }
