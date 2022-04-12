@@ -5,7 +5,7 @@ import WebSocketServer from './net/WebSocketServer'
 import WebServer from './WebServer'
 import TwitchClientManager from './net/TwitchClientManager'
 import ModuleStorage from './mod/ModuleStorage'
-import { logger, setLogLevel } from './common/fn'
+import { logger, MINUTE, SECOND, setLogLevel } from './common/fn'
 import Users, { User } from './services/Users'
 import Tokens from './services/Tokens'
 import TwitchChannels from './services/TwitchChannels'
@@ -140,14 +140,14 @@ const run = async () => {
     const sendStatus = async () => {
       const client = clientManager.getHelixClient()
       if (!client) {
-        setTimeout(sendStatus, 5000)
+        setTimeout(sendStatus, 5 * SECOND)
         return
       }
 
       // if the user is not connected through a websocket atm, dont
       // try to validate oauth tokens
       if (webSocketServer.sockets([user.id]).length === 0) {
-        setTimeout(sendStatus, 5000)
+        setTimeout(sendStatus, 5 * SECOND)
         return
       }
 
@@ -170,7 +170,7 @@ const run = async () => {
 
       const data = { event: 'status', data: { problems } }
       webSocketServer.notifyAll([user.id], 'core', data)
-      setTimeout(sendStatus, 5000)
+      setTimeout(sendStatus, 1 * MINUTE)
     }
     sendStatus()
   }

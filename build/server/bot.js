@@ -6442,7 +6442,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-12T05:18:05.511Z",
+    buildDate: "2022-04-12T05:39:08.349Z",
     // @ts-ignore
     buildVersion: "1.8.3",
 };
@@ -6531,13 +6531,13 @@ const run = async () => {
         const sendStatus = async () => {
             const client = clientManager.getHelixClient();
             if (!client) {
-                setTimeout(sendStatus, 5000);
+                setTimeout(sendStatus, 5 * SECOND);
                 return;
             }
             // if the user is not connected through a websocket atm, dont
             // try to validate oauth tokens
             if (webSocketServer.sockets([user.id]).length === 0) {
-                setTimeout(sendStatus, 5000);
+                setTimeout(sendStatus, 5 * SECOND);
                 return;
             }
             const problems = [];
@@ -6555,7 +6555,7 @@ const run = async () => {
             }
             const data = { event: 'status', data: { problems } };
             webSocketServer.notifyAll([user.id], 'core', data);
-            setTimeout(sendStatus, 5000);
+            setTimeout(sendStatus, 1 * MINUTE);
         };
         sendStatus();
     };
