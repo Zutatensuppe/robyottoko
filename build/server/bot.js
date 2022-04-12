@@ -3980,6 +3980,10 @@ const removeStreamTags = (originalCmd, bot, user) => async (command, client, tar
     const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag;
     const tmpTag = await fn.doReplacements(tag, command, context, originalCmd, bot, user);
     const tagsResponse = await helixClient.getStreamTags(context['room-id']);
+    if (!tagsResponse) {
+        say(`❌ Unable to fetch current tags.`);
+        return;
+    }
     if (tmpTag === '') {
         const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
         say(`Current tags: ${names.join(', ')}`);
@@ -6438,7 +6442,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-12T04:52:59.830Z",
+    buildDate: "2022-04-12T05:18:05.511Z",
     // @ts-ignore
     buildVersion: "1.8.3",
 };

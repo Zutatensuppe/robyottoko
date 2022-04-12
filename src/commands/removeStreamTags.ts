@@ -29,6 +29,10 @@ const removeStreamTags = (
     const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag
     const tmpTag = await fn.doReplacements(tag, command, context, originalCmd, bot, user)
     const tagsResponse = await helixClient.getStreamTags(context['room-id'])
+    if (!tagsResponse) {
+      say(`❌ Unable to fetch current tags.`)
+      return
+    }
     if (tmpTag === '') {
       const names = tagsResponse.data.map(entry => entry.localization_names['en-us'])
       say(`Current tags: ${names.join(', ')}`)
