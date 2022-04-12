@@ -1110,8 +1110,15 @@ class TwitchHelixClient {
             grant_type: 'client_credentials',
             scope: scopes.join(' '),
         });
-        const json = (await postJson(url));
-        return json.access_token;
+        let json;
+        try {
+            json = await postJson(url);
+            return json.access_token;
+        }
+        catch (e) {
+            log$h.error(url, json, e);
+            return '';
+        }
     }
     _url(path) {
         return `${API_BASE}${path}`;
@@ -1119,12 +1126,13 @@ class TwitchHelixClient {
     // https://dev.twitch.tv/docs/api/reference#get-users
     async _getUserBy(query) {
         const url = this._url(`/users${asQueryArgs(query)}`);
-        const json = await getJson(url, await this.withAuthHeaders());
+        let json;
         try {
+            json = await getJson(url, await this.withAuthHeaders());
             return json.data[0];
         }
         catch (e) {
-            log$h.error(json);
+            log$h.error(url, json, e);
             return null;
         }
     }
@@ -1145,61 +1153,83 @@ class TwitchHelixClient {
             started_at: startedAtRfc3339,
             ended_at: endedAtRfc3339,
         })}`);
-        const json = await getJson(url, await this.withAuthHeaders());
+        let json;
         try {
+            json = await getJson(url, await this.withAuthHeaders());
             const filtered = json.data.filter(item => item.duration <= maxDurationSeconds);
             return filtered[0];
         }
         catch (e) {
-            log$h.error(json);
+            log$h.error(url, json, e);
             return null;
         }
     }
     // https://dev.twitch.tv/docs/api/reference#get-streams
     async getStreamByUserId(userId) {
         const url = this._url(`/streams${asQueryArgs({ user_id: userId })}`);
-        const json = await getJson(url, await this.withAuthHeaders());
+        let json;
         try {
+            json = await getJson(url, await this.withAuthHeaders());
             return json.data[0];
         }
         catch (e) {
-            log$h.error(json);
+            log$h.error(url, json, e);
             return null;
         }
     }
     async getSubscriptions() {
         const url = this._url('/eventsub/subscriptions');
-        return await getJson(url, await this.withAuthHeaders());
+        try {
+            return await getJson(url, await this.withAuthHeaders());
+        }
+        catch (e) {
+            log$h.error(url, e);
+            return null;
+        }
     }
     async deleteSubscription(id) {
         const url = this._url(`/eventsub/subscriptions${asQueryArgs({ id: id })}`);
-        return await requestText('delete', url, await this.withAuthHeaders());
+        try {
+            return await requestText('delete', url, await this.withAuthHeaders());
+        }
+        catch (e) {
+            log$h.error(url, e);
+            return null;
+        }
     }
     async createSubscription(subscription) {
         const url = this._url('/eventsub/subscriptions');
-        return await postJson(url, await this.withAuthHeaders(asJson(subscription)));
+        try {
+            return await postJson(url, await this.withAuthHeaders(asJson(subscription)));
+        }
+        catch (e) {
+            log$h.error(url, e);
+            return null;
+        }
     }
     // https://dev.twitch.tv/docs/api/reference#search-categories
     async searchCategory(searchString) {
         const url = this._url(`/search/categories${asQueryArgs({ query: searchString })}`);
-        const json = await getJson(url, await this.withAuthHeaders());
+        let json;
         try {
+            json = await getJson(url, await this.withAuthHeaders());
             return getBestEntryFromCategorySearchItems(searchString, json);
         }
         catch (e) {
-            log$h.error(json);
+            log$h.error(url, json);
             return null;
         }
     }
     // https://dev.twitch.tv/docs/api/reference#get-channel-information
     async getChannelInformation(broadcasterId) {
         const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`);
-        const json = await getJson(url, await this.withAuthHeaders());
+        let json;
         try {
+            json = await getJson(url, await this.withAuthHeaders());
             return json.data[0];
         }
         catch (e) {
-            log$h.error(json);
+            log$h.error(url, json);
             return null;
         }
     }
@@ -1210,7 +1240,13 @@ class TwitchHelixClient {
             return null;
         }
         const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`);
-        return await request('patch', url, withHeaders(this._authHeaders(accessToken), asJson(data)));
+        try {
+            return await request('patch', url, withHeaders(this._authHeaders(accessToken), asJson(data)));
+        }
+        catch (e) {
+            log$h.error(url, e);
+            return null;
+        }
     }
     async getAllTags() {
         const allTags = [];
@@ -1230,8 +1266,13 @@ class TwitchHelixClient {
     // https://dev.twitch.tv/docs/api/reference#get-stream-tags
     async getStreamTags(broadcasterId) {
         const url = this._url(`/streams/tags${asQueryArgs({ broadcaster_id: broadcasterId })}`);
-        const json = await getJson(url, await this.withAuthHeaders());
-        return json;
+        try {
+            return await getJson(url, await this.withAuthHeaders());
+        }
+        catch (e) {
+            log$h.error(url, e);
+            return null;
+        }
     }
     // https://dev.twitch.tv/docs/api/reference#get-custom-reward
     async getChannelPointsCustomRewards(broadcasterId) {
@@ -1240,11 +1281,17 @@ class TwitchHelixClient {
             return null;
         }
         const url = this._url(`/channel_points/custom_rewards${asQueryArgs({ broadcaster_id: broadcasterId })}`);
-        const json = await getJson(url, withHeaders(this._authHeaders(accessToken)));
-        if (json.error) {
+        try {
+            const json = await getJson(url, withHeaders(this._authHeaders(accessToken)));
+            if (json.error) {
+                return null;
+            }
+            return json;
+        }
+        catch (e) {
+            console.log(url, e);
             return null;
         }
-        return json;
     }
     async getAllChannelPointsCustomRewards() {
         const rewards = {};
@@ -1263,12 +1310,19 @@ class TwitchHelixClient {
             return null;
         }
         const url = this._url(`/streams/tags${asQueryArgs({ broadcaster_id: broadcasterId })}`);
-        return await request('put', url, withHeaders(this._authHeaders(accessToken), asJson({ tag_ids: tagIds })));
+        try {
+            return await request('put', url, withHeaders(this._authHeaders(accessToken), asJson({ tag_ids: tagIds })));
+        }
+        catch (e) {
+            console.log(url, e);
+            return null;
+        }
     }
     async validateOAuthToken(broadcasterId, accessToken) {
         const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`);
-        const json = await getJson(url, withHeaders(this._authHeaders(accessToken)));
+        let json;
         try {
+            json = await getJson(url, withHeaders(this._authHeaders(accessToken)));
             return { valid: json.data[0] ? true : false, data: json };
         }
         catch (e) {
@@ -6380,7 +6434,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-08T07:09:15.803Z",
+    buildDate: "2022-04-12T04:37:23.649Z",
     // @ts-ignore
     buildVersion: "1.8.2",
 };
