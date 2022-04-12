@@ -6442,7 +6442,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-12T05:39:08.349Z",
+    buildDate: "2022-04-12T06:16:41.786Z",
     // @ts-ignore
     buildVersion: "1.8.3",
 };
@@ -6550,7 +6550,12 @@ const run = async () => {
                 if (!resp.valid) {
                     log.error(`Unable to validate OAuth token. user: ${user.name}: channel ${twitchChannel.channel_name}`);
                     log.error(resp.data);
-                    problems.push(`Access token for channel ${twitchChannel.channel_name} is invalid.`);
+                    problems.push({
+                        message: 'access_token_invalid',
+                        details: {
+                            channel_name: twitchChannel.channel_name,
+                        },
+                    });
                 }
             }
             const data = { event: 'status', data: { problems } };

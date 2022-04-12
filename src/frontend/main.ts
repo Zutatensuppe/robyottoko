@@ -26,6 +26,7 @@ import SoundUpload from './components/SoundUpload.vue'
 import DurationInput from "./components/DurationInput.vue";
 import Checkbox from "./components/Checkbox.vue";
 import Player from "./components/Player.vue";
+import ProblemsDialog from "./components/ProblemsDialog.vue";
 import Slider from "./components/Slider.vue";
 import VolumeSlider from "./components/VolumeSlider.vue";
 import ResponsiveImage from "./components/ResponsiveImage.vue";
@@ -192,6 +193,7 @@ const run = async () => {
   app.component('macro-select', MacroSelect)
   app.component('navbar', Navbar)
   app.component('player', Player)
+  app.component('problems-dialog', ProblemsDialog)
   app.component('responsive-image', ResponsiveImage)
   app.component('slider', Slider)
   app.component('upload', Upload)
