@@ -10,4 +10,5 @@ const wsClient = (path: string) => {
 
 export default {
   wsClient,
+  getParam: (name: string) => (new URLSearchParams(window.location.search)).get(name) || '',
 }

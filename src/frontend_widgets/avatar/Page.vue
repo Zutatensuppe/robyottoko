@@ -1,54 +1,42 @@
 <template>
   <div class="base" v-if="initialized">
-    <div
-      class="avatar"
-      :style="{
-        width: `${tuberDef.width}px`,
-        height: `${tuberDef.height}px`,
-      }"
-    >
-      <avatar-animation
-        v-for="(anim, idx) in animations"
-        :key="idx"
-        :frames="anim.frames"
-        :width="tuberDef.width"
-        :height="tuberDef.height"
-      />
+    <div class="avatar" :style="{
+      width: `${tuberDef.width}px`,
+      height: `${tuberDef.height}px`,
+    }">
+      <avatar-animation v-for="(anim, idx) in animations" :key="idx" :frames="anim.frames" :width="tuberDef.width"
+        :height="tuberDef.height" />
     </div>
 
     <table v-if="controls && showControls">
-      <tr v-if="!this.avatarFixed">
+      <tr v-if="!avatarFixed">
         <td>Tubers:</td>
         <td>
-          <button
-            v-for="(avatarDef, idx) in settings.avatarDefinitions"
-            :key="idx"
-            @click="setTuber(idx, true)"
-            :class="{ active: tuberIdx === idx }"
-          >
+          <button v-for="(avatarDef, idx) in settings.avatarDefinitions" :key="idx" @click="setTuber(idx, true)"
+            :class="{ active: tuberIdx === idx }">
             {{ avatarDef.name }}
           </button>
         </td>
       </tr>
-      <tr v-if="!this.avatarFixed">
-        <td colspan="2"><hr /></td>
+      <tr v-if="!avatarFixed">
+        <td colspan="2">
+          <hr />
+        </td>
       </tr>
       <tr>
         <td>Start Mic</td>
         <td><button @click="startMic">Start</button></td>
       </tr>
       <tr>
-        <td colspan="2"><hr /></td>
+        <td colspan="2">
+          <hr />
+        </td>
       </tr>
       <tr v-for="(def, idx) in tuberDef.slotDefinitions" :key="idx">
         <td>{{ def.slot }}:</td>
         <td>
-          <button
-            v-for="(item, idx2) in def.items"
-            :key="idx2"
-            @click="setSlot(def.slot, idx2, true)"
-            :class="{ active: slots[def.slot] === idx2 }"
-          >
+          <button v-for="(item, idx2) in def.items" :key="idx2" @click="setSlot(def.slot, idx2, true)"
+            :class="{ active: slots[def.slot] === idx2 }">
             {{ item.title }}
           </button>
         </td>
@@ -56,12 +44,8 @@
       <tr>
         <td>State:</td>
         <td>
-          <button
-            v-for="(def, idx) in tuberDef.stateDefinitions"
-            :key="idx"
-            @click="lockState(def.value, true)"
-            :class="{ active: lockedState === def.value }"
-          >
+          <button v-for="(def, idx) in tuberDef.stateDefinitions" :key="idx" @click="lockState(def.value, true)"
+            :class="{ active: lockedState === def.value }">
             {{ def.value }}
           </button>
         </td>
@@ -314,12 +298,7 @@ export default defineComponent({
     },
   },
   created() {
-    const params = new Proxy(new URLSearchParams(window.location.search), {
-      get: (searchParams, prop: string) => searchParams.get(prop),
-    });
-    if (params.avatar) {
-      this.avatarFixed = `${params.avatar}`;
-    }
+    this.avatarFixed = util.getParam('avatar')
   },
   mounted() {
     this.ws = util.wsClient(this.widget);

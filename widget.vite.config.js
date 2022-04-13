@@ -7,6 +7,7 @@ export default vite.defineConfig({
   plugins: [vue()],
   root: `./src/frontend_widgets/${widget}`,
   base: `/static/widgets/${widget}/`,
+  envDir: '../../../',
   build: {
     outDir: `../../../build/public/static/widgets/${widget}`,
     emptyOutDir: true,

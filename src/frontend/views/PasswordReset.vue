@@ -2,42 +2,26 @@
   <div class="view center-screen mt-2">
     <h1 class="title is-4">Hyottoko.club</h1>
 
-    <div
-      class="field has-background-success-light has-text-success-dark"
-      v-if="success"
-    >
+    <div class="field has-background-success-light has-text-success-dark" v-if="success">
       Password successfully set. Click
       <router-link :to="{ name: 'login' }">here</router-link>
       to login.
     </div>
     <div v-else>
-      <div
-        class="field has-background-danger-light has-text-danger-dark"
-        v-if="error"
-      >
+      <div class="field has-background-danger-light has-text-danger-dark" v-if="error">
         {{ error }}
       </div>
       <div class="field">
         <div class="control has-icons-left">
-          <input
-            class="input"
-            type="password"
-            placeholder="New Password"
-            v-model="pass"
-            @keyup="error = ''"
-            @keyup.enter="submit"
-          />
+          <input class="input" type="password" placeholder="New Password" v-model="pass" @keyup="error = ''"
+            @keyup.enter="submit" />
           <span class="icon is-left">
             <i class="fa fa-lock"></i>
           </span>
         </div>
       </div>
       <div class="field">
-        <button
-          class="button is-primary is-fullwidth"
-          :disabled="canSubmit ? null : true"
-          @click="submit"
-        >
+        <button class="button is-primary is-fullwidth" :disabled="canSubmit ? null : true" @click="submit">
           Save Password
         </button>
       </div>
@@ -47,6 +31,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import api from "../api";
+import util from "../util";
 
 export default defineComponent({
   data: () => ({
@@ -61,9 +46,7 @@ export default defineComponent({
   },
   methods: {
     async submit() {
-      const params = new URLSearchParams(window.location.search);
-      const token = params.get("t");
-
+      const token = util.getParam('t')
       this.success = false;
       this.error = "";
       const res = await api.resetPassword({ pass: this.pass, token });
