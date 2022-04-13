@@ -14,7 +14,7 @@ import {
 interface ComponentData {
   ws: WsClient | null;
   settings: GeneralModuleSettings;
-  commandId: string | null;
+  commandId: string;
 }
 
 export default defineComponent({
@@ -25,16 +25,11 @@ export default defineComponent({
     return {
       ws: null,
       settings: default_settings(),
-      commandId: null,
+      commandId: '',
     };
   },
   created() {
-    const params = new Proxy(new URLSearchParams(window.location.search), {
-      get: (searchParams, prop: string) => searchParams.get(prop),
-    });
-    if (params.id) {
-      this.commandId = `${params.id}`;
-    }
+    this.commandId = util.getParam('id')
   },
   mounted() {
     this.ws = util.wsClient("media");

@@ -15,47 +15,23 @@
     <table ref="text_table" class="btm_table">
       <tr>
         <td align="center" valign="bottom">
-          <div
-            v-if="settings.recognition.display"
-            class="stroke-single-bg"
-            ref="speech_text-bg"
-          >
+          <div v-if="settings.recognition.display" class="stroke-single-bg" ref="speech_text-bg">
             {{ recognizedText }}
           </div>
-          <div
-            v-if="settings.recognition.display"
-            class="stroke-single-fg"
-            ref="speech_text-fg"
-          >
+          <div v-if="settings.recognition.display" class="stroke-single-fg" ref="speech_text-fg">
             {{ recognizedText }}
           </div>
-          <div
-            v-if="settings.recognition.display"
-            class="stroke-single-imb"
-            ref="speech_text-imb"
-          >
+          <div v-if="settings.recognition.display" class="stroke-single-imb" ref="speech_text-imb">
             {{ recognizedText }}
           </div>
 
-          <div
-            v-if="settings.translation.enabled"
-            class="stroke-single-bg"
-            ref="trans_text-bg"
-          >
+          <div v-if="settings.translation.enabled" class="stroke-single-bg" ref="trans_text-bg">
             {{ translatedText }}
           </div>
-          <div
-            v-if="settings.translation.enabled"
-            class="stroke-single-fg"
-            ref="trans_text-fg"
-          >
+          <div v-if="settings.translation.enabled" class="stroke-single-fg" ref="trans_text-fg">
             {{ translatedText }}
           </div>
-          <div
-            v-if="settings.translation.enabled"
-            class="stroke-single-imb"
-            ref="trans_text-imb"
-          >
+          <div v-if="settings.translation.enabled" class="stroke-single-imb" ref="trans_text-imb">
             {{ translatedText }}
           </div>
         </td>
@@ -101,10 +77,6 @@ export default defineComponent({
       // texts
       texts: [] as { recognized: string; translated: string; ready: boolean }[],
       timeout: null, // null | number
-
-      // // timeout objects to hide text after time
-      // recognizedTextTimeout: null,
-      // translatedTextTimeout: null,
 
       // settings (overwritten from data ws)
       settings: null,
