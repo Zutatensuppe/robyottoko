@@ -14,7 +14,7 @@ import util from "../util";
 import fn from "../../common/fn";
 import { PomoEffect } from "../../mod/modules/PomoModuleCommon";
 import WsClient from "../../frontend/WsClient";
-import MediaQueueElement from "../MediaQueueElement.vue";
+import MediaQueueElement, { MediaQueueElementInstance } from "../MediaQueueElement.vue";
 
 export default defineComponent({
   components: {
@@ -93,6 +93,9 @@ export default defineComponent({
         color: this.data.settings.color,
       };
     },
+    q(): MediaQueueElementInstance {
+      return this.$refs.q as MediaQueueElementInstance
+    },
   },
   methods: {
     tick() {
@@ -114,13 +117,9 @@ export default defineComponent({
       this.tick();
     });
     this.ws.onMessage("effect", (data: PomoEffect) => {
-      this.$refs["q"].playmedia({
+      this.q.playmedia({
         sound: data.sound,
-        image: {
-          file: "",
-          filename: "",
-          urlpath: "",
-        },
+        image: { file: "", filename: "", urlpath: "" },
         twitch_clip: { url: "", volume: 100 },
         image_url: "",
         minDurationMs: 0,

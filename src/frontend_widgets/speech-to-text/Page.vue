@@ -109,6 +109,9 @@ export default defineComponent({
         this.settings.translation.synthesize
       );
     },
+    textTable(): HTMLTableElement {
+      return this.$refs["text_table"] as HTMLTableElement
+    },
   },
   methods: {
     initSpeech() {
@@ -177,9 +180,9 @@ export default defineComponent({
       }
 
       if (styles.vAlign === "top") {
-        this.$refs["text_table"].style.bottom = null;
+        this.textTable.style.bottom = null;
       } else if (styles.vAlign === "bottom") {
-        this.$refs["text_table"].style.bottom = 0;
+        this.textTable.style.bottom = 0;
       }
 
       const applyTextStyles = (imb, fg, bg, styles, bgColor) => {

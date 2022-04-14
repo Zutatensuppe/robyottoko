@@ -1,52 +1,24 @@
 <template>
-  <div
-    class="avatar-slot-item-state-editor card"
-    :class="{ 'dragging-over': draggingOver }"
-    @dragover="onDragOver"
-    @dragenter="onDragEnter"
-    @dragleave="onDragLeave"
-    @drop="onDrop"
-  >
+  <div class="avatar-slot-item-state-editor card" :class="{ 'dragging-over': draggingOver }" @dragover="onDragOver"
+    @dragenter="onDragEnter" @dragleave="onDragLeave" @drop="onDrop">
     <div class="avatar-slot-item-state-editor-title">
       {{ modelValue.state }}
     </div>
-    <avatar-animation
-      :frames="modelValue.frames"
-      v-if="modelValue.frames.length"
-    />
-    <avatar-animation
-      v-else
-      :frames="defaultState.frames"
-      class="avatar-fallback-animation"
-    />
+    <avatar-animation :frames="modelValue.frames" v-if="modelValue.frames.length" />
+    <avatar-animation v-else :frames="defaultState.frames" class="avatar-fallback-animation" />
     <div>
-      <div
-        class="avatar-animation-card mr-1"
-        v-for="(frame, idx) in modelValue.frames"
-        :key="idx"
-      >
-        <avatar-frame-upload
-          :modelValue="frame"
-          @update:modelValue="frameChanged(idx, $event)"
-        />
+      <div class="avatar-animation-card mr-1" v-for="(frame, idx) in modelValue.frames" :key="idx">
+        <avatar-frame-upload :modelValue="frame" @update:modelValue="frameChanged(idx, $event)" />
       </div>
 
       <div class="avatar-animation-card mr-1">
         <span class="avatar-animation-frame">
-          <span class="button is-small" @click="addFrame"
-            ><i class="fa fa-plus"></i
-          ></span>
+          <span class="button is-small" @click="addFrame"><i class="fa fa-plus"></i></span>
         </span>
       </div>
     </div>
 
-    <upload
-      v-show="false"
-      @uploaded="onUploaded"
-      accept="image/*"
-      label=""
-      ref="uploadComponent"
-    />
+    <upload v-show="false" @uploaded="onUploaded" accept="image/*" label="" ref="uploadComponent" />
   </div>
 </template>
 
@@ -57,6 +29,7 @@ import {
   AvatarModuleAnimationFrameDefinition,
 } from "../../../mod/modules/AvatarModuleCommon";
 import { MediaFile } from "../../../types";
+import { UploadInstance } from "../Upload.vue";
 
 export default defineComponent({
   props: {
@@ -75,25 +48,30 @@ export default defineComponent({
       editing: false,
     };
   },
+  computed: {
+    uploadComponent(): UploadInstance {
+      return this.$refs.uploadComponent as UploadInstance
+    },
+  },
   methods: {
-    onDragOver(e: any) {
+    onDragOver(e: DragEvent) {
       this.draggingOver = true;
       e.preventDefault();
       e.stopPropagation();
       return false;
     },
-    onDragLeave(e: any) {
+    onDragLeave(e: DragEvent) {
       this.draggingOver = false;
       e.preventDefault();
       e.stopPropagation();
       return false;
     },
-    onDragEnter(e: any) {
+    onDragEnter(e: DragEvent) {
       if (e.dataTransfer.getData("avatar-image-url")) {
         e.preventDefault();
       }
     },
-    onDrop(e: any) {
+    onDrop(e: DragEvent) {
       this.draggingOver = false;
       e.preventDefault();
       e.stopPropagation();
@@ -122,7 +100,7 @@ export default defineComponent({
           }
         }
         if (file) {
-          this.$refs.uploadComponent.uploadFile(file);
+          this.uploadComponent.uploadFile(file);
         }
       }
       return false;
@@ -139,7 +117,7 @@ export default defineComponent({
     frameChanged(idx: number, frame: AvatarModuleAnimationFrameDefinition) {
       if (frame.url === "") {
         this.modelValue.frames = this.modelValue.frames.filter(
-          (val, index) => index !== idx
+          (_val, index: number) => index !== idx
         );
       } else {
         this.modelValue.frames[idx] = frame;
@@ -160,29 +138,35 @@ export default defineComponent({
   display: inline-block;
   border: solid 1px hsl(0, 0%, 86%);
 }
+
 .avatar-slot-item-state-editor.dragging-over {
   border-style: dashed;
   border-color: #444;
 }
+
 .avatar-slot-item-state-editor-title {
   text-align: center;
   font-weight: bold;
   background: #efefef;
   border-bottom: solid 1px hsl(0, 0%, 86%);
 }
+
 .avatar-animation-card {
   display: inline-block;
   width: 64px;
   vertical-align: top;
 }
+
 .avatar-animation-frame {
   display: inline-block;
   position: relative;
   background: #efefef;
 }
+
 .avatar-animation-frame img {
   vertical-align: bottom;
 }
+
 .avatar-animation-frame-upload {
   width: 64px;
   height: 64px;
@@ -191,9 +175,11 @@ export default defineComponent({
   text-align: center;
   z-index: 1;
 }
+
 .avatar-animation-frame-upload .button {
   margin: 0 auto;
 }
+
 .avatar-animation-frame-remove {
   position: absolute;
   right: 0;
@@ -201,12 +187,15 @@ export default defineComponent({
   display: none;
   z-index: 2;
 }
+
 .avatar-animation-frame:hover .avatar-animation-frame-remove {
   display: inline-block;
 }
+
 .avatar-animation-frame input[type="text"] {
   max-width: 100px;
 }
+
 .avatar-fallback-animation {
   opacity: 0.7;
 }

@@ -18,10 +18,7 @@
       </div>
       <div class="spacerow">
         <label class="spacelabel">Interval </label>
-        <duration-input
-          :modelValue="countdown.interval"
-          @update:modelValue="countdown.interval = $event"
-        />
+        <duration-input :modelValue="countdown.interval" @update:modelValue="countdown.interval = $event" />
       </div>
       <div class="spacerow">
         <label class="spacelabel">Intro </label>
@@ -33,72 +30,45 @@
       </div>
     </div>
     <div v-else>
-      <draggable
-        :modelValue="countdown.actions"
-        @end="dragEnd"
-        handle=".handle"
-        item-key="id"
-      >
+      <draggable :modelValue="countdown.actions" @end="dragEnd" handle=".handle" item-key="id">
         <template #item="{ element, index }">
           <div class="field has-addons mr-1">
             <span class="handle p-2"><i class="fa fa-arrows"></i></span>
 
             <div class="control has-icons-left" v-if="element.type === 'delay'">
-              <duration-input
-                :modelValue="element.value"
-                @update:modelValue="element.value = $event"
-              />
+              <duration-input :modelValue="element.value" @update:modelValue="element.value = $event" />
               <span class="icon is-small is-left">
                 <i class="fa fa-hourglass"></i>
               </span>
             </div>
-            <div
-              class="control has-icons-left"
-              v-else-if="element.type === 'text'"
-            >
-              <input
-                class="input is-small"
-                type="text"
-                v-model="element.value"
-              />
+            <div class="control has-icons-left" v-else-if="element.type === 'text'">
+              <input class="input is-small" type="text" v-model="element.value" />
               <span class="icon is-small is-left">
                 <i class="fa fa-comments-o"></i>
               </span>
             </div>
-            <div
-              class="control has-icons-left"
-              v-else-if="element.type === 'media'"
-            >
+            <div class="control has-icons-left" v-else-if="element.type === 'media'">
               <table>
                 <tr>
                   <td>Image:</td>
                   <td>
-                    <image-upload
-                      v-model="element.value.image"
-                      @update:modelValue="mediaImgChanged(index, $event)"
-                    />
+                    <image-upload v-model="element.value.image" @update:modelValue="mediaImgChanged(index, $event)" />
                   </td>
                 </tr>
                 <tr>
                   <td>Sound:</td>
                   <td>
-                    <sound-upload
-                      v-model="element.value.sound"
-                      @update:modelValue="mediaSndChanged(index, $event)"
-                      :baseVolume="baseVolume"
-                    />
+                    <sound-upload v-model="element.value.sound" @update:modelValue="mediaSndChanged(index, $event)"
+                      :baseVolume="baseVolume" />
                   </td>
                 </tr>
                 <tr>
                   <td>Duration:</td>
                   <td>
                     <div class="control has-icons-left">
-                      <duration-input
-                        :modelValue="element.value.minDurationMs"
-                        @update:modelValue="
-                          element.value.minDurationMs = $event
-                        "
-                      />
+                      <duration-input :modelValue="element.value.minDurationMs" @update:modelValue="
+                        element.value.minDurationMs = $event
+                      " />
                       <span class="icon is-small is-left">
                         <i class="fa fa-hourglass"></i>
                       </span>
@@ -129,14 +99,29 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
 import fn from "../../../common/fn";
-import { CountdownAction, MediaFile, SoundMediaFile } from "../../../types";
+import { CountdownAction, CountdownCommandData, MediaFile, SoundMediaFile } from "../../../types";
 import {
   newCountdownDelay,
   newCountdownText,
   newCountdownMedia,
 } from "../../../common/commands";
+
+interface ComponentData {
+  countdown: {
+    type: string
+
+    // settings for manual
+    actions: CountdownAction[]
+
+    // settings for auto (old style)
+    steps: string | number,
+    interval: string | number, // can be human readable string
+    intro: string,
+    outro: string,
+  },
+}
 
 export default defineComponent({
   name: "countdown-edit",
@@ -145,11 +130,11 @@ export default defineComponent({
       default: 100,
     },
     modelValue: {
-      type: Object,
+      type: Object as PropType<CountdownCommandData>,
       required: true,
     },
   },
-  data: () => ({
+  data: (): ComponentData => ({
     countdown: {
       type: "manual",
 
@@ -182,7 +167,7 @@ export default defineComponent({
     },
     rmaction(idx: number) {
       this.countdown.actions = this.countdown.actions.filter(
-        (val, index) => index !== idx
+        (_val: CountdownAction, index: number) => index !== idx
       );
     },
     mediaSndChanged(idx: number, file: SoundMediaFile) {

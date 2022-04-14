@@ -1,12 +1,8 @@
 <template>
-  <div
-    :style="imgstyle"
-    class="image-container"
-    :class="{
-      'm-fadeIn': showimage,
-      'm-fadeOut': !showimage,
-    }"
-  ></div>
+  <div :style="imgstyle" class="image-container" :class="{
+    'm-fadeIn': showimage,
+    'm-fadeOut': !showimage,
+  }"></div>
   <div v-if="videosrc" class="video-container">
     <div class="video-16-9">
       <video :src="videosrc" ref="video" autoplay />
@@ -28,7 +24,7 @@ interface ComponentData {
   latestResolved: boolean;
 }
 
-export default defineComponent({
+const MediaQueueElement = defineComponent({
   props: {
     timeBetweenMediaMs: { type: Number, default: 400 },
     baseVolume: { type: Number, default: 100 },
@@ -164,6 +160,8 @@ export default defineComponent({
     },
   },
 });
+export type MediaQueueElementInstance = InstanceType<typeof MediaQueueElement>
+export default MediaQueueElement
 </script>
 <style scoped lang="scss">
 .m-fadeOut {
@@ -171,6 +169,7 @@ export default defineComponent({
   opacity: 0;
   transition: all 300ms;
 }
+
 .m-fadeIn {
   visibility: visible;
   opacity: 1;
@@ -183,6 +182,7 @@ export default defineComponent({
   background-position: center;
   height: 100%;
 }
+
 .video-container {
   position: absolute;
   width: 100%;

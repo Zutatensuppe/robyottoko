@@ -1,6 +1,11 @@
 import { Command, FunctionCommand, GlobalVariable, MediaFile, PlaylistItem } from "../../types"
 import { commands } from '../../common/commands'
 
+export interface TagInfo {
+  value: string
+  count: number
+}
+
 interface SongrequestModuleCustomCssPreset {
   name: string
   css: string

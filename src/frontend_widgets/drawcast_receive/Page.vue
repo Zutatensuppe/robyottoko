@@ -1,9 +1,5 @@
 <template>
-  <media-queue-element
-    ref="q"
-    :timeBetweenMediaMs="500"
-    :displayLatestForever="displayLatestForever"
-  />
+  <media-queue-element ref="q" :timeBetweenMediaMs="500" :displayLatestForever="displayLatestForever" />
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
@@ -11,7 +7,7 @@ import WsClient from "../../frontend/WsClient";
 import { DrawcastImage } from "../../mod/modules/DrawcastModuleCommon";
 import { SoundMediaFile } from "../../types";
 import util from "../util";
-import MediaQueueElement from "../MediaQueueElement.vue";
+import MediaQueueElement, { MediaQueueElementInstance } from "../MediaQueueElement.vue";
 
 interface ComponentData {
   ws: WsClient | null;
@@ -34,6 +30,11 @@ export default defineComponent({
       images: [],
     };
   },
+  computed: {
+    q(): MediaQueueElementInstance {
+      return this.$refs.q as MediaQueueElementInstance
+    },
+  },
   mounted() {
     this.ws = util.wsClient("drawcast_receive");
 
@@ -44,7 +45,7 @@ export default defineComponent({
       this.images = data.images.map((image: DrawcastImage) => image.path);
 
       if (data.settings.displayLatestAutomatically && this.images.length > 0) {
-        this.$refs["q"].playmedia({
+        this.q.playmedia({
           sound: { file: "", filename: "", urlpath: "", volume: 100 },
           image: { file: "", filename: "", urlpath: "" },
           twitch_clip: { url: "", volume: 100 },
@@ -58,8 +59,7 @@ export default defineComponent({
       (data: { nonce: string; img: string; mayNotify: boolean }) => {
         this.images.unshift(data.img);
         this.images = this.images.slice(0, 20);
-
-        this.$refs["q"].playmedia({
+        this.q.playmedia({
           sound:
             data.mayNotify && this.notificationSound
               ? this.notificationSound

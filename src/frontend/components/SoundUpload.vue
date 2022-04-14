@@ -1,44 +1,23 @@
 <template>
-  <div
-    @drop="onDrop"
-    @dragover="onDragover"
-    @dragleave="onDragleave"
-    class="sound-upload"
-    :class="{ 'dragging-over': draggingOver }"
-  >
-    <player
-      v-if="value.file"
-      :src="value.urlpath"
-      :name="value.filename"
-      :volume="value.volume"
-      :baseVolume="baseVolume"
-      class="button is-small"
-    />
-    <volume-slider
-      v-if="value.file"
-      :modelValue="value.volume"
-      @update:modelValue="
-        value.volume = $event;
-        this.emitUpdate();
-      "
-    />
+  <div @drop="onDrop" @dragover="onDragover" @dragleave="onDragleave" class="sound-upload"
+    :class="{ 'dragging-over': draggingOver }">
+    <player v-if="value.file" :src="value.urlpath" :name="value.filename" :volume="value.volume"
+      :baseVolume="baseVolume" class="button is-small" />
+    <volume-slider v-if="value.file" :modelValue="value.volume"
+      @update:modelValue="value.volume = $event; emitUpdate(); " />
     <button v-if="value.file" class="button is-small" @click="onRemove">
       <i class="fa fa-remove mr-1" /> Remove
     </button>
     <br v-if="value.file" />
-    <upload
-      @uploaded="onUploaded"
-      accept="audio/*"
-      label="Upload Sound"
-      :class="{ 'mt-1': value.file }"
-      ref="uploadComponent"
-    />
+    <upload @uploaded="onUploaded" accept="audio/*" label="Upload Sound" :class="{ 'mt-1': value.file }"
+      ref="uploadComponent" />
   </div>
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
 import { soundMediaFileFromUploadedFile } from "../../common/fn";
 import { SoundMediaFile, UploadedFile } from "../../types";
+import { UploadInstance } from "./Upload.vue";
 
 interface ComponentData {
   value: SoundMediaFile;
@@ -68,6 +47,11 @@ export default defineComponent({
     if (this.modelValue !== null) {
       this.value = JSON.parse(JSON.stringify(this.modelValue));
     }
+  },
+  computed: {
+    uploadComponent(): UploadInstance {
+      return this.$refs.uploadComponent as UploadInstance
+    },
   },
   methods: {
     emitUpdate() {
@@ -105,7 +89,7 @@ export default defineComponent({
       }
       if (file) {
         this.value.file = "";
-        this.$refs.uploadComponent.uploadFile(file);
+        this.uploadComponent.uploadFile(file);
       }
       return false;
     },
@@ -128,6 +112,7 @@ export default defineComponent({
 .sound-upload {
   border: dashed 2px transparent;
 }
+
 .sound-upload.dragging-over {
   border: dashed 2px #444;
 }

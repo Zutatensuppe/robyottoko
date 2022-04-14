@@ -8,12 +8,12 @@ import { defineComponent } from "vue";
 const log = (...args) => console.log("[youtube.js]", ...args);
 
 let apiRdy = false;
-function createApi() {
+function createApi(): Promise<void> {
   if (apiRdy) {
     log("ytapi ALREADY ready");
     return Promise.resolve();
   }
-  return new Promise((resolve) => {
+  return new Promise<void>((resolve) => {
     const tag = document.createElement("script");
     tag.src = "https://www.youtube.com/iframe_api";
     document.head.append(tag);
@@ -25,7 +25,7 @@ function createApi() {
   });
 }
 
-function createPlayer(id) {
+function createPlayer(id): Promise<YT.Player> {
   return new Promise((resolve) => {
     log("create player on " + id);
     const player = new YT.Player(id, {
@@ -48,7 +48,16 @@ async function prepareYt(id) {
   return await createPlayer(id);
 }
 
-export default defineComponent({
+interface ComponentData {
+  id: string
+  yt: string | null
+  loop: boolean
+  toplay: string | null
+  tovolume: number | null
+  tryPlayInterval: any | null // number / timeout
+}
+
+const Youtube = defineComponent({
   name: "youtube",
   props: {
     visible: {
@@ -56,9 +65,10 @@ export default defineComponent({
       default: true,
     },
   },
-  data: () => ({
+  data: (): ComponentData => ({
     id: "",
     yt: null,
+    loop: false,
     toplay: null,
     tovolume: null,
     tryPlayInterval: null,
@@ -69,35 +79,35 @@ export default defineComponent({
     )}-${new Date().getTime()}`;
   },
   methods: {
-    getDuration() {
+    getDuration(): number {
       if (this.yt) {
         return this.yt.getDuration();
       }
       return 0;
     },
-    getCurrentTime() {
+    getCurrentTime(): number {
       if (this.yt) {
         return this.yt.getCurrentTime();
       }
       return 0;
     },
-    getProgress() {
+    getProgress(): number {
       const d = this.getDuration();
       const c = this.getCurrentTime();
       return d ? c / d : 0;
     },
-    stop() {
+    stop(): void {
       if (this.yt) {
         this.yt.stopVideo();
       }
     },
-    stopTryPlayInterval() {
+    stopTryPlayInterval(): void {
       if (this.tryPlayInterval) {
         clearInterval(this.tryPlayInterval);
         this.tryPlayInterval = null;
       }
     },
-    tryPlay() {
+    tryPlay(): void {
       this.stopTryPlayInterval();
       if (!this.visible) {
         return;
@@ -117,7 +127,7 @@ export default defineComponent({
         this.yt.playVideo();
       }, 250);
     },
-    play(yt) {
+    play(yt: string): void {
       if (!this.yt) {
         this.toplay = yt;
       } else {
@@ -125,27 +135,27 @@ export default defineComponent({
         this.tryPlay();
       }
     },
-    pause() {
+    pause(): void {
       if (this.yt) {
         this.yt.pauseVideo();
       }
     },
-    unpause() {
+    unpause(): void {
       if (this.yt) {
         this.tryPlay();
       }
     },
-    setVolume(volume) {
+    setVolume(volume: number): void {
       if (!this.yt) {
         this.tovolume = volume;
       } else {
         this.yt.setVolume(volume);
       }
     },
-    setLoop(loop) {
+    setLoop(loop: boolean): void {
       this.loop = loop;
     },
-    playing() {
+    playing(): boolean {
       return this.yt && this.yt.getPlayerState() === 1;
     },
   },
@@ -172,4 +182,6 @@ export default defineComponent({
     });
   },
 });
+export type YoutubeInstance = InstanceType<typeof Youtube>
+export default Youtube
 </script>

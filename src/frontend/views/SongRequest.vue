@@ -3,50 +3,26 @@
     <div id="top" ref="top">
       <navbar />
       <div id="actionbar" class="p-1">
-        <button
-          class="button is-small mr-1"
-          :disabled="inited ? null : true"
-          @click="sendCtrl(control.ctrl, [])"
-          :title="control.title"
-          v-for="(control, idx) in controlDefinitions"
-          :key="idx"
-        >
+        <button class="button is-small mr-1" :disabled="inited ? null : true" @click="sendCtrl(control.ctrl, [])"
+          :title="control.title" v-for="(control, idx) in controlDefinitions" :key="idx">
           <i class="fa" :class="control.icon" />
         </button>
-        <button
-          class="button is-small mr-1"
-          :disabled="inited ? null : true"
-          @click="sendCtrl('setAllToPlayed', [])"
-          title="Sets all songs to at least 1x played"
-        >
+        <button class="button is-small mr-1" :disabled="inited ? null : true" @click="sendCtrl('setAllToPlayed', [])"
+          title="Sets all songs to at least 1x played">
           <span class="txt">Set all to played</span>
         </button>
-        <button
-          class="button is-small mr-1"
-          :disabled="inited ? null : true"
-          @click="togglePlayer"
-          :title="togglePlayerButtonText"
-        >
+        <button class="button is-small mr-1" :disabled="inited ? null : true" @click="togglePlayer"
+          :title="togglePlayerButtonText">
           <i class="fa fa-tv mr-1" /><span class="txt">
-            {{ togglePlayerButtonText }}</span
-          >
+            {{ togglePlayerButtonText }}</span>
         </button>
 
         <div class="field has-addons mr-1">
           <div class="control">
-            <input
-              class="input is-small"
-              :disabled="inited ? null : true"
-              v-model="resrinput"
-              @keyup.enter="resr"
-            />
+            <input class="input is-small" :disabled="inited ? null : true" v-model="resrinput" @keyup.enter="resr" />
           </div>
           <div class="control">
-            <button
-              class="button is-small"
-              :disabled="inited ? null : true"
-              @click="resr"
-            >
+            <button class="button is-small" :disabled="inited ? null : true" @click="resr">
               <i class="fa fa-search mr-1"></i> from playlist
             </button>
           </div>
@@ -54,30 +30,16 @@
 
         <div class="field has-addons mr-1">
           <div class="control">
-            <input
-              class="input is-small"
-              :disabled="inited ? null : true"
-              v-model="srinput"
-              @keyup.enter="sr"
-            />
+            <input class="input is-small" :disabled="inited ? null : true" v-model="srinput" @keyup.enter="sr" />
           </div>
           <div class="control">
-            <button
-              class="button is-small"
-              :disabled="inited ? null : true"
-              @click="sr"
-            >
+            <button class="button is-small" :disabled="inited ? null : true" @click="sr">
               <i class="fa fa-plus mr-1"></i> from YouTube
             </button>
           </div>
         </div>
-        <a
-          class="button is-small mr-1"
-          :disabled="inited ? null : true"
-          :href="widgetUrl"
-          target="_blank"
-          >Open SR widget</a
-        >
+        <a class="button is-small mr-1" :disabled="inited ? null : true" :href="widgetUrl" target="_blank">Open SR
+          widget</a>
       </div>
     </div>
     <div id="main" ref="main">
@@ -88,24 +50,16 @@
       </div>
       <div class="tabs">
         <ul>
-          <li
-            v-for="(def, idx) in tabDefinitions"
-            :key="idx"
-            :class="{ 'is-active': tab === def.tab }"
-            @click="tab = def.tab"
-          >
+          <li v-for="(def, idx) in tabDefinitions" :key="idx" :class="{ 'is-active': tab === def.tab }"
+            @click="tab = def.tab">
             <a>{{ def.title }}</a>
           </li>
         </ul>
       </div>
       <div v-if="inited && tab === 'import'">
         <div class="mb-1">
-          <a
-            class="button is-small mr-1"
-            :href="exportPlaylistUrl"
-            target="_blank"
-            ><i class="fa fa-download mr-1" /> Export playlist</a
-          >
+          <a class="button is-small mr-1" :href="exportPlaylistUrl" target="_blank"><i class="fa fa-download mr-1" />
+            Export playlist</a>
           <button class="button is-small" @click="doImportPlaylist">
             <i class="fa fa-upload mr-1" /> Import playlist
           </button>
@@ -115,34 +69,15 @@
       <div id="tags" v-if="inited && tab === 'tags'">
         <tags-editor :tags="tags" @updateTag="onTagUpdated" />
       </div>
-      <song-request-settings
-        id="settings"
-        v-if="inited && tab === 'settings'"
-        v-model="settings"
-        @update:modelValue="sendSave"
-      />
-      <div
-        id="playlist"
-        class="table-container"
-        v-if="inited && tab === 'playlist'"
-      >
-        <playlist-editor
-          :playlist="playlist"
-          :filter="filter"
-          @stopPlayer="player.stop()"
-          @filterChange="applyFilter"
-          @ctrl="onPlaylistCtrl"
-        />
+      <song-request-settings id="settings" v-if="inited && tab === 'settings'" v-model="settings"
+        @update:modelValue="sendSave" />
+      <div id="playlist" class="table-container" v-if="inited && tab === 'playlist'">
+        <playlist-editor :playlist="playlist" :filter="filter" @stopPlayer="player.stop()" @filterChange="applyFilter"
+          @ctrl="onPlaylistCtrl" />
       </div>
-      <commands-editor
-        v-if="inited && tab === 'commands'"
-        v-model="commands"
-        @update:modelValue="sendSave"
-        :globalVariables="globalVariables"
-        :channelPointsCustomRewards="channelPointsCustomRewards"
-        :possibleActions="possibleActions"
-        :baseVolume="100"
-      />
+      <commands-editor v-if="inited && tab === 'commands'" v-model="commands" @update:modelValue="sendSave"
+        :globalVariables="globalVariables" :channelPointsCustomRewards="channelPointsCustomRewards"
+        :possibleActions="possibleActions" :baseVolume="100" />
     </div>
   </div>
 </template>
@@ -160,12 +95,11 @@ import {
   default_settings,
   SongrequestModuleSettings,
   SongrequestModuleWsEventData,
+  TagInfo,
 } from "../../mod/modules/SongrequestModuleCommon";
 import { useToast } from "vue-toastification";
 import util from "../util";
 import api from "../api";
-
-type TagInfo = { value: string; count: number };
 
 interface ControlDefinition {
   title: string;
@@ -325,13 +259,13 @@ export default defineComponent({
     },
     player(): Player {
       return (this.$refs.youtube || {
-        stop: () => {},
-        play: () => {},
-        pause: () => {},
-        unpause: () => {},
-        setVolume: () => {},
-        setLoop: () => {},
-        playing: () => {},
+        stop: () => { },
+        play: () => { },
+        pause: () => { },
+        unpause: () => { },
+        setVolume: () => { },
+        setLoop: () => { },
+        playing: () => { },
       }) as Player;
     },
     filteredPlaylist(): PlaylistItem[] {

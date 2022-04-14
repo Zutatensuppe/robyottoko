@@ -4,11 +4,7 @@
     <div class="modal-card">
       <header class="modal-card-head">
         <p class="modal-card-title">{{ title }}</p>
-        <button
-          class="delete"
-          aria-label="close"
-          @click="onCloseClick"
-        ></button>
+        <button class="delete" aria-label="close" @click="onCloseClick"></button>
       </header>
       <section class="modal-card-body">
         <table class="table is-striped">
@@ -16,21 +12,11 @@
             <tr>
               <td>Triggers:</td>
               <td>
-                <trigger-editor
-                  v-for="(trigger, idx) in item.triggers"
-                  :key="idx"
-                  class="spacerow"
-                  :modelValue="trigger"
-                  :channelPointsCustomRewards="channelPointsCustomRewards"
-                  :removable="item.triggers.length > 1"
-                  @update:modelValue="item.triggers[idx] = $event"
-                  @remove="rmtrigger(idx)"
-                />
-                <dropdown-button
-                  :actions="possibleTriggerActions"
-                  label="Add trigger"
-                  @click="addtrigger"
-                />
+                <trigger-editor v-for="(trigger, idx) in item.triggers" :key="idx" class="spacerow"
+                  :modelValue="trigger" :channelPointsCustomRewards="channelPointsCustomRewards"
+                  :removable="item.triggers.length > 1" @update:modelValue="item.triggers[idx] = $event"
+                  @remove="rmtrigger(idx)" />
+                <dropdown-button :actions="possibleTriggerActions" label="Add trigger" @click="addtrigger" />
               </td>
             </tr>
             <tr v-if="actionDescription">
@@ -49,105 +35,55 @@
             <tr v-if="item.action === 'set_channel_title'">
               <td>Stream title:</td>
               <td>
-                <input
-                  class="input is-small spaceinput mb-1"
-                  v-model="item.data.title"
-                />
-                <span class="button is-small mr-1" @click="item.data.title = ''"
-                  >All args</span
-                >
+                <input class="input is-small spaceinput mb-1" v-model="item.data.title" />
+                <span class="button is-small mr-1" @click="item.data.title = ''">All args</span>
               </td>
             </tr>
             <tr v-if="item.action === 'set_channel_game_id'">
               <td>Stream category:</td>
               <td>
-                <input
-                  class="input is-small spaceinput mb-1"
-                  v-model="item.data.game_id"
-                />
-                <span
-                  class="button is-small mr-1"
-                  @click="item.data.game_id = ''"
-                  >All args</span
-                >
+                <input class="input is-small spaceinput mb-1" v-model="item.data.game_id" />
+                <span class="button is-small mr-1" @click="item.data.game_id = ''">All args</span>
               </td>
             </tr>
             <tr v-if="item.action === 'add_stream_tags'">
               <td>Tag to add:</td>
               <td>
-                <input
-                  class="input is-small spaceinput mb-1"
-                  v-model="item.data.tag"
-                />
-                <span class="button is-small mr-1" @click="item.data.tag = ''"
-                  >All args</span
-                >
+                <input class="input is-small spaceinput mb-1" v-model="item.data.tag" />
+                <span class="button is-small mr-1" @click="item.data.tag = ''">All args</span>
               </td>
             </tr>
             <tr v-if="item.action === 'remove_stream_tags'">
               <td>Tag to remove:</td>
               <td>
-                <input
-                  class="input is-small spaceinput mb-1"
-                  v-model="item.data.tag"
-                />
-                <span class="button is-small mr-1" @click="item.data.tag = ''"
-                  >All args</span
-                >
+                <input class="input is-small spaceinput mb-1" v-model="item.data.tag" />
+                <span class="button is-small mr-1" @click="item.data.tag = ''">All args</span>
               </td>
             </tr>
             <tr v-if="item.action === 'sr_addtag'">
               <td>Tag:</td>
               <td>
-                <input
-                  class="input is-small spaceinput mb-1"
-                  v-model="item.data.tag"
-                />
-                <span class="button is-small mr-1" @click="item.data.tag = ''"
-                  >All args</span
-                >
+                <input class="input is-small spaceinput mb-1" v-model="item.data.tag" />
+                <span class="button is-small mr-1" @click="item.data.tag = ''">All args</span>
               </td>
             </tr>
             <template v-if="item.action === 'dict_lookup'">
               <tr>
                 <td>Language:</td>
                 <td>
-                  <input
-                    class="input is-small spaceinput mb-1"
-                    v-model="item.data.lang"
-                  />
-                  <span
-                    v-for="(lang, idx) in dictLangs"
-                    :key="idx"
-                    class="button is-small mr-1"
-                    @click="item.data.lang = lang.value"
-                    :title="lang.title"
-                    >{{ lang.flag }}</span
-                  >
-                  <span
-                    class="button is-small mr-1"
-                    @click="item.data.lang = '$args(0)'"
-                    ><code>$args(0)</code></span
-                  >
+                  <input class="input is-small spaceinput mb-1" v-model="item.data.lang" />
+                  <span v-for="(lang, idx) in dictLangs" :key="idx" class="button is-small mr-1"
+                    @click="item.data.lang = lang.value" :title="lang.title">{{ lang.flag }}</span>
+                  <span class="button is-small mr-1" @click="item.data.lang = '$args(0)'"><code>$args(0)</code></span>
                 </td>
               </tr>
               <tr>
                 <td>Phrase:</td>
                 <td>
-                  <input
-                    class="input is-small spaceinput mb-1"
-                    v-model="item.data.phrase"
-                  />
-                  <span
-                    class="button is-small mr-1"
-                    @click="item.data.phrase = ''"
-                    >All args</span
-                  >
-                  <span
-                    class="button is-small mr-1"
-                    @click="item.data.phrase = '$args(1:)'"
-                    ><code>$args(1:)</code></span
-                  >
+                  <input class="input is-small spaceinput mb-1" v-model="item.data.phrase" />
+                  <span class="button is-small mr-1" @click="item.data.phrase = ''">All args</span>
+                  <span class="button is-small mr-1"
+                    @click="item.data.phrase = '$args(1:)'"><code>$args(1:)</code></span>
                 </td>
               </tr>
               <tr>
@@ -170,16 +106,11 @@
                 <td>Model:</td>
                 <td>
                   <div class="control">
-                    <input
-                      class="input is-small spaceinput"
-                      v-model="item.data.model"
-                    />
+                    <input class="input is-small spaceinput" v-model="item.data.model" />
                   </div>
                   <div class="help">
                     For possible values refer to
-                    <a href="https://madochan.hyottoko.club/" target="_blank"
-                      >madochan</a
-                    >
+                    <a href="https://madochan.hyottoko.club/" target="_blank">madochan</a>
                   </div>
                 </td>
               </tr>
@@ -187,16 +118,11 @@
                 <td>Weirdness:</td>
                 <td>
                   <div class="control">
-                    <input
-                      class="input is-small spaceinput"
-                      v-model="item.data.weirdness"
-                    />
+                    <input class="input is-small spaceinput" v-model="item.data.weirdness" />
                   </div>
                   <div class="help">
                     For possible values refer to
-                    <a href="https://madochan.hyottoko.club/" target="_blank"
-                      >madochan</a
-                    >
+                    <a href="https://madochan.hyottoko.club/" target="_blank">madochan</a>
                   </div>
                 </td>
               </tr>
@@ -208,28 +134,15 @@
             <tr v-if="item.action === 'text'">
               <td>Response:</td>
               <td>
-                <div
-                  v-for="(txt, idx) in item.data.text"
-                  :key="idx"
-                  class="field textarea-holder"
-                >
-                  <textarea
-                    class="textarea"
-                    type="text"
-                    v-model="item.data.text[idx]"
-                    :class="{
-                      'has-background-danger-light': !item.data.text[idx],
-                      'has-text-danger-dark': !item.data.text[idx],
-                    }"
-                  />
+                <div v-for="(txt, idx) in item.data.text" :key="idx" class="field textarea-holder">
+                  <textarea class="textarea" type="text" v-model="item.data.text[idx]" :class="{
+                    'has-background-danger-light': !item.data.text[idx],
+                    'has-text-danger-dark': !item.data.text[idx],
+                  }" />
                   <div class="help">
                     <macro-select @selected="insertMacro(idx, $event)" />
                   </div>
-                  <button
-                    class="button is-small"
-                    :disabled="item.data.text.length <= 1"
-                    @click="rmtxt(idx)"
-                  >
+                  <button class="button is-small" :disabled="item.data.text.length <= 1" @click="rmtxt(idx)">
                     <i class="fa fa-remove" />
                   </button>
                 </div>
@@ -249,16 +162,9 @@
             <tr v-if="item.action === 'media'">
               <td>Exclude from global widget:</td>
               <td>
-                <input
-                  type="checkbox"
-                  v-model="item.data.excludeFromGlobalWidget"
-                />
-                <a
-                  class="button is-small ml-1"
-                  v-if="item.data.excludeFromGlobalWidget"
-                  :href="`${widgetUrl}?id=${item.id}`"
-                  >Open widget</a
-                >
+                <input type="checkbox" v-model="item.data.excludeFromGlobalWidget" />
+                <a class="button is-small ml-1" v-if="item.data.excludeFromGlobalWidget"
+                  :href="`${widgetUrl}?id=${item.id}`">Open widget</a>
                 <div class="help">
                   If this checkbox is checked, the media will not be played in
                   the regular media widget. A button will appear with a special
@@ -269,43 +175,25 @@
             <tr v-if="item.action === 'media'">
               <td>Image:</td>
               <td>
-                <image-upload
-                  v-model="item.data.image"
-                  @update:modelValue="mediaImgChanged"
-                />
+                <image-upload v-model="item.data.image" @update:modelValue="mediaImgChanged" />
               </td>
             </tr>
             <tr v-if="item.action === 'media'">
               <td>Sound:</td>
               <td>
-                <sound-upload
-                  v-model="item.data.sound"
-                  :baseVolume="baseVolume"
-                  @update:modelValue="mediaSndChanged"
-                />
+                <sound-upload v-model="item.data.sound" :baseVolume="baseVolume" @update:modelValue="mediaSndChanged" />
               </td>
             </tr>
             <tr v-if="item.action === 'media'">
               <td>Image (by URL):</td>
               <td>
-                <input
-                  type="text"
-                  class="input is-small"
-                  v-model="item.data.image_url"
-                />
+                <input type="text" class="input is-small" v-model="item.data.image_url" />
                 <div>
-                  <span
-                    class="button is-small"
-                    @click="
-                      item.data.image_url = '$user($args).profile_image_url'
-                    "
-                    >Profile image of user given by args</span
-                  >
-                  <span
-                    class="button is-small"
-                    @click="item.data.image_url = '$user.profile_image_url'"
-                    >Profile image of user who executes the command</span
-                  >
+                  <span class="button is-small" @click="
+                    item.data.image_url = '$user($args).profile_image_url'
+                  ">Profile image of user given by args</span>
+                  <span class="button is-small" @click="item.data.image_url = '$user.profile_image_url'">Profile image
+                    of user who executes the command</span>
                 </div>
               </td>
             </tr>
@@ -316,11 +204,7 @@
                   <tr>
                     <td>Url:</td>
                     <td>
-                      <input
-                        type="text"
-                        class="input is-small"
-                        v-model="item.data.twitch_clip.url"
-                      />
+                      <input type="text" class="input is-small" v-model="item.data.twitch_clip.url" />
                     </td>
                   </tr>
                   <tr>
@@ -331,18 +215,11 @@
                   </tr>
                 </table>
                 <div>
-                  <span
-                    class="button is-small"
-                    @click="
-                      item.data.twitch_clip.url = '$user($args).recent_clip_url'
-                    "
-                    >A recent clip of user given by args</span
-                  >
-                  <span
-                    class="button is-small"
-                    @click="item.data.twitch_clip.url = '$user.recent_clip_url'"
-                    >A recent clip of user who executes the command</span
-                  >
+                  <span class="button is-small" @click="
+                    item.data.twitch_clip.url = '$user($args).recent_clip_url'
+                  ">A recent clip of user given by args</span>
+                  <span class="button is-small" @click="item.data.twitch_clip.url = '$user.recent_clip_url'">A recent
+                    clip of user who executes the command</span>
                 </div>
               </td>
             </tr>
@@ -350,10 +227,8 @@
               <td>Duration:</td>
               <td>
                 <div class="control has-icons-left">
-                  <duration-input
-                    :modelValue="item.data.minDurationMs"
-                    @update:modelValue="item.data.minDurationMs = $event"
-                  />
+                  <duration-input :modelValue="item.data.minDurationMs"
+                    @update:modelValue="item.data.minDurationMs = $event" />
                   <span class="icon is-small is-left">
                     <i class="fa fa-hourglass"></i>
                   </span>
@@ -363,10 +238,7 @@
             <tr v-if="item.action === 'countdown'">
               <td>Settings</td>
               <td>
-                <countdown-editor
-                  v-model="item.data"
-                  :baseVolume="baseVolume"
-                />
+                <countdown-editor v-model="item.data" :baseVolume="baseVolume" />
               </td>
             </tr>
             <tr>
@@ -382,33 +254,20 @@
                   <tbody>
                     <tr v-for="(v, idx) in item.variables" :key="idx">
                       <td>
-                        <input
-                          type="text"
-                          class="input is-small"
-                          v-model="v.name"
-                        />
+                        <input type="text" class="input is-small" v-model="v.name" />
                       </td>
                       <td>
-                        <input
-                          type="text"
-                          class="input is-small"
-                          v-model="v.value"
-                        />
+                        <input type="text" class="input is-small" v-model="v.value" />
                       </td>
                       <td>
-                        <button
-                          class="button is-small"
-                          @click="rmVariable(idx)"
-                        >
+                        <button class="button is-small" @click="rmVariable(idx)">
                           <i class="fa fa-remove" />
                         </button>
                       </td>
                     </tr>
                   </tbody>
                 </table>
-                <span class="button is-small" @click="onAddVariable"
-                  >Add Variable</span
-                >
+                <span class="button is-small" @click="onAddVariable">Add Variable</span>
                 <div class="help">
                   Variables can be used from the command with
                   <code>$var(variable_name)</code>. If the referenced variable
@@ -435,33 +294,19 @@
                       <td>
                         <div class="dropdown is-active is-up">
                           <div class="dropdown-trigger">
-                            <input
-                              type="text"
-                              class="input is-small"
-                              v-model="v.name"
-                              @focus="variableChangeFocusIdx = idx"
-                              @blur="onVarChangeInputBlur"
-                            />
+                            <input type="text" class="input is-small" v-model="v.name"
+                              @focus="variableChangeFocusIdx = idx" @blur="onVarChangeInputBlur" />
                           </div>
-                          <div
-                            class="dropdown-menu"
-                            id="dropdown-menu"
-                            role="menu"
-                            v-if="variableChangeFocusIdx === idx"
-                          >
+                          <div class="dropdown-menu" id="dropdown-menu" role="menu"
+                            v-if="variableChangeFocusIdx === idx">
                             <div class="dropdown-content">
-                              <a
-                                class="dropdown-item"
-                                v-for="(
+                              <a class="dropdown-item" v-for="(
                                   autocompleteVar, idx3
-                                ) in autocompletableVariables(v.name)"
-                                :key="idx3"
-                                @click="v.name = autocompleteVar.var.name"
-                              >
+                                ) in autocompletableVariables(v.name)" :key="idx3"
+                                @click="v.name = autocompleteVar.var.name">
                                 {{ autocompleteVar.var.name }} ({{
                                   autocompleteVar.type
-                                }}, <code>{{ autocompleteVar.var.value }}</code
-                                >)
+                                }}, <code>{{ autocompleteVar.var.value }}</code>)
                               </a>
                             </div>
                           </div>
@@ -477,26 +322,17 @@
                         </div>
                       </td>
                       <td>
-                        <input
-                          type="text"
-                          class="input is-small"
-                          v-model="v.value"
-                        />
+                        <input type="text" class="input is-small" v-model="v.value" />
                       </td>
                       <td>
-                        <button
-                          class="button is-small"
-                          @click="rmVariableChange(idx)"
-                        >
+                        <button class="button is-small" @click="rmVariableChange(idx)">
                           <i class="fa fa-remove" />
                         </button>
                       </td>
                     </tr>
                   </tbody>
                 </table>
-                <span class="button is-small" @click="onAddVariableChange"
-                  >Add Variable Change</span
-                >
+                <span class="button is-small" @click="onAddVariableChange">Add Variable Change</span>
                 <div class="help">
                   Variable changes are performed when the command is executed,
                   before anything else.
@@ -506,16 +342,8 @@
             <tr>
               <td>Permissions:</td>
               <td>
-                <label
-                  v-for="(perm, idx) in possiblePermissions"
-                  :key="idx"
-                  class="mr-1"
-                >
-                  <input
-                    type="checkbox"
-                    v-model="item.restrict_to"
-                    :value="perm.value"
-                  />
+                <label v-for="(perm, idx) in possiblePermissions" :key="idx" class="mr-1">
+                  <input type="checkbox" v-model="item.restrict_to" :value="perm.value" />
                   {{ perm.label }}
                 </label>
               </td>
@@ -524,11 +352,7 @@
         </table>
       </section>
       <footer class="modal-card-foot">
-        <button
-          class="button is-small is-primary"
-          :disabled="!valid"
-          @click="onSaveClick"
-        >
+        <button class="button is-small is-primary" :disabled="!valid" @click="onSaveClick">
           Save changes
         </button>
         <button class="button is-small" @click="onCancelClick">Cancel</button>
@@ -549,6 +373,7 @@ import {
 } from "../../../common/commands";
 import {
   Command,
+  CommandTrigger,
   GlobalVariable,
   MediaFile,
   SoundMediaFile,
@@ -714,7 +539,7 @@ export default defineComponent({
         return;
       }
       this.item.data.text = this.item.data.text.filter(
-        (val, index) => index !== idx
+        (_val: string, index: number) => index !== idx
       );
     },
     rmtrigger(idx: number) {
@@ -723,7 +548,7 @@ export default defineComponent({
         return;
       }
       this.item.triggers = this.item.triggers.filter(
-        (val, index) => index !== idx
+        (_val: CommandTrigger, index: number) => index !== idx
       );
     },
     insertMacro(idx: number, macro: { value: string; title: string }) {
@@ -828,6 +653,7 @@ export default defineComponent({
   position: relative;
   padding-right: 2em;
 }
+
 .textarea-holder .button {
   position: absolute;
   right: -2px;
