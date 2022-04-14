@@ -8,6 +8,7 @@ cp -r src/templates build/server/
 cp -r src/config_data build/server/
 
 # frontend build
+# npx vue-tsc --noEmit
 npm run vite -- build --config vite.config.js
 
 # widgets build

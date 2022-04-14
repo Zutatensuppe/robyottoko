@@ -3,34 +3,20 @@
     <div class="level avatar-slot-definition-editor-title p-1">
       <div class="level-left">
         <div class="level-item">
-          <avatar-animation
-            :frames="defaultAnimation"
-            :width="32"
-            :height="32"
-          />
+          <avatar-animation :frames="defaultAnimation" :width="32" :height="32" />
         </div>
         <div class="level-item">
-          <input
-            class="input is-small avatar-slot-definition-editor-title-input"
-            :class="{ 'is-static': !titleFocused }"
-            @focus="titleFocused = true"
-            @blur="titleFocused = false"
-            v-model="modelValue.slot"
-          />
+          <input class="input is-small avatar-slot-definition-editor-title-input"
+            :class="{ 'is-static': !titleFocused }" @focus="titleFocused = true" @blur="titleFocused = false"
+            v-model="modelValue.slot" />
         </div>
       </div>
       <div class="level-right">
         <div class="level-item">
-          <i
-            class="fa fa-chevron-up is-clickable ml-1"
-            @click="$emit('moveUp')"
-          ></i>
+          <i class="fa fa-chevron-up is-clickable ml-1" @click="$emit('moveUp')"></i>
         </div>
         <div class="level-item">
-          <i
-            class="fa fa-chevron-down is-clickable ml-1"
-            @click="$emit('moveDown')"
-          ></i>
+          <i class="fa fa-chevron-down is-clickable ml-1" @click="$emit('moveDown')"></i>
         </div>
         <div class="level-item">
           <span class="button is-small" @click="$emit('remove')">
@@ -40,19 +26,11 @@
       </div>
     </div>
     <div class="p-1">
-      <avatar-slot-item-editor
-        class="card mb-1"
-        :class="{ 'is-default': idx === this.modelValue.defaultItemIndex }"
-        v-for="(item, idx) in modelValue.items"
-        :key="idx"
-        :modelValue="item"
-        :isDefault="idx === this.modelValue.defaultItemIndex"
-        @moveUp="moveItemUp(idx)"
-        @moveDown="moveItemDown(idx)"
-        @update:modelValue="updateItem(idx, $event)"
-        @remove="removeItem(idx, $event)"
-        @makeDefault="makeItemDefault(idx, $event)"
-      />
+      <avatar-slot-item-editor class="card mb-1" :class="{ 'is-default': idx === modelValue.defaultItemIndex }"
+        v-for="(item, idx) in modelValue.items" :key="idx" :modelValue="item"
+        :isDefault="idx === modelValue.defaultItemIndex" @moveUp="moveItemUp(idx)" @moveDown="moveItemDown(idx)"
+        @update:modelValue="updateItem(idx, $event)" @remove="removeItem(idx, $event)"
+        @makeDefault="makeItemDefault(idx, $event)" />
     </div>
 
     <span class="button is-small" @click="addItem">Add item</span>
@@ -135,9 +113,8 @@ export default defineComponent({
     },
     addItem() {
       const item: AvatarModuleAvatarSlotItem = {
-        title: `${this.modelValue.slot} item ${
-          this.modelValue.items.length + 1
-        }`,
+        title: `${this.modelValue.slot} item ${this.modelValue.items.length + 1
+          }`,
         states: this.avatarDef.stateDefinitions.map((stateDef) => ({
           state: stateDef.value,
           frames: [],
@@ -172,9 +149,11 @@ export default defineComponent({
   font-weight: bold;
   font-size: 20px !important;
 }
+
 .avatar-slot-definition-editor {
   border: solid 1px hsl(0, 0%, 86%);
 }
+
 .avatar-slot-definition-editor-title {
   background: #efefef;
   border-bottom: solid 1px hsl(0, 0%, 86%);

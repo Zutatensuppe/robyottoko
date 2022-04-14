@@ -82,6 +82,20 @@ export interface Config {
   youtubeDlBinary: string,
 }
 
+// @see https://github.com/SortableJS/vue.draggable.next
+// @see https://github.com/SortableJS/Sortable#event-object-demo
+export interface DragEndEvent {
+  item: HTMLElement // dragged HTMLElement
+  to: any[] // target list
+  from: any[] // previous list
+  oldIndex: number // element's old index within old parent
+  newIndex: number // element's new index within new parent
+  oldDraggableIndex: number // element's old index within old parent, only counting draggable elements
+  newDraggableIndex: number // element's new index within new parent, only counting draggable elements
+  clone: any // the clone element
+  pullMode: any
+}
+
 export interface MediaFile {
   file: string
   filename: string
@@ -333,17 +347,19 @@ export interface CountdownAction {
   value: string | MediaCommandData
 }
 
+export interface CountdownCommandData {
+  type: string
+  step: string
+  steps: string
+  interval: string
+  intro: string
+  outro: string
+  actions: CountdownAction[]
+}
+
 export interface CountdownCommand extends Command {
   action: "countdown"
-  data: {
-    type: string
-    step: string
-    steps: string
-    interval: string
-    intro: string
-    outro: string
-    actions: CountdownAction[]
-  }
+  data: CountdownCommandData
 }
 
 export interface FunctionCommand {

@@ -1,36 +1,21 @@
 <template>
-  <div
-    @drop="onDrop"
-    @dragover="onDragover"
-    @dragleave="onDragleave"
-    class="image-upload"
-    :class="{ 'dragging-over': draggingOver }"
-  >
-    <responsive-image
-      v-if="value.file"
-      :src="value.urlpath"
-      :title="value.filename"
-      :width="width"
-      :height="height"
-      style="display: block"
-    />
+  <div @drop="onDrop" @dragover="onDragover" @dragleave="onDragleave" class="image-upload"
+    :class="{ 'dragging-over': draggingOver }">
+    <responsive-image v-if="value.file" :src="value.urlpath" :title="value.filename" :width="width" :height="height"
+      style="display: block" />
     <button v-if="value.file" class="button is-small" @click="onRemove">
       <i class="fa fa-remove mr-1" /> Remove
     </button>
     <br v-if="value.file" />
-    <upload
-      @uploaded="onUploaded"
-      accept="image/*"
-      label="Upload Image"
-      :class="{ 'mt-1': value.file }"
-      ref="uploadComponent"
-    />
+    <upload @uploaded="onUploaded" accept="image/*" label="Upload Image" :class="{ 'mt-1': value.file }"
+      ref="uploadComponent" />
   </div>
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
 import { mediaFileFromUploadedFile } from "../../common/fn";
 import { MediaFile, UploadedFile } from "../../types";
+import { UploadInstance } from "./Upload.vue";
 
 interface ComponentData {
   value: MediaFile;
@@ -60,6 +45,11 @@ export default defineComponent({
     if (this.modelValue !== null) {
       this.value = JSON.parse(JSON.stringify(this.modelValue));
     }
+  },
+  computed: {
+    uploadComponent(): UploadInstance {
+      return this.$refs.uploadComponent as UploadInstance
+    },
   },
   methods: {
     emitUpdate() {
@@ -97,7 +87,7 @@ export default defineComponent({
       }
       if (file) {
         this.value.file = "";
-        this.$refs.uploadComponent.uploadFile(file);
+        this.uploadComponent.uploadFile(file);
       }
       return false;
     },
@@ -120,6 +110,7 @@ export default defineComponent({
 .image-upload {
   border: dashed 2px transparent;
 }
+
 .image-upload.dragging-over {
   border: dashed 2px #444;
 }

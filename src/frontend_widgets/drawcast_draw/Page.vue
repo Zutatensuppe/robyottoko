@@ -1,16 +1,9 @@
 <template>
   <div id="drawcast">
     <div class="drawcast_body" :class="{ blurred: dialog }">
-      <div
-        class="streamer_info"
-        v-if="customDescription"
-        :class="{ 'no-avatar': !customProfileImageUrl }"
-      >
-        <div
-          class="streamer_avatar"
-          v-if="customProfileImageUrl"
-          :style="{ backgroundImage: `url(${customProfileImageUrl})` }"
-        ></div>
+      <div class="streamer_info" v-if="customDescription" :class="{ 'no-avatar': !customProfileImageUrl }">
+        <div class="streamer_avatar" v-if="customProfileImageUrl"
+          :style="{ backgroundImage: `url(${customProfileImageUrl})` }"></div>
         <div class="streamer_message">
           <span class="streamer_message_inner">{{ customDescription }} </span>
         </div>
@@ -19,73 +12,36 @@
         <div class="draw_panel_inner">
           <div class="draw_panel_top">
             <div class="draw_canvas_holder">
-              <div
-                class="draw_canvas_holder_inner"
-                :class="canvasClasses"
-                :style="{ width: canvasWidth + 4, height: canvasHeight + 4 }"
-              >
-                <canvas
-                  ref="finalcanvas"
-                  :width="canvasWidth"
-                  :height="canvasHeight"
-                  :style="styles"
-                ></canvas>
-                <canvas
-                  ref="draftcanvas"
-                  :width="canvasWidth"
-                  :height="canvasHeight"
-                  :style="styles"
-                  @touchstart.prevent="touchstart"
-                  @touchmove.prevent="touchmove"
-                  @mousedown="mousedown"
-                ></canvas>
+              <div class="draw_canvas_holder_inner" :class="canvasClasses"
+                :style="{ width: canvasWidth + 4, height: canvasHeight + 4 }">
+                <canvas ref="finalcanvas" :width="canvasWidth" :height="canvasHeight" :style="styles"></canvas>
+                <canvas ref="draftcanvas" :width="canvasWidth" :height="canvasHeight" :style="styles"
+                  @touchstart.prevent="touchstart" @touchmove.prevent="touchmove" @mousedown="mousedown"></canvas>
               </div>
             </div>
             <div class="v355_1274">
               <div class="card draw_tools_panel">
                 <div class="draw_tools_tool_buttons">
-                  <div
-                    class="draw_tools_tool_button clickable tool-pen"
-                    :class="{
-                      'is-current': tool === 'pen',
-                    }"
-                    title="Pen"
-                    @click="tool = 'pen'"
-                  >
+                  <div class="draw_tools_tool_button clickable tool-pen" :class="{
+                    'is-current': tool === 'pen',
+                  }" title="Pen" @click="tool = 'pen'">
                     <icon-pen />
                   </div>
-                  <div
-                    class="draw_tools_tool_button clickable tool-eraser"
-                    :class="{
-                      'is-current': tool === 'eraser',
-                    }"
-                    title="Eraser"
-                    @click="tool = 'eraser'"
-                  >
+                  <div class="draw_tools_tool_button clickable tool-eraser" :class="{
+                    'is-current': tool === 'eraser',
+                  }" title="Eraser" @click="tool = 'eraser'">
                     <icon-eraser />
                   </div>
-                  <div
-                    class="draw_tools_tool_button clickable tool-eyedropper"
-                    :class="{
-                      'is-current': tool === 'color-sampler',
-                    }"
-                    title="Color Sampler"
-                    @click="tool = 'color-sampler'"
-                  >
+                  <div class="draw_tools_tool_button clickable tool-eyedropper" :class="{
+                    'is-current': tool === 'color-sampler',
+                  }" title="Color Sampler" @click="tool = 'color-sampler'">
                     <icon-eyedropper />
                   </div>
-                  <div
-                    class="draw_tools_tool_button clickable tool-undo"
-                    title="Undo"
-                    @click="undo"
-                  >
+                  <div class="draw_tools_tool_button clickable tool-undo" title="Undo" @click="undo">
                     <icon-undo />
                   </div>
-                  <div
-                    class="draw_tools_tool_button clickable tool-clear"
-                    title="Clear the canvas"
-                    @click="showClearDialog"
-                  >
+                  <div class="draw_tools_tool_button clickable tool-clear" title="Clear the canvas"
+                    @click="showClearDialog">
                     <icon-clear />
                   </div>
                 </div>
@@ -94,13 +50,7 @@
                     <div class="bubble-small bubble-dark"></div>
                   </div>
                   <div class="slider-input-holder">
-                    <input
-                      v-model="sizeIdx"
-                      type="range"
-                      min="0"
-                      :max="sizes.length - 1"
-                      step="1"
-                    />
+                    <input v-model="sizeIdx" type="range" min="0" :max="sizes.length - 1" step="1" />
                   </div>
                   <div class="bubble bubble-right">
                     <div class="bubble-big bubble-dark"></div>
@@ -111,14 +61,8 @@
                     <div class="bubble-big bubble-light"></div>
                   </div>
                   <div class="slider-input-holder">
-                    <input
-                      v-model="transparencyIdx"
-                      type="range"
-                      min="0"
-                      :max="transparencies.length - 1"
-                      step="1"
-                      @update:modelValue="updateTransparency"
-                    />
+                    <input v-model="transparencyIdx" type="range" min="0" :max="transparencies.length - 1" step="1"
+                      @update:modelValue="updateTransparency" />
                   </div>
                   <div class="bubble bubble-right">
                     <div class="bubble-big bubble-dark"></div>
@@ -128,28 +72,17 @@
                 <div class="visual_background">
                   <div class="visual_background_title">Visual Background:</div>
                   <div class="visual_background_colors">
-                    <div
-                      @click="opt('canvasBg', 'transparent')"
-                      class="visual_background_button bg-transparent clickable"
-                      :class="{
+                    <div @click="opt('canvasBg', 'transparent')"
+                      class="visual_background_button bg-transparent clickable" :class="{
                         'is-current':
                           canvasBg !== 'white' && canvasBg !== 'black',
-                      }"
-                    ></div>
-                    <div
-                      @click="opt('canvasBg', 'white')"
-                      class="visual_background_button bg-white clickable"
-                      :class="{
-                        'is-current': canvasBg === 'white',
-                      }"
-                    ></div>
-                    <div
-                      @click="opt('canvasBg', 'black')"
-                      class="visual_background_button bg-black clickable"
-                      :class="{
-                        'is-current': canvasBg === 'black',
-                      }"
-                    ></div>
+                      }"></div>
+                    <div @click="opt('canvasBg', 'white')" class="visual_background_button bg-white clickable" :class="{
+                      'is-current': canvasBg === 'white',
+                    }"></div>
+                    <div @click="opt('canvasBg', 'black')" class="visual_background_button bg-black clickable" :class="{
+                      'is-current': canvasBg === 'black',
+                    }"></div>
                   </div>
                 </div>
               </div>
@@ -168,11 +101,8 @@
               <div class="draw_colors_current">
                 <label class="draw_colors_current_label clickable">
                   <input type="color" v-model="color" />
-                  <span
-                    class="draw_colors_current_inner"
-                    :class="{ active: tool === 'pen' }"
-                    :style="currentColorStyle"
-                  >
+                  <span class="draw_colors_current_inner" :class="{ active: tool === 'pen' }"
+                    :style="currentColorStyle">
                   </span>
                   <div class="draw_colors_current_icon">
                     <icon-eyedropper />
@@ -180,32 +110,19 @@
                 </label>
               </div>
               <div class="draw_colors_palette">
-                <div
-                  class="palette_color clickable"
-                  v-for="(c, idx) in palette"
-                  :style="{ backgroundColor: c }"
-                  :key="idx"
-                  @click="
-                    color = c;
-                    tool = 'pen';
-                  "
-                ></div>
+                <div class="palette_color clickable" v-for="(c, idx) in palette" :style="{ backgroundColor: c }"
+                  :key="idx" @click="
+  color = c;
+tool = 'pen';
+                  "></div>
               </div>
             </div>
             <div></div>
             <div class="drawing_panel_bottom_right">
-              <div
-                v-if="sending.nonce"
-                class="button button-primary send_button"
-                @click="prepareSubmitImage"
-              >
+              <div v-if="sending.nonce" class="button button-primary send_button" @click="prepareSubmitImage">
                 <span class="send_button_text">⏳ Sending...</span>
               </div>
-              <div
-                v-else
-                class="button button-primary send_button clickable"
-                @click="prepareSubmitImage"
-              >
+              <div v-else class="button button-primary send_button clickable" @click="prepareSubmitImage">
                 <icon-send />
                 <span class="send_button_text">
                   {{ submitButtonText }}
@@ -215,25 +132,15 @@
           </div>
         </div>
       </div>
-      <div
-        v-for="(fav, idx) in favoriteListsFiltered"
-        :key="idx"
-        class="drawings-panel favorite-drawings-panel"
-      >
+      <div v-for="(fav, idx) in favoriteListsFiltered" :key="idx" class="drawings-panel favorite-drawings-panel">
         <div class="drawings_panel_title">
           <span class="drawings_panel_title_inner">{{
             fav.title || "Streamer's favorites:"
           }}</span>
         </div>
         <div class="drawing_panel_drawings" v-if="nonfavorites.length">
-          <img
-            class="image favorite clickable"
-            v-for="(img, idx) in fav.list"
-            :key="idx"
-            @click="prepareModify(img)"
-            :src="img"
-            height="190"
-          />
+          <img class="image favorite clickable" v-for="(img, idx) in fav.list" :key="idx" @click="prepareModify(img)"
+            :src="img" height="190" />
         </div>
       </div>
       <div class="drawings-panel recent-drawings-panel">
@@ -243,40 +150,24 @@
           }}</span>
         </div>
         <div class="drawing_panel_drawings">
-          <img
-            class="image clickable"
-            v-for="(img, idx) in nonfavorites"
-            :key="idx"
-            @click="prepareModify(img)"
-            :src="img"
-            height="190"
-          />
+          <img class="image clickable" v-for="(img, idx) in nonfavorites" :key="idx" @click="prepareModify(img)"
+            :src="img" height="190" />
           <div class="dotdotdot"></div>
         </div>
       </div>
     </div>
 
     <div class="drawcast_footer" :class="{ blurred: dialog }">
-      <span class="drawcast_footer_left"
-        >Hyottoko.club | Developed by
+      <span class="drawcast_footer_left">Hyottoko.club | Developed by
         <a href="https://github.com/zutatensuppe" target="_blank">para</a>. UI
         Design by
-        <a href="https://www.artstation.com/lisadikaprio" target="_blank"
-          >LisadiKaprio</a
-        ></span
-      ><span class="drawcast_footer_right"
-        ><a href="https://github.com/zutatensuppe/robyottoko" target="_blank"
-          >Source code on Github</a
-        >
+        <a href="https://www.artstation.com/lisadikaprio" target="_blank">LisadiKaprio</a></span><span
+        class="drawcast_footer_right"><a href="https://github.com/zutatensuppe/robyottoko" target="_blank">Source code
+          on Github</a>
         |
-        <a href="https://twitch.tv/nc_para_" target="_blank"
-          >Developer’s Twitch channel</a
-        >
+        <a href="https://twitch.tv/nc_para_" target="_blank">Developer’s Twitch channel</a>
         |
-        <a href="https://jigsaw.hyottoko.club" target="_blank"
-          >Jigsaw Puzzle Multiplayer</a
-        ></span
-      >
+        <a href="https://jigsaw.hyottoko.club" target="_blank">Jigsaw Puzzle Multiplayer</a></span>
     </div>
 
     <div class="dialog success-dialog" v-if="dialog === 'success'">
@@ -351,6 +242,11 @@ import { DrawcastModuleWsDataData } from "../../mod/modules/DrawcastModuleCommon
 
 const log = logger("Page.vue");
 
+interface Point {
+  x: number
+  y: number
+}
+
 const touchPoint = (canvas: HTMLCanvasElement, evt: TouchEvent) => {
   const bcr = canvas.getBoundingClientRect();
   return {
@@ -394,7 +290,7 @@ export default defineComponent({
       ctx: {} as CanvasRenderingContext2D,
       finalctx: {} as CanvasRenderingContext2D,
 
-      last: null,
+      last: null as Point | null,
 
       canvasWidth: 720,
       canvasHeight: 405,
@@ -420,71 +316,71 @@ export default defineComponent({
     };
   },
   computed: {
-    finalcanvas() {
+    finalcanvas(): HTMLCanvasElement {
       return this.$refs.finalcanvas as HTMLCanvasElement;
     },
-    draftcanvas() {
+    draftcanvas(): HTMLCanvasElement {
       return this.$refs.draftcanvas as HTMLCanvasElement;
     },
-    favoriteListsFiltered() {
+    favoriteListsFiltered(): DrawcastFavoriteList[] {
       return this.favoriteLists.filter(
         (fav: DrawcastFavoriteList) => fav.list.length > 0
       );
     },
-    favorites() {
+    favorites(): string[] {
       const favorites = [];
       for (const fav of this.favoriteLists) {
         favorites.push(...fav.list);
       }
       return favorites;
     },
-    currentColorStyle() {
+    currentColorStyle(): { backgroundColor: string } {
       return {
         backgroundColor:
           this.tool === "color-sampler" ? this.sampleColor : this.color,
       };
     },
-    size() {
+    size(): number {
       return this.sizes[this.sizeIdx];
     },
-    transparency() {
+    transparency(): number {
       return this.transparencies[this.transparencyIdx];
     },
-    nonfavorites() {
+    nonfavorites(): string[] {
       return this.images.filter((url: string) => !this.favorites.includes(url));
     },
-    canvasBg() {
+    canvasBg(): string {
       return ["transparent", "white", "black"].includes(this.opts.canvasBg)
         ? this.opts.canvasBg
         : "transparent";
     },
-    canvasClasses() {
+    canvasClasses(): string[] {
       return [`bg-${this.canvasBg}`];
     },
-    halfSize() {
+    halfSize(): number {
       return Math.round(this.size / 2);
     },
-    styles() {
+    styles(): { cursor: string } {
       return {
         cursor: this.cursor,
       };
     },
-    cursor() {
+    cursor(): string {
       const c = document.createElement("canvas");
       const ctx = c.getContext("2d") as CanvasRenderingContext2D;
       if (this.tool === "color-sampler") {
         return "crosshair";
       }
 
-      c.width = parseInt(this.size, 10) + 1;
-      c.height = parseInt(this.size, 10) + 1;
+      c.width = this.size + 1;
+      c.height = this.size + 1;
       ctx.beginPath();
       if (this.tool === "eraser") {
         ctx.fillStyle = "#fff";
       } else {
         ctx.fillStyle = this.color;
       }
-      ctx.strokeStyle = hexIsLight(ctx.fillStyle) ? "#000" : "#fff";
+      ctx.strokeStyle = hexIsLight(String(ctx.fillStyle)) ? "#000" : "#fff";
 
       ctx.arc(this.halfSize, this.halfSize, this.halfSize, 0, 2 * Math.PI);
       ctx.closePath();
@@ -539,7 +435,7 @@ export default defineComponent({
       this.finalctx.drawImage(imageObject, 0, 0);
       this.finalctx.globalCompositeOperation = tmp;
     },
-    drawPathPart(pts) {
+    drawPathPart(pts: Point[]) {
       this.drawing = true;
       const color = this.color;
       const size = this.size;
@@ -598,7 +494,7 @@ export default defineComponent({
       this.last = null;
     },
 
-    startDraw(pt) {
+    startDraw(pt: Point) {
       if (this.tool === "color-sampler") {
         if (
           pt.x >= 0 &&
@@ -623,7 +519,7 @@ export default defineComponent({
       }
     },
 
-    continueDraw(pt) {
+    continueDraw(pt: Point) {
       if (this.tool === "color-sampler") {
         this.sampleColor = this.getColor(pt);
       }
@@ -738,13 +634,13 @@ export default defineComponent({
         this.modify(this.modifyImageUrl);
       }
     },
-    getColor(pt) {
+    getColor(pt: Point) {
       const [r, g, b, a] = this.finalctx.getImageData(pt.x, pt.y, 1, 1).data;
-      const hex = (v) => pad(v.toString(16), "00");
+      const hex = (v: number) => pad(v.toString(16), "00");
       // when selecting transparent color, instead use first color in palette
       return a ? `#${hex(r)}${hex(g)}${hex(b)}` : this.palette[0];
     },
-    keyup(e) {
+    keyup(e: KeyboardEvent) {
       if (e.code === "Digit1") {
         this.sizeIdx = 0;
       } else if (e.code === "Digit2") {
@@ -793,7 +689,7 @@ export default defineComponent({
       this.customDescription = data.settings.customDescription || "";
       this.customProfileImageUrl =
         data.settings.customProfileImage &&
-        data.settings.customProfileImage.urlpath
+          data.settings.customProfileImage.urlpath
           ? data.settings.customProfileImage.urlpath
           : "";
       this.recentImagesTitle =

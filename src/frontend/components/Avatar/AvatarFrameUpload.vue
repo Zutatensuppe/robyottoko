@@ -1,11 +1,6 @@
 <template>
-  <span
-    @drop="onDrop"
-    @dragover="onDragover"
-    @dragleave="onDragleave"
-    class="avatar-animation-frame"
-    :class="{ 'dragging-over': draggingOver }"
-  >
+  <span @drop="onDrop" @dragover="onDragover" @dragleave="onDragleave" class="avatar-animation-frame"
+    :class="{ 'dragging-over': draggingOver }">
     <div class="avatar-animation-frame-remove">
       <span class="button is-small" @click="onRemove">
         <i class="fa fa-trash"></i>
@@ -13,20 +8,9 @@
     </div>
     <img v-if="value.url" :src="value.url" width="64" height="64" />
 
-    <upload
-      v-show="!value.url"
-      @uploaded="onUploaded"
-      accept="image/*"
-      label=""
-      class="avatar-animation-frame-upload"
-      ref="uploadComponent"
-    />
-    <input
-      class="input is-small"
-      type="text"
-      v-model="value.duration"
-      @update:modelValue="onDurationChange"
-    />
+    <upload v-show="!value.url" @uploaded="onUploaded" accept="image/*" label="" class="avatar-animation-frame-upload"
+      ref="uploadComponent" />
+    <input class="input is-small" type="text" v-model="value.duration" @update:modelValue="onDurationChange" />
   </span>
 </template>
 
@@ -34,6 +18,7 @@
 import { defineComponent } from "vue";
 import { AvatarModuleAnimationFrameDefinition } from "../../../mod/modules/AvatarModuleCommon";
 import { UploadedFile } from "../../../types";
+import { UploadInstance } from "../Upload.vue";
 
 interface ComponentData {
   value: AvatarModuleAnimationFrameDefinition;
@@ -62,6 +47,11 @@ export default defineComponent({
   watch: {
     modelValue() {
       this.applyValue();
+    },
+  },
+  computed: {
+    uploadComponent(): UploadInstance {
+      return this.$refs.uploadComponent as UploadInstance
     },
   },
   methods: {
@@ -110,7 +100,7 @@ export default defineComponent({
       }
       if (file) {
         this.value.url = "";
-        this.$refs.uploadComponent.uploadFile(file);
+        this.uploadComponent.uploadFile(file);
       }
       return false;
     },
@@ -133,6 +123,7 @@ export default defineComponent({
 .avatar-animation-frame {
   border: dashed 2px transparent;
 }
+
 .avatar-animation-frame.dragging-over {
   border: dashed 2px #444;
 }

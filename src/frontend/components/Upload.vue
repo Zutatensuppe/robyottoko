@@ -1,17 +1,9 @@
 <template>
   <label class="upload">
-    <input
-      type="file"
-      :disabled="uploading"
-      style="display: none"
-      @change="upload"
-      :accept="accept"
-    />
-    <span class="button is-small"
-      ><i class="fa fa-upload" :class="{ 'mr-1': buttonText }" />{{
-        buttonText
-      }}</span
-    >
+    <input type="file" :disabled="uploading" style="display: none" @change="upload" :accept="accept" />
+    <span class="button is-small"><i class="fa fa-upload" :class="{ 'mr-1': buttonText }" />{{
+      buttonText
+    }}</span>
     <span class="progress" :style="progressStyle"></span>
   </label>
 </template>
@@ -21,7 +13,7 @@ import { defineComponent } from "vue";
 import { UploadedFile } from "../../types";
 import api from "../api";
 
-export default defineComponent({
+const Upload = defineComponent({
   name: "upload",
   props: {
     accept: String,
@@ -65,15 +57,18 @@ export default defineComponent({
       const uploadedFile: UploadedFile = await res.json();
       this.$emit("uploaded", uploadedFile);
     },
-    async upload(evt) {
-      const file = evt.target.files[0];
-      if (!file) {
+    async upload(evt: Event) {
+      const input = evt.target as HTMLInputElement
+      if (input.files.length === 0) {
         return;
       }
-      this.uploadFile(file);
+      this.uploadFile(input.files[0]);
     },
   },
 });
+
+export type UploadInstance = InstanceType<typeof Upload>
+export default Upload
 </script>
 
 <style lang="scss" scoped>
@@ -84,6 +79,7 @@ export default defineComponent({
   display: inline-block;
   vertical-align: text-bottom;
 }
+
 .upload .progress {
   height: 2px;
   position: absolute;

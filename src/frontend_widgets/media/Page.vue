@@ -3,7 +3,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
-import MediaQueueElement from "../MediaQueueElement.vue";
+import MediaQueueElement, { MediaQueueElementInstance } from "../MediaQueueElement.vue";
 import util from "../util";
 import WsClient from "../../frontend/WsClient";
 import {
@@ -31,6 +31,11 @@ export default defineComponent({
   created() {
     this.commandId = util.getParam('id')
   },
+  computed: {
+    q(): MediaQueueElementInstance {
+      return this.$refs.q as MediaQueueElementInstance
+    },
+  },
   mounted() {
     this.ws = util.wsClient("media");
     this.ws.onMessage("init", (data) => {
@@ -42,7 +47,7 @@ export default defineComponent({
       } else if (this.commandId && this.commandId !== origData.id) {
         // skipping this, as it isn't coming from right command
       } else {
-        this.$refs["q"].playmedia(data);
+        this.q.playmedia(data);
       }
     });
     this.ws.connect();

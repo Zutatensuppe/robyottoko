@@ -4,11 +4,7 @@
     <div class="modal-card">
       <header class="modal-card-head">
         <p class="modal-card-title">Edit Avatar</p>
-        <button
-          class="delete"
-          aria-label="close"
-          @click="onCloseClick"
-        ></button>
+        <button class="delete" aria-label="close" @click="onCloseClick"></button>
       </header>
       <section class="modal-card-body" ref="cardBody">
         <div class="columns">
@@ -22,90 +18,48 @@
                 <tr>
                   <td>Dimensions:</td>
                   <td>
-                    <input
-                      class="input is-small number-input"
-                      v-model="item.width"
-                    />✖<input
-                      class="input is-small number-input"
-                      v-model="item.height"
-                    />
+                    <input class="input is-small number-input" v-model="item.width" />✖<input
+                      class="input is-small number-input" v-model="item.height" />
                     Pixels
-                    <span
-                      v-if="allImages.length"
-                      class="button is-small"
-                      @click="autoDetectDimensions"
-                      >Auto-detect</span
-                    >
+                    <span v-if="allImages.length" class="button is-small"
+                      @click="autoDetectDimensions">Auto-detect</span>
                   </td>
                 </tr>
                 <tr>
                   <td>States:</td>
                   <td>
-                    <span
-                      class="tag"
-                      v-for="(stateDef, idx) in item.stateDefinitions"
-                      :key="idx"
-                    >
+                    <span class="tag" v-for="(stateDef, idx) in item.stateDefinitions" :key="idx">
                       <span>{{ stateDef.value }}</span>
-                      <span
-                        class="ml-1 is-clickable"
-                        v-if="stateDef.deletable"
-                        @click="removeStateDefinition(idx)"
-                        ><i class="fa fa-trash"></i
-                      ></span>
+                      <span class="ml-1 is-clickable" v-if="stateDef.deletable" @click="removeStateDefinition(idx)"><i
+                          class="fa fa-trash"></i></span>
                     </span>
 
-                    <input
-                      class="input is-small"
-                      type="text"
-                      v-model="newState"
-                      placeholder="State"
-                    />
-                    <span
-                      class="button is-small"
-                      @click="addStateDefinition"
-                      :disabled="isStateAddable ? null : true"
-                      >Add custom state</span
-                    >
+                    <input class="input is-small" type="text" v-model="newState" placeholder="State" />
+                    <span class="button is-small" @click="addStateDefinition"
+                      :disabled="isStateAddable ? null : true">Add custom state</span>
                   </td>
                 </tr>
                 <tr>
                   <td>Slots</td>
                   <td>
-                    <avatar-slot-definition-editor
-                      class="card mb-2"
-                      v-for="(slotDefinition, idx) in item.slotDefinitions"
-                      :key="idx"
-                      :modelValue="slotDefinition"
-                      :avatarDef="item"
-                      @update:modelValue="updateSlotDefinition(idx, $event)"
-                      @moveUp="moveSlotUp(idx)"
-                      @moveDown="moveSlotDown(idx)"
-                      @remove="removeSlotDefinition(idx)"
-                    />
+                    <avatar-slot-definition-editor class="card mb-2"
+                      v-for="(slotDefinition, idx) in item.slotDefinitions" :key="idx" :modelValue="slotDefinition"
+                      :avatarDef="item" @update:modelValue="updateSlotDefinition(idx, $event)" @moveUp="moveSlotUp(idx)"
+                      @moveDown="moveSlotDown(idx)" @remove="removeSlotDefinition(idx)" />
                   </td>
                 </tr>
               </tbody>
             </table>
 
-            <span class="button is-small" @click="addSlotDefinition"
-              >Add slot</span
-            >
+            <span class="button is-small" @click="addSlotDefinition">Add slot</span>
           </div>
           <div class="column">
             <div>JSON:</div>
             <textarea class="textarea mb-2" v-model="itemStr"></textarea>
             <div>All images in use:</div>
             <div class="avatar-all-images" ref="allImagesDiv">
-              <img
-                v-for="(img, idx) in allImages"
-                :key="idx"
-                :src="img"
-                draggable="true"
-                class="mr-1 mb-1"
-                @dragstart="imageDragStart"
-                :data-src="img"
-              />
+              <img v-for="(img, idx) in allImages" :key="idx" :src="img" draggable="true" class="mr-1 mb-1"
+                @dragstart="imageDragStart" :data-src="img" />
             </div>
           </div>
         </div>
@@ -190,6 +144,18 @@ export default defineComponent({
     },
   },
   computed: {
+    cardBody(): HTMLElement | null {
+      if (!this.$refs.cardBody) {
+        return null
+      }
+      return this.$refs.cardBody as HTMLElement
+    },
+    allImagesDiv(): HTMLDivElement | null {
+      if (!this.$refs.allImagesDiv) {
+        return null
+      }
+      return this.$refs.allImagesDiv as HTMLDivElement
+    },
     allImages() {
       const images: string[] = [];
       this.item?.slotDefinitions.forEach((slotDef) => {
@@ -219,7 +185,7 @@ export default defineComponent({
     },
   },
   methods: {
-    autoDetectDimensions() {
+    autoDetectDimensions(): void {
       if (this.allImages.length === 0) {
         return;
       }
@@ -233,22 +199,22 @@ export default defineComponent({
       };
       img.src = this.allImages[0];
     },
-    adjustAllImagesDivSize() {
+    adjustAllImagesDivSize(): void {
       this.$nextTick(() => {
-        if (!this.$refs.cardBody || !this.$refs.allImagesDiv) {
+        if (!this.cardBody || !this.allImagesDiv) {
           return;
         }
-        const maxHeight = this.$refs.cardBody.clientHeight;
-        this.$refs.allImagesDiv.style.maxHeight = `${maxHeight}px`;
+        const maxHeight = this.cardBody.clientHeight;
+        this.allImagesDiv.style.maxHeight = `${maxHeight}px`;
       });
     },
-    imageDragStart($evt) {
+    imageDragStart($evt: DragEvent): void {
       $evt.dataTransfer.setData(
         "avatar-image-url",
-        $evt.target.getAttribute("data-src")
+        ($evt.target as HTMLImageElement).getAttribute("data-src")
       );
     },
-    emitUpdate() {
+    emitUpdate(): void {
       if (!this.item) {
         console.warn("emitUpdate: this.item not initialized");
         return;
@@ -265,23 +231,23 @@ export default defineComponent({
         })
       );
     },
-    onSaveClick() {
+    onSaveClick(): void {
       this.emitUpdate();
     },
-    onSaveAndCloseClick() {
+    onSaveAndCloseClick(): void {
       this.emitUpdate();
       this.$emit("cancel");
     },
-    onCancelClick() {
+    onCancelClick(): void {
       this.$emit("cancel");
     },
-    onOverlayClick() {
+    onOverlayClick(): void {
       this.$emit("cancel");
     },
-    onCloseClick() {
+    onCloseClick(): void {
       this.$emit("cancel");
     },
-    addStateDefinition() {
+    addStateDefinition(): void {
       if (!this.item) {
         console.warn("addStateDefinition: this.item not initialized");
         return;
@@ -300,7 +266,7 @@ export default defineComponent({
         }
       }
     },
-    removeStateDefinition(index: string | number) {
+    removeStateDefinition(index: string | number): void {
       if (!this.item) {
         console.warn("removeStateDefinition: this.item not initialized");
         return;
@@ -324,7 +290,7 @@ export default defineComponent({
         }
       }
     },
-    removeSlotDefinition(index: string | number) {
+    removeSlotDefinition(index: string | number): void {
       if (!this.item) {
         console.warn("removeSlotDefinition: this.item not initialized");
         return;
@@ -341,14 +307,14 @@ export default defineComponent({
     updateSlotDefinition(
       index: string | number,
       slotDefinition: AvatarModuleAvatarSlotDefinition
-    ) {
+    ): void {
       if (!this.item) {
         console.warn("updateSlotDefinition: this.item not initialized");
         return;
       }
       this.item.slotDefinitions[parseInt(`${index}`, 10)] = slotDefinition;
     },
-    addSlotDefinition() {
+    addSlotDefinition(): void {
       if (!this.item) {
         console.warn("addSlotDefinition: this.item not initialized");
         return;
@@ -360,13 +326,13 @@ export default defineComponent({
       };
       this.item.slotDefinitions.push(slotDefinition);
     },
-    moveSlotUp(idx: number) {
+    moveSlotUp(idx: number): void {
       this.swapItems(idx - 1, idx);
     },
-    moveSlotDown(idx: number) {
+    moveSlotDown(idx: number): void {
       this.swapItems(idx + 1, idx);
     },
-    swapItems(idx1: number, idx2: number) {
+    swapItems(idx1: number, idx2: number): void {
       if (!this.item) {
         console.warn("swapItems: this.item not initialized");
         return;

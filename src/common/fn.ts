@@ -65,7 +65,7 @@ const dateformat = (
 }
 
 export const pad = (
-  x: number,
+  x: string | number,
   pad: string
 ): string => {
   const str = `${x}`
