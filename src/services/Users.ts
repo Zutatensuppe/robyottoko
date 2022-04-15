@@ -58,8 +58,8 @@ class Users {
     return await this.get({ id })
   }
 
-  async save(user: UpdateUser): Promise<any> {
-    return await this.db.upsert(TABLE, user, { id: user.id })
+  async save(user: UpdateUser): Promise<void> {
+    await this.db.upsert(TABLE, user, { id: user.id })
   }
 
   async getGroups(id: number): Promise<string[]> {

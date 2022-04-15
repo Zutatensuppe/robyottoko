@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "async-mutex": "^0.3.2",
     "bulma": "^0.9.3",
     "cookie-parser": "^1.4.5",
     "express": "^4.17.1",
