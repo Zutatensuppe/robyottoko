@@ -3119,7 +3119,7 @@ class Users {
         return await this.get({ id });
     }
     async save(user) {
-        return await this.db.upsert(TABLE$3, user, { id: user.id });
+        await this.db.upsert(TABLE$3, user, { id: user.id });
     }
     async getGroups(id) {
         const rows = await this.db._getMany(`
@@ -3181,7 +3181,7 @@ class TwitchChannels {
         this.db = db;
     }
     async save(channel) {
-        return await this.db.upsert(TABLE$1, channel, {
+        await this.db.upsert(TABLE$1, channel, {
             user_id: channel.user_id,
             channel_name: channel.channel_name,
         });
@@ -3214,9 +3214,135 @@ class Cache {
     }
 }
 
+const E_CANCELED = new Error('request for lock canceled');
+
+var __awaiter$2 = function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+class Semaphore {
+    constructor(_maxConcurrency, _cancelError = E_CANCELED) {
+        this._maxConcurrency = _maxConcurrency;
+        this._cancelError = _cancelError;
+        this._queue = [];
+        this._waiters = [];
+        if (_maxConcurrency <= 0) {
+            throw new Error('semaphore must be initialized to a positive value');
+        }
+        this._value = _maxConcurrency;
+    }
+    acquire() {
+        const locked = this.isLocked();
+        const ticketPromise = new Promise((resolve, reject) => this._queue.push({ resolve, reject }));
+        if (!locked)
+            this._dispatch();
+        return ticketPromise;
+    }
+    runExclusive(callback) {
+        return __awaiter$2(this, void 0, void 0, function* () {
+            const [value, release] = yield this.acquire();
+            try {
+                return yield callback(value);
+            }
+            finally {
+                release();
+            }
+        });
+    }
+    waitForUnlock() {
+        return __awaiter$2(this, void 0, void 0, function* () {
+            if (!this.isLocked()) {
+                return Promise.resolve();
+            }
+            const waitPromise = new Promise((resolve) => this._waiters.push({ resolve }));
+            return waitPromise;
+        });
+    }
+    isLocked() {
+        return this._value <= 0;
+    }
+    /** @deprecated Deprecated in 0.3.0, will be removed in 0.4.0. Use runExclusive instead. */
+    release() {
+        if (this._maxConcurrency > 1) {
+            throw new Error('this method is unavailable on semaphores with concurrency > 1; use the scoped release returned by acquire instead');
+        }
+        if (this._currentReleaser) {
+            const releaser = this._currentReleaser;
+            this._currentReleaser = undefined;
+            releaser();
+        }
+    }
+    cancel() {
+        this._queue.forEach((ticket) => ticket.reject(this._cancelError));
+        this._queue = [];
+    }
+    _dispatch() {
+        const nextTicket = this._queue.shift();
+        if (!nextTicket)
+            return;
+        let released = false;
+        this._currentReleaser = () => {
+            if (released)
+                return;
+            released = true;
+            this._value++;
+            this._resolveWaiters();
+            this._dispatch();
+        };
+        nextTicket.resolve([this._value--, this._currentReleaser]);
+    }
+    _resolveWaiters() {
+        this._waiters.forEach((waiter) => waiter.resolve());
+        this._waiters = [];
+    }
+}
+
+var __awaiter$1 = function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+class Mutex {
+    constructor(cancelError) {
+        this._semaphore = new Semaphore(1, cancelError);
+    }
+    acquire() {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            const [, releaser] = yield this._semaphore.acquire();
+            return releaser;
+        });
+    }
+    runExclusive(callback) {
+        return this._semaphore.runExclusive(() => callback());
+    }
+    isLocked() {
+        return this._semaphore.isLocked();
+    }
+    waitForUnlock() {
+        return this._semaphore.waitForUnlock();
+    }
+    /** @deprecated Deprecated in 0.3.0, will be removed in 0.4.0. Use runExclusive instead. */
+    release() {
+        this._semaphore.release();
+    }
+    cancel() {
+        return this._semaphore.cancel();
+    }
+}
+
 // @ts-ignore
 const { Client } = pg.default;
 const log$c = logger('Db.ts');
+const mutex = new Mutex();
 class Db {
     constructor(connectStr, patchesDir) {
         this.patchesDir = patchesDir;
@@ -3394,14 +3520,16 @@ class Db {
         return !!await this.get(table, whereRaw);
     }
     async upsert(table, data, check, idcol = null) {
-        if (!await this.exists(table, check)) {
-            return await this.insert(table, data, idcol);
-        }
-        await this.update(table, data, check);
-        if (idcol === null) {
-            return 0; // dont care about id
-        }
-        return (await this.get(table, check))[idcol]; // get id manually
+        return mutex.runExclusive(async () => {
+            if (!await this.exists(table, check)) {
+                return await this.insert(table, data, idcol);
+            }
+            await this.update(table, data, check);
+            if (idcol === null) {
+                return 0; // dont care about id
+            }
+            return (await this.get(table, check))[idcol]; // get id manually
+        });
     }
     async insert(table, data, idcol = null) {
         const keys = Object.keys(data);
@@ -6442,9 +6570,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-14T09:17:56.881Z",
+    buildDate: "2022-04-16T09:28:28.731Z",
     // @ts-ignore
-    buildVersion: "1.8.4",
+    buildVersion: "1.8.5",
 };
 
 setLogLevel(config.log.level);
