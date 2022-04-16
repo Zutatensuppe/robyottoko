@@ -6570,9 +6570,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-15T22:40:52.221Z",
+    buildDate: "2022-04-16T09:28:28.731Z",
     // @ts-ignore
-    buildVersion: "1.8.4",
+    buildVersion: "1.8.5",
 };
 
 setLogLevel(config.log.level);
