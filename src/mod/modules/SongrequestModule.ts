@@ -1296,7 +1296,9 @@ class SongrequestModule implements Module {
     let d = await this.bot.getCache().get(key)
     if (!d) {
       d = await Youtube.fetchDataByYoutubeId(youtubeId)
-      await this.bot.getCache().set(key, d)
+      if (d) {
+        await this.bot.getCache().set(key, d)
+      }
     }
     return d
   }

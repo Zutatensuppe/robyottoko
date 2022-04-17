@@ -4469,7 +4469,7 @@ const fetchDataByYoutubeId = async (youtubeId) => {
         return json.items[0];
     }
     catch (e) {
-        log$4.error(e, json);
+        log$4.error(e, json, youtubeId);
         return null;
     }
 };
@@ -5670,7 +5670,9 @@ class SongrequestModule {
         let d = await this.bot.getCache().get(key);
         if (!d) {
             d = await Youtube.fetchDataByYoutubeId(youtubeId);
-            await this.bot.getCache().set(key, d);
+            if (d) {
+                await this.bot.getCache().set(key, d);
+            }
         }
         return d;
     }
@@ -6587,7 +6589,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-17T19:11:53.761Z",
+    buildDate: "2022-04-17T19:17:04.463Z",
     // @ts-ignore
     buildVersion: "1.8.6",
 };

@@ -42,7 +42,7 @@ const fetchDataByYoutubeId = async (youtubeId: string): Promise<YoutubeVideosRes
     }) as YoutubeVideosResponseData
     return json.items[0]
   } catch (e) {
-    log.error(e, json)
+    log.error(e, json, youtubeId)
     return null
   }
 }
