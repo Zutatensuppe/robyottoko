@@ -353,11 +353,13 @@ class SongrequestModule implements Module {
     const tmpYoutubeId = Youtube.extractYoutubeId(youtubeUrl)
     if (tmpYoutubeId) {
       const tmpYoutubeData = await this.loadYoutubeData(tmpYoutubeId)
-      if (isTooLong(tmpYoutubeData)) {
-        return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_LONG }
+      if (tmpYoutubeData) {
+        if (isTooLong(tmpYoutubeData)) {
+          return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_LONG }
+        }
+        youtubeId = tmpYoutubeId
+        youtubeData = tmpYoutubeData
       }
-      youtubeId = tmpYoutubeId
-      youtubeData = tmpYoutubeData
     }
     if (!youtubeData) {
       const youtubeIds = await Youtube.getYoutubeIdsBySearch(youtubeUrl)
@@ -458,7 +460,11 @@ class SongrequestModule implements Module {
     let durationTotalMs = 0
     for (const item of this.data.playlist.slice(0, idx)) {
       const d = await this.loadYoutubeData(item.yt)
-      durationTotalMs += fn.parseISO8601Duration(d.contentDetails.duration)
+      // sometimes songs in the playlist may not be available on yt anymore
+      // then we just dont add that to the duration calculation
+      if (d) {
+        durationTotalMs += fn.parseISO8601Duration(d.contentDetails.duration)
+      }
     }
     return durationTotalMs
   }
@@ -469,7 +475,11 @@ class SongrequestModule implements Module {
     if (countTotal > 0) {
       for (const item of this.data.playlist) {
         const d = await this.loadYoutubeData(item.yt)
-        durationTotal += fn.parseISO8601Duration(d.contentDetails.duration)
+        // sometimes songs in the playlist may not be available on yt anymore
+        // then we just dont add that to the duration calculation
+        if (d) {
+          durationTotal += fn.parseISO8601Duration(d.contentDetails.duration)
+        }
       }
     }
     return {
@@ -1281,7 +1291,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  async loadYoutubeData(youtubeId: string): Promise<YoutubeVideosResponseDataEntry> {
+  async loadYoutubeData(youtubeId: string): Promise<YoutubeVideosResponseDataEntry | null> {
     const key = `youtubeData_${youtubeId}_20210717_2`
     let d = await this.bot.getCache().get(key)
     if (!d) {
