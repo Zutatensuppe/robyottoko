@@ -32,13 +32,19 @@ const get = async (url: string, args: QueryArgsData) => {
   return await getJson(url + asQueryArgs(args))
 }
 
-const fetchDataByYoutubeId = async (youtubeId: string): Promise<YoutubeVideosResponseDataEntry> => {
-  const json = await get('https://www.googleapis.com/youtube/v3/videos', {
-    part: 'snippet,status,contentDetails',
-    id: youtubeId,
-    fields: 'items(id,snippet,status,contentDetails)',
-  }) as YoutubeVideosResponseData
-  return json.items[0] || null
+const fetchDataByYoutubeId = async (youtubeId: string): Promise<YoutubeVideosResponseDataEntry | null> => {
+  let json
+  try {
+    json = await get('https://www.googleapis.com/youtube/v3/videos', {
+      part: 'snippet,status,contentDetails',
+      id: youtubeId,
+      fields: 'items(id,snippet,status,contentDetails)',
+    }) as YoutubeVideosResponseData
+    return json.items[0]
+  } catch (e) {
+    log.error(e, json)
+    return null
+  }
 }
 
 const extractYoutubeId = (str: string): string | null => {

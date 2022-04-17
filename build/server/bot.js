@@ -4459,12 +4459,19 @@ const get = async (url, args) => {
     return await getJson(url + asQueryArgs(args));
 };
 const fetchDataByYoutubeId = async (youtubeId) => {
-    const json = await get('https://www.googleapis.com/youtube/v3/videos', {
-        part: 'snippet,status,contentDetails',
-        id: youtubeId,
-        fields: 'items(id,snippet,status,contentDetails)',
-    });
-    return json.items[0] || null;
+    let json;
+    try {
+        json = await get('https://www.googleapis.com/youtube/v3/videos', {
+            part: 'snippet,status,contentDetails',
+            id: youtubeId,
+            fields: 'items(id,snippet,status,contentDetails)',
+        });
+        return json.items[0];
+    }
+    catch (e) {
+        log$4.error(e, json);
+        return null;
+    }
 };
 const extractYoutubeId = (str) => {
     const patterns = [
@@ -4921,11 +4928,13 @@ class SongrequestModule {
         const tmpYoutubeId = Youtube.extractYoutubeId(youtubeUrl);
         if (tmpYoutubeId) {
             const tmpYoutubeData = await this.loadYoutubeData(tmpYoutubeId);
-            if (isTooLong(tmpYoutubeData)) {
-                return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_LONG };
+            if (tmpYoutubeData) {
+                if (isTooLong(tmpYoutubeData)) {
+                    return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_LONG };
+                }
+                youtubeId = tmpYoutubeId;
+                youtubeData = tmpYoutubeData;
             }
-            youtubeId = tmpYoutubeId;
-            youtubeData = tmpYoutubeData;
         }
         if (!youtubeData) {
             const youtubeIds = await Youtube.getYoutubeIdsBySearch(youtubeUrl);
@@ -5018,7 +5027,11 @@ class SongrequestModule {
         let durationTotalMs = 0;
         for (const item of this.data.playlist.slice(0, idx)) {
             const d = await this.loadYoutubeData(item.yt);
-            durationTotalMs += fn.parseISO8601Duration(d.contentDetails.duration);
+            // sometimes songs in the playlist may not be available on yt anymore
+            // then we just dont add that to the duration calculation
+            if (d) {
+                durationTotalMs += fn.parseISO8601Duration(d.contentDetails.duration);
+            }
         }
         return durationTotalMs;
     }
@@ -5028,7 +5041,11 @@ class SongrequestModule {
         if (countTotal > 0) {
             for (const item of this.data.playlist) {
                 const d = await this.loadYoutubeData(item.yt);
-                durationTotal += fn.parseISO8601Duration(d.contentDetails.duration);
+                // sometimes songs in the playlist may not be available on yt anymore
+                // then we just dont add that to the duration calculation
+                if (d) {
+                    durationTotal += fn.parseISO8601Duration(d.contentDetails.duration);
+                }
             }
         }
         return {
@@ -6570,9 +6587,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-16T09:28:28.731Z",
+    buildDate: "2022-04-17T19:11:53.761Z",
     // @ts-ignore
-    buildVersion: "1.8.5",
+    buildVersion: "1.8.6",
 };
 
 setLogLevel(config.log.level);
