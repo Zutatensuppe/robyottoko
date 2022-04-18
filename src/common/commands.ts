@@ -1,28 +1,38 @@
 import { mustParseHumanDuration, nonce } from "../common/fn"
-import { Command, CommandAction, CommandTrigger, CommandTriggerType, CountdownAction, CountdownActionType, FunctionCommand, MediaCommandData } from "../types"
+import {
+  Command, CommandAction, CommandTrigger, CommandTriggerType,
+  CountdownAction, CountdownActionType, FunctionCommand,
+  MediaCommandData, MediaFile, MediaTwitchClip, SoundMediaFile,
+} from "../types"
 import { MOD_OR_ABOVE } from './permissions'
 
 export const newText = () => ''
 
-const newMedia = (): MediaCommandData => ({
-  excludeFromGlobalWidget: false,
-  sound: {
-    filename: '',
-    file: '',
-    urlpath: '',
-    volume: 100,
-  },
-  image: {
-    filename: '',
-    file: '',
-    urlpath: '',
-  },
-  image_url: '', // image identified by url only
-  twitch_clip: {
-    url: '', // twitch clip identified by url
-    volume: 100,
-  },
-  minDurationMs: '1s',
+const newSoundMediaFile = (obj: any = null): SoundMediaFile => ({
+  filename: (!obj || typeof obj.filename === 'undefined') ? '' : obj.filename,
+  file: (!obj || typeof obj.file === 'undefined') ? '' : obj.file,
+  urlpath: (!obj || typeof obj.urlpath === 'undefined') ? '' : obj.urlpath,
+  volume: (!obj || typeof obj.volume === 'undefined') ? 100 : obj.volume,
+})
+
+const newMediaFile = (obj: any = null): MediaFile => ({
+  filename: (!obj || typeof obj.filename === 'undefined') ? '' : obj.filename,
+  file: (!obj || typeof obj.file === 'undefined') ? '' : obj.file,
+  urlpath: (!obj || typeof obj.urlpath === 'undefined') ? '' : obj.urlpath,
+})
+
+const newTwitchClip = (obj: any = null): MediaTwitchClip => ({
+  url: (!obj || typeof obj.url === 'undefined') ? '' : obj.url, // twitch clip identified by url
+  volume: (!obj || typeof obj.volume === 'undefined') ? 100 : obj.volume,
+})
+
+export const newMedia = (obj: any = null): MediaCommandData => ({
+  excludeFromGlobalWidget: (!obj || typeof obj.excludeFromGlobalWidget === 'undefined') ? false : obj.excludeFromGlobalWidget,
+  sound: newSoundMediaFile(obj?.sound),
+  image: newMediaFile(obj?.image),
+  image_url: (!obj || typeof obj.image_url === 'undefined') ? '' : obj.image_url, // image identified by url only
+  twitch_clip: newTwitchClip(obj?.twitch_clip),
+  minDurationMs: (!obj || typeof obj.minDurationMs === 'undefined') ? '1s' : obj.minDurationMs,
 })
 
 export const newCountdownDelay = (): CountdownAction => ({ type: CountdownActionType.DELAY, value: "1s" })

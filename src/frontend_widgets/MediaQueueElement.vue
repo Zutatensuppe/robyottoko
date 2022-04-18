@@ -50,10 +50,15 @@ const MediaQueueElement = defineComponent({
           promises.push(
             new Promise((res) => {
               this.$nextTick(() => {
-                this.$refs.video.volume = !media.twitch_clip.volume
+                // it should be always a HTMLVideoElement
+                // because we set the videosrc. there could be some
+                // conditions where this is not true but for now this
+                // will be fine
+                const videoEl = this.$refs.video as HTMLVideoElement
+                videoEl.volume = !media.twitch_clip.volume
                   ? 0
                   : 100 / media.twitch_clip.volume;
-                this.$refs.video.addEventListener("ended", () => {
+                videoEl.addEventListener("ended", () => {
                   res();
                 });
               });
@@ -116,13 +121,13 @@ const MediaQueueElement = defineComponent({
         });
       });
     },
-    _addQueue(media: MediaCommandData) {
+    _addQueue(media: MediaCommandData): void {
       this.queue.push(media);
       if (this.worker) {
         return;
       }
 
-      const next = async () => {
+      const next = async (): Promise<void> => {
         if (this.queue.length === 0) {
           clearInterval(this.worker);
           this.worker = null;
@@ -144,15 +149,17 @@ const MediaQueueElement = defineComponent({
         const imgLoad = new Image();
         imgLoad.src = urlpath;
         this.$nextTick(() => {
-          if (imgLoad.loaded) {
+          if (imgLoad.complete) {
             resolve();
           } else {
-            imgLoad.onload = resolve;
+            imgLoad.onload = () => {
+              resolve();
+            }
           }
         });
       });
     },
-    playmedia(media: MediaCommandData) {
+    playmedia(media: MediaCommandData): void {
       if (!this.displayLatestForever && this.latestResolved) {
         this.showimage = false;
       }

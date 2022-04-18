@@ -328,14 +328,16 @@ export interface ChattersCommand extends Command {
   action: "chatters"
 }
 
+export interface MediaTwitchClip {
+  url: string,
+  volume: number, // 0 - 100
+}
+
 export interface MediaCommandData {
   excludeFromGlobalWidget: boolean,
   sound: SoundMediaFile,
   image: MediaFile,
-  twitch_clip: {
-    url: string,
-    volume: number, // 0 - 100
-  },
+  twitch_clip: MediaTwitchClip,
   image_url: string,
   minDurationMs: string | number
 }

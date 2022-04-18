@@ -97,7 +97,7 @@ export default defineComponent({
     },
     playlistItems(): PlaylistItem[] {
       const playlistItems: PlaylistItem[] = [];
-      for (const idx in this.playlist) {
+      for (let idx = 0; idx < this.playlist.length; idx++) {
         const item = this.playlist[idx];
         if (!this.isFilteredOut(item, idx)) {
           playlistItems[idx] = item;
@@ -171,7 +171,7 @@ export default defineComponent({
     applySettings(settings): void {
       if (this.settings.customCss !== settings.customCss) {
         let el = document.getElementById("customCss");
-        if (el) {
+        if (el && el.parentElement) {
           el.parentElement.removeChild(el);
         }
         el = document.createElement("style");

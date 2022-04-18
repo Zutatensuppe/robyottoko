@@ -12,45 +12,53 @@
 import { defineComponent } from "vue";
 import util from "../util";
 import fn from "../../common/fn";
-import { PomoEffect } from "../../mod/modules/PomoModuleCommon";
+import { newMedia } from "../../common/commands";
+import { PomoEffect, PomoModuleWsDataData } from "../../mod/modules/PomoModuleCommon";
 import WsClient from "../../frontend/WsClient";
 import MediaQueueElement, { MediaQueueElementInstance } from "../MediaQueueElement.vue";
 
+interface ComponentData {
+  ws: WsClient | null
+  data: PomoModuleWsDataData | null
+  timeout: any // number | null
+  now: Date | null
+}
 export default defineComponent({
   components: {
     MediaQueueElement,
   },
-  data() {
-    return {
-      ws: null as WsClient | null,
-      data: null,
-      timeout: null,
-      now: null,
-    };
-  },
+  data: (): ComponentData => ({
+    ws: null,
+    data: null,
+    timeout: null,
+    now: null,
+  }),
   computed: {
-    showTimerWhenFinished() {
+    showTimerWhenFinished(): boolean {
       if (!this.data) {
         return false;
       }
       return !!this.data.settings.showTimerWhenFinished;
     },
-    finishedText() {
+    finishedText(): string {
       if (!this.data) {
-        return false;
+        return '';
       }
       return this.data.settings.finishedText;
     },
-    finishined() {
+    finishined(): boolean {
       return this.timeLeft <= 0;
     },
-    running() {
+    running(): boolean {
       if (!this.data) {
         return false;
       }
       return !!this.data.state.running;
     },
-    timeLeftHumanReadable() {
+    timeLeftHumanReadable(): string {
+      if (!this.data) {
+        return ''
+      }
       const left = Math.max(this.timeLeft, 0);
       const MS = 1;
       const SEC = 1000 * MS;
@@ -65,27 +73,27 @@ export default defineComponent({
       str = str.replace("{ss}", sec);
       return str;
     },
-    timeLeft() {
+    timeLeft(): number {
       if (!this.dateEnd || !this.now) {
         return 0;
       }
       return this.dateEnd.getTime() - this.now.getTime();
     },
-    dateEnd() {
+    dateEnd(): Date | null {
       if (!this.dateStarted || !this.data) {
         return null;
       }
       return new Date(this.dateStarted.getTime() + this.data.state.durationMs);
     },
-    dateStarted() {
+    dateStarted(): Date | null {
       if (!this.data) {
         return null;
       }
       return new Date(JSON.parse(this.data.state.startTs));
     },
-    widgetStyles() {
+    widgetStyles(): { fontFamily: string, fontSize: string, color: string } | null {
       if (!this.data) {
-        return {};
+        return null;
       }
       return {
         fontFamily: this.data.settings.fontFamily,
@@ -98,13 +106,13 @@ export default defineComponent({
     },
   },
   methods: {
-    tick() {
+    tick(): void {
       if (this.timeout) {
         clearTimeout(this.timeout);
       }
       this.timeout = setTimeout(() => {
         this.now = new Date();
-        if (this.data.state.running) {
+        if (this.data && this.data.state.running) {
           this.tick();
         }
       }, 1000);
@@ -112,18 +120,15 @@ export default defineComponent({
   },
   mounted() {
     this.ws = util.wsClient("pomo");
-    this.ws.onMessage("init", (data) => {
+    this.ws.onMessage("init", (data: PomoModuleWsDataData) => {
       this.data = data;
       this.tick();
     });
     this.ws.onMessage("effect", (data: PomoEffect) => {
-      this.q.playmedia({
+      this.q.playmedia(newMedia({
         sound: data.sound,
-        image: { file: "", filename: "", urlpath: "" },
-        twitch_clip: { url: "", volume: 100 },
-        image_url: "",
         minDurationMs: 0,
-      });
+      }));
     });
     this.ws.connect();
   },

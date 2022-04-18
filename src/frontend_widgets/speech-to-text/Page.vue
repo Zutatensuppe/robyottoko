@@ -48,62 +48,80 @@ import {
   toNumberUnitString,
 } from "../../common/fn";
 import WsClient from "../../frontend/WsClient";
+import { SpeechToTextModuleSettings, SpeechToTextWsInitData } from "../../mod/modules/SpeechToTextModuleCommon";
 const log = logger("speech-to-text/Page.vue");
 
 // in brave treat insecure as secure to allow mic locally:
 //   brave://flags/#unsafely-treat-insecure-origin-as-secure
+
+interface ComponentData {
+  ws: WsClient | null
+  status: string
+  errors: string[]
+  initedSpeech: boolean
+  lastUtterance: string
+  recognition: {
+    interimResults: boolean
+    continuous: boolean
+  }
+  texts: { recognized: string; translated: string; ready: boolean }[]
+  timeout: any // null | number
+  settings: SpeechToTextModuleSettings | null
+  srObj: any // speech recognition object
+}
 
 export default defineComponent({
   props: {
     controls: { type: Boolean, required: true },
     widget: { type: String, required: true },
   },
-  data() {
-    return {
-      ws: null as WsClient | null,
-      status: "",
-      errors: [] as string[],
+  data: (): ComponentData => ({
+    ws: null as WsClient | null,
+    status: "",
+    errors: [] as string[],
 
-      initedSpeech: false,
+    initedSpeech: false,
 
-      // prevent doing things twice
-      lastUtterance: "",
+    // prevent doing things twice
+    lastUtterance: "",
 
-      recognition: {
-        interimResults: false,
-        continuous: true,
-      },
+    recognition: {
+      interimResults: false,
+      continuous: true,
+    },
 
-      // texts
-      texts: [] as { recognized: string; translated: string; ready: boolean }[],
-      timeout: null, // null | number
+    // texts
+    texts: [] as { recognized: string; translated: string; ready: boolean }[],
+    timeout: null, // null | number
 
-      // settings (overwritten from data ws)
-      settings: null,
+    // settings (overwritten from data ws)
+    settings: null,
 
-      srObj: null as any,
-    };
-  },
+    srObj: null as any,
+  }),
   computed: {
-    recognizedText() {
+    recognizedText(): string {
       if (this.texts.length === 0 || !this.texts[0].ready) {
         return "";
       }
       return this.texts[0].recognized;
     },
-    translatedText() {
+    translatedText(): string {
       if (this.texts.length === 0 || !this.texts[0].ready) {
         return "";
       }
       return this.texts[0].translated;
     },
-    lastRecognizedText() {
+    lastRecognizedText(): string {
       if (this.texts.length === 0) {
         return "";
       }
-      this.texts[this.texts.length - 1].recognized;
+      return this.texts[this.texts.length - 1].recognized;
     },
-    wantsSpeech() {
+    wantsSpeech(): boolean {
+      if (!this.settings) {
+        return false
+      }
       return (
         this.settings.recognition.synthesize ||
         this.settings.translation.synthesize
@@ -114,19 +132,23 @@ export default defineComponent({
     },
   },
   methods: {
-    initSpeech() {
+    initSpeech(): void {
       log.log(speechSynthesis);
       speechSynthesis.cancel();
       speechSynthesis.resume();
       this.initedSpeech = true;
     },
-    _next() {
+    _next(): void {
       if (this.timeout) {
         log.info("_next(): timeout still active");
         return;
       }
       if (!this.recognizedText && !this.translatedText) {
         log.info("_next(): recognizedText and translatedText empty");
+        return;
+      }
+      if (!this.settings) {
+        log.info("_next(): settings empty");
         return;
       }
 
@@ -152,7 +174,7 @@ export default defineComponent({
         this._next();
       }, this.calculateSubtitleDisplayTime(`${this.recognizedText} ${this.translatedText}`));
     },
-    calculateSubtitleDisplayTime(text: string) {
+    calculateSubtitleDisplayTime(text: string): number {
       const durationMs = calculateOptimalSubtitleDisplayTimeMs(text);
       // clamp duration between 1s and 10s
       return Math.min(10000, Math.max(2000, durationMs));
@@ -170,7 +192,11 @@ export default defineComponent({
         speechSynthesis.speak(utterance);
       }
     },
-    applyStyles() {
+    applyStyles(): void {
+      if (!this.settings) {
+        log.info("applyStyles(): settings empty");
+        return;
+      }
       const styles = this.settings.styles;
 
       if (styles.bgColorEnabled && styles.bgColor != null) {
@@ -180,12 +206,21 @@ export default defineComponent({
       }
 
       if (styles.vAlign === "top") {
+        // need to be set to null in order for style to become empty
+        // aka bottom style be removed completely
+        // @ts-ignore
         this.textTable.style.bottom = null;
       } else if (styles.vAlign === "bottom") {
-        this.textTable.style.bottom = 0;
+        this.textTable.style.bottom = '0px';
       }
 
-      const applyTextStyles = (imb, fg, bg, styles, bgColor) => {
+      const applyTextStyles = (
+        imb: HTMLDivElement,
+        fg: HTMLDivElement,
+        bg: HTMLDivElement,
+        styles,
+        bgColor,
+      ) => {
         if (styles.color != null) {
           fg.style.color = styles.color;
         }
@@ -224,9 +259,10 @@ export default defineComponent({
       // RECOGNIZED TEXT
       if (this.settings.recognition.display) {
         applyTextStyles(
-          this.$refs["speech_text-imb"],
-          this.$refs["speech_text-fg"],
-          this.$refs["speech_text-bg"],
+          // these are *guaranteed* to be divs here
+          this.$refs["speech_text-imb"] as HTMLDivElement,
+          this.$refs["speech_text-fg"] as HTMLDivElement,
+          this.$refs["speech_text-bg"] as HTMLDivElement,
           styles.recognition,
           styles.bgColor
         );
@@ -235,18 +271,26 @@ export default defineComponent({
       // TRANSLATED TEXT
       if (this.settings.translation.enabled) {
         applyTextStyles(
-          this.$refs["trans_text-imb"],
-          this.$refs["trans_text-fg"],
-          this.$refs["trans_text-bg"],
+          // these are *guaranteed* to be divs here
+          this.$refs["trans_text-imb"] as HTMLDivElement,
+          this.$refs["trans_text-fg"] as HTMLDivElement,
+          this.$refs["trans_text-bg"] as HTMLDivElement,
           styles.translation,
           styles.bgColor
         );
       }
     },
-    initVoiceRecognition() {
+    initVoiceRecognition(): void {
       if (!this.controls) {
         return;
       }
+      if (!this.settings) {
+        log.info("initVoiceRecognition(): settings empty");
+        return;
+      }
+      // ignore because neither SpeechRecognition nor webkitSpeechRecognition
+      // are known to typescript :(
+      // @ts-ignore
       const r = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!r) {
         alert(
@@ -290,7 +334,7 @@ export default defineComponent({
       };
       this.srObj.start();
     },
-    onVoiceResult(evt: any) {
+    onVoiceResult(evt: any): void {
       if (!this.ws) {
         log.error("onVoiceResult: this.ws not set");
         return;
@@ -321,7 +365,7 @@ export default defineComponent({
   },
   mounted() {
     this.ws = util.wsClient(this.widget);
-    this.ws.onMessage("text", (data) => {
+    this.ws.onMessage("text", (data: { recognized: string, translated: string }) => {
       this.texts.push({
         recognized: data.recognized,
         translated: data.translated,
@@ -329,7 +373,7 @@ export default defineComponent({
       });
       this._next();
     });
-    this.ws.onMessage("init", (data) => {
+    this.ws.onMessage("init", (data: SpeechToTextWsInitData) => {
       this.settings = data.settings;
       this.$nextTick(() => {
         this.applyStyles();

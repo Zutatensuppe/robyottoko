@@ -15,6 +15,7 @@ interface YoutubePlayer {
   pauseVideo: () => void
   playVideo: () => void
   setVolume: (volume: number) => void
+  addEventListener: (event: string, callback: (event: any) => void) => void
 }
 
 let apiRdy = false;
@@ -123,6 +124,9 @@ const Youtube = defineComponent({
     tryPlay(): void {
       this.stopTryPlayInterval();
       if (!this.visible) {
+        return;
+      }
+      if (!this.yt) {
         return;
       }
 

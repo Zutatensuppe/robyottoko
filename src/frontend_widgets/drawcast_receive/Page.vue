@@ -8,6 +8,7 @@ import { DrawcastImage } from "../../mod/modules/DrawcastModuleCommon";
 import { SoundMediaFile } from "../../types";
 import util from "../util";
 import MediaQueueElement, { MediaQueueElementInstance } from "../MediaQueueElement.vue";
+import { newMedia } from "../../common/commands";
 
 interface ComponentData {
   ws: WsClient | null;
@@ -45,13 +46,10 @@ export default defineComponent({
       this.images = data.images.map((image: DrawcastImage) => image.path);
 
       if (data.settings.displayLatestAutomatically && this.images.length > 0) {
-        this.q.playmedia({
-          sound: { file: "", filename: "", urlpath: "", volume: 100 },
-          image: { file: "", filename: "", urlpath: "" },
-          twitch_clip: { url: "", volume: 100 },
+        this.q.playmedia(newMedia({
           image_url: this.images[0],
           minDurationMs: this.displayDuration,
-        });
+        }));
       }
     });
     this.ws.onMessage(
@@ -59,16 +57,11 @@ export default defineComponent({
       (data: { nonce: string; img: string; mayNotify: boolean }) => {
         this.images.unshift(data.img);
         this.images = this.images.slice(0, 20);
-        this.q.playmedia({
-          sound:
-            data.mayNotify && this.notificationSound
-              ? this.notificationSound
-              : { file: "", filename: "", urlpath: "", volume: 100 },
-          image: { file: "", filename: "", urlpath: "" },
-          twitch_clip: { url: "", volume: 100 },
+        this.q.playmedia(newMedia({
+          sound: data.mayNotify ? this.notificationSound : null,
           image_url: data.img,
           minDurationMs: this.displayDuration,
-        });
+        }));
       }
     );
     this.ws.connect();

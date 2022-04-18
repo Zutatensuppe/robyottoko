@@ -209,10 +209,15 @@ export default defineComponent({
       });
     },
     imageDragStart($evt: DragEvent): void {
-      $evt.dataTransfer.setData(
-        "avatar-image-url",
-        ($evt.target as HTMLImageElement).getAttribute("data-src")
-      );
+      if (!$evt.dataTransfer) {
+        return;
+      }
+      const element = $evt.target as HTMLImageElement
+      const url = element.getAttribute("data-src")
+      if (!url) {
+        return;
+      }
+      $evt.dataTransfer.setData("avatar-image-url", url);
     },
     emitUpdate(): void {
       if (!this.item) {
