@@ -1,5 +1,5 @@
 import { mustParseHumanDuration, nonce } from "../common/fn"
-import { Command, CommandAction, CommandTrigger, CommandTriggerType, FunctionCommand, MediaCommandData } from "../types"
+import { Command, CommandAction, CommandTrigger, CommandTriggerType, CountdownAction, CountdownActionType, FunctionCommand, MediaCommandData } from "../types"
 import { MOD_OR_ABOVE } from './permissions'
 
 export const newText = () => ''
@@ -25,9 +25,9 @@ const newMedia = (): MediaCommandData => ({
   minDurationMs: '1s',
 })
 
-export const newCountdownDelay = () => ({ type: "delay", value: "1s" })
-export const newCountdownText = () => ({ type: "text", value: newText() })
-export const newCountdownMedia = () => ({ type: "media", value: newMedia() })
+export const newCountdownDelay = (): CountdownAction => ({ type: CountdownActionType.DELAY, value: "1s" })
+export const newCountdownText = (): CountdownAction => ({ type: CountdownActionType.TEXT, value: newText() })
+export const newCountdownMedia = (): CountdownAction => ({ type: CountdownActionType.MEDIA, value: newMedia() })
 
 export const newTrigger = (type: CommandTriggerType): CommandTrigger => ({
   type,

@@ -1,4 +1,7 @@
-export default {
+
+import { AvatarModuleAvatarDefinition } from "../../mod/modules/AvatarModuleCommon"
+
+const HyottokoChan: AvatarModuleAvatarDefinition = {
   "name": "Hyottoko-Chan",
   "width": 400,
   "height": 400,
@@ -186,11 +189,11 @@ export default {
               "frames": [
                 {
                   "url": "https://hyottoko.club/uploads/NO7zrl-eyes-calm.png",
-                  "duration": "4500"
+                  "duration": 4500
                 },
                 {
                   "url": "https://hyottoko.club/uploads/nmUEqi-eyes-closed.png",
-                  "duration": "150"
+                  "duration": 150
                 }
               ]
             },
@@ -199,11 +202,11 @@ export default {
               "frames": [
                 {
                   "url": "https://hyottoko.club/uploads/9eidC9-l2idid-eyes-calm.png",
-                  "duration": "4500"
+                  "duration": 4500
                 },
                 {
                   "url": "https://hyottoko.club/uploads/pw1HJw-nmUEqi-eyes-closed.png",
-                  "duration": "150"
+                  "duration": 150
                 }
               ]
             },
@@ -226,11 +229,11 @@ export default {
               "frames": [
                 {
                   "url": "https://hyottoko.club/uploads/2wlpCr-eyes-interested.png",
-                  "duration": "4500"
+                  "duration": 4500
                 },
                 {
                   "url": "https://hyottoko.club/uploads/DwiBor-eyes-closed.png",
-                  "duration": "150"
+                  "duration": 150
                 }
               ]
             },
@@ -239,11 +242,11 @@ export default {
               "frames": [
                 {
                   "url": "https://hyottoko.club/uploads/5fP25n-eyes-interested.png",
-                  "duration": "4500"
+                  "duration": 4500
                 },
                 {
                   "url": "https://hyottoko.club/uploads/PYiAtV-eyes-closed.png",
-                  "duration": "150"
+                  "duration": 150
                 }
               ]
             },
@@ -434,3 +437,4 @@ export default {
     "lockedState": "default"
   }
 }
+export default HyottokoChan

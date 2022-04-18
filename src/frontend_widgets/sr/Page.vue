@@ -88,7 +88,7 @@ export default defineComponent({
       return [this.thumbnailClass, this.progressBarClass];
     },
     player(): YoutubeInstance {
-      return this.$refs.youtube;
+      return this.$refs.youtube as YoutubeInstance;
     },
     progressValueStyle(): { width: string } {
       return {

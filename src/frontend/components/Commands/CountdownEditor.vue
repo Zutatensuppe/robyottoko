@@ -101,7 +101,7 @@
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
 import fn from "../../../common/fn";
-import { CountdownAction, CountdownCommandData, MediaFile, SoundMediaFile } from "../../../types";
+import { CountdownAction, CountdownCommandData, DragEndEvent, MediaFile, SoundMediaFile } from "../../../types";
 import {
   newCountdownDelay,
   newCountdownText,
@@ -149,7 +149,7 @@ export default defineComponent({
     },
   }),
   methods: {
-    dragEnd(evt) {
+    dragEnd(evt: DragEndEvent) {
       this.countdown.actions = fn.arrayMove(
         this.countdown.actions,
         evt.oldIndex,

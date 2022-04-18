@@ -59,7 +59,7 @@ const Upload = defineComponent({
     },
     async upload(evt: Event) {
       const input = evt.target as HTMLInputElement
-      if (input.files.length === 0) {
+      if (!input.files || input.files.length === 0) {
         return;
       }
       this.uploadFile(input.files[0]);

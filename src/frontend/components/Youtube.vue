@@ -5,7 +5,17 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 
-const log = (...args) => console.log("[youtube.js]", ...args);
+const log = (...args: any[]) => console.log("[youtube.js]", ...args);
+
+interface YoutubePlayer {
+  cueVideoById: (youtubeId: string) => void
+  getCurrentTime: () => number
+  getDuration: () => number
+  getPlayerState: () => number
+  pauseVideo: () => void
+  playVideo: () => void
+  setVolume: (volume: number) => void
+}
 
 let apiRdy = false;
 function createApi(): Promise<void> {
@@ -17,6 +27,9 @@ function createApi(): Promise<void> {
     const tag = document.createElement("script");
     tag.src = "https://www.youtube.com/iframe_api";
     document.head.append(tag);
+    // a callback function on window is required by youtube
+    // https://developers.google.com/youtube/iframe_api_reference
+    // @ts-ignore
     window.onYouTubeIframeAPIReady = () => {
       apiRdy = true;
       log("ytapi ready");
@@ -25,10 +38,10 @@ function createApi(): Promise<void> {
   });
 }
 
-function createPlayer(id): Promise<YT.Player> {
+function createPlayer(id: string): Promise<YoutubePlayer> {
   return new Promise((resolve) => {
     log("create player on " + id);
-    const player = new YT.Player(id, {
+    const player: YoutubePlayer = new YT.Player(id, {
       playerVars: {
         iv_load_policy: 3, // do not load annotations
         modestbranding: 1, // remove youtube logo
@@ -43,14 +56,14 @@ function createPlayer(id): Promise<YT.Player> {
   });
 }
 
-async function prepareYt(id) {
+async function prepareYt(id: string): Promise<YoutubePlayer> {
   await createApi();
   return await createPlayer(id);
 }
 
 interface ComponentData {
   id: string
-  yt: string | null
+  yt: YoutubePlayer | null
   loop: boolean
   toplay: string | null
   tovolume: number | null
@@ -156,7 +169,10 @@ const Youtube = defineComponent({
       this.loop = loop;
     },
     playing(): boolean {
-      return this.yt && this.yt.getPlayerState() === 1;
+      if (!this.yt) {
+        return false;
+      }
+      return this.yt.getPlayerState() === 1;
     },
   },
   async mounted() {
