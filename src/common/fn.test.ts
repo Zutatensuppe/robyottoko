@@ -1,3 +1,5 @@
+
+import { text } from 'body-parser'
 import {
   arrayMove,
   arraySwap,
@@ -11,6 +13,7 @@ import {
   MINUTE,
   SECOND,
   MS,
+  getProp,
 } from './fn'
 
 test.each`
@@ -177,5 +180,48 @@ test.each([
   },
 ])('toNumberUnitString', ({ number, unit, expected }) => {
   const actual = toNumberUnitString(number, unit)
+  expect(actual).toBe(expected)
+})
+
+
+test.each([
+  {
+    obj: '400',
+    keys: ['px'],
+    defaultVal: 1235,
+    expected: 1235,
+  },
+  {
+    obj: {},
+    keys: ['px'],
+    defaultVal: 1235,
+    expected: 1235,
+  },
+  {
+    obj: { bla: 0 },
+    keys: ['px'],
+    defaultVal: 1235,
+    expected: 1235,
+  },
+  {
+    obj: { px: 0 },
+    keys: ['px'],
+    defaultVal: 1235,
+    expected: 0,
+  },
+  {
+    obj: { px: 100 },
+    keys: ['px'],
+    defaultVal: 0,
+    expected: 100,
+  },
+  {
+    obj: { px: { bla: { blub: 'ui' } } },
+    keys: ['px', 'bla', 'blub'],
+    defaultVal: 10,
+    expected: 'ui',
+  },
+])('getProp', ({ obj, keys, defaultVal, expected }) => {
+  const actual = getProp(obj, keys, defaultVal)
   expect(actual).toBe(expected)
 })

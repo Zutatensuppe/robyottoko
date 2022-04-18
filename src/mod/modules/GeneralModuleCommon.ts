@@ -1,3 +1,5 @@
+"use strict";
+
 import { Command, GlobalVariable } from "../../types"
 
 export interface GeneralModuleSettings {

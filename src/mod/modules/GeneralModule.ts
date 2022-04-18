@@ -16,7 +16,9 @@ import {
   RewardRedemptionContext, Bot, Module,
   MediaCommand, DictLookupCommand, CountdownCommand,
   MadochanCommand, MediaVolumeCommand, ChattersCommand,
-  RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand, CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand, CommandTriggerType, CommandAction
+  RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand,
+  CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand,
+  CommandTriggerType, CommandAction,
 } from '../../types'
 import dictLookup from '../../commands/dictLookup'
 import { GeneralModuleAdminSettings, GeneralModuleSettings, GeneralModuleWsEventData, GeneralSaveEventData } from './GeneralModuleCommon'

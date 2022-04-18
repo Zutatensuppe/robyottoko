@@ -1,3 +1,6 @@
+"use strict";
+
+import { getProp } from "../../common/fn";
 import { SoundMediaFile } from "../../types";
 
 export interface PomoEffect {
@@ -65,32 +68,32 @@ export interface PomoModuleWsSaveData {
 }
 
 export const default_effect = (obj: any = null): PomoEffect => ({
-  chatMessage: (!obj || typeof obj.chatMessage === 'undefined') ? '' : obj.chatMessage,
-  sound: (!obj || typeof obj.sound === 'undefined') ? { file: '', filename: '', urlpath: '', volume: 100 } : obj.sound,
+  chatMessage: getProp(obj, ['chatMessage'], ''),
+  sound: getProp(obj, ['sound'], { file: '', filename: '', urlpath: '', volume: 100 }),
 })
 
 export const default_notification = (obj: any = null): PomoNotification => ({
-  effect: (!obj || typeof obj.effect === 'undefined') ? default_effect() : default_effect(obj.effect),
-  offsetMs: (!obj || typeof obj.offsetMs === 'undefined') ? '' : obj.offsetMs,
+  effect: default_effect(getProp(obj, ['effect'], null)),
+  offsetMs: getProp(obj, ['offsetMs'], ''),
 })
 
 export const default_settings = (obj: any = null): PomoModuleSettings => ({
-  fontFamily: (!obj || typeof obj.fontFamily === 'undefined') ? '' : obj.fontFamily,
-  fontSize: (!obj || typeof obj.fontSize === 'undefined') ? '72px' : obj.fontSize,
-  color: (!obj || typeof obj.color === 'undefined') ? '' : obj.color,
-  timerFormat: (!obj || typeof obj.timerFormat === 'undefined') ? '{mm}:{ss}' : obj.timerFormat,
-  showTimerWhenFinished: (!obj || typeof obj.showTimerWhenFinished === 'undefined') ? true : obj.showTimerWhenFinished,
-  finishedText: (!obj || typeof obj.finishedText === 'undefined') ? '' : obj.finishedText,
-  startEffect: (!obj || typeof obj.startEffect === 'undefined') ? default_effect() : default_effect(obj.startEffect),
-  endEffect: (!obj || typeof obj.endEffect === 'undefined') ? default_effect() : default_effect(obj.endEffect),
-  stopEffect: (!obj || typeof obj.stopEffect === 'undefined') ? default_effect() : default_effect(obj.stopEffect),
-  notifications: (!obj || typeof obj.notifications === 'undefined') ? [] : obj.notifications.map(default_notification),
+  fontFamily: getProp(obj, ['fontFamily'], ''),
+  fontSize: getProp(obj, ['fontSize'], '72px'),
+  color: getProp(obj, ['color'], ''),
+  timerFormat: getProp(obj, ['timerFormat'], '{mm}:{ss}'),
+  showTimerWhenFinished: getProp(obj, ['showTimerWhenFinished'], true),
+  finishedText: getProp(obj, ['finishedText'], ''),
+  startEffect: default_effect(getProp(obj, ['startEffect'], null)),
+  endEffect: default_effect(getProp(obj, ['endEffect'], null)),
+  stopEffect: default_effect(getProp(obj, ['stopEffect'], null)),
+  notifications: getProp(obj, ['notifications'], []).map(default_notification),
 })
 
 export const default_state = (obj: any = null): PomoModuleState => ({
-  running: (!obj || typeof obj.running === 'undefined') ? false : obj.running,
-  durationMs: (!obj || typeof obj.durationMs === 'undefined') ? (25 * 60 * 1000) : obj.durationMs,
-  startTs: (!obj || typeof obj.startTs === 'undefined') ? '' : obj.startTs,
-  doneTs: (!obj || typeof obj.doneTs === 'undefined') ? '' : obj.doneTs,
-  name: (!obj || typeof obj.name === 'undefined') ? '' : obj.name,
+  running: getProp(obj, ['running'], false),
+  durationMs: getProp(obj, ['durationMs'], (25 * 60 * 1000)),
+  startTs: getProp(obj, ['startTs'], ''),
+  doneTs: getProp(obj, ['doneTs'], ''),
+  name: getProp(obj, ['name'], ''),
 })
