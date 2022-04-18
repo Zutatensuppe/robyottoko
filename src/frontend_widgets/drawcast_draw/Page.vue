@@ -362,21 +362,36 @@ export default defineComponent({
         return "crosshair";
       }
 
-      c.width = this.size + 1;
-      c.height = this.size + 1;
-      ctx.beginPath();
-      if (this.tool === "eraser") {
-        ctx.fillStyle = "#fff";
-      } else {
-        ctx.fillStyle = this.color;
-      }
-      ctx.strokeStyle = hexIsLight(String(ctx.fillStyle)) ? "#000" : "#fff";
+      const crosshairSize = 10
+      const padding = 3
+      const canvasSize = this.size + crosshairSize + padding + crosshairSize + padding
+      const halfCanvasSize = Math.round(canvasSize / 2)
 
-      ctx.arc(this.halfSize, this.halfSize, this.halfSize, 0, 2 * Math.PI);
+      c.width = canvasSize + 1;
+      c.height = canvasSize + 1;
+
+      // crosshair around the color dot
+      ctx.fillStyle = "#AAA";
+      ctx.fillRect(0, halfCanvasSize - 1, crosshairSize, 3)
+      ctx.fillRect(c.width - crosshairSize, halfCanvasSize - 1, crosshairSize, 3)
+      ctx.fillRect(halfCanvasSize - 1, 0, 3, crosshairSize)
+      ctx.fillRect(halfCanvasSize - 1, c.height - crosshairSize, 3, crosshairSize)
+      ctx.fillStyle = "#666";
+      ctx.fillRect(1, halfCanvasSize, crosshairSize - 2, 1)
+      ctx.fillRect(c.width - crosshairSize + 1, halfCanvasSize, crosshairSize - 2, 1)
+      ctx.fillRect(halfCanvasSize, 1, 1, crosshairSize - 2)
+      ctx.fillRect(halfCanvasSize, c.height - crosshairSize + 1, 1, crosshairSize - 2)
+
+      ctx.beginPath();
+      ctx.fillStyle = this.color;
+      ctx.strokeStyle = hexIsLight(String(ctx.fillStyle)) ? "#000" : "#fff";
+      ctx.arc(halfCanvasSize, halfCanvasSize, this.halfSize, 0, 2 * Math.PI);
       ctx.closePath();
-      ctx.fill();
+      if (this.tool !== "eraser") {
+        ctx.fill();
+      }
       ctx.stroke();
-      return `url(${c.toDataURL()}) ${this.halfSize} ${this.halfSize}, default`;
+      return `url(${c.toDataURL()}) ${halfCanvasSize} ${halfCanvasSize}, default`;
     },
   },
   methods: {
