@@ -1,14 +1,14 @@
-$cardBackground: rgba(255,252,252,1);
-$textColor: rgba(170,162,166,1);
-$colorButtonShadow: 1px 1px 1px rgba(0,0,0,.2);
-$lightShadow: 3px 3px 1px rgba(0,0,0,.15);
+$cardBackground: rgba(255, 252, 252, 1);
+$textColor: rgba(170, 162, 166, 1);
+$colorButtonShadow: 1px 1px 1px rgba(0, 0, 0, .2);
+$lightShadow: 3px 3px 1px rgba(0, 0, 0, .15);
 $boxShadow_1: 2px 2px 1px rgba(0, 0, 0, 0.25);
 $boxShadowStreamerAvatar: 0 5px 1px rgba(0, 0, 0, 0.12);
 $buttonTextColor: #fffcfc;
 $buttonTextColorOk: $buttonTextColor;
 $buttonTextColorDanger: $buttonTextColor;
 
-$dangerBackground: rgba(212,71,68,1);
+$dangerBackground: rgba(212, 71, 68, 1);
 $dangerForeground: #FAF2F5;
 $dangerBackgroundHover: #F16358;
 $dangerForegroundHover: #fffcfc;
@@ -24,9 +24,11 @@ $dangerForegroundActive: #DFD7DA;
 * {
   box-sizing: border-box;
 }
+
 html {
   margin: 0;
 }
+
 body {
   margin: 0;
   font-size: 14px;
@@ -34,6 +36,7 @@ body {
   background-size: 58px 58px;
   font-family: Roboto;
 }
+
 a {
   text-decoration: none;
   color: #786DAF;
@@ -54,7 +57,7 @@ a {
 .draw_panel {
   width: fit-content;
   height: fit-content;
-  background: rgba(255,255,255,1);
+  background: rgba(255, 255, 255, 1);
   padding: 20px 20px;
   position: relative;
   left: 50%;
@@ -63,16 +66,19 @@ a {
   box-shadow: 3px 3px 2px rgba(0, 0, 0, 0.20);
   overflow: hidden;
 }
+
 .draw_panel_inner {
   display: grid;
   grid-template-areas: "top"
     "bottom";
 }
+
 .draw_panel_left {
   grid-area: left;
   position: relative;
   padding: 20px;
 }
+
 .draw_panel_right {
   grid-area: right;
   position: relative;
@@ -100,13 +106,14 @@ a {
   grid-template-columns: max-content auto max-content;
   grid-gap: 10px;
 }
+
 .drawing_panel_bottom_right {
   grid-area: bottom_right;
   align-self: end;
 }
 
 .draw_canvas_holder_inner {
-  border: 2px solid rgba(170,162,166,1);
+  border: 2px solid rgba(170, 162, 166, 1);
   box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.25);
   display: inline-block;
   position: relative;
@@ -117,6 +124,7 @@ a {
     left: 0;
   }
 }
+
 .draw_colors {
   display: grid;
   width: fit-content;
@@ -124,10 +132,12 @@ a {
   grid-template-columns: min-content 270px;
   grid-gap: 4px;
   background: $cardBackground;
-  padding: 8px 9px 8px 8px; /* :P probably 8 everywhere is good ^^ */
+  padding: 8px 9px 8px 8px;
+  /* :P probably 8 everywhere is good ^^ */
   border-radius: 4px;
   box-shadow: $boxShadow_1;
 }
+
 .draw_colors_current {
   grid-area: current;
   width: 45px;
@@ -136,6 +146,7 @@ a {
   position: relative;
   box-shadow: $colorButtonShadow;
 }
+
 .draw_colors_current_inner {
   width: 45px;
   height: 45px;
@@ -148,9 +159,11 @@ a {
 .visual_background_title {
   padding: 7px 0 0 7px;
 }
+
 .visual_background_colors {
   padding: 7px;
 }
+
 .visual_background_button {
   display: inline-block;
   position: relative;
@@ -179,17 +192,21 @@ a {
     border-color: rgb(165, 165, 165);
   }
 }
-.bg-white {
-  background: white;
-}
-.bg-black {
-  background: #111;
-}
-.bg-transparent {
+
+.bg-transparent-light {
   background-image:
-  linear-gradient(to right, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)),
-  linear-gradient(to right, black 50%, white 50%),
-  linear-gradient(to bottom, black 50%, white 50%);
+    linear-gradient(to right, rgba(255, 255, 255, .95), rgba(255, 255, 255, .95)),
+    linear-gradient(to right, black 50%, white 50%),
+    linear-gradient(to bottom, black 50%, white 50%);
+  background-blend-mode: normal, difference, normal;
+  background-size: 1.5em 1.5em;
+}
+
+.bg-transparent-dark {
+  background-image:
+    linear-gradient(to right, rgba(0, 0, 0, .9), rgba(0, 0, 0, .9)),
+    linear-gradient(to right, black 50%, white 50%),
+    linear-gradient(to bottom, black 50%, white 50%);
   background-blend-mode: normal, difference, normal;
   background-size: 1.5em 1.5em;
 }
@@ -203,10 +220,11 @@ a {
     display: none;
   }
 }
+
 .draw_colors_current_icon {
   width: 16px;
   height: 16px;
-  background: rgba(223,215,218,1);
+  background: rgba(223, 215, 218, 1);
   padding: 3px 3px;
   position: absolute;
   top: 28px;
@@ -218,12 +236,14 @@ a {
     height: 12px;
   }
 }
+
 .draw_colors_palette {
   grid-area: palette;
 }
+
 .palette_color {
   display: inline-block;
-  border: 1px solid rgba(88,72,84,1);
+  border: 1px solid rgba(88, 72, 84, 1);
   border-radius: 4px;
   width: 20px;
   height: 19px;
@@ -233,9 +253,11 @@ a {
   &:nth-child(11n) {
     margin: 0 0 6px 0;
   }
+
   &:nth-child(n+12) {
     margin: 0 5px 0 0;
   }
+
   &:nth-child(11n):nth-child(n+12) {
     margin: 0;
   }
@@ -253,15 +275,18 @@ a {
   border-radius: 4px;
   box-shadow: $boxShadow_1;
 }
+
 .draw_tools_panel {
   color: $textColor;
   width: 186px;
   position: relative;
 }
+
 .draw_tools_tool_buttons {
   position: relative;
   padding: 7px 0 0 7px;
 }
+
 .draw_tools_tool_button {
   display: inline-block;
   position: relative;
@@ -272,7 +297,7 @@ a {
   border-radius: 5px;
   border-style: solid;
   border-width: 1px;
-  background: rgba(250,242,245,1);
+  background: rgba(250, 242, 245, 1);
   color: #C4BCC0;
   border-color: #C4BCC0;
 
@@ -290,6 +315,7 @@ a {
     border-style: solid;
     border-color: rgb(165, 165, 165);
   }
+
   &:last-child {
     margin: 0;
   }
@@ -331,6 +357,7 @@ a {
       border-color: #BBBEE6;
       color: #fffcfc;
     }
+
     &:active {
       background: #8489CE;
       border-color: #78649A;
@@ -348,24 +375,28 @@ a {
     top: 3px;
     left: 5px;
   }
+
   &.tool-eraser svg {
     width: 24px;
     height: 23px;
     left: 4px;
     top: 4px;
   }
+
   &.tool-eyedropper svg {
     width: 21px;
     height: 23px;
     top: 3px;
     left: 5px;
   }
+
   &.tool-undo svg {
     width: 24px;
     height: 23px;
     top: 3px;
     left: 3px;
   }
+
   &.tool-clear svg {
     width: 20px;
     height: 20px;
@@ -374,15 +405,54 @@ a {
   }
 }
 
-.slider { width: 186px; height: 34px; padding: 5px 5px; position: relative; }
+.slider {
+  width: 186px;
+  height: 34px;
+  padding: 5px 5px;
+  position: relative;
+}
 
-.bubble { width: 20px; height: 20px; position: absolute; top: 7px; overflow: hidden; }
-.bubble-left { left: 12px; }
-.bubble-right { right: 12px; }
-.bubble-small { width: 4px; height: 4px; position: absolute; top: 8px; left: 8px; border-radius: 50%; }
-.bubble-big { width: 18px; height: 18px; position: absolute; top: 1px; left: 1px; border-radius: 50%; }
-.bubble-dark { background: rgba(74, 67, 71, 1); }
-.bubble-light { background: rgba(74, 67, 71, .1); }
+.bubble {
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  top: 7px;
+  overflow: hidden;
+}
+
+.bubble-left {
+  left: 12px;
+}
+
+.bubble-right {
+  right: 12px;
+}
+
+.bubble-small {
+  width: 4px;
+  height: 4px;
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  border-radius: 50%;
+}
+
+.bubble-big {
+  width: 18px;
+  height: 18px;
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  border-radius: 50%;
+}
+
+.bubble-dark {
+  background: rgba(74, 67, 71, 1);
+}
+
+.bubble-light {
+  background: rgba(74, 67, 71, .1);
+}
 
 .slider-input-holder {
   width: 110px;
@@ -391,6 +461,7 @@ a {
   position: absolute;
   top: 6px;
   left: 35px;
+
   input {
     width: 100%;
     position: absolute;
@@ -398,23 +469,27 @@ a {
     top: 0;
   }
 }
+
 .hotkey-help {
   width: 186px;
   margin-top: 20px;
   padding-left: 10px;
   border-radius: 4px;
 }
+
 .hotkey-help-title {
-  color: rgba(145,137,141,1);
+  color: rgba(145, 137, 141, 1);
   font-weight: Bold;
   font-size: 20px;
 }
+
 .hotkey-help-item {
   color: $textColor;
   font-family: Roboto;
   font-weight: Regular;
   font-size: 18px;
 }
+
 .drawings-panel {
   width: fit-content;
   margin: 20px auto 0;
@@ -423,10 +498,12 @@ a {
   border-radius: 8px;
   box-shadow: $boxShadow_1;
 }
+
 .drawings_panel_title {
-  background: rgba(250,242,245,1);
+  background: rgba(250, 242, 245, 1);
   padding: 15px 15px;
 }
+
 .drawings_panel_title_inner {
   color: $textColor;
   font-weight: Bold;
