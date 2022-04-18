@@ -1,3 +1,12 @@
+export interface SpeechToTextModuleStylesPack {
+  fontFamily: string
+  fontSize: string
+  fontWeight: string
+  strokeWidth: string
+  strokeColor: string
+  color: string
+}
+
 export interface SpeechToTextModuleSettings {
   status: {
     enabled: boolean
@@ -10,24 +19,10 @@ export interface SpeechToTextModuleSettings {
     vAlign: 'bottom' | 'top' | 'bottom'
 
     // recognized text
-    recognition: {
-      fontFamily: string
-      fontSize: string
-      fontWeight: string
-      strokeWidth: string
-      strokeColor: string
-      color: string
-    }
+    recognition: SpeechToTextModuleStylesPack
 
     // translated text
-    translation: {
-      fontFamily: string
-      fontSize: string
-      fontWeight: string
-      strokeWidth: string
-      strokeColor: string
-      color: string
-    }
+    translation: SpeechToTextModuleStylesPack
   }
 
   recognition: {

@@ -48,7 +48,7 @@ import {
   toNumberUnitString,
 } from "../../common/fn";
 import WsClient from "../../frontend/WsClient";
-import { SpeechToTextModuleSettings, SpeechToTextWsInitData } from "../../mod/modules/SpeechToTextModuleCommon";
+import { SpeechToTextModuleSettings, SpeechToTextModuleStylesPack, SpeechToTextWsInitData } from "../../mod/modules/SpeechToTextModuleCommon";
 const log = logger("speech-to-text/Page.vue");
 
 // in brave treat insecure as secure to allow mic locally:
@@ -199,11 +199,7 @@ export default defineComponent({
       }
       const styles = this.settings.styles;
 
-      if (styles.bgColorEnabled && styles.bgColor != null) {
-        document.body.style.backgroundColor = styles.bgColor;
-      } else {
-        document.body.style.backgroundColor = "";
-      }
+      const bgColor = styles.bgColorEnabled && styles.bgColor != null ? styles.bgColor : ''
 
       if (styles.vAlign === "top") {
         // need to be set to null in order for style to become empty
@@ -218,16 +214,14 @@ export default defineComponent({
         imb: HTMLDivElement,
         fg: HTMLDivElement,
         bg: HTMLDivElement,
-        styles,
-        bgColor,
+        styles: SpeechToTextModuleStylesPack,
+        bgColor: string,
       ) => {
         if (styles.color != null) {
           fg.style.color = styles.color;
         }
 
-        if (bgColor != null) {
-          imb.style.webkitTextStrokeColor = bgColor;
-        }
+        imb.style.webkitTextStrokeColor = bgColor;
         if (styles.strokeWidth != null) {
           const strokeWidth = toNumberUnitString(styles.strokeWidth);
           imb.style.webkitTextStrokeWidth = strokeWidth;
@@ -264,7 +258,7 @@ export default defineComponent({
           this.$refs["speech_text-fg"] as HTMLDivElement,
           this.$refs["speech_text-bg"] as HTMLDivElement,
           styles.recognition,
-          styles.bgColor
+          bgColor
         );
       }
 
@@ -276,7 +270,7 @@ export default defineComponent({
           this.$refs["trans_text-fg"] as HTMLDivElement,
           this.$refs["trans_text-bg"] as HTMLDivElement,
           styles.translation,
-          styles.bgColor
+          bgColor
         );
       }
     },

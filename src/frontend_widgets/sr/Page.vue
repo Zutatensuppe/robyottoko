@@ -17,7 +17,6 @@
 </template>
 
 <script lang="ts">
-import { VendorLonghandProperties } from "csstype";
 import { defineComponent } from "vue";
 import { logger } from "../../common/fn";
 import { YoutubeInstance } from "../../frontend/components/Youtube.vue";
@@ -136,7 +135,7 @@ export default defineComponent({
     ended(): void {
       this.sendMsg({ event: "ended" });
     },
-    sendMsg(data): void {
+    sendMsg(data: { event: string, id?: number }): void {
       if (!this.ws) {
         log.error('sendMsg, ws not defined')
         return
@@ -168,7 +167,7 @@ export default defineComponent({
         this.player.setVolume(this.settings.volume);
       }
     },
-    applySettings(settings): void {
+    applySettings(settings: SongrequestModuleSettings): void {
       if (this.settings.customCss !== settings.customCss) {
         let el = document.getElementById("customCss");
         if (el && el.parentElement) {

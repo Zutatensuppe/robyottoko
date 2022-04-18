@@ -14,6 +14,7 @@ interface YoutubePlayer {
   getPlayerState: () => number
   pauseVideo: () => void
   playVideo: () => void
+  stopVideo: () => void
   setVolume: (volume: number) => void
   addEventListener: (event: string, callback: (event: any) => void) => void
 }
@@ -42,6 +43,8 @@ function createApi(): Promise<void> {
 function createPlayer(id: string): Promise<YoutubePlayer> {
   return new Promise((resolve) => {
     log("create player on " + id);
+    // no knowledge about YT.Player :(
+    // @ts-ignore
     const player: YoutubePlayer = new YT.Player(id, {
       playerVars: {
         iv_load_policy: 3, // do not load annotations
@@ -126,11 +129,9 @@ const Youtube = defineComponent({
       if (!this.visible) {
         return;
       }
-      if (!this.yt) {
-        return;
+      if (this.yt) {
+        this.yt.playVideo();
       }
-
-      this.yt.playVideo();
 
       let triesRemaining = 20;
       this.tryPlayInterval = setInterval(() => {
@@ -141,7 +142,9 @@ const Youtube = defineComponent({
           this.stopTryPlayInterval();
           return;
         }
-        this.yt.playVideo();
+        if (this.yt) {
+          this.yt.playVideo();
+        }
       }, 250);
     },
     play(yt: string): void {
@@ -190,8 +193,12 @@ const Youtube = defineComponent({
       this.play(this.toplay);
     }
     this.yt.addEventListener("onStateChange", (event) => {
+      // no knowledge about YT.PlayerState :(
+      // @ts-ignore
       if (event.data === YT.PlayerState.CUED) {
         this.tryPlay();
+        // no knowledge about YT.PlayerState :(
+        // @ts-ignore
       } else if (event.data === YT.PlayerState.ENDED) {
         if (this.loop) {
           this.tryPlay();

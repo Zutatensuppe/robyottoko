@@ -37,6 +37,15 @@ import { defineComponent } from "vue";
 import user from "../user";
 import { eventBus } from "../wsstatus";
 
+interface ComponentData {
+  $me: { user: { id: number, name: string, email: string, status: string, groups: string[] }, token: string } | null
+  showProblems: boolean
+  linksStart: { to: { name: string }, text: string }[]
+  problems: { message: string, details: any }[]
+  burgerActive: boolean
+  darkmode: boolean
+}
+
 export default defineComponent({
   name: "navbar",
   computed: {
@@ -52,7 +61,7 @@ export default defineComponent({
   beforeUnmount() {
     eventBus.off("status", this.statusChanged);
   },
-  data: () => ({
+  data: (): ComponentData => ({
     $me: null,
     showProblems: false,
     linksStart: [
