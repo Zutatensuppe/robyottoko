@@ -19,9 +19,7 @@
             </td>
             <td>{{ widget.hint }}</td>
             <td>
-              <span class="button is-small ml-1" @click="newUrl(widget)"
-                >Generate new url</span
-              >
+              <span class="button is-small ml-1" @click="newUrl(widget)">Generate new url</span>
             </td>
           </tr>
         </tbody>
@@ -34,9 +32,17 @@ import { defineComponent } from "vue";
 import api from "../api";
 import { useToast } from "vue-toastification";
 
+interface WidgetDefinition {
+  type: string
+  pub: boolean
+  title: string
+  hint: string
+  url: string
+}
+
 export default defineComponent({
   data: () => ({
-    widgets: null,
+    widgets: [] as WidgetDefinition[],
     toast: useToast(),
   }),
   async created() {
@@ -46,12 +52,12 @@ export default defineComponent({
       return;
     }
 
-    const data = await res.json();
+    const data: { widgets: WidgetDefinition[] } = await res.json();
     this.widgets = data.widgets;
   },
   methods: {
     // TODO: define widget type
-    async newUrl(widget) {
+    async newUrl(widget: WidgetDefinition): Promise<void> {
       const res = await api.createWidgetUrl({
         type: widget.type,
         pub: widget.pub,

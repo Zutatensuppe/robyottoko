@@ -60,18 +60,25 @@ export default defineComponent({
       e.stopPropagation();
       return false;
     },
-    onDragLeave(e: DragEvent) {
+    onDragLeave(e: DragEvent): void {
       this.draggingOver = false;
       e.preventDefault();
       e.stopPropagation();
-      return false;
     },
-    onDragEnter(e: DragEvent) {
+    onDragEnter(e: DragEvent): void {
+      if (!e.dataTransfer) {
+        return;
+      }
+
       if (e.dataTransfer.getData("avatar-image-url")) {
         e.preventDefault();
       }
     },
-    onDrop(e: DragEvent) {
+    onDrop(e: DragEvent): void {
+      if (!e.dataTransfer) {
+        return;
+      }
+
       this.draggingOver = false;
       e.preventDefault();
       e.stopPropagation();
@@ -103,7 +110,6 @@ export default defineComponent({
           this.uploadComponent.uploadFile(file);
         }
       }
-      return false;
     },
     onUploaded(file: MediaFile) {
       this.modelValue.frames.push({

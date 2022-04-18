@@ -374,11 +374,17 @@ import {
 import {
   Command,
   CommandTrigger,
+  CommandVariable,
+  CommandVariableChange,
   GlobalVariable,
   MediaFile,
   SoundMediaFile,
 } from "../../../types";
 
+interface AutocompletableVariable {
+  var: CommandVariable | GlobalVariable;
+  type: string;
+}
 interface ComponentDataLang {
   value: string;
   flag: string;
@@ -454,21 +460,21 @@ export default defineComponent({
     },
   },
   methods: {
-    addtxt() {
+    addtxt(): void {
       if (!this.item) {
         console.warn("addtxt: this.item not initialized");
         return;
       }
       this.item.data.text.push(newText());
     },
-    addtrigger(trigger: any) {
+    addtrigger(trigger: any): void {
       if (!this.item) {
         console.warn("addtrigger: this.item not initialized");
         return;
       }
       this.item.triggers.push(newTrigger(trigger.type));
     },
-    onAddVariableChange() {
+    onAddVariableChange(): void {
       if (!this.item) {
         console.warn("onAddVariableChange: this.item not initialized");
         return;
@@ -479,16 +485,16 @@ export default defineComponent({
         value: "",
       });
     },
-    rmVariableChange(idx: number) {
+    rmVariableChange(idx: number): void {
       if (!this.item) {
         console.warn("rmVariableChange: this.item not initialized");
         return;
       }
       this.item.variableChanges = this.item.variableChanges.filter(
-        (val, index) => index !== idx
+        (_val: CommandVariableChange, index: number) => index !== idx
       );
     },
-    onAddVariable() {
+    onAddVariable(): void {
       if (!this.item) {
         console.warn("onAddVariable: this.item not initialized");
         return;
@@ -498,42 +504,42 @@ export default defineComponent({
         value: "",
       });
     },
-    rmVariable(idx: number) {
+    rmVariable(idx: number): void {
       if (!this.item) {
         console.warn("rmVariable: this.item not initialized");
         return;
       }
       this.item.variables = this.item.variables.filter(
-        (val, index) => index !== idx
+        (_val: CommandVariable, index: number) => index !== idx
       );
     },
-    onSaveClick() {
+    onSaveClick(): void {
       this.$emit("update:modelValue", this.item);
     },
-    onCancelClick() {
+    onCancelClick(): void {
       this.$emit("cancel");
     },
-    onCloseClick() {
+    onCloseClick(): void {
       this.$emit("cancel");
     },
-    onOverlayClick() {
+    onOverlayClick(): void {
       this.$emit("cancel");
     },
-    mediaSndChanged(file: SoundMediaFile) {
+    mediaSndChanged(file: SoundMediaFile): void {
       if (!this.item) {
         console.warn("mediaSndChanged: this.item not initialized");
         return;
       }
       this.item.data.sound = file;
     },
-    mediaImgChanged(file: MediaFile) {
+    mediaImgChanged(file: MediaFile): void {
       if (!this.item) {
         console.warn("mediaImgUploaded: this.item not initialized");
         return;
       }
       this.item.data.image = file;
     },
-    rmtxt(idx: number) {
+    rmtxt(idx: number): void {
       if (!this.item) {
         console.warn("rmtxt: this.item not initialized");
         return;
@@ -542,7 +548,7 @@ export default defineComponent({
         (_val: string, index: number) => index !== idx
       );
     },
-    rmtrigger(idx: number) {
+    rmtrigger(idx: number): void {
       if (!this.item) {
         console.warn("rmtrigger: this.item not initialized");
         return;
@@ -551,25 +557,25 @@ export default defineComponent({
         (_val: CommandTrigger, index: number) => index !== idx
       );
     },
-    insertMacro(idx: number, macro: { value: string; title: string }) {
+    insertMacro(idx: number, macro: { value: string; title: string }): void {
       if (!this.item) {
         console.warn("insertMacro: this.item not initialized");
         return;
       }
       this.item.data.text[idx] += macro.value;
     },
-    autocompletableVariables(start: string) {
+    autocompletableVariables(start: string): AutocompletableVariable[] {
       if (!this.item) {
         console.warn("autocompletableVariables: this.item not initialized");
-        return;
+        return [];
       }
-      const variables = this.item.variables.slice().map((localVar) => {
+      const variables: AutocompletableVariable[] = this.item.variables.slice().map((localVar: CommandVariable) => {
         return {
           var: localVar,
           type: "local",
         };
       });
-      this.globalVariables.forEach((globalVar) => {
+      this.globalVariables.forEach((globalVar: GlobalVariable) => {
         if (
           !variables.find((localVar) => localVar.var.name === globalVar.name)
         ) {
@@ -579,7 +585,7 @@ export default defineComponent({
           });
         }
       });
-      return variables.filter((v) => v.var.name.startsWith(start)).slice(0, 10);
+      return variables.filter((v: AutocompletableVariable) => v.var.name.startsWith(start)).slice(0, 10);
     },
     onVarChangeInputBlur() {
       setTimeout(() => {
@@ -588,7 +594,7 @@ export default defineComponent({
     },
   },
   computed: {
-    requiresAccessToken() {
+    requiresAccessToken(): boolean {
       if (!this.item) {
         return false;
       }
@@ -606,7 +612,7 @@ export default defineComponent({
         { type: "timer", label: "Add Timer", title: "Timer" },
       ];
     },
-    valid() {
+    valid(): boolean {
       if (!this.item) {
         return false;
       }
@@ -629,13 +635,13 @@ export default defineComponent({
 
       return true;
     },
-    actionDescription() {
+    actionDescription(): string {
       if (!this.item) {
         return "";
       }
       return commands[this.item.action].Description();
     },
-    title() {
+    title(): string {
       if (!this.item) {
         return "";
       }

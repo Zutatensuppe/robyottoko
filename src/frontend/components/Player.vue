@@ -1,11 +1,13 @@
 <template>
-  <span class="player" v-if="src" @click="toggle"
-    >{{ name }} <i class="fa ml-1" :class="cls"
-  /></span>
+  <span class="player" v-if="src" @click="toggle">{{ name }} <i class="fa ml-1" :class="cls"></i></span>
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
 
+interface ComponentData {
+  audio: HTMLAudioElement | null
+  playing: boolean
+}
 export default defineComponent({
   name: "player",
   props: {
@@ -18,7 +20,7 @@ export default defineComponent({
       default: 100,
     },
   },
-  data: () => ({
+  data: (): ComponentData => ({
     audio: null,
     playing: false,
   }),
@@ -29,12 +31,15 @@ export default defineComponent({
     });
   },
   computed: {
-    cls() {
+    cls(): string {
       return this.playing ? "fa-stop" : "fa-play";
     },
   },
   methods: {
-    toggle() {
+    toggle(): void {
+      if (!this.audio) {
+        return
+      }
       if (this.playing) {
         this.audio.pause();
         this.audio.currentTime = 0;
@@ -46,7 +51,7 @@ export default defineComponent({
       }
       this.playing = !this.playing;
     },
-    load() {
+    load(): void {
       if (this.audio) {
         this.audio.pause();
         this.audio = null;

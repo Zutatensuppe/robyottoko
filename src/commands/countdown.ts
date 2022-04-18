@@ -1,4 +1,4 @@
-import { Bot, CommandFunction, CountdownAction, CountdownCommand, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import { Bot, CommandFunction, CountdownAction, CountdownActionType, CountdownCommand, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
 import fn from './../fn'
 import { logger, mustParseHumanDuration } from './../common/fn'
 import { User } from '../services/Users'
@@ -42,20 +42,20 @@ const countdown = (
       const msgOutro = settings.outro || null
 
       if (msgIntro) {
-        actionDefs.push({ type: 'text', value: msgIntro.replace(/\{steps\}/g, `${steps}`) })
-        actionDefs.push({ type: 'delay', value: settings.interval || '1s' })
+        actionDefs.push({ type: CountdownActionType.TEXT, value: msgIntro.replace(/\{steps\}/g, `${steps}`) })
+        actionDefs.push({ type: CountdownActionType.DELAY, value: settings.interval || '1s' })
       }
 
       for (let step = steps; step > 0; step--) {
         actionDefs.push({
-          type: 'text',
+          type: CountdownActionType.TEXT,
           value: msgStep.replace(/\{steps\}/g, `${steps}`).replace(/\{step\}/g, `${step}`),
         })
-        actionDefs.push({ type: 'delay', value: settings.interval || '1s' })
+        actionDefs.push({ type: CountdownActionType.DELAY, value: settings.interval || '1s' })
       }
 
       if (msgOutro) {
-        actionDefs.push({ type: 'text', value: msgOutro.replace(/\{steps\}/g, `${steps}`) })
+        actionDefs.push({ type: CountdownActionType.TEXT, value: msgOutro.replace(/\{steps\}/g, `${steps}`) })
       }
     } else if (t === 'manual') {
       actionDefs = settings.actions
@@ -63,16 +63,16 @@ const countdown = (
 
     const actions = []
     for (const a of actionDefs) {
-      if (a.type === 'text') {
+      if (a.type === CountdownActionType.TEXT) {
         actions.push(async () => say(`${a.value}`))
-      } else if (a.type === 'media') {
+      } else if (a.type === CountdownActionType.MEDIA) {
         actions.push(async () => {
           bot.getWebSocketServer().notifyAll([user.id], 'general', {
             event: 'playmedia',
             data: a.value,
           })
         })
-      } else if (a.type === 'delay') {
+      } else if (a.type === CountdownActionType.DELAY) {
         let duration: number
         try {
           duration = (await parseDuration(`${a.value}`)) || 0

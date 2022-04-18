@@ -4,11 +4,7 @@
       <navbar />
       <div id="actionbar" class="p-1">
         <button class="button is-small" @click="onAdd">Add</button>
-        <button
-          class="button is-small is-primary"
-          :disabled="!changed"
-          @click="sendSave"
-        >
+        <button class="button is-small is-primary" :disabled="!changed" @click="sendSave">
           Save
         </button>
       </div>
@@ -39,13 +35,8 @@
                 <input type="text" class="input is-small" v-model="v.value" />
               </td>
               <td>
-                <doubleclick-button
-                  class="button is-small mr-1"
-                  message="Are you sure?"
-                  :timeout="1000"
-                  @doubleclick="remove(idx)"
-                  ><i class="fa fa-trash"
-                /></doubleclick-button>
+                <doubleclick-button class="button is-small mr-1" message="Are you sure?" :timeout="1000"
+                  @doubleclick="remove(idx)"><i class="fa fa-trash" /></doubleclick-button>
               </td>
             </tr>
           </tbody>
@@ -57,10 +48,17 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { GlobalVariable } from "../../types";
 import api from "../api";
 
+interface ComponentData {
+  unchangedJson: string
+  changedJson: string
+  variables: GlobalVariable[]
+}
+
 export default defineComponent({
-  data: () => ({
+  data: (): ComponentData => ({
     unchangedJson: "[]",
     changedJson: "[]",
     variables: [],
@@ -71,24 +69,24 @@ export default defineComponent({
     },
   },
   methods: {
-    remove(idx) {
-      this.variables = this.variables.filter((val, index) => index !== idx);
+    remove(idx: number): void {
+      this.variables = this.variables.filter((_val: GlobalVariable, index: number) => index !== idx);
     },
-    onAdd() {
+    onAdd(): void {
       this.variables.push({ name: "", value: "" });
     },
-    setChanged() {
+    setChanged(): void {
       this.changedJson = JSON.stringify({
         variables: this.variables,
       });
     },
-    setUnchanged() {
+    setUnchanged(): void {
       this.unchangedJson = JSON.stringify({
         variables: this.variables,
       });
       this.changedJson = this.unchangedJson;
     },
-    async sendSave() {
+    async sendSave(): Promise<void> {
       await api.saveVariables({
         variables: this.variables,
       });
@@ -110,7 +108,7 @@ export default defineComponent({
       return;
     }
 
-    const data = await res.json();
+    const data: { variables: GlobalVariable[] } = await res.json();
     this.variables = data.variables;
     this.setUnchanged();
   },

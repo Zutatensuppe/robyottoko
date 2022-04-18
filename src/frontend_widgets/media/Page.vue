@@ -10,6 +10,7 @@ import {
   GeneralModuleSettings,
   default_settings,
 } from "../../mod/modules/GeneralModuleCommon";
+import { newMedia } from "../../common/commands";
 
 interface ComponentData {
   ws: WsClient | null;
@@ -47,7 +48,7 @@ export default defineComponent({
       } else if (this.commandId && this.commandId !== origData.id) {
         // skipping this, as it isn't coming from right command
       } else {
-        this.q.playmedia(data);
+        this.q.playmedia(newMedia(data));
       }
     });
     this.ws.connect();

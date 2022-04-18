@@ -27,7 +27,7 @@
       </div>
     </div>
     <avatar-slot-item-state-editor class="mr-1" v-for="(animation, idx) in modelValue.states" :modelValue="animation"
-      :defaultState="defaultState" @update:modelValue="updateAnimation(idx, $event)" :key="idx" />
+      :defaultState="defaultState" :key="idx" />
   </div>
 </template>
 
@@ -56,10 +56,7 @@ export default defineComponent({
     },
   },
   methods: {
-    updateAnimation(index, animation) {
-      // TODO:
-    },
-    makeDefault() {
+    makeDefault(): void {
       this.$emit("makeDefault", this.modelValue);
     },
   },

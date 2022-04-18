@@ -101,7 +101,7 @@
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
 import fn from "../../../common/fn";
-import { CountdownAction, CountdownCommandData, MediaFile, SoundMediaFile } from "../../../types";
+import { CountdownAction, CountdownCommandData, DragEndEvent, MediaFile, SoundMediaFile } from "../../../types";
 import {
   newCountdownDelay,
   newCountdownText,
@@ -149,31 +149,31 @@ export default defineComponent({
     },
   }),
   methods: {
-    dragEnd(evt) {
+    dragEnd(evt: DragEndEvent): void {
       this.countdown.actions = fn.arrayMove(
         this.countdown.actions,
         evt.oldIndex,
         evt.newIndex
       );
     },
-    onAddDelay() {
+    onAddDelay(): void {
       this.countdown.actions.push(newCountdownDelay());
     },
-    onAddText() {
+    onAddText(): void {
       this.countdown.actions.push(newCountdownText());
     },
-    onAddMedia() {
+    onAddMedia(): void {
       this.countdown.actions.push(newCountdownMedia());
     },
-    rmaction(idx: number) {
+    rmaction(idx: number): void {
       this.countdown.actions = this.countdown.actions.filter(
         (_val: CountdownAction, index: number) => index !== idx
       );
     },
-    mediaSndChanged(idx: number, file: SoundMediaFile) {
+    mediaSndChanged(idx: number, file: SoundMediaFile): void {
       this.countdown.actions[idx].value.sound = file;
     },
-    mediaImgChanged(idx: number, file: MediaFile) {
+    mediaImgChanged(idx: number, file: MediaFile): void {
       this.countdown.actions[idx].value.image = file;
     },
   },

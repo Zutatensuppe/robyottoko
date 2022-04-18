@@ -60,7 +60,7 @@
 import { defineComponent } from "vue";
 
 import AvatarAnimation from "../../frontend/components/Avatar/AvatarAnimation.vue";
-import SoundMeter from "./soundmeter.js";
+import SoundMeter from "./soundmeter";
 import util from "../util";
 import WsClient from "../../frontend/WsClient";
 import {
@@ -258,14 +258,15 @@ export default defineComponent({
         return;
       }
 
-      const AudioContextClass =
-        window.AudioContext || window.webkitAudioContext;
+      // ignore because of the webkitAudioContext fallback
+      // @ts-ignore
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       const audioContext = new AudioContextClass();
       navigator.mediaDevices
         .getUserMedia({ audio: true })
         .then((stream) => {
           const soundMeter = new SoundMeter(audioContext);
-          soundMeter.connectToSource(stream, (e) => {
+          soundMeter.connectToSource(stream, (e: any | null) => {
             if (e) {
               log.error(e);
               return;

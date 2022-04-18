@@ -3,23 +3,15 @@
     <div id="top" ref="top">
       <navbar />
       <div id="actionbar" class="p-1">
-        <a class="button is-small mr-1" :href="controlWidgetUrl" target="_blank"
-          >Open control widget</a
-        >
-        <a class="button is-small mr-1" :href="displayWidgetUrl" target="_blank"
-          >Open display widget</a
-        >
+        <a class="button is-small mr-1" :href="controlWidgetUrl" target="_blank">Open control widget</a>
+        <a class="button is-small mr-1" :href="displayWidgetUrl" target="_blank">Open display widget</a>
       </div>
     </div>
     <div id="main" ref="main" v-if="inited">
       <div class="tabs">
         <ul>
-          <li
-            v-for="(def, idx) in tabDefinitions"
-            :key="idx"
-            :class="{ 'is-active': tab === def.tab }"
-            @click="tab = def.tab"
-          >
+          <li v-for="(def, idx) in tabDefinitions" :key="idx" :class="{ 'is-active': tab === def.tab }"
+            @click="tab = def.tab">
             <a>{{ def.title }}</a>
           </li>
         </ul>
@@ -32,23 +24,15 @@
           <tr>
             <td><code>settings.style.bgColor</code></td>
             <td>
-              <input
-                class="input is-small"
-                type="color"
-                v-model="settings.styles.bgColor"
-                @update:modelValue="sendSave"
-              />
+              <input class="input is-small" type="color" v-model="settings.styles.bgColor"
+                @update:modelValue="sendSave" />
             </td>
             <td>
-              <button
-                class="button is-small"
-                :disabled="
-                  settings.styles.bgColor === defaultSettings.styles.bgColor
-                "
-                @click="
+              <button class="button is-small" :disabled="
+                settings.styles.bgColor === defaultSettings.styles.bgColor
+              " @click="
                   settings.styles.bgColor = defaultSettings.styles.bgColor
-                "
-              >
+                ">
                 Reset to default
               </button>
             </td>
@@ -56,11 +40,7 @@
           <tr>
             <td><code>settings.style.bgColorEnabled</code></td>
             <td>
-              <input
-                type="checkbox"
-                v-model="settings.styles.bgColorEnabled"
-                @update:modelValue="sendSave"
-              />
+              <input type="checkbox" v-model="settings.styles.bgColorEnabled" @update:modelValue="sendSave" />
             </td>
           </tr>
         </tbody>
@@ -76,13 +56,7 @@
               <th>Actions</th>
             </tr>
           </thead>
-          <draggable
-            :modelValue="settings.avatarDefinitions"
-            @end="dragEnd"
-            tag="tbody"
-            handle=".handle"
-            item-key="id"
-          >
+          <draggable :modelValue="settings.avatarDefinitions" @end="dragEnd" tag="tbody" handle=".handle" item-key="id">
             <template #item="{ element, index }">
               <tr>
                 <td class="pt-4 handle">
@@ -100,50 +74,26 @@
                   {{ element.name }}
                 </td>
                 <td class="pl-0 pr-0">
-                  <doubleclick-button
-                    class="button is-small mr-1"
-                    message="Are you sure?"
-                    :timeout="1000"
-                    @doubleclick="remove(index)"
-                    ><i class="fa fa-trash"
-                  /></doubleclick-button>
-                  <button
-                    class="button is-small mr-1"
-                    @click="duplicate(index)"
-                  >
+                  <doubleclick-button class="button is-small mr-1" message="Are you sure?" :timeout="1000"
+                    @doubleclick="remove(index)"><i class="fa fa-trash" /></doubleclick-button>
+                  <button class="button is-small mr-1" @click="duplicate(index)">
                     <i class="fa fa-clone" />
                   </button>
-                  <a
-                    class="button is-small mr-1"
-                    :href="controlWidgetUrl + '?avatar=' + element.name"
-                    target="_blank"
-                    ><i class="fa fa-external-link mr-1" /> Control widget</a
-                  >
-                  <a
-                    class="button is-small"
-                    :href="displayWidgetUrl + '?avatar=' + element.name"
-                    target="_blank"
-                    ><i class="fa fa-external-link mr-1" /> Display widget</a
-                  >
+                  <a class="button is-small mr-1" :href="controlWidgetUrl + '?avatar=' + element.name"
+                    target="_blank"><i class="fa fa-external-link mr-1" /> Control widget</a>
+                  <a class="button is-small" :href="displayWidgetUrl + '?avatar=' + element.name" target="_blank"><i
+                      class="fa fa-external-link mr-1" /> Display widget</a>
                 </td>
               </tr>
             </template>
           </draggable>
         </table>
 
-        <avatar-editor
-          v-if="editEntity"
-          :modelValue="editEntity"
-          @update:modelValue="updatedAvatar"
-          @cancel="editEntity = null"
-        />
+        <avatar-editor v-if="editEntity" :modelValue="editEntity" @update:modelValue="updatedAvatar"
+          @cancel="editEntity = null" />
 
-        <span class="button is-small mr-1" @click="addAvatar"
-          >Add new avatar</span
-        >
-        <span class="button is-small" @click="addExampleAvatar"
-          >Add example avatar (Hyottoko-Chan)</span
-        >
+        <span class="button is-small mr-1" @click="addAvatar">Add new avatar</span>
+        <span class="button is-small" @click="addExampleAvatar">Add example avatar (Hyottoko-Chan)</span>
       </div>
     </div>
   </div>
@@ -162,7 +112,7 @@ import {
 import util from "../util";
 import WsClient from "../WsClient";
 
-import hyottokoChan from "./avatar_hyottoko_chan.js";
+import hyottokoChan from "./avatar_hyottoko_chan";
 
 interface TabDefinition {
   tab: string;
@@ -337,11 +287,13 @@ export default defineComponent({
 .avatar-editor .modal-card {
   width: calc(100% - 2em);
 }
+
 .avatar-all-images {
   position: sticky;
   top: 0;
   overflow: scroll;
 }
+
 .avatar-all-images img {
   background: #efefef;
   height: 64px;

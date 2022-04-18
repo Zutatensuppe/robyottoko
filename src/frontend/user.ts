@@ -5,16 +5,16 @@ let me: any = null;
 
 export const eventBus = mitt()
 
-export const isDarkmode = () => {
+export const isDarkmode = (): boolean => {
   return localStorage.getItem('darkmode') === '1'
 }
 
-export const setDarkmode = (darkmode: boolean) => {
+export const setDarkmode = (darkmode: boolean): void => {
   localStorage.setItem('darkmode', darkmode ? '1' : '0')
   eventBus.emit('darkmode', darkmode)
 }
 
-async function init() {
+async function init(): Promise<void> {
   eventBus.emit('darkmode', isDarkmode())
 
   const res = await api.getMe();
@@ -24,7 +24,7 @@ async function init() {
   }
 }
 
-async function logout() {
+async function logout(): Promise<{ error: string | false }> {
   const res = await api.logout();
   const data = await res.json();
   if (data.success) {
@@ -36,7 +36,7 @@ async function logout() {
   }
 }
 
-async function login(user: string, pass: string) {
+async function login(user: string, pass: string): Promise<{ error: string | false }> {
   const res = await api.login({ user, pass });
   if (res.status === 200) {
     await init()

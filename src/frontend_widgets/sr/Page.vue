@@ -17,7 +17,6 @@
 </template>
 
 <script lang="ts">
-import { VendorLonghandProperties } from "csstype";
 import { defineComponent } from "vue";
 import { logger } from "../../common/fn";
 import { YoutubeInstance } from "../../frontend/components/Youtube.vue";
@@ -88,7 +87,7 @@ export default defineComponent({
       return [this.thumbnailClass, this.progressBarClass];
     },
     player(): YoutubeInstance {
-      return this.$refs.youtube;
+      return this.$refs.youtube as YoutubeInstance;
     },
     progressValueStyle(): { width: string } {
       return {
@@ -97,7 +96,7 @@ export default defineComponent({
     },
     playlistItems(): PlaylistItem[] {
       const playlistItems: PlaylistItem[] = [];
-      for (const idx in this.playlist) {
+      for (let idx = 0; idx < this.playlist.length; idx++) {
         const item = this.playlist[idx];
         if (!this.isFilteredOut(item, idx)) {
           playlistItems[idx] = item;
@@ -136,7 +135,7 @@ export default defineComponent({
     ended(): void {
       this.sendMsg({ event: "ended" });
     },
-    sendMsg(data): void {
+    sendMsg(data: { event: string, id?: number }): void {
       if (!this.ws) {
         log.error('sendMsg, ws not defined')
         return
@@ -168,10 +167,10 @@ export default defineComponent({
         this.player.setVolume(this.settings.volume);
       }
     },
-    applySettings(settings): void {
+    applySettings(settings: SongrequestModuleSettings): void {
       if (this.settings.customCss !== settings.customCss) {
         let el = document.getElementById("customCss");
-        if (el) {
+        if (el && el.parentElement) {
           el.parentElement.removeChild(el);
         }
         el = document.createElement("style");

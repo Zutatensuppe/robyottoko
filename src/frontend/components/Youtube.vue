@@ -5,7 +5,19 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 
-const log = (...args) => console.log("[youtube.js]", ...args);
+const log = (...args: any[]) => console.log("[youtube.js]", ...args);
+
+interface YoutubePlayer {
+  cueVideoById: (youtubeId: string) => void
+  getCurrentTime: () => number
+  getDuration: () => number
+  getPlayerState: () => number
+  pauseVideo: () => void
+  playVideo: () => void
+  stopVideo: () => void
+  setVolume: (volume: number) => void
+  addEventListener: (event: string, callback: (event: any) => void) => void
+}
 
 let apiRdy = false;
 function createApi(): Promise<void> {
@@ -17,6 +29,9 @@ function createApi(): Promise<void> {
     const tag = document.createElement("script");
     tag.src = "https://www.youtube.com/iframe_api";
     document.head.append(tag);
+    // a callback function on window is required by youtube
+    // https://developers.google.com/youtube/iframe_api_reference
+    // @ts-ignore
     window.onYouTubeIframeAPIReady = () => {
       apiRdy = true;
       log("ytapi ready");
@@ -25,10 +40,12 @@ function createApi(): Promise<void> {
   });
 }
 
-function createPlayer(id): Promise<YT.Player> {
+function createPlayer(id: string): Promise<YoutubePlayer> {
   return new Promise((resolve) => {
     log("create player on " + id);
-    const player = new YT.Player(id, {
+    // no knowledge about YT.Player :(
+    // @ts-ignore
+    const player: YoutubePlayer = new YT.Player(id, {
       playerVars: {
         iv_load_policy: 3, // do not load annotations
         modestbranding: 1, // remove youtube logo
@@ -43,14 +60,14 @@ function createPlayer(id): Promise<YT.Player> {
   });
 }
 
-async function prepareYt(id) {
+async function prepareYt(id: string): Promise<YoutubePlayer> {
   await createApi();
   return await createPlayer(id);
 }
 
 interface ComponentData {
   id: string
-  yt: string | null
+  yt: YoutubePlayer | null
   loop: boolean
   toplay: string | null
   tovolume: number | null
@@ -112,8 +129,9 @@ const Youtube = defineComponent({
       if (!this.visible) {
         return;
       }
-
-      this.yt.playVideo();
+      if (this.yt) {
+        this.yt.playVideo();
+      }
 
       let triesRemaining = 20;
       this.tryPlayInterval = setInterval(() => {
@@ -124,7 +142,9 @@ const Youtube = defineComponent({
           this.stopTryPlayInterval();
           return;
         }
-        this.yt.playVideo();
+        if (this.yt) {
+          this.yt.playVideo();
+        }
       }, 250);
     },
     play(yt: string): void {
@@ -156,7 +176,10 @@ const Youtube = defineComponent({
       this.loop = loop;
     },
     playing(): boolean {
-      return this.yt && this.yt.getPlayerState() === 1;
+      if (!this.yt) {
+        return false;
+      }
+      return this.yt.getPlayerState() === 1;
     },
   },
   async mounted() {
@@ -170,8 +193,12 @@ const Youtube = defineComponent({
       this.play(this.toplay);
     }
     this.yt.addEventListener("onStateChange", (event) => {
+      // no knowledge about YT.PlayerState :(
+      // @ts-ignore
       if (event.data === YT.PlayerState.CUED) {
         this.tryPlay();
+        // no knowledge about YT.PlayerState :(
+        // @ts-ignore
       } else if (event.data === YT.PlayerState.ENDED) {
         if (this.loop) {
           this.tryPlay();
