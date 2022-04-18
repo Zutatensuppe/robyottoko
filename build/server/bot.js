@@ -2089,26 +2089,36 @@ class TwitchPubSubClient {
     }
 }
 
+var CountdownActionType;
+(function (CountdownActionType) {
+    CountdownActionType["TEXT"] = "text";
+    CountdownActionType["MEDIA"] = "media";
+    CountdownActionType["DELAY"] = "delay";
+})(CountdownActionType || (CountdownActionType = {}));
+
 const newText = () => '';
-const newMedia = () => ({
-    excludeFromGlobalWidget: false,
-    sound: {
-        filename: '',
-        file: '',
-        urlpath: '',
-        volume: 100,
-    },
-    image: {
-        filename: '',
-        file: '',
-        urlpath: '',
-    },
-    image_url: '',
-    twitch_clip: {
-        url: '',
-        volume: 100,
-    },
-    minDurationMs: '1s',
+const newSoundMediaFile = (obj = null) => ({
+    filename: (!obj || typeof obj.filename === 'undefined') ? '' : obj.filename,
+    file: (!obj || typeof obj.file === 'undefined') ? '' : obj.file,
+    urlpath: (!obj || typeof obj.urlpath === 'undefined') ? '' : obj.urlpath,
+    volume: (!obj || typeof obj.volume === 'undefined') ? 100 : obj.volume,
+});
+const newMediaFile = (obj = null) => ({
+    filename: (!obj || typeof obj.filename === 'undefined') ? '' : obj.filename,
+    file: (!obj || typeof obj.file === 'undefined') ? '' : obj.file,
+    urlpath: (!obj || typeof obj.urlpath === 'undefined') ? '' : obj.urlpath,
+});
+const newTwitchClip = (obj = null) => ({
+    url: (!obj || typeof obj.url === 'undefined') ? '' : obj.url,
+    volume: (!obj || typeof obj.volume === 'undefined') ? 100 : obj.volume,
+});
+const newMedia = (obj = null) => ({
+    excludeFromGlobalWidget: (!obj || typeof obj.excludeFromGlobalWidget === 'undefined') ? false : obj.excludeFromGlobalWidget,
+    sound: newSoundMediaFile(obj?.sound),
+    image: newMediaFile(obj?.image),
+    image_url: (!obj || typeof obj.image_url === 'undefined') ? '' : obj.image_url,
+    twitch_clip: newTwitchClip(obj?.twitch_clip),
+    minDurationMs: (!obj || typeof obj.minDurationMs === 'undefined') ? '1s' : obj.minDurationMs,
 });
 const newTrigger = (type) => ({
     type,
@@ -3643,18 +3653,18 @@ const countdown = (originalCmd, bot, user) => async (command, client, target, co
         const msgIntro = settings.intro || null;
         const msgOutro = settings.outro || null;
         if (msgIntro) {
-            actionDefs.push({ type: 'text', value: msgIntro.replace(/\{steps\}/g, `${steps}`) });
-            actionDefs.push({ type: 'delay', value: settings.interval || '1s' });
+            actionDefs.push({ type: CountdownActionType.TEXT, value: msgIntro.replace(/\{steps\}/g, `${steps}`) });
+            actionDefs.push({ type: CountdownActionType.DELAY, value: settings.interval || '1s' });
         }
         for (let step = steps; step > 0; step--) {
             actionDefs.push({
-                type: 'text',
+                type: CountdownActionType.TEXT,
                 value: msgStep.replace(/\{steps\}/g, `${steps}`).replace(/\{step\}/g, `${step}`),
             });
-            actionDefs.push({ type: 'delay', value: settings.interval || '1s' });
+            actionDefs.push({ type: CountdownActionType.DELAY, value: settings.interval || '1s' });
         }
         if (msgOutro) {
-            actionDefs.push({ type: 'text', value: msgOutro.replace(/\{steps\}/g, `${steps}`) });
+            actionDefs.push({ type: CountdownActionType.TEXT, value: msgOutro.replace(/\{steps\}/g, `${steps}`) });
         }
     }
     else if (t === 'manual') {
@@ -3662,10 +3672,10 @@ const countdown = (originalCmd, bot, user) => async (command, client, target, co
     }
     const actions = [];
     for (const a of actionDefs) {
-        if (a.type === 'text') {
+        if (a.type === CountdownActionType.TEXT) {
             actions.push(async () => say(`${a.value}`));
         }
-        else if (a.type === 'media') {
+        else if (a.type === CountdownActionType.MEDIA) {
             actions.push(async () => {
                 bot.getWebSocketServer().notifyAll([user.id], 'general', {
                     event: 'playmedia',
@@ -3673,7 +3683,7 @@ const countdown = (originalCmd, bot, user) => async (command, client, target, co
                 });
             });
         }
-        else if (a.type === 'delay') {
+        else if (a.type === CountdownActionType.DELAY) {
             let duration;
             try {
                 duration = (await parseDuration(`${a.value}`)) || 0;
@@ -6589,9 +6599,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-17T19:17:04.463Z",
+    buildDate: "2022-04-18T09:06:04.065Z",
     // @ts-ignore
-    buildVersion: "1.8.6",
+    buildVersion: "1.8.7",
 };
 
 setLogLevel(config.log.level);
