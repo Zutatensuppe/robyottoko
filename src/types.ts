@@ -203,7 +203,12 @@ export interface RawCommand {
   args: string[]
 }
 
-export type CommandTriggerType = 'command' | 'reward_redemption' | 'timer' | 'first_chat'
+export enum CommandTriggerType {
+  COMMAND = 'command',
+  REWARD_REDEMPTION = 'reward_redemption',
+  TIMER = 'timer',
+  FIRST_CHAT = 'first_chat',
+}
 
 export interface CommandTrigger {
   type: CommandTriggerType
@@ -237,17 +242,47 @@ export type CommandFunction = (
   context: TwitchChatContext | null,
 ) => any
 
-export type CommandAction =
+export enum CommandAction {
   // general
-  'text' | 'media' | 'media_volume' | 'countdown' | 'dict_lookup' | 'madochan_createword' | 'chatters'
-  | 'set_channel_title' | 'set_channel_game_id'
-  | 'add_stream_tags' | 'remove_stream_tags'
+  TEXT = 'text',
+  MEDIA = 'media',
+  MEDIA_VOLUME = 'media_volume',
+  COUNTDOWN = 'countdown',
+  DICT_LOOKUP = 'dict_lookup',
+  MADOCHAN_CREATEWORD = 'madochan_createword',
+  CHATTERS = 'chatters',
+  SET_CHANNEL_TITLE = 'set_channel_title',
+  SET_CHANNEL_GAME_ID = 'set_channel_game_id',
+  ADD_STREAM_TAGS = 'add_stream_tags',
+  REMOVE_STREAM_TAGS = 'remove_stream_tags',
   // song request
-  | 'sr_current' | 'sr_undo' | 'sr_good' | 'sr_bad' | 'sr_stats' | 'sr_prev' | 'sr_next'
-  | 'sr_jumptonew' | 'sr_clear' | 'sr_rm' | 'sr_shuffle' | 'sr_reset_stats' | 'sr_loop'
-  | 'sr_noloop' | 'sr_pause' | 'sr_unpause' | 'sr_hidevideo' | 'sr_showvideo' | 'sr_request'
-  | 'sr_re_request' | 'sr_addtag' | 'sr_rmtag' | 'sr_volume' | 'sr_filter' | 'sr_preset'
-  | 'sr_queue'
+  SR_CURRENT = 'sr_current',
+  SR_UNDO = 'sr_undo',
+  SR_GOOD = 'sr_good',
+  SR_BAD = 'sr_bad',
+  SR_STATS = 'sr_stats',
+  SR_PREV = 'sr_prev',
+  SR_NEXT = 'sr_next',
+  SR_JUMPTONEW = 'sr_jumptonew',
+  SR_CLEAR = 'sr_clear',
+  SR_RM = 'sr_rm',
+  SR_SHUFFLE = 'sr_shuffle',
+  SR_RESET_STATS = 'sr_reset_stats',
+  SR_LOOP = 'sr_loop',
+  SR_NOLOOP = 'sr_noloop',
+  SR_PAUSE = 'sr_pause',
+  SR_UNPAUSE = 'sr_unpause',
+  SR_HIDEVIDEO = 'sr_hidevideo',
+  SR_SHOWVIDEO = 'sr_showvideo',
+  SR_REQUEST = 'sr_request',
+  SR_RE_REQUEST = 'sr_re_request',
+  SR_ADDTAG = 'sr_addtag',
+  SR_RMTAG = 'sr_rmtag',
+  SR_VOLUME = 'sr_volume',
+  SR_FILTER = 'sr_filter',
+  SR_PRESET = 'sr_preset',
+  SR_QUEUE = 'sr_queue',
+}
 
 export interface Command {
   id?: string
@@ -260,35 +295,35 @@ export interface Command {
 }
 
 export interface SetChannelTitleCommand extends Command {
-  action: "set_channel_title"
+  action: CommandAction.SET_CHANNEL_TITLE
   data: {
     title: string
   }
 }
 
 export interface AddStreamTagCommand extends Command {
-  action: 'add_stream_tags'
+  action: CommandAction.ADD_STREAM_TAGS
   data: {
     tag: string
   }
 }
 
 export interface RemoveStreamTagCommand extends Command {
-  action: 'remove_stream_tags'
+  action: CommandAction.REMOVE_STREAM_TAGS
   data: {
     tag: string
   }
 }
 
 export interface SetChannelGameIdCommand extends Command {
-  action: "set_channel_game_id"
+  action: CommandAction.SET_CHANNEL_GAME_ID
   data: {
     game_id: string
   }
 }
 
 export interface DictLookupCommand extends Command {
-  action: "dict_lookup"
+  action: CommandAction.DICT_LOOKUP
   data: {
     lang: string
     phrase: string
@@ -296,7 +331,7 @@ export interface DictLookupCommand extends Command {
 }
 
 export interface MadochanCommand extends Command {
-  action: "madochan_createword"
+  action: CommandAction.MADOCHAN_CREATEWORD
   data: {
     model: string
     weirdness: string
@@ -309,23 +344,23 @@ export interface DictSearchResponseDataEntry {
 }
 
 export interface RandomTextCommand extends Command {
-  action: "text"
+  action: CommandAction.TEXT
   data: {
     text: string[]
   }
 }
 
 export interface MediaVolumeCommand extends Command {
-  action: "media_volume"
+  action: CommandAction.MEDIA_VOLUME
 }
 
 export interface MediaCommand extends Command {
-  action: "media"
+  action: CommandAction.MEDIA
   data: MediaCommandData
 }
 
 export interface ChattersCommand extends Command {
-  action: "chatters"
+  action: CommandAction.CHATTERS
 }
 
 export interface MediaTwitchClip {
@@ -364,7 +399,7 @@ export interface CountdownCommandData {
 }
 
 export interface CountdownCommand extends Command {
-  action: "countdown"
+  action: CommandAction.COUNTDOWN
   data: CountdownCommandData
 }
 

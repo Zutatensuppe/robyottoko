@@ -207,7 +207,7 @@ export const doReplacements = async (
   const replaces: { regex: RegExp, replacer: (...args: string[]) => Promise<string> }[] = [
     {
       regex: /\$args(?:\((\d*)(:?)(\d*)\))?/g,
-      replacer: async (m0: string, m1: string, m2: string, m3: string): Promise<string> => {
+      replacer: async (_m0: string, m1: string, m2: string, m3: string): Promise<string> => {
         if (!command) {
           return ''
         }
@@ -235,7 +235,7 @@ export const doReplacements = async (
     },
     {
       regex: /\$rand\(\s*(\d+)?\s*,\s*?(\d+)?\s*\)/g,
-      replacer: async (m0: string, m1: string, m2: string): Promise<string> => {
+      replacer: async (_m0: string, m1: string, m2: string): Promise<string> => {
         const min = typeof m1 === 'undefined' ? 1 : parseInt(m1, 10)
         const max = typeof m2 === 'undefined' ? 100 : parseInt(m2, 10)
         return `${getRandomInt(min, max)}`
@@ -243,7 +243,7 @@ export const doReplacements = async (
     },
     {
       regex: /\$var\(([^)]+)\)/g,
-      replacer: async (m0: string, m1: string): Promise<string> => {
+      replacer: async (_m0: string, m1: string): Promise<string> => {
         if (!originalCmd || !originalCmd.variables) {
           return ''
         }
@@ -257,7 +257,7 @@ export const doReplacements = async (
     },
     {
       regex: /\$bot\.(version|date|website|github|features)/g,
-      replacer: async (m0: string, m1: string): Promise<string> => {
+      replacer: async (_m0: string, m1: string): Promise<string> => {
         if (!bot) {
           return ''
         }
@@ -281,7 +281,7 @@ export const doReplacements = async (
     },
     {
       regex: /\$user(?:\(([^)]+)\)|())\.(name|profile_image_url|recent_clip_url|last_stream_category)/g,
-      replacer: async (m0: string, m1: string, m2: string, m3): Promise<string> => {
+      replacer: async (_m0: string, m1: string, m2: string, m3): Promise<string> => {
         if (!context) {
           return ''
         }
@@ -331,7 +331,7 @@ export const doReplacements = async (
     },
     {
       regex: /\$customapi\(([^$)]*)\)\['([A-Za-z0-9_ -]+)'\]/g,
-      replacer: async (m0: string, m1: string, m2: string): Promise<string> => {
+      replacer: async (_m0: string, m1: string, m2: string): Promise<string> => {
         try {
           const url = await doReplacements(m1, command, context, originalCmd, bot, user)
           // both of getText and JSON.parse can fail, so everything in a single try catch
@@ -345,7 +345,7 @@ export const doReplacements = async (
     },
     {
       regex: /\$customapi\(([^$)]*)\)/g,
-      replacer: async (m0: string, m1: string): Promise<string> => {
+      replacer: async (_m0: string, m1: string): Promise<string> => {
         try {
           const url = await doReplacements(m1, command, context, originalCmd, bot, user)
           return await getText(url)
@@ -357,14 +357,14 @@ export const doReplacements = async (
     },
     {
       regex: /\$urlencode\(([^$)]*)\)/g,
-      replacer: async (m0: string, m1: string): Promise<string> => {
+      replacer: async (_m0: string, m1: string): Promise<string> => {
         const value = await doReplacements(m1, command, context, originalCmd, bot, user)
         return encodeURIComponent(value)
       },
     },
     {
       regex: /\$calc\((\d+)([*/+-])(\d+)\)/g,
-      replacer: async (m0: string, arg1: string, op: string, arg2: string): Promise<string> => {
+      replacer: async (_m0: string, arg1: string, op: string, arg2: string): Promise<string> => {
         const arg1Int = parseInt(arg1, 10)
         const arg2Int = parseInt(arg2, 10)
         switch (op) {

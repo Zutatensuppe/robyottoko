@@ -59,7 +59,7 @@ class AvatarModule implements Module {
     })();
   }
 
-  async userChanged(user: User) {
+  async userChanged(user: User): Promise<void> {
     this.user = user
   }
 
@@ -95,11 +95,11 @@ class AvatarModule implements Module {
     }
   }
 
-  updateClient(data: WsModuleData, ws: Socket) {
+  updateClient(data: WsModuleData, ws: Socket): void {
     this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, data, ws)
   }
 
-  updateClients(data: WsControlData | WsModuleData) {
+  updateClients(data: WsControlData | WsModuleData): void {
     this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, data)
   }
 

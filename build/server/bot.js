@@ -444,7 +444,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
     const replaces = [
         {
             regex: /\$args(?:\((\d*)(:?)(\d*)\))?/g,
-            replacer: async (m0, m1, m2, m3) => {
+            replacer: async (_m0, m1, m2, m3) => {
                 if (!command) {
                     return '';
                 }
@@ -472,7 +472,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
         },
         {
             regex: /\$rand\(\s*(\d+)?\s*,\s*?(\d+)?\s*\)/g,
-            replacer: async (m0, m1, m2) => {
+            replacer: async (_m0, m1, m2) => {
                 const min = typeof m1 === 'undefined' ? 1 : parseInt(m1, 10);
                 const max = typeof m2 === 'undefined' ? 100 : parseInt(m2, 10);
                 return `${getRandomInt(min, max)}`;
@@ -480,7 +480,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
         },
         {
             regex: /\$var\(([^)]+)\)/g,
-            replacer: async (m0, m1) => {
+            replacer: async (_m0, m1) => {
                 if (!originalCmd || !originalCmd.variables) {
                     return '';
                 }
@@ -494,7 +494,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
         },
         {
             regex: /\$bot\.(version|date|website|github|features)/g,
-            replacer: async (m0, m1) => {
+            replacer: async (_m0, m1) => {
                 if (!bot) {
                     return '';
                 }
@@ -518,7 +518,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
         },
         {
             regex: /\$user(?:\(([^)]+)\)|())\.(name|profile_image_url|recent_clip_url|last_stream_category)/g,
-            replacer: async (m0, m1, m2, m3) => {
+            replacer: async (_m0, m1, m2, m3) => {
                 if (!context) {
                     return '';
                 }
@@ -559,7 +559,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
         },
         {
             regex: /\$customapi\(([^$)]*)\)\['([A-Za-z0-9_ -]+)'\]/g,
-            replacer: async (m0, m1, m2) => {
+            replacer: async (_m0, m1, m2) => {
                 try {
                     const url = await doReplacements(m1, command, context, originalCmd, bot, user);
                     // both of getText and JSON.parse can fail, so everything in a single try catch
@@ -574,7 +574,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
         },
         {
             regex: /\$customapi\(([^$)]*)\)/g,
-            replacer: async (m0, m1) => {
+            replacer: async (_m0, m1) => {
                 try {
                     const url = await doReplacements(m1, command, context, originalCmd, bot, user);
                     return await getText(url);
@@ -587,14 +587,14 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
         },
         {
             regex: /\$urlencode\(([^$)]*)\)/g,
-            replacer: async (m0, m1) => {
+            replacer: async (_m0, m1) => {
                 const value = await doReplacements(m1, command, context, originalCmd, bot, user);
                 return encodeURIComponent(value);
             },
         },
         {
             regex: /\$calc\((\d+)([*/+-])(\d+)\)/g,
-            replacer: async (m0, arg1, op, arg2) => {
+            replacer: async (_m0, arg1, op, arg2) => {
                 const arg1Int = parseInt(arg1, 10);
                 const arg2Int = parseInt(arg2, 10);
                 switch (op) {
@@ -1972,6 +1972,62 @@ class WebServer {
     }
 }
 
+var CommandTriggerType;
+(function (CommandTriggerType) {
+    CommandTriggerType["COMMAND"] = "command";
+    CommandTriggerType["REWARD_REDEMPTION"] = "reward_redemption";
+    CommandTriggerType["TIMER"] = "timer";
+    CommandTriggerType["FIRST_CHAT"] = "first_chat";
+})(CommandTriggerType || (CommandTriggerType = {}));
+var CommandAction;
+(function (CommandAction) {
+    // general
+    CommandAction["TEXT"] = "text";
+    CommandAction["MEDIA"] = "media";
+    CommandAction["MEDIA_VOLUME"] = "media_volume";
+    CommandAction["COUNTDOWN"] = "countdown";
+    CommandAction["DICT_LOOKUP"] = "dict_lookup";
+    CommandAction["MADOCHAN_CREATEWORD"] = "madochan_createword";
+    CommandAction["CHATTERS"] = "chatters";
+    CommandAction["SET_CHANNEL_TITLE"] = "set_channel_title";
+    CommandAction["SET_CHANNEL_GAME_ID"] = "set_channel_game_id";
+    CommandAction["ADD_STREAM_TAGS"] = "add_stream_tags";
+    CommandAction["REMOVE_STREAM_TAGS"] = "remove_stream_tags";
+    // song request
+    CommandAction["SR_CURRENT"] = "sr_current";
+    CommandAction["SR_UNDO"] = "sr_undo";
+    CommandAction["SR_GOOD"] = "sr_good";
+    CommandAction["SR_BAD"] = "sr_bad";
+    CommandAction["SR_STATS"] = "sr_stats";
+    CommandAction["SR_PREV"] = "sr_prev";
+    CommandAction["SR_NEXT"] = "sr_next";
+    CommandAction["SR_JUMPTONEW"] = "sr_jumptonew";
+    CommandAction["SR_CLEAR"] = "sr_clear";
+    CommandAction["SR_RM"] = "sr_rm";
+    CommandAction["SR_SHUFFLE"] = "sr_shuffle";
+    CommandAction["SR_RESET_STATS"] = "sr_reset_stats";
+    CommandAction["SR_LOOP"] = "sr_loop";
+    CommandAction["SR_NOLOOP"] = "sr_noloop";
+    CommandAction["SR_PAUSE"] = "sr_pause";
+    CommandAction["SR_UNPAUSE"] = "sr_unpause";
+    CommandAction["SR_HIDEVIDEO"] = "sr_hidevideo";
+    CommandAction["SR_SHOWVIDEO"] = "sr_showvideo";
+    CommandAction["SR_REQUEST"] = "sr_request";
+    CommandAction["SR_RE_REQUEST"] = "sr_re_request";
+    CommandAction["SR_ADDTAG"] = "sr_addtag";
+    CommandAction["SR_RMTAG"] = "sr_rmtag";
+    CommandAction["SR_VOLUME"] = "sr_volume";
+    CommandAction["SR_FILTER"] = "sr_filter";
+    CommandAction["SR_PRESET"] = "sr_preset";
+    CommandAction["SR_QUEUE"] = "sr_queue";
+})(CommandAction || (CommandAction = {}));
+var CountdownActionType;
+(function (CountdownActionType) {
+    CountdownActionType["TEXT"] = "text";
+    CountdownActionType["MEDIA"] = "media";
+    CountdownActionType["DELAY"] = "delay";
+})(CountdownActionType || (CountdownActionType = {}));
+
 function mitt(n){return {all:n=n||new Map,on:function(t,e){var i=n.get(t);i?i.push(e):n.set(t,[e]);},off:function(t,e){var i=n.get(t);i&&(e?i.splice(i.indexOf(e)>>>0,1):n.set(t,[]));},emit:function(t,e){var i=n.get(t);i&&i.slice().map(function(n){n(e);}),(i=n.get("*"))&&i.slice().map(function(n){n(t,e);});}}}
 
 const CODE_GOING_AWAY = 1001;
@@ -2089,13 +2145,6 @@ class TwitchPubSubClient {
     }
 }
 
-var CountdownActionType;
-(function (CountdownActionType) {
-    CountdownActionType["TEXT"] = "text";
-    CountdownActionType["MEDIA"] = "media";
-    CountdownActionType["DELAY"] = "delay";
-})(CountdownActionType || (CountdownActionType = {}));
-
 const newText = () => '';
 const newSoundMediaFile = (obj = null) => ({
     filename: (!obj || typeof obj.filename === 'undefined') ? '' : obj.filename,
@@ -2134,12 +2183,12 @@ const newTrigger = (type) => ({
     },
 });
 const newRewardRedemptionTrigger = (command = '') => {
-    const trigger = newTrigger('reward_redemption');
+    const trigger = newTrigger(CommandTriggerType.REWARD_REDEMPTION);
     trigger.data.command = command;
     return trigger;
 };
 const newCommandTrigger = (command = '', commandExact = false) => {
-    const trigger = newTrigger('command');
+    const trigger = newTrigger(CommandTriggerType.COMMAND);
     trigger.data.command = command;
     trigger.data.commandExact = commandExact;
     return trigger;
@@ -2150,24 +2199,24 @@ const commandHasAnyTrigger = (command, triggers) => {
             if (cmdTrigger.type !== trigger.type) {
                 continue;
             }
-            if (cmdTrigger.type === 'command') {
+            if (cmdTrigger.type === CommandTriggerType.COMMAND) {
                 if (cmdTrigger.data.command === trigger.data.command) {
                     // no need to check for commandExact here (i think^^)
                     return true;
                 }
             }
-            else if (cmdTrigger.type === 'reward_redemption') {
+            else if (cmdTrigger.type === CommandTriggerType.REWARD_REDEMPTION) {
                 if (cmdTrigger.data.command === trigger.data.command) {
                     return true;
                 }
             }
-            else if (cmdTrigger.type === 'timer') {
+            else if (cmdTrigger.type === CommandTriggerType.TIMER) {
                 if (cmdTrigger.data.minInterval === trigger.data.minInterval
                     && cmdTrigger.data.minLines === trigger.data.minLines) {
                     return true;
                 }
             }
-            else if (cmdTrigger.type === 'first_chat') {
+            else if (cmdTrigger.type === CommandTriggerType.FIRST_CHAT) {
                 return true;
             }
         }
@@ -2185,7 +2234,7 @@ const commands = {
         NewCommand: () => ({
             id: nonce(10),
             triggers: [newCommandTrigger()],
-            action: 'add_stream_tags',
+            action: CommandAction.ADD_STREAM_TAGS,
             restrict_to: MOD_OR_ABOVE,
             variables: [],
             variableChanges: [],
@@ -2201,7 +2250,7 @@ const commands = {
         NewCommand: () => ({
             id: nonce(10),
             triggers: [newCommandTrigger()],
-            action: 'chatters',
+            action: CommandAction.CHATTERS,
             restrict_to: [],
             variables: [],
             variableChanges: [],
@@ -2215,7 +2264,7 @@ const commands = {
         NewCommand: () => ({
             id: nonce(10),
             triggers: [newCommandTrigger()],
-            action: 'countdown',
+            action: CommandAction.COUNTDOWN,
             restrict_to: [],
             variables: [],
             variableChanges: [],
@@ -2234,7 +2283,7 @@ const commands = {
         NewCommand: () => ({
             id: nonce(10),
             triggers: [newCommandTrigger()],
-            action: 'dict_lookup',
+            action: CommandAction.DICT_LOOKUP,
             restrict_to: [],
             variables: [],
             variableChanges: [],
@@ -2251,7 +2300,7 @@ const commands = {
         NewCommand: () => ({
             id: nonce(10),
             triggers: [newCommandTrigger()],
-            action: 'madochan_createword',
+            action: CommandAction.MADOCHAN_CREATEWORD,
             restrict_to: [],
             variables: [],
             variableChanges: [],
@@ -2269,7 +2318,7 @@ const commands = {
         NewCommand: () => ({
             id: nonce(10),
             triggers: [newCommandTrigger()],
-            action: 'media',
+            action: CommandAction.MEDIA,
             restrict_to: [],
             variables: [],
             variableChanges: [],
@@ -2285,7 +2334,7 @@ const commands = {
         NewCommand: () => ({
             id: nonce(10),
             triggers: [newCommandTrigger()],
-            action: 'media_volume',
+            action: CommandAction.MEDIA_VOLUME,
             restrict_to: MOD_OR_ABOVE,
             variables: [],
             variableChanges: [],
@@ -2299,7 +2348,7 @@ const commands = {
         NewCommand: () => ({
             id: nonce(10),
             triggers: [newCommandTrigger()],
-            action: 'text',
+            action: CommandAction.TEXT,
             restrict_to: [],
             variables: [],
             variableChanges: [],
@@ -2315,7 +2364,7 @@ const commands = {
         NewCommand: () => ({
             id: nonce(10),
             triggers: [newCommandTrigger()],
-            action: 'remove_stream_tags',
+            action: CommandAction.REMOVE_STREAM_TAGS,
             restrict_to: MOD_OR_ABOVE,
             variables: [],
             variableChanges: [],
@@ -2331,7 +2380,7 @@ const commands = {
         NewCommand: () => ({
             id: nonce(10),
             triggers: [newCommandTrigger()],
-            action: 'set_channel_game_id',
+            action: CommandAction.SET_CHANNEL_GAME_ID,
             restrict_to: MOD_OR_ABOVE,
             variables: [],
             variableChanges: [],
@@ -2347,7 +2396,7 @@ const commands = {
         NewCommand: () => ({
             id: nonce(10),
             triggers: [newCommandTrigger()],
-            action: 'set_channel_title',
+            action: CommandAction.SET_CHANNEL_TITLE,
             restrict_to: MOD_OR_ABOVE,
             variables: [],
             variableChanges: [],
@@ -2362,7 +2411,7 @@ const commands = {
         Description: () => "Show what song is currently playing",
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_current',
+            action: CommandAction.SR_CURRENT,
             triggers: [newCommandTrigger('!sr current', true)],
             restrict_to: [],
             variables: [],
@@ -2376,7 +2425,7 @@ const commands = {
         Description: () => "Remove the song that was last added by oneself.",
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_undo',
+            action: CommandAction.SR_UNDO,
             triggers: [newCommandTrigger('!sr undo', true)],
             restrict_to: [],
             variables: [],
@@ -2390,7 +2439,7 @@ const commands = {
         Description: () => "Vote the current song up",
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_good',
+            action: CommandAction.SR_GOOD,
             triggers: [newCommandTrigger('!sr good', true)],
             restrict_to: [],
             variables: [],
@@ -2404,7 +2453,7 @@ const commands = {
         Description: () => "Vote the current song down",
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_bad',
+            action: CommandAction.SR_BAD,
             triggers: [newCommandTrigger('!sr bad', true)],
             restrict_to: [],
             variables: [],
@@ -2418,7 +2467,7 @@ const commands = {
         Description: () => "Show stats about the playlist",
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_stats',
+            action: CommandAction.SR_STATS,
             triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)],
             restrict_to: [],
             variables: [],
@@ -2432,7 +2481,7 @@ const commands = {
         Description: () => "Skip to the previous song",
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_prev',
+            action: CommandAction.SR_PREV,
             triggers: [newCommandTrigger('!sr prev', true)],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
@@ -2446,7 +2495,7 @@ const commands = {
         Description: () => "Skip to the next song",
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_next',
+            action: CommandAction.SR_NEXT,
             triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
@@ -2460,7 +2509,7 @@ const commands = {
         Description: () => "Jump to the next unplayed song",
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_jumptonew',
+            action: CommandAction.SR_JUMPTONEW,
             triggers: [newCommandTrigger('!sr jumptonew', true)],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
@@ -2474,7 +2523,7 @@ const commands = {
         Description: () => "Clear the playlist",
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_clear',
+            action: CommandAction.SR_CLEAR,
             triggers: [newCommandTrigger('!sr clear', true)],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
@@ -2488,7 +2537,7 @@ const commands = {
         Description: () => "Remove the current song from the playlist",
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_rm',
+            action: CommandAction.SR_RM,
             triggers: [newCommandTrigger('!sr rm', true)],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
@@ -2505,7 +2554,7 @@ const commands = {
     songs will be put after currently playing song.`,
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_shuffle',
+            action: CommandAction.SR_SHUFFLE,
             triggers: [newCommandTrigger('!sr shuffle', true)],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
@@ -2519,7 +2568,7 @@ const commands = {
         Description: () => "Reset all statistics of all songs",
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_reset_stats',
+            action: CommandAction.SR_RESET_STATS,
             triggers: [newCommandTrigger('!sr resetStats', true)],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
@@ -2533,7 +2582,7 @@ const commands = {
         Description: () => "Loop the current song",
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_loop',
+            action: CommandAction.SR_LOOP,
             triggers: [newCommandTrigger('!sr loop', true)],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
@@ -2547,7 +2596,7 @@ const commands = {
         Description: () => "Stop looping the current song",
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_noloop',
+            action: CommandAction.SR_NOLOOP,
             triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
@@ -2561,7 +2610,7 @@ const commands = {
         Description: () => "Pause currently playing song",
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_pause',
+            action: CommandAction.SR_PAUSE,
             triggers: [newCommandTrigger('!sr pause', true)],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
@@ -2575,7 +2624,7 @@ const commands = {
         Description: () => "Unpause currently paused song",
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_unpause',
+            action: CommandAction.SR_UNPAUSE,
             triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
@@ -2589,7 +2638,7 @@ const commands = {
         Description: () => "Hide video for current song",
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_hidevideo',
+            action: CommandAction.SR_HIDEVIDEO,
             triggers: [newCommandTrigger('!sr hidevideo', true)],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
@@ -2603,7 +2652,7 @@ const commands = {
         Description: () => "Show video for current song",
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_showvideo',
+            action: CommandAction.SR_SHOWVIDEO,
             triggers: [newCommandTrigger('!sr showvideo', true)],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
@@ -2621,7 +2670,7 @@ const commands = {
     batch of unplayed songs).`,
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_request',
+            action: CommandAction.SR_REQUEST,
             triggers: [newCommandTrigger('!sr')],
             restrict_to: [],
             variables: [],
@@ -2638,7 +2687,7 @@ const commands = {
     (after the first found batch of unplayed songs).`,
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_re_request',
+            action: CommandAction.SR_RE_REQUEST,
             triggers: [newCommandTrigger('!resr')],
             restrict_to: [],
             variables: [],
@@ -2652,7 +2701,7 @@ const commands = {
         Description: () => "Add tag <code>&lt;TAG&gt;</code> (argument to this command) to the current song",
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_addtag',
+            action: CommandAction.SR_ADDTAG,
             triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
@@ -2668,7 +2717,7 @@ const commands = {
         Description: () => "Remove tag <code>&lt;TAG&gt;</code> (argument to this command) from the current song",
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_rmtag',
+            action: CommandAction.SR_RMTAG,
             triggers: [newCommandTrigger('!sr rmtag')],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
@@ -2684,7 +2733,7 @@ const commands = {
     If no argument is given, just outputs the current volume`,
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_volume',
+            action: CommandAction.SR_VOLUME,
             triggers: [newCommandTrigger('!sr volume')],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
@@ -2699,7 +2748,7 @@ const commands = {
   is given, play all songs.`,
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_filter',
+            action: CommandAction.SR_FILTER,
             triggers: [newCommandTrigger('!sr filter')],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
@@ -2714,7 +2763,7 @@ const commands = {
   If no arguments are given, outputs all available presets.`,
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_preset',
+            action: CommandAction.SR_PRESET,
             triggers: [newCommandTrigger('!sr preset')],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
@@ -2728,7 +2777,7 @@ const commands = {
         Description: () => `Shows the next 3 songs that will play.`,
         NewCommand: () => ({
             id: nonce(10),
-            action: 'sr_queue',
+            action: CommandAction.SR_QUEUE,
             triggers: [newCommandTrigger('!sr queue')],
             restrict_to: [],
             variables: [],
@@ -2892,10 +2941,10 @@ class TwitchClientManager {
                 const relevantTriggers = [];
                 for (const command of commands) {
                     for (const trigger of command.triggers) {
-                        if (trigger.type === 'command') {
+                        if (trigger.type === CommandTriggerType.COMMAND) {
                             triggers.push(trigger);
                         }
-                        else if (trigger.type === 'first_chat') {
+                        else if (trigger.type === CommandTriggerType.FIRST_CHAT) {
                             if (trigger.data.since === 'alltime' && await isFirstChatAlltime()) {
                                 relevantTriggers.push(trigger);
                             }
@@ -4203,12 +4252,12 @@ class GeneralModule {
             }
             cmd.variables = cmd.variables || [];
             cmd.variableChanges = cmd.variableChanges || [];
-            if (cmd.action === 'text') {
+            if (cmd.action === CommandAction.TEXT) {
                 if (!Array.isArray(cmd.data.text)) {
                     cmd.data.text = [cmd.data.text];
                 }
             }
-            if (cmd.action === 'media') {
+            if (cmd.action === CommandAction.MEDIA) {
                 cmd.data.excludeFromGlobalWidget = typeof cmd.data.excludeFromGlobalWidget === 'undefined' ? false : cmd.data.excludeFromGlobalWidget;
                 cmd.data.minDurationMs = cmd.data.minDurationMs || 0;
                 cmd.data.sound.volume = cmd.data.sound.volume || 100;
@@ -4228,7 +4277,7 @@ class GeneralModule {
                     };
                 }
             }
-            if (cmd.action === 'countdown') {
+            if (cmd.action === CommandAction.COUNTDOWN) {
                 cmd.data.actions = cmd.data.actions.map((action) => {
                     if (typeof action.value === 'string') {
                         return action;
@@ -4243,7 +4292,7 @@ class GeneralModule {
                 });
             }
             if (cmd.action === 'jisho_org_lookup') {
-                cmd.action = 'dict_lookup';
+                cmd.action = CommandAction.DICT_LOOKUP;
                 cmd.data = { lang: 'ja', phrase: '' };
             }
             cmd.triggers = cmd.triggers.map((trigger) => {
@@ -4301,37 +4350,37 @@ class GeneralModule {
             }
             let cmdObj = null;
             switch (cmd.action) {
-                case 'media_volume':
+                case CommandAction.MEDIA_VOLUME:
                     cmdObj = Object.assign({}, cmd, { fn: this.mediaVolumeCmd.bind(this) });
                     break;
-                case 'madochan_createword':
+                case CommandAction.MADOCHAN_CREATEWORD:
                     cmdObj = Object.assign({}, cmd, { fn: madochanCreateWord(cmd) });
                     break;
-                case 'dict_lookup':
+                case CommandAction.DICT_LOOKUP:
                     cmdObj = Object.assign({}, cmd, { fn: dictLookup(cmd, this.bot, this.user) });
                     break;
-                case 'text':
+                case CommandAction.TEXT:
                     cmdObj = Object.assign({}, cmd, { fn: randomText(cmd, this.bot, this.user) });
                     break;
-                case 'media':
+                case CommandAction.MEDIA:
                     cmdObj = Object.assign({}, cmd, { fn: playMedia(cmd, this.bot, this.user) });
                     break;
-                case 'countdown':
+                case CommandAction.COUNTDOWN:
                     cmdObj = Object.assign({}, cmd, { fn: countdown(cmd, this.bot, this.user) });
                     break;
-                case 'chatters':
+                case CommandAction.CHATTERS:
                     cmdObj = Object.assign({}, cmd, { fn: chatters(this.bot, this.user) });
                     break;
-                case 'set_channel_title':
+                case CommandAction.SET_CHANNEL_TITLE:
                     cmdObj = Object.assign({}, cmd, { fn: setChannelTitle(cmd, this.bot, this.user) });
                     break;
-                case 'set_channel_game_id':
+                case CommandAction.SET_CHANNEL_GAME_ID:
                     cmdObj = Object.assign({}, cmd, { fn: setChannelGameId(cmd, this.bot, this.user) });
                     break;
-                case 'add_stream_tags':
+                case CommandAction.ADD_STREAM_TAGS:
                     cmdObj = Object.assign({}, cmd, { fn: addStreamTags(cmd, this.bot, this.user) });
                     break;
-                case 'remove_stream_tags':
+                case CommandAction.REMOVE_STREAM_TAGS:
                     cmdObj = Object.assign({}, cmd, { fn: removeStreamTags(cmd, this.bot, this.user) });
                     break;
             }
@@ -4339,22 +4388,22 @@ class GeneralModule {
                 return;
             }
             for (const trigger of cmd.triggers) {
-                if (trigger.type === 'first_chat') {
+                if (trigger.type === CommandTriggerType.FIRST_CHAT) {
                     commands$1.push(cmdObj);
                 }
-                else if (trigger.type === 'command') {
+                else if (trigger.type === CommandTriggerType.COMMAND) {
                     // TODO: check why this if is required, maybe for protection against '' command?
                     if (trigger.data.command) {
                         commands$1.push(cmdObj);
                     }
                 }
-                else if (trigger.type === 'reward_redemption') {
+                else if (trigger.type === CommandTriggerType.REWARD_REDEMPTION) {
                     // TODO: check why this if is required, maybe for protection against '' command?
                     if (trigger.data.command) {
                         commands$1.push(cmdObj);
                     }
                 }
-                else if (trigger.type === 'timer') {
+                else if (trigger.type === CommandTriggerType.TIMER) {
                     const interval = parseHumanDuration(trigger.data.minInterval);
                     if (trigger.data.minLines || interval) {
                         timers.push({
@@ -6599,7 +6648,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-18T09:06:04.065Z",
+    buildDate: "2022-04-18T13:44:33.016Z",
     // @ts-ignore
     buildVersion: "1.8.7",
 };

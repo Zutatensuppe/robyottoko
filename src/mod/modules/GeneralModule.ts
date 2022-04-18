@@ -16,7 +16,7 @@ import {
   RewardRedemptionContext, Bot, Module,
   MediaCommand, DictLookupCommand, CountdownCommand,
   MadochanCommand, MediaVolumeCommand, ChattersCommand,
-  RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand, CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand
+  RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand, CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand, CommandTriggerType, CommandAction
 } from '../../types'
 import dictLookup from '../../commands/dictLookup'
 import { GeneralModuleAdminSettings, GeneralModuleSettings, GeneralModuleWsEventData, GeneralSaveEventData } from './GeneralModuleCommon'
@@ -126,12 +126,12 @@ class GeneralModule implements Module {
       }
       cmd.variables = cmd.variables || []
       cmd.variableChanges = cmd.variableChanges || []
-      if (cmd.action === 'text') {
+      if (cmd.action === CommandAction.TEXT) {
         if (!Array.isArray(cmd.data.text)) {
           cmd.data.text = [cmd.data.text]
         }
       }
-      if (cmd.action === 'media') {
+      if (cmd.action === CommandAction.MEDIA) {
         cmd.data.excludeFromGlobalWidget = typeof cmd.data.excludeFromGlobalWidget === 'undefined' ? false : cmd.data.excludeFromGlobalWidget
         cmd.data.minDurationMs = cmd.data.minDurationMs || 0
         cmd.data.sound.volume = cmd.data.sound.volume || 100
@@ -154,7 +154,7 @@ class GeneralModule implements Module {
           }
         }
       }
-      if (cmd.action === 'countdown') {
+      if (cmd.action === CommandAction.COUNTDOWN) {
         cmd.data.actions = cmd.data.actions.map((action: CountdownAction) => {
           if (typeof action.value === 'string') {
             return action
@@ -170,7 +170,7 @@ class GeneralModule implements Module {
         })
       }
       if (cmd.action === 'jisho_org_lookup') {
-        cmd.action = 'dict_lookup'
+        cmd.action = CommandAction.DICT_LOOKUP
         cmd.data = { lang: 'ja', phrase: '' }
       }
       cmd.triggers = cmd.triggers.map((trigger: any) => {
@@ -235,37 +235,37 @@ class GeneralModule implements Module {
       }
       let cmdObj = null
       switch (cmd.action) {
-        case 'media_volume':
+        case CommandAction.MEDIA_VOLUME:
           cmdObj = Object.assign({}, cmd, { fn: this.mediaVolumeCmd.bind(this) })
           break;
-        case 'madochan_createword':
+        case CommandAction.MADOCHAN_CREATEWORD:
           cmdObj = Object.assign({}, cmd, { fn: madochanCreateWord(cmd) })
           break;
-        case 'dict_lookup':
+        case CommandAction.DICT_LOOKUP:
           cmdObj = Object.assign({}, cmd, { fn: dictLookup(cmd, this.bot, this.user) })
           break;
-        case 'text':
+        case CommandAction.TEXT:
           cmdObj = Object.assign({}, cmd, { fn: randomText(cmd, this.bot, this.user) })
           break;
-        case 'media':
+        case CommandAction.MEDIA:
           cmdObj = Object.assign({}, cmd, { fn: playMedia(cmd, this.bot, this.user) })
           break;
-        case 'countdown':
+        case CommandAction.COUNTDOWN:
           cmdObj = Object.assign({}, cmd, { fn: countdown(cmd, this.bot, this.user) })
           break;
-        case 'chatters':
+        case CommandAction.CHATTERS:
           cmdObj = Object.assign({}, cmd, { fn: chatters(this.bot, this.user) })
           break;
-        case 'set_channel_title':
+        case CommandAction.SET_CHANNEL_TITLE:
           cmdObj = Object.assign({}, cmd, { fn: setChannelTitle(cmd, this.bot, this.user) })
           break;
-        case 'set_channel_game_id':
+        case CommandAction.SET_CHANNEL_GAME_ID:
           cmdObj = Object.assign({}, cmd, { fn: setChannelGameId(cmd, this.bot, this.user) })
           break;
-        case 'add_stream_tags':
+        case CommandAction.ADD_STREAM_TAGS:
           cmdObj = Object.assign({}, cmd, { fn: addStreamTags(cmd, this.bot, this.user) })
           break;
-        case 'remove_stream_tags':
+        case CommandAction.REMOVE_STREAM_TAGS:
           cmdObj = Object.assign({}, cmd, { fn: removeStreamTags(cmd, this.bot, this.user) })
           break;
       }
@@ -273,19 +273,19 @@ class GeneralModule implements Module {
         return
       }
       for (const trigger of cmd.triggers) {
-        if (trigger.type === 'first_chat') {
+        if (trigger.type === CommandTriggerType.FIRST_CHAT) {
           commands.push(cmdObj)
-        } else if (trigger.type === 'command') {
+        } else if (trigger.type === CommandTriggerType.COMMAND) {
           // TODO: check why this if is required, maybe for protection against '' command?
           if (trigger.data.command) {
             commands.push(cmdObj)
           }
-        } else if (trigger.type === 'reward_redemption') {
+        } else if (trigger.type === CommandTriggerType.REWARD_REDEMPTION) {
           // TODO: check why this if is required, maybe for protection against '' command?
           if (trigger.data.command) {
             commands.push(cmdObj)
           }
-        } else if (trigger.type === 'timer') {
+        } else if (trigger.type === CommandTriggerType.TIMER) {
           const interval = parseHumanDuration(trigger.data.minInterval)
           if (trigger.data.minLines || interval) {
             timers.push({

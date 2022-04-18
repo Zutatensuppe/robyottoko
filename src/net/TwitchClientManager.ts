@@ -5,7 +5,7 @@ import fn from '../fn'
 import { logger, Logger, MINUTE } from '../common/fn'
 import TwitchChannels, { TwitchChannel, TwitchChannelWithAccessToken } from '../services/TwitchChannels'
 import { User } from '../services/Users'
-import { Bot, RawCommand, RewardRedemptionContext, TwitchChannelPointsEventMessage, TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
+import { Bot, CommandTriggerType, RawCommand, RewardRedemptionContext, TwitchChannelPointsEventMessage, TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
 import TwitchPubSubClient from '../services/TwitchPubSubClient'
 import { getUniqueCommandsByTriggers, newRewardRedemptionTrigger } from '../common/commands'
 import { isBroadcaster, isMod, isSubscriber } from '../common/permissions'
@@ -205,9 +205,9 @@ class TwitchClientManager {
         const relevantTriggers = []
         for (const command of commands) {
           for (const trigger of command.triggers) {
-            if (trigger.type === 'command') {
+            if (trigger.type === CommandTriggerType.COMMAND) {
               triggers.push(trigger)
-            } else if (trigger.type === 'first_chat') {
+            } else if (trigger.type === CommandTriggerType.FIRST_CHAT) {
               if (trigger.data.since === 'alltime' && await isFirstChatAlltime()) {
                 relevantTriggers.push(trigger)
               } else if (trigger.data.since === 'stream' && await isFirstChatStream()) {

@@ -373,7 +373,9 @@ import {
 } from "../../../common/commands";
 import {
   Command,
+  CommandAction,
   CommandTrigger,
+  CommandTriggerType,
   CommandVariable,
   CommandVariableChange,
   GlobalVariable,
@@ -602,14 +604,14 @@ export default defineComponent({
     },
     possibleTriggerActions() {
       return [
-        { type: "command", label: "Add Command", title: "Command" },
-        { type: "first_chat", label: "Add First Chat", title: "First Chat" },
+        { type: CommandTriggerType.COMMAND, label: "Add Command", title: "Command" },
+        { type: CommandTriggerType.FIRST_CHAT, label: "Add First Chat", title: "First Chat" },
         {
-          type: "reward_redemption",
+          type: CommandTriggerType.REWARD_REDEMPTION,
           label: "Add Reward Redemption",
           title: "Reward Redemption",
         },
-        { type: "timer", label: "Add Timer", title: "Timer" },
+        { type: CommandTriggerType.TIMER, label: "Add Timer", title: "Timer" },
       ];
     },
     valid(): boolean {
@@ -625,7 +627,7 @@ export default defineComponent({
       }
 
       // check if settings are correct
-      if (this.item.action === "text") {
+      if (this.item.action === CommandAction.TEXT) {
         for (const t of this.item.data.text) {
           if (t === "") {
             return false;
