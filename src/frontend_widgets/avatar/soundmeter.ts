@@ -59,14 +59,14 @@ class SoundMeter {
         callback(e);
       }
     }
-  };
+  }
 
   stop(): void {
     if (this.mic) {
       this.mic.disconnect();
     }
     this.script.disconnect();
-  };
+  }
 }
 
 export default SoundMeter

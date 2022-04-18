@@ -137,7 +137,7 @@ class SongrequestModule implements Module {
   }
 
   initCommands(rawCommands: Command[]): FunctionCommand[] {
-    const map: Record<string, ((originalCmd: any) => CommandFunction)> = {
+    const map: Record<string, ((originalCmd: Command) => CommandFunction)> = {
       sr_current: this.cmdSrCurrent.bind(this),
       sr_undo: this.cmdSrUndo.bind(this),
       sr_good: this.cmdSrGood.bind(this),
@@ -823,7 +823,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrCurrent(_originalCommand: any) {
+  cmdSrCurrent(_originalCommand: Command) {
     return async (
       command: RawCommand | null,
       client: TwitchChatClient | null,
@@ -844,7 +844,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrUndo(_originalCommand: any) {
+  cmdSrUndo(_originalCommand: Command) {
     return async (
       command: RawCommand | null,
       client: TwitchChatClient | null,
@@ -864,7 +864,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdResr(_originalCommand: any) {
+  cmdResr(_originalCommand: Command) {
     return async (
       command: RawCommand | null,
       client: TwitchChatClient | null,
@@ -888,7 +888,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrGood(_originalCommand: any) {
+  cmdSrGood(_originalCommand: Command) {
     return async (
       _command: RawCommand | null,
       _client: TwitchChatClient | null,
@@ -899,7 +899,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrBad(_originalCommand: any) {
+  cmdSrBad(_originalCommand: Command) {
     return async (
       _command: RawCommand | null,
       _client: TwitchChatClient | null,
@@ -910,7 +910,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrStats(_originalCommand: any) {
+  cmdSrStats(_originalCommand: Command) {
     return async (
       command: RawCommand | null,
       client: TwitchChatClient | null,
@@ -938,7 +938,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrPrev(_originalCommand: any) {
+  cmdSrPrev(_originalCommand: Command) {
     return async (
       _command: RawCommand | null,
       _client: TwitchChatClient | null,
@@ -949,7 +949,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrNext(_originalCommand: any) {
+  cmdSrNext(_originalCommand: Command) {
     return async (
       _command: RawCommand | null,
       _client: TwitchChatClient | null,
@@ -960,7 +960,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrJumpToNew(_originalCommand: any) {
+  cmdSrJumpToNew(_originalCommand: Command) {
     return async (
       _command: RawCommand | null,
       _client: TwitchChatClient | null,
@@ -971,7 +971,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrClear(_originalCommand: any) {
+  cmdSrClear(_originalCommand: Command) {
     return async (
       _command: RawCommand | null,
       _client: TwitchChatClient | null,
@@ -982,7 +982,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrRm(_originalCommand: any) {
+  cmdSrRm(_originalCommand: Command) {
     return async (
       _command: RawCommand | null,
       client: TwitchChatClient | null,
@@ -1000,7 +1000,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrShuffle(_originalCommand: any) {
+  cmdSrShuffle(_originalCommand: Command) {
     return async (
       _command: RawCommand | null,
       _client: TwitchChatClient | null,
@@ -1011,7 +1011,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrResetStats(_originalCommand: any) {
+  cmdSrResetStats(_originalCommand: Command) {
     return async (
       _command: RawCommand | null,
       _client: TwitchChatClient | null,
@@ -1022,7 +1022,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrLoop(_originalCommand: any) {
+  cmdSrLoop(_originalCommand: Command) {
     return async (
       _command: RawCommand | null,
       client: TwitchChatClient | null,
@@ -1038,7 +1038,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrNoloop(_originalCommand: any) {
+  cmdSrNoloop(_originalCommand: Command) {
     return async (
       _command: RawCommand | null,
       client: TwitchChatClient | null,
@@ -1076,7 +1076,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrRmTag(_originalCommand: any) {
+  cmdSrRmTag(_originalCommand: Command) {
     return async (
       command: RawCommand | null,
       client: TwitchChatClient | null,
@@ -1096,7 +1096,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrPause(_originalCommand: any) {
+  cmdSrPause(_originalCommand: Command) {
     return async (
       _command: RawCommand | null,
       _client: TwitchChatClient | null,
@@ -1107,7 +1107,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrUnpause(_originalCommand: any) {
+  cmdSrUnpause(_originalCommand: Command) {
     return async (
       _command: RawCommand | null,
       _client: TwitchChatClient | null,
@@ -1118,7 +1118,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrVolume(_originalCommand: any) {
+  cmdSrVolume(_originalCommand: Command) {
     return async (
       command: RawCommand | null,
       client: TwitchChatClient | null,
@@ -1139,7 +1139,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrHidevideo(_originalCommand: any) {
+  cmdSrHidevideo(_originalCommand: Command) {
     return async (
       _command: RawCommand | null,
       client: TwitchChatClient | null,
@@ -1155,7 +1155,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrShowvideo(_originalCommand: any) {
+  cmdSrShowvideo(_originalCommand: Command) {
     return async (
       _command: RawCommand | null,
       client: TwitchChatClient | null,
@@ -1171,7 +1171,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrFilter(_originalCommand: any) {
+  cmdSrFilter(_originalCommand: Command) {
     return async (
       command: RawCommand | null,
       client: TwitchChatClient | null,
@@ -1193,7 +1193,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrQueue(_originalCommand: any) {
+  cmdSrQueue(_originalCommand: Command) {
     return async (
       _command: RawCommand | null,
       client: TwitchChatClient | null,
@@ -1217,7 +1217,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSrPreset(_originalCommand: any) {
+  cmdSrPreset(_originalCommand: Command) {
     return async (
       command: RawCommand | null,
       client: TwitchChatClient | null,
@@ -1250,7 +1250,7 @@ class SongrequestModule implements Module {
     }
   }
 
-  cmdSr(_originalCommand: any) {
+  cmdSr(_originalCommand: Command) {
     return async (
       command: RawCommand | null,
       client: TwitchChatClient | null,

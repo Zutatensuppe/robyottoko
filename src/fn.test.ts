@@ -7,7 +7,6 @@ import {
   findIdxBySearchExactPart,
   parseCommandFromTriggerAndMessage,
 } from './fn'
-import Variables from './services/Variables'
 import { Command, CommandTrigger } from './types'
 
 test('joinIntoChunks', () => {
