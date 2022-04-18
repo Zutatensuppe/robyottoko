@@ -346,7 +346,7 @@ export const toNumberUnitString = (value: string | number, unit: string = 'pt') 
 export const getProp = (obj: any, keys: string[], defaultVal: any) => {
   let x = obj
   for (let key of keys) {
-    if (typeof x !== 'object') {
+    if (typeof x !== 'object' || x === null) {
       return defaultVal
     }
     if (!Object.keys(x).includes(key)) {

@@ -221,6 +221,30 @@ test.each([
     defaultVal: 10,
     expected: 'ui',
   },
+  {
+    obj: null,
+    keys: ['px', 'bla', 'blub'],
+    defaultVal: 10,
+    expected: 10,
+  },
+  {
+    obj: undefined,
+    keys: ['px', 'bla', 'blub'],
+    defaultVal: 10,
+    expected: 10,
+  },
+  {
+    obj: { px: null },
+    keys: ['px', 'bla', 'blub'],
+    defaultVal: 10,
+    expected: 10,
+  },
+  {
+    obj: { px: { bla: { blub: null } } },
+    keys: ['px', 'bla', 'blub'],
+    defaultVal: 10,
+    expected: null,
+  },
 ])('getProp', ({ obj, keys, defaultVal, expected }) => {
   const actual = getProp(obj, keys, defaultVal)
   expect(actual).toBe(expected)
