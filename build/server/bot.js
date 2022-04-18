@@ -267,7 +267,7 @@ const shuffle = (array) => {
 const getProp = (obj, keys, defaultVal) => {
     let x = obj;
     for (let key of keys) {
-        if (typeof x !== 'object') {
+        if (typeof x !== 'object' || x === null) {
             return defaultVal;
         }
         if (!Object.keys(x).includes(key)) {
@@ -6658,9 +6658,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-18T14:40:06.865Z",
+    buildDate: "2022-04-18T14:45:45.304Z",
     // @ts-ignore
-    buildVersion: "1.8.7",
+    buildVersion: "1.8.8",
 };
 
 setLogLevel(config.log.level);
