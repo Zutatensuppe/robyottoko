@@ -1,4 +1,4 @@
-import { mustParseHumanDuration, nonce } from "../common/fn"
+import { getProp, mustParseHumanDuration, nonce } from "../common/fn"
 import {
   Command, CommandAction, CommandTrigger, CommandTriggerType,
   CountdownAction, CountdownActionType, FunctionCommand,
@@ -9,30 +9,31 @@ import { MOD_OR_ABOVE } from './permissions'
 export const newText = () => ''
 
 const newSoundMediaFile = (obj: any = null): SoundMediaFile => ({
-  filename: (!obj || typeof obj.filename === 'undefined') ? '' : obj.filename,
-  file: (!obj || typeof obj.file === 'undefined') ? '' : obj.file,
-  urlpath: (!obj || typeof obj.urlpath === 'undefined') ? '' : obj.urlpath,
-  volume: (!obj || typeof obj.volume === 'undefined') ? 100 : obj.volume,
+  filename: getProp(obj, ['filename'], ''),
+  file: getProp(obj, ['file'], ''),
+  urlpath: getProp(obj, ['urlpath'], ''),
+  volume: getProp(obj, ['volume'], 100),
 })
 
 const newMediaFile = (obj: any = null): MediaFile => ({
-  filename: (!obj || typeof obj.filename === 'undefined') ? '' : obj.filename,
-  file: (!obj || typeof obj.file === 'undefined') ? '' : obj.file,
-  urlpath: (!obj || typeof obj.urlpath === 'undefined') ? '' : obj.urlpath,
+  filename: getProp(obj, ['filename'], ''),
+  file: getProp(obj, ['file'], ''),
+  urlpath: getProp(obj, ['urlpath'], ''),
 })
 
 const newTwitchClip = (obj: any = null): MediaTwitchClip => ({
-  url: (!obj || typeof obj.url === 'undefined') ? '' : obj.url, // twitch clip identified by url
-  volume: (!obj || typeof obj.volume === 'undefined') ? 100 : obj.volume,
+  // twitch clip identified by url
+  url: getProp(obj, ['url'], ''),
+  volume: getProp(obj, ['volume'], 100),
 })
 
 export const newMedia = (obj: any = null): MediaCommandData => ({
-  excludeFromGlobalWidget: (!obj || typeof obj.excludeFromGlobalWidget === 'undefined') ? false : obj.excludeFromGlobalWidget,
+  excludeFromGlobalWidget: getProp(obj, ['excludeFromGlobalWidget'], false),
   sound: newSoundMediaFile(obj?.sound),
   image: newMediaFile(obj?.image),
-  image_url: (!obj || typeof obj.image_url === 'undefined') ? '' : obj.image_url, // image identified by url only
+  image_url: getProp(obj, ['image_url'], ''), // image identified by url only
   twitch_clip: newTwitchClip(obj?.twitch_clip),
-  minDurationMs: (!obj || typeof obj.minDurationMs === 'undefined') ? '1s' : obj.minDurationMs,
+  minDurationMs: getProp(obj, ['minDurationMs'], '1s'),
 })
 
 export const newCountdownDelay = (): CountdownAction => ({ type: CountdownActionType.DELAY, value: "1s" })

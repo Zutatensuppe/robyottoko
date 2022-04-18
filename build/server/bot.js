@@ -2160,27 +2160,28 @@ class TwitchPubSubClient {
 
 const newText = () => '';
 const newSoundMediaFile = (obj = null) => ({
-    filename: (!obj || typeof obj.filename === 'undefined') ? '' : obj.filename,
-    file: (!obj || typeof obj.file === 'undefined') ? '' : obj.file,
-    urlpath: (!obj || typeof obj.urlpath === 'undefined') ? '' : obj.urlpath,
-    volume: (!obj || typeof obj.volume === 'undefined') ? 100 : obj.volume,
+    filename: getProp(obj, ['filename'], ''),
+    file: getProp(obj, ['file'], ''),
+    urlpath: getProp(obj, ['urlpath'], ''),
+    volume: getProp(obj, ['volume'], 100),
 });
 const newMediaFile = (obj = null) => ({
-    filename: (!obj || typeof obj.filename === 'undefined') ? '' : obj.filename,
-    file: (!obj || typeof obj.file === 'undefined') ? '' : obj.file,
-    urlpath: (!obj || typeof obj.urlpath === 'undefined') ? '' : obj.urlpath,
+    filename: getProp(obj, ['filename'], ''),
+    file: getProp(obj, ['file'], ''),
+    urlpath: getProp(obj, ['urlpath'], ''),
 });
 const newTwitchClip = (obj = null) => ({
-    url: (!obj || typeof obj.url === 'undefined') ? '' : obj.url,
-    volume: (!obj || typeof obj.volume === 'undefined') ? 100 : obj.volume,
+    // twitch clip identified by url
+    url: getProp(obj, ['url'], ''),
+    volume: getProp(obj, ['volume'], 100),
 });
 const newMedia = (obj = null) => ({
-    excludeFromGlobalWidget: (!obj || typeof obj.excludeFromGlobalWidget === 'undefined') ? false : obj.excludeFromGlobalWidget,
+    excludeFromGlobalWidget: getProp(obj, ['excludeFromGlobalWidget'], false),
     sound: newSoundMediaFile(obj?.sound),
     image: newMediaFile(obj?.image),
-    image_url: (!obj || typeof obj.image_url === 'undefined') ? '' : obj.image_url,
+    image_url: getProp(obj, ['image_url'], ''),
     twitch_clip: newTwitchClip(obj?.twitch_clip),
-    minDurationMs: (!obj || typeof obj.minDurationMs === 'undefined') ? '1s' : obj.minDurationMs,
+    minDurationMs: getProp(obj, ['minDurationMs'], '1s'),
 });
 const newTrigger = (type) => ({
     type,
@@ -4651,9 +4652,9 @@ const default_settings$4 = (obj = null) => ({
         sub: getProp(obj, ['maxSongLength', 'sub'], 0),
     },
     maxSongsQueued: {
-        viewer: parseInt(String(getProp(obj, ['maxSongsQueued'], 0)), 10),
-        mod: parseInt(String(getProp(obj, ['maxSongsQueued'], 0)), 10),
-        sub: parseInt(String(getProp(obj, ['maxSongsQueued'], 0)), 10),
+        viewer: parseInt(String(getProp(obj, ['maxSongsQueued', 'viewer'], 0)), 10),
+        mod: parseInt(String(getProp(obj, ['maxSongsQueued', 'mod'], 0)), 10),
+        sub: parseInt(String(getProp(obj, ['maxSongsQueued', 'sub'], 0)), 10),
     },
     customCss: getProp(obj, ['customCss'], ''),
     customCssPresets: getProp(obj, ['customCssPresets'], []).map(default_custom_css_preset),
@@ -6658,7 +6659,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-18T14:45:45.304Z",
+    buildDate: "2022-04-18T15:21:26.300Z",
     // @ts-ignore
     buildVersion: "1.8.8",
 };

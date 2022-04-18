@@ -127,9 +127,9 @@ export const default_settings = (obj: any = null): SongrequestModuleSettings => 
     sub: getProp(obj, ['maxSongLength', 'sub'], 0),
   },
   maxSongsQueued: {
-    viewer: parseInt(String(getProp(obj, ['maxSongsQueued'], 0)), 10),
-    mod: parseInt(String(getProp(obj, ['maxSongsQueued'], 0)), 10),
-    sub: parseInt(String(getProp(obj, ['maxSongsQueued'], 0)), 10),
+    viewer: parseInt(String(getProp(obj, ['maxSongsQueued', 'viewer'], 0)), 10),
+    mod: parseInt(String(getProp(obj, ['maxSongsQueued', 'mod'], 0)), 10),
+    sub: parseInt(String(getProp(obj, ['maxSongsQueued', 'sub'], 0)), 10),
   },
   customCss: getProp(obj, ['customCss'], ''),
   customCssPresets: getProp(obj, ['customCssPresets'], []).map(default_custom_css_preset),
