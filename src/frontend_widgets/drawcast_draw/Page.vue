@@ -72,27 +72,15 @@
                 <div class="visual_background">
                   <div class="visual_background_title">Visual Background:</div>
                   <div class="visual_background_colors">
-                    <div @click="opt('canvasBg', 'transparent')"
-                      class="visual_background_button bg-transparent clickable" :class="{
-                        'is-current':
-                          canvasBg !== 'white' && canvasBg !== 'black',
-                      }"></div>
-                    <div @click="opt('canvasBg', 'white')" class="visual_background_button bg-white clickable" :class="{
-                      'is-current': canvasBg === 'white',
-                    }"></div>
-                    <div @click="opt('canvasBg', 'black')" class="visual_background_button bg-black clickable" :class="{
-                      'is-current': canvasBg === 'black',
-                    }"></div>
+                    <div v-for="(bg, idx) of ['transparent-light', 'transparent-dark']" :key="idx"
+                      @click="opt('canvasBg', bg)" class="visual_background_button clickable"
+                      :class="{ 'is-current': canvasBg === bg, [`bg-${bg}`]: true }"></div>
                   </div>
                 </div>
               </div>
               <div class="hotkey-help">
                 <div class="hotkey-help-title">Hotkeys</div>
-                <div class="hotkey-help-item">E Eraser</div>
-                <div class="hotkey-help-item">B Pencil</div>
-                <div class="hotkey-help-item">S Color sampler</div>
-                <div class="hotkey-help-item">1-7 Adjust size</div>
-                <div class="hotkey-help-item">Ctrl+Z Undo</div>
+                <div class="hotkey-help-item" v-for="(item, idx) of hotkeys">{{ item }}</div>
               </div>
             </div>
           </div>
@@ -282,6 +270,8 @@ export default defineComponent({
       color: "#000000",
       sampleColor: "",
 
+      hotkeys: ['E Eraser', 'B Pencil', 'S Color sampler', '1-7 Adjust size', 'Ctrl+Z Undo'],
+
       tool: "pen", // 'pen'|'eraser'|'color-sampler'
       sizes: [1, 2, 5, 10, 30, 60, 100],
       sizeIdx: 2,
@@ -350,9 +340,9 @@ export default defineComponent({
       return this.images.filter((url: string) => !this.favorites.includes(url));
     },
     canvasBg(): string {
-      return ["transparent", "white", "black"].includes(this.opts.canvasBg)
+      return ["transparent-light", "transparent-dark"].includes(this.opts.canvasBg)
         ? this.opts.canvasBg
-        : "transparent";
+        : "transparent-light";
     },
     canvasClasses(): string[] {
       return [`bg-${this.canvasBg}`];
