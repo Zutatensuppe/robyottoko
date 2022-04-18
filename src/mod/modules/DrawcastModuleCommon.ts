@@ -1,3 +1,6 @@
+"use strict";
+
+import { getProp } from "../../common/fn";
 import { DrawcastSettings, MediaFile, SoundMediaFile } from "../../types";
 
 export interface DrawcastModuleWsData {
@@ -50,15 +53,15 @@ const default_notification_sound = (obj: any): SoundMediaFile | null => {
 }
 
 export const default_settings = (obj: any = null): DrawcastSettings => ({
-  submitButtonText: (!obj || typeof obj.submitButtonText === 'undefined') ? 'Submit' : obj.submitButtonText,
+  submitButtonText: getProp(obj, ['submitButtonText'], 'Submit'),
   // leave empty to not require confirm
-  submitConfirm: (!obj || typeof obj.submitConfirm === 'undefined') ? '' : obj.submitConfirm,
-  recentImagesTitle: (!obj || typeof obj.recentImagesTitle === 'undefined') ? '' : obj.recentImagesTitle,
-  canvasWidth: (!obj || typeof obj.canvasWidth === 'undefined') ? 720 : obj.canvasWidth,
-  canvasHeight: (!obj || typeof obj.canvasHeight === 'undefined') ? 405 : obj.canvasHeight,
-  customDescription: (!obj || typeof obj.customDescription === 'undefined') ? '' : obj.customDescription,
+  submitConfirm: getProp(obj, ['submitConfirm'], ''),
+  recentImagesTitle: getProp(obj, ['recentImagesTitle'], ''),
+  canvasWidth: getProp(obj, ['canvasWidth'], 720),
+  canvasHeight: getProp(obj, ['canvasHeight'], 405),
+  customDescription: getProp(obj, ['customDescription'], ''),
   customProfileImage: (!obj || typeof obj.customProfileImage === 'undefined') ? null : default_profile_image(obj.customProfileImage),
-  palette: (!obj || typeof obj.palette === 'undefined') ? [
+  palette: getProp(obj, ['palette'], [
     // row 1
     '#000000', '#808080', '#ff0000', '#ff8000', '#ffff00', '#00ff00',
     '#00ffff', '#0000ff', '#ff00ff', '#ff8080', '#80ff80',
@@ -66,19 +69,17 @@ export const default_settings = (obj: any = null): DrawcastSettings => ({
     // row 2
     '#ffffff', '#c0c0c0', '#800000', '#804000', '#808000', '#008000',
     '#008080', '#000080', '#800080', '#8080ff', '#ffff80',
-  ] : obj.palette,
-  displayDuration: (!obj || typeof obj.displayDuration === 'undefined') ? 5000 : obj.displayDuration,
-  displayLatestForever: (!obj || typeof obj.displayLatestForever === 'undefined') ? false : obj.displayLatestForever,
-  displayLatestAutomatically: (!obj || typeof obj.displayLatestAutomatically === 'undefined') ? false : obj.displayLatestAutomatically,
-  autofillLatest: (!obj || typeof obj.autofillLatest === 'undefined') ? false : obj.autofillLatest,
+  ]),
+  displayDuration: getProp(obj, ['displayDuration'], 5000),
+  displayLatestForever: getProp(obj, ['displayLatestForever'], false),
+  displayLatestAutomatically: getProp(obj, ['displayLatestAutomatically'], false),
+  autofillLatest: getProp(obj, ['autofillLatest'], false),
   notificationSound: (!obj || typeof obj.notificationSound === 'undefined') ? null : default_notification_sound(obj.notificationSound),
-  requireManualApproval: (!obj || typeof obj.requireManualApproval === 'undefined') ? false : obj.requireManualApproval,
-  favoriteLists: (!obj || typeof obj.favoriteLists === 'undefined')
-    ? [{
-      list: ((obj && obj.favorites) ? obj.favorites : []),
-      title: ((obj && obj.favoriteImagesTitle) ? obj.favoriteImagesTitle : ''),
-    }]
-    : obj.favoriteLists,
+  requireManualApproval: getProp(obj, ['requireManualApproval'], false),
+  favoriteLists: getProp(obj, ['favoriteLists'], [{
+    list: getProp(obj, ['favorites'], []),
+    title: getProp(obj, ['favoriteImagesTitle'], ''),
+  }]),
 })
 
 export interface DrawcastImage {

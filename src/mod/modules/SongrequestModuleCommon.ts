@@ -1,5 +1,8 @@
+"use strict";
+
 import { Command, FunctionCommand, GlobalVariable, MediaFile, PlaylistItem } from "../../types"
 import { commands } from '../../common/commands'
+import { getProp } from "../../common/fn"
 
 export interface TagInfo {
   value: string
@@ -65,11 +68,11 @@ export interface SongrequestModuleWsEventData {
 }
 
 const default_custom_css_preset = (obj: any = null): SongrequestModuleCustomCssPreset => ({
-  name: obj?.name || '',
-  css: obj?.css || '',
-  showProgressBar: typeof obj?.showProgressBar === 'undefined' ? false : obj.showProgressBar,
+  name: getProp(obj, ['name'], ''),
+  css: getProp(obj, ['css'], ''),
+  showProgressBar: getProp(obj, ['showProgressBar'], false),
   showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
-  maxItemsShown: typeof obj?.maxItemsShown === 'undefined' ? -1 : obj.maxItemsShown,
+  maxItemsShown: getProp(obj, ['maxItemsShown'], -1),
 })
 
 export const default_commands = (list: any = null) => {
@@ -109,30 +112,28 @@ export const default_commands = (list: any = null) => {
 }
 
 export const default_settings = (obj: any = null): SongrequestModuleSettings => ({
-  volume: typeof obj?.volume === 'undefined' ? 100 : obj.volume,
-  initAutoplay: typeof obj?.initAutoplay === 'undefined' ? true : obj.initAutoplay,
+  volume: getProp(obj, ['volume'], 100),
+  initAutoplay: getProp(obj, ['initAutoplay'], true),
   hideVideoImage: {
-    file: obj?.hideVideoImage?.file || '',
-    filename: obj?.hideVideoImage?.filename || '',
+    file: getProp(obj, ['hideVideoImage', 'file'], ''),
+    filename: getProp(obj, ['hideVideoImage', 'filename'], ''),
     urlpath: obj?.hideVideoImage?.urlpath ? obj.hideVideoImage.urlpath : (
       obj?.hideVideoImage?.file ? `/uploads/${encodeURIComponent(obj.hideVideoImage.file)}` : ''
     )
   },
   maxSongLength: {
-    viewer: typeof obj?.maxSongLength === 'undefined' ? 0 : obj?.maxSongLength.viewer,
-    mod: typeof obj?.maxSongLength === 'undefined' ? 0 : obj?.maxSongLength.mod,
-    sub: typeof obj?.maxSongLength === 'undefined' ? 0 : obj?.maxSongLength.sub,
+    viewer: getProp(obj, ['maxSongLength', 'viewer'], 0),
+    mod: getProp(obj, ['maxSongLength', 'mod'], 0),
+    sub: getProp(obj, ['maxSongLength', 'sub'], 0),
   },
   maxSongsQueued: {
-    viewer: typeof obj?.maxSongsQueued === 'undefined' ? 0 : parseInt(obj?.maxSongsQueued.viewer, 10),
-    mod: typeof obj?.maxSongsQueued === 'undefined' ? 0 : parseInt(obj?.maxSongsQueued.mod, 10),
-    sub: typeof obj?.maxSongsQueued === 'undefined' ? 0 : parseInt(obj?.maxSongsQueued.sub, 10),
+    viewer: parseInt(String(getProp(obj, ['maxSongsQueued'], 0)), 10),
+    mod: parseInt(String(getProp(obj, ['maxSongsQueued'], 0)), 10),
+    sub: parseInt(String(getProp(obj, ['maxSongsQueued'], 0)), 10),
   },
-
-  customCss: obj?.customCss || '',
-  customCssPresets: typeof obj?.customCssPresets === 'undefined' ? [] : obj.customCssPresets.map(default_custom_css_preset),
-
-  showProgressBar: typeof obj?.showProgressBar === 'undefined' ? false : obj.showProgressBar,
+  customCss: getProp(obj, ['customCss'], ''),
+  customCssPresets: getProp(obj, ['customCssPresets'], []).map(default_custom_css_preset),
+  showProgressBar: getProp(obj, ['showProgressBar'], false),
   showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
-  maxItemsShown: typeof obj?.maxItemsShown === 'undefined' ? -1 : obj.maxItemsShown,
+  maxItemsShown: getProp(obj, ['maxItemsShown'], -1),
 })

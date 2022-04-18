@@ -199,7 +199,8 @@ export default defineComponent({
       }
       const styles = this.settings.styles;
 
-      const bgColor = styles.bgColorEnabled && styles.bgColor != null ? styles.bgColor : ''
+      const bgColor = (styles.bgColorEnabled && styles.bgColor != null) ? styles.bgColor : ''
+      document.body.style.backgroundColor = bgColor;
 
       if (styles.vAlign === "top") {
         // need to be set to null in order for style to become empty

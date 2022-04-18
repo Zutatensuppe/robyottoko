@@ -264,6 +264,19 @@ const shuffle = (array) => {
     }
     return array;
 };
+const getProp = (obj, keys, defaultVal) => {
+    let x = obj;
+    for (let key of keys) {
+        if (typeof x !== 'object' || x === null) {
+            return defaultVal;
+        }
+        if (!Object.keys(x).includes(key)) {
+            return defaultVal;
+        }
+        x = x[key];
+    }
+    return x;
+};
 
 var CommandRestrict;
 (function (CommandRestrict) {
@@ -4583,11 +4596,11 @@ var Youtube = {
 };
 
 const default_custom_css_preset = (obj = null) => ({
-    name: obj?.name || '',
-    css: obj?.css || '',
-    showProgressBar: typeof obj?.showProgressBar === 'undefined' ? false : obj.showProgressBar,
+    name: getProp(obj, ['name'], ''),
+    css: getProp(obj, ['css'], ''),
+    showProgressBar: getProp(obj, ['showProgressBar'], false),
     showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
-    maxItemsShown: typeof obj?.maxItemsShown === 'undefined' ? -1 : obj.maxItemsShown,
+    maxItemsShown: getProp(obj, ['maxItemsShown'], -1),
 });
 const default_commands = (list = null) => {
     if (Array.isArray(list)) {
@@ -4625,28 +4638,28 @@ const default_commands = (list = null) => {
     ];
 };
 const default_settings$4 = (obj = null) => ({
-    volume: typeof obj?.volume === 'undefined' ? 100 : obj.volume,
-    initAutoplay: typeof obj?.initAutoplay === 'undefined' ? true : obj.initAutoplay,
+    volume: getProp(obj, ['volume'], 100),
+    initAutoplay: getProp(obj, ['initAutoplay'], true),
     hideVideoImage: {
-        file: obj?.hideVideoImage?.file || '',
-        filename: obj?.hideVideoImage?.filename || '',
+        file: getProp(obj, ['hideVideoImage', 'file'], ''),
+        filename: getProp(obj, ['hideVideoImage', 'filename'], ''),
         urlpath: obj?.hideVideoImage?.urlpath ? obj.hideVideoImage.urlpath : (obj?.hideVideoImage?.file ? `/uploads/${encodeURIComponent(obj.hideVideoImage.file)}` : '')
     },
     maxSongLength: {
-        viewer: typeof obj?.maxSongLength === 'undefined' ? 0 : obj?.maxSongLength.viewer,
-        mod: typeof obj?.maxSongLength === 'undefined' ? 0 : obj?.maxSongLength.mod,
-        sub: typeof obj?.maxSongLength === 'undefined' ? 0 : obj?.maxSongLength.sub,
+        viewer: getProp(obj, ['maxSongLength', 'viewer'], 0),
+        mod: getProp(obj, ['maxSongLength', 'mod'], 0),
+        sub: getProp(obj, ['maxSongLength', 'sub'], 0),
     },
     maxSongsQueued: {
-        viewer: typeof obj?.maxSongsQueued === 'undefined' ? 0 : parseInt(obj?.maxSongsQueued.viewer, 10),
-        mod: typeof obj?.maxSongsQueued === 'undefined' ? 0 : parseInt(obj?.maxSongsQueued.mod, 10),
-        sub: typeof obj?.maxSongsQueued === 'undefined' ? 0 : parseInt(obj?.maxSongsQueued.sub, 10),
+        viewer: parseInt(String(getProp(obj, ['maxSongsQueued'], 0)), 10),
+        mod: parseInt(String(getProp(obj, ['maxSongsQueued'], 0)), 10),
+        sub: parseInt(String(getProp(obj, ['maxSongsQueued'], 0)), 10),
     },
-    customCss: obj?.customCss || '',
-    customCssPresets: typeof obj?.customCssPresets === 'undefined' ? [] : obj.customCssPresets.map(default_custom_css_preset),
-    showProgressBar: typeof obj?.showProgressBar === 'undefined' ? false : obj.showProgressBar,
+    customCss: getProp(obj, ['customCss'], ''),
+    customCssPresets: getProp(obj, ['customCssPresets'], []).map(default_custom_css_preset),
+    showProgressBar: getProp(obj, ['showProgressBar'], false),
     showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
-    maxItemsShown: typeof obj?.maxItemsShown === 'undefined' ? -1 : obj.maxItemsShown,
+    maxItemsShown: getProp(obj, ['maxItemsShown'], -1),
 });
 
 const ADD_TYPE = {
@@ -5962,45 +5975,45 @@ class VoteModule {
 
 const default_settings$3 = (obj = null) => ({
     status: {
-        enabled: typeof obj?.status?.enabled !== 'undefined' ? obj.status.enabled : false,
+        enabled: getProp(obj, ['status', 'enabled'], false),
     },
     styles: {
         // page background color
-        bgColor: typeof obj?.styles?.bgColor !== 'undefined' ? obj.styles.bgColor : '#ff00ff',
-        bgColorEnabled: typeof obj?.styles?.bgColorEnabled !== 'undefined' ? obj.styles.bgColorEnabled : true,
-        // vertical align of text
-        vAlign: typeof obj?.styles?.vAlign !== 'undefined' ? obj.styles.vAlign : 'bottom',
+        bgColor: getProp(obj, ['styles', 'bgColor'], '#ff00ff'),
+        bgColorEnabled: getProp(obj, ['styles', 'bgColorEnabled'], true),
+        // vertical align of text (top|bottom)
+        vAlign: getProp(obj, ['styles', 'vAlign'], 'bottom'),
         // recognized text
         recognition: {
-            fontFamily: typeof obj?.styles?.recognition?.fontFamily !== 'undefined' ? obj.styles.recognition.fontFamily : 'sans-serif',
-            fontSize: typeof obj?.styles?.recognition?.fontSize !== 'undefined' ? obj.styles.recognition.fontSize : '30pt',
-            fontWeight: typeof obj?.styles?.recognition?.fontWeight !== 'undefined' ? obj.styles.recognition.fontWeight : '400',
-            strokeWidth: typeof obj?.styles?.recognition?.strokeWidth !== 'undefined' ? obj.styles.recognition.strokeWidth : '8pt',
-            strokeColor: typeof obj?.styles?.recognition?.strokeColor !== 'undefined' ? obj.styles.recognition.strokeColor : '#292929',
-            color: typeof obj?.styles?.recognition?.color !== 'undefined' ? obj.styles.recognition.color : '#ffff00',
+            fontFamily: getProp(obj, ['styles', 'recognition', 'fontFamily'], 'sans-serif'),
+            fontSize: getProp(obj, ['styles', 'recognition', 'fontSize'], '30pt'),
+            fontWeight: getProp(obj, ['styles', 'recognition', 'fontWeight'], '400'),
+            strokeWidth: getProp(obj, ['styles', 'recognition', 'strokeWidth'], '8pt'),
+            strokeColor: getProp(obj, ['styles', 'recognition', 'strokeColor'], '#292929'),
+            color: getProp(obj, ['styles', 'recognition', 'color'], '#ffff00'),
         },
         // translated text
         translation: {
-            fontFamily: typeof obj?.styles?.translation?.fontFamily !== 'undefined' ? obj.styles.translation.fontFamily : 'sans-serif',
-            fontSize: typeof obj?.styles?.translation?.fontSize !== 'undefined' ? obj.styles.translation.fontSize : '30pt',
-            fontWeight: typeof obj?.styles?.translation?.fontWeight !== 'undefined' ? obj.styles.translation.fontWeight : '400',
-            strokeWidth: typeof obj?.styles?.translation?.strokeWidth !== 'undefined' ? obj.styles.translation.strokeWidth : '8pt',
-            strokeColor: typeof obj?.styles?.translation?.strokeColor !== 'undefined' ? obj.styles.translation.strokeColor : '#292929',
-            color: typeof obj?.styles?.translation?.color !== 'undefined' ? obj.styles.translation.color : '#cbcbcb',
+            fontFamily: getProp(obj, ['styles', 'translation', 'fontFamily'], 'sans-serif'),
+            fontSize: getProp(obj, ['styles', 'translation', 'fontSize'], '30pt'),
+            fontWeight: getProp(obj, ['styles', 'translation', 'fontWeight'], '400'),
+            strokeWidth: getProp(obj, ['styles', 'translation', 'strokeWidth'], '8pt'),
+            strokeColor: getProp(obj, ['styles', 'translation', 'strokeColor'], '#292929'),
+            color: getProp(obj, ['styles', 'translation', 'color'], '#cbcbcb'),
         }
     },
     recognition: {
-        display: typeof obj?.recognition?.display !== 'undefined' ? obj.recognition.display : true,
-        lang: typeof obj?.recognition?.lang !== 'undefined' ? obj.recognition.lang : 'ja',
-        synthesize: typeof obj?.recognition?.synthesize !== 'undefined' ? obj.recognition.synthesize : false,
-        synthesizeLang: typeof obj?.recognition?.synthesizeLang !== 'undefined' ? obj.recognition.synthesizeLang : '',
+        display: getProp(obj, ['recognition', 'display'], true),
+        lang: getProp(obj, ['recognition', 'lang'], 'ja'),
+        synthesize: getProp(obj, ['recognition', 'synthesize'], false),
+        synthesizeLang: getProp(obj, ['recognition', 'synthesizeLang'], ''),
     },
     translation: {
-        enabled: typeof obj?.translation?.enabled !== 'undefined' ? obj.translation.enabled : true,
-        langSrc: typeof obj?.translation?.langSrc !== 'undefined' ? obj.translation.langSrc : 'ja',
-        langDst: typeof obj?.translation?.langDst !== 'undefined' ? obj.translation.langDst : 'en',
-        synthesize: typeof obj?.translation?.synthesize !== 'undefined' ? obj.translation.synthesize : false,
-        synthesizeLang: typeof obj?.translation?.synthesizeLang !== 'undefined' ? obj.translation.synthesizeLang : '',
+        enabled: getProp(obj, ['translation', 'enabled'], true),
+        langSrc: getProp(obj, ['translation', 'langSrc'], 'ja'),
+        langDst: getProp(obj, ['translation', 'langDst'], 'en'),
+        synthesize: getProp(obj, ['translation', 'synthesize'], false),
+        synthesizeLang: getProp(obj, ['translation', 'synthesizeLang'], ''),
     },
 });
 
@@ -6113,34 +6126,32 @@ const default_notification_sound = (obj) => {
     };
 };
 const default_settings$2 = (obj = null) => ({
-    submitButtonText: (!obj || typeof obj.submitButtonText === 'undefined') ? 'Submit' : obj.submitButtonText,
+    submitButtonText: getProp(obj, ['submitButtonText'], 'Submit'),
     // leave empty to not require confirm
-    submitConfirm: (!obj || typeof obj.submitConfirm === 'undefined') ? '' : obj.submitConfirm,
-    recentImagesTitle: (!obj || typeof obj.recentImagesTitle === 'undefined') ? '' : obj.recentImagesTitle,
-    canvasWidth: (!obj || typeof obj.canvasWidth === 'undefined') ? 720 : obj.canvasWidth,
-    canvasHeight: (!obj || typeof obj.canvasHeight === 'undefined') ? 405 : obj.canvasHeight,
-    customDescription: (!obj || typeof obj.customDescription === 'undefined') ? '' : obj.customDescription,
+    submitConfirm: getProp(obj, ['submitConfirm'], ''),
+    recentImagesTitle: getProp(obj, ['recentImagesTitle'], ''),
+    canvasWidth: getProp(obj, ['canvasWidth'], 720),
+    canvasHeight: getProp(obj, ['canvasHeight'], 405),
+    customDescription: getProp(obj, ['customDescription'], ''),
     customProfileImage: (!obj || typeof obj.customProfileImage === 'undefined') ? null : default_profile_image(obj.customProfileImage),
-    palette: (!obj || typeof obj.palette === 'undefined') ? [
+    palette: getProp(obj, ['palette'], [
         // row 1
         '#000000', '#808080', '#ff0000', '#ff8000', '#ffff00', '#00ff00',
         '#00ffff', '#0000ff', '#ff00ff', '#ff8080', '#80ff80',
         // row 2
         '#ffffff', '#c0c0c0', '#800000', '#804000', '#808000', '#008000',
         '#008080', '#000080', '#800080', '#8080ff', '#ffff80',
-    ] : obj.palette,
-    displayDuration: (!obj || typeof obj.displayDuration === 'undefined') ? 5000 : obj.displayDuration,
-    displayLatestForever: (!obj || typeof obj.displayLatestForever === 'undefined') ? false : obj.displayLatestForever,
-    displayLatestAutomatically: (!obj || typeof obj.displayLatestAutomatically === 'undefined') ? false : obj.displayLatestAutomatically,
-    autofillLatest: (!obj || typeof obj.autofillLatest === 'undefined') ? false : obj.autofillLatest,
+    ]),
+    displayDuration: getProp(obj, ['displayDuration'], 5000),
+    displayLatestForever: getProp(obj, ['displayLatestForever'], false),
+    displayLatestAutomatically: getProp(obj, ['displayLatestAutomatically'], false),
+    autofillLatest: getProp(obj, ['autofillLatest'], false),
     notificationSound: (!obj || typeof obj.notificationSound === 'undefined') ? null : default_notification_sound(obj.notificationSound),
-    requireManualApproval: (!obj || typeof obj.requireManualApproval === 'undefined') ? false : obj.requireManualApproval,
-    favoriteLists: (!obj || typeof obj.favoriteLists === 'undefined')
-        ? [{
-                list: ((obj && obj.favorites) ? obj.favorites : []),
-                title: ((obj && obj.favoriteImagesTitle) ? obj.favoriteImagesTitle : ''),
-            }]
-        : obj.favoriteLists,
+    requireManualApproval: getProp(obj, ['requireManualApproval'], false),
+    favoriteLists: getProp(obj, ['favoriteLists'], [{
+            list: getProp(obj, ['favorites'], []),
+            title: getProp(obj, ['favoriteImagesTitle'], ''),
+        }]),
 });
 const default_images = (list = null) => {
     if (Array.isArray(list)) {
@@ -6322,26 +6333,25 @@ class DrawcastModule {
 }
 
 const default_avatar_definition = (def = null) => {
-    const get = (obj, prop, val) => (obj ? (typeof obj[prop] === 'undefined' ? val : obj[prop]) : val);
     return {
-        name: get(def, 'name', ''),
-        width: get(def, 'width', 64),
-        height: get(def, 'height', 64),
-        stateDefinitions: get(def, 'stateDefinitions', []),
-        slotDefinitions: get(def, 'slotDefinitions', []),
-        state: get(def, 'state', { slots: {}, lockedState: '' })
+        name: getProp(def, ['name'], ''),
+        width: getProp(def, ['width'], 64),
+        height: getProp(def, ['height'], 64),
+        stateDefinitions: getProp(def, ['stateDefinitions'], []),
+        slotDefinitions: getProp(def, ['slotDefinitions'], []),
+        state: getProp(def, ['state'], { slots: {}, lockedState: '' }),
     };
 };
 const default_state$1 = (obj = null) => ({
-    tuberIdx: typeof obj?.tuberIdx !== 'undefined' ? obj.tuberIdx : -1,
+    tuberIdx: getProp(obj, ['tuberIdx'], -1),
 });
 const default_settings$1 = (obj = null) => ({
     styles: {
         // page background color
-        bgColor: typeof obj?.styles?.bgColor !== 'undefined' ? obj.styles.bgColor : '#80ff00',
-        bgColorEnabled: typeof obj?.styles?.bgColorEnabled !== 'undefined' ? obj.styles.bgColorEnabled : true,
+        bgColor: getProp(obj, ['styles', 'bgColor'], '#80ff00'),
+        bgColorEnabled: getProp(obj, ['styles', 'bgColorEnabled'], true),
     },
-    avatarDefinitions: typeof obj?.avatarDefinitions !== 'undefined' ? obj.avatarDefinitions.map(default_avatar_definition) : []
+    avatarDefinitions: getProp(obj, ['avatarDefinitions'], []).map(default_avatar_definition),
 });
 
 const log$2 = logger('AvatarModule.ts');
@@ -6449,31 +6459,31 @@ class AvatarModule {
 }
 
 const default_effect = (obj = null) => ({
-    chatMessage: (!obj || typeof obj.chatMessage === 'undefined') ? '' : obj.chatMessage,
-    sound: (!obj || typeof obj.sound === 'undefined') ? { file: '', filename: '', urlpath: '', volume: 100 } : obj.sound,
+    chatMessage: getProp(obj, ['chatMessage'], ''),
+    sound: getProp(obj, ['sound'], { file: '', filename: '', urlpath: '', volume: 100 }),
 });
 const default_notification = (obj = null) => ({
-    effect: (!obj || typeof obj.effect === 'undefined') ? default_effect() : default_effect(obj.effect),
-    offsetMs: (!obj || typeof obj.offsetMs === 'undefined') ? '' : obj.offsetMs,
+    effect: default_effect(getProp(obj, ['effect'], null)),
+    offsetMs: getProp(obj, ['offsetMs'], ''),
 });
 const default_settings = (obj = null) => ({
-    fontFamily: (!obj || typeof obj.fontFamily === 'undefined') ? '' : obj.fontFamily,
-    fontSize: (!obj || typeof obj.fontSize === 'undefined') ? '72px' : obj.fontSize,
-    color: (!obj || typeof obj.color === 'undefined') ? '' : obj.color,
-    timerFormat: (!obj || typeof obj.timerFormat === 'undefined') ? '{mm}:{ss}' : obj.timerFormat,
-    showTimerWhenFinished: (!obj || typeof obj.showTimerWhenFinished === 'undefined') ? true : obj.showTimerWhenFinished,
-    finishedText: (!obj || typeof obj.finishedText === 'undefined') ? '' : obj.finishedText,
-    startEffect: (!obj || typeof obj.startEffect === 'undefined') ? default_effect() : default_effect(obj.startEffect),
-    endEffect: (!obj || typeof obj.endEffect === 'undefined') ? default_effect() : default_effect(obj.endEffect),
-    stopEffect: (!obj || typeof obj.stopEffect === 'undefined') ? default_effect() : default_effect(obj.stopEffect),
-    notifications: (!obj || typeof obj.notifications === 'undefined') ? [] : obj.notifications.map(default_notification),
+    fontFamily: getProp(obj, ['fontFamily'], ''),
+    fontSize: getProp(obj, ['fontSize'], '72px'),
+    color: getProp(obj, ['color'], ''),
+    timerFormat: getProp(obj, ['timerFormat'], '{mm}:{ss}'),
+    showTimerWhenFinished: getProp(obj, ['showTimerWhenFinished'], true),
+    finishedText: getProp(obj, ['finishedText'], ''),
+    startEffect: default_effect(getProp(obj, ['startEffect'], null)),
+    endEffect: default_effect(getProp(obj, ['endEffect'], null)),
+    stopEffect: default_effect(getProp(obj, ['stopEffect'], null)),
+    notifications: getProp(obj, ['notifications'], []).map(default_notification),
 });
 const default_state = (obj = null) => ({
-    running: (!obj || typeof obj.running === 'undefined') ? false : obj.running,
-    durationMs: (!obj || typeof obj.durationMs === 'undefined') ? (25 * 60 * 1000) : obj.durationMs,
-    startTs: (!obj || typeof obj.startTs === 'undefined') ? '' : obj.startTs,
-    doneTs: (!obj || typeof obj.doneTs === 'undefined') ? '' : obj.doneTs,
-    name: (!obj || typeof obj.name === 'undefined') ? '' : obj.name,
+    running: getProp(obj, ['running'], false),
+    durationMs: getProp(obj, ['durationMs'], (25 * 60 * 1000)),
+    startTs: getProp(obj, ['startTs'], ''),
+    doneTs: getProp(obj, ['doneTs'], ''),
+    name: getProp(obj, ['name'], ''),
 });
 
 const log$1 = logger('PomoModule.ts');
@@ -6648,9 +6658,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-18T13:44:33.016Z",
+    buildDate: "2022-04-18T14:45:45.304Z",
     // @ts-ignore
-    buildVersion: "1.8.7",
+    buildVersion: "1.8.8",
 };
 
 setLogLevel(config.log.level);
