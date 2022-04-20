@@ -33,10 +33,7 @@
         |
         <router-link :to="{ name: 'forgot-password' }">Forgot password?</router-link>
       </div>
-      <div class="field has-text-grey-light">
-        There are currently {{ data.registeredUserCount }} streamers registered
-        ✨. <span v-if="data.streamingUserCount">{{ data.streamingUserCount }} are live right now.</span>
-      </div>
+      <global-user-info />
     </form>
   </div>
 </template>
@@ -44,7 +41,6 @@
 import { defineComponent } from "vue";
 import api from "../api";
 import user from "../user";
-import global from "../global";
 import util from "../util";
 
 export default defineComponent({
@@ -53,8 +49,6 @@ export default defineComponent({
     pass: "",
     error: "",
     success: "",
-
-    data: global.getData(),
   }),
   // TODO: move token handling to general place
   async mounted() {

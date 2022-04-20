@@ -59,17 +59,13 @@
         Already have an account?
         <router-link :to="{ name: 'login' }">Login!</router-link>
       </div>
-      <div class="field has-text-grey-light">
-        There are currently {{ data.registeredUserCount }} streamers registered
-        ✨. <span v-if="data.streamingUserCount">{{ data.streamingUserCount }} are live right now.</span>
-      </div>
+      <global-user-info />
     </div>
   </div>
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
 import api from "../api";
-import global from "../global";
 
 export default defineComponent({
   data: () => ({
@@ -78,7 +74,6 @@ export default defineComponent({
     email: "",
     error: "",
     success: false,
-    data: global.getData(),
   }),
   computed: {
     canRegister() {
