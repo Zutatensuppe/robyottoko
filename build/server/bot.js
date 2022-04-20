@@ -312,7 +312,7 @@ const mayExecute = (context, cmd) => {
     return false;
 };
 
-const log$j = logger('fn.ts');
+const log$k = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
         return mime.replace('image/', '');
@@ -352,9 +352,9 @@ const sayFn = (client, target) => (msg) => {
         // TODO: fix this somewhere else?
         // client can only say things in lowercase channels
         t = t.toLowerCase();
-        log$j.info(`saying in ${t}: ${msg}`);
+        log$k.info(`saying in ${t}: ${msg}`);
         client.say(t, msg).catch((e) => {
-            log$j.info(e);
+            log$k.info(e);
         });
     });
 };
@@ -426,14 +426,14 @@ const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, target, context
         if (!mayExecute(context, cmdDef)) {
             continue;
         }
-        log$j.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`);
+        log$k.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`);
         const p = new Promise(async (resolve) => {
             await applyVariableChanges(cmdDef, contextModule, rawCmd, context);
             const r = await cmdDef.fn(rawCmd, client, target, context);
             if (r) {
-                log$j.info(`${target}| * Returned: ${r}`);
+                log$k.info(`${target}| * Returned: ${r}`);
             }
-            log$j.info(`${target}| * Executed ${rawCmd?.name || '<unknown>'} command`);
+            log$k.info(`${target}| * Executed ${rawCmd?.name || '<unknown>'} command`);
             resolve(true);
         });
         promises.push(p);
@@ -580,7 +580,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
                     return String(JSON.parse(txt)[m2]);
                 }
                 catch (e) {
-                    log$j.error(e);
+                    log$k.error(e);
                     return '';
                 }
             },
@@ -593,7 +593,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
                     return await getText(url);
                 }
                 catch (e) {
-                    log$j.error(e);
+                    log$k.error(e);
                     return '';
                 }
             },
@@ -697,6 +697,10 @@ const findIdxFuzzy = (array, search, keyFn = String) => {
     }
     return idx;
 };
+const accentFolded = (str) => {
+    // @see https://stackoverflow.com/a/37511463/392905 + comments about ł
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\u0142/g, "l");
+};
 const findShortestIdx = (array, indexes, keyFn) => {
     let shortestIdx = -1;
     let shortest = 0;
@@ -710,30 +714,30 @@ const findShortestIdx = (array, indexes, keyFn) => {
     return shortestIdx;
 };
 const findIdxBySearchExact = (array, search, keyFn = String) => {
-    const searchLower = search.toLowerCase();
+    const searchLower = accentFolded(search.toLowerCase());
     const indexes = [];
     array.forEach((item, index) => {
-        if (keyFn(item).toLowerCase() === searchLower) {
+        if (accentFolded(keyFn(item).toLowerCase()) === searchLower) {
             indexes.push(index);
         }
     });
     return findShortestIdx(array, indexes, keyFn);
 };
 const findIdxBySearchExactStartsWith = (array, search, keyFn = String) => {
-    const searchLower = search.toLowerCase();
+    const searchLower = accentFolded(search.toLowerCase());
     const indexes = [];
     array.forEach((item, index) => {
-        if (keyFn(item).toLowerCase().startsWith(searchLower)) {
+        if (accentFolded(keyFn(item).toLowerCase()).startsWith(searchLower)) {
             indexes.push(index);
         }
     });
     return findShortestIdx(array, indexes, keyFn);
 };
 const findIdxBySearchExactWord = (array, search, keyFn = String) => {
-    const searchLower = search.toLowerCase();
+    const searchLower = accentFolded(search.toLowerCase());
     const indexes = [];
     array.forEach((item, index) => {
-        const keyLower = keyFn(item).toLowerCase();
+        const keyLower = accentFolded(keyFn(item).toLowerCase());
         const idx = keyLower.indexOf(searchLower);
         if (idx === -1) {
             return;
@@ -751,33 +755,33 @@ const findIdxBySearchExactWord = (array, search, keyFn = String) => {
     return findShortestIdx(array, indexes, keyFn);
 };
 const findIdxBySearchExactPart = (array, search, keyFn = String) => {
-    const searchLower = search.toLowerCase();
+    const searchLower = accentFolded(search.toLowerCase());
     const indexes = [];
     array.forEach((item, index) => {
-        if (keyFn(item).toLowerCase().indexOf(searchLower) !== -1) {
+        if (accentFolded(keyFn(item).toLowerCase()).indexOf(searchLower) !== -1) {
             indexes.push(index);
         }
     });
     return findShortestIdx(array, indexes, keyFn);
 };
 const findIdxBySearchInOrder = (array, search, keyFn = String) => {
-    const split = search.split(/\s+/);
+    const split = accentFolded(search).split(/\s+/);
     const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
     const regex = new RegExp(regexArgs.join('.*'), 'i');
     const indexes = [];
     array.forEach((item, index) => {
-        if (keyFn(item).match(regex)) {
+        if (accentFolded(keyFn(item)).match(regex)) {
             indexes.push(index);
         }
     });
     return findShortestIdx(array, indexes, keyFn);
 };
 const findIdxBySearch = (array, search, keyFn = String) => {
-    const split = search.split(/\s+/);
+    const split = accentFolded(search).split(/\s+/);
     const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
     const regexes = regexArgs.map(arg => new RegExp(arg, 'i'));
     return array.findIndex(item => {
-        const str = keyFn(item);
+        const str = accentFolded(keyFn(item));
         for (const regex of regexes) {
             if (!str.match(regex)) {
                 return false;
@@ -918,7 +922,7 @@ class ModuleManager {
     }
 }
 
-const log$i = logger("WebSocketServer.ts");
+const log$j = logger("WebSocketServer.ts");
 class WebSocketServer {
     constructor(moduleManager, config, auth) {
         this.moduleManager = moduleManager;
@@ -935,7 +939,7 @@ class WebSocketServer {
         this._websocketserver.on('connection', async (socket, request) => {
             const pathname = new URL(this.connectstring()).pathname;
             if (request.url?.indexOf(pathname) !== 0) {
-                log$i.info('bad request url: ', request.url);
+                log$j.info('bad request url: ', request.url);
                 socket.close();
                 return;
             }
@@ -958,7 +962,7 @@ class WebSocketServer {
             const token_type = widgetModule ? relpath : null;
             const tokenInfo = await this.auth.wsTokenFromProtocol(token, token_type);
             if (!tokenInfo) {
-                log$i.info('not found token: ', token, relpath);
+                log$j.info('not found token: ', token, relpath);
                 socket.close();
                 return;
             }
@@ -983,7 +987,7 @@ class WebSocketServer {
                 const evts = module.getWsEvents();
                 if (evts) {
                     socket.on('message', (data) => {
-                        log$i.info(`ws|${socket.user_id}| `, data);
+                        log$j.info(`ws|${socket.user_id}| `, data);
                         const unknownData = data;
                         const d = JSON.parse(unknownData);
                         if (!d.event) {
@@ -1025,7 +1029,7 @@ class WebSocketServer {
             && socket.user_id
             && user_ids.includes(socket.user_id)
             && socket.module === moduleName) {
-            log$i.info(`notifying ${socket.user_id} ${moduleName} (${data.event})`);
+            log$j.info(`notifying ${socket.user_id} ${moduleName} (${data.event})`);
             socket.send(JSON.stringify(data));
         }
     }
@@ -1034,7 +1038,7 @@ class WebSocketServer {
     }
     sockets(user_ids, moduleName = null) {
         if (!this._websocketserver) {
-            log$i.error(`sockets(): _websocketserver is null`);
+            log$j.error(`sockets(): _websocketserver is null`);
             return [];
         }
         const sockets = [];
@@ -1057,7 +1061,7 @@ class WebSocketServer {
     }
     notifyAll(user_ids, moduleName, data) {
         if (!this._websocketserver) {
-            log$i.error(`tried to notifyAll, but _websocketserver is null`);
+            log$j.error(`tried to notifyAll, but _websocketserver is null`);
             return;
         }
         this._websocketserver.clients.forEach((socket) => {
@@ -1088,7 +1092,7 @@ class Templates {
     }
 }
 
-const log$h = logger('TwitchHelixClient.ts');
+const log$i = logger('TwitchHelixClient.ts');
 const API_BASE = 'https://api.twitch.tv/helix';
 function getBestEntryFromCategorySearchItems(searchString, resp) {
     const idx = findIdxFuzzy(resp.data, searchString, (item) => item.name);
@@ -1132,7 +1136,7 @@ class TwitchHelixClient {
             return json.access_token;
         }
         catch (e) {
-            log$h.error(url, json, e);
+            log$i.error(url, json, e);
             return '';
         }
     }
@@ -1148,7 +1152,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$h.error(url, json, e);
+            log$i.error(url, json, e);
             return null;
         }
     }
@@ -1176,7 +1180,7 @@ class TwitchHelixClient {
             return filtered[0];
         }
         catch (e) {
-            log$h.error(url, json, e);
+            log$i.error(url, json, e);
             return null;
         }
     }
@@ -1189,7 +1193,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$h.error(url, json, e);
+            log$i.error(url, json, e);
             return null;
         }
     }
@@ -1199,7 +1203,7 @@ class TwitchHelixClient {
             return await getJson(url, await this.withAuthHeaders());
         }
         catch (e) {
-            log$h.error(url, e);
+            log$i.error(url, e);
             return null;
         }
     }
@@ -1209,7 +1213,7 @@ class TwitchHelixClient {
             return await requestText('delete', url, await this.withAuthHeaders());
         }
         catch (e) {
-            log$h.error(url, e);
+            log$i.error(url, e);
             return null;
         }
     }
@@ -1219,7 +1223,7 @@ class TwitchHelixClient {
             return await postJson(url, await this.withAuthHeaders(asJson(subscription)));
         }
         catch (e) {
-            log$h.error(url, e);
+            log$i.error(url, e);
             return null;
         }
     }
@@ -1232,7 +1236,7 @@ class TwitchHelixClient {
             return getBestEntryFromCategorySearchItems(searchString, json);
         }
         catch (e) {
-            log$h.error(url, json);
+            log$i.error(url, json);
             return null;
         }
     }
@@ -1245,7 +1249,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$h.error(url, json);
+            log$i.error(url, json);
             return null;
         }
     }
@@ -1260,7 +1264,7 @@ class TwitchHelixClient {
             return await request('patch', url, withHeaders(this._authHeaders(accessToken), asJson(data)));
         }
         catch (e) {
-            log$h.error(url, e);
+            log$i.error(url, e);
             return null;
         }
     }
@@ -1286,7 +1290,7 @@ class TwitchHelixClient {
             return await getJson(url, await this.withAuthHeaders());
         }
         catch (e) {
-            log$h.error(url, e);
+            log$i.error(url, e);
             return null;
         }
     }
@@ -1385,7 +1389,7 @@ class Variables {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const log$g = logger('WebServer.ts');
+const log$h = logger('WebServer.ts');
 const widgetTemplate = (widget) => {
     if (process.env.WIDGET_DUMMY) {
         return process.env.WIDGET_DUMMY;
@@ -1538,8 +1542,8 @@ class WebServer {
             hmac.update(msg);
             const expected = `sha256=${hmac.digest('hex')}`;
             if (req.headers['twitch-eventsub-message-signature'] !== expected) {
-                log$g.debug(req);
-                log$g.error('bad message signature', {
+                log$h.debug(req);
+                log$h.error('bad message signature', {
                     got: req.headers['twitch-eventsub-message-signature'],
                     expected,
                 });
@@ -1583,12 +1587,12 @@ class WebServer {
         app.post('/api/upload', requireLoginApi, (req, res) => {
             upload(req, res, (err) => {
                 if (err) {
-                    log$g.error(err);
+                    log$h.error(err);
                     res.status(400).send("Something went wrong!");
                     return;
                 }
                 if (!req.file) {
-                    log$g.error(err);
+                    log$h.error(err);
                     res.status(400).send("Something went wrong!");
                     return;
                 }
@@ -1780,7 +1784,7 @@ class WebServer {
                 this.eventHub.emit('user_registration_complete', user);
             }
             else {
-                log$g.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`);
+                log$h.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`);
             }
             return;
         });
@@ -1856,7 +1860,7 @@ class WebServer {
                 this.eventHub.emit('user_changed', changedUser);
             }
             else {
-                log$g.error(`save-settings: user doesn't exist after saving it: ${user.id}`);
+                log$h.error(`save-settings: user doesn't exist after saving it: ${user.id}`);
             }
             res.send();
         });
@@ -1895,16 +1899,16 @@ class WebServer {
             }
         });
         app.post('/twitch/event-sub/', express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
-            log$g.debug(req.body);
-            log$g.debug(req.headers);
+            log$h.debug(req.body);
+            log$h.debug(req.headers);
             if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-                log$g.info(`got verification request, challenge: ${req.body.challenge}`);
+                log$h.info(`got verification request, challenge: ${req.body.challenge}`);
                 res.write(req.body.challenge);
                 res.send();
                 return;
             }
             if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-                log$g.info(`got notification request: ${req.body.subscription.type}`);
+                log$h.info(`got notification request: ${req.body.subscription.type}`);
                 if (req.body.subscription.type === 'stream.online') {
                     // insert new stream
                     await this.db.insert('robyottoko.streams', {
@@ -1948,7 +1952,7 @@ class WebServer {
                 res.status(404).send();
                 return;
             }
-            log$g.debug(`/widget/:widget_type/:widget_token/`, type, token);
+            log$h.debug(`/widget/:widget_type/:widget_token/`, type, token);
             if (widgets.findIndex(w => w.type === type) !== -1) {
                 res.send(templates.render(widgetTemplate(type), {
                     wsUrl: this.wss.connectstring(),
@@ -1979,7 +1983,7 @@ class WebServer {
             const indexFile = `${__dirname}/../../build/public/index.html`;
             res.sendFile(path.resolve(indexFile));
         });
-        this.handle = app.listen(port, hostname, () => log$g.info(`server running on http://${hostname}:${port}`));
+        this.handle = app.listen(port, hostname, () => log$h.info(`server running on http://${hostname}:${port}`));
     }
     close() {
         if (this.handle) {
@@ -2050,7 +2054,7 @@ const CODE_GOING_AWAY = 1001;
 const CODE_CUSTOM_DISCONNECT = 4000;
 const heartbeatInterval = 60 * SECOND; //ms between PING's
 const reconnectInterval = 3 * SECOND; //ms to wait before reconnect
-const log$f = logger('TwitchPubSubClient.ts');
+const log$g = logger('TwitchPubSubClient.ts');
 const PUBSUB_WS_ADDR = 'wss://pubsub-edge.twitch.tv';
 class TwitchPubSubClient {
     constructor() {
@@ -2101,7 +2105,7 @@ class TwitchPubSubClient {
                 return;
             }
             if (this.handle.readyState !== WebSocket.OPEN) {
-                log$f.error('ERR', `readyState is not OPEN (${WebSocket.OPEN})`);
+                log$g.error('ERR', `readyState is not OPEN (${WebSocket.OPEN})`);
                 return;
             }
             if (this.reconnectTimeout) {
@@ -2111,7 +2115,7 @@ class TwitchPubSubClient {
             while (this.sendBuffer.length > 0) {
                 this.handle.send(this.sendBuffer.shift());
             }
-            log$f.info('INFO', 'Socket Opened');
+            log$g.info('INFO', 'Socket Opened');
             this._heartbeat();
             if (this.heartbeatHandle) {
                 clearInterval(this.heartbeatHandle);
@@ -2129,13 +2133,13 @@ class TwitchPubSubClient {
             }
             // log.debug('RECV', JSON.stringify(message))
             if (message.type === 'RECONNECT') {
-                log$f.info('INFO', 'Reconnecting...');
+                log$g.info('INFO', 'Reconnecting...');
                 this.connect();
             }
             this.evts.emit('message', message);
         };
         this.handle.onerror = (e) => {
-            log$f.error('ERR', e);
+            log$g.error('ERR', e);
             this.handle = null;
             this.reconnectTimeout = setTimeout(() => { this.connect(); }, reconnectInterval);
         };
@@ -2143,7 +2147,7 @@ class TwitchPubSubClient {
             this.handle = null;
             if (e.code === CODE_CUSTOM_DISCONNECT || e.code === CODE_GOING_AWAY) ;
             else {
-                log$f.info('INFO', 'Onclose...');
+                log$g.info('INFO', 'Onclose...');
                 this.reconnectTimeout = setTimeout(() => { this.connect(); }, reconnectInterval);
             }
             if (this.heartbeatHandle) {
@@ -2806,7 +2810,7 @@ const commands = {
 };
 
 // @ts-ignore
-const log$e = logger('TwitchClientManager.ts');
+const log$f = logger('TwitchClientManager.ts');
 class TwitchClientManager {
     constructor(bot, user, cfg, twitchChannelRepo) {
         this.chatClient = null;
@@ -2934,7 +2938,7 @@ class TwitchClientManager {
                     const stream = await helixClient.getStreamByUserId(context['room-id']);
                     if (!stream) {
                         const fakeStartDate = new Date(new Date().getTime() - (5 * MINUTE));
-                        log$e.info(`No stream is running atm for channel ${context['room-id']}. Using fake start date ${fakeStartDate}.`);
+                        log$f.info(`No stream is running atm for channel ${context['room-id']}. Using fake start date ${fakeStartDate}.`);
                         _isFirstChatStream = await countChatMessages({
                             broadcaster_user_id: context['room-id'],
                             created_at: { '$gte': fakeStartDate },
@@ -3153,7 +3157,7 @@ class TwitchClientManager {
     }
 }
 
-const log$d = logger('ModuleStorage.ts');
+const log$e = logger('ModuleStorage.ts');
 const TABLE$4 = 'robyottoko.module';
 class ModuleStorage {
     constructor(db, userId) {
@@ -3168,7 +3172,7 @@ class ModuleStorage {
             return data ? Object.assign({}, def, data) : def;
         }
         catch (e) {
-            log$d.error(e);
+            log$e.error(e);
             return def;
         }
     }
@@ -3429,7 +3433,7 @@ class Mutex {
 
 // @ts-ignore
 const { Client } = pg.default;
-const log$c = logger('Db.ts');
+const log$d = logger('Db.ts');
 const mutex = new Mutex();
 class Db {
     constructor(connectStr, patchesDir) {
@@ -3449,7 +3453,7 @@ class Db {
         for (const f of files) {
             if (patches.includes(f)) {
                 if (verbose) {
-                    log$c.info(`➡ skipping already applied db patch: ${f}`);
+                    log$d.info(`➡ skipping already applied db patch: ${f}`);
                 }
                 continue;
             }
@@ -3468,10 +3472,10 @@ class Db {
                     throw e;
                 }
                 await this.insert('public.db_patches', { id: f });
-                log$c.info(`✓ applied db patch: ${f}`);
+                log$d.info(`✓ applied db patch: ${f}`);
             }
             catch (e) {
-                log$c.error(`✖ unable to apply patch: ${f} ${e}`);
+                log$d.error(`✖ unable to apply patch: ${f} ${e}`);
                 return;
             }
         }
@@ -3562,7 +3566,7 @@ class Db {
             return (await this.dbh.query(query, params)).rows[0] || null;
         }
         catch (e) {
-            log$c.info('_get', query, params);
+            log$d.info('_get', query, params);
             console.error(e);
             throw e;
         }
@@ -3572,7 +3576,7 @@ class Db {
             return await this.dbh.query(query, params);
         }
         catch (e) {
-            log$c.info('run', query, params);
+            log$d.info('run', query, params);
             console.error(e);
             throw e;
         }
@@ -3582,7 +3586,7 @@ class Db {
             return (await this.dbh.query(query, params)).rows || [];
         }
         catch (e) {
-            log$c.info('_getMany', query, params);
+            log$d.info('_getMany', query, params);
             console.error(e);
             throw e;
         }
@@ -3648,7 +3652,7 @@ class Db {
 }
 
 // @ts-ignore
-const log$b = logger('Mail.ts');
+const log$c = logger('Mail.ts');
 class Mail {
     constructor(cfg) {
         const defaultClient = SibApiV3Sdk.ApiClient.instance;
@@ -3700,14 +3704,14 @@ class Mail {
     }
     send(mail) {
         this.apiInstance.sendTransacEmail(mail).then(function (data) {
-            log$b.info('API called successfully. Returned data: ' + JSON.stringify(data));
+            log$c.info('API called successfully. Returned data: ' + JSON.stringify(data));
         }, function (error) {
-            log$b.error(error);
+            log$c.error(error);
         });
     }
 }
 
-const log$a = logger('countdown.ts');
+const log$b = logger('countdown.ts');
 const countdown = (originalCmd, bot, user) => async (command, client, target, context) => {
     if (!client) {
         return;
@@ -3767,7 +3771,7 @@ const countdown = (originalCmd, bot, user) => async (command, client, target, co
                 duration = (await parseDuration(`${a.value}`)) || 0;
             }
             catch (e) {
-                log$a.error(e.message, a.value);
+                log$b.error(e.message, a.value);
                 return;
             }
             actions.push(async () => await fn.sleep(duration));
@@ -3850,14 +3854,14 @@ const playMedia = (originalCmd, bot, user) => async (command, _client, _target, 
     });
 };
 
-const log$9 = logger('chatters.ts');
+const log$a = logger('chatters.ts');
 const chatters = (bot, user) => async (_command, client, target, context) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!client || !context || !helixClient) {
-        log$9.info('client', client);
-        log$9.info('context', context);
-        log$9.info('helixClient', helixClient);
-        log$9.info('unable to execute chatters command, client, context, or helixClient missing');
+        log$a.info('client', client);
+        log$a.info('context', context);
+        log$a.info('helixClient', helixClient);
+        log$a.info('unable to execute chatters command, client, context, or helixClient missing');
         return;
     }
     const say = fn.sayFn(client, target);
@@ -3882,15 +3886,15 @@ const chatters = (bot, user) => async (_command, client, target, context) => {
     });
 };
 
-const log$8 = logger('setChannelTitle.ts');
+const log$9 = logger('setChannelTitle.ts');
 const setChannelTitle = (originalCmd, bot, user) => async (command, client, target, context) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!client || !command || !context || !helixClient) {
-        log$8.info('client', client);
-        log$8.info('command', command);
-        log$8.info('context', context);
-        log$8.info('helixClient', helixClient);
-        log$8.info('unable to execute setChannelTitle, client, command, context, or helixClient missing');
+        log$9.info('client', client);
+        log$9.info('command', command);
+        log$9.info('context', context);
+        log$9.info('helixClient', helixClient);
+        log$9.info('unable to execute setChannelTitle, client, command, context, or helixClient missing');
         return;
     }
     const say = fn.sayFn(client, target);
@@ -3923,15 +3927,15 @@ const setChannelTitle = (originalCmd, bot, user) => async (command, client, targ
     }
 };
 
-const log$7 = logger('setChannelGameId.ts');
+const log$8 = logger('setChannelGameId.ts');
 const setChannelGameId = (originalCmd, bot, user) => async (command, client, target, context) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!client || !command || !context || !helixClient) {
-        log$7.info('client', client);
-        log$7.info('command', command);
-        log$7.info('context', context);
-        log$7.info('helixClient', helixClient);
-        log$7.info('unable to execute setChannelGameId, client, command, context, or helixClient missing');
+        log$8.info('client', client);
+        log$8.info('command', command);
+        log$8.info('context', context);
+        log$8.info('helixClient', helixClient);
+        log$8.info('unable to execute setChannelGameId, client, command, context, or helixClient missing');
         return;
     }
     const say = fn.sayFn(client, target);
@@ -4129,15 +4133,15 @@ const dictLookup = (originalCmd, bot, user) => async (command, client, target, c
     }
 };
 
-const log$6 = logger('setStreamTags.ts');
+const log$7 = logger('setStreamTags.ts');
 const addStreamTags = (originalCmd, bot, user) => async (command, client, target, context) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!client || !command || !context || !helixClient) {
-        log$6.info('client', client);
-        log$6.info('command', command);
-        log$6.info('context', context);
-        log$6.info('helixClient', helixClient);
-        log$6.info('unable to execute addStreamTags, client, command, context, or helixClient missing');
+        log$7.info('client', client);
+        log$7.info('command', command);
+        log$7.info('context', context);
+        log$7.info('helixClient', helixClient);
+        log$7.info('unable to execute addStreamTags, client, command, context, or helixClient missing');
         return;
     }
     const say = fn.sayFn(client, target);
@@ -4174,22 +4178,22 @@ const addStreamTags = (originalCmd, bot, user) => async (command, client, target
     }
     const resp = await helixClient.replaceStreamTags(context['room-id'], newSettableTagIds);
     if (!resp || resp.status < 200 || resp.status >= 300) {
-        log$6.error(resp);
+        log$7.error(resp);
         say(`❌ Unable to add tag: ${tagEntry.name}`);
         return;
     }
     say(`✨ Added tag: ${tagEntry.name}`);
 };
 
-const log$5 = logger('setStreamTags.ts');
+const log$6 = logger('setStreamTags.ts');
 const removeStreamTags = (originalCmd, bot, user) => async (command, client, target, context) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!client || !command || !context || !helixClient) {
-        log$5.info('client', client);
-        log$5.info('command', command);
-        log$5.info('context', context);
-        log$5.info('helixClient', helixClient);
-        log$5.info('unable to execute removeStreamTags, client, command, context, or helixClient missing');
+        log$6.info('client', client);
+        log$6.info('command', command);
+        log$6.info('context', context);
+        log$6.info('helixClient', helixClient);
+        log$6.info('unable to execute removeStreamTags, client, command, context, or helixClient missing');
         return;
     }
     const say = fn.sayFn(client, target);
@@ -4541,7 +4545,7 @@ class GeneralModule {
     }
 }
 
-const log$4 = logger('Youtube.ts');
+const log$5 = logger('Youtube.ts');
 const get = async (url, args) => {
     args.key = config.modules.sr.google.api_key;
     return await getJson(url + asQueryArgs(args));
@@ -4557,7 +4561,7 @@ const fetchDataByYoutubeId = async (youtubeId) => {
         return json.items[0];
     }
     catch (e) {
-        log$4.error(e, json, youtubeId);
+        log$5.error(e, json, youtubeId);
         return null;
     }
 };
@@ -4598,7 +4602,7 @@ const getYoutubeIdsBySearch = async (searchterm) => {
             }
         }
         catch (e) {
-            log$4.info(e);
+            log$5.info(e);
         }
     }
     return ids;
@@ -4678,6 +4682,7 @@ const default_settings$4 = (obj = null) => ({
     maxItemsShown: getProp(obj, ['maxItemsShown'], -1),
 });
 
+const log$4 = logger('SongrequestModule.ts');
 const ADD_TYPE = {
     NOT_ADDED: 0,
     ADDED: 1,
@@ -5478,6 +5483,7 @@ class SongrequestModule {
     cmdResr(_originalCommand) {
         return async (command, client, target, context) => {
             if (!client || !command || !context) {
+                log$4.error('cmdResr: client, command or context empty');
                 return;
             }
             const say = fn.sayFn(client, target);
@@ -6674,9 +6680,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-20T19:00:38.591Z",
+    buildDate: "2022-04-20T19:28:30.537Z",
     // @ts-ignore
-    buildVersion: "1.8.12",
+    buildVersion: "1.8.13",
 };
 
 setLogLevel(config.log.level);

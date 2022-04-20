@@ -872,6 +872,7 @@ class SongrequestModule implements Module {
       context: TwitchChatContext | null,
     ) => {
       if (!client || !command || !context) {
+        log.error('cmdResr: client, command or context empty')
         return
       }
 

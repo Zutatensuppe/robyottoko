@@ -481,6 +481,11 @@ export const findIdxFuzzy = <T>(
   return idx
 }
 
+export const accentFolded = (str: string): string => {
+  // @see https://stackoverflow.com/a/37511463/392905 + comments about ł
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\u0142/g, "l")
+}
+
 export const findShortestIdx = <T>(
   array: T[],
   indexes: number[],
@@ -503,10 +508,10 @@ export const findIdxBySearchExact = <T>(
   search: string,
   keyFn: (item: T) => string = String
 ) => {
-  const searchLower = search.toLowerCase()
+  const searchLower = accentFolded(search.toLowerCase())
   const indexes: number[] = []
   array.forEach((item, index) => {
-    if (keyFn(item).toLowerCase() === searchLower) {
+    if (accentFolded(keyFn(item).toLowerCase()) === searchLower) {
       indexes.push(index)
     }
   })
@@ -518,10 +523,10 @@ export const findIdxBySearchExactStartsWith = <T>(
   search: string,
   keyFn: (item: T) => string = String
 ) => {
-  const searchLower = search.toLowerCase()
+  const searchLower = accentFolded(search.toLowerCase())
   const indexes: number[] = []
   array.forEach((item, index) => {
-    if (keyFn(item).toLowerCase().startsWith(searchLower)) {
+    if (accentFolded(keyFn(item).toLowerCase()).startsWith(searchLower)) {
       indexes.push(index)
     }
   })
@@ -533,10 +538,10 @@ export const findIdxBySearchExactWord = <T>(
   search: string,
   keyFn: (item: T) => string = String
 ) => {
-  const searchLower = search.toLowerCase()
+  const searchLower = accentFolded(search.toLowerCase())
   const indexes: number[] = []
   array.forEach((item, index) => {
-    const keyLower = keyFn(item).toLowerCase()
+    const keyLower = accentFolded(keyFn(item).toLowerCase())
     const idx = keyLower.indexOf(searchLower)
     if (idx === -1) {
       return
@@ -559,10 +564,10 @@ export const findIdxBySearchExactPart = <T>(
   search: string,
   keyFn: (item: T) => string = String
 ) => {
-  const searchLower = search.toLowerCase()
+  const searchLower = accentFolded(search.toLowerCase())
   const indexes: number[] = []
   array.forEach((item, index) => {
-    if (keyFn(item).toLowerCase().indexOf(searchLower) !== -1) {
+    if (accentFolded(keyFn(item).toLowerCase()).indexOf(searchLower) !== -1) {
       indexes.push(index)
     }
   })
@@ -574,12 +579,12 @@ export const findIdxBySearchInOrder = <T>(
   search: string,
   keyFn: (item: T) => string = String
 ) => {
-  const split = search.split(/\s+/)
+  const split = accentFolded(search).split(/\s+/)
   const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
   const regex = new RegExp(regexArgs.join('.*'), 'i')
   const indexes: number[] = []
   array.forEach((item, index) => {
-    if (keyFn(item).match(regex)) {
+    if (accentFolded(keyFn(item)).match(regex)) {
       indexes.push(index)
     }
   })
@@ -591,11 +596,11 @@ export const findIdxBySearch = <T>(
   search: string,
   keyFn: (item: T) => string = String
 ) => {
-  const split = search.split(/\s+/)
+  const split = accentFolded(search).split(/\s+/)
   const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
   const regexes = regexArgs.map(arg => new RegExp(arg, 'i'))
   return array.findIndex(item => {
-    const str = keyFn(item)
+    const str = accentFolded(keyFn(item))
     for (const regex of regexes) {
       if (!str.match(regex)) {
         return false
