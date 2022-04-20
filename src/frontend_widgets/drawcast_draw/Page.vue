@@ -257,6 +257,78 @@ const hexIsLight = (color: string) => {
   return brightness > 69;
 };
 
+const createCursor = (tool: string, size: number, color: string): string => {
+  if (tool === "color-sampler") {
+    return "crosshair";
+  }
+
+  const c = document.createElement("canvas");
+  const ctx = c.getContext("2d") as CanvasRenderingContext2D;
+  const crosshairSize = 10
+  const padding = 3
+  const canvasSize = size + crosshairSize + padding + crosshairSize + padding
+  const halfCanvasSize = Math.round(canvasSize / 2)
+
+  c.width = canvasSize + 1;
+  c.height = canvasSize + 1;
+
+  // crosshair around the color dot
+  ctx.fillStyle = "#AAA";
+  ctx.fillRect(0, halfCanvasSize - 1, crosshairSize, 3)
+  ctx.fillRect(c.width - crosshairSize, halfCanvasSize - 1, crosshairSize, 3)
+  ctx.fillRect(halfCanvasSize - 1, 0, 3, crosshairSize)
+  ctx.fillRect(halfCanvasSize - 1, c.height - crosshairSize, 3, crosshairSize)
+  ctx.fillStyle = "#666";
+  ctx.fillRect(1, halfCanvasSize, crosshairSize - 2, 1)
+  ctx.fillRect(c.width - crosshairSize + 1, halfCanvasSize, crosshairSize - 2, 1)
+  ctx.fillRect(halfCanvasSize, 1, 1, crosshairSize - 2)
+  ctx.fillRect(halfCanvasSize, c.height - crosshairSize + 1, 1, crosshairSize - 2)
+
+  ctx.beginPath();
+  ctx.translate(0.5, 0.5);
+  ctx.fillStyle = color;
+  ctx.strokeStyle = hexIsLight(String(ctx.fillStyle)) ? "#000" : "#fff";
+  ctx.arc(halfCanvasSize, halfCanvasSize, size / 2, 0, 2 * Math.PI);
+  ctx.translate(-0.5, -0.5);
+  ctx.closePath();
+  if (tool !== "eraser") {
+    ctx.fill();
+  }
+  ctx.stroke();
+  return `url(${c.toDataURL()}) ${halfCanvasSize} ${halfCanvasSize}, default`;
+}
+
+const fillpath = (
+  ctx: CanvasRenderingContext2D,
+  pts: Point[],
+  color: string,
+  size: number,
+) => {
+  if (pts.length === 1) {
+    ctx.beginPath();
+    ctx.translate(0.5, 0.5);
+    ctx.fillStyle = color;
+    ctx.arc(pts[0].x, pts[0].y, size / 2, 0, 2 * Math.PI);
+    ctx.translate(-0.5, -0.5);
+    ctx.closePath();
+    ctx.fill();
+    return;
+  }
+
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.translate(0.5, 0.5);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = size;
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) {
+    ctx.lineTo(pts[i].x, pts[i].y);
+  }
+  ctx.translate(-0.5, -0.5);
+  ctx.closePath();
+  ctx.stroke();
+};
+
 export default defineComponent({
   data() {
     return {
@@ -347,51 +419,13 @@ export default defineComponent({
     canvasClasses(): string[] {
       return [`bg-${this.canvasBg}`];
     },
-    halfSize(): number {
-      return Math.round(this.size / 2);
-    },
     styles(): { cursor: string } {
       return {
         cursor: this.cursor,
       };
     },
     cursor(): string {
-      const c = document.createElement("canvas");
-      const ctx = c.getContext("2d") as CanvasRenderingContext2D;
-      if (this.tool === "color-sampler") {
-        return "crosshair";
-      }
-
-      const crosshairSize = 10
-      const padding = 3
-      const canvasSize = this.size + crosshairSize + padding + crosshairSize + padding
-      const halfCanvasSize = Math.round(canvasSize / 2)
-
-      c.width = canvasSize + 1;
-      c.height = canvasSize + 1;
-
-      // crosshair around the color dot
-      ctx.fillStyle = "#AAA";
-      ctx.fillRect(0, halfCanvasSize - 1, crosshairSize, 3)
-      ctx.fillRect(c.width - crosshairSize, halfCanvasSize - 1, crosshairSize, 3)
-      ctx.fillRect(halfCanvasSize - 1, 0, 3, crosshairSize)
-      ctx.fillRect(halfCanvasSize - 1, c.height - crosshairSize, 3, crosshairSize)
-      ctx.fillStyle = "#666";
-      ctx.fillRect(1, halfCanvasSize, crosshairSize - 2, 1)
-      ctx.fillRect(c.width - crosshairSize + 1, halfCanvasSize, crosshairSize - 2, 1)
-      ctx.fillRect(halfCanvasSize, 1, 1, crosshairSize - 2)
-      ctx.fillRect(halfCanvasSize, c.height - crosshairSize + 1, 1, crosshairSize - 2)
-
-      ctx.beginPath();
-      ctx.fillStyle = this.color;
-      ctx.strokeStyle = hexIsLight(String(ctx.fillStyle)) ? "#000" : "#fff";
-      ctx.arc(halfCanvasSize, halfCanvasSize, this.halfSize, 0, 2 * Math.PI);
-      ctx.closePath();
-      if (this.tool !== "eraser") {
-        ctx.fill();
-      }
-      ctx.stroke();
-      return `url(${c.toDataURL()}) ${halfCanvasSize} ${halfCanvasSize}, default`;
+      return createCursor(this.tool, this.size, this.color)
     },
   },
   methods: {
@@ -442,43 +476,18 @@ export default defineComponent({
     },
     drawPathPart(pts: Point[]) {
       this.drawing = true;
-      const color = this.color;
-      const size = this.size;
-      const halfSize = this.halfSize;
       if (pts.length === 0) {
         return;
       }
 
-      const fillpath = (ctx: CanvasRenderingContext2D) => {
-        if (pts.length === 1) {
-          ctx.beginPath();
-          ctx.fillStyle = color;
-          ctx.arc(pts[0].x, pts[0].y, halfSize, 0, 2 * Math.PI);
-          ctx.closePath();
-          ctx.fill();
-          return;
-        }
-
-        ctx.lineJoin = "round";
-        ctx.beginPath();
-        ctx.strokeStyle = color;
-        ctx.lineWidth = size;
-        ctx.moveTo(pts[0].x, pts[0].y);
-        for (let i = 1; i < pts.length; i++) {
-          ctx.lineTo(pts[i].x, pts[i].y);
-        }
-        ctx.closePath();
-        ctx.stroke();
-      };
-
       if (this.tool === "eraser") {
         this.finalctx.globalCompositeOperation = "destination-out";
-        fillpath(this.finalctx);
+        fillpath(this.finalctx, pts, this.color, this.size);
         return;
       }
 
       this.finalctx.globalCompositeOperation = "source-over";
-      fillpath(this.ctx);
+      fillpath(this.ctx, pts, this.color, this.size);
     },
 
     cancelDraw() {
