@@ -1,4 +1,5 @@
 import {
+  accentFolded,
   joinIntoChunks,
   parseISO8601Duration,
   doReplacements,
@@ -8,6 +9,12 @@ import {
   parseCommandFromTriggerAndMessage,
 } from './fn'
 import { Command, CommandTrigger } from './types'
+
+test('accentFolded', () => {
+  let actual = accentFolded('Błogosławieni Miłosierni (Krysiek Remix)')
+  let expected = 'Blogoslawieni Milosierni (Krysiek Remix)'
+  expect(actual).toBe(expected)
+})
 
 test('joinIntoChunks', () => {
   let actual = joinIntoChunks(['hyottoko', 'van', 'megaport'], ', ', 12)
@@ -62,6 +69,7 @@ array             | search   | expected
 ${['abc', 'lel']} | ${'lel'} | ${1}
 ${['Trio Da Da Da Official Video', 'Panda! Go Panda! (Panda Kopanda) intro theme']} | ${'da da da'} | ${0}
 ${['Panda! Go Panda! (Panda Kopanda) intro theme', 'Trio Da Da Da Official Video']} | ${'da da da'} | ${1}
+${['Błogosławieni Miłosierni (Krysiek Remix)', 'Blogoslawieni Milosierni (Krysiek Remix)']} | ${'blogo'} | ${0}
 `('findIdxBySearchInOrder', ({ array, search, expected }) => {
   const actual = findIdxBySearchInOrder(array, search)
   expect(actual).toStrictEqual(expected)
