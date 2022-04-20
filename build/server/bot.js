@@ -1029,6 +1029,9 @@ class WebSocketServer {
             socket.send(JSON.stringify(data));
         }
     }
+    isUserConnected(user_id) {
+        return this.sockets([user_id]).length > 0;
+    }
     sockets(user_ids, moduleName = null) {
         if (!this._websocketserver) {
             log$i.error(`sockets(): _websocketserver is null`);
@@ -1791,9 +1794,9 @@ class WebServer {
             res.send();
         });
         app.get('/api/data/global', async (req, res) => {
-            const users = await this.userRepo.all();
             res.send({
-                registeredUserCount: users.filter(u => u.status === 'verified').length,
+                registeredUserCount: await this.userRepo.countVerifiedUsers(),
+                streamingUserCount: await this.twitchChannelRepo.countUniqueUsersStreaming(),
             });
         });
         app.get('/api/page/settings', requireLoginApi, async (req, res) => {
@@ -3204,6 +3207,10 @@ where x.user_id = $1`, [id]);
     async createUser(user) {
         return (await this.db.insert(TABLE$3, user));
     }
+    async countVerifiedUsers() {
+        const rows = await this.db.getMany(TABLE$3, { status: 'verified' });
+        return rows.length;
+    }
 }
 
 const TABLE$2 = 'robyottoko.token';
@@ -3258,6 +3265,14 @@ class TwitchChannels {
             user_id: channel.user_id,
             channel_name: channel.channel_name,
         });
+    }
+    async setStreaming(streaming, where) {
+        this.db.update(TABLE$1, { is_streaming: streaming }, where);
+    }
+    async countUniqueUsersStreaming() {
+        const channels = await this.db.getMany(TABLE$1, { is_streaming: true });
+        const userIds = [...new Set(channels.map(c => c.user_id))];
+        return userIds.length;
     }
     async allByUserId(user_id) {
         return await this.db.getMany(TABLE$1, { user_id });
@@ -6659,9 +6674,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-18T21:05:04.468Z",
+    buildDate: "2022-04-20T17:21:44.428Z",
     // @ts-ignore
-    buildVersion: "1.8.9",
+    buildVersion: "1.8.10",
 };
 
 setLogLevel(config.log.level);
@@ -6737,25 +6752,22 @@ const run = async () => {
         for (const moduleClass of modules) {
             moduleManager.add(user.id, await new moduleClass(bot, user));
         }
-        eventHub.on('user_changed', async (changedUser /* User */) => {
-            if (changedUser.id === user.id) {
-                await clientManager.userChanged(changedUser);
-                for (const mod of moduleManager.all(user.id)) {
-                    await mod.userChanged(changedUser);
-                }
+        let updateUserFrontendStatusTimeout = null;
+        const updateUserFrontendStatus = async () => {
+            if (updateUserFrontendStatusTimeout) {
+                clearTimeout(updateUserFrontendStatusTimeout);
+                updateUserFrontendStatusTimeout = null;
             }
-        });
-        const sendStatus = async () => {
             const client = clientManager.getHelixClient();
             if (!client) {
-                setTimeout(sendStatus, 5 * SECOND);
-                return;
+                return setTimeout(updateUserFrontendStatus, 5 * SECOND);
             }
-            // if the user is not connected through a websocket atm, dont
-            // try to validate oauth tokens
-            if (webSocketServer.sockets([user.id]).length === 0) {
-                setTimeout(sendStatus, 5 * SECOND);
-                return;
+            // status for the user that should show in frontend
+            // (eg. problems with their settings)
+            // this only is relevant if the user is at the moment connected
+            // to a websocket
+            if (!webSocketServer.isUserConnected(user.id)) {
+                return setTimeout(updateUserFrontendStatus, 5 * SECOND);
             }
             const problems = [];
             const twitchChannels = await twitchChannelRepo.allByUserId(user.id);
@@ -6777,9 +6789,47 @@ const run = async () => {
             }
             const data = { event: 'status', data: { problems } };
             webSocketServer.notifyAll([user.id], 'core', data);
-            setTimeout(sendStatus, 1 * MINUTE);
+            return setTimeout(updateUserFrontendStatus, 1 * MINUTE);
         };
-        sendStatus();
+        updateUserFrontendStatusTimeout = await updateUserFrontendStatus();
+        let updateUserStreamStatusTimeout = null;
+        const updateUserStreamStatus = async () => {
+            if (updateUserStreamStatusTimeout) {
+                clearTimeout(updateUserStreamStatusTimeout);
+                updateUserStreamStatusTimeout = null;
+            }
+            const client = clientManager.getHelixClient();
+            if (!client) {
+                return setTimeout(updateUserFrontendStatus, 5 * SECOND);
+            }
+            const twitchChannels = await twitchChannelRepo.allByUserId(user.id);
+            for (const twitchChannel of twitchChannels) {
+                // TODO: getUserIdByName should be cached..
+                if (twitchChannel.channel_id) {
+                    const stream = await client.getStreamByUserId(twitchChannel.channel_id);
+                    twitchChannelRepo.setStreaming(!!stream, { user_id: user.id, channel_id: twitchChannel.channel_id });
+                    continue;
+                }
+                const channelId = await client.getUserIdByName(twitchChannel.channel_name);
+                if (!channelId) {
+                    continue;
+                }
+                const stream = await client.getStreamByUserId(channelId);
+                twitchChannelRepo.setStreaming(!!stream, { user_id: user.id, channel_name: twitchChannel.channel_name });
+            }
+            return setTimeout(updateUserStreamStatus, 5 * MINUTE);
+        };
+        updateUserStreamStatusTimeout = await updateUserStreamStatus();
+        eventHub.on('user_changed', async (changedUser /* User */) => {
+            if (changedUser.id === user.id) {
+                await clientManager.userChanged(changedUser);
+                updateUserFrontendStatusTimeout = await updateUserFrontendStatus();
+                updateUserStreamStatusTimeout = await updateUserStreamStatus();
+                for (const mod of moduleManager.all(user.id)) {
+                    await mod.userChanged(changedUser);
+                }
+            }
+        });
     };
     webSocketServer.listen();
     await webServer.listen();

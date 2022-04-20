@@ -152,6 +152,10 @@ class WebSocketServer {
     }
   }
 
+  isUserConnected(user_id: number): boolean {
+    return this.sockets([user_id]).length > 0
+  }
+
   sockets(user_ids: number[], moduleName: string | null = null): Socket[] {
     if (!this._websocketserver) {
       log.error(`sockets(): _websocketserver is null`)

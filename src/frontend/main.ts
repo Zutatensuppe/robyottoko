@@ -19,22 +19,23 @@ import PasswordReset from './views/PasswordReset.vue'
 import ForgotPassword from './views/ForgotPassword.vue'
 import PomoModuleView from './views/PomoModuleView.vue'
 
-import draggable from "vuedraggable";
-import Upload from "./components/Upload.vue";
-import ImageUpload from './components/ImageUpload.vue'
-import SoundUpload from './components/SoundUpload.vue'
-import DurationInput from "./components/DurationInput.vue";
 import Checkbox from "./components/Checkbox.vue";
-import Player from "./components/Player.vue";
-import ProblemsDialog from "./components/ProblemsDialog.vue";
-import Slider from "./components/Slider.vue";
-import VolumeSlider from "./components/VolumeSlider.vue";
-import ResponsiveImage from "./components/ResponsiveImage.vue";
+import DoubleclickButton from "./components/DoubleclickButton.vue";
+import draggable from "vuedraggable";
+import DropdownButton from "./components/DropdownButton.vue";
+import Duration from "./components/Duration.vue";
+import DurationInput from "./components/DurationInput.vue";
+import GlobalUserInfo from "./components/GlobalUserInfo.vue";
+import ImageUpload from './components/ImageUpload.vue'
 import MacroSelect from "./components/MacroSelect.vue";
 import Navbar from "./components/Navbar.vue";
-import Duration from "./components/Duration.vue";
-import DoubleclickButton from "./components/DoubleclickButton.vue";
-import DropdownButton from "./components/DropdownButton.vue";
+import Player from "./components/Player.vue";
+import ProblemsDialog from "./components/ProblemsDialog.vue";
+import ResponsiveImage from "./components/ResponsiveImage.vue";
+import Slider from "./components/Slider.vue";
+import SoundUpload from './components/SoundUpload.vue'
+import Upload from "./components/Upload.vue";
+import VolumeSlider from "./components/VolumeSlider.vue";
 import Youtube from "./components/Youtube.vue";
 
 import CommandsCommandEditor from "./components/Commands/CommandEditor.vue";
@@ -184,6 +185,7 @@ const run = async () => {
   const app = Vue.createApp(App)
   app.use(router)
   app.use(Toast, {})
+  app.component('global-user-info', GlobalUserInfo)
   app.component('doubleclick-button', DoubleclickButton)
   app.component('dropdown-button', DropdownButton)
   app.component('checkbox', Checkbox)
