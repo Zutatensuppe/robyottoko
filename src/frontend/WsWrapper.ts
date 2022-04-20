@@ -27,7 +27,7 @@ export default class WsWrapper {
   public onopen: (e: Event) => void = () => {
     // pass
   }
-  public onclose: (e: CloseEvent) => void = () => {
+  public onclose: (e: CloseEvent | unknown) => void = () => {
     // pass
   }
   public onmessage: (e: MessageEvent<any>) => void = () => {
@@ -48,33 +48,41 @@ export default class WsWrapper {
   }
 
   connect() {
-    const ws = new WebSocket(this.addr, this.protocols)
-    ws.onopen = (e) => {
-      if (this.reconnectTimeout) {
-        clearTimeout(this.reconnectTimeout)
-      }
-      this.handle = ws
-      // should have a queue worker
-      while (this.sendBuffer.length > 0) {
-        const text = this.sendBuffer.shift()
-        if (text) {
-          this.handle.send(text)
+    try {
+      const ws = new WebSocket(this.addr, this.protocols)
+      ws.onopen = (e) => {
+        if (this.reconnectTimeout) {
+          clearTimeout(this.reconnectTimeout)
         }
+        this.handle = ws
+        // should have a queue worker
+        while (this.sendBuffer.length > 0) {
+          const text = this.sendBuffer.shift()
+          if (text) {
+            this.handle.send(text)
+          }
+        }
+        this.onopen(e)
       }
-      this.onopen(e)
-    }
-    ws.onmessage = (e) => {
-      this.onmessage(e)
-    }
-    ws.onclose = (e) => {
+      ws.onmessage = (e) => {
+        this.onmessage(e)
+      }
+      ws.onclose = (e) => {
+        this.handle = null
+        if (e.code === CODE_CUSTOM_DISCONNECT) {
+          log.info('custom disconnect, will not reconnect')
+        } else if (e.code === CODE_GOING_AWAY) {
+          log.info('going away, will not reconnect')
+        } else {
+          this.reconnectTimeout = setTimeout(() => { this.connect() }, 1000)
+        }
+        this.onclose(e)
+      }
+    } catch (e) {
+      // something went wrong....
+      log.error(e)
       this.handle = null
-      if (e.code === CODE_CUSTOM_DISCONNECT) {
-        log.info('custom disconnect, will not reconnect')
-      } else if (e.code === CODE_GOING_AWAY) {
-        log.info('going away, will not reconnect')
-      } else {
-        this.reconnectTimeout = setTimeout(() => { this.connect() }, 1000)
-      }
+      this.reconnectTimeout = setTimeout(() => { this.connect() }, 1000)
       this.onclose(e)
     }
   }
