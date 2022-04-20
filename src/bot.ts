@@ -128,29 +128,24 @@ const run = async () => {
       moduleManager.add(user.id, await new moduleClass(bot, user))
     }
 
-    eventHub.on('user_changed', async (changedUser: any /* User */) => {
-      if (changedUser.id === user.id) {
-        await clientManager.userChanged(changedUser)
-        for (const mod of moduleManager.all(user.id)) {
-          await mod.userChanged(changedUser)
-        }
+    let updateUserFrontendStatusTimeout: NodeJS.Timeout | null = null
+    const updateUserFrontendStatus = async (): Promise<NodeJS.Timeout> => {
+      if (updateUserFrontendStatusTimeout) {
+        clearTimeout(updateUserFrontendStatusTimeout)
+        updateUserFrontendStatusTimeout = null
       }
-    })
-
-    const sendStatus = async () => {
       const client = clientManager.getHelixClient()
       if (!client) {
-        setTimeout(sendStatus, 5 * SECOND)
-        return
+        return setTimeout(updateUserFrontendStatus, 5 * SECOND)
       }
 
-      // if the user is not connected through a websocket atm, dont
-      // try to validate oauth tokens
-      if (webSocketServer.sockets([user.id]).length === 0) {
-        setTimeout(sendStatus, 5 * SECOND)
-        return
+      // status for the user that should show in frontend
+      // (eg. problems with their settings)
+      // this only is relevant if the user is at the moment connected
+      // to a websocket
+      if (!webSocketServer.isUserConnected(user.id)) {
+        return setTimeout(updateUserFrontendStatus, 5 * SECOND)
       }
-
       const problems = []
       const twitchChannels = await twitchChannelRepo.allByUserId(user.id)
       for (const twitchChannel of twitchChannels) {
@@ -172,12 +167,51 @@ const run = async () => {
           })
         }
       }
-
       const data = { event: 'status', data: { problems } }
       webSocketServer.notifyAll([user.id], 'core', data)
-      setTimeout(sendStatus, 1 * MINUTE)
+      return setTimeout(updateUserFrontendStatus, 1 * MINUTE)
     }
-    sendStatus()
+    updateUserFrontendStatusTimeout = await updateUserFrontendStatus()
+
+    let updateUserStreamStatusTimeout: NodeJS.Timeout | null = null
+    const updateUserStreamStatus = async (): Promise<NodeJS.Timeout> => {
+      if (updateUserStreamStatusTimeout) {
+        clearTimeout(updateUserStreamStatusTimeout)
+        updateUserStreamStatusTimeout = null
+      }
+      const client = clientManager.getHelixClient()
+      if (!client) {
+        return setTimeout(updateUserFrontendStatus, 5 * SECOND)
+      }
+      const twitchChannels = await twitchChannelRepo.allByUserId(user.id)
+      for (const twitchChannel of twitchChannels) {
+        // TODO: getUserIdByName should be cached..
+        if (twitchChannel.channel_id) {
+          const stream = await client.getStreamByUserId(twitchChannel.channel_id)
+          twitchChannelRepo.setStreaming(!!stream, { user_id: user.id, channel_id: twitchChannel.channel_id })
+          continue
+        }
+        const channelId = await client.getUserIdByName(twitchChannel.channel_name)
+        if (!channelId) {
+          continue
+        }
+        const stream = await client.getStreamByUserId(channelId)
+        twitchChannelRepo.setStreaming(!!stream, { user_id: user.id, channel_name: twitchChannel.channel_name })
+      }
+      return setTimeout(updateUserStreamStatus, 5 * MINUTE)
+    }
+    updateUserStreamStatusTimeout = await updateUserStreamStatus()
+
+    eventHub.on('user_changed', async (changedUser: any /* User */) => {
+      if (changedUser.id === user.id) {
+        await clientManager.userChanged(changedUser)
+        updateUserFrontendStatusTimeout = await updateUserFrontendStatus()
+        updateUserStreamStatusTimeout = await updateUserStreamStatus()
+        for (const mod of moduleManager.all(user.id)) {
+          await mod.userChanged(changedUser)
+        }
+      }
+    })
   }
 
   webSocketServer.listen()

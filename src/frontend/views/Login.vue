@@ -35,7 +35,7 @@
       </div>
       <div class="field has-text-grey-light">
         There are currently {{ data.registeredUserCount }} streamers registered
-        ✨.
+        ✨. <span v-if="data.streamingUserCount">{{ data.streamingUserCount }} are live right now.</span>
       </div>
     </form>
   </div>

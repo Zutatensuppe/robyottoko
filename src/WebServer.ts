@@ -505,9 +505,9 @@ class WebServer {
     })
 
     app.get('/api/data/global', async (req: any, res: Response) => {
-      const users = await this.userRepo.all()
       res.send({
-        registeredUserCount: users.filter(u => u.status === 'verified').length,
+        registeredUserCount: await this.userRepo.countVerifiedUsers(),
+        streamingUserCount: await this.twitchChannelRepo.countUniqueUsersStreaming(),
       })
     })
 

@@ -73,6 +73,11 @@ where x.user_id = $1`, [id])
   async createUser(user: CreateUser): Promise<number> {
     return (await this.db.insert(TABLE, user)) as number
   }
+
+  async countVerifiedUsers(): Promise<number> {
+    const rows = await this.db.getMany(TABLE, { status: 'verified' })
+    return rows.length
+  }
 }
 
 export default Users

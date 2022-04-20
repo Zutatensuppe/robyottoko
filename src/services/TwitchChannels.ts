@@ -1,4 +1,4 @@
-import Db from "../DbPostgres"
+import Db, { WhereRaw } from "../DbPostgres"
 
 const TABLE = 'robyottoko.twitch_channel'
 
@@ -38,6 +38,16 @@ class TwitchChannels {
       user_id: channel.user_id,
       channel_name: channel.channel_name,
     })
+  }
+
+  async setStreaming(streaming: boolean, where: WhereRaw): Promise<void> {
+    this.db.update(TABLE, { is_streaming: streaming }, where)
+  }
+
+  async countUniqueUsersStreaming(): Promise<number> {
+    const channels = await this.db.getMany(TABLE, { is_streaming: true })
+    const userIds = [...new Set(channels.map(c => c.user_id))]
+    return userIds.length
   }
 
   async allByUserId(user_id: number): Promise<TwitchChannel[]> {
