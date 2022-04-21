@@ -920,6 +920,14 @@ class ModuleManager {
     all(userId) {
         return this.instances[userId] || [];
     }
+    get(userId, name) {
+        for (const m of this.all(userId)) {
+            if (m.name === name) {
+                return m;
+            }
+        }
+        return null;
+    }
 }
 
 const log$j = logger("WebSocketServer.ts");
@@ -936,14 +944,11 @@ class WebSocketServer {
     listen() {
         this._websocketserver = new WebSocket.Server(this.config);
         this._websocketserver.on('connection', async (socket, request) => {
+            // note: here the socket is already set in _websocketserver.clients !
+            // but it has no user_id or module set yet!
             const pathname = new URL(this.connectstring()).pathname;
-            if (request.url?.indexOf(pathname) !== 0) {
-                log$j.info('bad request url: ', request.url);
-                socket.close();
-                return;
-            }
+            const relpathfull = request.url?.substring(pathname.length) || '';
             const token = socket.protocol;
-            const relpathfull = request.url.substr(pathname.length);
             const widget_path_to_module_map = {
                 widget_avatar: 'avatar',
                 widget_avatar_receive: 'avatar',
@@ -959,96 +964,91 @@ class WebSocketServer {
             const relpath = relpathfull.startsWith('/') ? relpathfull.substring(1) : relpathfull;
             const widgetModule = widget_path_to_module_map[relpath];
             const token_type = widgetModule ? relpath : null;
+            const moduleName = widgetModule || relpath;
             const tokenInfo = await this.auth.wsTokenFromProtocol(token, token_type);
-            if (!tokenInfo) {
+            socket.user_id = tokenInfo?.user_id;
+            socket.module = moduleName;
+            log$j.log('added socket: ', moduleName, socket.protocol);
+            log$j.log('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
+            socket.on('close', () => {
+                log$j.log('removed socket: ', moduleName, socket.protocol);
+                log$j.log('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
+            });
+            if (request.url?.indexOf(pathname) !== 0) {
+                log$j.info('bad request url: ', request.url);
+                socket.close();
+                return;
+            }
+            if (!tokenInfo || !socket.user_id) {
                 log$j.info('not found token: ', token, relpath);
                 socket.close();
                 return;
             }
-            socket.user_id = tokenInfo.user_id;
+            const m = this.moduleManager.get(socket.user_id, moduleName);
+            // log.info('found a module?', moduleName, !!m)
+            if (m) {
+                const evts = m.getWsEvents();
+                if (evts && evts['conn']) {
+                    // log.info('connected!', moduleName, !!m)
+                    evts['conn'](socket);
+                }
+            }
             socket.on('message', (data) => {
                 try {
                     const unknownData = data;
                     const d = JSON.parse(unknownData);
                     if (d.type && d.type === 'ping') {
                         socket.send(JSON.stringify({ type: 'pong' }));
+                        return;
+                    }
+                    if (m && d.event) {
+                        const evts = m.getWsEvents();
+                        if (evts && evts[d.event]) {
+                            evts[d.event](socket, d);
+                        }
                     }
                 }
                 catch (e) {
-                    // ignore
+                    log$j.error('socket on message', e);
                 }
             });
-            if (relpath === 'core') {
-                socket.module = 'core';
-                // log.info('/conn connected')
-                // not a module
-                // ... doesnt matter
-                return;
-            }
-            // module routing
-            for (const module of this.moduleManager.all(socket.user_id)) {
-                if (module.name !== relpath && module.name !== widgetModule) {
-                    continue;
-                }
-                socket.module = module.name;
-                const evts = module.getWsEvents();
-                if (evts) {
-                    socket.on('message', (data) => {
-                        log$j.info(`ws|${socket.user_id}| `, data);
-                        const unknownData = data;
-                        const d = JSON.parse(unknownData);
-                        if (!d.event) {
-                            return;
-                        }
-                        if (evts[d.event]) {
-                            evts[d.event](socket, d);
-                        }
-                    });
-                    if (evts['conn']) {
-                        evts['conn'](socket);
-                    }
-                }
+        });
+    }
+    isUserConnected(user_id) {
+        return !!this.sockets().find(s => s.user_id === user_id);
+    }
+    _notify(socket, data) {
+        log$j.info(`notifying ${socket.user_id} ${socket.module} (${data.event})`);
+        socket.send(JSON.stringify(data));
+    }
+    notifyOne(user_ids, moduleName, data, socket) {
+        const isConnectedSocket = this.sockets().includes(socket);
+        if (isConnectedSocket
+            && socket.user_id
+            && user_ids.includes(socket.user_id)
+            && socket.module === moduleName) {
+            this._notify(socket, data);
+        }
+        else {
+            log$j.error('tried to notify invalid socket', socket.user_id, socket.module, user_ids, moduleName, isConnectedSocket);
+        }
+    }
+    notifyAll(user_ids, moduleName, data) {
+        this.sockets().forEach((s) => {
+            if (s.user_id && user_ids.includes(s.user_id) && s.module === moduleName) {
+                this._notify(s, data);
             }
         });
     }
-    notifyOne(user_ids, moduleName, data, socket) {
-        if (socket.user_id
-            && user_ids.includes(socket.user_id)
-            && socket.module === moduleName) {
-            log$j.info(`notifying ${socket.user_id} ${moduleName} (${data.event})`);
-            socket.send(JSON.stringify(data));
-        }
-    }
-    isUserConnected(user_id) {
-        return this.sockets([user_id]).length > 0;
-    }
-    sockets(user_ids, moduleName = null) {
+    sockets() {
         if (!this._websocketserver) {
-            log$j.error(`sockets(): _websocketserver is null`);
             return [];
         }
         const sockets = [];
-        this._websocketserver.clients.forEach((socket) => {
-            if (!socket.user_id || !user_ids.includes(socket.user_id)) {
-                // dont add sockets not belonging to user
-                return;
-            }
-            if (moduleName !== null && socket.module !== moduleName) {
-                // dont add sockets not belonging to module
-                return;
-            }
-            sockets.push(socket);
+        this._websocketserver.clients.forEach((s) => {
+            sockets.push(s);
         });
         return sockets;
-    }
-    notifyAll(user_ids, moduleName, data) {
-        if (!this._websocketserver) {
-            log$j.error(`tried to notifyAll, but _websocketserver is null`);
-            return;
-        }
-        this._websocketserver.clients.forEach((socket) => {
-            this.notifyOne(user_ids, moduleName, data, socket);
-        });
     }
     close() {
         if (this._websocketserver) {
@@ -6662,7 +6662,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-21T07:20:59.341Z",
+    buildDate: "2022-04-21T16:19:03.844Z",
     // @ts-ignore
     buildVersion: "1.8.13",
 };
@@ -6819,8 +6819,6 @@ const run = async () => {
             }
         });
     };
-    webSocketServer.listen();
-    await webServer.listen();
     // one for each user
     for (const user of await userRepo.all()) {
         await initForUser(user);
@@ -6828,6 +6826,12 @@ const run = async () => {
     eventHub.on('user_registration_complete', async (user /* User */) => {
         await initForUser(user);
     });
+    // as the last step, start websocketserver and webserver
+    // it needs to be the last step, because modules etc.
+    // need to be set up in advance so that everything is registered
+    // at the point of connection from outside
+    webSocketServer.listen();
+    await webServer.listen();
     const gracefulShutdown = (signal) => {
         log.info(`${signal} received...`);
         log.info('shutting down webserver...');
