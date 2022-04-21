@@ -2,6 +2,7 @@ import { RequestInit } from 'node-fetch'
 import { logger } from '../common/fn'
 import { findIdxFuzzy } from '../fn'
 import { postJson, getJson, asJson, withHeaders, asQueryArgs, requestText, request } from '../net/xhr'
+import Cache from './Cache'
 import { TwitchChannel } from './TwitchChannels'
 
 const log = logger('TwitchHelixClient.ts')
@@ -263,9 +264,19 @@ class TwitchHelixClient {
     return await this._getUserBy({ login: userName })
   }
 
-  async getUserIdByName(userName: string): Promise<string> {
+  async getUserIdByName(userName: string, cache: Cache): Promise<string> {
+    const cacheKey = `TwitchHelixClient::getUserIdByName(${userName})`
+    let userId = String(await cache.get(cacheKey))
+    if (!userId) {
+      userId = await this._getUserIdByNameUncached(userName)
+      await cache.set(cacheKey, userId)
+    }
+    return userId
+  }
+
+  async _getUserIdByNameUncached(userName: string): Promise<string> {
     const user = await this.getUserByName(userName)
-    return user ? user.id : ''
+    return user ? String(user.id) : ''
   }
 
   // https://dev.twitch.tv/docs/api/reference#get-clips
