@@ -15,6 +15,15 @@ class ModuleManager {
   all(userId: number): Module[] {
     return this.instances[userId] || []
   }
+
+  get(userId: number, name: string): Module | null {
+    for (const m of this.all(userId)) {
+      if (m.name === name) {
+        return m
+      }
+    }
+    return null
+  }
 }
 
 export default ModuleManager

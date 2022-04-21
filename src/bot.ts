@@ -214,9 +214,6 @@ const run = async () => {
     })
   }
 
-  webSocketServer.listen()
-  await webServer.listen()
-
   // one for each user
   for (const user of await userRepo.all()) {
     await initForUser(user)
@@ -225,6 +222,13 @@ const run = async () => {
   eventHub.on('user_registration_complete', async (user: any /* User */) => {
     await initForUser(user)
   })
+
+  // as the last step, start websocketserver and webserver
+  // it needs to be the last step, because modules etc.
+  // need to be set up in advance so that everything is registered
+  // at the point of connection from outside
+  webSocketServer.listen()
+  await webServer.listen()
 
   const gracefulShutdown = (signal: 'SIGUSR2' | 'SIGINT' | 'SIGTERM') => {
     log.info(`${signal} received...`)
