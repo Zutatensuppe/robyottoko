@@ -966,6 +966,18 @@ class WebSocketServer {
                 return;
             }
             socket.user_id = tokenInfo.user_id;
+            socket.on('message', (data) => {
+                try {
+                    const unknownData = data;
+                    const d = JSON.parse(unknownData);
+                    if (d.type && d.type === 'ping') {
+                        socket.send(JSON.stringify({ type: 'pong' }));
+                    }
+                }
+                catch (e) {
+                    // ignore
+                }
+            });
             if (relpath === 'core') {
                 socket.module = 'core';
                 // log.info('/conn connected')
@@ -983,10 +995,6 @@ class WebSocketServer {
                 if (evts) {
                     socket.on('message', (data) => {
                         log$j.info(`ws|${socket.user_id}| `, data);
-                        if (!data) {
-                            // ping
-                            return;
-                        }
                         const unknownData = data;
                         const d = JSON.parse(unknownData);
                         if (!d.event) {
@@ -6654,7 +6662,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-21T06:45:34.356Z",
+    buildDate: "2022-04-21T07:20:59.341Z",
     // @ts-ignore
     buildVersion: "1.8.13",
 };
