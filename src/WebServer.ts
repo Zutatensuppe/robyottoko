@@ -21,6 +21,7 @@ import ModuleManager from './mod/ModuleManager'
 import Auth from './net/Auth'
 import { UpdateUser } from './services/Users'
 import { Emitter, EventType } from 'mitt'
+import Cache from './services/Cache'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -108,6 +109,7 @@ class WebServer {
   private handle: http.Server | null
   private eventHub: Emitter<Record<EventType, unknown>>
   private db: Db
+  private cache: Cache
   private userRepo: Users
   private tokenRepo: Tokens
   private mail: MailService
@@ -123,6 +125,7 @@ class WebServer {
   constructor(
     eventHub: Emitter<Record<EventType, unknown>>,
     db: Db,
+    cache: Cache,
     userRepo: Users,
     tokenRepo: Tokens,
     mail: MailService,
@@ -135,6 +138,7 @@ class WebServer {
   ) {
     this.eventHub = eventHub
     this.db = db
+    this.cache = cache
     this.userRepo = userRepo
     this.tokenRepo = tokenRepo
     this.mail = mail
@@ -605,7 +609,7 @@ class WebServer {
       try {
         // todo: maybe fill twitchChannels instead of empty array
         const client = new TwitchHelixClient(clientId, clientSecret, [])
-        res.send({ id: await client.getUserIdByName(req.body.name) })
+        res.send({ id: await client.getUserIdByName(req.body.name, this.cache) })
       } catch (e) {
         res.status(500).send("Something went wrong!");
       }

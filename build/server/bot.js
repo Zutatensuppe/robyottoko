@@ -1149,9 +1149,18 @@ class TwitchHelixClient {
     async getUserByName(userName) {
         return await this._getUserBy({ login: userName });
     }
-    async getUserIdByName(userName) {
+    async getUserIdByName(userName, cache) {
+        const cacheKey = `TwitchHelixClient::getUserIdByName(${userName})`;
+        let userId = String(await cache.get(cacheKey));
+        if (!userId) {
+            userId = await this._getUserIdByNameUncached(userName);
+            await cache.set(cacheKey, userId);
+        }
+        return userId;
+    }
+    async _getUserIdByNameUncached(userName) {
         const user = await this.getUserByName(userName);
-        return user ? user.id : '';
+        return user ? String(user.id) : '';
     }
     // https://dev.twitch.tv/docs/api/reference#get-clips
     async getClipByUserId(userId, startedAtRfc3339, endedAtRfc3339, maxDurationSeconds) {
@@ -1446,9 +1455,10 @@ const widgets = [
     },
 ];
 class WebServer {
-    constructor(eventHub, db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, configHttp, configTwitch, wss, auth) {
+    constructor(eventHub, db, cache, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, configHttp, configTwitch, wss, auth) {
         this.eventHub = eventHub;
         this.db = db;
+        this.cache = cache;
         this.userRepo = userRepo;
         this.tokenRepo = tokenRepo;
         this.mail = mail;
@@ -1877,7 +1887,7 @@ class WebServer {
             try {
                 // todo: maybe fill twitchChannels instead of empty array
                 const client = new TwitchHelixClient(clientId, clientSecret, []);
-                res.send({ id: await client.getUserIdByName(req.body.name) });
+                res.send({ id: await client.getUserIdByName(req.body.name, this.cache) });
             }
             catch (e) {
                 res.status(500).send("Something went wrong!");
@@ -6668,7 +6678,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-21T19:22:51.706Z",
+    buildDate: "2022-04-21T20:42:22.443Z",
     // @ts-ignore
     buildVersion: "1.9.0",
 };
@@ -6700,7 +6710,7 @@ const run = async () => {
     const eventHub = mitt();
     const moduleManager = new ModuleManager();
     const webSocketServer = new WebSocketServer(moduleManager, config.ws, auth);
-    const webServer = new WebServer(eventHub, db, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, config.http, config.twitch, webSocketServer, auth);
+    const webServer = new WebServer(eventHub, db, cache, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, config.http, config.twitch, webSocketServer, auth);
     class BotImpl {
         constructor() {
             this.userVariableInstances = {};
@@ -6804,7 +6814,7 @@ const run = async () => {
                     twitchChannelRepo.setStreaming(!!stream, { user_id: user.id, channel_id: twitchChannel.channel_id });
                     continue;
                 }
-                const channelId = await client.getUserIdByName(twitchChannel.channel_name);
+                const channelId = await client.getUserIdByName(twitchChannel.channel_name, cache);
                 if (!channelId) {
                     continue;
                 }

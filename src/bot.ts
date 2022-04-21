@@ -59,6 +59,7 @@ const run = async () => {
   const webServer = new WebServer(
     eventHub,
     db,
+    cache,
     userRepo,
     tokenRepo,
     mail,
@@ -185,13 +186,12 @@ const run = async () => {
       }
       const twitchChannels = await twitchChannelRepo.allByUserId(user.id)
       for (const twitchChannel of twitchChannels) {
-        // TODO: getUserIdByName should be cached..
         if (twitchChannel.channel_id) {
           const stream = await client.getStreamByUserId(twitchChannel.channel_id)
           twitchChannelRepo.setStreaming(!!stream, { user_id: user.id, channel_id: twitchChannel.channel_id })
           continue
         }
-        const channelId = await client.getUserIdByName(twitchChannel.channel_name)
+        const channelId = await client.getUserIdByName(twitchChannel.channel_name, cache)
         if (!channelId) {
           continue
         }
