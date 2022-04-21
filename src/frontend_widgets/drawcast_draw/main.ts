@@ -1,5 +1,7 @@
 import * as Vue from 'vue'
 
+import './main.scss'
+
 import Page from './Page.vue'
 import IconPen from './components/IconPen.vue'
 import IconEyedropper from './components/IconEyedropper.vue'

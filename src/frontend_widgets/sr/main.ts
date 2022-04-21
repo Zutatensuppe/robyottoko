@@ -1,5 +1,7 @@
 import * as Vue from 'vue'
 
+import './main.scss'
+
 import Page from './Page.vue'
 import ResponsiveImage from './../../frontend/components/ResponsiveImage.vue'
 import Youtube from './../../frontend/components/Youtube.vue'
