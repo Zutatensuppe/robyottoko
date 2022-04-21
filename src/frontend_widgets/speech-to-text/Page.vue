@@ -358,6 +358,10 @@ export default defineComponent({
       }
     },
   },
+  created() {
+    // @ts-ignore
+    import("./main.css");
+  },
   mounted() {
     this.ws = util.wsClient(this.widget);
     this.ws.onMessage("text", (data: { recognized: string, translated: string }) => {

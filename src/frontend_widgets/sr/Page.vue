@@ -29,6 +29,10 @@ import {
 import { PlaylistItem } from "../../types";
 import util from "../util";
 
+import ResponsiveImage from './../../frontend/components/ResponsiveImage.vue'
+import Youtube from './../../frontend/components/Youtube.vue'
+import ListItem from './components/ListItem.vue'
+
 const log = logger('Page.vue')
 
 interface ComponentData {
@@ -43,6 +47,11 @@ interface ComponentData {
 }
 
 export default defineComponent({
+  components: {
+    ResponsiveImage,
+    Youtube,
+    ListItem,
+  },
   data(): ComponentData {
     return {
       ws: null,
@@ -193,6 +202,10 @@ export default defineComponent({
       this.settings = settings;
       this.adjustVolume();
     },
+  },
+  created() {
+    // @ts-ignore
+    import("./main.scss");
   },
   mounted() {
     this.ws = util.wsClient("sr");

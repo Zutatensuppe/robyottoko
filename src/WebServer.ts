@@ -27,11 +27,11 @@ const __dirname = dirname(__filename)
 
 const log = logger('WebServer.ts')
 
-const widgetTemplate = (widget: string) => {
+const widgetTemplate = () => {
   if (process.env.WIDGET_DUMMY) {
     return process.env.WIDGET_DUMMY
   }
-  return '../public/static/widgets/' + widget + '/index.html'
+  return '../public/static/widgets/index.html'
 }
 
 interface WidgetDefinition {
@@ -199,9 +199,7 @@ class WebServer {
     const app = express()
 
     const templates = new Templates(__dirname)
-    for (const widget of widgets) {
-      await templates.add(widgetTemplate(widget.type))
-    }
+    await templates.add(widgetTemplate())
     await templates.add('templates/twitch_redirect_uri.html')
 
     app.get('/pub/:id', async (req, res, _next) => {
@@ -680,8 +678,11 @@ class WebServer {
         return
       }
       log.debug(`/widget/:widget_type/:widget_token/`, type, token)
-      if (widgets.findIndex(w => w.type === type) !== -1) {
-        res.send(templates.render(widgetTemplate(type), {
+      const w = widgets.find(w => w.type === type)
+      if (w) {
+        res.send(templates.render(widgetTemplate(), {
+          widget: w.type,
+          title: w.title,
           wsUrl: this.wss.connectstring(),
           widgetToken: token,
         }))

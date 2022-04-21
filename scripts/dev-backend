@@ -1,5 +1,6 @@
 #!/bin/sh
 
+export VITE_ENV=development
 export APP_CONFIG=config.json
 export WIDGET_DUMMY=templates/widget_dummy.html
 nodemon \

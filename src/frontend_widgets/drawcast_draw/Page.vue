@@ -227,6 +227,12 @@ import WsClient from "../../frontend/WsClient";
 import { DrawcastFavoriteList } from "../../types";
 import util from "../util";
 import { DrawcastModuleWsDataData } from "../../mod/modules/DrawcastModuleCommon";
+import IconPen from './components/IconPen.vue'
+import IconEyedropper from './components/IconEyedropper.vue'
+import IconSend from './components/IconSend.vue'
+import IconUndo from './components/IconUndo.vue'
+import IconEraser from './components/IconEraser.vue'
+import IconClear from './components/IconClear.vue'
 
 const log = logger("Page.vue");
 
@@ -330,6 +336,14 @@ const fillpath = (
 };
 
 export default defineComponent({
+  components: {
+    IconPen,
+    IconEyedropper,
+    IconSend,
+    IconUndo,
+    IconEraser,
+    IconClear,
+  },
   data() {
     return {
       ws: null as WsClient | null,
@@ -682,6 +696,10 @@ export default defineComponent({
         this.undo();
       }
     },
+  },
+  created() {
+    // @ts-ignore
+    import("./main.scss");
   },
   mounted() {
     this.ctx = this.draftcanvas.getContext("2d") as CanvasRenderingContext2D;

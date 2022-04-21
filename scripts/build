@@ -12,13 +12,4 @@ cp -r src/config_data build/server/
 npm run vite -- build --config vite.config.js
 
 # widgets build
-WIDGET=avatar                 npm run vite -- build --config widget.vite.config.js
-WIDGET=avatar_receive         npm run vite -- build --config widget.vite.config.js
-WIDGET=drawcast_control       npm run vite -- build --config widget.vite.config.js
-WIDGET=drawcast_draw          npm run vite -- build --config widget.vite.config.js
-WIDGET=drawcast_receive       npm run vite -- build --config widget.vite.config.js
-WIDGET=media                  npm run vite -- build --config widget.vite.config.js
-WIDGET=pomo                   npm run vite -- build --config widget.vite.config.js
-WIDGET=speech-to-text         npm run vite -- build --config widget.vite.config.js
-WIDGET=speech-to-text_receive npm run vite -- build --config widget.vite.config.js
-WIDGET=sr                     npm run vite -- build --config widget.vite.config.js
+npm run vite -- build --config widget.vite.config.js

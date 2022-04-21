@@ -118,6 +118,10 @@ export default defineComponent({
       }, 1000);
     },
   },
+  created() {
+    // @ts-ignore
+    import("./main.scss");
+  },
   mounted() {
     this.ws = util.wsClient("pomo");
     this.ws.onMessage("init", (data: PomoModuleWsDataData) => {
