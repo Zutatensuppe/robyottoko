@@ -1,4 +1,4 @@
-import { logger } from "../common/fn"
+import { logger, nonce } from "../common/fn"
 
 const CODE_GOING_AWAY = 1001
 const CODE_CUSTOM_DISCONNECT = 4000
@@ -11,6 +11,8 @@ const log = logger('WsWrapper.ts')
  * - automatically tries to reconnect on close
  */
 export default class WsWrapper {
+  id: string | null = null
+
   // actual ws handle
   handle: WebSocket | null = null
 
@@ -24,6 +26,8 @@ export default class WsWrapper {
 
   protocols: string
 
+  timerId: any = 0;
+
   public onopen: (e: Event) => void = () => {
     // pass
   }
@@ -32,6 +36,21 @@ export default class WsWrapper {
   }
   public onmessage: (e: MessageEvent<any>) => void = () => {
     // pass
+  }
+
+  keepAlive(timeout = 20000) {
+    if (this.handle && this.handle.readyState == this.handle.OPEN) {
+      this.handle.send('');
+    }
+    this.timerId = setTimeout(() => {
+      this.keepAlive(timeout)
+    }, timeout);
+  }
+
+  cancelKeepAlive() {
+    if (this.timerId) {
+      clearTimeout(this.timerId);
+    }
   }
 
   constructor(addr: string, protocols: string) {
@@ -48,6 +67,8 @@ export default class WsWrapper {
   }
 
   connect() {
+    const id = nonce(10)
+    this.id = id
     const reconnect = () => {
       if (this.reconnectTimeout) {
         clearTimeout(this.reconnectTimeout)
@@ -55,68 +76,54 @@ export default class WsWrapper {
       this.reconnectTimeout = setTimeout(() => { this.connect() }, 1000)
     }
 
-    try {
-      log.info(`trying to connect: ${this.addr}`)
-      let timedOut = false
-      const ws = new WebSocket(this.addr, this.protocols)
-      setTimeout(() => {
-        if (!this.handle) {
-          // connection was not opened
-          timedOut = true
-          log.info(`connect attempt timed out`)
-          // this aborts the current connection attempt
-          ws.close(CODE_CUSTOM_DISCONNECT)
-
-          reconnect()
-        } else {
-          // connection was made
-        }
-      }, 5000)
-
-      ws.onopen = (e) => {
-        if (timedOut) {
-          // this should not be required, but
-          // just in case we do a custom disconnect here
-          // so that no reconnect is attempted
-          ws.close(CODE_CUSTOM_DISCONNECT)
-          return
-        }
-
-        // prevent two handles being active
-        this.disconnect()
-
-        log.info('ws connected')
-        this.handle = ws
-        // should have a queue worker
-        while (this.sendBuffer.length > 0) {
-          const text = this.sendBuffer.shift()
-          if (text) {
-            this.handle.send(text)
-          }
-        }
-        this.onopen(e)
+    log.info(`trying to connect: ${this.addr}`, id)
+    const ws = new WebSocket(this.addr, this.protocols)
+    ws.onopen = (e) => {
+      log.info('ws connected', id)
+      if (id !== this.id) {
+        // this is not the last connection.. ignore it
+        log.info('connected but it is not the last attempt', id, this.id)
+        ws.close(CODE_CUSTOM_DISCONNECT)
+        return
       }
-      ws.onmessage = (e) => {
-        this.onmessage(e)
+
+      if (this.handle) {
+        // should not happen...
+        log.error(`handle already existed, closing old one and replacing it`, id)
+        this.handle.close(CODE_CUSTOM_DISCONNECT)
       }
-      ws.onclose = (e) => {
-        this.handle = null
-        this.onclose(e)
-        if (e.code === CODE_CUSTOM_DISCONNECT) {
-          log.info('custom disconnect, will not reconnect')
-        } else if (e.code === CODE_GOING_AWAY) {
-          log.info('going away, will not reconnect')
-        } else {
-          log.info(`connection closed, trying to reconnect. code: ${e.code}`)
-          reconnect()
+      this.handle = ws
+      // should have a queue worker
+      while (this.sendBuffer.length > 0) {
+        const text = this.sendBuffer.shift()
+        if (text) {
+          this.handle.send(text)
         }
       }
-    } catch (e) {
-      // something went wrong....
-      log.error(e)
+      this.onopen(e)
+      this.keepAlive()
+    }
+    ws.onmessage = (e) => {
+      this.onmessage(e)
+    }
+    ws.onerror = (e) => {
+      this.cancelKeepAlive()
+      log.error(e, id)
+      // this will cause a close with reason 1006
+      // reconnect will automatically happen
+    }
+    ws.onclose = (e) => {
+      this.cancelKeepAlive()
       this.handle = null
       this.onclose(e)
-      reconnect()
+      if (e.code === CODE_CUSTOM_DISCONNECT) {
+        log.info('custom disconnect, will not reconnect', id)
+      } else if (e.code === CODE_GOING_AWAY) {
+        log.info('going away, will not reconnect', id)
+      } else {
+        log.info(`connection closed, trying to reconnect. code: ${e.code}`, id)
+        reconnect()
+      }
     }
   }
 

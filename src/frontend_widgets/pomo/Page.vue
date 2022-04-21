@@ -136,6 +136,9 @@ export default defineComponent({
     if (this.timeout) {
       clearTimeout(this.timeout);
     }
+    if (this.ws) {
+      this.ws.disconnect()
+    }
   },
 });
 </script>
