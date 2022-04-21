@@ -27,6 +27,8 @@ export default class WsWrapper {
   protocols: string
 
   timerId: any = 0;
+  gotPong: boolean = false;
+  pongWaitTimerId: any = 0;
 
   public onopen: (e: Event) => void = () => {
     // pass
@@ -40,7 +42,17 @@ export default class WsWrapper {
 
   keepAlive(timeout = 20000) {
     if (this.handle && this.handle.readyState == this.handle.OPEN) {
-      this.handle.send('');
+      this.gotPong = false
+      this.handle.send(JSON.stringify({ type: 'ping' }));
+      if (this.pongWaitTimerId) {
+        clearTimeout(this.pongWaitTimerId)
+      }
+      this.pongWaitTimerId = setTimeout(() => {
+        if (!this.gotPong && this.handle) {
+          // close without custom disconnect, to trigger reconnect
+          this.handle.close()
+        }
+      }, 1000) // server should answer more quickly in reality
     }
     this.timerId = setTimeout(() => {
       this.keepAlive(timeout)
@@ -104,6 +116,15 @@ export default class WsWrapper {
       this.keepAlive()
     }
     ws.onmessage = (e) => {
+      try {
+        const parsed = JSON.parse(e.data)
+        if (parsed.type && parsed.type === 'pong') {
+          this.gotPong = true
+          return
+        }
+      } catch (e) {
+        // ignore
+      }
       this.onmessage(e)
     }
     ws.onerror = (e) => {

@@ -73,6 +73,18 @@ class WebSocketServer {
 
       socket.user_id = tokenInfo.user_id
 
+      socket.on('message', (data) => {
+        try {
+          const unknownData = data as unknown
+          const d = JSON.parse(unknownData as string)
+          if (d.type && d.type === 'ping') {
+            socket.send(JSON.stringify({ type: 'pong' }))
+          }
+        } catch (e) {
+          // ignore
+        }
+      })
+
       if (relpath === 'core') {
         socket.module = 'core'
         // log.info('/conn connected')
@@ -92,10 +104,6 @@ class WebSocketServer {
         if (evts) {
           socket.on('message', (data) => {
             log.info(`ws|${socket.user_id}| `, data)
-            if (!data) {
-              // ping
-              return
-            }
             const unknownData = data as unknown
             const d = JSON.parse(unknownData as string)
             if (!d.event) {
