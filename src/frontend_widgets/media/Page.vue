@@ -29,13 +29,15 @@ export default defineComponent({
       commandId: '',
     };
   },
-  created() {
-    this.commandId = util.getParam('id')
-  },
   computed: {
     q(): MediaQueueElementInstance {
       return this.$refs.q as MediaQueueElementInstance
     },
+  },
+  created() {
+    // @ts-ignore
+    import("./main.scss");
+    this.commandId = util.getParam('id')
   },
   mounted() {
     this.ws = util.wsClient("media");

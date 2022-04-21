@@ -299,6 +299,8 @@ export default defineComponent({
     },
   },
   created() {
+    // @ts-ignore
+    import('./main.css');
     this.avatarFixed = util.getParam('avatar')
   },
   mounted() {

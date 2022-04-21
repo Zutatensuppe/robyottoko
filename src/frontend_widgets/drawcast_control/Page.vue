@@ -67,6 +67,10 @@ export default defineComponent({
       this.ws.send(JSON.stringify(data));
     },
   },
+  created() {
+    // @ts-ignore
+    import('./main.scss');
+  },
   mounted() {
     this.ws = util.wsClient("drawcast_control");
     this.ws.onMessage("init", async (data: DrawcastData) => {

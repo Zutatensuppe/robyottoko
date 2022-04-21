@@ -965,8 +965,13 @@ class WebSocketServer {
             const widgetModule = widget_path_to_module_map[relpath];
             const token_type = widgetModule ? relpath : null;
             const moduleName = widgetModule || relpath;
-            const tokenInfo = await this.auth.wsTokenFromProtocol(token, token_type);
-            socket.user_id = tokenInfo?.user_id;
+            if (process.env.VITE_ENV === 'development') {
+                socket.user_id = parseInt(token, 10);
+            }
+            else {
+                const tokenInfo = await this.auth.wsTokenFromProtocol(token, token_type);
+                socket.user_id = tokenInfo?.user_id;
+            }
             socket.module = moduleName;
             log$j.log('added socket: ', moduleName, socket.protocol);
             log$j.log('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
@@ -979,7 +984,7 @@ class WebSocketServer {
                 socket.close();
                 return;
             }
-            if (!tokenInfo || !socket.user_id) {
+            if (!socket.user_id) {
                 log$j.info('not found token: ', token, relpath);
                 socket.close();
                 return;
@@ -1372,11 +1377,11 @@ class Variables {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const log$h = logger('WebServer.ts');
-const widgetTemplate = (widget) => {
+const widgetTemplate = () => {
     if (process.env.WIDGET_DUMMY) {
         return process.env.WIDGET_DUMMY;
     }
-    return '../public/static/widgets/' + widget + '/index.html';
+    return '../public/static/widgets/index.html';
 };
 const widgets = [
     {
@@ -1501,9 +1506,7 @@ class WebServer {
         const hostname = this.hostname;
         const app = express();
         const templates = new Templates(__dirname);
-        for (const widget of widgets) {
-            await templates.add(widgetTemplate(widget.type));
-        }
+        await templates.add(widgetTemplate());
         await templates.add('templates/twitch_redirect_uri.html');
         app.get('/pub/:id', async (req, res, _next) => {
             const row = await this.db.get('robyottoko.pub', {
@@ -1935,8 +1938,11 @@ class WebServer {
                 return;
             }
             log$h.debug(`/widget/:widget_type/:widget_token/`, type, token);
-            if (widgets.findIndex(w => w.type === type) !== -1) {
-                res.send(templates.render(widgetTemplate(type), {
+            const w = widgets.find(w => w.type === type);
+            if (w) {
+                res.send(templates.render(widgetTemplate(), {
+                    widget: w.type,
+                    title: w.title,
                     wsUrl: this.wss.connectstring(),
                     widgetToken: token,
                 }));
@@ -6662,7 +6668,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-21T16:39:58.931Z",
+    buildDate: "2022-04-21T19:19:22.692Z",
     // @ts-ignore
     buildVersion: "1.8.13",
 };
