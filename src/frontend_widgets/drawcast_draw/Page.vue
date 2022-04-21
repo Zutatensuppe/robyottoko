@@ -796,6 +796,9 @@ export default defineComponent({
     });
   },
   unmounted() {
+    if (this.ws) {
+      this.ws.disconnect()
+    }
     window.removeEventListener("mousemove", this.mousemove);
     window.removeEventListener("mouseup", this.cancelDraw);
     window.removeEventListener("touchend", this.cancelDraw);

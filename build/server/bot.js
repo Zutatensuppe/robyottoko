@@ -929,7 +929,6 @@ class WebSocketServer {
         this.config = config;
         this.auth = auth;
         this._websocketserver = null;
-        this._interval = null;
     }
     connectstring() {
         return this.config.connectstring;
@@ -967,10 +966,6 @@ class WebSocketServer {
                 return;
             }
             socket.user_id = tokenInfo.user_id;
-            socket.isAlive = true;
-            socket.on('pong', function () {
-                socket.isAlive = true;
-            });
             if (relpath === 'core') {
                 socket.module = 'core';
                 // log.info('/conn connected')
@@ -988,6 +983,10 @@ class WebSocketServer {
                 if (evts) {
                     socket.on('message', (data) => {
                         log$j.info(`ws|${socket.user_id}| `, data);
+                        if (!data) {
+                            // ping
+                            return;
+                        }
                         const unknownData = data;
                         const d = JSON.parse(unknownData);
                         if (!d.event) {
@@ -1003,30 +1002,9 @@ class WebSocketServer {
                 }
             }
         });
-        this._interval = setInterval(() => {
-            if (this._websocketserver === null) {
-                return;
-            }
-            this._websocketserver.clients.forEach((socket) => {
-                if (socket.isAlive === false) {
-                    return socket.terminate();
-                }
-                socket.isAlive = false;
-                socket.ping(() => {
-                    // pass
-                });
-            });
-        }, 30 * SECOND);
-        this._websocketserver.on('close', () => {
-            if (this._interval === null) {
-                return;
-            }
-            clearInterval(this._interval);
-        });
     }
     notifyOne(user_ids, moduleName, data, socket) {
-        if (socket.isAlive
-            && socket.user_id
+        if (socket.user_id
             && user_ids.includes(socket.user_id)
             && socket.module === moduleName) {
             log$j.info(`notifying ${socket.user_id} ${moduleName} (${data.event})`);
@@ -1043,10 +1021,6 @@ class WebSocketServer {
         }
         const sockets = [];
         this._websocketserver.clients.forEach((socket) => {
-            if (!socket.isAlive) {
-                // dont add non alive sockets
-                return;
-            }
             if (!socket.user_id || !user_ids.includes(socket.user_id)) {
                 // dont add sockets not belonging to user
                 return;
@@ -6680,7 +6654,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-20T21:25:09.355Z",
+    buildDate: "2022-04-21T06:45:34.356Z",
     // @ts-ignore
     buildVersion: "1.8.13",
 };

@@ -264,5 +264,10 @@ export default defineComponent({
     });
     this.ws.connect();
   },
+  unmounted() {
+    if (this.ws) {
+      this.ws.disconnect()
+    }
+  },
 });
 </script>

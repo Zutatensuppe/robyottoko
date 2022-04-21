@@ -2,25 +2,15 @@
   <div class="p-2">
     <h1 class="title">Drawings awaiting approval</h1>
     <div v-if="manualApproval.items.length">
-      <div
-        class="image-to-approve card mr-1"
-        v-for="(url, idx2) in manualApproval.items"
-        :key="idx2"
-      >
+      <div class="image-to-approve card mr-1" v-for="(url, idx2) in manualApproval.items" :key="idx2">
         <div class="card-body">
           <img :src="url" class="thumbnail mr-1" />
         </div>
         <div class="card-footer">
-          <span
-            class="card-footer-item button is-small is-success is-light"
-            @click="approveImage(url)"
-          >
+          <span class="card-footer-item button is-small is-success is-light" @click="approveImage(url)">
             Approve!
           </span>
-          <span
-            class="card-footer-item button is-small is-danger is-light"
-            @click="denyImage(url)"
-          >
+          <span class="card-footer-item button is-small is-danger is-light" @click="denyImage(url)">
             Deny!
           </span>
         </div>
@@ -128,6 +118,11 @@ export default defineComponent({
       }
     );
     this.ws.connect();
+  },
+  unmounted() {
+    if (this.ws) {
+      this.ws.disconnect()
+    }
   },
 });
 </script>

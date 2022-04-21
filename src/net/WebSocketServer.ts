@@ -11,7 +11,6 @@ type WebSocketNotifyData = any
 
 export interface Socket extends WebSocket.WebSocket {
   user_id?: number
-  isAlive?: boolean
   module?: string
 }
 
@@ -21,7 +20,6 @@ class WebSocketServer {
   private auth: Auth
 
   private _websocketserver: WebSocket.Server | null
-  private _interval: NodeJS.Timer | null
 
   constructor(
     moduleManager: ModuleManager,
@@ -32,7 +30,6 @@ class WebSocketServer {
     this.config = config
     this.auth = auth
     this._websocketserver = null
-    this._interval = null
   }
 
   connectstring() {
@@ -75,10 +72,6 @@ class WebSocketServer {
       }
 
       socket.user_id = tokenInfo.user_id
-      socket.isAlive = true
-      socket.on('pong', function () {
-        socket.isAlive = true;
-      })
 
       if (relpath === 'core') {
         socket.module = 'core'
@@ -99,6 +92,10 @@ class WebSocketServer {
         if (evts) {
           socket.on('message', (data) => {
             log.info(`ws|${socket.user_id}| `, data)
+            if (!data) {
+              // ping
+              return
+            }
             const unknownData = data as unknown
             const d = JSON.parse(unknownData as string)
             if (!d.event) {
@@ -116,34 +113,11 @@ class WebSocketServer {
         }
       }
     })
-
-    this._interval = setInterval(() => {
-      if (this._websocketserver === null) {
-        return
-      }
-      this._websocketserver.clients.forEach((socket: Socket) => {
-        if (socket.isAlive === false) {
-          return socket.terminate()
-        }
-        socket.isAlive = false
-        socket.ping(() => {
-          // pass
-        })
-      })
-    }, 30 * SECOND)
-
-    this._websocketserver.on('close', () => {
-      if (this._interval === null) {
-        return
-      }
-      clearInterval(this._interval)
-    })
   }
 
   notifyOne(user_ids: number[], moduleName: string, data: WebSocketNotifyData, socket: Socket) {
     if (
-      socket.isAlive
-      && socket.user_id
+      socket.user_id
       && user_ids.includes(socket.user_id)
       && socket.module === moduleName
     ) {
@@ -164,10 +138,6 @@ class WebSocketServer {
 
     const sockets: Socket[] = []
     this._websocketserver.clients.forEach((socket: Socket) => {
-      if (!socket.isAlive) {
-        // dont add non alive sockets
-        return
-      }
       if (!socket.user_id || !user_ids.includes(socket.user_id)) {
         // dont add sockets not belonging to user
         return
