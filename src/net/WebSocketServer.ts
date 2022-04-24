@@ -62,12 +62,13 @@ class WebSocketServer {
       const token_type = widgetModule ? relpath : null
       const moduleName = widgetModule || relpath
 
-      if (process.env.VITE_ENV === 'development') {
+      const tokenInfo = await this.auth.wsTokenFromProtocol(token, token_type)
+      if (tokenInfo) {
+        socket.user_id = tokenInfo.user_id
+      } else if (process.env.VITE_ENV === 'development') {
         socket.user_id = parseInt(token, 10)
-      } else {
-        const tokenInfo = await this.auth.wsTokenFromProtocol(token, token_type)
-        socket.user_id = tokenInfo?.user_id
       }
+
       socket.module = moduleName
 
       log.log('added socket: ', moduleName, socket.protocol)
