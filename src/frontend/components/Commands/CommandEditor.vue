@@ -164,7 +164,7 @@
               <td>
                 <input type="checkbox" v-model="item.data.excludeFromGlobalWidget" />
                 <a class="button is-small ml-1" v-if="item.data.excludeFromGlobalWidget"
-                  :href="`${widgetUrl}?id=${item.id}`">Open widget</a>
+                  :href="`${widgetUrl}?id=${item.id}`" target="_blank">Open widget</a>
                 <div class="help">
                   If this checkbox is checked, the media will not be played in
                   the regular media widget. A button will appear with a special
@@ -305,7 +305,7 @@
                                 ) in autocompletableVariables(v.name)" :key="idx3"
                                 @click="v.name = autocompleteVar.var.name">
                                 {{ autocompleteVar.var.name }} ({{
-                                  autocompleteVar.type
+                                    autocompleteVar.type
                                 }}, <code>{{ autocompleteVar.var.value }}</code>)
                               </a>
                             </div>

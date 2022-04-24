@@ -965,12 +965,12 @@ class WebSocketServer {
             const widgetModule = widget_path_to_module_map[relpath];
             const token_type = widgetModule ? relpath : null;
             const moduleName = widgetModule || relpath;
-            if (process.env.VITE_ENV === 'development') {
-                socket.user_id = parseInt(token, 10);
+            const tokenInfo = await this.auth.wsTokenFromProtocol(token, token_type);
+            if (tokenInfo) {
+                socket.user_id = tokenInfo.user_id;
             }
-            else {
-                const tokenInfo = await this.auth.wsTokenFromProtocol(token, token_type);
-                socket.user_id = tokenInfo?.user_id;
+            else if (process.env.VITE_ENV === 'development') {
+                socket.user_id = parseInt(token, 10);
             }
             socket.module = moduleName;
             log$j.log('added socket: ', moduleName, socket.protocol);
@@ -6678,7 +6678,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-21T20:42:22.443Z",
+    buildDate: "2022-04-24T14:53:47.904Z",
     // @ts-ignore
     buildVersion: "1.9.0",
 };
@@ -6808,7 +6808,6 @@ const run = async () => {
             }
             const twitchChannels = await twitchChannelRepo.allByUserId(user.id);
             for (const twitchChannel of twitchChannels) {
-                // TODO: getUserIdByName should be cached..
                 if (twitchChannel.channel_id) {
                     const stream = await client.getStreamByUserId(twitchChannel.channel_id);
                     twitchChannelRepo.setStreaming(!!stream, { user_id: user.id, channel_id: twitchChannel.channel_id });
