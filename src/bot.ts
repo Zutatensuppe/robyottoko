@@ -173,12 +173,7 @@ const run = async () => {
           })
         }
       }
-      problems.push({
-        message: 'access_token_invalid',
-        details: {
-          channel_name: 'aaa',
-        },
-      })
+
       const data = { event: 'status', data: { problems } }
       webSocketServer.notifyAll([user.id], 'core', data)
       return setTimeout(updateUserFrontendStatus, 1 * MINUTE)
