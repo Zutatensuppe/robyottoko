@@ -9,7 +9,7 @@
         <ol class="pl-4">
           <li v-for="(problem, idx) in problems" :key="idx">
             <div v-if="problem.message === 'access_token_invalid'">
-              The Access Token for channel <b>{{ problem.detail.channel_name }}</b> is invalid. Please go to
+              The Access Token for channel <b>{{ problem.details.channel_name }}</b> is invalid. Please go to
               <router-link :to="{ name: 'settings' }">Settings</router-link> and update the
               token.
             </div>

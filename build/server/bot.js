@@ -932,7 +932,8 @@ class ModuleManager {
 
 const log$j = logger("WebSocketServer.ts");
 class WebSocketServer {
-    constructor(moduleManager, config, auth) {
+    constructor(eventHub, moduleManager, config, auth) {
+        this.eventHub = eventHub;
         this.moduleManager = moduleManager;
         this.config = config;
         this.auth = auth;
@@ -989,6 +990,8 @@ class WebSocketServer {
                 socket.close();
                 return;
             }
+            // user connected
+            this.eventHub.emit('wss_user_connected', socket);
             const m = this.moduleManager.get(socket.user_id, moduleName);
             // log.info('found a module?', moduleName, !!m)
             if (m) {
@@ -6678,7 +6681,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-24T14:53:47.904Z",
+    buildDate: "2022-04-28T18:33:38.721Z",
     // @ts-ignore
     buildVersion: "1.9.0",
 };
@@ -6709,7 +6712,7 @@ const run = async () => {
     const mail = new Mail(config.mail);
     const eventHub = mitt();
     const moduleManager = new ModuleManager();
-    const webSocketServer = new WebSocketServer(moduleManager, config.ws, auth);
+    const webSocketServer = new WebSocketServer(eventHub, moduleManager, config.ws, auth);
     const webServer = new WebServer(eventHub, db, cache, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, config.http, config.twitch, webSocketServer, auth);
     class BotImpl {
         constructor() {
@@ -6823,6 +6826,12 @@ const run = async () => {
             return setTimeout(updateUserStreamStatus, 5 * MINUTE);
         };
         updateUserStreamStatusTimeout = await updateUserStreamStatus();
+        eventHub.on('wss_user_connected', async (socket /* Socket */) => {
+            if (socket.user_id === user.id && socket.module === 'core') {
+                updateUserFrontendStatusTimeout = await updateUserFrontendStatus();
+                updateUserStreamStatusTimeout = await updateUserStreamStatus();
+            }
+        });
         eventHub.on('user_changed', async (changedUser /* User */) => {
             if (changedUser.id === user.id) {
                 await clientManager.userChanged(changedUser);

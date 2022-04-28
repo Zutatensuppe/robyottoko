@@ -4,6 +4,7 @@ import { logger } from '../common/fn'
 import ModuleManager from '../mod/ModuleManager'
 import { WsConfig } from '../types'
 import Auth from './Auth'
+import { Emitter, EventType } from 'mitt'
 
 const log = logger("WebSocketServer.ts")
 
@@ -15,6 +16,7 @@ export interface Socket extends WebSocket.WebSocket {
 }
 
 class WebSocketServer {
+  private eventHub: Emitter<Record<EventType, unknown>>
   private moduleManager: ModuleManager
   private config: WsConfig
   private auth: Auth
@@ -22,10 +24,12 @@ class WebSocketServer {
   private _websocketserver: WebSocket.Server | null
 
   constructor(
+    eventHub: Emitter<Record<EventType, unknown>>,
     moduleManager: ModuleManager,
     config: WsConfig,
     auth: Auth,
   ) {
+    this.eventHub = eventHub
     this.moduleManager = moduleManager
     this.config = config
     this.auth = auth
@@ -90,6 +94,9 @@ class WebSocketServer {
         socket.close()
         return
       }
+
+      // user connected
+      this.eventHub.emit('wss_user_connected', socket)
 
       const m = this.moduleManager.get(socket.user_id, moduleName)
       // log.info('found a module?', moduleName, !!m)
