@@ -75,33 +75,40 @@ export const newFirstChatTrigger = (since: 'alltime' | 'stream'): CommandTrigger
   return trigger
 }
 
+const triggersEqual = (a: CommandTrigger, b: CommandTrigger): boolean => {
+  if (a.type !== b.type) {
+    return false
+  }
+  if (a.type === CommandTriggerType.COMMAND) {
+    if (a.data.command === b.data.command) {
+      // no need to check for commandExact here (i think^^)
+      return true
+    }
+  } else if (a.type === CommandTriggerType.REWARD_REDEMPTION) {
+    if (a.data.command === b.data.command) {
+      return true
+    }
+  } else if (a.type === CommandTriggerType.TIMER) {
+    if (
+      a.data.minInterval === b.data.minInterval
+      && a.data.minLines === b.data.minLines
+    ) {
+      return true
+    }
+  } else if (a.type === CommandTriggerType.FIRST_CHAT) {
+    return true
+  }
+  return false
+}
+
 export const commandHasAnyTrigger = (
   command: FunctionCommand,
   triggers: CommandTrigger[],
-) => {
+): boolean => {
   for (const cmdTrigger of command.triggers) {
     for (const trigger of triggers) {
-      if (cmdTrigger.type !== trigger.type) {
-        continue
-      }
-      if (cmdTrigger.type === CommandTriggerType.COMMAND) {
-        if (cmdTrigger.data.command === trigger.data.command) {
-          // no need to check for commandExact here (i think^^)
-          return true
-        }
-      } else if (cmdTrigger.type === CommandTriggerType.REWARD_REDEMPTION) {
-        if (cmdTrigger.data.command === trigger.data.command) {
-          return true
-        }
-      } else if (cmdTrigger.type === CommandTriggerType.TIMER) {
-        if (
-          cmdTrigger.data.minInterval === trigger.data.minInterval
-          && cmdTrigger.data.minLines === trigger.data.minLines
-        ) {
-          return true
-        }
-      } else if (cmdTrigger.type === CommandTriggerType.FIRST_CHAT) {
-        return true;
+      if (triggersEqual(cmdTrigger, trigger)) {
+        return true
       }
     }
   }
@@ -111,12 +118,12 @@ export const commandHasAnyTrigger = (
 export const getUniqueCommandsByTriggers = (
   commands: FunctionCommand[],
   triggers: CommandTrigger[],
-) => {
+): FunctionCommand[] => {
   const tmp = commands.filter((command) => commandHasAnyTrigger(command, triggers))
   return tmp.filter((item, i, ar) => ar.indexOf(item) === i)
 }
 
-export const isValidTrigger = (trigger: CommandTrigger) => {
+export const isValidTrigger = (trigger: CommandTrigger): boolean => {
   if (trigger.type === CommandTriggerType.COMMAND) {
     if (!trigger.data.command) {
       return false;
