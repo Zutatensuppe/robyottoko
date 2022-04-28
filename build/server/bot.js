@@ -4028,24 +4028,50 @@ const parseResult = (text) => {
     const arr2 = info.arr2;
     const arr1NoPunct = arr1.map(item => normalize(item));
     const arr2NoPunct = arr2.map(item => normalize(item));
-    let searchWords = [];
-    let fromArrSearch = [];
-    let fromArr = [];
-    let toArr = [];
+    const results = [];
+    const collectResults = (searchWords, fromArrSearch, fromArr, toArr) => {
+        const _results = [];
+        for (const i in fromArr) {
+            if (!fromArrSearch[i]) {
+                continue;
+            }
+            if (!searchWords.includes(fromArrSearch[i])) {
+                continue;
+            }
+            if (fromArr[i] === toArr[i]) {
+                // from and to is exactly the same, so skip it
+                continue;
+            }
+            const idx = _results.findIndex(item => item.from === fromArr[i]);
+            if (idx < 0) {
+                _results.push({ from: fromArr[i], to: [toArr[i]] });
+            }
+            else {
+                _results[idx].to.push(toArr[i]);
+            }
+        }
+        results.push(..._results);
+    };
     const matchedSentence = normalize(matchedWords.join(' '));
     if (arr1NoPunct.includes(matchedSentence)) {
-        fromArrSearch = arr1NoPunct;
-        fromArr = arr1;
-        toArr = arr2;
-        searchWords = [matchedSentence];
+        const fromArrSearch = arr1NoPunct;
+        const fromArr = arr1;
+        const toArr = arr2;
+        const searchWords = [matchedSentence];
+        collectResults(searchWords, fromArrSearch, fromArr, toArr);
     }
-    else if (arr2NoPunct.includes(matchedSentence)) {
-        fromArrSearch = arr2NoPunct;
-        fromArr = arr2;
-        toArr = arr1;
-        searchWords = [matchedSentence];
+    if (arr2NoPunct.includes(matchedSentence)) {
+        const fromArrSearch = arr2NoPunct;
+        const fromArr = arr2;
+        const toArr = arr1;
+        const searchWords = [matchedSentence];
+        collectResults(searchWords, fromArrSearch, fromArr, toArr);
     }
-    else {
+    if (results.length === 0) {
+        let fromArrSearch = [];
+        let fromArr = [];
+        let toArr = [];
+        let searchWords = [];
         for (const matchedWord of matchedWords) {
             if (arr1.includes(matchedWord)) {
                 fromArr = fromArrSearch = arr1;
@@ -4057,22 +4083,7 @@ const parseResult = (text) => {
             }
         }
         searchWords = matchedWords;
-    }
-    const results = [];
-    for (const i in fromArr) {
-        if (!fromArrSearch[i]) {
-            continue;
-        }
-        if (!searchWords.includes(fromArrSearch[i])) {
-            continue;
-        }
-        const idx = results.findIndex(item => item.from === fromArr[i]);
-        if (idx < 0) {
-            results.push({ from: fromArr[i], to: [toArr[i]] });
-        }
-        else {
-            results[idx].to.push(toArr[i]);
-        }
+        collectResults(searchWords, fromArrSearch, fromArr, toArr);
     }
     return results;
 };
@@ -6681,7 +6692,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-28T18:33:38.721Z",
+    buildDate: "2022-04-28T20:05:15.427Z",
     // @ts-ignore
     buildVersion: "1.9.0",
 };
