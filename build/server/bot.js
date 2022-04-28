@@ -6681,7 +6681,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-28T18:27:59.884Z",
+    buildDate: "2022-04-28T18:32:37.542Z",
     // @ts-ignore
     buildVersion: "1.9.0",
 };
@@ -6794,6 +6794,12 @@ const run = async () => {
                     });
                 }
             }
+            problems.push({
+                message: 'access_token_invalid',
+                details: {
+                    channel_name: 'aaa',
+                },
+            });
             const data = { event: 'status', data: { problems } };
             webSocketServer.notifyAll([user.id], 'core', data);
             return setTimeout(updateUserFrontendStatus, 1 * MINUTE);
