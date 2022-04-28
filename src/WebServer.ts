@@ -386,10 +386,7 @@ class WebServer {
       }
 
       const token = await this.tokenRepo.createToken(user.id, 'password_reset')
-      this.mail.sendPasswordResetMail({
-        user: user,
-        token: token,
-      })
+      this.mail.sendPasswordResetMail({ user, token })
       res.send({ success: true })
     })
 
@@ -412,10 +409,7 @@ class WebServer {
       }
 
       const token = await this.tokenRepo.createToken(user.id, 'registration')
-      this.mail.sendRegistrationMail({
-        user: user,
-        token: token,
-      })
+      this.mail.sendRegistrationMail({ user, token })
       res.send({ success: true })
     })
 
@@ -462,10 +456,7 @@ class WebServer {
         return
       }
       const token = await this.tokenRepo.createToken(userId, 'registration')
-      this.mail.sendRegistrationMail({
-        user: user,
-        token: token,
-      })
+      this.mail.sendRegistrationMail({ user, token })
       res.send({ success: true })
     })
 
