@@ -55,7 +55,12 @@ const run = async () => {
 
   const eventHub = mitt()
   const moduleManager = new ModuleManager()
-  const webSocketServer = new WebSocketServer(moduleManager, config.ws, auth)
+  const webSocketServer = new WebSocketServer(
+    eventHub,
+    moduleManager,
+    config.ws,
+    auth
+  )
   const webServer = new WebServer(
     eventHub,
     db,
@@ -201,6 +206,13 @@ const run = async () => {
       return setTimeout(updateUserStreamStatus, 5 * MINUTE)
     }
     updateUserStreamStatusTimeout = await updateUserStreamStatus()
+
+    eventHub.on('wss_user_connected', async (socket: any /* Socket */) => {
+      if (socket.user_id === user.id && socket.module === 'core') {
+        updateUserFrontendStatusTimeout = await updateUserFrontendStatus()
+        updateUserStreamStatusTimeout = await updateUserStreamStatus()
+      }
+    })
 
     eventHub.on('user_changed', async (changedUser: any /* User */) => {
       if (changedUser.id === user.id) {
