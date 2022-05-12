@@ -4043,7 +4043,7 @@ const parseResult = (text) => {
             if (idx < 0) {
                 _results.push({ from: fromArr[i], to: [toArr[i]] });
             }
-            else {
+            else if (!_results[idx].to.includes(toArr[i])) {
                 _results[idx].to.push(toArr[i]);
             }
         }
@@ -6689,9 +6689,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-04-28T20:59:58.787Z",
+    buildDate: "2022-05-12T17:11:50.973Z",
     // @ts-ignore
-    buildVersion: "1.9.0",
+    buildVersion: "1.9.1",
 };
 
 setLogLevel(config.log.level);
