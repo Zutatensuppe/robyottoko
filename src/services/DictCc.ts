@@ -89,7 +89,7 @@ const parseResult = (
       const idx = _results.findIndex(item => item.from === fromArr[i])
       if (idx < 0) {
         _results.push({ from: fromArr[i], to: [toArr[i]] })
-      } else {
+      } else if (!_results[idx].to.includes(toArr[i])) {
         _results[idx].to.push(toArr[i])
       }
     }

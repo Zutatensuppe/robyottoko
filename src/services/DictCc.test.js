@@ -78,6 +78,18 @@ test.each([
       },
     ]
   },
+  {
+    file: __dirname + '/fixtures/dictcc.10.fixture.html',
+    expected: [
+      {
+        from: 'law', to: [
+          'Gesetz', 'Recht', 'Jura', 'Rechtswissenschaft', 'Regel',
+          'Rechtswesen', 'Juristerei', 'Lehrsatz', 'Jurisprudenz',
+          'Vorgabe', 'Jus',
+        ],
+      },
+    ]
+  },
 ])('parseResult', ({ file, expected }) => {
   const txt = fs.readFileSync(file)
   const actual = dictCc.parseResult(String(txt))
