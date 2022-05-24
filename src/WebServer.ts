@@ -3,6 +3,7 @@ import { fileURLToPath } from 'url'
 import cookieParser from 'cookie-parser'
 import crypto from 'crypto'
 import express, { NextFunction, Response } from 'express'
+import cors from 'cors'
 import multer from 'multer'
 import path from 'path'
 import Templates from './services/Templates'
@@ -615,7 +616,9 @@ class WebServer {
       res.send()
     })
 
-    apiRouter.get('/pub/v1/chatters', async (req, res: Response) => {
+    const pubApiV1Router = express.Router()
+    pubApiV1Router.use(cors())
+    pubApiV1Router.get('/chatters', async (req, res: Response) => {
       if (!req.query.apiKey) {
         res.status(403).send({ ok: false, error: 'invalid api key' })
         return
@@ -675,6 +678,8 @@ class WebServer {
       )).map(r => r.display_name)
       res.status(200).send({ ok: true, data: { chatters: userNames, since: dateSince } })
     })
+
+    apiRouter.use('/pub/v1', pubApiV1Router)
 
     app.use('/api', apiRouter)
 
