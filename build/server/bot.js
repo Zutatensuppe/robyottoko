@@ -1159,7 +1159,7 @@ class TwitchHelixClient {
             userId = await this._getUserIdByNameUncached(userName);
             await cache.set(cacheKey, userId);
         }
-        return userId;
+        return `${userId}`;
     }
     async _getUserIdByNameUncached(userName) {
         const user = await this.getUserByName(userName);
@@ -6745,7 +6745,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-05-24T19:04:44.553Z",
+    buildDate: "2022-05-24T19:08:09.215Z",
     // @ts-ignore
     buildVersion: "1.9.1",
 };
