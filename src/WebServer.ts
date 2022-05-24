@@ -272,7 +272,9 @@ class WebServer {
     })
     const upload = multer({ storage }).single('file');
     app.use('/uploads', express.static(uploadDir))
-    app.post('/api/upload', requireLoginApi, (req, res: Response) => {
+
+    const apiRouter = express.Router()
+    apiRouter.post('/upload', requireLoginApi, (req, res: Response) => {
       upload(req, res, (err) => {
         if (err) {
           log.error(err)
@@ -300,7 +302,7 @@ class WebServer {
       })
     })
 
-    app.post('/api/widget/create_url', requireLoginApi, express.json(), async (req: any, res: Response) => {
+    apiRouter.post('/widget/create_url', requireLoginApi, express.json(), async (req: any, res: Response) => {
       const type = req.body.type
       const pub = req.body.pub
       const url = await this._createWidgetUrl(type, req.user.id)
@@ -309,20 +311,20 @@ class WebServer {
       })
     })
 
-    app.get('/api/conf', async (req, res: Response) => {
+    apiRouter.get('/conf', async (req, res: Response) => {
       res.send({
         wsBase: this.wss.connectstring(),
       })
     })
 
-    app.get('/api/user/me', requireLoginApi, async (req: any, res: Response) => {
+    apiRouter.get('/user/me', requireLoginApi, async (req: any, res: Response) => {
       res.send({
         user: req.user,
         token: req.cookies['x-token'],
       })
     })
 
-    app.post('/api/logout', requireLoginApi, async (req: any, res: Response) => {
+    apiRouter.post('/logout', requireLoginApi, async (req: any, res: Response) => {
       if (req.token) {
         await this.auth.destroyToken(req.token)
         res.clearCookie("x-token")
@@ -330,7 +332,7 @@ class WebServer {
       res.send({ success: true })
     })
 
-    app.get('/api/page/index', requireLoginApi, async (req: any, res: Response) => {
+    apiRouter.get('/page/index', requireLoginApi, async (req: any, res: Response) => {
       const mappedWidgets = []
       for (const w of widgets) {
         const url = await this._widgetUrlByTypeAndUserId(w.type, req.user.id)
@@ -345,7 +347,7 @@ class WebServer {
       res.send({ widgets: mappedWidgets })
     })
 
-    app.post('/api/user/_reset_password', express.json(), async (req, res) => {
+    apiRouter.post('/user/_reset_password', express.json(), async (req, res) => {
       const plainPass = req.body.pass || null
       const token = req.body.token || null
       if (!plainPass || !token) {
@@ -372,7 +374,7 @@ class WebServer {
       res.send({ success: true })
     })
 
-    app.post('/api/user/_request_password_reset', express.json(), async (req, res) => {
+    apiRouter.post('/user/_request_password_reset', express.json(), async (req, res) => {
       const email = req.body.email || null
       if (!email) {
         res.status(400).send({ reason: 'bad request' })
@@ -390,7 +392,7 @@ class WebServer {
       res.send({ success: true })
     })
 
-    app.post('/api/user/_resend_verification_mail', express.json(), async (req, res) => {
+    apiRouter.post('/user/_resend_verification_mail', express.json(), async (req, res) => {
       const email = req.body.email || null
       if (!email) {
         res.status(400).send({ reason: 'bad request' })
@@ -413,7 +415,7 @@ class WebServer {
       res.send({ success: true })
     })
 
-    app.post('/api/user/_register', express.json(), async (req, res) => {
+    apiRouter.post('/user/_register', express.json(), async (req, res) => {
       const salt = fn.passwordSalt()
       const user: CreateUser = {
         name: req.body.user,
@@ -460,7 +462,7 @@ class WebServer {
       res.send({ success: true })
     })
 
-    app.post('/api/_handle-token', express.json(), async (req, res) => {
+    apiRouter.post('/_handle-token', express.json(), async (req, res) => {
       const token = req.body.token || null
       if (!token) {
         res.status(400).send({ reason: 'invalid_token' })
@@ -486,25 +488,25 @@ class WebServer {
       return
     })
 
-    app.get('/api/page/variables', requireLoginApi, async (req: any, res: Response) => {
+    apiRouter.get('/page/variables', requireLoginApi, async (req: any, res: Response) => {
       const variables = new Variables(this.db, req.user.id)
       res.send({ variables: await variables.all() })
     })
 
-    app.post('/api/save-variables', requireLoginApi, express.json(), async (req: any, res: Response) => {
+    apiRouter.post('/save-variables', requireLoginApi, express.json(), async (req: any, res: Response) => {
       const variables = new Variables(this.db, req.user.id)
       await variables.replace(req.body.variables || [])
       res.send()
     })
 
-    app.get('/api/data/global', async (req: any, res: Response) => {
+    apiRouter.get('/data/global', async (req: any, res: Response) => {
       res.send({
         registeredUserCount: await this.userRepo.countVerifiedUsers(),
         streamingUserCount: await this.twitchChannelRepo.countUniqueUsersStreaming(),
       })
     })
 
-    app.get('/api/page/settings', requireLoginApi, async (req: any, res: Response) => {
+    apiRouter.get('/page/settings', requireLoginApi, async (req: any, res: Response) => {
       const user = await this.userRepo.getById(req.user.id) as User
       res.send({
         user: {
@@ -523,7 +525,7 @@ class WebServer {
       })
     })
 
-    app.post('/api/save-settings', requireLoginApi, express.json(), async (req: any, res: Response) => {
+    apiRouter.post('/save-settings', requireLoginApi, express.json(), async (req: any, res: Response) => {
       if (!req.user.groups.includes('admin')) {
         if (req.user.id !== req.body.user.id) {
           // editing other user than self
@@ -572,12 +574,7 @@ class WebServer {
       res.send()
     })
 
-    // twitch calls this url after auth
-    // from here we render a js that reads the token and shows it to the user
-    app.get('/twitch/redirect_uri', async (req, res: Response) => {
-      res.send(templates.render('templates/twitch_redirect_uri.html', {}))
-    })
-    app.post('/api/twitch/user-id-by-name', requireLoginApi, express.json(), async (req: any, res: Response) => {
+    apiRouter.post('/twitch/user-id-by-name', requireLoginApi, express.json(), async (req: any, res: Response) => {
       let clientId
       let clientSecret
       if (!req.user.groups.includes('admin')) {
@@ -606,8 +603,89 @@ class WebServer {
       }
     })
 
-    app.post(
-      '/twitch/event-sub/',
+    apiRouter.post('/auth', express.json(), async (req, res: Response) => {
+      const user = await this.auth.getUserByNameAndPass(req.body.user, req.body.pass)
+      if (!user) {
+        res.status(401).send({ reason: 'bad credentials' })
+        return
+      }
+
+      const token = await this.auth.getUserAuthToken(user.id)
+      res.cookie('x-token', token, { maxAge: 1 * YEAR, httpOnly: true })
+      res.send()
+    })
+
+    apiRouter.get('/pub/v1/chatters', async (req, res: Response) => {
+      if (!req.query.apiKey) {
+        res.status(403).send({ ok: false, error: 'invalid api key' })
+        return
+      }
+      const apiKey = String(req.query.apiKey)
+      const t = await this.tokenRepo.getByTokenAndType(apiKey, 'api_key')
+      if (!t) {
+        res.status(403).send({ ok: false, error: 'invalid api key' })
+        return
+      }
+      const user = await this.userRepo.getById(t.user_id)
+      if (!user) {
+        res.status(400).send({ ok: false, error: 'user_not_found' })
+        return
+      }
+      if (!req.query.channel) {
+        res.status(400).send({ ok: false, error: 'channel missing' })
+        return
+      }
+
+      const channelName = String(req.query.channel)
+      const helixClient = new TwitchHelixClient(
+        this.configTwitch.tmi.identity.client_id,
+        this.configTwitch.tmi.identity.client_secret,
+        []
+      )
+      const channelId = await helixClient.getUserIdByName(channelName, this.cache)
+      if (!channelId) {
+        res.status(400).send({ ok: false, error: 'unable to determine channel id' })
+        return
+      }
+
+      let dateSince: Date
+      if (req.query.since) {
+        try {
+          dateSince = new Date(String(req.query.since))
+        } catch (e) {
+          res.status(400).send({ ok: false, error: 'unable to parse since' })
+          return
+        }
+      } else {
+        const stream = await helixClient.getStreamByUserId(channelId)
+        if (!stream) {
+          res.status(400).send({ ok: false, error: 'stream not online at the moment' })
+          return
+        }
+        dateSince = new Date(stream.started_at)
+      }
+
+      const whereObject = this.db._buildWhere({
+        broadcaster_user_id: channelId,
+        created_at: { '$gte': dateSince },
+      })
+      const userNames = (await this.db._getMany(
+        `select display_name from robyottoko.chat_log ${whereObject.sql} group by display_name`,
+        whereObject.values
+      )).map(r => r.display_name)
+      res.status(200).send({ ok: true, data: { chatters: userNames, since: dateSince } })
+    })
+
+    app.use('/api', apiRouter)
+
+    const twitchRouter = express.Router()
+    // twitch calls this url after auth
+    // from here we render a js that reads the token and shows it to the user
+    twitchRouter.get('/redirect_uri', async (req, res: Response) => {
+      res.send(templates.render('templates/twitch_redirect_uri.html', {}))
+    })
+    twitchRouter.post(
+      '/event-sub/',
       express.json({ verify: (req: any, _res: Response, buf) => { req.rawBody = buf } }),
       verifyTwitchSignature,
       async (req, res) => {
@@ -650,18 +728,7 @@ class WebServer {
 
         res.status(400).send({ reason: 'unhandled sub type' })
       })
-
-    app.post('/api/auth', express.json(), async (req, res: Response) => {
-      const user = await this.auth.getUserByNameAndPass(req.body.user, req.body.pass)
-      if (!user) {
-        res.status(401).send({ reason: 'bad credentials' })
-        return
-      }
-
-      const token = await this.auth.getUserAuthToken(user.id)
-      res.cookie('x-token', token, { maxAge: 1 * YEAR, httpOnly: true })
-      res.send()
-    })
+    app.use('/twitch', twitchRouter)
 
     app.get('/widget/:widget_type/:widget_token/', async (req, res: Response, _next: NextFunction) => {
       const type = req.params.widget_type

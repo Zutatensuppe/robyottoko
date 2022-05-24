@@ -11,6 +11,6 @@ nodemon \
   src/bot.ts \
   -e ts \
   --trace-warnings \
-  --ignore public/static/
-  --ignore src/frontend/
+  --ignore public/static/ \
+  --ignore src/frontend/ \
   --ignore src/frontend_widgets/
