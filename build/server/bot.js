@@ -6,6 +6,7 @@ import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import express from 'express';
+import cors from 'cors';
 import multer from 'multer';
 import tmi from 'tmi.js';
 import * as pg from 'pg';
@@ -1893,7 +1894,9 @@ class WebServer {
             res.cookie('x-token', token, { maxAge: 1 * YEAR, httpOnly: true });
             res.send();
         });
-        apiRouter.get('/pub/v1/chatters', async (req, res) => {
+        const pubApiV1Router = express.Router();
+        pubApiV1Router.use(cors());
+        pubApiV1Router.get('/chatters', async (req, res) => {
             if (!req.query.apiKey) {
                 res.status(403).send({ ok: false, error: 'invalid api key' });
                 return;
@@ -1945,6 +1948,7 @@ class WebServer {
             const userNames = (await this.db._getMany(`select display_name from robyottoko.chat_log ${whereObject.sql} group by display_name`, whereObject.values)).map(r => r.display_name);
             res.status(200).send({ ok: true, data: { chatters: userNames, since: dateSince } });
         });
+        apiRouter.use('/pub/v1', pubApiV1Router);
         app.use('/api', apiRouter);
         const twitchRouter = express.Router();
         // twitch calls this url after auth
@@ -6745,9 +6749,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-05-24T19:08:57.061Z",
+    buildDate: "2022-05-24T19:39:40.769Z",
     // @ts-ignore
-    buildVersion: "1.10.0",
+    buildVersion: "1.10.1",
 };
 
 setLogLevel(config.log.level);

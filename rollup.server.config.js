@@ -14,6 +14,7 @@ export default {
     format: 'es',
   },
   external: [
+    "cors",
     "ws",
     "pg",
     "multer",
