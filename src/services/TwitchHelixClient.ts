@@ -265,13 +265,13 @@ class TwitchHelixClient {
   }
 
   async getUserIdByName(userName: string, cache: Cache): Promise<string> {
-    const cacheKey = `TwitchHelixClient::getUserIdByName(${userName})`
-    let userId = String(await cache.get(cacheKey))
-    if (!userId) {
+    const cacheKey = `TwitchHelixClient::getUserIdByName(${userName})x`
+    let userId = await cache.get(cacheKey)
+    if (userId === null) {
       userId = await this._getUserIdByNameUncached(userName)
       await cache.set(cacheKey, userId)
     }
-    return userId
+    return `${userId}`
   }
 
   async _getUserIdByNameUncached(userName: string): Promise<string> {

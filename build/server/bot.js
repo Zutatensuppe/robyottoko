@@ -1153,13 +1153,13 @@ class TwitchHelixClient {
         return await this._getUserBy({ login: userName });
     }
     async getUserIdByName(userName, cache) {
-        const cacheKey = `TwitchHelixClient::getUserIdByName(${userName})`;
-        let userId = String(await cache.get(cacheKey));
-        if (!userId) {
+        const cacheKey = `TwitchHelixClient::getUserIdByName(${userName})x`;
+        let userId = await cache.get(cacheKey);
+        if (userId === null) {
             userId = await this._getUserIdByNameUncached(userName);
             await cache.set(cacheKey, userId);
         }
-        return userId;
+        return `${userId}`;
     }
     async _getUserIdByNameUncached(userName) {
         const user = await this.getUserByName(userName);
@@ -1582,7 +1582,8 @@ class WebServer {
         });
         const upload = multer({ storage }).single('file');
         app.use('/uploads', express.static(uploadDir));
-        app.post('/api/upload', requireLoginApi, (req, res) => {
+        const apiRouter = express.Router();
+        apiRouter.post('/upload', requireLoginApi, (req, res) => {
             upload(req, res, (err) => {
                 if (err) {
                     log$h.error(err);
@@ -1608,7 +1609,7 @@ class WebServer {
                 res.send(uploadedFile);
             });
         });
-        app.post('/api/widget/create_url', requireLoginApi, express.json(), async (req, res) => {
+        apiRouter.post('/widget/create_url', requireLoginApi, express.json(), async (req, res) => {
             const type = req.body.type;
             const pub = req.body.pub;
             const url = await this._createWidgetUrl(type, req.user.id);
@@ -1616,25 +1617,25 @@ class WebServer {
                 url: pub ? (await this._pubUrl(url)) : url
             });
         });
-        app.get('/api/conf', async (req, res) => {
+        apiRouter.get('/conf', async (req, res) => {
             res.send({
                 wsBase: this.wss.connectstring(),
             });
         });
-        app.get('/api/user/me', requireLoginApi, async (req, res) => {
+        apiRouter.get('/user/me', requireLoginApi, async (req, res) => {
             res.send({
                 user: req.user,
                 token: req.cookies['x-token'],
             });
         });
-        app.post('/api/logout', requireLoginApi, async (req, res) => {
+        apiRouter.post('/logout', requireLoginApi, async (req, res) => {
             if (req.token) {
                 await this.auth.destroyToken(req.token);
                 res.clearCookie("x-token");
             }
             res.send({ success: true });
         });
-        app.get('/api/page/index', requireLoginApi, async (req, res) => {
+        apiRouter.get('/page/index', requireLoginApi, async (req, res) => {
             const mappedWidgets = [];
             for (const w of widgets) {
                 const url = await this._widgetUrlByTypeAndUserId(w.type, req.user.id);
@@ -1648,7 +1649,7 @@ class WebServer {
             }
             res.send({ widgets: mappedWidgets });
         });
-        app.post('/api/user/_reset_password', express.json(), async (req, res) => {
+        apiRouter.post('/user/_reset_password', express.json(), async (req, res) => {
             const plainPass = req.body.pass || null;
             const token = req.body.token || null;
             if (!plainPass || !token) {
@@ -1671,7 +1672,7 @@ class WebServer {
             await this.tokenRepo.delete(tokenObj.token);
             res.send({ success: true });
         });
-        app.post('/api/user/_request_password_reset', express.json(), async (req, res) => {
+        apiRouter.post('/user/_request_password_reset', express.json(), async (req, res) => {
             const email = req.body.email || null;
             if (!email) {
                 res.status(400).send({ reason: 'bad request' });
@@ -1686,7 +1687,7 @@ class WebServer {
             this.mail.sendPasswordResetMail({ user, token });
             res.send({ success: true });
         });
-        app.post('/api/user/_resend_verification_mail', express.json(), async (req, res) => {
+        apiRouter.post('/user/_resend_verification_mail', express.json(), async (req, res) => {
             const email = req.body.email || null;
             if (!email) {
                 res.status(400).send({ reason: 'bad request' });
@@ -1705,7 +1706,7 @@ class WebServer {
             this.mail.sendRegistrationMail({ user, token });
             res.send({ success: true });
         });
-        app.post('/api/user/_register', express.json(), async (req, res) => {
+        apiRouter.post('/user/_register', express.json(), async (req, res) => {
             const salt = fn.passwordSalt();
             const user = {
                 name: req.body.user,
@@ -1752,7 +1753,7 @@ class WebServer {
             this.mail.sendRegistrationMail({ user, token });
             res.send({ success: true });
         });
-        app.post('/api/_handle-token', express.json(), async (req, res) => {
+        apiRouter.post('/_handle-token', express.json(), async (req, res) => {
             const token = req.body.token || null;
             if (!token) {
                 res.status(400).send({ reason: 'invalid_token' });
@@ -1777,22 +1778,22 @@ class WebServer {
             }
             return;
         });
-        app.get('/api/page/variables', requireLoginApi, async (req, res) => {
+        apiRouter.get('/page/variables', requireLoginApi, async (req, res) => {
             const variables = new Variables(this.db, req.user.id);
             res.send({ variables: await variables.all() });
         });
-        app.post('/api/save-variables', requireLoginApi, express.json(), async (req, res) => {
+        apiRouter.post('/save-variables', requireLoginApi, express.json(), async (req, res) => {
             const variables = new Variables(this.db, req.user.id);
             await variables.replace(req.body.variables || []);
             res.send();
         });
-        app.get('/api/data/global', async (req, res) => {
+        apiRouter.get('/data/global', async (req, res) => {
             res.send({
                 registeredUserCount: await this.userRepo.countVerifiedUsers(),
                 streamingUserCount: await this.twitchChannelRepo.countUniqueUsersStreaming(),
             });
         });
-        app.get('/api/page/settings', requireLoginApi, async (req, res) => {
+        apiRouter.get('/page/settings', requireLoginApi, async (req, res) => {
             const user = await this.userRepo.getById(req.user.id);
             res.send({
                 user: {
@@ -1810,7 +1811,7 @@ class WebServer {
                 twitchChannels: await this.twitchChannelRepo.allByUserId(req.user.id),
             });
         });
-        app.post('/api/save-settings', requireLoginApi, express.json(), async (req, res) => {
+        apiRouter.post('/save-settings', requireLoginApi, express.json(), async (req, res) => {
             if (!req.user.groups.includes('admin')) {
                 if (req.user.id !== req.body.user.id) {
                     // editing other user than self
@@ -1853,12 +1854,7 @@ class WebServer {
             }
             res.send();
         });
-        // twitch calls this url after auth
-        // from here we render a js that reads the token and shows it to the user
-        app.get('/twitch/redirect_uri', async (req, res) => {
-            res.send(templates.render('templates/twitch_redirect_uri.html', {}));
-        });
-        app.post('/api/twitch/user-id-by-name', requireLoginApi, express.json(), async (req, res) => {
+        apiRouter.post('/twitch/user-id-by-name', requireLoginApi, express.json(), async (req, res) => {
             let clientId;
             let clientSecret;
             if (!req.user.groups.includes('admin')) {
@@ -1887,7 +1883,76 @@ class WebServer {
                 res.status(500).send("Something went wrong!");
             }
         });
-        app.post('/twitch/event-sub/', express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
+        apiRouter.post('/auth', express.json(), async (req, res) => {
+            const user = await this.auth.getUserByNameAndPass(req.body.user, req.body.pass);
+            if (!user) {
+                res.status(401).send({ reason: 'bad credentials' });
+                return;
+            }
+            const token = await this.auth.getUserAuthToken(user.id);
+            res.cookie('x-token', token, { maxAge: 1 * YEAR, httpOnly: true });
+            res.send();
+        });
+        apiRouter.get('/pub/v1/chatters', async (req, res) => {
+            if (!req.query.apiKey) {
+                res.status(403).send({ ok: false, error: 'invalid api key' });
+                return;
+            }
+            const apiKey = String(req.query.apiKey);
+            const t = await this.tokenRepo.getByTokenAndType(apiKey, 'api_key');
+            if (!t) {
+                res.status(403).send({ ok: false, error: 'invalid api key' });
+                return;
+            }
+            const user = await this.userRepo.getById(t.user_id);
+            if (!user) {
+                res.status(400).send({ ok: false, error: 'user_not_found' });
+                return;
+            }
+            if (!req.query.channel) {
+                res.status(400).send({ ok: false, error: 'channel missing' });
+                return;
+            }
+            const channelName = String(req.query.channel);
+            const helixClient = new TwitchHelixClient(this.configTwitch.tmi.identity.client_id, this.configTwitch.tmi.identity.client_secret, []);
+            const channelId = await helixClient.getUserIdByName(channelName, this.cache);
+            if (!channelId) {
+                res.status(400).send({ ok: false, error: 'unable to determine channel id' });
+                return;
+            }
+            let dateSince;
+            if (req.query.since) {
+                try {
+                    dateSince = new Date(String(req.query.since));
+                }
+                catch (e) {
+                    res.status(400).send({ ok: false, error: 'unable to parse since' });
+                    return;
+                }
+            }
+            else {
+                const stream = await helixClient.getStreamByUserId(channelId);
+                if (!stream) {
+                    res.status(400).send({ ok: false, error: 'stream not online at the moment' });
+                    return;
+                }
+                dateSince = new Date(stream.started_at);
+            }
+            const whereObject = this.db._buildWhere({
+                broadcaster_user_id: channelId,
+                created_at: { '$gte': dateSince },
+            });
+            const userNames = (await this.db._getMany(`select display_name from robyottoko.chat_log ${whereObject.sql} group by display_name`, whereObject.values)).map(r => r.display_name);
+            res.status(200).send({ ok: true, data: { chatters: userNames, since: dateSince } });
+        });
+        app.use('/api', apiRouter);
+        const twitchRouter = express.Router();
+        // twitch calls this url after auth
+        // from here we render a js that reads the token and shows it to the user
+        twitchRouter.get('/redirect_uri', async (req, res) => {
+            res.send(templates.render('templates/twitch_redirect_uri.html', {}));
+        });
+        twitchRouter.post('/event-sub/', express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
             log$h.debug(req.body);
             log$h.debug(req.headers);
             if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
@@ -1922,16 +1987,7 @@ class WebServer {
             }
             res.status(400).send({ reason: 'unhandled sub type' });
         });
-        app.post('/api/auth', express.json(), async (req, res) => {
-            const user = await this.auth.getUserByNameAndPass(req.body.user, req.body.pass);
-            if (!user) {
-                res.status(401).send({ reason: 'bad credentials' });
-                return;
-            }
-            const token = await this.auth.getUserAuthToken(user.id);
-            res.cookie('x-token', token, { maxAge: 1 * YEAR, httpOnly: true });
-            res.send();
-        });
+        app.use('/twitch', twitchRouter);
         app.get('/widget/:widget_type/:widget_token/', async (req, res, _next) => {
             const type = req.params.widget_type;
             const token = req.params.widget_token;
@@ -6689,9 +6745,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-05-12T17:11:50.973Z",
+    buildDate: "2022-05-24T19:08:57.061Z",
     // @ts-ignore
-    buildVersion: "1.9.1",
+    buildVersion: "1.10.0",
 };
 
 setLogLevel(config.log.level);
