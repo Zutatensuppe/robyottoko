@@ -134,7 +134,14 @@ class GeneralModule implements Module {
         }
       }
       if (cmd.action === CommandAction.MEDIA) {
-        cmd.data.excludeFromGlobalWidget = typeof cmd.data.excludeFromGlobalWidget === 'undefined' ? false : cmd.data.excludeFromGlobalWidget
+        if (cmd.data.excludeFromGlobalWidget) {
+          cmd.data.widgetIds = [cmd.id]
+        } else if (typeof cmd.data.widgetIds === 'undefined') {
+          cmd.data.widgetIds = []
+        }
+        if (typeof cmd.data.excludeFromGlobalWidget !== 'undefined') {
+          delete cmd.data.excludeFromGlobalWidget
+        }
         cmd.data.minDurationMs = cmd.data.minDurationMs || 0
         cmd.data.sound.volume = cmd.data.sound.volume || 100
 
