@@ -197,7 +197,7 @@ class PomoModule implements Module {
       data: {
         settings: this.data.settings,
         state: this.data.state,
-        widgetUrl: await this.bot.getWebServer().getWidgetUrl('pomo', this.user.id),
+        widgetUrl: await this.bot.getWidgets().getWidgetUrl('pomo', this.user.id),
       }
     }
   }

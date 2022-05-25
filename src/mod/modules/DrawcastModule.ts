@@ -94,15 +94,15 @@ class DrawcastModule implements Module {
   }
 
   async drawUrl(): Promise<string> {
-    return await this.bot.getWebServer().getPublicWidgetUrl('drawcast_draw', this.user.id)
+    return await this.bot.getWidgets().getPublicWidgetUrl('drawcast_draw', this.user.id)
   }
 
   async receiveUrl(): Promise<string> {
-    return await this.bot.getWebServer().getWidgetUrl('drawcast_receive', this.user.id)
+    return await this.bot.getWidgets().getWidgetUrl('drawcast_receive', this.user.id)
   }
 
   async controlUrl(): Promise<string> {
-    return await this.bot.getWebServer().getWidgetUrl('drawcast_control', this.user.id)
+    return await this.bot.getWidgets().getWidgetUrl('drawcast_control', this.user.id)
   }
 
   async wsdata(eventName: string): Promise<DrawcastModuleWsData> {

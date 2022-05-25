@@ -12,6 +12,7 @@ import Cache from './services/Cache'
 import Tokens, { Token } from './services/Tokens'
 import { User } from './services/Users'
 import Variables from './services/Variables'
+import Widgets from './services/Widgets'
 import WebServer from './WebServer'
 
 type int = number
@@ -519,6 +520,7 @@ export interface Bot {
   getCache: () => Cache
   getWebServer: () => WebServer
   getWebSocketServer: () => WebSocketServer
+  getWidgets: () => Widgets
 
   getUserVariables: (user: User) => Variables
   getUserModuleStorage: (user: User) => ModuleStorage

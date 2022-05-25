@@ -1,6 +1,6 @@
 import { NextFunction, Response } from "express"
 import { passwordHash } from "../fn"
-import Tokens, { Token } from "../services/Tokens"
+import Tokens, { Token, TokenType } from "../services/Tokens"
 import Users, { User } from "../services/Users"
 
 class Auth {
@@ -42,7 +42,7 @@ class Auth {
   addAuthInfoMiddleware() {
     return async (req: any, _res: Response, next: NextFunction) => {
       const token = req.cookies['x-token'] || null
-      const tokenInfo = await this.getTokenInfoByTokenAndType(token, 'auth')
+      const tokenInfo = await this.getTokenInfoByTokenAndType(token, TokenType.AUTH)
       if (tokenInfo) {
         const user = await this.userRepo.getById(tokenInfo.user_id)
         if (user) {
@@ -75,7 +75,7 @@ class Auth {
   }
 
   async userFromPubToken(token: string): Promise<User | null> {
-    const tokenInfo = await this.getTokenInfoByTokenAndType(token, 'pub')
+    const tokenInfo = await this.getTokenInfoByTokenAndType(token, TokenType.PUB)
     if (tokenInfo) {
       return await this.getUserById(tokenInfo.user_id)
     }
@@ -101,11 +101,11 @@ class Auth {
       return null
     }
 
-    let tokenInfo = await this.getTokenInfoByTokenAndType(proto, 'auth')
+    let tokenInfo = await this.getTokenInfoByTokenAndType(proto, TokenType.AUTH)
     if (tokenInfo) {
       return tokenInfo
     }
-    tokenInfo = await this.getTokenInfoByTokenAndType(proto, 'pub')
+    tokenInfo = await this.getTokenInfoByTokenAndType(proto, TokenType.PUB)
     if (tokenInfo) {
       return tokenInfo
     }
