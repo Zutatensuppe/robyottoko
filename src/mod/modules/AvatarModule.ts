@@ -89,8 +89,8 @@ class AvatarModule implements Module {
       data: {
         settings: this.data.settings,
         state: this.data.state,
-        controlWidgetUrl: await this.bot.getWebServer().getWidgetUrl('avatar', this.user.id),
-        displayWidgetUrl: await this.bot.getWebServer().getWidgetUrl('avatar_receive', this.user.id),
+        controlWidgetUrl: await this.bot.getWidgets().getWidgetUrl('avatar', this.user.id),
+        displayWidgetUrl: await this.bot.getWidgets().getWidgetUrl('avatar_receive', this.user.id),
       }
     }
   }

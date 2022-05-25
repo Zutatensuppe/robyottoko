@@ -6,8 +6,8 @@ import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import express from 'express';
-import cors from 'cors';
 import multer from 'multer';
+import cors from 'cors';
 import tmi from 'tmi.js';
 import * as pg from 'pg';
 import SibApiV3Sdk from 'sib-api-v3-sdk';
@@ -313,7 +313,7 @@ const mayExecute = (context, cmd) => {
     return false;
 };
 
-const log$k = logger('fn.ts');
+const log$m = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
         return mime.replace('image/', '');
@@ -353,9 +353,9 @@ const sayFn = (client, target) => (msg) => {
         // TODO: fix this somewhere else?
         // client can only say things in lowercase channels
         t = t.toLowerCase();
-        log$k.info(`saying in ${t}: ${msg}`);
+        log$m.info(`saying in ${t}: ${msg}`);
         client.say(t, msg).catch((e) => {
-            log$k.info(e);
+            log$m.info(e);
         });
     });
 };
@@ -427,14 +427,14 @@ const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, target, context
         if (!mayExecute(context, cmdDef)) {
             continue;
         }
-        log$k.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`);
+        log$m.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`);
         const p = new Promise(async (resolve) => {
             await applyVariableChanges(cmdDef, contextModule, rawCmd, context);
             const r = await cmdDef.fn(rawCmd, client, target, context);
             if (r) {
-                log$k.info(`${target}| * Returned: ${r}`);
+                log$m.info(`${target}| * Returned: ${r}`);
             }
-            log$k.info(`${target}| * Executed ${rawCmd?.name || '<unknown>'} command`);
+            log$m.info(`${target}| * Executed ${rawCmd?.name || '<unknown>'} command`);
             resolve(true);
         });
         promises.push(p);
@@ -581,7 +581,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
                     return String(JSON.parse(txt)[m2]);
                 }
                 catch (e) {
-                    log$k.error(e);
+                    log$m.error(e);
                     return '';
                 }
             },
@@ -594,7 +594,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
                     return await getText(url);
                 }
                 catch (e) {
-                    log$k.error(e);
+                    log$m.error(e);
                     return '';
                 }
             },
@@ -815,6 +815,56 @@ var fn = {
     findIdxBySearch,
 };
 
+const TABLE$5 = 'robyottoko.token';
+var TokenType;
+(function (TokenType) {
+    TokenType["API_KEY"] = "api_key";
+    TokenType["AUTH"] = "auth";
+    TokenType["PASSWORD_RESET"] = "password_reset";
+    TokenType["PUB"] = "pub";
+    TokenType["REGISTRATION"] = "registration";
+})(TokenType || (TokenType = {}));
+function generateToken(length) {
+    // edit the token allowed characters
+    const a = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'.split('');
+    const b = [];
+    for (let i = 0; i < length; i++) {
+        const j = parseInt((Math.random() * (a.length - 1)).toFixed(0), 10);
+        b[i] = a[j];
+    }
+    return b.join('');
+}
+class Tokens {
+    constructor(db) {
+        this.db = db;
+    }
+    async getByUserIdAndType(user_id, type) {
+        return await this.db.get(TABLE$5, { user_id, type });
+    }
+    async insert(tokenInfo) {
+        return await this.db.insert(TABLE$5, tokenInfo);
+    }
+    async createToken(user_id, type) {
+        const token = generateToken(32);
+        const tokenObj = { user_id, type, token };
+        await this.insert(tokenObj);
+        return tokenObj;
+    }
+    async getOrCreateToken(user_id, type) {
+        return (await this.getByUserIdAndType(user_id, type))
+            || (await this.createToken(user_id, type));
+    }
+    async getByTokenAndType(token, type) {
+        return (await this.db.get(TABLE$5, { token, type })) || null;
+    }
+    async delete(token) {
+        return await this.db.delete(TABLE$5, { token });
+    }
+    async generateAuthTokenForUserId(user_id) {
+        return await this.createToken(user_id, TokenType.AUTH);
+    }
+}
+
 class Auth {
     constructor(userRepo, tokenRepo) {
         this.userRepo = userRepo;
@@ -842,7 +892,7 @@ class Auth {
     addAuthInfoMiddleware() {
         return async (req, _res, next) => {
             const token = req.cookies['x-token'] || null;
-            const tokenInfo = await this.getTokenInfoByTokenAndType(token, 'auth');
+            const tokenInfo = await this.getTokenInfoByTokenAndType(token, TokenType.AUTH);
             if (tokenInfo) {
                 const user = await this.userRepo.getById(tokenInfo.user_id);
                 if (user) {
@@ -875,7 +925,7 @@ class Auth {
         return null;
     }
     async userFromPubToken(token) {
-        const tokenInfo = await this.getTokenInfoByTokenAndType(token, 'pub');
+        const tokenInfo = await this.getTokenInfoByTokenAndType(token, TokenType.PUB);
         if (tokenInfo) {
             return await this.getUserById(tokenInfo.user_id);
         }
@@ -898,11 +948,11 @@ class Auth {
             }
             return null;
         }
-        let tokenInfo = await this.getTokenInfoByTokenAndType(proto, 'auth');
+        let tokenInfo = await this.getTokenInfoByTokenAndType(proto, TokenType.AUTH);
         if (tokenInfo) {
             return tokenInfo;
         }
-        tokenInfo = await this.getTokenInfoByTokenAndType(proto, 'pub');
+        tokenInfo = await this.getTokenInfoByTokenAndType(proto, TokenType.PUB);
         if (tokenInfo) {
             return tokenInfo;
         }
@@ -931,7 +981,7 @@ class ModuleManager {
     }
 }
 
-const log$j = logger("WebSocketServer.ts");
+const log$l = logger("WebSocketServer.ts");
 class WebSocketServer {
     constructor(eventHub, moduleManager, config, auth) {
         this.eventHub = eventHub;
@@ -975,19 +1025,19 @@ class WebSocketServer {
                 socket.user_id = parseInt(token, 10);
             }
             socket.module = moduleName;
-            log$j.log('added socket: ', moduleName, socket.protocol);
-            log$j.log('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
+            log$l.log('added socket: ', moduleName, socket.protocol);
+            log$l.log('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
             socket.on('close', () => {
-                log$j.log('removed socket: ', moduleName, socket.protocol);
-                log$j.log('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
+                log$l.log('removed socket: ', moduleName, socket.protocol);
+                log$l.log('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
             });
             if (request.url?.indexOf(pathname) !== 0) {
-                log$j.info('bad request url: ', request.url);
+                log$l.info('bad request url: ', request.url);
                 socket.close();
                 return;
             }
             if (!socket.user_id) {
-                log$j.info('not found token: ', token, relpath);
+                log$l.info('not found token: ', token, relpath);
                 socket.close();
                 return;
             }
@@ -1018,7 +1068,7 @@ class WebSocketServer {
                     }
                 }
                 catch (e) {
-                    log$j.error('socket on message', e);
+                    log$l.error('socket on message', e);
                 }
             });
         });
@@ -1027,7 +1077,7 @@ class WebSocketServer {
         return !!this.sockets().find(s => s.user_id === user_id);
     }
     _notify(socket, data) {
-        log$j.info(`notifying ${socket.user_id} ${socket.module} (${data.event})`);
+        log$l.info(`notifying ${socket.user_id} ${socket.module} (${data.event})`);
         socket.send(JSON.stringify(data));
     }
     notifyOne(user_ids, moduleName, data, socket) {
@@ -1039,7 +1089,7 @@ class WebSocketServer {
             this._notify(socket, data);
         }
         else {
-            log$j.error('tried to notify invalid socket', socket.user_id, socket.module, user_ids, moduleName, isConnectedSocket);
+            log$l.error('tried to notify invalid socket', socket.user_id, socket.module, user_ids, moduleName, isConnectedSocket);
         }
     }
     notifyAll(user_ids, moduleName, data) {
@@ -1083,7 +1133,70 @@ class Templates {
     }
 }
 
-const log$i = logger('TwitchHelixClient.ts');
+const log$k = logger('twitch/index.ts');
+const createRouter$3 = (db, templates, configTwitch) => {
+    const verifyTwitchSignature = (req, res, next) => {
+        const body = Buffer.from(req.rawBody, 'utf8');
+        const msg = `${req.headers['twitch-eventsub-message-id']}${req.headers['twitch-eventsub-message-timestamp']}${body}`;
+        const hmac = crypto.createHmac('sha256', configTwitch.eventSub.transport.secret);
+        hmac.update(msg);
+        const expected = `sha256=${hmac.digest('hex')}`;
+        if (req.headers['twitch-eventsub-message-signature'] !== expected) {
+            log$k.debug(req);
+            log$k.error('bad message signature', {
+                got: req.headers['twitch-eventsub-message-signature'],
+                expected,
+            });
+            res.status(403).send({ reason: 'bad message signature' });
+            return;
+        }
+        return next();
+    };
+    const router = express.Router();
+    // twitch calls this url after auth
+    // from here we render a js that reads the token and shows it to the user
+    router.get('/redirect_uri', async (req, res) => {
+        res.send(templates.render('templates/twitch_redirect_uri.html', {}));
+    });
+    router.post('/event-sub/', express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
+        log$k.debug(req.body);
+        log$k.debug(req.headers);
+        if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
+            log$k.info(`got verification request, challenge: ${req.body.challenge}`);
+            res.write(req.body.challenge);
+            res.send();
+            return;
+        }
+        if (req.headers['twitch-eventsub-message-type'] === 'notification') {
+            log$k.info(`got notification request: ${req.body.subscription.type}`);
+            if (req.body.subscription.type === 'stream.online') {
+                // insert new stream
+                await db.insert('robyottoko.streams', {
+                    broadcaster_user_id: req.body.event.broadcaster_user_id,
+                    started_at: new Date(req.body.event.started_at),
+                });
+            }
+            else if (req.body.subscription.type === 'stream.offline') {
+                // get last started stream for broadcaster
+                // if it exists and it didnt end yet set ended_at date
+                const stream = await db.get('robyottoko.streams', {
+                    broadcaster_user_id: req.body.event.broadcaster_user_id,
+                }, [{ started_at: -1 }]);
+                if (!stream.ended_at) {
+                    await db.update('robyottoko.streams', {
+                        ended_at: new Date(),
+                    }, { id: stream.id });
+                }
+            }
+            res.send();
+            return;
+        }
+        res.status(400).send({ reason: 'unhandled sub type' });
+    });
+    return router;
+};
+
+const log$j = logger('TwitchHelixClient.ts');
 const API_BASE = 'https://api.twitch.tv/helix';
 function getBestEntryFromCategorySearchItems(searchString, resp) {
     const idx = findIdxFuzzy(resp.data, searchString, (item) => item.name);
@@ -1127,7 +1240,7 @@ class TwitchHelixClient {
             return json.access_token;
         }
         catch (e) {
-            log$i.error(url, json, e);
+            log$j.error(url, json, e);
             return '';
         }
     }
@@ -1143,7 +1256,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$i.error(url, json, e);
+            log$j.error(url, json, e);
             return null;
         }
     }
@@ -1180,7 +1293,7 @@ class TwitchHelixClient {
             return filtered[0];
         }
         catch (e) {
-            log$i.error(url, json, e);
+            log$j.error(url, json, e);
             return null;
         }
     }
@@ -1193,7 +1306,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$i.error(url, json, e);
+            log$j.error(url, json, e);
             return null;
         }
     }
@@ -1203,7 +1316,7 @@ class TwitchHelixClient {
             return await getJson(url, await this.withAuthHeaders());
         }
         catch (e) {
-            log$i.error(url, e);
+            log$j.error(url, e);
             return null;
         }
     }
@@ -1213,7 +1326,7 @@ class TwitchHelixClient {
             return await requestText('delete', url, await this.withAuthHeaders());
         }
         catch (e) {
-            log$i.error(url, e);
+            log$j.error(url, e);
             return null;
         }
     }
@@ -1223,7 +1336,7 @@ class TwitchHelixClient {
             return await postJson(url, await this.withAuthHeaders(asJson(subscription)));
         }
         catch (e) {
-            log$i.error(url, e);
+            log$j.error(url, e);
             return null;
         }
     }
@@ -1236,7 +1349,7 @@ class TwitchHelixClient {
             return getBestEntryFromCategorySearchItems(searchString, json);
         }
         catch (e) {
-            log$i.error(url, json);
+            log$j.error(url, json);
             return null;
         }
     }
@@ -1249,7 +1362,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$i.error(url, json);
+            log$j.error(url, json);
             return null;
         }
     }
@@ -1264,7 +1377,7 @@ class TwitchHelixClient {
             return await request('patch', url, withHeaders(this._authHeaders(accessToken), asJson(data)));
         }
         catch (e) {
-            log$i.error(url, e);
+            log$j.error(url, e);
             return null;
         }
     }
@@ -1290,7 +1403,7 @@ class TwitchHelixClient {
             return await getJson(url, await this.withAuthHeaders());
         }
         catch (e) {
-            log$i.error(url, e);
+            log$j.error(url, e);
             return null;
         }
     }
@@ -1351,14 +1464,14 @@ class TwitchHelixClient {
     }
 }
 
-const TABLE$5 = 'robyottoko.variables';
+const TABLE$4 = 'robyottoko.variables';
 class Variables {
     constructor(db, userId) {
         this.db = db;
         this.userId = userId;
     }
     async set(name, value) {
-        await this.db.upsert(TABLE$5, {
+        await this.db.upsert(TABLE$4, {
             name,
             user_id: this.userId,
             value: JSON.stringify(value),
@@ -1368,11 +1481,11 @@ class Variables {
         });
     }
     async get(name) {
-        const row = await this.db.get(TABLE$5, { name, user_id: this.userId });
+        const row = await this.db.get(TABLE$4, { name, user_id: this.userId });
         return row ? JSON.parse(row.value) : null;
     }
     async all() {
-        const rows = await this.db.getMany(TABLE$5, { user_id: this.userId });
+        const rows = await this.db.getMany(TABLE$4, { user_id: this.userId });
         return rows.map(row => ({
             name: row.name,
             value: JSON.parse(row.value),
@@ -1380,12 +1493,401 @@ class Variables {
     }
     async replace(variables) {
         const names = variables.map(v => v.name);
-        await this.db.delete(TABLE$5, { user_id: this.userId, name: { '$nin': names } });
+        await this.db.delete(TABLE$4, { user_id: this.userId, name: { '$nin': names } });
         for (const { name, value } of variables) {
             await this.set(name, value);
         }
     }
 }
+
+const getChatters = async (db, channelId, since) => {
+    const whereObject = db._buildWhere({
+        broadcaster_user_id: channelId,
+        created_at: { '$gte': since },
+    });
+    return (await db._getMany(`select display_name from robyottoko.chat_log ${whereObject.sql} group by display_name`, whereObject.values)).map(r => r.display_name);
+};
+
+const createRouter$2 = (db, tokenRepo, userRepo, cache, configTwitch) => {
+    const router = express.Router();
+    router.use(cors());
+    router.get('/chatters', async (req, res) => {
+        if (!req.query.apiKey) {
+            res.status(403).send({ ok: false, error: 'api key missing' });
+            return;
+        }
+        const apiKey = String(req.query.apiKey);
+        const t = await tokenRepo.getByTokenAndType(apiKey, TokenType.API_KEY);
+        if (!t) {
+            res.status(403).send({ ok: false, error: 'invalid api key' });
+            return;
+        }
+        const user = await userRepo.getById(t.user_id);
+        if (!user) {
+            res.status(400).send({ ok: false, error: 'user_not_found' });
+            return;
+        }
+        if (!req.query.channel) {
+            res.status(400).send({ ok: false, error: 'channel missing' });
+            return;
+        }
+        const channelName = String(req.query.channel);
+        const helixClient = new TwitchHelixClient(configTwitch.tmi.identity.client_id, configTwitch.tmi.identity.client_secret, []);
+        const channelId = await helixClient.getUserIdByName(channelName, cache);
+        if (!channelId) {
+            res.status(400).send({ ok: false, error: 'unable to determine channel id' });
+            return;
+        }
+        let dateSince;
+        if (req.query.since) {
+            try {
+                dateSince = new Date(String(req.query.since));
+            }
+            catch (e) {
+                res.status(400).send({ ok: false, error: 'unable to parse since' });
+                return;
+            }
+        }
+        else {
+            const stream = await helixClient.getStreamByUserId(channelId);
+            if (!stream) {
+                res.status(400).send({ ok: false, error: 'stream not online at the moment' });
+                return;
+            }
+            dateSince = new Date(stream.started_at);
+        }
+        const userNames = getChatters(db, channelId, dateSince);
+        res.status(200).send({ ok: true, data: { chatters: userNames, since: dateSince } });
+    });
+    return router;
+};
+
+const createRouter$1 = (tokenRepo, userRepo, mail, requireLoginApi) => {
+    const router = express.Router();
+    router.get('/me', requireLoginApi, async (req, res) => {
+        res.send({
+            user: req.user,
+            token: req.cookies['x-token'],
+        });
+    });
+    router.post('/_reset_password', express.json(), async (req, res) => {
+        const plainPass = req.body.pass || null;
+        const token = req.body.token || null;
+        if (!plainPass || !token) {
+            res.status(400).send({ reason: 'bad request' });
+            return;
+        }
+        const tokenObj = await tokenRepo.getByTokenAndType(token, TokenType.PASSWORD_RESET);
+        if (!tokenObj) {
+            res.status(400).send({ reason: 'bad request' });
+            return;
+        }
+        const originalUser = await userRepo.getById(tokenObj.user_id);
+        if (!originalUser) {
+            res.status(404).send({ reason: 'user_does_not_exist' });
+            return;
+        }
+        const pass = fn.passwordHash(plainPass, originalUser.salt);
+        const user = { id: originalUser.id, pass };
+        await userRepo.save(user);
+        await tokenRepo.delete(tokenObj.token);
+        res.send({ success: true });
+    });
+    router.post('/_request_password_reset', express.json(), async (req, res) => {
+        const email = req.body.email || null;
+        if (!email) {
+            res.status(400).send({ reason: 'bad request' });
+            return;
+        }
+        const user = await userRepo.get({ email, status: 'verified' });
+        if (!user) {
+            res.status(404).send({ reason: 'user not found' });
+            return;
+        }
+        const token = await tokenRepo.createToken(user.id, TokenType.PASSWORD_RESET);
+        mail.sendPasswordResetMail({ user, token });
+        res.send({ success: true });
+    });
+    router.post('/_resend_verification_mail', express.json(), async (req, res) => {
+        const email = req.body.email || null;
+        if (!email) {
+            res.status(400).send({ reason: 'bad request' });
+            return;
+        }
+        const user = await userRepo.getByEmail(email);
+        if (!user) {
+            res.status(404).send({ reason: 'email not found' });
+            return;
+        }
+        if (user.status !== 'verification_pending') {
+            res.status(400).send({ reason: 'already verified' });
+            return;
+        }
+        const token = await tokenRepo.createToken(user.id, TokenType.REGISTRATION);
+        mail.sendRegistrationMail({ user, token });
+        res.send({ success: true });
+    });
+    router.post('/_register', express.json(), async (req, res) => {
+        const salt = fn.passwordSalt();
+        const user = {
+            name: req.body.user,
+            pass: fn.passwordHash(req.body.pass, salt),
+            salt: salt,
+            email: req.body.email,
+            status: 'verification_pending',
+            tmi_identity_username: '',
+            tmi_identity_password: '',
+            tmi_identity_client_id: '',
+            tmi_identity_client_secret: '',
+        };
+        let tmpUser = await userRepo.getByEmail(user.email);
+        if (tmpUser) {
+            if (tmpUser.status === 'verified') {
+                // user should use password reset function
+                res.status(400).send({ reason: 'verified_mail_already_exists' });
+            }
+            else {
+                // user should use resend registration mail function
+                res.status(400).send({ reason: 'unverified_mail_already_exists' });
+            }
+            return;
+        }
+        tmpUser = await userRepo.getByName(user.name);
+        if (tmpUser) {
+            if (tmpUser.status === 'verified') {
+                // user should use password reset function
+                res.status(400).send({ reason: 'verified_name_already_exists' });
+            }
+            else {
+                // user should use resend registration mail function
+                res.status(400).send({ reason: 'unverified_name_already_exists' });
+            }
+            return;
+        }
+        const userId = await userRepo.createUser(user);
+        if (!userId) {
+            res.status(400).send({ reason: 'unable to create user' });
+            return;
+        }
+        const token = await tokenRepo.createToken(userId, TokenType.REGISTRATION);
+        mail.sendRegistrationMail({ user, token });
+        res.send({ success: true });
+    });
+    return router;
+};
+
+const log$i = logger('api/index.ts');
+const createRouter = (eventHub, db, tokenRepo, userRepo, mail, wss, auth, configTwitch, cache, widgets, twitchChannelRepo) => {
+    const requireLoginApi = (req, res, next) => {
+        if (!req.token) {
+            res.status(401).send({});
+            return;
+        }
+        return next();
+    };
+    const uploadDir = './data/uploads';
+    const storage = multer.diskStorage({
+        destination: uploadDir,
+        filename: function (req, file, cb) {
+            cb(null, `${nonce(6)}-${file.originalname}`);
+        }
+    });
+    const upload = multer({ storage }).single('file');
+    const router = express.Router();
+    router.post('/upload', requireLoginApi, (req, res) => {
+        upload(req, res, (err) => {
+            if (err) {
+                log$i.error(err);
+                res.status(400).send("Something went wrong!");
+                return;
+            }
+            if (!req.file) {
+                log$i.error(err);
+                res.status(400).send("Something went wrong!");
+                return;
+            }
+            const uploadedFile = {
+                fieldname: req.file.fieldname,
+                originalname: req.file.originalname,
+                encoding: req.file.encoding,
+                mimetype: req.file.mimetype,
+                destination: req.file.destination,
+                filename: req.file.filename,
+                filepath: req.file.path,
+                size: req.file.size,
+                urlpath: `/uploads/${encodeURIComponent(req.file.filename)}`,
+            };
+            res.send(uploadedFile);
+        });
+    });
+    router.get('/conf', async (req, res) => {
+        res.send({
+            wsBase: wss.connectstring(),
+        });
+    });
+    router.post('/logout', requireLoginApi, async (req, res) => {
+        if (req.token) {
+            await auth.destroyToken(req.token);
+            res.clearCookie("x-token");
+        }
+        res.send({ success: true });
+    });
+    router.post('/_handle-token', express.json(), async (req, res) => {
+        const token = req.body.token || null;
+        if (!token) {
+            res.status(400).send({ reason: 'invalid_token' });
+            return;
+        }
+        const tokenObj = await tokenRepo.getByTokenAndType(token, TokenType.REGISTRATION);
+        if (!tokenObj) {
+            res.status(400).send({ reason: 'invalid_token' });
+            return;
+        }
+        await userRepo.save({ status: 'verified', id: tokenObj.user_id });
+        await tokenRepo.delete(tokenObj.token);
+        res.send({ type: 'registration-verified' });
+        // new user was registered. module manager should be notified about this
+        // so that bot doesnt need to be restarted :O
+        const user = await userRepo.getById(tokenObj.user_id);
+        if (user) {
+            eventHub.emit('user_registration_complete', user);
+        }
+        else {
+            log$i.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`);
+        }
+        return;
+    });
+    router.post('/widget/create_url', requireLoginApi, express.json(), async (req, res) => {
+        const type = req.body.type;
+        const pub = req.body.pub;
+        const url = await widgets.createWidgetUrl(type, req.user.id);
+        res.send({
+            url: pub ? (await widgets.pubUrl(url)) : url
+        });
+    });
+    router.get('/page/index', requireLoginApi, async (req, res) => {
+        const mappedWidgets = await widgets.getWidgetInfos(req.user.id);
+        res.send({ widgets: mappedWidgets });
+    });
+    router.get('/page/variables', requireLoginApi, async (req, res) => {
+        const variables = new Variables(db, req.user.id);
+        res.send({ variables: await variables.all() });
+    });
+    router.post('/save-variables', requireLoginApi, express.json(), async (req, res) => {
+        const variables = new Variables(db, req.user.id);
+        await variables.replace(req.body.variables || []);
+        res.send();
+    });
+    router.get('/data/global', async (req, res) => {
+        res.send({
+            registeredUserCount: await userRepo.countVerifiedUsers(),
+            streamingUserCount: await twitchChannelRepo.countUniqueUsersStreaming(),
+        });
+    });
+    router.get('/page/settings', requireLoginApi, async (req, res) => {
+        const user = await userRepo.getById(req.user.id);
+        res.send({
+            user: {
+                id: user.id,
+                name: user.name,
+                salt: user.salt,
+                email: user.email,
+                status: user.status,
+                tmi_identity_username: user.tmi_identity_username,
+                tmi_identity_password: user.tmi_identity_password,
+                tmi_identity_client_id: user.tmi_identity_client_id,
+                tmi_identity_client_secret: user.tmi_identity_client_secret,
+                groups: await userRepo.getGroups(user.id)
+            },
+            twitchChannels: await twitchChannelRepo.allByUserId(req.user.id),
+        });
+    });
+    router.post('/save-settings', requireLoginApi, express.json(), async (req, res) => {
+        if (!req.user.groups.includes('admin')) {
+            if (req.user.id !== req.body.user.id) {
+                // editing other user than self
+                res.status(401).send({ reason: 'not_allowed_to_edit_other_users' });
+                return;
+            }
+        }
+        const originalUser = await userRepo.getById(req.body.user.id);
+        if (!originalUser) {
+            res.status(404).send({ reason: 'user_does_not_exist' });
+            return;
+        }
+        const user = {
+            id: req.body.user.id,
+        };
+        if (req.body.user.pass) {
+            user.pass = fn.passwordHash(req.body.user.pass, originalUser.salt);
+        }
+        if (req.body.user.email) {
+            user.email = req.body.user.email;
+        }
+        if (req.user.groups.includes('admin')) {
+            user.tmi_identity_client_id = req.body.user.tmi_identity_client_id;
+            user.tmi_identity_client_secret = req.body.user.tmi_identity_client_secret;
+            user.tmi_identity_username = req.body.user.tmi_identity_username;
+            user.tmi_identity_password = req.body.user.tmi_identity_password;
+        }
+        const twitch_channels = req.body.twitch_channels.map((channel) => {
+            channel.user_id = user.id;
+            return channel;
+        });
+        await userRepo.save(user);
+        await twitchChannelRepo.saveUserChannels(user.id, twitch_channels);
+        const changedUser = await userRepo.getById(user.id);
+        if (changedUser) {
+            eventHub.emit('user_changed', changedUser);
+        }
+        else {
+            log$i.error(`save-settings: user doesn't exist after saving it: ${user.id}`);
+        }
+        res.send();
+    });
+    router.post('/twitch/user-id-by-name', requireLoginApi, express.json(), async (req, res) => {
+        let clientId;
+        let clientSecret;
+        if (!req.user.groups.includes('admin')) {
+            const u = await userRepo.getById(req.user.id);
+            clientId = u.tmi_identity_client_id || configTwitch.tmi.identity.client_id;
+            clientSecret = u.tmi_identity_client_secret || configTwitch.tmi.identity.client_secret;
+        }
+        else {
+            clientId = req.body.client_id;
+            clientSecret = req.body.client_secret;
+        }
+        if (!clientId) {
+            res.status(400).send({ reason: 'need client id' });
+            return;
+        }
+        if (!clientSecret) {
+            res.status(400).send({ reason: 'need client secret' });
+            return;
+        }
+        try {
+            // todo: maybe fill twitchChannels instead of empty array
+            const client = new TwitchHelixClient(clientId, clientSecret, []);
+            res.send({ id: await client.getUserIdByName(req.body.name, cache) });
+        }
+        catch (e) {
+            res.status(500).send("Something went wrong!");
+        }
+    });
+    router.post('/auth', express.json(), async (req, res) => {
+        const user = await auth.getUserByNameAndPass(req.body.user, req.body.pass);
+        if (!user) {
+            res.status(401).send({ reason: 'bad credentials' });
+            return;
+        }
+        const token = await auth.getUserAuthToken(user.id);
+        res.cookie('x-token', token, { maxAge: 1 * YEAR, httpOnly: true });
+        res.send();
+    });
+    router.use('/user', createRouter$1(tokenRepo, userRepo, mail, requireLoginApi));
+    router.use('/pub/v1', createRouter$2(db, tokenRepo, userRepo, cache, configTwitch));
+    return router;
+};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -1396,70 +1898,8 @@ const widgetTemplate = () => {
     }
     return '../public/static/widgets/index.html';
 };
-const widgets = [
-    {
-        type: 'sr',
-        title: 'Song Request',
-        hint: 'Browser source, or open in browser and capture window',
-        pub: false,
-    },
-    {
-        type: 'media',
-        title: 'Media',
-        hint: 'Browser source, or open in browser and capture window',
-        pub: false,
-    },
-    {
-        type: 'speech-to-text',
-        title: 'Speech-to-Text',
-        hint: 'Google Chrome + window capture',
-        pub: false,
-    },
-    {
-        type: 'speech-to-text_receive',
-        title: 'Speech-to-Text (receive)',
-        hint: 'Browser source, or open in browser and capture window',
-        pub: false,
-    },
-    {
-        type: 'avatar',
-        title: 'Avatar (control)',
-        hint: '???',
-        pub: false,
-    },
-    {
-        type: 'avatar_receive',
-        title: 'Avatar (receive)',
-        hint: 'Browser source, or open in browser and capture window',
-        pub: false,
-    },
-    {
-        type: 'drawcast_receive',
-        title: 'Drawcast (Overlay)',
-        hint: 'Browser source, or open in browser and capture window',
-        pub: false,
-    },
-    {
-        type: 'drawcast_draw',
-        title: 'Drawcast (Draw)',
-        hint: 'Open this to draw (or give to viewers to let them draw)',
-        pub: true,
-    },
-    {
-        type: 'drawcast_control',
-        title: 'Drawcast (Control)',
-        hint: 'Open this to control certain actions of draw (for example permit drawings)',
-        pub: false,
-    },
-    {
-        type: 'pomo',
-        title: 'Pomo',
-        hint: 'Browser source, or open in browser and capture window',
-        pub: false,
-    },
-];
 class WebServer {
-    constructor(eventHub, db, cache, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, configHttp, configTwitch, wss, auth) {
+    constructor(eventHub, db, cache, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, configHttp, configTwitch, wss, auth, widgets) {
         this.eventHub = eventHub;
         this.db = db;
         this.cache = cache;
@@ -1470,50 +1910,11 @@ class WebServer {
         this.moduleManager = moduleManager;
         this.port = configHttp.port;
         this.hostname = configHttp.hostname;
-        this.url = configHttp.url;
         this.configTwitch = configTwitch;
         this.wss = wss;
         this.auth = auth;
+        this.widgets = widgets;
         this.handle = null;
-    }
-    async getWidgetUrl(widgetType, userId) {
-        return await this._widgetUrlByTypeAndUserId(widgetType, userId);
-    }
-    async getPublicWidgetUrl(widgetType, userId) {
-        const url = await this._widgetUrlByTypeAndUserId(widgetType, userId);
-        return await this._pubUrl(url);
-    }
-    async _pubUrl(target) {
-        const row = await this.db.get('robyottoko.pub', { target });
-        let id;
-        if (!row) {
-            do {
-                id = nonce(6);
-            } while (await this.db.get('robyottoko.pub', { id }));
-            await this.db.insert('robyottoko.pub', { id, target });
-        }
-        else {
-            id = row.id;
-        }
-        return `${this.url}/pub/${id}`;
-    }
-    _widgetUrl(type, token) {
-        return `${this.url}/widget/${type}/${token}/`;
-    }
-    async _createWidgetUrl(type, userId) {
-        let t = await this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`);
-        if (t) {
-            await this.tokenRepo.delete(t.token);
-        }
-        t = await this.tokenRepo.createToken(userId, `widget_${type}`);
-        return `${this.url}/widget/${type}/${t.token}`;
-    }
-    async _widgetUrlByTypeAndUserId(type, userId) {
-        const t = await this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`);
-        if (t) {
-            return this._widgetUrl(type, t.token);
-        }
-        return await this._createWidgetUrl(type, userId);
     }
     async listen() {
         const port = this.port;
@@ -1522,6 +1923,7 @@ class WebServer {
         const templates = new Templates(__dirname);
         await templates.add(widgetTemplate());
         await templates.add('templates/twitch_redirect_uri.html');
+        const indexFile = path.resolve(`${__dirname}/../../build/public/index.html`);
         app.get('/pub/:id', async (req, res, _next) => {
             const row = await this.db.get('robyottoko.pub', {
                 id: req.params.id,
@@ -1534,30 +1936,6 @@ class WebServer {
             }
             res.status(404).send();
         });
-        const verifyTwitchSignature = (req, res, next) => {
-            const body = Buffer.from(req.rawBody, 'utf8');
-            const msg = `${req.headers['twitch-eventsub-message-id']}${req.headers['twitch-eventsub-message-timestamp']}${body}`;
-            const hmac = crypto.createHmac('sha256', this.configTwitch.eventSub.transport.secret);
-            hmac.update(msg);
-            const expected = `sha256=${hmac.digest('hex')}`;
-            if (req.headers['twitch-eventsub-message-signature'] !== expected) {
-                log$h.debug(req);
-                log$h.error('bad message signature', {
-                    got: req.headers['twitch-eventsub-message-signature'],
-                    expected,
-                });
-                res.status(403).send({ reason: 'bad message signature' });
-                return;
-            }
-            return next();
-        };
-        const requireLoginApi = (req, res, next) => {
-            if (!req.token) {
-                res.status(401).send({});
-                return;
-            }
-            return next();
-        };
         const requireLogin = (req, res, next) => {
             if (!req.token) {
                 if (req.method === 'GET') {
@@ -1574,424 +1952,9 @@ class WebServer {
         app.use(this.auth.addAuthInfoMiddleware());
         app.use('/', express.static('./build/public'));
         app.use('/static', express.static('./public/static'));
-        const uploadDir = './data/uploads';
-        const storage = multer.diskStorage({
-            destination: uploadDir,
-            filename: function (req, file, cb) {
-                cb(null, `${nonce(6)}-${file.originalname}`);
-            }
-        });
-        const upload = multer({ storage }).single('file');
-        app.use('/uploads', express.static(uploadDir));
-        const apiRouter = express.Router();
-        apiRouter.post('/upload', requireLoginApi, (req, res) => {
-            upload(req, res, (err) => {
-                if (err) {
-                    log$h.error(err);
-                    res.status(400).send("Something went wrong!");
-                    return;
-                }
-                if (!req.file) {
-                    log$h.error(err);
-                    res.status(400).send("Something went wrong!");
-                    return;
-                }
-                const uploadedFile = {
-                    fieldname: req.file.fieldname,
-                    originalname: req.file.originalname,
-                    encoding: req.file.encoding,
-                    mimetype: req.file.mimetype,
-                    destination: req.file.destination,
-                    filename: req.file.filename,
-                    filepath: req.file.path,
-                    size: req.file.size,
-                    urlpath: `/uploads/${encodeURIComponent(req.file.filename)}`,
-                };
-                res.send(uploadedFile);
-            });
-        });
-        apiRouter.post('/widget/create_url', requireLoginApi, express.json(), async (req, res) => {
-            const type = req.body.type;
-            const pub = req.body.pub;
-            const url = await this._createWidgetUrl(type, req.user.id);
-            res.send({
-                url: pub ? (await this._pubUrl(url)) : url
-            });
-        });
-        apiRouter.get('/conf', async (req, res) => {
-            res.send({
-                wsBase: this.wss.connectstring(),
-            });
-        });
-        apiRouter.get('/user/me', requireLoginApi, async (req, res) => {
-            res.send({
-                user: req.user,
-                token: req.cookies['x-token'],
-            });
-        });
-        apiRouter.post('/logout', requireLoginApi, async (req, res) => {
-            if (req.token) {
-                await this.auth.destroyToken(req.token);
-                res.clearCookie("x-token");
-            }
-            res.send({ success: true });
-        });
-        apiRouter.get('/page/index', requireLoginApi, async (req, res) => {
-            const mappedWidgets = [];
-            for (const w of widgets) {
-                const url = await this._widgetUrlByTypeAndUserId(w.type, req.user.id);
-                mappedWidgets.push({
-                    type: w.type,
-                    pub: w.pub,
-                    title: w.title,
-                    hint: w.hint,
-                    url: w.pub ? (await this._pubUrl(url)) : url,
-                });
-            }
-            res.send({ widgets: mappedWidgets });
-        });
-        apiRouter.post('/user/_reset_password', express.json(), async (req, res) => {
-            const plainPass = req.body.pass || null;
-            const token = req.body.token || null;
-            if (!plainPass || !token) {
-                res.status(400).send({ reason: 'bad request' });
-                return;
-            }
-            const tokenObj = await this.tokenRepo.getByTokenAndType(token, 'password_reset');
-            if (!tokenObj) {
-                res.status(400).send({ reason: 'bad request' });
-                return;
-            }
-            const originalUser = await this.userRepo.getById(tokenObj.user_id);
-            if (!originalUser) {
-                res.status(404).send({ reason: 'user_does_not_exist' });
-                return;
-            }
-            const pass = fn.passwordHash(plainPass, originalUser.salt);
-            const user = { id: originalUser.id, pass };
-            await this.userRepo.save(user);
-            await this.tokenRepo.delete(tokenObj.token);
-            res.send({ success: true });
-        });
-        apiRouter.post('/user/_request_password_reset', express.json(), async (req, res) => {
-            const email = req.body.email || null;
-            if (!email) {
-                res.status(400).send({ reason: 'bad request' });
-                return;
-            }
-            const user = await this.userRepo.get({ email, status: 'verified' });
-            if (!user) {
-                res.status(404).send({ reason: 'user not found' });
-                return;
-            }
-            const token = await this.tokenRepo.createToken(user.id, 'password_reset');
-            this.mail.sendPasswordResetMail({ user, token });
-            res.send({ success: true });
-        });
-        apiRouter.post('/user/_resend_verification_mail', express.json(), async (req, res) => {
-            const email = req.body.email || null;
-            if (!email) {
-                res.status(400).send({ reason: 'bad request' });
-                return;
-            }
-            const user = await this.db.get('robyottoko.user', { email });
-            if (!user) {
-                res.status(404).send({ reason: 'email not found' });
-                return;
-            }
-            if (user.status !== 'verification_pending') {
-                res.status(400).send({ reason: 'already verified' });
-                return;
-            }
-            const token = await this.tokenRepo.createToken(user.id, 'registration');
-            this.mail.sendRegistrationMail({ user, token });
-            res.send({ success: true });
-        });
-        apiRouter.post('/user/_register', express.json(), async (req, res) => {
-            const salt = fn.passwordSalt();
-            const user = {
-                name: req.body.user,
-                pass: fn.passwordHash(req.body.pass, salt),
-                salt: salt,
-                email: req.body.email,
-                status: 'verification_pending',
-                tmi_identity_username: '',
-                tmi_identity_password: '',
-                tmi_identity_client_id: '',
-                tmi_identity_client_secret: '',
-            };
-            let tmpUser;
-            tmpUser = await this.db.get('robyottoko.user', { email: user.email });
-            if (tmpUser) {
-                if (tmpUser.status === 'verified') {
-                    // user should use password reset function
-                    res.status(400).send({ reason: 'verified_mail_already_exists' });
-                }
-                else {
-                    // user should use resend registration mail function
-                    res.status(400).send({ reason: 'unverified_mail_already_exists' });
-                }
-                return;
-            }
-            tmpUser = await this.db.get('robyottoko.user', { name: user.name });
-            if (tmpUser) {
-                if (tmpUser.status === 'verified') {
-                    // user should use password reset function
-                    res.status(400).send({ reason: 'verified_name_already_exists' });
-                }
-                else {
-                    // user should use resend registration mail function
-                    res.status(400).send({ reason: 'unverified_name_already_exists' });
-                }
-                return;
-            }
-            const userId = await this.userRepo.createUser(user);
-            if (!userId) {
-                res.status(400).send({ reason: 'unable to create user' });
-                return;
-            }
-            const token = await this.tokenRepo.createToken(userId, 'registration');
-            this.mail.sendRegistrationMail({ user, token });
-            res.send({ success: true });
-        });
-        apiRouter.post('/_handle-token', express.json(), async (req, res) => {
-            const token = req.body.token || null;
-            if (!token) {
-                res.status(400).send({ reason: 'invalid_token' });
-                return;
-            }
-            const tokenObj = await this.tokenRepo.getByTokenAndType(token, 'registration');
-            if (!tokenObj) {
-                res.status(400).send({ reason: 'invalid_token' });
-                return;
-            }
-            await this.userRepo.save({ status: 'verified', id: tokenObj.user_id });
-            await this.tokenRepo.delete(tokenObj.token);
-            res.send({ type: 'registration-verified' });
-            // new user was registered. module manager should be notified about this
-            // so that bot doesnt need to be restarted :O
-            const user = await this.userRepo.getById(tokenObj.user_id);
-            if (user) {
-                this.eventHub.emit('user_registration_complete', user);
-            }
-            else {
-                log$h.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`);
-            }
-            return;
-        });
-        apiRouter.get('/page/variables', requireLoginApi, async (req, res) => {
-            const variables = new Variables(this.db, req.user.id);
-            res.send({ variables: await variables.all() });
-        });
-        apiRouter.post('/save-variables', requireLoginApi, express.json(), async (req, res) => {
-            const variables = new Variables(this.db, req.user.id);
-            await variables.replace(req.body.variables || []);
-            res.send();
-        });
-        apiRouter.get('/data/global', async (req, res) => {
-            res.send({
-                registeredUserCount: await this.userRepo.countVerifiedUsers(),
-                streamingUserCount: await this.twitchChannelRepo.countUniqueUsersStreaming(),
-            });
-        });
-        apiRouter.get('/page/settings', requireLoginApi, async (req, res) => {
-            const user = await this.userRepo.getById(req.user.id);
-            res.send({
-                user: {
-                    id: user.id,
-                    name: user.name,
-                    salt: user.salt,
-                    email: user.email,
-                    status: user.status,
-                    tmi_identity_username: user.tmi_identity_username,
-                    tmi_identity_password: user.tmi_identity_password,
-                    tmi_identity_client_id: user.tmi_identity_client_id,
-                    tmi_identity_client_secret: user.tmi_identity_client_secret,
-                    groups: await this.userRepo.getGroups(user.id)
-                },
-                twitchChannels: await this.twitchChannelRepo.allByUserId(req.user.id),
-            });
-        });
-        apiRouter.post('/save-settings', requireLoginApi, express.json(), async (req, res) => {
-            if (!req.user.groups.includes('admin')) {
-                if (req.user.id !== req.body.user.id) {
-                    // editing other user than self
-                    res.status(401).send({ reason: 'not_allowed_to_edit_other_users' });
-                    return;
-                }
-            }
-            const originalUser = await this.userRepo.getById(req.body.user.id);
-            if (!originalUser) {
-                res.status(404).send({ reason: 'user_does_not_exist' });
-                return;
-            }
-            const user = {
-                id: req.body.user.id,
-            };
-            if (req.body.user.pass) {
-                user.pass = fn.passwordHash(req.body.user.pass, originalUser.salt);
-            }
-            if (req.body.user.email) {
-                user.email = req.body.user.email;
-            }
-            if (req.user.groups.includes('admin')) {
-                user.tmi_identity_client_id = req.body.user.tmi_identity_client_id;
-                user.tmi_identity_client_secret = req.body.user.tmi_identity_client_secret;
-                user.tmi_identity_username = req.body.user.tmi_identity_username;
-                user.tmi_identity_password = req.body.user.tmi_identity_password;
-            }
-            const twitch_channels = req.body.twitch_channels.map((channel) => {
-                channel.user_id = user.id;
-                return channel;
-            });
-            await this.userRepo.save(user);
-            await this.twitchChannelRepo.saveUserChannels(user.id, twitch_channels);
-            const changedUser = await this.userRepo.getById(user.id);
-            if (changedUser) {
-                this.eventHub.emit('user_changed', changedUser);
-            }
-            else {
-                log$h.error(`save-settings: user doesn't exist after saving it: ${user.id}`);
-            }
-            res.send();
-        });
-        apiRouter.post('/twitch/user-id-by-name', requireLoginApi, express.json(), async (req, res) => {
-            let clientId;
-            let clientSecret;
-            if (!req.user.groups.includes('admin')) {
-                const u = await this.userRepo.getById(req.user.id);
-                clientId = u.tmi_identity_client_id || this.configTwitch.tmi.identity.client_id;
-                clientSecret = u.tmi_identity_client_secret || this.configTwitch.tmi.identity.client_secret;
-            }
-            else {
-                clientId = req.body.client_id;
-                clientSecret = req.body.client_secret;
-            }
-            if (!clientId) {
-                res.status(400).send({ reason: 'need client id' });
-                return;
-            }
-            if (!clientSecret) {
-                res.status(400).send({ reason: 'need client secret' });
-                return;
-            }
-            try {
-                // todo: maybe fill twitchChannels instead of empty array
-                const client = new TwitchHelixClient(clientId, clientSecret, []);
-                res.send({ id: await client.getUserIdByName(req.body.name, this.cache) });
-            }
-            catch (e) {
-                res.status(500).send("Something went wrong!");
-            }
-        });
-        apiRouter.post('/auth', express.json(), async (req, res) => {
-            const user = await this.auth.getUserByNameAndPass(req.body.user, req.body.pass);
-            if (!user) {
-                res.status(401).send({ reason: 'bad credentials' });
-                return;
-            }
-            const token = await this.auth.getUserAuthToken(user.id);
-            res.cookie('x-token', token, { maxAge: 1 * YEAR, httpOnly: true });
-            res.send();
-        });
-        const pubApiV1Router = express.Router();
-        pubApiV1Router.use(cors());
-        pubApiV1Router.get('/chatters', async (req, res) => {
-            if (!req.query.apiKey) {
-                res.status(403).send({ ok: false, error: 'invalid api key' });
-                return;
-            }
-            const apiKey = String(req.query.apiKey);
-            const t = await this.tokenRepo.getByTokenAndType(apiKey, 'api_key');
-            if (!t) {
-                res.status(403).send({ ok: false, error: 'invalid api key' });
-                return;
-            }
-            const user = await this.userRepo.getById(t.user_id);
-            if (!user) {
-                res.status(400).send({ ok: false, error: 'user_not_found' });
-                return;
-            }
-            if (!req.query.channel) {
-                res.status(400).send({ ok: false, error: 'channel missing' });
-                return;
-            }
-            const channelName = String(req.query.channel);
-            const helixClient = new TwitchHelixClient(this.configTwitch.tmi.identity.client_id, this.configTwitch.tmi.identity.client_secret, []);
-            const channelId = await helixClient.getUserIdByName(channelName, this.cache);
-            if (!channelId) {
-                res.status(400).send({ ok: false, error: 'unable to determine channel id' });
-                return;
-            }
-            let dateSince;
-            if (req.query.since) {
-                try {
-                    dateSince = new Date(String(req.query.since));
-                }
-                catch (e) {
-                    res.status(400).send({ ok: false, error: 'unable to parse since' });
-                    return;
-                }
-            }
-            else {
-                const stream = await helixClient.getStreamByUserId(channelId);
-                if (!stream) {
-                    res.status(400).send({ ok: false, error: 'stream not online at the moment' });
-                    return;
-                }
-                dateSince = new Date(stream.started_at);
-            }
-            const whereObject = this.db._buildWhere({
-                broadcaster_user_id: channelId,
-                created_at: { '$gte': dateSince },
-            });
-            const userNames = (await this.db._getMany(`select display_name from robyottoko.chat_log ${whereObject.sql} group by display_name`, whereObject.values)).map(r => r.display_name);
-            res.status(200).send({ ok: true, data: { chatters: userNames, since: dateSince } });
-        });
-        apiRouter.use('/pub/v1', pubApiV1Router);
-        app.use('/api', apiRouter);
-        const twitchRouter = express.Router();
-        // twitch calls this url after auth
-        // from here we render a js that reads the token and shows it to the user
-        twitchRouter.get('/redirect_uri', async (req, res) => {
-            res.send(templates.render('templates/twitch_redirect_uri.html', {}));
-        });
-        twitchRouter.post('/event-sub/', express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
-            log$h.debug(req.body);
-            log$h.debug(req.headers);
-            if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-                log$h.info(`got verification request, challenge: ${req.body.challenge}`);
-                res.write(req.body.challenge);
-                res.send();
-                return;
-            }
-            if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-                log$h.info(`got notification request: ${req.body.subscription.type}`);
-                if (req.body.subscription.type === 'stream.online') {
-                    // insert new stream
-                    await this.db.insert('robyottoko.streams', {
-                        broadcaster_user_id: req.body.event.broadcaster_user_id,
-                        started_at: new Date(req.body.event.started_at),
-                    });
-                }
-                else if (req.body.subscription.type === 'stream.offline') {
-                    // get last started stream for broadcaster
-                    // if it exists and it didnt end yet set ended_at date
-                    const stream = await this.db.get('robyottoko.streams', {
-                        broadcaster_user_id: req.body.event.broadcaster_user_id,
-                    }, [{ started_at: -1 }]);
-                    if (!stream.ended_at) {
-                        await this.db.update('robyottoko.streams', {
-                            ended_at: new Date(),
-                        }, { id: stream.id });
-                    }
-                }
-                res.send();
-                return;
-            }
-            res.status(400).send({ reason: 'unhandled sub type' });
-        });
-        app.use('/twitch', twitchRouter);
+        app.use('/uploads', express.static('./data/uploads'));
+        app.use('/api', createRouter(this.eventHub, this.db, this.tokenRepo, this.userRepo, this.mail, this.wss, this.auth, this.configTwitch, this.cache, this.widgets, this.twitchChannelRepo));
+        app.use('/twitch', createRouter$3(this.db, templates, this.configTwitch));
         app.get('/widget/:widget_type/:widget_token/', async (req, res, _next) => {
             const type = req.params.widget_type;
             const token = req.params.widget_token;
@@ -2002,7 +1965,7 @@ class WebServer {
                 return;
             }
             log$h.debug(`/widget/:widget_type/:widget_token/`, type, token);
-            const w = widgets.find(w => w.type === type);
+            const w = this.widgets.getWidgetDefinitionByType(type);
             if (w) {
                 res.send(templates.render(widgetTemplate(), {
                     widget: w.type,
@@ -2015,12 +1978,10 @@ class WebServer {
             res.status(404).send();
         });
         app.all('/login', async (_req, res, _next) => {
-            const indexFile = `${__dirname}/../../build/public/index.html`;
-            res.sendFile(path.resolve(indexFile));
+            res.sendFile(indexFile);
         });
         app.all('/password-reset', async (_req, res, _next) => {
-            const indexFile = `${__dirname}/../../build/public/index.html`;
-            res.sendFile(path.resolve(indexFile));
+            res.sendFile(indexFile);
         });
         app.all('*', requireLogin, express.json({ limit: '50mb' }), async (req, res, next) => {
             const method = req.method.toLowerCase();
@@ -2032,8 +1993,7 @@ class WebServer {
                     return;
                 }
             }
-            const indexFile = `${__dirname}/../../build/public/index.html`;
-            res.sendFile(path.resolve(indexFile));
+            res.sendFile(indexFile);
         });
         this.handle = app.listen(port, hostname, () => log$h.info(`server running on http://${hostname}:${port}`));
     }
@@ -3216,7 +3176,7 @@ class TwitchClientManager {
 }
 
 const log$e = logger('ModuleStorage.ts');
-const TABLE$4 = 'robyottoko.module';
+const TABLE$3 = 'robyottoko.module';
 class ModuleStorage {
     constructor(db, userId) {
         this.db = db;
@@ -3225,7 +3185,7 @@ class ModuleStorage {
     async load(key, def) {
         try {
             const where = { user_id: this.userId, key };
-            const row = await this.db.get(TABLE$4, where);
+            const row = await this.db.get(TABLE$3, where);
             const data = row ? JSON.parse('' + row.data) : null;
             return data ? Object.assign({}, def, data) : def;
         }
@@ -3238,26 +3198,32 @@ class ModuleStorage {
         const where = { user_id: this.userId, key };
         const data = JSON.stringify(rawData);
         const dbData = Object.assign({}, where, { data });
-        await this.db.upsert(TABLE$4, dbData, where);
+        await this.db.upsert(TABLE$3, dbData, where);
     }
 }
 
-const TABLE$3 = 'robyottoko.user';
+const TABLE$2 = 'robyottoko.user';
 class Users {
     constructor(db) {
         this.db = db;
     }
     async get(by) {
-        return await this.db.get(TABLE$3, by) || null;
+        return await this.db.get(TABLE$2, by) || null;
     }
     async all() {
-        return await this.db.getMany(TABLE$3);
+        return await this.db.getMany(TABLE$2);
     }
     async getById(id) {
         return await this.get({ id });
     }
+    async getByEmail(email) {
+        return await this.get({ email });
+    }
+    async getByName(name) {
+        return await this.get({ name });
+    }
     async save(user) {
-        await this.db.upsert(TABLE$3, user, { id: user.id });
+        await this.db.upsert(TABLE$2, user, { id: user.id });
     }
     async getGroups(id) {
         const rows = await this.db._getMany(`
@@ -3267,53 +3233,11 @@ where x.user_id = $1`, [id]);
         return rows.map(r => r.name);
     }
     async createUser(user) {
-        return (await this.db.insert(TABLE$3, user));
+        return (await this.db.insert(TABLE$2, user));
     }
     async countVerifiedUsers() {
-        const rows = await this.db.getMany(TABLE$3, { status: 'verified' });
+        const rows = await this.db.getMany(TABLE$2, { status: 'verified' });
         return rows.length;
-    }
-}
-
-const TABLE$2 = 'robyottoko.token';
-function generateToken(length) {
-    // edit the token allowed characters
-    const a = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'.split('');
-    const b = [];
-    for (let i = 0; i < length; i++) {
-        const j = parseInt((Math.random() * (a.length - 1)).toFixed(0), 10);
-        b[i] = a[j];
-    }
-    return b.join('');
-}
-class Tokens {
-    constructor(db) {
-        this.db = db;
-    }
-    async getByUserIdAndType(user_id, type) {
-        return await this.db.get(TABLE$2, { user_id, type });
-    }
-    async insert(tokenInfo) {
-        return await this.db.insert(TABLE$2, tokenInfo);
-    }
-    async createToken(user_id, type) {
-        const token = generateToken(32);
-        const tokenObj = { user_id, type, token };
-        await this.insert(tokenObj);
-        return tokenObj;
-    }
-    async getOrCreateToken(user_id, type) {
-        return (await this.getByUserIdAndType(user_id, type))
-            || (await this.createToken(user_id, type));
-    }
-    async getByTokenAndType(token, type) {
-        return (await this.db.get(TABLE$2, { token, type })) || null;
-    }
-    async delete(token) {
-        return await this.db.delete(TABLE$2, { token });
-    }
-    async generateAuthTokenForUserId(user_id) {
-        return await this.createToken(user_id, 'auth');
     }
 }
 
@@ -3928,12 +3852,7 @@ const chatters = (bot, user) => async (_command, client, target, context) => {
         say(`It seems this channel is not live at the moment...`);
         return;
     }
-    const db = bot.getDb();
-    const whereObject = db._buildWhere({
-        broadcaster_user_id: context['room-id'],
-        created_at: { '$gte': new Date(stream.started_at) },
-    });
-    const userNames = (await db._getMany(`select display_name from robyottoko.chat_log ${whereObject.sql} group by display_name`, whereObject.values)).map(r => r.display_name);
+    const userNames = await getChatters(bot.getDb(), context['room-id'], new Date(stream.started_at));
     if (userNames.length === 0) {
         say(`It seems nobody chatted? :(`);
         return;
@@ -4540,7 +4459,7 @@ class GeneralModule {
                 adminSettings: this.data.adminSettings,
                 globalVariables: await this.bot.getUserVariables(this.user).all(),
                 channelPointsCustomRewards: this.channelPointsCustomRewards,
-                mediaWidgetUrl: await this.bot.getWebServer().getWidgetUrl('media', this.user.id),
+                mediaWidgetUrl: await this.bot.getWidgets().getWidgetUrl('media', this.user.id),
             },
         };
     }
@@ -4932,7 +4851,7 @@ class SongrequestModule {
                 commands: this.data.commands,
                 globalVariables: await this.bot.getUserVariables(this.user).all(),
                 channelPointsCustomRewards: this.channelPointsCustomRewards,
-                widgetUrl: await this.bot.getWebServer().getWidgetUrl('sr', this.user.id),
+                widgetUrl: await this.bot.getWidgets().getWidgetUrl('sr', this.user.id),
             }
         };
     }
@@ -6139,8 +6058,8 @@ class SpeechToTextModule {
             event: eventName,
             data: {
                 settings: this.data.settings,
-                controlWidgetUrl: await this.bot.getWebServer().getWidgetUrl('speech-to-text', this.user.id),
-                displayWidgetUrl: await this.bot.getWebServer().getWidgetUrl('speech-to-text_receive', this.user.id),
+                controlWidgetUrl: await this.bot.getWidgets().getWidgetUrl('speech-to-text', this.user.id),
+                displayWidgetUrl: await this.bot.getWidgets().getWidgetUrl('speech-to-text_receive', this.user.id),
             }
         };
     }
@@ -6313,13 +6232,13 @@ class DrawcastModule {
         };
     }
     async drawUrl() {
-        return await this.bot.getWebServer().getPublicWidgetUrl('drawcast_draw', this.user.id);
+        return await this.bot.getWidgets().getPublicWidgetUrl('drawcast_draw', this.user.id);
     }
     async receiveUrl() {
-        return await this.bot.getWebServer().getWidgetUrl('drawcast_receive', this.user.id);
+        return await this.bot.getWidgets().getWidgetUrl('drawcast_receive', this.user.id);
     }
     async controlUrl() {
-        return await this.bot.getWebServer().getWidgetUrl('drawcast_control', this.user.id);
+        return await this.bot.getWidgets().getWidgetUrl('drawcast_control', this.user.id);
     }
     async wsdata(eventName) {
         return {
@@ -6482,8 +6401,8 @@ class AvatarModule {
             data: {
                 settings: this.data.settings,
                 state: this.data.state,
-                controlWidgetUrl: await this.bot.getWebServer().getWidgetUrl('avatar', this.user.id),
-                displayWidgetUrl: await this.bot.getWebServer().getWidgetUrl('avatar_receive', this.user.id),
+                controlWidgetUrl: await this.bot.getWidgets().getWidgetUrl('avatar', this.user.id),
+                displayWidgetUrl: await this.bot.getWidgets().getWidgetUrl('avatar_receive', this.user.id),
             }
         };
     }
@@ -6713,7 +6632,7 @@ class PomoModule {
             data: {
                 settings: this.data.settings,
                 state: this.data.state,
-                widgetUrl: await this.bot.getWebServer().getWidgetUrl('pomo', this.user.id),
+                widgetUrl: await this.bot.getWidgets().getWidgetUrl('pomo', this.user.id),
             }
         };
     }
@@ -6749,10 +6668,136 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-05-24T19:39:40.769Z",
+    buildDate: "2022-05-25T18:58:24.121Z",
     // @ts-ignore
     buildVersion: "1.10.1",
 };
+
+const widgets = [
+    {
+        type: 'sr',
+        title: 'Song Request',
+        hint: 'Browser source, or open in browser and capture window',
+        pub: false,
+    },
+    {
+        type: 'media',
+        title: 'Media',
+        hint: 'Browser source, or open in browser and capture window',
+        pub: false,
+    },
+    {
+        type: 'speech-to-text',
+        title: 'Speech-to-Text',
+        hint: 'Google Chrome + window capture',
+        pub: false,
+    },
+    {
+        type: 'speech-to-text_receive',
+        title: 'Speech-to-Text (receive)',
+        hint: 'Browser source, or open in browser and capture window',
+        pub: false,
+    },
+    {
+        type: 'avatar',
+        title: 'Avatar (control)',
+        hint: '???',
+        pub: false,
+    },
+    {
+        type: 'avatar_receive',
+        title: 'Avatar (receive)',
+        hint: 'Browser source, or open in browser and capture window',
+        pub: false,
+    },
+    {
+        type: 'drawcast_receive',
+        title: 'Drawcast (Overlay)',
+        hint: 'Browser source, or open in browser and capture window',
+        pub: false,
+    },
+    {
+        type: 'drawcast_draw',
+        title: 'Drawcast (Draw)',
+        hint: 'Open this to draw (or give to viewers to let them draw)',
+        pub: true,
+    },
+    {
+        type: 'drawcast_control',
+        title: 'Drawcast (Control)',
+        hint: 'Open this to control certain actions of draw (for example permit drawings)',
+        pub: false,
+    },
+    {
+        type: 'pomo',
+        title: 'Pomo',
+        hint: 'Browser source, or open in browser and capture window',
+        pub: false,
+    },
+];
+class Widgets {
+    constructor(base, db, tokenRepo) {
+        this._widgetUrl = (type, token) => {
+            return `${this.base}/widget/${type}/${token}/`;
+        };
+        this.base = base;
+        this.db = db;
+        this.tokenRepo = tokenRepo;
+    }
+    async createWidgetUrl(type, userId) {
+        let t = await this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`);
+        if (t) {
+            await this.tokenRepo.delete(t.token);
+        }
+        t = await this.tokenRepo.createToken(userId, `widget_${type}`);
+        return this._widgetUrl(type, t.token);
+    }
+    async widgetUrlByTypeAndUserId(type, userId) {
+        const t = await this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`);
+        if (t) {
+            return this._widgetUrl(type, t.token);
+        }
+        return await this.createWidgetUrl(type, userId);
+    }
+    async pubUrl(target) {
+        const row = await this.db.get('robyottoko.pub', { target });
+        let id;
+        if (!row) {
+            do {
+                id = nonce(6);
+            } while (await this.db.get('robyottoko.pub', { id }));
+            await this.db.insert('robyottoko.pub', { id, target });
+        }
+        else {
+            id = row.id;
+        }
+        return `${this.base}/pub/${id}`;
+    }
+    async getWidgetUrl(widgetType, userId) {
+        return await this.widgetUrlByTypeAndUserId(widgetType, userId);
+    }
+    async getPublicWidgetUrl(widgetType, userId) {
+        const url = await this.widgetUrlByTypeAndUserId(widgetType, userId);
+        return await this.pubUrl(url);
+    }
+    async getWidgetInfos(userId) {
+        const widgetInfos = [];
+        for (const w of widgets) {
+            const url = await this.widgetUrlByTypeAndUserId(w.type, userId);
+            widgetInfos.push({
+                type: w.type,
+                pub: w.pub,
+                title: w.title,
+                hint: w.hint,
+                url: w.pub ? (await this.pubUrl(url)) : url,
+            });
+        }
+        return widgetInfos;
+    }
+    getWidgetDefinitionByType(type) {
+        return widgets.find(w => w.type === type) || null;
+    }
+}
 
 setLogLevel(config.log.level);
 const log = logger('bot.ts');
@@ -6781,7 +6826,8 @@ const run = async () => {
     const eventHub = mitt();
     const moduleManager = new ModuleManager();
     const webSocketServer = new WebSocketServer(eventHub, moduleManager, config.ws, auth);
-    const webServer = new WebServer(eventHub, db, cache, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, config.http, config.twitch, webSocketServer, auth);
+    const widgets = new Widgets(config.http.url, db, tokenRepo);
+    const webServer = new WebServer(eventHub, db, cache, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, config.http, config.twitch, webSocketServer, auth, widgets);
     class BotImpl {
         constructor() {
             this.userVariableInstances = {};
@@ -6797,6 +6843,7 @@ const run = async () => {
         getCache() { return cache; }
         getWebServer() { return webServer; }
         getWebSocketServer() { return webSocketServer; }
+        getWidgets() { return widgets; }
         // user specific
         // -----------------------------------------------------------------
         getUserVariables(user) {

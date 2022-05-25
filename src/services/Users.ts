@@ -58,6 +58,14 @@ class Users {
     return await this.get({ id })
   }
 
+  async getByEmail(email: string): Promise<User | null> {
+    return await this.get({ email })
+  }
+
+  async getByName(name: string): Promise<User | null> {
+    return await this.get({ name })
+  }
+
   async save(user: UpdateUser): Promise<void> {
     await this.db.upsert(TABLE, user, { id: user.id })
   }

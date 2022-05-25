@@ -2,6 +2,14 @@ import Db from "../DbPostgres"
 
 const TABLE = 'robyottoko.token'
 
+export enum TokenType {
+  API_KEY = 'api_key',
+  AUTH = 'auth',
+  PASSWORD_RESET = 'password_reset',
+  PUB = 'pub',
+  REGISTRATION = 'registration',
+}
+
 export interface Token {
   user_id: number
   type: string
@@ -61,7 +69,7 @@ class Tokens {
   }
 
   async generateAuthTokenForUserId(user_id: number): Promise<Token> {
-    return await this.createToken(user_id, 'auth')
+    return await this.createToken(user_id, TokenType.AUTH)
   }
 }
 

@@ -22,6 +22,7 @@ import DrawcastModule from './mod/modules/DrawcastModule'
 import AvatarModule from './mod/modules/AvatarModule'
 import PomoModule from './mod/modules/PomoModule'
 import buildEnv from './buildEnv'
+import Widgets from './services/Widgets'
 
 import { Bot } from './types'
 
@@ -61,6 +62,7 @@ const run = async () => {
     config.ws,
     auth
   )
+  const widgets = new Widgets(config.http.url, db, tokenRepo)
   const webServer = new WebServer(
     eventHub,
     db,
@@ -73,7 +75,8 @@ const run = async () => {
     config.http,
     config.twitch,
     webSocketServer,
-    auth
+    auth,
+    widgets,
   )
 
   class BotImpl implements Bot {
@@ -93,6 +96,7 @@ const run = async () => {
     getCache() { return cache }
     getWebServer() { return webServer }
     getWebSocketServer() { return webSocketServer }
+    getWidgets() { return widgets }
 
     // user specific
     // -----------------------------------------------------------------

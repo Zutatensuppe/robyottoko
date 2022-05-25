@@ -2,6 +2,7 @@ import { Bot, CommandFunction, RawCommand, TwitchChatClient, TwitchChatContext }
 import fn from './../fn'
 import { logger } from './../common/fn'
 import { User } from '../services/Users'
+import { getChatters } from '../services/Chatters'
 
 const log = logger('chatters.ts')
 
@@ -31,15 +32,7 @@ const chatters = (
       return
     }
 
-    const db = bot.getDb()
-    const whereObject = db._buildWhere({
-      broadcaster_user_id: context['room-id'],
-      created_at: { '$gte': new Date(stream.started_at) },
-    })
-    const userNames = (await db._getMany(
-      `select display_name from robyottoko.chat_log ${whereObject.sql} group by display_name`,
-      whereObject.values
-    )).map(r => r.display_name)
+    const userNames = await getChatters(bot.getDb(), context['room-id'], new Date(stream.started_at))
     if (userNames.length === 0) {
       say(`It seems nobody chatted? :(`)
       return

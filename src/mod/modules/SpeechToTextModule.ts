@@ -52,8 +52,8 @@ class SpeechToTextModule implements Module {
       event: eventName,
       data: {
         settings: this.data.settings,
-        controlWidgetUrl: await this.bot.getWebServer().getWidgetUrl('speech-to-text', this.user.id),
-        displayWidgetUrl: await this.bot.getWebServer().getWidgetUrl('speech-to-text_receive', this.user.id),
+        controlWidgetUrl: await this.bot.getWidgets().getWidgetUrl('speech-to-text', this.user.id),
+        displayWidgetUrl: await this.bot.getWidgets().getWidgetUrl('speech-to-text_receive', this.user.id),
       }
     };
   }
