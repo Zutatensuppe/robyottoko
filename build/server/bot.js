@@ -2195,7 +2195,7 @@ const newTwitchClip = (obj = null) => ({
     volume: getProp(obj, ['volume'], 100),
 });
 const newMedia = (obj = null) => ({
-    excludeFromGlobalWidget: getProp(obj, ['excludeFromGlobalWidget'], false),
+    widgetIds: getProp(obj, ['widgetIds'], []),
     sound: newSoundMediaFile(obj?.sound),
     image: newMediaFile(obj?.image),
     image_url: getProp(obj, ['image_url'], ''),
@@ -4279,7 +4279,15 @@ class GeneralModule {
                 }
             }
             if (cmd.action === CommandAction.MEDIA) {
-                cmd.data.excludeFromGlobalWidget = typeof cmd.data.excludeFromGlobalWidget === 'undefined' ? false : cmd.data.excludeFromGlobalWidget;
+                if (cmd.data.excludeFromGlobalWidget) {
+                    cmd.data.widgetIds = [cmd.id];
+                }
+                else if (typeof cmd.data.widgetIds === 'undefined') {
+                    cmd.data.widgetIds = [];
+                }
+                if (typeof cmd.data.excludeFromGlobalWidget !== 'undefined') {
+                    delete cmd.data.excludeFromGlobalWidget;
+                }
                 cmd.data.minDurationMs = cmd.data.minDurationMs || 0;
                 cmd.data.sound.volume = cmd.data.sound.volume || 100;
                 if (!cmd.data.sound.urlpath && cmd.data.sound.file) {
@@ -6668,7 +6676,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-05-25T19:00:11.372Z",
+    buildDate: "2022-05-25T20:39:57.678Z",
     // @ts-ignore
     buildVersion: "1.10.2",
 };
