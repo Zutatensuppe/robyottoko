@@ -160,15 +160,32 @@
               </td>
             </tr>
             <tr v-if="item.action === 'media'">
-              <td>Exclude from global widget:</td>
+              <td>Widgets:</td>
               <td>
-                <input type="checkbox" v-model="item.data.excludeFromGlobalWidget" />
-                <a class="button is-small ml-1" v-if="item.data.excludeFromGlobalWidget"
-                  :href="`${widgetUrl}?id=${item.id}`" target="_blank">Open widget</a>
-                <div class="help">
-                  If this checkbox is checked, the media will not be played in
-                  the regular media widget. A button will appear with a special
-                  widget URL that will only display media from THIS command.
+                <div class="field has-addons" v-if="item.data.widgetIds.length === 0">
+                  This media will show in the&nbsp;
+                  <a :href="`${widgetUrl}`" target="_blank">default widget</a>.
+                </div>
+                <div class="field has-addons" v-for="(id, idx) in item.data.widgetIds" :key="idx">
+                  <div class="control mr-1">
+                    <input type="text" class="input is-small" v-model="item.data.widgetIds[idx]" />
+                  </div>
+                  <a class="button is-small mr-1" :href="`${widgetUrl}?id=${encodeURIComponent(id)}`"
+                    target="_blank">Open widget</a>
+                  <button class="button is-small" @click="rmWidgetId(idx)">
+                    <i class="fa fa-remove" />
+                  </button>
+                </div>
+                <div class="field">
+                  <button class="button is-small" @click="addWidgetId">
+                    <i class="fa fa-plus mr-1" /> Add widget
+                  </button>
+                </div>
+                <div>
+                  <p class="help">
+                    Define in which widgets this media should show up in.
+                    Leave the list empty to only show in the default widget.
+                  </p>
                 </div>
               </td>
             </tr>
@@ -462,6 +479,13 @@ export default defineComponent({
     },
   },
   methods: {
+    addWidgetId(): void {
+      if (!this.item) {
+        console.warn("addWidgetId: this.item not initialized");
+        return;
+      }
+      this.item.data.widgetIds.push('');
+    },
     addtxt(): void {
       if (!this.item) {
         console.warn("addtxt: this.item not initialized");
@@ -540,6 +564,15 @@ export default defineComponent({
         return;
       }
       this.item.data.image = file;
+    },
+    rmWidgetId(idx: number): void {
+      if (!this.item) {
+        console.warn("rmWidgetId: this.item not initialized");
+        return;
+      }
+      this.item.data.widgetIds = this.item.data.widgetIds.filter(
+        (_val: string, index: number) => index !== idx
+      );
     },
     rmtxt(idx: number): void {
       if (!this.item) {

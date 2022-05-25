@@ -28,7 +28,7 @@ const newTwitchClip = (obj: any = null): MediaTwitchClip => ({
 })
 
 export const newMedia = (obj: any = null): MediaCommandData => ({
-  excludeFromGlobalWidget: getProp(obj, ['excludeFromGlobalWidget'], false),
+  widgetIds: getProp(obj, ['widgetIds'], []),
   sound: newSoundMediaFile(obj?.sound),
   image: newMediaFile(obj?.image),
   image_url: getProp(obj, ['image_url'], ''), // image identified by url only
