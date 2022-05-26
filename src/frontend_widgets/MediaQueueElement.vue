@@ -55,9 +55,8 @@ const MediaQueueElement = defineComponent({
                 // conditions where this is not true but for now this
                 // will be fine
                 const videoEl = this.$refs.video as HTMLVideoElement
-                videoEl.volume = !media.twitch_clip.volume
-                  ? 0
-                  : 100 / media.twitch_clip.volume;
+                const volume = media.twitch_clip.volume / 100
+                videoEl.volume = fn.clamp(0, volume, 1)
                 videoEl.addEventListener("ended", () => {
                   res();
                 });
@@ -95,7 +94,7 @@ const MediaQueueElement = defineComponent({
               });
               const maxVolume = this.baseVolume / 100.0;
               const soundVolume = media.sound.volume / 100.0;
-              audio.volume = maxVolume * soundVolume;
+              audio.volume = fn.clamp(0, maxVolume * soundVolume, 1);
               audio.play();
             })
           );

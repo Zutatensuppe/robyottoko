@@ -1,8 +1,11 @@
-#!/bin/sh
+#!/bin/sh -eu
+
+cd "$RUN_DIR"
 
 export VITE_ENV=development
 export APP_CONFIG=config.json
 export WIDGET_DUMMY=templates/widget_dummy.html
+
 nodemon \
   --delay 2 \
   -x "node --experimental-specifier-resolution=node --loader ts-node/esm" \

@@ -1,3 +1,5 @@
 #!/bin/sh -eu
 
+cd "$RUN_DIR"
+
 docker-compose up

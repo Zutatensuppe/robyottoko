@@ -312,7 +312,7 @@ export const doReplacements = async (
         if (m3 === 'recent_clip_url') {
           const end = new Date()
           const start = new Date(end.getTime() - 30 * DAY)
-          const maxDurationSeconds = 20
+          const maxDurationSeconds = 30
 
           const clip = await helixClient.getClipByUserId(
             twitchUser.id,

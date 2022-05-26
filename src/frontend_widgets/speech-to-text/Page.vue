@@ -44,7 +44,9 @@ import { defineComponent } from "vue";
 import util from "../util";
 import {
   calculateOptimalSubtitleDisplayTimeMs,
+  clamp,
   logger,
+  SECOND,
   toNumberUnitString,
 } from "../../common/fn";
 import WsClient from "../../frontend/WsClient";
@@ -176,8 +178,7 @@ export default defineComponent({
     },
     calculateSubtitleDisplayTime(text: string): number {
       const durationMs = calculateOptimalSubtitleDisplayTimeMs(text);
-      // clamp duration between 1s and 10s
-      return Math.min(10000, Math.max(2000, durationMs));
+      return clamp(2 * SECOND, durationMs, 10 * SECOND)
     },
     synthesize(text: string, lang: string): void {
       log.info("synthesize", this.lastUtterance, text, lang);
