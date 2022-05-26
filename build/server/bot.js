@@ -6549,7 +6549,7 @@ class PomoModule {
                 {
                     triggers: [newCommandTrigger('!pomo exit', true)],
                     restrict_to: MOD_OR_ABOVE,
-                    fn: this.cmdPomoEnd.bind(this),
+                    fn: this.cmdPomoExit.bind(this),
                 },
             ];
             return this;
@@ -6561,17 +6561,26 @@ class PomoModule {
         text = text.replace(/\$pomo\.name/g, this.data.state.name);
         return text;
     }
+    async effect(effect, command, client, target, context) {
+        if (effect.chatMessage) {
+            const say = client ? fn.sayFn(client, target) : ((msg) => { log$1.info('say(), client not set, msg', msg); });
+            say(await this.replaceText(effect.chatMessage, command, context));
+        }
+        this.updateClients({ event: 'effect', data: effect });
+    }
     tick(command, context) {
+        if (!this.data.state.running) {
+            return;
+        }
         if (this.timeout) {
             clearTimeout(this.timeout);
             this.timeout = null;
         }
         this.timeout = setTimeout(async () => {
-            if (!this.data || !this.data.state.startTs) {
-                return null;
+            if (!this.data || !this.data.state.startTs || !this.data.state.running) {
+                return;
             }
             const client = this.bot.getUserTwitchClientManager(this.user).getChatClient();
-            const say = client ? fn.sayFn(client, null) : ((msg) => { log$1.info('say(), client not set, msg', msg); });
             const dateStarted = new Date(JSON.parse(this.data.state.startTs));
             const dateEnd = new Date(dateStarted.getTime() + this.data.state.durationMs);
             const doneDate = this.data.state.doneTs ? new Date(JSON.parse(this.data.state.doneTs)) : dateStarted;
@@ -6582,10 +6591,7 @@ class PomoModule {
                 if (nDateEnd < now) {
                     // is over and should maybe be triggered!
                     if (!doneDate || nDateEnd > doneDate) {
-                        if (n.effect.chatMessage) {
-                            say(await this.replaceText(n.effect.chatMessage, command, context));
-                        }
-                        this.updateClients({ event: 'effect', data: n.effect });
+                        await this.effect(n.effect, command, client, null, context);
                     }
                 }
                 else {
@@ -6595,10 +6601,7 @@ class PomoModule {
             if (dateEnd < now) {
                 // is over and should maybe be triggered!
                 if (!doneDate || dateEnd > doneDate) {
-                    if (this.data.settings.endEffect.chatMessage) {
-                        say(await this.replaceText(this.data.settings.endEffect.chatMessage, command, context));
-                    }
-                    this.updateClients({ event: 'effect', data: this.data.settings.endEffect });
+                    await this.effect(this.data.settings.endEffect, command, client, null, context);
                 }
             }
             else {
@@ -6609,10 +6612,9 @@ class PomoModule {
             if (anyNotificationsLeft && this.data.state.running) {
                 this.tick(command, context);
             }
-        }, 1000);
+        }, 1 * SECOND);
     }
     async cmdPomoStart(command, client, target, context) {
-        const say = client ? fn.sayFn(client, target) : ((msg) => { log$1.info('say(), client not set, msg', msg); });
         this.data.state.running = true;
         this.data.state.startTs = JSON.stringify(new Date());
         this.data.state.doneTs = this.data.state.startTs;
@@ -6624,21 +6626,14 @@ class PomoModule {
         await this.save();
         this.tick(command, context);
         this.updateClients(await this.wsdata('init'));
-        if (this.data.settings.startEffect.chatMessage) {
-            say(await this.replaceText(this.data.settings.startEffect.chatMessage, command, context));
-        }
-        this.updateClients({ event: 'effect', data: this.data.settings.startEffect });
+        await this.effect(this.data.settings.startEffect, command, client, target, context);
     }
-    async cmdPomoEnd(command, client, target, context) {
-        const say = client ? fn.sayFn(client, target) : ((msg) => { log$1.info('say(), client not set, msg', msg); });
+    async cmdPomoExit(command, client, target, context) {
         this.data.state.running = false;
         await this.save();
         this.tick(command, context);
         this.updateClients(await this.wsdata('init'));
-        if (this.data.settings.stopEffect.chatMessage) {
-            say(await this.replaceText(this.data.settings.stopEffect.chatMessage, command, context));
-        }
-        this.updateClients({ event: 'effect', data: this.data.settings.stopEffect });
+        await this.effect(this.data.settings.stopEffect, command, client, target, context);
     }
     async userChanged(user) {
         this.user = user;
@@ -6701,9 +6696,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-05-26T14:18:34.388Z",
+    buildDate: "2022-05-26T15:22:36.589Z",
     // @ts-ignore
-    buildVersion: "1.11.2",
+    buildVersion: "1.11.3",
 };
 
 const widgets = [
