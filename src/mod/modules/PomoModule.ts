@@ -44,7 +44,7 @@ class PomoModule implements Module {
         {
           triggers: [newCommandTrigger('!pomo exit', true)],
           restrict_to: MOD_OR_ABOVE,
-          fn: this.cmdPomoEnd.bind(this),
+          fn: this.cmdPomoExit.bind(this),
         },
       ];
       return this;
@@ -66,14 +66,18 @@ class PomoModule implements Module {
     command: RawCommand | null,
     context: TwitchChatContext | null,
   ) {
+    if (!this.data.state.running) {
+      return
+    }
+
     if (this.timeout) {
       clearTimeout(this.timeout);
       this.timeout = null;
     }
 
     this.timeout = setTimeout(async () => {
-      if (!this.data || !this.data.state.startTs) {
-        return null;
+      if (!this.data || !this.data.state.startTs || !this.data.state.running) {
+        return
       }
       const client = this.bot.getUserTwitchClientManager(this.user).getChatClient()
       const say = client ? fn.sayFn(client, null) : ((msg: string) => { log.info('say(), client not set, msg', msg) })
@@ -147,7 +151,7 @@ class PomoModule implements Module {
     this.updateClients({ event: 'effect', data: this.data.settings.startEffect })
   }
 
-  async cmdPomoEnd(
+  async cmdPomoExit(
     command: RawCommand | null,
     client: TwitchChatClient | null,
     target: string | null,
