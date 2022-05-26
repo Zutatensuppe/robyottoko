@@ -244,7 +244,7 @@ export const createRouter = (
     try {
       // todo: maybe fill twitchChannels instead of empty array
       const client = new TwitchHelixClient(clientId, clientSecret, [])
-      res.send({ id: await client.getUserIdByName(req.body.name, cache) })
+      res.send({ id: await client.getUserIdByNameCached(req.body.name, cache) })
     } catch (e) {
       res.status(500).send("Something went wrong!");
     }

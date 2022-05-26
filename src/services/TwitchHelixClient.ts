@@ -1,5 +1,5 @@
 import { RequestInit } from 'node-fetch'
-import { logger } from '../common/fn'
+import { logger, SECOND } from '../common/fn'
 import { findIdxFuzzy } from '../fn'
 import { postJson, getJson, asJson, withHeaders, asQueryArgs, requestText, request } from '../net/xhr'
 import Cache from './Cache'
@@ -264,12 +264,12 @@ class TwitchHelixClient {
     return await this._getUserBy({ login: userName })
   }
 
-  async getUserIdByName(userName: string, cache: Cache): Promise<string> {
-    const cacheKey = `TwitchHelixClient::getUserIdByName(${userName})x`
+  async getUserIdByNameCached(userName: string, cache: Cache): Promise<string> {
+    const cacheKey = `TwitchHelixClient::getUserIdByNameCached(${userName})`
     let userId = await cache.get(cacheKey)
-    if (userId === null) {
+    if (userId === undefined) {
       userId = await this._getUserIdByNameUncached(userName)
-      await cache.set(cacheKey, userId)
+      await cache.set(cacheKey, userId, Infinity)
     }
     return `${userId}`
   }
@@ -302,13 +302,23 @@ class TwitchHelixClient {
     }
   }
 
+  async getStreamByUserIdCached(userId: string, cache: Cache) {
+    const cacheKey = `TwitchHelixClient::getStreamByUserIdCached(${userId})`
+    let stream = await cache.get(cacheKey)
+    if (stream === undefined) {
+      stream = await this.getStreamByUserId(userId)
+      await cache.set(cacheKey, stream, 30 * SECOND)
+    }
+    return stream
+  }
+
   // https://dev.twitch.tv/docs/api/reference#get-streams
-  async getStreamByUserId(userId: string) {
+  async getStreamByUserId(userId: string): Promise<TwitchHelixStreamSearchResponseDataEntry | null> {
     const url = this._url(`/streams${asQueryArgs({ user_id: userId })}`)
     let json
     try {
       json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixStreamSearchResponseData
-      return json.data[0]
+      return json.data[0] || null
     } catch (e) {
       log.error(url, json, e)
       return null
