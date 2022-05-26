@@ -345,7 +345,7 @@ export const toNumberUnitString = (value: string | number, unit: string = 'pt') 
 
 export const getProp = (obj: any, keys: string[], defaultVal: any) => {
   let x = obj
-  for (let key of keys) {
+  for (const key of keys) {
     if (typeof x !== 'object' || x === null) {
       return defaultVal
     }
@@ -357,18 +357,23 @@ export const getProp = (obj: any, keys: string[], defaultVal: any) => {
   return x
 }
 
+export const clamp = (min: number, val: number, max: number): number => {
+  return Math.max(min, Math.min(max, val))
+}
+
 export default {
-  unicodeLength,
   arrayMove,
   arraySwap,
-  humanDuration,
-  parseHumanDuration,
-  mustParseHumanDuration,
+  clamp,
   doDummyReplacements,
-  split,
-  shuffle,
-  pad,
+  humanDuration,
   mediaFileFromUploadedFile,
+  mustParseHumanDuration,
+  pad,
+  parseHumanDuration,
+  shuffle,
   soundMediaFileFromUploadedFile,
+  split,
   toNumberUnitString,
+  unicodeLength,
 }

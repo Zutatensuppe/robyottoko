@@ -4,6 +4,7 @@ import {
   arrayMove,
   arraySwap,
   calculateOptimalSubtitleDisplayTimeMs,
+  clamp,
   toNumberUnitString,
   humanDuration,
   parseHumanDuration,
@@ -119,6 +120,34 @@ describe('fn.calculateOptimalSubtitleDisplayTimeMs', () => {
     const actual = calculateOptimalSubtitleDisplayTimeMs(text)
     expect(actual).toBe(expected)
   })
+})
+
+
+test.each([
+  // value smaller than min
+  {
+    min: -1,
+    val: -5,
+    max: 1,
+    expected: -1,
+  },
+  // value ok
+  {
+    min: -1,
+    val: 0,
+    max: 1,
+    expected: 0,
+  },
+  // value bigger than max
+  {
+    min: -1,
+    val: 2,
+    max: 1,
+    expected: 1,
+  },
+])('clamp $min > $val < $max', ({ min, val, max, expected }) => {
+  const actual = clamp(min, val, max)
+  expect(actual).toStrictEqual(expected)
 })
 
 
