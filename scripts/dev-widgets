@@ -1,0 +1,7 @@
+#!/bin/sh -eu
+
+cd "$RUN_DIR"
+
+export PORT=3001
+
+npx vite --config widget.vite.config.js
