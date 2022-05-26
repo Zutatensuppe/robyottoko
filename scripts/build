@@ -5,13 +5,13 @@ cd "$RUN_DIR"
 rm build/* -rf
 
 # server build
-npx rollup -- -c rollup.server.config.js
+npx rollup -c rollup.server.config.js
 cp -r src/templates build/server/
 cp -r src/config_data build/server/
 
 # frontend build
 # npx vue-tsc --noEmit
-npx vite -- build --config vite.config.js
+npx vite build --config vite.config.js
 
 # widgets build
-npx vite -- build --config widget.vite.config.js
+npx vite build --config widget.vite.config.js
