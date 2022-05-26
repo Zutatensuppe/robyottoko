@@ -139,7 +139,7 @@
                 <div v-if="element.action === 'media'">
                   <a class="button is-small mr-1" :href="`${widgetUrl}`" target="_blank"
                     v-if="element.data.widgetIds.length === 0">Default widget</a>
-                  <a class="button is-small mr-1" :href="`${widgetUrl}?id=${encodeURIComponent(id)}`"
+                  <a class="button is-small mr-1" :href="`${widgetUrl}?id=${encodeURIComponent(id)}`" target="_blank"
                     v-for="(id, idx) in element.data.widgetIds" :key="idx">
                     <code>{{ id }}</code> Widget
                   </a>
