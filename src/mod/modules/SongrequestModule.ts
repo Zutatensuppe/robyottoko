@@ -1295,10 +1295,10 @@ class SongrequestModule implements Module {
   async loadYoutubeData(youtubeId: string): Promise<YoutubeVideosResponseDataEntry | null> {
     const key = `youtubeData_${youtubeId}_20210717_2`
     let d = await this.bot.getCache().get(key)
-    if (!d) {
+    if (d === undefined) {
       d = await Youtube.fetchDataByYoutubeId(youtubeId)
       if (d) {
-        await this.bot.getCache().set(key, d)
+        await this.bot.getCache().set(key, d, Infinity)
       }
     }
     return d

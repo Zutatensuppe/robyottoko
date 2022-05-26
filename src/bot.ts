@@ -201,7 +201,7 @@ const run = async () => {
           twitchChannelRepo.setStreaming(!!stream, { user_id: user.id, channel_id: twitchChannel.channel_id })
           continue
         }
-        const channelId = await client.getUserIdByName(twitchChannel.channel_name, cache)
+        const channelId = await client.getUserIdByNameCached(twitchChannel.channel_name, cache)
         if (!channelId) {
           continue
         }

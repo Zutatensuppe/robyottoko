@@ -46,7 +46,7 @@ export const createRouter = (
       configTwitch.tmi.identity.client_secret,
       []
     )
-    const channelId = await helixClient.getUserIdByName(channelName, cache)
+    const channelId = await helixClient.getUserIdByNameCached(channelName, cache)
     if (!channelId) {
       res.status(400).send({ ok: false, error: 'unable to determine channel id' })
       return
@@ -61,7 +61,7 @@ export const createRouter = (
         return
       }
     } else {
-      const stream = await helixClient.getStreamByUserId(channelId)
+      const stream = await helixClient.getStreamByUserIdCached(channelId, cache)
       if (!stream) {
         res.status(400).send({ ok: false, error: 'stream not online at the moment' })
         return
