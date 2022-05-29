@@ -234,7 +234,10 @@ export interface CommandVariableChange {
   name: string
   value: string
 }
-export interface CommandData { }
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface CommandData {
+}
 
 export type CommandFunction = (
   rawCmd: RawCommand | null,

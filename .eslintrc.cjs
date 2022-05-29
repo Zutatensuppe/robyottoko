@@ -18,12 +18,14 @@ module.exports = {
   rules: {
     '@typescript-eslint/no-inferrable-types': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
+    // for now, explicit any is fine!
+    '@typescript-eslint/no-explicit-any': 'off',
     "no-unused-vars": "off",
     '@typescript-eslint/no-unused-vars': [
       'warn',
       {
         argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
+        varsIgnorePattern: '(^log$|^_)',
         caughtErrorsIgnorePattern: '^_',
       },
     ],
