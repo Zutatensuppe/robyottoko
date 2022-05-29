@@ -1565,7 +1565,7 @@ const createRouter$2 = (db, tokenRepo, userRepo, cache, configTwitch) => {
             }
             dateSince = new Date(stream.started_at);
         }
-        const userNames = getChatters(db, channelId, dateSince);
+        const userNames = await getChatters(db, channelId, dateSince);
         res.status(200).send({ ok: true, data: { chatters: userNames, since: dateSince } });
     });
     return router;
@@ -6696,9 +6696,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-05-29T12:09:22.096Z",
+    buildDate: "2022-05-29T18:12:41.711Z",
     // @ts-ignore
-    buildVersion: "1.11.4",
+    buildVersion: "1.11.5",
 };
 
 const widgets = [
