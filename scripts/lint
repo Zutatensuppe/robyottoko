@@ -2,8 +2,4 @@
 
 cd "$RUN_DIR"
 
-if [ "${RUN_ENV}" = "ci" ]; then
-  echo "skipping linter in ci for now"
-else
-  npx eslint src
-fi
+npx eslint src

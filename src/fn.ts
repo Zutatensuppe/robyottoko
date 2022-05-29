@@ -40,7 +40,7 @@ function getRandom<T>(array: T[]): T {
 const fnRandom = <T>(values: T[]) => (): T => getRandom(values)
 
 const sleep = (ms: number) => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, _reject) => {
     setTimeout(resolve, ms)
   })
 }
@@ -164,6 +164,7 @@ const tryExecuteCommand = async (
       continue
     }
     log.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`)
+    // eslint-disable-next-line no-async-promise-executor
     const p = new Promise(async (resolve) => {
       await applyVariableChanges(cmdDef, contextModule, rawCmd, context)
       const r = await cmdDef.fn(rawCmd, client, target, context)

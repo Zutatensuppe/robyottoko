@@ -11,8 +11,8 @@ import {
 import { Command, CommandTrigger } from './types'
 
 test('accentFolded', () => {
-  let actual = accentFolded('Błogosławieni Miłosierni (Krysiek Remix)')
-  let expected = 'Blogoslawieni Milosierni (Krysiek Remix)'
+  const actual = accentFolded('Błogosławieni Miłosierni (Krysiek Remix)')
+  const expected = 'Blogoslawieni Milosierni (Krysiek Remix)'
   expect(actual).toBe(expected)
 })
 

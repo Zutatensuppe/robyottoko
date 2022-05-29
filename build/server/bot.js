@@ -340,7 +340,7 @@ function getRandom(array) {
 }
 const fnRandom = (values) => () => getRandom(values);
 const sleep = (ms) => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
         setTimeout(resolve, ms);
     });
 };
@@ -428,6 +428,7 @@ const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, target, context
             continue;
         }
         log$o.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`);
+        // eslint-disable-next-line no-async-promise-executor
         const p = new Promise(async (resolve) => {
             await applyVariableChanges(cmdDef, contextModule, rawCmd, context);
             const r = await cmdDef.fn(rawCmd, client, target, context);
@@ -6696,9 +6697,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-05-29T18:12:41.711Z",
+    buildDate: "2022-05-29T19:42:39.967Z",
     // @ts-ignore
-    buildVersion: "1.11.5",
+    buildVersion: "1.11.6",
 };
 
 const widgets = [
@@ -7012,10 +7013,10 @@ const run = async () => {
     process.once('SIGUSR2', function () {
         gracefulShutdown('SIGUSR2');
     });
-    process.once('SIGINT', function (code) {
+    process.once('SIGINT', function (_code) {
         gracefulShutdown('SIGINT');
     });
-    process.once('SIGTERM', function (code) {
+    process.once('SIGTERM', function (_code) {
         gracefulShutdown('SIGTERM');
     });
 };

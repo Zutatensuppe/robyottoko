@@ -265,11 +265,11 @@ const run = async () => {
     gracefulShutdown('SIGUSR2')
   });
 
-  process.once('SIGINT', function (code) {
+  process.once('SIGINT', function (_code) {
     gracefulShutdown('SIGINT')
   });
 
-  process.once('SIGTERM', function (code) {
+  process.once('SIGTERM', function (_code) {
     gracefulShutdown('SIGTERM')
   });
 }
