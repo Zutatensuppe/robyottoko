@@ -68,7 +68,7 @@ export const createRouter = (
       }
       dateSince = new Date(stream.started_at)
     }
-    const userNames = getChatters(db, channelId, dateSince)
+    const userNames = await getChatters(db, channelId, dateSince)
     res.status(200).send({ ok: true, data: { chatters: userNames, since: dateSince } })
   })
   return router
