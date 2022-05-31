@@ -6697,9 +6697,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-05-29T19:42:39.967Z",
+    buildDate: "2022-05-31T19:01:59.529Z",
     // @ts-ignore
-    buildVersion: "1.11.6",
+    buildVersion: "1.12.0",
 };
 
 const widgets = [
