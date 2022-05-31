@@ -2,7 +2,7 @@
   <input class="input is-small spaceinput" :class="classes" v-model="v" />
 </template>
 <script setup lang="ts">
-import { computed, defineComponent, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import fn from "../../common/fn";
 
 const props = defineProps({

@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineComponent, PropType, ref } from "vue";
+import { computed, PropType, ref } from "vue";
 import { arraySwap } from "../../../common/fn";
 import {
   AvatarModuleAvatarDefinition,
