@@ -1,79 +1,58 @@
 <template>
   <button class="doubleclick-button" @click="onClick">
     <slot />
-    <span
-      class="doubleclick-button-message mr-2 p-1 has-text-danger"
-      v-if="timer"
-    >
+    <span class="doubleclick-button-message mr-2 p-1 has-text-danger" v-if="timer">
       {{ message }}
-      <span
-        class="doubleclick-button-timout-indicator"
-        :style="indicatorStyle"
-      ></span>
+      <span class="doubleclick-button-timout-indicator" :style="indicatorStyle"></span>
     </span>
   </button>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { computed, ref } from "vue";
 
-interface ComponentData {
-  time: null | number;
-  timer: any; // number
+const time = ref<number | null>(null)
+const timer = ref<any>(null)
+
+const emit = defineEmits(['click', 'doubleclick'])
+
+const props = defineProps<{
+  message: string,
+  timeout: number,
+}>()
+
+const indicatorStyle = computed(() => {
+  if (timer.value === null || time.value === null) {
+    return {};
+  }
+  return {
+    width: `${(time.value / props.timeout) * 100}%`,
+  };
+})
+
+const onClick = () => {
+  if (timer.value === null) {
+    emit("click");
+    time.value = props.timeout;
+    timer.value = setInterval(() => {
+      if (time.value) {
+        time.value -= 10;
+      }
+      if (!time.value || time.value <= 0) {
+        clearInterval(timer.value);
+        timer.value = null;
+        time.value = null;
+      }
+    }, 10);
+  } else {
+    emit("doubleclick");
+    if (timer.value) {
+      clearInterval(timer.value);
+      timer.value = null;
+      time.value = null;
+    }
+  }
 }
-
-export default defineComponent({
-  emits: ["click", "doubleclick"],
-  props: {
-    message: {
-      type: String,
-      required: true,
-    },
-    timeout: {
-      type: Number,
-      required: true,
-    },
-  },
-  data: (): ComponentData => ({
-    time: null,
-    timer: null,
-  }),
-  computed: {
-    indicatorStyle() {
-      if (this.timer === null || this.time === null) {
-        return {};
-      }
-      return {
-        width: `${(this.time / this.timeout) * 100}%`,
-      };
-    },
-  },
-  methods: {
-    onClick() {
-      if (this.timer === null) {
-        this.$emit("click");
-        this.time = this.timeout;
-        this.timer = setInterval(() => {
-          if (this.time) {
-            this.time -= 10;
-          }
-          if (!this.time || this.time <= 0) {
-            clearInterval(this.timer);
-            this.timer = null;
-            this.time = null;
-          }
-        }, 10);
-      } else {
-        this.$emit("doubleclick");
-        if (this.timer) {
-          clearInterval(this.timer);
-          this.timer = null;
-          this.time = null;
-        }
-      }
-    },
-  },
-});
 </script>
 
 <style scoped>

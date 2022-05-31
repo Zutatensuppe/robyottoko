@@ -1,54 +1,40 @@
 <template>
   <input class="input is-small spaceinput" :class="classes" v-model="v" />
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from "vue";
 import fn from "../../common/fn";
 
-export default defineComponent({
-  props: {
-    modelValue: {
-      required: true,
-    },
-    allowNegative: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  emits: ["update:modelValue"],
-  data: () => ({
-    v: "",
-    valid: true,
-  }),
-  computed: {
-    classes() {
-      if (this.valid) {
-        return [];
-      }
-      return ["has-background-danger-light", "has-text-danger-dark"];
-    },
-  },
-  mounted() {
-    this.v = `${this.modelValue}`;
-  },
-  watch: {
-    v: {
-      handler(v) {
-        try {
-          const r = fn.doDummyReplacements(v, "0");
-          fn.mustParseHumanDuration(r, this.allowNegative);
-          this.valid = true;
-        } catch (e) {
-          this.valid = false;
-        }
-        this.$emit("update:modelValue", v);
-      },
-    },
-    modelValue: {
-      handler(v) {
-        this.v = `${v}`;
-      },
-    },
-  },
-});
+const props = defineProps({
+  modelValue: { required: true },
+  allowNegative: { type: Boolean, default: false },
+})
+const emit = defineEmits(['update:modelValue'])
+const v = ref<string>("")
+const valid = ref<boolean>(true)
+
+const classes = computed(() => {
+  if (valid.value) {
+    return [];
+  }
+  return ["has-background-danger-light", "has-text-danger-dark"];
+})
+
+onMounted(() => {
+  v.value = `${props.modelValue}`;
+
+  watch(() => v, (newValue) => {
+    try {
+      const r = fn.doDummyReplacements(newValue.value, "0");
+      fn.mustParseHumanDuration(r, props.allowNegative);
+      valid.value = true;
+    } catch (e) {
+      valid.value = false;
+    }
+    emit("update:modelValue", newValue);
+  })
+  watch(() => props.modelValue, (newValue) => {
+    v.value = `${newValue}`;
+  })
+})
 </script>

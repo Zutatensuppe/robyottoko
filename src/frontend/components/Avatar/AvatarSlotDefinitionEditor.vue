@@ -37,8 +37,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from "vue";
+<script setup lang="ts">
+import { computed, PropType, ref } from "vue";
 import { arraySwap } from "../../../common/fn";
 import {
   AvatarModuleAvatarDefinition,
@@ -46,103 +46,96 @@ import {
   AvatarModuleAvatarSlotItem,
 } from "../../../mod/modules/AvatarModuleCommon";
 
-export default defineComponent({
-  props: {
-    modelValue: {
-      type: Object as PropType<AvatarModuleAvatarSlotDefinition>,
-      required: true,
-    },
-    avatarDef: {
-      type: Object as PropType<AvatarModuleAvatarDefinition>,
-      required: true,
-    },
+const props = defineProps({
+  modelValue: {
+    type: Object as PropType<AvatarModuleAvatarSlotDefinition>,
+    required: true,
   },
-  emits: ["update:modelValue", "remove", "moveUp", "moveDown"],
-  data: () => ({
-    titleFocused: false,
-  }),
-  computed: {
-    defaultItem() {
-      if (
-        this.modelValue.defaultItemIndex >= 0 &&
-        this.modelValue.items.length > this.modelValue.defaultItemIndex
-      ) {
-        return this.modelValue.items[this.modelValue.defaultItemIndex];
-      }
-      return null;
-    },
-    defaultAnimation() {
-      if (!this.defaultItem) {
-        return [];
-      }
-      const state = this.defaultItem.states.find(
-        ({ state }) => state === "default"
-      );
-      if (!state) {
-        return [];
-      }
-      return state.frames;
-    },
+  avatarDef: {
+    type: Object as PropType<AvatarModuleAvatarDefinition>,
+    required: true,
   },
-  methods: {
-    emitChange() {
-      this.$emit("update:modelValue", this.modelValue);
-    },
-    updateItem(index: number, item: AvatarModuleAvatarSlotItem) {
-      this.modelValue.items[index] = item;
-      this.emitChange();
-    },
-    removeItem(idx: number, item: AvatarModuleAvatarSlotItem) {
-      this.modelValue.items = this.modelValue.items.filter(
-        (val, index) => index !== idx
-      );
-      if (idx <= this.modelValue.defaultItemIndex) {
-        this.modelValue.defaultItemIndex = this.modelValue.defaultItemIndex - 1;
-      }
-      if (
-        this.modelValue.items.length > 0 &&
-        this.modelValue.defaultItemIndex < 0
-      ) {
-        this.modelValue.defaultItemIndex = 0;
-      }
-      this.emitChange();
-    },
-    makeItemDefault(index: number, item: AvatarModuleAvatarSlotItem) {
-      this.modelValue.defaultItemIndex = index;
-      this.emitChange();
-    },
-    addItem() {
-      const item: AvatarModuleAvatarSlotItem = {
-        title: `${this.modelValue.slot} item ${this.modelValue.items.length + 1
-          }`,
-        states: this.avatarDef.stateDefinitions.map((stateDef) => ({
-          state: stateDef.value,
-          frames: [],
-        })),
-      };
-      this.modelValue.items.push(item);
-      if (this.modelValue.defaultItemIndex === -1) {
-        this.modelValue.defaultItemIndex = 0;
-      }
-      this.emitChange();
-    },
-    moveItemUp(idx: number) {
-      this.swapItems(idx - 1, idx);
-    },
-    moveItemDown(idx: number) {
-      this.swapItems(idx + 1, idx);
-    },
-    swapItems(idx1: number, idx2: number) {
-      if (arraySwap(this.modelValue.items, idx1, idx2)) {
-        if (this.modelValue.defaultItemIndex === idx1) {
-          this.modelValue.defaultItemIndex = idx2;
-        } else if (this.modelValue.defaultItemIndex === idx2) {
-          this.modelValue.defaultItemIndex = idx1;
-        }
-      }
-    },
-  },
-});
+})
+const emit = defineEmits(["update:modelValue", "remove", "moveUp", "moveDown"])
+const titleFocused = ref<boolean>(false)
+
+const defaultItem = computed(() => {
+  if (
+    props.modelValue.defaultItemIndex >= 0 &&
+    props.modelValue.items.length > props.modelValue.defaultItemIndex
+  ) {
+    return props.modelValue.items[props.modelValue.defaultItemIndex];
+  }
+  return null;
+})
+const defaultAnimation = computed(() => {
+  if (!defaultItem.value) {
+    return [];
+  }
+  const state = defaultItem.value.states.find(
+    ({ state }) => state === "default"
+  );
+  if (!state) {
+    return [];
+  }
+  return state.frames;
+})
+const emitChange = () => {
+  emit("update:modelValue", props.modelValue);
+}
+const updateItem = (idx: number, item: AvatarModuleAvatarSlotItem) => {
+  props.modelValue.items[idx] = item;
+  emitChange();
+}
+const removeItem = (idx: number, item: AvatarModuleAvatarSlotItem) => {
+  props.modelValue.items = props.modelValue.items.filter(
+    (val, index) => index !== idx
+  );
+  if (idx <= props.modelValue.defaultItemIndex) {
+    props.modelValue.defaultItemIndex = props.modelValue.defaultItemIndex - 1;
+  }
+  if (
+    props.modelValue.items.length > 0 &&
+    props.modelValue.defaultItemIndex < 0
+  ) {
+    props.modelValue.defaultItemIndex = 0;
+  }
+  emitChange();
+}
+const makeItemDefault = (idx: number, item: AvatarModuleAvatarSlotItem) => {
+  props.modelValue.defaultItemIndex = idx;
+  emitChange();
+}
+const addItem = () => {
+  const item: AvatarModuleAvatarSlotItem = {
+    title: `${props.modelValue.slot} item ${props.modelValue.items.length + 1
+      }`,
+    states: props.avatarDef.stateDefinitions.map((stateDef) => ({
+      state: stateDef.value,
+      frames: [],
+    })),
+  };
+  props.modelValue.items.push(item);
+  if (props.modelValue.defaultItemIndex === -1) {
+    props.modelValue.defaultItemIndex = 0;
+  }
+  emitChange();
+}
+const moveItemUp = (idx: number) => {
+  swapItems(idx - 1, idx);
+}
+const moveItemDown = (idx: number) => {
+  swapItems(idx + 1, idx);
+}
+const swapItems = (idx1: number, idx2: number) => {
+  if (arraySwap(props.modelValue.items, idx1, idx2)) {
+    if (props.modelValue.defaultItemIndex === idx1) {
+      props.modelValue.defaultItemIndex = idx2;
+    } else if (props.modelValue.defaultItemIndex === idx2) {
+      props.modelValue.defaultItemIndex = idx1;
+    }
+  }
+}
 </script>
 <style>
 .avatar-slot-definition-editor-title-input {

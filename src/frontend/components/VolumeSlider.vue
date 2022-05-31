@@ -1,35 +1,18 @@
 <template>
-  <slider
-    class="volume-slider"
-    iconLeft="fa-volume-down"
-    iconRight="fa-volume-up"
-    :min="0"
-    :max="100"
-    v-model="volume"
-    @update:modelValue="valChange"
-  />
+  <slider class="volume-slider" iconLeft="fa-volume-down" iconRight="fa-volume-up" :min="0" :max="100" v-model="volume"
+    @update:modelValue="valChange" />
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { ref } from "vue";
 
-export default defineComponent({
-  name: "volume-slider",
-  props: {
-    modelValue: {
-      required: true,
-    },
-  },
-  emits: ["update:modelValue"],
-  data: () => ({
-    volume: 100,
-  }),
-  methods: {
-    valChange() {
-      this.$emit("update:modelValue", parseInt(`${this.volume}`, 10));
-    },
-  },
-  created() {
-    this.volume = parseInt(`${this.modelValue}`, 10);
-  },
-});
+const props = defineProps({
+  modelValue: { required: true },
+})
+const emit = defineEmits(["update:modelValue"])
+
+const volume = ref<number>(parseInt(`${props.modelValue}`, 10))
+
+const valChange = () => {
+  emit("update:modelValue", parseInt(`${volume.value}`, 10));
+}
 </script>

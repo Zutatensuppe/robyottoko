@@ -8,13 +8,7 @@
     {{ global.streamingUserCount }} streamer {{ global.streamingUserCount > 1 ? 'are' : 'is' }} live right now.
   </div>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
-import global from "../global";
-
-export default defineComponent({
-  data: () => ({
-    global: global.getData(),
-  }),
-})
+<script setup lang="ts">
+import g from "../global";
+const global = g.getData()
 </script>

@@ -1,34 +1,29 @@
 <template>
-  <span v-if="tag === 'span'">{{ humanReadable }}</span
-  ><code v-else>{{ humanReadable }}</code>
+  <span v-if="tag === 'span'">{{ humanReadable }}</span><code v-else>{{ humanReadable }}</code>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { computed } from "vue";
 import fn from "../../common/fn";
 
-export default defineComponent({
-  props: {
-    value: {
-      required: true,
-    },
-  },
-  computed: {
-    tag() {
-      try {
-        fn.mustParseHumanDuration(`${this.value}`);
-        return "span";
-      } catch (e) {
-        return "code";
-      }
-    },
-    humanReadable() {
-      try {
-        return fn.humanDuration(fn.mustParseHumanDuration(`${this.value}`));
-      } catch (e) {
-        return this.value;
-      }
-    },
-  },
-});
+const props = defineProps({
+  value: { required: true },
+})
+
+const tag = computed(() => {
+  try {
+    fn.mustParseHumanDuration(`${props.value}`);
+    return "span";
+  } catch (e) {
+    return "code";
+  }
+})
+
+const humanReadable = computed(() => {
+  try {
+    return fn.humanDuration(fn.mustParseHumanDuration(`${props.value}`));
+  } catch (e) {
+    return props.value;
+  }
+})
 </script>

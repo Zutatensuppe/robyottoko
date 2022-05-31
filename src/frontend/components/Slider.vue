@@ -17,39 +17,21 @@
     </div>
   </div>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { ref } from "vue";
 
-export default defineComponent({
-  name: "slider",
-  props: {
-    modelValue: {
-      type: Number,
-      required: true,
-    },
-    iconLeft: String,
-    iconRight: String,
-    min: {
-      type: Number,
-      default: 0,
-    },
-    max: {
-      type: Number,
-      default: 100,
-    },
-  },
-  data: () => ({
-    curVal: 100,
-  }),
-  methods: {
-    valChange() {
-      this.$emit("update:modelValue", parseInt(`${this.curVal}`, 10));
-    },
-  },
-  created() {
-    this.curVal = this.modelValue;
-  },
-});
+const props = defineProps({
+  modelValue: { type: Number, required: true },
+  iconLeft: String,
+  iconRight: String,
+  min: { type: Number, default: 0 },
+  max: { type: Number, default: 100 },
+})
+const emit = defineEmits(['update:modelValue'])
+const curVal = ref<number>(props.modelValue)
+const valChange = () => {
+  emit("update:modelValue", parseInt(`${curVal.value}`, 10));
+}
 </script>
 <style lang="scss" scoped>
 @import "../vars.scss";

@@ -23,21 +23,16 @@
     </div>
   </div>
 </template>
-<script lang="ts">
-import { defineComponent, PropType } from 'vue'
-
-export default defineComponent({
-  props: {
-    problems: {
-      type: Array as PropType<any[]>,
-      required: true,
-    },
-  },
-  emits: ["close"],
-  methods: {
-    onClose() {
-      this.$emit('close')
-    },
+<script setup lang="ts">
+import { PropType } from 'vue'
+defineProps({
+  problems: {
+    type: Array as PropType<any[]>,
+    required: true,
   },
 })
+const emit = defineEmits(['close'])
+const onClose = () => {
+  emit('close')
+}
 </script>

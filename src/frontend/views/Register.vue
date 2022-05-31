@@ -63,56 +63,51 @@
     </div>
   </div>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { computed, ref } from "vue";
 import api from "../api";
 
-export default defineComponent({
-  data: () => ({
-    user: "",
-    pass: "",
-    email: "",
-    error: "",
-    success: false,
-  }),
-  computed: {
-    canRegister() {
-      return this.user && this.pass && this.email && !this.error;
-    },
-  },
-  methods: {
-    async onRequestVerificationEmail() {
-      this.success = false;
-      this.error = "";
-      const res = await api.resendVerificationMail({ email: this.email });
-      if (res.status === 200) {
-        this.success = true;
-      } else {
-        try {
-          this.error = (await res.json()).reason;
-        } catch (e) {
-          this.error = "Unknown error";
-        }
-      }
-    },
-    async submit() {
-      this.success = false;
-      this.error = "";
-      const res = await api.register({
-        user: this.user,
-        pass: this.pass,
-        email: this.email,
-      });
-      if (res.status === 200) {
-        this.success = true;
-      } else {
-        try {
-          this.error = (await res.json()).reason;
-        } catch (e) {
-          this.error = "Unknown error";
-        }
-      }
-    },
-  },
-});
+const user = ref<string>("")
+const pass = ref<string>("")
+const email = ref<string>("")
+const error = ref<string>("")
+const success = ref<boolean>(false)
+
+const canRegister = computed(() => {
+  return user.value && pass.value && email.value && !error.value
+})
+
+const onRequestVerificationEmail = async () => {
+  success.value = false
+  error.value = ""
+  const res = await api.resendVerificationMail({ email: email.value })
+  if (res.status === 200) {
+    success.value = true
+  } else {
+    try {
+      error.value = (await res.json()).reason;
+    } catch (e) {
+      error.value = "Unknown error";
+    }
+  }
+}
+
+const submit = async () => {
+  success.value = false
+  error.value = ""
+  const res = await api.register({
+    user: user.value,
+    pass: pass.value,
+    email: email.value,
+  })
+  if (res.status === 200) {
+    success.value = true
+  } else {
+    try {
+      error.value = (await res.json()).reason
+    } catch (e) {
+      error.value = "Unknown error"
+    }
+  }
+}
 </script>

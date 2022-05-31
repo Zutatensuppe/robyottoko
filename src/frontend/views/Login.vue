@@ -37,47 +37,46 @@
     </form>
   </div>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
 import api from "../api";
-import user from "../user";
+import userModule from "../user";
 import util from "../util";
 
-export default defineComponent({
-  data: () => ({
-    user: "",
-    pass: "",
-    error: "",
-    success: "",
-  }),
+const user = ref<string>("")
+const pass = ref<string>("")
+const error = ref<string>("")
+const success = ref<string>("")
+
+onMounted(async () => {
   // TODO: move token handling to general place
-  async mounted() {
-    const token = util.getParam('t')
-    if (token) {
-      this.success = "";
-      this.error = "";
-      const res = await api.handleToken({ token });
-      if (res.status === 200) {
-        const json = await res.json();
-        if (json.type === "registration-verified") {
-          this.success = "Registration complete";
-        }
-      } else {
-        this.error = "Unknown error";
+  const token = util.getParam('t')
+  if (token) {
+    success.value = "";
+    error.value = "";
+    const res = await api.handleToken({ token });
+    if (res.status === 200) {
+      const json = await res.json();
+      if (json.type === "registration-verified") {
+        success.value = "Registration complete";
       }
+    } else {
+      error.value = "Unknown error";
     }
-  },
-  methods: {
-    async submit() {
-      this.success = "";
-      this.error = "";
-      const res = await user.login(this.user, this.pass);
-      if (res.error) {
-        this.error = res.error;
-      } else {
-        this.$router.push({ name: "index" });
-      }
-    },
-  },
-});
+  }
+})
+
+const router = useRouter()
+
+const submit = async () => {
+  success.value = "";
+  error.value = "";
+  const res = await userModule.login(user.value, pass.value);
+  if (res.error) {
+    error.value = res.error;
+  } else {
+    router.push({ name: "index" });
+  }
+}
 </script>

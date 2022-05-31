@@ -1,67 +1,53 @@
 <template>
   <span class="player" v-if="src" @click="toggle">{{ name }} <i class="fa ml-1" :class="cls"></i></span>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from "vue";
 
-interface ComponentData {
-  audio: HTMLAudioElement | null
-  playing: boolean
+const props = defineProps({
+  src: String,
+  name: String,
+  volume: { required: true },
+  baseVolume: { default: 100 },
+})
+
+const audio = ref<HTMLAudioElement | null>(null)
+const playing = ref<boolean>(false)
+
+const cls = computed(() => playing.value ? "fa-stop" : "fa-play")
+
+const toggle = (): void => {
+  if (!audio.value) {
+    return
+  }
+  if (playing.value) {
+    audio.value.pause()
+    audio.value.currentTime = 0
+  } else {
+    const maxVolume = parseInt(`${props.baseVolume}`, 10) / 100.0
+    const soundVolume = parseInt(`${props.volume}`, 10) / 100.0
+    audio.value.volume = maxVolume * soundVolume
+    audio.value.play()
+  }
+  playing.value = !playing.value
 }
-export default defineComponent({
-  name: "player",
-  props: {
-    src: String,
-    name: String,
-    volume: {
-      required: true,
-    },
-    baseVolume: {
-      default: 100,
-    },
-  },
-  data: (): ComponentData => ({
-    audio: null,
-    playing: false,
-  }),
-  created: function () {
-    this.load();
-    this.$watch("src", () => {
-      this.load();
-    });
-  },
-  computed: {
-    cls(): string {
-      return this.playing ? "fa-stop" : "fa-play";
-    },
-  },
-  methods: {
-    toggle(): void {
-      if (!this.audio) {
-        return
-      }
-      if (this.playing) {
-        this.audio.pause();
-        this.audio.currentTime = 0;
-      } else {
-        const maxVolume = parseInt(`${this.baseVolume}`, 10) / 100.0;
-        const soundVolume = parseInt(`${this.volume}`, 10) / 100.0;
-        this.audio.volume = maxVolume * soundVolume;
-        this.audio.play();
-      }
-      this.playing = !this.playing;
-    },
-    load(): void {
-      if (this.audio) {
-        this.audio.pause();
-        this.audio = null;
-      }
-      this.audio = new Audio(this.src);
-      this.audio.addEventListener("ended", () => {
-        this.playing = false;
-      });
-      this.playing = false;
-    },
-  },
-});
+
+const load = (): void => {
+  if (audio.value) {
+    audio.value.pause()
+    audio.value = null
+  }
+  audio.value = new Audio(props.src)
+  audio.value.addEventListener("ended", () => {
+    playing.value = false
+  })
+  playing.value = false
+}
+
+onMounted(() => {
+  load()
+  watch(() => props.src, () => {
+    load()
+  })
+})
 </script>
