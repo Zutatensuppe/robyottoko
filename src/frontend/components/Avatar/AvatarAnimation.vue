@@ -12,7 +12,7 @@
   </span>
 </template>
 <script setup lang="ts">
-import { computed, defineComponent, onUnmounted, PropType, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, PropType, ref, watch } from "vue";
 import { AvatarModuleAnimationFrameDefinition } from "../../../mod/modules/AvatarModuleCommon";
 
 const props = defineProps({
@@ -36,9 +36,9 @@ const idx = ref<number>(-1)
 
 const src = computed(() => {
   if (idx.value >= 0 && idx.value < props.frames.length) {
-    return props.frames[idx.value].url;
+    return props.frames[idx.value].url
   }
-  return "";
+  return ""
 })
 
 const nextFrame = () => {
@@ -59,18 +59,19 @@ const nextFrame = () => {
   }, props.frames[idx.value].duration)
 }
 
-onUnmounted(() => {
-  if (timeout.value) {
-    clearTimeout(timeout.value);
-    timeout.value = null;
-  }
-
-  nextFrame();
-
+onMounted(() => {
+  nextFrame()
   watch(() => props.frames, () => {
     // reset to the first frame when frames change
     idx.value = -1
     nextFrame()
-  }, { deep: true });
+  }, { deep: true })
+})
+
+onUnmounted(() => {
+  if (timeout.value) {
+    clearTimeout(timeout.value)
+    timeout.value = null
+  }
 })
 </script>
