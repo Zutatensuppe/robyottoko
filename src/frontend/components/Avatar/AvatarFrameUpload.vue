@@ -14,110 +14,89 @@
   </span>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { onMounted, Ref, ref, watch } from "vue";
 import { AvatarModuleAnimationFrameDefinition } from "../../../mod/modules/AvatarModuleCommon";
 import { UploadedFile } from "../../../types";
 import { UploadInstance } from "../Upload.vue";
 
-interface ComponentData {
-  value: AvatarModuleAnimationFrameDefinition;
-  draggingOver: boolean;
+const props = defineProps({
+  modelValue: { /* type: Object as PropType<MediaFile | null>, */ required: true },
+})
+const emit = defineEmits(["update:modelValue"])
+
+const value = ref<AvatarModuleAnimationFrameDefinition>({
+  url: "",
+  duration: 100,
+})
+const draggingOver = ref<boolean>(false)
+const uploadComponent = ref<UploadInstance>() as Ref<UploadInstance>
+
+const applyValue = () => {
+  value.value = props.modelValue !== null
+    ? JSON.parse(JSON.stringify(props.modelValue))
+    : { url: "", duration: 100 }
+}
+const emitUpdate = () => {
+  emit("update:modelValue", JSON.parse(JSON.stringify(value.value)))
+}
+const onDurationChange = () => {
+  emit("update:modelValue", JSON.parse(JSON.stringify(value.value)))
+}
+const onRemove = () => {
+  value.value = { url: "", duration: 100 }
+  emitUpdate()
+}
+const onUploaded = (file: UploadedFile) => {
+  value.value = { url: file.urlpath, duration: 100 }
+  emitUpdate()
+}
+const onDrop = (e: any) => {
+  draggingOver.value = false;
+  e.preventDefault();
+  e.stopPropagation();
+  let file = null;
+  if (e.dataTransfer.items) {
+    // Use DataTransferItemList interface to access the file(s)
+    for (var i = 0; i < e.dataTransfer.items.length; i++) {
+      // If dropped items aren't files, reject them
+      if (e.dataTransfer.items[i].kind === "file") {
+        file = e.dataTransfer.items[i].getAsFile();
+        break;
+      }
+    }
+  } else {
+    // Use DataTransfer interface to access the file(s)
+    for (var i = 0; i < e.dataTransfer.files.length; i++) {
+      file = e.dataTransfer.files[i];
+      break;
+    }
+  }
+  if (file) {
+    value.value.url = "";
+    uploadComponent.value.uploadFile(file);
+  }
+  return false;
+}
+const onDragover = (e: any) => {
+  draggingOver.value = true
+  e.preventDefault()
+  e.stopPropagation()
+  return false
+}
+const onDragleave = (e: any) => {
+  draggingOver.value = false
+  e.preventDefault()
+  e.stopPropagation()
+  return false
 }
 
-export default defineComponent({
-  props: {
-    modelValue: {
-      /* type: Object as PropType<MediaFile | null>, */ required: true,
-    },
-  },
-  emits: ["update:modelValue"],
-  data(): ComponentData {
-    return {
-      value: {
-        url: "",
-        duration: 100,
-      },
-      draggingOver: false,
-    };
-  },
-  created() {
-    this.applyValue();
-  },
-  watch: {
-    modelValue() {
-      this.applyValue();
-    },
-  },
-  computed: {
-    uploadComponent(): UploadInstance {
-      return this.$refs.uploadComponent as UploadInstance
-    },
-  },
-  methods: {
-    applyValue() {
-      if (this.modelValue !== null) {
-        this.value = JSON.parse(JSON.stringify(this.modelValue));
-      } else {
-        this.value = { url: "", duration: 100 };
-      }
-    },
-    emitUpdate() {
-      this.$emit("update:modelValue", JSON.parse(JSON.stringify(this.value)));
-    },
-    onDurationChange() {
-      this.$emit("update:modelValue", JSON.parse(JSON.stringify(this.value)));
-    },
-    onRemove() {
-      this.value = { url: "", duration: 100 };
-      this.emitUpdate();
-    },
-    onUploaded(file: UploadedFile) {
-      this.value = { url: file.urlpath, duration: 100 };
-      this.emitUpdate();
-    },
-    onDrop(e: any) {
-      this.draggingOver = false;
-      e.preventDefault();
-      e.stopPropagation();
-
-      let file = null;
-      if (e.dataTransfer.items) {
-        // Use DataTransferItemList interface to access the file(s)
-        for (var i = 0; i < e.dataTransfer.items.length; i++) {
-          // If dropped items aren't files, reject them
-          if (e.dataTransfer.items[i].kind === "file") {
-            file = e.dataTransfer.items[i].getAsFile();
-            break;
-          }
-        }
-      } else {
-        // Use DataTransfer interface to access the file(s)
-        for (var i = 0; i < e.dataTransfer.files.length; i++) {
-          file = e.dataTransfer.files[i];
-          break;
-        }
-      }
-      if (file) {
-        this.value.url = "";
-        this.uploadComponent.uploadFile(file);
-      }
-      return false;
-    },
-    onDragover(e: any) {
-      this.draggingOver = true;
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    },
-    onDragleave(e: any) {
-      this.draggingOver = false;
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    },
-  },
-});
+onMounted(() => {
+  watch(() => props.modelValue, () => {
+    applyValue();
+  })
+  applyValue();
+})
 </script>
 <style scoped>
 .avatar-animation-frame {

@@ -30,31 +30,26 @@
     </form>
   </div>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { ref } from "vue";
 import api from "../api";
 
-export default defineComponent({
-  data: () => ({
-    email: "",
-    error: "",
-    success: false,
-  }),
-  methods: {
-    async submit() {
-      this.success = false;
-      this.error = "";
-      const res = await api.requestPasswordReset({ email: this.email });
-      if (res.status === 200) {
-        this.success = true;
-      } else {
-        try {
-          this.error = (await res.json()).reason;
-        } catch (e) {
-          this.error = "Unknown error";
-        }
-      }
-    },
-  },
-});
+const email = ref<string>("")
+const error = ref<string>("")
+const success = ref<boolean>(false)
+
+const submit = async () => {
+  success.value = false;
+  error.value = "";
+  const res = await api.requestPasswordReset({ email: email.value });
+  if (res.status === 200) {
+    success.value = true;
+  } else {
+    try {
+      error.value = (await res.json()).reason;
+    } catch (e) {
+      error.value = "Unknown error";
+    }
+  }
+}
 </script>

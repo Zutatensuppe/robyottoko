@@ -1,98 +1,76 @@
 <template>
-  <span
-    class="avatar-animation"
-    :style="{
+  <span class="avatar-animation" :style="{
+    width: `${width}px`,
+    height: `${width}px`,
+  }">
+    <img v-if="src" :src="src" :width="width" :height="height" />
+    <span v-else :style="{
       width: `${width}px`,
       height: `${width}px`,
-    }"
-  >
-    <img v-if="src" :src="src" :width="width" :height="height" />
-    <span
-      v-else
-      :style="{
-        width: `${width}px`,
-        height: `${width}px`,
-        display: 'inline-block',
-      }"
-    />
+      display: 'inline-block',
+    }" />
   </span>
 </template>
-<script lang="ts">
-import { defineComponent, PropType } from "vue";
+<script setup lang="ts">
+import { computed, defineComponent, onUnmounted, PropType, ref, watch } from "vue";
 import { AvatarModuleAnimationFrameDefinition } from "../../../mod/modules/AvatarModuleCommon";
 
-interface ComponentData {
-  timeout: NodeJS.Timeout | null;
-  idx: number;
+const props = defineProps({
+  frames: {
+    type: Array as PropType<AvatarModuleAnimationFrameDefinition[]>,
+    required: true,
+  },
+  width: {
+    type: Number,
+    required: false,
+    default: 64,
+  },
+  height: {
+    type: Number,
+    required: false,
+    default: 64,
+  },
+})
+const timeout = ref<any | null>(null) // timeout
+const idx = ref<number>(-1)
+
+const src = computed(() => {
+  if (idx.value >= 0 && idx.value < props.frames.length) {
+    return props.frames[idx.value].url;
+  }
+  return "";
+})
+
+const nextFrame = () => {
+  if (props.frames.length === 0) {
+    idx.value = -1
+    return
+  }
+  if (timeout.value) {
+    clearTimeout(timeout.value)
+    timeout.value = null
+  }
+  idx.value++
+  if (idx.value >= props.frames.length) {
+    idx.value = 0
+  }
+  timeout.value = setTimeout(() => {
+    nextFrame()
+  }, props.frames[idx.value].duration)
 }
 
-export default defineComponent({
-  props: {
-    frames: {
-      type: Array as PropType<AvatarModuleAnimationFrameDefinition[]>,
-      required: true,
-    },
-    width: {
-      type: Number,
-      required: false,
-      default: 64,
-    },
-    height: {
-      type: Number,
-      required: false,
-      default: 64,
-    },
-  },
-  data(): ComponentData {
-    return {
-      timeout: null,
-      idx: -1,
-    };
-  },
-  computed: {
-    src(): string {
-      if (this.idx >= 0 && this.idx < this.frames.length) {
-        return this.frames[this.idx].url;
-      }
-      return "";
-    },
-  },
-  methods: {
-    nextFrame() {
-      if (this.frames.length === 0) {
-        this.idx = -1;
-        return;
-      }
-      if (this.timeout) {
-        clearTimeout(this.timeout);
-        this.timeout = null;
-      }
-      this.idx++;
-      if (this.idx >= this.frames.length) {
-        this.idx = 0;
-      }
-      this.timeout = setTimeout(() => {
-        this.nextFrame();
-      }, this.frames[this.idx].duration);
-    },
-  },
-  created() {
-    this.nextFrame();
-    this.$watch(
-      "frames",
-      () => {
-        // reset to the first frame when frames change
-        this.idx = -1;
-        this.nextFrame();
-      },
-      { deep: true }
-    );
-  },
-  unmounted() {
-    if (this.timeout) {
-      clearTimeout(this.timeout);
-      this.timeout = null;
-    }
-  },
-});
+onUnmounted(() => {
+  if (timeout.value) {
+    clearTimeout(timeout.value);
+    timeout.value = null;
+  }
+
+  nextFrame();
+
+  watch(() => props.frames, () => {
+    // reset to the first frame when frames change
+    idx.value = -1
+    nextFrame()
+  }, { deep: true });
+})
 </script>

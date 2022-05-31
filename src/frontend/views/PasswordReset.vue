@@ -28,38 +28,30 @@
     </div>
   </div>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { computed, ref } from "vue";
 import api from "../api";
 import util from "../util";
 
-export default defineComponent({
-  data: () => ({
-    pass: "",
-    error: "",
-    success: false,
-  }),
-  computed: {
-    canSubmit() {
-      return this.pass && !this.error;
-    },
-  },
-  methods: {
-    async submit() {
-      const token = util.getParam('t')
-      this.success = false;
-      this.error = "";
-      const res = await api.resetPassword({ pass: this.pass, token });
-      if (res.status === 200) {
-        this.success = true;
-      } else {
-        try {
-          this.error = (await res.json()).reason;
-        } catch (e) {
-          this.error = "Unknown error";
-        }
-      }
-    },
-  },
-});
+const pass = ref<string>("")
+const error = ref<string>("")
+const success = ref<boolean>(false)
+
+const canSubmit = computed(() => pass.value && !error.value)
+
+const submit = async () => {
+  const token = util.getParam('t')
+  success.value = false;
+  error.value = "";
+  const res = await api.resetPassword({ pass: pass.value, token });
+  if (res.status === 200) {
+    success.value = true;
+  } else {
+    try {
+      error.value = (await res.json()).reason;
+    } catch (e) {
+      error.value = "Unknown error";
+    }
+  }
+}
 </script>

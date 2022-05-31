@@ -46,71 +46,60 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 import { GlobalVariable } from "../../types";
 import api from "../api";
 
-interface ComponentData {
-  unchangedJson: string
-  changedJson: string
-  variables: GlobalVariable[]
+const unchangedJson = ref<string>('[]')
+const changedJson = ref<string>('[]')
+const variables = ref<GlobalVariable[]>([])
+
+const changed = computed(() => unchangedJson.value !== changedJson.value)
+
+const remove = (idx: number): void => {
+  variables.value = variables.value.filter((_val: GlobalVariable, index: number) => index !== idx);
 }
 
-export default defineComponent({
-  data: (): ComponentData => ({
-    unchangedJson: "[]",
-    changedJson: "[]",
-    variables: [],
-  }),
-  computed: {
-    changed() {
-      return this.unchangedJson !== this.changedJson;
-    },
-  },
-  methods: {
-    remove(idx: number): void {
-      this.variables = this.variables.filter((_val: GlobalVariable, index: number) => index !== idx);
-    },
-    onAdd(): void {
-      this.variables.push({ name: "", value: "" });
-    },
-    setChanged(): void {
-      this.changedJson = JSON.stringify({
-        variables: this.variables,
-      });
-    },
-    setUnchanged(): void {
-      this.unchangedJson = JSON.stringify({
-        variables: this.variables,
-      });
-      this.changedJson = this.unchangedJson;
-    },
-    async sendSave(): Promise<void> {
-      await api.saveVariables({
-        variables: this.variables,
-      });
-      this.setUnchanged();
-    },
-  },
-  watch: {
-    variables: {
-      deep: true,
-      handler() {
-        this.setChanged();
-      },
-    },
-  },
-  async mounted() {
-    const res = await api.getPageVariablesData();
-    if (res.status !== 200) {
-      this.$router.push({ name: "login" });
-      return;
-    }
+const onAdd = (): void => {
+  variables.value.push({ name: "", value: "" });
+}
 
-    const data: { variables: GlobalVariable[] } = await res.json();
-    this.variables = data.variables;
-    this.setUnchanged();
-  },
-});
+const setChanged = (): void => {
+  changedJson.value = JSON.stringify({
+    variables: variables.value,
+  });
+}
+
+const setUnchanged = (): void => {
+  unchangedJson.value = JSON.stringify({
+    variables: variables.value,
+  });
+  changedJson.value = unchangedJson.value;
+}
+
+const sendSave = async (): Promise<void> => {
+  await api.saveVariables({
+    variables: variables.value,
+  });
+  setUnchanged();
+}
+
+const router = useRouter();
+onMounted(async () => {
+  const res = await api.getPageVariablesData();
+  if (res.status !== 200) {
+    router.push({ name: "login" });
+    return;
+  }
+
+  const data: { variables: GlobalVariable[] } = await res.json();
+  variables.value = data.variables;
+  setUnchanged();
+
+  watch(() => variables, () => {
+    setChanged();
+  }, { deep: true })
+})
 </script>

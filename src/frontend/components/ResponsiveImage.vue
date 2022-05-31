@@ -1,36 +1,29 @@
 <template>
   <div class="responsive-image" :style="style" :title="title"></div>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { computed, defineComponent } from "vue";
 
-export default defineComponent({
-  name: "responsive-image",
-  props: {
-    src: String,
-    title: String,
-    height: {
-      type: String,
-      default: "100%",
-    },
-    width: {
-      type: String,
-      default: "100%",
-    },
+const props = defineProps({
+  src: String,
+  title: String,
+  height: {
+    type: String,
+    default: "100%",
   },
-  computed: {
-    style() {
-      return {
-        display: "inline-block",
-        verticalAlign: "text-bottom",
-        backgroundImage: `url(${this.src})`,
-        backgroundRepeat: "no-repeat",
-        backgroundSize: "contain",
-        backgroundPosition: "center",
-        width: this.width,
-        height: this.height,
-      };
-    },
+  width: {
+    type: String,
+    default: "100%",
   },
-});
+})
+const style = computed(() => ({
+  display: "inline-block",
+  verticalAlign: "text-bottom",
+  backgroundImage: `url(${props.src})`,
+  backgroundRepeat: "no-repeat",
+  backgroundSize: "contain",
+  backgroundPosition: "center",
+  width: props.width,
+  height: props.height,
+}))
 </script>

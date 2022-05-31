@@ -30,37 +30,27 @@
       :defaultState="defaultState" :key="idx" />
   </div>
 </template>
-
-<script lang="ts">
-import { defineComponent, PropType } from "vue";
+<script setup lang="ts">
+import { computed, PropType, ref } from "vue";
 import { AvatarModuleAvatarSlotItem } from "../../../mod/modules/AvatarModuleCommon";
 
-export default defineComponent({
-  props: {
-    modelValue: {
-      type: Object as PropType<AvatarModuleAvatarSlotItem>,
-      required: true,
-    },
-    isDefault: {
-      type: Boolean,
-      required: true,
-    },
+const props = defineProps({
+  modelValue: {
+    type: Object as PropType<AvatarModuleAvatarSlotItem>,
+    required: true,
   },
-  emits: ["update:modelValue", "makeDefault", "moveUp", "moveDown", "remove"],
-  data: () => ({
-    titleFocused: false,
-  }),
-  computed: {
-    defaultState() {
-      return this.modelValue.states.find(({ state }) => state === "default");
-    },
+  isDefault: {
+    type: Boolean,
+    required: true,
   },
-  methods: {
-    makeDefault(): void {
-      this.$emit("makeDefault", this.modelValue);
-    },
-  },
-});
+})
+
+const emit = defineEmits(["update:modelValue", "makeDefault", "moveUp", "moveDown", "remove"])
+const titleFocused = ref<boolean>(false)
+const defaultState = computed(() => props.modelValue.states.find(({ state }) => state === "default"))
+const makeDefault = (): void => {
+  emit("makeDefault", props.modelValue)
+}
 </script>
 <style>
 .avatar-slot-item-editor-title {

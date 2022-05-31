@@ -6,45 +6,26 @@
     <div id="main" ref="main">
       <div class="tabs">
         <ul>
-          <li
-            v-for="(def, idx) in tabDefinitions"
-            :key="idx"
-            :class="{ 'is-active': tab === def.tab }"
-            @click="tab = def.tab"
-          >
+          <li v-for="(def, idx) in tabDefinitions" :key="idx" :class="{ 'is-active': tab === def.tab }"
+            @click="tab = def.tab">
             <a>{{ def.title }}</a>
           </li>
           <li>
-            <a class="button is-small mr-1" :href="widgetUrl" target="_blank"
-              >Open Media widget</a
-            >
+            <a class="button is-small mr-1" :href="widgetUrl" target="_blank">Open Media widget</a>
           </li>
         </ul>
       </div>
-      <commands-editor
-        v-if="inited && tab === 'commands'"
-        v-model="commands"
-        @update:modelValue="sendSave"
-        :globalVariables="globalVariables"
-        :channelPointsCustomRewards="channelPointsCustomRewards"
-        :possibleActions="possibleActions"
-        :baseVolume="baseVolume"
-        :showToggleImages="true"
-        :showFilterActions="true"
-        :widgetUrl="widgetUrl"
-        :showImages="adminSettings.showImages"
-        @showImagesChange="updateShowImages"
-      />
+      <commands-editor v-if="inited && tab === 'commands'" v-model="commands" @update:modelValue="sendSave"
+        :globalVariables="globalVariables" :channelPointsCustomRewards="channelPointsCustomRewards"
+        :possibleActions="possibleActions" :baseVolume="baseVolume" :showToggleImages="true" :showFilterActions="true"
+        :widgetUrl="widgetUrl" :showImages="adminSettings.showImages" @showImagesChange="updateShowImages" />
       <div v-if="inited && tab === 'settings'">
         <table class="table is-striped" ref="table" v-if="settings">
           <tbody>
             <tr>
               <td><code>settings.volume</code></td>
               <td>
-                <volume-slider
-                  v-model="settings.volume"
-                  @update:modelValue="sendSave"
-                />
+                <volume-slider v-model="settings.volume" @update:modelValue="sendSave" />
               </td>
               <td>Base volume for all media playing from commands</td>
             </tr>
@@ -54,8 +35,8 @@
     </div>
   </div>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref } from "vue";
 
 import WsClient from "../WsClient";
 import {
@@ -69,102 +50,80 @@ import {
 import { Command, CommandAction, GlobalVariable } from "../../types";
 import util from "../util";
 
+type TabType = "commands" | "settings"
 interface TabDefinition {
-  tab: string;
+  tab: TabType;
   title: string;
 }
 
-interface ComponentData {
-  commands: Command[];
-  settings: GeneralModuleSettings;
-  adminSettings: GeneralModuleAdminSettings;
-  globalVariables: GlobalVariable[];
-  channelPointsCustomRewards: Record<string, string[]>;
-  ws: WsClient | null;
-  inited: boolean;
-  possibleActions: CommandAction[];
-  tabDefinitions: TabDefinition[];
-  tab: "commands" | "settings";
-  widgetUrl: string;
+const commands = ref<Command[]>([])
+const settings = ref<GeneralModuleSettings>(default_settings())
+const adminSettings = ref<GeneralModuleAdminSettings>(default_admin_settings())
+const globalVariables = ref<GlobalVariable[]>([])
+const channelPointsCustomRewards = ref<Record<string, string[]>>({})
+let ws: WsClient | null = null
+const possibleActions: CommandAction[] = [
+  CommandAction.TEXT,
+  CommandAction.MEDIA,
+  CommandAction.MEDIA_VOLUME,
+  CommandAction.COUNTDOWN,
+  CommandAction.DICT_LOOKUP,
+  CommandAction.MADOCHAN_CREATEWORD,
+  CommandAction.CHATTERS,
+  CommandAction.SET_CHANNEL_TITLE,
+  CommandAction.SET_CHANNEL_GAME_ID,
+  CommandAction.ADD_STREAM_TAGS,
+  CommandAction.REMOVE_STREAM_TAGS,
+]
+const tabDefinitions: TabDefinition[] = [
+  { tab: "commands", title: "Commands" },
+  { tab: "settings", title: "Settings" },
+]
+const inited = ref<boolean>(false)
+const tab = ref<TabType>("commands")
+const widgetUrl = ref<string>("")
+
+const baseVolume = computed(() => {
+  return settings.value.volume
+})
+
+const updateShowImages = (showImages: boolean) => {
+  adminSettings.value.showImages = showImages;
+  sendSave();
+}
+const sendSave = () => {
+  sendMsg({
+    event: "save",
+    commands: commands.value,
+    settings: settings.value,
+    adminSettings: adminSettings.value,
+  });
+}
+const sendMsg = (data: GeneralSaveEventData) => {
+  if (!ws) {
+    console.warn("sendMsg: this.ws not initialized");
+    return;
+  }
+  ws.send(JSON.stringify(data));
 }
 
-export default defineComponent({
-  data: (): ComponentData => ({
-    commands: [],
-    settings: default_settings(),
-    adminSettings: default_admin_settings(),
-    globalVariables: [],
-    channelPointsCustomRewards: {},
-    ws: null,
+onMounted(() => {
+  ws = util.wsClient("general");
+  ws.onMessage("init", (data: GeneralModuleWsEventData) => {
+    commands.value = data.commands;
+    settings.value = data.settings;
+    widgetUrl.value = data.mediaWidgetUrl;
+    adminSettings.value = data.adminSettings;
+    globalVariables.value = data.globalVariables;
+    channelPointsCustomRewards.value = data.channelPointsCustomRewards;
+    inited.value = true;
+  });
+  ws.connect();
+})
 
-    possibleActions: [
-      "text",
-      "media",
-      "media_volume",
-      "countdown",
-      "dict_lookup",
-      "madochan_createword",
-      "chatters",
-      "set_channel_title",
-      "set_channel_game_id",
-      "add_stream_tags",
-      "remove_stream_tags",
-    ],
-
-    tabDefinitions: [
-      { tab: "commands", title: "Commands" },
-      { tab: "settings", title: "Settings" },
-    ],
-
-    inited: false,
-
-    tab: "commands",
-
-    widgetUrl: "",
-  }),
-  computed: {
-    baseVolume() {
-      return this.settings.volume;
-    },
-  },
-  methods: {
-    updateShowImages(showImages: boolean) {
-      this.adminSettings.showImages = showImages;
-      this.sendSave();
-    },
-    sendSave() {
-      this.sendMsg({
-        event: "save",
-        commands: this.commands,
-        settings: this.settings,
-        adminSettings: this.adminSettings,
-      });
-    },
-    sendMsg(data: GeneralSaveEventData) {
-      if (!this.ws) {
-        console.warn("sendMsg: this.ws not initialized");
-        return;
-      }
-      this.ws.send(JSON.stringify(data));
-    },
-  },
-  async mounted() {
-    this.ws = util.wsClient("general");
-    this.ws.onMessage("init", (data: GeneralModuleWsEventData) => {
-      this.commands = data.commands;
-      this.settings = data.settings;
-      this.widgetUrl = data.mediaWidgetUrl;
-      this.adminSettings = data.adminSettings;
-      this.globalVariables = data.globalVariables;
-      this.channelPointsCustomRewards = data.channelPointsCustomRewards;
-      this.inited = true;
-    });
-    this.ws.connect();
-  },
-  unmounted() {
-    if (this.ws) {
-      this.ws.disconnect();
-    }
-  },
-});
+onUnmounted(() => {
+  if (ws) {
+    ws.disconnect();
+  }
+})
 </script>
