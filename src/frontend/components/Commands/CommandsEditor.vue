@@ -168,7 +168,7 @@
 </template>
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import { Command, CommandAction, GlobalVariable } from "../../../types";
+import { Command, CommandAction, CommandTriggerType, GlobalVariable, RandomTextCommand } from "../../../types";
 import { permissionsStr } from "../../../common/permissions";
 import { commands } from "../../../common/commands";
 import fn from "../../../common/fn";
@@ -287,10 +287,28 @@ export default defineComponent({
         return false;
       }
       const search = this.filter.search.toLowerCase();
-      return !item.triggers.find(
-        ({ type, data }) =>
-          type === "command" && data.command.toLowerCase().indexOf(search) >= 0
-      );
+      // search in triggers:
+      const foundInTriggers = item.triggers.find(trigger => {
+        if (trigger.type === CommandTriggerType.COMMAND) {
+          return trigger.data.command.toLowerCase().indexOf(search) >= 0
+        }
+        if (trigger.type === CommandTriggerType.REWARD_REDEMPTION) {
+          return trigger.data.command.toLowerCase().indexOf(search) >= 0
+        }
+        return false
+      })
+      if (foundInTriggers) {
+        return false
+      }
+      if (item.action === CommandAction.TEXT) {
+        const foundInText = ((item as RandomTextCommand).data.text).find((text) => {
+          return text.toLowerCase().indexOf(search) >= 0
+        })
+        if (foundInText) {
+          return false
+        }
+      }
+      return true
     },
     permissionsStr(item: Command) {
       return permissionsStr(item.restrict_to);
