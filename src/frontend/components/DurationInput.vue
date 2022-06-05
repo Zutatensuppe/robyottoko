@@ -23,9 +23,9 @@ const classes = computed(() => {
 onMounted(() => {
   v.value = `${props.modelValue}`;
 
-  watch(() => v, (newValue) => {
+  watch(v, (newValue) => {
     try {
-      const r = fn.doDummyReplacements(newValue.value, "0");
+      const r = fn.doDummyReplacements(newValue, "0");
       fn.mustParseHumanDuration(r, props.allowNegative);
       valid.value = true;
     } catch (e) {

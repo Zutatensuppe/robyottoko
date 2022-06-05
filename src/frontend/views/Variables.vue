@@ -98,7 +98,7 @@ onMounted(async () => {
   variables.value = data.variables;
   setUnchanged();
 
-  watch(() => variables, () => {
+  watch(variables, () => {
     setChanged();
   }, { deep: true })
 })

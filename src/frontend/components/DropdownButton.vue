@@ -19,7 +19,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { onMounted, onUnmounted, PropType, ref } from "vue";
+import { onMounted, onUnmounted, PropType, Ref, ref } from "vue";
 
 defineProps({
   label: { type: String, required: true },
@@ -29,7 +29,7 @@ defineProps({
 const emit = defineEmits(["click"])
 
 const active = ref<boolean>(false)
-const dropdown = ref<HTMLDivElement | null>(null)
+const dropdown = ref<HTMLDivElement>() as Ref<HTMLDivElement>
 
 const openDropdown = () => {
   active.value = true
