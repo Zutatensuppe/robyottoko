@@ -6697,7 +6697,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-06-05T22:27:16.504Z",
+    buildDate: "2022-06-07T19:40:37.906Z",
     // @ts-ignore
     buildVersion: "1.12.2",
 };
