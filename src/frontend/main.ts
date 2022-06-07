@@ -23,6 +23,7 @@ import Checkbox from "./components/Checkbox.vue";
 import DoubleclickButton from "./components/DoubleclickButton.vue";
 import draggable from "vuedraggable";
 import DropdownButton from "./components/DropdownButton.vue";
+import DropdownInput from "./components/DropdownInput.vue";
 import Duration from "./components/Duration.vue";
 import DurationInput from "./components/DurationInput.vue";
 import GlobalUserInfo from "./components/GlobalUserInfo.vue";
@@ -188,6 +189,7 @@ const run = async () => {
   app.component('global-user-info', GlobalUserInfo)
   app.component('doubleclick-button', DoubleclickButton)
   app.component('dropdown-button', DropdownButton)
+  app.component('dropdown-input', DropdownInput)
   app.component('checkbox', Checkbox)
   app.component('draggable', draggable)
   app.component('duration-input', DurationInput)
