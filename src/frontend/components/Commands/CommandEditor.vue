@@ -309,25 +309,8 @@
                   <tbody>
                     <tr v-for="(v, idx) in item.variableChanges" :key="idx">
                       <td>
-                        <div class="dropdown is-active is-up">
-                          <div class="dropdown-trigger">
-                            <input type="text" class="input is-small" v-model="v.name"
-                              @focus="variableChangeFocusIdx = idx" @blur="onVarChangeInputBlur" />
-                          </div>
-                          <div class="dropdown-menu" id="dropdown-menu" role="menu"
-                            v-if="variableChangeFocusIdx === idx">
-                            <div class="dropdown-content">
-                              <a class="dropdown-item" v-for="(
-                                  autocompleteVar, idx3
-                                ) in autocompletableVariables(v.name)" :key="idx3"
-                                @click="v.name = autocompleteVar.var.name">
-                                {{ autocompleteVar.var.name }} ({{
-                                    autocompleteVar.type
-                                }}, <code>{{ autocompleteVar.var.value }}</code>)
-                              </a>
-                            </div>
-                          </div>
-                        </div>
+                        <dropdown-input v-model="v.name"
+                          :values="autocompletableVariables().map(a => ({ value: a.var.name, label: `${a.var.name} (${a.type}), <code>${a.var.value}</code>` }))" />
                       </td>
                       <td>
                         <div class="select is-small">
@@ -599,7 +582,7 @@ export default defineComponent({
       }
       this.item.data.text[idx] += macro.value;
     },
-    autocompletableVariables(start: string): AutocompletableVariable[] {
+    autocompletableVariables(): AutocompletableVariable[] {
       if (!this.item) {
         console.warn("autocompletableVariables: this.item not initialized");
         return [];
@@ -620,7 +603,7 @@ export default defineComponent({
           });
         }
       });
-      return variables.filter((v: AutocompletableVariable) => v.var.name.startsWith(start)).slice(0, 10);
+      return variables
     },
     onVarChangeInputBlur() {
       setTimeout(() => {
@@ -704,6 +687,7 @@ export default defineComponent({
 <style>
 .modal-card-body .dropdown-content {
   max-height: 300px;
-  overflow: scroll;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 </style>

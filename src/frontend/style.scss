@@ -155,6 +155,10 @@ body {
   width: 100%;
 }
 
+input[type="number"] {
+  min-width: 70px;
+}
+
 input[type="color"] {
   min-width: 100px;
 }
