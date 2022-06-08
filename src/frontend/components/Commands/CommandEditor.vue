@@ -196,47 +196,16 @@
               </td>
             </tr>
             <tr v-if="item.action === 'media'">
-              <td>Sound:</td>
-              <td>
-                <sound-upload v-model="item.data.sound" :baseVolume="baseVolume" @update:modelValue="mediaSndChanged" />
-              </td>
-            </tr>
-            <tr v-if="item.action === 'media'">
               <td>Image (by URL):</td>
               <td>
                 <input type="text" class="input is-small" v-model="item.data.image_url" />
                 <div>
                   <span class="button is-small" @click="
                     item.data.image_url = '$user($args).profile_image_url'
-                  ">Profile image of user given by args</span>
-                  <span class="button is-small" @click="item.data.image_url = '$user.profile_image_url'">Profile image
+                  ">Twitch profile image of user given by args</span>
+                  <span class="button is-small" @click="item.data.image_url = '$user.profile_image_url'">Twitch profile
+                    image
                     of user who executes the command</span>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'media'">
-              <td>Twitch clip:</td>
-              <td>
-                <table>
-                  <tr>
-                    <td>Url:</td>
-                    <td>
-                      <input type="text" class="input is-small" v-model="item.data.twitch_clip.url" />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Volume:</td>
-                    <td>
-                      <volume-slider v-model="item.data.twitch_clip.volume" />
-                    </td>
-                  </tr>
-                </table>
-                <div>
-                  <span class="button is-small" @click="
-                    item.data.twitch_clip.url = '$user($args).recent_clip_url'
-                  ">A recent clip of user given by args</span>
-                  <span class="button is-small" @click="item.data.twitch_clip.url = '$user.recent_clip_url'">A recent
-                    clip of user who executes the command</span>
                 </div>
               </td>
             </tr>
@@ -249,6 +218,50 @@
                   <span class="icon is-small is-left">
                     <i class="fa fa-hourglass"></i>
                   </span>
+                </div>
+                <div class="help">
+                  The minimum duration that images will be displayed.
+                  Sounds and videos will always play for their full length
+                  regardless of this setting.
+                </div>
+              </td>
+            </tr>
+            <tr v-if="item.action === 'media'">
+              <td>Sound:</td>
+              <td>
+                <sound-upload v-model="item.data.sound" :baseVolume="baseVolume" @update:modelValue="mediaSndChanged" />
+              </td>
+            </tr>
+            <tr v-if="item.action === 'media'">
+              <td>Video:</td>
+              <td>
+                <table>
+                  <tr>
+                    <td>Url:</td>
+                    <td>
+                      <input type="text" class="input is-small" v-model="item.data.video.url" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Volume:</td>
+                    <td>
+                      <volume-slider v-model="item.data.video.volume" />
+                    </td>
+                  </tr>
+                </table>
+                <div class="help">
+                  The video url has to be a twitch clip url
+                  (<code>https://clips.twitch.tv/...</code>) or a URL to a
+                  video file (a URL usually ending in <code>.mp4</code> or
+                  similar).
+                  Currently Youtube or other Video Hosters are not supported.
+                </div>
+                <div>
+                  <span class="button is-small" @click="
+                    item.data.video.url = '$user($args).recent_clip_url'
+                  ">A recent twitch clip of user given by args</span>
+                  <span class="button is-small" @click="item.data.video.url = '$user.recent_clip_url'">A recent
+                    twitch clip of user who executes the command</span>
                 </div>
               </td>
             </tr>

@@ -12,8 +12,10 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 
-import fn from "../common/fn";
+import fn, { logger } from "../common/fn";
 import { MediaCommandData } from "../types";
+
+const log = logger('MediaQueueElement.vue')
 
 interface ComponentData {
   queue: MediaCommandData[];
@@ -45,8 +47,8 @@ const MediaQueueElement = defineComponent({
       return new Promise(async (resolve) => {
         this.latestResolved = false;
         const promises: Promise<void>[] = [];
-        if (media.twitch_clip.url) {
-          this.videosrc = media.twitch_clip.url;
+        if (media.video.url) {
+          this.videosrc = media.video.url;
           promises.push(
             new Promise((res) => {
               this.$nextTick(() => {
@@ -55,7 +57,11 @@ const MediaQueueElement = defineComponent({
                 // conditions where this is not true but for now this
                 // will be fine
                 const videoEl = this.$refs.video as HTMLVideoElement
-                const volume = media.twitch_clip.volume / 100
+                const volume = media.video.volume / 100
+                videoEl.addEventListener("error", (e) => {
+                  log.error('error when playing video', e)
+                  res();
+                });
                 videoEl.volume = fn.clamp(0, volume, 1)
                 videoEl.addEventListener("ended", () => {
                   res();

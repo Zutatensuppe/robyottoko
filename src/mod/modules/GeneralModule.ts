@@ -156,11 +156,14 @@ class GeneralModule implements Module {
         if (!cmd.data.image_url || cmd.data.image_url === 'undefined') {
           cmd.data.image_url = ''
         }
-        if (!cmd.data.twitch_clip) {
-          cmd.data.twitch_clip = {
-            url: cmd.data.clip_url || '',
-            volume: 100,
+        if (!cmd.data.video) {
+          cmd.data.video = {
+            url: cmd.data.video || cmd.data.twitch_clip?.url || '',
+            volume: cmd.data.twitch_clip?.volume || 100,
           }
+        }
+        if (typeof cmd.data.twitch_clip !== 'undefined') {
+          delete cmd.data.twitch_clip
         }
       }
       if (cmd.action === CommandAction.COUNTDOWN) {

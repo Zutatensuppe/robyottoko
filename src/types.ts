@@ -367,7 +367,7 @@ export interface ChattersCommand extends Command {
   action: CommandAction.CHATTERS
 }
 
-export interface MediaTwitchClip {
+export interface MediaVideo {
   url: string
   volume: number // 0 - 100
 }
@@ -376,7 +376,7 @@ export interface MediaCommandData {
   widgetIds: string[]
   sound: SoundMediaFile
   image: MediaFile
-  twitch_clip: MediaTwitchClip
+  video: MediaVideo
   image_url: string
   minDurationMs: string | number
 }

@@ -2199,8 +2199,8 @@ const newMediaFile = (obj = null) => ({
     file: getProp(obj, ['file'], ''),
     urlpath: getProp(obj, ['urlpath'], ''),
 });
-const newTwitchClip = (obj = null) => ({
-    // twitch clip identified by url
+const newMediaVideo = (obj = null) => ({
+    // video identified by url
     url: getProp(obj, ['url'], ''),
     volume: getProp(obj, ['volume'], 100),
 });
@@ -2209,7 +2209,7 @@ const newMedia = (obj = null) => ({
     sound: newSoundMediaFile(obj?.sound),
     image: newMediaFile(obj?.image),
     image_url: getProp(obj, ['image_url'], ''),
-    twitch_clip: newTwitchClip(obj?.twitch_clip),
+    video: newMediaVideo(obj?.video),
     minDurationMs: getProp(obj, ['minDurationMs'], '1s'),
 });
 const newTrigger = (type) => ({
@@ -3828,28 +3828,32 @@ const log$b = logger('playMedia.ts');
 const playMedia = (originalCmd, bot, user) => async (command, _client, _target, context) => {
     const data = originalCmd.data;
     data.image_url = await fn.doReplacements(data.image_url, command, context, originalCmd, bot, user);
-    if (data.twitch_clip.url) {
-        log$b.debug(`clip is defined: ${data.twitch_clip.url}`);
-        data.twitch_clip.url = await fn.doReplacements(data.twitch_clip.url, command, context, originalCmd, bot, user);
-        if (data.twitch_clip.url) {
-            log$b.debug(`clip found: ${data.twitch_clip.url}`);
-            const filename = `${hash(data.twitch_clip.url)}-clip.mp4`;
-            const outfile = `./data/uploads/${filename}`;
-            if (!fs.existsSync(outfile)) {
-                log$b.debug(`downloading the clip to ${outfile}`);
-                const child = childProcess.execFile(config.youtubeDlBinary, [
-                    data.twitch_clip.url,
-                    '-o',
-                    outfile,
-                ]);
-                await new Promise((resolve) => {
-                    child.on('close', resolve);
-                });
+    if (data.video.url) {
+        log$b.debug(`clip is defined: ${data.video.url}`);
+        data.video.url = await fn.doReplacements(data.video.url, command, context, originalCmd, bot, user);
+        if (data.video.url) {
+            // if video url looks like a twitch clip url, dl it first
+            if (data.video.url.match(/^https:\/\/clips\.twitch\.tv\/.+/)) {
+                log$b.debug(`twitch clip found: ${data.video.url}`);
+                const filename = `${hash(data.video.url)}-clip.mp4`;
+                const outfile = `./data/uploads/${filename}`;
+                if (!fs.existsSync(outfile)) {
+                    log$b.debug(`downloading the clip to ${outfile}`);
+                    const child = childProcess.execFile(config.youtubeDlBinary, [data.video.url, '-o', outfile]);
+                    await new Promise((resolve) => {
+                        child.on('close', resolve);
+                    });
+                }
+                else {
+                    log$b.debug(`clip exists at ${outfile}`);
+                }
+                data.video.url = `/uploads/${filename}`;
             }
             else {
-                log$b.debug(`clip exists at ${outfile}`);
+                // else assume it is already a playable video url
+                // TODO: youtube videos maybe should also be downloaded
+                log$b.debug('clip is assumed to be directly playable via html5 video element');
             }
-            data.twitch_clip.url = `/uploads/${filename}`;
         }
         else {
             log$b.debug('no clip found');
@@ -4325,11 +4329,14 @@ class GeneralModule {
                 if (!cmd.data.image_url || cmd.data.image_url === 'undefined') {
                     cmd.data.image_url = '';
                 }
-                if (!cmd.data.twitch_clip) {
-                    cmd.data.twitch_clip = {
-                        url: cmd.data.clip_url || '',
-                        volume: 100,
+                if (!cmd.data.video) {
+                    cmd.data.video = {
+                        url: cmd.data.video || cmd.data.twitch_clip?.url || '',
+                        volume: cmd.data.twitch_clip?.volume || 100,
                     };
+                }
+                if (typeof cmd.data.twitch_clip !== 'undefined') {
+                    delete cmd.data.twitch_clip;
                 }
             }
             if (cmd.action === CommandAction.COUNTDOWN) {
@@ -6697,9 +6704,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-06-07T22:34:22.990Z",
+    buildDate: "2022-06-08T18:53:43.039Z",
     // @ts-ignore
-    buildVersion: "1.12.3",
+    buildVersion: "1.13.0",
 };
 
 const widgets = [
