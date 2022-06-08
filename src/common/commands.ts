@@ -2,7 +2,7 @@ import { getProp, mustParseHumanDuration, nonce } from "../common/fn"
 import {
   Command, CommandAction, CommandTrigger, CommandTriggerType,
   CountdownAction, CountdownActionType, FunctionCommand,
-  MediaCommandData, MediaFile, MediaTwitchClip, SoundMediaFile,
+  MediaCommandData, MediaFile, MediaVideo, SoundMediaFile,
 } from "../types"
 import { MOD_OR_ABOVE } from './permissions'
 
@@ -21,8 +21,8 @@ const newMediaFile = (obj: any = null): MediaFile => ({
   urlpath: getProp(obj, ['urlpath'], ''),
 })
 
-const newTwitchClip = (obj: any = null): MediaTwitchClip => ({
-  // twitch clip identified by url
+const newMediaVideo = (obj: any = null): MediaVideo => ({
+  // video identified by url
   url: getProp(obj, ['url'], ''),
   volume: getProp(obj, ['volume'], 100),
 })
@@ -32,7 +32,7 @@ export const newMedia = (obj: any = null): MediaCommandData => ({
   sound: newSoundMediaFile(obj?.sound),
   image: newMediaFile(obj?.image),
   image_url: getProp(obj, ['image_url'], ''), // image identified by url only
-  twitch_clip: newTwitchClip(obj?.twitch_clip),
+  video: newMediaVideo(obj?.video),
   minDurationMs: getProp(obj, ['minDurationMs'], '1s'),
 })
 
