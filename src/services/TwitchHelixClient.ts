@@ -221,6 +221,37 @@ class TwitchHelixClient {
     return null
   }
 
+  async getAccessTokenByCode(code: string, redirectUri: string): Promise<TwitchHelixOauthTokenResponseData | null> {
+    const url = `https://id.twitch.tv/oauth2/token` + asQueryArgs({
+      client_id: this.clientId,
+      client_secret: this.clientSecret,
+      code,
+      grant_type: 'authorization_code',
+      redirect_uri: redirectUri,
+    })
+    try {
+      return await postJson(url) as TwitchHelixOauthTokenResponseData
+    } catch (e) {
+      log.error(url, e)
+      return null
+    }
+  }
+
+  async refreshOAuthToken(refreshToken: string): Promise<TwitchHelixOauthTokenResponseData | null> {
+    const url = `https://id.twitch.tv/oauth2/token` + asQueryArgs({
+      client_id: this.clientId,
+      client_secret: this.clientSecret,
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+    })
+    try {
+      return await postJson(url) as TwitchHelixOauthTokenResponseData
+    } catch (e) {
+      log.error(url, e)
+      return null
+    }
+  }
+
   // https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/
   async getAccessToken(scopes: string[] = []): Promise<string> {
     const url = `https://id.twitch.tv/oauth2/token` + asQueryArgs({
@@ -241,6 +272,18 @@ class TwitchHelixClient {
 
   _url(path: string): string {
     return `${API_BASE}${path}`
+  }
+
+  async getUser(accessToken: string): Promise<TwitchHelixUserSearchResponseDataEntry | null> {
+    const url = this._url(`/users`)
+    let json
+    try {
+      json = await getJson(url, withHeaders(this._authHeaders(accessToken), {})) as TwitchHelixUserSearchResponseData
+      return json.data[0]
+    } catch (e) {
+      log.error(url, json, e)
+      return null
+    }
   }
 
   // https://dev.twitch.tv/docs/api/reference#get-users

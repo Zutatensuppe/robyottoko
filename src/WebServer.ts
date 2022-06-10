@@ -44,6 +44,7 @@ class WebServer {
   private moduleManager: ModuleManager
   private port: number
   private hostname: string
+  private url: string
   private configTwitch: TwitchConfig
   private wss: WebSocketServer
   private auth: Auth
@@ -74,6 +75,7 @@ class WebServer {
     this.moduleManager = moduleManager
     this.port = configHttp.port
     this.hostname = configHttp.hostname
+    this.url = configHttp.url
     this.configTwitch = configTwitch
     this.wss = wss
     this.auth = auth
@@ -137,7 +139,16 @@ class WebServer {
       this.twitchChannelRepo,
     ))
 
-    app.use('/twitch', createTwitchRouter(this.db, templates, this.configTwitch))
+    app.use('/twitch', createTwitchRouter(
+      this.eventHub,
+      this.db,
+      templates,
+      this.configTwitch,
+      this.url,
+      this.userRepo,
+      this.twitchChannelRepo,
+      this.cache,
+    ))
 
     app.get('/widget/:widget_type/:widget_token/', async (req, res: Response, _next: NextFunction) => {
       const type = req.params.widget_type

@@ -6,13 +6,23 @@ import { logger } from '../../common/fn'
 import Db from '../../DbPostgres'
 import Templates from '../../services/Templates'
 import { TwitchConfig } from '../../types'
+import Users from '../../services/Users'
+import TwitchChannels from '../../services/TwitchChannels'
+import { Emitter, EventType } from 'mitt'
+import { handleOAuthCodeCallback } from '../../oauth'
+import Cache from '../../services/Cache'
 
 const log = logger('twitch/index.ts')
 
 export const createRouter = (
+  eventHub: Emitter<Record<EventType, unknown>>,
   db: Db,
   templates: Templates,
   configTwitch: TwitchConfig,
+  baseUrl: string,
+  userRepo: Users,
+  twitchChannelRepo: TwitchChannels,
+  cache: Cache,
 ): Router => {
   const verifyTwitchSignature = (req: any, res: any, next: NextFunction) => {
     const body = Buffer.from(req.rawBody, 'utf8')
@@ -36,9 +46,53 @@ export const createRouter = (
   const router = express.Router()
   // twitch calls this url after auth
   // from here we render a js that reads the token and shows it to the user
-  router.get('/redirect_uri', async (req, res: Response) => {
-    res.send(templates.render('templates/twitch_redirect_uri.html', {}))
+  router.get('/redirect_uri', async (req: any, res: Response) => {
+    if (!req.user) {
+      // a user that is not logged in may not visit to redirect_uri
+      res.status(401).send({ reason: 'not logged in' })
+      return
+    }
+    // in success case:
+    // http://localhost:3000/
+    // ?code=gulfwdmys5lsm6qyz4xiz9q32l10
+    // &scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls
+    // &state=c3ab8aa609ea11e793ae92361f002671
+    if (req.query.code) {
+      const code = `${req.query.code}`
+      const redirectUri = `${baseUrl}/twitch/redirect_uri`
+      const result = await handleOAuthCodeCallback(
+        code,
+        redirectUri,
+        configTwitch,
+        db,
+        twitchChannelRepo,
+        req.user,
+        cache,
+      )
+      if (result.error) {
+        res.status(500).send("Something went wrong!");
+        return
+      }
+      if (result.updated) {
+        const changedUser = await userRepo.getById(req.user.id)
+        if (changedUser) {
+          eventHub.emit('user_changed', changedUser)
+        } else {
+          log.error(`updating user twitch channels: user doesn't exist after saving it: ${req.user.id}`)
+        }
+      }
+      res.send(templates.render('templates/twitch_redirect_uri.html', {}))
+      return
+    }
+
+    // in error case:
+    // http://localhost:3000/
+    // ?error=access_denied
+    // &error_description=The+user+denied+you+access
+    // &state=c3ab8aa609ea11e793ae92361f002671
+    res.status(403).send({ reason: req.query })
   })
+
   router.post(
     '/event-sub/',
     express.json({ verify: (req: any, _res: Response, buf) => { req.rawBody = buf } }),

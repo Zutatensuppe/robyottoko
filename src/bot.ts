@@ -23,6 +23,7 @@ import AvatarModule from './mod/modules/AvatarModule'
 import PomoModule from './mod/modules/PomoModule'
 import buildEnv from './buildEnv'
 import Widgets from './services/Widgets'
+import { refreshExpiredTwitchChannelAccessToken } from './oauth'
 
 import { Bot } from './types'
 
@@ -159,22 +160,29 @@ const run = async () => {
       const problems = []
       const twitchChannels = await twitchChannelRepo.allByUserId(user.id)
       for (const twitchChannel of twitchChannels) {
-        if (!twitchChannel.access_token) {
-          continue;
-        }
-        const resp = await client.validateOAuthToken(
-          twitchChannel.channel_id,
-          twitchChannel.access_token,
+        const result = await refreshExpiredTwitchChannelAccessToken(
+          db,
+          twitchChannel,
+          twitchChannelRepo,
+          client,
+          cache,
         )
-        if (!resp.valid) {
-          log.error(`Unable to validate OAuth token. user: ${user.name}: channel ${twitchChannel.channel_name}`)
-          log.error(resp.data)
+        if (result.error) {
+          log.error('Unable to validate or refresh OAuth token.')
+          log.error(`user: ${user.name}, channel: ${twitchChannel.channel_name}, error: ${result.error}`)
           problems.push({
             message: 'access_token_invalid',
             details: {
               channel_name: twitchChannel.channel_name,
             },
           })
+        } else if (result.refreshed) {
+          const changedUser = await userRepo.getById(user.id)
+          if (changedUser) {
+            eventHub.emit('user_changed', changedUser)
+          } else {
+            log.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`)
+          }
         }
       }
 

@@ -211,7 +211,6 @@ export const createRouter = (
     await userRepo.save(user)
     await twitchChannelRepo.saveUserChannels(user.id, twitch_channels)
 
-
     const changedUser = await userRepo.getById(user.id)
     if (changedUser) {
       eventHub.emit('user_changed', changedUser)

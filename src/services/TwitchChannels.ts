@@ -33,7 +33,7 @@ class TwitchChannels {
     this.db = db
   }
 
-  async save(channel: UpdateTwitchChannel): Promise<void> {
+  async save(channel: UpdateTwitchChannel | TwitchChannel): Promise<void> {
     await this.db.upsert(TABLE, channel, {
       user_id: channel.user_id,
       channel_name: channel.channel_name,

@@ -141,7 +141,13 @@ class TwitchPubSubClient {
 
   disconnect() {
     if (this.handle) {
-      this.handle.close(CODE_CUSTOM_DISCONNECT)
+      try {
+        this.handle.close(CODE_CUSTOM_DISCONNECT)
+      } catch (e) {
+        // this can happen when calling close before the connection
+        // could be established
+        log.error('error when closing the handle', e)
+      }
     }
   }
 
