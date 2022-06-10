@@ -313,7 +313,7 @@ const mayExecute = (context, cmd) => {
     return false;
 };
 
-const log$o = logger('fn.ts');
+const log$p = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
         return mime.replace('image/', '');
@@ -353,9 +353,9 @@ const sayFn = (client, target) => (msg) => {
         // TODO: fix this somewhere else?
         // client can only say things in lowercase channels
         t = t.toLowerCase();
-        log$o.info(`saying in ${t}: ${msg}`);
+        log$p.info(`saying in ${t}: ${msg}`);
         client.say(t, msg).catch((e) => {
-            log$o.info(e);
+            log$p.info(e);
         });
     });
 };
@@ -427,15 +427,15 @@ const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, target, context
         if (!mayExecute(context, cmdDef)) {
             continue;
         }
-        log$o.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`);
+        log$p.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`);
         // eslint-disable-next-line no-async-promise-executor
         const p = new Promise(async (resolve) => {
             await applyVariableChanges(cmdDef, contextModule, rawCmd, context);
             const r = await cmdDef.fn(rawCmd, client, target, context);
             if (r) {
-                log$o.info(`${target}| * Returned: ${r}`);
+                log$p.info(`${target}| * Returned: ${r}`);
             }
-            log$o.info(`${target}| * Executed ${rawCmd?.name || '<unknown>'} command`);
+            log$p.info(`${target}| * Executed ${rawCmd?.name || '<unknown>'} command`);
             resolve(true);
         });
         promises.push(p);
@@ -582,7 +582,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
                     return String(JSON.parse(txt)[m2]);
                 }
                 catch (e) {
-                    log$o.error(e);
+                    log$p.error(e);
                     return '';
                 }
             },
@@ -595,7 +595,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
                     return await getText(url);
                 }
                 catch (e) {
-                    log$o.error(e);
+                    log$p.error(e);
                     return '';
                 }
             },
@@ -816,7 +816,7 @@ var fn = {
     findIdxBySearch,
 };
 
-const TABLE$5 = 'robyottoko.token';
+const TABLE$6 = 'robyottoko.token';
 var TokenType;
 (function (TokenType) {
     TokenType["API_KEY"] = "api_key";
@@ -840,10 +840,10 @@ class Tokens {
         this.db = db;
     }
     async getByUserIdAndType(user_id, type) {
-        return await this.db.get(TABLE$5, { user_id, type });
+        return await this.db.get(TABLE$6, { user_id, type });
     }
     async insert(tokenInfo) {
-        return await this.db.insert(TABLE$5, tokenInfo);
+        return await this.db.insert(TABLE$6, tokenInfo);
     }
     async createToken(user_id, type) {
         const token = generateToken(32);
@@ -856,10 +856,10 @@ class Tokens {
             || (await this.createToken(user_id, type));
     }
     async getByTokenAndType(token, type) {
-        return (await this.db.get(TABLE$5, { token, type })) || null;
+        return (await this.db.get(TABLE$6, { token, type })) || null;
     }
     async delete(token) {
-        return await this.db.delete(TABLE$5, { token });
+        return await this.db.delete(TABLE$6, { token });
     }
     async generateAuthTokenForUserId(user_id) {
         return await this.createToken(user_id, TokenType.AUTH);
@@ -982,7 +982,7 @@ class ModuleManager {
     }
 }
 
-const log$n = logger("WebSocketServer.ts");
+const log$o = logger("WebSocketServer.ts");
 class WebSocketServer {
     constructor(eventHub, moduleManager, config, auth) {
         this.eventHub = eventHub;
@@ -1026,19 +1026,19 @@ class WebSocketServer {
                 socket.user_id = parseInt(token, 10);
             }
             socket.module = moduleName;
-            log$n.log('added socket: ', moduleName, socket.protocol);
-            log$n.log('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
+            log$o.log('added socket: ', moduleName, socket.protocol);
+            log$o.log('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
             socket.on('close', () => {
-                log$n.log('removed socket: ', moduleName, socket.protocol);
-                log$n.log('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
+                log$o.log('removed socket: ', moduleName, socket.protocol);
+                log$o.log('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
             });
             if (request.url?.indexOf(pathname) !== 0) {
-                log$n.info('bad request url: ', request.url);
+                log$o.info('bad request url: ', request.url);
                 socket.close();
                 return;
             }
             if (!socket.user_id) {
-                log$n.info('not found token: ', token, relpath);
+                log$o.info('not found token: ', token, relpath);
                 socket.close();
                 return;
             }
@@ -1069,7 +1069,7 @@ class WebSocketServer {
                     }
                 }
                 catch (e) {
-                    log$n.error('socket on message', e);
+                    log$o.error('socket on message', e);
                 }
             });
         });
@@ -1078,7 +1078,7 @@ class WebSocketServer {
         return !!this.sockets().find(s => s.user_id === user_id);
     }
     _notify(socket, data) {
-        log$n.info(`notifying ${socket.user_id} ${socket.module} (${data.event})`);
+        log$o.info(`notifying ${socket.user_id} ${socket.module} (${data.event})`);
         socket.send(JSON.stringify(data));
     }
     notifyOne(user_ids, moduleName, data, socket) {
@@ -1090,7 +1090,7 @@ class WebSocketServer {
             this._notify(socket, data);
         }
         else {
-            log$n.error('tried to notify invalid socket', socket.user_id, socket.module, user_ids, moduleName, isConnectedSocket);
+            log$o.error('tried to notify invalid socket', socket.user_id, socket.module, user_ids, moduleName, isConnectedSocket);
         }
     }
     notifyAll(user_ids, moduleName, data) {
@@ -1134,70 +1134,7 @@ class Templates {
     }
 }
 
-const log$m = logger('twitch/index.ts');
-const createRouter$3 = (db, templates, configTwitch) => {
-    const verifyTwitchSignature = (req, res, next) => {
-        const body = Buffer.from(req.rawBody, 'utf8');
-        const msg = `${req.headers['twitch-eventsub-message-id']}${req.headers['twitch-eventsub-message-timestamp']}${body}`;
-        const hmac = crypto.createHmac('sha256', configTwitch.eventSub.transport.secret);
-        hmac.update(msg);
-        const expected = `sha256=${hmac.digest('hex')}`;
-        if (req.headers['twitch-eventsub-message-signature'] !== expected) {
-            log$m.debug(req);
-            log$m.error('bad message signature', {
-                got: req.headers['twitch-eventsub-message-signature'],
-                expected,
-            });
-            res.status(403).send({ reason: 'bad message signature' });
-            return;
-        }
-        return next();
-    };
-    const router = express.Router();
-    // twitch calls this url after auth
-    // from here we render a js that reads the token and shows it to the user
-    router.get('/redirect_uri', async (req, res) => {
-        res.send(templates.render('templates/twitch_redirect_uri.html', {}));
-    });
-    router.post('/event-sub/', express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
-        log$m.debug(req.body);
-        log$m.debug(req.headers);
-        if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-            log$m.info(`got verification request, challenge: ${req.body.challenge}`);
-            res.write(req.body.challenge);
-            res.send();
-            return;
-        }
-        if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-            log$m.info(`got notification request: ${req.body.subscription.type}`);
-            if (req.body.subscription.type === 'stream.online') {
-                // insert new stream
-                await db.insert('robyottoko.streams', {
-                    broadcaster_user_id: req.body.event.broadcaster_user_id,
-                    started_at: new Date(req.body.event.started_at),
-                });
-            }
-            else if (req.body.subscription.type === 'stream.offline') {
-                // get last started stream for broadcaster
-                // if it exists and it didnt end yet set ended_at date
-                const stream = await db.get('robyottoko.streams', {
-                    broadcaster_user_id: req.body.event.broadcaster_user_id,
-                }, [{ started_at: -1 }]);
-                if (!stream.ended_at) {
-                    await db.update('robyottoko.streams', {
-                        ended_at: new Date(),
-                    }, { id: stream.id });
-                }
-            }
-            res.send();
-            return;
-        }
-        res.status(400).send({ reason: 'unhandled sub type' });
-    });
-    return router;
-};
-
-const log$l = logger('TwitchHelixClient.ts');
+const log$n = logger('TwitchHelixClient.ts');
 const API_BASE = 'https://api.twitch.tv/helix';
 function getBestEntryFromCategorySearchItems(searchString, resp) {
     const idx = findIdxFuzzy(resp.data, searchString, (item) => item.name);
@@ -1227,6 +1164,37 @@ class TwitchHelixClient {
         }
         return null;
     }
+    async getAccessTokenByCode(code, redirectUri) {
+        const url = `https://id.twitch.tv/oauth2/token` + asQueryArgs({
+            client_id: this.clientId,
+            client_secret: this.clientSecret,
+            code,
+            grant_type: 'authorization_code',
+            redirect_uri: redirectUri,
+        });
+        try {
+            return await postJson(url);
+        }
+        catch (e) {
+            log$n.error(url, e);
+            return null;
+        }
+    }
+    async refreshOAuthToken(refreshToken) {
+        const url = `https://id.twitch.tv/oauth2/token` + asQueryArgs({
+            client_id: this.clientId,
+            client_secret: this.clientSecret,
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken,
+        });
+        try {
+            return await postJson(url);
+        }
+        catch (e) {
+            log$n.error(url, e);
+            return null;
+        }
+    }
     // https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/
     async getAccessToken(scopes = []) {
         const url = `https://id.twitch.tv/oauth2/token` + asQueryArgs({
@@ -1241,12 +1209,24 @@ class TwitchHelixClient {
             return json.access_token;
         }
         catch (e) {
-            log$l.error(url, json, e);
+            log$n.error(url, json, e);
             return '';
         }
     }
     _url(path) {
         return `${API_BASE}${path}`;
+    }
+    async getUser(accessToken) {
+        const url = this._url(`/users`);
+        let json;
+        try {
+            json = await getJson(url, withHeaders(this._authHeaders(accessToken), {}));
+            return json.data[0];
+        }
+        catch (e) {
+            log$n.error(url, json, e);
+            return null;
+        }
     }
     // https://dev.twitch.tv/docs/api/reference#get-users
     async _getUserBy(query) {
@@ -1257,7 +1237,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$l.error(url, json, e);
+            log$n.error(url, json, e);
             return null;
         }
     }
@@ -1294,7 +1274,7 @@ class TwitchHelixClient {
             return filtered[0];
         }
         catch (e) {
-            log$l.error(url, json, e);
+            log$n.error(url, json, e);
             return null;
         }
     }
@@ -1316,7 +1296,7 @@ class TwitchHelixClient {
             return json.data[0] || null;
         }
         catch (e) {
-            log$l.error(url, json, e);
+            log$n.error(url, json, e);
             return null;
         }
     }
@@ -1326,7 +1306,7 @@ class TwitchHelixClient {
             return await getJson(url, await this.withAuthHeaders());
         }
         catch (e) {
-            log$l.error(url, e);
+            log$n.error(url, e);
             return null;
         }
     }
@@ -1336,7 +1316,7 @@ class TwitchHelixClient {
             return await requestText('delete', url, await this.withAuthHeaders());
         }
         catch (e) {
-            log$l.error(url, e);
+            log$n.error(url, e);
             return null;
         }
     }
@@ -1346,7 +1326,7 @@ class TwitchHelixClient {
             return await postJson(url, await this.withAuthHeaders(asJson(subscription)));
         }
         catch (e) {
-            log$l.error(url, e);
+            log$n.error(url, e);
             return null;
         }
     }
@@ -1359,7 +1339,7 @@ class TwitchHelixClient {
             return getBestEntryFromCategorySearchItems(searchString, json);
         }
         catch (e) {
-            log$l.error(url, json);
+            log$n.error(url, json);
             return null;
         }
     }
@@ -1372,7 +1352,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$l.error(url, json);
+            log$n.error(url, json);
             return null;
         }
     }
@@ -1387,7 +1367,7 @@ class TwitchHelixClient {
             return await request('patch', url, withHeaders(this._authHeaders(accessToken), asJson(data)));
         }
         catch (e) {
-            log$l.error(url, e);
+            log$n.error(url, e);
             return null;
         }
     }
@@ -1413,7 +1393,7 @@ class TwitchHelixClient {
             return await getJson(url, await this.withAuthHeaders());
         }
         catch (e) {
-            log$l.error(url, e);
+            log$n.error(url, e);
             return null;
         }
     }
@@ -1473,6 +1453,218 @@ class TwitchHelixClient {
         }
     }
 }
+
+const log$m = logger('oauth.ts');
+const TABLE$5 = 'robyottoko.oauth_token';
+// TODO: check if anything has to be put in a try catch block
+const refreshExpiredTwitchChannelAccessToken = async (db, twitchChannel, twitchChannelRepo, client, cache) => {
+    if (!twitchChannel.access_token) {
+        return {
+            error: false,
+            refreshed: false,
+        };
+    }
+    if (!twitchChannel.channel_id) {
+        const channelId = await client.getUserIdByNameCached(twitchChannel.channel_name, cache);
+        if (!channelId) {
+            return {
+                error: false,
+                refreshed: false,
+            };
+        }
+        twitchChannel.channel_id = channelId;
+    }
+    const resp = await client.validateOAuthToken(twitchChannel.channel_id, twitchChannel.access_token);
+    if (resp.valid) {
+        // token is valid, check next :)
+        return {
+            error: false,
+            refreshed: false,
+        };
+    }
+    // try to refresh the token, if possible
+    const row = await db.get(TABLE$5, {
+        access_token: twitchChannel.access_token,
+    });
+    if (!row || !row.refresh_token) {
+        // we have no information about that token
+        // or at least no way to refresh it
+        return {
+            error: 'no_refresh_token_found',
+            refreshed: false,
+        };
+    }
+    const refreshResp = await client.refreshOAuthToken(row.refresh_token);
+    if (!refreshResp) {
+        // there was something wrong when refreshing
+        return {
+            error: 'refresh_oauth_token_failed',
+            refreshed: false,
+        };
+    }
+    // update the token in the database
+    await db.update(TABLE$5, {
+        access_token: refreshResp.access_token,
+        refresh_token: refreshResp.refresh_token,
+        expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
+    }, {
+        access_token: row.access_token,
+    });
+    // update the twitch channel in the database
+    twitchChannel.access_token = refreshResp.access_token;
+    await twitchChannelRepo.save(twitchChannel);
+    log$m.info('refreshed an oauth token');
+    return {
+        error: false,
+        refreshed: true,
+    };
+};
+// TODO: check if anything has to be put in a try catch block
+const handleOAuthCodeCallback = async (code, redirectUri, configTwitch, db, twitchChannelRepo, user, cache) => {
+    const twitchChannels = await twitchChannelRepo.allByUserId(user.id);
+    const client = new TwitchHelixClient(configTwitch.tmi.identity.client_id, configTwitch.tmi.identity.client_secret, twitchChannels);
+    const resp = await client.getAccessTokenByCode(code, redirectUri);
+    if (!resp) {
+        return {
+            error: true,
+            updated: false,
+        };
+    }
+    // store the token
+    await db.insert(TABLE$5, {
+        access_token: resp.access_token,
+        refresh_token: resp.refresh_token,
+        scope: resp.scope.join(','),
+        token_type: resp.token_type,
+        expires_at: new Date(new Date().getTime() + resp.expires_in * 1000),
+    });
+    // get the user that corresponds to the token
+    const userResp = await client.getUser(resp.access_token);
+    if (!userResp) {
+        return {
+            error: true,
+            updated: false,
+        };
+    }
+    let updated = false;
+    for (const twitchChannel of twitchChannels) {
+        if (!twitchChannel.channel_id) {
+            const channelId = await client.getUserIdByNameCached(twitchChannel.channel_name, cache);
+            if (!channelId) {
+                continue;
+            }
+            twitchChannel.channel_id = channelId;
+        }
+        if (twitchChannel.channel_id !== userResp.id) {
+            continue;
+        }
+        twitchChannel.access_token = resp.access_token;
+        await twitchChannelRepo.save(twitchChannel);
+        updated = true;
+    }
+    return {
+        error: false,
+        updated: updated,
+    };
+};
+
+const log$l = logger('twitch/index.ts');
+const createRouter$3 = (eventHub, db, templates, configTwitch, baseUrl, userRepo, twitchChannelRepo, cache) => {
+    const verifyTwitchSignature = (req, res, next) => {
+        const body = Buffer.from(req.rawBody, 'utf8');
+        const msg = `${req.headers['twitch-eventsub-message-id']}${req.headers['twitch-eventsub-message-timestamp']}${body}`;
+        const hmac = crypto.createHmac('sha256', configTwitch.eventSub.transport.secret);
+        hmac.update(msg);
+        const expected = `sha256=${hmac.digest('hex')}`;
+        if (req.headers['twitch-eventsub-message-signature'] !== expected) {
+            log$l.debug(req);
+            log$l.error('bad message signature', {
+                got: req.headers['twitch-eventsub-message-signature'],
+                expected,
+            });
+            res.status(403).send({ reason: 'bad message signature' });
+            return;
+        }
+        return next();
+    };
+    const router = express.Router();
+    // twitch calls this url after auth
+    // from here we render a js that reads the token and shows it to the user
+    router.get('/redirect_uri', async (req, res) => {
+        if (!req.user) {
+            // a user that is not logged in may not visit to redirect_uri
+            res.status(401).send({ reason: 'not logged in' });
+            return;
+        }
+        // in success case:
+        // http://localhost:3000/
+        // ?code=gulfwdmys5lsm6qyz4xiz9q32l10
+        // &scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls
+        // &state=c3ab8aa609ea11e793ae92361f002671
+        if (req.query.code) {
+            const code = `${req.query.code}`;
+            const redirectUri = `${baseUrl}/twitch/redirect_uri`;
+            const result = await handleOAuthCodeCallback(code, redirectUri, configTwitch, db, twitchChannelRepo, req.user, cache);
+            if (result.error) {
+                res.status(500).send("Something went wrong!");
+                return;
+            }
+            if (result.updated) {
+                const changedUser = await userRepo.getById(req.user.id);
+                if (changedUser) {
+                    eventHub.emit('user_changed', changedUser);
+                }
+                else {
+                    log$l.error(`updating user twitch channels: user doesn't exist after saving it: ${req.user.id}`);
+                }
+            }
+            res.send(templates.render('templates/twitch_redirect_uri.html', {}));
+            return;
+        }
+        // in error case:
+        // http://localhost:3000/
+        // ?error=access_denied
+        // &error_description=The+user+denied+you+access
+        // &state=c3ab8aa609ea11e793ae92361f002671
+        res.status(403).send({ reason: req.query });
+    });
+    router.post('/event-sub/', express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
+        log$l.debug(req.body);
+        log$l.debug(req.headers);
+        if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
+            log$l.info(`got verification request, challenge: ${req.body.challenge}`);
+            res.write(req.body.challenge);
+            res.send();
+            return;
+        }
+        if (req.headers['twitch-eventsub-message-type'] === 'notification') {
+            log$l.info(`got notification request: ${req.body.subscription.type}`);
+            if (req.body.subscription.type === 'stream.online') {
+                // insert new stream
+                await db.insert('robyottoko.streams', {
+                    broadcaster_user_id: req.body.event.broadcaster_user_id,
+                    started_at: new Date(req.body.event.started_at),
+                });
+            }
+            else if (req.body.subscription.type === 'stream.offline') {
+                // get last started stream for broadcaster
+                // if it exists and it didnt end yet set ended_at date
+                const stream = await db.get('robyottoko.streams', {
+                    broadcaster_user_id: req.body.event.broadcaster_user_id,
+                }, [{ started_at: -1 }]);
+                if (!stream.ended_at) {
+                    await db.update('robyottoko.streams', {
+                        ended_at: new Date(),
+                    }, { id: stream.id });
+                }
+            }
+            res.send();
+            return;
+        }
+        res.status(400).send({ reason: 'unhandled sub type' });
+    });
+    return router;
+};
 
 const TABLE$4 = 'robyottoko.variables';
 class Variables {
@@ -1920,6 +2112,7 @@ class WebServer {
         this.moduleManager = moduleManager;
         this.port = configHttp.port;
         this.hostname = configHttp.hostname;
+        this.url = configHttp.url;
         this.configTwitch = configTwitch;
         this.wss = wss;
         this.auth = auth;
@@ -1964,7 +2157,7 @@ class WebServer {
         app.use('/static', express.static('./public/static'));
         app.use('/uploads', express.static('./data/uploads'));
         app.use('/api', createRouter(this.eventHub, this.db, this.tokenRepo, this.userRepo, this.mail, this.wss, this.auth, this.configTwitch, this.cache, this.widgets, this.twitchChannelRepo));
-        app.use('/twitch', createRouter$3(this.db, templates, this.configTwitch));
+        app.use('/twitch', createRouter$3(this.eventHub, this.db, templates, this.configTwitch, this.url, this.userRepo, this.twitchChannelRepo, this.cache));
         app.get('/widget/:widget_type/:widget_token/', async (req, res, _next) => {
             const type = req.params.widget_type;
             const token = req.params.widget_token;
@@ -2179,7 +2372,14 @@ class TwitchPubSubClient {
     }
     disconnect() {
         if (this.handle) {
-            this.handle.close(CODE_CUSTOM_DISCONNECT);
+            try {
+                this.handle.close(CODE_CUSTOM_DISCONNECT);
+            }
+            catch (e) {
+                // this can happen when calling close before the connection
+                // could be established
+                log$i.error('error when closing the handle', e);
+            }
         }
     }
     on(what, cb) {
@@ -6704,9 +6904,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-06-08T18:53:43.039Z",
+    buildDate: "2022-06-10T18:47:29.685Z",
     // @ts-ignore
-    buildVersion: "1.13.0",
+    buildVersion: "1.14.0",
 };
 
 const widgets = [
@@ -6930,19 +7130,25 @@ const run = async () => {
             const problems = [];
             const twitchChannels = await twitchChannelRepo.allByUserId(user.id);
             for (const twitchChannel of twitchChannels) {
-                if (!twitchChannel.access_token) {
-                    continue;
-                }
-                const resp = await client.validateOAuthToken(twitchChannel.channel_id, twitchChannel.access_token);
-                if (!resp.valid) {
-                    log.error(`Unable to validate OAuth token. user: ${user.name}: channel ${twitchChannel.channel_name}`);
-                    log.error(resp.data);
+                const result = await refreshExpiredTwitchChannelAccessToken(db, twitchChannel, twitchChannelRepo, client, cache);
+                if (result.error) {
+                    log.error('Unable to validate or refresh OAuth token.');
+                    log.error(`user: ${user.name}, channel: ${twitchChannel.channel_name}, error: ${result.error}`);
                     problems.push({
                         message: 'access_token_invalid',
                         details: {
                             channel_name: twitchChannel.channel_name,
                         },
                     });
+                }
+                else if (result.refreshed) {
+                    const changedUser = await userRepo.getById(user.id);
+                    if (changedUser) {
+                        eventHub.emit('user_changed', changedUser);
+                    }
+                    else {
+                        log.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`);
+                    }
                 }
             }
             const data = { event: 'status', data: { problems } };

@@ -3,11 +3,7 @@
     <div id="top" ref="top">
       <navbar />
       <div id="actionbar" class="p-1">
-        <button
-          class="button is-small is-primary"
-          :disabled="!changed"
-          @click="sendSave"
-        >
+        <button class="button is-small is-primary" :disabled="!changed" @click="sendSave">
           Save
         </button>
       </div>
@@ -37,52 +33,32 @@
         <h1 class="title mb-2">Twitch-Bot</h1>
         <p>
           Please refer to
-          <a
-            href="https://dev.twitch.tv/docs/irc/#building-the-bot"
-            target="_blank"
-            >building the bot</a
-          >.
+          <a href="https://dev.twitch.tv/docs/irc/#building-the-bot" target="_blank">building the bot</a>.
         </p>
         <table class="table is-striped">
           <tbody>
             <tr>
               <td>Bot name:</td>
               <td>
-                <input
-                  class="input is-small"
-                  type="text"
-                  v-model="user.tmi_identity_username"
-                />
+                <input class="input is-small" type="text" v-model="user.tmi_identity_username" />
               </td>
             </tr>
             <tr>
               <td>Bot oauth (pass):</td>
               <td>
-                <input
-                  class="input is-small"
-                  type="password"
-                  v-model="user.tmi_identity_password"
-                />
+                <input class="input is-small" type="password" v-model="user.tmi_identity_password" />
               </td>
             </tr>
             <tr>
               <td>Bot client_id:</td>
               <td>
-                <input
-                  class="input is-small"
-                  type="text"
-                  v-model="user.tmi_identity_client_id"
-                />
+                <input class="input is-small" type="text" v-model="user.tmi_identity_client_id" />
               </td>
             </tr>
             <tr>
               <td>Bot client_secret:</td>
               <td>
-                <input
-                  class="input is-small"
-                  type="password"
-                  v-model="user.tmi_identity_client_secret"
-                />
+                <input class="input is-small" type="password" v-model="user.tmi_identity_client_secret" />
               </td>
             </tr>
           </tbody>
@@ -110,41 +86,19 @@
           <tbody>
             <tr v-for="(channel, idx) in twitch_channels" :key="idx">
               <td>
-                <input
-                  class="input is-small"
-                  type="text"
-                  v-model="channel.channel_name"
-                />
+                <input class="input is-small" type="text" v-model="channel.channel_name" />
               </td>
               <td>
-                <checkbox
-                  class="is-small"
-                  :onValue="1"
-                  :offValue="0"
-                  v-model="channel.bot_status_messages"
-                />
+                <checkbox class="is-small" :onValue="1" :offValue="0" v-model="channel.bot_status_messages" />
               </td>
               <td>
-                <input
-                  class="input is-small"
-                  type="text"
-                  v-model="channel.channel_id"
-                  v-if="channel.channel_id"
-                />
-                <button
-                  class="button is-small"
-                  @click="loadid(idx)"
-                  v-if="!channel.channel_id"
-                >
+                <input class="input is-small" type="text" v-model="channel.channel_id" v-if="channel.channel_id" />
+                <button class="button is-small" @click="loadid(idx)" v-if="!channel.channel_id">
                   Load id
                 </button>
               </td>
               <td>
-                <input
-                  class="input is-small"
-                  type="password"
-                  v-model="channel.access_token"
-                />
+                <input class="input is-small" type="password" v-model="channel.access_token" />
               </td>
               <td>
                 <button class="button is-small" @click="rmchannel(idx)">
@@ -169,15 +123,15 @@
         <ol v-if="accessTokenLink" class="list">
           <li class="list-item">Login to twitch as the channel owner</li>
           <li class="list-item">
-            Click <a :href="accessTokenLink" target="_blank">here</a> to
+            Click <a @click="openAuth" target="_blank">here</a> to
             authorize the bot with the channel
           </li>
           <li class="list-item">
-            If authorized, you get redirected back to hyottoko.club, and the
-            access token will display
+            If authorized, you get redirected back to hyottoko.club. If there
+            is a success message, the access token will have been set and
+            this page should automatically reload.
           </li>
         </ol>
-
         <p v-else-if="isAdmin">
           To configure an access token, please configure the "Bot client_id"
           above.
@@ -261,7 +215,7 @@ export default defineComponent({
       const redirectUri = `${loc.protocol}//${loc.host}/twitch/redirect_uri`;
       return (
         "https://id.twitch.tv/oauth2/authorize" +
-        "?response_type=token" +
+        "?response_type=code" +
         `&client_id=${this.user.tmi_identity_client_id}` +
         `&redirect_uri=${redirectUri}` +
         `&scope=${scopes.join("+")}`
@@ -269,6 +223,9 @@ export default defineComponent({
     },
   },
   methods: {
+    openAuth() {
+      window.open(this.accessTokenLink)
+    },
     setChanged() {
       this.changedJson = JSON.stringify({
         user: this.user,
