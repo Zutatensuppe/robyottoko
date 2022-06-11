@@ -1,38 +1,23 @@
 'use strict'
 
 import express, { NextFunction, Response, Router } from 'express'
-import { Emitter, EventType } from 'mitt'
 import multer from 'multer'
 import { logger, nonce, YEAR } from '../../common/fn'
-import Db from '../../DbPostgres'
 import fn from '../../fn'
-import Auth from '../../net/Auth'
-import WebSocketServer from '../../net/WebSocketServer'
-import Cache from '../../services/Cache'
-import Tokens, { TokenType } from '../../services/Tokens'
-import TwitchChannels, { TwitchChannel } from '../../services/TwitchChannels'
+import { TokenType } from '../../services/Tokens'
+import { TwitchChannel } from '../../services/TwitchChannels'
 import TwitchHelixClient from '../../services/TwitchHelixClient'
-import Users, { UpdateUser, User } from '../../services/Users'
+import { UpdateUser, User } from '../../services/Users'
 import Variables from '../../services/Variables'
-import Widgets from '../../services/Widgets'
-import { MailService, TwitchConfig, UploadedFile } from '../../types'
+import { Bot, TwitchConfig, UploadedFile } from '../../types'
 import { createRouter as createApiPubV1Router } from './pub/v1'
 import { createRouter as createUserRouter } from './user'
 
 const log = logger('api/index.ts')
 
 export const createRouter = (
-  eventHub: Emitter<Record<EventType, unknown>>,
-  db: Db,
-  tokenRepo: Tokens,
-  userRepo: Users,
-  mail: MailService,
-  wss: WebSocketServer,
-  auth: Auth,
   configTwitch: TwitchConfig,
-  cache: Cache,
-  widgets: Widgets,
-  twitchChannelRepo: TwitchChannels,
+  bot: Bot,
 ): Router => {
 
   const requireLoginApi = (req: any, res: any, next: NextFunction) => {
@@ -83,13 +68,13 @@ export const createRouter = (
 
   router.get('/conf', async (req, res: Response) => {
     res.send({
-      wsBase: wss.connectstring(),
+      wsBase: bot.getWebSocketServer().connectstring(),
     })
   })
 
   router.post('/logout', requireLoginApi, async (req: any, res: Response) => {
     if (req.token) {
-      await auth.destroyToken(req.token)
+      await bot.getAuth().destroyToken(req.token)
       res.clearCookie("x-token")
     }
     res.send({ success: true })
@@ -101,20 +86,20 @@ export const createRouter = (
       res.status(400).send({ reason: 'invalid_token' })
       return
     }
-    const tokenObj = await tokenRepo.getByTokenAndType(token, TokenType.REGISTRATION)
+    const tokenObj = await bot.getTokens().getByTokenAndType(token, TokenType.REGISTRATION)
     if (!tokenObj) {
       res.status(400).send({ reason: 'invalid_token' })
       return
     }
-    await userRepo.save({ status: 'verified', id: tokenObj.user_id })
-    await tokenRepo.delete(tokenObj.token)
+    await bot.getUsers().save({ status: 'verified', id: tokenObj.user_id })
+    await bot.getTokens().delete(tokenObj.token)
     res.send({ type: 'registration-verified' })
 
     // new user was registered. module manager should be notified about this
     // so that bot doesnt need to be restarted :O
-    const user = await userRepo.getById(tokenObj.user_id)
+    const user = await bot.getUsers().getById(tokenObj.user_id)
     if (user) {
-      eventHub.emit('user_registration_complete', user)
+      bot.getEventHub().emit('user_registration_complete', user)
     } else {
       log.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`)
     }
@@ -124,37 +109,37 @@ export const createRouter = (
   router.post('/widget/create_url', requireLoginApi, express.json(), async (req: any, res: Response) => {
     const type = req.body.type
     const pub = req.body.pub
-    const url = await widgets.createWidgetUrl(type, req.user.id)
+    const url = await bot.getWidgets().createWidgetUrl(type, req.user.id)
     res.send({
-      url: pub ? (await widgets.pubUrl(url)) : url
+      url: pub ? (await bot.getWidgets().pubUrl(url)) : url
     })
   })
 
   router.get('/page/index', requireLoginApi, async (req: any, res: Response) => {
-    const mappedWidgets = await widgets.getWidgetInfos(req.user.id)
+    const mappedWidgets = await bot.getWidgets().getWidgetInfos(req.user.id)
     res.send({ widgets: mappedWidgets })
   })
 
   router.get('/page/variables', requireLoginApi, async (req: any, res: Response) => {
-    const variables = new Variables(db, req.user.id)
+    const variables = new Variables(bot.getDb(), req.user.id)
     res.send({ variables: await variables.all() })
   })
 
   router.post('/save-variables', requireLoginApi, express.json(), async (req: any, res: Response) => {
-    const variables = new Variables(db, req.user.id)
+    const variables = new Variables(bot.getDb(), req.user.id)
     await variables.replace(req.body.variables || [])
     res.send()
   })
 
   router.get('/data/global', async (req: any, res: Response) => {
     res.send({
-      registeredUserCount: await userRepo.countVerifiedUsers(),
-      streamingUserCount: await twitchChannelRepo.countUniqueUsersStreaming(),
+      registeredUserCount: await bot.getUsers().countVerifiedUsers(),
+      streamingUserCount: await bot.getTwitchChannels().countUniqueUsersStreaming(),
     })
   })
 
   router.get('/page/settings', requireLoginApi, async (req: any, res: Response) => {
-    const user = await userRepo.getById(req.user.id) as User
+    const user = await bot.getUsers().getById(req.user.id) as User
     res.send({
       user: {
         id: user.id,
@@ -166,9 +151,9 @@ export const createRouter = (
         tmi_identity_password: user.tmi_identity_password,
         tmi_identity_client_id: user.tmi_identity_client_id,
         tmi_identity_client_secret: user.tmi_identity_client_secret,
-        groups: await userRepo.getGroups(user.id)
+        groups: await bot.getUsers().getGroups(user.id)
       },
-      twitchChannels: await twitchChannelRepo.allByUserId(req.user.id),
+      twitchChannels: await bot.getTwitchChannels().allByUserId(req.user.id),
     })
   })
 
@@ -181,7 +166,7 @@ export const createRouter = (
       }
     }
 
-    const originalUser = await userRepo.getById(req.body.user.id)
+    const originalUser = await bot.getUsers().getById(req.body.user.id)
     if (!originalUser) {
       res.status(404).send({ reason: 'user_does_not_exist' })
       return
@@ -208,12 +193,12 @@ export const createRouter = (
       return channel
     })
 
-    await userRepo.save(user)
-    await twitchChannelRepo.saveUserChannels(user.id, twitch_channels)
+    await bot.getUsers().save(user)
+    await bot.getTwitchChannels().saveUserChannels(user.id, twitch_channels)
 
-    const changedUser = await userRepo.getById(user.id)
+    const changedUser = await bot.getUsers().getById(user.id)
     if (changedUser) {
-      eventHub.emit('user_changed', changedUser)
+      bot.getEventHub().emit('user_changed', changedUser)
     } else {
       log.error(`save-settings: user doesn't exist after saving it: ${user.id}`)
     }
@@ -224,7 +209,7 @@ export const createRouter = (
     let clientId
     let clientSecret
     if (!req.user.groups.includes('admin')) {
-      const u = await userRepo.getById(req.user.id) as User
+      const u = await bot.getUsers().getById(req.user.id) as User
       clientId = u.tmi_identity_client_id || configTwitch.tmi.identity.client_id
       clientSecret = u.tmi_identity_client_secret || configTwitch.tmi.identity.client_secret
     } else {
@@ -243,25 +228,25 @@ export const createRouter = (
     try {
       // todo: maybe fill twitchChannels instead of empty array
       const client = new TwitchHelixClient(clientId, clientSecret, [])
-      res.send({ id: await client.getUserIdByNameCached(req.body.name, cache) })
+      res.send({ id: await client.getUserIdByNameCached(req.body.name, bot.getCache()) })
     } catch (e) {
       res.status(500).send("Something went wrong!");
     }
   })
 
   router.post('/auth', express.json(), async (req, res: Response) => {
-    const user = await auth.getUserByNameAndPass(req.body.user, req.body.pass)
+    const user = await bot.getAuth().getUserByNameAndPass(req.body.user, req.body.pass)
     if (!user) {
       res.status(401).send({ reason: 'bad credentials' })
       return
     }
 
-    const token = await auth.getUserAuthToken(user.id)
+    const token = await bot.getAuth().getUserAuthToken(user.id)
     res.cookie('x-token', token, { maxAge: 1 * YEAR, httpOnly: true })
     res.send()
   })
 
-  router.use('/user', createUserRouter(tokenRepo, userRepo, mail, requireLoginApi))
-  router.use('/pub/v1', createApiPubV1Router(db, tokenRepo, userRepo, cache, configTwitch))
+  router.use('/user', createUserRouter(bot, requireLoginApi))
+  router.use('/pub/v1', createApiPubV1Router(bot, configTwitch))
   return router
 }

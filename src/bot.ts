@@ -54,31 +54,12 @@ const run = async () => {
   const cache = new Cache(db)
   const auth = new Auth(userRepo, tokenRepo)
   const mail = new Mail(config.mail)
+  const widgets = new Widgets(config.http.url, db, tokenRepo)
 
   const eventHub = mitt()
   const moduleManager = new ModuleManager()
-  const webSocketServer = new WebSocketServer(
-    eventHub,
-    moduleManager,
-    config.ws,
-    auth
-  )
-  const widgets = new Widgets(config.http.url, db, tokenRepo)
-  const webServer = new WebServer(
-    eventHub,
-    db,
-    cache,
-    userRepo,
-    tokenRepo,
-    mail,
-    twitchChannelRepo,
-    moduleManager,
-    config.http,
-    config.twitch,
-    webSocketServer,
-    auth,
-    widgets,
-  )
+  const webSocketServer = new WebSocketServer(config.ws)
+  const webServer = new WebServer(config.http, config.twitch)
 
   class BotImpl implements Bot {
     private userVariableInstances: Record<number, Variables> = {}
@@ -93,11 +74,16 @@ const run = async () => {
     getBuildDate() { return buildEnv.buildDate }
     getModuleManager() { return moduleManager }
     getDb() { return db }
+    getUsers() { return userRepo }
     getTokens() { return tokenRepo }
+    getTwitchChannels() { return twitchChannelRepo }
     getCache() { return cache }
+    getMail() { return mail }
+    getAuth() { return auth }
     getWebServer() { return webServer }
     getWebSocketServer() { return webSocketServer }
     getWidgets() { return widgets }
+    getEventHub() { return eventHub }
 
     // user specific
     // -----------------------------------------------------------------
@@ -252,8 +238,8 @@ const run = async () => {
   // it needs to be the last step, because modules etc.
   // need to be set up in advance so that everything is registered
   // at the point of connection from outside
-  webSocketServer.listen()
-  await webServer.listen()
+  webSocketServer.listen(bot)
+  await webServer.listen(bot)
 
   const gracefulShutdown = (signal: 'SIGUSR2' | 'SIGINT' | 'SIGTERM') => {
     log.info(`${signal} received...`)

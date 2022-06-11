@@ -1,10 +1,7 @@
 import WebSocket from 'ws'
 import { IncomingMessage } from 'http'
 import { logger } from '../common/fn'
-import ModuleManager from '../mod/ModuleManager'
-import { WsConfig } from '../types'
-import Auth from './Auth'
-import { Emitter, EventType } from 'mitt'
+import { Bot, WsConfig } from '../types'
 
 const log = logger("WebSocketServer.ts")
 
@@ -16,23 +13,14 @@ export interface Socket extends WebSocket.WebSocket {
 }
 
 class WebSocketServer {
-  private eventHub: Emitter<Record<EventType, unknown>>
-  private moduleManager: ModuleManager
   private config: WsConfig
-  private auth: Auth
 
   private _websocketserver: WebSocket.Server | null
 
   constructor(
-    eventHub: Emitter<Record<EventType, unknown>>,
-    moduleManager: ModuleManager,
     config: WsConfig,
-    auth: Auth,
   ) {
-    this.eventHub = eventHub
-    this.moduleManager = moduleManager
     this.config = config
-    this.auth = auth
     this._websocketserver = null
   }
 
@@ -40,7 +28,7 @@ class WebSocketServer {
     return this.config.connectstring
   }
 
-  listen() {
+  listen(bot: Bot) {
     this._websocketserver = new WebSocket.Server(this.config)
     this._websocketserver.on('connection', async (socket: Socket, request: IncomingMessage) => {
       // note: here the socket is already set in _websocketserver.clients !
@@ -66,7 +54,7 @@ class WebSocketServer {
       const token_type = widgetModule ? relpath : null
       const moduleName = widgetModule || relpath
 
-      const tokenInfo = await this.auth.wsTokenFromProtocol(token, token_type)
+      const tokenInfo = await bot.getAuth().wsTokenFromProtocol(token, token_type)
       if (tokenInfo) {
         socket.user_id = tokenInfo.user_id
       } else if (process.env.VITE_ENV === 'development') {
@@ -96,9 +84,9 @@ class WebSocketServer {
       }
 
       // user connected
-      this.eventHub.emit('wss_user_connected', socket)
+      bot.getEventHub().emit('wss_user_connected', socket)
 
-      const m = this.moduleManager.get(socket.user_id, moduleName)
+      const m = bot.getModuleManager().get(socket.user_id, moduleName)
       // log.info('found a module?', moduleName, !!m)
       if (m) {
         const evts = m.getWsEvents()

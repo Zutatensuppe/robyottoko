@@ -1,4 +1,5 @@
 import { NextFunction, Response } from 'express'
+import { Emitter, EventType } from 'mitt'
 // @ts-ignore
 import { Client } from 'tmi.js'
 import { LogLevel } from './common/fn'
@@ -6,11 +7,13 @@ import { CommandRestrict } from './common/permissions'
 import Db from './DbPostgres'
 import ModuleManager from './mod/ModuleManager'
 import ModuleStorage from './mod/ModuleStorage'
+import Auth from './net/Auth'
 import TwitchClientManager from './net/TwitchClientManager'
 import WebSocketServer, { Socket } from './net/WebSocketServer'
 import Cache from './services/Cache'
 import Tokens, { Token } from './services/Tokens'
-import { User } from './services/Users'
+import TwitchChannels from './services/TwitchChannels'
+import Users, { User } from './services/Users'
 import Variables from './services/Variables'
 import Widgets from './services/Widgets'
 import WebServer from './WebServer'
@@ -519,11 +522,16 @@ export interface Bot {
   getBuildDate: () => string
   getModuleManager: () => ModuleManager
   getDb: () => Db
+  getUsers: () => Users
   getTokens: () => Tokens
+  getTwitchChannels: () => TwitchChannels
   getCache: () => Cache
+  getMail: () => MailService
+  getAuth: () => Auth
   getWebServer: () => WebServer
   getWebSocketServer: () => WebSocketServer
   getWidgets: () => Widgets
+  getEventHub: () => Emitter<Record<EventType, unknown>>
 
   getUserVariables: (user: User) => Variables
   getUserModuleStorage: (user: User) => ModuleStorage

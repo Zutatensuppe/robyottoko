@@ -2,19 +2,13 @@
 
 import express, { Response, Router } from 'express'
 import cors from 'cors'
-import Tokens, { TokenType } from '../../../../services/Tokens'
-import Users from '../../../../services/Users'
-import Cache from '../../../../services/Cache'
-import { TwitchConfig } from '../../../../types'
+import { TokenType } from '../../../../services/Tokens'
+import { Bot, TwitchConfig } from '../../../../types'
 import TwitchHelixClient from '../../../../services/TwitchHelixClient'
 import { getChatters } from '../../../../services/Chatters'
-import Db from '../../../../DbPostgres'
 
 export const createRouter = (
-  db: Db,
-  tokenRepo: Tokens,
-  userRepo: Users,
-  cache: Cache,
+  bot: Bot,
   configTwitch: TwitchConfig
 ): Router => {
   const router = express.Router()
@@ -25,12 +19,12 @@ export const createRouter = (
       return
     }
     const apiKey = String(req.query.apiKey)
-    const t = await tokenRepo.getByTokenAndType(apiKey, TokenType.API_KEY)
+    const t = await bot.getTokens().getByTokenAndType(apiKey, TokenType.API_KEY)
     if (!t) {
       res.status(403).send({ ok: false, error: 'invalid api key' })
       return
     }
-    const user = await userRepo.getById(t.user_id)
+    const user = await bot.getUsers().getById(t.user_id)
     if (!user) {
       res.status(400).send({ ok: false, error: 'user_not_found' })
       return
@@ -46,7 +40,7 @@ export const createRouter = (
       configTwitch.tmi.identity.client_secret,
       []
     )
-    const channelId = await helixClient.getUserIdByNameCached(channelName, cache)
+    const channelId = await helixClient.getUserIdByNameCached(channelName, bot.getCache())
     if (!channelId) {
       res.status(400).send({ ok: false, error: 'unable to determine channel id' })
       return
@@ -61,14 +55,14 @@ export const createRouter = (
         return
       }
     } else {
-      const stream = await helixClient.getStreamByUserIdCached(channelId, cache)
+      const stream = await helixClient.getStreamByUserIdCached(channelId, bot.getCache())
       if (!stream) {
         res.status(400).send({ ok: false, error: 'stream not online at the moment' })
         return
       }
       dateSince = new Date(stream.started_at)
     }
-    const userNames = await getChatters(db, channelId, dateSince)
+    const userNames = await getChatters(bot.getDb(), channelId, dateSince)
     res.status(200).send({ ok: true, data: { chatters: userNames, since: dateSince } })
   })
   return router
