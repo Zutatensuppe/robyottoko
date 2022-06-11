@@ -165,7 +165,7 @@ const run = async () => {
         } else if (result.refreshed) {
           const changedUser = await userRepo.getById(user.id)
           if (changedUser) {
-            eventHub.emit('user_changed', changedUser)
+            eventHub.emit('access_token_refreshed', changedUser)
           } else {
             log.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`)
           }
@@ -212,7 +212,16 @@ const run = async () => {
         updateUserStreamStatusTimeout = await updateUserStreamStatus()
       }
     })
-
+    eventHub.on('access_token_refreshed', async (changedUser: any /* User */) => {
+      if (changedUser.id === user.id) {
+        await clientManager.accessTokenRefreshed(changedUser)
+        updateUserFrontendStatusTimeout = await updateUserFrontendStatus()
+        updateUserStreamStatusTimeout = await updateUserStreamStatus()
+        for (const mod of moduleManager.all(user.id)) {
+          await mod.userChanged(changedUser)
+        }
+      }
+    })
     eventHub.on('user_changed', async (changedUser: any /* User */) => {
       if (changedUser.id === user.id) {
         await clientManager.userChanged(changedUser)

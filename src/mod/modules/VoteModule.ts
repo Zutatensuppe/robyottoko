@@ -35,8 +35,8 @@ class VoteModule implements Module {
     })();
   }
 
-  async userChanged(_user: User) {
-    // pass
+  async userChanged(user: User) {
+    this.user = user
   }
 
   async reinit(): Promise<VoteModuleData> {

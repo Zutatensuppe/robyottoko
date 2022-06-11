@@ -50,6 +50,11 @@ class TwitchClientManager {
     this.twitchChannelRepo = twitchChannelRepo
   }
 
+  async accessTokenRefreshed(user: User) {
+    this.user = user
+    await this.init('access_token_refreshed')
+  }
+
   async userChanged(user: User) {
     this.user = user
     await this.init('user_change')
@@ -252,6 +257,8 @@ class TwitchClientManager {
         const say = fn.sayFn(chatClient, channel.channel_name)
         if (connectReason === 'init') {
           say('⚠️ Bot rebooted - please restart timers...')
+        } else if (connectReason === 'access_token_refreshed') {
+          // dont say anything
         } else if (connectReason === 'user_change') {
           say('✅ User settings updated...')
         } else {
