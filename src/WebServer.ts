@@ -5,18 +5,8 @@ import express, { NextFunction, Response } from 'express'
 import path from 'path'
 import Templates from './services/Templates'
 import http from 'http'
-import Db from './DbPostgres'
 import { logger } from './common/fn'
-import Tokens from './services/Tokens'
-import Users from './services/Users'
-import WebSocketServer from './net/WebSocketServer'
-import { HttpConfig, MailService, TwitchConfig } from './types'
-import TwitchChannels from './services/TwitchChannels'
-import ModuleManager from './mod/ModuleManager'
-import Auth from './net/Auth'
-import { Emitter, EventType } from 'mitt'
-import Cache from './services/Cache'
-import Widgets from './services/Widgets'
+import { Bot, HttpConfig, TwitchConfig } from './types'
 import { createRouter as createTwitchRouter } from './web_routes/twitch'
 import { createRouter as createApiRouter } from './web_routes/api'
 
@@ -34,58 +24,19 @@ const widgetTemplate = () => {
 
 class WebServer {
   private handle: http.Server | null
-  private eventHub: Emitter<Record<EventType, unknown>>
-  private db: Db
-  private cache: Cache
-  private userRepo: Users
-  private tokenRepo: Tokens
-  private mail: MailService
-  private twitchChannelRepo: TwitchChannels
-  private moduleManager: ModuleManager
-  private port: number
-  private hostname: string
-  private url: string
+  private configHttp: HttpConfig
   private configTwitch: TwitchConfig
-  private wss: WebSocketServer
-  private auth: Auth
-  private widgets: Widgets
 
   constructor(
-    eventHub: Emitter<Record<EventType, unknown>>,
-    db: Db,
-    cache: Cache,
-    userRepo: Users,
-    tokenRepo: Tokens,
-    mail: MailService,
-    twitchChannelRepo: TwitchChannels,
-    moduleManager: ModuleManager,
     configHttp: HttpConfig,
     configTwitch: TwitchConfig,
-    wss: WebSocketServer,
-    auth: Auth,
-    widgets: Widgets,
   ) {
-    this.eventHub = eventHub
-    this.db = db
-    this.cache = cache
-    this.userRepo = userRepo
-    this.tokenRepo = tokenRepo
-    this.mail = mail
-    this.twitchChannelRepo = twitchChannelRepo
-    this.moduleManager = moduleManager
-    this.port = configHttp.port
-    this.hostname = configHttp.hostname
-    this.url = configHttp.url
+    this.configHttp = configHttp
     this.configTwitch = configTwitch
-    this.wss = wss
-    this.auth = auth
-    this.widgets = widgets
     this.handle = null
   }
 
-  async listen() {
-    const port = this.port
-    const hostname = this.hostname
+  async listen(bot: Bot) {
     const app = express()
 
     const templates = new Templates(__dirname)
@@ -95,7 +46,7 @@ class WebServer {
     const indexFile = path.resolve(`${__dirname}/../../build/public/index.html`)
 
     app.get('/pub/:id', async (req, res, _next) => {
-      const row = await this.db.get('robyottoko.pub', {
+      const row = await bot.getDb().get('robyottoko.pub', {
         id: req.params.id,
       })
       if (row && row.target) {
@@ -120,52 +71,39 @@ class WebServer {
     }
 
     app.use(cookieParser())
-    app.use(this.auth.addAuthInfoMiddleware())
+    app.use(bot.getAuth().addAuthInfoMiddleware())
     app.use('/', express.static('./build/public'))
     app.use('/static', express.static('./public/static'))
     app.use('/uploads', express.static('./data/uploads'))
 
     app.use('/api', createApiRouter(
-      this.eventHub,
-      this.db,
-      this.tokenRepo,
-      this.userRepo,
-      this.mail,
-      this.wss,
-      this.auth,
       this.configTwitch,
-      this.cache,
-      this.widgets,
-      this.twitchChannelRepo,
+      bot,
     ))
 
     app.use('/twitch', createTwitchRouter(
-      this.eventHub,
-      this.db,
       templates,
       this.configTwitch,
-      this.url,
-      this.userRepo,
-      this.twitchChannelRepo,
-      this.cache,
+      this.configHttp.url,
+      bot,
     ))
 
     app.get('/widget/:widget_type/:widget_token/', async (req, res: Response, _next: NextFunction) => {
       const type = req.params.widget_type
       const token = req.params.widget_token
-      const user = (await this.auth.userFromWidgetToken(token, type))
-        || (await this.auth.userFromPubToken(token))
+      const user = (await bot.getAuth().userFromWidgetToken(token, type))
+        || (await bot.getAuth().userFromPubToken(token))
       if (!user) {
         res.status(404).send()
         return
       }
       log.debug(`/widget/:widget_type/:widget_token/`, type, token)
-      const w = this.widgets.getWidgetDefinitionByType(type)
+      const w = bot.getWidgets().getWidgetDefinitionByType(type)
       if (w) {
         res.send(templates.render(widgetTemplate(), {
           widget: w.type,
           title: w.title,
-          wsUrl: this.wss.connectstring(),
+          wsUrl: bot.getWebSocketServer().connectstring(),
           widgetToken: token,
         }))
         return
@@ -184,7 +122,7 @@ class WebServer {
     app.all('*', requireLogin, express.json({ limit: '50mb' }), async (req: any, res: Response, next: NextFunction) => {
       const method = req.method.toLowerCase()
       const key = req.url
-      for (const m of this.moduleManager.all(req.user.id)) {
+      for (const m of bot.getModuleManager().all(req.user.id)) {
         const map = m.getRoutes()
         if (map && map[method] && map[method][key]) {
           await map[method][key](req, res, next)
@@ -196,9 +134,9 @@ class WebServer {
     })
 
     this.handle = app.listen(
-      port,
-      hostname,
-      () => log.info(`server running on http://${hostname}:${port}`)
+      this.configHttp.port,
+      this.configHttp.hostname,
+      () => log.info(`server running on http://${this.configHttp.hostname}:${this.configHttp.port}`)
     )
   }
   close() {

@@ -984,17 +984,14 @@ class ModuleManager {
 
 const log$o = logger("WebSocketServer.ts");
 class WebSocketServer {
-    constructor(eventHub, moduleManager, config, auth) {
-        this.eventHub = eventHub;
-        this.moduleManager = moduleManager;
+    constructor(config) {
         this.config = config;
-        this.auth = auth;
         this._websocketserver = null;
     }
     connectstring() {
         return this.config.connectstring;
     }
-    listen() {
+    listen(bot) {
         this._websocketserver = new WebSocket.Server(this.config);
         this._websocketserver.on('connection', async (socket, request) => {
             // note: here the socket is already set in _websocketserver.clients !
@@ -1018,7 +1015,7 @@ class WebSocketServer {
             const widgetModule = widget_path_to_module_map[relpath];
             const token_type = widgetModule ? relpath : null;
             const moduleName = widgetModule || relpath;
-            const tokenInfo = await this.auth.wsTokenFromProtocol(token, token_type);
+            const tokenInfo = await bot.getAuth().wsTokenFromProtocol(token, token_type);
             if (tokenInfo) {
                 socket.user_id = tokenInfo.user_id;
             }
@@ -1043,8 +1040,8 @@ class WebSocketServer {
                 return;
             }
             // user connected
-            this.eventHub.emit('wss_user_connected', socket);
-            const m = this.moduleManager.get(socket.user_id, moduleName);
+            bot.getEventHub().emit('wss_user_connected', socket);
+            const m = bot.getModuleManager().get(socket.user_id, moduleName);
             // log.info('found a module?', moduleName, !!m)
             if (m) {
                 const evts = m.getWsEvents();
@@ -1569,7 +1566,7 @@ const handleOAuthCodeCallback = async (code, redirectUri, configTwitch, db, twit
 };
 
 const log$l = logger('twitch/index.ts');
-const createRouter$3 = (eventHub, db, templates, configTwitch, baseUrl, userRepo, twitchChannelRepo, cache) => {
+const createRouter$3 = (templates, configTwitch, baseUrl, bot) => {
     const verifyTwitchSignature = (req, res, next) => {
         const body = Buffer.from(req.rawBody, 'utf8');
         const msg = `${req.headers['twitch-eventsub-message-id']}${req.headers['twitch-eventsub-message-timestamp']}${body}`;
@@ -1604,15 +1601,15 @@ const createRouter$3 = (eventHub, db, templates, configTwitch, baseUrl, userRepo
         if (req.query.code) {
             const code = `${req.query.code}`;
             const redirectUri = `${baseUrl}/twitch/redirect_uri`;
-            const result = await handleOAuthCodeCallback(code, redirectUri, configTwitch, db, twitchChannelRepo, req.user, cache);
+            const result = await handleOAuthCodeCallback(code, redirectUri, configTwitch, bot.getDb(), bot.getTwitchChannels(), req.user, bot.getCache());
             if (result.error) {
                 res.status(500).send("Something went wrong!");
                 return;
             }
             if (result.updated) {
-                const changedUser = await userRepo.getById(req.user.id);
+                const changedUser = await bot.getUsers().getById(req.user.id);
                 if (changedUser) {
-                    eventHub.emit('user_changed', changedUser);
+                    bot.getEventHub().emit('user_changed', changedUser);
                 }
                 else {
                     log$l.error(`updating user twitch channels: user doesn't exist after saving it: ${req.user.id}`);
@@ -1641,7 +1638,7 @@ const createRouter$3 = (eventHub, db, templates, configTwitch, baseUrl, userRepo
             log$l.info(`got notification request: ${req.body.subscription.type}`);
             if (req.body.subscription.type === 'stream.online') {
                 // insert new stream
-                await db.insert('robyottoko.streams', {
+                await bot.getDb().insert('robyottoko.streams', {
                     broadcaster_user_id: req.body.event.broadcaster_user_id,
                     started_at: new Date(req.body.event.started_at),
                 });
@@ -1649,11 +1646,11 @@ const createRouter$3 = (eventHub, db, templates, configTwitch, baseUrl, userRepo
             else if (req.body.subscription.type === 'stream.offline') {
                 // get last started stream for broadcaster
                 // if it exists and it didnt end yet set ended_at date
-                const stream = await db.get('robyottoko.streams', {
+                const stream = await bot.getDb().get('robyottoko.streams', {
                     broadcaster_user_id: req.body.event.broadcaster_user_id,
                 }, [{ started_at: -1 }]);
                 if (!stream.ended_at) {
-                    await db.update('robyottoko.streams', {
+                    await bot.getDb().update('robyottoko.streams', {
                         ended_at: new Date(),
                     }, { id: stream.id });
                 }
@@ -1710,7 +1707,7 @@ const getChatters = async (db, channelId, since) => {
     return (await db._getMany(`select display_name from robyottoko.chat_log ${whereObject.sql} group by display_name`, whereObject.values)).map(r => r.display_name);
 };
 
-const createRouter$2 = (db, tokenRepo, userRepo, cache, configTwitch) => {
+const createRouter$2 = (bot, configTwitch) => {
     const router = express.Router();
     router.use(cors());
     router.get('/chatters', async (req, res) => {
@@ -1719,12 +1716,12 @@ const createRouter$2 = (db, tokenRepo, userRepo, cache, configTwitch) => {
             return;
         }
         const apiKey = String(req.query.apiKey);
-        const t = await tokenRepo.getByTokenAndType(apiKey, TokenType.API_KEY);
+        const t = await bot.getTokens().getByTokenAndType(apiKey, TokenType.API_KEY);
         if (!t) {
             res.status(403).send({ ok: false, error: 'invalid api key' });
             return;
         }
-        const user = await userRepo.getById(t.user_id);
+        const user = await bot.getUsers().getById(t.user_id);
         if (!user) {
             res.status(400).send({ ok: false, error: 'user_not_found' });
             return;
@@ -1735,7 +1732,7 @@ const createRouter$2 = (db, tokenRepo, userRepo, cache, configTwitch) => {
         }
         const channelName = String(req.query.channel);
         const helixClient = new TwitchHelixClient(configTwitch.tmi.identity.client_id, configTwitch.tmi.identity.client_secret, []);
-        const channelId = await helixClient.getUserIdByNameCached(channelName, cache);
+        const channelId = await helixClient.getUserIdByNameCached(channelName, bot.getCache());
         if (!channelId) {
             res.status(400).send({ ok: false, error: 'unable to determine channel id' });
             return;
@@ -1751,20 +1748,20 @@ const createRouter$2 = (db, tokenRepo, userRepo, cache, configTwitch) => {
             }
         }
         else {
-            const stream = await helixClient.getStreamByUserIdCached(channelId, cache);
+            const stream = await helixClient.getStreamByUserIdCached(channelId, bot.getCache());
             if (!stream) {
                 res.status(400).send({ ok: false, error: 'stream not online at the moment' });
                 return;
             }
             dateSince = new Date(stream.started_at);
         }
-        const userNames = await getChatters(db, channelId, dateSince);
+        const userNames = await getChatters(bot.getDb(), channelId, dateSince);
         res.status(200).send({ ok: true, data: { chatters: userNames, since: dateSince } });
     });
     return router;
 };
 
-const createRouter$1 = (tokenRepo, userRepo, mail, requireLoginApi) => {
+const createRouter$1 = (bot, requireLoginApi) => {
     const router = express.Router();
     router.get('/me', requireLoginApi, async (req, res) => {
         res.send({
@@ -1779,20 +1776,20 @@ const createRouter$1 = (tokenRepo, userRepo, mail, requireLoginApi) => {
             res.status(400).send({ reason: 'bad request' });
             return;
         }
-        const tokenObj = await tokenRepo.getByTokenAndType(token, TokenType.PASSWORD_RESET);
+        const tokenObj = await bot.getTokens().getByTokenAndType(token, TokenType.PASSWORD_RESET);
         if (!tokenObj) {
             res.status(400).send({ reason: 'bad request' });
             return;
         }
-        const originalUser = await userRepo.getById(tokenObj.user_id);
+        const originalUser = await bot.getUsers().getById(tokenObj.user_id);
         if (!originalUser) {
             res.status(404).send({ reason: 'user_does_not_exist' });
             return;
         }
         const pass = fn.passwordHash(plainPass, originalUser.salt);
         const user = { id: originalUser.id, pass };
-        await userRepo.save(user);
-        await tokenRepo.delete(tokenObj.token);
+        await bot.getUsers().save(user);
+        await bot.getTokens().delete(tokenObj.token);
         res.send({ success: true });
     });
     router.post('/_request_password_reset', express.json(), async (req, res) => {
@@ -1801,13 +1798,13 @@ const createRouter$1 = (tokenRepo, userRepo, mail, requireLoginApi) => {
             res.status(400).send({ reason: 'bad request' });
             return;
         }
-        const user = await userRepo.get({ email, status: 'verified' });
+        const user = await bot.getUsers().get({ email, status: 'verified' });
         if (!user) {
             res.status(404).send({ reason: 'user not found' });
             return;
         }
-        const token = await tokenRepo.createToken(user.id, TokenType.PASSWORD_RESET);
-        mail.sendPasswordResetMail({ user, token });
+        const token = await bot.getTokens().createToken(user.id, TokenType.PASSWORD_RESET);
+        bot.getMail().sendPasswordResetMail({ user, token });
         res.send({ success: true });
     });
     router.post('/_resend_verification_mail', express.json(), async (req, res) => {
@@ -1816,7 +1813,7 @@ const createRouter$1 = (tokenRepo, userRepo, mail, requireLoginApi) => {
             res.status(400).send({ reason: 'bad request' });
             return;
         }
-        const user = await userRepo.getByEmail(email);
+        const user = await bot.getUsers().getByEmail(email);
         if (!user) {
             res.status(404).send({ reason: 'email not found' });
             return;
@@ -1825,8 +1822,8 @@ const createRouter$1 = (tokenRepo, userRepo, mail, requireLoginApi) => {
             res.status(400).send({ reason: 'already verified' });
             return;
         }
-        const token = await tokenRepo.createToken(user.id, TokenType.REGISTRATION);
-        mail.sendRegistrationMail({ user, token });
+        const token = await bot.getTokens().createToken(user.id, TokenType.REGISTRATION);
+        bot.getMail().sendRegistrationMail({ user, token });
         res.send({ success: true });
     });
     router.post('/_register', express.json(), async (req, res) => {
@@ -1842,7 +1839,7 @@ const createRouter$1 = (tokenRepo, userRepo, mail, requireLoginApi) => {
             tmi_identity_client_id: '',
             tmi_identity_client_secret: '',
         };
-        let tmpUser = await userRepo.getByEmail(user.email);
+        let tmpUser = await bot.getUsers().getByEmail(user.email);
         if (tmpUser) {
             if (tmpUser.status === 'verified') {
                 // user should use password reset function
@@ -1854,7 +1851,7 @@ const createRouter$1 = (tokenRepo, userRepo, mail, requireLoginApi) => {
             }
             return;
         }
-        tmpUser = await userRepo.getByName(user.name);
+        tmpUser = await bot.getUsers().getByName(user.name);
         if (tmpUser) {
             if (tmpUser.status === 'verified') {
                 // user should use password reset function
@@ -1866,20 +1863,20 @@ const createRouter$1 = (tokenRepo, userRepo, mail, requireLoginApi) => {
             }
             return;
         }
-        const userId = await userRepo.createUser(user);
+        const userId = await bot.getUsers().createUser(user);
         if (!userId) {
             res.status(400).send({ reason: 'unable to create user' });
             return;
         }
-        const token = await tokenRepo.createToken(userId, TokenType.REGISTRATION);
-        mail.sendRegistrationMail({ user, token });
+        const token = await bot.getTokens().createToken(userId, TokenType.REGISTRATION);
+        bot.getMail().sendRegistrationMail({ user, token });
         res.send({ success: true });
     });
     return router;
 };
 
 const log$k = logger('api/index.ts');
-const createRouter = (eventHub, db, tokenRepo, userRepo, mail, wss, auth, configTwitch, cache, widgets, twitchChannelRepo) => {
+const createRouter = (configTwitch, bot) => {
     const requireLoginApi = (req, res, next) => {
         if (!req.token) {
             res.status(401).send({});
@@ -1924,12 +1921,12 @@ const createRouter = (eventHub, db, tokenRepo, userRepo, mail, wss, auth, config
     });
     router.get('/conf', async (req, res) => {
         res.send({
-            wsBase: wss.connectstring(),
+            wsBase: bot.getWebSocketServer().connectstring(),
         });
     });
     router.post('/logout', requireLoginApi, async (req, res) => {
         if (req.token) {
-            await auth.destroyToken(req.token);
+            await bot.getAuth().destroyToken(req.token);
             res.clearCookie("x-token");
         }
         res.send({ success: true });
@@ -1940,19 +1937,19 @@ const createRouter = (eventHub, db, tokenRepo, userRepo, mail, wss, auth, config
             res.status(400).send({ reason: 'invalid_token' });
             return;
         }
-        const tokenObj = await tokenRepo.getByTokenAndType(token, TokenType.REGISTRATION);
+        const tokenObj = await bot.getTokens().getByTokenAndType(token, TokenType.REGISTRATION);
         if (!tokenObj) {
             res.status(400).send({ reason: 'invalid_token' });
             return;
         }
-        await userRepo.save({ status: 'verified', id: tokenObj.user_id });
-        await tokenRepo.delete(tokenObj.token);
+        await bot.getUsers().save({ status: 'verified', id: tokenObj.user_id });
+        await bot.getTokens().delete(tokenObj.token);
         res.send({ type: 'registration-verified' });
         // new user was registered. module manager should be notified about this
         // so that bot doesnt need to be restarted :O
-        const user = await userRepo.getById(tokenObj.user_id);
+        const user = await bot.getUsers().getById(tokenObj.user_id);
         if (user) {
-            eventHub.emit('user_registration_complete', user);
+            bot.getEventHub().emit('user_registration_complete', user);
         }
         else {
             log$k.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`);
@@ -1962,32 +1959,32 @@ const createRouter = (eventHub, db, tokenRepo, userRepo, mail, wss, auth, config
     router.post('/widget/create_url', requireLoginApi, express.json(), async (req, res) => {
         const type = req.body.type;
         const pub = req.body.pub;
-        const url = await widgets.createWidgetUrl(type, req.user.id);
+        const url = await bot.getWidgets().createWidgetUrl(type, req.user.id);
         res.send({
-            url: pub ? (await widgets.pubUrl(url)) : url
+            url: pub ? (await bot.getWidgets().pubUrl(url)) : url
         });
     });
     router.get('/page/index', requireLoginApi, async (req, res) => {
-        const mappedWidgets = await widgets.getWidgetInfos(req.user.id);
+        const mappedWidgets = await bot.getWidgets().getWidgetInfos(req.user.id);
         res.send({ widgets: mappedWidgets });
     });
     router.get('/page/variables', requireLoginApi, async (req, res) => {
-        const variables = new Variables(db, req.user.id);
+        const variables = new Variables(bot.getDb(), req.user.id);
         res.send({ variables: await variables.all() });
     });
     router.post('/save-variables', requireLoginApi, express.json(), async (req, res) => {
-        const variables = new Variables(db, req.user.id);
+        const variables = new Variables(bot.getDb(), req.user.id);
         await variables.replace(req.body.variables || []);
         res.send();
     });
     router.get('/data/global', async (req, res) => {
         res.send({
-            registeredUserCount: await userRepo.countVerifiedUsers(),
-            streamingUserCount: await twitchChannelRepo.countUniqueUsersStreaming(),
+            registeredUserCount: await bot.getUsers().countVerifiedUsers(),
+            streamingUserCount: await bot.getTwitchChannels().countUniqueUsersStreaming(),
         });
     });
     router.get('/page/settings', requireLoginApi, async (req, res) => {
-        const user = await userRepo.getById(req.user.id);
+        const user = await bot.getUsers().getById(req.user.id);
         res.send({
             user: {
                 id: user.id,
@@ -1999,9 +1996,9 @@ const createRouter = (eventHub, db, tokenRepo, userRepo, mail, wss, auth, config
                 tmi_identity_password: user.tmi_identity_password,
                 tmi_identity_client_id: user.tmi_identity_client_id,
                 tmi_identity_client_secret: user.tmi_identity_client_secret,
-                groups: await userRepo.getGroups(user.id)
+                groups: await bot.getUsers().getGroups(user.id)
             },
-            twitchChannels: await twitchChannelRepo.allByUserId(req.user.id),
+            twitchChannels: await bot.getTwitchChannels().allByUserId(req.user.id),
         });
     });
     router.post('/save-settings', requireLoginApi, express.json(), async (req, res) => {
@@ -2012,7 +2009,7 @@ const createRouter = (eventHub, db, tokenRepo, userRepo, mail, wss, auth, config
                 return;
             }
         }
-        const originalUser = await userRepo.getById(req.body.user.id);
+        const originalUser = await bot.getUsers().getById(req.body.user.id);
         if (!originalUser) {
             res.status(404).send({ reason: 'user_does_not_exist' });
             return;
@@ -2036,11 +2033,11 @@ const createRouter = (eventHub, db, tokenRepo, userRepo, mail, wss, auth, config
             channel.user_id = user.id;
             return channel;
         });
-        await userRepo.save(user);
-        await twitchChannelRepo.saveUserChannels(user.id, twitch_channels);
-        const changedUser = await userRepo.getById(user.id);
+        await bot.getUsers().save(user);
+        await bot.getTwitchChannels().saveUserChannels(user.id, twitch_channels);
+        const changedUser = await bot.getUsers().getById(user.id);
         if (changedUser) {
-            eventHub.emit('user_changed', changedUser);
+            bot.getEventHub().emit('user_changed', changedUser);
         }
         else {
             log$k.error(`save-settings: user doesn't exist after saving it: ${user.id}`);
@@ -2051,7 +2048,7 @@ const createRouter = (eventHub, db, tokenRepo, userRepo, mail, wss, auth, config
         let clientId;
         let clientSecret;
         if (!req.user.groups.includes('admin')) {
-            const u = await userRepo.getById(req.user.id);
+            const u = await bot.getUsers().getById(req.user.id);
             clientId = u.tmi_identity_client_id || configTwitch.tmi.identity.client_id;
             clientSecret = u.tmi_identity_client_secret || configTwitch.tmi.identity.client_secret;
         }
@@ -2070,24 +2067,24 @@ const createRouter = (eventHub, db, tokenRepo, userRepo, mail, wss, auth, config
         try {
             // todo: maybe fill twitchChannels instead of empty array
             const client = new TwitchHelixClient(clientId, clientSecret, []);
-            res.send({ id: await client.getUserIdByNameCached(req.body.name, cache) });
+            res.send({ id: await client.getUserIdByNameCached(req.body.name, bot.getCache()) });
         }
         catch (e) {
             res.status(500).send("Something went wrong!");
         }
     });
     router.post('/auth', express.json(), async (req, res) => {
-        const user = await auth.getUserByNameAndPass(req.body.user, req.body.pass);
+        const user = await bot.getAuth().getUserByNameAndPass(req.body.user, req.body.pass);
         if (!user) {
             res.status(401).send({ reason: 'bad credentials' });
             return;
         }
-        const token = await auth.getUserAuthToken(user.id);
+        const token = await bot.getAuth().getUserAuthToken(user.id);
         res.cookie('x-token', token, { maxAge: 1 * YEAR, httpOnly: true });
         res.send();
     });
-    router.use('/user', createRouter$1(tokenRepo, userRepo, mail, requireLoginApi));
-    router.use('/pub/v1', createRouter$2(db, tokenRepo, userRepo, cache, configTwitch));
+    router.use('/user', createRouter$1(bot, requireLoginApi));
+    router.use('/pub/v1', createRouter$2(bot, configTwitch));
     return router;
 };
 
@@ -2101,34 +2098,19 @@ const widgetTemplate = () => {
     return '../public/static/widgets/index.html';
 };
 class WebServer {
-    constructor(eventHub, db, cache, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, configHttp, configTwitch, wss, auth, widgets) {
-        this.eventHub = eventHub;
-        this.db = db;
-        this.cache = cache;
-        this.userRepo = userRepo;
-        this.tokenRepo = tokenRepo;
-        this.mail = mail;
-        this.twitchChannelRepo = twitchChannelRepo;
-        this.moduleManager = moduleManager;
-        this.port = configHttp.port;
-        this.hostname = configHttp.hostname;
-        this.url = configHttp.url;
+    constructor(configHttp, configTwitch) {
+        this.configHttp = configHttp;
         this.configTwitch = configTwitch;
-        this.wss = wss;
-        this.auth = auth;
-        this.widgets = widgets;
         this.handle = null;
     }
-    async listen() {
-        const port = this.port;
-        const hostname = this.hostname;
+    async listen(bot) {
         const app = express();
         const templates = new Templates(__dirname);
         await templates.add(widgetTemplate());
         await templates.add('templates/twitch_redirect_uri.html');
         const indexFile = path.resolve(`${__dirname}/../../build/public/index.html`);
         app.get('/pub/:id', async (req, res, _next) => {
-            const row = await this.db.get('robyottoko.pub', {
+            const row = await bot.getDb().get('robyottoko.pub', {
                 id: req.params.id,
             });
             if (row && row.target) {
@@ -2152,28 +2134,28 @@ class WebServer {
             return next();
         };
         app.use(cookieParser());
-        app.use(this.auth.addAuthInfoMiddleware());
+        app.use(bot.getAuth().addAuthInfoMiddleware());
         app.use('/', express.static('./build/public'));
         app.use('/static', express.static('./public/static'));
         app.use('/uploads', express.static('./data/uploads'));
-        app.use('/api', createRouter(this.eventHub, this.db, this.tokenRepo, this.userRepo, this.mail, this.wss, this.auth, this.configTwitch, this.cache, this.widgets, this.twitchChannelRepo));
-        app.use('/twitch', createRouter$3(this.eventHub, this.db, templates, this.configTwitch, this.url, this.userRepo, this.twitchChannelRepo, this.cache));
+        app.use('/api', createRouter(this.configTwitch, bot));
+        app.use('/twitch', createRouter$3(templates, this.configTwitch, this.configHttp.url, bot));
         app.get('/widget/:widget_type/:widget_token/', async (req, res, _next) => {
             const type = req.params.widget_type;
             const token = req.params.widget_token;
-            const user = (await this.auth.userFromWidgetToken(token, type))
-                || (await this.auth.userFromPubToken(token));
+            const user = (await bot.getAuth().userFromWidgetToken(token, type))
+                || (await bot.getAuth().userFromPubToken(token));
             if (!user) {
                 res.status(404).send();
                 return;
             }
             log$j.debug(`/widget/:widget_type/:widget_token/`, type, token);
-            const w = this.widgets.getWidgetDefinitionByType(type);
+            const w = bot.getWidgets().getWidgetDefinitionByType(type);
             if (w) {
                 res.send(templates.render(widgetTemplate(), {
                     widget: w.type,
                     title: w.title,
-                    wsUrl: this.wss.connectstring(),
+                    wsUrl: bot.getWebSocketServer().connectstring(),
                     widgetToken: token,
                 }));
                 return;
@@ -2189,7 +2171,7 @@ class WebServer {
         app.all('*', requireLogin, express.json({ limit: '50mb' }), async (req, res, next) => {
             const method = req.method.toLowerCase();
             const key = req.url;
-            for (const m of this.moduleManager.all(req.user.id)) {
+            for (const m of bot.getModuleManager().all(req.user.id)) {
                 const map = m.getRoutes();
                 if (map && map[method] && map[method][key]) {
                     await map[method][key](req, res, next);
@@ -2198,7 +2180,7 @@ class WebServer {
             }
             res.sendFile(indexFile);
         });
-        this.handle = app.listen(port, hostname, () => log$j.info(`server running on http://${hostname}:${port}`));
+        this.handle = app.listen(this.configHttp.port, this.configHttp.hostname, () => log$j.info(`server running on http://${this.configHttp.hostname}:${this.configHttp.port}`));
     }
     close() {
         if (this.handle) {
@@ -6904,9 +6886,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-06-10T18:47:29.685Z",
+    buildDate: "2022-06-11T19:05:22.392Z",
     // @ts-ignore
-    buildVersion: "1.14.0",
+    buildVersion: "1.14.1",
 };
 
 const widgets = [
@@ -7059,11 +7041,11 @@ const run = async () => {
     const cache = new Cache(db);
     const auth = new Auth(userRepo, tokenRepo);
     const mail = new Mail(config.mail);
+    const widgets = new Widgets(config.http.url, db, tokenRepo);
     const eventHub = mitt();
     const moduleManager = new ModuleManager();
-    const webSocketServer = new WebSocketServer(eventHub, moduleManager, config.ws, auth);
-    const widgets = new Widgets(config.http.url, db, tokenRepo);
-    const webServer = new WebServer(eventHub, db, cache, userRepo, tokenRepo, mail, twitchChannelRepo, moduleManager, config.http, config.twitch, webSocketServer, auth, widgets);
+    const webSocketServer = new WebSocketServer(config.ws);
+    const webServer = new WebServer(config.http, config.twitch);
     class BotImpl {
         constructor() {
             this.userVariableInstances = {};
@@ -7075,11 +7057,16 @@ const run = async () => {
         getBuildDate() { return buildEnv.buildDate; }
         getModuleManager() { return moduleManager; }
         getDb() { return db; }
+        getUsers() { return userRepo; }
         getTokens() { return tokenRepo; }
+        getTwitchChannels() { return twitchChannelRepo; }
         getCache() { return cache; }
+        getMail() { return mail; }
+        getAuth() { return auth; }
         getWebServer() { return webServer; }
         getWebSocketServer() { return webSocketServer; }
         getWidgets() { return widgets; }
+        getEventHub() { return eventHub; }
         // user specific
         // -----------------------------------------------------------------
         getUserVariables(user) {
@@ -7211,8 +7198,8 @@ const run = async () => {
     // it needs to be the last step, because modules etc.
     // need to be set up in advance so that everything is registered
     // at the point of connection from outside
-    webSocketServer.listen();
-    await webServer.listen();
+    webSocketServer.listen(bot);
+    await webServer.listen(bot);
     const gracefulShutdown = (signal) => {
         log.info(`${signal} received...`);
         log.info('shutting down webserver...');

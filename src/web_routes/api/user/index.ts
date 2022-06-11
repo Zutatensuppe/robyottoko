@@ -1,15 +1,13 @@
 'use strict'
 
 import express, { NextFunction, Response, Router } from 'express'
-import Tokens, { TokenType } from '../../../services/Tokens'
-import Users, { CreateUser } from '../../../services/Users'
-import { MailService } from '../../../types'
+import { TokenType } from '../../../services/Tokens'
+import { CreateUser } from '../../../services/Users'
+import { Bot } from '../../../types'
 import fn from '../../../fn'
 
 export const createRouter = (
-  tokenRepo: Tokens,
-  userRepo: Users,
-  mail: MailService,
+  bot: Bot,
   requireLoginApi: (req: any, res: any, next: NextFunction) => void
 ): Router => {
   const router = express.Router()
@@ -27,13 +25,13 @@ export const createRouter = (
       return
     }
 
-    const tokenObj = await tokenRepo.getByTokenAndType(token, TokenType.PASSWORD_RESET)
+    const tokenObj = await bot.getTokens().getByTokenAndType(token, TokenType.PASSWORD_RESET)
     if (!tokenObj) {
       res.status(400).send({ reason: 'bad request' })
       return
     }
 
-    const originalUser = await userRepo.getById(tokenObj.user_id)
+    const originalUser = await bot.getUsers().getById(tokenObj.user_id)
     if (!originalUser) {
       res.status(404).send({ reason: 'user_does_not_exist' })
       return
@@ -41,8 +39,8 @@ export const createRouter = (
 
     const pass = fn.passwordHash(plainPass, originalUser.salt)
     const user = { id: originalUser.id, pass }
-    await userRepo.save(user)
-    await tokenRepo.delete(tokenObj.token)
+    await bot.getUsers().save(user)
+    await bot.getTokens().delete(tokenObj.token)
     res.send({ success: true })
   })
 
@@ -53,14 +51,14 @@ export const createRouter = (
       return
     }
 
-    const user = await userRepo.get({ email, status: 'verified' })
+    const user = await bot.getUsers().get({ email, status: 'verified' })
     if (!user) {
       res.status(404).send({ reason: 'user not found' })
       return
     }
 
-    const token = await tokenRepo.createToken(user.id, TokenType.PASSWORD_RESET)
-    mail.sendPasswordResetMail({ user, token })
+    const token = await bot.getTokens().createToken(user.id, TokenType.PASSWORD_RESET)
+    bot.getMail().sendPasswordResetMail({ user, token })
     res.send({ success: true })
   })
 
@@ -71,7 +69,7 @@ export const createRouter = (
       return
     }
 
-    const user = await userRepo.getByEmail(email)
+    const user = await bot.getUsers().getByEmail(email)
     if (!user) {
       res.status(404).send({ reason: 'email not found' })
       return
@@ -82,8 +80,8 @@ export const createRouter = (
       return
     }
 
-    const token = await tokenRepo.createToken(user.id, TokenType.REGISTRATION)
-    mail.sendRegistrationMail({ user, token })
+    const token = await bot.getTokens().createToken(user.id, TokenType.REGISTRATION)
+    bot.getMail().sendRegistrationMail({ user, token })
     res.send({ success: true })
   })
 
@@ -100,7 +98,7 @@ export const createRouter = (
       tmi_identity_client_id: '',
       tmi_identity_client_secret: '',
     }
-    let tmpUser = await userRepo.getByEmail(user.email)
+    let tmpUser = await bot.getUsers().getByEmail(user.email)
     if (tmpUser) {
       if (tmpUser.status === 'verified') {
         // user should use password reset function
@@ -111,7 +109,7 @@ export const createRouter = (
       }
       return
     }
-    tmpUser = await userRepo.getByName(user.name)
+    tmpUser = await bot.getUsers().getByName(user.name)
     if (tmpUser) {
       if (tmpUser.status === 'verified') {
         // user should use password reset function
@@ -123,13 +121,13 @@ export const createRouter = (
       return
     }
 
-    const userId = await userRepo.createUser(user)
+    const userId = await bot.getUsers().createUser(user)
     if (!userId) {
       res.status(400).send({ reason: 'unable to create user' })
       return
     }
-    const token = await tokenRepo.createToken(userId, TokenType.REGISTRATION)
-    mail.sendRegistrationMail({ user, token })
+    const token = await bot.getTokens().createToken(userId, TokenType.REGISTRATION)
+    bot.getMail().sendRegistrationMail({ user, token })
     res.send({ success: true })
   })
   return router

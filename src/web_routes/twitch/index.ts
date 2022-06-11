@@ -3,26 +3,17 @@
 import express, { NextFunction, Response, Router } from 'express'
 import crypto from 'crypto'
 import { logger } from '../../common/fn'
-import Db from '../../DbPostgres'
 import Templates from '../../services/Templates'
-import { TwitchConfig } from '../../types'
-import Users from '../../services/Users'
-import TwitchChannels from '../../services/TwitchChannels'
-import { Emitter, EventType } from 'mitt'
+import { Bot, TwitchConfig } from '../../types'
 import { handleOAuthCodeCallback } from '../../oauth'
-import Cache from '../../services/Cache'
 
 const log = logger('twitch/index.ts')
 
 export const createRouter = (
-  eventHub: Emitter<Record<EventType, unknown>>,
-  db: Db,
   templates: Templates,
   configTwitch: TwitchConfig,
   baseUrl: string,
-  userRepo: Users,
-  twitchChannelRepo: TwitchChannels,
-  cache: Cache,
+  bot: Bot,
 ): Router => {
   const verifyTwitchSignature = (req: any, res: any, next: NextFunction) => {
     const body = Buffer.from(req.rawBody, 'utf8')
@@ -64,19 +55,19 @@ export const createRouter = (
         code,
         redirectUri,
         configTwitch,
-        db,
-        twitchChannelRepo,
+        bot.getDb(),
+        bot.getTwitchChannels(),
         req.user,
-        cache,
+        bot.getCache(),
       )
       if (result.error) {
         res.status(500).send("Something went wrong!");
         return
       }
       if (result.updated) {
-        const changedUser = await userRepo.getById(req.user.id)
+        const changedUser = await bot.getUsers().getById(req.user.id)
         if (changedUser) {
-          eventHub.emit('user_changed', changedUser)
+          bot.getEventHub().emit('user_changed', changedUser)
         } else {
           log.error(`updating user twitch channels: user doesn't exist after saving it: ${req.user.id}`)
         }
@@ -114,18 +105,18 @@ export const createRouter = (
 
         if (req.body.subscription.type === 'stream.online') {
           // insert new stream
-          await db.insert('robyottoko.streams', {
+          await bot.getDb().insert('robyottoko.streams', {
             broadcaster_user_id: req.body.event.broadcaster_user_id,
             started_at: new Date(req.body.event.started_at),
           })
         } else if (req.body.subscription.type === 'stream.offline') {
           // get last started stream for broadcaster
           // if it exists and it didnt end yet set ended_at date
-          const stream = await db.get('robyottoko.streams', {
+          const stream = await bot.getDb().get('robyottoko.streams', {
             broadcaster_user_id: req.body.event.broadcaster_user_id,
           }, [{ started_at: -1 }])
           if (!stream.ended_at) {
-            await db.update('robyottoko.streams', {
+            await bot.getDb().update('robyottoko.streams', {
               ended_at: new Date(),
             }, { id: stream.id })
           }
