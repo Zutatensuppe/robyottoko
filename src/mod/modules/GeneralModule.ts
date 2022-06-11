@@ -321,7 +321,7 @@ class GeneralModule implements Module {
   async _channelPointsCustomRewards(): Promise<Record<string, string[]>> {
     const helixClient = this.bot.getUserTwitchClientManager(this.user).getHelixClient()
     if (helixClient) {
-      return await helixClient.getAllChannelPointsCustomRewards()
+      return await helixClient.getAllChannelPointsCustomRewards(this.bot, this.user)
     }
     return {}
   }

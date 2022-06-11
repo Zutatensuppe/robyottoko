@@ -54,11 +54,8 @@ export const createRouter = (
       const result = await handleOAuthCodeCallback(
         code,
         redirectUri,
-        configTwitch,
-        bot.getDb(),
-        bot.getTwitchChannels(),
+        bot,
         req.user,
-        bot.getCache(),
       )
       if (result.error) {
         res.status(500).send("Something went wrong!");

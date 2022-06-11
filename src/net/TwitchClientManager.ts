@@ -24,7 +24,6 @@ class TwitchClientManager {
   private bot: Bot
   private cfg: TwitchConfig
   private user: User
-  private twitchChannelRepo: TwitchChannels
 
   private chatClient: TwitchChatClient | null = null
   private helixClient: TwitchHelixClient | null = null
@@ -41,13 +40,16 @@ class TwitchClientManager {
     bot: Bot,
     user: User,
     cfg: TwitchConfig,
-    twitchChannelRepo: TwitchChannels,
   ) {
     this.bot = bot
     this.user = user
     this.cfg = cfg
     this.log = logger('TwitchClientManager.ts', `${user.name}|`)
-    this.twitchChannelRepo = twitchChannelRepo
+  }
+
+  async accessTokenRefreshed(user: User) {
+    this.user = user
+    await this.init('access_token_refreshed')
   }
 
   async userChanged(user: User) {
@@ -88,14 +90,13 @@ class TwitchClientManager {
     let connectReason = reason
     const cfg = this.cfg
     const user = this.user
-    const twitchChannelRepo = this.twitchChannelRepo
 
     this.log = logger('TwitchClientManager.ts', `${user.name}|`)
 
     await this._disconnectChatClient()
     this._disconnectPubSubClient()
 
-    const twitchChannels = await twitchChannelRepo.allByUserId(user.id)
+    const twitchChannels = await this.bot.getTwitchChannels().allByUserId(user.id)
     if (twitchChannels.length === 0) {
       this.log.info(`* No twitch channels configured at all`)
       return
@@ -252,6 +253,8 @@ class TwitchClientManager {
         const say = fn.sayFn(chatClient, channel.channel_name)
         if (connectReason === 'init') {
           say('⚠️ Bot rebooted - please restart timers...')
+        } else if (connectReason === 'access_token_refreshed') {
+          // dont say anything
         } else if (connectReason === 'user_change') {
           say('✅ User settings updated...')
         } else {

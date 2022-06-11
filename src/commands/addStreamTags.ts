@@ -59,7 +59,12 @@ const addStreamTags = (
       return
     }
 
-    const resp = await helixClient.replaceStreamTags(context['room-id'], newSettableTagIds)
+    const resp = await helixClient.replaceStreamTags(
+      context['room-id'],
+      newSettableTagIds,
+      bot,
+      user,
+    )
     if (!resp || resp.status < 200 || resp.status >= 300) {
       log.error(resp)
       say(`❌ Unable to add tag: ${tagEntry.name}`)

@@ -48,7 +48,9 @@ const setChannelTitle = (
 
     const resp = await helixClient.modifyChannelInformation(
       context['room-id'],
-      { title: tmpTitle }
+      { title: tmpTitle },
+      bot,
+      user,
     )
     if (resp?.status === 204) {
       say(`✨ Changed title to "${tmpTitle}".`)

@@ -1,9 +1,12 @@
-import { RequestInit } from 'node-fetch'
+import { RequestInit, Response } from 'node-fetch'
 import { logger, SECOND } from '../common/fn'
 import { findIdxFuzzy } from '../fn'
 import { postJson, getJson, asJson, withHeaders, asQueryArgs, requestText, request } from '../net/xhr'
+import { tryRefreshAccessToken } from '../oauth'
+import { Bot } from '../types'
 import Cache from './Cache'
 import { TwitchChannel } from './TwitchChannels'
+import { User } from './Users'
 
 const log = logger('TwitchHelixClient.ts')
 
@@ -183,6 +186,24 @@ export function getBestEntryFromCategorySearchItems(
 ): TwitchHelixCategorySearchResponseDataEntry | null {
   const idx = findIdxFuzzy(resp.data, searchString, (item) => item.name)
   return idx === -1 ? null : resp.data[idx]
+}
+
+async function executeRequestWithRetry(
+  accessToken: string,
+  req: (accessToken: string) => Promise<Response>,
+  bot: Bot,
+  user: User,
+): Promise<Response> {
+  const resp = await req(accessToken)
+  if (resp.status !== 401) {
+    return resp
+  }
+  // try to refresh the token and try again
+  const newAccessToken = await tryRefreshAccessToken(accessToken, bot, user)
+  if (!newAccessToken) {
+    return resp
+  }
+  return await req(newAccessToken)
 }
 
 class TwitchHelixClient {
@@ -425,15 +446,23 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/api/reference#modify-channel-information
-  async modifyChannelInformation(broadcasterId: string, data: ModifyChannelInformationData) {
+  async modifyChannelInformation(
+    broadcasterId: string,
+    data: ModifyChannelInformationData,
+    bot: Bot,
+    user: User,
+  ) {
     const accessToken = this._oauthAccessTokenByBroadcasterId(broadcasterId)
     if (!accessToken) {
       return null
     }
 
     const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`)
+    const req = async (token: string): Promise<Response> => {
+      return await request('patch', url, withHeaders(this._authHeaders(token), asJson(data)))
+    }
     try {
-      return await request('patch', url, withHeaders(this._authHeaders(accessToken), asJson(data)))
+      return await executeRequestWithRetry(accessToken, req, bot, user)
     } catch (e) {
       log.error(url, e)
       return null
@@ -468,15 +497,23 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/api/reference#get-custom-reward
-  async getChannelPointsCustomRewards(broadcasterId: string) {
+  async getChannelPointsCustomRewards(
+    broadcasterId: string,
+    bot: Bot,
+    user: User,
+  ) {
     const accessToken = this._oauthAccessTokenByBroadcasterId(broadcasterId)
     if (!accessToken) {
       return null
     }
 
     const url = this._url(`/channel_points/custom_rewards${asQueryArgs({ broadcaster_id: broadcasterId })}`)
+    const req = async (token: string): Promise<Response> => {
+      return await request('get', url, withHeaders(this._authHeaders(token)))
+    }
     try {
-      const json = await getJson(url, withHeaders(this._authHeaders(accessToken))) as any
+      const resp = await executeRequestWithRetry(accessToken, req, bot, user)
+      const json = await resp.json() as any
       if (json.error) {
         return null
       }
@@ -487,10 +524,10 @@ class TwitchHelixClient {
     }
   }
 
-  async getAllChannelPointsCustomRewards() {
+  async getAllChannelPointsCustomRewards(bot: Bot, user: User) {
     const rewards: Record<string, string[]> = {}
     for (const twitchChannel of this.twitchChannels) {
-      const res = await this.getChannelPointsCustomRewards(twitchChannel.channel_id)
+      const res = await this.getChannelPointsCustomRewards(twitchChannel.channel_id, bot, user)
       if (res) {
         rewards[twitchChannel.channel_name] = res.data.map(entry => entry.title);
       }
@@ -499,15 +536,23 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/api/reference#replace-stream-tags
-  async replaceStreamTags(broadcasterId: string, tagIds: string[]) {
+  async replaceStreamTags(
+    broadcasterId: string,
+    tagIds: string[],
+    bot: Bot,
+    user: User,
+  ) {
     const accessToken = this._oauthAccessTokenByBroadcasterId(broadcasterId)
     if (!accessToken) {
       return null
     }
 
     const url = this._url(`/streams/tags${asQueryArgs({ broadcaster_id: broadcasterId })}`)
+    const req = async (token: string): Promise<Response> => {
+      return await request('put', url, withHeaders(this._authHeaders(token), asJson({ tag_ids: tagIds })))
+    }
     try {
-      return await request('put', url, withHeaders(this._authHeaders(accessToken), asJson({ tag_ids: tagIds })))
+      return await executeRequestWithRetry(accessToken, req, bot, user)
     } catch (e) {
       console.log(url, e)
       return null
@@ -518,7 +563,8 @@ class TwitchHelixClient {
     const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`)
     let json
     try {
-      json = await getJson(url, withHeaders(this._authHeaders(accessToken))) as TwitchHelixGetChannelInformationResponseData
+      const resp = await request('get', url, withHeaders(this._authHeaders(accessToken)))
+      const json = (await resp.json()) as TwitchHelixGetChannelInformationResponseData
       return { valid: json.data[0] ? true : false, data: json }
     } catch (e) {
       return { valid: false, data: json }

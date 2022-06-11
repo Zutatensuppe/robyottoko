@@ -45,7 +45,9 @@ const setChannelGameId = (
 
     const resp = await helixClient.modifyChannelInformation(
       context['room-id'],
-      { game_id: category.id }
+      { game_id: category.id },
+      bot,
+      user,
     )
     if (resp?.status === 204) {
       say(`✨ Changed category to "${category.name}".`)
