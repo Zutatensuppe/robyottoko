@@ -108,7 +108,6 @@ const run = async () => {
           this,
           user,
           config.twitch,
-          twitchChannelRepo,
         )
       }
       return this.userTwitchClientManagerInstances[user.id]
@@ -147,11 +146,9 @@ const run = async () => {
       const twitchChannels = await twitchChannelRepo.allByUserId(user.id)
       for (const twitchChannel of twitchChannels) {
         const result = await refreshExpiredTwitchChannelAccessToken(
-          db,
           twitchChannel,
-          twitchChannelRepo,
-          client,
-          cache,
+          bot,
+          user,
         )
         if (result.error) {
           log.error('Unable to validate or refresh OAuth token.')
@@ -163,7 +160,7 @@ const run = async () => {
             },
           })
         } else if (result.refreshed) {
-          const changedUser = await userRepo.getById(user.id)
+          const changedUser = await bot.getUsers().getById(user.id)
           if (changedUser) {
             eventHub.emit('access_token_refreshed', changedUser)
           } else {
@@ -188,7 +185,7 @@ const run = async () => {
       if (!client) {
         return setTimeout(updateUserFrontendStatus, 5 * SECOND)
       }
-      const twitchChannels = await twitchChannelRepo.allByUserId(user.id)
+      const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id)
       for (const twitchChannel of twitchChannels) {
         if (twitchChannel.channel_id) {
           const stream = await client.getStreamByUserId(twitchChannel.channel_id)
@@ -235,7 +232,7 @@ const run = async () => {
   }
 
   // one for each user
-  for (const user of await userRepo.all()) {
+  for (const user of await bot.getUsers().all()) {
     await initForUser(user)
   }
 

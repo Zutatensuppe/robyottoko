@@ -1,10 +1,7 @@
 import { logger } from "./common/fn";
-import Db from "./DbPostgres";
-import Cache from "./services/Cache";
-import TwitchChannels, { TwitchChannel } from "./services/TwitchChannels";
-import TwitchHelixClient from "./services/TwitchHelixClient";
+import { TwitchChannel } from "./services/TwitchChannels";
 import { User } from "./services/Users";
-import { TwitchConfig } from "./types";
+import { Bot } from "./types";
 
 const log = logger('oauth.ts')
 
@@ -15,27 +12,77 @@ interface TokenRefreshResult {
   refreshed: boolean
 }
 
+/**
+ * Tries to refresh the access token and returns the new token
+ * if successful, otherwise null.
+ */
+export const tryRefreshAccessToken = async (
+  accessToken: string,
+  bot: Bot,
+  user: User,
+): Promise<string | null> => {
+  const client = bot.getUserTwitchClientManager(user).getHelixClient()
+  if (!client) {
+    return null
+  }
+
+  const twitchChannels = (await bot.getTwitchChannels().allByUserId(user.id))
+    .filter(channel => channel.access_token === accessToken)
+  if (twitchChannels.length === 0) {
+    return null
+  }
+
+  // try to refresh the token, if possible
+  const row = await bot.getDb().get(TABLE, {
+    access_token: accessToken,
+  })
+  if (!row || !row.refresh_token) {
+    // we have no information about that token
+    // or at least no way to refresh it
+    return null
+  }
+
+  const refreshResp = await client.refreshOAuthToken(row.refresh_token)
+  if (!refreshResp) {
+    return null
+  }
+
+  // update the token in the database
+  await bot.getDb().update(TABLE, {
+    access_token: refreshResp.access_token,
+    refresh_token: refreshResp.refresh_token,
+    expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
+  }, {
+    access_token: row.access_token,
+  })
+
+  for (const twitchChannel of twitchChannels) {
+    // update the twitch channel in the database
+    twitchChannel.access_token = refreshResp.access_token
+    await bot.getTwitchChannels().save(twitchChannel)
+  }
+
+  log.info('refreshed an oauth token')
+  return refreshResp.access_token
+}
+
 // TODO: check if anything has to be put in a try catch block
 export const refreshExpiredTwitchChannelAccessToken = async (
-  db: Db,
   twitchChannel: TwitchChannel,
-  twitchChannelRepo: TwitchChannels,
-  client: TwitchHelixClient,
-  cache: Cache,
+  bot: Bot,
+  user: User,
 ): Promise<TokenRefreshResult> => {
+  const client = bot.getUserTwitchClientManager(user).getHelixClient()
+  if (!client) {
+    return { error: false, refreshed: false }
+  }
   if (!twitchChannel.access_token) {
-    return {
-      error: false,
-      refreshed: false,
-    }
+    return { error: false, refreshed: false }
   }
   if (!twitchChannel.channel_id) {
-    const channelId = await client.getUserIdByNameCached(twitchChannel.channel_name, cache)
+    const channelId = await client.getUserIdByNameCached(twitchChannel.channel_name, bot.getCache())
     if (!channelId) {
-      return {
-        error: false,
-        refreshed: false,
-      }
+      return { error: false, refreshed: false }
     }
     twitchChannel.channel_id = channelId
   }
@@ -47,36 +94,27 @@ export const refreshExpiredTwitchChannelAccessToken = async (
 
   if (resp.valid) {
     // token is valid, check next :)
-    return {
-      error: false,
-      refreshed: false,
-    }
+    return { error: false, refreshed: false }
   }
 
   // try to refresh the token, if possible
-  const row = await db.get(TABLE, {
+  const row = await bot.getDb().get(TABLE, {
     access_token: twitchChannel.access_token,
   })
   if (!row || !row.refresh_token) {
     // we have no information about that token
     // or at least no way to refresh it
-    return {
-      error: 'no_refresh_token_found',
-      refreshed: false,
-    }
+    return { error: 'no_refresh_token_found', refreshed: false }
   }
 
   const refreshResp = await client.refreshOAuthToken(row.refresh_token)
   if (!refreshResp) {
     // there was something wrong when refreshing
-    return {
-      error: 'refresh_oauth_token_failed',
-      refreshed: false,
-    }
+    return { error: 'refresh_oauth_token_failed', refreshed: false }
   }
 
   // update the token in the database
-  await db.update(TABLE, {
+  await bot.getDb().update(TABLE, {
     access_token: refreshResp.access_token,
     refresh_token: refreshResp.refresh_token,
     expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
@@ -86,13 +124,10 @@ export const refreshExpiredTwitchChannelAccessToken = async (
 
   // update the twitch channel in the database
   twitchChannel.access_token = refreshResp.access_token
-  await twitchChannelRepo.save(twitchChannel)
+  await bot.getTwitchChannels().save(twitchChannel)
 
   log.info('refreshed an oauth token')
-  return {
-    error: false,
-    refreshed: true,
-  }
+  return { error: false, refreshed: true }
 }
 
 interface HandleCodeCallbackResult {
@@ -104,28 +139,20 @@ interface HandleCodeCallbackResult {
 export const handleOAuthCodeCallback = async (
   code: string,
   redirectUri: string,
-  configTwitch: TwitchConfig,
-  db: Db,
-  twitchChannelRepo: TwitchChannels,
+  bot: Bot,
   user: User,
-  cache: Cache,
 ): Promise<HandleCodeCallbackResult> => {
-  const twitchChannels = await twitchChannelRepo.allByUserId(user.id)
-  const client = new TwitchHelixClient(
-    configTwitch.tmi.identity.client_id,
-    configTwitch.tmi.identity.client_secret,
-    twitchChannels,
-  )
+  const client = bot.getUserTwitchClientManager(user).getHelixClient()
+  if (!client) {
+    return { error: true, updated: false }
+  }
   const resp = await client.getAccessTokenByCode(code, redirectUri)
   if (!resp) {
-    return {
-      error: true,
-      updated: false,
-    }
+    return { error: true, updated: false }
   }
 
   // store the token
-  await db.insert(TABLE, {
+  await bot.getDb().insert(TABLE, {
     access_token: resp.access_token,
     refresh_token: resp.refresh_token,
     scope: resp.scope.join(','),
@@ -136,16 +163,14 @@ export const handleOAuthCodeCallback = async (
   // get the user that corresponds to the token
   const userResp = await client.getUser(resp.access_token)
   if (!userResp) {
-    return {
-      error: true,
-      updated: false,
-    }
+    return { error: true, updated: false }
   }
 
   let updated = false
+  const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id)
   for (const twitchChannel of twitchChannels) {
     if (!twitchChannel.channel_id) {
-      const channelId = await client.getUserIdByNameCached(twitchChannel.channel_name, cache)
+      const channelId = await client.getUserIdByNameCached(twitchChannel.channel_name, bot.getCache())
       if (!channelId) {
         continue
       }
@@ -155,12 +180,9 @@ export const handleOAuthCodeCallback = async (
       continue
     }
     twitchChannel.access_token = resp.access_token
-    await twitchChannelRepo.save(twitchChannel)
+    await bot.getTwitchChannels().save(twitchChannel)
     updated = true
   }
 
-  return {
-    error: false,
-    updated: updated,
-  }
+  return { error: false, updated }
 }

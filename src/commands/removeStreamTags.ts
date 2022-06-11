@@ -52,7 +52,12 @@ const removeStreamTags = (
     }
     const newTagIds = manualTags.filter((_value, index) => index !== idx).map(entry => entry.tag_id)
     const newSettableTagIds: string[] = newTagIds.filter(tagId => !config.twitch.auto_tags.find(t => t.id === tagId))
-    const resp = await helixClient.replaceStreamTags(context['room-id'], newSettableTagIds)
+    const resp = await helixClient.replaceStreamTags(
+      context['room-id'],
+      newSettableTagIds,
+      bot,
+      user,
+    )
     if (!resp || resp.status < 200 || resp.status >= 300) {
       say(`❌ Unable to remove tag: ${manualTags[idx].localization_names['en-us']}`)
       return
