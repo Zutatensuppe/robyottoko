@@ -32,137 +32,119 @@
                 </div>
               </td>
             </tr>
-            <tr v-if="item.action === 'set_channel_title'">
-              <td>Stream title:</td>
+            <tr>
+              <td>Widgets:</td>
               <td>
-                <input class="input is-small spaceinput mb-1" v-model="item.data.title" />
-                <span class="button is-small mr-1" @click="item.data.title = ''">All args</span>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'set_channel_game_id'">
-              <td>Stream category:</td>
-              <td>
-                <input class="input is-small spaceinput mb-1" v-model="item.data.game_id" />
-                <span class="button is-small mr-1" @click="item.data.game_id = ''">All args</span>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'add_stream_tags'">
-              <td>Tag to add:</td>
-              <td>
-                <input class="input is-small spaceinput mb-1" v-model="item.data.tag" />
-                <span class="button is-small mr-1" @click="item.data.tag = ''">All args</span>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'remove_stream_tags'">
-              <td>Tag to remove:</td>
-              <td>
-                <input class="input is-small spaceinput mb-1" v-model="item.data.tag" />
-                <span class="button is-small mr-1" @click="item.data.tag = ''">All args</span>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'sr_addtag'">
-              <td>Tag:</td>
-              <td>
-                <input class="input is-small spaceinput mb-1" v-model="item.data.tag" />
-                <span class="button is-small mr-1" @click="item.data.tag = ''">All args</span>
-              </td>
-            </tr>
-            <template v-if="item.action === 'dict_lookup'">
-              <tr>
-                <td>Language:</td>
-                <td>
-                  <input class="input is-small spaceinput mb-1" v-model="item.data.lang" />
-                  <span v-for="(lang, idx) in dictLangs" :key="idx" class="button is-small mr-1"
-                    @click="item.data.lang = lang.value" :title="lang.title">{{ lang.flag }}</span>
-                  <span class="button is-small mr-1" @click="item.data.lang = '$args(0)'"><code>$args(0)</code></span>
-                </td>
-              </tr>
-              <tr>
-                <td>Phrase:</td>
-                <td>
-                  <input class="input is-small spaceinput mb-1" v-model="item.data.phrase" />
-                  <span class="button is-small mr-1" @click="item.data.phrase = ''">All args</span>
-                  <span class="button is-small mr-1"
-                    @click="item.data.phrase = '$args(1:)'"><code>$args(1:)</code></span>
-                </td>
-              </tr>
-              <tr>
-                <td>Response:</td>
-                <td>
-                  <div class="help">
-                    Outputs the translation for the input phrase. The
-                    translation is always from/to english. <br />
-                    To let the user decide on the language use
-                    <code>$args(0)</code> as language, and
-                    <code>$args(1:)</code> as phrase. <br />
-                    If phrase is left empty, all arguments to the command will
-                    be used as the phrase.
+                <div class="field has-addons" v-if="item.data.widgetIds.length === 0">
+                  This media will show in the&nbsp;
+                  <a :href="`${widgetUrl}`" target="_blank">default widget</a>.
+                </div>
+                <div class="field has-addons" v-for="(id, idx) in item.data.widgetIds" :key="idx">
+                  <div class="control mr-1">
+                    <input type="text" class="input is-small" v-model="item.data.widgetIds[idx]" />
                   </div>
-                </td>
-              </tr>
-            </template>
-            <template v-if="item.action === 'madochan_createword'">
-              <tr>
-                <td>Model:</td>
-                <td>
-                  <div class="control">
-                    <input class="input is-small spaceinput" v-model="item.data.model" />
-                  </div>
-                  <div class="help">
-                    For possible values refer to
-                    <a href="https://madochan.hyottoko.club/" target="_blank">madochan</a>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td>Weirdness:</td>
-                <td>
-                  <div class="control">
-                    <input class="input is-small spaceinput" v-model="item.data.weirdness" />
-                  </div>
-                  <div class="help">
-                    For possible values refer to
-                    <a href="https://madochan.hyottoko.club/" target="_blank">madochan</a>
-                  </div>
-                </td>
-              </tr>
-            </template>
-            <tr v-if="item.action === 'chatters'">
-              <td>Response:</td>
-              <td>Outputs the people who chatted during the stream.</td>
-            </tr>
-            <tr v-if="item.action === 'text'">
-              <td>Response:</td>
-              <td>
-                <div v-for="(txt, idx) in item.data.text" :key="idx" class="field textarea-holder">
-                  <textarea class="textarea" type="text" v-model="item.data.text[idx]" :class="{
-                    'has-background-danger-light': !item.data.text[idx],
-                    'has-text-danger-dark': !item.data.text[idx],
-                  }" />
-                  <div class="help">
-                    <macro-select @selected="insertMacro(idx, $event)" />
-                  </div>
-                  <button class="button is-small" :disabled="item.data.text.length <= 1" @click="rmtxt(idx)">
+                  <a class="button is-small mr-1" :href="`${widgetUrl}?id=${encodeURIComponent(id)}`"
+                    target="_blank">Open widget</a>
+                  <button class="button is-small" @click="rmWidgetId(idx)">
                     <i class="fa fa-remove" />
                   </button>
                 </div>
                 <div class="field">
-                  <button class="button is-small" @click="addtxt">
-                    <i class="fa fa-plus mr-1" /> Add response
+                  <button class="button is-small" @click="addWidgetId">
+                    <i class="fa fa-plus mr-1" /> Add widget
                   </button>
                 </div>
                 <div>
                   <p class="help">
-                    If multiple responses exist, a random one will be used when
-                    the command is triggered.
+                    Define in which widgets this media should show up in.
+                    Leave the list empty to only show in the default widget.
                   </p>
                 </div>
               </td>
             </tr>
-            <tr v-if="item.action === 'countdown'">
-              <td>Settings</td>
+            <tr>
+              <td>Type:</td>
               <td>
-                <countdown-editor v-model="item.data" :baseVolume="baseVolume" />
+                <label class="mr-1"><input type="radio" v-model="type" value="image" /> Image</label>
+                <label class="mr-1"><input type="radio" v-model="type" value="image,sound" /> Image + Sound</label>
+                <label class="mr-1"><input type="radio" v-model="type" value="sound" /> Sound</label>
+                <label class="mr-1"><input type="radio" v-model="type" value="video" /> Video</label>
+              </td>
+            </tr>
+            <tr v-if="type === 'image' || type === 'image,sound'">
+              <td>Display-Duration:</td>
+              <td>
+                <div class="control has-icons-left">
+                  <duration-input :modelValue="item.data.minDurationMs"
+                    @update:modelValue="item.data.minDurationMs = $event" />
+                  <span class="icon is-small is-left">
+                    <i class="fa fa-hourglass"></i>
+                  </span>
+                </div>
+                <div class="help">
+                  The minimum duration that images will be displayed.
+                  Sound will always play for their full length
+                  regardless of this setting.
+                </div>
+              </td>
+            </tr>
+            <tr v-if="type === 'image' || type === 'image,sound'">
+              <td>Image:</td>
+              <td>
+                <image-upload v-model="item.data.image" @update:modelValue="mediaImgChanged" />
+              </td>
+            </tr>
+            <tr v-if="type === 'image' || type === 'image,sound'">
+              <td>Image (by URL):</td>
+              <td>
+                <input type="text" class="input is-small" v-model="item.data.image_url" />
+                <div>
+                  <span class="button is-small" @click="
+                    item.data.image_url = '$user($args).profile_image_url'
+                  ">Twitch profile image of user given by args</span>
+                  <span class="button is-small" @click="item.data.image_url = '$user.profile_image_url'">Twitch profile
+                    image
+                    of user who executes the command</span>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="type === 'sound' || type === 'image,sound'">
+              <td>Sound:</td>
+              <td>
+                <sound-upload v-model="item.data.sound" :baseVolume="baseVolume" @update:modelValue="mediaSndChanged" />
+              </td>
+            </tr>
+            <tr v-if="type === 'video'">
+              <td>Video:</td>
+              <td>
+                <table>
+                  <tr>
+                    <td>Url:</td>
+                    <td>
+                      <input type="text" class="input is-small" v-model="item.data.video.url" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Volume:</td>
+                    <td>
+                      <volume-slider v-model="item.data.video.volume" />
+                    </td>
+                  </tr>
+                </table>
+                <div class="help">
+                  The video url has to be a twitch clip url
+                  (<code>https://clips.twitch.tv/...</code>) or a URL to a
+                  video file (a URL usually ending in <code>.mp4</code> or
+                  similar).
+                  Currently Youtube or other Video Hosters are not supported.
+                </div>
+                <div>
+                  <span class="button is-small" @click="
+                    item.data.video.url = '$user($args).recent_clip_url'
+                  ">A recent twitch clip of user given by args</span>
+                  <span class="button is-small" @click="item.data.video.url = '$user.recent_clip_url'">A recent
+                    twitch clip of user who executes the command</span>
+                </div>
               </td>
             </tr>
             <tr>
@@ -275,7 +257,6 @@ import { permissions } from "../../../common/permissions";
 import {
   commands,
   isValidTrigger,
-  newText,
   newTrigger,
 } from "../../../common/commands";
 import {
@@ -286,16 +267,14 @@ import {
   CommandVariable,
   CommandVariableChange,
   GlobalVariable,
+  MediaCommand,
+  MediaFile,
+  SoundMediaFile,
 } from "../../../types";
 
 interface AutocompletableVariable {
   var: CommandVariable | GlobalVariable;
   type: string;
-}
-interface ComponentDataLang {
-  value: string;
-  flag: string;
-  title: string;
 }
 
 interface ComponentDataPermission {
@@ -304,16 +283,16 @@ interface ComponentDataPermission {
 }
 
 interface ComponentData {
-  item: Command | null;
+  item: MediaCommand | null;
+  type: string;
   variableChangeFocusIdx: number;
-  dictLangs: ComponentDataLang[];
   possiblePermissions: ComponentDataPermission[];
 }
 
 export default defineComponent({
   props: {
     modelValue: {
-      type: Object,
+      type: Object as PropType<MediaCommand>,
       required: true,
     },
     mode: {
@@ -331,24 +310,34 @@ export default defineComponent({
     baseVolume: {
       default: 100,
     },
+    widgetUrl: {
+      type: String,
+      required: false,
+      default: "",
+    },
   },
   emits: ["update:modelValue", "cancel"],
   data: (): ComponentData => ({
     item: null,
+    type: '',
     variableChangeFocusIdx: -1,
-    dictLangs: [
-      { value: "ja", flag: "🇯🇵", title: "Japanese" },
-      { value: "ru", flag: "🇷🇺", title: "Russian" },
-      { value: "de", flag: "🇩🇪", title: "German" },
-      { value: "es", flag: "🇪🇸", title: "Spanish" },
-      { value: "fr", flag: "🇫🇷", title: "French" },
-      { value: "it", flag: "🇮🇹", title: "Italian" },
-      { value: "pt", flag: "🇵🇹/🇧🇷", title: "Portuguese" },
-    ],
     possiblePermissions: permissions,
   }),
   mounted() {
     this.item = JSON.parse(JSON.stringify(this.modelValue));
+    if (this.item) {
+      if (this.item.data.video.url) {
+        this.type = 'video'
+      } else if (this.item.data.sound.file) {
+        if (this.item.data.image.file || this.item.data.image_url) {
+          this.type = 'image,sound'
+        } else {
+          this.type = 'sound'
+        }
+      } else {
+        this.type = 'image'
+      }
+    }
     this.$nextTick(() => {
       const el = this.$el.querySelector('input[type="text"]');
       el.focus();
@@ -368,13 +357,6 @@ export default defineComponent({
         return;
       }
       this.item.data.widgetIds.push('');
-    },
-    addtxt(): void {
-      if (!this.item) {
-        console.warn("addtxt: this.item not initialized");
-        return;
-      }
-      this.item.data.text.push(newText());
     },
     addtrigger(trigger: any): void {
       if (!this.item) {
@@ -434,21 +416,26 @@ export default defineComponent({
     onOverlayClick(): void {
       this.$emit("cancel");
     },
+    mediaSndChanged(file: SoundMediaFile): void {
+      if (!this.item) {
+        console.warn("mediaSndChanged: this.item not initialized");
+        return;
+      }
+      this.item.data.sound = file;
+    },
+    mediaImgChanged(file: MediaFile): void {
+      if (!this.item) {
+        console.warn("mediaImgUploaded: this.item not initialized");
+        return;
+      }
+      this.item.data.image = file;
+    },
     rmWidgetId(idx: number): void {
       if (!this.item) {
         console.warn("rmWidgetId: this.item not initialized");
         return;
       }
       this.item.data.widgetIds = this.item.data.widgetIds.filter(
-        (_val: string, index: number) => index !== idx
-      );
-    },
-    rmtxt(idx: number): void {
-      if (!this.item) {
-        console.warn("rmtxt: this.item not initialized");
-        return;
-      }
-      this.item.data.text = this.item.data.text.filter(
         (_val: string, index: number) => index !== idx
       );
     },
@@ -460,13 +447,6 @@ export default defineComponent({
       this.item.triggers = this.item.triggers.filter(
         (_val: CommandTrigger, index: number) => index !== idx
       );
-    },
-    insertMacro(idx: number, macro: { value: string; title: string }): void {
-      if (!this.item) {
-        console.warn("insertMacro: this.item not initialized");
-        return;
-      }
-      this.item.data.text[idx] += macro.value;
     },
     autocompletableVariables(): AutocompletableVariable[] {
       if (!this.item) {
@@ -553,15 +533,3 @@ export default defineComponent({
   },
 });
 </script>
-<style scoped>
-.textarea-holder {
-  position: relative;
-  padding-right: 2em;
-}
-
-.textarea-holder .button {
-  position: absolute;
-  right: -2px;
-  top: 0;
-}
-</style>

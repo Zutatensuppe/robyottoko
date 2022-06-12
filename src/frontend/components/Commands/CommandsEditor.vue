@@ -160,7 +160,12 @@
     </div>
     <div v-else>No commands set up</div>
 
-    <command-editor v-if="editCommand" :globalVariables="globalVariables"
+    <command-editor v-if="editCommand && editCommand.action !== 'media'" :globalVariables="globalVariables"
+      :channelPointsCustomRewards="channelPointsCustomRewards" :modelValue="editCommand"
+      :mode="editIdx >= commands.length ? 'create' : 'edit'" :baseVolume="baseVolume" @update:modelValue="editedCommand"
+      @cancel="editCommand = null" />
+
+    <media-command-editor v-if="editCommand && editCommand.action === 'media'" :globalVariables="globalVariables"
       :channelPointsCustomRewards="channelPointsCustomRewards" :modelValue="editCommand"
       :mode="editIdx >= commands.length ? 'create' : 'edit'" :baseVolume="baseVolume" :widgetUrl="widgetUrl"
       @update:modelValue="editedCommand" @cancel="editCommand = null" />
