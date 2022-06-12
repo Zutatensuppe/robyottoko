@@ -351,6 +351,7 @@ class TwitchClientManager {
           }
           const rewardRedemptionContext: RewardRedemptionContext = { client: chatClient, target, context, redemption }
 
+          const promises: Promise<void>[] = []
           for (const m of this.bot.getModuleManager().all(user.id)) {
             // reward redemption should all have exact key/name of the reward,
             // no sorting required
@@ -363,9 +364,10 @@ class TwitchClientManager {
               args: redemption.user_input ? [redemption.user_input] : [],
             }
             const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger])
-            await fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context)
-            await m.onRewardRedemption(rewardRedemptionContext)
+            promises.push(fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context))
+            promises.push(m.onRewardRedemption(rewardRedemptionContext))
           }
+          await Promise.all(promises)
         })
       })
     }
