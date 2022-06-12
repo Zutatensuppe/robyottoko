@@ -176,6 +176,12 @@ input[type="color"] {
   }
 }
 
+.modal-card-body .dropdown-content {
+  max-height: 300px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
 html.darkmode {
   filter: invert(86%) hue-rotate(180deg) brightness(105%) contrast(105%);
   background: white;

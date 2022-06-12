@@ -40,6 +40,7 @@ import VolumeSlider from "./components/VolumeSlider.vue";
 import Youtube from "./components/Youtube.vue";
 
 import CommandsCommandEditor from "./components/Commands/CommandEditor.vue";
+import CommandsMediaCommandEditor from "./components/Commands/MediaCommandEditor.vue";
 import CommandsCommandsEditor from "./components/Commands/CommandsEditor.vue";
 import CommandsCountdownEditor from "./components/Commands/CountdownEditor.vue";
 import CommandsTriggerEditor from "./components/Commands/TriggerEditor.vue";
@@ -207,6 +208,7 @@ const run = async () => {
   app.component('youtube', Youtube)
   app.component('commands-editor', CommandsCommandsEditor)
   app.component('command-editor', CommandsCommandEditor)
+  app.component('media-command-editor', CommandsMediaCommandEditor)
   app.component('countdown-editor', CommandsCountdownEditor)
   app.component('trigger-editor', CommandsTriggerEditor)
   // songrequest - maybe dont register these globally?
