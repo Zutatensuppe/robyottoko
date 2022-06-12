@@ -160,15 +160,20 @@
     </div>
     <div v-else>No commands set up</div>
 
-    <command-editor v-if="editCommand && editCommand.action !== 'media'" :globalVariables="globalVariables"
+    <text-command-editor v-if="editCommand && editCommand.action === 'text'" :globalVariables="globalVariables"
       :channelPointsCustomRewards="channelPointsCustomRewards" :modelValue="editCommand"
-      :mode="editIdx >= commands.length ? 'create' : 'edit'" :baseVolume="baseVolume" @update:modelValue="editedCommand"
+      :mode="editIdx >= commands.length ? 'create' : 'edit'" @update:modelValue="editedCommand"
       @cancel="editCommand = null" />
 
-    <media-command-editor v-if="editCommand && editCommand.action === 'media'" :globalVariables="globalVariables"
+    <media-command-editor v-else-if="editCommand && editCommand.action === 'media'" :globalVariables="globalVariables"
       :channelPointsCustomRewards="channelPointsCustomRewards" :modelValue="editCommand"
       :mode="editIdx >= commands.length ? 'create' : 'edit'" :baseVolume="baseVolume" :widgetUrl="widgetUrl"
       @update:modelValue="editedCommand" @cancel="editCommand = null" />
+
+    <command-editor v-else-if="editCommand" :globalVariables="globalVariables"
+      :channelPointsCustomRewards="channelPointsCustomRewards" :modelValue="editCommand"
+      :mode="editIdx >= commands.length ? 'create' : 'edit'" :baseVolume="baseVolume" @update:modelValue="editedCommand"
+      @cancel="editCommand = null" />
   </div>
 </template>
 <script lang="ts">
