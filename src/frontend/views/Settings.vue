@@ -144,7 +144,6 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { TwitchChannel } from "../../services/TwitchChannels";
-import { User } from "../../services/Users";
 import api from "../api";
 
 interface ComponentData {
