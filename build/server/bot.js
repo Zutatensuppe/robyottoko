@@ -3353,6 +3353,7 @@ class TwitchClientManager {
                         subscriber: redemption.reward.is_sub_only, // this does not really tell us if the user is sub or not, just if the redemption was sub only
                     };
                     const rewardRedemptionContext = { client: chatClient, target, context, redemption };
+                    const promises = [];
                     for (const m of this.bot.getModuleManager().all(user.id)) {
                         // reward redemption should all have exact key/name of the reward,
                         // no sorting required
@@ -3364,9 +3365,10 @@ class TwitchClientManager {
                             args: redemption.user_input ? [redemption.user_input] : [],
                         };
                         const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger]);
-                        await fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context);
-                        await m.onRewardRedemption(rewardRedemptionContext);
+                        promises.push(fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context));
+                        promises.push(m.onRewardRedemption(rewardRedemptionContext));
                     }
+                    await Promise.all(promises);
                 });
             });
         }
@@ -6942,9 +6944,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-06-12T13:16:46.660Z",
+    buildDate: "2022-06-12T18:08:05.045Z",
     // @ts-ignore
-    buildVersion: "1.15.3",
+    buildVersion: "1.15.4",
 };
 
 const widgets = [
