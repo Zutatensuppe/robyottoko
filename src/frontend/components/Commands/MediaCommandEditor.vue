@@ -260,7 +260,6 @@ import {
   newTrigger,
 } from "../../../common/commands";
 import {
-  Command,
   CommandAction,
   CommandTrigger,
   CommandTriggerType,

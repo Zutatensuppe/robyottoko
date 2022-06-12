@@ -32,109 +32,32 @@
                 </div>
               </td>
             </tr>
-            <tr v-if="item.action === 'set_channel_title'">
-              <td>Stream title:</td>
-              <td>
-                <input class="input is-small spaceinput mb-1" v-model="item.data.title" />
-                <span class="button is-small mr-1" @click="item.data.title = ''">All args</span>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'set_channel_game_id'">
-              <td>Stream category:</td>
-              <td>
-                <input class="input is-small spaceinput mb-1" v-model="item.data.game_id" />
-                <span class="button is-small mr-1" @click="item.data.game_id = ''">All args</span>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'add_stream_tags'">
-              <td>Tag to add:</td>
-              <td>
-                <input class="input is-small spaceinput mb-1" v-model="item.data.tag" />
-                <span class="button is-small mr-1" @click="item.data.tag = ''">All args</span>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'remove_stream_tags'">
-              <td>Tag to remove:</td>
-              <td>
-                <input class="input is-small spaceinput mb-1" v-model="item.data.tag" />
-                <span class="button is-small mr-1" @click="item.data.tag = ''">All args</span>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'sr_addtag'">
-              <td>Tag:</td>
-              <td>
-                <input class="input is-small spaceinput mb-1" v-model="item.data.tag" />
-                <span class="button is-small mr-1" @click="item.data.tag = ''">All args</span>
-              </td>
-            </tr>
-            <template v-if="item.action === 'dict_lookup'">
-              <tr>
-                <td>Language:</td>
-                <td>
-                  <input class="input is-small spaceinput mb-1" v-model="item.data.lang" />
-                  <span v-for="(lang, idx) in dictLangs" :key="idx" class="button is-small mr-1"
-                    @click="item.data.lang = lang.value" :title="lang.title">{{ lang.flag }}</span>
-                  <span class="button is-small mr-1" @click="item.data.lang = '$args(0)'"><code>$args(0)</code></span>
-                </td>
-              </tr>
-              <tr>
-                <td>Phrase:</td>
-                <td>
-                  <input class="input is-small spaceinput mb-1" v-model="item.data.phrase" />
-                  <span class="button is-small mr-1" @click="item.data.phrase = ''">All args</span>
-                  <span class="button is-small mr-1"
-                    @click="item.data.phrase = '$args(1:)'"><code>$args(1:)</code></span>
-                </td>
-              </tr>
-              <tr>
-                <td>Response:</td>
-                <td>
-                  <div class="help">
-                    Outputs the translation for the input phrase. The
-                    translation is always from/to english. <br />
-                    To let the user decide on the language use
-                    <code>$args(0)</code> as language, and
-                    <code>$args(1:)</code> as phrase. <br />
-                    If phrase is left empty, all arguments to the command will
-                    be used as the phrase.
-                  </div>
-                </td>
-              </tr>
-            </template>
-            <template v-if="item.action === 'madochan_createword'">
-              <tr>
-                <td>Model:</td>
-                <td>
-                  <div class="control">
-                    <input class="input is-small spaceinput" v-model="item.data.model" />
-                  </div>
-                  <div class="help">
-                    For possible values refer to
-                    <a href="https://madochan.hyottoko.club/" target="_blank">madochan</a>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td>Weirdness:</td>
-                <td>
-                  <div class="control">
-                    <input class="input is-small spaceinput" v-model="item.data.weirdness" />
-                  </div>
-                  <div class="help">
-                    For possible values refer to
-                    <a href="https://madochan.hyottoko.club/" target="_blank">madochan</a>
-                  </div>
-                </td>
-              </tr>
-            </template>
-            <tr v-if="item.action === 'chatters'">
+            <tr v-if="item.action === 'text'">
               <td>Response:</td>
-              <td>Outputs the people who chatted during the stream.</td>
-            </tr>
-            <tr v-if="item.action === 'countdown'">
-              <td>Settings</td>
               <td>
-                <countdown-editor v-model="item.data" :baseVolume="baseVolume" />
+                <div v-for="(txt, idx) in item.data.text" :key="idx" class="field textarea-holder">
+                  <textarea class="textarea" type="text" v-model="item.data.text[idx]" :class="{
+                    'has-background-danger-light': !item.data.text[idx],
+                    'has-text-danger-dark': !item.data.text[idx],
+                  }" />
+                  <div class="help">
+                    <macro-select @selected="insertMacro(idx, $event)" />
+                  </div>
+                  <button class="button is-small" :disabled="item.data.text.length <= 1" @click="rmtxt(idx)">
+                    <i class="fa fa-remove" />
+                  </button>
+                </div>
+                <div class="field">
+                  <button class="button is-small" @click="addtxt">
+                    <i class="fa fa-plus mr-1" /> Add response
+                  </button>
+                </div>
+                <div>
+                  <p class="help">
+                    If multiple responses exist, a random one will be used when
+                    the command is triggered.
+                  </p>
+                </div>
               </td>
             </tr>
             <tr>
@@ -247,26 +170,22 @@ import { permissions } from "../../../common/permissions";
 import {
   commands,
   isValidTrigger,
+  newText,
   newTrigger,
 } from "../../../common/commands";
 import {
-  Command,
   CommandAction,
   CommandTrigger,
   CommandTriggerType,
   CommandVariable,
   CommandVariableChange,
   GlobalVariable,
+  RandomTextCommand,
 } from "../../../types";
 
 interface AutocompletableVariable {
   var: CommandVariable | GlobalVariable;
   type: string;
-}
-interface ComponentDataLang {
-  value: string;
-  flag: string;
-  title: string;
 }
 
 interface ComponentDataPermission {
@@ -275,16 +194,15 @@ interface ComponentDataPermission {
 }
 
 interface ComponentData {
-  item: Command | null;
+  item: RandomTextCommand | null;
   variableChangeFocusIdx: number;
-  dictLangs: ComponentDataLang[];
   possiblePermissions: ComponentDataPermission[];
 }
 
 export default defineComponent({
   props: {
     modelValue: {
-      type: Object,
+      type: Object as PropType<RandomTextCommand>,
       required: true,
     },
     mode: {
@@ -299,23 +217,11 @@ export default defineComponent({
       type: Object as PropType<Record<string, string[]>>,
       required: true,
     },
-    baseVolume: {
-      default: 100,
-    },
   },
   emits: ["update:modelValue", "cancel"],
   data: (): ComponentData => ({
     item: null,
     variableChangeFocusIdx: -1,
-    dictLangs: [
-      { value: "ja", flag: "🇯🇵", title: "Japanese" },
-      { value: "ru", flag: "🇷🇺", title: "Russian" },
-      { value: "de", flag: "🇩🇪", title: "German" },
-      { value: "es", flag: "🇪🇸", title: "Spanish" },
-      { value: "fr", flag: "🇫🇷", title: "French" },
-      { value: "it", flag: "🇮🇹", title: "Italian" },
-      { value: "pt", flag: "🇵🇹/🇧🇷", title: "Portuguese" },
-    ],
     possiblePermissions: permissions,
   }),
   mounted() {
@@ -333,6 +239,13 @@ export default defineComponent({
     },
   },
   methods: {
+    addtxt(): void {
+      if (!this.item) {
+        console.warn("addtxt: this.item not initialized");
+        return;
+      }
+      this.item.data.text.push(newText());
+    },
     addtrigger(trigger: any): void {
       if (!this.item) {
         console.warn("addtrigger: this.item not initialized");
@@ -391,6 +304,15 @@ export default defineComponent({
     onOverlayClick(): void {
       this.$emit("cancel");
     },
+    rmtxt(idx: number): void {
+      if (!this.item) {
+        console.warn("rmtxt: this.item not initialized");
+        return;
+      }
+      this.item.data.text = this.item.data.text.filter(
+        (_val: string, index: number) => index !== idx
+      );
+    },
     rmtrigger(idx: number): void {
       if (!this.item) {
         console.warn("rmtrigger: this.item not initialized");
@@ -399,6 +321,13 @@ export default defineComponent({
       this.item.triggers = this.item.triggers.filter(
         (_val: CommandTrigger, index: number) => index !== idx
       );
+    },
+    insertMacro(idx: number, macro: { value: string; title: string }): void {
+      if (!this.item) {
+        console.warn("insertMacro: this.item not initialized");
+        return;
+      }
+      this.item.data.text[idx] += macro.value;
     },
     autocompletableVariables(): AutocompletableVariable[] {
       if (!this.item) {
@@ -485,3 +414,15 @@ export default defineComponent({
   },
 });
 </script>
+<style scoped>
+.textarea-holder {
+  position: relative;
+  padding-right: 2em;
+}
+
+.textarea-holder .button {
+  position: absolute;
+  right: -2px;
+  top: 0;
+}
+</style>
