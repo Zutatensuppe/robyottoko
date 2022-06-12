@@ -1,6 +1,6 @@
 import fetch, { RequestInit } from 'node-fetch'
 
-type RequestMethod = 'get' | 'post' | 'get' | 'delete' | 'patch' | 'put'
+type RequestMethod = 'get' | 'post' | 'delete' | 'patch' | 'put'
 
 export type QueryArgsData = Record<string, string | number>
 
@@ -32,7 +32,7 @@ export function asQueryArgs(data: QueryArgsData) {
   return `?${q.join('&')}`
 }
 
-export async function request(method: RequestMethod, url: string, opts: RequestInit = {}) {
+const request = async (method: RequestMethod, url: string, opts: RequestInit = {}) => {
   const options = opts || {}
   options.method = method
   return await fetch(url, options)
@@ -42,5 +42,9 @@ export default {
   withHeaders,
   asJson,
   asQueryArgs,
-  request,
+  get: async (url: string, opts: RequestInit = {}) => request('get', url, opts),
+  post: async (url: string, opts: RequestInit = {}) => request('post', url, opts),
+  delete: async (url: string, opts: RequestInit = {}) => request('delete', url, opts),
+  patch: async (url: string, opts: RequestInit = {}) => request('patch', url, opts),
+  put: async (url: string, opts: RequestInit = {}) => request('put', url, opts),
 }

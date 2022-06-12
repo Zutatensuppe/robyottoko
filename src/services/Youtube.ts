@@ -1,6 +1,6 @@
 import config from '../config'
 import { logger } from '../common/fn'
-import { asQueryArgs, QueryArgsData, request } from '../net/xhr'
+import xhr, { asQueryArgs, QueryArgsData } from '../net/xhr'
 
 const log = logger('Youtube.ts')
 
@@ -29,7 +29,7 @@ interface YoutubeVideosResponseData {
 
 const get = async (url: string, args: QueryArgsData) => {
   args.key = config.modules.sr.google.api_key
-  const resp = await request('get', url + asQueryArgs(args))
+  const resp = await xhr.get(url + asQueryArgs(args))
   return await resp.json()
 }
 

@@ -1,4 +1,4 @@
-import { asJson, request } from '../net/xhr'
+import xhr, { asJson } from '../net/xhr'
 
 interface MadochanCreateWordRequestData {
   model: string
@@ -14,7 +14,7 @@ const createWord = async (
   createWordRequestData: MadochanCreateWordRequestData
 ): Promise<MadochanCreateWordResponseData> => {
   const url = 'https://madochan.hyottoko.club/api/v1/_create_word'
-  const resp = await request('post', url, asJson(createWordRequestData))
+  const resp = await xhr.post(url, asJson(createWordRequestData))
   const json = (await resp.json()) as MadochanCreateWordResponseData
   return json
 }

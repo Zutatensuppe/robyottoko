@@ -1,4 +1,4 @@
-import { asQueryArgs, request } from '../net/xhr'
+import xhr, { asQueryArgs } from '../net/xhr'
 
 interface JishoJapaneseEntry {
   word?: string
@@ -58,7 +58,7 @@ const searchWord = async (
     keyword: keyword,
     page: page,
   })
-  const resp = await request('get', url)
+  const resp = await xhr.get(url)
   const json: JishoSearchResponseData = (await resp.json()) as JishoSearchResponseData
   return json.data
 }
