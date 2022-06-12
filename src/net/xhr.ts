@@ -38,45 +38,9 @@ export async function request(method: RequestMethod, url: string, opts: RequestI
   return await fetch(url, options)
 }
 
-export async function requestJson(method: RequestMethod, url: string, opts: RequestInit = {}) {
-  const resp = await request(method, url, opts)
-  return await resp.json()
-}
-
-export async function requestText(method: RequestMethod, url: string, opts: RequestInit = {}) {
-  const resp = await request(method, url, opts)
-  return await resp.text()
-}
-
-export async function getText(url: string, opts: RequestInit = {}) {
-  return await requestText('get', url, opts)
-}
-
-export async function postJson(url: string, opts: RequestInit = {}) {
-  return await requestJson('post', url, opts)
-}
-
-export async function patchJson(url: string, opts: RequestInit = {}) {
-  return await requestJson('patch', url, opts)
-}
-
-export async function getJson(url: string, opts: RequestInit = {}) {
-  return await requestJson('get', url, opts)
-}
-
-export async function delJson(url: string, opts: RequestInit = {}) {
-  return await requestJson('delete', url, opts)
-}
-
 export default {
   withHeaders,
   asJson,
   asQueryArgs,
   request,
-  requestJson,
-  requestText,
-  getText,
-  postJson,
-  getJson,
-  delJson,
 }

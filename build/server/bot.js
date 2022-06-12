@@ -55,23 +55,6 @@ async function request(method, url, opts = {}) {
     options.method = method;
     return await fetch(url, options);
 }
-async function requestJson(method, url, opts = {}) {
-    const resp = await request(method, url, opts);
-    return await resp.json();
-}
-async function requestText(method, url, opts = {}) {
-    const resp = await request(method, url, opts);
-    return await resp.text();
-}
-async function getText(url, opts = {}) {
-    return await requestText('get', url, opts);
-}
-async function postJson(url, opts = {}) {
-    return await requestJson('post', url, opts);
-}
-async function getJson(url, opts = {}) {
-    return await requestJson('get', url, opts);
-}
 
 const MS = 1;
 const SECOND = 1000 * MS;
@@ -578,7 +561,8 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
                 try {
                     const url = await doReplacements(m1, command, context, originalCmd, bot, user);
                     // both of getText and JSON.parse can fail, so everything in a single try catch
-                    const txt = await getText(url);
+                    const resp = await request('get', url);
+                    const txt = await resp.text();
                     return String(JSON.parse(txt)[m2]);
                 }
                 catch (e) {
@@ -592,7 +576,8 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
             replacer: async (_m0, m1) => {
                 try {
                     const url = await doReplacements(m1, command, context, originalCmd, bot, user);
-                    return await getText(url);
+                    const resp = await request('get', url);
+                    return await resp.text();
                 }
                 catch (e) {
                     log$p.error(e);
@@ -1417,7 +1402,8 @@ class TwitchHelixClient {
             redirect_uri: redirectUri,
         });
         try {
-            return await postJson(url);
+            const resp = await request('post', url);
+            return (await resp.json());
         }
         catch (e) {
             log$l.error(url, e);
@@ -1432,7 +1418,8 @@ class TwitchHelixClient {
             refresh_token: refreshToken,
         });
         try {
-            return await postJson(url);
+            const resp = await request('post', url);
+            return (await resp.json());
         }
         catch (e) {
             log$l.error(url, e);
@@ -1449,7 +1436,8 @@ class TwitchHelixClient {
         });
         let json;
         try {
-            json = await postJson(url);
+            const resp = await request('post', url);
+            json = (await resp.json());
             return json.access_token;
         }
         catch (e) {
@@ -1464,7 +1452,8 @@ class TwitchHelixClient {
         const url = this._url(`/users`);
         let json;
         try {
-            json = await getJson(url, withHeaders(this._authHeaders(accessToken), {}));
+            const resp = await request('get', url, withHeaders(this._authHeaders(accessToken), {}));
+            json = (await resp.json());
             return json.data[0];
         }
         catch (e) {
@@ -1477,7 +1466,8 @@ class TwitchHelixClient {
         const url = this._url(`/users${asQueryArgs(query)}`);
         let json;
         try {
-            json = await getJson(url, await this.withAuthHeaders());
+            const resp = await request('get', url, await this.withAuthHeaders());
+            json = (await resp.json());
             return json.data[0];
         }
         catch (e) {
@@ -1513,7 +1503,8 @@ class TwitchHelixClient {
         })}`);
         let json;
         try {
-            json = await getJson(url, await this.withAuthHeaders());
+            const resp = await request('get', url, await this.withAuthHeaders());
+            json = (await resp.json());
             const filtered = json.data.filter(item => item.duration <= maxDurationSeconds);
             return filtered[0];
         }
@@ -1536,7 +1527,8 @@ class TwitchHelixClient {
         const url = this._url(`/streams${asQueryArgs({ user_id: userId })}`);
         let json;
         try {
-            json = await getJson(url, await this.withAuthHeaders());
+            const resp = await request('get', url, await this.withAuthHeaders());
+            json = (await resp.json());
             return json.data[0] || null;
         }
         catch (e) {
@@ -1547,7 +1539,8 @@ class TwitchHelixClient {
     async getSubscriptions() {
         const url = this._url('/eventsub/subscriptions');
         try {
-            return await getJson(url, await this.withAuthHeaders());
+            const resp = await request('get', url, await this.withAuthHeaders());
+            return await resp.json();
         }
         catch (e) {
             log$l.error(url, e);
@@ -1557,7 +1550,8 @@ class TwitchHelixClient {
     async deleteSubscription(id) {
         const url = this._url(`/eventsub/subscriptions${asQueryArgs({ id: id })}`);
         try {
-            return await requestText('delete', url, await this.withAuthHeaders());
+            const resp = await request('delete', url, await this.withAuthHeaders());
+            return await resp.text();
         }
         catch (e) {
             log$l.error(url, e);
@@ -1567,7 +1561,8 @@ class TwitchHelixClient {
     async createSubscription(subscription) {
         const url = this._url('/eventsub/subscriptions');
         try {
-            return await postJson(url, await this.withAuthHeaders(asJson(subscription)));
+            const resp = await request('post', url, await this.withAuthHeaders(asJson(subscription)));
+            return (await resp.json());
         }
         catch (e) {
             log$l.error(url, e);
@@ -1579,7 +1574,8 @@ class TwitchHelixClient {
         const url = this._url(`/search/categories${asQueryArgs({ query: searchString })}`);
         let json;
         try {
-            json = await getJson(url, await this.withAuthHeaders());
+            const resp = await request('get', url, await this.withAuthHeaders());
+            json = (await resp.json());
             return getBestEntryFromCategorySearchItems(searchString, json);
         }
         catch (e) {
@@ -1592,7 +1588,8 @@ class TwitchHelixClient {
         const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`);
         let json;
         try {
-            json = await getJson(url, await this.withAuthHeaders());
+            const resp = await request('get', url, await this.withAuthHeaders());
+            json = (await resp.json());
             return json.data[0];
         }
         catch (e) {
@@ -1626,7 +1623,8 @@ class TwitchHelixClient {
             const url = cursor
                 ? this._url(`/tags/streams${asQueryArgs({ after: cursor, first })}`)
                 : this._url(`/tags/streams${asQueryArgs({ first })}`);
-            const json = await getJson(url, await this.withAuthHeaders());
+            const resp = await request('get', url, await this.withAuthHeaders());
+            const json = (await resp.json());
             const entries = json.data;
             allTags.push(...entries);
             cursor = json.pagination.cursor; // is undefined when there are no more pages
@@ -1637,7 +1635,8 @@ class TwitchHelixClient {
     async getStreamTags(broadcasterId) {
         const url = this._url(`/streams/tags${asQueryArgs({ broadcaster_id: broadcasterId })}`);
         try {
-            return await getJson(url, await this.withAuthHeaders());
+            const resp = await request('get', url, await this.withAuthHeaders());
+            return (await resp.json());
         }
         catch (e) {
             log$l.error(url, e);
@@ -4012,7 +4011,8 @@ const countdown = (originalCmd, bot, user) => async (command, client, target, co
 
 const createWord = async (createWordRequestData) => {
     const url = 'https://madochan.hyottoko.club/api/v1/_create_word';
-    const json = (await postJson(url, asJson(createWordRequestData)));
+    const resp = await request('post', url, asJson(createWordRequestData));
+    const json = (await resp.json());
     return json;
 };
 var Madochan = {
@@ -4205,7 +4205,8 @@ const searchWord$1 = async (keyword, page = 1) => {
         keyword: keyword,
         page: page,
     });
-    const json = (await getJson(url));
+    const resp = await request('get', url);
+    const json = (await resp.json());
     return json.data;
 };
 var JishoOrg = {
@@ -4327,7 +4328,8 @@ const searchWord = async (keyword, lang) => {
         return [];
     }
     const url = baseUrl + asQueryArgs({ s: keyword });
-    const text = await getText(url);
+    const resp = await request('get', url);
+    const text = await resp.text();
     return parseResult(text);
 };
 var DictCc = {
@@ -4805,7 +4807,8 @@ class GeneralModule {
 const log$5 = logger('Youtube.ts');
 const get = async (url, args) => {
     args.key = config.modules.sr.google.api_key;
-    return await getJson(url + asQueryArgs(args));
+    const resp = await request('get', url + asQueryArgs(args));
+    return await resp.json();
 };
 const fetchDataByYoutubeId = async (youtubeId) => {
     let json;
@@ -6349,7 +6352,8 @@ class SpeechToTextModule {
                         source: this.data.settings.translation.langSrc,
                         target: this.data.settings.translation.langDst,
                     });
-                    translated = await getText(query);
+                    const resp = await request('get', query);
+                    translated = await resp.text();
                 }
                 this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
                     event: 'text',
@@ -6932,7 +6936,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-06-12T11:10:54.525Z",
+    buildDate: "2022-06-12T11:36:01.902Z",
     // @ts-ignore
     buildVersion: "1.15.1",
 };

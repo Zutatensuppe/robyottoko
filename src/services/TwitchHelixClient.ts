@@ -1,7 +1,7 @@
 import { RequestInit, Response } from 'node-fetch'
 import { logger, SECOND } from '../common/fn'
 import { findIdxFuzzy } from '../fn'
-import { postJson, getJson, asJson, withHeaders, asQueryArgs, requestText, request } from '../net/xhr'
+import { asJson, withHeaders, asQueryArgs, request } from '../net/xhr'
 import { tryRefreshAccessToken } from '../oauth'
 import { Bot } from '../types'
 import Cache from './Cache'
@@ -251,7 +251,8 @@ class TwitchHelixClient {
       redirect_uri: redirectUri,
     })
     try {
-      return await postJson(url) as TwitchHelixOauthTokenResponseData
+      const resp = await request('post', url)
+      return (await resp.json()) as TwitchHelixOauthTokenResponseData
     } catch (e) {
       log.error(url, e)
       return null
@@ -266,7 +267,8 @@ class TwitchHelixClient {
       refresh_token: refreshToken,
     })
     try {
-      return await postJson(url) as TwitchHelixOauthTokenResponseData
+      const resp = await request('post', url)
+      return (await resp.json()) as TwitchHelixOauthTokenResponseData
     } catch (e) {
       log.error(url, e)
       return null
@@ -283,7 +285,8 @@ class TwitchHelixClient {
     })
     let json
     try {
-      json = await postJson(url) as TwitchHelixOauthTokenResponseData
+      const resp = await request('post', url)
+      json = (await resp.json()) as TwitchHelixOauthTokenResponseData
       return json.access_token
     } catch (e) {
       log.error(url, json, e)
@@ -299,7 +302,8 @@ class TwitchHelixClient {
     const url = this._url(`/users`)
     let json
     try {
-      json = await getJson(url, withHeaders(this._authHeaders(accessToken), {})) as TwitchHelixUserSearchResponseData
+      const resp = await request('get', url, withHeaders(this._authHeaders(accessToken), {}))
+      json = (await resp.json()) as TwitchHelixUserSearchResponseData
       return json.data[0]
     } catch (e) {
       log.error(url, json, e)
@@ -312,7 +316,8 @@ class TwitchHelixClient {
     const url = this._url(`/users${asQueryArgs(query)}`)
     let json
     try {
-      json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixUserSearchResponseData
+      const resp = await request('get', url, await this.withAuthHeaders())
+      json = (await resp.json()) as TwitchHelixUserSearchResponseData
       return json.data[0]
     } catch (e) {
       log.error(url, json, e)
@@ -357,7 +362,8 @@ class TwitchHelixClient {
     })}`)
     let json
     try {
-      json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixClipSearchResponseData
+      const resp = await request('get', url, await this.withAuthHeaders())
+      json = (await resp.json()) as TwitchHelixClipSearchResponseData
       const filtered = json.data.filter(item => item.duration <= maxDurationSeconds)
       return filtered[0]
     } catch (e) {
@@ -381,7 +387,8 @@ class TwitchHelixClient {
     const url = this._url(`/streams${asQueryArgs({ user_id: userId })}`)
     let json
     try {
-      json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixStreamSearchResponseData
+      const resp = await request('get', url, await this.withAuthHeaders())
+      json = (await resp.json()) as TwitchHelixStreamSearchResponseData
       return json.data[0] || null
     } catch (e) {
       log.error(url, json, e)
@@ -392,7 +399,8 @@ class TwitchHelixClient {
   async getSubscriptions() {
     const url = this._url('/eventsub/subscriptions')
     try {
-      return await getJson(url, await this.withAuthHeaders())
+      const resp = await request('get', url, await this.withAuthHeaders())
+      return await resp.json()
     } catch (e) {
       log.error(url, e)
       return null
@@ -402,7 +410,8 @@ class TwitchHelixClient {
   async deleteSubscription(id: string) {
     const url = this._url(`/eventsub/subscriptions${asQueryArgs({ id: id })}`)
     try {
-      return await requestText('delete', url, await this.withAuthHeaders())
+      const resp = await request('delete', url, await this.withAuthHeaders())
+      return await resp.text()
     } catch (e) {
       log.error(url, e)
       return null
@@ -412,7 +421,8 @@ class TwitchHelixClient {
   async createSubscription(subscription: TwitchHelixSubscription) {
     const url = this._url('/eventsub/subscriptions')
     try {
-      return await postJson(url, await this.withAuthHeaders(asJson(subscription)))
+      const resp = await request('post', url, await this.withAuthHeaders(asJson(subscription)))
+      return (await resp.json())
     } catch (e) {
       log.error(url, e)
       return null
@@ -424,7 +434,8 @@ class TwitchHelixClient {
     const url = this._url(`/search/categories${asQueryArgs({ query: searchString })}`)
     let json
     try {
-      json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixCategorySearchResponseData
+      const resp = await request('get', url, await this.withAuthHeaders())
+      json = (await resp.json()) as TwitchHelixCategorySearchResponseData
       return getBestEntryFromCategorySearchItems(searchString, json)
     } catch (e) {
       log.error(url, json)
@@ -437,7 +448,8 @@ class TwitchHelixClient {
     const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`)
     let json
     try {
-      json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixGetChannelInformationResponseData
+      const resp = await request('get', url, await this.withAuthHeaders())
+      json = (await resp.json()) as TwitchHelixGetChannelInformationResponseData
       return json.data[0]
     } catch (e) {
       log.error(url, json)
@@ -477,7 +489,8 @@ class TwitchHelixClient {
       const url = cursor
         ? this._url(`/tags/streams${asQueryArgs({ after: cursor, first })}`)
         : this._url(`/tags/streams${asQueryArgs({ first })}`)
-      const json = await getJson(url, await this.withAuthHeaders()) as TwitchHelixGetStreamTagsResponseData
+      const resp = await request('get', url, await this.withAuthHeaders())
+      const json = (await resp.json()) as TwitchHelixGetStreamTagsResponseData
       const entries = json.data
       allTags.push(...entries)
       cursor = json.pagination.cursor // is undefined when there are no more pages
@@ -489,7 +502,8 @@ class TwitchHelixClient {
   async getStreamTags(broadcasterId: string) {
     const url = this._url(`/streams/tags${asQueryArgs({ broadcaster_id: broadcasterId })}`)
     try {
-      return await getJson(url, await this.withAuthHeaders()) as TwitchHelixGetStreamTagsResponseData
+      const resp = await request('get', url, await this.withAuthHeaders())
+      return (await resp.json()) as TwitchHelixGetStreamTagsResponseData
     } catch (e) {
       log.error(url, e)
       return null
