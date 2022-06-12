@@ -144,21 +144,24 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { TwitchChannel } from "../../services/TwitchChannels";
+import { User } from "../../services/Users";
 import api from "../api";
 
 interface ComponentData {
-  unchangedJson: string;
-  changedJson: string;
+  unchangedJson: string
+  changedJson: string
   user: {
-    id: number;
-    name: string;
-    email: string;
-    pass: string;
-    groups: string[];
-    tmi_identity_client_id: string;
-    tmi_identity_client_secret: string;
+    id: number
+    name: string
+    email: string
+    pass: string
+    groups: string[]
+    tmi_identity_client_id: string
+    tmi_identity_client_secret: string
+    tmi_identity_password: string
+    tmi_identity_username: string
   };
-  twitch_channels: TwitchChannel[];
+  twitch_channels: TwitchChannel[]
 }
 
 export default defineComponent({
@@ -173,6 +176,8 @@ export default defineComponent({
       groups: [],
       tmi_identity_client_id: "",
       tmi_identity_client_secret: "",
+      tmi_identity_password: "",
+      tmi_identity_username: "",
     },
     twitch_channels: [],
   }),
