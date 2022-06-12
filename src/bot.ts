@@ -40,14 +40,11 @@ const modules = [
   PomoModule,
 ]
 
-const run = async () => {
+const createBot = async (): Promise<Bot> => {
   const db = new Db(config.db.connectStr, config.db.patchesDir)
   await db.connect()
   await db.patch()
 
-  // const db = new Db(config.db)
-  // // make sure we are always on latest db version
-  // db.patch(false)
   const userRepo = new Users(db)
   const tokenRepo = new Tokens(db)
   const twitchChannelRepo = new TwitchChannels(db)
@@ -55,7 +52,6 @@ const run = async () => {
   const auth = new Auth(userRepo, tokenRepo)
   const mail = new Mail(config.mail)
   const widgets = new Widgets(config.http.url, db, tokenRepo)
-
   const eventHub = mitt()
   const moduleManager = new ModuleManager()
   const webSocketServer = new WebSocketServer(config.ws)
@@ -113,148 +109,151 @@ const run = async () => {
       return this.userTwitchClientManagerInstances[user.id]
     }
   }
-  const bot = new BotImpl()
+  return new BotImpl()
+}
 
-  // this function may only be called once per user!
-  // changes to user will be handled by user_changed event
-  const initForUser = async (user: User) => {
-    const clientManager = bot.getUserTwitchClientManager(user)
-    await clientManager.init('init')
-    for (const moduleClass of modules) {
-      moduleManager.add(user.id, await new moduleClass(bot, user))
+// this function may only be called once per user!
+// changes to user will be handled by user_changed event
+const initForUser = async (bot: Bot, user: User) => {
+  const clientManager = bot.getUserTwitchClientManager(user)
+  await clientManager.init('init')
+  for (const moduleClass of modules) {
+    bot.getModuleManager().add(user.id, await new moduleClass(bot, user))
+  }
+
+  let updateUserFrontendStatusTimeout: NodeJS.Timeout | null = null
+  const updateUserFrontendStatus = async (): Promise<NodeJS.Timeout> => {
+    if (updateUserFrontendStatusTimeout) {
+      clearTimeout(updateUserFrontendStatusTimeout)
+      updateUserFrontendStatusTimeout = null
+    }
+    const client = clientManager.getHelixClient()
+    if (!client) {
+      return setTimeout(updateUserFrontendStatus, 5 * SECOND)
     }
 
-    let updateUserFrontendStatusTimeout: NodeJS.Timeout | null = null
-    const updateUserFrontendStatus = async (): Promise<NodeJS.Timeout> => {
-      if (updateUserFrontendStatusTimeout) {
-        clearTimeout(updateUserFrontendStatusTimeout)
-        updateUserFrontendStatusTimeout = null
-      }
-      const client = clientManager.getHelixClient()
-      if (!client) {
-        return setTimeout(updateUserFrontendStatus, 5 * SECOND)
-      }
-
-      // status for the user that should show in frontend
-      // (eg. problems with their settings)
-      // this only is relevant if the user is at the moment connected
-      // to a websocket
-      if (!webSocketServer.isUserConnected(user.id)) {
-        return setTimeout(updateUserFrontendStatus, 5 * SECOND)
-      }
-      const problems = []
-      const twitchChannels = await twitchChannelRepo.allByUserId(user.id)
-      for (const twitchChannel of twitchChannels) {
-        const result = await refreshExpiredTwitchChannelAccessToken(
-          twitchChannel,
-          bot,
-          user,
-        )
-        if (result.error) {
-          log.error('Unable to validate or refresh OAuth token.')
-          log.error(`user: ${user.name}, channel: ${twitchChannel.channel_name}, error: ${result.error}`)
-          problems.push({
-            message: 'access_token_invalid',
-            details: {
-              channel_name: twitchChannel.channel_name,
-            },
-          })
-        } else if (result.refreshed) {
-          const changedUser = await bot.getUsers().getById(user.id)
-          if (changedUser) {
-            eventHub.emit('access_token_refreshed', changedUser)
-          } else {
-            log.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`)
-          }
-        }
-      }
-
-      const data = { event: 'status', data: { problems } }
-      webSocketServer.notifyAll([user.id], 'core', data)
-      return setTimeout(updateUserFrontendStatus, 1 * MINUTE)
+    // status for the user that should show in frontend
+    // (eg. problems with their settings)
+    // this only is relevant if the user is at the moment connected
+    // to a websocket
+    if (!bot.getWebSocketServer().isUserConnected(user.id)) {
+      return setTimeout(updateUserFrontendStatus, 5 * SECOND)
     }
-    updateUserFrontendStatusTimeout = await updateUserFrontendStatus()
-
-    let updateUserStreamStatusTimeout: NodeJS.Timeout | null = null
-    const updateUserStreamStatus = async (): Promise<NodeJS.Timeout> => {
-      if (updateUserStreamStatusTimeout) {
-        clearTimeout(updateUserStreamStatusTimeout)
-        updateUserStreamStatusTimeout = null
-      }
-      const client = clientManager.getHelixClient()
-      if (!client) {
-        return setTimeout(updateUserFrontendStatus, 5 * SECOND)
-      }
-      const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id)
-      for (const twitchChannel of twitchChannels) {
-        if (twitchChannel.channel_id) {
-          const stream = await client.getStreamByUserId(twitchChannel.channel_id)
-          twitchChannelRepo.setStreaming(!!stream, { user_id: user.id, channel_id: twitchChannel.channel_id })
-          continue
+    const problems = []
+    const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id)
+    for (const twitchChannel of twitchChannels) {
+      const result = await refreshExpiredTwitchChannelAccessToken(
+        twitchChannel,
+        bot,
+        user,
+      )
+      if (result.error) {
+        log.error('Unable to validate or refresh OAuth token.')
+        log.error(`user: ${user.name}, channel: ${twitchChannel.channel_name}, error: ${result.error}`)
+        problems.push({
+          message: 'access_token_invalid',
+          details: {
+            channel_name: twitchChannel.channel_name,
+          },
+        })
+      } else if (result.refreshed) {
+        const changedUser = await bot.getUsers().getById(user.id)
+        if (changedUser) {
+          bot.getEventHub().emit('access_token_refreshed', changedUser)
+        } else {
+          log.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`)
         }
-        const channelId = await client.getUserIdByNameCached(twitchChannel.channel_name, cache)
+      }
+    }
+
+    const data = { event: 'status', data: { problems } }
+    bot.getWebSocketServer().notifyAll([user.id], 'core', data)
+    return setTimeout(updateUserFrontendStatus, 1 * MINUTE)
+  }
+  updateUserFrontendStatusTimeout = await updateUserFrontendStatus()
+
+  let updateUserStreamStatusTimeout: NodeJS.Timeout | null = null
+  const updateUserStreamStatus = async (): Promise<NodeJS.Timeout> => {
+    if (updateUserStreamStatusTimeout) {
+      clearTimeout(updateUserStreamStatusTimeout)
+      updateUserStreamStatusTimeout = null
+    }
+    const client = clientManager.getHelixClient()
+    if (!client) {
+      return setTimeout(updateUserFrontendStatus, 5 * SECOND)
+    }
+    const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id)
+    for (const twitchChannel of twitchChannels) {
+      if (!twitchChannel.channel_id) {
+        const channelId = await client.getUserIdByNameCached(twitchChannel.channel_name, bot.getCache())
         if (!channelId) {
           continue
         }
-        const stream = await client.getStreamByUserId(channelId)
-        twitchChannelRepo.setStreaming(!!stream, { user_id: user.id, channel_name: twitchChannel.channel_name })
+        twitchChannel.channel_id = channelId
       }
-      return setTimeout(updateUserStreamStatus, 5 * MINUTE)
+      const stream = await client.getStreamByUserId(twitchChannel.channel_id)
+      twitchChannel.is_streaming = !!stream
+      bot.getTwitchChannels().save(twitchChannel)
     }
-    updateUserStreamStatusTimeout = await updateUserStreamStatus()
-
-    eventHub.on('wss_user_connected', async (socket: any /* Socket */) => {
-      if (socket.user_id === user.id && socket.module === 'core') {
-        updateUserFrontendStatusTimeout = await updateUserFrontendStatus()
-        updateUserStreamStatusTimeout = await updateUserStreamStatus()
-      }
-    })
-    eventHub.on('access_token_refreshed', async (changedUser: any /* User */) => {
-      if (changedUser.id === user.id) {
-        await clientManager.accessTokenRefreshed(changedUser)
-        updateUserFrontendStatusTimeout = await updateUserFrontendStatus()
-        updateUserStreamStatusTimeout = await updateUserStreamStatus()
-        for (const mod of moduleManager.all(user.id)) {
-          await mod.userChanged(changedUser)
-        }
-      }
-    })
-    eventHub.on('user_changed', async (changedUser: any /* User */) => {
-      if (changedUser.id === user.id) {
-        await clientManager.userChanged(changedUser)
-        updateUserFrontendStatusTimeout = await updateUserFrontendStatus()
-        updateUserStreamStatusTimeout = await updateUserStreamStatus()
-        for (const mod of moduleManager.all(user.id)) {
-          await mod.userChanged(changedUser)
-        }
-      }
-    })
+    return setTimeout(updateUserStreamStatus, 5 * MINUTE)
   }
+  updateUserStreamStatusTimeout = await updateUserStreamStatus()
+
+  bot.getEventHub().on('wss_user_connected', async (socket: any /* Socket */) => {
+    if (socket.user_id === user.id && socket.module === 'core') {
+      updateUserFrontendStatusTimeout = await updateUserFrontendStatus()
+      updateUserStreamStatusTimeout = await updateUserStreamStatus()
+    }
+  })
+  bot.getEventHub().on('access_token_refreshed', async (changedUser: any /* User */) => {
+    if (changedUser.id === user.id) {
+      await clientManager.accessTokenRefreshed(changedUser)
+      updateUserFrontendStatusTimeout = await updateUserFrontendStatus()
+      updateUserStreamStatusTimeout = await updateUserStreamStatus()
+      for (const mod of bot.getModuleManager().all(user.id)) {
+        await mod.userChanged(changedUser)
+      }
+    }
+  })
+  bot.getEventHub().on('user_changed', async (changedUser: any /* User */) => {
+    if (changedUser.id === user.id) {
+      await clientManager.userChanged(changedUser)
+      updateUserFrontendStatusTimeout = await updateUserFrontendStatus()
+      updateUserStreamStatusTimeout = await updateUserStreamStatus()
+      for (const mod of bot.getModuleManager().all(user.id)) {
+        await mod.userChanged(changedUser)
+      }
+    }
+  })
+}
+
+const run = async () => {
+  const bot = await createBot()
 
   // one for each user
   for (const user of await bot.getUsers().all()) {
-    await initForUser(user)
+    await initForUser(bot, user)
   }
 
-  eventHub.on('user_registration_complete', async (user: any /* User */) => {
-    await initForUser(user)
+  bot.getEventHub().on('user_registration_complete', async (user: any /* User */) => {
+    await initForUser(bot, user)
   })
 
   // as the last step, start websocketserver and webserver
   // it needs to be the last step, because modules etc.
   // need to be set up in advance so that everything is registered
   // at the point of connection from outside
-  webSocketServer.listen(bot)
-  await webServer.listen(bot)
+  bot.getWebSocketServer().listen(bot)
+  await bot.getWebServer().listen(bot)
 
   const gracefulShutdown = (signal: 'SIGUSR2' | 'SIGINT' | 'SIGTERM') => {
     log.info(`${signal} received...`)
 
     log.info('shutting down webserver...')
-    webServer.close()
+    bot.getWebServer().close()
 
     log.info('shutting down websocketserver...')
-    webSocketServer.close()
+    bot.getWebSocketServer().close()
 
     log.info('shutting down...')
     process.exit()

@@ -1,4 +1,4 @@
-import Db, { WhereRaw } from "../DbPostgres"
+import Db from "../DbPostgres"
 
 const TABLE = 'robyottoko.twitch_channel'
 
@@ -8,6 +8,7 @@ export interface TwitchChannel {
   channel_id: string
   access_token: string | null
   bot_status_messages: number
+  is_streaming: boolean
 }
 
 export interface TwitchChannelWithAccessToken {
@@ -16,6 +17,7 @@ export interface TwitchChannelWithAccessToken {
   channel_id: string
   access_token: string
   bot_status_messages: number
+  is_streaming: boolean
 }
 
 interface UpdateTwitchChannel {
@@ -24,6 +26,7 @@ interface UpdateTwitchChannel {
   channel_id?: string
   access_token?: string
   bot_status_messages?: number
+  is_streaming?: boolean
 }
 
 class TwitchChannels {
@@ -38,10 +41,6 @@ class TwitchChannels {
       user_id: channel.user_id,
       channel_name: channel.channel_name,
     })
-  }
-
-  async setStreaming(streaming: boolean, where: WhereRaw): Promise<void> {
-    this.db.update(TABLE, { is_streaming: streaming }, where)
   }
 
   async countUniqueUsersStreaming(): Promise<number> {

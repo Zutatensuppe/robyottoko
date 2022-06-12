@@ -1,6 +1,6 @@
 import config from './config'
 import crypto from 'crypto'
-import { getText } from './net/xhr'
+import xhr from './net/xhr'
 import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, nonce } from './common/fn'
 
 import { Command, GlobalVariable, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module, CommandTrigger, Bot } from './types'
@@ -336,7 +336,8 @@ export const doReplacements = async (
         try {
           const url = await doReplacements(m1, command, context, originalCmd, bot, user)
           // both of getText and JSON.parse can fail, so everything in a single try catch
-          const txt = await getText(url)
+          const resp = await xhr.get(url)
+          const txt = await resp.text()
           return String(JSON.parse(txt)[m2])
         } catch (e: any) {
           log.error(e)
@@ -349,7 +350,8 @@ export const doReplacements = async (
       replacer: async (_m0: string, m1: string): Promise<string> => {
         try {
           const url = await doReplacements(m1, command, context, originalCmd, bot, user)
-          return await getText(url)
+          const resp = await xhr.get(url)
+          return await resp.text()
         } catch (e: any) {
           log.error(e)
           return ''

@@ -50,28 +50,21 @@ function asQueryArgs(data) {
     }
     return `?${q.join('&')}`;
 }
-async function request(method, url, opts = {}) {
+const request = async (method, url, opts = {}) => {
     const options = opts || {};
     options.method = method;
     return await fetch(url, options);
-}
-async function requestJson(method, url, opts = {}) {
-    const resp = await request(method, url, opts);
-    return await resp.json();
-}
-async function requestText(method, url, opts = {}) {
-    const resp = await request(method, url, opts);
-    return await resp.text();
-}
-async function getText(url, opts = {}) {
-    return await requestText('get', url, opts);
-}
-async function postJson(url, opts = {}) {
-    return await requestJson('post', url, opts);
-}
-async function getJson(url, opts = {}) {
-    return await requestJson('get', url, opts);
-}
+};
+var xhr = {
+    withHeaders,
+    asJson,
+    asQueryArgs,
+    get: async (url, opts = {}) => request('get', url, opts),
+    post: async (url, opts = {}) => request('post', url, opts),
+    delete: async (url, opts = {}) => request('delete', url, opts),
+    patch: async (url, opts = {}) => request('patch', url, opts),
+    put: async (url, opts = {}) => request('put', url, opts),
+};
 
 const MS = 1;
 const SECOND = 1000 * MS;
@@ -578,7 +571,8 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
                 try {
                     const url = await doReplacements(m1, command, context, originalCmd, bot, user);
                     // both of getText and JSON.parse can fail, so everything in a single try catch
-                    const txt = await getText(url);
+                    const resp = await xhr.get(url);
+                    const txt = await resp.text();
                     return String(JSON.parse(txt)[m2]);
                 }
                 catch (e) {
@@ -592,7 +586,8 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
             replacer: async (_m0, m1) => {
                 try {
                     const url = await doReplacements(m1, command, context, originalCmd, bot, user);
-                    return await getText(url);
+                    const resp = await xhr.get(url);
+                    return await resp.text();
                 }
                 catch (e) {
                     log$p.error(e);
@@ -1368,6 +1363,8 @@ const createRouter$3 = (templates, configTwitch, baseUrl, bot) => {
 
 const log$l = logger('TwitchHelixClient.ts');
 const API_BASE = 'https://api.twitch.tv/helix';
+const TOKEN_ENDPOINT = 'https://id.twitch.tv/oauth2/token';
+const apiUrl = (path) => `${API_BASE}${path}`;
 function getBestEntryFromCategorySearchItems(searchString, resp) {
     const idx = findIdxFuzzy(resp.data, searchString, (item) => item.name);
     return idx === -1 ? null : resp.data[idx];
@@ -1396,8 +1393,8 @@ class TwitchHelixClient {
             'Authorization': `Bearer ${accessToken}`,
         };
     }
-    async withAuthHeaders(opts = {}, scopes = []) {
-        const accessToken = await this.getAccessToken(scopes);
+    async withAuthHeaders(opts = {}) {
+        const accessToken = await this.getAccessToken();
         return withHeaders(this._authHeaders(accessToken), opts);
     }
     _oauthAccessTokenByBroadcasterId(broadcasterId) {
@@ -1409,15 +1406,16 @@ class TwitchHelixClient {
         return null;
     }
     async getAccessTokenByCode(code, redirectUri) {
-        const url = `https://id.twitch.tv/oauth2/token` + asQueryArgs({
+        const url = TOKEN_ENDPOINT + asQueryArgs({
             client_id: this.clientId,
             client_secret: this.clientSecret,
-            code,
             grant_type: 'authorization_code',
+            code,
             redirect_uri: redirectUri,
         });
         try {
-            return await postJson(url);
+            const resp = await xhr.post(url);
+            return (await resp.json());
         }
         catch (e) {
             log$l.error(url, e);
@@ -1425,14 +1423,15 @@ class TwitchHelixClient {
         }
     }
     async refreshOAuthToken(refreshToken) {
-        const url = `https://id.twitch.tv/oauth2/token` + asQueryArgs({
+        const url = TOKEN_ENDPOINT + asQueryArgs({
             client_id: this.clientId,
             client_secret: this.clientSecret,
             grant_type: 'refresh_token',
             refresh_token: refreshToken,
         });
         try {
-            return await postJson(url);
+            const resp = await xhr.post(url);
+            return (await resp.json());
         }
         catch (e) {
             log$l.error(url, e);
@@ -1440,16 +1439,16 @@ class TwitchHelixClient {
         }
     }
     // https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/
-    async getAccessToken(scopes = []) {
-        const url = `https://id.twitch.tv/oauth2/token` + asQueryArgs({
+    async getAccessToken() {
+        const url = TOKEN_ENDPOINT + asQueryArgs({
             client_id: this.clientId,
             client_secret: this.clientSecret,
             grant_type: 'client_credentials',
-            scope: scopes.join(' '),
         });
         let json;
         try {
-            json = await postJson(url);
+            const resp = await xhr.post(url);
+            json = (await resp.json());
             return json.access_token;
         }
         catch (e) {
@@ -1457,14 +1456,12 @@ class TwitchHelixClient {
             return '';
         }
     }
-    _url(path) {
-        return `${API_BASE}${path}`;
-    }
     async getUser(accessToken) {
-        const url = this._url(`/users`);
+        const url = apiUrl(`/users`);
         let json;
         try {
-            json = await getJson(url, withHeaders(this._authHeaders(accessToken), {}));
+            const resp = await xhr.get(url, withHeaders(this._authHeaders(accessToken), {}));
+            json = (await resp.json());
             return json.data[0];
         }
         catch (e) {
@@ -1474,10 +1471,11 @@ class TwitchHelixClient {
     }
     // https://dev.twitch.tv/docs/api/reference#get-users
     async _getUserBy(query) {
-        const url = this._url(`/users${asQueryArgs(query)}`);
+        const url = apiUrl('/users') + asQueryArgs(query);
         let json;
         try {
-            json = await getJson(url, await this.withAuthHeaders());
+            const resp = await xhr.get(url, await this.withAuthHeaders());
+            json = (await resp.json());
             return json.data[0];
         }
         catch (e) {
@@ -1506,14 +1504,15 @@ class TwitchHelixClient {
     }
     // https://dev.twitch.tv/docs/api/reference#get-clips
     async getClipByUserId(userId, startedAtRfc3339, endedAtRfc3339, maxDurationSeconds) {
-        const url = this._url(`/clips${asQueryArgs({
+        const url = apiUrl('/clips') + asQueryArgs({
             broadcaster_id: userId,
             started_at: startedAtRfc3339,
             ended_at: endedAtRfc3339,
-        })}`);
+        });
         let json;
         try {
-            json = await getJson(url, await this.withAuthHeaders());
+            const resp = await xhr.get(url, await this.withAuthHeaders());
+            json = (await resp.json());
             const filtered = json.data.filter(item => item.duration <= maxDurationSeconds);
             return filtered[0];
         }
@@ -1533,10 +1532,11 @@ class TwitchHelixClient {
     }
     // https://dev.twitch.tv/docs/api/reference#get-streams
     async getStreamByUserId(userId) {
-        const url = this._url(`/streams${asQueryArgs({ user_id: userId })}`);
+        const url = apiUrl('/streams') + asQueryArgs({ user_id: userId });
         let json;
         try {
-            json = await getJson(url, await this.withAuthHeaders());
+            const resp = await xhr.get(url, await this.withAuthHeaders());
+            json = (await resp.json());
             return json.data[0] || null;
         }
         catch (e) {
@@ -1545,9 +1545,10 @@ class TwitchHelixClient {
         }
     }
     async getSubscriptions() {
-        const url = this._url('/eventsub/subscriptions');
+        const url = apiUrl('/eventsub/subscriptions');
         try {
-            return await getJson(url, await this.withAuthHeaders());
+            const resp = await xhr.get(url, await this.withAuthHeaders());
+            return await resp.json();
         }
         catch (e) {
             log$l.error(url, e);
@@ -1555,9 +1556,10 @@ class TwitchHelixClient {
         }
     }
     async deleteSubscription(id) {
-        const url = this._url(`/eventsub/subscriptions${asQueryArgs({ id: id })}`);
+        const url = apiUrl('/eventsub/subscriptions') + asQueryArgs({ id: id });
         try {
-            return await requestText('delete', url, await this.withAuthHeaders());
+            const resp = await xhr.delete(url, await this.withAuthHeaders());
+            return await resp.text();
         }
         catch (e) {
             log$l.error(url, e);
@@ -1565,9 +1567,10 @@ class TwitchHelixClient {
         }
     }
     async createSubscription(subscription) {
-        const url = this._url('/eventsub/subscriptions');
+        const url = apiUrl('/eventsub/subscriptions');
         try {
-            return await postJson(url, await this.withAuthHeaders(asJson(subscription)));
+            const resp = await xhr.post(url, await this.withAuthHeaders(asJson(subscription)));
+            return await resp.json();
         }
         catch (e) {
             log$l.error(url, e);
@@ -1576,10 +1579,11 @@ class TwitchHelixClient {
     }
     // https://dev.twitch.tv/docs/api/reference#search-categories
     async searchCategory(searchString) {
-        const url = this._url(`/search/categories${asQueryArgs({ query: searchString })}`);
+        const url = apiUrl('/search/categories') + asQueryArgs({ query: searchString });
         let json;
         try {
-            json = await getJson(url, await this.withAuthHeaders());
+            const resp = await xhr.get(url, await this.withAuthHeaders());
+            json = (await resp.json());
             return getBestEntryFromCategorySearchItems(searchString, json);
         }
         catch (e) {
@@ -1589,10 +1593,11 @@ class TwitchHelixClient {
     }
     // https://dev.twitch.tv/docs/api/reference#get-channel-information
     async getChannelInformation(broadcasterId) {
-        const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`);
+        const url = apiUrl('/channels') + asQueryArgs({ broadcaster_id: broadcasterId });
         let json;
         try {
-            json = await getJson(url, await this.withAuthHeaders());
+            const resp = await xhr.get(url, await this.withAuthHeaders());
+            json = (await resp.json());
             return json.data[0];
         }
         catch (e) {
@@ -1606,9 +1611,9 @@ class TwitchHelixClient {
         if (!accessToken) {
             return null;
         }
-        const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`);
+        const url = apiUrl('/channels') + asQueryArgs({ broadcaster_id: broadcasterId });
         const req = async (token) => {
-            return await request('patch', url, withHeaders(this._authHeaders(token), asJson(data)));
+            return await xhr.patch(url, withHeaders(this._authHeaders(token), asJson(data)));
         };
         try {
             return await executeRequestWithRetry(accessToken, req, bot, user);
@@ -1623,10 +1628,9 @@ class TwitchHelixClient {
         let cursor = null;
         const first = 100;
         do {
-            const url = cursor
-                ? this._url(`/tags/streams${asQueryArgs({ after: cursor, first })}`)
-                : this._url(`/tags/streams${asQueryArgs({ first })}`);
-            const json = await getJson(url, await this.withAuthHeaders());
+            const url = apiUrl('/tags/streams') + asQueryArgs(cursor ? { after: cursor, first } : { first });
+            const resp = await xhr.get(url, await this.withAuthHeaders());
+            const json = (await resp.json());
             const entries = json.data;
             allTags.push(...entries);
             cursor = json.pagination.cursor; // is undefined when there are no more pages
@@ -1635,9 +1639,10 @@ class TwitchHelixClient {
     }
     // https://dev.twitch.tv/docs/api/reference#get-stream-tags
     async getStreamTags(broadcasterId) {
-        const url = this._url(`/streams/tags${asQueryArgs({ broadcaster_id: broadcasterId })}`);
+        const url = apiUrl('/streams/tags') + asQueryArgs({ broadcaster_id: broadcasterId });
         try {
-            return await getJson(url, await this.withAuthHeaders());
+            const resp = await xhr.get(url, await this.withAuthHeaders());
+            return (await resp.json());
         }
         catch (e) {
             log$l.error(url, e);
@@ -1650,9 +1655,9 @@ class TwitchHelixClient {
         if (!accessToken) {
             return null;
         }
-        const url = this._url(`/channel_points/custom_rewards${asQueryArgs({ broadcaster_id: broadcasterId })}`);
+        const url = apiUrl('/channel_points/custom_rewards') + asQueryArgs({ broadcaster_id: broadcasterId });
         const req = async (token) => {
-            return await request('get', url, withHeaders(this._authHeaders(token)));
+            return await xhr.get(url, withHeaders(this._authHeaders(token)));
         };
         try {
             const resp = await executeRequestWithRetry(accessToken, req, bot, user);
@@ -1683,9 +1688,9 @@ class TwitchHelixClient {
         if (!accessToken) {
             return null;
         }
-        const url = this._url(`/streams/tags${asQueryArgs({ broadcaster_id: broadcasterId })}`);
+        const url = apiUrl('/streams/tags') + asQueryArgs({ broadcaster_id: broadcasterId });
         const req = async (token) => {
-            return await request('put', url, withHeaders(this._authHeaders(token), asJson({ tag_ids: tagIds })));
+            return await xhr.put(url, withHeaders(this._authHeaders(token), asJson({ tag_ids: tagIds })));
         };
         try {
             return await executeRequestWithRetry(accessToken, req, bot, user);
@@ -1696,10 +1701,10 @@ class TwitchHelixClient {
         }
     }
     async validateOAuthToken(broadcasterId, accessToken) {
-        const url = this._url(`/channels${asQueryArgs({ broadcaster_id: broadcasterId })}`);
+        const url = apiUrl('/channels') + asQueryArgs({ broadcaster_id: broadcasterId });
         let json;
         try {
-            const resp = await request('get', url, withHeaders(this._authHeaders(accessToken)));
+            const resp = await xhr.get(url, withHeaders(this._authHeaders(accessToken)));
             const json = (await resp.json());
             return { valid: json.data[0] ? true : false, data: json };
         }
@@ -3493,9 +3498,6 @@ class TwitchChannels {
             channel_name: channel.channel_name,
         });
     }
-    async setStreaming(streaming, where) {
-        this.db.update(TABLE$1, { is_streaming: streaming }, where);
-    }
     async countUniqueUsersStreaming() {
         const channels = await this.db.getMany(TABLE$1, { is_streaming: true });
         const userIds = [...new Set(channels.map(c => c.user_id))];
@@ -4015,7 +4017,8 @@ const countdown = (originalCmd, bot, user) => async (command, client, target, co
 
 const createWord = async (createWordRequestData) => {
     const url = 'https://madochan.hyottoko.club/api/v1/_create_word';
-    const json = (await postJson(url, asJson(createWordRequestData)));
+    const resp = await xhr.post(url, asJson(createWordRequestData));
+    const json = (await resp.json());
     return json;
 };
 var Madochan = {
@@ -4208,7 +4211,8 @@ const searchWord$1 = async (keyword, page = 1) => {
         keyword: keyword,
         page: page,
     });
-    const json = (await getJson(url));
+    const resp = await xhr.get(url);
+    const json = (await resp.json());
     return json.data;
 };
 var JishoOrg = {
@@ -4330,7 +4334,8 @@ const searchWord = async (keyword, lang) => {
         return [];
     }
     const url = baseUrl + asQueryArgs({ s: keyword });
-    const text = await getText(url);
+    const resp = await xhr.get(url);
+    const text = await resp.text();
     return parseResult(text);
 };
 var DictCc = {
@@ -4808,7 +4813,8 @@ class GeneralModule {
 const log$5 = logger('Youtube.ts');
 const get = async (url, args) => {
     args.key = config.modules.sr.google.api_key;
-    return await getJson(url + asQueryArgs(args));
+    const resp = await xhr.get(url + asQueryArgs(args));
+    return await resp.json();
 };
 const fetchDataByYoutubeId = async (youtubeId) => {
     let json;
@@ -6352,7 +6358,8 @@ class SpeechToTextModule {
                         source: this.data.settings.translation.langSrc,
                         target: this.data.settings.translation.langDst,
                     });
-                    translated = await getText(query);
+                    const resp = await xhr.get(query);
+                    translated = await resp.text();
                 }
                 this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
                     event: 'text',
@@ -6935,9 +6942,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-06-11T21:53:52.135Z",
+    buildDate: "2022-06-12T12:22:06.307Z",
     // @ts-ignore
-    buildVersion: "1.15.0",
+    buildVersion: "1.15.1",
 };
 
 const widgets = [
@@ -7077,13 +7084,10 @@ const modules = [
     AvatarModule,
     PomoModule,
 ];
-const run = async () => {
+const createBot = async () => {
     const db = new Db(config.db.connectStr, config.db.patchesDir);
     await db.connect();
     await db.patch();
-    // const db = new Db(config.db)
-    // // make sure we are always on latest db version
-    // db.patch(false)
     const userRepo = new Users(db);
     const tokenRepo = new Tokens(db);
     const twitchChannelRepo = new TwitchChannels(db);
@@ -7137,134 +7141,136 @@ const run = async () => {
             return this.userTwitchClientManagerInstances[user.id];
         }
     }
-    const bot = new BotImpl();
-    // this function may only be called once per user!
-    // changes to user will be handled by user_changed event
-    const initForUser = async (user) => {
-        const clientManager = bot.getUserTwitchClientManager(user);
-        await clientManager.init('init');
-        for (const moduleClass of modules) {
-            moduleManager.add(user.id, await new moduleClass(bot, user));
+    return new BotImpl();
+};
+// this function may only be called once per user!
+// changes to user will be handled by user_changed event
+const initForUser = async (bot, user) => {
+    const clientManager = bot.getUserTwitchClientManager(user);
+    await clientManager.init('init');
+    for (const moduleClass of modules) {
+        bot.getModuleManager().add(user.id, await new moduleClass(bot, user));
+    }
+    let updateUserFrontendStatusTimeout = null;
+    const updateUserFrontendStatus = async () => {
+        if (updateUserFrontendStatusTimeout) {
+            clearTimeout(updateUserFrontendStatusTimeout);
+            updateUserFrontendStatusTimeout = null;
         }
-        let updateUserFrontendStatusTimeout = null;
-        const updateUserFrontendStatus = async () => {
-            if (updateUserFrontendStatusTimeout) {
-                clearTimeout(updateUserFrontendStatusTimeout);
-                updateUserFrontendStatusTimeout = null;
+        const client = clientManager.getHelixClient();
+        if (!client) {
+            return setTimeout(updateUserFrontendStatus, 5 * SECOND);
+        }
+        // status for the user that should show in frontend
+        // (eg. problems with their settings)
+        // this only is relevant if the user is at the moment connected
+        // to a websocket
+        if (!bot.getWebSocketServer().isUserConnected(user.id)) {
+            return setTimeout(updateUserFrontendStatus, 5 * SECOND);
+        }
+        const problems = [];
+        const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id);
+        for (const twitchChannel of twitchChannels) {
+            const result = await refreshExpiredTwitchChannelAccessToken(twitchChannel, bot, user);
+            if (result.error) {
+                log.error('Unable to validate or refresh OAuth token.');
+                log.error(`user: ${user.name}, channel: ${twitchChannel.channel_name}, error: ${result.error}`);
+                problems.push({
+                    message: 'access_token_invalid',
+                    details: {
+                        channel_name: twitchChannel.channel_name,
+                    },
+                });
             }
-            const client = clientManager.getHelixClient();
-            if (!client) {
-                return setTimeout(updateUserFrontendStatus, 5 * SECOND);
-            }
-            // status for the user that should show in frontend
-            // (eg. problems with their settings)
-            // this only is relevant if the user is at the moment connected
-            // to a websocket
-            if (!webSocketServer.isUserConnected(user.id)) {
-                return setTimeout(updateUserFrontendStatus, 5 * SECOND);
-            }
-            const problems = [];
-            const twitchChannels = await twitchChannelRepo.allByUserId(user.id);
-            for (const twitchChannel of twitchChannels) {
-                const result = await refreshExpiredTwitchChannelAccessToken(twitchChannel, bot, user);
-                if (result.error) {
-                    log.error('Unable to validate or refresh OAuth token.');
-                    log.error(`user: ${user.name}, channel: ${twitchChannel.channel_name}, error: ${result.error}`);
-                    problems.push({
-                        message: 'access_token_invalid',
-                        details: {
-                            channel_name: twitchChannel.channel_name,
-                        },
-                    });
+            else if (result.refreshed) {
+                const changedUser = await bot.getUsers().getById(user.id);
+                if (changedUser) {
+                    bot.getEventHub().emit('access_token_refreshed', changedUser);
                 }
-                else if (result.refreshed) {
-                    const changedUser = await bot.getUsers().getById(user.id);
-                    if (changedUser) {
-                        eventHub.emit('access_token_refreshed', changedUser);
-                    }
-                    else {
-                        log.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`);
-                    }
+                else {
+                    log.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`);
                 }
             }
-            const data = { event: 'status', data: { problems } };
-            webSocketServer.notifyAll([user.id], 'core', data);
-            return setTimeout(updateUserFrontendStatus, 1 * MINUTE);
-        };
-        updateUserFrontendStatusTimeout = await updateUserFrontendStatus();
-        let updateUserStreamStatusTimeout = null;
-        const updateUserStreamStatus = async () => {
-            if (updateUserStreamStatusTimeout) {
-                clearTimeout(updateUserStreamStatusTimeout);
-                updateUserStreamStatusTimeout = null;
-            }
-            const client = clientManager.getHelixClient();
-            if (!client) {
-                return setTimeout(updateUserFrontendStatus, 5 * SECOND);
-            }
-            const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id);
-            for (const twitchChannel of twitchChannels) {
-                if (twitchChannel.channel_id) {
-                    const stream = await client.getStreamByUserId(twitchChannel.channel_id);
-                    twitchChannelRepo.setStreaming(!!stream, { user_id: user.id, channel_id: twitchChannel.channel_id });
-                    continue;
-                }
-                const channelId = await client.getUserIdByNameCached(twitchChannel.channel_name, cache);
+        }
+        const data = { event: 'status', data: { problems } };
+        bot.getWebSocketServer().notifyAll([user.id], 'core', data);
+        return setTimeout(updateUserFrontendStatus, 1 * MINUTE);
+    };
+    updateUserFrontendStatusTimeout = await updateUserFrontendStatus();
+    let updateUserStreamStatusTimeout = null;
+    const updateUserStreamStatus = async () => {
+        if (updateUserStreamStatusTimeout) {
+            clearTimeout(updateUserStreamStatusTimeout);
+            updateUserStreamStatusTimeout = null;
+        }
+        const client = clientManager.getHelixClient();
+        if (!client) {
+            return setTimeout(updateUserFrontendStatus, 5 * SECOND);
+        }
+        const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id);
+        for (const twitchChannel of twitchChannels) {
+            if (!twitchChannel.channel_id) {
+                const channelId = await client.getUserIdByNameCached(twitchChannel.channel_name, bot.getCache());
                 if (!channelId) {
                     continue;
                 }
-                const stream = await client.getStreamByUserId(channelId);
-                twitchChannelRepo.setStreaming(!!stream, { user_id: user.id, channel_name: twitchChannel.channel_name });
+                twitchChannel.channel_id = channelId;
             }
-            return setTimeout(updateUserStreamStatus, 5 * MINUTE);
-        };
-        updateUserStreamStatusTimeout = await updateUserStreamStatus();
-        eventHub.on('wss_user_connected', async (socket /* Socket */) => {
-            if (socket.user_id === user.id && socket.module === 'core') {
-                updateUserFrontendStatusTimeout = await updateUserFrontendStatus();
-                updateUserStreamStatusTimeout = await updateUserStreamStatus();
-            }
-        });
-        eventHub.on('access_token_refreshed', async (changedUser /* User */) => {
-            if (changedUser.id === user.id) {
-                await clientManager.accessTokenRefreshed(changedUser);
-                updateUserFrontendStatusTimeout = await updateUserFrontendStatus();
-                updateUserStreamStatusTimeout = await updateUserStreamStatus();
-                for (const mod of moduleManager.all(user.id)) {
-                    await mod.userChanged(changedUser);
-                }
-            }
-        });
-        eventHub.on('user_changed', async (changedUser /* User */) => {
-            if (changedUser.id === user.id) {
-                await clientManager.userChanged(changedUser);
-                updateUserFrontendStatusTimeout = await updateUserFrontendStatus();
-                updateUserStreamStatusTimeout = await updateUserStreamStatus();
-                for (const mod of moduleManager.all(user.id)) {
-                    await mod.userChanged(changedUser);
-                }
-            }
-        });
+            const stream = await client.getStreamByUserId(twitchChannel.channel_id);
+            twitchChannel.is_streaming = !!stream;
+            bot.getTwitchChannels().save(twitchChannel);
+        }
+        return setTimeout(updateUserStreamStatus, 5 * MINUTE);
     };
+    updateUserStreamStatusTimeout = await updateUserStreamStatus();
+    bot.getEventHub().on('wss_user_connected', async (socket /* Socket */) => {
+        if (socket.user_id === user.id && socket.module === 'core') {
+            updateUserFrontendStatusTimeout = await updateUserFrontendStatus();
+            updateUserStreamStatusTimeout = await updateUserStreamStatus();
+        }
+    });
+    bot.getEventHub().on('access_token_refreshed', async (changedUser /* User */) => {
+        if (changedUser.id === user.id) {
+            await clientManager.accessTokenRefreshed(changedUser);
+            updateUserFrontendStatusTimeout = await updateUserFrontendStatus();
+            updateUserStreamStatusTimeout = await updateUserStreamStatus();
+            for (const mod of bot.getModuleManager().all(user.id)) {
+                await mod.userChanged(changedUser);
+            }
+        }
+    });
+    bot.getEventHub().on('user_changed', async (changedUser /* User */) => {
+        if (changedUser.id === user.id) {
+            await clientManager.userChanged(changedUser);
+            updateUserFrontendStatusTimeout = await updateUserFrontendStatus();
+            updateUserStreamStatusTimeout = await updateUserStreamStatus();
+            for (const mod of bot.getModuleManager().all(user.id)) {
+                await mod.userChanged(changedUser);
+            }
+        }
+    });
+};
+const run = async () => {
+    const bot = await createBot();
     // one for each user
     for (const user of await bot.getUsers().all()) {
-        await initForUser(user);
+        await initForUser(bot, user);
     }
-    eventHub.on('user_registration_complete', async (user /* User */) => {
-        await initForUser(user);
+    bot.getEventHub().on('user_registration_complete', async (user /* User */) => {
+        await initForUser(bot, user);
     });
     // as the last step, start websocketserver and webserver
     // it needs to be the last step, because modules etc.
     // need to be set up in advance so that everything is registered
     // at the point of connection from outside
-    webSocketServer.listen(bot);
-    await webServer.listen(bot);
+    bot.getWebSocketServer().listen(bot);
+    await bot.getWebServer().listen(bot);
     const gracefulShutdown = (signal) => {
         log.info(`${signal} received...`);
         log.info('shutting down webserver...');
-        webServer.close();
+        bot.getWebServer().close();
         log.info('shutting down websocketserver...');
-        webSocketServer.close();
+        bot.getWebSocketServer().close();
         log.info('shutting down...');
         process.exit();
     };

@@ -1,4 +1,4 @@
-import { getText, asQueryArgs } from '../net/xhr'
+import xhr, { asQueryArgs } from '../net/xhr'
 import { DictSearchResponseDataEntry } from '../types'
 
 interface DictCCParseResultEntry {
@@ -143,7 +143,8 @@ const searchWord = async (
   }
 
   const url = baseUrl + asQueryArgs({ s: keyword })
-  const text = await getText(url)
+  const resp = await xhr.get(url)
+  const text = await resp.text()
   return parseResult(text)
 }
 

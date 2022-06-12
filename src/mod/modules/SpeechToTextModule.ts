@@ -1,6 +1,6 @@
 import config from '../../config'
 import { Socket } from '../../net/WebSocketServer'
-import { getText, asQueryArgs } from '../../net/xhr'
+import xhr, { asQueryArgs } from '../../net/xhr'
 import { User } from '../../services/Users'
 import { Bot, ChatMessageContext, Module, RewardRedemptionContext } from '../../types'
 import { default_settings, SpeechToTextModuleData, SpeechToTextModuleSettings, SpeechToTextWsData } from './SpeechToTextModuleCommon'
@@ -77,7 +77,8 @@ class SpeechToTextModule implements Module {
             source: this.data.settings.translation.langSrc,
             target: this.data.settings.translation.langDst,
           })
-          translated = await getText(query)
+          const resp = await xhr.get(query)
+          translated = await resp.text()
         }
         this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
           event: 'text',
