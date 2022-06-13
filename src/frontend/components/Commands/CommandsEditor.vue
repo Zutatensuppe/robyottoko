@@ -170,6 +170,16 @@
       :mode="editIdx >= commands.length ? 'create' : 'edit'" :baseVolume="baseVolume" :widgetUrl="widgetUrl"
       @update:modelValue="editedCommand" @cancel="editCommand = null" />
 
+    <dict-lookup-command-editor v-else-if="editCommand && editCommand.action === 'dict_lookup'"
+      :globalVariables="globalVariables" :channelPointsCustomRewards="channelPointsCustomRewards"
+      :modelValue="editCommand" :mode="editIdx >= commands.length ? 'create' : 'edit'"
+      @update:modelValue="editedCommand" @cancel="editCommand = null" />
+
+    <madochan-createword-command-editor v-else-if="editCommand && editCommand.action === 'madochan_createword'"
+      :globalVariables="globalVariables" :channelPointsCustomRewards="channelPointsCustomRewards"
+      :modelValue="editCommand" :mode="editIdx >= commands.length ? 'create' : 'edit'"
+      @update:modelValue="editedCommand" @cancel="editCommand = null" />
+
     <command-editor v-else-if="editCommand" :globalVariables="globalVariables"
       :channelPointsCustomRewards="channelPointsCustomRewards" :modelValue="editCommand"
       :mode="editIdx >= commands.length ? 'create' : 'edit'" :baseVolume="baseVolume" @update:modelValue="editedCommand"

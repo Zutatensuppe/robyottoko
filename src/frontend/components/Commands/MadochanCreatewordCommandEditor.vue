@@ -33,30 +33,26 @@
               </td>
             </tr>
             <tr>
-              <td>Response:</td>
+              <td>Model:</td>
               <td>
-                <div v-for="(txt, idx) in item.data.text" :key="idx" class="field textarea-holder">
-                  <textarea class="textarea" type="text" v-model="item.data.text[idx]" :class="{
-                    'has-background-danger-light': !item.data.text[idx],
-                    'has-text-danger-dark': !item.data.text[idx],
-                  }" />
-                  <div class="help">
-                    <macro-select @selected="insertMacro(idx, $event)" />
-                  </div>
-                  <button class="button is-small" :disabled="item.data.text.length <= 1" @click="rmtxt(idx)">
-                    <i class="fa fa-remove" />
-                  </button>
+                <div class="control">
+                  <input class="input is-small spaceinput" v-model="item.data.model" />
                 </div>
-                <div class="field">
-                  <button class="button is-small" @click="addtxt">
-                    <i class="fa fa-plus mr-1" /> Add response
-                  </button>
+                <div class="help">
+                  For possible values refer to
+                  <a href="https://madochan.hyottoko.club/" target="_blank">madochan</a>
                 </div>
-                <div>
-                  <p class="help">
-                    If multiple responses exist, a random one will be used when
-                    the command is triggered.
-                  </p>
+              </td>
+            </tr>
+            <tr>
+              <td>Weirdness:</td>
+              <td>
+                <div class="control">
+                  <input class="input is-small spaceinput" v-model="item.data.weirdness" />
+                </div>
+                <div class="help">
+                  For possible values refer to
+                  <a href="https://madochan.hyottoko.club/" target="_blank">madochan</a>
                 </div>
               </td>
             </tr>
@@ -170,7 +166,6 @@ import { permissions } from "../../../common/permissions";
 import {
   commands,
   isValidTrigger,
-  newText,
   newTrigger,
 } from "../../../common/commands";
 import {
@@ -179,7 +174,7 @@ import {
   CommandVariable,
   CommandVariableChange,
   GlobalVariable,
-  RandomTextCommand,
+  MadochanCommand,
 } from "../../../types";
 
 interface AutocompletableVariable {
@@ -193,7 +188,7 @@ interface ComponentDataPermission {
 }
 
 interface ComponentData {
-  item: RandomTextCommand | null;
+  item: MadochanCommand | null;
   variableChangeFocusIdx: number;
   possiblePermissions: ComponentDataPermission[];
 }
@@ -201,7 +196,7 @@ interface ComponentData {
 export default defineComponent({
   props: {
     modelValue: {
-      type: Object as PropType<RandomTextCommand>,
+      type: Object as PropType<MadochanCommand>,
       required: true,
     },
     mode: {
@@ -238,13 +233,6 @@ export default defineComponent({
     },
   },
   methods: {
-    addtxt(): void {
-      if (!this.item) {
-        console.warn("addtxt: this.item not initialized");
-        return;
-      }
-      this.item.data.text.push(newText());
-    },
     addtrigger(trigger: any): void {
       if (!this.item) {
         console.warn("addtrigger: this.item not initialized");
@@ -303,15 +291,6 @@ export default defineComponent({
     onOverlayClick(): void {
       this.$emit("cancel");
     },
-    rmtxt(idx: number): void {
-      if (!this.item) {
-        console.warn("rmtxt: this.item not initialized");
-        return;
-      }
-      this.item.data.text = this.item.data.text.filter(
-        (_val: string, index: number) => index !== idx
-      );
-    },
     rmtrigger(idx: number): void {
       if (!this.item) {
         console.warn("rmtrigger: this.item not initialized");
@@ -320,13 +299,6 @@ export default defineComponent({
       this.item.triggers = this.item.triggers.filter(
         (_val: CommandTrigger, index: number) => index !== idx
       );
-    },
-    insertMacro(idx: number, macro: { value: string; title: string }): void {
-      if (!this.item) {
-        console.warn("insertMacro: this.item not initialized");
-        return;
-      }
-      this.item.data.text[idx] += macro.value;
     },
     autocompletableVariables(): AutocompletableVariable[] {
       if (!this.item) {
@@ -383,13 +355,6 @@ export default defineComponent({
         }
       }
 
-      // check if settings are correct
-      for (const t of this.item.data.text) {
-        if (t === "") {
-          return false;
-        }
-      }
-
       return true;
     },
     actionDescription(): string {
@@ -411,15 +376,3 @@ export default defineComponent({
   },
 });
 </script>
-<style scoped>
-.textarea-holder {
-  position: relative;
-  padding-right: 2em;
-}
-
-.textarea-holder .button {
-  position: absolute;
-  right: -2px;
-  top: 0;
-}
-</style>
