@@ -260,7 +260,6 @@ import {
   newTrigger,
 } from "../../../common/commands";
 import {
-  CommandAction,
   CommandTrigger,
   CommandTriggerType,
   CommandVariable,
@@ -499,15 +498,6 @@ export default defineComponent({
       for (const trigger of this.item.triggers) {
         if (!isValidTrigger(trigger)) {
           return false;
-        }
-      }
-
-      // check if settings are correct
-      if (this.item.action === CommandAction.TEXT) {
-        for (const t of this.item.data.text) {
-          if (t === "") {
-            return false;
-          }
         }
       }
 

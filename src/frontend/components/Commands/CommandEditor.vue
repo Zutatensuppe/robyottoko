@@ -67,66 +67,6 @@
                 <span class="button is-small mr-1" @click="item.data.tag = ''">All args</span>
               </td>
             </tr>
-            <template v-if="item.action === 'dict_lookup'">
-              <tr>
-                <td>Language:</td>
-                <td>
-                  <input class="input is-small spaceinput mb-1" v-model="item.data.lang" />
-                  <span v-for="(lang, idx) in dictLangs" :key="idx" class="button is-small mr-1"
-                    @click="item.data.lang = lang.value" :title="lang.title">{{ lang.flag }}</span>
-                  <span class="button is-small mr-1" @click="item.data.lang = '$args(0)'"><code>$args(0)</code></span>
-                </td>
-              </tr>
-              <tr>
-                <td>Phrase:</td>
-                <td>
-                  <input class="input is-small spaceinput mb-1" v-model="item.data.phrase" />
-                  <span class="button is-small mr-1" @click="item.data.phrase = ''">All args</span>
-                  <span class="button is-small mr-1"
-                    @click="item.data.phrase = '$args(1:)'"><code>$args(1:)</code></span>
-                </td>
-              </tr>
-              <tr>
-                <td>Response:</td>
-                <td>
-                  <div class="help">
-                    Outputs the translation for the input phrase. The
-                    translation is always from/to english. <br />
-                    To let the user decide on the language use
-                    <code>$args(0)</code> as language, and
-                    <code>$args(1:)</code> as phrase. <br />
-                    If phrase is left empty, all arguments to the command will
-                    be used as the phrase.
-                  </div>
-                </td>
-              </tr>
-            </template>
-            <template v-if="item.action === 'madochan_createword'">
-              <tr>
-                <td>Model:</td>
-                <td>
-                  <div class="control">
-                    <input class="input is-small spaceinput" v-model="item.data.model" />
-                  </div>
-                  <div class="help">
-                    For possible values refer to
-                    <a href="https://madochan.hyottoko.club/" target="_blank">madochan</a>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td>Weirdness:</td>
-                <td>
-                  <div class="control">
-                    <input class="input is-small spaceinput" v-model="item.data.weirdness" />
-                  </div>
-                  <div class="help">
-                    For possible values refer to
-                    <a href="https://madochan.hyottoko.club/" target="_blank">madochan</a>
-                  </div>
-                </td>
-              </tr>
-            </template>
             <tr v-if="item.action === 'chatters'">
               <td>Response:</td>
               <td>Outputs the people who chatted during the stream.</td>
@@ -251,7 +191,6 @@ import {
 } from "../../../common/commands";
 import {
   Command,
-  CommandAction,
   CommandTrigger,
   CommandTriggerType,
   CommandVariable,
@@ -263,11 +202,6 @@ interface AutocompletableVariable {
   var: CommandVariable | GlobalVariable;
   type: string;
 }
-interface ComponentDataLang {
-  value: string;
-  flag: string;
-  title: string;
-}
 
 interface ComponentDataPermission {
   value: string;
@@ -277,7 +211,6 @@ interface ComponentDataPermission {
 interface ComponentData {
   item: Command | null;
   variableChangeFocusIdx: number;
-  dictLangs: ComponentDataLang[];
   possiblePermissions: ComponentDataPermission[];
 }
 
@@ -307,15 +240,6 @@ export default defineComponent({
   data: (): ComponentData => ({
     item: null,
     variableChangeFocusIdx: -1,
-    dictLangs: [
-      { value: "ja", flag: "🇯🇵", title: "Japanese" },
-      { value: "ru", flag: "🇷🇺", title: "Russian" },
-      { value: "de", flag: "🇩🇪", title: "German" },
-      { value: "es", flag: "🇪🇸", title: "Spanish" },
-      { value: "fr", flag: "🇫🇷", title: "French" },
-      { value: "it", flag: "🇮🇹", title: "Italian" },
-      { value: "pt", flag: "🇵🇹/🇧🇷", title: "Portuguese" },
-    ],
     possiblePermissions: permissions,
   }),
   mounted() {
@@ -452,15 +376,6 @@ export default defineComponent({
       for (const trigger of this.item.triggers) {
         if (!isValidTrigger(trigger)) {
           return false;
-        }
-      }
-
-      // check if settings are correct
-      if (this.item.action === CommandAction.TEXT) {
-        for (const t of this.item.data.text) {
-          if (t === "") {
-            return false;
-          }
         }
       }
 

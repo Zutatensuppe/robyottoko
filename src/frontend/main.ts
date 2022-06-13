@@ -42,6 +42,8 @@ import Youtube from "./components/Youtube.vue";
 import CommandsCommandEditor from "./components/Commands/CommandEditor.vue";
 import CommandsMediaCommandEditor from "./components/Commands/MediaCommandEditor.vue";
 import CommandsTextCommandEditor from "./components/Commands/TextCommandEditor.vue";
+import CommandsDictLookupCommandEditor from "./components/Commands/DictLookupCommandEditor.vue";
+import CommandsMadochanCreatewordCommandEditor from "./components/Commands/MadochanCreatewordCommandEditor.vue";
 import CommandsCommandsEditor from "./components/Commands/CommandsEditor.vue";
 import CommandsCountdownEditor from "./components/Commands/CountdownEditor.vue";
 import CommandsTriggerEditor from "./components/Commands/TriggerEditor.vue";
@@ -211,6 +213,8 @@ const run = async () => {
   app.component('command-editor', CommandsCommandEditor)
   app.component('media-command-editor', CommandsMediaCommandEditor)
   app.component('text-command-editor', CommandsTextCommandEditor)
+  app.component('dict-lookup-command-editor', CommandsDictLookupCommandEditor)
+  app.component('madochan-createword-command-editor', CommandsMadochanCreatewordCommandEditor)
   app.component('countdown-editor', CommandsCountdownEditor)
   app.component('trigger-editor', CommandsTriggerEditor)
   // songrequest - maybe dont register these globally?
