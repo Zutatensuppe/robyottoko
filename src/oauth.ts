@@ -48,12 +48,12 @@ export const tryRefreshAccessToken = async (
   }
 
   // update the token in the database
-  await bot.getDb().update(TABLE, {
+  await bot.getDb().insert(TABLE, {
     access_token: refreshResp.access_token,
     refresh_token: refreshResp.refresh_token,
+    scope: refreshResp.scope.join(','),
+    token_type: refreshResp.token_type,
     expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
-  }, {
-    access_token: row.access_token,
   })
 
   for (const twitchChannel of twitchChannels) {
@@ -114,12 +114,12 @@ export const refreshExpiredTwitchChannelAccessToken = async (
   }
 
   // update the token in the database
-  await bot.getDb().update(TABLE, {
+  await bot.getDb().insert(TABLE, {
     access_token: refreshResp.access_token,
     refresh_token: refreshResp.refresh_token,
+    scope: refreshResp.scope.join(','),
+    token_type: refreshResp.token_type,
     expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
-  }, {
-    access_token: row.access_token,
   })
 
   // update the twitch channel in the database
