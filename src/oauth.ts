@@ -49,6 +49,7 @@ export const tryRefreshAccessToken = async (
 
   // update the token in the database
   await bot.getDb().insert(TABLE, {
+    user_id: user.id,
     access_token: refreshResp.access_token,
     refresh_token: refreshResp.refresh_token,
     scope: refreshResp.scope.join(','),
@@ -115,6 +116,7 @@ export const refreshExpiredTwitchChannelAccessToken = async (
 
   // update the token in the database
   await bot.getDb().insert(TABLE, {
+    user_id: user.id,
     access_token: refreshResp.access_token,
     refresh_token: refreshResp.refresh_token,
     scope: refreshResp.scope.join(','),
@@ -153,6 +155,7 @@ export const handleOAuthCodeCallback = async (
 
   // store the token
   await bot.getDb().insert(TABLE, {
+    user_id: user.id,
     access_token: resp.access_token,
     refresh_token: resp.refresh_token,
     scope: resp.scope.join(','),
