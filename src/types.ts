@@ -188,8 +188,8 @@ export interface TwitchChatClient extends Client {
     channels: string[],
   },
   say: (target: string, msg: string) => Promise<any>
-  connect: () => any
-  disconnect: () => any
+  connect: () => Promise<any>
+  disconnect: () => Promise<any>
   on: (event: string, callback: (target: string, context: TwitchChatContext, msg: string, self: boolean) => Promise<void>) => void
 }
 

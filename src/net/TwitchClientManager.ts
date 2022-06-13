@@ -373,7 +373,13 @@ class TwitchClientManager {
     }
 
     if (this.chatClient) {
-      this.chatClient.connect()
+      try {
+        await this.chatClient.connect()
+      } catch (e) {
+        // this can happen when calling close before the connection
+        // could be established
+        this.log.error('error when connecting', e)
+      }
     }
     if (this.pubSubClient) {
       this.pubSubClient.connect()

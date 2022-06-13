@@ -3378,7 +3378,14 @@ class TwitchClientManager {
             });
         }
         if (this.chatClient) {
-            this.chatClient.connect();
+            try {
+                await this.chatClient.connect();
+            }
+            catch (e) {
+                // this can happen when calling close before the connection
+                // could be established
+                this.log.error('error when connecting', e);
+            }
         }
         if (this.pubSubClient) {
             this.pubSubClient.connect();
@@ -6949,9 +6956,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-06-13T18:29:52.832Z",
+    buildDate: "2022-06-13T20:07:31.558Z",
     // @ts-ignore
-    buildVersion: "1.15.5",
+    buildVersion: "1.15.6",
 };
 
 const widgets = [
