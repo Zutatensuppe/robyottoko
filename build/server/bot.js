@@ -1142,6 +1142,8 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
     if (twitchChannels.length === 0) {
         return null;
     }
+    // there should only be 1 channel per accessToken
+    const twitchChannel = twitchChannels[0];
     // try to refresh the token, if possible
     const row = await bot.getDb().get(TABLE$5, {
         access_token: accessToken,
@@ -1157,17 +1159,16 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
     }
     // update the token in the database
     await bot.getDb().insert(TABLE$5, {
+        user_id: user.id,
+        channel_id: twitchChannel.channel_id,
         access_token: refreshResp.access_token,
         refresh_token: refreshResp.refresh_token,
         scope: refreshResp.scope.join(','),
         token_type: refreshResp.token_type,
         expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
     });
-    for (const twitchChannel of twitchChannels) {
-        // update the twitch channel in the database
-        twitchChannel.access_token = refreshResp.access_token;
-        await bot.getTwitchChannels().save(twitchChannel);
-    }
+    twitchChannel.access_token = refreshResp.access_token;
+    await bot.getTwitchChannels().save(twitchChannel);
     log$n.info('refreshed an oauth token');
     return refreshResp.access_token;
 };
@@ -1208,6 +1209,8 @@ const refreshExpiredTwitchChannelAccessToken = async (twitchChannel, bot, user) 
     }
     // update the token in the database
     await bot.getDb().insert(TABLE$5, {
+        user_id: user.id,
+        channel_id: twitchChannel.channel_id,
         access_token: refreshResp.access_token,
         refresh_token: refreshResp.refresh_token,
         scope: refreshResp.scope.join(','),
@@ -1230,19 +1233,21 @@ const handleOAuthCodeCallback = async (code, redirectUri, bot, user) => {
     if (!resp) {
         return { error: true, updated: false };
     }
+    // get the user that corresponds to the token
+    const userResp = await client.getUser(resp.access_token);
+    if (!userResp) {
+        return { error: true, updated: false };
+    }
     // store the token
     await bot.getDb().insert(TABLE$5, {
+        user_id: user.id,
+        channel_id: userResp.id,
         access_token: resp.access_token,
         refresh_token: resp.refresh_token,
         scope: resp.scope.join(','),
         token_type: resp.token_type,
         expires_at: new Date(new Date().getTime() + resp.expires_in * 1000),
     });
-    // get the user that corresponds to the token
-    const userResp = await client.getUser(resp.access_token);
-    if (!userResp) {
-        return { error: true, updated: false };
-    }
     let updated = false;
     const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id);
     for (const twitchChannel of twitchChannels) {
@@ -6944,7 +6949,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-06-13T18:17:27.470Z",
+    buildDate: "2022-06-13T18:29:52.832Z",
     // @ts-ignore
     buildVersion: "1.15.5",
 };
