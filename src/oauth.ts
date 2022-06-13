@@ -31,6 +31,8 @@ export const tryRefreshAccessToken = async (
   if (twitchChannels.length === 0) {
     return null
   }
+  // there should only be 1 channel per accessToken
+  const twitchChannel = twitchChannels[0]
 
   // try to refresh the token, if possible
   const row = await bot.getDb().get(TABLE, {
@@ -50,6 +52,7 @@ export const tryRefreshAccessToken = async (
   // update the token in the database
   await bot.getDb().insert(TABLE, {
     user_id: user.id,
+    channel_id: twitchChannel.channel_id,
     access_token: refreshResp.access_token,
     refresh_token: refreshResp.refresh_token,
     scope: refreshResp.scope.join(','),
@@ -57,11 +60,8 @@ export const tryRefreshAccessToken = async (
     expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
   })
 
-  for (const twitchChannel of twitchChannels) {
-    // update the twitch channel in the database
-    twitchChannel.access_token = refreshResp.access_token
-    await bot.getTwitchChannels().save(twitchChannel)
-  }
+  twitchChannel.access_token = refreshResp.access_token
+  await bot.getTwitchChannels().save(twitchChannel)
 
   log.info('refreshed an oauth token')
   return refreshResp.access_token
@@ -117,6 +117,7 @@ export const refreshExpiredTwitchChannelAccessToken = async (
   // update the token in the database
   await bot.getDb().insert(TABLE, {
     user_id: user.id,
+    channel_id: twitchChannel.channel_id,
     access_token: refreshResp.access_token,
     refresh_token: refreshResp.refresh_token,
     scope: refreshResp.scope.join(','),
@@ -153,21 +154,22 @@ export const handleOAuthCodeCallback = async (
     return { error: true, updated: false }
   }
 
+  // get the user that corresponds to the token
+  const userResp = await client.getUser(resp.access_token)
+  if (!userResp) {
+    return { error: true, updated: false }
+  }
+
   // store the token
   await bot.getDb().insert(TABLE, {
     user_id: user.id,
+    channel_id: userResp.id,
     access_token: resp.access_token,
     refresh_token: resp.refresh_token,
     scope: resp.scope.join(','),
     token_type: resp.token_type,
     expires_at: new Date(new Date().getTime() + resp.expires_in * 1000),
   })
-
-  // get the user that corresponds to the token
-  const userResp = await client.getUser(resp.access_token)
-  if (!userResp) {
-    return { error: true, updated: false }
-  }
 
   let updated = false
   const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id)
