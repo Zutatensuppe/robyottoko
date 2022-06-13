@@ -1156,12 +1156,12 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
         return null;
     }
     // update the token in the database
-    await bot.getDb().update(TABLE$5, {
+    await bot.getDb().insert(TABLE$5, {
         access_token: refreshResp.access_token,
         refresh_token: refreshResp.refresh_token,
+        scope: refreshResp.scope.join(','),
+        token_type: refreshResp.token_type,
         expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
-    }, {
-        access_token: row.access_token,
     });
     for (const twitchChannel of twitchChannels) {
         // update the twitch channel in the database
@@ -1207,12 +1207,12 @@ const refreshExpiredTwitchChannelAccessToken = async (twitchChannel, bot, user) 
         return { error: 'refresh_oauth_token_failed', refreshed: false };
     }
     // update the token in the database
-    await bot.getDb().update(TABLE$5, {
+    await bot.getDb().insert(TABLE$5, {
         access_token: refreshResp.access_token,
         refresh_token: refreshResp.refresh_token,
+        scope: refreshResp.scope.join(','),
+        token_type: refreshResp.token_type,
         expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
-    }, {
-        access_token: row.access_token,
     });
     // update the twitch channel in the database
     twitchChannel.access_token = refreshResp.access_token;
@@ -6944,9 +6944,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-06-12T18:08:05.045Z",
+    buildDate: "2022-06-13T18:17:27.470Z",
     // @ts-ignore
-    buildVersion: "1.15.4",
+    buildVersion: "1.15.5",
 };
 
 const widgets = [
