@@ -282,7 +282,12 @@ class TwitchHelixClient {
       const resp = await xhr.post(url)
       if (resp.status === 401) {
         const txt = await resp.text()
-        log.warn('tried to refresh with an invalid refresh token', txt)
+        log.warn('tried to refresh access_token with an invalid refresh token', txt)
+        return null
+      }
+      if (!resp.ok) {
+        const txt = await resp.text()
+        log.warn('unable to refresh access_token', txt)
         return null
       }
       return (await resp.json()) as TwitchHelixOauthTokenResponseData
