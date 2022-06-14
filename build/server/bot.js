@@ -73,25 +73,32 @@ const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 const MONTH = 30 * DAY;
 const YEAR = 365 * DAY;
+var LogLevel;
+(function (LogLevel) {
+    LogLevel["INFO"] = "info";
+    LogLevel["WARN"] = "warn";
+    LogLevel["DEBUG"] = "debug";
+    LogLevel["ERROR"] = "error";
+})(LogLevel || (LogLevel = {}));
 // error | info | log | debug
 let logEnabled = []; // always log errors
 const setLogLevel = (logLevel) => {
     switch (logLevel) {
-        case 'error':
-            logEnabled = ['error'];
+        case LogLevel.ERROR:
+            logEnabled = [LogLevel.ERROR];
             break;
-        case 'info':
-            logEnabled = ['error', 'info'];
+        case LogLevel.WARN:
+            logEnabled = [LogLevel.ERROR, LogLevel.WARN];
             break;
-        case 'log':
-            logEnabled = ['error', 'info', 'log'];
+        case LogLevel.INFO:
+            logEnabled = [LogLevel.ERROR, LogLevel.WARN, LogLevel.INFO];
             break;
-        case 'debug':
-            logEnabled = ['error', 'info', 'log', 'debug'];
+        case LogLevel.DEBUG:
+            logEnabled = [LogLevel.ERROR, LogLevel.WARN, LogLevel.INFO, LogLevel.DEBUG];
             break;
     }
 };
-setLogLevel('info');
+setLogLevel(LogLevel.INFO);
 const logger = (prefix, ...pre) => {
     const b = prefix;
     const fn = (t) => (...args) => {
@@ -100,10 +107,10 @@ const logger = (prefix, ...pre) => {
         }
     };
     return {
-        log: fn('log'),
-        info: fn('info'),
-        debug: fn('debug'),
-        error: fn('error'),
+        error: fn(LogLevel.ERROR),
+        warn: fn(LogLevel.WARN),
+        info: fn(LogLevel.INFO),
+        debug: fn(LogLevel.DEBUG),
     };
 };
 const unicodeLength = (str) => {
@@ -1018,11 +1025,11 @@ class WebSocketServer {
                 socket.user_id = parseInt(token, 10);
             }
             socket.module = moduleName;
-            log$o.log('added socket: ', moduleName, socket.protocol);
-            log$o.log('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
+            log$o.info('added socket: ', moduleName, socket.protocol);
+            log$o.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
             socket.on('close', () => {
-                log$o.log('removed socket: ', moduleName, socket.protocol);
-                log$o.log('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
+                log$o.info('removed socket: ', moduleName, socket.protocol);
+                log$o.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
             });
             if (request.url?.indexOf(pathname) !== 0) {
                 log$o.info('bad request url: ', request.url);
@@ -1169,7 +1176,7 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
     });
     twitchChannel.access_token = refreshResp.access_token;
     await bot.getTwitchChannels().save(twitchChannel);
-    log$n.info('refreshed an oauth token');
+    log$n.info('tryRefreshAccessToken - refreshed an oauth token');
     return refreshResp.access_token;
 };
 // TODO: check if anything has to be put in a try catch block
@@ -1220,7 +1227,7 @@ const refreshExpiredTwitchChannelAccessToken = async (twitchChannel, bot, user) 
     // update the twitch channel in the database
     twitchChannel.access_token = refreshResp.access_token;
     await bot.getTwitchChannels().save(twitchChannel);
-    log$n.info('refreshed an oauth token');
+    log$n.info('refreshExpiredTwitchChannelAccessToken - refreshed an oauth token');
     return { error: false, refreshed: true };
 };
 // TODO: check if anything has to be put in a try catch block
@@ -1384,6 +1391,7 @@ async function executeRequestWithRetry(accessToken, req, bot, user) {
     if (!newAccessToken) {
         return resp;
     }
+    log$l.warn('retrying with refreshed token');
     return await req(newAccessToken);
 }
 class TwitchHelixClient {
@@ -4500,6 +4508,7 @@ const removeStreamTags = (originalCmd, bot, user) => async (command, client, tar
     say(`✨ Removed tag: ${manualTags[idx].localization_names['en-us']}`);
 };
 
+logger('GeneralModule.ts');
 class GeneralModule {
     constructor(bot, user) {
         this.name = 'general';
@@ -6956,9 +6965,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-06-13T21:29:58.228Z",
+    buildDate: "2022-06-14T17:38:32.476Z",
     // @ts-ignore
-    buildVersion: "1.15.7",
+    buildVersion: "1.15.8",
 };
 
 const widgets = [

@@ -201,11 +201,14 @@ async function executeRequestWithRetry(
   if (resp.status !== 401) {
     return resp
   }
+
   // try to refresh the token and try again
   const newAccessToken = await tryRefreshAccessToken(accessToken, bot, user)
   if (!newAccessToken) {
     return resp
   }
+
+  log.warn('retrying with refreshed token')
   return await req(newAccessToken)
 }
 

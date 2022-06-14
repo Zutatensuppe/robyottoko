@@ -135,7 +135,7 @@ export default defineComponent({
   },
   methods: {
     initSpeech(): void {
-      log.log(speechSynthesis);
+      log.info(speechSynthesis);
       speechSynthesis.cancel();
       speechSynthesis.resume();
       this.initedSpeech = true;

@@ -63,12 +63,12 @@ class WebSocketServer {
 
       socket.module = moduleName
 
-      log.log('added socket: ', moduleName, socket.protocol)
-      log.log('socket count: ', this.sockets().filter(s => s.module === socket.module).length)
+      log.info('added socket: ', moduleName, socket.protocol)
+      log.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length)
 
       socket.on('close', () => {
-        log.log('removed socket: ', moduleName, socket.protocol)
-        log.log('socket count: ', this.sockets().filter(s => s.module === socket.module).length)
+        log.info('removed socket: ', moduleName, socket.protocol)
+        log.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length)
       })
 
       if (request.url?.indexOf(pathname) !== 0) {

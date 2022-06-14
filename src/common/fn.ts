@@ -10,11 +10,16 @@ export const YEAR = 365 * DAY
 
 type LogFn = (...args: any[]) => void
 
-export type LogLevel = 'info' | 'debug' | 'error' | 'log'
+export enum LogLevel {
+  INFO = 'info',
+  WARN = 'warn',
+  DEBUG = 'debug',
+  ERROR = 'error',
+}
 
 export interface Logger {
-  log: LogFn
   info: LogFn
+  warn: LogFn
   debug: LogFn
   error: LogFn
 }
@@ -23,13 +28,13 @@ export interface Logger {
 let logEnabled: LogLevel[] = [] // always log errors
 export const setLogLevel = (logLevel: LogLevel): void => {
   switch (logLevel) {
-    case 'error': logEnabled = ['error']; break
-    case 'info': logEnabled = ['error', 'info']; break
-    case 'log': logEnabled = ['error', 'info', 'log']; break
-    case 'debug': logEnabled = ['error', 'info', 'log', 'debug']; break
+    case LogLevel.ERROR: logEnabled = [LogLevel.ERROR]; break
+    case LogLevel.WARN: logEnabled = [LogLevel.ERROR, LogLevel.WARN]; break
+    case LogLevel.INFO: logEnabled = [LogLevel.ERROR, LogLevel.WARN, LogLevel.INFO]; break
+    case LogLevel.DEBUG: logEnabled = [LogLevel.ERROR, LogLevel.WARN, LogLevel.INFO, LogLevel.DEBUG]; break
   }
 }
-setLogLevel('info')
+setLogLevel(LogLevel.INFO)
 
 export const logger = (prefix: string, ...pre: string[]): Logger => {
   const b = prefix
@@ -39,10 +44,10 @@ export const logger = (prefix: string, ...pre: string[]): Logger => {
     }
   }
   return {
-    log: fn('log'),
-    info: fn('info'),
-    debug: fn('debug'),
-    error: fn('error'),
+    error: fn(LogLevel.ERROR),
+    warn: fn(LogLevel.WARN),
+    info: fn(LogLevel.INFO),
+    debug: fn(LogLevel.DEBUG),
   }
 }
 
