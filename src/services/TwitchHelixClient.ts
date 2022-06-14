@@ -261,6 +261,11 @@ class TwitchHelixClient {
     })
     try {
       const resp = await xhr.post(url)
+      if (!resp.ok) {
+        const txt = await resp.text()
+        log.warn('unable to get access_token by code', txt)
+        return null
+      }
       return (await resp.json()) as TwitchHelixOauthTokenResponseData
     } catch (e) {
       log.error(url, e)
@@ -307,6 +312,11 @@ class TwitchHelixClient {
     let json
     try {
       const resp = await xhr.post(url)
+      if (!resp.ok) {
+        const txt = await resp.text()
+        log.warn('unable to get access_token', txt)
+        return ''
+      }
       json = (await resp.json()) as TwitchHelixOauthTokenResponseData
       return json.access_token
     } catch (e) {
