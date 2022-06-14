@@ -63,7 +63,7 @@ export const tryRefreshAccessToken = async (
   twitchChannel.access_token = refreshResp.access_token
   await bot.getTwitchChannels().save(twitchChannel)
 
-  log.info('tryRefreshAccessToken - refreshed an oauth token')
+  log.info('tryRefreshAccessToken - refreshed an access token')
   return refreshResp.access_token
 }
 
@@ -129,7 +129,7 @@ export const refreshExpiredTwitchChannelAccessToken = async (
   twitchChannel.access_token = refreshResp.access_token
   await bot.getTwitchChannels().save(twitchChannel)
 
-  log.info('refreshExpiredTwitchChannelAccessToken - refreshed an oauth token')
+  log.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token')
   return { error: false, refreshed: true }
 }
 
