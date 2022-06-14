@@ -44,7 +44,7 @@ export const tryRefreshAccessToken = async (
     return null
   }
 
-  const refreshResp = await client.refreshOAuthToken(row.refresh_token)
+  const refreshResp = await client.refreshAccessToken(row.refresh_token)
   if (!refreshResp) {
     return null
   }
@@ -108,7 +108,7 @@ export const refreshExpiredTwitchChannelAccessToken = async (
     return { error: 'no_refresh_token_found', refreshed: false }
   }
 
-  const refreshResp = await client.refreshOAuthToken(row.refresh_token)
+  const refreshResp = await client.refreshAccessToken(row.refresh_token)
   if (!refreshResp) {
     // there was something wrong when refreshing
     return { error: 'refresh_oauth_token_failed', refreshed: false }

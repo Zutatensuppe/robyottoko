@@ -269,7 +269,7 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/authentication/refresh-tokens
-  async refreshOAuthToken(
+  async refreshAccessToken(
     refreshToken: string
   ): Promise<TwitchHelixOauthTokenResponseData | null> {
     const url = TOKEN_ENDPOINT + asQueryArgs({
