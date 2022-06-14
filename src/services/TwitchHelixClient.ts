@@ -268,6 +268,7 @@ class TwitchHelixClient {
     }
   }
 
+  // https://dev.twitch.tv/docs/authentication/refresh-tokens
   async refreshOAuthToken(
     refreshToken: string
   ): Promise<TwitchHelixOauthTokenResponseData | null> {
@@ -279,6 +280,10 @@ class TwitchHelixClient {
     })
     try {
       const resp = await xhr.post(url)
+      if (resp.status === 401) {
+        log.warn('tried to refresh with an invalid refresh token')
+        return null
+      }
       return (await resp.json()) as TwitchHelixOauthTokenResponseData
     } catch (e) {
       log.error(url, e)
