@@ -272,7 +272,6 @@ class TwitchClientManager {
     const helixClient = new TwitchHelixClient(
       identity.client_id,
       identity.client_secret,
-      twitchChannels,
     )
     this.helixClient = helixClient
 

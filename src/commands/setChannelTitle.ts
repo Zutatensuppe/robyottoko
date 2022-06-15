@@ -2,6 +2,7 @@ import { Bot, CommandFunction, RawCommand, SetChannelTitleCommand, TwitchChatCli
 import fn from './../fn'
 import { logger, unicodeLength } from './../common/fn'
 import { User } from '../services/Users'
+import { getMatchingAccessToken } from '../oauth'
 
 const log = logger('setChannelTitle.ts')
 
@@ -24,11 +25,12 @@ const setChannelTitle = (
       log.info('unable to execute setChannelTitle, client, command, context, or helixClient missing')
       return
     }
+    const channelId = context['room-id']
     const say = fn.sayFn(client, target)
     const title = originalCmd.data.title === '' ? '$args()' : originalCmd.data.title
     const tmpTitle = await fn.doReplacements(title, command, context, originalCmd, bot, user)
     if (tmpTitle === '') {
-      const info = await helixClient.getChannelInformation(context['room-id'])
+      const info = await helixClient.getChannelInformation(channelId)
       if (info) {
         say(`Current title is "${info.title}".`)
       } else {
@@ -46,8 +48,15 @@ const setChannelTitle = (
       return
     }
 
+    const accessToken = await getMatchingAccessToken(channelId, bot, user)
+    if (!accessToken) {
+      say(`❌ Not authorized to change title.`)
+      return
+    }
+
     const resp = await helixClient.modifyChannelInformation(
-      context['room-id'],
+      accessToken,
+      channelId,
       { title: tmpTitle },
       bot,
       user,

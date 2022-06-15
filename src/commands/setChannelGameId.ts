@@ -2,6 +2,7 @@ import { Bot, CommandFunction, RawCommand, SetChannelGameIdCommand, TwitchChatCl
 import fn from './../fn'
 import { logger } from './../common/fn'
 import { User } from '../services/Users'
+import { getMatchingAccessToken } from '../oauth'
 
 const log = logger('setChannelGameId.ts')
 
@@ -24,11 +25,12 @@ const setChannelGameId = (
       log.info('unable to execute setChannelGameId, client, command, context, or helixClient missing')
       return
     }
+    const channelId = context['room-id']
     const say = fn.sayFn(client, target)
     const gameId = originalCmd.data.game_id === '' ? '$args()' : originalCmd.data.game_id
     const tmpGameId = await fn.doReplacements(gameId, command, context, originalCmd, bot, user)
     if (tmpGameId === '') {
-      const info = await helixClient.getChannelInformation(context['room-id'])
+      const info = await helixClient.getChannelInformation(channelId)
       if (info) {
         say(`Current category is "${info.game_name}".`)
       } else {
@@ -43,8 +45,15 @@ const setChannelGameId = (
       return
     }
 
+    const accessToken = await getMatchingAccessToken(channelId, bot, user)
+    if (!accessToken) {
+      say(`❌ Not authorized to update category.`)
+      return
+    }
+
     const resp = await helixClient.modifyChannelInformation(
-      context['room-id'],
+      accessToken,
+      channelId,
       { game_id: category.id },
       bot,
       user,
