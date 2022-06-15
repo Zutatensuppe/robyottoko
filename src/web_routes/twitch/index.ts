@@ -69,7 +69,7 @@ export const createRouter = (
           log.error(`updating user twitch channels: user doesn't exist after saving it: ${req.user.id}`)
         }
       }
-      res.send(templates.render('templates/twitch_redirect_uri.html', {}))
+      res.send(await templates.render('templates/twitch_redirect_uri.html', {}))
       return
     }
 

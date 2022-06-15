@@ -4,7 +4,6 @@ cd "$RUN_DIR"
 
 export VITE_ENV=development
 export APP_CONFIG=config.json
-export WIDGET_DUMMY=templates/widget_dummy.html
 
 nodemon \
   --delay 2 \

@@ -15,13 +15,6 @@ const __dirname = dirname(__filename)
 
 const log = logger('WebServer.ts')
 
-const widgetTemplate = () => {
-  if (process.env.WIDGET_DUMMY) {
-    return process.env.WIDGET_DUMMY
-  }
-  return '../public/static/widgets/index.html'
-}
-
 class WebServer {
   private handle: http.Server | null
   private configHttp: HttpConfig
@@ -40,8 +33,8 @@ class WebServer {
     const app = express()
 
     const templates = new Templates(__dirname)
-    await templates.add(widgetTemplate())
-    await templates.add('templates/twitch_redirect_uri.html')
+    templates.add('../public/static/widgets/index.html')
+    templates.add('templates/twitch_redirect_uri.html')
 
     const indexFile = path.resolve(`${__dirname}/../../build/public/index.html`)
 
@@ -100,7 +93,7 @@ class WebServer {
       log.debug(`/widget/:widget_type/:widget_token/`, type, token)
       const w = bot.getWidgets().getWidgetDefinitionByType(type)
       if (w) {
-        res.send(templates.render(widgetTemplate(), {
+        res.send(await templates.render('../public/static/widgets/index.html', {
           widget: w.type,
           title: w.title,
           wsUrl: bot.getWebSocketServer().connectstring(),

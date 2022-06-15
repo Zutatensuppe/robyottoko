@@ -313,7 +313,7 @@ const mayExecute = (context, cmd) => {
     return false;
 };
 
-const log$p = logger('fn.ts');
+const log$q = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
         return mime.replace('image/', '');
@@ -353,9 +353,9 @@ const sayFn = (client, target) => (msg) => {
         // TODO: fix this somewhere else?
         // client can only say things in lowercase channels
         t = t.toLowerCase();
-        log$p.info(`saying in ${t}: ${msg}`);
+        log$q.info(`saying in ${t}: ${msg}`);
         client.say(t, msg).catch((e) => {
-            log$p.info(e);
+            log$q.info(e);
         });
     });
 };
@@ -427,15 +427,15 @@ const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, target, context
         if (!mayExecute(context, cmdDef)) {
             continue;
         }
-        log$p.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`);
+        log$q.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`);
         // eslint-disable-next-line no-async-promise-executor
         const p = new Promise(async (resolve) => {
             await applyVariableChanges(cmdDef, contextModule, rawCmd, context);
             const r = await cmdDef.fn(rawCmd, client, target, context);
             if (r) {
-                log$p.info(`${target}| * Returned: ${r}`);
+                log$q.info(`${target}| * Returned: ${r}`);
             }
-            log$p.info(`${target}| * Executed ${rawCmd?.name || '<unknown>'} command`);
+            log$q.info(`${target}| * Executed ${rawCmd?.name || '<unknown>'} command`);
             resolve(true);
         });
         promises.push(p);
@@ -583,7 +583,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
                     return String(JSON.parse(txt)[m2]);
                 }
                 catch (e) {
-                    log$p.error(e);
+                    log$q.error(e);
                     return '';
                 }
             },
@@ -597,7 +597,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
                     return await resp.text();
                 }
                 catch (e) {
-                    log$p.error(e);
+                    log$q.error(e);
                     return '';
                 }
             },
@@ -984,7 +984,7 @@ class ModuleManager {
     }
 }
 
-const log$o = logger("WebSocketServer.ts");
+const log$p = logger("WebSocketServer.ts");
 class WebSocketServer {
     constructor(config) {
         this.config = config;
@@ -1025,19 +1025,19 @@ class WebSocketServer {
                 socket.user_id = parseInt(token, 10);
             }
             socket.module = moduleName;
-            log$o.info('added socket: ', moduleName, socket.protocol);
-            log$o.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
+            log$p.info('added socket: ', moduleName, socket.protocol);
+            log$p.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
             socket.on('close', () => {
-                log$o.info('removed socket: ', moduleName, socket.protocol);
-                log$o.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
+                log$p.info('removed socket: ', moduleName, socket.protocol);
+                log$p.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
             });
             if (request.url?.indexOf(pathname) !== 0) {
-                log$o.info('bad request url: ', request.url);
+                log$p.info('bad request url: ', request.url);
                 socket.close();
                 return;
             }
             if (!socket.user_id) {
-                log$o.info('not found token: ', token, relpath);
+                log$p.info('not found token: ', token, relpath);
                 socket.close();
                 return;
             }
@@ -1068,7 +1068,7 @@ class WebSocketServer {
                     }
                 }
                 catch (e) {
-                    log$o.error('socket on message', e);
+                    log$p.error('socket on message', e);
                 }
             });
         });
@@ -1077,7 +1077,7 @@ class WebSocketServer {
         return !!this.sockets().find(s => s.user_id === user_id);
     }
     _notify(socket, data) {
-        log$o.info(`notifying ${socket.user_id} ${socket.module} (${data.event})`);
+        log$p.info(`notifying ${socket.user_id} ${socket.module} (${data.event})`);
         socket.send(JSON.stringify(data));
     }
     notifyOne(user_ids, moduleName, data, socket) {
@@ -1089,7 +1089,7 @@ class WebSocketServer {
             this._notify(socket, data);
         }
         else {
-            log$o.error('tried to notify invalid socket', socket.user_id, socket.module, user_ids, moduleName, isConnectedSocket);
+            log$p.error('tried to notify invalid socket', socket.user_id, socket.module, user_ids, moduleName, isConnectedSocket);
         }
     }
     notifyAll(user_ids, moduleName, data) {
@@ -1116,18 +1116,28 @@ class WebSocketServer {
     }
 }
 
+const log$o = logger('Templates.ts');
 class Templates {
     constructor(baseDir) {
         this.templates = {};
         this.baseDir = baseDir;
     }
-    async add(templatePath) {
+    add(templatePath) {
         const templatePathAbsolute = path.join(this.baseDir, templatePath);
-        this.templates[templatePath] = (await promises.readFile(templatePathAbsolute)).toString();
+        this.templates[templatePath] = { templatePathAbsolute, templateContents: '' };
     }
-    render(templatePath, data) {
-        const template = this.templates[templatePath];
-        return template.replace(/\{\{(.*?)\}\}/g, (m0, m1) => {
+    async render(templatePath, data) {
+        const tmpl = this.templates[templatePath];
+        if (tmpl.templateContents === null) {
+            try {
+                tmpl.templateContents = (await promises.readFile(tmpl.templatePathAbsolute)).toString();
+            }
+            catch (e) {
+                log$o.error('error loading template', e);
+                tmpl.templateContents = '';
+            }
+        }
+        return tmpl.templateContents.replace(/\{\{(.*?)\}\}/g, (m0, m1) => {
             return data[m1.trim()] || '';
         });
     }
@@ -1135,6 +1145,11 @@ class Templates {
 
 const log$n = logger('oauth.ts');
 const TABLE$5 = 'robyottoko.oauth_token';
+const getMatchingAccessToken = async (channelId, bot, user) => {
+    const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id);
+    const channel = twitchChannels.find(c => c.channel_id === channelId && c.access_token);
+    return channel ? channel.access_token : null;
+};
 /**
  * Tries to refresh the access token and returns the new token
  * if successful, otherwise null.
@@ -1160,7 +1175,7 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
         // or at least no way to refresh it
         return null;
     }
-    const refreshResp = await client.refreshOAuthToken(row.refresh_token);
+    const refreshResp = await client.refreshAccessToken(row.refresh_token);
     if (!refreshResp) {
         return null;
     }
@@ -1176,7 +1191,7 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
     });
     twitchChannel.access_token = refreshResp.access_token;
     await bot.getTwitchChannels().save(twitchChannel);
-    log$n.info('tryRefreshAccessToken - refreshed an oauth token');
+    log$n.info('tryRefreshAccessToken - refreshed an access token');
     return refreshResp.access_token;
 };
 // TODO: check if anything has to be put in a try catch block
@@ -1209,7 +1224,7 @@ const refreshExpiredTwitchChannelAccessToken = async (twitchChannel, bot, user) 
         // or at least no way to refresh it
         return { error: 'no_refresh_token_found', refreshed: false };
     }
-    const refreshResp = await client.refreshOAuthToken(row.refresh_token);
+    const refreshResp = await client.refreshAccessToken(row.refresh_token);
     if (!refreshResp) {
         // there was something wrong when refreshing
         return { error: 'refresh_oauth_token_failed', refreshed: false };
@@ -1227,7 +1242,7 @@ const refreshExpiredTwitchChannelAccessToken = async (twitchChannel, bot, user) 
     // update the twitch channel in the database
     twitchChannel.access_token = refreshResp.access_token;
     await bot.getTwitchChannels().save(twitchChannel);
-    log$n.info('refreshExpiredTwitchChannelAccessToken - refreshed an oauth token');
+    log$n.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
     return { error: false, refreshed: true };
 };
 // TODO: check if anything has to be put in a try catch block
@@ -1325,7 +1340,7 @@ const createRouter$3 = (templates, configTwitch, baseUrl, bot) => {
                     log$m.error(`updating user twitch channels: user doesn't exist after saving it: ${req.user.id}`);
                 }
             }
-            res.send(templates.render('templates/twitch_redirect_uri.html', {}));
+            res.send(await templates.render('templates/twitch_redirect_uri.html', {}));
             return;
         }
         // in error case:
@@ -1395,10 +1410,9 @@ async function executeRequestWithRetry(accessToken, req, bot, user) {
     return await req(newAccessToken);
 }
 class TwitchHelixClient {
-    constructor(clientId, clientSecret, twitchChannels) {
+    constructor(clientId, clientSecret) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
-        this.twitchChannels = twitchChannels;
     }
     _authHeaders(accessToken) {
         return {
@@ -1410,14 +1424,6 @@ class TwitchHelixClient {
         const accessToken = await this.getAccessToken();
         return withHeaders(this._authHeaders(accessToken), opts);
     }
-    _oauthAccessTokenByBroadcasterId(broadcasterId) {
-        for (const twitchChannel of this.twitchChannels) {
-            if (twitchChannel.channel_id === broadcasterId) {
-                return twitchChannel.access_token;
-            }
-        }
-        return null;
-    }
     async getAccessTokenByCode(code, redirectUri) {
         const url = TOKEN_ENDPOINT + asQueryArgs({
             client_id: this.clientId,
@@ -1428,6 +1434,11 @@ class TwitchHelixClient {
         });
         try {
             const resp = await xhr.post(url);
+            if (!resp.ok) {
+                const txt = await resp.text();
+                log$l.warn('unable to get access_token by code', txt);
+                return null;
+            }
             return (await resp.json());
         }
         catch (e) {
@@ -1435,7 +1446,8 @@ class TwitchHelixClient {
             return null;
         }
     }
-    async refreshOAuthToken(refreshToken) {
+    // https://dev.twitch.tv/docs/authentication/refresh-tokens
+    async refreshAccessToken(refreshToken) {
         const url = TOKEN_ENDPOINT + asQueryArgs({
             client_id: this.clientId,
             client_secret: this.clientSecret,
@@ -1444,6 +1456,16 @@ class TwitchHelixClient {
         });
         try {
             const resp = await xhr.post(url);
+            if (resp.status === 401) {
+                const txt = await resp.text();
+                log$l.warn('tried to refresh access_token with an invalid refresh token', txt);
+                return null;
+            }
+            if (!resp.ok) {
+                const txt = await resp.text();
+                log$l.warn('unable to refresh access_token', txt);
+                return null;
+            }
             return (await resp.json());
         }
         catch (e) {
@@ -1461,6 +1483,11 @@ class TwitchHelixClient {
         let json;
         try {
             const resp = await xhr.post(url);
+            if (!resp.ok) {
+                const txt = await resp.text();
+                log$l.warn('unable to get access_token', txt);
+                return '';
+            }
             json = (await resp.json());
             return json.access_token;
         }
@@ -1619,11 +1646,7 @@ class TwitchHelixClient {
         }
     }
     // https://dev.twitch.tv/docs/api/reference#modify-channel-information
-    async modifyChannelInformation(broadcasterId, data, bot, user) {
-        const accessToken = this._oauthAccessTokenByBroadcasterId(broadcasterId);
-        if (!accessToken) {
-            return null;
-        }
+    async modifyChannelInformation(accessToken, broadcasterId, data, bot, user) {
         const url = apiUrl('/channels') + asQueryArgs({ broadcaster_id: broadcasterId });
         const req = async (token) => {
             return await xhr.patch(url, withHeaders(this._authHeaders(token), asJson(data)));
@@ -1663,11 +1686,7 @@ class TwitchHelixClient {
         }
     }
     // https://dev.twitch.tv/docs/api/reference#get-custom-reward
-    async getChannelPointsCustomRewards(broadcasterId, bot, user) {
-        const accessToken = this._oauthAccessTokenByBroadcasterId(broadcasterId);
-        if (!accessToken) {
-            return null;
-        }
+    async getChannelPointsCustomRewards(accessToken, broadcasterId, bot, user) {
         const url = apiUrl('/channel_points/custom_rewards') + asQueryArgs({ broadcaster_id: broadcasterId });
         const req = async (token) => {
             return await xhr.get(url, withHeaders(this._authHeaders(token)));
@@ -1685,10 +1704,13 @@ class TwitchHelixClient {
             return null;
         }
     }
-    async getAllChannelPointsCustomRewards(bot, user) {
+    async getAllChannelPointsCustomRewards(twitchChannels, bot, user) {
         const rewards = {};
-        for (const twitchChannel of this.twitchChannels) {
-            const res = await this.getChannelPointsCustomRewards(twitchChannel.channel_id, bot, user);
+        for (const twitchChannel of twitchChannels) {
+            if (!twitchChannel.access_token || !twitchChannel.channel_id) {
+                continue;
+            }
+            const res = await this.getChannelPointsCustomRewards(twitchChannel.access_token, twitchChannel.channel_id, bot, user);
             if (res) {
                 rewards[twitchChannel.channel_name] = res.data.map(entry => entry.title);
             }
@@ -1696,11 +1718,7 @@ class TwitchHelixClient {
         return rewards;
     }
     // https://dev.twitch.tv/docs/api/reference#replace-stream-tags
-    async replaceStreamTags(broadcasterId, tagIds, bot, user) {
-        const accessToken = this._oauthAccessTokenByBroadcasterId(broadcasterId);
-        if (!accessToken) {
-            return null;
-        }
+    async replaceStreamTags(accessToken, broadcasterId, tagIds, bot, user) {
         const url = apiUrl('/streams/tags') + asQueryArgs({ broadcaster_id: broadcasterId });
         const req = async (token) => {
             return await xhr.put(url, withHeaders(this._authHeaders(token), asJson({ tag_ids: tagIds })));
@@ -1795,7 +1813,7 @@ const createRouter$2 = (bot, configTwitch) => {
             return;
         }
         const channelName = String(req.query.channel);
-        const helixClient = new TwitchHelixClient(configTwitch.tmi.identity.client_id, configTwitch.tmi.identity.client_secret, []);
+        const helixClient = new TwitchHelixClient(configTwitch.tmi.identity.client_id, configTwitch.tmi.identity.client_secret);
         const channelId = await helixClient.getUserIdByNameCached(channelName, bot.getCache());
         if (!channelId) {
             res.status(400).send({ ok: false, error: 'unable to determine channel id' });
@@ -2130,7 +2148,7 @@ const createRouter = (configTwitch, bot) => {
         }
         try {
             // todo: maybe fill twitchChannels instead of empty array
-            const client = new TwitchHelixClient(clientId, clientSecret, []);
+            const client = new TwitchHelixClient(clientId, clientSecret);
             res.send({ id: await client.getUserIdByNameCached(req.body.name, bot.getCache()) });
         }
         catch (e) {
@@ -2155,12 +2173,6 @@ const createRouter = (configTwitch, bot) => {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const log$j = logger('WebServer.ts');
-const widgetTemplate = () => {
-    if (process.env.WIDGET_DUMMY) {
-        return process.env.WIDGET_DUMMY;
-    }
-    return '../public/static/widgets/index.html';
-};
 class WebServer {
     constructor(configHttp, configTwitch) {
         this.configHttp = configHttp;
@@ -2170,8 +2182,8 @@ class WebServer {
     async listen(bot) {
         const app = express();
         const templates = new Templates(__dirname);
-        await templates.add(widgetTemplate());
-        await templates.add('templates/twitch_redirect_uri.html');
+        templates.add('../public/static/widgets/index.html');
+        templates.add('templates/twitch_redirect_uri.html');
         const indexFile = path.resolve(`${__dirname}/../../build/public/index.html`);
         app.get('/pub/:id', async (req, res, _next) => {
             const row = await bot.getDb().get('robyottoko.pub', {
@@ -2216,7 +2228,7 @@ class WebServer {
             log$j.debug(`/widget/:widget_type/:widget_token/`, type, token);
             const w = bot.getWidgets().getWidgetDefinitionByType(type);
             if (w) {
-                res.send(templates.render(widgetTemplate(), {
+                res.send(await templates.render('../public/static/widgets/index.html', {
                     widget: w.type,
                     title: w.title,
                     wsUrl: bot.getWebSocketServer().connectstring(),
@@ -3299,7 +3311,7 @@ class TwitchClientManager {
         });
         // register EventSub
         // @see https://dev.twitch.tv/docs/eventsub
-        const helixClient = new TwitchHelixClient(identity.client_id, identity.client_secret, twitchChannels);
+        const helixClient = new TwitchHelixClient(identity.client_id, identity.client_secret);
         this.helixClient = helixClient;
         // connect to PubSub websocket only when required
         // https://dev.twitch.tv/docs/pubsub#topics
@@ -4160,11 +4172,12 @@ const setChannelTitle = (originalCmd, bot, user) => async (command, client, targ
         log$9.info('unable to execute setChannelTitle, client, command, context, or helixClient missing');
         return;
     }
+    const channelId = context['room-id'];
     const say = fn.sayFn(client, target);
     const title = originalCmd.data.title === '' ? '$args()' : originalCmd.data.title;
     const tmpTitle = await fn.doReplacements(title, command, context, originalCmd, bot, user);
     if (tmpTitle === '') {
-        const info = await helixClient.getChannelInformation(context['room-id']);
+        const info = await helixClient.getChannelInformation(channelId);
         if (info) {
             say(`Current title is "${info.title}".`);
         }
@@ -4181,7 +4194,12 @@ const setChannelTitle = (originalCmd, bot, user) => async (command, client, targ
         say(`❌ Unable to change title because it is too long (${len}/${max} characters).`);
         return;
     }
-    const resp = await helixClient.modifyChannelInformation(context['room-id'], { title: tmpTitle }, bot, user);
+    const accessToken = await getMatchingAccessToken(channelId, bot, user);
+    if (!accessToken) {
+        say(`❌ Not authorized to change title.`);
+        return;
+    }
+    const resp = await helixClient.modifyChannelInformation(accessToken, channelId, { title: tmpTitle }, bot, user);
     if (resp?.status === 204) {
         say(`✨ Changed title to "${tmpTitle}".`);
     }
@@ -4201,11 +4219,12 @@ const setChannelGameId = (originalCmd, bot, user) => async (command, client, tar
         log$8.info('unable to execute setChannelGameId, client, command, context, or helixClient missing');
         return;
     }
+    const channelId = context['room-id'];
     const say = fn.sayFn(client, target);
     const gameId = originalCmd.data.game_id === '' ? '$args()' : originalCmd.data.game_id;
     const tmpGameId = await fn.doReplacements(gameId, command, context, originalCmd, bot, user);
     if (tmpGameId === '') {
-        const info = await helixClient.getChannelInformation(context['room-id']);
+        const info = await helixClient.getChannelInformation(channelId);
         if (info) {
             say(`Current category is "${info.game_name}".`);
         }
@@ -4219,7 +4238,12 @@ const setChannelGameId = (originalCmd, bot, user) => async (command, client, tar
         say('🔎 Category not found.');
         return;
     }
-    const resp = await helixClient.modifyChannelInformation(context['room-id'], { game_id: category.id }, bot, user);
+    const accessToken = await getMatchingAccessToken(channelId, bot, user);
+    if (!accessToken) {
+        say(`❌ Not authorized to update category.`);
+        return;
+    }
+    const resp = await helixClient.modifyChannelInformation(accessToken, channelId, { game_id: category.id }, bot, user);
     if (resp?.status === 204) {
         say(`✨ Changed category to "${category.name}".`);
     }
@@ -4420,10 +4444,11 @@ const addStreamTags = (originalCmd, bot, user) => async (command, client, target
         log$7.info('unable to execute addStreamTags, client, command, context, or helixClient missing');
         return;
     }
+    const channelId = context['room-id'];
     const say = fn.sayFn(client, target);
     const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag;
     const tmpTag = await fn.doReplacements(tag, command, context, originalCmd, bot, user);
-    const tagsResponse = await helixClient.getStreamTags(context['room-id']);
+    const tagsResponse = await helixClient.getStreamTags(channelId);
     if (!tagsResponse) {
         say(`❌ Unable to fetch current tags.`);
         return;
@@ -4452,7 +4477,12 @@ const addStreamTags = (originalCmd, bot, user) => async (command, client, target
         say(`❌ Too many tags already exist, current tags: ${names.join(', ')}`);
         return;
     }
-    const resp = await helixClient.replaceStreamTags(context['room-id'], newSettableTagIds, bot, user);
+    const accessToken = await getMatchingAccessToken(channelId, bot, user);
+    if (!accessToken) {
+        say(`❌ Not authorized to add tag: ${tagEntry.name}`);
+        return;
+    }
+    const resp = await helixClient.replaceStreamTags(accessToken, channelId, newSettableTagIds, bot, user);
     if (!resp || resp.status < 200 || resp.status >= 300) {
         log$7.error(resp);
         say(`❌ Unable to add tag: ${tagEntry.name}`);
@@ -4472,10 +4502,11 @@ const removeStreamTags = (originalCmd, bot, user) => async (command, client, tar
         log$6.info('unable to execute removeStreamTags, client, command, context, or helixClient missing');
         return;
     }
+    const channelId = context['room-id'];
     const say = fn.sayFn(client, target);
     const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag;
     const tmpTag = await fn.doReplacements(tag, command, context, originalCmd, bot, user);
-    const tagsResponse = await helixClient.getStreamTags(context['room-id']);
+    const tagsResponse = await helixClient.getStreamTags(channelId);
     if (!tagsResponse) {
         say(`❌ Unable to fetch current tags.`);
         return;
@@ -4500,7 +4531,12 @@ const removeStreamTags = (originalCmd, bot, user) => async (command, client, tar
     }
     const newTagIds = manualTags.filter((_value, index) => index !== idx).map(entry => entry.tag_id);
     const newSettableTagIds = newTagIds.filter(tagId => !config.twitch.auto_tags.find(t => t.id === tagId));
-    const resp = await helixClient.replaceStreamTags(context['room-id'], newSettableTagIds, bot, user);
+    const accessToken = await getMatchingAccessToken(channelId, bot, user);
+    if (!accessToken) {
+        say(`❌ Not authorized to remove tag: ${manualTags[idx].localization_names['en-us']}`);
+        return;
+    }
+    const resp = await helixClient.replaceStreamTags(accessToken, channelId, newSettableTagIds, bot, user);
     if (!resp || resp.status < 200 || resp.status >= 300) {
         say(`❌ Unable to remove tag: ${manualTags[idx].localization_names['en-us']}`);
         return;
@@ -4746,7 +4782,8 @@ class GeneralModule {
     async _channelPointsCustomRewards() {
         const helixClient = this.bot.getUserTwitchClientManager(this.user).getHelixClient();
         if (helixClient) {
-            return await helixClient.getAllChannelPointsCustomRewards(this.bot, this.user);
+            const twitchChannels = await this.bot.getTwitchChannels().allByUserId(this.user.id);
+            return await helixClient.getAllChannelPointsCustomRewards(twitchChannels, this.bot, this.user);
         }
         return {};
     }
@@ -5164,10 +5201,14 @@ class SongrequestModule {
     }
     async _channelPointsCustomRewards() {
         const helixClient = this.bot.getUserTwitchClientManager(this.user).getHelixClient();
-        if (helixClient) {
-            return await helixClient.getAllChannelPointsCustomRewards(this.bot, this.user);
+        if (!helixClient) {
+            return {};
         }
-        return {};
+        const twitchChannels = await this.bot.getTwitchChannels().allByUserId(this.user.id);
+        if (!twitchChannels) {
+            return {};
+        }
+        return await helixClient.getAllChannelPointsCustomRewards(twitchChannels, this.bot, this.user);
     }
     getWsEvents() {
         return {
@@ -6965,7 +7006,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-06-14T17:38:32.476Z",
+    buildDate: "2022-06-15T20:41:19.813Z",
     // @ts-ignore
     buildVersion: "1.15.8",
 };
