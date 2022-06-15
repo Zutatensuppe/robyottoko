@@ -251,10 +251,18 @@ class SongrequestModule implements Module {
 
   async _channelPointsCustomRewards(): Promise<Record<string, string[]>> {
     const helixClient = this.bot.getUserTwitchClientManager(this.user).getHelixClient()
-    if (helixClient) {
-      return await helixClient.getAllChannelPointsCustomRewards(this.bot, this.user)
+    if (!helixClient) {
+      return {}
     }
-    return {}
+    const twitchChannels = await this.bot.getTwitchChannels().allByUserId(this.user.id)
+    if (!twitchChannels) {
+      return {}
+    }
+    return await helixClient.getAllChannelPointsCustomRewards(
+      twitchChannels,
+      this.bot,
+      this.user
+    )
   }
 
   getWsEvents() {

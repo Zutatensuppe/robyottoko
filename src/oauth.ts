@@ -12,6 +12,16 @@ interface TokenRefreshResult {
   refreshed: boolean
 }
 
+export const getMatchingAccessToken = async (
+  channelId: string,
+  bot: Bot,
+  user: User,
+): Promise<string | null> => {
+  const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id)
+  const channel = twitchChannels.find(c => c.channel_id === channelId && c.access_token)
+  return channel ? channel.access_token : null
+}
+
 /**
  * Tries to refresh the access token and returns the new token
  * if successful, otherwise null.

@@ -3,6 +3,7 @@ import fn, { findIdxFuzzy } from './../fn'
 import { logger } from './../common/fn'
 import config from '../config'
 import { User } from '../services/Users'
+import { getMatchingAccessToken } from '../oauth'
 
 const log = logger('setStreamTags.ts')
 
@@ -25,10 +26,11 @@ const removeStreamTags = (
       log.info('unable to execute removeStreamTags, client, command, context, or helixClient missing')
       return
     }
+    const channelId = context['room-id']
     const say = fn.sayFn(client, target)
     const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag
     const tmpTag = await fn.doReplacements(tag, command, context, originalCmd, bot, user)
-    const tagsResponse = await helixClient.getStreamTags(context['room-id'])
+    const tagsResponse = await helixClient.getStreamTags(channelId)
     if (!tagsResponse) {
       say(`❌ Unable to fetch current tags.`)
       return
@@ -52,8 +54,16 @@ const removeStreamTags = (
     }
     const newTagIds = manualTags.filter((_value, index) => index !== idx).map(entry => entry.tag_id)
     const newSettableTagIds: string[] = newTagIds.filter(tagId => !config.twitch.auto_tags.find(t => t.id === tagId))
+
+    const accessToken = await getMatchingAccessToken(channelId, bot, user)
+    if (!accessToken) {
+      say(`❌ Not authorized to remove tag: ${manualTags[idx].localization_names['en-us']}`)
+      return
+    }
+
     const resp = await helixClient.replaceStreamTags(
-      context['room-id'],
+      accessToken,
+      channelId,
       newSettableTagIds,
       bot,
       user,

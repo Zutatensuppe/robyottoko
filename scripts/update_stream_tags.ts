@@ -10,7 +10,6 @@ import TwitchHelixClient from '../src/services/TwitchHelixClient'
 const c = new TwitchHelixClient(
   config.twitch.tmi.identity.client_id,
   config.twitch.tmi.identity.client_secret,
-  [],
 );
 const file = __dirname + '/../src/config_data/tags_complete.json'
 const readFrom = 'file';

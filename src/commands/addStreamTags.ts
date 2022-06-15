@@ -3,6 +3,7 @@ import fn, { findIdxFuzzy } from './../fn'
 import { logger } from './../common/fn'
 import config from '../config'
 import { User } from '../services/Users'
+import { getMatchingAccessToken } from '../oauth'
 
 const log = logger('setStreamTags.ts')
 
@@ -25,10 +26,11 @@ const addStreamTags = (
       log.info('unable to execute addStreamTags, client, command, context, or helixClient missing')
       return
     }
+    const channelId = context['room-id']
     const say = fn.sayFn(client, target)
     const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag
     const tmpTag = await fn.doReplacements(tag, command, context, originalCmd, bot, user)
-    const tagsResponse = await helixClient.getStreamTags(context['room-id'])
+    const tagsResponse = await helixClient.getStreamTags(channelId)
     if (!tagsResponse) {
       say(`❌ Unable to fetch current tags.`)
       return
@@ -59,8 +61,15 @@ const addStreamTags = (
       return
     }
 
+    const accessToken = await getMatchingAccessToken(channelId, bot, user)
+    if (!accessToken) {
+      say(`❌ Not authorized to add tag: ${tagEntry.name}`)
+      return
+    }
+
     const resp = await helixClient.replaceStreamTags(
-      context['room-id'],
+      accessToken,
+      channelId,
       newSettableTagIds,
       bot,
       user,
