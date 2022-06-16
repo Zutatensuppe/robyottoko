@@ -13,7 +13,7 @@ class Templates {
 
   add(templatePath: string) {
     const templatePathAbsolute = path.join(this.baseDir, templatePath)
-    this.templates[templatePath] = { templatePathAbsolute, templateContents: '' }
+    this.templates[templatePath] = { templatePathAbsolute, templateContents: null }
   }
 
   async render(templatePath: string, data: Record<string, string>): Promise<string> {

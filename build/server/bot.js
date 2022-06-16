@@ -1124,7 +1124,7 @@ class Templates {
     }
     add(templatePath) {
         const templatePathAbsolute = path.join(this.baseDir, templatePath);
-        this.templates[templatePath] = { templatePathAbsolute, templateContents: '' };
+        this.templates[templatePath] = { templatePathAbsolute, templateContents: null };
     }
     async render(templatePath, data) {
         const tmpl = this.templates[templatePath];
@@ -7006,7 +7006,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-06-15T20:49:09.529Z",
+    buildDate: "2022-06-16T19:41:05.025Z",
     // @ts-ignore
     buildVersion: "1.16.0",
 };
