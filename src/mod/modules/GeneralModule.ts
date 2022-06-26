@@ -185,7 +185,7 @@ class GeneralModule implements Module {
         cmd.action = CommandAction.DICT_LOOKUP
         cmd.data = { lang: 'ja', phrase: '' }
       }
-      cmd.triggers = cmd.triggers.map((trigger: any) => {
+      cmd.triggers = (cmd.triggers || []).map((trigger: any) => {
         trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0
         if (trigger.data.minSeconds) {
           trigger.data.minInterval = trigger.data.minSeconds * 1000
