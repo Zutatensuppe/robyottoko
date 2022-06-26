@@ -1,8 +1,12 @@
 import { getProp, mustParseHumanDuration, nonce } from "../common/fn"
 import {
+  AddStreamTagCommand,
+  ChattersCommand,
   Command, CommandAction, CommandTrigger, CommandTriggerType,
-  CountdownAction, CountdownActionType, FunctionCommand,
-  MediaCommandData, MediaFile, MediaVideo, SoundMediaFile,
+  CountdownAction, CountdownActionType, CountdownCommand, DictLookupCommand, FunctionCommand,
+  MadochanCommand,
+  MediaCommand,
+  MediaCommandData, MediaFile, MediaVideo, MediaVolumeCommand, RandomTextCommand, RemoveStreamTagCommand, SetChannelGameIdCommand, SetChannelTitleCommand, SoundMediaFile,
 } from "../types"
 import { MOD_OR_ABOVE } from './permissions'
 
@@ -158,7 +162,7 @@ export const commands: Record<CommandAction, CommandDef> = {
   add_stream_tags: {
     Name: () => "add_stream_tags command",
     Description: () => "Add streamtag",
-    NewCommand: (): Command => ({
+    NewCommand: (): AddStreamTagCommand => ({
       id: nonce(10),
       triggers: [newCommandTrigger()],
       action: CommandAction.ADD_STREAM_TAGS,
@@ -174,7 +178,7 @@ export const commands: Record<CommandAction, CommandDef> = {
   chatters: {
     Name: () => "chatters command",
     Description: () => "Outputs the people who chatted during the stream.",
-    NewCommand: (): Command => ({
+    NewCommand: (): ChattersCommand => ({
       id: nonce(10),
       triggers: [newCommandTrigger()],
       action: CommandAction.CHATTERS,
@@ -188,7 +192,7 @@ export const commands: Record<CommandAction, CommandDef> = {
   countdown: {
     Name: () => "countdown",
     Description: () => "Add a countdown or messages spaced by time intervals.",
-    NewCommand: (): Command => ({
+    NewCommand: (): CountdownCommand => ({
       id: nonce(10),
       triggers: [newCommandTrigger()],
       action: CommandAction.COUNTDOWN,
@@ -196,10 +200,13 @@ export const commands: Record<CommandAction, CommandDef> = {
       variables: [],
       variableChanges: [],
       data: {
-        steps: 3,
+        type: 'auto',
+        step: '',
+        steps: '3',
         interval: '1s',
         intro: 'Starting countdown...',
-        outro: 'Done!'
+        outro: 'Done!',
+        actions: [] as CountdownAction[]
       },
     }),
     RequiresAccessToken: () => false,
@@ -207,7 +214,7 @@ export const commands: Record<CommandAction, CommandDef> = {
   dict_lookup: {
     Name: () => "dictionary lookup",
     Description: () => "Outputs the translation for the searched word.",
-    NewCommand: (): Command => ({
+    NewCommand: (): DictLookupCommand => ({
       id: nonce(10),
       triggers: [newCommandTrigger()],
       action: CommandAction.DICT_LOOKUP,
@@ -224,7 +231,7 @@ export const commands: Record<CommandAction, CommandDef> = {
   madochan_createword: {
     Name: () => "madochan",
     Description: () => "Creates a word for a definition.",
-    NewCommand: (): Command => ({
+    NewCommand: (): MadochanCommand => ({
       id: nonce(10),
       triggers: [newCommandTrigger()],
       action: CommandAction.MADOCHAN_CREATEWORD,
@@ -234,7 +241,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       data: {
         // TODO: use from same resource as server
         model: '100epochs800lenhashingbidirectional.h5',
-        weirdness: 1,
+        weirdness: '1',
       },
     }),
     RequiresAccessToken: () => false,
@@ -242,7 +249,7 @@ export const commands: Record<CommandAction, CommandDef> = {
   media: {
     Name: () => "media command",
     Description: () => "Display an image and/or play a sound.",
-    NewCommand: (): Command => ({
+    NewCommand: (): MediaCommand => ({
       id: nonce(10),
       triggers: [newCommandTrigger()],
       action: CommandAction.MEDIA,
@@ -258,7 +265,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => `Sets the media volume to <code>&lt;VOLUME&gt;</code> (argument to this command, min 0, max 100).
     <br />
     If no argument is given, just outputs the current volume`,
-    NewCommand: (): Command => ({
+    NewCommand: (): MediaVolumeCommand => ({
       id: nonce(10),
       triggers: [newCommandTrigger()],
       action: CommandAction.MEDIA_VOLUME,
@@ -272,7 +279,7 @@ export const commands: Record<CommandAction, CommandDef> = {
   text: {
     Name: () => "command",
     Description: () => "Send a message to chat",
-    NewCommand: (): Command => ({
+    NewCommand: (): RandomTextCommand => ({
       id: nonce(10),
       triggers: [newCommandTrigger()],
       action: CommandAction.TEXT,
@@ -288,7 +295,7 @@ export const commands: Record<CommandAction, CommandDef> = {
   remove_stream_tags: {
     Name: () => "remove_stream_tags command",
     Description: () => "Remove streamtag",
-    NewCommand: (): Command => ({
+    NewCommand: (): RemoveStreamTagCommand => ({
       id: nonce(10),
       triggers: [newCommandTrigger()],
       action: CommandAction.REMOVE_STREAM_TAGS,
@@ -304,7 +311,7 @@ export const commands: Record<CommandAction, CommandDef> = {
   set_channel_game_id: {
     Name: () => "change stream category command",
     Description: () => "Change the stream category",
-    NewCommand: (): Command => ({
+    NewCommand: (): SetChannelGameIdCommand => ({
       id: nonce(10),
       triggers: [newCommandTrigger()],
       action: CommandAction.SET_CHANNEL_GAME_ID,
@@ -320,7 +327,7 @@ export const commands: Record<CommandAction, CommandDef> = {
   set_channel_title: {
     Name: () => "change stream title command",
     Description: () => "Change the stream title",
-    NewCommand: (): Command => ({
+    NewCommand: (): SetChannelTitleCommand => ({
       id: nonce(10),
       triggers: [newCommandTrigger()],
       action: CommandAction.SET_CHANNEL_TITLE,
