@@ -167,7 +167,7 @@ class GeneralModule implements Module {
         }
       }
       if (cmd.action === CommandAction.COUNTDOWN) {
-        cmd.data.actions = cmd.data.actions.map((action: CountdownAction) => {
+        cmd.data.actions = (cmd.data.actions || []).map((action: CountdownAction) => {
           if (typeof action.value === 'string') {
             return action
           }
