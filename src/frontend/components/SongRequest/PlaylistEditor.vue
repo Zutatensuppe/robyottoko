@@ -110,9 +110,8 @@ tagInput = '';
                 </button>
               </td>
               <td>
-                <button class="button is-small" @click="sendCtrl('rmIdx', [index])" title="Remove">
-                  <i class="fa fa-trash" />
-                </button>
+                <doubleclick-button class="button is-small mr-1" message="Are you sure?" :timeout="1000"
+                  @doubleclick="sendCtrl('rmIdx', [index])" title="Remove"><i class="fa fa-trash" /></doubleclick-button>
               </td>
             </tr>
           </template>

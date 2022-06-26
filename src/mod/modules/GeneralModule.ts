@@ -167,7 +167,7 @@ class GeneralModule implements Module {
         }
       }
       if (cmd.action === CommandAction.COUNTDOWN) {
-        cmd.data.actions = cmd.data.actions.map((action: CountdownAction) => {
+        cmd.data.actions = (cmd.data.actions || []).map((action: CountdownAction) => {
           if (typeof action.value === 'string') {
             return action
           }
@@ -185,7 +185,7 @@ class GeneralModule implements Module {
         cmd.action = CommandAction.DICT_LOOKUP
         cmd.data = { lang: 'ja', phrase: '' }
       }
-      cmd.triggers = cmd.triggers.map((trigger: any) => {
+      cmd.triggers = (cmd.triggers || []).map((trigger: any) => {
         trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0
         if (trigger.data.minSeconds) {
           trigger.data.minInterval = trigger.data.minSeconds * 1000
@@ -349,20 +349,16 @@ class GeneralModule implements Module {
     this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, await this.wsdata(eventName))
   }
 
-  async saveSettings(): Promise<void> {
-    await this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
-    // no need for calling reinit, that would also recreate timers and stuff
-    // but updating settings shouldnt mess with those
-    await this.updateClients('init')
-  }
-
-  async saveCommands(): Promise<void> {
+  async save(): Promise<void> {
     await this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
     const initData = await this.reinit()
     this.data = initData.data
     this.commands = initData.commands
     this.timers = initData.timers
-    await this.updateClients('init')
+  }
+
+  async saveCommands(): Promise<void> {
+    await this.save()
   }
 
   getWsEvents() {
@@ -371,11 +367,11 @@ class GeneralModule implements Module {
         this.channelPointsCustomRewards = await this._channelPointsCustomRewards()
         await this.updateClient('init', ws)
       },
-      'save': async (ws: Socket, data: GeneralSaveEventData) => {
+      'save': async (_ws: Socket, data: GeneralSaveEventData) => {
         this.data.commands = this.fix(data.commands)
         this.data.settings = data.settings
         this.data.adminSettings = data.adminSettings
-        await this.saveCommands()
+        await this.save()
       },
     }
   }
@@ -387,8 +383,8 @@ class GeneralModule implements Module {
     if (vol > 100) {
       vol = 100
     }
-    this.data.settings.volume = parseInt(`${vol}`, 10)
-    await this.saveSettings()
+    this.data.settings.volume = vol
+    await this.save()
   }
 
   async mediaVolumeCmd(

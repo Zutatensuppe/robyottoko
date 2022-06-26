@@ -333,11 +333,13 @@ export default defineComponent({
     resr() {
       if (this.resrinput !== "") {
         this.sendCtrl("resr", [this.resrinput]);
+        this.resrinput = ''
       }
     },
     sr() {
       if (this.srinput !== "") {
         this.sendCtrl("sr", [this.srinput]);
+        this.srinput = ''
       }
     },
     sendCtrl(ctrl: string, args: any[]) {

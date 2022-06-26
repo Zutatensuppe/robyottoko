@@ -2576,10 +2576,13 @@ const commands = {
             variables: [],
             variableChanges: [],
             data: {
-                steps: 3,
+                type: 'auto',
+                step: '',
+                steps: '3',
                 interval: '1s',
                 intro: 'Starting countdown...',
-                outro: 'Done!'
+                outro: 'Done!',
+                actions: []
             },
         }),
         RequiresAccessToken: () => false,
@@ -2614,7 +2617,7 @@ const commands = {
             data: {
                 // TODO: use from same resource as server
                 model: '100epochs800lenhashingbidirectional.h5',
-                weirdness: 1,
+                weirdness: '1',
             },
         }),
         RequiresAccessToken: () => false,
@@ -4635,7 +4638,7 @@ class GeneralModule {
                 }
             }
             if (cmd.action === CommandAction.COUNTDOWN) {
-                cmd.data.actions = cmd.data.actions.map((action) => {
+                cmd.data.actions = (cmd.data.actions || []).map((action) => {
                     if (typeof action.value === 'string') {
                         return action;
                     }
@@ -4652,7 +4655,7 @@ class GeneralModule {
                 cmd.action = CommandAction.DICT_LOOKUP;
                 cmd.data = { lang: 'ja', phrase: '' };
             }
-            cmd.triggers = cmd.triggers.map((trigger) => {
+            cmd.triggers = (cmd.triggers || []).map((trigger) => {
                 trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0;
                 if (trigger.data.minSeconds) {
                     trigger.data.minInterval = trigger.data.minSeconds * 1000;
@@ -4806,19 +4809,15 @@ class GeneralModule {
     async updateClients(eventName) {
         this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, await this.wsdata(eventName));
     }
-    async saveSettings() {
-        await this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
-        // no need for calling reinit, that would also recreate timers and stuff
-        // but updating settings shouldnt mess with those
-        await this.updateClients('init');
-    }
-    async saveCommands() {
+    async save() {
         await this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
         const initData = await this.reinit();
         this.data = initData.data;
         this.commands = initData.commands;
         this.timers = initData.timers;
-        await this.updateClients('init');
+    }
+    async saveCommands() {
+        await this.save();
     }
     getWsEvents() {
         return {
@@ -4826,11 +4825,11 @@ class GeneralModule {
                 this.channelPointsCustomRewards = await this._channelPointsCustomRewards();
                 await this.updateClient('init', ws);
             },
-            'save': async (ws, data) => {
+            'save': async (_ws, data) => {
                 this.data.commands = this.fix(data.commands);
                 this.data.settings = data.settings;
                 this.data.adminSettings = data.adminSettings;
-                await this.saveCommands();
+                await this.save();
             },
         };
     }
@@ -4841,8 +4840,8 @@ class GeneralModule {
         if (vol > 100) {
             vol = 100;
         }
-        this.data.settings.volume = parseInt(`${vol}`, 10);
-        await this.saveSettings();
+        this.data.settings.volume = vol;
+        await this.save();
     }
     async mediaVolumeCmd(command, client, target, _context) {
         if (!client || !command) {
@@ -5132,6 +5131,7 @@ class SongrequestModule {
     }
     saveCommands() {
         // pass
+        // TODO: save, because variable changes could have happened
     }
     getRoutes() {
         return {
@@ -7006,9 +7006,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-06-16T19:42:24.402Z",
+    buildDate: "2022-06-26T16:07:49.272Z",
     // @ts-ignore
-    buildVersion: "1.16.1",
+    buildVersion: "1.16.2",
 };
 
 const widgets = [
