@@ -177,6 +177,7 @@ class SongrequestModule implements Module {
 
   saveCommands() {
     // pass
+    // TODO: save, because variable changes could have happened
   }
 
   getRoutes() {
