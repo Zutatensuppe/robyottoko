@@ -120,8 +120,8 @@ class GeneralModule implements Module {
     }, 1 * SECOND)
   }
 
-  fix(commands: any[]): Command[] {
-    return (commands || []).map((cmd: any) => {
+  fix(commands: any[]): { commands: Command[], shouldSave: boolean } {
+    const fixedCommands = (commands || []).map((cmd: any) => {
       if (cmd.command) {
         cmd.triggers = [newCommandTrigger(cmd.command, cmd.commandExact || false)]
         delete cmd.command
@@ -194,10 +194,26 @@ class GeneralModule implements Module {
       })
       return cmd
     })
+
+    let shouldSave = false
+    // add ids to commands that dont have one yet
+    for (const command of fixedCommands) {
+      if (!command.id) {
+        command.id = nonce(10)
+        shouldSave = true
+      }
+      if (!command.createdAt) {
+        command.createdAt = JSON.stringify(new Date())
+        shouldSave = true
+      }
+    }
+    return {
+      commands: fixedCommands,
+      shouldSave,
+    }
   }
 
   async reinit(): Promise<GeneralModuleInitData> {
-    let shouldSave = false
     const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {
       commands: [],
       settings: {
@@ -208,14 +224,8 @@ class GeneralModule implements Module {
         autocommands: []
       },
     })
-    data.commands = this.fix(data.commands)
-    // add ids to commands that dont have one yet
-    for (const command of data.commands) {
-      if (!command.id) {
-        command.id = nonce(10)
-        shouldSave = true
-      }
-    }
+    const fixed = this.fix(data.commands)
+    data.commands = fixed.commands
 
     if (!data.adminSettings) {
       data.adminSettings = {}
@@ -232,7 +242,7 @@ class GeneralModule implements Module {
       txtCommand.data.text = ['Version $bot.version $bot.website < - $bot.features - Source code at $bot.github']
       data.commands.push(txtCommand)
       data.adminSettings.autocommands.push('!bot')
-      shouldSave = true
+      fixed.shouldSave = true
     }
 
     const commands: FunctionCommand[] = []
@@ -311,7 +321,7 @@ class GeneralModule implements Module {
         }
       }
     })
-    return { data, commands, timers, shouldSave } as GeneralModuleInitData
+    return { data, commands, timers, shouldSave: fixed.shouldSave } as GeneralModuleInitData
   }
 
   getRoutes() {
@@ -368,7 +378,8 @@ class GeneralModule implements Module {
         await this.updateClient('init', ws)
       },
       'save': async (_ws: Socket, data: GeneralSaveEventData) => {
-        this.data.commands = this.fix(data.commands)
+        const fixed = this.fix(data.commands)
+        this.data.commands = fixed.commands
         this.data.settings = data.settings
         this.data.adminSettings = data.adminSettings
         await this.save()

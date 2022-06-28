@@ -292,7 +292,8 @@ export enum CommandAction {
 }
 
 export interface Command {
-  id?: string
+  id: string
+  createdAt: string // json date string
   triggers: CommandTrigger[]
   action: CommandAction
   restrict_to: CommandRestrict[]

@@ -164,6 +164,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Add streamtag",
     NewCommand: (): AddStreamTagCommand => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       triggers: [newCommandTrigger()],
       action: CommandAction.ADD_STREAM_TAGS,
       restrict_to: MOD_OR_ABOVE,
@@ -180,6 +181,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Outputs the people who chatted during the stream.",
     NewCommand: (): ChattersCommand => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       triggers: [newCommandTrigger()],
       action: CommandAction.CHATTERS,
       restrict_to: [],
@@ -194,6 +196,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Add a countdown or messages spaced by time intervals.",
     NewCommand: (): CountdownCommand => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       triggers: [newCommandTrigger()],
       action: CommandAction.COUNTDOWN,
       restrict_to: [],
@@ -216,6 +219,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Outputs the translation for the searched word.",
     NewCommand: (): DictLookupCommand => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       triggers: [newCommandTrigger()],
       action: CommandAction.DICT_LOOKUP,
       restrict_to: [],
@@ -233,6 +237,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Creates a word for a definition.",
     NewCommand: (): MadochanCommand => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       triggers: [newCommandTrigger()],
       action: CommandAction.MADOCHAN_CREATEWORD,
       restrict_to: [],
@@ -251,6 +256,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Display an image and/or play a sound.",
     NewCommand: (): MediaCommand => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       triggers: [newCommandTrigger()],
       action: CommandAction.MEDIA,
       restrict_to: [],
@@ -267,6 +273,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     If no argument is given, just outputs the current volume`,
     NewCommand: (): MediaVolumeCommand => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       triggers: [newCommandTrigger()],
       action: CommandAction.MEDIA_VOLUME,
       restrict_to: MOD_OR_ABOVE,
@@ -281,6 +288,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Send a message to chat",
     NewCommand: (): RandomTextCommand => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       triggers: [newCommandTrigger()],
       action: CommandAction.TEXT,
       restrict_to: [],
@@ -297,6 +305,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Remove streamtag",
     NewCommand: (): RemoveStreamTagCommand => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       triggers: [newCommandTrigger()],
       action: CommandAction.REMOVE_STREAM_TAGS,
       restrict_to: MOD_OR_ABOVE,
@@ -313,6 +322,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Change the stream category",
     NewCommand: (): SetChannelGameIdCommand => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       triggers: [newCommandTrigger()],
       action: CommandAction.SET_CHANNEL_GAME_ID,
       restrict_to: MOD_OR_ABOVE,
@@ -329,6 +339,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Change the stream title",
     NewCommand: (): SetChannelTitleCommand => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       triggers: [newCommandTrigger()],
       action: CommandAction.SET_CHANNEL_TITLE,
       restrict_to: MOD_OR_ABOVE,
@@ -345,6 +356,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Show what song is currently playing",
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_CURRENT,
       triggers: [newCommandTrigger('!sr current', true)],
       restrict_to: [],
@@ -359,6 +371,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Remove the song that was last added by oneself.",
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_UNDO,
       triggers: [newCommandTrigger('!sr undo', true)],
       restrict_to: [],
@@ -373,6 +386,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Vote the current song up",
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_GOOD,
       triggers: [newCommandTrigger('!sr good', true)],
       restrict_to: [],
@@ -387,6 +401,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Vote the current song down",
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_BAD,
       triggers: [newCommandTrigger('!sr bad', true)],
       restrict_to: [],
@@ -401,6 +416,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Show stats about the playlist",
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_STATS,
       triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)],
       restrict_to: [],
@@ -415,6 +431,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Skip to the previous song",
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_PREV,
       triggers: [newCommandTrigger('!sr prev', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -429,6 +446,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Skip to the next song",
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_NEXT,
       triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -443,6 +461,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Jump to the next unplayed song",
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_JUMPTONEW,
       triggers: [newCommandTrigger('!sr jumptonew', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -457,6 +476,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Clear the playlist",
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_CLEAR,
       triggers: [newCommandTrigger('!sr clear', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -471,6 +491,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Remove the current song from the playlist",
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_RM,
       triggers: [newCommandTrigger('!sr rm', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -488,6 +509,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     songs will be put after currently playing song.`,
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_SHUFFLE,
       triggers: [newCommandTrigger('!sr shuffle', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -502,6 +524,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Reset all statistics of all songs",
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_RESET_STATS,
       triggers: [newCommandTrigger('!sr resetStats', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -516,6 +539,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Loop the current song",
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_LOOP,
       triggers: [newCommandTrigger('!sr loop', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -530,6 +554,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Stop looping the current song",
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_NOLOOP,
       triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -544,6 +569,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Pause currently playing song",
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_PAUSE,
       triggers: [newCommandTrigger('!sr pause', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -558,6 +584,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Unpause currently paused song",
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_UNPAUSE,
       triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -572,6 +599,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Hide video for current song",
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_HIDEVIDEO,
       triggers: [newCommandTrigger('!sr hidevideo', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -586,6 +614,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Show video for current song",
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_SHOWVIDEO,
       triggers: [newCommandTrigger('!sr showvideo', true)],
       restrict_to: MOD_OR_ABOVE,
@@ -604,6 +633,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     batch of unplayed songs).`,
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_REQUEST,
       triggers: [newCommandTrigger('!sr')],
       restrict_to: [],
@@ -621,6 +651,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     (after the first found batch of unplayed songs).`,
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_RE_REQUEST,
       triggers: [newCommandTrigger('!resr')],
       restrict_to: [],
@@ -635,6 +666,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Add tag <code>&lt;TAG&gt;</code> (argument to this command) to the current song",
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_ADDTAG,
       triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')],
       restrict_to: MOD_OR_ABOVE,
@@ -651,6 +683,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => "Remove tag <code>&lt;TAG&gt;</code> (argument to this command) from the current song",
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_RMTAG,
       triggers: [newCommandTrigger('!sr rmtag')],
       restrict_to: MOD_OR_ABOVE,
@@ -667,6 +700,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     If no argument is given, just outputs the current volume`,
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_VOLUME,
       triggers: [newCommandTrigger('!sr volume')],
       restrict_to: MOD_OR_ABOVE,
@@ -682,6 +716,7 @@ export const commands: Record<CommandAction, CommandDef> = {
   is given, play all songs.`,
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_FILTER,
       triggers: [newCommandTrigger('!sr filter')],
       restrict_to: MOD_OR_ABOVE,
@@ -697,6 +732,7 @@ export const commands: Record<CommandAction, CommandDef> = {
   If no arguments are given, outputs all available presets.`,
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_PRESET,
       triggers: [newCommandTrigger('!sr preset')],
       restrict_to: MOD_OR_ABOVE,
@@ -711,6 +747,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => `Shows the next 3 songs that will play.`,
     NewCommand: (): Command => ({
       id: nonce(10),
+      createdAt: JSON.stringify(new Date()),
       action: CommandAction.SR_QUEUE,
       triggers: [newCommandTrigger('!sr queue')],
       restrict_to: [],
