@@ -2540,6 +2540,7 @@ const commands = {
         Description: () => "Add streamtag",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             triggers: [newCommandTrigger()],
             action: CommandAction.ADD_STREAM_TAGS,
             restrict_to: MOD_OR_ABOVE,
@@ -2556,6 +2557,7 @@ const commands = {
         Description: () => "Outputs the people who chatted during the stream.",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             triggers: [newCommandTrigger()],
             action: CommandAction.CHATTERS,
             restrict_to: [],
@@ -2570,6 +2572,7 @@ const commands = {
         Description: () => "Add a countdown or messages spaced by time intervals.",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             triggers: [newCommandTrigger()],
             action: CommandAction.COUNTDOWN,
             restrict_to: [],
@@ -2592,6 +2595,7 @@ const commands = {
         Description: () => "Outputs the translation for the searched word.",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             triggers: [newCommandTrigger()],
             action: CommandAction.DICT_LOOKUP,
             restrict_to: [],
@@ -2609,6 +2613,7 @@ const commands = {
         Description: () => "Creates a word for a definition.",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             triggers: [newCommandTrigger()],
             action: CommandAction.MADOCHAN_CREATEWORD,
             restrict_to: [],
@@ -2627,6 +2632,7 @@ const commands = {
         Description: () => "Display an image and/or play a sound.",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             triggers: [newCommandTrigger()],
             action: CommandAction.MEDIA,
             restrict_to: [],
@@ -2643,6 +2649,7 @@ const commands = {
     If no argument is given, just outputs the current volume`,
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             triggers: [newCommandTrigger()],
             action: CommandAction.MEDIA_VOLUME,
             restrict_to: MOD_OR_ABOVE,
@@ -2657,6 +2664,7 @@ const commands = {
         Description: () => "Send a message to chat",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             triggers: [newCommandTrigger()],
             action: CommandAction.TEXT,
             restrict_to: [],
@@ -2673,6 +2681,7 @@ const commands = {
         Description: () => "Remove streamtag",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             triggers: [newCommandTrigger()],
             action: CommandAction.REMOVE_STREAM_TAGS,
             restrict_to: MOD_OR_ABOVE,
@@ -2689,6 +2698,7 @@ const commands = {
         Description: () => "Change the stream category",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             triggers: [newCommandTrigger()],
             action: CommandAction.SET_CHANNEL_GAME_ID,
             restrict_to: MOD_OR_ABOVE,
@@ -2705,6 +2715,7 @@ const commands = {
         Description: () => "Change the stream title",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             triggers: [newCommandTrigger()],
             action: CommandAction.SET_CHANNEL_TITLE,
             restrict_to: MOD_OR_ABOVE,
@@ -2721,6 +2732,7 @@ const commands = {
         Description: () => "Show what song is currently playing",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_CURRENT,
             triggers: [newCommandTrigger('!sr current', true)],
             restrict_to: [],
@@ -2735,6 +2747,7 @@ const commands = {
         Description: () => "Remove the song that was last added by oneself.",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_UNDO,
             triggers: [newCommandTrigger('!sr undo', true)],
             restrict_to: [],
@@ -2749,6 +2762,7 @@ const commands = {
         Description: () => "Vote the current song up",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_GOOD,
             triggers: [newCommandTrigger('!sr good', true)],
             restrict_to: [],
@@ -2763,6 +2777,7 @@ const commands = {
         Description: () => "Vote the current song down",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_BAD,
             triggers: [newCommandTrigger('!sr bad', true)],
             restrict_to: [],
@@ -2777,6 +2792,7 @@ const commands = {
         Description: () => "Show stats about the playlist",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_STATS,
             triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)],
             restrict_to: [],
@@ -2791,6 +2807,7 @@ const commands = {
         Description: () => "Skip to the previous song",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_PREV,
             triggers: [newCommandTrigger('!sr prev', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2805,6 +2822,7 @@ const commands = {
         Description: () => "Skip to the next song",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_NEXT,
             triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2819,6 +2837,7 @@ const commands = {
         Description: () => "Jump to the next unplayed song",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_JUMPTONEW,
             triggers: [newCommandTrigger('!sr jumptonew', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2833,6 +2852,7 @@ const commands = {
         Description: () => "Clear the playlist",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_CLEAR,
             triggers: [newCommandTrigger('!sr clear', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2847,6 +2867,7 @@ const commands = {
         Description: () => "Remove the current song from the playlist",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_RM,
             triggers: [newCommandTrigger('!sr rm', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2864,6 +2885,7 @@ const commands = {
     songs will be put after currently playing song.`,
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_SHUFFLE,
             triggers: [newCommandTrigger('!sr shuffle', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2878,6 +2900,7 @@ const commands = {
         Description: () => "Reset all statistics of all songs",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_RESET_STATS,
             triggers: [newCommandTrigger('!sr resetStats', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2892,6 +2915,7 @@ const commands = {
         Description: () => "Loop the current song",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_LOOP,
             triggers: [newCommandTrigger('!sr loop', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2906,6 +2930,7 @@ const commands = {
         Description: () => "Stop looping the current song",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_NOLOOP,
             triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2920,6 +2945,7 @@ const commands = {
         Description: () => "Pause currently playing song",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_PAUSE,
             triggers: [newCommandTrigger('!sr pause', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2934,6 +2960,7 @@ const commands = {
         Description: () => "Unpause currently paused song",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_UNPAUSE,
             triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2948,6 +2975,7 @@ const commands = {
         Description: () => "Hide video for current song",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_HIDEVIDEO,
             triggers: [newCommandTrigger('!sr hidevideo', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2962,6 +2990,7 @@ const commands = {
         Description: () => "Show video for current song",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_SHOWVIDEO,
             triggers: [newCommandTrigger('!sr showvideo', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2980,6 +3009,7 @@ const commands = {
     batch of unplayed songs).`,
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_REQUEST,
             triggers: [newCommandTrigger('!sr')],
             restrict_to: [],
@@ -2997,6 +3027,7 @@ const commands = {
     (after the first found batch of unplayed songs).`,
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_RE_REQUEST,
             triggers: [newCommandTrigger('!resr')],
             restrict_to: [],
@@ -3011,6 +3042,7 @@ const commands = {
         Description: () => "Add tag <code>&lt;TAG&gt;</code> (argument to this command) to the current song",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_ADDTAG,
             triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')],
             restrict_to: MOD_OR_ABOVE,
@@ -3027,6 +3059,7 @@ const commands = {
         Description: () => "Remove tag <code>&lt;TAG&gt;</code> (argument to this command) from the current song",
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_RMTAG,
             triggers: [newCommandTrigger('!sr rmtag')],
             restrict_to: MOD_OR_ABOVE,
@@ -3043,6 +3076,7 @@ const commands = {
     If no argument is given, just outputs the current volume`,
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_VOLUME,
             triggers: [newCommandTrigger('!sr volume')],
             restrict_to: MOD_OR_ABOVE,
@@ -3058,6 +3092,7 @@ const commands = {
   is given, play all songs.`,
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_FILTER,
             triggers: [newCommandTrigger('!sr filter')],
             restrict_to: MOD_OR_ABOVE,
@@ -3073,6 +3108,7 @@ const commands = {
   If no arguments are given, outputs all available presets.`,
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_PRESET,
             triggers: [newCommandTrigger('!sr preset')],
             restrict_to: MOD_OR_ABOVE,
@@ -3087,6 +3123,7 @@ const commands = {
         Description: () => `Shows the next 3 songs that will play.`,
         NewCommand: () => ({
             id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
             action: CommandAction.SR_QUEUE,
             triggers: [newCommandTrigger('!sr queue')],
             restrict_to: [],
@@ -4594,7 +4631,7 @@ class GeneralModule {
         }, 1 * SECOND);
     }
     fix(commands) {
-        return (commands || []).map((cmd) => {
+        const fixedCommands = (commands || []).map((cmd) => {
             if (cmd.command) {
                 cmd.triggers = [newCommandTrigger(cmd.command, cmd.commandExact || false)];
                 delete cmd.command;
@@ -4664,9 +4701,24 @@ class GeneralModule {
             });
             return cmd;
         });
+        let shouldSave = false;
+        // add ids to commands that dont have one yet
+        for (const command of fixedCommands) {
+            if (!command.id) {
+                command.id = nonce(10);
+                shouldSave = true;
+            }
+            if (!command.createdAt) {
+                command.createdAt = JSON.stringify(new Date());
+                shouldSave = true;
+            }
+        }
+        return {
+            commands: fixedCommands,
+            shouldSave,
+        };
     }
     async reinit() {
-        let shouldSave = false;
         const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {
             commands: [],
             settings: {
@@ -4677,14 +4729,8 @@ class GeneralModule {
                 autocommands: []
             },
         });
-        data.commands = this.fix(data.commands);
-        // add ids to commands that dont have one yet
-        for (const command of data.commands) {
-            if (!command.id) {
-                command.id = nonce(10);
-                shouldSave = true;
-            }
-        }
+        const fixed = this.fix(data.commands);
+        data.commands = fixed.commands;
         if (!data.adminSettings) {
             data.adminSettings = {};
         }
@@ -4700,7 +4746,7 @@ class GeneralModule {
             txtCommand.data.text = ['Version $bot.version $bot.website < - $bot.features - Source code at $bot.github'];
             data.commands.push(txtCommand);
             data.adminSettings.autocommands.push('!bot');
-            shouldSave = true;
+            fixed.shouldSave = true;
         }
         const commands$1 = [];
         const timers = [];
@@ -4777,7 +4823,7 @@ class GeneralModule {
                 }
             }
         });
-        return { data, commands: commands$1, timers, shouldSave };
+        return { data, commands: commands$1, timers, shouldSave: fixed.shouldSave };
     }
     getRoutes() {
         return {};
@@ -4826,7 +4872,8 @@ class GeneralModule {
                 await this.updateClient('init', ws);
             },
             'save': async (_ws, data) => {
-                this.data.commands = this.fix(data.commands);
+                const fixed = this.fix(data.commands);
+                this.data.commands = fixed.commands;
                 this.data.settings = data.settings;
                 this.data.adminSettings = data.adminSettings;
                 await this.save();
@@ -5058,6 +5105,9 @@ class SongrequestModule {
                 stacks: initData.data.stacks,
             };
             this.commands = initData.commands;
+            if (initData.shouldSave) {
+                await this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
+            }
             return this;
         })();
     }
@@ -5065,6 +5115,7 @@ class SongrequestModule {
         this.user = user;
     }
     async reinit() {
+        let shouldSave = false;
         const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {
             filter: {
                 tag: '',
@@ -5080,6 +5131,17 @@ class SongrequestModule {
         data.playlist = default_playlist(data.playlist);
         data.settings = default_settings$4(data.settings);
         data.commands = default_commands(data.commands);
+        // add ids to commands that dont have one yet
+        for (const command of data.commands) {
+            if (!command.id) {
+                command.id = nonce(10);
+                shouldSave = true;
+            }
+            if (!command.createdAt) {
+                command.createdAt = JSON.stringify(new Date());
+                shouldSave = true;
+            }
+        }
         return {
             data: {
                 playlist: data.playlist,
@@ -5089,6 +5151,7 @@ class SongrequestModule {
                 stacks: data.stacks,
             },
             commands: this.initCommands(data.commands),
+            shouldSave,
         };
     }
     initCommands(rawCommands) {
@@ -7006,9 +7069,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-06-26T16:07:49.272Z",
+    buildDate: "2022-06-28T21:32:06.086Z",
     // @ts-ignore
-    buildVersion: "1.16.2",
+    buildVersion: "1.17.0",
 };
 
 const widgets = [

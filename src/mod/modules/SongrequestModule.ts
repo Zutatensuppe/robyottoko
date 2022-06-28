@@ -1,5 +1,5 @@
 import fn, { findIdxFuzzy } from '../../fn'
-import { shuffle, arrayMove, logger, humanDuration, parseHumanDuration } from '../../common/fn'
+import { shuffle, arrayMove, logger, humanDuration, parseHumanDuration, nonce } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
 import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
 import { User } from '../../services/Users'
@@ -98,6 +98,9 @@ class SongrequestModule implements Module {
         stacks: initData.data.stacks,
       }
       this.commands = initData.commands
+      if (initData.shouldSave) {
+        await this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
+      }
       return this;
     })();
   }
@@ -107,6 +110,7 @@ class SongrequestModule implements Module {
   }
 
   async reinit(): Promise<SongerquestModuleInitData> {
+    let shouldSave = false
     const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {
       filter: {
         tag: '',
@@ -124,6 +128,18 @@ class SongrequestModule implements Module {
     data.settings = default_settings(data.settings)
     data.commands = default_commands(data.commands)
 
+    // add ids to commands that dont have one yet
+    for (const command of data.commands) {
+      if (!command.id) {
+        command.id = nonce(10)
+        shouldSave = true
+      }
+      if (!command.createdAt) {
+        command.createdAt = JSON.stringify(new Date())
+        shouldSave = true
+      }
+    }
+
     return {
       data: {
         playlist: data.playlist,
@@ -133,6 +149,7 @@ class SongrequestModule implements Module {
         stacks: data.stacks,
       },
       commands: this.initCommands(data.commands),
+      shouldSave,
     }
   }
 

@@ -334,12 +334,12 @@ export default defineComponent({
       return permissionsStr(item.restrict_to);
     },
     remove(idx: number) {
-      this.commands = this.commands.filter((val, index) => index !== idx);
+      this.commands = this.commands.filter((_val, index: number) => index !== idx);
       this.emitChange();
     },
     add(mappedAction: any) {
       const type: CommandAction = mappedAction.type;
-      this.editIdx = this.commands.length;
+      this.editIdx = -1
       this.editCommand = commands[type].NewCommand();
     },
     edit(idx: number) {
@@ -347,14 +347,20 @@ export default defineComponent({
       this.editCommand = this.commands[idx];
     },
     duplicate(idx: number) {
-      this.editIdx = this.commands.length;
+      this.editIdx = -1
       this.editCommand = JSON.parse(JSON.stringify(this.commands[idx]));
     },
     editedCommand(command: Command): void {
       if (this.editIdx === null) {
         return;
       }
-      this.commands[this.editIdx] = command;
+      if (this.editIdx === -1) {
+        // put new commands on top of the list
+        this.commands.unshift(command)
+      } else {
+        // otherwise edit the edited command
+        this.commands[this.editIdx] = command;
+      }
       this.emitChange();
       this.editIdx = null;
       this.editCommand = null;
@@ -391,5 +397,10 @@ export default defineComponent({
 .actions {
   display: flex;
   align-items: center;
+  position: sticky;
+  top: 51px;
+  background: white;
+  z-index: 6;
+  padding: 5px 0;
 }
 </style>

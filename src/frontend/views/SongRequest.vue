@@ -107,9 +107,10 @@ interface ControlDefinition {
   icon: string;
 }
 
+type Tab = "playlist" | "commands" | "settings" | "import" | "tags"
 interface TabDefinition {
-  title: string;
-  tab: string;
+  title: string
+  tab: Tab
 }
 
 interface ComponentData {
@@ -124,7 +125,7 @@ interface ComponentData {
   resrinput: string;
   srinput: string;
   inited: boolean;
-  tab: "playlist" | "commands" | "import" | "tags";
+  tab: Tab;
   importPlaylist: string;
 
   widgetUrl: string;
