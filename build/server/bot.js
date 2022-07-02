@@ -794,6 +794,34 @@ const findIdxBySearch = (array, search, keyFn = String) => {
         return true;
     });
 };
+/**
+ * Determines new volume from an input and a current volume.
+ * If the input cannot be parsed, the current volume is returned.
+ */
+const determineNewVolume = (input, currentVal) => {
+    if (input.match(/^\+\d+$/)) {
+        // prefixed with + means increase volume by an amount
+        const val = parseInt(input.substring(1), 10);
+        if (isNaN(val)) {
+            return currentVal;
+        }
+        return currentVal + val;
+    }
+    if (input.match(/^-\d+$/)) {
+        // prefixed with - means decrease volume by an amount
+        const val = parseInt(input.substring(1), 10);
+        if (isNaN(val)) {
+            return currentVal;
+        }
+        return currentVal - val;
+    }
+    // no prefix, just set the volume to the input
+    const val = parseInt(input, 10);
+    if (isNaN(val)) {
+        return currentVal;
+    }
+    return val;
+};
 var fn = {
     applyVariableChanges,
     logger,
@@ -4899,7 +4927,8 @@ class GeneralModule {
             say(`Current volume: ${this.data.settings.volume}`);
         }
         else {
-            await this.volume(parseInt(command.args[0], 10));
+            const newVolume = determineNewVolume(command.args[0], this.data.settings.volume);
+            await this.volume(newVolume);
             say(`New volume: ${this.data.settings.volume}`);
         }
     }
@@ -6031,7 +6060,8 @@ class SongrequestModule {
                 say(`Current volume: ${this.data.settings.volume}`);
             }
             else {
-                await this.volume(parseInt(command.args[0], 10));
+                const newVolume = determineNewVolume(command.args[0], this.data.settings.volume);
+                await this.volume(newVolume);
                 say(`New volume: ${this.data.settings.volume}`);
             }
         };
@@ -7069,9 +7099,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-06-28T21:32:06.086Z",
+    buildDate: "2022-07-02T12:15:36.811Z",
     // @ts-ignore
-    buildVersion: "1.17.0",
+    buildVersion: "1.18.0",
 };
 
 const widgets = [
