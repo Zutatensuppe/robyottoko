@@ -1,5 +1,6 @@
 import {
   accentFolded,
+  determineNewVolume,
   joinIntoChunks,
   parseISO8601Duration,
   doReplacements,
@@ -13,6 +14,20 @@ import { Command, CommandTrigger } from './types'
 test('accentFolded', () => {
   const actual = accentFolded('Błogosławieni Miłosierni (Krysiek Remix)')
   const expected = 'Blogoslawieni Milosierni (Krysiek Remix)'
+  expect(actual).toBe(expected)
+})
+
+test.each([
+  { input: '10', current: 50, expected: 10 },
+  { input: '+10', current: 50, expected: 60 },
+  { input: '-10', current: 50, expected: 40 },
+  { input: '-55', current: 50, expected: -5 },
+  { input: '+55', current: 50, expected: 105 },
+  { input: '--10', current: 50, expected: 50 },
+  { input: '++10', current: 50, expected: 50 },
+  { input: 'zz0z0', current: 50, expected: 50 },
+])('determineNewVolume', ({ input, current, expected }) => {
+  const actual = determineNewVolume(input, current)
   expect(actual).toBe(expected)
 })
 

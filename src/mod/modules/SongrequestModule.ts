@@ -1,4 +1,4 @@
-import fn, { findIdxFuzzy } from '../../fn'
+import fn, { determineNewVolume, findIdxFuzzy } from '../../fn'
 import { shuffle, arrayMove, logger, humanDuration, parseHumanDuration, nonce } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
 import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
@@ -1160,7 +1160,11 @@ class SongrequestModule implements Module {
       if (command.args.length === 0) {
         say(`Current volume: ${this.data.settings.volume}`)
       } else {
-        await this.volume(parseInt(command.args[0], 10))
+        const newVolume = determineNewVolume(
+          command.args[0],
+          this.data.settings.volume,
+        )
+        await this.volume(newVolume)
         say(`New volume: ${this.data.settings.volume}`)
       }
     }
