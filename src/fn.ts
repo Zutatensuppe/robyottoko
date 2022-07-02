@@ -613,6 +613,38 @@ export const findIdxBySearch = <T>(
   })
 }
 
+/**
+ * Determines new volume from an input and a current volume.
+ * If the input cannot be parsed, the current volume is returned.
+ */
+export const determineNewVolume = (
+  input: string,
+  currentVal: number,
+): number => {
+  if (input.match(/^\+\d+$/)) {
+    // prefixed with + means increase volume by an amount
+    const val = parseInt(input.substring(1), 10)
+    if (isNaN(val)) {
+      return currentVal
+    }
+    return currentVal + val
+  }
+  if (input.match(/^-\d+$/)) {
+    // prefixed with - means decrease volume by an amount
+    const val = parseInt(input.substring(1), 10)
+    if (isNaN(val)) {
+      return currentVal
+    }
+    return currentVal - val
+  }
+  // no prefix, just set the volume to the input
+  const val = parseInt(input, 10)
+  if (isNaN(val)) {
+    return currentVal
+  }
+  return val
+}
+
 export default {
   applyVariableChanges,
   logger,

@@ -2,7 +2,7 @@ import countdown from '../../commands/countdown'
 import madochanCreateWord from '../../commands/madochanCreateWord'
 import randomText from '../../commands/randomText'
 import playMedia from '../../commands/playMedia'
-import fn from '../../fn'
+import fn, { determineNewVolume } from '../../fn'
 import { logger, nonce, parseHumanDuration, SECOND } from '../../common/fn'
 import chatters from '../../commands/chatters'
 import { commands as commonCommands, newCommandTrigger } from '../../common/commands'
@@ -412,7 +412,11 @@ class GeneralModule implements Module {
     if (command.args.length === 0) {
       say(`Current volume: ${this.data.settings.volume}`)
     } else {
-      await this.volume(parseInt(command.args[0], 10))
+      const newVolume = determineNewVolume(
+        command.args[0],
+        this.data.settings.volume,
+      )
+      await this.volume(newVolume)
       say(`New volume: ${this.data.settings.volume}`)
     }
   }
