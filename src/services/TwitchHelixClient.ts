@@ -438,6 +438,7 @@ class TwitchHelixClient {
     }
   }
 
+  // https://dev.twitch.tv/docs/eventsub/manage-subscriptions#subscribing-to-events
   async createSubscription(subscription: TwitchHelixSubscription) {
     const url = apiUrl('/eventsub/subscriptions')
     try {

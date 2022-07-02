@@ -210,6 +210,9 @@ export interface RawCommand {
 export enum CommandTriggerType {
   COMMAND = 'command',
   REWARD_REDEMPTION = 'reward_redemption',
+  FOLLOW = 'follow',
+  SUB = 'sub',
+  BITS = 'bits',
   TIMER = 'timer',
   FIRST_CHAT = 'first_chat',
 }

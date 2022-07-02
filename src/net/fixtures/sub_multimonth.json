@@ -1,0 +1,27 @@
+{
+  "type": "MESSAGE",
+  "data": {
+    "topic": "channel-subscribe-events-v1.44322889",
+    "message": {
+      "user_name": "tww2",
+      "display_name": "TWW2",
+      "channel_name": "mr_woodchuck",
+      "user_id": "13405587",
+      "channel_id": "89614178",
+      "time": "2015-12-19T16:39:57-08:00",
+      "sub_plan": "1000",
+      "sub_plan_name": "Channel Subscription (mr_woodchuck)",
+      "months": 4,
+      "context": "sub",
+      "is_gift": false,
+      "sub_message": {
+        "message": "",
+        "emotes": null
+      },
+      "recipient_id": "19571752",
+      "recipient_user_name": "forstycup",
+      "recipient_display_name": "forstycup",
+      "multi_month_duration": 6
+    }
+  }
+}

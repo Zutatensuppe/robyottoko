@@ -186,6 +186,7 @@ import {
   DictLookupCommand,
   GlobalVariable,
 } from "../../../types";
+import { possibleTriggerActions } from "../../../common/triggers";
 
 interface AutocompletableVariable {
   var: CommandVariable | GlobalVariable;
@@ -357,16 +358,7 @@ export default defineComponent({
       return commands[this.item.action].RequiresAccessToken();
     },
     possibleTriggerActions() {
-      return [
-        { type: CommandTriggerType.COMMAND, label: "Add Command", title: "Command" },
-        { type: CommandTriggerType.FIRST_CHAT, label: "Add First Chat", title: "First Chat" },
-        {
-          type: CommandTriggerType.REWARD_REDEMPTION,
-          label: "Add Reward Redemption",
-          title: "Reward Redemption",
-        },
-        { type: CommandTriggerType.TIMER, label: "Add Timer", title: "Timer" },
-      ];
+      return possibleTriggerActions()
     },
     valid(): boolean {
       if (!this.item) {

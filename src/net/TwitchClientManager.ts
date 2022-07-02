@@ -326,47 +326,11 @@ class TwitchClientManager {
           const messageData: any = JSON.parse(message.data.message)
           // channel points redeemed with non standard reward
           // standard rewards are not supported :/
-          if (messageData.type !== 'reward-redeemed') {
-            return
+          if (messageData.type === 'reward-redeemed') {
+            await this.handleRewardRedeemMessage(messageData)
+          } else {
+            this.log.debug('MESSAGE received', messageData)
           }
-
-          const redemptionMessage: TwitchChannelPointsEventMessage = messageData
-          this.log.debug(redemptionMessage.data.redemption)
-          const redemption = redemptionMessage.data.redemption
-
-          const twitchChannel = await this.bot.getDb().get('robyottoko.twitch_channel', { channel_id: redemption.channel_id })
-          if (!twitchChannel) {
-            return
-          }
-
-          const target = twitchChannel.channel_name
-          const context: TwitchChatContext = {
-            "room-id": redemption.channel_id,
-            "user-id": redemption.user.id,
-            "display-name": redemption.user.display_name,
-            username: redemption.user.login,
-            mod: false, // no way to tell without further looking up user somehow
-            subscriber: redemption.reward.is_sub_only, // this does not really tell us if the user is sub or not, just if the redemption was sub only
-          }
-          const rewardRedemptionContext: RewardRedemptionContext = { client: chatClient, target, context, redemption }
-
-          const promises: Promise<void>[] = []
-          for (const m of this.bot.getModuleManager().all(user.id)) {
-            // reward redemption should all have exact key/name of the reward,
-            // no sorting required
-            const commands = m.getCommands()
-
-            // make a tmp trigger to match commands against
-            const trigger = newRewardRedemptionTrigger(redemption.reward.title)
-            const rawCmd: RawCommand = {
-              name: redemption.reward.title,
-              args: redemption.user_input ? [redemption.user_input] : [],
-            }
-            const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger])
-            promises.push(fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context))
-            promises.push(m.onRewardRedemption(rewardRedemptionContext))
-          }
-          await Promise.all(promises)
         })
       })
     }
@@ -384,16 +348,65 @@ class TwitchClientManager {
       this.pubSubClient.connect()
     }
 
-    // to delete all subscriptions
-    // ;(async () => {
+    // // to delete all subscriptions
+    // (async () => {
     //   if (!this.helixClient) {
     //     return
     //   }
-    //   const subzz = await this.helixClient.getSubscriptions()
-    //   for (const s of subzz.data) {
+    //   const allSubscriptions: any = await this.helixClient.getSubscriptions()
+    //   for (const s of allSubscriptions.data) {
     //     await this.helixClient.deleteSubscription(s.id)
     //   }
     // })()
+  }
+
+  async handleRewardRedeemMessage(messageData: any) {
+    if (!this.chatClient) {
+      return
+    }
+
+    const redemptionMessage: TwitchChannelPointsEventMessage = messageData
+    this.log.debug(redemptionMessage.data.redemption)
+    const redemption = redemptionMessage.data.redemption
+
+    const twitchChannel = await this.bot.getDb().get('robyottoko.twitch_channel', { channel_id: redemption.channel_id })
+    if (!twitchChannel) {
+      return
+    }
+
+    const target = twitchChannel.channel_name
+    const context: TwitchChatContext = {
+      "room-id": redemption.channel_id,
+      "user-id": redemption.user.id,
+      "display-name": redemption.user.display_name,
+      username: redemption.user.login,
+      mod: false, // no way to tell without further looking up user somehow
+      subscriber: redemption.reward.is_sub_only, // this does not really tell us if the user is sub or not, just if the redemption was sub only
+    }
+    const rewardRedemptionContext: RewardRedemptionContext = {
+      client: this.chatClient,
+      target,
+      context,
+      redemption,
+    }
+
+    const promises: Promise<void>[] = []
+    for (const m of this.bot.getModuleManager().all(this.user.id)) {
+      // reward redemption should all have exact key/name of the reward,
+      // no sorting required
+      const commands = m.getCommands()
+
+      // make a tmp trigger to match commands against
+      const trigger = newRewardRedemptionTrigger(redemption.reward.title)
+      const rawCmd: RawCommand = {
+        name: redemption.reward.title,
+        args: redemption.user_input ? [redemption.user_input] : [],
+      }
+      const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger])
+      promises.push(fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context))
+      promises.push(m.onRewardRedemption(rewardRedemptionContext))
+    }
+    await Promise.all(promises)
   }
 
   async _disconnectChatClient() {

@@ -1,6 +1,6 @@
 <template>
   <div class="trigger-editor">
-    <div class="field has-addons" v-if="value.type === 'first_chat'">
+    <div v-if="value.type === 'first_chat'" class="field has-addons">
       <span class="mr-1">First chat by user</span>
       <div class="control">
         <label class="mr-1">
@@ -20,7 +20,7 @@
         </button>
       </div>
     </div>
-    <div class="field has-addons" v-if="value.type === 'command'">
+    <div v-else-if="value.type === 'command'" class="field has-addons">
       <div class="control has-icons-left mr-1">
         <input class="input is-small" :class="{
           'has-background-danger-light': !value.data.command,
@@ -44,7 +44,7 @@
         </button>
       </div>
     </div>
-    <div class="field has-addons" v-if="value.type === 'reward_redemption'">
+    <div v-else-if="value.type === 'reward_redemption'" class="field has-addons">
       <div class="control has-icons-left">
         <dropdown-input v-model="value.data.command" @update:modelValue="emitUpdate"
           :values="rewardRedemptionActions.map(a => ({ value: a.type, label: a.label }))" :class="{
@@ -58,7 +58,7 @@
         </button>
       </div>
     </div>
-    <div v-if="value.type === 'timer'" class="timer-trigger">
+    <div v-else-if="value.type === 'timer'" class="timer-trigger">
       <div class="control remove-control">
         <button class="button is-small" :disabled="!removable" @click="emitRemove">
           <i class="fa fa-remove" />
@@ -74,10 +74,8 @@
         </div>
         <label class="mr-1">Interval ≥</label>
         <div class="control has-icons-left has-icons-right mr-1">
-          <duration-input :modelValue="value.data.minInterval" @update:modelValue="
-  value.data.minInterval = $event;
-emitUpdate();
-          " />
+          <duration-input :modelValue="value.data.minInterval"
+            @update:modelValue="value.data.minInterval = $event; emitUpdate(); " />
           <span class="icon is-small is-left">
             <i class="fa fa-hourglass"></i>
           </span>
@@ -87,6 +85,38 @@ emitUpdate();
         Command will be triggered when at least <code>Messages</code> chat
         messages arrived AND <code>Interval</code> have passed.
       </p>
+    </div>
+    <div v-else-if="value.type === 'sub'" class="field has-addons">
+      {{ value }}
+      <div class="control">
+        <button class="button is-small" :disabled="!removable" @click="emitRemove">
+          <i class="fa fa-remove" />
+        </button>
+      </div>
+    </div>
+    <div v-else-if="value.type === 'bits'" class="field has-addons">
+      {{ value }}
+      <div class="control">
+        <button class="button is-small" :disabled="!removable" @click="emitRemove">
+          <i class="fa fa-remove" />
+        </button>
+      </div>
+    </div>
+    <div v-else-if="value.type === 'follow'" class="field has-addons">
+      {{ value }}
+      <div class="control">
+        <button class="button is-small" :disabled="!removable" @click="emitRemove">
+          <i class="fa fa-remove" />
+        </button>
+      </div>
+    </div>
+    <div v-else>
+      Unknown trigger: {{ value }}
+      <div class="control">
+        <button class="button is-small" :disabled="!removable" @click="emitRemove">
+          <i class="fa fa-remove" />
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -115,6 +145,7 @@ export default defineComponent({
       value: {
         type: "",
         data: {
+          since: "",
           command: "",
           commandExact: false,
           minInterval: 0,

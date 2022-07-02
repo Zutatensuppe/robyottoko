@@ -1,0 +1,30 @@
+{
+  "type": "MESSAGE",
+  "data": {
+    "topic": "channel-subscribe-events-v1.44322889",
+    "message": {
+      "user_name": "tww2",
+      "display_name": "TWW2",
+      "channel_name": "mr_woodchuck",
+      "user_id": "13405587",
+      "channel_id": "89614178",
+      "time": "2015-12-19T16:39:57-08:00",
+      "sub_plan": "1000",
+      "sub_plan_name": "Channel Subscription (mr_woodchuck)",
+      "cumulative_months": 9,
+      "streak_months": 3,
+      "context": "resub",
+      "is_gift": false,
+      "sub_message": {
+        "message": "A Twitch baby is born! KappaHD",
+        "emotes": [
+          {
+            "start": 23,
+            "end": 7,
+            "id": 2867
+          }
+        ]
+      }
+    }
+  }
+}

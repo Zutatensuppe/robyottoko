@@ -1,0 +1,23 @@
+{
+  "type": "MESSAGE",
+  "data": {
+    "topic": "channel-subscribe-events-v1.44322889",
+    "message": {
+      "channel_name": "mr_woodchuck",
+      "channel_id": "89614178",
+      "time": "2015-12-19T16:39:57-08:00",
+      "sub_plan": "1000",
+      "sub_plan_name": "Channel Subscription (mr_woodchuck)",
+      "months": 9,
+      "context": "anonsubgift",
+      "is_gift": true,
+      "sub_message": {
+        "message": "",
+        "emotes": null
+      },
+      "recipient_id": "13405587",
+      "recipient_user_name": "tww2",
+      "recipient_display_name": "TWW2"
+    }
+  }
+}
