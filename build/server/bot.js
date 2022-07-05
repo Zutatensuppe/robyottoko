@@ -3498,8 +3498,7 @@ class TwitchClientManager {
         if (this.pubSubClient) {
             this.pubSubClient.connect();
         }
-        // TODO: uncomment
-        // await this.registerSubscriptions(twitchChannels)
+        await this.registerSubscriptions(twitchChannels);
     }
     async registerSubscriptions(twitchChannels) {
         if (!this.helixClient) {
@@ -7291,9 +7290,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-07-05T17:17:18.370Z",
+    buildDate: "2022-07-05T17:27:35.516Z",
     // @ts-ignore
-    buildVersion: "1.19.0",
+    buildVersion: "1.19.1",
 };
 
 const widgets = [

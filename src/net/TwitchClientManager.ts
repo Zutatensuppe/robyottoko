@@ -345,8 +345,7 @@ class TwitchClientManager {
       this.pubSubClient.connect()
     }
 
-    // TODO: uncomment
-    // await this.registerSubscriptions(twitchChannels)
+    await this.registerSubscriptions(twitchChannels)
   }
 
   async registerSubscriptions(twitchChannels: TwitchChannel[]) {
