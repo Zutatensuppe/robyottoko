@@ -3539,7 +3539,7 @@ class TwitchClientManager {
                     },
                 };
                 const resp = await this.helixClient.createSubscription(subscription);
-                if (resp) {
+                if (resp && resp.data && resp.data.length > 0) {
                     await this.bot.getDb().insert('robyottoko.event_sub', {
                         user_id: this.user.id,
                         subscription_id: resp.data[0].id,
@@ -7290,9 +7290,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-07-05T17:27:35.516Z",
+    buildDate: "2022-07-05T17:33:34.207Z",
     // @ts-ignore
-    buildVersion: "1.19.1",
+    buildVersion: "1.19.2",
 };
 
 const widgets = [
