@@ -526,6 +526,7 @@ export interface Bot {
   getBuildDate: () => string
   getModuleManager: () => ModuleManager
   getDb: () => Db
+  getConfig: () => Config
   getUsers: () => Users
   getTokens: () => Tokens
   getTwitchChannels: () => TwitchChannels

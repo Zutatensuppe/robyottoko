@@ -9,14 +9,13 @@ import { TwitchChannel } from '../../services/TwitchChannels'
 import TwitchHelixClient from '../../services/TwitchHelixClient'
 import { UpdateUser, User } from '../../services/Users'
 import Variables from '../../services/Variables'
-import { Bot, TwitchConfig, UploadedFile } from '../../types'
+import { Bot, UploadedFile } from '../../types'
 import { createRouter as createApiPubV1Router } from './pub/v1'
 import { createRouter as createUserRouter } from './user'
 
 const log = logger('api/index.ts')
 
 export const createRouter = (
-  configTwitch: TwitchConfig,
   bot: Bot,
 ): Router => {
 
@@ -210,8 +209,8 @@ export const createRouter = (
     let clientSecret
     if (!req.user.groups.includes('admin')) {
       const u = await bot.getUsers().getById(req.user.id) as User
-      clientId = u.tmi_identity_client_id || configTwitch.tmi.identity.client_id
-      clientSecret = u.tmi_identity_client_secret || configTwitch.tmi.identity.client_secret
+      clientId = u.tmi_identity_client_id || bot.getConfig().twitch.tmi.identity.client_id
+      clientSecret = u.tmi_identity_client_secret || bot.getConfig().twitch.tmi.identity.client_secret
     } else {
       clientId = req.body.client_id
       clientSecret = req.body.client_secret
@@ -247,6 +246,6 @@ export const createRouter = (
   })
 
   router.use('/user', createUserRouter(bot, requireLoginApi))
-  router.use('/pub/v1', createApiPubV1Router(bot, configTwitch))
+  router.use('/pub/v1', createApiPubV1Router(bot))
   return router
 }

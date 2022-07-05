@@ -15,7 +15,40 @@ const TOKEN_ENDPOINT = 'https://id.twitch.tv/oauth2/token'
 
 const apiUrl = (path: string): string => `${API_BASE}${path}`
 
-type TwitchHelixSubscription = any
+interface TwitchHelixSubscription {
+  type: string // todo: define exact types
+  version: string
+  condition: {
+    broadcaster_user_id: string
+  }
+  transport: {
+    method: string
+    callback: string
+    secret: string
+  }
+}
+
+interface TwitchHelixSubscriptionResponseData {
+  data: {
+    id: string
+    status: string // 'webhook_callback_verification_pending'
+    cost: number
+    created_at: string // json date
+
+    type: string // todo: define exact types
+    version: number
+    condition: {
+      broadcaster_user_id: string
+    }
+    transport: {
+      method: string
+      callback: string
+    }
+  }[]
+  total: number
+  total_cost: number
+  max_total_cost: number
+}
 
 interface TwitchHelixOauthTokenResponseData {
   access_token: string
@@ -439,11 +472,14 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/eventsub/manage-subscriptions#subscribing-to-events
-  async createSubscription(subscription: TwitchHelixSubscription) {
+  async createSubscription(
+    subscription: TwitchHelixSubscription,
+  ): Promise<TwitchHelixSubscriptionResponseData | null> {
     const url = apiUrl('/eventsub/subscriptions')
     try {
       const resp = await xhr.post(url, await this.withAuthHeaders(asJson(subscription)))
-      return await resp.json()
+      const json = await resp.json() as TwitchHelixSubscriptionResponseData
+      return json
     } catch (e) {
       log.error(url, e)
       return null

@@ -6,7 +6,7 @@ import path from 'path'
 import Templates from './services/Templates'
 import http from 'http'
 import { logger } from './common/fn'
-import { Bot, HttpConfig, TwitchConfig } from './types'
+import { Bot } from './types'
 import { createRouter as createTwitchRouter } from './web_routes/twitch'
 import { createRouter as createApiRouter } from './web_routes/api'
 
@@ -17,15 +17,8 @@ const log = logger('WebServer.ts')
 
 class WebServer {
   private handle: http.Server | null
-  private configHttp: HttpConfig
-  private configTwitch: TwitchConfig
 
-  constructor(
-    configHttp: HttpConfig,
-    configTwitch: TwitchConfig,
-  ) {
-    this.configHttp = configHttp
-    this.configTwitch = configTwitch
+  constructor() {
     this.handle = null
   }
 
@@ -69,17 +62,9 @@ class WebServer {
     app.use('/static', express.static('./public/static'))
     app.use('/uploads', express.static('./data/uploads'))
 
-    app.use('/api', createApiRouter(
-      this.configTwitch,
-      bot,
-    ))
+    app.use('/api', createApiRouter(bot))
 
-    app.use('/twitch', createTwitchRouter(
-      templates,
-      this.configTwitch,
-      this.configHttp.url,
-      bot,
-    ))
+    app.use('/twitch', createTwitchRouter(templates, bot))
 
     app.get('/widget/:widget_type/:widget_token/', async (req, res: Response, _next: NextFunction) => {
       const type = req.params.widget_type
@@ -126,10 +111,11 @@ class WebServer {
       res.sendFile(indexFile);
     })
 
+    const httpConf = bot.getConfig().http
     this.handle = app.listen(
-      this.configHttp.port,
-      this.configHttp.hostname,
-      () => log.info(`server running on http://${this.configHttp.hostname}:${this.configHttp.port}`)
+      httpConf.port,
+      httpConf.hostname,
+      () => log.info(`server running on http://${httpConf.hostname}:${httpConf.port}`)
     )
   }
   close() {

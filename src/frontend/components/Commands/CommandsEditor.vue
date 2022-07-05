@@ -53,20 +53,29 @@
                     <code v-if="element.triggers[idx2].data.since === 'alltime'">alltime</code>
                     <code v-if="element.triggers[idx2].data.since === 'stream'">current stream</code>
                   </div>
-                  <div v-if="element.triggers[idx2].type === 'command'">
+                  <div v-else-if="element.triggers[idx2].type === 'command'">
                     <code>{{ element.triggers[idx2].data.command }}</code>
                   </div>
-                  <div v-if="element.triggers[idx2].type === 'reward_redemption'">
+                  <div v-else-if="element.triggers[idx2].type === 'reward_redemption'">
                     <span class="is-small" title="Channel Point Reward"><i class="fa fa-bullseye"></i>:
                     </span>
                     <code>{{ element.triggers[idx2].data.command }}</code>
                   </div>
-                  <div v-if="element.triggers[idx2].type === 'timer'">
+                  <div v-else-if="element.triggers[idx2].type === 'timer'">
                     <span class="is-small">Timer: </span>
                     <code>{{ element.triggers[idx2].data.minLines }} lines,
                       <duration
                         :value="element.triggers[idx2].data.minInterval"
                     /></code>
+                  </div>
+                  <div v-else-if="element.triggers[idx2].type === 'sub'">
+                    <span class="is-small">Sub</span>
+                  </div>
+                  <div v-else-if="element.triggers[idx2].type === 'follow'">
+                    <span class="is-small">Follow</span>
+                  </div>
+                  <div v-else-if="element.triggers[idx2].type === 'bits'">
+                    <span class="is-small">Bits</span>
                   </div>
                 </div>
               </td>

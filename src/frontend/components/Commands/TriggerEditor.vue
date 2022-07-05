@@ -87,7 +87,7 @@
       </p>
     </div>
     <div v-else-if="value.type === 'sub'" class="field has-addons">
-      {{ value }}
+      Sub
       <div class="control">
         <button class="button is-small" :disabled="!removable" @click="emitRemove">
           <i class="fa fa-remove" />
@@ -95,7 +95,7 @@
       </div>
     </div>
     <div v-else-if="value.type === 'bits'" class="field has-addons">
-      {{ value }}
+      Bits
       <div class="control">
         <button class="button is-small" :disabled="!removable" @click="emitRemove">
           <i class="fa fa-remove" />
@@ -103,7 +103,7 @@
       </div>
     </div>
     <div v-else-if="value.type === 'follow'" class="field has-addons">
-      {{ value }}
+      Follow
       <div class="control">
         <button class="button is-small" :disabled="!removable" @click="emitRemove">
           <i class="fa fa-remove" />
