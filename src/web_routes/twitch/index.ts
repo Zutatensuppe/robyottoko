@@ -4,21 +4,19 @@ import express, { NextFunction, Response, Router } from 'express'
 import crypto from 'crypto'
 import { logger } from '../../common/fn'
 import Templates from '../../services/Templates'
-import { Bot, TwitchConfig } from '../../types'
+import { Bot } from '../../types'
 import { handleOAuthCodeCallback } from '../../oauth'
 
 const log = logger('twitch/index.ts')
 
 export const createRouter = (
   templates: Templates,
-  configTwitch: TwitchConfig,
-  baseUrl: string,
   bot: Bot,
 ): Router => {
   const verifyTwitchSignature = (req: any, res: any, next: NextFunction) => {
     const body = Buffer.from(req.rawBody, 'utf8')
     const msg = `${req.headers['twitch-eventsub-message-id']}${req.headers['twitch-eventsub-message-timestamp']}${body}`
-    const hmac = crypto.createHmac('sha256', configTwitch.eventSub.transport.secret)
+    const hmac = crypto.createHmac('sha256', bot.getConfig().twitch.eventSub.transport.secret)
     hmac.update(msg)
     const expected = `sha256=${hmac.digest('hex')}`
     if (req.headers['twitch-eventsub-message-signature'] !== expected) {
@@ -50,7 +48,7 @@ export const createRouter = (
     // &state=c3ab8aa609ea11e793ae92361f002671
     if (req.query.code) {
       const code = `${req.query.code}`
-      const redirectUri = `${baseUrl}/twitch/redirect_uri`
+      const redirectUri = `${bot.getConfig().http.url}/twitch/redirect_uri`
       const result = await handleOAuthCodeCallback(
         code,
         redirectUri,
@@ -86,12 +84,11 @@ export const createRouter = (
     express.json({ verify: (req: any, _res: Response, buf) => { req.rawBody = buf } }),
     verifyTwitchSignature,
     async (req, res) => {
-      log.debug(req.body)
-      log.debug(req.headers)
+      // log.debug(req.body)
+      // log.debug(req.headers)
 
       if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
         log.info(`got verification request, challenge: ${req.body.challenge}`)
-
         res.write(req.body.challenge)
         res.send()
         return
@@ -99,8 +96,34 @@ export const createRouter = (
 
       if (req.headers['twitch-eventsub-message-type'] === 'notification') {
         log.info(`got notification request: ${req.body.subscription.type}`)
+        const row = await bot.getDb().get('robyottoko.event_sub', {
+          subscription_id: req.body.subscription.id,
+        })
+        if (!row) {
+          log.info('unknown subscription_id')
+          res.status(400).send({ reason: 'unknown subscription_id' })
+          return
+        }
+        const userId = row.user_id as number
+        // const userId = 2
+        const user = await bot.getUsers().getById(userId)
+        if (!user) {
+          log.info('unknown user')
+          res.status(400).send({ reason: 'unknown user' })
+          return
+        }
+        const clientManager = bot.getUserTwitchClientManager(user)
 
-        if (req.body.subscription.type === 'stream.online') {
+        if (req.body.subscription.type === 'channel.subscribe') {
+          // got a new sub
+          await clientManager.handleSubscribeEvent(req.body)
+        } else if (req.body.subscription.type === 'channel.follow') {
+          // got a new follow
+          await clientManager.handleFollowEvent(req.body)
+        } else if (req.body.subscription.type === 'channel.cheer') {
+          // got a new cheer
+          await clientManager.handleCheerEvent(req.body)
+        } else if (req.body.subscription.type === 'stream.online') {
           // insert new stream
           await bot.getDb().insert('robyottoko.streams', {
             broadcaster_user_id: req.body.event.broadcaster_user_id,

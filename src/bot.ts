@@ -55,7 +55,7 @@ const createBot = async (): Promise<Bot> => {
   const eventHub = mitt()
   const moduleManager = new ModuleManager()
   const webSocketServer = new WebSocketServer(config.ws)
-  const webServer = new WebServer(config.http, config.twitch)
+  const webServer = new WebServer()
 
   class BotImpl implements Bot {
     private userVariableInstances: Record<number, Variables> = {}
@@ -70,6 +70,7 @@ const createBot = async (): Promise<Bot> => {
     getBuildDate() { return buildEnv.buildDate }
     getModuleManager() { return moduleManager }
     getDb() { return db }
+    getConfig() { return config }
     getUsers() { return userRepo }
     getTokens() { return tokenRepo }
     getTwitchChannels() { return twitchChannelRepo }
@@ -103,7 +104,6 @@ const createBot = async (): Promise<Bot> => {
         this.userTwitchClientManagerInstances[user.id] = new TwitchClientManager(
           this,
           user,
-          config.twitch,
         )
       }
       return this.userTwitchClientManagerInstances[user.id]

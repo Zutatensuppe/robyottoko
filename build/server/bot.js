@@ -1319,11 +1319,11 @@ const handleOAuthCodeCallback = async (code, redirectUri, bot, user) => {
 };
 
 const log$m = logger('twitch/index.ts');
-const createRouter$3 = (templates, configTwitch, baseUrl, bot) => {
+const createRouter$3 = (templates, bot) => {
     const verifyTwitchSignature = (req, res, next) => {
         const body = Buffer.from(req.rawBody, 'utf8');
         const msg = `${req.headers['twitch-eventsub-message-id']}${req.headers['twitch-eventsub-message-timestamp']}${body}`;
-        const hmac = crypto.createHmac('sha256', configTwitch.eventSub.transport.secret);
+        const hmac = crypto.createHmac('sha256', bot.getConfig().twitch.eventSub.transport.secret);
         hmac.update(msg);
         const expected = `sha256=${hmac.digest('hex')}`;
         if (req.headers['twitch-eventsub-message-signature'] !== expected) {
@@ -1353,7 +1353,7 @@ const createRouter$3 = (templates, configTwitch, baseUrl, bot) => {
         // &state=c3ab8aa609ea11e793ae92361f002671
         if (req.query.code) {
             const code = `${req.query.code}`;
-            const redirectUri = `${baseUrl}/twitch/redirect_uri`;
+            const redirectUri = `${bot.getConfig().http.url}/twitch/redirect_uri`;
             const result = await handleOAuthCodeCallback(code, redirectUri, bot, req.user);
             if (result.error) {
                 res.status(500).send("Something went wrong!");
@@ -1379,8 +1379,8 @@ const createRouter$3 = (templates, configTwitch, baseUrl, bot) => {
         res.status(403).send({ reason: req.query });
     });
     router.post('/event-sub/', express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
-        log$m.debug(req.body);
-        log$m.debug(req.headers);
+        // log.debug(req.body)
+        // log.debug(req.headers)
         if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
             log$m.info(`got verification request, challenge: ${req.body.challenge}`);
             res.write(req.body.challenge);
@@ -1389,7 +1389,36 @@ const createRouter$3 = (templates, configTwitch, baseUrl, bot) => {
         }
         if (req.headers['twitch-eventsub-message-type'] === 'notification') {
             log$m.info(`got notification request: ${req.body.subscription.type}`);
-            if (req.body.subscription.type === 'stream.online') {
+            const row = await bot.getDb().get('robyottoko.event_sub', {
+                subscription_id: req.body.subscription.id,
+            });
+            if (!row) {
+                log$m.info('unknown subscription_id');
+                res.status(400).send({ reason: 'unknown subscription_id' });
+                return;
+            }
+            const userId = row.user_id;
+            // const userId = 2
+            const user = await bot.getUsers().getById(userId);
+            if (!user) {
+                log$m.info('unknown user');
+                res.status(400).send({ reason: 'unknown user' });
+                return;
+            }
+            const clientManager = bot.getUserTwitchClientManager(user);
+            if (req.body.subscription.type === 'channel.subscribe') {
+                // got a new sub
+                await clientManager.handleSubscribeEvent(req.body);
+            }
+            else if (req.body.subscription.type === 'channel.follow') {
+                // got a new follow
+                await clientManager.handleFollowEvent(req.body);
+            }
+            else if (req.body.subscription.type === 'channel.cheer') {
+                // got a new cheer
+                await clientManager.handleCheerEvent(req.body);
+            }
+            else if (req.body.subscription.type === 'stream.online') {
                 // insert new stream
                 await bot.getDb().insert('robyottoko.streams', {
                     broadcaster_user_id: req.body.event.broadcaster_user_id,
@@ -1634,11 +1663,13 @@ class TwitchHelixClient {
             return null;
         }
     }
+    // https://dev.twitch.tv/docs/eventsub/manage-subscriptions#subscribing-to-events
     async createSubscription(subscription) {
         const url = apiUrl('/eventsub/subscriptions');
         try {
             const resp = await xhr.post(url, await this.withAuthHeaders(asJson(subscription)));
-            return await resp.json();
+            const json = await resp.json();
+            return json;
         }
         catch (e) {
             log$l.error(url, e);
@@ -1817,7 +1848,7 @@ const getChatters = async (db, channelId, since) => {
     return (await db._getMany(`select display_name from robyottoko.chat_log ${whereObject.sql} group by display_name`, whereObject.values)).map(r => r.display_name);
 };
 
-const createRouter$2 = (bot, configTwitch) => {
+const createRouter$2 = (bot) => {
     const router = express.Router();
     router.use(cors());
     router.get('/chatters', async (req, res) => {
@@ -1841,7 +1872,7 @@ const createRouter$2 = (bot, configTwitch) => {
             return;
         }
         const channelName = String(req.query.channel);
-        const helixClient = new TwitchHelixClient(configTwitch.tmi.identity.client_id, configTwitch.tmi.identity.client_secret);
+        const helixClient = new TwitchHelixClient(bot.getConfig().twitch.tmi.identity.client_id, bot.getConfig().twitch.tmi.identity.client_secret);
         const channelId = await helixClient.getUserIdByNameCached(channelName, bot.getCache());
         if (!channelId) {
             res.status(400).send({ ok: false, error: 'unable to determine channel id' });
@@ -1986,7 +2017,7 @@ const createRouter$1 = (bot, requireLoginApi) => {
 };
 
 const log$k = logger('api/index.ts');
-const createRouter = (configTwitch, bot) => {
+const createRouter = (bot) => {
     const requireLoginApi = (req, res, next) => {
         if (!req.token) {
             res.status(401).send({});
@@ -2159,8 +2190,8 @@ const createRouter = (configTwitch, bot) => {
         let clientSecret;
         if (!req.user.groups.includes('admin')) {
             const u = await bot.getUsers().getById(req.user.id);
-            clientId = u.tmi_identity_client_id || configTwitch.tmi.identity.client_id;
-            clientSecret = u.tmi_identity_client_secret || configTwitch.tmi.identity.client_secret;
+            clientId = u.tmi_identity_client_id || bot.getConfig().twitch.tmi.identity.client_id;
+            clientSecret = u.tmi_identity_client_secret || bot.getConfig().twitch.tmi.identity.client_secret;
         }
         else {
             clientId = req.body.client_id;
@@ -2194,7 +2225,7 @@ const createRouter = (configTwitch, bot) => {
         res.send();
     });
     router.use('/user', createRouter$1(bot, requireLoginApi));
-    router.use('/pub/v1', createRouter$2(bot, configTwitch));
+    router.use('/pub/v1', createRouter$2(bot));
     return router;
 };
 
@@ -2202,9 +2233,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const log$j = logger('WebServer.ts');
 class WebServer {
-    constructor(configHttp, configTwitch) {
-        this.configHttp = configHttp;
-        this.configTwitch = configTwitch;
+    constructor() {
         this.handle = null;
     }
     async listen(bot) {
@@ -2242,8 +2271,8 @@ class WebServer {
         app.use('/', express.static('./build/public'));
         app.use('/static', express.static('./public/static'));
         app.use('/uploads', express.static('./data/uploads'));
-        app.use('/api', createRouter(this.configTwitch, bot));
-        app.use('/twitch', createRouter$3(templates, this.configTwitch, this.configHttp.url, bot));
+        app.use('/api', createRouter(bot));
+        app.use('/twitch', createRouter$3(templates, bot));
         app.get('/widget/:widget_type/:widget_token/', async (req, res, _next) => {
             const type = req.params.widget_type;
             const token = req.params.widget_token;
@@ -2284,7 +2313,8 @@ class WebServer {
             }
             res.sendFile(indexFile);
         });
-        this.handle = app.listen(this.configHttp.port, this.configHttp.hostname, () => log$j.info(`server running on http://${this.configHttp.hostname}:${this.configHttp.port}`));
+        const httpConf = bot.getConfig().http;
+        this.handle = app.listen(httpConf.port, httpConf.hostname, () => log$j.info(`server running on http://${httpConf.hostname}:${httpConf.port}`));
     }
     close() {
         if (this.handle) {
@@ -2297,6 +2327,9 @@ var CommandTriggerType;
 (function (CommandTriggerType) {
     CommandTriggerType["COMMAND"] = "command";
     CommandTriggerType["REWARD_REDEMPTION"] = "reward_redemption";
+    CommandTriggerType["FOLLOW"] = "follow";
+    CommandTriggerType["SUB"] = "sub";
+    CommandTriggerType["BITS"] = "bits";
     CommandTriggerType["TIMER"] = "timer";
     CommandTriggerType["FIRST_CHAT"] = "first_chat";
 })(CommandTriggerType || (CommandTriggerType = {}));
@@ -2511,6 +2544,15 @@ const newTrigger = (type) => ({
         since: 'stream',
     },
 });
+const newSubscribeTrigger = () => {
+    return newTrigger(CommandTriggerType.SUB);
+};
+const newFollowTrigger = () => {
+    return newTrigger(CommandTriggerType.FOLLOW);
+};
+const newBitsTrigger = () => {
+    return newTrigger(CommandTriggerType.BITS);
+};
 const newRewardRedemptionTrigger = (command = '') => {
     const trigger = newTrigger(CommandTriggerType.REWARD_REDEMPTION);
     trigger.data.command = command;
@@ -2544,6 +2586,15 @@ const triggersEqual = (a, b) => {
         }
     }
     else if (a.type === CommandTriggerType.FIRST_CHAT) {
+        return true;
+    }
+    else if (a.type === CommandTriggerType.SUB) {
+        return true;
+    }
+    else if (a.type === CommandTriggerType.FOLLOW) {
+        return true;
+    }
+    else if (a.type === CommandTriggerType.BITS) {
         return true;
     }
     return false;
@@ -3166,7 +3217,7 @@ const commands = {
 // @ts-ignore
 const log$h = logger('TwitchClientManager.ts');
 class TwitchClientManager {
-    constructor(bot, user, cfg) {
+    constructor(bot, user) {
         this.chatClient = null;
         this.helixClient = null;
         this.identity = null;
@@ -3176,7 +3227,6 @@ class TwitchClientManager {
         this.badAuthTokens = {};
         this.bot = bot;
         this.user = user;
-        this.cfg = cfg;
         this.log = logger('TwitchClientManager.ts', `${user.name}|`);
     }
     async accessTokenRefreshed(user) {
@@ -3212,7 +3262,7 @@ class TwitchClientManager {
     }
     async init(reason) {
         let connectReason = reason;
-        const cfg = this.cfg;
+        const cfg = this.bot.getConfig().twitch;
         const user = this.user;
         this.log = logger('TwitchClientManager.ts', `${user.name}|`);
         await this._disconnectChatClient();
@@ -3426,42 +3476,12 @@ class TwitchClientManager {
                     const messageData = JSON.parse(message.data.message);
                     // channel points redeemed with non standard reward
                     // standard rewards are not supported :/
-                    if (messageData.type !== 'reward-redeemed') {
-                        return;
+                    if (messageData.type === 'reward-redeemed') {
+                        await this.handleRewardRedeemMessage(messageData);
                     }
-                    const redemptionMessage = messageData;
-                    this.log.debug(redemptionMessage.data.redemption);
-                    const redemption = redemptionMessage.data.redemption;
-                    const twitchChannel = await this.bot.getDb().get('robyottoko.twitch_channel', { channel_id: redemption.channel_id });
-                    if (!twitchChannel) {
-                        return;
+                    else {
+                        this.log.debug('MESSAGE received', messageData);
                     }
-                    const target = twitchChannel.channel_name;
-                    const context = {
-                        "room-id": redemption.channel_id,
-                        "user-id": redemption.user.id,
-                        "display-name": redemption.user.display_name,
-                        username: redemption.user.login,
-                        mod: false,
-                        subscriber: redemption.reward.is_sub_only, // this does not really tell us if the user is sub or not, just if the redemption was sub only
-                    };
-                    const rewardRedemptionContext = { client: chatClient, target, context, redemption };
-                    const promises = [];
-                    for (const m of this.bot.getModuleManager().all(user.id)) {
-                        // reward redemption should all have exact key/name of the reward,
-                        // no sorting required
-                        const commands = m.getCommands();
-                        // make a tmp trigger to match commands against
-                        const trigger = newRewardRedemptionTrigger(redemption.reward.title);
-                        const rawCmd = {
-                            name: redemption.reward.title,
-                            args: redemption.user_input ? [redemption.user_input] : [],
-                        };
-                        const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger]);
-                        promises.push(fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context));
-                        promises.push(m.onRewardRedemption(rewardRedemptionContext));
-                    }
-                    await Promise.all(promises);
                 });
             });
         }
@@ -3478,16 +3498,179 @@ class TwitchClientManager {
         if (this.pubSubClient) {
             this.pubSubClient.connect();
         }
-        // to delete all subscriptions
-        // ;(async () => {
-        //   if (!this.helixClient) {
-        //     return
-        //   }
-        //   const subzz = await this.helixClient.getSubscriptions()
-        //   for (const s of subzz.data) {
-        //     await this.helixClient.deleteSubscription(s.id)
-        //   }
-        // })()
+        // TODO: uncomment
+        // await this.registerSubscriptions(twitchChannels)
+    }
+    async registerSubscriptions(twitchChannels) {
+        if (!this.helixClient) {
+            this.log.error('registerSubscriptions: helixClient not initialized');
+            return;
+        }
+        const twitchChannelIds = twitchChannels.map(ch => `${ch.channel_id}`);
+        // delete all subscriptions
+        const allSubscriptions = await this.helixClient.getSubscriptions();
+        for (const s of allSubscriptions.data) {
+            if (twitchChannelIds.includes(s.condition.broadcaster_user_id)) {
+                await this.helixClient.deleteSubscription(s.id);
+                await this.bot.getDb().delete('robyottoko.event_sub', {
+                    user_id: this.user.id,
+                    subscription_id: s.id,
+                });
+                this.log.info(`${s.type} subscription deleted`);
+            }
+        }
+        // create all subscriptions
+        const botCfg = this.bot.getConfig();
+        for (const twitchChannel of twitchChannels) {
+            if (!twitchChannel.channel_id) {
+                continue;
+            }
+            const subscriptionTypes = [
+                'channel.follow',
+                'channel.cheer',
+                'channel.subscribe',
+            ];
+            for (const subscriptionType of subscriptionTypes) {
+                const subscription = {
+                    type: subscriptionType,
+                    version: '1',
+                    transport: botCfg.twitch.eventSub.transport,
+                    condition: {
+                        broadcaster_user_id: `${twitchChannel.channel_id}`,
+                    },
+                };
+                const resp = await this.helixClient.createSubscription(subscription);
+                if (resp) {
+                    await this.bot.getDb().insert('robyottoko.event_sub', {
+                        user_id: this.user.id,
+                        subscription_id: resp.data[0].id,
+                    });
+                    this.log.info(`${subscriptionType} subscription registered`);
+                }
+                this.log.debug(resp);
+            }
+        }
+    }
+    // TODO: use better type info
+    async handleSubscribeEvent(data) {
+        this.log.info('handleSubscribeEvent');
+        const rawCmd = {
+            name: 'channel.subscribe',
+            args: [],
+        };
+        const target = data.event.broadcaster_user_name;
+        const context = {
+            "room-id": data.event.broadcaster_user_id,
+            "user-id": data.event.user_id,
+            "display-name": data.event.user_name,
+            username: data.event.user_login,
+            mod: false,
+            subscriber: true, // user just subscribed, so it is a subscriber
+        };
+        const promises = [];
+        for (const m of this.bot.getModuleManager().all(this.user.id)) {
+            const trigger = newSubscribeTrigger();
+            const commands = m.getCommands();
+            const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger]);
+            this.log.info('cmdDefs:', cmdDefs.length);
+            promises.push(fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context));
+        }
+        await Promise.all(promises);
+    }
+    // TODO: use better type info
+    async handleFollowEvent(data) {
+        this.log.info('handleFollowEvent');
+        const rawCmd = {
+            name: 'channel.follow',
+            args: [],
+        };
+        const target = data.event.broadcaster_user_name;
+        const context = {
+            "room-id": data.event.broadcaster_user_id,
+            "user-id": data.event.user_id,
+            "display-name": data.event.user_name,
+            username: data.event.user_login,
+            mod: false,
+            subscriber: false, // unknown
+        };
+        const promises = [];
+        for (const m of this.bot.getModuleManager().all(this.user.id)) {
+            const trigger = newFollowTrigger();
+            const commands = m.getCommands();
+            const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger]);
+            this.log.info('cmdDefs:', cmdDefs.length);
+            promises.push(fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context));
+        }
+        await Promise.all(promises);
+    }
+    // TODO: use better type info
+    async handleCheerEvent(data) {
+        this.log.info('handleCheerEvent');
+        const rawCmd = {
+            name: 'channel.cheer',
+            args: [],
+        };
+        const target = data.event.broadcaster_user_name;
+        const context = {
+            "room-id": data.event.broadcaster_user_id,
+            "user-id": data.event.user_id,
+            "display-name": data.event.user_name,
+            username: data.event.user_login,
+            mod: false,
+            subscriber: false, // unknown
+        };
+        const promises = [];
+        for (const m of this.bot.getModuleManager().all(this.user.id)) {
+            const trigger = newBitsTrigger();
+            const commands = m.getCommands();
+            const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger]);
+            this.log.info('cmdDefs:', cmdDefs.length);
+            promises.push(fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context));
+        }
+        await Promise.all(promises);
+    }
+    async handleRewardRedeemMessage(messageData) {
+        if (!this.chatClient) {
+            return;
+        }
+        const redemptionMessage = messageData;
+        this.log.debug(redemptionMessage.data.redemption);
+        const redemption = redemptionMessage.data.redemption;
+        const twitchChannel = await this.bot.getDb().get('robyottoko.twitch_channel', { channel_id: redemption.channel_id });
+        if (!twitchChannel) {
+            return;
+        }
+        const target = twitchChannel.channel_name;
+        const context = {
+            "room-id": redemption.channel_id,
+            "user-id": redemption.user.id,
+            "display-name": redemption.user.display_name,
+            username: redemption.user.login,
+            mod: false,
+            subscriber: redemption.reward.is_sub_only, // this does not really tell us if the user is sub or not, just if the redemption was sub only
+        };
+        const rewardRedemptionContext = {
+            client: this.chatClient,
+            target,
+            context,
+            redemption,
+        };
+        const promises = [];
+        for (const m of this.bot.getModuleManager().all(this.user.id)) {
+            // reward redemption should all have exact key/name of the reward,
+            // no sorting required
+            const commands = m.getCommands();
+            // make a tmp trigger to match commands against
+            const trigger = newRewardRedemptionTrigger(redemption.reward.title);
+            const rawCmd = {
+                name: redemption.reward.title,
+                args: redemption.user_input ? [redemption.user_input] : [],
+            };
+            const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger]);
+            promises.push(fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context));
+            promises.push(m.onRewardRedemption(rewardRedemptionContext));
+        }
+        await Promise.all(promises);
     }
     async _disconnectChatClient() {
         if (this.chatClient) {
@@ -4836,6 +5019,15 @@ class GeneralModule {
                     if (trigger.data.command) {
                         commands$1.push(cmdObj);
                     }
+                }
+                else if (trigger.type === CommandTriggerType.FOLLOW) {
+                    commands$1.push(cmdObj);
+                }
+                else if (trigger.type === CommandTriggerType.SUB) {
+                    commands$1.push(cmdObj);
+                }
+                else if (trigger.type === CommandTriggerType.BITS) {
+                    commands$1.push(cmdObj);
                 }
                 else if (trigger.type === CommandTriggerType.TIMER) {
                     const interval = parseHumanDuration(trigger.data.minInterval);
@@ -7099,9 +7291,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-07-02T12:15:36.811Z",
+    buildDate: "2022-07-05T17:17:18.370Z",
     // @ts-ignore
-    buildVersion: "1.18.0",
+    buildVersion: "1.19.0",
 };
 
 const widgets = [
@@ -7255,7 +7447,7 @@ const createBot = async () => {
     const eventHub = mitt();
     const moduleManager = new ModuleManager();
     const webSocketServer = new WebSocketServer(config.ws);
-    const webServer = new WebServer(config.http, config.twitch);
+    const webServer = new WebServer();
     class BotImpl {
         constructor() {
             this.userVariableInstances = {};
@@ -7267,6 +7459,7 @@ const createBot = async () => {
         getBuildDate() { return buildEnv.buildDate; }
         getModuleManager() { return moduleManager; }
         getDb() { return db; }
+        getConfig() { return config; }
         getUsers() { return userRepo; }
         getTokens() { return tokenRepo; }
         getTwitchChannels() { return twitchChannelRepo; }
@@ -7293,7 +7486,7 @@ const createBot = async () => {
         }
         getUserTwitchClientManager(user) {
             if (!this.userTwitchClientManagerInstances[user.id]) {
-                this.userTwitchClientManagerInstances[user.id] = new TwitchClientManager(this, user, config.twitch);
+                this.userTwitchClientManagerInstances[user.id] = new TwitchClientManager(this, user);
             }
             return this.userTwitchClientManagerInstances[user.id];
         }

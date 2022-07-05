@@ -307,6 +307,12 @@ class GeneralModule implements Module {
           if (trigger.data.command) {
             commands.push(cmdObj)
           }
+        } else if (trigger.type === CommandTriggerType.FOLLOW) {
+          commands.push(cmdObj)
+        } else if (trigger.type === CommandTriggerType.SUB) {
+          commands.push(cmdObj)
+        } else if (trigger.type === CommandTriggerType.BITS) {
+          commands.push(cmdObj)
         } else if (trigger.type === CommandTriggerType.TIMER) {
           const interval = parseHumanDuration(trigger.data.minInterval)
           if (trigger.data.minLines || interval) {

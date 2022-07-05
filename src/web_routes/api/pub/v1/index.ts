@@ -3,13 +3,12 @@
 import express, { Response, Router } from 'express'
 import cors from 'cors'
 import { TokenType } from '../../../../services/Tokens'
-import { Bot, TwitchConfig } from '../../../../types'
+import { Bot } from '../../../../types'
 import TwitchHelixClient from '../../../../services/TwitchHelixClient'
 import { getChatters } from '../../../../services/Chatters'
 
 export const createRouter = (
   bot: Bot,
-  configTwitch: TwitchConfig
 ): Router => {
   const router = express.Router()
   router.use(cors())
@@ -36,8 +35,8 @@ export const createRouter = (
 
     const channelName = String(req.query.channel)
     const helixClient = new TwitchHelixClient(
-      configTwitch.tmi.identity.client_id,
-      configTwitch.tmi.identity.client_secret
+      bot.getConfig().twitch.tmi.identity.client_id,
+      bot.getConfig().twitch.tmi.identity.client_secret
     )
     const channelId = await helixClient.getUserIdByNameCached(channelName, bot.getCache())
     if (!channelId) {
