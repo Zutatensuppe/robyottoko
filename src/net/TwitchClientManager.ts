@@ -389,7 +389,7 @@ class TwitchClientManager {
           },
         }
         const resp = await this.helixClient.createSubscription(subscription)
-        if (resp) {
+        if (resp && resp.data && resp.data.length > 0) {
           await this.bot.getDb().insert('robyottoko.event_sub', {
             user_id: this.user.id,
             subscription_id: resp.data[0].id,
