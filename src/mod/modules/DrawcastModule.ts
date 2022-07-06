@@ -2,7 +2,7 @@ import fn from '../../fn'
 import { nonce, logger } from '../../common/fn'
 import fs from 'fs'
 import { Socket } from '../../net/WebSocketServer'
-import { Bot, ChatMessageContext, DrawcastSettings, Module, RewardRedemptionContext } from '../../types'
+import { Bot, ChatMessageContext, DrawcastSettings, Module } from '../../types'
 import { User } from '../../services/Users'
 import { default_settings, default_images, DrawcastModuleData, DrawcastImage, DrawcastModuleWsData } from './DrawcastModuleCommon'
 import { NextFunction, Response } from 'express'
@@ -208,10 +208,6 @@ class DrawcastModule implements Module {
   }
 
   async onChatMsg(_chatMessageContext: ChatMessageContext) {
-    // pass
-  }
-
-  async onRewardRedemption(_RewardRedemptionContext: RewardRedemptionContext) {
     // pass
   }
 }

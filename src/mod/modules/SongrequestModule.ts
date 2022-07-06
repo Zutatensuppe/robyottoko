@@ -5,7 +5,7 @@ import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
 import { User } from '../../services/Users'
 import {
   ChatMessageContext, PlaylistItem, RawCommand, TwitchChatClient,
-  TwitchChatContext, RewardRedemptionContext, FunctionCommand, Command,
+  TwitchChatContext, FunctionCommand, Command,
   Bot, CommandFunction, Module
 } from '../../types'
 import {
@@ -1441,10 +1441,6 @@ class SongrequestModule implements Module {
   }
 
   async onChatMsg(_chatMessageContext: ChatMessageContext) {
-    // pass
-  }
-
-  async onRewardRedemption(_RewardRedemptionContext: RewardRedemptionContext) {
     // pass
   }
 }

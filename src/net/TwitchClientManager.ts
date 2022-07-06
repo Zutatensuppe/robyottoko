@@ -3,10 +3,9 @@ import tmi from 'tmi.js'
 import TwitchHelixClient from '../services/TwitchHelixClient'
 import fn from '../fn'
 import { logger, Logger, MINUTE } from '../common/fn'
-import { TwitchChannel, TwitchChannelWithAccessToken } from '../services/TwitchChannels'
+import { TwitchChannel } from '../services/TwitchChannels'
 import { User } from '../services/Users'
-import { Bot, CommandTriggerType, RawCommand, RewardRedemptionContext, TwitchChannelPointsEventMessage, TwitchChatClient, TwitchChatContext } from '../types'
-import TwitchPubSubClient from '../services/TwitchPubSubClient'
+import { Bot, CommandTrigger, CommandTriggerType, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
 import { getUniqueCommandsByTriggers, newBitsTrigger, newFollowTrigger, newRewardRedemptionTrigger, newSubscribeTrigger } from '../common/commands'
 import { isBroadcaster, isMod, isSubscriber } from '../common/permissions'
 import { WhereRaw } from '../DbPostgres'
@@ -27,11 +26,6 @@ class TwitchClientManager {
   private chatClient: TwitchChatClient | null = null
   private helixClient: TwitchHelixClient | null = null
   private identity: Identity | null = null
-  private pubSubClient: TwitchPubSubClient | null = null
-
-  // this should probably be handled in the pub sub client code?
-  // channel_id => [] list of auth tokens that are bad
-  private badAuthTokens: Record<string, string[]> = {}
 
   private log: Logger
 
@@ -54,35 +48,6 @@ class TwitchClientManager {
     await this.init('user_change')
   }
 
-  _resetBadAuthTokens() {
-    this.badAuthTokens = {}
-  }
-
-  _addBadAuthToken(channelIds: string[], authToken: string) {
-    for (const channelId of channelIds) {
-      if (!this.badAuthTokens[channelId]) {
-        this.badAuthTokens[channelId] = []
-      }
-      if (!this.badAuthTokens[channelId].includes(authToken)) {
-        this.badAuthTokens[channelId].push(authToken)
-      }
-    }
-  }
-
-  _isBadAuthToken(channelId: string, authToken: string): boolean {
-    return !!(
-      this.badAuthTokens[channelId]
-      && this.badAuthTokens[channelId].includes(authToken)
-    )
-  }
-
-  determineRelevantPubSubChannels(twitchChannels: TwitchChannel[]): TwitchChannelWithAccessToken[] {
-    return twitchChannels.filter(channel => {
-      return !!(channel.access_token && channel.channel_id)
-        && !this._isBadAuthToken(channel.channel_id, channel.access_token)
-    }) as TwitchChannelWithAccessToken[]
-  }
-
   async init(reason: string) {
     let connectReason = reason
     const cfg = this.bot.getConfig().twitch
@@ -91,7 +56,6 @@ class TwitchClientManager {
     this.log = logger('TwitchClientManager.ts', `${user.name}|`)
 
     await this._disconnectChatClient()
-    this._disconnectPubSubClient()
 
     const twitchChannels = await this.bot.getTwitchChannels().allByUserId(user.id)
     if (twitchChannels.length === 0) {
@@ -272,66 +236,6 @@ class TwitchClientManager {
     )
     this.helixClient = helixClient
 
-    // connect to PubSub websocket only when required
-    // https://dev.twitch.tv/docs/pubsub#topics
-    this.log.info(`Initializing PubSub`)
-    const pubsubChannels = this.determineRelevantPubSubChannels(twitchChannels)
-    if (pubsubChannels.length === 0) {
-      this.log.info(`* No twitch channels configured with access_token and channel_id set`)
-    } else {
-      this.pubSubClient = new TwitchPubSubClient()
-      this.pubSubClient.on('open', async () => {
-        if (!this.pubSubClient) {
-          return
-        }
-
-        // listen for evts
-        const pubsubChannels = this.determineRelevantPubSubChannels(twitchChannels)
-        if (pubsubChannels.length === 0) {
-          this.log.info(`* No twitch channels configured with a valid access_token`)
-          this._disconnectPubSubClient()
-          return
-        }
-
-        for (const channel of pubsubChannels) {
-          this.log.info(`${channel.channel_name} listen for channel point redemptions`)
-          this.pubSubClient.listen(
-            `channel-points-channel-v1.${channel.channel_id}`,
-            channel.access_token
-          )
-        }
-
-        // TODO: change any type
-        this.pubSubClient.on('message', async (message: any) => {
-          if (message.type === 'RESPONSE' && message.error === 'ERR_BADAUTH' && message.sentData) {
-            const channelIds = message.sentData.data.topics.map((t: string) => t.split('.')[1])
-            const authToken = message.sentData.data.auth_token
-            this._addBadAuthToken(channelIds, authToken)
-
-            // now check if there are still any valid twitch channels, if not
-            // then disconnect, because we dont need the pubsub to be active
-            const pubsubChannels = this.determineRelevantPubSubChannels(twitchChannels)
-            if (pubsubChannels.length === 0) {
-              this.log.info(`* No twitch channels configured with a valid access_token`)
-              this._disconnectPubSubClient()
-              return
-            }
-          }
-          if (message.type !== 'MESSAGE') {
-            return
-          }
-          const messageData: any = JSON.parse(message.data.message)
-          // channel points redeemed with non standard reward
-          // standard rewards are not supported :/
-          if (messageData.type === 'reward-redeemed') {
-            await this.handleRewardRedeemMessage(messageData)
-          } else {
-            this.log.debug('MESSAGE received', messageData)
-          }
-        })
-      })
-    }
-
     if (this.chatClient) {
       try {
         await this.chatClient.connect()
@@ -340,9 +244,6 @@ class TwitchClientManager {
         // could be established
         this.log.error('error when connecting', e)
       }
-    }
-    if (this.pubSubClient) {
-      this.pubSubClient.connect()
     }
 
     await this.registerSubscriptions(twitchChannels)
@@ -356,49 +257,73 @@ class TwitchClientManager {
     const twitchChannelIds: string[] = twitchChannels.map(ch => `${ch.channel_id}`)
 
     // delete all subscriptions
+    const deletePromises: Promise<void>[] = []
     const allSubscriptions: any = await this.helixClient.getSubscriptions()
     for (const s of allSubscriptions.data) {
       if (twitchChannelIds.includes(s.condition.broadcaster_user_id)) {
-        await this.helixClient.deleteSubscription(s.id)
-        await this.bot.getDb().delete('robyottoko.event_sub', {
-          user_id: this.user.id,
-          subscription_id: s.id,
-        })
-        this.log.info(`${s.type} subscription deleted`)
+        deletePromises.push(this.deleteSubscription(s))
       }
     }
+    await Promise.all(deletePromises)
 
+    const createPromises: Promise<void>[] = []
     // create all subscriptions
-    const botCfg = this.bot.getConfig()
     for (const twitchChannel of twitchChannels) {
-      if (!twitchChannel.channel_id) {
-        continue
-      }
       const subscriptionTypes = [
         'channel.follow',
         'channel.cheer',
         'channel.subscribe',
+        'channel.channel_points_custom_reward_redemption.add',
       ]
       for (const subscriptionType of subscriptionTypes) {
-        const subscription = {
-          type: subscriptionType,
-          version: '1',
-          transport: botCfg.twitch.eventSub.transport,
-          condition: {
-            broadcaster_user_id: `${twitchChannel.channel_id}`,
-          },
-        }
-        const resp = await this.helixClient.createSubscription(subscription)
-        if (resp && resp.data && resp.data.length > 0) {
-          await this.bot.getDb().insert('robyottoko.event_sub', {
-            user_id: this.user.id,
-            subscription_id: resp.data[0].id,
-          })
-          this.log.info(`${subscriptionType} subscription registered`)
-        }
-        this.log.debug(resp)
+        createPromises.push(this.registerSubscription(subscriptionType, twitchChannel))
       }
     }
+    await Promise.all(createPromises)
+  }
+
+  async deleteSubscription(
+    subscription: any,
+  ): Promise<void> {
+    if (!this.helixClient) {
+      return
+    }
+    await this.helixClient.deleteSubscription(subscription.id)
+    await this.bot.getDb().delete('robyottoko.event_sub', {
+      user_id: this.user.id,
+      subscription_id: subscription.id,
+    })
+    this.log.info(`${subscription.type} subscription deleted`)
+  }
+
+  async registerSubscription(
+    subscriptionType: string,
+    twitchChannel: TwitchChannel,
+  ): Promise<void> {
+    if (!this.helixClient) {
+      return
+    }
+    if (!twitchChannel.channel_id) {
+      return
+    }
+
+    const subscription = {
+      type: subscriptionType,
+      version: '1',
+      transport: this.bot.getConfig().twitch.eventSub.transport,
+      condition: {
+        broadcaster_user_id: `${twitchChannel.channel_id}`,
+      },
+    }
+    const resp = await this.helixClient.createSubscription(subscription)
+    if (resp && resp.data && resp.data.length > 0) {
+      await this.bot.getDb().insert('robyottoko.event_sub', {
+        user_id: this.user.id,
+        subscription_id: resp.data[0].id,
+      })
+      this.log.info(`${subscriptionType} subscription registered`)
+    }
+    this.log.debug(resp)
   }
 
   // TODO: use better type info
@@ -417,16 +342,8 @@ class TwitchClientManager {
       mod: false, // no way to tell without further looking up user somehow
       subscriber: true, // user just subscribed, so it is a subscriber
     }
-
-    const promises: Promise<void>[] = []
-    for (const m of this.bot.getModuleManager().all(this.user.id)) {
-      const trigger = newSubscribeTrigger()
-      const commands = m.getCommands()
-      const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger])
-      this.log.info('cmdDefs:', cmdDefs.length)
-      promises.push(fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context))
-    }
-    await Promise.all(promises)
+    const trigger = newSubscribeTrigger()
+    await this.executeMatchingCommands(rawCmd, target, context, trigger)
   }
 
   // TODO: use better type info
@@ -445,16 +362,8 @@ class TwitchClientManager {
       mod: false, // no way to tell without further looking up user somehow
       subscriber: false, // unknown
     }
-
-    const promises: Promise<void>[] = []
-    for (const m of this.bot.getModuleManager().all(this.user.id)) {
-      const trigger = newFollowTrigger()
-      const commands = m.getCommands()
-      const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger])
-      this.log.info('cmdDefs:', cmdDefs.length)
-      promises.push(fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context))
-    }
-    await Promise.all(promises)
+    const trigger = newFollowTrigger()
+    await this.executeMatchingCommands(rawCmd, target, context, trigger)
   }
 
   // TODO: use better type info
@@ -473,63 +382,40 @@ class TwitchClientManager {
       mod: false, // no way to tell without further looking up user somehow
       subscriber: false, // unknown
     }
-
-    const promises: Promise<void>[] = []
-    for (const m of this.bot.getModuleManager().all(this.user.id)) {
-      const trigger = newBitsTrigger()
-      const commands = m.getCommands()
-      const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger])
-      this.log.info('cmdDefs:', cmdDefs.length)
-      promises.push(fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context))
-    }
-    await Promise.all(promises)
+    const trigger = newBitsTrigger()
+    await this.executeMatchingCommands(rawCmd, target, context, trigger)
   }
 
-  async handleRewardRedeemMessage(messageData: any) {
-    if (!this.chatClient) {
-      return
+  async handleChannelPointsCustomRewardRedemptionAddEvent(data: { subscription: any, event: any }) {
+    this.log.info('handleChannelPointsCustomRewardRedemptionAddEvent')
+    const rawCmd: RawCommand = {
+      name: data.event.reward.title,
+      args: data.event.user_input ? [data.event.user_input] : [],
     }
-
-    const redemptionMessage: TwitchChannelPointsEventMessage = messageData
-    this.log.debug(redemptionMessage.data.redemption)
-    const redemption = redemptionMessage.data.redemption
-
-    const twitchChannel = await this.bot.getDb().get('robyottoko.twitch_channel', { channel_id: redemption.channel_id })
-    if (!twitchChannel) {
-      return
-    }
-
-    const target = twitchChannel.channel_name
+    const target = data.event.broadcaster_user_name
     const context: TwitchChatContext = {
-      "room-id": redemption.channel_id,
-      "user-id": redemption.user.id,
-      "display-name": redemption.user.display_name,
-      username: redemption.user.login,
+      "room-id": data.event.broadcaster_user_id,
+      "user-id": data.event.user_id,
+      "display-name": data.event.user_name,
+      username: data.event.user_login,
       mod: false, // no way to tell without further looking up user somehow
-      subscriber: redemption.reward.is_sub_only, // this does not really tell us if the user is sub or not, just if the redemption was sub only
+      subscriber: false, // unknown
     }
-    const rewardRedemptionContext: RewardRedemptionContext = {
-      client: this.chatClient,
-      target,
-      context,
-      redemption,
-    }
+    const trigger = newRewardRedemptionTrigger(data.event.reward.title)
+    await this.executeMatchingCommands(rawCmd, target, context, trigger)
+  }
 
+  async executeMatchingCommands(
+    rawCmd: RawCommand,
+    target: string,
+    context: TwitchChatContext,
+    trigger: CommandTrigger,
+  ) {
     const promises: Promise<void>[] = []
     for (const m of this.bot.getModuleManager().all(this.user.id)) {
-      // reward redemption should all have exact key/name of the reward,
-      // no sorting required
       const commands = m.getCommands()
-
-      // make a tmp trigger to match commands against
-      const trigger = newRewardRedemptionTrigger(redemption.reward.title)
-      const rawCmd: RawCommand = {
-        name: redemption.reward.title,
-        args: redemption.user_input ? [redemption.user_input] : [],
-      }
       const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger])
       promises.push(fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context))
-      promises.push(m.onRewardRedemption(rewardRedemptionContext))
     }
     await Promise.all(promises)
   }
@@ -543,18 +429,6 @@ class TwitchClientManager {
         this.log.info(e)
       }
     }
-  }
-
-  _disconnectPubSubClient() {
-    try {
-      if (this.pubSubClient !== null) {
-        this.pubSubClient.disconnect()
-        this.pubSubClient = null
-      }
-    } catch (e) {
-      this.log.info(e)
-    }
-    this._resetBadAuthTokens()
   }
 
   getChatClient() {

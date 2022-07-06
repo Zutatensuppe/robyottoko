@@ -13,7 +13,7 @@ import { User } from '../../services/Users'
 import {
   ChatMessageContext, Command, FunctionCommand,
   TwitchChatClient, TwitchChatContext, RawCommand,
-  RewardRedemptionContext, Bot, Module,
+  Bot, Module,
   MediaCommand, DictLookupCommand, CountdownCommand,
   MadochanCommand, MediaVolumeCommand, ChattersCommand,
   RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand,
@@ -435,10 +435,6 @@ class GeneralModule implements Module {
     this.timers.forEach(t => {
       t.lines++
     })
-  }
-
-  async onRewardRedemption(_RewardRedemptionContext: RewardRedemptionContext) {
-    // pass
   }
 }
 

@@ -123,6 +123,9 @@ export const createRouter = (
         } else if (req.body.subscription.type === 'channel.cheer') {
           // got a new cheer
           await clientManager.handleCheerEvent(req.body)
+        } else if (req.body.subscription.type === 'channel.channel_points_custom_reward_redemption.add') {
+          // got a new channel point reward redeem
+          await clientManager.handleChannelPointsCustomRewardRedemptionAddEvent(req.body)
         } else if (req.body.subscription.type === 'stream.online') {
           // insert new stream
           await bot.getDb().insert('robyottoko.streams', {
