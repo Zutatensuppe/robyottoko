@@ -67,7 +67,7 @@ export const createRouter = (
 
   router.get('/conf', async (req, res: Response) => {
     res.send({
-      wsBase: bot.getWebSocketServer().connectstring(),
+      wsBase: bot.getConfig().ws.connectstring,
     })
   })
 

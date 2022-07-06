@@ -255,12 +255,16 @@ class TwitchClientManager {
       return
     }
     const twitchChannelIds: string[] = twitchChannels.map(ch => `${ch.channel_id}`)
+    const transport = this.bot.getConfig().twitch.eventSub.transport
 
     // delete all subscriptions
     const deletePromises: Promise<void>[] = []
     const allSubscriptions: any = await this.helixClient.getSubscriptions()
     for (const s of allSubscriptions.data) {
-      if (twitchChannelIds.includes(s.condition.broadcaster_user_id)) {
+      if (
+        transport.method === s.transport.method
+        && transport.callback === s.transport.callback
+        && twitchChannelIds.includes(s.condition.broadcaster_user_id)) {
         deletePromises.push(this.deleteSubscription(s))
       }
     }

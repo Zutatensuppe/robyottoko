@@ -81,7 +81,7 @@ class WebServer {
         res.send(await templates.render('../public/static/widgets/index.html', {
           widget: w.type,
           title: w.title,
-          wsUrl: bot.getWebSocketServer().connectstring(),
+          wsUrl: bot.getConfig().ws.connectstring,
           widgetToken: token,
         }))
         return
