@@ -13,28 +13,19 @@ export interface Socket extends WebSocket.WebSocket {
 }
 
 class WebSocketServer {
-  private config: WsConfig
-
   private _websocketserver: WebSocket.Server | null
 
-  constructor(
-    config: WsConfig,
-  ) {
-    this.config = config
+  constructor() {
     this._websocketserver = null
   }
 
-  connectstring() {
-    return this.config.connectstring
-  }
-
   listen(bot: Bot) {
-    this._websocketserver = new WebSocket.Server(this.config)
+    this._websocketserver = new WebSocket.Server(bot.getConfig().ws)
     this._websocketserver.on('connection', async (socket: Socket, request: IncomingMessage) => {
       // note: here the socket is already set in _websocketserver.clients !
       // but it has no user_id or module set yet!
 
-      const pathname = new URL(this.connectstring()).pathname
+      const pathname = new URL(bot.getConfig().ws.connectstring).pathname
       const relpathfull = request.url?.substring(pathname.length) || ''
       const token = socket.protocol
       const widget_path_to_module_map: Record<string, string> = {
