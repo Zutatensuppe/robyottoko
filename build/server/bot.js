@@ -1014,19 +1014,15 @@ class ModuleManager {
 
 const log$o = logger("WebSocketServer.ts");
 class WebSocketServer {
-    constructor(config) {
-        this.config = config;
+    constructor() {
         this._websocketserver = null;
     }
-    connectstring() {
-        return this.config.connectstring;
-    }
     listen(bot) {
-        this._websocketserver = new WebSocket.Server(this.config);
+        this._websocketserver = new WebSocket.Server(bot.getConfig().ws);
         this._websocketserver.on('connection', async (socket, request) => {
             // note: here the socket is already set in _websocketserver.clients !
             // but it has no user_id or module set yet!
-            const pathname = new URL(this.connectstring()).pathname;
+            const pathname = new URL(bot.getConfig().ws.connectstring).pathname;
             const relpathfull = request.url?.substring(pathname.length) || '';
             const token = socket.protocol;
             const widget_path_to_module_map = {
@@ -2066,7 +2062,7 @@ const createRouter = (bot) => {
     });
     router.get('/conf', async (req, res) => {
         res.send({
-            wsBase: bot.getWebSocketServer().connectstring(),
+            wsBase: bot.getConfig().ws.connectstring,
         });
     });
     router.post('/logout', requireLoginApi, async (req, res) => {
@@ -2292,7 +2288,7 @@ class WebServer {
                 res.send(await templates.render('../public/static/widgets/index.html', {
                     widget: w.type,
                     title: w.title,
-                    wsUrl: bot.getWebSocketServer().connectstring(),
+                    wsUrl: bot.getConfig().ws.connectstring,
                     widgetToken: token,
                 }));
                 return;
@@ -3301,11 +3297,14 @@ class TwitchClientManager {
             return;
         }
         const twitchChannelIds = twitchChannels.map(ch => `${ch.channel_id}`);
+        const transport = this.bot.getConfig().twitch.eventSub.transport;
         // delete all subscriptions
         const deletePromises = [];
         const allSubscriptions = await this.helixClient.getSubscriptions();
         for (const s of allSubscriptions.data) {
-            if (twitchChannelIds.includes(s.condition.broadcaster_user_id)) {
+            if (transport.method === s.transport.method
+                && transport.callback === s.transport.callback
+                && twitchChannelIds.includes(s.condition.broadcaster_user_id)) {
                 deletePromises.push(this.deleteSubscription(s));
             }
         }
@@ -7033,9 +7032,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-07-06T18:45:25.188Z",
+    buildDate: "2022-07-06T20:17:15.620Z",
     // @ts-ignore
-    buildVersion: "1.20.0",
+    buildVersion: "1.20.1",
 };
 
 const widgets = [
