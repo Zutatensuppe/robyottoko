@@ -54,7 +54,7 @@ const createBot = async (): Promise<Bot> => {
   const widgets = new Widgets(config.http.url, db, tokenRepo)
   const eventHub = mitt()
   const moduleManager = new ModuleManager()
-  const webSocketServer = new WebSocketServer(config.ws)
+  const webSocketServer = new WebSocketServer()
   const webServer = new WebServer()
 
   class BotImpl implements Bot {

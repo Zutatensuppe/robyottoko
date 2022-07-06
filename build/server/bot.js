@@ -7032,7 +7032,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-07-06T20:17:15.620Z",
+    buildDate: "2022-07-06T20:22:11.431Z",
     // @ts-ignore
     buildVersion: "1.20.1",
 };
@@ -7187,7 +7187,7 @@ const createBot = async () => {
     const widgets = new Widgets(config.http.url, db, tokenRepo);
     const eventHub = mitt();
     const moduleManager = new ModuleManager();
-    const webSocketServer = new WebSocketServer(config.ws);
+    const webSocketServer = new WebSocketServer();
     const webServer = new WebServer();
     class BotImpl {
         constructor() {
