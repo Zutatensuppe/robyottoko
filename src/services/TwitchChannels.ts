@@ -11,15 +11,6 @@ export interface TwitchChannel {
   is_streaming: boolean
 }
 
-export interface TwitchChannelWithAccessToken {
-  user_id: number
-  channel_name: string
-  channel_id: string
-  access_token: string
-  bot_status_messages: number
-  is_streaming: boolean
-}
-
 interface UpdateTwitchChannel {
   user_id?: number
   channel_name?: string

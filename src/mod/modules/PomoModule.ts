@@ -1,6 +1,6 @@
 import { logger, humanDuration, parseHumanDuration, SECOND } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
-import { Bot, ChatMessageContext, FunctionCommand, Module, RawCommand, RewardRedemptionContext, TwitchChatClient, TwitchChatContext } from '../../types'
+import { Bot, ChatMessageContext, FunctionCommand, Module, RawCommand, TwitchChatClient, TwitchChatContext } from '../../types'
 import { User } from '../../services/Users'
 import { default_settings, default_state, PomoEffect, PomoModuleData, PomoModuleWsData, PomoModuleWsEffectData, PomoModuleWsSaveData } from './PomoModuleCommon'
 import fn, { doReplacements } from '../../fn'
@@ -230,10 +230,6 @@ class PomoModule implements Module {
   }
 
   async onChatMsg(_chatMessageContext: ChatMessageContext) {
-    // pass
-  }
-
-  async onRewardRedemption(_RewardRedemptionContext: RewardRedemptionContext) {
     // pass
   }
 }

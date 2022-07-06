@@ -1,6 +1,6 @@
 import { logger } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
-import { Bot, ChatMessageContext, Module, RewardRedemptionContext } from '../../types'
+import { Bot, ChatMessageContext, Module } from '../../types'
 import { User } from '../../services/Users'
 import { AvatarModuleSettings, AvatarModuleState, AvatarModuleWsSaveData, default_settings, default_state } from './AvatarModuleCommon'
 
@@ -151,10 +151,6 @@ class AvatarModule implements Module {
   }
 
   async onChatMsg(_chatMessageContext: ChatMessageContext) {
-    // pass
-  }
-
-  async onRewardRedemption(_RewardRedemptionContext: RewardRedemptionContext) {
     // pass
   }
 }

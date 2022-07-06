@@ -1,6 +1,6 @@
 import fn from '../../fn'
 import { User } from '../../services/Users'
-import { Bot, ChatMessageContext, Module, RawCommand, RewardRedemptionContext, TwitchChatClient, TwitchChatContext } from '../../types'
+import { Bot, ChatMessageContext, Module, RawCommand, TwitchChatClient, TwitchChatContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import { newCommandTrigger } from '../../common/commands'
 import { isBroadcaster, isMod } from '../../common/permissions'
@@ -180,10 +180,6 @@ class VoteModule implements Module {
   }
 
   async onChatMsg(_chatMessageContext: ChatMessageContext) {
-    // pass
-  }
-
-  async onRewardRedemption(_RewardRedemptionContext: RewardRedemptionContext) {
     // pass
   }
 }

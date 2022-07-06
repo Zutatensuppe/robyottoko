@@ -2,7 +2,7 @@ import config from '../../config'
 import { Socket } from '../../net/WebSocketServer'
 import xhr, { asQueryArgs } from '../../net/xhr'
 import { User } from '../../services/Users'
-import { Bot, ChatMessageContext, Module, RewardRedemptionContext } from '../../types'
+import { Bot, ChatMessageContext, Module } from '../../types'
 import { default_settings, SpeechToTextModuleData, SpeechToTextModuleSettings, SpeechToTextWsData } from './SpeechToTextModuleCommon'
 
 class SpeechToTextModule implements Module {
@@ -104,10 +104,6 @@ class SpeechToTextModule implements Module {
   }
 
   async onChatMsg(_chatMessageContext: ChatMessageContext) {
-    // pass
-  }
-
-  async onRewardRedemption(_rewardRedemptionContext: RewardRedemptionContext) {
     // pass
   }
 }

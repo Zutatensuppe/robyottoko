@@ -313,7 +313,7 @@ const mayExecute = (context, cmd) => {
     return false;
 };
 
-const log$q = logger('fn.ts');
+const log$p = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
         return mime.replace('image/', '');
@@ -353,9 +353,9 @@ const sayFn = (client, target) => (msg) => {
         // TODO: fix this somewhere else?
         // client can only say things in lowercase channels
         t = t.toLowerCase();
-        log$q.info(`saying in ${t}: ${msg}`);
+        log$p.info(`saying in ${t}: ${msg}`);
         client.say(t, msg).catch((e) => {
-            log$q.info(e);
+            log$p.info(e);
         });
     });
 };
@@ -427,15 +427,15 @@ const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, target, context
         if (!mayExecute(context, cmdDef)) {
             continue;
         }
-        log$q.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`);
+        log$p.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`);
         // eslint-disable-next-line no-async-promise-executor
         const p = new Promise(async (resolve) => {
             await applyVariableChanges(cmdDef, contextModule, rawCmd, context);
             const r = await cmdDef.fn(rawCmd, client, target, context);
             if (r) {
-                log$q.info(`${target}| * Returned: ${r}`);
+                log$p.info(`${target}| * Returned: ${r}`);
             }
-            log$q.info(`${target}| * Executed ${rawCmd?.name || '<unknown>'} command`);
+            log$p.info(`${target}| * Executed ${rawCmd?.name || '<unknown>'} command`);
             resolve(true);
         });
         promises.push(p);
@@ -583,7 +583,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
                     return String(JSON.parse(txt)[m2]);
                 }
                 catch (e) {
-                    log$q.error(e);
+                    log$p.error(e);
                     return '';
                 }
             },
@@ -597,7 +597,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
                     return await resp.text();
                 }
                 catch (e) {
-                    log$q.error(e);
+                    log$p.error(e);
                     return '';
                 }
             },
@@ -1012,7 +1012,7 @@ class ModuleManager {
     }
 }
 
-const log$p = logger("WebSocketServer.ts");
+const log$o = logger("WebSocketServer.ts");
 class WebSocketServer {
     constructor(config) {
         this.config = config;
@@ -1053,19 +1053,19 @@ class WebSocketServer {
                 socket.user_id = parseInt(token, 10);
             }
             socket.module = moduleName;
-            log$p.info('added socket: ', moduleName, socket.protocol);
-            log$p.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
+            log$o.info('added socket: ', moduleName, socket.protocol);
+            log$o.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
             socket.on('close', () => {
-                log$p.info('removed socket: ', moduleName, socket.protocol);
-                log$p.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
+                log$o.info('removed socket: ', moduleName, socket.protocol);
+                log$o.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
             });
             if (request.url?.indexOf(pathname) !== 0) {
-                log$p.info('bad request url: ', request.url);
+                log$o.info('bad request url: ', request.url);
                 socket.close();
                 return;
             }
             if (!socket.user_id) {
-                log$p.info('not found token: ', token, relpath);
+                log$o.info('not found token: ', token, relpath);
                 socket.close();
                 return;
             }
@@ -1096,7 +1096,7 @@ class WebSocketServer {
                     }
                 }
                 catch (e) {
-                    log$p.error('socket on message', e);
+                    log$o.error('socket on message', e);
                 }
             });
         });
@@ -1105,7 +1105,7 @@ class WebSocketServer {
         return !!this.sockets().find(s => s.user_id === user_id);
     }
     _notify(socket, data) {
-        log$p.info(`notifying ${socket.user_id} ${socket.module} (${data.event})`);
+        log$o.info(`notifying ${socket.user_id} ${socket.module} (${data.event})`);
         socket.send(JSON.stringify(data));
     }
     notifyOne(user_ids, moduleName, data, socket) {
@@ -1117,7 +1117,7 @@ class WebSocketServer {
             this._notify(socket, data);
         }
         else {
-            log$p.error('tried to notify invalid socket', socket.user_id, socket.module, user_ids, moduleName, isConnectedSocket);
+            log$o.error('tried to notify invalid socket', socket.user_id, socket.module, user_ids, moduleName, isConnectedSocket);
         }
     }
     notifyAll(user_ids, moduleName, data) {
@@ -1144,7 +1144,7 @@ class WebSocketServer {
     }
 }
 
-const log$o = logger('Templates.ts');
+const log$n = logger('Templates.ts');
 class Templates {
     constructor(baseDir) {
         this.templates = {};
@@ -1161,7 +1161,7 @@ class Templates {
                 tmpl.templateContents = (await promises.readFile(tmpl.templatePathAbsolute)).toString();
             }
             catch (e) {
-                log$o.error('error loading template', e);
+                log$n.error('error loading template', e);
                 tmpl.templateContents = '';
             }
         }
@@ -1171,7 +1171,7 @@ class Templates {
     }
 }
 
-const log$n = logger('oauth.ts');
+const log$m = logger('oauth.ts');
 const TABLE$5 = 'robyottoko.oauth_token';
 const getMatchingAccessToken = async (channelId, bot, user) => {
     const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id);
@@ -1219,7 +1219,7 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
     });
     twitchChannel.access_token = refreshResp.access_token;
     await bot.getTwitchChannels().save(twitchChannel);
-    log$n.info('tryRefreshAccessToken - refreshed an access token');
+    log$m.info('tryRefreshAccessToken - refreshed an access token');
     return refreshResp.access_token;
 };
 // TODO: check if anything has to be put in a try catch block
@@ -1270,7 +1270,7 @@ const refreshExpiredTwitchChannelAccessToken = async (twitchChannel, bot, user) 
     // update the twitch channel in the database
     twitchChannel.access_token = refreshResp.access_token;
     await bot.getTwitchChannels().save(twitchChannel);
-    log$n.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
+    log$m.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
     return { error: false, refreshed: true };
 };
 // TODO: check if anything has to be put in a try catch block
@@ -1318,7 +1318,7 @@ const handleOAuthCodeCallback = async (code, redirectUri, bot, user) => {
     return { error: false, updated };
 };
 
-const log$m = logger('twitch/index.ts');
+const log$l = logger('twitch/index.ts');
 const createRouter$3 = (templates, bot) => {
     const verifyTwitchSignature = (req, res, next) => {
         const body = Buffer.from(req.rawBody, 'utf8');
@@ -1327,8 +1327,8 @@ const createRouter$3 = (templates, bot) => {
         hmac.update(msg);
         const expected = `sha256=${hmac.digest('hex')}`;
         if (req.headers['twitch-eventsub-message-signature'] !== expected) {
-            log$m.debug(req);
-            log$m.error('bad message signature', {
+            log$l.debug(req);
+            log$l.error('bad message signature', {
                 got: req.headers['twitch-eventsub-message-signature'],
                 expected,
             });
@@ -1365,7 +1365,7 @@ const createRouter$3 = (templates, bot) => {
                     bot.getEventHub().emit('user_changed', changedUser);
                 }
                 else {
-                    log$m.error(`updating user twitch channels: user doesn't exist after saving it: ${req.user.id}`);
+                    log$l.error(`updating user twitch channels: user doesn't exist after saving it: ${req.user.id}`);
                 }
             }
             res.send(await templates.render('templates/twitch_redirect_uri.html', {}));
@@ -1382,18 +1382,18 @@ const createRouter$3 = (templates, bot) => {
         // log.debug(req.body)
         // log.debug(req.headers)
         if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-            log$m.info(`got verification request, challenge: ${req.body.challenge}`);
+            log$l.info(`got verification request, challenge: ${req.body.challenge}`);
             res.write(req.body.challenge);
             res.send();
             return;
         }
         if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-            log$m.info(`got notification request: ${req.body.subscription.type}`);
+            log$l.info(`got notification request: ${req.body.subscription.type}`);
             const row = await bot.getDb().get('robyottoko.event_sub', {
                 subscription_id: req.body.subscription.id,
             });
             if (!row) {
-                log$m.info('unknown subscription_id');
+                log$l.info('unknown subscription_id');
                 res.status(400).send({ reason: 'unknown subscription_id' });
                 return;
             }
@@ -1401,7 +1401,7 @@ const createRouter$3 = (templates, bot) => {
             // const userId = 2
             const user = await bot.getUsers().getById(userId);
             if (!user) {
-                log$m.info('unknown user');
+                log$l.info('unknown user');
                 res.status(400).send({ reason: 'unknown user' });
                 return;
             }
@@ -1417,6 +1417,10 @@ const createRouter$3 = (templates, bot) => {
             else if (req.body.subscription.type === 'channel.cheer') {
                 // got a new cheer
                 await clientManager.handleCheerEvent(req.body);
+            }
+            else if (req.body.subscription.type === 'channel.channel_points_custom_reward_redemption.add') {
+                // got a new channel point reward redeem
+                await clientManager.handleChannelPointsCustomRewardRedemptionAddEvent(req.body);
             }
             else if (req.body.subscription.type === 'stream.online') {
                 // insert new stream
@@ -1445,7 +1449,7 @@ const createRouter$3 = (templates, bot) => {
     return router;
 };
 
-const log$l = logger('TwitchHelixClient.ts');
+const log$k = logger('TwitchHelixClient.ts');
 const API_BASE = 'https://api.twitch.tv/helix';
 const TOKEN_ENDPOINT = 'https://id.twitch.tv/oauth2/token';
 const apiUrl = (path) => `${API_BASE}${path}`;
@@ -1463,7 +1467,7 @@ async function executeRequestWithRetry(accessToken, req, bot, user) {
     if (!newAccessToken) {
         return resp;
     }
-    log$l.warn('retrying with refreshed token');
+    log$k.warn('retrying with refreshed token');
     return await req(newAccessToken);
 }
 class TwitchHelixClient {
@@ -1493,13 +1497,13 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$l.warn('unable to get access_token by code', txt);
+                log$k.warn('unable to get access_token by code', txt);
                 return null;
             }
             return (await resp.json());
         }
         catch (e) {
-            log$l.error(url, e);
+            log$k.error(url, e);
             return null;
         }
     }
@@ -1515,18 +1519,18 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (resp.status === 401) {
                 const txt = await resp.text();
-                log$l.warn('tried to refresh access_token with an invalid refresh token', txt);
+                log$k.warn('tried to refresh access_token with an invalid refresh token', txt);
                 return null;
             }
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$l.warn('unable to refresh access_token', txt);
+                log$k.warn('unable to refresh access_token', txt);
                 return null;
             }
             return (await resp.json());
         }
         catch (e) {
-            log$l.error(url, e);
+            log$k.error(url, e);
             return null;
         }
     }
@@ -1542,14 +1546,14 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$l.warn('unable to get access_token', txt);
+                log$k.warn('unable to get access_token', txt);
                 return '';
             }
             json = (await resp.json());
             return json.access_token;
         }
         catch (e) {
-            log$l.error(url, json, e);
+            log$k.error(url, json, e);
             return '';
         }
     }
@@ -1562,7 +1566,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$l.error(url, json, e);
+            log$k.error(url, json, e);
             return null;
         }
     }
@@ -1576,7 +1580,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$l.error(url, json, e);
+            log$k.error(url, json, e);
             return null;
         }
     }
@@ -1614,7 +1618,7 @@ class TwitchHelixClient {
             return filtered[0];
         }
         catch (e) {
-            log$l.error(url, json, e);
+            log$k.error(url, json, e);
             return null;
         }
     }
@@ -1637,7 +1641,7 @@ class TwitchHelixClient {
             return json.data[0] || null;
         }
         catch (e) {
-            log$l.error(url, json, e);
+            log$k.error(url, json, e);
             return null;
         }
     }
@@ -1648,7 +1652,7 @@ class TwitchHelixClient {
             return await resp.json();
         }
         catch (e) {
-            log$l.error(url, e);
+            log$k.error(url, e);
             return null;
         }
     }
@@ -1659,7 +1663,7 @@ class TwitchHelixClient {
             return await resp.text();
         }
         catch (e) {
-            log$l.error(url, e);
+            log$k.error(url, e);
             return null;
         }
     }
@@ -1672,7 +1676,7 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$l.error(url, e);
+            log$k.error(url, e);
             return null;
         }
     }
@@ -1686,7 +1690,7 @@ class TwitchHelixClient {
             return getBestEntryFromCategorySearchItems(searchString, json);
         }
         catch (e) {
-            log$l.error(url, json);
+            log$k.error(url, json);
             return null;
         }
     }
@@ -1700,7 +1704,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$l.error(url, json);
+            log$k.error(url, json);
             return null;
         }
     }
@@ -1714,7 +1718,7 @@ class TwitchHelixClient {
             return await executeRequestWithRetry(accessToken, req, bot, user);
         }
         catch (e) {
-            log$l.error(url, e);
+            log$k.error(url, e);
             return null;
         }
     }
@@ -1740,7 +1744,7 @@ class TwitchHelixClient {
             return (await resp.json());
         }
         catch (e) {
-            log$l.error(url, e);
+            log$k.error(url, e);
             return null;
         }
     }
@@ -2016,7 +2020,7 @@ const createRouter$1 = (bot, requireLoginApi) => {
     return router;
 };
 
-const log$k = logger('api/index.ts');
+const log$j = logger('api/index.ts');
 const createRouter = (bot) => {
     const requireLoginApi = (req, res, next) => {
         if (!req.token) {
@@ -2037,12 +2041,12 @@ const createRouter = (bot) => {
     router.post('/upload', requireLoginApi, (req, res) => {
         upload(req, res, (err) => {
             if (err) {
-                log$k.error(err);
+                log$j.error(err);
                 res.status(400).send("Something went wrong!");
                 return;
             }
             if (!req.file) {
-                log$k.error(err);
+                log$j.error(err);
                 res.status(400).send("Something went wrong!");
                 return;
             }
@@ -2093,7 +2097,7 @@ const createRouter = (bot) => {
             bot.getEventHub().emit('user_registration_complete', user);
         }
         else {
-            log$k.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`);
+            log$j.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`);
         }
         return;
     });
@@ -2181,7 +2185,7 @@ const createRouter = (bot) => {
             bot.getEventHub().emit('user_changed', changedUser);
         }
         else {
-            log$k.error(`save-settings: user doesn't exist after saving it: ${user.id}`);
+            log$j.error(`save-settings: user doesn't exist after saving it: ${user.id}`);
         }
         res.send();
     });
@@ -2231,7 +2235,7 @@ const createRouter = (bot) => {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const log$j = logger('WebServer.ts');
+const log$i = logger('WebServer.ts');
 class WebServer {
     constructor() {
         this.handle = null;
@@ -2282,7 +2286,7 @@ class WebServer {
                 res.status(404).send();
                 return;
             }
-            log$j.debug(`/widget/:widget_type/:widget_token/`, type, token);
+            log$i.debug(`/widget/:widget_type/:widget_token/`, type, token);
             const w = bot.getWidgets().getWidgetDefinitionByType(type);
             if (w) {
                 res.send(await templates.render('../public/static/widgets/index.html', {
@@ -2314,7 +2318,7 @@ class WebServer {
             res.sendFile(indexFile);
         });
         const httpConf = bot.getConfig().http;
-        this.handle = app.listen(httpConf.port, httpConf.hostname, () => log$j.info(`server running on http://${httpConf.hostname}:${httpConf.port}`));
+        this.handle = app.listen(httpConf.port, httpConf.hostname, () => log$i.info(`server running on http://${httpConf.hostname}:${httpConf.port}`));
     }
     close() {
         if (this.handle) {
@@ -2381,130 +2385,6 @@ var CountdownActionType;
     CountdownActionType["MEDIA"] = "media";
     CountdownActionType["DELAY"] = "delay";
 })(CountdownActionType || (CountdownActionType = {}));
-
-function mitt(n){return {all:n=n||new Map,on:function(t,e){var i=n.get(t);i?i.push(e):n.set(t,[e]);},off:function(t,e){var i=n.get(t);i&&(e?i.splice(i.indexOf(e)>>>0,1):n.set(t,[]));},emit:function(t,e){var i=n.get(t);i&&i.slice().map(function(n){n(e);}),(i=n.get("*"))&&i.slice().map(function(n){n(t,e);});}}}
-
-const CODE_GOING_AWAY = 1001;
-const CODE_CUSTOM_DISCONNECT = 4000;
-const heartbeatInterval = 60 * SECOND; //ms between PING's
-const reconnectInterval = 3 * SECOND; //ms to wait before reconnect
-const log$i = logger('TwitchPubSubClient.ts');
-const PUBSUB_WS_ADDR = 'wss://pubsub-edge.twitch.tv';
-class TwitchPubSubClient {
-    constructor() {
-        this.handle = null;
-        // timeout for automatic reconnect
-        this.reconnectTimeout = null;
-        // buffer for 'send'
-        this.sendBuffer = [];
-        this.heartbeatHandle = null;
-        this.nonceMessages = {};
-        this.evts = mitt();
-    }
-    _send(message) {
-        const msgStr = JSON.stringify(message);
-        // log.debug('SEND', msgStr)
-        if (this.handle) {
-            try {
-                this.handle.send(msgStr);
-            }
-            catch (e) {
-                this.sendBuffer.push(msgStr);
-            }
-        }
-        else {
-            this.sendBuffer.push(msgStr);
-        }
-    }
-    _heartbeat() {
-        this._send({ type: 'PING' });
-    }
-    listen(topic, authToken) {
-        const n = nonce(15);
-        const message = {
-            type: 'LISTEN',
-            nonce: n,
-            data: {
-                topics: [topic],
-                auth_token: authToken,
-            }
-        };
-        this.nonceMessages[n] = message;
-        this._send(message);
-    }
-    connect() {
-        this.handle = new WebSocket(PUBSUB_WS_ADDR);
-        this.handle.onopen = (_e) => {
-            if (!this.handle) {
-                return;
-            }
-            if (this.handle.readyState !== WebSocket.OPEN) {
-                log$i.error('ERR', `readyState is not OPEN (${WebSocket.OPEN})`);
-                return;
-            }
-            if (this.reconnectTimeout) {
-                clearTimeout(this.reconnectTimeout);
-            }
-            // should have a queue worker
-            while (this.sendBuffer.length > 0) {
-                this.handle.send(this.sendBuffer.shift());
-            }
-            log$i.info('INFO', 'Socket Opened');
-            this._heartbeat();
-            if (this.heartbeatHandle) {
-                clearInterval(this.heartbeatHandle);
-            }
-            this.heartbeatHandle = setInterval(() => {
-                this._heartbeat();
-            }, heartbeatInterval);
-            this.evts.emit('open', {});
-        };
-        this.handle.onmessage = (e) => {
-            const message = JSON.parse(`${e.data}`);
-            if (message.nonce) {
-                message.sentData = this.nonceMessages[message.nonce];
-                delete this.nonceMessages[message.nonce];
-            }
-            // log.debug('RECV', JSON.stringify(message))
-            if (message.type === 'RECONNECT') {
-                log$i.info('INFO', 'Reconnecting...');
-                this.connect();
-            }
-            this.evts.emit('message', message);
-        };
-        this.handle.onerror = (e) => {
-            log$i.error('ERR', e);
-            this.handle = null;
-            this.reconnectTimeout = setTimeout(() => { this.connect(); }, reconnectInterval);
-        };
-        this.handle.onclose = (e) => {
-            this.handle = null;
-            if (e.code === CODE_CUSTOM_DISCONNECT || e.code === CODE_GOING_AWAY) ;
-            else {
-                log$i.info('INFO', 'Onclose...');
-                this.reconnectTimeout = setTimeout(() => { this.connect(); }, reconnectInterval);
-            }
-            if (this.heartbeatHandle) {
-                clearInterval(this.heartbeatHandle);
-            }
-        };
-    }
-    disconnect() {
-        if (this.handle) {
-            try {
-                this.handle.close(CODE_CUSTOM_DISCONNECT);
-            }
-            catch (e) {
-                // this can happen when calling close before the connection
-                // could be established
-                log$i.error('error when closing the handle', e);
-            }
-        }
-    }
-    on(what, cb) {
-        this.evts.on(what, cb);
-    }
-}
 
 const newText = () => '';
 const newSoundMediaFile = (obj = null) => ({
@@ -3221,10 +3101,6 @@ class TwitchClientManager {
         this.chatClient = null;
         this.helixClient = null;
         this.identity = null;
-        this.pubSubClient = null;
-        // this should probably be handled in the pub sub client code?
-        // channel_id => [] list of auth tokens that are bad
-        this.badAuthTokens = {};
         this.bot = bot;
         this.user = user;
         this.log = logger('TwitchClientManager.ts', `${user.name}|`);
@@ -3237,36 +3113,12 @@ class TwitchClientManager {
         this.user = user;
         await this.init('user_change');
     }
-    _resetBadAuthTokens() {
-        this.badAuthTokens = {};
-    }
-    _addBadAuthToken(channelIds, authToken) {
-        for (const channelId of channelIds) {
-            if (!this.badAuthTokens[channelId]) {
-                this.badAuthTokens[channelId] = [];
-            }
-            if (!this.badAuthTokens[channelId].includes(authToken)) {
-                this.badAuthTokens[channelId].push(authToken);
-            }
-        }
-    }
-    _isBadAuthToken(channelId, authToken) {
-        return !!(this.badAuthTokens[channelId]
-            && this.badAuthTokens[channelId].includes(authToken));
-    }
-    determineRelevantPubSubChannels(twitchChannels) {
-        return twitchChannels.filter(channel => {
-            return !!(channel.access_token && channel.channel_id)
-                && !this._isBadAuthToken(channel.channel_id, channel.access_token);
-        });
-    }
     async init(reason) {
         let connectReason = reason;
         const cfg = this.bot.getConfig().twitch;
         const user = this.user;
         this.log = logger('TwitchClientManager.ts', `${user.name}|`);
         await this._disconnectChatClient();
-        this._disconnectPubSubClient();
         const twitchChannels = await this.bot.getTwitchChannels().allByUserId(user.id);
         if (twitchChannels.length === 0) {
             this.log.info(`* No twitch channels configured at all`);
@@ -3431,60 +3283,6 @@ class TwitchClientManager {
         // @see https://dev.twitch.tv/docs/eventsub
         const helixClient = new TwitchHelixClient(identity.client_id, identity.client_secret);
         this.helixClient = helixClient;
-        // connect to PubSub websocket only when required
-        // https://dev.twitch.tv/docs/pubsub#topics
-        this.log.info(`Initializing PubSub`);
-        const pubsubChannels = this.determineRelevantPubSubChannels(twitchChannels);
-        if (pubsubChannels.length === 0) {
-            this.log.info(`* No twitch channels configured with access_token and channel_id set`);
-        }
-        else {
-            this.pubSubClient = new TwitchPubSubClient();
-            this.pubSubClient.on('open', async () => {
-                if (!this.pubSubClient) {
-                    return;
-                }
-                // listen for evts
-                const pubsubChannels = this.determineRelevantPubSubChannels(twitchChannels);
-                if (pubsubChannels.length === 0) {
-                    this.log.info(`* No twitch channels configured with a valid access_token`);
-                    this._disconnectPubSubClient();
-                    return;
-                }
-                for (const channel of pubsubChannels) {
-                    this.log.info(`${channel.channel_name} listen for channel point redemptions`);
-                    this.pubSubClient.listen(`channel-points-channel-v1.${channel.channel_id}`, channel.access_token);
-                }
-                // TODO: change any type
-                this.pubSubClient.on('message', async (message) => {
-                    if (message.type === 'RESPONSE' && message.error === 'ERR_BADAUTH' && message.sentData) {
-                        const channelIds = message.sentData.data.topics.map((t) => t.split('.')[1]);
-                        const authToken = message.sentData.data.auth_token;
-                        this._addBadAuthToken(channelIds, authToken);
-                        // now check if there are still any valid twitch channels, if not
-                        // then disconnect, because we dont need the pubsub to be active
-                        const pubsubChannels = this.determineRelevantPubSubChannels(twitchChannels);
-                        if (pubsubChannels.length === 0) {
-                            this.log.info(`* No twitch channels configured with a valid access_token`);
-                            this._disconnectPubSubClient();
-                            return;
-                        }
-                    }
-                    if (message.type !== 'MESSAGE') {
-                        return;
-                    }
-                    const messageData = JSON.parse(message.data.message);
-                    // channel points redeemed with non standard reward
-                    // standard rewards are not supported :/
-                    if (messageData.type === 'reward-redeemed') {
-                        await this.handleRewardRedeemMessage(messageData);
-                    }
-                    else {
-                        this.log.debug('MESSAGE received', messageData);
-                    }
-                });
-            });
-        }
         if (this.chatClient) {
             try {
                 await this.chatClient.connect();
@@ -3495,9 +3293,6 @@ class TwitchClientManager {
                 this.log.error('error when connecting', e);
             }
         }
-        if (this.pubSubClient) {
-            this.pubSubClient.connect();
-        }
         await this.registerSubscriptions(twitchChannels);
     }
     async registerSubscriptions(twitchChannels) {
@@ -3507,48 +3302,64 @@ class TwitchClientManager {
         }
         const twitchChannelIds = twitchChannels.map(ch => `${ch.channel_id}`);
         // delete all subscriptions
+        const deletePromises = [];
         const allSubscriptions = await this.helixClient.getSubscriptions();
         for (const s of allSubscriptions.data) {
             if (twitchChannelIds.includes(s.condition.broadcaster_user_id)) {
-                await this.helixClient.deleteSubscription(s.id);
-                await this.bot.getDb().delete('robyottoko.event_sub', {
-                    user_id: this.user.id,
-                    subscription_id: s.id,
-                });
-                this.log.info(`${s.type} subscription deleted`);
+                deletePromises.push(this.deleteSubscription(s));
             }
         }
+        await Promise.all(deletePromises);
+        const createPromises = [];
         // create all subscriptions
-        const botCfg = this.bot.getConfig();
         for (const twitchChannel of twitchChannels) {
-            if (!twitchChannel.channel_id) {
-                continue;
-            }
             const subscriptionTypes = [
                 'channel.follow',
                 'channel.cheer',
                 'channel.subscribe',
+                'channel.channel_points_custom_reward_redemption.add',
             ];
             for (const subscriptionType of subscriptionTypes) {
-                const subscription = {
-                    type: subscriptionType,
-                    version: '1',
-                    transport: botCfg.twitch.eventSub.transport,
-                    condition: {
-                        broadcaster_user_id: `${twitchChannel.channel_id}`,
-                    },
-                };
-                const resp = await this.helixClient.createSubscription(subscription);
-                if (resp && resp.data && resp.data.length > 0) {
-                    await this.bot.getDb().insert('robyottoko.event_sub', {
-                        user_id: this.user.id,
-                        subscription_id: resp.data[0].id,
-                    });
-                    this.log.info(`${subscriptionType} subscription registered`);
-                }
-                this.log.debug(resp);
+                createPromises.push(this.registerSubscription(subscriptionType, twitchChannel));
             }
         }
+        await Promise.all(createPromises);
+    }
+    async deleteSubscription(subscription) {
+        if (!this.helixClient) {
+            return;
+        }
+        await this.helixClient.deleteSubscription(subscription.id);
+        await this.bot.getDb().delete('robyottoko.event_sub', {
+            user_id: this.user.id,
+            subscription_id: subscription.id,
+        });
+        this.log.info(`${subscription.type} subscription deleted`);
+    }
+    async registerSubscription(subscriptionType, twitchChannel) {
+        if (!this.helixClient) {
+            return;
+        }
+        if (!twitchChannel.channel_id) {
+            return;
+        }
+        const subscription = {
+            type: subscriptionType,
+            version: '1',
+            transport: this.bot.getConfig().twitch.eventSub.transport,
+            condition: {
+                broadcaster_user_id: `${twitchChannel.channel_id}`,
+            },
+        };
+        const resp = await this.helixClient.createSubscription(subscription);
+        if (resp && resp.data && resp.data.length > 0) {
+            await this.bot.getDb().insert('robyottoko.event_sub', {
+                user_id: this.user.id,
+                subscription_id: resp.data[0].id,
+            });
+            this.log.info(`${subscriptionType} subscription registered`);
+        }
+        this.log.debug(resp);
     }
     // TODO: use better type info
     async handleSubscribeEvent(data) {
@@ -3566,15 +3377,8 @@ class TwitchClientManager {
             mod: false,
             subscriber: true, // user just subscribed, so it is a subscriber
         };
-        const promises = [];
-        for (const m of this.bot.getModuleManager().all(this.user.id)) {
-            const trigger = newSubscribeTrigger();
-            const commands = m.getCommands();
-            const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger]);
-            this.log.info('cmdDefs:', cmdDefs.length);
-            promises.push(fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context));
-        }
-        await Promise.all(promises);
+        const trigger = newSubscribeTrigger();
+        await this.executeMatchingCommands(rawCmd, target, context, trigger);
     }
     // TODO: use better type info
     async handleFollowEvent(data) {
@@ -3592,15 +3396,8 @@ class TwitchClientManager {
             mod: false,
             subscriber: false, // unknown
         };
-        const promises = [];
-        for (const m of this.bot.getModuleManager().all(this.user.id)) {
-            const trigger = newFollowTrigger();
-            const commands = m.getCommands();
-            const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger]);
-            this.log.info('cmdDefs:', cmdDefs.length);
-            promises.push(fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context));
-        }
-        await Promise.all(promises);
+        const trigger = newFollowTrigger();
+        await this.executeMatchingCommands(rawCmd, target, context, trigger);
     }
     // TODO: use better type info
     async handleCheerEvent(data) {
@@ -3618,56 +3415,33 @@ class TwitchClientManager {
             mod: false,
             subscriber: false, // unknown
         };
-        const promises = [];
-        for (const m of this.bot.getModuleManager().all(this.user.id)) {
-            const trigger = newBitsTrigger();
-            const commands = m.getCommands();
-            const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger]);
-            this.log.info('cmdDefs:', cmdDefs.length);
-            promises.push(fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context));
-        }
-        await Promise.all(promises);
+        const trigger = newBitsTrigger();
+        await this.executeMatchingCommands(rawCmd, target, context, trigger);
     }
-    async handleRewardRedeemMessage(messageData) {
-        if (!this.chatClient) {
-            return;
-        }
-        const redemptionMessage = messageData;
-        this.log.debug(redemptionMessage.data.redemption);
-        const redemption = redemptionMessage.data.redemption;
-        const twitchChannel = await this.bot.getDb().get('robyottoko.twitch_channel', { channel_id: redemption.channel_id });
-        if (!twitchChannel) {
-            return;
-        }
-        const target = twitchChannel.channel_name;
+    async handleChannelPointsCustomRewardRedemptionAddEvent(data) {
+        this.log.info('handleChannelPointsCustomRewardRedemptionAddEvent');
+        const rawCmd = {
+            name: data.event.reward.title,
+            args: data.event.user_input ? [data.event.user_input] : [],
+        };
+        const target = data.event.broadcaster_user_name;
         const context = {
-            "room-id": redemption.channel_id,
-            "user-id": redemption.user.id,
-            "display-name": redemption.user.display_name,
-            username: redemption.user.login,
+            "room-id": data.event.broadcaster_user_id,
+            "user-id": data.event.user_id,
+            "display-name": data.event.user_name,
+            username: data.event.user_login,
             mod: false,
-            subscriber: redemption.reward.is_sub_only, // this does not really tell us if the user is sub or not, just if the redemption was sub only
+            subscriber: false, // unknown
         };
-        const rewardRedemptionContext = {
-            client: this.chatClient,
-            target,
-            context,
-            redemption,
-        };
+        const trigger = newRewardRedemptionTrigger(data.event.reward.title);
+        await this.executeMatchingCommands(rawCmd, target, context, trigger);
+    }
+    async executeMatchingCommands(rawCmd, target, context, trigger) {
         const promises = [];
         for (const m of this.bot.getModuleManager().all(this.user.id)) {
-            // reward redemption should all have exact key/name of the reward,
-            // no sorting required
             const commands = m.getCommands();
-            // make a tmp trigger to match commands against
-            const trigger = newRewardRedemptionTrigger(redemption.reward.title);
-            const rawCmd = {
-                name: redemption.reward.title,
-                args: redemption.user_input ? [redemption.user_input] : [],
-            };
             const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger]);
             promises.push(fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context));
-            promises.push(m.onRewardRedemption(rewardRedemptionContext));
         }
         await Promise.all(promises);
     }
@@ -3681,18 +3455,6 @@ class TwitchClientManager {
                 this.log.info(e);
             }
         }
-    }
-    _disconnectPubSubClient() {
-        try {
-            if (this.pubSubClient !== null) {
-                this.pubSubClient.disconnect();
-                this.pubSubClient = null;
-            }
-        }
-        catch (e) {
-            this.log.info(e);
-        }
-        this._resetBadAuthTokens();
     }
     getChatClient() {
         return this.chatClient;
@@ -4227,6 +3989,8 @@ class Mail {
         });
     }
 }
+
+function mitt(n){return {all:n=n||new Map,on:function(t,e){var i=n.get(t);i?i.push(e):n.set(t,[e]);},off:function(t,e){var i=n.get(t);i&&(e?i.splice(i.indexOf(e)>>>0,1):n.set(t,[]));},emit:function(t,e){var i=n.get(t);i&&i.slice().map(function(n){n(e);}),(i=n.get("*"))&&i.slice().map(function(n){n(t,e);});}}}
 
 const log$c = logger('countdown.ts');
 const countdown = (originalCmd, bot, user) => async (command, client, target, context) => {
@@ -5130,9 +4894,6 @@ class GeneralModule {
         this.timers.forEach(t => {
             t.lines++;
         });
-    }
-    async onRewardRedemption(_RewardRedemptionContext) {
-        // pass
     }
 }
 
@@ -6477,9 +6238,6 @@ class SongrequestModule {
     async onChatMsg(_chatMessageContext) {
         // pass
     }
-    async onRewardRedemption(_RewardRedemptionContext) {
-        // pass
-    }
 }
 
 class VoteModule {
@@ -6602,9 +6360,6 @@ class VoteModule {
         ];
     }
     async onChatMsg(_chatMessageContext) {
-        // pass
-    }
-    async onRewardRedemption(_RewardRedemptionContext) {
         // pass
     }
 }
@@ -6732,9 +6487,6 @@ class SpeechToTextModule {
         return [];
     }
     async onChatMsg(_chatMessageContext) {
-        // pass
-    }
-    async onRewardRedemption(_rewardRedemptionContext) {
         // pass
     }
 }
@@ -6964,9 +6716,6 @@ class DrawcastModule {
     async onChatMsg(_chatMessageContext) {
         // pass
     }
-    async onRewardRedemption(_RewardRedemptionContext) {
-        // pass
-    }
 }
 
 const default_avatar_definition = (def = null) => {
@@ -7088,9 +6837,6 @@ class AvatarModule {
         return [];
     }
     async onChatMsg(_chatMessageContext) {
-        // pass
-    }
-    async onRewardRedemption(_RewardRedemptionContext) {
         // pass
     }
 }
@@ -7283,16 +7029,13 @@ class PomoModule {
     async onChatMsg(_chatMessageContext) {
         // pass
     }
-    async onRewardRedemption(_RewardRedemptionContext) {
-        // pass
-    }
 }
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-07-05T17:33:34.207Z",
+    buildDate: "2022-07-06T18:45:25.188Z",
     // @ts-ignore
-    buildVersion: "1.19.2",
+    buildVersion: "1.20.0",
 };
 
 const widgets = [
