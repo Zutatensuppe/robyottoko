@@ -227,7 +227,7 @@ const initForUser = async (bot: Bot, user: User) => {
   })
 }
 
-const run = async () => {
+export const run = async () => {
   const bot = await createBot()
 
   // one for each user
@@ -272,5 +272,3 @@ const run = async () => {
     gracefulShutdown('SIGTERM')
   });
 }
-
-run()

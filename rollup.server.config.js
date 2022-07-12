@@ -8,7 +8,7 @@ const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf-8'))
 
 export default {
   cache: false,
-  input: 'src/bot.ts',
+  input: 'src/index.ts',
   output: {
     dir: 'build/server',
     format: 'es',
