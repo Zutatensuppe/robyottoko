@@ -10,7 +10,7 @@ nodemon \
   -x "node --experimental-specifier-resolution=node --loader ts-node/esm" \
   --max-old-space-size=256 \
   -w src \
-  src/bot.ts \
+  src/index-dev.ts \
   -e ts \
   --trace-warnings \
   --ignore public/static/ \
