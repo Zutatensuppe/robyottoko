@@ -3098,7 +3098,7 @@ const isDevTunnel = (url) => url.match(/^https:\/\/[a-z0-9-]+\.(?:loca\.lt|ngrok
 const shouldDeleteSubscription = (transport, subscription, twitchChannelIds) => {
     return transport.method === subscription.transport.method
         && (transport.callback === subscription.transport.callback
-            || isDevTunnel(subscription.transport.callback))
+            || (isDevTunnel(transport.callback) && isDevTunnel(subscription.transport.callback)))
         && twitchChannelIds.includes(subscription.condition.broadcaster_user_id);
 };
 const rolesLettersFromTwitchChatContext = (context) => {
@@ -7045,7 +7045,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-07-13T21:32:44.948Z",
+    buildDate: "2022-07-13T21:38:10.636Z",
     // @ts-ignore
     buildVersion: "1.20.3",
 };
