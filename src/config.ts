@@ -1,20 +1,18 @@
-import { readFileSync } from 'fs'
+import { PathOrFileDescriptor, readFileSync } from 'fs'
 import { Config } from './types'
+
+const absPath = (path: string): URL => new URL(path, import.meta.url)
+
+const readJson = (path: PathOrFileDescriptor): any => JSON.parse(String(readFileSync(path)))
 
 const init = (): Config => {
   const configFile = process.env.APP_CONFIG || ''
   if (configFile === '') {
     process.exit(2)
   }
-  const config: Config = JSON.parse(String(readFileSync(configFile)))
-
-  config.twitch.auto_tags = JSON.parse(
-    String(readFileSync(new URL('./config_data/tags_auto.json', import.meta.url)))
-  );
-  config.twitch.manual_tags = JSON.parse(
-    String(readFileSync(new URL('./config_data/tags_manual.json', import.meta.url)))
-  );
-
+  const config: Config = readJson(configFile)
+  config.twitch.auto_tags = readJson(absPath('./config_data/tags_auto.json'))
+  config.twitch.manual_tags = readJson(absPath('./config_data/tags_manual.json'))
   return config
 }
 const config: Config = init()
