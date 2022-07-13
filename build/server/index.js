@@ -13,14 +13,16 @@ import * as pg from 'pg';
 import SibApiV3Sdk from 'sib-api-v3-sdk';
 import childProcess from 'child_process';
 
+const absPath = (path) => new URL(path, import.meta.url);
+const readJson = (path) => JSON.parse(String(readFileSync(path)));
 const init = () => {
     const configFile = process.env.APP_CONFIG || '';
     if (configFile === '') {
         process.exit(2);
     }
-    const config = JSON.parse(String(readFileSync(configFile)));
-    config.twitch.auto_tags = JSON.parse(String(readFileSync(new URL('./config_data/tags_auto.json', import.meta.url))));
-    config.twitch.manual_tags = JSON.parse(String(readFileSync(new URL('./config_data/tags_manual.json', import.meta.url))));
+    const config = readJson(configFile);
+    config.twitch.auto_tags = readJson(absPath('./config_data/tags_auto.json'));
+    config.twitch.manual_tags = readJson(absPath('./config_data/tags_manual.json'));
     return config;
 };
 const config = init();
@@ -3092,6 +3094,26 @@ const commands = {
 
 // @ts-ignore
 const log$h = logger('TwitchClientManager.ts');
+const isDevTunnel = (url) => url.match(/^https:\/\/[a-z0-9-]+\.(?:loca\.lt|ngrok\.io)\//);
+const shouldDeleteSubscription = (transport, subscription, twitchChannelIds) => {
+    return transport.method === subscription.transport.method
+        && (transport.callback === subscription.transport.callback
+            || isDevTunnel(subscription.transport.callback))
+        && twitchChannelIds.includes(subscription.condition.broadcaster_user_id);
+};
+const rolesLettersFromTwitchChatContext = (context) => {
+    const roles = [];
+    if (isMod(context)) {
+        roles.push('M');
+    }
+    if (isSubscriber(context)) {
+        roles.push('S');
+    }
+    if (isBroadcaster(context)) {
+        roles.push('B');
+    }
+    return roles;
+};
 class TwitchClientManager {
     constructor(bot, user) {
         this.chatClient = null;
@@ -3151,17 +3173,7 @@ class TwitchClientManager {
             if (self) {
                 return;
             } // Ignore messages from the bot
-            // log.debug(context)
-            const roles = [];
-            if (isMod(context)) {
-                roles.push('M');
-            }
-            if (isSubscriber(context)) {
-                roles.push('S');
-            }
-            if (isBroadcaster(context)) {
-                roles.push('B');
-            }
+            const roles = rolesLettersFromTwitchChatContext(context);
             this.log.debug(`${context.username}[${roles.join('')}]@${target}: ${msg}`);
             await this.bot.getDb().insert('robyottoko.chat_log', {
                 created_at: new Date(),
@@ -3178,34 +3190,37 @@ class TwitchClientManager {
             };
             let _isFirstChatAlltime = null;
             let _isFirstChatStream = null;
+            const determineIsFirstChatAlltime = async () => {
+                return await countChatMessages({
+                    broadcaster_user_id: context['room-id'],
+                    user_name: context.username,
+                }) === 1;
+            };
             const isFirstChatAlltime = async () => {
                 if (_isFirstChatAlltime === null) {
-                    _isFirstChatAlltime = await countChatMessages({
-                        broadcaster_user_id: context['room-id'],
-                        user_name: context.username,
-                    }) === 1;
+                    _isFirstChatAlltime = await determineIsFirstChatAlltime();
                 }
                 return _isFirstChatAlltime;
             };
+            const determineIsFirstChatStream = async () => {
+                const stream = await helixClient.getStreamByUserId(context['room-id']);
+                let minDate;
+                if (stream) {
+                    minDate = new Date(stream.started_at);
+                }
+                else {
+                    minDate = new Date(new Date().getTime() - (5 * MINUTE));
+                    log$h.info(`No stream is running atm for channel ${context['room-id']}. Using fake start date ${minDate}.`);
+                }
+                return await countChatMessages({
+                    broadcaster_user_id: context['room-id'],
+                    user_name: context.username,
+                    created_at: { '$gte': minDate },
+                }) === 1;
+            };
             const isFirstChatStream = async () => {
                 if (_isFirstChatStream === null) {
-                    const stream = await helixClient.getStreamByUserId(context['room-id']);
-                    if (!stream) {
-                        const fakeStartDate = new Date(new Date().getTime() - (5 * MINUTE));
-                        log$h.info(`No stream is running atm for channel ${context['room-id']}. Using fake start date ${fakeStartDate}.`);
-                        _isFirstChatStream = await countChatMessages({
-                            broadcaster_user_id: context['room-id'],
-                            created_at: { '$gte': fakeStartDate },
-                            user_name: context.username,
-                        }) === 1;
-                    }
-                    else {
-                        _isFirstChatStream = await countChatMessages({
-                            broadcaster_user_id: context['room-id'],
-                            created_at: { '$gte': new Date(stream.started_at) },
-                            user_name: context.username,
-                        }) === 1;
-                    }
+                    _isFirstChatStream = await determineIsFirstChatStream();
                 }
                 return _isFirstChatStream;
             };
@@ -3301,11 +3316,9 @@ class TwitchClientManager {
         // delete all subscriptions
         const deletePromises = [];
         const allSubscriptions = await this.helixClient.getSubscriptions();
-        for (const s of allSubscriptions.data) {
-            if (transport.method === s.transport.method
-                && transport.callback === s.transport.callback
-                && twitchChannelIds.includes(s.condition.broadcaster_user_id)) {
-                deletePromises.push(this.deleteSubscription(s));
+        for (const subscription of allSubscriptions.data) {
+            if (shouldDeleteSubscription(transport, subscription, twitchChannelIds)) {
+                deletePromises.push(this.deleteSubscription(subscription));
             }
         }
         await Promise.all(deletePromises);
@@ -7032,9 +7045,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-07-12T20:29:03.698Z",
+    buildDate: "2022-07-13T21:32:44.948Z",
     // @ts-ignore
-    buildVersion: "1.20.2",
+    buildVersion: "1.20.3",
 };
 
 const widgets = [

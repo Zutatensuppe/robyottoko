@@ -1,19 +1,11 @@
-import localtunnel from 'localtunnel'
+import ngrok from 'ngrok'
 import { run } from './bot'
 import config, { setPublicUrl } from './config'
 
 (async () => {
-  const tunnel = await localtunnel({
-    local_host: config.http.hostname,
-    port: config.http.port,
+  const url = await ngrok.connect({
+    addr: `${config.http.hostname}:${config.http.port}`,
   });
-
-  setPublicUrl(tunnel.url);
+  setPublicUrl(url);
   run()
-
-  tunnel.on('close', () => {
-    // tunnels are closed
-    // ignore for now...
-    // TODO: should stop bot and print some error.. maybe?
-  });
 })();

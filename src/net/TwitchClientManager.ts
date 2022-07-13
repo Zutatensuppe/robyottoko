@@ -5,7 +5,7 @@ import fn from '../fn'
 import { logger, Logger, MINUTE } from '../common/fn'
 import { TwitchChannel } from '../services/TwitchChannels'
 import { User } from '../services/Users'
-import { Bot, CommandTrigger, CommandTriggerType, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import { Bot, CommandTrigger, CommandTriggerType, EventSubTransport, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
 import { getUniqueCommandsByTriggers, newBitsTrigger, newFollowTrigger, newRewardRedemptionTrigger, newSubscribeTrigger } from '../common/commands'
 import { isBroadcaster, isMod, isSubscriber } from '../common/permissions'
 import { WhereRaw } from '../DbPostgres'
@@ -17,6 +17,35 @@ interface Identity {
   password: string
   client_id: string
   client_secret: string
+}
+
+const isDevTunnel = (url: string) => url.match(/^https:\/\/[a-z0-9-]+\.(?:loca\.lt|ngrok\.io)\//)
+
+const shouldDeleteSubscription = (
+  transport: EventSubTransport,
+  subscription: any,
+  twitchChannelIds: string[]
+) => {
+  return transport.method === subscription.transport.method
+    && (
+      transport.callback === subscription.transport.callback
+      || isDevTunnel(subscription.transport.callback)
+    )
+    && twitchChannelIds.includes(subscription.condition.broadcaster_user_id)
+}
+
+const rolesLettersFromTwitchChatContext = (context: TwitchChatContext): string[] => {
+  const roles: string[] = []
+  if (isMod(context)) {
+    roles.push('M')
+  }
+  if (isSubscriber(context)) {
+    roles.push('S')
+  }
+  if (isBroadcaster(context)) {
+    roles.push('B')
+  }
+  return roles
 }
 
 class TwitchClientManager {
@@ -97,17 +126,7 @@ class TwitchClientManager {
     chatClient.on('message', async (target: string, context: TwitchChatContext, msg: string, self: boolean) => {
       if (self) { return; } // Ignore messages from the bot
 
-      // log.debug(context)
-      const roles = []
-      if (isMod(context)) {
-        roles.push('M')
-      }
-      if (isSubscriber(context)) {
-        roles.push('S')
-      }
-      if (isBroadcaster(context)) {
-        roles.push('B')
-      }
+      const roles = rolesLettersFromTwitchChatContext(context)
       this.log.debug(`${context.username}[${roles.join('')}]@${target}: ${msg}`)
 
       await this.bot.getDb().insert('robyottoko.chat_log', {
@@ -129,33 +148,37 @@ class TwitchClientManager {
       }
       let _isFirstChatAlltime: null | boolean = null
       let _isFirstChatStream: null | boolean = null
-      const isFirstChatAlltime = async () => {
+      const determineIsFirstChatAlltime = async (): Promise<boolean> => {
+        return await countChatMessages({
+          broadcaster_user_id: context['room-id'],
+          user_name: context.username,
+        }) === 1
+      }
+      const isFirstChatAlltime = async (): Promise<boolean> => {
         if (_isFirstChatAlltime === null) {
-          _isFirstChatAlltime = await countChatMessages({
-            broadcaster_user_id: context['room-id'],
-            user_name: context.username,
-          }) === 1
+          _isFirstChatAlltime = await determineIsFirstChatAlltime()
         }
         return _isFirstChatAlltime
       }
-      const isFirstChatStream = async () => {
+      const determineIsFirstChatStream = async (): Promise<boolean> => {
+        const stream = await helixClient.getStreamByUserId(context['room-id'])
+        let minDate: Date
+        if (stream) {
+          minDate = new Date(stream.started_at)
+        } else {
+          minDate = new Date(new Date().getTime() - (5 * MINUTE))
+          log.info(`No stream is running atm for channel ${context['room-id']}. Using fake start date ${minDate}.`)
+        }
+
+        return await countChatMessages({
+          broadcaster_user_id: context['room-id'],
+          user_name: context.username,
+          created_at: { '$gte': minDate },
+        }) === 1
+      }
+      const isFirstChatStream = async (): Promise<boolean> => {
         if (_isFirstChatStream === null) {
-          const stream = await helixClient.getStreamByUserId(context['room-id'])
-          if (!stream) {
-            const fakeStartDate = new Date(new Date().getTime() - (5 * MINUTE))
-            log.info(`No stream is running atm for channel ${context['room-id']}. Using fake start date ${fakeStartDate}.`)
-            _isFirstChatStream = await countChatMessages({
-              broadcaster_user_id: context['room-id'],
-              created_at: { '$gte': fakeStartDate },
-              user_name: context.username,
-            }) === 1
-          } else {
-            _isFirstChatStream = await countChatMessages({
-              broadcaster_user_id: context['room-id'],
-              created_at: { '$gte': new Date(stream.started_at) },
-              user_name: context.username,
-            }) === 1
-          }
+          _isFirstChatStream = await determineIsFirstChatStream()
         }
         return _isFirstChatStream
       }
@@ -260,12 +283,9 @@ class TwitchClientManager {
     // delete all subscriptions
     const deletePromises: Promise<void>[] = []
     const allSubscriptions: any = await this.helixClient.getSubscriptions()
-    for (const s of allSubscriptions.data) {
-      if (
-        transport.method === s.transport.method
-        && transport.callback === s.transport.callback
-        && twitchChannelIds.includes(s.condition.broadcaster_user_id)) {
-        deletePromises.push(this.deleteSubscription(s))
+    for (const subscription of allSubscriptions.data) {
+      if (shouldDeleteSubscription(transport, subscription, twitchChannelIds)) {
+        deletePromises.push(this.deleteSubscription(subscription))
       }
     }
     await Promise.all(deletePromises)
@@ -331,7 +351,7 @@ class TwitchClientManager {
   }
 
   // TODO: use better type info
-  async handleSubscribeEvent(data: { subscription: any, event: any }) {
+  async handleSubscribeEvent(data: { subscription: any, event: any }): Promise<void> {
     this.log.info('handleSubscribeEvent')
     const rawCmd: RawCommand = {
       name: 'channel.subscribe',
@@ -351,7 +371,7 @@ class TwitchClientManager {
   }
 
   // TODO: use better type info
-  async handleFollowEvent(data: { subscription: any, event: any }) {
+  async handleFollowEvent(data: { subscription: any, event: any }): Promise<void> {
     this.log.info('handleFollowEvent')
     const rawCmd: RawCommand = {
       name: 'channel.follow',
@@ -371,7 +391,7 @@ class TwitchClientManager {
   }
 
   // TODO: use better type info
-  async handleCheerEvent(data: { subscription: any, event: any }) {
+  async handleCheerEvent(data: { subscription: any, event: any }): Promise<void> {
     this.log.info('handleCheerEvent')
     const rawCmd: RawCommand = {
       name: 'channel.cheer',
@@ -390,7 +410,7 @@ class TwitchClientManager {
     await this.executeMatchingCommands(rawCmd, target, context, trigger)
   }
 
-  async handleChannelPointsCustomRewardRedemptionAddEvent(data: { subscription: any, event: any }) {
+  async handleChannelPointsCustomRewardRedemptionAddEvent(data: { subscription: any, event: any }): Promise<void> {
     this.log.info('handleChannelPointsCustomRewardRedemptionAddEvent')
     const rawCmd: RawCommand = {
       name: data.event.reward.title,
@@ -414,7 +434,7 @@ class TwitchClientManager {
     target: string,
     context: TwitchChatContext,
     trigger: CommandTrigger,
-  ) {
+  ): Promise<void> {
     const promises: Promise<void>[] = []
     for (const m of this.bot.getModuleManager().all(this.user.id)) {
       const commands = m.getCommands()
