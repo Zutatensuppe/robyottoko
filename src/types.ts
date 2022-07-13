@@ -41,13 +41,15 @@ export interface HttpConfig {
   url: string
 }
 
+export interface EventSubTransport {
+  method: string // webhook
+  callback: string
+  secret: string
+}
+
 export interface TwitchConfig {
   eventSub: {
-    transport: {
-      method: string // 'webhook'
-      callback: string
-      secret: string
-    }
+    transport: EventSubTransport
   }
   tmi: {
     identity: {
