@@ -29,7 +29,7 @@ const shouldDeleteSubscription = (
   return transport.method === subscription.transport.method
     && (
       transport.callback === subscription.transport.callback
-      || isDevTunnel(subscription.transport.callback)
+      || (isDevTunnel(transport.callback) && isDevTunnel(subscription.transport.callback))
     )
     && twitchChannelIds.includes(subscription.condition.broadcaster_user_id)
 }
