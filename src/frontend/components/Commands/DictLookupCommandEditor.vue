@@ -32,40 +32,38 @@
                 </div>
               </td>
             </tr>
-            <template>
-              <tr>
-                <td>Language:</td>
-                <td>
-                  <input class="input is-small spaceinput mb-1" v-model="item.data.lang" />
-                  <span v-for="(lang, idx) in dictLangs" :key="idx" class="button is-small mr-1"
-                    @click="item.data.lang = lang.value" :title="lang.title">{{ lang.flag }}</span>
-                  <span class="button is-small mr-1" @click="item.data.lang = '$args(0)'"><code>$args(0)</code></span>
-                </td>
-              </tr>
-              <tr>
-                <td>Phrase:</td>
-                <td>
-                  <input class="input is-small spaceinput mb-1" v-model="item.data.phrase" />
-                  <span class="button is-small mr-1" @click="item.data.phrase = ''">All args</span>
-                  <span class="button is-small mr-1"
-                    @click="item.data.phrase = '$args(1:)'"><code>$args(1:)</code></span>
-                </td>
-              </tr>
-              <tr>
-                <td>Response:</td>
-                <td>
-                  <div class="help">
-                    Outputs the translation for the input phrase. The
-                    translation is always from/to english. <br />
-                    To let the user decide on the language use
-                    <code>$args(0)</code> as language, and
-                    <code>$args(1:)</code> as phrase. <br />
-                    If phrase is left empty, all arguments to the command will
-                    be used as the phrase.
-                  </div>
-                </td>
-              </tr>
-            </template>
+            <tr>
+              <td>Language:</td>
+              <td>
+                <input class="input is-small spaceinput mb-1" v-model="item.data.lang" />
+                <span v-for="(lang, idx) in dictLangs" :key="idx" class="button is-small mr-1"
+                  @click="item.data.lang = lang.value" :title="lang.title">{{ lang.flag }}</span>
+                <span class="button is-small mr-1" @click="item.data.lang = '$args(0)'"><code>$args(0)</code></span>
+              </td>
+            </tr>
+            <tr>
+              <td>Phrase:</td>
+              <td>
+                <input class="input is-small spaceinput mb-1" v-model="item.data.phrase" />
+                <span class="button is-small mr-1" @click="item.data.phrase = ''">All args</span>
+                <span class="button is-small mr-1"
+                  @click="item.data.phrase = '$args(1:)'"><code>$args(1:)</code></span>
+              </td>
+            </tr>
+            <tr>
+              <td>Response:</td>
+              <td>
+                <div class="help">
+                  Outputs the translation for the input phrase. The
+                  translation is always from/to english. <br />
+                  To let the user decide on the language use
+                  <code>$args(0)</code> as language, and
+                  <code>$args(1:)</code> as phrase. <br />
+                  If phrase is left empty, all arguments to the command will
+                  be used as the phrase.
+                </div>
+              </td>
+            </tr>
             <tr>
               <td>Variables:</td>
               <td>
