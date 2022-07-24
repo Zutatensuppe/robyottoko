@@ -9,6 +9,7 @@ import { Bot, CommandTrigger, CommandTriggerType, EventSubTransport, RawCommand,
 import { getUniqueCommandsByTriggers } from '../common/commands'
 import { isBroadcaster, isMod, isSubscriber } from '../common/permissions'
 import { WhereRaw } from '../DbPostgres'
+import { ALL_SUBSCRIPTIONS_TYPES } from '../services/twitch/EventSub'
 
 const log = logger('TwitchClientManager.ts')
 
@@ -293,13 +294,7 @@ class TwitchClientManager {
     const createPromises: Promise<void>[] = []
     // create all subscriptions
     for (const twitchChannel of twitchChannels) {
-      const subscriptionTypes = [
-        'channel.follow',
-        'channel.cheer',
-        'channel.subscribe',
-        'channel.channel_points_custom_reward_redemption.add',
-      ]
-      for (const subscriptionType of subscriptionTypes) {
+      for (const subscriptionType of ALL_SUBSCRIPTIONS_TYPES) {
         createPromises.push(this.registerSubscription(subscriptionType, twitchChannel))
       }
     }

@@ -10,6 +10,9 @@ import { SubscribeEventHandler } from '../../services/twitch/SubscribeEventHandl
 import { FollowEventHandler } from '../../services/twitch/FollowEventHandler'
 import { CheerEventHandler } from '../../services/twitch/CheerEventHandler'
 import { ChannelPointRedeemEventHandler } from '../../services/twitch/ChannelPointRedeemEventHandler'
+import { SubscriptionType } from '../../services/twitch/EventSub'
+import { StreamOnlineEventHandler } from '../../services/twitch/StreamOnlineEventHandler'
+import { StreamOfflineEventHandler } from '../../services/twitch/StreamOfflineEventHandler'
 
 const log = logger('twitch/index.ts')
 
@@ -118,35 +121,18 @@ export const createRouter = (
         }
         const clientManager = bot.getUserTwitchClientManager(user)
 
-        if (req.body.subscription.type === 'channel.subscribe') {
-          // got a new sub
+        if (req.body.subscription.type === SubscriptionType.ChannelSubscribe) {
           await (new SubscribeEventHandler()).handle(clientManager, req.body)
-        } else if (req.body.subscription.type === 'channel.follow') {
-          // got a new follow
+        } else if (req.body.subscription.type === SubscriptionType.ChannelFollow) {
           await (new FollowEventHandler()).handle(clientManager, req.body)
-        } else if (req.body.subscription.type === 'channel.cheer') {
-          // got a new cheer
+        } else if (req.body.subscription.type === SubscriptionType.ChannelCheer) {
           await (new CheerEventHandler()).handle(clientManager, req.body)
-        } else if (req.body.subscription.type === 'channel.channel_points_custom_reward_redemption.add') {
-          // got a new channel point reward redeem
+        } else if (req.body.subscription.type === SubscriptionType.ChannelPointsCustomRewardRedemptionAdd) {
           await (new ChannelPointRedeemEventHandler()).handle(clientManager, req.body)
-        } else if (req.body.subscription.type === 'stream.online') {
-          // insert new stream
-          await bot.getDb().insert('robyottoko.streams', {
-            broadcaster_user_id: req.body.event.broadcaster_user_id,
-            started_at: new Date(req.body.event.started_at),
-          })
-        } else if (req.body.subscription.type === 'stream.offline') {
-          // get last started stream for broadcaster
-          // if it exists and it didnt end yet set ended_at date
-          const stream = await bot.getDb().get('robyottoko.streams', {
-            broadcaster_user_id: req.body.event.broadcaster_user_id,
-          }, [{ started_at: -1 }])
-          if (!stream.ended_at) {
-            await bot.getDb().update('robyottoko.streams', {
-              ended_at: new Date(),
-            }, { id: stream.id })
-          }
+        } else if (req.body.subscription.type === SubscriptionType.StreamOnline) {
+          await (new StreamOnlineEventHandler()).handle(bot, req.body)
+        } else if (req.body.subscription.type === SubscriptionType.StreamOffline) {
+          await (new StreamOfflineEventHandler()).handle(bot, req.body)
         }
 
         res.send()
