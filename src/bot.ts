@@ -27,6 +27,7 @@ import { refreshExpiredTwitchChannelAccessToken } from './oauth'
 
 import { Bot } from './types'
 import { ChatLogRepo } from './services/ChatLogRepo'
+import fn from './fn'
 
 setLogLevel(config.log.level)
 const log = logger('bot.ts')
@@ -87,6 +88,13 @@ const createBot = async (): Promise<Bot> => {
 
     // user specific
     // -----------------------------------------------------------------
+
+    sayFn(user: User, target: string | null): (msg: string) => void {
+      const chatClient = this.getUserTwitchClientManager(user).getChatClient()
+      return chatClient
+        ? fn.sayFn(chatClient, target)
+        : ((msg: string) => { log.info('say(), client not set, msg', msg) })
+    }
 
     getUserVariables(user: User) {
       if (!this.userVariableInstances[user.id]) {

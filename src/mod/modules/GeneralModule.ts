@@ -12,13 +12,12 @@ import { Socket } from '../../net/WebSocketServer'
 import { User } from '../../services/Users'
 import {
   ChatMessageContext, Command, FunctionCommand,
-  TwitchChatClient, TwitchChatContext, RawCommand,
   Bot, Module,
   MediaCommand, DictLookupCommand, CountdownCommand,
   MadochanCommand, MediaVolumeCommand, ChattersCommand,
   RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand,
   CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand,
-  CommandTriggerType, CommandAction,
+  CommandTriggerType, CommandAction, CommandExecutionContext,
 } from '../../types'
 import dictLookup from '../../commands/dictLookup'
 import { GeneralModuleAdminSettings, GeneralModuleSettings, GeneralModuleWsEventData, GeneralSaveEventData } from './GeneralModuleCommon'
@@ -108,11 +107,10 @@ class GeneralModule implements Module {
         if (t.lines >= t.minLines && now > t.next) {
           const cmdDef = t.command
           const rawCmd = null
-          const client = this.bot.getUserTwitchClientManager(this.user).getChatClient()
           const target = null
           const context = null
           await fn.applyVariableChanges(cmdDef, this, rawCmd, context)
-          await cmdDef.fn(rawCmd, client, target, context)
+          await cmdDef.fn({ rawCmd, target, context })
           t.lines = 0
           t.next = now + t.minInterval
         }
@@ -261,7 +259,7 @@ class GeneralModule implements Module {
           cmdObj = Object.assign({}, cmd, { fn: this.mediaVolumeCmd.bind(this) })
           break;
         case CommandAction.MADOCHAN_CREATEWORD:
-          cmdObj = Object.assign({}, cmd, { fn: madochanCreateWord(cmd) })
+          cmdObj = Object.assign({}, cmd, { fn: madochanCreateWord(cmd, this.bot, this.user) })
           break;
         case CommandAction.DICT_LOOKUP:
           cmdObj = Object.assign({}, cmd, { fn: dictLookup(cmd, this.bot, this.user) })
@@ -406,22 +404,17 @@ class GeneralModule implements Module {
     await this.save()
   }
 
-  async mediaVolumeCmd(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    _context: TwitchChatContext | null,
-  ) {
-    if (!client || !command) {
+  async mediaVolumeCmd(ctx: CommandExecutionContext) {
+    if (!ctx.rawCmd) {
       return
     }
 
-    const say = fn.sayFn(client, target)
-    if (command.args.length === 0) {
+    const say = this.bot.sayFn(this.user, ctx.target)
+    if (ctx.rawCmd.args.length === 0) {
       say(`Current volume: ${this.data.settings.volume}`)
     } else {
       const newVolume = determineNewVolume(
-        command.args[0],
+        ctx.rawCmd.args[0],
         this.data.settings.volume,
       )
       await this.volume(newVolume)

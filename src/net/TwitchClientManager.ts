@@ -128,7 +128,7 @@ class TwitchClientManager {
         }
         // note: this can lead to multiple messages if multiple users
         //       have the same channels set up
-        const say = fn.sayFn(chatClient, channel.channel_name)
+        const say = this.bot.sayFn(user, channel.channel_name)
         if (connectReason === 'init') {
           say('⚠️ Bot rebooted - please restart timers...')
         } else if (connectReason === 'access_token_refreshed') {

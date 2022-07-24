@@ -1,23 +1,15 @@
 import { User } from '../services/Users'
-import { Bot, CommandFunction, RandomTextCommand, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import { Bot, CommandExecutionContext, CommandFunction, RandomTextCommand } from '../types'
 import fn from './../fn'
 
 const randomText = (
   originalCmd: RandomTextCommand,
   bot: Bot,
   user: User,
-): CommandFunction => async (
-  command: RawCommand | null,
-  client: TwitchChatClient | null,
-  target: string | null,
-  context: TwitchChatContext | null,
-  ) => {
-    if (!client) {
-      return
-    }
-    const texts = originalCmd.data.text
-    const say = fn.sayFn(client, target)
-    say(await fn.doReplacements(fn.getRandom(texts), command, context, originalCmd, bot, user))
-  }
+): CommandFunction => async (ctx: CommandExecutionContext) => {
+  const texts = originalCmd.data.text
+  const say = bot.sayFn(user, ctx.target)
+  say(await fn.doReplacements(fn.getRandom(texts), ctx.rawCmd, ctx.context, originalCmd, bot, user))
+}
 
 export default randomText

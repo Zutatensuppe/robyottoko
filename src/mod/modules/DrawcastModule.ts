@@ -132,7 +132,7 @@ class DrawcastModule implements Module {
           }
         }, ws)
       },
-      'approve_image': async (ws: Socket, { path }: { path: string }) => {
+      'approve_image': async (_ws: Socket, { path }: { path: string }) => {
         const image = this.data.images.find(item => item.path === path)
         if (!image) {
           // should not happen
@@ -148,7 +148,7 @@ class DrawcastModule implements Module {
           data: { nonce: '', img: image.path, mayNotify: false },
         })
       },
-      'deny_image': async (ws: Socket, { path }: { path: string }) => {
+      'deny_image': async (_ws: Socket, { path }: { path: string }) => {
         const image = this.data.images.find(item => item.path === path)
         if (!image) {
           // should not happen
@@ -162,7 +162,7 @@ class DrawcastModule implements Module {
           data: { nonce: '', img: image.path, mayNotify: false },
         })
       },
-      'post': async (ws: Socket, data: PostEventData) => {
+      'post': async (_ws: Socket, data: PostEventData) => {
         const rel = `/uploads/drawcast/${this.user.id}`
         const img = fn.decodeBase64Image(data.data.img)
         const name = `${(new Date()).toJSON()}-${nonce(6)}.${fn.mimeToExt(img.type)}`
@@ -185,7 +185,7 @@ class DrawcastModule implements Module {
           data: { nonce: data.data.nonce, img: urlPath, mayNotify: true },
         })
       },
-      'save': async (ws: Socket, { settings }: { settings: DrawcastSettings }) => {
+      'save': async (_ws: Socket, { settings }: { settings: DrawcastSettings }) => {
         this.data.settings = settings
         await this.save()
         this.data = await this.reinit()

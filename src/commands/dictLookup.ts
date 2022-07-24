@@ -1,4 +1,4 @@
-import { Bot, CommandFunction, DictLookupCommand, DictSearchResponseDataEntry, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import { Bot, CommandExecutionContext, CommandFunction, DictLookupCommand, DictSearchResponseDataEntry } from '../types'
 import JishoOrg from './../services/JishoOrg'
 import DictCc from './../services/DictCc'
 import fn from './../fn'
@@ -35,35 +35,30 @@ const dictLookup = (
   bot: Bot,
   user: User,
   // no params
-): CommandFunction => async (
-  command: RawCommand | null,
-  client: TwitchChatClient | null,
-  target: string | null,
-  context: TwitchChatContext | null,
-  ) => {
-    if (!client || !command) {
-      return []
-    }
-    const say = fn.sayFn(client, target)
-    const tmpLang = await fn.doReplacements(originalCmd.data.lang, command, context, originalCmd, bot, user)
-    const dictFn = LANG_TO_FN[tmpLang] || null
-    if (!dictFn) {
-      say(`Sorry, language not supported: "${tmpLang}"`)
-      return
-    }
-
-    // if no phrase is setup, use all args given to command
-    const phrase = originalCmd.data.phrase === '' ? '$args()' : originalCmd.data.phrase
-    const tmpPhrase = await fn.doReplacements(phrase, command, context, originalCmd, bot, user)
-
-    const items = await dictFn(tmpPhrase)
-    if (items.length === 0) {
-      say(`Sorry, I didn't find anything for "${tmpPhrase}" in language "${tmpLang}"`)
-      return
-    }
-    for (const item of items) {
-      say(`Phrase "${item.from}": ${item.to.join(", ")}`)
-    }
+): CommandFunction => async (ctx: CommandExecutionContext) => {
+  if (!ctx.rawCmd) {
+    return []
   }
+  const say = bot.sayFn(user, ctx.target)
+  const tmpLang = await fn.doReplacements(originalCmd.data.lang, ctx.rawCmd, ctx.context, originalCmd, bot, user)
+  const dictFn = LANG_TO_FN[tmpLang] || null
+  if (!dictFn) {
+    say(`Sorry, language not supported: "${tmpLang}"`)
+    return
+  }
+
+  // if no phrase is setup, use all args given to command
+  const phrase = originalCmd.data.phrase === '' ? '$args()' : originalCmd.data.phrase
+  const tmpPhrase = await fn.doReplacements(phrase, ctx.rawCmd, ctx.context, originalCmd, bot, user)
+
+  const items = await dictFn(tmpPhrase)
+  if (items.length === 0) {
+    say(`Sorry, I didn't find anything for "${tmpPhrase}" in language "${tmpLang}"`)
+    return
+  }
+  for (const item of items) {
+    say(`Phrase "${item.from}": ${item.to.join(", ")}`)
+  }
+}
 
 export default dictLookup

@@ -205,6 +205,12 @@ export interface TwitchChatContext {
   subscriber: any
 }
 
+export interface CommandExecutionContext {
+  rawCmd: RawCommand | null
+  target: string | null
+  context: TwitchChatContext | null
+}
+
 export interface RawCommand {
   name: string
   args: string[]
@@ -249,12 +255,7 @@ export interface CommandVariableChange {
 export interface CommandData {
 }
 
-export type CommandFunction = (
-  rawCmd: RawCommand | null,
-  client: TwitchChatClient | null,
-  target: string | null,
-  context: TwitchChatContext | null,
-) => any
+export type CommandFunction = (ctx: CommandExecutionContext) => any
 
 export enum CommandAction {
   // general
@@ -485,6 +486,7 @@ export interface Bot {
   getEventHub: () => Emitter<Record<EventType, unknown>>
   getChatLog: () => ChatLogRepo
 
+  sayFn: (user: User, target: string | null) => (msg: string) => void
   getUserVariables: (user: User) => Variables
   getUserModuleStorage: (user: User) => ModuleStorage
   getUserTwitchClientManager: (user: User) => TwitchClientManager

@@ -1,35 +1,37 @@
-import { CommandFunction, MadochanCommand, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
+import { logger } from '../common/fn'
+import { User } from '../services/Users'
+import { Bot, CommandExecutionContext, CommandFunction, MadochanCommand } from '../types'
 import fn from './../fn'
 import Madochan from './../services/Madochan'
 
+const log = logger('madochanCreateWord.ts')
+
 const madochanCreateWord = (
   originalCmd: MadochanCommand,
-): CommandFunction => async (
-  command: RawCommand | null,
-  client: TwitchChatClient | null,
-  target: string | null,
-  _context: TwitchChatContext | null,
-  ) => {
-    if (!client || !command) {
-      return
-    }
+  bot: Bot,
+  user: User,
+): CommandFunction => async (ctx: CommandExecutionContext) => {
+  if (!ctx.rawCmd) {
+    return
+  }
 
-    const model = `${originalCmd.data.model}` || Madochan.defaultModel
-    const weirdness = parseInt(originalCmd.data.weirdness, 10) || Madochan.defaultWeirdness
+  const model = `${originalCmd.data.model}` || Madochan.defaultModel
+  const weirdness = parseInt(originalCmd.data.weirdness, 10) || Madochan.defaultWeirdness
 
-    const say = fn.sayFn(client, target)
-    const definition = command.args.join(' ')
-    say(`Generating word for "${definition}"...`)
-    const data = await Madochan.createWord({
-      model: model,
-      weirdness: weirdness,
-      definition: definition,
-    })
+  const say = bot.sayFn(user, ctx.target)
+  const definition = ctx.rawCmd.args.join(' ')
+  say(`Generating word for "${definition}"...`)
+  try {
+    const data = await Madochan.createWord({ model, weirdness, definition })
     if (data.word === '') {
       say(`Sorry, I could not generate a word :("`)
     } else {
       say(`"${definition}": ${data.word}`)
     }
+  } catch (e: any) {
+    log.error(e)
+    say(`Error occured, unable to generate a word :("`)
   }
+}
 
 export default madochanCreateWord
