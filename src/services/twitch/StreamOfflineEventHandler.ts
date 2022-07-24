@@ -1,12 +1,16 @@
 'use strict'
 
+import { logger } from "../../common/fn";
 import { Bot } from "../../types";
+
+const log = logger('StreamOfflineEventHandler.ts')
 
 export class StreamOfflineEventHandler {
   async handle(
     bot: Bot,
     data: { subscription: any, event: any },
   ) {
+    log.info('handle')
     // get last started stream for broadcaster
     // if it exists and it didnt end yet set ended_at date
     const stream = await bot.getDb().get('robyottoko.streams', {
