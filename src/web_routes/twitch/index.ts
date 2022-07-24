@@ -13,6 +13,7 @@ import { ChannelPointRedeemEventHandler } from '../../services/twitch/ChannelPoi
 import { SubscriptionType } from '../../services/twitch/EventSub'
 import { StreamOnlineEventHandler } from '../../services/twitch/StreamOnlineEventHandler'
 import { StreamOfflineEventHandler } from '../../services/twitch/StreamOfflineEventHandler'
+import { RaidEventHandler } from '../../services/twitch/RaidEventHandler'
 
 const log = logger('twitch/index.ts')
 
@@ -127,6 +128,8 @@ export const createRouter = (
           await (new FollowEventHandler()).handle(clientManager, req.body)
         } else if (req.body.subscription.type === SubscriptionType.ChannelCheer) {
           await (new CheerEventHandler()).handle(clientManager, req.body)
+        } else if (req.body.subscription.type === SubscriptionType.ChannelRaid) {
+          await (new RaidEventHandler()).handle(clientManager, req.body)
         } else if (req.body.subscription.type === SubscriptionType.ChannelPointsCustomRewardRedemptionAdd) {
           await (new ChannelPointRedeemEventHandler()).handle(clientManager, req.body)
         } else if (req.body.subscription.type === SubscriptionType.StreamOnline) {

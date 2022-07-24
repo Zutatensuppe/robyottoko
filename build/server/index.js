@@ -315,7 +315,7 @@ const mayExecute = (context, cmd) => {
     return false;
 };
 
-const log$v = logger('fn.ts');
+const log$w = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
         return mime.replace('image/', '');
@@ -355,9 +355,9 @@ const sayFn = (client, target) => (msg) => {
         // TODO: fix this somewhere else?
         // client can only say things in lowercase channels
         t = t.toLowerCase();
-        log$v.info(`saying in ${t}: ${msg}`);
+        log$w.info(`saying in ${t}: ${msg}`);
         client.say(t, msg).catch((e) => {
-            log$v.info(e);
+            log$w.info(e);
         });
     });
 };
@@ -429,15 +429,15 @@ const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, target, context
         if (!mayExecute(context, cmdDef)) {
             continue;
         }
-        log$v.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`);
+        log$w.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`);
         // eslint-disable-next-line no-async-promise-executor
         const p = new Promise(async (resolve) => {
             await applyVariableChanges(cmdDef, contextModule, rawCmd, context);
             const r = await cmdDef.fn(rawCmd, client, target, context);
             if (r) {
-                log$v.info(`${target}| * Returned: ${r}`);
+                log$w.info(`${target}| * Returned: ${r}`);
             }
-            log$v.info(`${target}| * Executed ${rawCmd?.name || '<unknown>'} command`);
+            log$w.info(`${target}| * Executed ${rawCmd?.name || '<unknown>'} command`);
             resolve(true);
         });
         promises.push(p);
@@ -585,7 +585,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
                     return String(JSON.parse(txt)[m2]);
                 }
                 catch (e) {
-                    log$v.error(e);
+                    log$w.error(e);
                     return '';
                 }
             },
@@ -599,7 +599,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
                     return await resp.text();
                 }
                 catch (e) {
-                    log$v.error(e);
+                    log$w.error(e);
                     return '';
                 }
             },
@@ -1014,7 +1014,7 @@ class ModuleManager {
     }
 }
 
-const log$u = logger("WebSocketServer.ts");
+const log$v = logger("WebSocketServer.ts");
 class WebSocketServer {
     constructor() {
         this._websocketserver = null;
@@ -1051,19 +1051,19 @@ class WebSocketServer {
                 socket.user_id = parseInt(token, 10);
             }
             socket.module = moduleName;
-            log$u.info('added socket: ', moduleName, socket.protocol);
-            log$u.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
+            log$v.info('added socket: ', moduleName, socket.protocol);
+            log$v.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
             socket.on('close', () => {
-                log$u.info('removed socket: ', moduleName, socket.protocol);
-                log$u.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
+                log$v.info('removed socket: ', moduleName, socket.protocol);
+                log$v.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
             });
             if (request.url?.indexOf(pathname) !== 0) {
-                log$u.info('bad request url: ', request.url);
+                log$v.info('bad request url: ', request.url);
                 socket.close();
                 return;
             }
             if (!socket.user_id) {
-                log$u.info('not found token: ', token, relpath);
+                log$v.info('not found token: ', token, relpath);
                 socket.close();
                 return;
             }
@@ -1094,7 +1094,7 @@ class WebSocketServer {
                     }
                 }
                 catch (e) {
-                    log$u.error('socket on message', e);
+                    log$v.error('socket on message', e);
                 }
             });
         });
@@ -1103,7 +1103,7 @@ class WebSocketServer {
         return !!this.sockets().find(s => s.user_id === user_id);
     }
     _notify(socket, data) {
-        log$u.info(`notifying ${socket.user_id} ${socket.module} (${data.event})`);
+        log$v.info(`notifying ${socket.user_id} ${socket.module} (${data.event})`);
         socket.send(JSON.stringify(data));
     }
     notifyOne(user_ids, moduleName, data, socket) {
@@ -1115,7 +1115,7 @@ class WebSocketServer {
             this._notify(socket, data);
         }
         else {
-            log$u.error('tried to notify invalid socket', socket.user_id, socket.module, user_ids, moduleName, isConnectedSocket);
+            log$v.error('tried to notify invalid socket', socket.user_id, socket.module, user_ids, moduleName, isConnectedSocket);
         }
     }
     notifyAll(user_ids, moduleName, data) {
@@ -1142,7 +1142,7 @@ class WebSocketServer {
     }
 }
 
-const log$t = logger('Templates.ts');
+const log$u = logger('Templates.ts');
 class Templates {
     constructor(baseDir) {
         this.templates = {};
@@ -1159,7 +1159,7 @@ class Templates {
                 tmpl.templateContents = (await promises.readFile(tmpl.templatePathAbsolute)).toString();
             }
             catch (e) {
-                log$t.error('error loading template', e);
+                log$u.error('error loading template', e);
                 tmpl.templateContents = '';
             }
         }
@@ -1169,7 +1169,7 @@ class Templates {
     }
 }
 
-const log$s = logger('oauth.ts');
+const log$t = logger('oauth.ts');
 const TABLE$5 = 'robyottoko.oauth_token';
 const getMatchingAccessToken = async (channelId, bot, user) => {
     const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id);
@@ -1217,7 +1217,7 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
     });
     twitchChannel.access_token = refreshResp.access_token;
     await bot.getTwitchChannels().save(twitchChannel);
-    log$s.info('tryRefreshAccessToken - refreshed an access token');
+    log$t.info('tryRefreshAccessToken - refreshed an access token');
     return refreshResp.access_token;
 };
 // TODO: check if anything has to be put in a try catch block
@@ -1268,7 +1268,7 @@ const refreshExpiredTwitchChannelAccessToken = async (twitchChannel, bot, user) 
     // update the twitch channel in the database
     twitchChannel.access_token = refreshResp.access_token;
     await bot.getTwitchChannels().save(twitchChannel);
-    log$s.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
+    log$t.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
     return { error: false, refreshed: true };
 };
 // TODO: check if anything has to be put in a try catch block
@@ -1417,6 +1417,7 @@ const newTrigger = (type) => ({
 const newSubscribeTrigger = () => newTrigger(CommandTriggerType.SUB);
 const newFollowTrigger = () => newTrigger(CommandTriggerType.FOLLOW);
 const newBitsTrigger = () => newTrigger(CommandTriggerType.BITS);
+const newRaidTrigger = () => newTrigger(CommandTriggerType.RAID);
 const newRewardRedemptionTrigger = (command = '') => {
     const trigger = newTrigger(CommandTriggerType.REWARD_REDEMPTION);
     trigger.data.command = command;
@@ -2081,11 +2082,11 @@ const commands = {
     },
 };
 
-const log$r = logger('SubscribeEventHandler.ts');
+const log$s = logger('SubscribeEventHandler.ts');
 class SubscribeEventHandler {
     // TODO: use better type info
     async handle(tcm, data) {
-        log$r.info('handle');
+        log$s.info('handle');
         const rawCmd = {
             name: 'channel.subscribe',
             args: [],
@@ -2104,11 +2105,11 @@ class SubscribeEventHandler {
     }
 }
 
-const log$q = logger('FollowEventHandler.ts');
+const log$r = logger('FollowEventHandler.ts');
 class FollowEventHandler {
     // TODO: use better type info
     async handle(tcm, data) {
-        log$q.info('handle');
+        log$r.info('handle');
         const rawCmd = {
             name: 'channel.follow',
             args: [],
@@ -2127,11 +2128,11 @@ class FollowEventHandler {
     }
 }
 
-const log$p = logger('CheerEventHandler.ts');
+const log$q = logger('CheerEventHandler.ts');
 class CheerEventHandler {
     // TODO: use better type info
     async handle(tcm, data) {
-        log$p.info('handle');
+        log$q.info('handle');
         const rawCmd = {
             name: 'channel.cheer',
             args: [],
@@ -2150,10 +2151,10 @@ class CheerEventHandler {
     }
 }
 
-const log$o = logger('ChannelPointRedeemEventHandler.ts');
+const log$p = logger('ChannelPointRedeemEventHandler.ts');
 class ChannelPointRedeemEventHandler {
     async handle(tcm, data) {
-        log$o.info('handle');
+        log$p.info('handle');
         const rawCmd = {
             name: data.event.reward.title,
             args: data.event.user_input ? [data.event.user_input] : [],
@@ -2185,10 +2186,10 @@ var SubscriptionType;
 })(SubscriptionType || (SubscriptionType = {}));
 const ALL_SUBSCRIPTIONS_TYPES = Object.values(SubscriptionType);
 
-const log$n = logger('StreamOnlineEventHandler.ts');
+const log$o = logger('StreamOnlineEventHandler.ts');
 class StreamOnlineEventHandler {
     async handle(bot, data) {
-        log$n.info('handle');
+        log$o.info('handle');
         // insert new stream
         await bot.getDb().insert('robyottoko.streams', {
             broadcaster_user_id: data.event.broadcaster_user_id,
@@ -2197,10 +2198,10 @@ class StreamOnlineEventHandler {
     }
 }
 
-const log$m = logger('StreamOfflineEventHandler.ts');
+const log$n = logger('StreamOfflineEventHandler.ts');
 class StreamOfflineEventHandler {
     async handle(bot, data) {
-        log$m.info('handle');
+        log$n.info('handle');
         // get last started stream for broadcaster
         // if it exists and it didnt end yet set ended_at date
         const stream = await bot.getDb().get('robyottoko.streams', {
@@ -2213,6 +2214,29 @@ class StreamOfflineEventHandler {
                 }, { id: stream.id });
             }
         }
+    }
+}
+
+const log$m = logger('RaidEventHandler.ts');
+class RaidEventHandler {
+    // TODO: use better type info
+    async handle(tcm, data) {
+        log$m.info('handle');
+        const rawCmd = {
+            name: 'channel.raid',
+            args: [],
+        };
+        const target = data.event.broadcaster_user_name;
+        const context = {
+            "room-id": data.event.to_broadcaster_user_id,
+            "user-id": data.event.from_broadcaster_user_id,
+            "display-name": data.event.from_broadcaster_user_name,
+            username: data.event.from_broadcaster_user_login,
+            mod: false,
+            subscriber: false, // unknown
+        };
+        const trigger = newRaidTrigger();
+        await tcm.executeMatchingCommands(rawCmd, target, context, trigger);
     }
 }
 
@@ -2312,6 +2336,9 @@ const createRouter$3 = (templates, bot) => {
             }
             else if (req.body.subscription.type === SubscriptionType.ChannelCheer) {
                 await (new CheerEventHandler()).handle(clientManager, req.body);
+            }
+            else if (req.body.subscription.type === SubscriptionType.ChannelRaid) {
+                await (new RaidEventHandler()).handle(clientManager, req.body);
             }
             else if (req.body.subscription.type === SubscriptionType.ChannelPointsCustomRewardRedemptionAdd) {
                 await (new ChannelPointRedeemEventHandler()).handle(clientManager, req.body);
@@ -7084,7 +7111,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-07-24T13:00:13.340Z",
+    buildDate: "2022-07-24T13:05:50.439Z",
     // @ts-ignore
     buildVersion: "1.21.0",
 };
