@@ -11,6 +11,7 @@ import Auth from './net/Auth'
 import TwitchClientManager from './net/TwitchClientManager'
 import WebSocketServer, { Socket } from './net/WebSocketServer'
 import Cache from './services/Cache'
+import { ChatLogRepo } from './services/ChatLogRepo'
 import Tokens, { Token } from './services/Tokens'
 import TwitchChannels from './services/TwitchChannels'
 import Users, { User } from './services/Users'
@@ -428,7 +429,7 @@ export interface FunctionCommand {
 }
 
 export interface ChatMessageContext {
-  client: TwitchChatClient
+  client: TwitchChatClient | null
   target: string
   context: TwitchChatContext
   msg: string
@@ -482,6 +483,7 @@ export interface Bot {
   getWebSocketServer: () => WebSocketServer
   getWidgets: () => Widgets
   getEventHub: () => Emitter<Record<EventType, unknown>>
+  getChatLog: () => ChatLogRepo
 
   getUserVariables: (user: User) => Variables
   getUserModuleStorage: (user: User) => ModuleStorage

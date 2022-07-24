@@ -20,14 +20,13 @@ export class CommandExecutor {
   ): Promise<void> {
     const promises: Promise<void>[] = []
     for (const m of bot.getModuleManager().all(user.id)) {
-      const commands = m.getCommands()
-      const cmdDefs = getUniqueCommandsByTriggers(commands, triggers)
-      promises.push(this.tryExecuteCommand(m, rawCmd, cmdDefs, target, context))
+      const cmdDefs = getUniqueCommandsByTriggers(m.getCommands(), triggers)
+      promises.push(this.tryExecuteCommands(m, rawCmd, cmdDefs, target, context))
     }
     await Promise.all(promises)
   }
 
-  async tryExecuteCommand(
+  async tryExecuteCommands(
     contextModule: Module,
     rawCmd: RawCommand | null,
     cmdDefs: FunctionCommand[],

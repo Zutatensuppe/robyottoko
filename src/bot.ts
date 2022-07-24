@@ -26,6 +26,7 @@ import Widgets from './services/Widgets'
 import { refreshExpiredTwitchChannelAccessToken } from './oauth'
 
 import { Bot } from './types'
+import { ChatLogRepo } from './services/ChatLogRepo'
 
 setLogLevel(config.log.level)
 const log = logger('bot.ts')
@@ -56,6 +57,7 @@ const createBot = async (): Promise<Bot> => {
   const moduleManager = new ModuleManager()
   const webSocketServer = new WebSocketServer()
   const webServer = new WebServer()
+  const chatLog = new ChatLogRepo(db)
 
   class BotImpl implements Bot {
     private userVariableInstances: Record<number, Variables> = {}
@@ -81,6 +83,7 @@ const createBot = async (): Promise<Bot> => {
     getWebSocketServer() { return webSocketServer }
     getWidgets() { return widgets }
     getEventHub() { return eventHub }
+    getChatLog() { return chatLog }
 
     // user specific
     // -----------------------------------------------------------------
