@@ -6,7 +6,7 @@ import { logger, Logger, MINUTE } from '../common/fn'
 import { TwitchChannel } from '../services/TwitchChannels'
 import { User } from '../services/Users'
 import { Bot, CommandTrigger, CommandTriggerType, EventSubTransport, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
-import { getUniqueCommandsByTriggers, newBitsTrigger, newFollowTrigger, newRewardRedemptionTrigger, newSubscribeTrigger } from '../common/commands'
+import { getUniqueCommandsByTriggers } from '../common/commands'
 import { isBroadcaster, isMod, isSubscriber } from '../common/permissions'
 import { WhereRaw } from '../DbPostgres'
 
@@ -348,85 +348,6 @@ class TwitchClientManager {
       this.log.info(`${subscriptionType} subscription registered`)
     }
     this.log.debug(resp)
-  }
-
-  // TODO: use better type info
-  async handleSubscribeEvent(data: { subscription: any, event: any }): Promise<void> {
-    this.log.info('handleSubscribeEvent')
-    const rawCmd: RawCommand = {
-      name: 'channel.subscribe',
-      args: [],
-    }
-    const target = data.event.broadcaster_user_name
-    const context: TwitchChatContext = {
-      "room-id": data.event.broadcaster_user_id,
-      "user-id": data.event.user_id,
-      "display-name": data.event.user_name,
-      username: data.event.user_login,
-      mod: false, // no way to tell without further looking up user somehow
-      subscriber: true, // user just subscribed, so it is a subscriber
-    }
-    const trigger = newSubscribeTrigger()
-    await this.executeMatchingCommands(rawCmd, target, context, trigger)
-  }
-
-  // TODO: use better type info
-  async handleFollowEvent(data: { subscription: any, event: any }): Promise<void> {
-    this.log.info('handleFollowEvent')
-    const rawCmd: RawCommand = {
-      name: 'channel.follow',
-      args: [],
-    }
-    const target = data.event.broadcaster_user_name
-    const context: TwitchChatContext = {
-      "room-id": data.event.broadcaster_user_id,
-      "user-id": data.event.user_id,
-      "display-name": data.event.user_name,
-      username: data.event.user_login,
-      mod: false, // no way to tell without further looking up user somehow
-      subscriber: false, // unknown
-    }
-    const trigger = newFollowTrigger()
-    await this.executeMatchingCommands(rawCmd, target, context, trigger)
-  }
-
-  // TODO: use better type info
-  async handleCheerEvent(data: { subscription: any, event: any }): Promise<void> {
-    this.log.info('handleCheerEvent')
-    const rawCmd: RawCommand = {
-      name: 'channel.cheer',
-      args: [],
-    }
-    const target = data.event.broadcaster_user_name
-    const context: TwitchChatContext = {
-      "room-id": data.event.broadcaster_user_id,
-      "user-id": data.event.user_id,
-      "display-name": data.event.user_name,
-      username: data.event.user_login,
-      mod: false, // no way to tell without further looking up user somehow
-      subscriber: false, // unknown
-    }
-    const trigger = newBitsTrigger()
-    await this.executeMatchingCommands(rawCmd, target, context, trigger)
-  }
-
-  async handleChannelPointsCustomRewardRedemptionAddEvent(data: { subscription: any, event: any }): Promise<void> {
-    this.log.info('handleChannelPointsCustomRewardRedemptionAddEvent')
-    const rawCmd: RawCommand = {
-      name: data.event.reward.title,
-      args: data.event.user_input ? [data.event.user_input] : [],
-    }
-    const target = data.event.broadcaster_user_name
-    const context: TwitchChatContext = {
-      "room-id": data.event.broadcaster_user_id,
-      "user-id": data.event.user_id,
-      "display-name": data.event.user_name,
-      username: data.event.user_login,
-      mod: false, // no way to tell without further looking up user somehow
-      subscriber: false, // unknown
-    }
-    const trigger = newRewardRedemptionTrigger(data.event.reward.title)
-    await this.executeMatchingCommands(rawCmd, target, context, trigger)
   }
 
   async executeMatchingCommands(

@@ -6,6 +6,10 @@ import { logger } from '../../common/fn'
 import Templates from '../../services/Templates'
 import { Bot } from '../../types'
 import { handleOAuthCodeCallback } from '../../oauth'
+import { SubscribeEventHandler } from '../../services/twitch/SubscribeEventHandler'
+import { FollowEventHandler } from '../../services/twitch/FollowEventHandler'
+import { CheerEventHandler } from '../../services/twitch/CheerEventHandler'
+import { ChannelPointRedeemEventHandler } from '../../services/twitch/ChannelPointRedeemEventHandler'
 
 const log = logger('twitch/index.ts')
 
@@ -116,16 +120,16 @@ export const createRouter = (
 
         if (req.body.subscription.type === 'channel.subscribe') {
           // got a new sub
-          await clientManager.handleSubscribeEvent(req.body)
+          await (new SubscribeEventHandler()).handle(clientManager, req.body)
         } else if (req.body.subscription.type === 'channel.follow') {
           // got a new follow
-          await clientManager.handleFollowEvent(req.body)
+          await (new FollowEventHandler()).handle(clientManager, req.body)
         } else if (req.body.subscription.type === 'channel.cheer') {
           // got a new cheer
-          await clientManager.handleCheerEvent(req.body)
+          await (new CheerEventHandler()).handle(clientManager, req.body)
         } else if (req.body.subscription.type === 'channel.channel_points_custom_reward_redemption.add') {
           // got a new channel point reward redeem
-          await clientManager.handleChannelPointsCustomRewardRedemptionAddEvent(req.body)
+          await (new ChannelPointRedeemEventHandler()).handle(clientManager, req.body)
         } else if (req.body.subscription.type === 'stream.online') {
           // insert new stream
           await bot.getDb().insert('robyottoko.streams', {
