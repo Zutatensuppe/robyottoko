@@ -2,14 +2,12 @@
 import tmi from 'tmi.js'
 import TwitchHelixClient from '../services/TwitchHelixClient'
 import fn from '../fn'
-import { logger, Logger, MINUTE } from '../common/fn'
+import { logger, Logger } from '../common/fn'
 import { TwitchChannel } from '../services/TwitchChannels'
 import { User } from '../services/Users'
-import { Bot, CommandTrigger, CommandTriggerType, EventSubTransport, RawCommand, TwitchChatClient, TwitchChatContext } from '../types'
-import { getUniqueCommandsByTriggers } from '../common/commands'
-import { isBroadcaster, isMod, isSubscriber } from '../common/permissions'
-import { WhereRaw } from '../DbPostgres'
+import { Bot, EventSubTransport, TwitchChatClient, TwitchChatContext } from '../types'
 import { ALL_SUBSCRIPTIONS_TYPES } from '../services/twitch/EventSub'
+import { ChatEventHandler } from '../services/twitch/ChatEventHandler'
 
 const log = logger('TwitchClientManager.ts')
 
@@ -33,20 +31,6 @@ const shouldDeleteSubscription = (
       || (isDevTunnel(transport.callback) && isDevTunnel(subscription.transport.callback))
     )
     && twitchChannelIds.includes(subscription.condition.broadcaster_user_id)
-}
-
-const rolesLettersFromTwitchChatContext = (context: TwitchChatContext): string[] => {
-  const roles: string[] = []
-  if (isMod(context)) {
-    roles.push('M')
-  }
-  if (isSubscriber(context)) {
-    roles.push('S')
-  }
-  if (isBroadcaster(context)) {
-    roles.push('B')
-  }
-  return roles
 }
 
 class TwitchClientManager {
@@ -127,103 +111,7 @@ class TwitchClientManager {
     chatClient.on('message', async (target: string, context: TwitchChatContext, msg: string, self: boolean) => {
       if (self) { return; } // Ignore messages from the bot
 
-      const roles = rolesLettersFromTwitchChatContext(context)
-      this.log.debug(`${context.username}[${roles.join('')}]@${target}: ${msg}`)
-
-      await this.bot.getDb().insert('robyottoko.chat_log', {
-        created_at: new Date(),
-        broadcaster_user_id: context['room-id'],
-        user_name: context.username,
-        display_name: context['display-name'],
-        message: msg,
-      })
-
-      const countChatMessages = async (where: WhereRaw): Promise<number> => {
-        const db = this.bot.getDb()
-        const whereObject = db._buildWhere(where)
-        const row = await db._get(
-          `select COUNT(*) as c from robyottoko.chat_log ${whereObject.sql}`,
-          whereObject.values
-        )
-        return parseInt(`${row.c}`, 10)
-      }
-      let _isFirstChatAlltime: null | boolean = null
-      let _isFirstChatStream: null | boolean = null
-      const determineIsFirstChatAlltime = async (): Promise<boolean> => {
-        return await countChatMessages({
-          broadcaster_user_id: context['room-id'],
-          user_name: context.username,
-        }) === 1
-      }
-      const isFirstChatAlltime = async (): Promise<boolean> => {
-        if (_isFirstChatAlltime === null) {
-          _isFirstChatAlltime = await determineIsFirstChatAlltime()
-        }
-        return _isFirstChatAlltime
-      }
-      const determineIsFirstChatStream = async (): Promise<boolean> => {
-        const stream = await helixClient.getStreamByUserId(context['room-id'])
-        let minDate: Date
-        if (stream) {
-          minDate = new Date(stream.started_at)
-        } else {
-          minDate = new Date(new Date().getTime() - (5 * MINUTE))
-          log.info(`No stream is running atm for channel ${context['room-id']}. Using fake start date ${minDate}.`)
-        }
-
-        return await countChatMessages({
-          broadcaster_user_id: context['room-id'],
-          user_name: context.username,
-          created_at: { '$gte': minDate },
-        }) === 1
-      }
-      const isFirstChatStream = async (): Promise<boolean> => {
-        if (_isFirstChatStream === null) {
-          _isFirstChatStream = await determineIsFirstChatStream()
-        }
-        return _isFirstChatStream
-      }
-      const chatMessageContext = { client: chatClient, target, context, msg }
-
-      for (const m of this.bot.getModuleManager().all(user.id)) {
-        const commands = m.getCommands() || []
-        let triggers = []
-        const relevantTriggers = []
-        for (const command of commands) {
-          for (const trigger of command.triggers) {
-            if (trigger.type === CommandTriggerType.COMMAND) {
-              triggers.push(trigger)
-            } else if (trigger.type === CommandTriggerType.FIRST_CHAT) {
-              if (trigger.data.since === 'alltime' && await isFirstChatAlltime()) {
-                relevantTriggers.push(trigger)
-              } else if (trigger.data.since === 'stream' && await isFirstChatStream()) {
-                relevantTriggers.push(trigger)
-              }
-            }
-          }
-        }
-
-        // make sure longest commands are found first
-        // so that in case commands `!draw` and `!draw bad` are set up
-        // and `!draw bad` is written in chat, that command only will be
-        // executed and not also `!draw`
-        triggers = triggers.sort((a, b) => b.data.command.length - a.data.command.length)
-        let rawCmd = null
-        for (const trigger of triggers) {
-          rawCmd = fn.parseCommandFromTriggerAndMessage(chatMessageContext.msg, trigger)
-          if (!rawCmd) {
-            continue
-          }
-          relevantTriggers.push(trigger)
-          break
-        }
-
-        if (relevantTriggers.length > 0) {
-          const cmdDefs = getUniqueCommandsByTriggers(commands, relevantTriggers)
-          await fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context)
-        }
-        await m.onChatMsg(chatMessageContext);
-      }
+      await (new ChatEventHandler()).handle(this.bot, this.user, target, context, msg)
     })
 
     // Called every time the bot connects to Twitch chat
@@ -343,22 +231,6 @@ class TwitchClientManager {
       this.log.info(`${subscriptionType} subscription registered`)
     }
     this.log.debug(resp)
-  }
-
-  // TODO: remove/move
-  async executeMatchingCommands(
-    rawCmd: RawCommand,
-    target: string,
-    context: TwitchChatContext,
-    trigger: CommandTrigger,
-  ): Promise<void> {
-    const promises: Promise<void>[] = []
-    for (const m of this.bot.getModuleManager().all(this.user.id)) {
-      const commands = m.getCommands()
-      const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger])
-      promises.push(fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context))
-    }
-    await Promise.all(promises)
   }
 
   async _disconnectChatClient() {

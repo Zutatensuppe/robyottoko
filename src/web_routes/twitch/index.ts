@@ -120,18 +120,17 @@ export const createRouter = (
           res.status(400).send({ reason: 'unknown user' })
           return
         }
-        const clientManager = bot.getUserTwitchClientManager(user)
 
         if (req.body.subscription.type === SubscriptionType.ChannelSubscribe) {
-          await (new SubscribeEventHandler()).handle(clientManager, req.body)
+          await (new SubscribeEventHandler()).handle(bot, user, req.body)
         } else if (req.body.subscription.type === SubscriptionType.ChannelFollow) {
-          await (new FollowEventHandler()).handle(clientManager, req.body)
+          await (new FollowEventHandler()).handle(bot, user, req.body)
         } else if (req.body.subscription.type === SubscriptionType.ChannelCheer) {
-          await (new CheerEventHandler()).handle(clientManager, req.body)
+          await (new CheerEventHandler()).handle(bot, user, req.body)
         } else if (req.body.subscription.type === SubscriptionType.ChannelRaid) {
-          await (new RaidEventHandler()).handle(clientManager, req.body)
+          await (new RaidEventHandler()).handle(bot, user, req.body)
         } else if (req.body.subscription.type === SubscriptionType.ChannelPointsCustomRewardRedemptionAdd) {
-          await (new ChannelPointRedeemEventHandler()).handle(clientManager, req.body)
+          await (new ChannelPointRedeemEventHandler()).handle(bot, user, req.body)
         } else if (req.body.subscription.type === SubscriptionType.StreamOnline) {
           await (new StreamOnlineEventHandler()).handle(bot, req.body)
         } else if (req.body.subscription.type === SubscriptionType.StreamOffline) {
