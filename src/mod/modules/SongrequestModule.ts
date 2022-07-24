@@ -4,9 +4,9 @@ import { Socket } from '../../net/WebSocketServer'
 import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
 import { User } from '../../services/Users'
 import {
-  ChatMessageContext, PlaylistItem, RawCommand, TwitchChatClient,
-  TwitchChatContext, FunctionCommand, Command,
-  Bot, CommandFunction, Module
+  ChatMessageContext, PlaylistItem,
+  FunctionCommand, Command,
+  Bot, CommandFunction, Module, CommandExecutionContext
 } from '../../types'
 import {
   default_commands,
@@ -850,16 +850,11 @@ class SongrequestModule implements Module {
   }
 
   cmdSrCurrent(_originalCommand: Command) {
-    return async (
-      command: RawCommand | null,
-      client: TwitchChatClient | null,
-      target: string | null,
-      context: TwitchChatContext | null,
-    ) => {
-      if (!client || !command || !context) {
+    return async (ctx: CommandExecutionContext) => {
+      if (!ctx.rawCmd || !ctx.context) {
         return
       }
-      const say = fn.sayFn(client, target)
+      const say = this.bot.sayFn(this.user, ctx.target)
       if (this.data.playlist.length === 0) {
         say(`Playlist is empty`)
         return
@@ -871,17 +866,12 @@ class SongrequestModule implements Module {
   }
 
   cmdSrUndo(_originalCommand: Command) {
-    return async (
-      command: RawCommand | null,
-      client: TwitchChatClient | null,
-      target: string | null,
-      context: TwitchChatContext | null,
-    ) => {
-      if (!client || !command || !context) {
+    return async (ctx: CommandExecutionContext) => {
+      if (!ctx.rawCmd || !ctx.context) {
         return
       }
-      const say = fn.sayFn(client, target)
-      const undid = await this.undo(context['display-name'])
+      const say = this.bot.sayFn(this.user, ctx.target)
+      const undid = await this.undo(ctx.context['display-name'])
       if (!undid) {
         say(`Could not undo anything`)
       } else {
@@ -891,66 +881,46 @@ class SongrequestModule implements Module {
   }
 
   cmdResr(_originalCommand: Command) {
-    return async (
-      command: RawCommand | null,
-      client: TwitchChatClient | null,
-      target: string | null,
-      context: TwitchChatContext | null,
-    ) => {
-      if (!client || !command || !context) {
+    return async (ctx: CommandExecutionContext) => {
+      if (!ctx.rawCmd || !ctx.context) {
         log.error('cmdResr: client, command or context empty')
         return
       }
 
-      const say = fn.sayFn(client, target)
+      const say = this.bot.sayFn(this.user, ctx.target)
 
-      if (command.args.length === 0) {
+      if (ctx.rawCmd.args.length === 0) {
         say(`Usage: !resr SEARCH`)
         return
       }
 
-      const searchterm = command.args.join(' ')
+      const searchterm = ctx.rawCmd.args.join(' ')
       const addResponseData = await this.resr(searchterm)
       say(await this.answerAddRequest(addResponseData))
     }
   }
 
   cmdSrGood(_originalCommand: Command) {
-    return async (
-      _command: RawCommand | null,
-      _client: TwitchChatClient | null,
-      _target: string | null,
-      _context: TwitchChatContext | null,
-    ) => {
+    return async (_ctx: CommandExecutionContext) => {
       await this.like()
     }
   }
 
   cmdSrBad(_originalCommand: Command) {
-    return async (
-      _command: RawCommand | null,
-      _client: TwitchChatClient | null,
-      _target: string | null,
-      _context: TwitchChatContext | null,
-    ) => {
+    return async (_ctx: CommandExecutionContext) => {
       await this.dislike()
     }
   }
 
   cmdSrStats(_originalCommand: Command) {
-    return async (
-      command: RawCommand | null,
-      client: TwitchChatClient | null,
-      target: string | null,
-      context: TwitchChatContext | null,
-    ) => {
-      if (!client || !command || !context) {
+    return async (ctx: CommandExecutionContext) => {
+      if (!ctx.rawCmd || !ctx.context) {
         return
       }
 
-      const say = fn.sayFn(client, target)
+      const say = this.bot.sayFn(this.user, ctx.target)
 
-      const stats = await this.stats(context['display-name'])
+      const stats = await this.stats(ctx.context['display-name'])
       let number = `${stats.count.byUser}`
       const verb = stats.count.byUser === 1 ? 'was' : 'were'
       if (stats.count.byUser === 1) {
@@ -959,209 +929,133 @@ class SongrequestModule implements Module {
         number = 'none'
       }
       const countStr = `There are ${stats.count.total} songs in the playlist, `
-        + `${number} of which ${verb} requested by ${context['display-name']}.`
+        + `${number} of which ${verb} requested by ${ctx.context['display-name']}.`
       const durationStr = `The total duration of the playlist is ${stats.duration.human}.`
       say([countStr, durationStr].join(' '))
     }
   }
 
   cmdSrPrev(_originalCommand: Command) {
-    return async (
-      _command: RawCommand | null,
-      _client: TwitchChatClient | null,
-      _target: string | null,
-      _context: TwitchChatContext | null,
-    ) => {
+    return async (_ctx: CommandExecutionContext) => {
       await this.prev()
     }
   }
 
   cmdSrNext(_originalCommand: Command) {
-    return async (
-      _command: RawCommand | null,
-      _client: TwitchChatClient | null,
-      _target: string | null,
-      _context: TwitchChatContext | null,
-    ) => {
+    return async (_ctx: CommandExecutionContext) => {
       await this.next()
     }
   }
 
   cmdSrJumpToNew(_originalCommand: Command) {
-    return async (
-      _command: RawCommand | null,
-      _client: TwitchChatClient | null,
-      _target: string | null,
-      _context: TwitchChatContext | null,
-    ) => {
+    return async (_ctx: CommandExecutionContext) => {
       await this.jumptonew()
     }
   }
 
   cmdSrClear(_originalCommand: Command) {
-    return async (
-      _command: RawCommand | null,
-      _client: TwitchChatClient | null,
-      _target: string | null,
-      _context: TwitchChatContext | null,
-    ) => {
+    return async (_ctx: CommandExecutionContext) => {
       await this.clear()
     }
   }
 
   cmdSrRm(_originalCommand: Command) {
-    return async (
-      _command: RawCommand | null,
-      client: TwitchChatClient | null,
-      target: string | null,
-      _context: TwitchChatContext | null,
-    ) => {
-      if (!client || !target) {
+    return async (ctx: CommandExecutionContext) => {
+      if (!ctx.target) {
         return
       }
       const removedItem = await this.remove()
       if (removedItem) {
-        const say = fn.sayFn(client, target)
+        const say = this.bot.sayFn(this.user, ctx.target)
         say(`Removed "${removedItem.title}" from the playlist.`)
       }
     }
   }
 
   cmdSrShuffle(_originalCommand: Command) {
-    return async (
-      _command: RawCommand | null,
-      _client: TwitchChatClient | null,
-      _target: string | null,
-      _context: TwitchChatContext | null,
-    ) => {
+    return async (_ctx: CommandExecutionContext) => {
       await this.shuffle()
     }
   }
 
   cmdSrResetStats(_originalCommand: Command) {
-    return async (
-      _command: RawCommand | null,
-      _client: TwitchChatClient | null,
-      _target: string | null,
-      _context: TwitchChatContext | null,
-    ) => {
+    return async (_ctx: CommandExecutionContext) => {
       await this.resetStats()
     }
   }
 
   cmdSrLoop(_originalCommand: Command) {
-    return async (
-      _command: RawCommand | null,
-      client: TwitchChatClient | null,
-      target: string | null,
-      _context: TwitchChatContext | null,
-    ) => {
-      if (!client) {
-        return
-      }
-      const say = fn.sayFn(client, target)
+    return async (ctx: CommandExecutionContext) => {
+      const say = this.bot.sayFn(this.user, ctx.target)
       await this.loop()
       say('Now looping the current song')
     }
   }
 
   cmdSrNoloop(_originalCommand: Command) {
-    return async (
-      _command: RawCommand | null,
-      client: TwitchChatClient | null,
-      target: string | null,
-      _context: TwitchChatContext | null,
-    ) => {
-      if (!client) {
-        return
-      }
-      const say = fn.sayFn(client, target)
+    return async (ctx: CommandExecutionContext) => {
+      const say = this.bot.sayFn(this.user, ctx.target)
       await this.noloop()
       say('Stopped looping the current song')
     }
   }
 
   cmdSrAddTag(originalCmd: any) {
-    return async (
-      command: RawCommand | null,
-      client: TwitchChatClient | null,
-      target: string | null,
-      context: TwitchChatContext | null,
-    ) => {
-      if (!client || !command) {
+    return async (ctx: CommandExecutionContext) => {
+      if (!ctx.rawCmd) {
         return
       }
       let tag = originalCmd.data?.tag || '$args'
-      tag = await fn.doReplacements(tag, command, context, originalCmd, this.bot, this.user)
+      tag = await fn.doReplacements(tag, ctx.rawCmd, ctx.context, originalCmd, this.bot, this.user)
       if (tag === "") {
         return
       }
 
-      const say = fn.sayFn(client, target)
+      const say = this.bot.sayFn(this.user, ctx.target)
       await this.addTag(tag)
       say(`Added tag "${tag}"`)
     }
   }
 
   cmdSrRmTag(_originalCommand: Command) {
-    return async (
-      command: RawCommand | null,
-      client: TwitchChatClient | null,
-      target: string | null,
-      _context: TwitchChatContext | null,
-    ) => {
-      if (!client || !command) {
+    return async (ctx: CommandExecutionContext) => {
+      if (!ctx.rawCmd) {
         return
       }
-      if (!command.args.length) {
+      if (!ctx.rawCmd.args.length) {
         return
       }
-      const say = fn.sayFn(client, target)
-      const tag = command.args.join(' ')
+      const say = this.bot.sayFn(this.user, ctx.target)
+      const tag = ctx.rawCmd.args.join(' ')
       await this.rmTag(tag)
       say(`Removed tag "${tag}"`)
     }
   }
 
   cmdSrPause(_originalCommand: Command) {
-    return async (
-      _command: RawCommand | null,
-      _client: TwitchChatClient | null,
-      _target: string | null,
-      _context: TwitchChatContext | null,
-    ) => {
+    return async (_ctx: CommandExecutionContext) => {
       await this.pause()
     }
   }
 
   cmdSrUnpause(_originalCommand: Command) {
-    return async (
-      _command: RawCommand | null,
-      _client: TwitchChatClient | null,
-      _target: string | null,
-      _context: TwitchChatContext | null,
-    ) => {
+    return async (_ctx: CommandExecutionContext) => {
       await this.unpause()
     }
   }
 
   cmdSrVolume(_originalCommand: Command) {
-    return async (
-      command: RawCommand | null,
-      client: TwitchChatClient | null,
-      target: string | null,
-      _context: TwitchChatContext | null,
-    ) => {
-      if (!client || !command) {
+    return async (ctx: CommandExecutionContext) => {
+      if (!ctx.rawCmd) {
         return
       }
 
-      const say = fn.sayFn(client, target)
-      if (command.args.length === 0) {
+      const say = this.bot.sayFn(this.user, ctx.target)
+      if (ctx.rawCmd.args.length === 0) {
         say(`Current volume: ${this.data.settings.volume}`)
       } else {
         const newVolume = determineNewVolume(
-          command.args[0],
+          ctx.rawCmd.args[0],
           this.data.settings.volume,
         )
         await this.volume(newVolume)
@@ -1171,50 +1065,29 @@ class SongrequestModule implements Module {
   }
 
   cmdSrHidevideo(_originalCommand: Command) {
-    return async (
-      _command: RawCommand | null,
-      client: TwitchChatClient | null,
-      target: string | null,
-      _context: TwitchChatContext | null,
-    ) => {
-      if (!client) {
-        return
-      }
-      const say = fn.sayFn(client, target)
+    return async (ctx: CommandExecutionContext) => {
+      const say = this.bot.sayFn(this.user, ctx.target)
       await this.videoVisibility(false)
       say(`Video is now hidden.`)
     }
   }
 
   cmdSrShowvideo(_originalCommand: Command) {
-    return async (
-      _command: RawCommand | null,
-      client: TwitchChatClient | null,
-      target: string | null,
-      _context: TwitchChatContext | null,
-    ) => {
-      if (!client) {
-        return
-      }
-      const say = fn.sayFn(client, target)
+    return async (ctx: CommandExecutionContext) => {
+      const say = this.bot.sayFn(this.user, ctx.target)
       await this.videoVisibility(true)
       say(`Video is now shown.`)
     }
   }
 
   cmdSrFilter(_originalCommand: Command) {
-    return async (
-      command: RawCommand | null,
-      client: TwitchChatClient | null,
-      target: string | null,
-      context: TwitchChatContext | null,
-    ) => {
-      if (!client || !command || !context) {
+    return async (ctx: CommandExecutionContext) => {
+      if (!ctx.rawCmd || !ctx.context) {
         return
       }
 
-      const say = fn.sayFn(client, target)
-      const tag = command.args.join(' ')
+      const say = this.bot.sayFn(this.user, ctx.target)
+      const tag = ctx.rawCmd.args.join(' ')
       await this.filter({ tag })
       if (tag !== '') {
         say(`Playing only songs tagged with "${tag}"`)
@@ -1225,18 +1098,8 @@ class SongrequestModule implements Module {
   }
 
   cmdSrQueue(_originalCommand: Command) {
-    return async (
-      _command: RawCommand | null,
-      client: TwitchChatClient | null,
-      target: string | null,
-      _context: TwitchChatContext | null,
-    ) => {
-      if (!client) {
-        return
-      }
-
-      const say = fn.sayFn(client, target)
-
+    return async (ctx: CommandExecutionContext) => {
+      const say = this.bot.sayFn(this.user, ctx.target)
       const titles = this.data.playlist.slice(1, 4).map(item => item.title)
       if (titles.length === 1) {
         say(`${titles.length} song queued ("${titles.join('" → "')}").`)
@@ -1249,18 +1112,13 @@ class SongrequestModule implements Module {
   }
 
   cmdSrPreset(_originalCommand: Command) {
-    return async (
-      command: RawCommand | null,
-      client: TwitchChatClient | null,
-      target: string | null,
-      context: TwitchChatContext | null,
-    ) => {
-      if (!client || !command || !context) {
+    return async (ctx: CommandExecutionContext) => {
+      if (!ctx.rawCmd || !ctx.context) {
         return
       }
 
-      const say = fn.sayFn(client, target)
-      const presetName = command.args.join(' ')
+      const say = this.bot.sayFn(this.user, ctx.target)
+      const presetName = ctx.rawCmd.args.join(' ')
       if (presetName === '') {
         if (this.data.settings.customCssPresets.length) {
           say(`Presets: ${this.data.settings.customCssPresets.map(preset => preset.name).join(', ')}`)
@@ -1282,34 +1140,29 @@ class SongrequestModule implements Module {
   }
 
   cmdSr(_originalCommand: Command) {
-    return async (
-      command: RawCommand | null,
-      client: TwitchChatClient | null,
-      target: string | null,
-      context: TwitchChatContext | null,
-    ) => {
-      if (!client || !command || !context) {
+    return async (ctx: CommandExecutionContext) => {
+      if (!ctx.rawCmd || !ctx.context) {
         return
       }
 
-      const say = fn.sayFn(client, target)
+      const say = this.bot.sayFn(this.user, ctx.target)
 
-      if (command.args.length === 0) {
+      if (ctx.rawCmd.args.length === 0) {
         say(`Usage: !sr YOUTUBE-URL`)
         return
       }
 
-      const str = command.args.join(' ')
+      const str = ctx.rawCmd.args.join(' ')
 
       let maxLenMs: number
       let maxQueued: number
-      if (isBroadcaster(context)) {
+      if (isBroadcaster(ctx.context)) {
         maxLenMs = 0
         maxQueued = 0
-      } else if (isMod(context)) {
+      } else if (isMod(ctx.context)) {
         maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.mod)
         maxQueued = this.data.settings.maxSongsQueued.mod
-      } else if (isSubscriber(context)) {
+      } else if (isSubscriber(ctx.context)) {
         maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.sub)
         maxQueued = this.data.settings.maxSongsQueued.sub
       } else {
@@ -1317,7 +1170,7 @@ class SongrequestModule implements Module {
         maxQueued = this.data.settings.maxSongsQueued.viewer
       }
 
-      const addResponseData = await this.add(str, context['display-name'], maxLenMs, maxQueued)
+      const addResponseData = await this.add(str, ctx.context['display-name'], maxLenMs, maxQueued)
       say(await this.answerAddRequest(addResponseData))
     }
   }

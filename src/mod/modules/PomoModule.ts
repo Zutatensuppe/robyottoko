@@ -1,9 +1,9 @@
 import { logger, humanDuration, parseHumanDuration, SECOND } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
-import { Bot, ChatMessageContext, FunctionCommand, Module, RawCommand, TwitchChatClient, TwitchChatContext } from '../../types'
+import { Bot, ChatMessageContext, CommandExecutionContext, FunctionCommand, Module, RawCommand, TwitchChatContext } from '../../types'
 import { User } from '../../services/Users'
 import { default_settings, default_state, PomoEffect, PomoModuleData, PomoModuleWsData, PomoModuleWsEffectData, PomoModuleWsSaveData } from './PomoModuleCommon'
-import fn, { doReplacements } from '../../fn'
+import { doReplacements } from '../../fn'
 import { newCommandTrigger } from '../../common/commands'
 import { MOD_OR_ABOVE } from '../../common/permissions'
 
@@ -65,12 +65,11 @@ class PomoModule implements Module {
   async effect(
     effect: PomoEffect,
     command: RawCommand | null,
-    client: TwitchChatClient | null,
     target: string | null,
     context: TwitchChatContext | null,
   ) {
     if (effect.chatMessage) {
-      const say = client ? fn.sayFn(client, target) : ((msg: string) => { log.info('say(), client not set, msg', msg) })
+      const say = this.bot.sayFn(this.user, target)
       say(await this.replaceText(effect.chatMessage, command, context))
     }
     this.updateClients({ event: 'effect', data: effect })
@@ -93,7 +92,6 @@ class PomoModule implements Module {
       if (!this.data || !this.data.state.startTs || !this.data.state.running) {
         return
       }
-      const client = this.bot.getUserTwitchClientManager(this.user).getChatClient()
 
       const dateStarted = new Date(JSON.parse(this.data.state.startTs));
       const dateEnd = new Date(dateStarted.getTime() + this.data.state.durationMs);
@@ -106,7 +104,7 @@ class PomoModule implements Module {
         if (nDateEnd < now) {
           // is over and should maybe be triggered!
           if (!doneDate || nDateEnd > doneDate) {
-            await this.effect(n.effect, command, client, null, context)
+            await this.effect(n.effect, command, null, context)
           }
         } else {
           anyNotificationsLeft = true
@@ -116,7 +114,7 @@ class PomoModule implements Module {
       if (dateEnd < now) {
         // is over and should maybe be triggered!
         if (!doneDate || dateEnd > doneDate) {
-          await this.effect(this.data.settings.endEffect, command, client, null, context)
+          await this.effect(this.data.settings.endEffect, command, null, context)
         }
       } else {
         anyNotificationsLeft = true
@@ -131,40 +129,30 @@ class PomoModule implements Module {
     }, 1 * SECOND);
   }
 
-  async cmdPomoStart(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-  ) {
+  async cmdPomoStart(ctx: CommandExecutionContext) {
     this.data.state.running = true
     this.data.state.startTs = JSON.stringify(new Date())
     this.data.state.doneTs = this.data.state.startTs
     // todo: parse args and use that
-    this.data.state.name = command?.args.slice(1).join(' ') || ''
+    this.data.state.name = ctx.rawCmd?.args.slice(1).join(' ') || ''
 
-    let duration = command?.args[0] || '25m'
+    let duration = ctx.rawCmd?.args[0] || '25m'
     duration = duration.match(/^\d+$/) ? `${duration}m` : duration
     this.data.state.durationMs = parseHumanDuration(duration)
     await this.save()
-    this.tick(command, context)
+    this.tick(ctx.rawCmd, ctx.context)
     this.updateClients(await this.wsdata('init'))
 
-    await this.effect(this.data.settings.startEffect, command, client, target, context)
+    await this.effect(this.data.settings.startEffect, ctx.rawCmd, ctx.target, ctx.context)
   }
 
-  async cmdPomoExit(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-  ) {
+  async cmdPomoExit(ctx: CommandExecutionContext) {
     this.data.state.running = false
     await this.save()
-    this.tick(command, context)
+    this.tick(ctx.rawCmd, ctx.context)
     this.updateClients(await this.wsdata('init'))
 
-    await this.effect(this.data.settings.stopEffect, command, client, target, context)
+    await this.effect(this.data.settings.stopEffect, ctx.rawCmd, ctx.target, ctx.context)
   }
 
   async userChanged(user: User) {

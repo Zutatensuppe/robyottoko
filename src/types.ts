@@ -11,6 +11,7 @@ import Auth from './net/Auth'
 import TwitchClientManager from './net/TwitchClientManager'
 import WebSocketServer, { Socket } from './net/WebSocketServer'
 import Cache from './services/Cache'
+import { ChatLogRepo } from './services/ChatLogRepo'
 import Tokens, { Token } from './services/Tokens'
 import TwitchChannels from './services/TwitchChannels'
 import Users, { User } from './services/Users'
@@ -204,6 +205,12 @@ export interface TwitchChatContext {
   subscriber: any
 }
 
+export interface CommandExecutionContext {
+  rawCmd: RawCommand | null
+  target: string | null
+  context: TwitchChatContext | null
+}
+
 export interface RawCommand {
   name: string
   args: string[]
@@ -248,12 +255,7 @@ export interface CommandVariableChange {
 export interface CommandData {
 }
 
-export type CommandFunction = (
-  rawCmd: RawCommand | null,
-  client: TwitchChatClient | null,
-  target: string | null,
-  context: TwitchChatContext | null,
-) => any
+export type CommandFunction = (ctx: CommandExecutionContext) => any
 
 export enum CommandAction {
   // general
@@ -428,7 +430,7 @@ export interface FunctionCommand {
 }
 
 export interface ChatMessageContext {
-  client: TwitchChatClient
+  client: TwitchChatClient | null
   target: string
   context: TwitchChatContext
   msg: string
@@ -482,7 +484,9 @@ export interface Bot {
   getWebSocketServer: () => WebSocketServer
   getWidgets: () => Widgets
   getEventHub: () => Emitter<Record<EventType, unknown>>
+  getChatLog: () => ChatLogRepo
 
+  sayFn: (user: User, target: string | null) => (msg: string) => void
   getUserVariables: (user: User) => Variables
   getUserModuleStorage: (user: User) => ModuleStorage
   getUserTwitchClientManager: (user: User) => TwitchClientManager

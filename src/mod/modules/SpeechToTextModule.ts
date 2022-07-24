@@ -68,7 +68,7 @@ class SpeechToTextModule implements Module {
 
   getWsEvents() {
     return {
-      'onVoiceResult': async (ws: Socket, { text }: { text: string }) => {
+      'onVoiceResult': async (_ws: Socket, { text }: { text: string }) => {
         let translated = ''
         if (this.data.settings.translation.enabled) {
           const scriptId = config.modules.speechToText.google.scriptId
@@ -91,7 +91,7 @@ class SpeechToTextModule implements Module {
       'conn': async (ws: Socket) => {
         await this.updateClient('init', ws)
       },
-      'save': async (ws: Socket, { settings }: { settings: SpeechToTextModuleSettings }) => {
+      'save': async (_ws: Socket, { settings }: { settings: SpeechToTextModuleSettings }) => {
         this.data.settings = settings
         this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
         await this.reinit()

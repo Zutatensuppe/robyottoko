@@ -1,5 +1,5 @@
 import { User } from "../services/Users"
-import { Bot, CommandFunction, MediaCommand, RawCommand, TwitchChatClient, TwitchChatContext } from "../types"
+import { Bot, CommandExecutionContext, CommandFunction, MediaCommand, MediaCommandData } from "../types"
 import fn from './../fn'
 import { hash, logger } from './../common/fn'
 import childProcess from 'child_process'
@@ -8,56 +8,71 @@ import config from "../config"
 
 const log = logger('playMedia.ts')
 
+const isTwitchClipUrl = (url: string): boolean => {
+  return !!url.match(/^https:\/\/clips\.twitch\.tv\/.+/)
+}
+
+const downloadVideo = async (originalUrl: string): Promise<string> => {
+  // if video url looks like a twitch clip url, dl it first
+  const filename = `${hash(originalUrl)}-clip.mp4`
+  const outfile = `./data/uploads/${filename}`
+  if (!fs.existsSync(outfile)) {
+    log.debug(`downloading the video to ${outfile}`)
+    const child = childProcess.execFile(
+      config.youtubeDlBinary,
+      [originalUrl, '-o', outfile]
+    )
+    await new Promise((resolve) => {
+      child.on('close', resolve)
+    })
+  } else {
+    log.debug(`video exists at ${outfile}`)
+  }
+  return `/uploads/${filename}`
+}
+
+const prepareData = async (
+  ctx: CommandExecutionContext,
+  originalCmd: MediaCommand,
+  bot: Bot,
+  user: User,
+): Promise<MediaCommandData> => {
+  const doReplaces = async (str: string) => {
+    return await fn.doReplacements(str, ctx.rawCmd, ctx.context, originalCmd, bot, user)
+  }
+  const data = originalCmd.data
+  data.image_url = await doReplaces(data.image_url)
+  if (!data.video.url) {
+    return data
+  }
+
+  log.debug(`video url is defined: ${data.video.url}`)
+  data.video.url = await doReplaces(data.video.url)
+  if (!data.video.url) {
+    log.debug('no video url found')
+  } else if (isTwitchClipUrl(data.video.url)) {
+    // video url looks like a twitch clip url, dl it first
+    log.debug(`twitch clip found: ${data.video.url}`)
+    data.video.url = await downloadVideo(data.video.url)
+  } else {
+    // otherwise assume it is already a playable video url
+    // TODO: youtube videos maybe should also be downloaded
+    log.debug('video is assumed to be directly playable via html5 video element')
+  }
+
+  return data
+}
+
 const playMedia = (
   originalCmd: MediaCommand,
   bot: Bot,
   user: User,
-): CommandFunction => async (
-  command: RawCommand | null,
-  _client: TwitchChatClient | null,
-  _target: string | null,
-  context: TwitchChatContext | null,
-  ) => {
-    const data = originalCmd.data
-    data.image_url = await fn.doReplacements(data.image_url, command, context, originalCmd, bot, user)
-    if (data.video.url) {
-      log.debug(`clip is defined: ${data.video.url}`)
-      data.video.url = await fn.doReplacements(data.video.url, command, context, originalCmd, bot, user)
-
-      if (data.video.url) {
-        // if video url looks like a twitch clip url, dl it first
-        if (data.video.url.match(/^https:\/\/clips\.twitch\.tv\/.+/)) {
-          log.debug(`twitch clip found: ${data.video.url}`)
-          const filename = `${hash(data.video.url)}-clip.mp4`
-          const outfile = `./data/uploads/${filename}`
-          if (!fs.existsSync(outfile)) {
-            log.debug(`downloading the clip to ${outfile}`)
-            const child = childProcess.execFile(
-              config.youtubeDlBinary,
-              [data.video.url, '-o', outfile]
-            )
-            await new Promise((resolve) => {
-              child.on('close', resolve)
-            })
-          } else {
-            log.debug(`clip exists at ${outfile}`)
-          }
-          data.video.url = `/uploads/${filename}`
-        } else {
-          // else assume it is already a playable video url
-          // TODO: youtube videos maybe should also be downloaded
-          log.debug('clip is assumed to be directly playable via html5 video element')
-        }
-      } else {
-        log.debug('no clip found')
-      }
-    }
-
-    bot.getWebSocketServer().notifyAll([user.id], 'general', {
-      event: 'playmedia',
-      data: data,
-      id: originalCmd.id
-    })
-  }
+): CommandFunction => async (ctx: CommandExecutionContext) => {
+  bot.getWebSocketServer().notifyAll([user.id], 'general', {
+    event: 'playmedia',
+    data: await prepareData(ctx, originalCmd, bot, user),
+    id: originalCmd.id
+  })
+}
 
 export default playMedia

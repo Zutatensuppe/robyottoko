@@ -1,6 +1,5 @@
-import fn from '../../fn'
 import { User } from '../../services/Users'
-import { Bot, ChatMessageContext, Module, RawCommand, TwitchChatClient, TwitchChatContext } from '../../types'
+import { Bot, ChatMessageContext, CommandExecutionContext, Module, TwitchChatContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import { newCommandTrigger } from '../../common/commands'
 import { isBroadcaster, isMod } from '../../common/permissions'
@@ -67,64 +66,53 @@ class VoteModule implements Module {
   async vote(
     type: string,
     thing: string,
-    client: TwitchChatClient,
     target: string,
     context: TwitchChatContext,
   ): Promise<void> {
-    const say = fn.sayFn(client, target)
+    const say = this.bot.sayFn(this.user, target)
     this.data.votes[type] = this.data.votes[type] || {}
     this.data.votes[type][context['display-name']] = thing
     say(`Thanks ${context['display-name']}, registered your "${type}" vote: ${thing}`)
     await this.save()
   }
 
-  async playCmd(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-  ) {
-    if (!client || !command || !context || !target) {
+  async playCmd(ctx: CommandExecutionContext): Promise<void> {
+    if (!ctx.rawCmd || !ctx.context || !ctx.target) {
       return
     }
 
-    const say = fn.sayFn(client, target)
-    if (command.args.length === 0) {
+    const say = this.bot.sayFn(this.user, ctx.target)
+    if (ctx.rawCmd.args.length === 0) {
       say(`Usage: !play THING`)
       return
     }
 
-    const thing = command.args.join(' ')
+    const thing = ctx.rawCmd.args.join(' ')
     const type = 'play'
-    await this.vote(type, thing, client, target, context)
+    await this.vote(type, thing, ctx.target, ctx.context)
   }
 
-  async voteCmd(
-    command: RawCommand | null,
-    client: TwitchChatClient | null,
-    target: string | null,
-    context: TwitchChatContext | null,
-  ): Promise<void> {
-    if (!client || !command || !context || !target) {
+  async voteCmd(ctx: CommandExecutionContext): Promise<void> {
+    if (!ctx.rawCmd || !ctx.context || !ctx.target) {
       return
     }
 
-    const say = fn.sayFn(client, target)
+    const say = this.bot.sayFn(this.user, ctx.target)
 
     // maybe open up for everyone, but for now use dedicated
     // commands like !play THING
 
-    if (!isMod(context) && !isBroadcaster(context)) {
+    if (!isMod(ctx.context) && !isBroadcaster(ctx.context)) {
       say('Not allowed to execute !vote command')
     }
 
-    if (command.args.length < 2) {
+    if (ctx.rawCmd.args.length < 2) {
       say(`Usage: !vote TYPE THING`)
       return
     }
 
-    if (command.args[0] === 'show') {
-      const type = command.args[1]
+    if (ctx.rawCmd.args[0] === 'show') {
+      const type = ctx.rawCmd.args[1]
       if (!this.data.votes[type]) {
         say(`No votes for "${type}".`)
         return
@@ -153,11 +141,11 @@ class VoteModule implements Module {
       return
     }
 
-    if (command.args[0] === 'clear') {
-      if (!isBroadcaster(context)) {
+    if (ctx.rawCmd.args[0] === 'clear') {
+      if (!isBroadcaster(ctx.context)) {
         say('Not allowed to execute !vote clear')
       }
-      const type = command.args[1]
+      const type = ctx.rawCmd.args[1]
       if (this.data.votes[type]) {
         delete this.data.votes[type]
       }
@@ -166,9 +154,9 @@ class VoteModule implements Module {
       return
     }
 
-    const type = command.args[0]
-    const thing = command.args.slice(1).join(' ')
-    await this.vote(type, thing, client, target, context)
+    const type = ctx.rawCmd.args[0]
+    const thing = ctx.rawCmd.args.slice(1).join(' ')
+    await this.vote(type, thing, ctx.target, ctx.context)
   }
 
   getCommands() {

@@ -281,41 +281,7 @@ const getProp = (obj, keys, defaultVal) => {
     return x;
 };
 
-var CommandRestrict;
-(function (CommandRestrict) {
-    CommandRestrict["MOD"] = "mod";
-    CommandRestrict["SUB"] = "sub";
-    CommandRestrict["BROADCASTER"] = "broadcaster";
-})(CommandRestrict || (CommandRestrict = {}));
-const MOD_OR_ABOVE = [
-    CommandRestrict.MOD,
-    CommandRestrict.BROADCASTER,
-];
-[
-    { value: CommandRestrict.BROADCASTER, label: "Broadcaster" },
-    { value: CommandRestrict.MOD, label: "Moderators" },
-    { value: CommandRestrict.SUB, label: "Subscribers" },
-];
-const isBroadcaster = (ctx) => ctx['room-id'] === ctx['user-id'];
-const isMod = (ctx) => !!ctx.mod;
-const isSubscriber = (ctx) => !!ctx.subscriber;
-const mayExecute = (context, cmd) => {
-    if (!cmd.restrict_to || cmd.restrict_to.length === 0) {
-        return true;
-    }
-    if (cmd.restrict_to.includes(CommandRestrict.MOD) && isMod(context)) {
-        return true;
-    }
-    if (cmd.restrict_to.includes(CommandRestrict.SUB) && isSubscriber(context)) {
-        return true;
-    }
-    if (cmd.restrict_to.includes(CommandRestrict.BROADCASTER) && isBroadcaster(context)) {
-        return true;
-    }
-    return false;
-};
-
-const log$w = logger('fn.ts');
+const log$x = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
         return mime.replace('image/', '');
@@ -355,9 +321,9 @@ const sayFn = (client, target) => (msg) => {
         // TODO: fix this somewhere else?
         // client can only say things in lowercase channels
         t = t.toLowerCase();
-        log$w.info(`saying in ${t}: ${msg}`);
+        log$x.info(`saying in ${t}: ${msg}`);
         client.say(t, msg).catch((e) => {
-            log$w.info(e);
+            log$x.info(e);
         });
     });
 };
@@ -421,28 +387,6 @@ const applyVariableChanges = async (cmdDef, contextModule, rawCmd, context) => {
         }
     }
     contextModule.saveCommands();
-};
-const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, target, context) => {
-    const client = contextModule.bot.getUserTwitchClientManager(contextModule.user).getChatClient();
-    const promises = [];
-    for (const cmdDef of cmdDefs) {
-        if (!mayExecute(context, cmdDef)) {
-            continue;
-        }
-        log$w.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`);
-        // eslint-disable-next-line no-async-promise-executor
-        const p = new Promise(async (resolve) => {
-            await applyVariableChanges(cmdDef, contextModule, rawCmd, context);
-            const r = await cmdDef.fn(rawCmd, client, target, context);
-            if (r) {
-                log$w.info(`${target}| * Returned: ${r}`);
-            }
-            log$w.info(`${target}| * Executed ${rawCmd?.name || '<unknown>'} command`);
-            resolve(true);
-        });
-        promises.push(p);
-    }
-    await Promise.all(promises);
 };
 async function replaceAsync(str, regex, asyncFn) {
     const promises = [];
@@ -585,7 +529,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
                     return String(JSON.parse(txt)[m2]);
                 }
                 catch (e) {
-                    log$w.error(e);
+                    log$x.error(e);
                     return '';
                 }
             },
@@ -599,7 +543,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
                     return await resp.text();
                 }
                 catch (e) {
-                    log$w.error(e);
+                    log$x.error(e);
                     return '';
                 }
             },
@@ -834,7 +778,6 @@ var fn = {
     parseCommandFromCmdAndMessage,
     passwordSalt,
     passwordHash,
-    tryExecuteCommand,
     getRandomInt,
     getRandom,
     sleep,
@@ -848,7 +791,7 @@ var fn = {
     findIdxBySearch,
 };
 
-const TABLE$6 = 'robyottoko.token';
+const TABLE$7 = 'robyottoko.token';
 var TokenType;
 (function (TokenType) {
     TokenType["API_KEY"] = "api_key";
@@ -872,10 +815,10 @@ class Tokens {
         this.db = db;
     }
     async getByUserIdAndType(user_id, type) {
-        return await this.db.get(TABLE$6, { user_id, type });
+        return await this.db.get(TABLE$7, { user_id, type });
     }
     async insert(tokenInfo) {
-        return await this.db.insert(TABLE$6, tokenInfo);
+        return await this.db.insert(TABLE$7, tokenInfo);
     }
     async createToken(user_id, type) {
         const token = generateToken(32);
@@ -888,10 +831,10 @@ class Tokens {
             || (await this.createToken(user_id, type));
     }
     async getByTokenAndType(token, type) {
-        return (await this.db.get(TABLE$6, { token, type })) || null;
+        return (await this.db.get(TABLE$7, { token, type })) || null;
     }
     async delete(token) {
-        return await this.db.delete(TABLE$6, { token });
+        return await this.db.delete(TABLE$7, { token });
     }
     async generateAuthTokenForUserId(user_id) {
         return await this.createToken(user_id, TokenType.AUTH);
@@ -1014,7 +957,7 @@ class ModuleManager {
     }
 }
 
-const log$v = logger("WebSocketServer.ts");
+const log$w = logger("WebSocketServer.ts");
 class WebSocketServer {
     constructor() {
         this._websocketserver = null;
@@ -1051,19 +994,19 @@ class WebSocketServer {
                 socket.user_id = parseInt(token, 10);
             }
             socket.module = moduleName;
-            log$v.info('added socket: ', moduleName, socket.protocol);
-            log$v.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
+            log$w.info('added socket: ', moduleName, socket.protocol);
+            log$w.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
             socket.on('close', () => {
-                log$v.info('removed socket: ', moduleName, socket.protocol);
-                log$v.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
+                log$w.info('removed socket: ', moduleName, socket.protocol);
+                log$w.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
             });
             if (request.url?.indexOf(pathname) !== 0) {
-                log$v.info('bad request url: ', request.url);
+                log$w.info('bad request url: ', request.url);
                 socket.close();
                 return;
             }
             if (!socket.user_id) {
-                log$v.info('not found token: ', token, relpath);
+                log$w.info('not found token: ', token, relpath);
                 socket.close();
                 return;
             }
@@ -1094,7 +1037,7 @@ class WebSocketServer {
                     }
                 }
                 catch (e) {
-                    log$v.error('socket on message', e);
+                    log$w.error('socket on message', e);
                 }
             });
         });
@@ -1103,7 +1046,7 @@ class WebSocketServer {
         return !!this.sockets().find(s => s.user_id === user_id);
     }
     _notify(socket, data) {
-        log$v.info(`notifying ${socket.user_id} ${socket.module} (${data.event})`);
+        log$w.info(`notifying ${socket.user_id} ${socket.module} (${data.event})`);
         socket.send(JSON.stringify(data));
     }
     notifyOne(user_ids, moduleName, data, socket) {
@@ -1115,7 +1058,7 @@ class WebSocketServer {
             this._notify(socket, data);
         }
         else {
-            log$v.error('tried to notify invalid socket', socket.user_id, socket.module, user_ids, moduleName, isConnectedSocket);
+            log$w.error('tried to notify invalid socket', socket.user_id, socket.module, user_ids, moduleName, isConnectedSocket);
         }
     }
     notifyAll(user_ids, moduleName, data) {
@@ -1142,7 +1085,7 @@ class WebSocketServer {
     }
 }
 
-const log$u = logger('Templates.ts');
+const log$v = logger('Templates.ts');
 class Templates {
     constructor(baseDir) {
         this.templates = {};
@@ -1159,7 +1102,7 @@ class Templates {
                 tmpl.templateContents = (await promises.readFile(tmpl.templatePathAbsolute)).toString();
             }
             catch (e) {
-                log$u.error('error loading template', e);
+                log$v.error('error loading template', e);
                 tmpl.templateContents = '';
             }
         }
@@ -1169,8 +1112,8 @@ class Templates {
     }
 }
 
-const log$t = logger('oauth.ts');
-const TABLE$5 = 'robyottoko.oauth_token';
+const log$u = logger('oauth.ts');
+const TABLE$6 = 'robyottoko.oauth_token';
 const getMatchingAccessToken = async (channelId, bot, user) => {
     const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id);
     const channel = twitchChannels.find(c => c.channel_id === channelId && c.access_token);
@@ -1193,7 +1136,7 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
     // there should only be 1 channel per accessToken
     const twitchChannel = twitchChannels[0];
     // try to refresh the token, if possible
-    const row = await bot.getDb().get(TABLE$5, {
+    const row = await bot.getDb().get(TABLE$6, {
         access_token: accessToken,
     });
     if (!row || !row.refresh_token) {
@@ -1206,7 +1149,7 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
         return null;
     }
     // update the token in the database
-    await bot.getDb().insert(TABLE$5, {
+    await bot.getDb().insert(TABLE$6, {
         user_id: user.id,
         channel_id: twitchChannel.channel_id,
         access_token: refreshResp.access_token,
@@ -1217,7 +1160,7 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
     });
     twitchChannel.access_token = refreshResp.access_token;
     await bot.getTwitchChannels().save(twitchChannel);
-    log$t.info('tryRefreshAccessToken - refreshed an access token');
+    log$u.info('tryRefreshAccessToken - refreshed an access token');
     return refreshResp.access_token;
 };
 // TODO: check if anything has to be put in a try catch block
@@ -1242,7 +1185,7 @@ const refreshExpiredTwitchChannelAccessToken = async (twitchChannel, bot, user) 
         return { error: false, refreshed: false };
     }
     // try to refresh the token, if possible
-    const row = await bot.getDb().get(TABLE$5, {
+    const row = await bot.getDb().get(TABLE$6, {
         access_token: twitchChannel.access_token,
     });
     if (!row || !row.refresh_token) {
@@ -1256,7 +1199,7 @@ const refreshExpiredTwitchChannelAccessToken = async (twitchChannel, bot, user) 
         return { error: 'refresh_oauth_token_failed', refreshed: false };
     }
     // update the token in the database
-    await bot.getDb().insert(TABLE$5, {
+    await bot.getDb().insert(TABLE$6, {
         user_id: user.id,
         channel_id: twitchChannel.channel_id,
         access_token: refreshResp.access_token,
@@ -1268,7 +1211,7 @@ const refreshExpiredTwitchChannelAccessToken = async (twitchChannel, bot, user) 
     // update the twitch channel in the database
     twitchChannel.access_token = refreshResp.access_token;
     await bot.getTwitchChannels().save(twitchChannel);
-    log$t.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
+    log$u.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
     return { error: false, refreshed: true };
 };
 // TODO: check if anything has to be put in a try catch block
@@ -1287,7 +1230,7 @@ const handleOAuthCodeCallback = async (code, redirectUri, bot, user) => {
         return { error: true, updated: false };
     }
     // store the token
-    await bot.getDb().insert(TABLE$5, {
+    await bot.getDb().insert(TABLE$6, {
         user_id: user.id,
         channel_id: userResp.id,
         access_token: resp.access_token,
@@ -1375,6 +1318,40 @@ var CountdownActionType;
     CountdownActionType["MEDIA"] = "media";
     CountdownActionType["DELAY"] = "delay";
 })(CountdownActionType || (CountdownActionType = {}));
+
+var CommandRestrict;
+(function (CommandRestrict) {
+    CommandRestrict["MOD"] = "mod";
+    CommandRestrict["SUB"] = "sub";
+    CommandRestrict["BROADCASTER"] = "broadcaster";
+})(CommandRestrict || (CommandRestrict = {}));
+const MOD_OR_ABOVE = [
+    CommandRestrict.MOD,
+    CommandRestrict.BROADCASTER,
+];
+[
+    { value: CommandRestrict.BROADCASTER, label: "Broadcaster" },
+    { value: CommandRestrict.MOD, label: "Moderators" },
+    { value: CommandRestrict.SUB, label: "Subscribers" },
+];
+const isBroadcaster = (ctx) => ctx['room-id'] === ctx['user-id'];
+const isMod = (ctx) => !!ctx.mod;
+const isSubscriber = (ctx) => !!ctx.subscriber;
+const mayExecute = (context, cmd) => {
+    if (!cmd.restrict_to || cmd.restrict_to.length === 0) {
+        return true;
+    }
+    if (cmd.restrict_to.includes(CommandRestrict.MOD) && isMod(context)) {
+        return true;
+    }
+    if (cmd.restrict_to.includes(CommandRestrict.SUB) && isSubscriber(context)) {
+        return true;
+    }
+    if (cmd.restrict_to.includes(CommandRestrict.BROADCASTER) && isBroadcaster(context)) {
+        return true;
+    }
+    return false;
+};
 
 const newText = () => '';
 const newSoundMediaFile = (obj = null) => ({
@@ -2082,10 +2059,44 @@ const commands = {
     },
 };
 
+const log$t = logger('CommandExecutor.ts');
+class CommandExecutor {
+    async executeMatchingCommands(bot, user, rawCmd, target, context, triggers) {
+        const promises = [];
+        const ctx = { rawCmd, target, context };
+        for (const m of bot.getModuleManager().all(user.id)) {
+            const cmdDefs = getUniqueCommandsByTriggers(m.getCommands(), triggers);
+            promises.push(this.tryExecuteCommands(m, cmdDefs, ctx));
+        }
+        await Promise.all(promises);
+    }
+    async tryExecuteCommands(contextModule, cmdDefs, ctx) {
+        const promises = [];
+        for (const cmdDef of cmdDefs) {
+            if (!ctx.context || !mayExecute(ctx.context, cmdDef)) {
+                continue;
+            }
+            log$t.info(`${ctx.target}| * Executing ${ctx.rawCmd?.name || '<unknown>'} command`);
+            // eslint-disable-next-line no-async-promise-executor
+            const p = new Promise(async (resolve) => {
+                await fn.applyVariableChanges(cmdDef, contextModule, ctx.rawCmd, ctx.context);
+                const r = await cmdDef.fn(ctx);
+                if (r) {
+                    log$t.info(`${ctx.target}| * Returned: ${r}`);
+                }
+                log$t.info(`${ctx.target}| * Executed ${ctx.rawCmd?.name || '<unknown>'} command`);
+                resolve(true);
+            });
+            promises.push(p);
+        }
+        await Promise.all(promises);
+    }
+}
+
 const log$s = logger('SubscribeEventHandler.ts');
 class SubscribeEventHandler {
     // TODO: use better type info
-    async handle(tcm, data) {
+    async handle(bot, user, data) {
         log$s.info('handle');
         const rawCmd = {
             name: 'channel.subscribe',
@@ -2101,14 +2112,15 @@ class SubscribeEventHandler {
             subscriber: true, // user just subscribed, so it is a subscriber
         };
         const trigger = newSubscribeTrigger();
-        await tcm.executeMatchingCommands(rawCmd, target, context, trigger);
+        const exec = new CommandExecutor();
+        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger]);
     }
 }
 
 const log$r = logger('FollowEventHandler.ts');
 class FollowEventHandler {
     // TODO: use better type info
-    async handle(tcm, data) {
+    async handle(bot, user, data) {
         log$r.info('handle');
         const rawCmd = {
             name: 'channel.follow',
@@ -2124,14 +2136,15 @@ class FollowEventHandler {
             subscriber: false, // unknown
         };
         const trigger = newFollowTrigger();
-        await tcm.executeMatchingCommands(rawCmd, target, context, trigger);
+        const exec = new CommandExecutor();
+        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger]);
     }
 }
 
 const log$q = logger('CheerEventHandler.ts');
 class CheerEventHandler {
     // TODO: use better type info
-    async handle(tcm, data) {
+    async handle(bot, user, data) {
         log$q.info('handle');
         const rawCmd = {
             name: 'channel.cheer',
@@ -2147,13 +2160,14 @@ class CheerEventHandler {
             subscriber: false, // unknown
         };
         const trigger = newBitsTrigger();
-        await tcm.executeMatchingCommands(rawCmd, target, context, trigger);
+        const exec = new CommandExecutor();
+        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger]);
     }
 }
 
 const log$p = logger('ChannelPointRedeemEventHandler.ts');
 class ChannelPointRedeemEventHandler {
-    async handle(tcm, data) {
+    async handle(bot, user, data) {
         log$p.info('handle');
         const rawCmd = {
             name: data.event.reward.title,
@@ -2169,7 +2183,8 @@ class ChannelPointRedeemEventHandler {
             subscriber: false, // unknown
         };
         const trigger = newRewardRedemptionTrigger(data.event.reward.title);
-        await tcm.executeMatchingCommands(rawCmd, target, context, trigger);
+        const exec = new CommandExecutor();
+        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger]);
     }
 }
 
@@ -2220,7 +2235,7 @@ class StreamOfflineEventHandler {
 const log$m = logger('RaidEventHandler.ts');
 class RaidEventHandler {
     // TODO: use better type info
-    async handle(tcm, data) {
+    async handle(bot, user, data) {
         log$m.info('handle');
         const rawCmd = {
             name: 'channel.raid',
@@ -2236,7 +2251,8 @@ class RaidEventHandler {
             subscriber: false, // unknown
         };
         const trigger = newRaidTrigger();
-        await tcm.executeMatchingCommands(rawCmd, target, context, trigger);
+        const exec = new CommandExecutor();
+        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger]);
     }
 }
 
@@ -2327,21 +2343,20 @@ const createRouter$3 = (templates, bot) => {
                 res.status(400).send({ reason: 'unknown user' });
                 return;
             }
-            const clientManager = bot.getUserTwitchClientManager(user);
             if (req.body.subscription.type === SubscriptionType.ChannelSubscribe) {
-                await (new SubscribeEventHandler()).handle(clientManager, req.body);
+                await (new SubscribeEventHandler()).handle(bot, user, req.body);
             }
             else if (req.body.subscription.type === SubscriptionType.ChannelFollow) {
-                await (new FollowEventHandler()).handle(clientManager, req.body);
+                await (new FollowEventHandler()).handle(bot, user, req.body);
             }
             else if (req.body.subscription.type === SubscriptionType.ChannelCheer) {
-                await (new CheerEventHandler()).handle(clientManager, req.body);
+                await (new CheerEventHandler()).handle(bot, user, req.body);
             }
             else if (req.body.subscription.type === SubscriptionType.ChannelRaid) {
-                await (new RaidEventHandler()).handle(clientManager, req.body);
+                await (new RaidEventHandler()).handle(bot, user, req.body);
             }
             else if (req.body.subscription.type === SubscriptionType.ChannelPointsCustomRewardRedemptionAdd) {
-                await (new ChannelPointRedeemEventHandler()).handle(clientManager, req.body);
+                await (new ChannelPointRedeemEventHandler()).handle(bot, user, req.body);
             }
             else if (req.body.subscription.type === SubscriptionType.StreamOnline) {
                 await (new StreamOnlineEventHandler()).handle(bot, req.body);
@@ -2716,14 +2731,14 @@ class TwitchHelixClient {
     }
 }
 
-const TABLE$4 = 'robyottoko.variables';
+const TABLE$5 = 'robyottoko.variables';
 class Variables {
     constructor(db, userId) {
         this.db = db;
         this.userId = userId;
     }
     async set(name, value) {
-        await this.db.upsert(TABLE$4, {
+        await this.db.upsert(TABLE$5, {
             name,
             user_id: this.userId,
             value: JSON.stringify(value),
@@ -2733,11 +2748,11 @@ class Variables {
         });
     }
     async get(name) {
-        const row = await this.db.get(TABLE$4, { name, user_id: this.userId });
+        const row = await this.db.get(TABLE$5, { name, user_id: this.userId });
         return row ? JSON.parse(row.value) : null;
     }
     async all() {
-        const rows = await this.db.getMany(TABLE$4, { user_id: this.userId });
+        const rows = await this.db.getMany(TABLE$5, { user_id: this.userId });
         return rows.map(row => ({
             name: row.name,
             value: JSON.parse(row.value),
@@ -2745,7 +2760,7 @@ class Variables {
     }
     async replace(variables) {
         const names = variables.map(v => v.name);
-        await this.db.delete(TABLE$4, { user_id: this.userId, name: { '$nin': names } });
+        await this.db.delete(TABLE$5, { user_id: this.userId, name: { '$nin': names } });
         for (const { name, value } of variables) {
             await this.set(name, value);
         }
@@ -3235,15 +3250,7 @@ class WebServer {
     }
 }
 
-// @ts-ignore
-const log$h = logger('TwitchClientManager.ts');
-const isDevTunnel = (url) => url.match(/^https:\/\/[a-z0-9-]+\.(?:loca\.lt|ngrok\.io)\//);
-const shouldDeleteSubscription = (transport, subscription, twitchChannelIds) => {
-    return transport.method === subscription.transport.method
-        && (transport.callback === subscription.transport.callback
-            || (isDevTunnel(transport.callback) && isDevTunnel(subscription.transport.callback)))
-        && twitchChannelIds.includes(subscription.condition.broadcaster_user_id);
-};
+const log$h = logger('ChatEventHandler.ts');
 const rolesLettersFromTwitchChatContext = (context) => {
     const roles = [];
     if (isMod(context)) {
@@ -3256,6 +3263,105 @@ const rolesLettersFromTwitchChatContext = (context) => {
         roles.push('B');
     }
     return roles;
+};
+const determineStreamStartDate = async (context, helixClient) => {
+    const stream = await helixClient.getStreamByUserId(context['room-id']);
+    if (stream) {
+        return new Date(stream.started_at);
+    }
+    const date = new Date(new Date().getTime() - (5 * MINUTE));
+    log$h.info(`No stream is running atm for channel ${context['room-id']}. Using fake start date ${date}.`);
+    return date;
+};
+const determineIsFirstChatStream = async (bot, user, context) => {
+    const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
+    if (!helixClient) {
+        return false;
+    }
+    const minDate = await determineStreamStartDate(context, helixClient);
+    return await bot.getChatLog().isFirstChatSince(context, minDate);
+};
+class ChatEventHandler {
+    async handle(bot, user, target, context, msg) {
+        const roles = rolesLettersFromTwitchChatContext(context);
+        log$h.debug(`${context.username}[${roles.join('')}]@${target}: ${msg}`);
+        bot.getChatLog().insert(context, msg);
+        let _isFirstChatAlltime = null;
+        const isFirstChatAlltime = async () => {
+            if (_isFirstChatAlltime === null) {
+                _isFirstChatAlltime = await bot.getChatLog().isFirstChatAllTime(context);
+            }
+            return _isFirstChatAlltime;
+        };
+        let _isFirstChatStream = null;
+        const isFirstChatStream = async () => {
+            if (_isFirstChatStream === null) {
+                _isFirstChatStream = await determineIsFirstChatStream(bot, user, context);
+            }
+            return _isFirstChatStream;
+        };
+        const isRelevantFirstChatTrigger = async (trigger) => {
+            if (trigger.type !== CommandTriggerType.FIRST_CHAT) {
+                return false;
+            }
+            if (trigger.data.since === 'alltime') {
+                return await isFirstChatAlltime();
+            }
+            if (trigger.data.since === 'stream') {
+                return await isFirstChatStream();
+            }
+            return false;
+        };
+        const createTriggers = async (m) => {
+            let commandTriggers = [];
+            const triggers = [];
+            for (const command of m.getCommands()) {
+                for (const trigger of command.triggers) {
+                    if (trigger.type === CommandTriggerType.COMMAND) {
+                        commandTriggers.push(trigger);
+                    }
+                    else if (await isRelevantFirstChatTrigger(trigger)) {
+                        triggers.push(trigger);
+                    }
+                }
+            }
+            // make sure longest commands are found first
+            // so that in case commands `!draw` and `!draw bad` are set up
+            // and `!draw bad` is written in chat, that command only will be
+            // executed and not also `!draw`
+            commandTriggers = commandTriggers.sort((a, b) => b.data.command.length - a.data.command.length);
+            let rawCmd = null;
+            for (const trigger of commandTriggers) {
+                rawCmd = fn.parseCommandFromTriggerAndMessage(msg, trigger);
+                if (!rawCmd) {
+                    continue;
+                }
+                triggers.push(trigger);
+                break;
+            }
+            return { triggers, rawCmd };
+        };
+        const client = bot.getUserTwitchClientManager(user).getChatClient();
+        const chatMessageContext = { client, target, context, msg };
+        for (const m of bot.getModuleManager().all(user.id)) {
+            const { triggers, rawCmd } = await createTriggers(m);
+            if (triggers.length > 0) {
+                const exec = new CommandExecutor();
+                await exec.executeMatchingCommands(bot, user, rawCmd, target, context, triggers);
+            }
+            await m.onChatMsg(chatMessageContext);
+        }
+    }
+}
+
+// @ts-ignore
+logger('TwitchClientManager.ts');
+const isDevTunnel = (url) => url.match(/^https:\/\/[a-z0-9-]+\.(?:loca\.lt|ngrok\.io)\//);
+const shouldDeleteSubscription = (configuredTransport, subscription, twitchChannelIds) => {
+    return configuredTransport.method === subscription.transport.method
+        && (configuredTransport.callback === subscription.transport.callback
+            || (isDevTunnel(configuredTransport.callback) && isDevTunnel(subscription.transport.callback)))
+        && twitchChannelIds.includes(subscription.condition.broadcaster_user_id);
 };
 class TwitchClientManager {
     constructor(bot, user) {
@@ -3316,97 +3422,7 @@ class TwitchClientManager {
             if (self) {
                 return;
             } // Ignore messages from the bot
-            const roles = rolesLettersFromTwitchChatContext(context);
-            this.log.debug(`${context.username}[${roles.join('')}]@${target}: ${msg}`);
-            await this.bot.getDb().insert('robyottoko.chat_log', {
-                created_at: new Date(),
-                broadcaster_user_id: context['room-id'],
-                user_name: context.username,
-                display_name: context['display-name'],
-                message: msg,
-            });
-            const countChatMessages = async (where) => {
-                const db = this.bot.getDb();
-                const whereObject = db._buildWhere(where);
-                const row = await db._get(`select COUNT(*) as c from robyottoko.chat_log ${whereObject.sql}`, whereObject.values);
-                return parseInt(`${row.c}`, 10);
-            };
-            let _isFirstChatAlltime = null;
-            let _isFirstChatStream = null;
-            const determineIsFirstChatAlltime = async () => {
-                return await countChatMessages({
-                    broadcaster_user_id: context['room-id'],
-                    user_name: context.username,
-                }) === 1;
-            };
-            const isFirstChatAlltime = async () => {
-                if (_isFirstChatAlltime === null) {
-                    _isFirstChatAlltime = await determineIsFirstChatAlltime();
-                }
-                return _isFirstChatAlltime;
-            };
-            const determineIsFirstChatStream = async () => {
-                const stream = await helixClient.getStreamByUserId(context['room-id']);
-                let minDate;
-                if (stream) {
-                    minDate = new Date(stream.started_at);
-                }
-                else {
-                    minDate = new Date(new Date().getTime() - (5 * MINUTE));
-                    log$h.info(`No stream is running atm for channel ${context['room-id']}. Using fake start date ${minDate}.`);
-                }
-                return await countChatMessages({
-                    broadcaster_user_id: context['room-id'],
-                    user_name: context.username,
-                    created_at: { '$gte': minDate },
-                }) === 1;
-            };
-            const isFirstChatStream = async () => {
-                if (_isFirstChatStream === null) {
-                    _isFirstChatStream = await determineIsFirstChatStream();
-                }
-                return _isFirstChatStream;
-            };
-            const chatMessageContext = { client: chatClient, target, context, msg };
-            for (const m of this.bot.getModuleManager().all(user.id)) {
-                const commands = m.getCommands() || [];
-                let triggers = [];
-                const relevantTriggers = [];
-                for (const command of commands) {
-                    for (const trigger of command.triggers) {
-                        if (trigger.type === CommandTriggerType.COMMAND) {
-                            triggers.push(trigger);
-                        }
-                        else if (trigger.type === CommandTriggerType.FIRST_CHAT) {
-                            if (trigger.data.since === 'alltime' && await isFirstChatAlltime()) {
-                                relevantTriggers.push(trigger);
-                            }
-                            else if (trigger.data.since === 'stream' && await isFirstChatStream()) {
-                                relevantTriggers.push(trigger);
-                            }
-                        }
-                    }
-                }
-                // make sure longest commands are found first
-                // so that in case commands `!draw` and `!draw bad` are set up
-                // and `!draw bad` is written in chat, that command only will be
-                // executed and not also `!draw`
-                triggers = triggers.sort((a, b) => b.data.command.length - a.data.command.length);
-                let rawCmd = null;
-                for (const trigger of triggers) {
-                    rawCmd = fn.parseCommandFromTriggerAndMessage(chatMessageContext.msg, trigger);
-                    if (!rawCmd) {
-                        continue;
-                    }
-                    relevantTriggers.push(trigger);
-                    break;
-                }
-                if (relevantTriggers.length > 0) {
-                    const cmdDefs = getUniqueCommandsByTriggers(commands, relevantTriggers);
-                    await fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context);
-                }
-                await m.onChatMsg(chatMessageContext);
-            }
+            await (new ChatEventHandler()).handle(this.bot, this.user, target, context, msg);
         });
         // Called every time the bot connects to Twitch chat
         chatClient.on('connected', (addr, port) => {
@@ -3417,7 +3433,7 @@ class TwitchClientManager {
                 }
                 // note: this can lead to multiple messages if multiple users
                 //       have the same channels set up
-                const say = fn.sayFn(chatClient, channel.channel_name);
+                const say = this.bot.sayFn(user, channel.channel_name);
                 if (connectReason === 'init') {
                     say('⚠️ Bot rebooted - please restart timers...');
                 }
@@ -3510,16 +3526,6 @@ class TwitchClientManager {
         }
         this.log.debug(resp);
     }
-    // TODO: remove/move
-    async executeMatchingCommands(rawCmd, target, context, trigger) {
-        const promises = [];
-        for (const m of this.bot.getModuleManager().all(this.user.id)) {
-            const commands = m.getCommands();
-            const cmdDefs = getUniqueCommandsByTriggers(commands, [trigger]);
-            promises.push(fn.tryExecuteCommand(m, rawCmd, cmdDefs, target, context));
-        }
-        await Promise.all(promises);
-    }
     async _disconnectChatClient() {
         if (this.chatClient) {
             try {
@@ -3543,7 +3549,7 @@ class TwitchClientManager {
 }
 
 const log$g = logger('ModuleStorage.ts');
-const TABLE$3 = 'robyottoko.module';
+const TABLE$4 = 'robyottoko.module';
 class ModuleStorage {
     constructor(db, userId) {
         this.db = db;
@@ -3552,7 +3558,7 @@ class ModuleStorage {
     async load(key, def) {
         try {
             const where = { user_id: this.userId, key };
-            const row = await this.db.get(TABLE$3, where);
+            const row = await this.db.get(TABLE$4, where);
             const data = row ? JSON.parse('' + row.data) : null;
             return data ? Object.assign({}, def, data) : def;
         }
@@ -3565,20 +3571,20 @@ class ModuleStorage {
         const where = { user_id: this.userId, key };
         const data = JSON.stringify(rawData);
         const dbData = Object.assign({}, where, { data });
-        await this.db.upsert(TABLE$3, dbData, where);
+        await this.db.upsert(TABLE$4, dbData, where);
     }
 }
 
-const TABLE$2 = 'robyottoko.user';
+const TABLE$3 = 'robyottoko.user';
 class Users {
     constructor(db) {
         this.db = db;
     }
     async get(by) {
-        return await this.db.get(TABLE$2, by) || null;
+        return await this.db.get(TABLE$3, by) || null;
     }
     async all() {
-        return await this.db.getMany(TABLE$2);
+        return await this.db.getMany(TABLE$3);
     }
     async getById(id) {
         return await this.get({ id });
@@ -3590,7 +3596,7 @@ class Users {
         return await this.get({ name });
     }
     async save(user) {
-        await this.db.upsert(TABLE$2, user, { id: user.id });
+        await this.db.upsert(TABLE$3, user, { id: user.id });
     }
     async getGroups(id) {
         const rows = await this.db._getMany(`
@@ -3600,45 +3606,45 @@ where x.user_id = $1`, [id]);
         return rows.map(r => r.name);
     }
     async createUser(user) {
-        return (await this.db.insert(TABLE$2, user));
+        return (await this.db.insert(TABLE$3, user));
     }
     async countVerifiedUsers() {
-        const rows = await this.db.getMany(TABLE$2, { status: 'verified' });
+        const rows = await this.db.getMany(TABLE$3, { status: 'verified' });
         return rows.length;
     }
 }
 
-const TABLE$1 = 'robyottoko.twitch_channel';
+const TABLE$2 = 'robyottoko.twitch_channel';
 class TwitchChannels {
     constructor(db) {
         this.db = db;
     }
     async save(channel) {
-        await this.db.upsert(TABLE$1, channel, {
+        await this.db.upsert(TABLE$2, channel, {
             user_id: channel.user_id,
             channel_name: channel.channel_name,
         });
     }
     async countUniqueUsersStreaming() {
-        const channels = await this.db.getMany(TABLE$1, { is_streaming: true });
+        const channels = await this.db.getMany(TABLE$2, { is_streaming: true });
         const userIds = [...new Set(channels.map(c => c.user_id))];
         return userIds.length;
     }
     async allByUserId(user_id) {
-        return await this.db.getMany(TABLE$1, { user_id });
+        return await this.db.getMany(TABLE$2, { user_id });
     }
     async saveUserChannels(user_id, channels) {
         for (const channel of channels) {
             await this.save(channel);
         }
-        await this.db.delete(TABLE$1, {
+        await this.db.delete(TABLE$2, {
             user_id: user_id,
             channel_name: { '$nin': channels.map(c => c.channel_name) }
         });
     }
 }
 
-const TABLE = 'robyottoko.cache';
+const TABLE$1 = 'robyottoko.cache';
 const log$f = logger('Cache.ts');
 class Cache {
     constructor(db) {
@@ -3651,7 +3657,7 @@ class Cache {
         }
         const expiresAt = lifetime === Infinity ? null : (new Date(new Date().getTime() + lifetime));
         const valueStr = JSON.stringify(value);
-        await this.db.upsert(TABLE, { key, value: valueStr, expires_at: expiresAt }, { key });
+        await this.db.upsert(TABLE$1, { key, value: valueStr, expires_at: expiresAt }, { key });
     }
     async get(key) {
         // get *non-expired* cache entry from db
@@ -4068,13 +4074,10 @@ class Mail {
 function mitt(n){return {all:n=n||new Map,on:function(t,e){var i=n.get(t);i?i.push(e):n.set(t,[e]);},off:function(t,e){var i=n.get(t);i&&(e?i.splice(i.indexOf(e)>>>0,1):n.set(t,[]));},emit:function(t,e){var i=n.get(t);i&&i.slice().map(function(n){n(e);}),(i=n.get("*"))&&i.slice().map(function(n){n(t,e);});}}}
 
 const log$c = logger('countdown.ts');
-const countdown = (originalCmd, bot, user) => async (command, client, target, context) => {
-    if (!client) {
-        return;
-    }
-    const sayFn = fn.sayFn(client, target);
+const countdown = (originalCmd, bot, user) => async (ctx) => {
+    const sayFn = bot.sayFn(user, ctx.target);
     const doReplacements = async (text) => {
-        return await fn.doReplacements(text, command, context, originalCmd, bot, user);
+        return await fn.doReplacements(text, ctx.rawCmd, ctx.context, originalCmd, bot, user);
     };
     const say = async (text) => {
         return sayFn(await doReplacements(text));
@@ -4150,96 +4153,107 @@ var Madochan = {
     defaultWeirdness: 1,
 };
 
-const madochanCreateWord = (originalCmd) => async (command, client, target, _context) => {
-    if (!client || !command) {
+const log$b = logger('madochanCreateWord.ts');
+const madochanCreateWord = (originalCmd, bot, user) => async (ctx) => {
+    if (!ctx.rawCmd) {
         return;
     }
     const model = `${originalCmd.data.model}` || Madochan.defaultModel;
     const weirdness = parseInt(originalCmd.data.weirdness, 10) || Madochan.defaultWeirdness;
-    const say = fn.sayFn(client, target);
-    const definition = command.args.join(' ');
+    const say = bot.sayFn(user, ctx.target);
+    const definition = ctx.rawCmd.args.join(' ');
     say(`Generating word for "${definition}"...`);
-    const data = await Madochan.createWord({
-        model: model,
-        weirdness: weirdness,
-        definition: definition,
-    });
-    if (data.word === '') {
-        say(`Sorry, I could not generate a word :("`);
-    }
-    else {
-        say(`"${definition}": ${data.word}`);
-    }
-};
-
-const randomText = (originalCmd, bot, user) => async (command, client, target, context) => {
-    if (!client) {
-        return;
-    }
-    const texts = originalCmd.data.text;
-    const say = fn.sayFn(client, target);
-    say(await fn.doReplacements(fn.getRandom(texts), command, context, originalCmd, bot, user));
-};
-
-const log$b = logger('playMedia.ts');
-const playMedia = (originalCmd, bot, user) => async (command, _client, _target, context) => {
-    const data = originalCmd.data;
-    data.image_url = await fn.doReplacements(data.image_url, command, context, originalCmd, bot, user);
-    if (data.video.url) {
-        log$b.debug(`clip is defined: ${data.video.url}`);
-        data.video.url = await fn.doReplacements(data.video.url, command, context, originalCmd, bot, user);
-        if (data.video.url) {
-            // if video url looks like a twitch clip url, dl it first
-            if (data.video.url.match(/^https:\/\/clips\.twitch\.tv\/.+/)) {
-                log$b.debug(`twitch clip found: ${data.video.url}`);
-                const filename = `${hash(data.video.url)}-clip.mp4`;
-                const outfile = `./data/uploads/${filename}`;
-                if (!fs.existsSync(outfile)) {
-                    log$b.debug(`downloading the clip to ${outfile}`);
-                    const child = childProcess.execFile(config.youtubeDlBinary, [data.video.url, '-o', outfile]);
-                    await new Promise((resolve) => {
-                        child.on('close', resolve);
-                    });
-                }
-                else {
-                    log$b.debug(`clip exists at ${outfile}`);
-                }
-                data.video.url = `/uploads/${filename}`;
-            }
-            else {
-                // else assume it is already a playable video url
-                // TODO: youtube videos maybe should also be downloaded
-                log$b.debug('clip is assumed to be directly playable via html5 video element');
-            }
+    try {
+        const data = await Madochan.createWord({ model, weirdness, definition });
+        if (data.word === '') {
+            say(`Sorry, I could not generate a word :("`);
         }
         else {
-            log$b.debug('no clip found');
+            say(`"${definition}": ${data.word}`);
         }
     }
+    catch (e) {
+        log$b.error(e);
+        say(`Error occured, unable to generate a word :("`);
+    }
+};
+
+const randomText = (originalCmd, bot, user) => async (ctx) => {
+    const texts = originalCmd.data.text;
+    const say = bot.sayFn(user, ctx.target);
+    say(await fn.doReplacements(fn.getRandom(texts), ctx.rawCmd, ctx.context, originalCmd, bot, user));
+};
+
+const log$a = logger('playMedia.ts');
+const isTwitchClipUrl = (url) => {
+    return !!url.match(/^https:\/\/clips\.twitch\.tv\/.+/);
+};
+const downloadVideo = async (originalUrl) => {
+    // if video url looks like a twitch clip url, dl it first
+    const filename = `${hash(originalUrl)}-clip.mp4`;
+    const outfile = `./data/uploads/${filename}`;
+    if (!fs.existsSync(outfile)) {
+        log$a.debug(`downloading the video to ${outfile}`);
+        const child = childProcess.execFile(config.youtubeDlBinary, [originalUrl, '-o', outfile]);
+        await new Promise((resolve) => {
+            child.on('close', resolve);
+        });
+    }
+    else {
+        log$a.debug(`video exists at ${outfile}`);
+    }
+    return `/uploads/${filename}`;
+};
+const prepareData = async (ctx, originalCmd, bot, user) => {
+    const doReplaces = async (str) => {
+        return await fn.doReplacements(str, ctx.rawCmd, ctx.context, originalCmd, bot, user);
+    };
+    const data = originalCmd.data;
+    data.image_url = await doReplaces(data.image_url);
+    if (!data.video.url) {
+        return data;
+    }
+    log$a.debug(`video url is defined: ${data.video.url}`);
+    data.video.url = await doReplaces(data.video.url);
+    if (!data.video.url) {
+        log$a.debug('no video url found');
+    }
+    else if (isTwitchClipUrl(data.video.url)) {
+        // video url looks like a twitch clip url, dl it first
+        log$a.debug(`twitch clip found: ${data.video.url}`);
+        data.video.url = await downloadVideo(data.video.url);
+    }
+    else {
+        // otherwise assume it is already a playable video url
+        // TODO: youtube videos maybe should also be downloaded
+        log$a.debug('video is assumed to be directly playable via html5 video element');
+    }
+    return data;
+};
+const playMedia = (originalCmd, bot, user) => async (ctx) => {
     bot.getWebSocketServer().notifyAll([user.id], 'general', {
         event: 'playmedia',
-        data: data,
+        data: await prepareData(ctx, originalCmd, bot, user),
         id: originalCmd.id
     });
 };
 
-const log$a = logger('chatters.ts');
-const chatters = (bot, user) => async (_command, client, target, context) => {
+const log$9 = logger('chatters.ts');
+const chatters = (bot, user) => async (ctx) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
-    if (!client || !context || !helixClient) {
-        log$a.info('client', client);
-        log$a.info('context', context);
-        log$a.info('helixClient', helixClient);
-        log$a.info('unable to execute chatters command, client, context, or helixClient missing');
+    if (!ctx.context || !helixClient) {
+        log$9.info('context', ctx.context);
+        log$9.info('helixClient', helixClient);
+        log$9.info('unable to execute chatters command, client, context, or helixClient missing');
         return;
     }
-    const say = fn.sayFn(client, target);
-    const stream = await helixClient.getStreamByUserId(context['room-id']);
+    const say = bot.sayFn(user, ctx.target);
+    const stream = await helixClient.getStreamByUserId(ctx.context['room-id']);
     if (!stream) {
         say(`It seems this channel is not live at the moment...`);
         return;
     }
-    const userNames = await getChatters(bot.getDb(), context['room-id'], new Date(stream.started_at));
+    const userNames = await getChatters(bot.getDb(), ctx.context['room-id'], new Date(stream.started_at));
     if (userNames.length === 0) {
         say(`It seems nobody chatted? :(`);
         return;
@@ -4250,21 +4264,20 @@ const chatters = (bot, user) => async (_command, client, target, context) => {
     });
 };
 
-const log$9 = logger('setChannelTitle.ts');
-const setChannelTitle = (originalCmd, bot, user) => async (command, client, target, context) => {
+const log$8 = logger('setChannelTitle.ts');
+const setChannelTitle = (originalCmd, bot, user) => async (ctx) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
-    if (!client || !command || !context || !helixClient) {
-        log$9.info('client', client);
-        log$9.info('command', command);
-        log$9.info('context', context);
-        log$9.info('helixClient', helixClient);
-        log$9.info('unable to execute setChannelTitle, client, command, context, or helixClient missing');
+    if (!ctx.rawCmd || !ctx.context || !helixClient) {
+        log$8.info('command', ctx.rawCmd);
+        log$8.info('context', ctx.context);
+        log$8.info('helixClient', helixClient);
+        log$8.info('unable to execute setChannelTitle, client, command, context, or helixClient missing');
         return;
     }
-    const channelId = context['room-id'];
-    const say = fn.sayFn(client, target);
+    const channelId = ctx.context['room-id'];
+    const say = bot.sayFn(user, ctx.target);
     const title = originalCmd.data.title === '' ? '$args()' : originalCmd.data.title;
-    const tmpTitle = await fn.doReplacements(title, command, context, originalCmd, bot, user);
+    const tmpTitle = await fn.doReplacements(title, ctx.rawCmd, ctx.context, originalCmd, bot, user);
     if (tmpTitle === '') {
         const info = await helixClient.getChannelInformation(channelId);
         if (info) {
@@ -4297,21 +4310,20 @@ const setChannelTitle = (originalCmd, bot, user) => async (command, client, targ
     }
 };
 
-const log$8 = logger('setChannelGameId.ts');
-const setChannelGameId = (originalCmd, bot, user) => async (command, client, target, context) => {
+const log$7 = logger('setChannelGameId.ts');
+const setChannelGameId = (originalCmd, bot, user) => async (ctx) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
-    if (!client || !command || !context || !helixClient) {
-        log$8.info('client', client);
-        log$8.info('command', command);
-        log$8.info('context', context);
-        log$8.info('helixClient', helixClient);
-        log$8.info('unable to execute setChannelGameId, client, command, context, or helixClient missing');
+    if (!ctx.rawCmd || !ctx.context || !helixClient) {
+        log$7.info('command', ctx.rawCmd);
+        log$7.info('context', ctx.context);
+        log$7.info('helixClient', helixClient);
+        log$7.info('unable to execute setChannelGameId, client, command, context, or helixClient missing');
         return;
     }
-    const channelId = context['room-id'];
-    const say = fn.sayFn(client, target);
+    const channelId = ctx.context['room-id'];
+    const say = bot.sayFn(user, ctx.target);
     const gameId = originalCmd.data.game_id === '' ? '$args()' : originalCmd.data.game_id;
-    const tmpGameId = await fn.doReplacements(gameId, command, context, originalCmd, bot, user);
+    const tmpGameId = await fn.doReplacements(gameId, ctx.rawCmd, ctx.context, originalCmd, bot, user);
     if (tmpGameId === '') {
         const info = await helixClient.getChannelInformation(channelId);
         if (info) {
@@ -4498,12 +4510,12 @@ const LANG_TO_FN = {
 for (const key of Object.keys(DictCc.LANG_TO_URL_MAP)) {
     LANG_TO_FN[key] = (phrase) => DictCc.searchWord(phrase, key);
 }
-const dictLookup = (originalCmd, bot, user) => async (command, client, target, context) => {
-    if (!client || !command) {
+const dictLookup = (originalCmd, bot, user) => async (ctx) => {
+    if (!ctx.rawCmd) {
         return [];
     }
-    const say = fn.sayFn(client, target);
-    const tmpLang = await fn.doReplacements(originalCmd.data.lang, command, context, originalCmd, bot, user);
+    const say = bot.sayFn(user, ctx.target);
+    const tmpLang = await fn.doReplacements(originalCmd.data.lang, ctx.rawCmd, ctx.context, originalCmd, bot, user);
     const dictFn = LANG_TO_FN[tmpLang] || null;
     if (!dictFn) {
         say(`Sorry, language not supported: "${tmpLang}"`);
@@ -4511,7 +4523,7 @@ const dictLookup = (originalCmd, bot, user) => async (command, client, target, c
     }
     // if no phrase is setup, use all args given to command
     const phrase = originalCmd.data.phrase === '' ? '$args()' : originalCmd.data.phrase;
-    const tmpPhrase = await fn.doReplacements(phrase, command, context, originalCmd, bot, user);
+    const tmpPhrase = await fn.doReplacements(phrase, ctx.rawCmd, ctx.context, originalCmd, bot, user);
     const items = await dictFn(tmpPhrase);
     if (items.length === 0) {
         say(`Sorry, I didn't find anything for "${tmpPhrase}" in language "${tmpLang}"`);
@@ -4522,21 +4534,20 @@ const dictLookup = (originalCmd, bot, user) => async (command, client, target, c
     }
 };
 
-const log$7 = logger('setStreamTags.ts');
-const addStreamTags = (originalCmd, bot, user) => async (command, client, target, context) => {
+const log$6 = logger('setStreamTags.ts');
+const addStreamTags = (originalCmd, bot, user) => async (ctx) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
-    if (!client || !command || !context || !helixClient) {
-        log$7.info('client', client);
-        log$7.info('command', command);
-        log$7.info('context', context);
-        log$7.info('helixClient', helixClient);
-        log$7.info('unable to execute addStreamTags, client, command, context, or helixClient missing');
+    if (!ctx.rawCmd || !ctx.context || !helixClient) {
+        log$6.info('command', ctx.rawCmd);
+        log$6.info('context', ctx.context);
+        log$6.info('helixClient', helixClient);
+        log$6.info('unable to execute addStreamTags, client, command, context, or helixClient missing');
         return;
     }
-    const channelId = context['room-id'];
-    const say = fn.sayFn(client, target);
+    const channelId = ctx.context['room-id'];
+    const say = bot.sayFn(user, ctx.target);
     const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag;
-    const tmpTag = await fn.doReplacements(tag, command, context, originalCmd, bot, user);
+    const tmpTag = await fn.doReplacements(tag, ctx.rawCmd, ctx.context, originalCmd, bot, user);
     const tagsResponse = await helixClient.getStreamTags(channelId);
     if (!tagsResponse) {
         say(`❌ Unable to fetch current tags.`);
@@ -4573,28 +4584,27 @@ const addStreamTags = (originalCmd, bot, user) => async (command, client, target
     }
     const resp = await helixClient.replaceStreamTags(accessToken, channelId, newSettableTagIds, bot, user);
     if (!resp || resp.status < 200 || resp.status >= 300) {
-        log$7.error(resp);
+        log$6.error(resp);
         say(`❌ Unable to add tag: ${tagEntry.name}`);
         return;
     }
     say(`✨ Added tag: ${tagEntry.name}`);
 };
 
-const log$6 = logger('setStreamTags.ts');
-const removeStreamTags = (originalCmd, bot, user) => async (command, client, target, context) => {
+const log$5 = logger('setStreamTags.ts');
+const removeStreamTags = (originalCmd, bot, user) => async (ctx) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
-    if (!client || !command || !context || !helixClient) {
-        log$6.info('client', client);
-        log$6.info('command', command);
-        log$6.info('context', context);
-        log$6.info('helixClient', helixClient);
-        log$6.info('unable to execute removeStreamTags, client, command, context, or helixClient missing');
+    if (!ctx.rawCmd || !ctx.context || !helixClient) {
+        log$5.info('command', ctx.rawCmd);
+        log$5.info('context', ctx.context);
+        log$5.info('helixClient', helixClient);
+        log$5.info('unable to execute removeStreamTags, client, command, context, or helixClient missing');
         return;
     }
-    const channelId = context['room-id'];
-    const say = fn.sayFn(client, target);
+    const channelId = ctx.context['room-id'];
+    const say = bot.sayFn(user, ctx.target);
     const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag;
-    const tmpTag = await fn.doReplacements(tag, command, context, originalCmd, bot, user);
+    const tmpTag = await fn.doReplacements(tag, ctx.rawCmd, ctx.context, originalCmd, bot, user);
     const tagsResponse = await helixClient.getStreamTags(channelId);
     if (!tagsResponse) {
         say(`❌ Unable to fetch current tags.`);
@@ -4668,11 +4678,10 @@ class GeneralModule {
                 if (t.lines >= t.minLines && now > t.next) {
                     const cmdDef = t.command;
                     const rawCmd = null;
-                    const client = this.bot.getUserTwitchClientManager(this.user).getChatClient();
                     const target = null;
                     const context = null;
                     await fn.applyVariableChanges(cmdDef, this, rawCmd, context);
-                    await cmdDef.fn(rawCmd, client, target, context);
+                    await cmdDef.fn({ rawCmd, target, context });
                     t.lines = 0;
                     t.next = now + t.minInterval;
                 }
@@ -4809,7 +4818,7 @@ class GeneralModule {
                     cmdObj = Object.assign({}, cmd, { fn: this.mediaVolumeCmd.bind(this) });
                     break;
                 case CommandAction.MADOCHAN_CREATEWORD:
-                    cmdObj = Object.assign({}, cmd, { fn: madochanCreateWord(cmd) });
+                    cmdObj = Object.assign({}, cmd, { fn: madochanCreateWord(cmd, this.bot, this.user) });
                     break;
                 case CommandAction.DICT_LOOKUP:
                     cmdObj = Object.assign({}, cmd, { fn: dictLookup(cmd, this.bot, this.user) });
@@ -4951,16 +4960,16 @@ class GeneralModule {
         this.data.settings.volume = vol;
         await this.save();
     }
-    async mediaVolumeCmd(command, client, target, _context) {
-        if (!client || !command) {
+    async mediaVolumeCmd(ctx) {
+        if (!ctx.rawCmd) {
             return;
         }
-        const say = fn.sayFn(client, target);
-        if (command.args.length === 0) {
+        const say = this.bot.sayFn(this.user, ctx.target);
+        if (ctx.rawCmd.args.length === 0) {
             say(`Current volume: ${this.data.settings.volume}`);
         }
         else {
-            const newVolume = determineNewVolume(command.args[0], this.data.settings.volume);
+            const newVolume = determineNewVolume(ctx.rawCmd.args[0], this.data.settings.volume);
             await this.volume(newVolume);
             say(`New volume: ${this.data.settings.volume}`);
         }
@@ -4975,7 +4984,7 @@ class GeneralModule {
     }
 }
 
-const log$5 = logger('Youtube.ts');
+const log$4 = logger('Youtube.ts');
 const get = async (url, args) => {
     args.key = config.modules.sr.google.api_key;
     const resp = await xhr.get(url + asQueryArgs(args));
@@ -4992,7 +5001,7 @@ const fetchDataByYoutubeId = async (youtubeId) => {
         return json.items[0];
     }
     catch (e) {
-        log$5.error(e, json, youtubeId);
+        log$4.error(e, json, youtubeId);
         return null;
     }
 };
@@ -5033,7 +5042,7 @@ const getYoutubeIdsBySearch = async (searchterm) => {
             }
         }
         catch (e) {
-            log$5.info(e);
+            log$4.info(e);
         }
     }
     return ids;
@@ -5113,7 +5122,7 @@ const default_settings$4 = (obj = null) => ({
     maxItemsShown: getProp(obj, ['maxItemsShown'], -1),
 });
 
-const log$4 = logger('SongrequestModule.ts');
+const log$3 = logger('SongrequestModule.ts');
 const ADD_TYPE = {
     NOT_ADDED: 0,
     ADDED: 1,
@@ -5903,11 +5912,11 @@ class SongrequestModule {
         }
     }
     cmdSrCurrent(_originalCommand) {
-        return async (command, client, target, context) => {
-            if (!client || !command || !context) {
+        return async (ctx) => {
+            if (!ctx.rawCmd || !ctx.context) {
                 return;
             }
-            const say = fn.sayFn(client, target);
+            const say = this.bot.sayFn(this.user, ctx.target);
             if (this.data.playlist.length === 0) {
                 say(`Playlist is empty`);
                 return;
@@ -5918,12 +5927,12 @@ class SongrequestModule {
         };
     }
     cmdSrUndo(_originalCommand) {
-        return async (command, client, target, context) => {
-            if (!client || !command || !context) {
+        return async (ctx) => {
+            if (!ctx.rawCmd || !ctx.context) {
                 return;
             }
-            const say = fn.sayFn(client, target);
-            const undid = await this.undo(context['display-name']);
+            const say = this.bot.sayFn(this.user, ctx.target);
+            const undid = await this.undo(ctx.context['display-name']);
             if (!undid) {
                 say(`Could not undo anything`);
             }
@@ -5933,38 +5942,38 @@ class SongrequestModule {
         };
     }
     cmdResr(_originalCommand) {
-        return async (command, client, target, context) => {
-            if (!client || !command || !context) {
-                log$4.error('cmdResr: client, command or context empty');
+        return async (ctx) => {
+            if (!ctx.rawCmd || !ctx.context) {
+                log$3.error('cmdResr: client, command or context empty');
                 return;
             }
-            const say = fn.sayFn(client, target);
-            if (command.args.length === 0) {
+            const say = this.bot.sayFn(this.user, ctx.target);
+            if (ctx.rawCmd.args.length === 0) {
                 say(`Usage: !resr SEARCH`);
                 return;
             }
-            const searchterm = command.args.join(' ');
+            const searchterm = ctx.rawCmd.args.join(' ');
             const addResponseData = await this.resr(searchterm);
             say(await this.answerAddRequest(addResponseData));
         };
     }
     cmdSrGood(_originalCommand) {
-        return async (_command, _client, _target, _context) => {
+        return async (_ctx) => {
             await this.like();
         };
     }
     cmdSrBad(_originalCommand) {
-        return async (_command, _client, _target, _context) => {
+        return async (_ctx) => {
             await this.dislike();
         };
     }
     cmdSrStats(_originalCommand) {
-        return async (command, client, target, context) => {
-            if (!client || !command || !context) {
+        return async (ctx) => {
+            if (!ctx.rawCmd || !ctx.context) {
                 return;
             }
-            const say = fn.sayFn(client, target);
-            const stats = await this.stats(context['display-name']);
+            const say = this.bot.sayFn(this.user, ctx.target);
+            const stats = await this.stats(ctx.context['display-name']);
             let number = `${stats.count.byUser}`;
             const verb = stats.count.byUser === 1 ? 'was' : 'were';
             if (stats.count.byUser === 1) {
@@ -5974,155 +5983,143 @@ class SongrequestModule {
                 number = 'none';
             }
             const countStr = `There are ${stats.count.total} songs in the playlist, `
-                + `${number} of which ${verb} requested by ${context['display-name']}.`;
+                + `${number} of which ${verb} requested by ${ctx.context['display-name']}.`;
             const durationStr = `The total duration of the playlist is ${stats.duration.human}.`;
             say([countStr, durationStr].join(' '));
         };
     }
     cmdSrPrev(_originalCommand) {
-        return async (_command, _client, _target, _context) => {
+        return async (_ctx) => {
             await this.prev();
         };
     }
     cmdSrNext(_originalCommand) {
-        return async (_command, _client, _target, _context) => {
+        return async (_ctx) => {
             await this.next();
         };
     }
     cmdSrJumpToNew(_originalCommand) {
-        return async (_command, _client, _target, _context) => {
+        return async (_ctx) => {
             await this.jumptonew();
         };
     }
     cmdSrClear(_originalCommand) {
-        return async (_command, _client, _target, _context) => {
+        return async (_ctx) => {
             await this.clear();
         };
     }
     cmdSrRm(_originalCommand) {
-        return async (_command, client, target, _context) => {
-            if (!client || !target) {
+        return async (ctx) => {
+            if (!ctx.target) {
                 return;
             }
             const removedItem = await this.remove();
             if (removedItem) {
-                const say = fn.sayFn(client, target);
+                const say = this.bot.sayFn(this.user, ctx.target);
                 say(`Removed "${removedItem.title}" from the playlist.`);
             }
         };
     }
     cmdSrShuffle(_originalCommand) {
-        return async (_command, _client, _target, _context) => {
+        return async (_ctx) => {
             await this.shuffle();
         };
     }
     cmdSrResetStats(_originalCommand) {
-        return async (_command, _client, _target, _context) => {
+        return async (_ctx) => {
             await this.resetStats();
         };
     }
     cmdSrLoop(_originalCommand) {
-        return async (_command, client, target, _context) => {
-            if (!client) {
-                return;
-            }
-            const say = fn.sayFn(client, target);
+        return async (ctx) => {
+            const say = this.bot.sayFn(this.user, ctx.target);
             await this.loop();
             say('Now looping the current song');
         };
     }
     cmdSrNoloop(_originalCommand) {
-        return async (_command, client, target, _context) => {
-            if (!client) {
-                return;
-            }
-            const say = fn.sayFn(client, target);
+        return async (ctx) => {
+            const say = this.bot.sayFn(this.user, ctx.target);
             await this.noloop();
             say('Stopped looping the current song');
         };
     }
     cmdSrAddTag(originalCmd) {
-        return async (command, client, target, context) => {
-            if (!client || !command) {
+        return async (ctx) => {
+            if (!ctx.rawCmd) {
                 return;
             }
             let tag = originalCmd.data?.tag || '$args';
-            tag = await fn.doReplacements(tag, command, context, originalCmd, this.bot, this.user);
+            tag = await fn.doReplacements(tag, ctx.rawCmd, ctx.context, originalCmd, this.bot, this.user);
             if (tag === "") {
                 return;
             }
-            const say = fn.sayFn(client, target);
+            const say = this.bot.sayFn(this.user, ctx.target);
             await this.addTag(tag);
             say(`Added tag "${tag}"`);
         };
     }
     cmdSrRmTag(_originalCommand) {
-        return async (command, client, target, _context) => {
-            if (!client || !command) {
+        return async (ctx) => {
+            if (!ctx.rawCmd) {
                 return;
             }
-            if (!command.args.length) {
+            if (!ctx.rawCmd.args.length) {
                 return;
             }
-            const say = fn.sayFn(client, target);
-            const tag = command.args.join(' ');
+            const say = this.bot.sayFn(this.user, ctx.target);
+            const tag = ctx.rawCmd.args.join(' ');
             await this.rmTag(tag);
             say(`Removed tag "${tag}"`);
         };
     }
     cmdSrPause(_originalCommand) {
-        return async (_command, _client, _target, _context) => {
+        return async (_ctx) => {
             await this.pause();
         };
     }
     cmdSrUnpause(_originalCommand) {
-        return async (_command, _client, _target, _context) => {
+        return async (_ctx) => {
             await this.unpause();
         };
     }
     cmdSrVolume(_originalCommand) {
-        return async (command, client, target, _context) => {
-            if (!client || !command) {
+        return async (ctx) => {
+            if (!ctx.rawCmd) {
                 return;
             }
-            const say = fn.sayFn(client, target);
-            if (command.args.length === 0) {
+            const say = this.bot.sayFn(this.user, ctx.target);
+            if (ctx.rawCmd.args.length === 0) {
                 say(`Current volume: ${this.data.settings.volume}`);
             }
             else {
-                const newVolume = determineNewVolume(command.args[0], this.data.settings.volume);
+                const newVolume = determineNewVolume(ctx.rawCmd.args[0], this.data.settings.volume);
                 await this.volume(newVolume);
                 say(`New volume: ${this.data.settings.volume}`);
             }
         };
     }
     cmdSrHidevideo(_originalCommand) {
-        return async (_command, client, target, _context) => {
-            if (!client) {
-                return;
-            }
-            const say = fn.sayFn(client, target);
+        return async (ctx) => {
+            const say = this.bot.sayFn(this.user, ctx.target);
             await this.videoVisibility(false);
             say(`Video is now hidden.`);
         };
     }
     cmdSrShowvideo(_originalCommand) {
-        return async (_command, client, target, _context) => {
-            if (!client) {
-                return;
-            }
-            const say = fn.sayFn(client, target);
+        return async (ctx) => {
+            const say = this.bot.sayFn(this.user, ctx.target);
             await this.videoVisibility(true);
             say(`Video is now shown.`);
         };
     }
     cmdSrFilter(_originalCommand) {
-        return async (command, client, target, context) => {
-            if (!client || !command || !context) {
+        return async (ctx) => {
+            if (!ctx.rawCmd || !ctx.context) {
                 return;
             }
-            const say = fn.sayFn(client, target);
-            const tag = command.args.join(' ');
+            const say = this.bot.sayFn(this.user, ctx.target);
+            const tag = ctx.rawCmd.args.join(' ');
             await this.filter({ tag });
             if (tag !== '') {
                 say(`Playing only songs tagged with "${tag}"`);
@@ -6133,11 +6130,8 @@ class SongrequestModule {
         };
     }
     cmdSrQueue(_originalCommand) {
-        return async (_command, client, target, _context) => {
-            if (!client) {
-                return;
-            }
-            const say = fn.sayFn(client, target);
+        return async (ctx) => {
+            const say = this.bot.sayFn(this.user, ctx.target);
             const titles = this.data.playlist.slice(1, 4).map(item => item.title);
             if (titles.length === 1) {
                 say(`${titles.length} song queued ("${titles.join('" → "')}").`);
@@ -6151,12 +6145,12 @@ class SongrequestModule {
         };
     }
     cmdSrPreset(_originalCommand) {
-        return async (command, client, target, context) => {
-            if (!client || !command || !context) {
+        return async (ctx) => {
+            if (!ctx.rawCmd || !ctx.context) {
                 return;
             }
-            const say = fn.sayFn(client, target);
-            const presetName = command.args.join(' ');
+            const say = this.bot.sayFn(this.user, ctx.target);
+            const presetName = ctx.rawCmd.args.join(' ');
             if (presetName === '') {
                 if (this.data.settings.customCssPresets.length) {
                     say(`Presets: ${this.data.settings.customCssPresets.map(preset => preset.name).join(', ')}`);
@@ -6180,27 +6174,27 @@ class SongrequestModule {
         };
     }
     cmdSr(_originalCommand) {
-        return async (command, client, target, context) => {
-            if (!client || !command || !context) {
+        return async (ctx) => {
+            if (!ctx.rawCmd || !ctx.context) {
                 return;
             }
-            const say = fn.sayFn(client, target);
-            if (command.args.length === 0) {
+            const say = this.bot.sayFn(this.user, ctx.target);
+            if (ctx.rawCmd.args.length === 0) {
                 say(`Usage: !sr YOUTUBE-URL`);
                 return;
             }
-            const str = command.args.join(' ');
+            const str = ctx.rawCmd.args.join(' ');
             let maxLenMs;
             let maxQueued;
-            if (isBroadcaster(context)) {
+            if (isBroadcaster(ctx.context)) {
                 maxLenMs = 0;
                 maxQueued = 0;
             }
-            else if (isMod(context)) {
+            else if (isMod(ctx.context)) {
                 maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.mod);
                 maxQueued = this.data.settings.maxSongsQueued.mod;
             }
-            else if (isSubscriber(context)) {
+            else if (isSubscriber(ctx.context)) {
                 maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.sub);
                 maxQueued = this.data.settings.maxSongsQueued.sub;
             }
@@ -6208,7 +6202,7 @@ class SongrequestModule {
                 maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.viewer);
                 maxQueued = this.data.settings.maxSongsQueued.viewer;
             }
-            const addResponseData = await this.add(str, context['display-name'], maxLenMs, maxQueued);
+            const addResponseData = await this.add(str, ctx.context['display-name'], maxLenMs, maxQueued);
             say(await this.answerAddRequest(addResponseData));
         };
     }
@@ -6353,42 +6347,42 @@ class VoteModule {
     getWsEvents() {
         return {};
     }
-    async vote(type, thing, client, target, context) {
-        const say = fn.sayFn(client, target);
+    async vote(type, thing, target, context) {
+        const say = this.bot.sayFn(this.user, target);
         this.data.votes[type] = this.data.votes[type] || {};
         this.data.votes[type][context['display-name']] = thing;
         say(`Thanks ${context['display-name']}, registered your "${type}" vote: ${thing}`);
         await this.save();
     }
-    async playCmd(command, client, target, context) {
-        if (!client || !command || !context || !target) {
+    async playCmd(ctx) {
+        if (!ctx.rawCmd || !ctx.context || !ctx.target) {
             return;
         }
-        const say = fn.sayFn(client, target);
-        if (command.args.length === 0) {
+        const say = this.bot.sayFn(this.user, ctx.target);
+        if (ctx.rawCmd.args.length === 0) {
             say(`Usage: !play THING`);
             return;
         }
-        const thing = command.args.join(' ');
+        const thing = ctx.rawCmd.args.join(' ');
         const type = 'play';
-        await this.vote(type, thing, client, target, context);
+        await this.vote(type, thing, ctx.target, ctx.context);
     }
-    async voteCmd(command, client, target, context) {
-        if (!client || !command || !context || !target) {
+    async voteCmd(ctx) {
+        if (!ctx.rawCmd || !ctx.context || !ctx.target) {
             return;
         }
-        const say = fn.sayFn(client, target);
+        const say = this.bot.sayFn(this.user, ctx.target);
         // maybe open up for everyone, but for now use dedicated
         // commands like !play THING
-        if (!isMod(context) && !isBroadcaster(context)) {
+        if (!isMod(ctx.context) && !isBroadcaster(ctx.context)) {
             say('Not allowed to execute !vote command');
         }
-        if (command.args.length < 2) {
+        if (ctx.rawCmd.args.length < 2) {
             say(`Usage: !vote TYPE THING`);
             return;
         }
-        if (command.args[0] === 'show') {
-            const type = command.args[1];
+        if (ctx.rawCmd.args[0] === 'show') {
+            const type = ctx.rawCmd.args[1];
             if (!this.data.votes[type]) {
                 say(`No votes for "${type}".`);
                 return;
@@ -6414,11 +6408,11 @@ class VoteModule {
             }
             return;
         }
-        if (command.args[0] === 'clear') {
-            if (!isBroadcaster(context)) {
+        if (ctx.rawCmd.args[0] === 'clear') {
+            if (!isBroadcaster(ctx.context)) {
                 say('Not allowed to execute !vote clear');
             }
-            const type = command.args[1];
+            const type = ctx.rawCmd.args[1];
             if (this.data.votes[type]) {
                 delete this.data.votes[type];
             }
@@ -6426,9 +6420,9 @@ class VoteModule {
             say(`Cleared votes for "${type}". ✨`);
             return;
         }
-        const type = command.args[0];
-        const thing = command.args.slice(1).join(' ');
-        await this.vote(type, thing, client, target, context);
+        const type = ctx.rawCmd.args[0];
+        const thing = ctx.rawCmd.args.slice(1).join(' ');
+        await this.vote(type, thing, ctx.target, ctx.context);
     }
     getCommands() {
         return [
@@ -6530,7 +6524,7 @@ class SpeechToTextModule {
     }
     getWsEvents() {
         return {
-            'onVoiceResult': async (ws, { text }) => {
+            'onVoiceResult': async (_ws, { text }) => {
                 let translated = '';
                 if (this.data.settings.translation.enabled) {
                     const scriptId = config.modules.speechToText.google.scriptId;
@@ -6553,7 +6547,7 @@ class SpeechToTextModule {
             'conn': async (ws) => {
                 await this.updateClient('init', ws);
             },
-            'save': async (ws, { settings }) => {
+            'save': async (_ws, { settings }) => {
                 this.data.settings = settings;
                 this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
                 await this.reinit();
@@ -6628,7 +6622,7 @@ const default_images = (list = null) => {
     return [];
 };
 
-const log$3 = logger('DrawcastModule.ts');
+const log$2 = logger('DrawcastModule.ts');
 class DrawcastModule {
     constructor(bot, user) {
         this.name = 'drawcast';
@@ -6723,11 +6717,11 @@ class DrawcastModule {
                     }
                 }, ws);
             },
-            'approve_image': async (ws, { path }) => {
+            'approve_image': async (_ws, { path }) => {
                 const image = this.data.images.find(item => item.path === path);
                 if (!image) {
                     // should not happen
-                    log$3.error(`approve_image: image not found: ${path}`);
+                    log$2.error(`approve_image: image not found: ${path}`);
                     return;
                 }
                 image.approved = true;
@@ -6739,11 +6733,11 @@ class DrawcastModule {
                     data: { nonce: '', img: image.path, mayNotify: false },
                 });
             },
-            'deny_image': async (ws, { path }) => {
+            'deny_image': async (_ws, { path }) => {
                 const image = this.data.images.find(item => item.path === path);
                 if (!image) {
                     // should not happen
-                    log$3.error(`deny_image: image not found: ${path}`);
+                    log$2.error(`deny_image: image not found: ${path}`);
                     return;
                 }
                 this.data.images = this.data.images.filter(item => item.path !== image.path);
@@ -6753,7 +6747,7 @@ class DrawcastModule {
                     data: { nonce: '', img: image.path, mayNotify: false },
                 });
             },
-            'post': async (ws, data) => {
+            'post': async (_ws, data) => {
                 const rel = `/uploads/drawcast/${this.user.id}`;
                 const img = fn.decodeBase64Image(data.data.img);
                 const name = `${(new Date()).toJSON()}-${nonce(6)}.${fn.mimeToExt(img.type)}`;
@@ -6771,7 +6765,7 @@ class DrawcastModule {
                     data: { nonce: data.data.nonce, img: urlPath, mayNotify: true },
                 });
             },
-            'save': async (ws, { settings }) => {
+            'save': async (_ws, { settings }) => {
                 this.data.settings = settings;
                 await this.save();
                 this.data = await this.reinit();
@@ -6818,7 +6812,7 @@ const default_settings$1 = (obj = null) => ({
     avatarDefinitions: getProp(obj, ['avatarDefinitions'], []).map(default_avatar_definition),
 });
 
-const log$2 = logger('AvatarModule.ts');
+const log$1 = logger('AvatarModule.ts');
 class AvatarModule {
     constructor(bot, user) {
         this.name = 'avatar';
@@ -6887,7 +6881,7 @@ class AvatarModule {
                         await this.save();
                     }
                     catch (e) {
-                        log$2.error('ws ctrl: unable to setSlot', tuberIdx, slotName, itemIdx);
+                        log$1.error('ws ctrl: unable to setSlot', tuberIdx, slotName, itemIdx);
                     }
                 }
                 else if (data.data.ctrl === "lockState") {
@@ -6898,7 +6892,7 @@ class AvatarModule {
                         await this.save();
                     }
                     catch (e) {
-                        log$2.error('ws ctrl: unable to lockState', tuberIdx, lockedState);
+                        log$1.error('ws ctrl: unable to lockState', tuberIdx, lockedState);
                     }
                 }
                 else if (data.data.ctrl === "setTuber") {
@@ -6947,7 +6941,7 @@ const default_state = (obj = null) => ({
     name: getProp(obj, ['name'], ''),
 });
 
-const log$1 = logger('PomoModule.ts');
+logger('PomoModule.ts');
 class PomoModule {
     constructor(bot, user) {
         this.name = 'pomo';
@@ -6979,9 +6973,9 @@ class PomoModule {
         text = text.replace(/\$pomo\.name/g, this.data.state.name);
         return text;
     }
-    async effect(effect, command, client, target, context) {
+    async effect(effect, command, target, context) {
         if (effect.chatMessage) {
-            const say = client ? fn.sayFn(client, target) : ((msg) => { log$1.info('say(), client not set, msg', msg); });
+            const say = this.bot.sayFn(this.user, target);
             say(await this.replaceText(effect.chatMessage, command, context));
         }
         this.updateClients({ event: 'effect', data: effect });
@@ -6998,7 +6992,6 @@ class PomoModule {
             if (!this.data || !this.data.state.startTs || !this.data.state.running) {
                 return;
             }
-            const client = this.bot.getUserTwitchClientManager(this.user).getChatClient();
             const dateStarted = new Date(JSON.parse(this.data.state.startTs));
             const dateEnd = new Date(dateStarted.getTime() + this.data.state.durationMs);
             const doneDate = this.data.state.doneTs ? new Date(JSON.parse(this.data.state.doneTs)) : dateStarted;
@@ -7009,7 +7002,7 @@ class PomoModule {
                 if (nDateEnd < now) {
                     // is over and should maybe be triggered!
                     if (!doneDate || nDateEnd > doneDate) {
-                        await this.effect(n.effect, command, client, null, context);
+                        await this.effect(n.effect, command, null, context);
                     }
                 }
                 else {
@@ -7019,7 +7012,7 @@ class PomoModule {
             if (dateEnd < now) {
                 // is over and should maybe be triggered!
                 if (!doneDate || dateEnd > doneDate) {
-                    await this.effect(this.data.settings.endEffect, command, client, null, context);
+                    await this.effect(this.data.settings.endEffect, command, null, context);
                 }
             }
             else {
@@ -7032,26 +7025,26 @@ class PomoModule {
             }
         }, 1 * SECOND);
     }
-    async cmdPomoStart(command, client, target, context) {
+    async cmdPomoStart(ctx) {
         this.data.state.running = true;
         this.data.state.startTs = JSON.stringify(new Date());
         this.data.state.doneTs = this.data.state.startTs;
         // todo: parse args and use that
-        this.data.state.name = command?.args.slice(1).join(' ') || '';
-        let duration = command?.args[0] || '25m';
+        this.data.state.name = ctx.rawCmd?.args.slice(1).join(' ') || '';
+        let duration = ctx.rawCmd?.args[0] || '25m';
         duration = duration.match(/^\d+$/) ? `${duration}m` : duration;
         this.data.state.durationMs = parseHumanDuration(duration);
         await this.save();
-        this.tick(command, context);
+        this.tick(ctx.rawCmd, ctx.context);
         this.updateClients(await this.wsdata('init'));
-        await this.effect(this.data.settings.startEffect, command, client, target, context);
+        await this.effect(this.data.settings.startEffect, ctx.rawCmd, ctx.target, ctx.context);
     }
-    async cmdPomoExit(command, client, target, context) {
+    async cmdPomoExit(ctx) {
         this.data.state.running = false;
         await this.save();
-        this.tick(command, context);
+        this.tick(ctx.rawCmd, ctx.context);
         this.updateClients(await this.wsdata('init'));
-        await this.effect(this.data.settings.stopEffect, command, client, target, context);
+        await this.effect(this.data.settings.stopEffect, ctx.rawCmd, ctx.target, ctx.context);
     }
     async userChanged(user) {
         this.user = user;
@@ -7111,9 +7104,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-07-24T13:05:50.439Z",
+    buildDate: "2022-07-24T17:42:13.860Z",
     // @ts-ignore
-    buildVersion: "1.21.0",
+    buildVersion: "1.22.0",
 };
 
 const widgets = [
@@ -7242,6 +7235,40 @@ class Widgets {
     }
 }
 
+const TABLE = 'robyottoko.chat_log';
+class ChatLogRepo {
+    constructor(db) {
+        this.db = db;
+    }
+    async insert(context, msg) {
+        await this.db.insert(TABLE, {
+            created_at: new Date(),
+            broadcaster_user_id: context['room-id'],
+            user_name: context.username,
+            display_name: context['display-name'],
+            message: msg,
+        });
+    }
+    async count(where) {
+        const whereObject = this.db._buildWhere(where);
+        const row = await this.db._get(`select COUNT(*) as c from ${TABLE} ${whereObject.sql}`, whereObject.values);
+        return parseInt(`${row.c}`, 10);
+    }
+    async isFirstChatAllTime(context) {
+        return await this.count({
+            broadcaster_user_id: context['room-id'],
+            user_name: context.username,
+        }) === 1;
+    }
+    async isFirstChatSince(context, date) {
+        return await this.count({
+            broadcaster_user_id: context['room-id'],
+            user_name: context.username,
+            created_at: { '$gte': date },
+        }) === 1;
+    }
+}
+
 setLogLevel(config.log.level);
 const log = logger('bot.ts');
 const modules = [
@@ -7268,6 +7295,7 @@ const createBot = async () => {
     const moduleManager = new ModuleManager();
     const webSocketServer = new WebSocketServer();
     const webServer = new WebServer();
+    const chatLog = new ChatLogRepo(db);
     class BotImpl {
         constructor() {
             this.userVariableInstances = {};
@@ -7290,8 +7318,15 @@ const createBot = async () => {
         getWebSocketServer() { return webSocketServer; }
         getWidgets() { return widgets; }
         getEventHub() { return eventHub; }
+        getChatLog() { return chatLog; }
         // user specific
         // -----------------------------------------------------------------
+        sayFn(user, target) {
+            const chatClient = this.getUserTwitchClientManager(user).getChatClient();
+            return chatClient
+                ? fn.sayFn(chatClient, target)
+                : ((msg) => { log.info('say(), client not set, msg', msg); });
+        }
         getUserVariables(user) {
             if (!this.userVariableInstances[user.id]) {
                 this.userVariableInstances[user.id] = new Variables(this.getDb(), user.id);

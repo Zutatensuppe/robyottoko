@@ -21,14 +21,14 @@ interface Identity {
 const isDevTunnel = (url: string) => url.match(/^https:\/\/[a-z0-9-]+\.(?:loca\.lt|ngrok\.io)\//)
 
 const shouldDeleteSubscription = (
-  transport: EventSubTransport,
+  configuredTransport: EventSubTransport,
   subscription: any,
   twitchChannelIds: string[]
 ) => {
-  return transport.method === subscription.transport.method
+  return configuredTransport.method === subscription.transport.method
     && (
-      transport.callback === subscription.transport.callback
-      || (isDevTunnel(transport.callback) && isDevTunnel(subscription.transport.callback))
+      configuredTransport.callback === subscription.transport.callback
+      || (isDevTunnel(configuredTransport.callback) && isDevTunnel(subscription.transport.callback))
     )
     && twitchChannelIds.includes(subscription.condition.broadcaster_user_id)
 }
@@ -108,7 +108,12 @@ class TwitchClientManager {
     })
     this.chatClient = chatClient
 
-    chatClient.on('message', async (target: string, context: TwitchChatContext, msg: string, self: boolean) => {
+    chatClient.on('message', async (
+      target: string,
+      context: TwitchChatContext,
+      msg: string,
+      self: boolean,
+    ) => {
       if (self) { return; } // Ignore messages from the bot
 
       await (new ChatEventHandler()).handle(this.bot, this.user, target, context, msg)
@@ -123,7 +128,7 @@ class TwitchClientManager {
         }
         // note: this can lead to multiple messages if multiple users
         //       have the same channels set up
-        const say = fn.sayFn(chatClient, channel.channel_name)
+        const say = this.bot.sayFn(user, channel.channel_name)
         if (connectReason === 'init') {
           say('⚠️ Bot rebooted - please restart timers...')
         } else if (connectReason === 'access_token_refreshed') {
