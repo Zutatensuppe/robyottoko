@@ -311,6 +311,8 @@ class GeneralModule implements Module {
           commands.push(cmdObj)
         } else if (trigger.type === CommandTriggerType.SUB) {
           commands.push(cmdObj)
+        } else if (trigger.type === CommandTriggerType.RAID) {
+          commands.push(cmdObj)
         } else if (trigger.type === CommandTriggerType.BITS) {
           commands.push(cmdObj)
         } else if (trigger.type === CommandTriggerType.TIMER) {

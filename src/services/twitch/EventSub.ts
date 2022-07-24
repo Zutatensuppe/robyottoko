@@ -4,6 +4,7 @@
 export enum SubscriptionType {
   ChannelFollow = 'channel.follow',
   ChannelCheer = 'channel.cheer',
+  ChannelRaid = 'channel.raid',
   ChannelSubscribe = 'channel.subscribe',
   ChannelPointsCustomRewardRedemptionAdd = 'channel.channel_points_custom_reward_redemption.add',
   StreamOnline = 'stream.online',

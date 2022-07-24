@@ -110,6 +110,14 @@
         </button>
       </div>
     </div>
+    <div v-else-if="value.type === 'raid'" class="field has-addons">
+      Raid
+      <div class="control">
+        <button class="button is-small" :disabled="!removable" @click="emitRemove">
+          <i class="fa fa-remove" />
+        </button>
+      </div>
+    </div>
     <div v-else>
       Unknown trigger: {{ value }}
       <div class="control">

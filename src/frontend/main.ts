@@ -47,6 +47,7 @@ import CommandsMadochanCreatewordCommandEditor from "./components/Commands/Madoc
 import CommandsCommandsEditor from "./components/Commands/CommandsEditor.vue";
 import CommandsCountdownEditor from "./components/Commands/CountdownEditor.vue";
 import CommandsTriggerEditor from "./components/Commands/TriggerEditor.vue";
+import CommandsTriggerInfo from "./components/Commands/TriggerInfo.vue";
 
 import SongRequestPlaylistEditor from "./components/SongRequest/PlaylistEditor.vue";
 import SongRequestSettings from "./components/SongRequest/Settings.vue";
@@ -217,6 +218,7 @@ const run = async () => {
   app.component('madochan-createword-command-editor', CommandsMadochanCreatewordCommandEditor)
   app.component('countdown-editor', CommandsCountdownEditor)
   app.component('trigger-editor', CommandsTriggerEditor)
+  app.component('trigger-info', CommandsTriggerInfo)
   // songrequest - maybe dont register these globally?
   app.component('playlist-editor', SongRequestPlaylistEditor)
   app.component('tags-editor', SongRequestTagsEditor)

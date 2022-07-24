@@ -345,6 +345,7 @@ class TwitchClientManager {
     this.log.debug(resp)
   }
 
+  // TODO: remove/move
   async executeMatchingCommands(
     rawCmd: RawCommand,
     target: string,

@@ -8,8 +8,9 @@ export const possibleTriggerActions = () => ([
     label: "Add Reward Redemption",
     title: "Reward Redemption",
   },
-  { type: CommandTriggerType.SUB, label: "Add Sub", title: "Sub" },
   { type: CommandTriggerType.BITS, label: "Add Bits", title: "Bits" },
   { type: CommandTriggerType.FOLLOW, label: "Add Follow", title: "Follow" },
+  { type: CommandTriggerType.RAID, label: "Add Raid", title: "Raid" },
+  { type: CommandTriggerType.SUB, label: "Add Sub", title: "Sub" },
   { type: CommandTriggerType.TIMER, label: "Add Timer", title: "Timer" },
 ])
