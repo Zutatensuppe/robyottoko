@@ -46,8 +46,7 @@
               <td>
                 <input class="input is-small spaceinput mb-1" v-model="item.data.phrase" />
                 <span class="button is-small mr-1" @click="item.data.phrase = ''">All args</span>
-                <span class="button is-small mr-1"
-                  @click="item.data.phrase = '$args(1:)'"><code>$args(1:)</code></span>
+                <span class="button is-small mr-1" @click="item.data.phrase = '$args(1:)'"><code>$args(1:)</code></span>
               </td>
             </tr>
             <tr>
@@ -178,7 +177,6 @@ import {
 } from "../../../common/commands";
 import {
   CommandTrigger,
-  CommandTriggerType,
   CommandVariable,
   CommandVariableChange,
   DictLookupCommand,

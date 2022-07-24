@@ -60,17 +60,10 @@ export const newTrigger = (type: CommandTriggerType): CommandTrigger => ({
   },
 })
 
-export const newSubscribeTrigger = (): CommandTrigger => {
-  return newTrigger(CommandTriggerType.SUB)
-}
-
-export const newFollowTrigger = (): CommandTrigger => {
-  return newTrigger(CommandTriggerType.FOLLOW)
-}
-
-export const newBitsTrigger = (): CommandTrigger => {
-  return newTrigger(CommandTriggerType.BITS)
-}
+export const newSubscribeTrigger = (): CommandTrigger => newTrigger(CommandTriggerType.SUB)
+export const newFollowTrigger = (): CommandTrigger => newTrigger(CommandTriggerType.FOLLOW)
+export const newBitsTrigger = (): CommandTrigger => newTrigger(CommandTriggerType.BITS)
+export const newRaidTrigger = (): CommandTrigger => newTrigger(CommandTriggerType.RAID)
 
 export const newRewardRedemptionTrigger = (command: string = ''): CommandTrigger => {
   const trigger = newTrigger(CommandTriggerType.REWARD_REDEMPTION)
@@ -118,6 +111,8 @@ const triggersEqual = (a: CommandTrigger, b: CommandTrigger): boolean => {
   } else if (a.type === CommandTriggerType.FOLLOW) {
     return true
   } else if (a.type === CommandTriggerType.BITS) {
+    return true
+  } else if (a.type === CommandTriggerType.RAID) {
     return true
   }
   return false

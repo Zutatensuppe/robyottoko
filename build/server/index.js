@@ -315,7 +315,7 @@ const mayExecute = (context, cmd) => {
     return false;
 };
 
-const log$p = logger('fn.ts');
+const log$w = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
         return mime.replace('image/', '');
@@ -355,9 +355,9 @@ const sayFn = (client, target) => (msg) => {
         // TODO: fix this somewhere else?
         // client can only say things in lowercase channels
         t = t.toLowerCase();
-        log$p.info(`saying in ${t}: ${msg}`);
+        log$w.info(`saying in ${t}: ${msg}`);
         client.say(t, msg).catch((e) => {
-            log$p.info(e);
+            log$w.info(e);
         });
     });
 };
@@ -429,15 +429,15 @@ const tryExecuteCommand = async (contextModule, rawCmd, cmdDefs, target, context
         if (!mayExecute(context, cmdDef)) {
             continue;
         }
-        log$p.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`);
+        log$w.info(`${target}| * Executing ${rawCmd?.name || '<unknown>'} command`);
         // eslint-disable-next-line no-async-promise-executor
         const p = new Promise(async (resolve) => {
             await applyVariableChanges(cmdDef, contextModule, rawCmd, context);
             const r = await cmdDef.fn(rawCmd, client, target, context);
             if (r) {
-                log$p.info(`${target}| * Returned: ${r}`);
+                log$w.info(`${target}| * Returned: ${r}`);
             }
-            log$p.info(`${target}| * Executed ${rawCmd?.name || '<unknown>'} command`);
+            log$w.info(`${target}| * Executed ${rawCmd?.name || '<unknown>'} command`);
             resolve(true);
         });
         promises.push(p);
@@ -585,7 +585,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
                     return String(JSON.parse(txt)[m2]);
                 }
                 catch (e) {
-                    log$p.error(e);
+                    log$w.error(e);
                     return '';
                 }
             },
@@ -599,7 +599,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
                     return await resp.text();
                 }
                 catch (e) {
-                    log$p.error(e);
+                    log$w.error(e);
                     return '';
                 }
             },
@@ -1014,7 +1014,7 @@ class ModuleManager {
     }
 }
 
-const log$o = logger("WebSocketServer.ts");
+const log$v = logger("WebSocketServer.ts");
 class WebSocketServer {
     constructor() {
         this._websocketserver = null;
@@ -1051,19 +1051,19 @@ class WebSocketServer {
                 socket.user_id = parseInt(token, 10);
             }
             socket.module = moduleName;
-            log$o.info('added socket: ', moduleName, socket.protocol);
-            log$o.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
+            log$v.info('added socket: ', moduleName, socket.protocol);
+            log$v.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
             socket.on('close', () => {
-                log$o.info('removed socket: ', moduleName, socket.protocol);
-                log$o.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
+                log$v.info('removed socket: ', moduleName, socket.protocol);
+                log$v.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
             });
             if (request.url?.indexOf(pathname) !== 0) {
-                log$o.info('bad request url: ', request.url);
+                log$v.info('bad request url: ', request.url);
                 socket.close();
                 return;
             }
             if (!socket.user_id) {
-                log$o.info('not found token: ', token, relpath);
+                log$v.info('not found token: ', token, relpath);
                 socket.close();
                 return;
             }
@@ -1094,7 +1094,7 @@ class WebSocketServer {
                     }
                 }
                 catch (e) {
-                    log$o.error('socket on message', e);
+                    log$v.error('socket on message', e);
                 }
             });
         });
@@ -1103,7 +1103,7 @@ class WebSocketServer {
         return !!this.sockets().find(s => s.user_id === user_id);
     }
     _notify(socket, data) {
-        log$o.info(`notifying ${socket.user_id} ${socket.module} (${data.event})`);
+        log$v.info(`notifying ${socket.user_id} ${socket.module} (${data.event})`);
         socket.send(JSON.stringify(data));
     }
     notifyOne(user_ids, moduleName, data, socket) {
@@ -1115,7 +1115,7 @@ class WebSocketServer {
             this._notify(socket, data);
         }
         else {
-            log$o.error('tried to notify invalid socket', socket.user_id, socket.module, user_ids, moduleName, isConnectedSocket);
+            log$v.error('tried to notify invalid socket', socket.user_id, socket.module, user_ids, moduleName, isConnectedSocket);
         }
     }
     notifyAll(user_ids, moduleName, data) {
@@ -1142,7 +1142,7 @@ class WebSocketServer {
     }
 }
 
-const log$n = logger('Templates.ts');
+const log$u = logger('Templates.ts');
 class Templates {
     constructor(baseDir) {
         this.templates = {};
@@ -1159,7 +1159,7 @@ class Templates {
                 tmpl.templateContents = (await promises.readFile(tmpl.templatePathAbsolute)).toString();
             }
             catch (e) {
-                log$n.error('error loading template', e);
+                log$u.error('error loading template', e);
                 tmpl.templateContents = '';
             }
         }
@@ -1169,7 +1169,7 @@ class Templates {
     }
 }
 
-const log$m = logger('oauth.ts');
+const log$t = logger('oauth.ts');
 const TABLE$5 = 'robyottoko.oauth_token';
 const getMatchingAccessToken = async (channelId, bot, user) => {
     const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id);
@@ -1217,7 +1217,7 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
     });
     twitchChannel.access_token = refreshResp.access_token;
     await bot.getTwitchChannels().save(twitchChannel);
-    log$m.info('tryRefreshAccessToken - refreshed an access token');
+    log$t.info('tryRefreshAccessToken - refreshed an access token');
     return refreshResp.access_token;
 };
 // TODO: check if anything has to be put in a try catch block
@@ -1268,7 +1268,7 @@ const refreshExpiredTwitchChannelAccessToken = async (twitchChannel, bot, user) 
     // update the twitch channel in the database
     twitchChannel.access_token = refreshResp.access_token;
     await bot.getTwitchChannels().save(twitchChannel);
-    log$m.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
+    log$t.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
     return { error: false, refreshed: true };
 };
 // TODO: check if anything has to be put in a try catch block
@@ -1315,6 +1315,930 @@ const handleOAuthCodeCallback = async (code, redirectUri, bot, user) => {
     }
     return { error: false, updated };
 };
+
+var CommandTriggerType;
+(function (CommandTriggerType) {
+    CommandTriggerType["COMMAND"] = "command";
+    CommandTriggerType["REWARD_REDEMPTION"] = "reward_redemption";
+    CommandTriggerType["FOLLOW"] = "follow";
+    CommandTriggerType["SUB"] = "sub";
+    CommandTriggerType["BITS"] = "bits";
+    CommandTriggerType["RAID"] = "raid";
+    CommandTriggerType["TIMER"] = "timer";
+    CommandTriggerType["FIRST_CHAT"] = "first_chat";
+})(CommandTriggerType || (CommandTriggerType = {}));
+var CommandAction;
+(function (CommandAction) {
+    // general
+    CommandAction["TEXT"] = "text";
+    CommandAction["MEDIA"] = "media";
+    CommandAction["MEDIA_VOLUME"] = "media_volume";
+    CommandAction["COUNTDOWN"] = "countdown";
+    CommandAction["DICT_LOOKUP"] = "dict_lookup";
+    CommandAction["MADOCHAN_CREATEWORD"] = "madochan_createword";
+    CommandAction["CHATTERS"] = "chatters";
+    CommandAction["SET_CHANNEL_TITLE"] = "set_channel_title";
+    CommandAction["SET_CHANNEL_GAME_ID"] = "set_channel_game_id";
+    CommandAction["ADD_STREAM_TAGS"] = "add_stream_tags";
+    CommandAction["REMOVE_STREAM_TAGS"] = "remove_stream_tags";
+    // song request
+    CommandAction["SR_CURRENT"] = "sr_current";
+    CommandAction["SR_UNDO"] = "sr_undo";
+    CommandAction["SR_GOOD"] = "sr_good";
+    CommandAction["SR_BAD"] = "sr_bad";
+    CommandAction["SR_STATS"] = "sr_stats";
+    CommandAction["SR_PREV"] = "sr_prev";
+    CommandAction["SR_NEXT"] = "sr_next";
+    CommandAction["SR_JUMPTONEW"] = "sr_jumptonew";
+    CommandAction["SR_CLEAR"] = "sr_clear";
+    CommandAction["SR_RM"] = "sr_rm";
+    CommandAction["SR_SHUFFLE"] = "sr_shuffle";
+    CommandAction["SR_RESET_STATS"] = "sr_reset_stats";
+    CommandAction["SR_LOOP"] = "sr_loop";
+    CommandAction["SR_NOLOOP"] = "sr_noloop";
+    CommandAction["SR_PAUSE"] = "sr_pause";
+    CommandAction["SR_UNPAUSE"] = "sr_unpause";
+    CommandAction["SR_HIDEVIDEO"] = "sr_hidevideo";
+    CommandAction["SR_SHOWVIDEO"] = "sr_showvideo";
+    CommandAction["SR_REQUEST"] = "sr_request";
+    CommandAction["SR_RE_REQUEST"] = "sr_re_request";
+    CommandAction["SR_ADDTAG"] = "sr_addtag";
+    CommandAction["SR_RMTAG"] = "sr_rmtag";
+    CommandAction["SR_VOLUME"] = "sr_volume";
+    CommandAction["SR_FILTER"] = "sr_filter";
+    CommandAction["SR_PRESET"] = "sr_preset";
+    CommandAction["SR_QUEUE"] = "sr_queue";
+})(CommandAction || (CommandAction = {}));
+var CountdownActionType;
+(function (CountdownActionType) {
+    CountdownActionType["TEXT"] = "text";
+    CountdownActionType["MEDIA"] = "media";
+    CountdownActionType["DELAY"] = "delay";
+})(CountdownActionType || (CountdownActionType = {}));
+
+const newText = () => '';
+const newSoundMediaFile = (obj = null) => ({
+    filename: getProp(obj, ['filename'], ''),
+    file: getProp(obj, ['file'], ''),
+    urlpath: getProp(obj, ['urlpath'], ''),
+    volume: getProp(obj, ['volume'], 100),
+});
+const newMediaFile = (obj = null) => ({
+    filename: getProp(obj, ['filename'], ''),
+    file: getProp(obj, ['file'], ''),
+    urlpath: getProp(obj, ['urlpath'], ''),
+});
+const newMediaVideo = (obj = null) => ({
+    // video identified by url
+    url: getProp(obj, ['url'], ''),
+    volume: getProp(obj, ['volume'], 100),
+});
+const newMedia = (obj = null) => ({
+    widgetIds: getProp(obj, ['widgetIds'], []),
+    sound: newSoundMediaFile(obj?.sound),
+    image: newMediaFile(obj?.image),
+    image_url: getProp(obj, ['image_url'], ''),
+    video: newMediaVideo(obj?.video),
+    minDurationMs: getProp(obj, ['minDurationMs'], '1s'),
+});
+const newTrigger = (type) => ({
+    type,
+    data: {
+        // for trigger type "command" (todo: should only exist if type is command, not always)
+        command: '',
+        commandExact: false,
+        // for trigger type "timer" (todo: should only exist if type is timer, not always)
+        minInterval: 0,
+        minLines: 0,
+        // for trigger type "first_chat"
+        since: 'stream',
+    },
+});
+const newSubscribeTrigger = () => newTrigger(CommandTriggerType.SUB);
+const newFollowTrigger = () => newTrigger(CommandTriggerType.FOLLOW);
+const newBitsTrigger = () => newTrigger(CommandTriggerType.BITS);
+const newRaidTrigger = () => newTrigger(CommandTriggerType.RAID);
+const newRewardRedemptionTrigger = (command = '') => {
+    const trigger = newTrigger(CommandTriggerType.REWARD_REDEMPTION);
+    trigger.data.command = command;
+    return trigger;
+};
+const newCommandTrigger = (command = '', commandExact = false) => {
+    const trigger = newTrigger(CommandTriggerType.COMMAND);
+    trigger.data.command = command;
+    trigger.data.commandExact = commandExact;
+    return trigger;
+};
+const triggersEqual = (a, b) => {
+    if (a.type !== b.type) {
+        return false;
+    }
+    if (a.type === CommandTriggerType.COMMAND) {
+        if (a.data.command === b.data.command) {
+            // no need to check for commandExact here (i think^^)
+            return true;
+        }
+    }
+    else if (a.type === CommandTriggerType.REWARD_REDEMPTION) {
+        if (a.data.command === b.data.command) {
+            return true;
+        }
+    }
+    else if (a.type === CommandTriggerType.TIMER) {
+        if (a.data.minInterval === b.data.minInterval
+            && a.data.minLines === b.data.minLines) {
+            return true;
+        }
+    }
+    else if (a.type === CommandTriggerType.FIRST_CHAT) {
+        return true;
+    }
+    else if (a.type === CommandTriggerType.SUB) {
+        return true;
+    }
+    else if (a.type === CommandTriggerType.FOLLOW) {
+        return true;
+    }
+    else if (a.type === CommandTriggerType.BITS) {
+        return true;
+    }
+    else if (a.type === CommandTriggerType.RAID) {
+        return true;
+    }
+    return false;
+};
+const commandHasAnyTrigger = (command, triggers) => {
+    for (const cmdTrigger of command.triggers) {
+        for (const trigger of triggers) {
+            if (triggersEqual(cmdTrigger, trigger)) {
+                return true;
+            }
+        }
+    }
+    return false;
+};
+const getUniqueCommandsByTriggers = (commands, triggers) => {
+    const tmp = commands.filter((command) => commandHasAnyTrigger(command, triggers));
+    return tmp.filter((item, i, ar) => ar.indexOf(item) === i);
+};
+const commands = {
+    add_stream_tags: {
+        Name: () => "add_stream_tags command",
+        Description: () => "Add streamtag",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            triggers: [newCommandTrigger()],
+            action: CommandAction.ADD_STREAM_TAGS,
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {
+                tag: ''
+            },
+        }),
+        RequiresAccessToken: () => true,
+    },
+    chatters: {
+        Name: () => "chatters command",
+        Description: () => "Outputs the people who chatted during the stream.",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            triggers: [newCommandTrigger()],
+            action: CommandAction.CHATTERS,
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    countdown: {
+        Name: () => "countdown",
+        Description: () => "Add a countdown or messages spaced by time intervals.",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            triggers: [newCommandTrigger()],
+            action: CommandAction.COUNTDOWN,
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {
+                type: 'auto',
+                step: '',
+                steps: '3',
+                interval: '1s',
+                intro: 'Starting countdown...',
+                outro: 'Done!',
+                actions: []
+            },
+        }),
+        RequiresAccessToken: () => false,
+    },
+    dict_lookup: {
+        Name: () => "dictionary lookup",
+        Description: () => "Outputs the translation for the searched word.",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            triggers: [newCommandTrigger()],
+            action: CommandAction.DICT_LOOKUP,
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {
+                lang: 'ja',
+                phrase: '',
+            },
+        }),
+        RequiresAccessToken: () => false,
+    },
+    madochan_createword: {
+        Name: () => "madochan",
+        Description: () => "Creates a word for a definition.",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            triggers: [newCommandTrigger()],
+            action: CommandAction.MADOCHAN_CREATEWORD,
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {
+                // TODO: use from same resource as server
+                model: '100epochs800lenhashingbidirectional.h5',
+                weirdness: '1',
+            },
+        }),
+        RequiresAccessToken: () => false,
+    },
+    media: {
+        Name: () => "media command",
+        Description: () => "Display an image and/or play a sound.",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            triggers: [newCommandTrigger()],
+            action: CommandAction.MEDIA,
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: newMedia(),
+        }),
+        RequiresAccessToken: () => false,
+    },
+    media_volume: {
+        Name: () => "media volume command",
+        Description: () => `Sets the media volume to <code>&lt;VOLUME&gt;</code> (argument to this command, min 0, max 100).
+    <br />
+    If no argument is given, just outputs the current volume`,
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            triggers: [newCommandTrigger()],
+            action: CommandAction.MEDIA_VOLUME,
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    text: {
+        Name: () => "command",
+        Description: () => "Send a message to chat",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            triggers: [newCommandTrigger()],
+            action: CommandAction.TEXT,
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {
+                text: [newText()],
+            },
+        }),
+        RequiresAccessToken: () => false,
+    },
+    remove_stream_tags: {
+        Name: () => "remove_stream_tags command",
+        Description: () => "Remove streamtag",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            triggers: [newCommandTrigger()],
+            action: CommandAction.REMOVE_STREAM_TAGS,
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {
+                tag: ''
+            },
+        }),
+        RequiresAccessToken: () => true,
+    },
+    set_channel_game_id: {
+        Name: () => "change stream category command",
+        Description: () => "Change the stream category",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            triggers: [newCommandTrigger()],
+            action: CommandAction.SET_CHANNEL_GAME_ID,
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {
+                game_id: ''
+            },
+        }),
+        RequiresAccessToken: () => true,
+    },
+    set_channel_title: {
+        Name: () => "change stream title command",
+        Description: () => "Change the stream title",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            triggers: [newCommandTrigger()],
+            action: CommandAction.SET_CHANNEL_TITLE,
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {
+                title: ''
+            },
+        }),
+        RequiresAccessToken: () => true,
+    },
+    sr_current: {
+        Name: () => "sr_current",
+        Description: () => "Show what song is currently playing",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_CURRENT,
+            triggers: [newCommandTrigger('!sr current', true)],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_undo: {
+        Name: () => "sr_undo",
+        Description: () => "Remove the song that was last added by oneself.",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_UNDO,
+            triggers: [newCommandTrigger('!sr undo', true)],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_good: {
+        Name: () => "sr_good",
+        Description: () => "Vote the current song up",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_GOOD,
+            triggers: [newCommandTrigger('!sr good', true)],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_bad: {
+        Name: () => "sr_bad",
+        Description: () => "Vote the current song down",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_BAD,
+            triggers: [newCommandTrigger('!sr bad', true)],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_stats: {
+        Name: () => "sr_stats",
+        Description: () => "Show stats about the playlist",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_STATS,
+            triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_prev: {
+        Name: () => "sr_prev",
+        Description: () => "Skip to the previous song",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_PREV,
+            triggers: [newCommandTrigger('!sr prev', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_next: {
+        Name: () => "sr_next",
+        Description: () => "Skip to the next song",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_NEXT,
+            triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_jumptonew: {
+        Name: () => "sr_jumptonew",
+        Description: () => "Jump to the next unplayed song",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_JUMPTONEW,
+            triggers: [newCommandTrigger('!sr jumptonew', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_clear: {
+        Name: () => "sr_clear",
+        Description: () => "Clear the playlist",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_CLEAR,
+            triggers: [newCommandTrigger('!sr clear', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_rm: {
+        Name: () => "sr_rm",
+        Description: () => "Remove the current song from the playlist",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_RM,
+            triggers: [newCommandTrigger('!sr rm', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_shuffle: {
+        Name: () => "sr_shuffle",
+        Description: () => `Shuffle the playlist (current song unaffected).
+    <br />
+    Non-played and played songs will be shuffled separately and non-played
+    songs will be put after currently playing song.`,
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_SHUFFLE,
+            triggers: [newCommandTrigger('!sr shuffle', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_reset_stats: {
+        Name: () => "sr_reset_stats",
+        Description: () => "Reset all statistics of all songs",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_RESET_STATS,
+            triggers: [newCommandTrigger('!sr resetStats', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_loop: {
+        Name: () => "sr_loop",
+        Description: () => "Loop the current song",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_LOOP,
+            triggers: [newCommandTrigger('!sr loop', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_noloop: {
+        Name: () => "sr_noloop",
+        Description: () => "Stop looping the current song",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_NOLOOP,
+            triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_pause: {
+        Name: () => "sr_pause",
+        Description: () => "Pause currently playing song",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_PAUSE,
+            triggers: [newCommandTrigger('!sr pause', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_unpause: {
+        Name: () => "sr_unpause",
+        Description: () => "Unpause currently paused song",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_UNPAUSE,
+            triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_hidevideo: {
+        Name: () => "sr_hidevideo",
+        Description: () => "Hide video for current song",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_HIDEVIDEO,
+            triggers: [newCommandTrigger('!sr hidevideo', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_showvideo: {
+        Name: () => "sr_showvideo",
+        Description: () => "Show video for current song",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_SHOWVIDEO,
+            triggers: [newCommandTrigger('!sr showvideo', true)],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_request: {
+        Name: () => "sr_request",
+        Description: () => `
+    Search for <code>&lt;SEARCH&gt;</code> (argument to this command)
+    at youtube (by id or by title)
+    and queue the first result in the playlist (after the first found
+    batch of unplayed songs).`,
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_REQUEST,
+            triggers: [newCommandTrigger('!sr')],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_re_request: {
+        Name: () => "sr_re_request",
+        Description: () => `
+    Search for <code>&lt;SEARCH&gt;</code> (argument to this command)
+    in the current playlist and queue the first result in the playlist
+    (after the first found batch of unplayed songs).`,
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_RE_REQUEST,
+            triggers: [newCommandTrigger('!resr')],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_addtag: {
+        Name: () => "sr_addtag",
+        Description: () => "Add tag <code>&lt;TAG&gt;</code> (argument to this command) to the current song",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_ADDTAG,
+            triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {
+                tag: "",
+            },
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_rmtag: {
+        Name: () => "sr_rmtag",
+        Description: () => "Remove tag <code>&lt;TAG&gt;</code> (argument to this command) from the current song",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_RMTAG,
+            triggers: [newCommandTrigger('!sr rmtag')],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_volume: {
+        Name: () => "sr_volume",
+        Description: () => `Sets the song request volume to <code>&lt;VOLUME&gt;</code> (argument to this command, min 0, max 100).
+    <br />
+    If no argument is given, just outputs the current volume`,
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_VOLUME,
+            triggers: [newCommandTrigger('!sr volume')],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_filter: {
+        Name: () => "sr_filter",
+        Description: () => `Play only songs with the given tag <code>&lt;TAG&gt;</code> (argument to this command). If no tag
+  is given, play all songs.`,
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_FILTER,
+            triggers: [newCommandTrigger('!sr filter')],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_preset: {
+        Name: () => "sr_preset",
+        Description: () => `Switches to the preset <code>&lt;PRESET&gt;</code> (argument to this command) if it exists.
+  If no arguments are given, outputs all available presets.`,
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_PRESET,
+            triggers: [newCommandTrigger('!sr preset')],
+            restrict_to: MOD_OR_ABOVE,
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+    sr_queue: {
+        Name: () => "sr_queue",
+        Description: () => `Shows the next 3 songs that will play.`,
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            action: CommandAction.SR_QUEUE,
+            triggers: [newCommandTrigger('!sr queue')],
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {},
+        }),
+        RequiresAccessToken: () => false,
+    },
+};
+
+const log$s = logger('SubscribeEventHandler.ts');
+class SubscribeEventHandler {
+    // TODO: use better type info
+    async handle(tcm, data) {
+        log$s.info('handle');
+        const rawCmd = {
+            name: 'channel.subscribe',
+            args: [],
+        };
+        const target = data.event.broadcaster_user_name;
+        const context = {
+            "room-id": data.event.broadcaster_user_id,
+            "user-id": data.event.user_id,
+            "display-name": data.event.user_name,
+            username: data.event.user_login,
+            mod: false,
+            subscriber: true, // user just subscribed, so it is a subscriber
+        };
+        const trigger = newSubscribeTrigger();
+        await tcm.executeMatchingCommands(rawCmd, target, context, trigger);
+    }
+}
+
+const log$r = logger('FollowEventHandler.ts');
+class FollowEventHandler {
+    // TODO: use better type info
+    async handle(tcm, data) {
+        log$r.info('handle');
+        const rawCmd = {
+            name: 'channel.follow',
+            args: [],
+        };
+        const target = data.event.broadcaster_user_name;
+        const context = {
+            "room-id": data.event.broadcaster_user_id,
+            "user-id": data.event.user_id,
+            "display-name": data.event.user_name,
+            username: data.event.user_login,
+            mod: false,
+            subscriber: false, // unknown
+        };
+        const trigger = newFollowTrigger();
+        await tcm.executeMatchingCommands(rawCmd, target, context, trigger);
+    }
+}
+
+const log$q = logger('CheerEventHandler.ts');
+class CheerEventHandler {
+    // TODO: use better type info
+    async handle(tcm, data) {
+        log$q.info('handle');
+        const rawCmd = {
+            name: 'channel.cheer',
+            args: [],
+        };
+        const target = data.event.broadcaster_user_name;
+        const context = {
+            "room-id": data.event.broadcaster_user_id,
+            "user-id": data.event.user_id,
+            "display-name": data.event.user_name,
+            username: data.event.user_login,
+            mod: false,
+            subscriber: false, // unknown
+        };
+        const trigger = newBitsTrigger();
+        await tcm.executeMatchingCommands(rawCmd, target, context, trigger);
+    }
+}
+
+const log$p = logger('ChannelPointRedeemEventHandler.ts');
+class ChannelPointRedeemEventHandler {
+    async handle(tcm, data) {
+        log$p.info('handle');
+        const rawCmd = {
+            name: data.event.reward.title,
+            args: data.event.user_input ? [data.event.user_input] : [],
+        };
+        const target = data.event.broadcaster_user_name;
+        const context = {
+            "room-id": data.event.broadcaster_user_id,
+            "user-id": data.event.user_id,
+            "display-name": data.event.user_name,
+            username: data.event.user_login,
+            mod: false,
+            subscriber: false, // unknown
+        };
+        const trigger = newRewardRedemptionTrigger(data.event.reward.title);
+        await tcm.executeMatchingCommands(rawCmd, target, context, trigger);
+    }
+}
+
+// https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types
+var SubscriptionType;
+(function (SubscriptionType) {
+    SubscriptionType["ChannelFollow"] = "channel.follow";
+    SubscriptionType["ChannelCheer"] = "channel.cheer";
+    SubscriptionType["ChannelRaid"] = "channel.raid";
+    SubscriptionType["ChannelSubscribe"] = "channel.subscribe";
+    SubscriptionType["ChannelPointsCustomRewardRedemptionAdd"] = "channel.channel_points_custom_reward_redemption.add";
+    SubscriptionType["StreamOnline"] = "stream.online";
+    SubscriptionType["StreamOffline"] = "stream.offline";
+})(SubscriptionType || (SubscriptionType = {}));
+const ALL_SUBSCRIPTIONS_TYPES = Object.values(SubscriptionType);
+
+const log$o = logger('StreamOnlineEventHandler.ts');
+class StreamOnlineEventHandler {
+    async handle(bot, data) {
+        log$o.info('handle');
+        // insert new stream
+        await bot.getDb().insert('robyottoko.streams', {
+            broadcaster_user_id: data.event.broadcaster_user_id,
+            started_at: new Date(data.event.started_at),
+        });
+    }
+}
+
+const log$n = logger('StreamOfflineEventHandler.ts');
+class StreamOfflineEventHandler {
+    async handle(bot, data) {
+        log$n.info('handle');
+        // get last started stream for broadcaster
+        // if it exists and it didnt end yet set ended_at date
+        const stream = await bot.getDb().get('robyottoko.streams', {
+            broadcaster_user_id: data.event.broadcaster_user_id,
+        }, [{ started_at: -1 }]);
+        if (stream) {
+            if (!stream.ended_at) {
+                await bot.getDb().update('robyottoko.streams', {
+                    ended_at: new Date(),
+                }, { id: stream.id });
+            }
+        }
+    }
+}
+
+const log$m = logger('RaidEventHandler.ts');
+class RaidEventHandler {
+    // TODO: use better type info
+    async handle(tcm, data) {
+        log$m.info('handle');
+        const rawCmd = {
+            name: 'channel.raid',
+            args: [],
+        };
+        const target = data.event.broadcaster_user_name;
+        const context = {
+            "room-id": data.event.to_broadcaster_user_id,
+            "user-id": data.event.from_broadcaster_user_id,
+            "display-name": data.event.from_broadcaster_user_name,
+            username: data.event.from_broadcaster_user_login,
+            mod: false,
+            subscriber: false, // unknown
+        };
+        const trigger = newRaidTrigger();
+        await tcm.executeMatchingCommands(rawCmd, target, context, trigger);
+    }
+}
 
 const log$l = logger('twitch/index.ts');
 const createRouter$3 = (templates, bot) => {
@@ -1404,40 +2328,26 @@ const createRouter$3 = (templates, bot) => {
                 return;
             }
             const clientManager = bot.getUserTwitchClientManager(user);
-            if (req.body.subscription.type === 'channel.subscribe') {
-                // got a new sub
-                await clientManager.handleSubscribeEvent(req.body);
+            if (req.body.subscription.type === SubscriptionType.ChannelSubscribe) {
+                await (new SubscribeEventHandler()).handle(clientManager, req.body);
             }
-            else if (req.body.subscription.type === 'channel.follow') {
-                // got a new follow
-                await clientManager.handleFollowEvent(req.body);
+            else if (req.body.subscription.type === SubscriptionType.ChannelFollow) {
+                await (new FollowEventHandler()).handle(clientManager, req.body);
             }
-            else if (req.body.subscription.type === 'channel.cheer') {
-                // got a new cheer
-                await clientManager.handleCheerEvent(req.body);
+            else if (req.body.subscription.type === SubscriptionType.ChannelCheer) {
+                await (new CheerEventHandler()).handle(clientManager, req.body);
             }
-            else if (req.body.subscription.type === 'channel.channel_points_custom_reward_redemption.add') {
-                // got a new channel point reward redeem
-                await clientManager.handleChannelPointsCustomRewardRedemptionAddEvent(req.body);
+            else if (req.body.subscription.type === SubscriptionType.ChannelRaid) {
+                await (new RaidEventHandler()).handle(clientManager, req.body);
             }
-            else if (req.body.subscription.type === 'stream.online') {
-                // insert new stream
-                await bot.getDb().insert('robyottoko.streams', {
-                    broadcaster_user_id: req.body.event.broadcaster_user_id,
-                    started_at: new Date(req.body.event.started_at),
-                });
+            else if (req.body.subscription.type === SubscriptionType.ChannelPointsCustomRewardRedemptionAdd) {
+                await (new ChannelPointRedeemEventHandler()).handle(clientManager, req.body);
             }
-            else if (req.body.subscription.type === 'stream.offline') {
-                // get last started stream for broadcaster
-                // if it exists and it didnt end yet set ended_at date
-                const stream = await bot.getDb().get('robyottoko.streams', {
-                    broadcaster_user_id: req.body.event.broadcaster_user_id,
-                }, [{ started_at: -1 }]);
-                if (!stream.ended_at) {
-                    await bot.getDb().update('robyottoko.streams', {
-                        ended_at: new Date(),
-                    }, { id: stream.id });
-                }
+            else if (req.body.subscription.type === SubscriptionType.StreamOnline) {
+                await (new StreamOnlineEventHandler()).handle(bot, req.body);
+            }
+            else if (req.body.subscription.type === SubscriptionType.StreamOffline) {
+                await (new StreamOfflineEventHandler()).handle(bot, req.body);
             }
             res.send();
             return;
@@ -2325,773 +3235,6 @@ class WebServer {
     }
 }
 
-var CommandTriggerType;
-(function (CommandTriggerType) {
-    CommandTriggerType["COMMAND"] = "command";
-    CommandTriggerType["REWARD_REDEMPTION"] = "reward_redemption";
-    CommandTriggerType["FOLLOW"] = "follow";
-    CommandTriggerType["SUB"] = "sub";
-    CommandTriggerType["BITS"] = "bits";
-    CommandTriggerType["TIMER"] = "timer";
-    CommandTriggerType["FIRST_CHAT"] = "first_chat";
-})(CommandTriggerType || (CommandTriggerType = {}));
-var CommandAction;
-(function (CommandAction) {
-    // general
-    CommandAction["TEXT"] = "text";
-    CommandAction["MEDIA"] = "media";
-    CommandAction["MEDIA_VOLUME"] = "media_volume";
-    CommandAction["COUNTDOWN"] = "countdown";
-    CommandAction["DICT_LOOKUP"] = "dict_lookup";
-    CommandAction["MADOCHAN_CREATEWORD"] = "madochan_createword";
-    CommandAction["CHATTERS"] = "chatters";
-    CommandAction["SET_CHANNEL_TITLE"] = "set_channel_title";
-    CommandAction["SET_CHANNEL_GAME_ID"] = "set_channel_game_id";
-    CommandAction["ADD_STREAM_TAGS"] = "add_stream_tags";
-    CommandAction["REMOVE_STREAM_TAGS"] = "remove_stream_tags";
-    // song request
-    CommandAction["SR_CURRENT"] = "sr_current";
-    CommandAction["SR_UNDO"] = "sr_undo";
-    CommandAction["SR_GOOD"] = "sr_good";
-    CommandAction["SR_BAD"] = "sr_bad";
-    CommandAction["SR_STATS"] = "sr_stats";
-    CommandAction["SR_PREV"] = "sr_prev";
-    CommandAction["SR_NEXT"] = "sr_next";
-    CommandAction["SR_JUMPTONEW"] = "sr_jumptonew";
-    CommandAction["SR_CLEAR"] = "sr_clear";
-    CommandAction["SR_RM"] = "sr_rm";
-    CommandAction["SR_SHUFFLE"] = "sr_shuffle";
-    CommandAction["SR_RESET_STATS"] = "sr_reset_stats";
-    CommandAction["SR_LOOP"] = "sr_loop";
-    CommandAction["SR_NOLOOP"] = "sr_noloop";
-    CommandAction["SR_PAUSE"] = "sr_pause";
-    CommandAction["SR_UNPAUSE"] = "sr_unpause";
-    CommandAction["SR_HIDEVIDEO"] = "sr_hidevideo";
-    CommandAction["SR_SHOWVIDEO"] = "sr_showvideo";
-    CommandAction["SR_REQUEST"] = "sr_request";
-    CommandAction["SR_RE_REQUEST"] = "sr_re_request";
-    CommandAction["SR_ADDTAG"] = "sr_addtag";
-    CommandAction["SR_RMTAG"] = "sr_rmtag";
-    CommandAction["SR_VOLUME"] = "sr_volume";
-    CommandAction["SR_FILTER"] = "sr_filter";
-    CommandAction["SR_PRESET"] = "sr_preset";
-    CommandAction["SR_QUEUE"] = "sr_queue";
-})(CommandAction || (CommandAction = {}));
-var CountdownActionType;
-(function (CountdownActionType) {
-    CountdownActionType["TEXT"] = "text";
-    CountdownActionType["MEDIA"] = "media";
-    CountdownActionType["DELAY"] = "delay";
-})(CountdownActionType || (CountdownActionType = {}));
-
-const newText = () => '';
-const newSoundMediaFile = (obj = null) => ({
-    filename: getProp(obj, ['filename'], ''),
-    file: getProp(obj, ['file'], ''),
-    urlpath: getProp(obj, ['urlpath'], ''),
-    volume: getProp(obj, ['volume'], 100),
-});
-const newMediaFile = (obj = null) => ({
-    filename: getProp(obj, ['filename'], ''),
-    file: getProp(obj, ['file'], ''),
-    urlpath: getProp(obj, ['urlpath'], ''),
-});
-const newMediaVideo = (obj = null) => ({
-    // video identified by url
-    url: getProp(obj, ['url'], ''),
-    volume: getProp(obj, ['volume'], 100),
-});
-const newMedia = (obj = null) => ({
-    widgetIds: getProp(obj, ['widgetIds'], []),
-    sound: newSoundMediaFile(obj?.sound),
-    image: newMediaFile(obj?.image),
-    image_url: getProp(obj, ['image_url'], ''),
-    video: newMediaVideo(obj?.video),
-    minDurationMs: getProp(obj, ['minDurationMs'], '1s'),
-});
-const newTrigger = (type) => ({
-    type,
-    data: {
-        // for trigger type "command" (todo: should only exist if type is command, not always)
-        command: '',
-        commandExact: false,
-        // for trigger type "timer" (todo: should only exist if type is timer, not always)
-        minInterval: 0,
-        minLines: 0,
-        // for trigger type "first_chat"
-        since: 'stream',
-    },
-});
-const newSubscribeTrigger = () => {
-    return newTrigger(CommandTriggerType.SUB);
-};
-const newFollowTrigger = () => {
-    return newTrigger(CommandTriggerType.FOLLOW);
-};
-const newBitsTrigger = () => {
-    return newTrigger(CommandTriggerType.BITS);
-};
-const newRewardRedemptionTrigger = (command = '') => {
-    const trigger = newTrigger(CommandTriggerType.REWARD_REDEMPTION);
-    trigger.data.command = command;
-    return trigger;
-};
-const newCommandTrigger = (command = '', commandExact = false) => {
-    const trigger = newTrigger(CommandTriggerType.COMMAND);
-    trigger.data.command = command;
-    trigger.data.commandExact = commandExact;
-    return trigger;
-};
-const triggersEqual = (a, b) => {
-    if (a.type !== b.type) {
-        return false;
-    }
-    if (a.type === CommandTriggerType.COMMAND) {
-        if (a.data.command === b.data.command) {
-            // no need to check for commandExact here (i think^^)
-            return true;
-        }
-    }
-    else if (a.type === CommandTriggerType.REWARD_REDEMPTION) {
-        if (a.data.command === b.data.command) {
-            return true;
-        }
-    }
-    else if (a.type === CommandTriggerType.TIMER) {
-        if (a.data.minInterval === b.data.minInterval
-            && a.data.minLines === b.data.minLines) {
-            return true;
-        }
-    }
-    else if (a.type === CommandTriggerType.FIRST_CHAT) {
-        return true;
-    }
-    else if (a.type === CommandTriggerType.SUB) {
-        return true;
-    }
-    else if (a.type === CommandTriggerType.FOLLOW) {
-        return true;
-    }
-    else if (a.type === CommandTriggerType.BITS) {
-        return true;
-    }
-    return false;
-};
-const commandHasAnyTrigger = (command, triggers) => {
-    for (const cmdTrigger of command.triggers) {
-        for (const trigger of triggers) {
-            if (triggersEqual(cmdTrigger, trigger)) {
-                return true;
-            }
-        }
-    }
-    return false;
-};
-const getUniqueCommandsByTriggers = (commands, triggers) => {
-    const tmp = commands.filter((command) => commandHasAnyTrigger(command, triggers));
-    return tmp.filter((item, i, ar) => ar.indexOf(item) === i);
-};
-const commands = {
-    add_stream_tags: {
-        Name: () => "add_stream_tags command",
-        Description: () => "Add streamtag",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.ADD_STREAM_TAGS,
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {
-                tag: ''
-            },
-        }),
-        RequiresAccessToken: () => true,
-    },
-    chatters: {
-        Name: () => "chatters command",
-        Description: () => "Outputs the people who chatted during the stream.",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.CHATTERS,
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    countdown: {
-        Name: () => "countdown",
-        Description: () => "Add a countdown or messages spaced by time intervals.",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.COUNTDOWN,
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {
-                type: 'auto',
-                step: '',
-                steps: '3',
-                interval: '1s',
-                intro: 'Starting countdown...',
-                outro: 'Done!',
-                actions: []
-            },
-        }),
-        RequiresAccessToken: () => false,
-    },
-    dict_lookup: {
-        Name: () => "dictionary lookup",
-        Description: () => "Outputs the translation for the searched word.",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.DICT_LOOKUP,
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {
-                lang: 'ja',
-                phrase: '',
-            },
-        }),
-        RequiresAccessToken: () => false,
-    },
-    madochan_createword: {
-        Name: () => "madochan",
-        Description: () => "Creates a word for a definition.",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.MADOCHAN_CREATEWORD,
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {
-                // TODO: use from same resource as server
-                model: '100epochs800lenhashingbidirectional.h5',
-                weirdness: '1',
-            },
-        }),
-        RequiresAccessToken: () => false,
-    },
-    media: {
-        Name: () => "media command",
-        Description: () => "Display an image and/or play a sound.",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.MEDIA,
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: newMedia(),
-        }),
-        RequiresAccessToken: () => false,
-    },
-    media_volume: {
-        Name: () => "media volume command",
-        Description: () => `Sets the media volume to <code>&lt;VOLUME&gt;</code> (argument to this command, min 0, max 100).
-    <br />
-    If no argument is given, just outputs the current volume`,
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.MEDIA_VOLUME,
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    text: {
-        Name: () => "command",
-        Description: () => "Send a message to chat",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.TEXT,
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {
-                text: [newText()],
-            },
-        }),
-        RequiresAccessToken: () => false,
-    },
-    remove_stream_tags: {
-        Name: () => "remove_stream_tags command",
-        Description: () => "Remove streamtag",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.REMOVE_STREAM_TAGS,
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {
-                tag: ''
-            },
-        }),
-        RequiresAccessToken: () => true,
-    },
-    set_channel_game_id: {
-        Name: () => "change stream category command",
-        Description: () => "Change the stream category",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.SET_CHANNEL_GAME_ID,
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {
-                game_id: ''
-            },
-        }),
-        RequiresAccessToken: () => true,
-    },
-    set_channel_title: {
-        Name: () => "change stream title command",
-        Description: () => "Change the stream title",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.SET_CHANNEL_TITLE,
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {
-                title: ''
-            },
-        }),
-        RequiresAccessToken: () => true,
-    },
-    sr_current: {
-        Name: () => "sr_current",
-        Description: () => "Show what song is currently playing",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_CURRENT,
-            triggers: [newCommandTrigger('!sr current', true)],
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_undo: {
-        Name: () => "sr_undo",
-        Description: () => "Remove the song that was last added by oneself.",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_UNDO,
-            triggers: [newCommandTrigger('!sr undo', true)],
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_good: {
-        Name: () => "sr_good",
-        Description: () => "Vote the current song up",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_GOOD,
-            triggers: [newCommandTrigger('!sr good', true)],
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_bad: {
-        Name: () => "sr_bad",
-        Description: () => "Vote the current song down",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_BAD,
-            triggers: [newCommandTrigger('!sr bad', true)],
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_stats: {
-        Name: () => "sr_stats",
-        Description: () => "Show stats about the playlist",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_STATS,
-            triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)],
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_prev: {
-        Name: () => "sr_prev",
-        Description: () => "Skip to the previous song",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_PREV,
-            triggers: [newCommandTrigger('!sr prev', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_next: {
-        Name: () => "sr_next",
-        Description: () => "Skip to the next song",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_NEXT,
-            triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_jumptonew: {
-        Name: () => "sr_jumptonew",
-        Description: () => "Jump to the next unplayed song",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_JUMPTONEW,
-            triggers: [newCommandTrigger('!sr jumptonew', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_clear: {
-        Name: () => "sr_clear",
-        Description: () => "Clear the playlist",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_CLEAR,
-            triggers: [newCommandTrigger('!sr clear', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_rm: {
-        Name: () => "sr_rm",
-        Description: () => "Remove the current song from the playlist",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_RM,
-            triggers: [newCommandTrigger('!sr rm', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_shuffle: {
-        Name: () => "sr_shuffle",
-        Description: () => `Shuffle the playlist (current song unaffected).
-    <br />
-    Non-played and played songs will be shuffled separately and non-played
-    songs will be put after currently playing song.`,
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_SHUFFLE,
-            triggers: [newCommandTrigger('!sr shuffle', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_reset_stats: {
-        Name: () => "sr_reset_stats",
-        Description: () => "Reset all statistics of all songs",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_RESET_STATS,
-            triggers: [newCommandTrigger('!sr resetStats', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_loop: {
-        Name: () => "sr_loop",
-        Description: () => "Loop the current song",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_LOOP,
-            triggers: [newCommandTrigger('!sr loop', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_noloop: {
-        Name: () => "sr_noloop",
-        Description: () => "Stop looping the current song",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_NOLOOP,
-            triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_pause: {
-        Name: () => "sr_pause",
-        Description: () => "Pause currently playing song",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_PAUSE,
-            triggers: [newCommandTrigger('!sr pause', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_unpause: {
-        Name: () => "sr_unpause",
-        Description: () => "Unpause currently paused song",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_UNPAUSE,
-            triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_hidevideo: {
-        Name: () => "sr_hidevideo",
-        Description: () => "Hide video for current song",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_HIDEVIDEO,
-            triggers: [newCommandTrigger('!sr hidevideo', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_showvideo: {
-        Name: () => "sr_showvideo",
-        Description: () => "Show video for current song",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_SHOWVIDEO,
-            triggers: [newCommandTrigger('!sr showvideo', true)],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_request: {
-        Name: () => "sr_request",
-        Description: () => `
-    Search for <code>&lt;SEARCH&gt;</code> (argument to this command)
-    at youtube (by id or by title)
-    and queue the first result in the playlist (after the first found
-    batch of unplayed songs).`,
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_REQUEST,
-            triggers: [newCommandTrigger('!sr')],
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_re_request: {
-        Name: () => "sr_re_request",
-        Description: () => `
-    Search for <code>&lt;SEARCH&gt;</code> (argument to this command)
-    in the current playlist and queue the first result in the playlist
-    (after the first found batch of unplayed songs).`,
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_RE_REQUEST,
-            triggers: [newCommandTrigger('!resr')],
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_addtag: {
-        Name: () => "sr_addtag",
-        Description: () => "Add tag <code>&lt;TAG&gt;</code> (argument to this command) to the current song",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_ADDTAG,
-            triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {
-                tag: "",
-            },
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_rmtag: {
-        Name: () => "sr_rmtag",
-        Description: () => "Remove tag <code>&lt;TAG&gt;</code> (argument to this command) from the current song",
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_RMTAG,
-            triggers: [newCommandTrigger('!sr rmtag')],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_volume: {
-        Name: () => "sr_volume",
-        Description: () => `Sets the song request volume to <code>&lt;VOLUME&gt;</code> (argument to this command, min 0, max 100).
-    <br />
-    If no argument is given, just outputs the current volume`,
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_VOLUME,
-            triggers: [newCommandTrigger('!sr volume')],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_filter: {
-        Name: () => "sr_filter",
-        Description: () => `Play only songs with the given tag <code>&lt;TAG&gt;</code> (argument to this command). If no tag
-  is given, play all songs.`,
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_FILTER,
-            triggers: [newCommandTrigger('!sr filter')],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_preset: {
-        Name: () => "sr_preset",
-        Description: () => `Switches to the preset <code>&lt;PRESET&gt;</code> (argument to this command) if it exists.
-  If no arguments are given, outputs all available presets.`,
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_PRESET,
-            triggers: [newCommandTrigger('!sr preset')],
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    sr_queue: {
-        Name: () => "sr_queue",
-        Description: () => `Shows the next 3 songs that will play.`,
-        NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
-            action: CommandAction.SR_QUEUE,
-            triggers: [newCommandTrigger('!sr queue')],
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-};
-
 // @ts-ignore
 const log$h = logger('TwitchClientManager.ts');
 const isDevTunnel = (url) => url.match(/^https:\/\/[a-z0-9-]+\.(?:loca\.lt|ngrok\.io)\//);
@@ -3325,13 +3468,7 @@ class TwitchClientManager {
         const createPromises = [];
         // create all subscriptions
         for (const twitchChannel of twitchChannels) {
-            const subscriptionTypes = [
-                'channel.follow',
-                'channel.cheer',
-                'channel.subscribe',
-                'channel.channel_points_custom_reward_redemption.add',
-            ];
-            for (const subscriptionType of subscriptionTypes) {
+            for (const subscriptionType of ALL_SUBSCRIPTIONS_TYPES) {
                 createPromises.push(this.registerSubscription(subscriptionType, twitchChannel));
             }
         }
@@ -3373,81 +3510,7 @@ class TwitchClientManager {
         }
         this.log.debug(resp);
     }
-    // TODO: use better type info
-    async handleSubscribeEvent(data) {
-        this.log.info('handleSubscribeEvent');
-        const rawCmd = {
-            name: 'channel.subscribe',
-            args: [],
-        };
-        const target = data.event.broadcaster_user_name;
-        const context = {
-            "room-id": data.event.broadcaster_user_id,
-            "user-id": data.event.user_id,
-            "display-name": data.event.user_name,
-            username: data.event.user_login,
-            mod: false,
-            subscriber: true, // user just subscribed, so it is a subscriber
-        };
-        const trigger = newSubscribeTrigger();
-        await this.executeMatchingCommands(rawCmd, target, context, trigger);
-    }
-    // TODO: use better type info
-    async handleFollowEvent(data) {
-        this.log.info('handleFollowEvent');
-        const rawCmd = {
-            name: 'channel.follow',
-            args: [],
-        };
-        const target = data.event.broadcaster_user_name;
-        const context = {
-            "room-id": data.event.broadcaster_user_id,
-            "user-id": data.event.user_id,
-            "display-name": data.event.user_name,
-            username: data.event.user_login,
-            mod: false,
-            subscriber: false, // unknown
-        };
-        const trigger = newFollowTrigger();
-        await this.executeMatchingCommands(rawCmd, target, context, trigger);
-    }
-    // TODO: use better type info
-    async handleCheerEvent(data) {
-        this.log.info('handleCheerEvent');
-        const rawCmd = {
-            name: 'channel.cheer',
-            args: [],
-        };
-        const target = data.event.broadcaster_user_name;
-        const context = {
-            "room-id": data.event.broadcaster_user_id,
-            "user-id": data.event.user_id,
-            "display-name": data.event.user_name,
-            username: data.event.user_login,
-            mod: false,
-            subscriber: false, // unknown
-        };
-        const trigger = newBitsTrigger();
-        await this.executeMatchingCommands(rawCmd, target, context, trigger);
-    }
-    async handleChannelPointsCustomRewardRedemptionAddEvent(data) {
-        this.log.info('handleChannelPointsCustomRewardRedemptionAddEvent');
-        const rawCmd = {
-            name: data.event.reward.title,
-            args: data.event.user_input ? [data.event.user_input] : [],
-        };
-        const target = data.event.broadcaster_user_name;
-        const context = {
-            "room-id": data.event.broadcaster_user_id,
-            "user-id": data.event.user_id,
-            "display-name": data.event.user_name,
-            username: data.event.user_login,
-            mod: false,
-            subscriber: false, // unknown
-        };
-        const trigger = newRewardRedemptionTrigger(data.event.reward.title);
-        await this.executeMatchingCommands(rawCmd, target, context, trigger);
-    }
+    // TODO: remove/move
     async executeMatchingCommands(rawCmd, target, context, trigger) {
         const promises = [];
         for (const m of this.bot.getModuleManager().all(this.user.id)) {
@@ -4799,6 +4862,9 @@ class GeneralModule {
                     commands$1.push(cmdObj);
                 }
                 else if (trigger.type === CommandTriggerType.SUB) {
+                    commands$1.push(cmdObj);
+                }
+                else if (trigger.type === CommandTriggerType.RAID) {
                     commands$1.push(cmdObj);
                 }
                 else if (trigger.type === CommandTriggerType.BITS) {
@@ -7045,9 +7111,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-07-17T14:16:10.295Z",
+    buildDate: "2022-07-24T13:05:50.439Z",
     // @ts-ignore
-    buildVersion: "1.20.4",
+    buildVersion: "1.21.0",
 };
 
 const widgets = [

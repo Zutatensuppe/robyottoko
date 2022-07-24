@@ -215,6 +215,7 @@ export enum CommandTriggerType {
   FOLLOW = 'follow',
   SUB = 'sub',
   BITS = 'bits',
+  RAID = 'raid',
   TIMER = 'timer',
   FIRST_CHAT = 'first_chat',
 }

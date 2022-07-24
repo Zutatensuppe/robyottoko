@@ -192,7 +192,6 @@ import {
 import {
   Command,
   CommandTrigger,
-  CommandTriggerType,
   CommandVariable,
   CommandVariableChange,
   GlobalVariable,

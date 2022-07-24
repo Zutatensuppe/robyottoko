@@ -170,7 +170,6 @@ import {
 } from "../../../common/commands";
 import {
   CommandTrigger,
-  CommandTriggerType,
   CommandVariable,
   CommandVariableChange,
   GlobalVariable,
