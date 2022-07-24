@@ -2,15 +2,17 @@
 
 import { newBitsTrigger } from "../../common/commands"
 import { logger } from "../../common/fn"
-import TwitchClientManager from "../../net/TwitchClientManager"
-import { RawCommand, TwitchChatContext } from "../../types"
+import { Bot, RawCommand, TwitchChatContext } from "../../types"
+import { CommandExecutor } from "../CommandExecutor"
+import { User } from "../Users"
 
 const log = logger('CheerEventHandler.ts')
 
 export class CheerEventHandler {
   // TODO: use better type info
   async handle(
-    tcm: TwitchClientManager,
+    bot: Bot,
+    user: User,
     data: { subscription: any, event: any },
   ): Promise<void> {
     log.info('handle')
@@ -28,6 +30,7 @@ export class CheerEventHandler {
       subscriber: false, // unknown
     }
     const trigger = newBitsTrigger()
-    await tcm.executeMatchingCommands(rawCmd, target, context, trigger)
+    const exec = new CommandExecutor()
+    await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger])
   }
 }

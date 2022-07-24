@@ -2,15 +2,17 @@
 
 import { newFollowTrigger } from "../../common/commands"
 import { logger } from "../../common/fn"
-import TwitchClientManager from "../../net/TwitchClientManager"
-import { RawCommand, TwitchChatContext } from "../../types"
+import { Bot, RawCommand, TwitchChatContext } from "../../types"
+import { CommandExecutor } from "../CommandExecutor"
+import { User } from "../Users"
 
 const log = logger('FollowEventHandler.ts')
 
 export class FollowEventHandler {
   // TODO: use better type info
   async handle(
-    tcm: TwitchClientManager,
+    bot: Bot,
+    user: User,
     data: { subscription: any, event: any },
   ): Promise<void> {
     log.info('handle')
@@ -28,6 +30,7 @@ export class FollowEventHandler {
       subscriber: false, // unknown
     }
     const trigger = newFollowTrigger()
-    await tcm.executeMatchingCommands(rawCmd, target, context, trigger)
+    const exec = new CommandExecutor()
+    await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger])
   }
 }
