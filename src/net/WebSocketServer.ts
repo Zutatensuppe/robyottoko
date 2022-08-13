@@ -1,7 +1,8 @@
 import WebSocket from 'ws'
 import { IncomingMessage } from 'http'
 import { logger } from '../common/fn'
-import { Bot, WsConfig } from '../types'
+import { Bot } from '../types'
+import { moduleByWidgetType } from '../services/Widgets'
 
 const log = logger("WebSocketServer.ts")
 
@@ -28,28 +29,16 @@ class WebSocketServer {
       const pathname = new URL(bot.getConfig().ws.connectstring).pathname
       const relpathfull = request.url?.substring(pathname.length) || ''
       const token = socket.protocol
-      const widget_path_to_module_map: Record<string, string> = {
-        widget_avatar: 'avatar',
-        widget_avatar_receive: 'avatar',
-        widget_drawcast_control: 'drawcast',
-        widget_drawcast_draw: 'drawcast',
-        widget_drawcast_receive: 'drawcast',
-        widget_media: 'general',
-        widget_pomo: 'pomo',
-        'widget_speech-to-text': 'speech-to-text',
-        'widget_speech-to-text_receive': 'speech-to-text',
-        widget_sr: 'sr',
-      }
+
       const relpath = relpathfull.startsWith('/') ? relpathfull.substring(1) : relpathfull
-      const widgetModule = widget_path_to_module_map[relpath]
+      const widgetPrefix = 'widget_'
+      const widgetModule = moduleByWidgetType(relpath.startsWith(widgetPrefix) ? relpath.substring(widgetPrefix.length) : '')
       const token_type = widgetModule ? relpath : null
       const moduleName = widgetModule || relpath
 
       const tokenInfo = await bot.getAuth().wsTokenFromProtocol(token, token_type)
       if (tokenInfo) {
         socket.user_id = tokenInfo.user_id
-      } else if (process.env.VITE_ENV === 'development') {
-        socket.user_id = parseInt(token, 10)
       }
 
       socket.module = moduleName

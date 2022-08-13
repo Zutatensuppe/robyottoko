@@ -165,7 +165,8 @@ class DrawcastModule implements Module {
       'post': async (_ws: Socket, data: PostEventData) => {
         const rel = `/uploads/drawcast/${this.user.id}`
         const img = fn.decodeBase64Image(data.data.img)
-        const name = `${(new Date()).toJSON()}-${nonce(6)}.${fn.mimeToExt(img.type)}`
+        const nameWithoutExt = `${(new Date()).toJSON()}-${nonce(6)}`.replace(/[^a-zA-Z0-9-]/g, '_')
+        const name = `${nameWithoutExt}.${fn.mimeToExt(img.type)}`
 
         const dirPath = `./data${rel}`
         const filePath = `${dirPath}/${name}`

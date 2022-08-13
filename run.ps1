@@ -21,6 +21,7 @@ if ([System.IO.File]::Exists($SCRIPT_FULL_PATH_PS1)) {
 } else {
   # -EA Continue required to set the correct exit code
   # (because we could have set $ErrorActionPreference = "Stop")
+  # see https://stackoverflow.com/questions/73344421/
   Write-Error "Task not found: $RUN_TASK" -EA Continue
   exit 2
 }

@@ -1,6 +1,6 @@
 import { RequestInit, Response } from 'node-fetch'
 import { logger, SECOND } from '../common/fn'
-import { findIdxFuzzy } from '../fn'
+import { findIdxFuzzy, getRandom } from '../fn'
 import xhr, { asJson, withHeaders, asQueryArgs } from '../net/xhr'
 import { tryRefreshAccessToken } from '../oauth'
 import { Bot } from '../types'
@@ -413,7 +413,7 @@ class TwitchHelixClient {
       const resp = await xhr.get(url, await this.withAuthHeaders())
       json = (await resp.json()) as TwitchHelixClipSearchResponseData
       const filtered = json.data.filter(item => item.duration <= maxDurationSeconds)
-      return filtered[0]
+      return getRandom(filtered)
     } catch (e) {
       log.error(url, json, e)
       return null

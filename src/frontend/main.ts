@@ -61,7 +61,8 @@ import AvatarSlotItemStateEditor from "./components/Avatar/AvatarSlotItemStateEd
 import AvatarFrameUpload from "./components/Avatar/AvatarFrameUpload.vue";
 import AvatarAnimation from "./components/Avatar/AvatarAnimation.vue";
 
-import "./style.scss"
+import Widget from './widgets/Widget.vue';
+
 import global from './global'
 import conf from './conf'
 import user from './user'
@@ -149,28 +150,57 @@ const run = async () => {
           protected: true,
         }
       },
+      {
+        name: 'widget', path: '/widget/:widget_type/:widget_token/', component: Widget, meta: {
+          title: 'Widget',
+          protected: false,
+        }
+      },
+      {
+        name: 'pub', path: '/pub/:pub_id/', component: Widget, meta: {
+          title: 'Pub',
+          protected: false,
+        }
+      }
     ],
   })
 
-  user.eventBus.on('login', () => {
-    wsstatus.init()
-  })
-  user.eventBus.on('logout', () => {
-    wsstatus.stop()
-  })
-  user.eventBus.on('darkmode', (darkmode) => {
-    if (darkmode) {
-      document.documentElement.classList.add('darkmode')
-    } else {
-      document.documentElement.classList.remove('darkmode')
+  let initialized = false
+
+  router.beforeEach(async (to, from, next) => {
+    // is widget or pub, no extra init needed
+    if (to.name === 'widget' || to.name === 'pub') {
+      next()
+      return
     }
-  })
 
-  await global.init()
-  await conf.init()
-  await user.init()
+    if (!initialized) {
+      // load styles only when not opening a widget page.
+      // widgets each have their own style
+      // @ts-ignore
+      import("./style.scss")
 
-  router.beforeEach((to, from, next) => {
+      user.eventBus.on('login', () => {
+        wsstatus.init()
+      })
+      user.eventBus.on('logout', () => {
+        wsstatus.stop()
+      })
+      user.eventBus.on('darkmode', (darkmode) => {
+        if (darkmode) {
+          document.documentElement.classList.add('darkmode')
+        } else {
+          document.documentElement.classList.remove('darkmode')
+        }
+      })
+
+      await global.init()
+      await conf.init()
+      await user.init()
+
+      initialized = true
+    }
+
     if (to.meta.protected && !user.getMe()) {
       next({ name: 'login' })
       return
