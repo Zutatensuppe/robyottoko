@@ -401,6 +401,21 @@ async function replaceAsync(str, regex, asyncFn) {
     const data = await Promise.all(promises);
     return str.replace(regex, () => data.shift() || '');
 }
+const getTwitchUser = async (usernameOrDisplayname, helixClient, bot) => {
+    const twitchUser = await helixClient.getUserByName(usernameOrDisplayname);
+    if (twitchUser) {
+        return twitchUser;
+    }
+    // no twitchUser found, maybe the username is not the username but the display name
+    // look up the username in the local chat log
+    // TODO: keep a record of userNames -> userDisplayNames in db instead
+    //       of relying on the chat log
+    const username = await bot.getChatLog().getUsernameByUserDisplayName(usernameOrDisplayname);
+    if (username === null || username === usernameOrDisplayname) {
+        return null;
+    }
+    return await helixClient.getUserByName(username);
+};
 const doReplacements = async (text, command, context, originalCmd, bot, user) => {
     const replaces = [
         {
@@ -478,7 +493,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
             },
         },
         {
-            regex: /\$user(?:\(([^)]+)\)|())\.(name|profile_image_url|recent_clip_url|last_stream_category)/g,
+            regex: /\$user(?:\(([^)]+)\)|())\.(name|username|twitch_url|profile_image_url|recent_clip_url|last_stream_category)/g,
             replacer: async (_m0, m1, m2, m3) => {
                 if (!context) {
                     return '';
@@ -487,19 +502,33 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
                 if (username === context.username && m3 === 'name') {
                     return String(context['display-name']);
                 }
+                if (username === context.username && m3 === 'username') {
+                    return String(context.username);
+                }
+                if (username === context.username && m3 === 'twitch_url') {
+                    return String(`twitch.tv/${context.username}`);
+                }
                 if (!bot || !user) {
+                    log$x.info('no bot, no user, no watch');
                     return '';
                 }
                 const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
                 if (!helixClient) {
                     return '';
                 }
-                const twitchUser = await helixClient.getUserByName(username);
+                const twitchUser = await getTwitchUser(username, helixClient, bot);
                 if (!twitchUser) {
+                    log$x.info('no twitch user found', username);
                     return '';
                 }
                 if (m3 === 'name') {
                     return String(twitchUser.display_name);
+                }
+                if (m3 === 'username') {
+                    return String(twitchUser.login);
+                }
+                if (m3 === 'twitch_url') {
+                    return String(`twitch.tv/${twitchUser.login}`);
                 }
                 if (m3 === 'profile_image_url') {
                     return String(twitchUser.profile_image_url);
@@ -7109,9 +7138,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-08-13T13:58:06.982Z",
+    buildDate: "2022-08-13T15:22:53.206Z",
     // @ts-ignore
-    buildVersion: "1.22.0",
+    buildVersion: "1.22.1",
 };
 
 const widgets = [
@@ -7271,6 +7300,14 @@ class ChatLogRepo {
             user_name: context.username,
             created_at: { '$gte': date },
         }) === 1;
+    }
+    // HACK: we have no other way of getting a user name by user display name atm
+    // TODO: replace this functionality
+    async getUsernameByUserDisplayName(displayName) {
+        const row = await this.db.get(TABLE, {
+            display_name: displayName,
+        });
+        return row ? row.user_name : null;
     }
 }
 

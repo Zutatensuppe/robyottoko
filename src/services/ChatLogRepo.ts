@@ -45,4 +45,13 @@ export class ChatLogRepo {
       created_at: { '$gte': date },
     }) === 1
   }
+
+  // HACK: we have no other way of getting a user name by user display name atm
+  // TODO: replace this functionality
+  async getUsernameByUserDisplayName(displayName: string): Promise<string | null> {
+    const row = await this.db.get(TABLE, {
+      display_name: displayName,
+    })
+    return row ? row.user_name : null
+  }
 }

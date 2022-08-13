@@ -5,6 +5,7 @@ import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, nonce } from './common/
 
 import { Command, GlobalVariable, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module, CommandTrigger, Bot } from './types'
 import { User } from './services/Users'
+import TwitchHelixClient, { TwitchHelixUserSearchResponseDataEntry } from './services/TwitchHelixClient'
 
 const log = logger('fn.ts')
 
@@ -167,6 +168,26 @@ async function replaceAsync(
   return str.replace(regex, () => data.shift() || '')
 }
 
+const getTwitchUser = async (
+  usernameOrDisplayname: string,
+  helixClient: TwitchHelixClient,
+  bot: Bot,
+): Promise<TwitchHelixUserSearchResponseDataEntry | null> => {
+  const twitchUser = await helixClient.getUserByName(usernameOrDisplayname)
+  if (twitchUser) {
+    return twitchUser
+  }
+  // no twitchUser found, maybe the username is not the username but the display name
+  // look up the username in the local chat log
+  // TODO: keep a record of userNames -> userDisplayNames in db instead
+  //       of relying on the chat log
+  const username = await bot.getChatLog().getUsernameByUserDisplayName(usernameOrDisplayname)
+  if (username === null || username === usernameOrDisplayname) {
+    return null
+  }
+  return await helixClient.getUserByName(username)
+}
+
 export const doReplacements = async (
   text: string,
   command: RawCommand | null,
@@ -251,7 +272,7 @@ export const doReplacements = async (
       },
     },
     {
-      regex: /\$user(?:\(([^)]+)\)|())\.(name|profile_image_url|recent_clip_url|last_stream_category)/g,
+      regex: /\$user(?:\(([^)]+)\)|())\.(name|username|twitch_url|profile_image_url|recent_clip_url|last_stream_category)/g,
       replacer: async (_m0: string, m1: string, m2: string, m3): Promise<string> => {
         if (!context) {
           return ''
@@ -262,7 +283,16 @@ export const doReplacements = async (
           return String(context['display-name'])
         }
 
+        if (username === context.username && m3 === 'username') {
+          return String(context.username)
+        }
+
+        if (username === context.username && m3 === 'twitch_url') {
+          return String(`twitch.tv/${context.username}`)
+        }
+
         if (!bot || !user) {
+          log.info('no bot, no user, no watch')
           return ''
         }
         const helixClient = bot.getUserTwitchClientManager(user).getHelixClient()
@@ -270,12 +300,19 @@ export const doReplacements = async (
           return ''
         }
 
-        const twitchUser = await helixClient.getUserByName(username)
+        const twitchUser = await getTwitchUser(username, helixClient, bot)
         if (!twitchUser) {
+          log.info('no twitch user found', username)
           return ''
         }
         if (m3 === 'name') {
           return String(twitchUser.display_name)
+        }
+        if (m3 === 'username') {
+          return String(twitchUser.login)
+        }
+        if (m3 === 'twitch_url') {
+          return String(`twitch.tv/${twitchUser.login}`)
         }
         if (m3 === 'profile_image_url') {
           return String(twitchUser.profile_image_url)
