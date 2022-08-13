@@ -28,6 +28,7 @@ export class SubscribeEventHandler {
       username: data.event.user_login,
       mod: false, // no way to tell without further looking up user somehow
       subscriber: true, // user just subscribed, so it is a subscriber
+      badges: {},
     }
     const trigger = newSubscribeTrigger()
     const exec = new CommandExecutor()

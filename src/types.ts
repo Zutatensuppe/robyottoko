@@ -203,6 +203,10 @@ export interface TwitchChatContext {
   username: string
   mod: any
   subscriber: any
+  badges: {
+    broadcaster?: string
+  }
+  // incomplete
 }
 
 export interface CommandExecutionContext {

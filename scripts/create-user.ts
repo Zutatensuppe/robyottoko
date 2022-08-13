@@ -42,7 +42,7 @@ const log = console.log
       tmi_identity_client_secret: '', // bot app client secret
     }
 
-    const user_id = await db.upsert('user', user, { name: user.name }, 'id')
+    const user_id = await db.upsert('robyottoko.user', user, { name: user.name }, 'id')
     log('user created/updated: ' + user_id)
     await db.close()
   })()

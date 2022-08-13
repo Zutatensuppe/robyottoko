@@ -239,6 +239,7 @@ describe('fn.doReplacements', () => {
         username: "bla",
         mod: false,
         subscriber: false,
+        badges: {},
       },
       originalCmd: {} as Command,
       expected: 'mondgesicht',

@@ -11,7 +11,7 @@ export default vite.defineConfig({
   server: {
     proxy: {
       '^/(twitch|api|uploads)/.*': {
-        target: `http://192.168.178.30:1337`,
+        target: `http://localhost:1337`,
         secure: false,
       },
     },

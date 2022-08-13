@@ -2109,7 +2109,8 @@ class SubscribeEventHandler {
             "display-name": data.event.user_name,
             username: data.event.user_login,
             mod: false,
-            subscriber: true, // user just subscribed, so it is a subscriber
+            subscriber: true,
+            badges: {},
         };
         const trigger = newSubscribeTrigger();
         const exec = new CommandExecutor();
@@ -2133,7 +2134,8 @@ class FollowEventHandler {
             "display-name": data.event.user_name,
             username: data.event.user_login,
             mod: false,
-            subscriber: false, // unknown
+            subscriber: false,
+            badges: {},
         };
         const trigger = newFollowTrigger();
         const exec = new CommandExecutor();
@@ -2157,7 +2159,8 @@ class CheerEventHandler {
             "display-name": data.event.user_name,
             username: data.event.user_login,
             mod: false,
-            subscriber: false, // unknown
+            subscriber: false,
+            badges: {},
         };
         const trigger = newBitsTrigger();
         const exec = new CommandExecutor();
@@ -2180,7 +2183,8 @@ class ChannelPointRedeemEventHandler {
             "display-name": data.event.user_name,
             username: data.event.user_login,
             mod: false,
-            subscriber: false, // unknown
+            subscriber: false,
+            badges: {}
         };
         const trigger = newRewardRedemptionTrigger(data.event.reward.title);
         const exec = new CommandExecutor();
@@ -2248,7 +2252,8 @@ class RaidEventHandler {
             "display-name": data.event.from_broadcaster_user_name,
             username: data.event.from_broadcaster_user_login,
             mod: false,
-            subscriber: false, // unknown
+            subscriber: false,
+            badges: {},
         };
         const trigger = newRaidTrigger();
         const exec = new CommandExecutor();
@@ -7104,7 +7109,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-07-24T17:42:13.860Z",
+    buildDate: "2022-08-13T13:58:06.982Z",
     // @ts-ignore
     buildVersion: "1.22.0",
 };
