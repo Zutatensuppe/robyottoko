@@ -3387,6 +3387,12 @@ class WebServer {
         app.all('/password-reset', async (_req, res, _next) => {
             res.sendFile(indexFile);
         });
+        app.all('/widget/*', async (_req, res, _next) => {
+            res.sendFile(indexFile);
+        });
+        app.all('/pub/*', async (_req, res, _next) => {
+            res.sendFile(indexFile);
+        });
         app.all('*', requireLogin, express.json({ limit: '50mb' }), async (req, res, next) => {
             const method = req.method.toLowerCase();
             const key = req.url;
@@ -7264,9 +7270,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-08-13T19:08:05.935Z",
+    buildDate: "2022-08-13T19:31:41.513Z",
     // @ts-ignore
-    buildVersion: "1.23.0",
+    buildVersion: "1.23.1",
 };
 
 const TABLE = 'robyottoko.chat_log';
