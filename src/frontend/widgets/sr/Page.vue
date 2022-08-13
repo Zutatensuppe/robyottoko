@@ -17,20 +17,20 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import { logger } from "../../common/fn";
-import { YoutubeInstance } from "../../frontend/components/Youtube.vue";
-import WsClient from "../../frontend/WsClient";
+import { defineComponent, PropType } from "vue";
+import { logger } from "../../../common/fn";
+import { YoutubeInstance } from "../../components/Youtube.vue";
+import WsClient from "../../WsClient";
 import {
   SongRequestModuleFilter,
   SongrequestModuleSettings,
   default_settings,
-} from "../../mod/modules/SongrequestModuleCommon";
-import { PlaylistItem } from "../../types";
-import util from "../util";
+} from "../../../mod/modules/SongrequestModuleCommon";
+import { PlaylistItem } from "../../../types";
+import util, { WidgetApiData } from "../util";
 
-import ResponsiveImage from './../../frontend/components/ResponsiveImage.vue'
-import Youtube from './../../frontend/components/Youtube.vue'
+import ResponsiveImage from './../../components/ResponsiveImage.vue'
+import Youtube from './../../components/Youtube.vue'
 import ListItem from './components/ListItem.vue'
 
 const log = logger('Page.vue')
@@ -51,6 +51,9 @@ export default defineComponent({
     ResponsiveImage,
     Youtube,
     ListItem,
+  },
+  props: {
+    wdata: { type: Object as PropType<WidgetApiData>, required: true }
   },
   data(): ComponentData {
     return {
@@ -208,7 +211,7 @@ export default defineComponent({
     import("./main.scss");
   },
   mounted() {
-    this.ws = util.wsClient("sr");
+    this.ws = util.wsClient(this.wdata);
 
     this.ws.onMessage(["save", "settings"], (data) => {
       this.applySettings(data.settings);

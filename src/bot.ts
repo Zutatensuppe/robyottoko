@@ -53,7 +53,7 @@ const createBot = async (): Promise<Bot> => {
   const cache = new Cache(db)
   const auth = new Auth(userRepo, tokenRepo)
   const mail = new Mail(config.mail)
-  const widgets = new Widgets(config.http.url, db, tokenRepo)
+  const widgets = new Widgets(db, tokenRepo)
   const eventHub = mitt()
   const moduleManager = new ModuleManager()
   const webSocketServer = new WebSocketServer()

@@ -18,7 +18,3 @@ ThrowOnNativeFailure
 # npx vue-tsc --noEmit
 npx vite build --config vite.config.js
 ThrowOnNativeFailure
-
-# widgets build
-npx vite build --config widget.vite.config.js
-ThrowOnNativeFailure

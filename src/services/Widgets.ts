@@ -4,6 +4,7 @@ import Tokens from "./Tokens"
 
 interface WidgetDefinition {
   type: string
+  module: string
   title: string
   hint: string
   pub: boolean
@@ -16,79 +17,92 @@ interface WidgetInfo extends WidgetDefinition {
 const widgets: WidgetDefinition[] = [
   {
     type: 'sr',
+    module: 'sr',
     title: 'Song Request',
     hint: 'Browser source, or open in browser and capture window',
     pub: false,
   },
   {
     type: 'media',
+    module: 'general',
     title: 'Media',
     hint: 'Browser source, or open in browser and capture window',
     pub: false,
   },
   {
     type: 'speech-to-text',
+    module: 'speech-to-text',
     title: 'Speech-to-Text',
     hint: 'Google Chrome + window capture',
     pub: false,
   },
   {
     type: 'speech-to-text_receive',
+    module: 'speech-to-text',
     title: 'Speech-to-Text (receive)',
     hint: 'Browser source, or open in browser and capture window',
     pub: false,
   },
   {
     type: 'avatar',
+    module: 'avatar',
     title: 'Avatar (control)',
     hint: '???',
     pub: false,
   },
   {
     type: 'avatar_receive',
+    module: 'avatar',
     title: 'Avatar (receive)',
     hint: 'Browser source, or open in browser and capture window',
     pub: false,
   },
   {
     type: 'drawcast_receive',
+    module: 'drawcast',
     title: 'Drawcast (Overlay)',
     hint: 'Browser source, or open in browser and capture window',
     pub: false,
   },
   {
     type: 'drawcast_draw',
+    module: 'drawcast',
     title: 'Drawcast (Draw)',
     hint: 'Open this to draw (or give to viewers to let them draw)',
     pub: true,
   },
   {
     type: 'drawcast_control',
+    module: 'drawcast',
     title: 'Drawcast (Control)',
     hint: 'Open this to control certain actions of draw (for example permit drawings)',
     pub: false,
   },
   {
     type: 'pomo',
+    module: 'pomo',
     title: 'Pomo',
     hint: 'Browser source, or open in browser and capture window',
     pub: false,
   },
 ]
 
+export const moduleByWidgetType = (widgetType: string): string | null => {
+  const found = widgets.find((w) => w.type === widgetType)
+  return found ? found.module : null
+}
+
 class Widgets {
-  private base: string
   private db: Db
   private tokenRepo: Tokens
 
-  constructor(base: string, db: Db, tokenRepo: Tokens) {
-    this.base = base
+  constructor(db: Db, tokenRepo: Tokens) {
     this.db = db
     this.tokenRepo = tokenRepo
   }
 
   _widgetUrl = (type: string, token: string): string => {
-    return `${this.base}/widget/${type}/${token}/`
+    return `/widget/${type}/${token}/`
   }
 
   async createWidgetUrl(type: string, userId: number): Promise<string> {
@@ -119,7 +133,7 @@ class Widgets {
     } else {
       id = row.id
     }
-    return `${this.base}/pub/${id}`
+    return `/pub/${id}`
   }
 
   async getWidgetUrl(widgetType: string, userId: number): Promise<string> {
@@ -137,6 +151,7 @@ class Widgets {
       const url = await this.widgetUrlByTypeAndUserId(w.type, userId)
       widgetInfos.push({
         type: w.type,
+        module: w.module,
         pub: w.pub,
         title: w.title,
         hint: w.hint,

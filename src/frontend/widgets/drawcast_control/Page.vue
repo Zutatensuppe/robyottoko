@@ -20,13 +20,13 @@
   </div>
 </template>
 <script lang="ts">
-import { DrawcastData } from "../../types";
-import api from "../../frontend/api";
+import { DrawcastData } from "../../../types";
+import api from "../../api";
 
-import { defineComponent } from "vue";
-import WsClient from "../../frontend/WsClient";
-import { DrawcastImage } from "../../mod/modules/DrawcastModuleCommon";
-import util from "../util";
+import { defineComponent, PropType } from "vue";
+import WsClient from "../../WsClient";
+import { DrawcastImage } from "../../../mod/modules/DrawcastModuleCommon";
+import util, { WidgetApiData } from "../util";
 import MediaQueueElement from "../MediaQueueElement.vue";
 
 interface ComponentData {
@@ -41,6 +41,9 @@ interface ComponentData {
 export default defineComponent({
   components: {
     MediaQueueElement,
+  },
+  props: {
+    wdata: { type: Object as PropType<WidgetApiData>, required: true }
   },
   data(): ComponentData {
     return {
@@ -72,7 +75,7 @@ export default defineComponent({
     import('./main.scss');
   },
   mounted() {
-    this.ws = util.wsClient("drawcast_control");
+    this.ws = util.wsClient(this.wdata);
     this.ws.onMessage("init", async (data: DrawcastData) => {
       const res = await api.getDrawcastAllImages();
       const images = await res.json();

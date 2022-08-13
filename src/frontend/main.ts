@@ -61,7 +61,8 @@ import AvatarSlotItemStateEditor from "./components/Avatar/AvatarSlotItemStateEd
 import AvatarFrameUpload from "./components/Avatar/AvatarFrameUpload.vue";
 import AvatarAnimation from "./components/Avatar/AvatarAnimation.vue";
 
-import "./style.scss"
+import Widget from './widgets/Page.vue';
+
 import global from './global'
 import conf from './conf'
 import user from './user'
@@ -149,8 +150,16 @@ const run = async () => {
           protected: true,
         }
       },
+      {
+        name: 'widget', path: '/widget/:widget_type/:widget_token/', component: Widget, meta: {
+          title: 'Widget',
+          protected: false,
+        }
+      }
     ],
   })
+
+  let hasStyle = false
 
   user.eventBus.on('login', () => {
     wsstatus.init()
@@ -171,6 +180,19 @@ const run = async () => {
   await user.init()
 
   router.beforeEach((to, from, next) => {
+    if (to.name === 'widget') {
+      next()
+      return
+    }
+
+    // load styles only when not opening a widget page.
+    // widgets each have their own style
+    if (!hasStyle) {
+      hasStyle = true
+      // @ts-ignore
+      import("./style.scss")
+    }
+
     if (to.meta.protected && !user.getMe()) {
       next({ name: 'login' })
       return

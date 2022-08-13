@@ -221,12 +221,12 @@ tool = 'pen';
   </div>
 </template>
 <script lang="ts">
-import { defineComponent } from "vue";
-import { nonce, logger, pad } from "../../common/fn";
-import WsClient from "../../frontend/WsClient";
-import { DrawcastFavoriteList } from "../../types";
-import util from "../util";
-import { DrawcastModuleWsDataData } from "../../mod/modules/DrawcastModuleCommon";
+import { defineComponent, PropType } from "vue";
+import { nonce, logger, pad } from "../../../common/fn";
+import WsClient from "../../WsClient";
+import { DrawcastFavoriteList } from "../../../types";
+import util, { WidgetApiData } from "../util";
+import { DrawcastModuleWsDataData } from "../../../mod/modules/DrawcastModuleCommon";
 import IconPen from './components/IconPen.vue'
 import IconEyedropper from './components/IconEyedropper.vue'
 import IconSend from './components/IconSend.vue'
@@ -343,6 +343,9 @@ export default defineComponent({
     IconUndo,
     IconEraser,
     IconClear,
+  },
+  props: {
+    wdata: { type: Object as PropType<WidgetApiData>, required: true }
   },
   data() {
     return {
@@ -707,7 +710,7 @@ export default defineComponent({
       "2d"
     ) as CanvasRenderingContext2D;
 
-    this.ws = util.wsClient("drawcast_draw");
+    this.ws = util.wsClient(this.wdata);
 
     const opts = window.localStorage.getItem("drawcastOpts");
     this.opts = opts ? JSON.parse(opts) : { canvasBg: "transparent" };

@@ -2,13 +2,13 @@
   <media-queue-element ref="q" :timeBetweenMediaMs="500" :displayLatestForever="displayLatestForever" />
 </template>
 <script lang="ts">
-import { defineComponent } from "vue";
-import WsClient from "../../frontend/WsClient";
-import { DrawcastImage } from "../../mod/modules/DrawcastModuleCommon";
-import { SoundMediaFile } from "../../types";
-import util from "../util";
+import { defineComponent, PropType } from "vue";
+import WsClient from "../../WsClient";
+import { DrawcastImage } from "../../../mod/modules/DrawcastModuleCommon";
+import { SoundMediaFile } from "../../../types";
+import util, { WidgetApiData } from "../util";
 import MediaQueueElement, { MediaQueueElementInstance } from "../MediaQueueElement.vue";
-import { newMedia } from "../../common/commands";
+import { newMedia } from "../../../common/commands";
 
 interface ComponentData {
   ws: WsClient | null;
@@ -21,6 +21,9 @@ interface ComponentData {
 export default defineComponent({
   components: {
     MediaQueueElement,
+  },
+  props: {
+    wdata: { type: Object as PropType<WidgetApiData>, required: true }
   },
   data(): ComponentData {
     return {
@@ -37,7 +40,7 @@ export default defineComponent({
     },
   },
   mounted() {
-    this.ws = util.wsClient("drawcast_receive");
+    this.ws = util.wsClient(this.wdata);
 
     this.ws.onMessage("init", (data) => {
       // submit button may not be empty

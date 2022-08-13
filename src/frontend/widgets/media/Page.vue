@@ -2,15 +2,15 @@
   <media-queue-element ref="q" :baseVolume="settings.volume" />
 </template>
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
 import MediaQueueElement, { MediaQueueElementInstance } from "../MediaQueueElement.vue";
-import util from "../util";
-import WsClient from "../../frontend/WsClient";
+import util, { WidgetApiData } from "../util";
+import WsClient from "../../WsClient";
 import {
   GeneralModuleSettings,
   default_settings,
-} from "../../mod/modules/GeneralModuleCommon";
-import { newMedia } from "../../common/commands";
+} from "../../../mod/modules/GeneralModuleCommon";
+import { newMedia } from "../../../common/commands";
 
 interface ComponentData {
   ws: WsClient | null;
@@ -21,6 +21,9 @@ interface ComponentData {
 export default defineComponent({
   components: {
     MediaQueueElement,
+  },
+  props: {
+    wdata: { type: Object as PropType<WidgetApiData>, required: true }
   },
   data(): ComponentData {
     return {
@@ -40,7 +43,7 @@ export default defineComponent({
     this.widgetId = util.getParam('id')
   },
   mounted() {
-    this.ws = util.wsClient("media");
+    this.ws = util.wsClient(this.wdata);
     this.ws.onMessage("init", (data) => {
       this.settings = data.settings;
     });

@@ -12,6 +12,3 @@ cp -r src/config_data build/server/
 # frontend build
 # npx vue-tsc --noEmit
 npx vite build --config vite.config.js
-
-# widgets build
-npx vite build --config widget.vite.config.js

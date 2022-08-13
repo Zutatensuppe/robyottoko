@@ -1,6 +1,5 @@
 . "$env:RUN_DIR/scripts/_common.ps1"
 
-$env:VITE_ENV='development'
 $env:APP_CONFIG='config.json'
 
 Set-Location $env:RUN_DIR

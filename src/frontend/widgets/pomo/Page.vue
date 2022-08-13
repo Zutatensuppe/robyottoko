@@ -9,12 +9,12 @@
   <media-queue-element ref="q" :timeBetweenMediaMs="100" />
 </template>
 <script lang="ts">
-import { defineComponent } from "vue";
-import util from "../util";
-import fn from "../../common/fn";
-import { newMedia } from "../../common/commands";
-import { PomoEffect, PomoModuleWsDataData } from "../../mod/modules/PomoModuleCommon";
-import WsClient from "../../frontend/WsClient";
+import { defineComponent, PropType } from "vue";
+import util, { WidgetApiData } from "../util";
+import fn from "../../../common/fn";
+import { newMedia } from "../../../common/commands";
+import { PomoEffect, PomoModuleWsDataData } from "../../../mod/modules/PomoModuleCommon";
+import WsClient from "../../WsClient";
 import MediaQueueElement, { MediaQueueElementInstance } from "../MediaQueueElement.vue";
 
 interface ComponentData {
@@ -26,6 +26,9 @@ interface ComponentData {
 export default defineComponent({
   components: {
     MediaQueueElement,
+  },
+  props: {
+    wdata: { type: Object as PropType<WidgetApiData>, required: true }
   },
   data: (): ComponentData => ({
     ws: null,
@@ -123,7 +126,7 @@ export default defineComponent({
     import("./main.scss");
   },
   mounted() {
-    this.ws = util.wsClient("pomo");
+    this.ws = util.wsClient(this.wdata);
     this.ws.onMessage("init", (data: PomoModuleWsDataData) => {
       this.data = data;
       this.tick();

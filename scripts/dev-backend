@@ -2,7 +2,6 @@
 
 cd "$RUN_DIR"
 
-export VITE_ENV=development
 export APP_CONFIG=config.json
 
 nodemon \

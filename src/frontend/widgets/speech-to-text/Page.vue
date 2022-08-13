@@ -40,17 +40,18 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent } from "vue";
-import util from "../util";
+import { defineComponent, PropType } from "vue";
+import util, { WidgetApiData } from "../util";
 import {
   calculateOptimalSubtitleDisplayTimeMs,
   clamp,
   logger,
   SECOND,
   toNumberUnitString,
-} from "../../common/fn";
-import WsClient from "../../frontend/WsClient";
-import { SpeechToTextModuleSettings, SpeechToTextModuleStylesPack, SpeechToTextWsInitData } from "../../mod/modules/SpeechToTextModuleCommon";
+} from "../../../common/fn";
+import WsClient from "../../WsClient";
+import { SpeechToTextModuleSettings, SpeechToTextModuleStylesPack, SpeechToTextWsInitData } from "../../../mod/modules/SpeechToTextModuleCommon";
+
 const log = logger("speech-to-text/Page.vue");
 
 // in brave treat insecure as secure to allow mic locally:
@@ -75,7 +76,7 @@ interface ComponentData {
 export default defineComponent({
   props: {
     controls: { type: Boolean, required: true },
-    widget: { type: String, required: true },
+    wdata: { type: Object as PropType<WidgetApiData>, required: true }
   },
   data: (): ComponentData => ({
     ws: null as WsClient | null,
@@ -364,7 +365,7 @@ export default defineComponent({
     import("./main.css");
   },
   mounted() {
-    this.ws = util.wsClient(this.widget);
+    this.ws = util.wsClient(this.wdata);
     this.ws.onMessage("text", (data: { recognized: string, translated: string }) => {
       this.texts.push({
         recognized: data.recognized,

@@ -156,6 +156,29 @@ export const createRouter = (
     })
   })
 
+  router.get('/widget/:widget_type/:widget_token/', async (req, res: Response, _next: NextFunction) => {
+    const type = req.params.widget_type
+    const token = req.params.widget_token
+    const user = (await bot.getAuth().userFromWidgetToken(token, type))
+      || (await bot.getAuth().userFromPubToken(token))
+    if (!user) {
+      res.status(404).send()
+      return
+    }
+    log.debug(`/widget/:widget_type/:widget_token/`, type, token)
+    const w = bot.getWidgets().getWidgetDefinitionByType(type)
+    if (w) {
+      res.send({
+        widget: w.type,
+        title: w.title,
+        wsUrl: bot.getConfig().ws.connectstring,
+        widgetToken: token,
+      })
+      return
+    }
+    res.status(404).send()
+  })
+
   router.post('/save-settings', requireLoginApi, express.json(), async (req: any, res: Response) => {
     if (!req.user.groups.includes('admin')) {
       if (req.user.id !== req.body.user.id) {

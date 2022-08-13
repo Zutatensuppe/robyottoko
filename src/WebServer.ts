@@ -26,7 +26,6 @@ class WebServer {
     const app = express()
 
     const templates = new Templates(__dirname)
-    templates.add('../public/static/widgets/index.html')
     templates.add('templates/twitch_redirect_uri.html')
 
     const indexFile = path.resolve(`${__dirname}/../../build/public/index.html`)
@@ -65,29 +64,6 @@ class WebServer {
     app.use('/api', createApiRouter(bot))
 
     app.use('/twitch', createTwitchRouter(templates, bot))
-
-    app.get('/widget/:widget_type/:widget_token/', async (req, res: Response, _next: NextFunction) => {
-      const type = req.params.widget_type
-      const token = req.params.widget_token
-      const user = (await bot.getAuth().userFromWidgetToken(token, type))
-        || (await bot.getAuth().userFromPubToken(token))
-      if (!user) {
-        res.status(404).send()
-        return
-      }
-      log.debug(`/widget/:widget_type/:widget_token/`, type, token)
-      const w = bot.getWidgets().getWidgetDefinitionByType(type)
-      if (w) {
-        res.send(await templates.render('../public/static/widgets/index.html', {
-          widget: w.type,
-          title: w.title,
-          wsUrl: bot.getConfig().ws.connectstring,
-          widgetToken: token,
-        }))
-        return
-      }
-      res.status(404).send()
-    })
 
     app.all('/login', async (_req, res: Response, _next: NextFunction) => {
       res.sendFile(indexFile);

@@ -12,8 +12,8 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 
-import fn, { logger } from "../common/fn";
-import { MediaCommandData } from "../types";
+import fn, { logger } from "../../common/fn";
+import { MediaCommandData } from "../../types";
 
 const log = logger('MediaQueueElement.vue')
 

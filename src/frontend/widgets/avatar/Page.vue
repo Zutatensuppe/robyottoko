@@ -57,12 +57,12 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
 
-import AvatarAnimation from "../../frontend/components/Avatar/AvatarAnimation.vue";
+import AvatarAnimation from "../../components/Avatar/AvatarAnimation.vue";
 import SoundMeter from "./soundmeter";
-import util from "../util";
-import WsClient from "../../frontend/WsClient";
+import util, { WidgetApiData } from "../util";
+import WsClient from "../../WsClient";
 import {
   AvatarModuleAvatarSlotDefinition,
   AvatarModuleAvatarSlotItem,
@@ -70,8 +70,8 @@ import {
   AvatarModuleSlotItemStateDefinition,
   AvatarModuleWsInitData,
   default_settings,
-} from "../../mod/modules/AvatarModuleCommon";
-import { logger } from "../../common/fn";
+} from "../../../mod/modules/AvatarModuleCommon";
+import { logger } from "../../../common/fn";
 
 const log = logger("Page.vue");
 
@@ -103,7 +103,7 @@ export default defineComponent({
   },
   props: {
     controls: { type: Boolean, required: true },
-    widget: { type: String, required: true },
+    wdata: { type: Object as PropType<WidgetApiData>, required: true },
   },
   data(): ComponentData {
     return {
@@ -304,7 +304,7 @@ export default defineComponent({
     this.avatarFixed = util.getParam('avatar')
   },
   mounted() {
-    this.ws = util.wsClient(this.widget);
+    this.ws = util.wsClient(this.wdata);
     this.ws.onMessage("init", (data: AvatarModuleWsInitData) => {
       this.settings = data.settings;
       this.$nextTick(() => {
