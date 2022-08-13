@@ -986,6 +986,146 @@ class ModuleManager {
     }
 }
 
+const widgets = [
+    {
+        type: 'sr',
+        module: 'sr',
+        title: 'Song Request',
+        hint: 'Browser source, or open in browser and capture window',
+        pub: false,
+    },
+    {
+        type: 'media',
+        module: 'general',
+        title: 'Media',
+        hint: 'Browser source, or open in browser and capture window',
+        pub: false,
+    },
+    {
+        type: 'speech-to-text',
+        module: 'speech-to-text',
+        title: 'Speech-to-Text',
+        hint: 'Google Chrome + window capture',
+        pub: false,
+    },
+    {
+        type: 'speech-to-text_receive',
+        module: 'speech-to-text',
+        title: 'Speech-to-Text (receive)',
+        hint: 'Browser source, or open in browser and capture window',
+        pub: false,
+    },
+    {
+        type: 'avatar',
+        module: 'avatar',
+        title: 'Avatar (control)',
+        hint: '???',
+        pub: false,
+    },
+    {
+        type: 'avatar_receive',
+        module: 'avatar',
+        title: 'Avatar (receive)',
+        hint: 'Browser source, or open in browser and capture window',
+        pub: false,
+    },
+    {
+        type: 'drawcast_receive',
+        module: 'drawcast',
+        title: 'Drawcast (Overlay)',
+        hint: 'Browser source, or open in browser and capture window',
+        pub: false,
+    },
+    {
+        type: 'drawcast_draw',
+        module: 'drawcast',
+        title: 'Drawcast (Draw)',
+        hint: 'Open this to draw (or give to viewers to let them draw)',
+        pub: true,
+    },
+    {
+        type: 'drawcast_control',
+        module: 'drawcast',
+        title: 'Drawcast (Control)',
+        hint: 'Open this to control certain actions of draw (for example permit drawings)',
+        pub: false,
+    },
+    {
+        type: 'pomo',
+        module: 'pomo',
+        title: 'Pomo',
+        hint: 'Browser source, or open in browser and capture window',
+        pub: false,
+    },
+];
+const moduleByWidgetType = (widgetType) => {
+    const found = widgets.find((w) => w.type === widgetType);
+    return found ? found.module : null;
+};
+class Widgets {
+    constructor(db, tokenRepo) {
+        this._widgetUrl = (type, token) => {
+            return `/widget/${type}/${token}/`;
+        };
+        this.db = db;
+        this.tokenRepo = tokenRepo;
+    }
+    async createWidgetUrl(type, userId) {
+        let t = await this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`);
+        if (t) {
+            await this.tokenRepo.delete(t.token);
+        }
+        t = await this.tokenRepo.createToken(userId, `widget_${type}`);
+        return this._widgetUrl(type, t.token);
+    }
+    async widgetUrlByTypeAndUserId(type, userId) {
+        const t = await this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`);
+        if (t) {
+            return this._widgetUrl(type, t.token);
+        }
+        return await this.createWidgetUrl(type, userId);
+    }
+    async pubUrl(target) {
+        const row = await this.db.get('robyottoko.pub', { target });
+        let id;
+        if (!row) {
+            do {
+                id = nonce(6);
+            } while (await this.db.get('robyottoko.pub', { id }));
+            await this.db.insert('robyottoko.pub', { id, target });
+        }
+        else {
+            id = row.id;
+        }
+        return `/pub/${id}`;
+    }
+    async getWidgetUrl(widgetType, userId) {
+        return await this.widgetUrlByTypeAndUserId(widgetType, userId);
+    }
+    async getPublicWidgetUrl(widgetType, userId) {
+        const url = await this.widgetUrlByTypeAndUserId(widgetType, userId);
+        return await this.pubUrl(url);
+    }
+    async getWidgetInfos(userId) {
+        const widgetInfos = [];
+        for (const w of widgets) {
+            const url = await this.widgetUrlByTypeAndUserId(w.type, userId);
+            widgetInfos.push({
+                type: w.type,
+                module: w.module,
+                pub: w.pub,
+                title: w.title,
+                hint: w.hint,
+                url: w.pub ? (await this.pubUrl(url)) : url,
+            });
+        }
+        return widgetInfos;
+    }
+    getWidgetDefinitionByType(type) {
+        return widgets.find(w => w.type === type) || null;
+    }
+}
+
 const log$w = logger("WebSocketServer.ts");
 class WebSocketServer {
     constructor() {
@@ -999,28 +1139,14 @@ class WebSocketServer {
             const pathname = new URL(bot.getConfig().ws.connectstring).pathname;
             const relpathfull = request.url?.substring(pathname.length) || '';
             const token = socket.protocol;
-            const widget_path_to_module_map = {
-                widget_avatar: 'avatar',
-                widget_avatar_receive: 'avatar',
-                widget_drawcast_control: 'drawcast',
-                widget_drawcast_draw: 'drawcast',
-                widget_drawcast_receive: 'drawcast',
-                widget_media: 'general',
-                widget_pomo: 'pomo',
-                'widget_speech-to-text': 'speech-to-text',
-                'widget_speech-to-text_receive': 'speech-to-text',
-                widget_sr: 'sr',
-            };
             const relpath = relpathfull.startsWith('/') ? relpathfull.substring(1) : relpathfull;
-            const widgetModule = widget_path_to_module_map[relpath];
+            const widgetPrefix = 'widget_';
+            const widgetModule = moduleByWidgetType(relpath.startsWith(widgetPrefix) ? relpath.substring(widgetPrefix.length) : '');
             const token_type = widgetModule ? relpath : null;
             const moduleName = widgetModule || relpath;
             const tokenInfo = await bot.getAuth().wsTokenFromProtocol(token, token_type);
             if (tokenInfo) {
                 socket.user_id = tokenInfo.user_id;
-            }
-            else if (process.env.VITE_ENV === 'development') {
-                socket.user_id = parseInt(token, 10);
             }
             socket.module = moduleName;
             log$w.info('added socket: ', moduleName, socket.protocol);
@@ -2572,7 +2698,7 @@ class TwitchHelixClient {
             const resp = await xhr.get(url, await this.withAuthHeaders());
             json = (await resp.json());
             const filtered = json.data.filter(item => item.duration <= maxDurationSeconds);
-            return filtered[0];
+            return getRandom(filtered);
         }
         catch (e) {
             log$k.error(url, json, e);
@@ -3103,6 +3229,40 @@ const createRouter = (bot) => {
             twitchChannels: await bot.getTwitchChannels().allByUserId(req.user.id),
         });
     });
+    router.get('/pub/:id', async (req, res, _next) => {
+        const row = await bot.getDb().get('robyottoko.pub', {
+            id: req.params.id,
+        });
+        if (row && row.target) {
+            req.url = row.target;
+            // @ts-ignore
+            router.handle(req, res);
+            return;
+        }
+        res.status(404).send();
+    });
+    router.get('/widget/:widget_type/:widget_token/', async (req, res, _next) => {
+        const type = req.params.widget_type;
+        const token = req.params.widget_token;
+        const user = (await bot.getAuth().userFromWidgetToken(token, type))
+            || (await bot.getAuth().userFromPubToken(token));
+        if (!user) {
+            res.status(404).send();
+            return;
+        }
+        log$j.debug(`/widget/:widget_type/:widget_token/`, type, token);
+        const w = bot.getWidgets().getWidgetDefinitionByType(type);
+        if (w) {
+            res.send({
+                widget: w.type,
+                title: w.title,
+                wsUrl: bot.getConfig().ws.connectstring,
+                widgetToken: token,
+            });
+            return;
+        }
+        res.status(404).send();
+    });
     router.post('/save-settings', requireLoginApi, express.json(), async (req, res) => {
         if (!req.user.groups.includes('admin')) {
             if (req.user.id !== req.body.user.id) {
@@ -3200,21 +3360,8 @@ class WebServer {
     async listen(bot) {
         const app = express();
         const templates = new Templates(__dirname);
-        templates.add('../public/static/widgets/index.html');
         templates.add('templates/twitch_redirect_uri.html');
         const indexFile = path.resolve(`${__dirname}/../../build/public/index.html`);
-        app.get('/pub/:id', async (req, res, _next) => {
-            const row = await bot.getDb().get('robyottoko.pub', {
-                id: req.params.id,
-            });
-            if (row && row.target) {
-                req.url = row.target;
-                // @ts-ignore
-                req.app.handle(req, res);
-                return;
-            }
-            res.status(404).send();
-        });
         const requireLogin = (req, res, next) => {
             if (!req.token) {
                 if (req.method === 'GET') {
@@ -3234,28 +3381,6 @@ class WebServer {
         app.use('/uploads', express.static('./data/uploads'));
         app.use('/api', createRouter(bot));
         app.use('/twitch', createRouter$3(templates, bot));
-        app.get('/widget/:widget_type/:widget_token/', async (req, res, _next) => {
-            const type = req.params.widget_type;
-            const token = req.params.widget_token;
-            const user = (await bot.getAuth().userFromWidgetToken(token, type))
-                || (await bot.getAuth().userFromPubToken(token));
-            if (!user) {
-                res.status(404).send();
-                return;
-            }
-            log$i.debug(`/widget/:widget_type/:widget_token/`, type, token);
-            const w = bot.getWidgets().getWidgetDefinitionByType(type);
-            if (w) {
-                res.send(await templates.render('../public/static/widgets/index.html', {
-                    widget: w.type,
-                    title: w.title,
-                    wsUrl: bot.getConfig().ws.connectstring,
-                    widgetToken: token,
-                }));
-                return;
-            }
-            res.status(404).send();
-        });
         app.all('/login', async (_req, res, _next) => {
             res.sendFile(indexFile);
         });
@@ -6784,7 +6909,8 @@ class DrawcastModule {
             'post': async (_ws, data) => {
                 const rel = `/uploads/drawcast/${this.user.id}`;
                 const img = fn.decodeBase64Image(data.data.img);
-                const name = `${(new Date()).toJSON()}-${nonce(6)}.${fn.mimeToExt(img.type)}`;
+                const nameWithoutExt = `${(new Date()).toJSON()}-${nonce(6)}`.replace(/[^a-zA-Z0-9-]/g, '_');
+                const name = `${nameWithoutExt}.${fn.mimeToExt(img.type)}`;
                 const dirPath = `./data${rel}`;
                 const filePath = `${dirPath}/${name}`;
                 const urlPath = `${rel}/${name}`;
@@ -7138,136 +7264,10 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-08-13T15:22:53.206Z",
+    buildDate: "2022-08-13T19:08:05.935Z",
     // @ts-ignore
-    buildVersion: "1.22.1",
+    buildVersion: "1.23.0",
 };
-
-const widgets = [
-    {
-        type: 'sr',
-        title: 'Song Request',
-        hint: 'Browser source, or open in browser and capture window',
-        pub: false,
-    },
-    {
-        type: 'media',
-        title: 'Media',
-        hint: 'Browser source, or open in browser and capture window',
-        pub: false,
-    },
-    {
-        type: 'speech-to-text',
-        title: 'Speech-to-Text',
-        hint: 'Google Chrome + window capture',
-        pub: false,
-    },
-    {
-        type: 'speech-to-text_receive',
-        title: 'Speech-to-Text (receive)',
-        hint: 'Browser source, or open in browser and capture window',
-        pub: false,
-    },
-    {
-        type: 'avatar',
-        title: 'Avatar (control)',
-        hint: '???',
-        pub: false,
-    },
-    {
-        type: 'avatar_receive',
-        title: 'Avatar (receive)',
-        hint: 'Browser source, or open in browser and capture window',
-        pub: false,
-    },
-    {
-        type: 'drawcast_receive',
-        title: 'Drawcast (Overlay)',
-        hint: 'Browser source, or open in browser and capture window',
-        pub: false,
-    },
-    {
-        type: 'drawcast_draw',
-        title: 'Drawcast (Draw)',
-        hint: 'Open this to draw (or give to viewers to let them draw)',
-        pub: true,
-    },
-    {
-        type: 'drawcast_control',
-        title: 'Drawcast (Control)',
-        hint: 'Open this to control certain actions of draw (for example permit drawings)',
-        pub: false,
-    },
-    {
-        type: 'pomo',
-        title: 'Pomo',
-        hint: 'Browser source, or open in browser and capture window',
-        pub: false,
-    },
-];
-class Widgets {
-    constructor(base, db, tokenRepo) {
-        this._widgetUrl = (type, token) => {
-            return `${this.base}/widget/${type}/${token}/`;
-        };
-        this.base = base;
-        this.db = db;
-        this.tokenRepo = tokenRepo;
-    }
-    async createWidgetUrl(type, userId) {
-        let t = await this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`);
-        if (t) {
-            await this.tokenRepo.delete(t.token);
-        }
-        t = await this.tokenRepo.createToken(userId, `widget_${type}`);
-        return this._widgetUrl(type, t.token);
-    }
-    async widgetUrlByTypeAndUserId(type, userId) {
-        const t = await this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`);
-        if (t) {
-            return this._widgetUrl(type, t.token);
-        }
-        return await this.createWidgetUrl(type, userId);
-    }
-    async pubUrl(target) {
-        const row = await this.db.get('robyottoko.pub', { target });
-        let id;
-        if (!row) {
-            do {
-                id = nonce(6);
-            } while (await this.db.get('robyottoko.pub', { id }));
-            await this.db.insert('robyottoko.pub', { id, target });
-        }
-        else {
-            id = row.id;
-        }
-        return `${this.base}/pub/${id}`;
-    }
-    async getWidgetUrl(widgetType, userId) {
-        return await this.widgetUrlByTypeAndUserId(widgetType, userId);
-    }
-    async getPublicWidgetUrl(widgetType, userId) {
-        const url = await this.widgetUrlByTypeAndUserId(widgetType, userId);
-        return await this.pubUrl(url);
-    }
-    async getWidgetInfos(userId) {
-        const widgetInfos = [];
-        for (const w of widgets) {
-            const url = await this.widgetUrlByTypeAndUserId(w.type, userId);
-            widgetInfos.push({
-                type: w.type,
-                pub: w.pub,
-                title: w.title,
-                hint: w.hint,
-                url: w.pub ? (await this.pubUrl(url)) : url,
-            });
-        }
-        return widgetInfos;
-    }
-    getWidgetDefinitionByType(type) {
-        return widgets.find(w => w.type === type) || null;
-    }
-}
 
 const TABLE = 'robyottoko.chat_log';
 class ChatLogRepo {
@@ -7332,7 +7332,7 @@ const createBot = async () => {
     const cache = new Cache(db);
     const auth = new Auth(userRepo, tokenRepo);
     const mail = new Mail(config.mail);
-    const widgets = new Widgets(config.http.url, db, tokenRepo);
+    const widgets = new Widgets(db, tokenRepo);
     const eventHub = mitt();
     const moduleManager = new ModuleManager();
     const webSocketServer = new WebSocketServer();
