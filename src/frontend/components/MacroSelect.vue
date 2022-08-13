@@ -62,6 +62,14 @@ export default defineComponent({
         title: "Profile image url of user who executed the command",
       },
       {
+        value: "$user.username",
+        title: "Username of user who executed the command",
+      },
+      {
+        value: "$user.twitch_url",
+        title: "Twitch url of user who executed the command",
+      },
+      {
         value: "$user.recent_clip_url",
         title: "Recent clip url of user who executed the command",
       },
@@ -72,6 +80,14 @@ export default defineComponent({
       {
         value: "$user(NAME).name",
         title: "Name of user identified by username NAME",
+      },
+      {
+        value: "$user(NAME).username",
+        title: "Username of user identified by username NAME",
+      },
+      {
+        value: "$user(NAME).twitch_url",
+        title: "Twitch url of user identified by username NAME",
       },
       {
         value: "$user(NAME).profile_image_url",

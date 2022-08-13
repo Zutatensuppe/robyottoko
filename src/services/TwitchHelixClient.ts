@@ -58,7 +58,7 @@ interface TwitchHelixOauthTokenResponseData {
   token_type: string
 }
 
-interface TwitchHelixUserSearchResponseDataEntry {
+export interface TwitchHelixUserSearchResponseDataEntry {
   id: string
   login: string
   display_name: string
