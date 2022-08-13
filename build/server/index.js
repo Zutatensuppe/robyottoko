@@ -7270,9 +7270,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-08-13T19:31:41.513Z",
+    buildDate: "2022-08-13T19:38:46.114Z",
     // @ts-ignore
-    buildVersion: "1.23.1",
+    buildVersion: "1.23.2",
 };
 
 const TABLE = 'robyottoko.chat_log';

@@ -39,6 +39,10 @@ export default defineComponent({
       return this.$refs.q as MediaQueueElementInstance
     },
   },
+  created() {
+    // @ts-ignore
+    import("./main.scss");
+  },
   mounted() {
     this.ws = util.wsClient(this.wdata);
 
