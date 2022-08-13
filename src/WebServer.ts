@@ -60,6 +60,14 @@ class WebServer {
       res.sendFile(indexFile);
     })
 
+    app.all('/widget/*', async (_req, res: Response, _next: NextFunction) => {
+      res.sendFile(indexFile);
+    })
+
+    app.all('/pub/*', async (_req, res: Response, _next: NextFunction) => {
+      res.sendFile(indexFile);
+    })
+
     app.all('*', requireLogin, express.json({ limit: '50mb' }), async (req: any, res: Response, next: NextFunction) => {
       const method = req.method.toLowerCase()
       const key = req.url
