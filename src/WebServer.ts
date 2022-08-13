@@ -30,19 +30,6 @@ class WebServer {
 
     const indexFile = path.resolve(`${__dirname}/../../build/public/index.html`)
 
-    app.get('/pub/:id', async (req, res, _next) => {
-      const row = await bot.getDb().get('robyottoko.pub', {
-        id: req.params.id,
-      })
-      if (row && row.target) {
-        req.url = row.target
-        // @ts-ignore
-        req.app.handle(req, res)
-        return
-      }
-      res.status(404).send()
-    })
-
     const requireLogin = (req: any, res: any, next: NextFunction) => {
       if (!req.token) {
         if (req.method === 'GET') {

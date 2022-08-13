@@ -21,7 +21,7 @@ interface ComponentData {
   queue: MediaCommandData[];
   worker: any; // null | number (setInterval)
   showimage: boolean;
-  imgstyle: null | Record<string, string>;
+  imgstyle: undefined | Record<string, string>;
   videosrc: string;
   latestResolved: boolean;
 }
@@ -37,7 +37,7 @@ const MediaQueueElement = defineComponent({
       queue: [],
       worker: null,
       showimage: false,
-      imgstyle: null,
+      imgstyle: undefined,
       videosrc: "",
       latestResolved: true,
     };

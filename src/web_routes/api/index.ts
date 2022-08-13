@@ -156,6 +156,19 @@ export const createRouter = (
     })
   })
 
+  router.get('/pub/:id', async (req, res, _next) => {
+    const row = await bot.getDb().get('robyottoko.pub', {
+      id: req.params.id,
+    })
+    if (row && row.target) {
+      req.url = row.target
+      // @ts-ignore
+      router.handle(req, res)
+      return
+    }
+    res.status(404).send()
+  })
+
   router.get('/widget/:widget_type/:widget_token/', async (req, res: Response, _next: NextFunction) => {
     const type = req.params.widget_type
     const token = req.params.widget_token

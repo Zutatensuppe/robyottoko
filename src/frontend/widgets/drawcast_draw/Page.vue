@@ -12,8 +12,7 @@
         <div class="draw_panel_inner">
           <div class="draw_panel_top">
             <div class="draw_canvas_holder">
-              <div class="draw_canvas_holder_inner" :class="canvasClasses"
-                :style="{ width: canvasWidth + 4, height: canvasHeight + 4 }">
+              <div class="draw_canvas_holder_inner" :class="canvasClasses" :style="canvasHolderStyle">
                 <canvas ref="finalcanvas" :width="canvasWidth" :height="canvasHeight" :style="styles"></canvas>
                 <canvas ref="draftcanvas" :width="canvasWidth" :height="canvasHeight" :style="styles"
                   @touchstart.prevent="touchstart" @touchmove.prevent="touchmove" @mousedown="mousedown"></canvas>
@@ -407,7 +406,7 @@ export default defineComponent({
       );
     },
     favorites(): string[] {
-      const favorites = [];
+      const favorites: string[] = [];
       for (const fav of this.favoriteLists) {
         favorites.push(...fav.list);
       }
@@ -418,6 +417,12 @@ export default defineComponent({
         backgroundColor:
           this.tool === "color-sampler" ? this.sampleColor : this.color,
       };
+    },
+    canvasHolderStyle(): { width: string, height: string } {
+      return {
+        width: `${this.canvasWidth + 4}px`,
+        height: `${this.canvasHeight + 4}px`,
+      }
     },
     size(): number {
       return this.sizes[this.sizeIdx];
@@ -716,6 +721,7 @@ export default defineComponent({
     this.opts = opts ? JSON.parse(opts) : { canvasBg: "transparent" };
 
     this.ws.onMessage("init", (data: DrawcastModuleWsDataData) => {
+      console.log('inited', data)
       // submit button may not be empty
       this.submitButtonText = data.settings.submitButtonText || "Send";
       this.submitConfirm = data.settings.submitConfirm;

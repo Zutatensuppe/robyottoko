@@ -61,7 +61,7 @@ import AvatarSlotItemStateEditor from "./components/Avatar/AvatarSlotItemStateEd
 import AvatarFrameUpload from "./components/Avatar/AvatarFrameUpload.vue";
 import AvatarAnimation from "./components/Avatar/AvatarAnimation.vue";
 
-import Widget from './widgets/Page.vue';
+import Widget from './widgets/Widget.vue';
 
 import global from './global'
 import conf from './conf'
@@ -155,42 +155,50 @@ const run = async () => {
           title: 'Widget',
           protected: false,
         }
+      },
+      {
+        name: 'pub', path: '/pub/:pub_id/', component: Widget, meta: {
+          title: 'Pub',
+          protected: false,
+        }
       }
     ],
   })
 
-  let hasStyle = false
+  let initialized = false
 
-  user.eventBus.on('login', () => {
-    wsstatus.init()
-  })
-  user.eventBus.on('logout', () => {
-    wsstatus.stop()
-  })
-  user.eventBus.on('darkmode', (darkmode) => {
-    if (darkmode) {
-      document.documentElement.classList.add('darkmode')
-    } else {
-      document.documentElement.classList.remove('darkmode')
-    }
-  })
-
-  await global.init()
-  await conf.init()
-  await user.init()
-
-  router.beforeEach((to, from, next) => {
-    if (to.name === 'widget') {
+  router.beforeEach(async (to, from, next) => {
+    // is widget or pub, no extra init needed
+    if (to.name === 'widget' || to.name === 'pub') {
       next()
       return
     }
 
-    // load styles only when not opening a widget page.
-    // widgets each have their own style
-    if (!hasStyle) {
-      hasStyle = true
+    if (!initialized) {
+      // load styles only when not opening a widget page.
+      // widgets each have their own style
       // @ts-ignore
       import("./style.scss")
+
+      user.eventBus.on('login', () => {
+        wsstatus.init()
+      })
+      user.eventBus.on('logout', () => {
+        wsstatus.stop()
+      })
+      user.eventBus.on('darkmode', (darkmode) => {
+        if (darkmode) {
+          document.documentElement.classList.add('darkmode')
+        } else {
+          document.documentElement.classList.remove('darkmode')
+        }
+      })
+
+      await global.init()
+      await conf.init()
+      await user.init()
+
+      initialized = true
     }
 
     if (to.meta.protected && !user.getMe()) {

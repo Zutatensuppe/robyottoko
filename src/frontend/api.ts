@@ -76,4 +76,5 @@ export default {
   getDrawcastAllImages: async () => get("/api/drawcast/all-images/"),
   createWidgetUrl: async (data: { type: string, pub: boolean }) => postJson("/api/widget/create_url", data),
   getWidgetData: async (widgetType: string, widgetToken: string) => get(`/api/widget/${widgetType}/${widgetToken}/`),
+  getPubData: async (pubId: string) => get(`/api/pub/${pubId}`),
 }

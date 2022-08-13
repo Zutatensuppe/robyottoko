@@ -9,6 +9,8 @@
   <speech-to-text-page v-else-if="widget === 'speech-to-text'" :wdata="data" :controls="true" />
   <speech-to-text-page v-else-if="widget === 'speech-to-text_receive'" :wdata="data" :controls="false" />
   <sr-page v-else-if="widget === 'sr'" :wdata="data" />
+  <div v-else-if="!error">Loading...</div>
+  <div v-else>{{error}}</div>
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
@@ -35,26 +37,27 @@ export default defineComponent({
     SpeechToTextPage,
     SrPage,
   },
-  data: (): { data: null | WidgetApiData } => ({
-    data: null
+  data: (): { data: null | WidgetApiData, error: string } => ({
+    data: null,
+    error: '',
   }),
-  created() {
-    console.log(this.$route)
-    // document.documentElement.classList.add(this.widget)
-  },
   computed: {
     widget () {
       return this.data ? this.data.widget : null
     },
   },
   async created() {
-    const res = await api.getWidgetData(
-      this.$route.params.widget_type,
-      this.$route.params.widget_token,
-    );
+    this.error = ''
+    const res = this.$route.name === 'pub'
+      ? await api.getPubData(
+        this.$route.params.pub_id,
+      )
+      : await api.getWidgetData(
+        this.$route.params.widget_type,
+        this.$route.params.widget_token,
+      )
     if (res.status !== 200) {
-      // TODO: do something better
-      console.log('error...')
+      this.error = 'Widget not found...'
       return;
     }
 
