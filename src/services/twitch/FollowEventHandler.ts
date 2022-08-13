@@ -28,6 +28,7 @@ export class FollowEventHandler {
       username: data.event.user_login,
       mod: false, // no way to tell without further looking up user somehow
       subscriber: false, // unknown
+      badges: {},
     }
     const trigger = newFollowTrigger()
     const exec = new CommandExecutor()

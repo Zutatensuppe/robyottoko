@@ -29,6 +29,7 @@ export class RaidEventHandler {
       username: data.event.from_broadcaster_user_login,
       mod: false, // unknown
       subscriber: false, // unknown
+      badges: {},
     }
     const trigger = newRaidTrigger()
     const exec = new CommandExecutor()
