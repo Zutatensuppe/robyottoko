@@ -1,7 +1,8 @@
 import mitt from "mitt";
+import { ApiUserData } from "../types";
 import api from "./api";
 
-let me: any = null;
+let me: ApiUserData | null = null;
 
 export const eventBus = mitt()
 

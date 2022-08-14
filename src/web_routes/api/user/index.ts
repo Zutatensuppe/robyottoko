@@ -3,7 +3,7 @@
 import express, { NextFunction, Response, Router } from 'express'
 import { TokenType } from '../../../services/Tokens'
 import { CreateUser } from '../../../services/Users'
-import { Bot } from '../../../types'
+import { ApiUserData, Bot } from '../../../types'
 import fn from '../../../fn'
 
 export const createRouter = (
@@ -12,10 +12,11 @@ export const createRouter = (
 ): Router => {
   const router = express.Router()
   router.get('/me', requireLoginApi, async (req: any, res: Response) => {
-    res.send({
+    const apiUser: ApiUserData = {
       user: req.user,
       token: req.cookies['x-token'],
-    })
+    }
+    res.send(apiUser)
   })
   router.post('/_reset_password', express.json(), async (req, res) => {
     const plainPass = req.body.pass || null
