@@ -14,6 +14,7 @@ import {
   SECOND,
   MS,
   getProp,
+  withoutLeading,
 } from './fn'
 
 test.each`
@@ -276,4 +277,36 @@ test.each([
 ])('getProp', ({ obj, keys, defaultVal, expected }) => {
   const actual = getProp(obj, keys, defaultVal)
   expect(actual).toBe(expected)
+})
+
+describe('withoutLeading', () => {
+  test.each([
+    {
+      _name: 'empty',
+      string: '',
+      prefix: '',
+      expected: '',
+    },
+    {
+      _name: 'prefix not found',
+      string: 'hello',
+      prefix: 'ello',
+      expected: 'hello',
+    },
+    {
+      _name: 'prefix found',
+      string: 'hello',
+      prefix: 'hel',
+      expected: 'lo',
+    },
+    {
+      _name: 'multiple found',
+      string: '///bla',
+      prefix: '/',
+      expected: 'bla',
+    },
+  ])('$_name', ({ _name, string, prefix, expected }) => {
+    const actual = withoutLeading(string, prefix)
+    expect(actual).toBe(expected)
+  })
 })

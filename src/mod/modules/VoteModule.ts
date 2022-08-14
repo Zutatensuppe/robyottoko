@@ -1,5 +1,5 @@
 import { User } from '../../services/Users'
-import { Bot, ChatMessageContext, CommandExecutionContext, Module, TwitchChatContext } from '../../types'
+import { Bot, ChatMessageContext, CommandExecutionContext, Module, MODULE_NAME, TwitchChatContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import { newCommandTrigger } from '../../common/commands'
 import { isBroadcaster, isMod } from '../../common/permissions'
@@ -9,7 +9,7 @@ interface VoteModuleData {
 }
 
 class VoteModule implements Module {
-  public name = 'vote'
+  public name = MODULE_NAME.VOTE
 
   // @ts-ignore
   public bot: Bot

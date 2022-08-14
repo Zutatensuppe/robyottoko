@@ -1,10 +1,11 @@
 import { nonce } from "../common/fn"
 import Db from "../DbPostgres"
+import { MODULE_NAME, WIDGET_TYPE } from "../types"
 import Tokens from "./Tokens"
 
 interface WidgetDefinition {
-  type: string
-  module: string
+  type: WIDGET_TYPE
+  module: MODULE_NAME
   title: string
   hint: string
   pub: boolean
@@ -16,71 +17,71 @@ interface WidgetInfo extends WidgetDefinition {
 
 const widgets: WidgetDefinition[] = [
   {
-    type: 'sr',
-    module: 'sr',
+    type: WIDGET_TYPE.SR,
+    module: MODULE_NAME.SR,
     title: 'Song Request',
     hint: 'Browser source, or open in browser and capture window',
     pub: false,
   },
   {
-    type: 'media',
-    module: 'general',
+    type: WIDGET_TYPE.MEDIA,
+    module: MODULE_NAME.GENERAL,
     title: 'Media',
     hint: 'Browser source, or open in browser and capture window',
     pub: false,
   },
   {
-    type: 'speech-to-text',
-    module: 'speech-to-text',
+    type: WIDGET_TYPE.SPEECH_TO_TEXT_CONTROL,
+    module: MODULE_NAME.SPEECH_TO_TEXT,
     title: 'Speech-to-Text',
     hint: 'Google Chrome + window capture',
     pub: false,
   },
   {
-    type: 'speech-to-text_receive',
-    module: 'speech-to-text',
+    type: WIDGET_TYPE.SPEECH_TO_TEXT_RECEIVE,
+    module: MODULE_NAME.SPEECH_TO_TEXT,
     title: 'Speech-to-Text (receive)',
     hint: 'Browser source, or open in browser and capture window',
     pub: false,
   },
   {
-    type: 'avatar',
-    module: 'avatar',
+    type: WIDGET_TYPE.AVATAR_CONTROL,
+    module: MODULE_NAME.AVATAR,
     title: 'Avatar (control)',
     hint: '???',
     pub: false,
   },
   {
-    type: 'avatar_receive',
-    module: 'avatar',
+    type: WIDGET_TYPE.AVATAR_RECEIVE,
+    module: MODULE_NAME.AVATAR,
     title: 'Avatar (receive)',
     hint: 'Browser source, or open in browser and capture window',
     pub: false,
   },
   {
-    type: 'drawcast_receive',
-    module: 'drawcast',
+    type: WIDGET_TYPE.DRAWCAST_RECEIVE,
+    module: MODULE_NAME.DRAWCAST,
     title: 'Drawcast (Overlay)',
     hint: 'Browser source, or open in browser and capture window',
     pub: false,
   },
   {
-    type: 'drawcast_draw',
-    module: 'drawcast',
+    type: WIDGET_TYPE.DRAWCAST_DRAW,
+    module: MODULE_NAME.DRAWCAST,
     title: 'Drawcast (Draw)',
     hint: 'Open this to draw (or give to viewers to let them draw)',
     pub: true,
   },
   {
-    type: 'drawcast_control',
-    module: 'drawcast',
+    type: WIDGET_TYPE.DRAWCAST_CONTROL,
+    module: MODULE_NAME.DRAWCAST,
     title: 'Drawcast (Control)',
     hint: 'Open this to control certain actions of draw (for example permit drawings)',
     pub: false,
   },
   {
-    type: 'pomo',
-    module: 'pomo',
+    type: WIDGET_TYPE.POMO,
+    module: MODULE_NAME.POMO,
     title: 'Pomo',
     hint: 'Browser source, or open in browser and capture window',
     pub: false,
@@ -114,7 +115,10 @@ class Widgets {
     return this._widgetUrl(type, t.token)
   }
 
-  async widgetUrlByTypeAndUserId(type: string, userId: number): Promise<string> {
+  async widgetUrlByTypeAndUserId(
+    type: WIDGET_TYPE,
+    userId: number,
+  ): Promise<string> {
     const t = await this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`)
     if (t) {
       return this._widgetUrl(type, t.token)
@@ -136,11 +140,11 @@ class Widgets {
     return `/pub/${id}`
   }
 
-  async getWidgetUrl(widgetType: string, userId: number): Promise<string> {
+  async getWidgetUrl(widgetType: WIDGET_TYPE, userId: number): Promise<string> {
     return await this.widgetUrlByTypeAndUserId(widgetType, userId)
   }
 
-  async getPublicWidgetUrl(widgetType: string, userId: number): Promise<string> {
+  async getPublicWidgetUrl(widgetType: WIDGET_TYPE, userId: number): Promise<string> {
     const url = await this.widgetUrlByTypeAndUserId(widgetType, userId)
     return await this.pubUrl(url)
   }

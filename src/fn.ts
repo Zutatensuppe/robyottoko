@@ -1,7 +1,7 @@
 import config from './config'
 import crypto from 'crypto'
 import xhr from './net/xhr'
-import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, nonce } from './common/fn'
+import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, nonce, getRandom, getRandomInt } from './common/fn'
 
 import { Command, GlobalVariable, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module, CommandTrigger, Bot } from './types'
 import { User } from './services/Users'
@@ -27,14 +27,8 @@ function decodeBase64Image(base64Str: string) {
   }
 }
 
-function getRandomInt(min: number, max: number) {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-export function getRandom<T>(array: T[]): T {
-  return array[getRandomInt(0, array.length - 1)]
+export const safeFileName = (string: string): string => {
+  return string.replace(/[^a-zA-Z0-9.-]/g, '_')
 }
 
 const fnRandom = <T>(values: T[]) => (): T => getRandom(values)
@@ -96,7 +90,6 @@ export const parseCommandFromCmdAndMessage = (
   return null
 }
 
-
 const _toInt = (value: any) => parseInt(`${value}`, 10)
 
 const _increase = (value: any, by: any) => (_toInt(value) + _toInt(by))
@@ -104,30 +97,32 @@ const _increase = (value: any, by: any) => (_toInt(value) + _toInt(by))
 const _decrease = (value: any, by: any) => (_toInt(value) - _toInt(by))
 
 const applyVariableChanges = async (
-  cmdDef: FunctionCommand,
+  originalCmd: FunctionCommand,
   contextModule: Module,
   rawCmd: RawCommand | null,
   context: TwitchChatContext | null,
 ) => {
-  if (!cmdDef.variableChanges) {
+  if (!originalCmd.variableChanges) {
     return
   }
   const variables = contextModule.bot.getUserVariables(contextModule.user)
-  for (const variableChange of cmdDef.variableChanges) {
+  const doReplace = async (value: string) => await doReplacements(value, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
+
+  for (const variableChange of originalCmd.variableChanges) {
     const op = variableChange.change
-    const name = await doReplacements(variableChange.name, rawCmd, context, cmdDef, contextModule.bot, contextModule.user)
-    const value = await doReplacements(variableChange.value, rawCmd, context, cmdDef, contextModule.bot, contextModule.user)
+    const name = await doReplace(variableChange.name)
+    const value = await doReplace(variableChange.value)
 
     // check if there is a local variable for the change
-    if (cmdDef.variables) {
-      const idx = cmdDef.variables.findIndex(v => (v.name === name))
+    if (originalCmd.variables) {
+      const idx = originalCmd.variables.findIndex(v => (v.name === name))
       if (idx !== -1) {
         if (op === 'set') {
-          cmdDef.variables[idx].value = value
+          originalCmd.variables[idx].value = value
         } else if (op === 'increase_by') {
-          cmdDef.variables[idx].value = _increase(cmdDef.variables[idx].value, value)
+          originalCmd.variables[idx].value = _increase(originalCmd.variables[idx].value, value)
         } else if (op === 'decrease_by') {
-          cmdDef.variables[idx].value = _decrease(cmdDef.variables[idx].value, value)
+          originalCmd.variables[idx].value = _decrease(originalCmd.variables[idx].value, value)
         }
         continue
       }
@@ -190,39 +185,41 @@ const getTwitchUser = async (
 
 export const doReplacements = async (
   text: string,
-  command: RawCommand | null,
+  rawCmd: RawCommand | null,
   context: TwitchChatContext | null,
   originalCmd: Command | FunctionCommand | null,
   bot: Bot | null,
   user: User | null,
 ) => {
+  const doReplace = async (value: string) => await doReplacements(value, rawCmd, context, originalCmd, bot, user)
+
   const replaces: { regex: RegExp, replacer: (...args: string[]) => Promise<string> }[] = [
     {
       regex: /\$args(?:\((\d*)(:?)(\d*)\))?/g,
       replacer: async (_m0: string, m1: string, m2: string, m3: string): Promise<string> => {
-        if (!command) {
+        if (!rawCmd) {
           return ''
         }
         let from = 0
-        let to = command.args.length
+        let to = rawCmd.args.length
         if (m1 !== '' && m1 !== undefined) {
           from = parseInt(m1, 10)
           to = from
         }
         if (m2 !== '' && m1 !== undefined) {
-          to = command.args.length - 1
+          to = rawCmd.args.length - 1
         }
         if (m3 !== '' && m1 !== undefined) {
           to = parseInt(m3, 10)
         }
         if (from === to) {
           const index = from
-          if (index < command.args.length) {
-            return command.args[index]
+          if (index < rawCmd.args.length) {
+            return rawCmd.args[index]
           }
           return ''
         }
-        return command.args.slice(from, to + 1).join(' ')
+        return rawCmd.args.slice(from, to + 1).join(' ')
       },
     },
     {
@@ -341,7 +338,7 @@ export const doReplacements = async (
       regex: /\$customapi\(([^$)]*)\)\['([A-Za-z0-9_ -]+)'\]/g,
       replacer: async (_m0: string, m1: string, m2: string): Promise<string> => {
         try {
-          const url = await doReplacements(m1, command, context, originalCmd, bot, user)
+          const url = await doReplace(m1)
           // both of getText and JSON.parse can fail, so everything in a single try catch
           const resp = await xhr.get(url)
           const txt = await resp.text()
@@ -356,7 +353,7 @@ export const doReplacements = async (
       regex: /\$customapi\(([^$)]*)\)/g,
       replacer: async (_m0: string, m1: string): Promise<string> => {
         try {
-          const url = await doReplacements(m1, command, context, originalCmd, bot, user)
+          const url = await doReplace(m1)
           const resp = await xhr.get(url)
           return await resp.text()
         } catch (e: any) {
@@ -368,7 +365,7 @@ export const doReplacements = async (
     {
       regex: /\$urlencode\(([^$)]*)\)/g,
       replacer: async (_m0: string, m1: string): Promise<string> => {
-        const value = await doReplacements(m1, command, context, originalCmd, bot, user)
+        const value = await doReplace(m1)
         return encodeURIComponent(value)
       },
     },
@@ -657,13 +654,12 @@ export default {
   logger,
   mimeToExt,
   decodeBase64Image,
+  safeFileName,
   sayFn,
   parseCommandFromTriggerAndMessage,
   parseCommandFromCmdAndMessage,
   passwordSalt,
   passwordHash,
-  getRandomInt,
-  getRandom,
   sleep,
   fnRandom,
   parseISO8601Duration,

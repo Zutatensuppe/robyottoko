@@ -280,6 +280,24 @@ const getProp = (obj, keys, defaultVal) => {
     }
     return x;
 };
+const withoutLeading = (string, prefix) => {
+    if (prefix === '') {
+        return string;
+    }
+    let tmp = string;
+    while (tmp.startsWith(prefix)) {
+        tmp = tmp.substring(prefix.length);
+    }
+    return tmp;
+};
+const getRandomInt = (min, max) => {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+const getRandom = (array) => {
+    return array[getRandomInt(0, array.length - 1)];
+};
 
 const log$x = logger('fn.ts');
 function mimeToExt(mime) {
@@ -298,14 +316,9 @@ function decodeBase64Image(base64Str) {
         data: Buffer.from(matches[2], 'base64'),
     };
 }
-function getRandomInt(min, max) {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-function getRandom(array) {
-    return array[getRandomInt(0, array.length - 1)];
-}
+const safeFileName = (string) => {
+    return string.replace(/[^a-zA-Z0-9.-]/g, '_');
+};
 const fnRandom = (values) => () => getRandom(values);
 const sleep = (ms) => {
     return new Promise((resolve, _reject) => {
@@ -345,27 +358,28 @@ const parseCommandFromCmdAndMessage = (msg, command, commandExact) => {
 const _toInt = (value) => parseInt(`${value}`, 10);
 const _increase = (value, by) => (_toInt(value) + _toInt(by));
 const _decrease = (value, by) => (_toInt(value) - _toInt(by));
-const applyVariableChanges = async (cmdDef, contextModule, rawCmd, context) => {
-    if (!cmdDef.variableChanges) {
+const applyVariableChanges = async (originalCmd, contextModule, rawCmd, context) => {
+    if (!originalCmd.variableChanges) {
         return;
     }
     const variables = contextModule.bot.getUserVariables(contextModule.user);
-    for (const variableChange of cmdDef.variableChanges) {
+    const doReplace = async (value) => await doReplacements(value, rawCmd, context, originalCmd, contextModule.bot, contextModule.user);
+    for (const variableChange of originalCmd.variableChanges) {
         const op = variableChange.change;
-        const name = await doReplacements(variableChange.name, rawCmd, context, cmdDef, contextModule.bot, contextModule.user);
-        const value = await doReplacements(variableChange.value, rawCmd, context, cmdDef, contextModule.bot, contextModule.user);
+        const name = await doReplace(variableChange.name);
+        const value = await doReplace(variableChange.value);
         // check if there is a local variable for the change
-        if (cmdDef.variables) {
-            const idx = cmdDef.variables.findIndex(v => (v.name === name));
+        if (originalCmd.variables) {
+            const idx = originalCmd.variables.findIndex(v => (v.name === name));
             if (idx !== -1) {
                 if (op === 'set') {
-                    cmdDef.variables[idx].value = value;
+                    originalCmd.variables[idx].value = value;
                 }
                 else if (op === 'increase_by') {
-                    cmdDef.variables[idx].value = _increase(cmdDef.variables[idx].value, value);
+                    originalCmd.variables[idx].value = _increase(originalCmd.variables[idx].value, value);
                 }
                 else if (op === 'decrease_by') {
-                    cmdDef.variables[idx].value = _decrease(cmdDef.variables[idx].value, value);
+                    originalCmd.variables[idx].value = _decrease(originalCmd.variables[idx].value, value);
                 }
                 continue;
             }
@@ -416,34 +430,35 @@ const getTwitchUser = async (usernameOrDisplayname, helixClient, bot) => {
     }
     return await helixClient.getUserByName(username);
 };
-const doReplacements = async (text, command, context, originalCmd, bot, user) => {
+const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => {
+    const doReplace = async (value) => await doReplacements(value, rawCmd, context, originalCmd, bot, user);
     const replaces = [
         {
             regex: /\$args(?:\((\d*)(:?)(\d*)\))?/g,
             replacer: async (_m0, m1, m2, m3) => {
-                if (!command) {
+                if (!rawCmd) {
                     return '';
                 }
                 let from = 0;
-                let to = command.args.length;
+                let to = rawCmd.args.length;
                 if (m1 !== '' && m1 !== undefined) {
                     from = parseInt(m1, 10);
                     to = from;
                 }
                 if (m2 !== '' && m1 !== undefined) {
-                    to = command.args.length - 1;
+                    to = rawCmd.args.length - 1;
                 }
                 if (m3 !== '' && m1 !== undefined) {
                     to = parseInt(m3, 10);
                 }
                 if (from === to) {
                     const index = from;
-                    if (index < command.args.length) {
-                        return command.args[index];
+                    if (index < rawCmd.args.length) {
+                        return rawCmd.args[index];
                     }
                     return '';
                 }
-                return command.args.slice(from, to + 1).join(' ');
+                return rawCmd.args.slice(from, to + 1).join(' ');
             },
         },
         {
@@ -551,7 +566,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
             regex: /\$customapi\(([^$)]*)\)\['([A-Za-z0-9_ -]+)'\]/g,
             replacer: async (_m0, m1, m2) => {
                 try {
-                    const url = await doReplacements(m1, command, context, originalCmd, bot, user);
+                    const url = await doReplace(m1);
                     // both of getText and JSON.parse can fail, so everything in a single try catch
                     const resp = await xhr.get(url);
                     const txt = await resp.text();
@@ -567,7 +582,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
             regex: /\$customapi\(([^$)]*)\)/g,
             replacer: async (_m0, m1) => {
                 try {
-                    const url = await doReplacements(m1, command, context, originalCmd, bot, user);
+                    const url = await doReplace(m1);
                     const resp = await xhr.get(url);
                     return await resp.text();
                 }
@@ -580,7 +595,7 @@ const doReplacements = async (text, command, context, originalCmd, bot, user) =>
         {
             regex: /\$urlencode\(([^$)]*)\)/g,
             replacer: async (_m0, m1) => {
-                const value = await doReplacements(m1, command, context, originalCmd, bot, user);
+                const value = await doReplace(m1);
                 return encodeURIComponent(value);
             },
         },
@@ -802,13 +817,12 @@ var fn = {
     logger,
     mimeToExt,
     decodeBase64Image,
+    safeFileName,
     sayFn,
     parseCommandFromTriggerAndMessage,
     parseCommandFromCmdAndMessage,
     passwordSalt,
     passwordHash,
-    getRandomInt,
-    getRandom,
     sleep,
     fnRandom,
     parseISO8601Duration,
@@ -990,73 +1004,157 @@ class ModuleManager {
     }
 }
 
+var CommandTriggerType;
+(function (CommandTriggerType) {
+    CommandTriggerType["COMMAND"] = "command";
+    CommandTriggerType["REWARD_REDEMPTION"] = "reward_redemption";
+    CommandTriggerType["FOLLOW"] = "follow";
+    CommandTriggerType["SUB"] = "sub";
+    CommandTriggerType["BITS"] = "bits";
+    CommandTriggerType["RAID"] = "raid";
+    CommandTriggerType["TIMER"] = "timer";
+    CommandTriggerType["FIRST_CHAT"] = "first_chat";
+})(CommandTriggerType || (CommandTriggerType = {}));
+var CommandAction;
+(function (CommandAction) {
+    // general
+    CommandAction["TEXT"] = "text";
+    CommandAction["MEDIA"] = "media";
+    CommandAction["MEDIA_VOLUME"] = "media_volume";
+    CommandAction["COUNTDOWN"] = "countdown";
+    CommandAction["DICT_LOOKUP"] = "dict_lookup";
+    CommandAction["MADOCHAN_CREATEWORD"] = "madochan_createword";
+    CommandAction["CHATTERS"] = "chatters";
+    CommandAction["SET_CHANNEL_TITLE"] = "set_channel_title";
+    CommandAction["SET_CHANNEL_GAME_ID"] = "set_channel_game_id";
+    CommandAction["ADD_STREAM_TAGS"] = "add_stream_tags";
+    CommandAction["REMOVE_STREAM_TAGS"] = "remove_stream_tags";
+    // song request
+    CommandAction["SR_CURRENT"] = "sr_current";
+    CommandAction["SR_UNDO"] = "sr_undo";
+    CommandAction["SR_GOOD"] = "sr_good";
+    CommandAction["SR_BAD"] = "sr_bad";
+    CommandAction["SR_STATS"] = "sr_stats";
+    CommandAction["SR_PREV"] = "sr_prev";
+    CommandAction["SR_NEXT"] = "sr_next";
+    CommandAction["SR_JUMPTONEW"] = "sr_jumptonew";
+    CommandAction["SR_CLEAR"] = "sr_clear";
+    CommandAction["SR_RM"] = "sr_rm";
+    CommandAction["SR_SHUFFLE"] = "sr_shuffle";
+    CommandAction["SR_RESET_STATS"] = "sr_reset_stats";
+    CommandAction["SR_LOOP"] = "sr_loop";
+    CommandAction["SR_NOLOOP"] = "sr_noloop";
+    CommandAction["SR_PAUSE"] = "sr_pause";
+    CommandAction["SR_UNPAUSE"] = "sr_unpause";
+    CommandAction["SR_HIDEVIDEO"] = "sr_hidevideo";
+    CommandAction["SR_SHOWVIDEO"] = "sr_showvideo";
+    CommandAction["SR_REQUEST"] = "sr_request";
+    CommandAction["SR_RE_REQUEST"] = "sr_re_request";
+    CommandAction["SR_ADDTAG"] = "sr_addtag";
+    CommandAction["SR_RMTAG"] = "sr_rmtag";
+    CommandAction["SR_VOLUME"] = "sr_volume";
+    CommandAction["SR_FILTER"] = "sr_filter";
+    CommandAction["SR_PRESET"] = "sr_preset";
+    CommandAction["SR_QUEUE"] = "sr_queue";
+})(CommandAction || (CommandAction = {}));
+var CountdownActionType;
+(function (CountdownActionType) {
+    CountdownActionType["TEXT"] = "text";
+    CountdownActionType["MEDIA"] = "media";
+    CountdownActionType["DELAY"] = "delay";
+})(CountdownActionType || (CountdownActionType = {}));
+var MODULE_NAME;
+(function (MODULE_NAME) {
+    MODULE_NAME["CORE"] = "core";
+    MODULE_NAME["AVATAR"] = "avatar";
+    MODULE_NAME["DRAWCAST"] = "drawcast";
+    MODULE_NAME["GENERAL"] = "general";
+    MODULE_NAME["POMO"] = "pomo";
+    MODULE_NAME["SR"] = "sr";
+    MODULE_NAME["SPEECH_TO_TEXT"] = "speech-to-text";
+    MODULE_NAME["VOTE"] = "vote";
+})(MODULE_NAME || (MODULE_NAME = {}));
+var WIDGET_TYPE;
+(function (WIDGET_TYPE) {
+    WIDGET_TYPE["SR"] = "sr";
+    WIDGET_TYPE["MEDIA"] = "media";
+    WIDGET_TYPE["SPEECH_TO_TEXT_CONTROL"] = "speech-to-text";
+    WIDGET_TYPE["SPEECH_TO_TEXT_RECEIVE"] = "speech-to-text_receive";
+    WIDGET_TYPE["AVATAR_CONTROL"] = "avatar";
+    WIDGET_TYPE["AVATAR_RECEIVE"] = "avatar_receive";
+    WIDGET_TYPE["DRAWCAST_RECEIVE"] = "drawcast_receive";
+    WIDGET_TYPE["DRAWCAST_DRAW"] = "drawcast_draw";
+    WIDGET_TYPE["DRAWCAST_CONTROL"] = "drawcast_control";
+    WIDGET_TYPE["POMO"] = "pomo";
+})(WIDGET_TYPE || (WIDGET_TYPE = {}));
+
 const widgets = [
     {
-        type: 'sr',
-        module: 'sr',
+        type: WIDGET_TYPE.SR,
+        module: MODULE_NAME.SR,
         title: 'Song Request',
         hint: 'Browser source, or open in browser and capture window',
         pub: false,
     },
     {
-        type: 'media',
-        module: 'general',
+        type: WIDGET_TYPE.MEDIA,
+        module: MODULE_NAME.GENERAL,
         title: 'Media',
         hint: 'Browser source, or open in browser and capture window',
         pub: false,
     },
     {
-        type: 'speech-to-text',
-        module: 'speech-to-text',
+        type: WIDGET_TYPE.SPEECH_TO_TEXT_CONTROL,
+        module: MODULE_NAME.SPEECH_TO_TEXT,
         title: 'Speech-to-Text',
         hint: 'Google Chrome + window capture',
         pub: false,
     },
     {
-        type: 'speech-to-text_receive',
-        module: 'speech-to-text',
+        type: WIDGET_TYPE.SPEECH_TO_TEXT_RECEIVE,
+        module: MODULE_NAME.SPEECH_TO_TEXT,
         title: 'Speech-to-Text (receive)',
         hint: 'Browser source, or open in browser and capture window',
         pub: false,
     },
     {
-        type: 'avatar',
-        module: 'avatar',
+        type: WIDGET_TYPE.AVATAR_CONTROL,
+        module: MODULE_NAME.AVATAR,
         title: 'Avatar (control)',
         hint: '???',
         pub: false,
     },
     {
-        type: 'avatar_receive',
-        module: 'avatar',
+        type: WIDGET_TYPE.AVATAR_RECEIVE,
+        module: MODULE_NAME.AVATAR,
         title: 'Avatar (receive)',
         hint: 'Browser source, or open in browser and capture window',
         pub: false,
     },
     {
-        type: 'drawcast_receive',
-        module: 'drawcast',
+        type: WIDGET_TYPE.DRAWCAST_RECEIVE,
+        module: MODULE_NAME.DRAWCAST,
         title: 'Drawcast (Overlay)',
         hint: 'Browser source, or open in browser and capture window',
         pub: false,
     },
     {
-        type: 'drawcast_draw',
-        module: 'drawcast',
+        type: WIDGET_TYPE.DRAWCAST_DRAW,
+        module: MODULE_NAME.DRAWCAST,
         title: 'Drawcast (Draw)',
         hint: 'Open this to draw (or give to viewers to let them draw)',
         pub: true,
     },
     {
-        type: 'drawcast_control',
-        module: 'drawcast',
+        type: WIDGET_TYPE.DRAWCAST_CONTROL,
+        module: MODULE_NAME.DRAWCAST,
         title: 'Drawcast (Control)',
         hint: 'Open this to control certain actions of draw (for example permit drawings)',
         pub: false,
     },
     {
-        type: 'pomo',
-        module: 'pomo',
+        type: WIDGET_TYPE.POMO,
+        module: MODULE_NAME.POMO,
         title: 'Pomo',
         hint: 'Browser source, or open in browser and capture window',
         pub: false,
@@ -1131,6 +1229,22 @@ class Widgets {
 }
 
 const log$w = logger("WebSocketServer.ts");
+const determineUserIdAndModuleName = async (basePath, requestUrl, socket, bot) => {
+    const relativePath = requestUrl.substring(basePath.length) || '';
+    const relpath = withoutLeading(relativePath, '/');
+    if (requestUrl.indexOf(basePath) !== 0) {
+        return { userId: null, moduleName: null };
+    }
+    const widgetPrefix = 'widget_';
+    const widgetModule = moduleByWidgetType(relpath.startsWith(widgetPrefix) ? relpath.substring(widgetPrefix.length) : '');
+    const tokenType = widgetModule ? relpath : null;
+    const tmpModuleName = widgetModule || relpath;
+    const moduleName = Object.values(MODULE_NAME).includes(tmpModuleName) ? tmpModuleName : null;
+    const token = socket.protocol;
+    const tokenInfo = await bot.getAuth().wsTokenFromProtocol(token, tokenType);
+    const userId = tokenInfo ? tokenInfo.user_id : null;
+    return { userId, moduleName };
+};
 class WebSocketServer {
     constructor() {
         this._websocketserver = null;
@@ -1140,18 +1254,10 @@ class WebSocketServer {
         this._websocketserver.on('connection', async (socket, request) => {
             // note: here the socket is already set in _websocketserver.clients !
             // but it has no user_id or module set yet!
-            const pathname = new URL(bot.getConfig().ws.connectstring).pathname;
-            const relpathfull = request.url?.substring(pathname.length) || '';
-            const token = socket.protocol;
-            const relpath = relpathfull.startsWith('/') ? relpathfull.substring(1) : relpathfull;
-            const widgetPrefix = 'widget_';
-            const widgetModule = moduleByWidgetType(relpath.startsWith(widgetPrefix) ? relpath.substring(widgetPrefix.length) : '');
-            const token_type = widgetModule ? relpath : null;
-            const moduleName = widgetModule || relpath;
-            const tokenInfo = await bot.getAuth().wsTokenFromProtocol(token, token_type);
-            if (tokenInfo) {
-                socket.user_id = tokenInfo.user_id;
-            }
+            const basePath = new URL(bot.getConfig().ws.connectstring).pathname;
+            const requestUrl = request.url || '';
+            const { userId, moduleName } = await determineUserIdAndModuleName(basePath, requestUrl, socket, bot);
+            socket.user_id = userId;
             socket.module = moduleName;
             log$w.info('added socket: ', moduleName, socket.protocol);
             log$w.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
@@ -1159,19 +1265,19 @@ class WebSocketServer {
                 log$w.info('removed socket: ', moduleName, socket.protocol);
                 log$w.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length);
             });
-            if (request.url?.indexOf(pathname) !== 0) {
-                log$w.info('bad request url: ', request.url);
+            if (!socket.user_id) {
+                log$w.info('not found token: ', socket.protocol, requestUrl);
                 socket.close();
                 return;
             }
-            if (!socket.user_id) {
-                log$w.info('not found token: ', token, relpath);
+            if (!socket.module) {
+                log$w.info('bad request url: ', requestUrl);
                 socket.close();
                 return;
             }
             // user connected
             bot.getEventHub().emit('wss_user_connected', socket);
-            const m = bot.getModuleManager().get(socket.user_id, moduleName);
+            const m = bot.getModuleManager().get(socket.user_id, socket.module);
             // log.info('found a module?', moduleName, !!m)
             if (m) {
                 const evts = m.getWsEvents();
@@ -1417,66 +1523,6 @@ const handleOAuthCodeCallback = async (code, redirectUri, bot, user) => {
     }
     return { error: false, updated };
 };
-
-var CommandTriggerType;
-(function (CommandTriggerType) {
-    CommandTriggerType["COMMAND"] = "command";
-    CommandTriggerType["REWARD_REDEMPTION"] = "reward_redemption";
-    CommandTriggerType["FOLLOW"] = "follow";
-    CommandTriggerType["SUB"] = "sub";
-    CommandTriggerType["BITS"] = "bits";
-    CommandTriggerType["RAID"] = "raid";
-    CommandTriggerType["TIMER"] = "timer";
-    CommandTriggerType["FIRST_CHAT"] = "first_chat";
-})(CommandTriggerType || (CommandTriggerType = {}));
-var CommandAction;
-(function (CommandAction) {
-    // general
-    CommandAction["TEXT"] = "text";
-    CommandAction["MEDIA"] = "media";
-    CommandAction["MEDIA_VOLUME"] = "media_volume";
-    CommandAction["COUNTDOWN"] = "countdown";
-    CommandAction["DICT_LOOKUP"] = "dict_lookup";
-    CommandAction["MADOCHAN_CREATEWORD"] = "madochan_createword";
-    CommandAction["CHATTERS"] = "chatters";
-    CommandAction["SET_CHANNEL_TITLE"] = "set_channel_title";
-    CommandAction["SET_CHANNEL_GAME_ID"] = "set_channel_game_id";
-    CommandAction["ADD_STREAM_TAGS"] = "add_stream_tags";
-    CommandAction["REMOVE_STREAM_TAGS"] = "remove_stream_tags";
-    // song request
-    CommandAction["SR_CURRENT"] = "sr_current";
-    CommandAction["SR_UNDO"] = "sr_undo";
-    CommandAction["SR_GOOD"] = "sr_good";
-    CommandAction["SR_BAD"] = "sr_bad";
-    CommandAction["SR_STATS"] = "sr_stats";
-    CommandAction["SR_PREV"] = "sr_prev";
-    CommandAction["SR_NEXT"] = "sr_next";
-    CommandAction["SR_JUMPTONEW"] = "sr_jumptonew";
-    CommandAction["SR_CLEAR"] = "sr_clear";
-    CommandAction["SR_RM"] = "sr_rm";
-    CommandAction["SR_SHUFFLE"] = "sr_shuffle";
-    CommandAction["SR_RESET_STATS"] = "sr_reset_stats";
-    CommandAction["SR_LOOP"] = "sr_loop";
-    CommandAction["SR_NOLOOP"] = "sr_noloop";
-    CommandAction["SR_PAUSE"] = "sr_pause";
-    CommandAction["SR_UNPAUSE"] = "sr_unpause";
-    CommandAction["SR_HIDEVIDEO"] = "sr_hidevideo";
-    CommandAction["SR_SHOWVIDEO"] = "sr_showvideo";
-    CommandAction["SR_REQUEST"] = "sr_request";
-    CommandAction["SR_RE_REQUEST"] = "sr_re_request";
-    CommandAction["SR_ADDTAG"] = "sr_addtag";
-    CommandAction["SR_RMTAG"] = "sr_rmtag";
-    CommandAction["SR_VOLUME"] = "sr_volume";
-    CommandAction["SR_FILTER"] = "sr_filter";
-    CommandAction["SR_PRESET"] = "sr_preset";
-    CommandAction["SR_QUEUE"] = "sr_queue";
-})(CommandAction || (CommandAction = {}));
-var CountdownActionType;
-(function (CountdownActionType) {
-    CountdownActionType["TEXT"] = "text";
-    CountdownActionType["MEDIA"] = "media";
-    CountdownActionType["DELAY"] = "delay";
-})(CountdownActionType || (CountdownActionType = {}));
 
 var CommandRestrict;
 (function (CommandRestrict) {
@@ -4351,7 +4397,7 @@ const madochanCreateWord = (originalCmd, bot, user) => async (ctx) => {
 const randomText = (originalCmd, bot, user) => async (ctx) => {
     const texts = originalCmd.data.text;
     const say = bot.sayFn(user, ctx.target);
-    say(await fn.doReplacements(fn.getRandom(texts), ctx.rawCmd, ctx.context, originalCmd, bot, user));
+    say(await fn.doReplacements(getRandom(texts), ctx.rawCmd, ctx.context, originalCmd, bot, user));
 };
 
 const log$a = logger('playMedia.ts');
@@ -4816,7 +4862,7 @@ const removeStreamTags = (originalCmd, bot, user) => async (ctx) => {
 logger('GeneralModule.ts');
 class GeneralModule {
     constructor(bot, user) {
-        this.name = 'general';
+        this.name = MODULE_NAME.GENERAL;
         this.interval = null;
         this.channelPointsCustomRewards = {};
         // @ts-ignore
@@ -5085,7 +5131,7 @@ class GeneralModule {
                 adminSettings: this.data.adminSettings,
                 globalVariables: await this.bot.getUserVariables(this.user).all(),
                 channelPointsCustomRewards: this.channelPointsCustomRewards,
-                mediaWidgetUrl: await this.bot.getWidgets().getWidgetUrl('media', this.user.id),
+                mediaWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.MEDIA, this.user.id),
             },
         };
     }
@@ -5328,7 +5374,7 @@ const default_playlist = (list = null) => {
 };
 class SongrequestModule {
     constructor(bot, user) {
-        this.name = 'sr';
+        this.name = MODULE_NAME.SR;
         this.channelPointsCustomRewards = {};
         // @ts-ignore
         return (async () => {
@@ -5490,7 +5536,7 @@ class SongrequestModule {
                 commands: this.data.commands,
                 globalVariables: await this.bot.getUserVariables(this.user).all(),
                 channelPointsCustomRewards: this.channelPointsCustomRewards,
-                widgetUrl: await this.bot.getWidgets().getWidgetUrl('sr', this.user.id),
+                widgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.SR, this.user.id),
             }
         };
     }
@@ -6484,7 +6530,7 @@ class SongrequestModule {
 
 class VoteModule {
     constructor(bot, user) {
-        this.name = 'vote';
+        this.name = MODULE_NAME.VOTE;
         // @ts-ignore
         return (async () => {
             this.bot = bot;
@@ -6652,7 +6698,7 @@ const default_settings$3 = (obj = null) => ({
 
 class SpeechToTextModule {
     constructor(bot, user) {
-        this.name = 'speech-to-text';
+        this.name = MODULE_NAME.SPEECH_TO_TEXT;
         // @ts-ignore
         return (async () => {
             this.bot = bot;
@@ -6681,8 +6727,8 @@ class SpeechToTextModule {
             event: eventName,
             data: {
                 settings: this.data.settings,
-                controlWidgetUrl: await this.bot.getWidgets().getWidgetUrl('speech-to-text', this.user.id),
-                displayWidgetUrl: await this.bot.getWidgets().getWidgetUrl('speech-to-text_receive', this.user.id),
+                controlWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.SPEECH_TO_TEXT_CONTROL, this.user.id),
+                displayWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.SPEECH_TO_TEXT_RECEIVE, this.user.id),
             }
         };
     }
@@ -6795,7 +6841,7 @@ const default_images = (list = null) => {
 const log$2 = logger('DrawcastModule.ts');
 class DrawcastModule {
     constructor(bot, user) {
-        this.name = 'drawcast';
+        this.name = MODULE_NAME.DRAWCAST;
         // @ts-ignore
         return (async () => {
             this.bot = bot;
@@ -6853,13 +6899,13 @@ class DrawcastModule {
         };
     }
     async drawUrl() {
-        return await this.bot.getWidgets().getPublicWidgetUrl('drawcast_draw', this.user.id);
+        return await this.bot.getWidgets().getPublicWidgetUrl(WIDGET_TYPE.DRAWCAST_DRAW, this.user.id);
     }
     async receiveUrl() {
-        return await this.bot.getWidgets().getWidgetUrl('drawcast_receive', this.user.id);
+        return await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.DRAWCAST_RECEIVE, this.user.id);
     }
     async controlUrl() {
-        return await this.bot.getWidgets().getWidgetUrl('drawcast_control', this.user.id);
+        return await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.DRAWCAST_CONTROL, this.user.id);
     }
     async wsdata(eventName) {
         return {
@@ -6920,8 +6966,7 @@ class DrawcastModule {
             'post': async (_ws, data) => {
                 const rel = `/uploads/drawcast/${this.user.id}`;
                 const img = fn.decodeBase64Image(data.data.img);
-                const nameWithoutExt = `${(new Date()).toJSON()}-${nonce(6)}`.replace(/[^a-zA-Z0-9-]/g, '_');
-                const name = `${nameWithoutExt}.${fn.mimeToExt(img.type)}`;
+                const name = fn.safeFileName(`${(new Date()).toJSON()}-${nonce(6)}.${fn.mimeToExt(img.type)}`);
                 const dirPath = `./data${rel}`;
                 const filePath = `${dirPath}/${name}`;
                 const urlPath = `${rel}/${name}`;
@@ -6986,7 +7031,7 @@ const default_settings$1 = (obj = null) => ({
 const log$1 = logger('AvatarModule.ts');
 class AvatarModule {
     constructor(bot, user) {
-        this.name = 'avatar';
+        this.name = MODULE_NAME.AVATAR;
         // @ts-ignore
         return (async () => {
             this.bot = bot;
@@ -7020,8 +7065,8 @@ class AvatarModule {
             data: {
                 settings: this.data.settings,
                 state: this.data.state,
-                controlWidgetUrl: await this.bot.getWidgets().getWidgetUrl('avatar', this.user.id),
-                displayWidgetUrl: await this.bot.getWidgets().getWidgetUrl('avatar_receive', this.user.id),
+                controlWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.AVATAR_CONTROL, this.user.id),
+                displayWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.AVATAR_RECEIVE, this.user.id),
             }
         };
     }
@@ -7115,7 +7160,7 @@ const default_state = (obj = null) => ({
 logger('PomoModule.ts');
 class PomoModule {
     constructor(bot, user) {
-        this.name = 'pomo';
+        this.name = MODULE_NAME.POMO;
         this.timeout = null;
         // @ts-ignore
         return (async () => {
@@ -7242,7 +7287,7 @@ class PomoModule {
             data: {
                 settings: this.data.settings,
                 state: this.data.state,
-                widgetUrl: await this.bot.getWidgets().getWidgetUrl('pomo', this.user.id),
+                widgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.POMO, this.user.id),
             }
         };
     }
@@ -7275,9 +7320,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-08-14T09:52:16.547Z",
+    buildDate: "2022-08-14T11:51:51.680Z",
     // @ts-ignore
-    buildVersion: "1.23.3",
+    buildVersion: "1.23.4",
 };
 
 const TABLE = 'robyottoko.chat_log';

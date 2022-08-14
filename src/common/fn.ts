@@ -366,11 +366,35 @@ export const clamp = (min: number, val: number, max: number): number => {
   return Math.max(min, Math.min(max, val))
 }
 
+export const withoutLeading = (string: string, prefix: string): string => {
+  if (prefix === '') {
+    return string
+  }
+
+  let tmp = string
+  while (tmp.startsWith(prefix)) {
+    tmp = tmp.substring(prefix.length)
+  }
+  return tmp
+}
+
+export const getRandomInt = (min: number, max: number): number => {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+export const getRandom = <T>(array: T[]): T => {
+  return array[getRandomInt(0, array.length - 1)]
+}
+
 export default {
   arrayMove,
   arraySwap,
   clamp,
   doDummyReplacements,
+  getRandom,
+  getRandomInt,
   humanDuration,
   mediaFileFromUploadedFile,
   mustParseHumanDuration,

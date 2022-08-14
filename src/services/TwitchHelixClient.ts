@@ -1,6 +1,6 @@
 import { RequestInit, Response } from 'node-fetch'
-import { logger, SECOND } from '../common/fn'
-import { findIdxFuzzy, getRandom } from '../fn'
+import { getRandom, logger, SECOND } from '../common/fn'
+import { findIdxFuzzy } from '../fn'
 import xhr, { asJson, withHeaders, asQueryArgs } from '../net/xhr'
 import { tryRefreshAccessToken } from '../oauth'
 import { Bot } from '../types'

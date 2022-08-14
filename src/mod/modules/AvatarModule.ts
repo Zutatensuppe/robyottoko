@@ -1,6 +1,6 @@
 import { logger } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
-import { Bot, ChatMessageContext, Module } from '../../types'
+import { Bot, ChatMessageContext, Module, MODULE_NAME, WIDGET_TYPE } from '../../types'
 import { User } from '../../services/Users'
 import { AvatarModuleSettings, AvatarModuleState, AvatarModuleWsSaveData, default_settings, default_state } from './AvatarModuleCommon'
 
@@ -37,7 +37,7 @@ interface WsControlData {
 }
 
 class AvatarModule implements Module {
-  public name = 'avatar'
+  public name = MODULE_NAME.AVATAR
 
   // @ts-ignore
   public bot: Bot
@@ -89,8 +89,8 @@ class AvatarModule implements Module {
       data: {
         settings: this.data.settings,
         state: this.data.state,
-        controlWidgetUrl: await this.bot.getWidgets().getWidgetUrl('avatar', this.user.id),
-        displayWidgetUrl: await this.bot.getWidgets().getWidgetUrl('avatar_receive', this.user.id),
+        controlWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.AVATAR_CONTROL, this.user.id),
+        displayWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.AVATAR_RECEIVE, this.user.id),
       }
     }
   }

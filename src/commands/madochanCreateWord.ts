@@ -1,7 +1,6 @@
 import { logger } from '../common/fn'
 import { User } from '../services/Users'
 import { Bot, CommandExecutionContext, CommandFunction, MadochanCommand } from '../types'
-import fn from './../fn'
 import Madochan from './../services/Madochan'
 
 const log = logger('madochanCreateWord.ts')

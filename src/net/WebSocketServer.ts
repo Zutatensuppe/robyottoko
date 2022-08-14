@@ -1,7 +1,7 @@
 import WebSocket from 'ws'
 import { IncomingMessage } from 'http'
-import { logger } from '../common/fn'
-import { Bot } from '../types'
+import { logger, withoutLeading } from '../common/fn'
+import { Bot, MODULE_NAME } from '../types'
 import { moduleByWidgetType } from '../services/Widgets'
 
 const log = logger("WebSocketServer.ts")
@@ -9,8 +9,34 @@ const log = logger("WebSocketServer.ts")
 type WebSocketNotifyData = any
 
 export interface Socket extends WebSocket.WebSocket {
-  user_id?: number
-  module?: string
+  user_id?: number | null
+  module?: string | null
+}
+
+const determineUserIdAndModuleName = async (
+  basePath: string,
+  requestUrl: string,
+  socket: Socket,
+  bot: Bot,
+): Promise<{ userId: number | null, moduleName: string | null}> => {
+  const relativePath = requestUrl.substring(basePath.length) || ''
+  const relpath = withoutLeading(relativePath, '/')
+
+  if (requestUrl.indexOf(basePath) !== 0) {
+    return { userId: null, moduleName: null }
+  }
+
+  const widgetPrefix = 'widget_'
+  const widgetModule = moduleByWidgetType(relpath.startsWith(widgetPrefix) ? relpath.substring(widgetPrefix.length) : '')
+  const tokenType = widgetModule ? relpath : null
+  const tmpModuleName = widgetModule || relpath
+  const moduleName = Object.values(MODULE_NAME).includes(tmpModuleName as any) ? tmpModuleName : null
+  const token = socket.protocol
+
+  const tokenInfo = await bot.getAuth().wsTokenFromProtocol(token, tokenType)
+  const userId = tokenInfo ? tokenInfo.user_id : null
+
+  return { userId, moduleName }
 }
 
 class WebSocketServer {
@@ -26,21 +52,11 @@ class WebSocketServer {
       // note: here the socket is already set in _websocketserver.clients !
       // but it has no user_id or module set yet!
 
-      const pathname = new URL(bot.getConfig().ws.connectstring).pathname
-      const relpathfull = request.url?.substring(pathname.length) || ''
-      const token = socket.protocol
+      const basePath = new URL(bot.getConfig().ws.connectstring).pathname
+      const requestUrl = request.url || ''
+      const { userId, moduleName } = await determineUserIdAndModuleName(basePath, requestUrl, socket, bot)
 
-      const relpath = relpathfull.startsWith('/') ? relpathfull.substring(1) : relpathfull
-      const widgetPrefix = 'widget_'
-      const widgetModule = moduleByWidgetType(relpath.startsWith(widgetPrefix) ? relpath.substring(widgetPrefix.length) : '')
-      const token_type = widgetModule ? relpath : null
-      const moduleName = widgetModule || relpath
-
-      const tokenInfo = await bot.getAuth().wsTokenFromProtocol(token, token_type)
-      if (tokenInfo) {
-        socket.user_id = tokenInfo.user_id
-      }
-
+      socket.user_id = userId
       socket.module = moduleName
 
       log.info('added socket: ', moduleName, socket.protocol)
@@ -51,14 +67,14 @@ class WebSocketServer {
         log.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length)
       })
 
-      if (request.url?.indexOf(pathname) !== 0) {
-        log.info('bad request url: ', request.url)
+      if (!socket.user_id) {
+        log.info('not found token: ', socket.protocol, requestUrl)
         socket.close()
         return
       }
 
-      if (!socket.user_id) {
-        log.info('not found token: ', token, relpath)
+      if (!socket.module) {
+        log.info('bad request url: ', requestUrl)
         socket.close()
         return
       }
@@ -66,7 +82,7 @@ class WebSocketServer {
       // user connected
       bot.getEventHub().emit('wss_user_connected', socket)
 
-      const m = bot.getModuleManager().get(socket.user_id, moduleName)
+      const m = bot.getModuleManager().get(socket.user_id, socket.module)
       // log.info('found a module?', moduleName, !!m)
       if (m) {
         const evts = m.getWsEvents()

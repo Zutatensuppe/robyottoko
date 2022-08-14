@@ -17,7 +17,7 @@ import {
   MadochanCommand, MediaVolumeCommand, ChattersCommand,
   RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand,
   CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand,
-  CommandTriggerType, CommandAction, CommandExecutionContext,
+  CommandTriggerType, CommandAction, CommandExecutionContext, MODULE_NAME, WIDGET_TYPE,
 } from '../../types'
 import dictLookup from '../../commands/dictLookup'
 import { GeneralModuleAdminSettings, GeneralModuleSettings, GeneralModuleWsEventData, GeneralSaveEventData } from './GeneralModuleCommon'
@@ -54,7 +54,7 @@ interface WsData {
 }
 
 class GeneralModule implements Module {
-  public name = 'general'
+  public name = MODULE_NAME.GENERAL
 
   // @ts-ignore
   public bot: Bot
@@ -352,7 +352,7 @@ class GeneralModule implements Module {
         adminSettings: this.data.adminSettings,
         globalVariables: await this.bot.getUserVariables(this.user).all(),
         channelPointsCustomRewards: this.channelPointsCustomRewards,
-        mediaWidgetUrl: await this.bot.getWidgets().getWidgetUrl('media', this.user.id),
+        mediaWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.MEDIA, this.user.id),
       },
     }
   }
