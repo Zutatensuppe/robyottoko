@@ -894,31 +894,35 @@ class Auth {
     async destroyToken(token) {
         return await this.tokenRepo.delete(token);
     }
+    async _determineApiUserData(token) {
+        if (token === null) {
+            return null;
+        }
+        const tokenInfo = await this.getTokenInfoByTokenAndType(token, TokenType.AUTH);
+        if (!tokenInfo) {
+            return null;
+        }
+        const user = await this.userRepo.getById(tokenInfo.user_id);
+        if (!user) {
+            return null;
+        }
+        return {
+            token: tokenInfo.token,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                status: user.status,
+                groups: await this.userRepo.getGroups(user.id)
+            },
+        };
+    }
     addAuthInfoMiddleware() {
         return async (req, _res, next) => {
             const token = req.cookies['x-token'] || null;
-            const tokenInfo = await this.getTokenInfoByTokenAndType(token, TokenType.AUTH);
-            if (tokenInfo) {
-                const user = await this.userRepo.getById(tokenInfo.user_id);
-                if (user) {
-                    req.token = tokenInfo.token;
-                    req.user = {
-                        id: user.id,
-                        name: user.name,
-                        email: user.email,
-                        status: user.status,
-                        groups: await this.userRepo.getGroups(user.id)
-                    };
-                }
-                else {
-                    req.token = null;
-                    req.user = null;
-                }
-            }
-            else {
-                req.token = null;
-                req.user = null;
-            }
+            const userData = await this._determineApiUserData(token);
+            req.token = userData?.token || null;
+            req.user = userData?.user || null;
             next();
         };
     }
@@ -2992,10 +2996,11 @@ const createRouter$2 = (bot) => {
 const createRouter$1 = (bot, requireLoginApi) => {
     const router = express.Router();
     router.get('/me', requireLoginApi, async (req, res) => {
-        res.send({
+        const apiUser = {
             user: req.user,
             token: req.cookies['x-token'],
-        });
+        };
+        res.send(apiUser);
     });
     router.post('/_reset_password', express.json(), async (req, res) => {
         const plainPass = req.body.pass || null;
@@ -7270,9 +7275,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-08-13T19:38:46.114Z",
+    buildDate: "2022-08-14T09:52:16.547Z",
     // @ts-ignore
-    buildVersion: "1.23.2",
+    buildVersion: "1.23.3",
 };
 
 const TABLE = 'robyottoko.chat_log';
