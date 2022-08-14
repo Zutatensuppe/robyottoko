@@ -2,6 +2,7 @@ import { NextFunction, Response } from "express"
 import { passwordHash } from "../fn"
 import Tokens, { Token, TokenType } from "../services/Tokens"
 import Users, { User } from "../services/Users"
+import { ApiUserData } from "../types"
 
 class Auth {
   private userRepo: Users
@@ -39,29 +40,38 @@ class Auth {
     return await this.tokenRepo.delete(token)
   }
 
+  async _determineApiUserData(token: string | null): Promise<ApiUserData | null> {
+    if (token === null) {
+      return null
+    }
+    const tokenInfo = await this.getTokenInfoByTokenAndType(token, TokenType.AUTH)
+    if (!tokenInfo) {
+      return null
+    }
+
+    const user = await this.userRepo.getById(tokenInfo.user_id)
+    if (!user) {
+      return null
+    }
+
+    return {
+      token: tokenInfo.token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        status: user.status,
+        groups: await this.userRepo.getGroups(user.id)
+      },
+    }
+  }
+
   addAuthInfoMiddleware() {
     return async (req: any, _res: Response, next: NextFunction) => {
       const token = req.cookies['x-token'] || null
-      const tokenInfo = await this.getTokenInfoByTokenAndType(token, TokenType.AUTH)
-      if (tokenInfo) {
-        const user = await this.userRepo.getById(tokenInfo.user_id)
-        if (user) {
-          req.token = tokenInfo.token
-          req.user = {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            status: user.status,
-            groups: await this.userRepo.getGroups(user.id)
-          }
-        } else {
-          req.token = null
-          req.user = null
-        }
-      } else {
-        req.token = null
-        req.user = null
-      }
+      const userData = await this._determineApiUserData(token)
+      req.token = userData?.token || null
+      req.user = userData?.user || null
       next()
     }
   }

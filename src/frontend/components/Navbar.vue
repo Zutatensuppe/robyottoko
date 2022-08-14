@@ -36,9 +36,10 @@
 import { defineComponent } from "vue";
 import user from "../user";
 import { eventBus } from "../wsstatus";
+import { ApiUser } from '../../types';
 
 interface ComponentData {
-  $me: { user: { id: number, name: string, email: string, status: string, groups: string[] }, token: string } | null
+  me: ApiUser | null
   showProblems: boolean
   linksStart: { to: { name: string }, text: string }[]
   problems: { message: string, details: any }[]
@@ -50,11 +51,11 @@ export default defineComponent({
   name: "navbar",
   computed: {
     user() {
-      return this.$me?.user?.name || "";
+      return this.me?.user?.name || "";
     },
   },
   created() {
-    this.$me = user.getMe();
+    this.me = user.getMe();
     this.darkmode = user.isDarkmode();
     eventBus.on("status", this.statusChanged);
   },
@@ -62,7 +63,7 @@ export default defineComponent({
     eventBus.off("status", this.statusChanged);
   },
   data: (): ComponentData => ({
-    $me: null,
+    me: null,
     showProblems: false,
     linksStart: [
       {

@@ -21,6 +21,19 @@ import WebServer from './WebServer'
 
 type int = number
 
+export interface ApiUser {
+  id: number
+  name: string
+  email: string
+  status: string
+  groups: string[]
+}
+
+export interface ApiUserData {
+  user: ApiUser
+  token: string
+}
+
 export interface DbConfig {
   connectStr: string
   patchesDir: string
