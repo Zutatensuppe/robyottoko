@@ -4397,7 +4397,7 @@ const madochanCreateWord = (originalCmd, bot, user) => async (ctx) => {
 const randomText = (originalCmd, bot, user) => async (ctx) => {
     const texts = originalCmd.data.text;
     const say = bot.sayFn(user, ctx.target);
-    say(await fn.doReplacements(fn.getRandom(texts), ctx.rawCmd, ctx.context, originalCmd, bot, user));
+    say(await fn.doReplacements(getRandom(texts), ctx.rawCmd, ctx.context, originalCmd, bot, user));
 };
 
 const log$a = logger('playMedia.ts');
@@ -7320,7 +7320,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-08-14T11:37:38.949Z",
+    buildDate: "2022-08-14T11:51:51.680Z",
     // @ts-ignore
     buildVersion: "1.23.4",
 };
