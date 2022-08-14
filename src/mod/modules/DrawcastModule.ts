@@ -2,7 +2,7 @@ import fn from '../../fn'
 import { nonce, logger } from '../../common/fn'
 import fs from 'fs'
 import { Socket } from '../../net/WebSocketServer'
-import { Bot, ChatMessageContext, DrawcastSettings, Module } from '../../types'
+import { Bot, ChatMessageContext, DrawcastSettings, Module, MODULE_NAME, WIDGET_TYPE } from '../../types'
 import { User } from '../../services/Users'
 import { default_settings, default_images, DrawcastModuleData, DrawcastImage, DrawcastModuleWsData } from './DrawcastModuleCommon'
 import { NextFunction, Response } from 'express'
@@ -18,7 +18,7 @@ interface PostEventData {
 }
 
 class DrawcastModule implements Module {
-  public name = 'drawcast'
+  public name = MODULE_NAME.DRAWCAST
 
   // @ts-ignore
   public bot: Bot
@@ -94,15 +94,15 @@ class DrawcastModule implements Module {
   }
 
   async drawUrl(): Promise<string> {
-    return await this.bot.getWidgets().getPublicWidgetUrl('drawcast_draw', this.user.id)
+    return await this.bot.getWidgets().getPublicWidgetUrl(WIDGET_TYPE.DRAWCAST_DRAW, this.user.id)
   }
 
   async receiveUrl(): Promise<string> {
-    return await this.bot.getWidgets().getWidgetUrl('drawcast_receive', this.user.id)
+    return await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.DRAWCAST_RECEIVE, this.user.id)
   }
 
   async controlUrl(): Promise<string> {
-    return await this.bot.getWidgets().getWidgetUrl('drawcast_control', this.user.id)
+    return await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.DRAWCAST_CONTROL, this.user.id)
   }
 
   async wsdata(eventName: string): Promise<DrawcastModuleWsData> {
@@ -165,8 +165,7 @@ class DrawcastModule implements Module {
       'post': async (_ws: Socket, data: PostEventData) => {
         const rel = `/uploads/drawcast/${this.user.id}`
         const img = fn.decodeBase64Image(data.data.img)
-        const nameWithoutExt = `${(new Date()).toJSON()}-${nonce(6)}`.replace(/[^a-zA-Z0-9-]/g, '_')
-        const name = `${nameWithoutExt}.${fn.mimeToExt(img.type)}`
+        const name = fn.safeFileName(`${(new Date()).toJSON()}-${nonce(6)}.${fn.mimeToExt(img.type)}`)
 
         const dirPath = `./data${rel}`
         const filePath = `${dirPath}/${name}`

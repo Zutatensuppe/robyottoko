@@ -1,14 +1,15 @@
 import {
   accentFolded,
   determineNewVolume,
-  joinIntoChunks,
-  parseISO8601Duration,
   doReplacements,
-  findIdxBySearchInOrder,
   findIdxBySearch,
-  findIdxFuzzy,
   findIdxBySearchExactPart,
+  findIdxBySearchInOrder,
+  findIdxFuzzy,
+  joinIntoChunks,
   parseCommandFromTriggerAndMessage,
+  parseISO8601Duration,
+  safeFileName,
 } from './fn'
 import { Command, CommandTrigger } from './types'
 
@@ -288,6 +289,39 @@ describe('fn.doReplacements', () => {
     },
   ])('doReplacements $text', async ({ text, command, context, originalCmd, expected }) => {
     const actual = await doReplacements(text, command, context, originalCmd, null, null)
+    expect(actual).toBe(expected)
+  })
+})
+
+describe('fn.safeFileName', () => {
+  test.each([
+    {
+      _name: 'is ok',
+      string: 'heLLo0193',
+      expected: 'heLLo0193',
+    },
+    {
+      _name: 'empty',
+      string: '',
+      expected: '',
+    },
+    {
+      _name: 'contains some bad chars',
+      string: 'Some:%file_zname.p0000g.champ',
+      expected: 'Some__file_zname.p0000g.champ',
+    },
+    {
+      _name: 'contains only chars',
+      string: '%@#$',
+      expected: '____',
+    },
+    {
+      _name: 'contains slashes and backslashes',
+      string: 'file/Z0zo\\zozo.jpg',
+      expected: 'file_Z0zo_zozo.jpg',
+    },
+  ])('$_name', ({ _name, string, expected }) => {
+    const actual = safeFileName(string)
     expect(actual).toBe(expected)
   })
 })

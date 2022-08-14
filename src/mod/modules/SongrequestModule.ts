@@ -6,7 +6,8 @@ import { User } from '../../services/Users'
 import {
   ChatMessageContext, PlaylistItem,
   FunctionCommand, Command,
-  Bot, CommandFunction, Module, CommandExecutionContext
+  Bot, CommandFunction, Module, CommandExecutionContext,
+  MODULE_NAME, WIDGET_TYPE
 } from '../../types'
 import {
   default_commands,
@@ -67,7 +68,7 @@ const default_playlist = (list: any = null): PlaylistItem[] => {
 }
 
 class SongrequestModule implements Module {
-  public name = 'sr'
+  public name = MODULE_NAME.SR
 
   // @ts-ignore
   public bot: Bot
@@ -254,7 +255,7 @@ class SongrequestModule implements Module {
         commands: this.data.commands,
         globalVariables: await this.bot.getUserVariables(this.user).all(),
         channelPointsCustomRewards: this.channelPointsCustomRewards,
-        widgetUrl: await this.bot.getWidgets().getWidgetUrl('sr', this.user.id),
+        widgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.SR, this.user.id),
       }
     };
   }

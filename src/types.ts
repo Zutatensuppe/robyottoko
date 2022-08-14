@@ -485,6 +485,30 @@ export interface MailService {
   sendRegistrationMail: (data: MailServiceRegistrationData) => any
 }
 
+export enum MODULE_NAME {
+  CORE = 'core', // not really a module
+  AVATAR = 'avatar',
+  DRAWCAST = 'drawcast',
+  GENERAL = 'general',
+  POMO = 'pomo',
+  SR = 'sr',
+  SPEECH_TO_TEXT = 'speech-to-text',
+  VOTE = 'vote',
+}
+
+export enum WIDGET_TYPE {
+  SR = 'sr',
+  MEDIA = 'media',
+  SPEECH_TO_TEXT_CONTROL = 'speech-to-text',
+  SPEECH_TO_TEXT_RECEIVE = 'speech-to-text_receive',
+  AVATAR_CONTROL = 'avatar',
+  AVATAR_RECEIVE = 'avatar_receive',
+  DRAWCAST_RECEIVE = 'drawcast_receive',
+  DRAWCAST_DRAW = 'drawcast_draw',
+  DRAWCAST_CONTROL = 'drawcast_control',
+  POMO = 'pomo',
+}
+
 export interface Bot {
   getBuildVersion: () => string
   getBuildDate: () => string

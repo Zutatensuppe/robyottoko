@@ -2,11 +2,11 @@ import config from '../../config'
 import { Socket } from '../../net/WebSocketServer'
 import xhr, { asQueryArgs } from '../../net/xhr'
 import { User } from '../../services/Users'
-import { Bot, ChatMessageContext, Module } from '../../types'
+import { Bot, ChatMessageContext, Module, MODULE_NAME, WIDGET_TYPE } from '../../types'
 import { default_settings, SpeechToTextModuleData, SpeechToTextModuleSettings, SpeechToTextWsData } from './SpeechToTextModuleCommon'
 
 class SpeechToTextModule implements Module {
-  public name = 'speech-to-text'
+  public name = MODULE_NAME.SPEECH_TO_TEXT
 
   // @ts-ignore
   public bot: Bot
@@ -52,8 +52,8 @@ class SpeechToTextModule implements Module {
       event: eventName,
       data: {
         settings: this.data.settings,
-        controlWidgetUrl: await this.bot.getWidgets().getWidgetUrl('speech-to-text', this.user.id),
-        displayWidgetUrl: await this.bot.getWidgets().getWidgetUrl('speech-to-text_receive', this.user.id),
+        controlWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.SPEECH_TO_TEXT_CONTROL, this.user.id),
+        displayWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.SPEECH_TO_TEXT_RECEIVE, this.user.id),
       }
     };
   }

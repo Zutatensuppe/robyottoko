@@ -1,6 +1,6 @@
 import { logger, humanDuration, parseHumanDuration, SECOND } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
-import { Bot, ChatMessageContext, CommandExecutionContext, FunctionCommand, Module, RawCommand, TwitchChatContext } from '../../types'
+import { Bot, ChatMessageContext, CommandExecutionContext, FunctionCommand, Module, MODULE_NAME, RawCommand, TwitchChatContext, WIDGET_TYPE } from '../../types'
 import { User } from '../../services/Users'
 import { default_settings, default_state, PomoEffect, PomoModuleData, PomoModuleWsData, PomoModuleWsEffectData, PomoModuleWsSaveData } from './PomoModuleCommon'
 import { doReplacements } from '../../fn'
@@ -10,7 +10,7 @@ import { MOD_OR_ABOVE } from '../../common/permissions'
 const log = logger('PomoModule.ts')
 
 class PomoModule implements Module {
-  public name = 'pomo'
+  public name = MODULE_NAME.POMO
 
   // @ts-ignore
   public bot: Bot
@@ -186,7 +186,7 @@ class PomoModule implements Module {
       data: {
         settings: this.data.settings,
         state: this.data.state,
-        widgetUrl: await this.bot.getWidgets().getWidgetUrl('pomo', this.user.id),
+        widgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.POMO, this.user.id),
       }
     }
   }

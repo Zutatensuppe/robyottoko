@@ -1,7 +1,6 @@
 // @ts-ignore
 import tmi from 'tmi.js'
 import TwitchHelixClient from '../services/TwitchHelixClient'
-import fn from '../fn'
 import { logger, Logger } from '../common/fn'
 import { TwitchChannel } from '../services/TwitchChannels'
 import { User } from '../services/Users'
