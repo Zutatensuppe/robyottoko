@@ -182,9 +182,9 @@ export default defineComponent({
       return clamp(2 * SECOND, durationMs, 10 * SECOND)
     },
     synthesize(text: string, lang: string): void {
-      log.info("synthesize", this.lastUtterance, text, lang);
+      log.info({ lastUtterance: this.lastUtterance, text, lang }, "synthesize");
       if (this.lastUtterance !== text) {
-        log.info("speechSynthesis", speechSynthesis);
+        log.info({ speechSynthesis }, "speechSynthesis");
         this.lastUtterance = text;
         let utterance = new SpeechSynthesisUtterance(`${this.lastUtterance}`);
         if (lang) {
@@ -337,7 +337,7 @@ export default defineComponent({
         return;
       }
       let results = evt.results;
-      log.info("onVoiceResult()", evt);
+      log.info({ evt }, "onVoiceResult()");
       for (var i = evt.resultIndex; i < results.length; i++) {
         if (!results[i].isFinal) {
           // recognizedText = "<<" + _recognizedText + ">>";

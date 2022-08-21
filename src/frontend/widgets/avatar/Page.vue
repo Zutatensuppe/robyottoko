@@ -268,7 +268,7 @@ export default defineComponent({
           const soundMeter = new SoundMeter(audioContext);
           soundMeter.connectToSource(stream, (e: any | null) => {
             if (e) {
-              log.error(e);
+              log.error({ e });
               return;
             }
             setInterval(() => {
@@ -280,7 +280,7 @@ export default defineComponent({
           });
         })
         .catch((e) => {
-          log.error(e);
+          log.error({ e });
           alert("Error capturing audio.");
         });
     },

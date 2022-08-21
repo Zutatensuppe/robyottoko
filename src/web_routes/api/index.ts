@@ -40,12 +40,12 @@ export const createRouter = (
   router.post('/upload', requireLoginApi, (req, res: Response) => {
     upload(req, res, (err) => {
       if (err) {
-        log.error(err)
+        log.error({ err })
         res.status(400).send("Something went wrong!");
         return
       }
       if (!req.file) {
-        log.error(err)
+        log.error({ err })
         res.status(400).send("Something went wrong!");
         return
       }
@@ -100,7 +100,9 @@ export const createRouter = (
     if (user) {
       bot.getEventHub().emit('user_registration_complete', user)
     } else {
-      log.error(`registration: user doesn't exist after saving it: ${tokenObj.user_id}`)
+      log.error({
+        user_id: tokenObj.user_id,
+      }, `registration: user doesn't exist after saving it`)
     }
     return
   })
@@ -178,7 +180,7 @@ export const createRouter = (
       res.status(404).send()
       return
     }
-    log.debug(`/widget/:widget_type/:widget_token/`, type, token)
+    log.debug({ route: `/widget/:widget_type/:widget_token/`, type, token })
     const w = bot.getWidgets().getWidgetDefinitionByType(type)
     if (w) {
       res.send({
@@ -235,7 +237,9 @@ export const createRouter = (
     if (changedUser) {
       bot.getEventHub().emit('user_changed', changedUser)
     } else {
-      log.error(`save-settings: user doesn't exist after saving it: ${user.id}`)
+      log.error({
+        user_id: user.id,
+      }, 'save-settings: user doesn\'t exist after saving it')
     }
     res.send()
   })

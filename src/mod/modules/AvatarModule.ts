@@ -123,7 +123,7 @@ class AvatarModule implements Module {
             this.data.settings.avatarDefinitions[tuberIdx].state.slots[slotName] = itemIdx
             await this.save()
           } catch (e) {
-            log.error('ws ctrl: unable to setSlot', tuberIdx, slotName, itemIdx)
+            log.error({ tuberIdx, slotName, itemIdx }, 'ws ctrl: unable to setSlot')
           }
         } else if (data.data.ctrl === "lockState") {
           const tuberIdx = data.data.args[0];
@@ -132,7 +132,7 @@ class AvatarModule implements Module {
             this.data.settings.avatarDefinitions[tuberIdx].state.lockedState = lockedState
             await this.save()
           } catch (e) {
-            log.error('ws ctrl: unable to lockState', tuberIdx, lockedState)
+            log.error({ tuberIdx, lockedState }, 'ws ctrl: unable to lockState')
           }
         } else if (data.data.ctrl === "setTuber") {
           const tuberIdx = data.data.args[0];

@@ -34,7 +34,10 @@ const determineStreamStartDate = async (
   }
 
   const date = new Date(new Date().getTime() - (5 * MINUTE))
-  log.info(`No stream is running atm for channel ${context['room-id']}. Using fake start date ${date}.`)
+  log.info({
+    roomId: context['room-id'],
+    date: date,
+  }, `No stream is running atm, using fake start date.`)
   return date
 }
 
@@ -60,7 +63,12 @@ export class ChatEventHandler {
     msg: string,
   ): Promise<void> {
     const roles = rolesLettersFromTwitchChatContext(context)
-    log.debug(`${context.username}[${roles.join('')}]@${target}: ${msg}`)
+    log.debug({
+      username: context.username,
+      roles,
+      target,
+      msg,
+    })
 
     bot.getChatLog().insert(context, msg)
 

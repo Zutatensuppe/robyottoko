@@ -120,7 +120,7 @@ class TwitchClientManager {
 
     // Called every time the bot connects to Twitch chat
     chatClient.on('connected', (addr: string, port: number) => {
-      this.log.info(`* Connected to ${addr}:${port}`)
+      this.log.info({ addr, port }, 'Connected')
       for (const channel of twitchChannels) {
         if (!channel.bot_status_messages) {
           continue;
@@ -158,7 +158,7 @@ class TwitchClientManager {
       } catch (e) {
         // this can happen when calling close before the connection
         // could be established
-        this.log.error('error when connecting', e)
+        this.log.error({ e }, 'error when connecting')
       }
     }
 
@@ -204,7 +204,7 @@ class TwitchClientManager {
       user_id: this.user.id,
       subscription_id: subscription.id,
     })
-    this.log.info(`${subscription.type} subscription deleted`)
+    this.log.info({ type: subscription.type }, 'subscription deleted')
   }
 
   async registerSubscription(
@@ -232,9 +232,9 @@ class TwitchClientManager {
         user_id: this.user.id,
         subscription_id: resp.data[0].id,
       })
-      this.log.info(`${subscriptionType} subscription registered`)
+      this.log.info({ type: subscriptionType }, 'subscription registered')
     }
-    this.log.debug(resp)
+    this.log.debug({ resp })
   }
 
   async _disconnectChatClient() {
@@ -243,7 +243,7 @@ class TwitchClientManager {
         await this.chatClient.disconnect()
         this.chatClient = null
       } catch (e) {
-        this.log.info(e)
+        this.log.info({ e })
       }
     }
   }

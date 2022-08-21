@@ -8,7 +8,10 @@ export const DAY = 24 * HOUR
 export const MONTH = 30 * DAY
 export const YEAR = 365 * DAY
 
-type LogFn = (...args: any[]) => void
+interface LogFn {
+  (obj: unknown, msg?: string): void;
+  (msg: string): void;
+}
 
 export enum LogLevel {
   INFO = 'info',

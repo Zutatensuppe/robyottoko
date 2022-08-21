@@ -284,12 +284,12 @@ class TwitchHelixClient {
       const resp = await xhr.post(url)
       if (!resp.ok) {
         const txt = await resp.text()
-        log.warn('unable to get access_token by code', txt)
+        log.warn({ txt }, 'unable to get access_token by code')
         return null
       }
       return (await resp.json()) as TwitchHelixOauthTokenResponseData
     } catch (e) {
-      log.error(url, e)
+      log.error({ url, e })
       return null
     }
   }
@@ -308,17 +308,17 @@ class TwitchHelixClient {
       const resp = await xhr.post(url)
       if (resp.status === 401) {
         const txt = await resp.text()
-        log.warn('tried to refresh access_token with an invalid refresh token', txt)
+        log.warn({ txt }, 'tried to refresh access_token with an invalid refresh token')
         return null
       }
       if (!resp.ok) {
         const txt = await resp.text()
-        log.warn('unable to refresh access_token', txt)
+        log.warn({ txt }, 'unable to refresh access_token')
         return null
       }
       return (await resp.json()) as TwitchHelixOauthTokenResponseData
     } catch (e) {
-      log.error(url, e)
+      log.error({ url, e })
       return null
     }
   }
@@ -335,13 +335,13 @@ class TwitchHelixClient {
       const resp = await xhr.post(url)
       if (!resp.ok) {
         const txt = await resp.text()
-        log.warn('unable to get access_token', txt)
+        log.warn({ txt }, 'unable to get access_token')
         return ''
       }
       json = (await resp.json()) as TwitchHelixOauthTokenResponseData
       return json.access_token
     } catch (e) {
-      log.error(url, json, e)
+      log.error({ url, json, e })
       return ''
     }
   }
@@ -354,7 +354,7 @@ class TwitchHelixClient {
       json = (await resp.json()) as TwitchHelixUserSearchResponseData
       return json.data[0]
     } catch (e) {
-      log.error(url, json, e)
+      log.error({ url, json, e })
       return null
     }
   }
@@ -368,7 +368,7 @@ class TwitchHelixClient {
       json = (await resp.json()) as TwitchHelixUserSearchResponseData
       return json.data[0]
     } catch (e) {
-      log.error(url, json, e)
+      log.error({ url, json, e })
       return null
     }
   }
@@ -415,7 +415,7 @@ class TwitchHelixClient {
       const filtered = json.data.filter(item => item.duration <= maxDurationSeconds)
       return getRandom(filtered)
     } catch (e) {
-      log.error(url, json, e)
+      log.error({ url, json, e })
       return null
     }
   }
@@ -444,7 +444,7 @@ class TwitchHelixClient {
       json = (await resp.json()) as TwitchHelixStreamSearchResponseData
       return json.data[0] || null
     } catch (e) {
-      log.error(url, json, e)
+      log.error({ url, json, e })
       return null
     }
   }
@@ -455,7 +455,7 @@ class TwitchHelixClient {
       const resp = await xhr.get(url, await this.withAuthHeaders())
       return await resp.json()
     } catch (e) {
-      log.error(url, e)
+      log.error({ url, e })
       return null
     }
   }
@@ -466,7 +466,7 @@ class TwitchHelixClient {
       const resp = await xhr.delete(url, await this.withAuthHeaders())
       return await resp.text()
     } catch (e) {
-      log.error(url, e)
+      log.error({ url, e })
       return null
     }
   }
@@ -481,7 +481,7 @@ class TwitchHelixClient {
       const json = await resp.json() as TwitchHelixSubscriptionResponseData
       return json
     } catch (e) {
-      log.error(url, e)
+      log.error({ url, e })
       return null
     }
   }
@@ -497,7 +497,7 @@ class TwitchHelixClient {
       json = (await resp.json()) as TwitchHelixCategorySearchResponseData
       return getBestEntryFromCategorySearchItems(searchString, json)
     } catch (e) {
-      log.error(url, json)
+      log.error({ url, json })
       return null
     }
   }
@@ -513,7 +513,7 @@ class TwitchHelixClient {
       json = (await resp.json()) as TwitchHelixGetChannelInformationResponseData
       return json.data[0]
     } catch (e) {
-      log.error(url, json)
+      log.error({ url, json })
       return null
     }
   }
@@ -533,7 +533,7 @@ class TwitchHelixClient {
     try {
       return await executeRequestWithRetry(accessToken, req, bot, user)
     } catch (e) {
-      log.error(url, e)
+      log.error({ url, e })
       return null
     }
   }
@@ -562,7 +562,7 @@ class TwitchHelixClient {
       const resp = await xhr.get(url, await this.withAuthHeaders())
       return (await resp.json()) as TwitchHelixGetStreamTagsResponseData
     } catch (e) {
-      log.error(url, e)
+      log.error({ url, e })
       return null
     }
   }

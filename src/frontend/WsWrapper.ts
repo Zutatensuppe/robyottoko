@@ -88,20 +88,23 @@ export default class WsWrapper {
       this.reconnectTimeout = setTimeout(() => { this.connect() }, 1000)
     }
 
-    log.info(`trying to connect: ${this.addr}`, id)
+    log.info({ id, addr: this.addr }, 'trying to connect')
     const ws = new WebSocket(this.addr, this.protocols)
     ws.onopen = (e) => {
-      log.info('ws connected', id)
+      log.info({ id }, 'ws connected')
       if (id !== this.id) {
         // this is not the last connection.. ignore it
-        log.info('connected but it is not the last attempt', id, this.id)
+        log.info({
+          id,
+          this_id: this.id
+        }, 'connected but it is not the last attempt')
         ws.close(CODE_CUSTOM_DISCONNECT)
         return
       }
 
       if (this.handle) {
         // should not happen...
-        log.error(`handle already existed, closing old one and replacing it`, id)
+        log.error({ e }, 'handle already existed, closing old one and replacing it')
         this.handle.close(CODE_CUSTOM_DISCONNECT)
       }
       this.handle = ws
@@ -129,7 +132,7 @@ export default class WsWrapper {
     }
     ws.onerror = (e) => {
       this.cancelKeepAlive()
-      log.error(e, id)
+      log.error({ e, id })
       // this will cause a close with reason 1006
       // reconnect will automatically happen
     }
@@ -138,11 +141,11 @@ export default class WsWrapper {
       this.handle = null
       this.onclose(e)
       if (e.code === CODE_CUSTOM_DISCONNECT) {
-        log.info('custom disconnect, will not reconnect', id)
+        log.info({ id }, 'custom disconnect, will not reconnect')
       } else if (e.code === CODE_GOING_AWAY) {
-        log.info('going away, will not reconnect', id)
+        log.info({ id }, 'going away, will not reconnect')
       } else {
-        log.info(`connection closed, trying to reconnect. code: ${e.code}`, id)
+        log.info({ id, code: e.code }, 'connection closed, trying to reconnect.')
         reconnect()
       }
     }
@@ -150,7 +153,7 @@ export default class WsWrapper {
 
   disconnect() {
     if (this.handle) {
-      log.info(`handle existed, closing with code: ${CODE_CUSTOM_DISCONNECT}`)
+      log.info({ code: CODE_CUSTOM_DISCONNECT }, 'handle existed, closing')
       this.handle.close(CODE_CUSTOM_DISCONNECT)
     }
   }

@@ -59,7 +59,7 @@ const MediaQueueElement = defineComponent({
                 const videoEl = this.$refs.video as HTMLVideoElement
                 const volume = media.video.volume / 100
                 videoEl.addEventListener("error", (e) => {
-                  log.error('error when playing video', e)
+                  log.error({ e }, 'error when playing video')
                   res();
                 });
                 videoEl.volume = fn.clamp(0, volume, 1)

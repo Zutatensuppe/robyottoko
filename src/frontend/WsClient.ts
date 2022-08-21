@@ -55,7 +55,7 @@ export default class WsClient extends WsWrapper {
         return d
       }
     } catch (e) {
-      log.info(e)
+      log.info({ e })
     }
     return { event: null, data: null }
   }
@@ -67,7 +67,7 @@ export default class WsClient extends WsWrapper {
       return
     }
 
-    log.info(`ws dispatch ${type} ${tag}`)
+    log.info({ type, tag }, 'ws dispatch')
     for (const callback of callbacks) {
       callback(...args)
     }
