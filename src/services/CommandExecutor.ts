@@ -37,15 +37,24 @@ export class CommandExecutor {
       if (!ctx.context || !mayExecute(ctx.context, cmdDef)) {
         continue
       }
-      log.info(`${ctx.target}| * Executing ${ctx.rawCmd?.name || '<unknown>'} command`)
+      log.info({
+        target: ctx.target,
+        command: ctx.rawCmd?.name || '<unknown>',
+      }, 'Executing command')
       // eslint-disable-next-line no-async-promise-executor
       const p = new Promise(async (resolve) => {
         await fn.applyVariableChanges(cmdDef, contextModule, ctx.rawCmd, ctx.context)
         const r = await cmdDef.fn(ctx)
         if (r) {
-          log.info(`${ctx.target}| * Returned: ${r}`)
+          log.info({
+            target: ctx.target,
+            return: r,
+          }, 'Returned from command')
         }
-        log.info(`${ctx.target}| * Executed ${ctx.rawCmd?.name || '<unknown>'} command`)
+        log.info({
+          target: ctx.target,
+          command: ctx.rawCmd?.name || '<unknown>',
+        }, 'Executed command')
         resolve(true)
       })
       promises.push(p)

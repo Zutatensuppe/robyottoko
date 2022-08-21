@@ -12,9 +12,10 @@ const chatters = (
 ): CommandFunction => async (ctx: CommandExecutionContext) => {
   const helixClient = bot.getUserTwitchClientManager(user).getHelixClient()
   if (!ctx.context || !helixClient) {
-    log.info('context', ctx.context)
-    log.info('helixClient', helixClient)
-    log.info('unable to execute chatters command, client, context, or helixClient missing')
+    log.info({
+      context: ctx.context,
+      helixClient,
+    }, 'unable to execute chatters command, client, context, or helixClient missing')
     return
   }
 

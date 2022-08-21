@@ -14,10 +14,11 @@ const removeStreamTags = (
 ): CommandFunction => async (ctx: CommandExecutionContext) => {
   const helixClient = bot.getUserTwitchClientManager(user).getHelixClient()
   if (!ctx.rawCmd || !ctx.context || !helixClient) {
-    log.info('command', ctx.rawCmd)
-    log.info('context', ctx.context)
-    log.info('helixClient', helixClient)
-    log.info('unable to execute removeStreamTags, client, command, context, or helixClient missing')
+    log.info({
+      rawCmd: ctx.rawCmd,
+      context: ctx.context,
+      helixClient,
+    }, 'unable to execute removeStreamTags, client, command, context, or helixClient missing')
     return
   }
   const channelId = ctx.context['room-id']

@@ -179,7 +179,7 @@ class Db {
     try {
       return (await this.dbh.query(query, params)).rows[0] || null
     } catch (e) {
-      log.info('_get', query, params)
+      log.info({ fn: '_get', query, params })
       console.error(e)
       throw e
     }
@@ -189,7 +189,7 @@ class Db {
     try {
       return await this.dbh.query(query, params)
     } catch (e) {
-      log.info('run', query, params)
+      log.info({ fn: 'run', query, params })
       console.error(e)
       throw e
     }
@@ -199,7 +199,7 @@ class Db {
     try {
       return (await this.dbh.query(query, params)).rows || []
     } catch (e) {
-      log.info('_getMany', query, params)
+      log.info({ fn: '_getMany', query, params })
       console.error(e)
       throw e
     }

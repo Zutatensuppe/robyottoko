@@ -22,7 +22,7 @@ class Templates {
       try {
         tmpl.templateContents = (await fs.readFile(tmpl.templatePathAbsolute)).toString();
       } catch (e) {
-        log.error('error loading template', e)
+        log.error({ e }, 'error loading template')
         tmpl.templateContents = ''
       }
     }

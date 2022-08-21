@@ -28,7 +28,7 @@ const madochanCreateWord = (
       say(`"${definition}": ${data.word}`)
     }
   } catch (e: any) {
-    log.error(e)
+    log.error({ e })
     say(`Error occured, unable to generate a word :("`)
   }
 }

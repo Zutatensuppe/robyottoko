@@ -68,7 +68,7 @@ const countdown = (
       try {
         duration = (await parseDuration(`${a.value}`)) || 0
       } catch (e: any) {
-        log.error(e.message, a.value)
+        log.error({ message: e.message, value: a.value })
         return
       }
       actions.push(async () => await fn.sleep(duration))

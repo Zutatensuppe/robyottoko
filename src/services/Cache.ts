@@ -15,7 +15,7 @@ class Cache {
 
   async set(key: string, value: CacheValue, lifetime: number): Promise<void> {
     if (value === undefined) {
-      log.error(`unable to store undefined value for cache key: ${key}`)
+      log.error({ key }, 'unable to store undefined value for cache key')
       return
     }
     const expiresAt = lifetime === Infinity ? null : (new Date(new Date().getTime() + lifetime))

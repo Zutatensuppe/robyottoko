@@ -85,7 +85,7 @@ class TwitchPubSubClient {
         return
       }
       if (this.handle.readyState !== WebSocket.OPEN) {
-        log.error('ERR', `readyState is not OPEN (${WebSocket.OPEN})`)
+        log.error(`readyState is not OPEN (${WebSocket.OPEN})`)
         return
       }
       if (this.reconnectTimeout) {
@@ -95,7 +95,7 @@ class TwitchPubSubClient {
       while (this.sendBuffer.length > 0) {
         this.handle.send(this.sendBuffer.shift())
       }
-      log.info('INFO', 'Socket Opened')
+      log.info('Socket Opened')
       this._heartbeat()
       if (this.heartbeatHandle) {
         clearInterval(this.heartbeatHandle)
@@ -114,14 +114,14 @@ class TwitchPubSubClient {
 
       // log.debug('RECV', JSON.stringify(message))
       if (message.type === 'RECONNECT') {
-        log.info('INFO', 'Reconnecting...')
+        log.info('Reconnecting...')
         this.connect()
       }
 
       this.evts.emit('message', message)
     }
     this.handle.onerror = (e) => {
-      log.error('ERR', e)
+      log.error({ e })
       this.handle = null
       this.reconnectTimeout = setTimeout(() => { this.connect() }, reconnectInterval)
     }
@@ -130,7 +130,7 @@ class TwitchPubSubClient {
       if (e.code === CODE_CUSTOM_DISCONNECT || e.code === CODE_GOING_AWAY) {
         // no need to reconnect on custom disconnect or going away
       } else {
-        log.info('INFO', 'Onclose...')
+        log.info('Onclose...')
         this.reconnectTimeout = setTimeout(() => { this.connect() }, reconnectInterval)
       }
       if (this.heartbeatHandle) {
@@ -146,7 +146,7 @@ class TwitchPubSubClient {
       } catch (e) {
         // this can happen when calling close before the connection
         // could be established
-        log.error('error when closing the handle', e)
+        log.error({ e }, 'error when closing the handle')
       }
     }
   }

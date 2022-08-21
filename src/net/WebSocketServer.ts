@@ -59,22 +59,37 @@ class WebSocketServer {
       socket.user_id = userId
       socket.module = moduleName
 
-      log.info('added socket: ', moduleName, socket.protocol)
-      log.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length)
+      log.info({
+        moduleName,
+        socket: { protocol: socket.protocol },
+      }, 'added socket')
+
+      log.info({
+        count: this.sockets().filter(s => s.module === socket.module).length,
+      }, 'socket_count')
 
       socket.on('close', () => {
-        log.info('removed socket: ', moduleName, socket.protocol)
-        log.info('socket count: ', this.sockets().filter(s => s.module === socket.module).length)
+        log.info({
+          moduleName,
+          socket: { protocol: socket.protocol },
+        }, 'removed socket')
+
+        log.info({
+          count: this.sockets().filter(s => s.module === socket.module).length,
+        }, 'socket count')
       })
 
       if (!socket.user_id) {
-        log.info('not found token: ', socket.protocol, requestUrl)
+        log.info({
+          requestUrl,
+          socket: { protocol: socket.protocol },
+        }, 'not found token')
         socket.close()
         return
       }
 
       if (!socket.module) {
-        log.info('bad request url: ', requestUrl)
+        log.info({ requestUrl }, 'bad request url')
         socket.close()
         return
       }
@@ -107,7 +122,7 @@ class WebSocketServer {
             }
           }
         } catch (e) {
-          log.error('socket on message', e)
+          log.error({ e }, 'socket on message')
         }
       })
     })
@@ -118,7 +133,7 @@ class WebSocketServer {
   }
 
   _notify(socket: Socket, data: WebSocketNotifyData): void {
-    log.info(`notifying ${socket.user_id} ${socket.module} (${data.event})`)
+    log.info({ user_id: socket.user_id, module: socket.module, event: data.event }, 'notifying')
     socket.send(JSON.stringify(data))
   }
 
@@ -137,14 +152,15 @@ class WebSocketServer {
     ) {
       this._notify(socket, data)
     } else {
-      log.error(
-        'tried to notify invalid socket',
-        socket.user_id,
-        socket.module,
+      log.error({
+        socket: {
+          user_id: socket.user_id,
+          module: socket.module,
+        },
         user_ids,
         moduleName,
         isConnectedSocket,
-      )
+      }, 'tried to notify invalid socket')
     }
   }
 

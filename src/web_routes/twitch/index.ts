@@ -28,11 +28,11 @@ export const createRouter = (
     hmac.update(msg)
     const expected = `sha256=${hmac.digest('hex')}`
     if (req.headers['twitch-eventsub-message-signature'] !== expected) {
-      log.debug(req)
-      log.error('bad message signature', {
+      log.debug({ req })
+      log.error({
         got: req.headers['twitch-eventsub-message-signature'],
         expected,
-      })
+      }, 'bad message signature')
       res.status(403).send({ reason: 'bad message signature' })
       return
     }
@@ -72,7 +72,9 @@ export const createRouter = (
         if (changedUser) {
           bot.getEventHub().emit('user_changed', changedUser)
         } else {
-          log.error(`updating user twitch channels: user doesn't exist after saving it: ${req.user.id}`)
+          log.error({
+            user_id: req.user.id,
+          }, 'updating user twitch channels: user doesn\'t exist after saving it')
         }
       }
       res.send(await templates.render('templates/twitch_redirect_uri.html', {}))
@@ -92,18 +94,15 @@ export const createRouter = (
     express.json({ verify: (req: any, _res: Response, buf) => { req.rawBody = buf } }),
     verifyTwitchSignature,
     async (req, res) => {
-      // log.debug(req.body)
-      // log.debug(req.headers)
-
       if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-        log.info(`got verification request, challenge: ${req.body.challenge}`)
+        log.info({ challenge: req.body.challenge }, 'got verification request')
         res.write(req.body.challenge)
         res.send()
         return
       }
 
       if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-        log.info(`got notification request: ${req.body.subscription.type}`)
+        log.info({ type: req.body.subscription.type }, 'got notification request')
         const row = await bot.getDb().get('robyottoko.event_sub', {
           subscription_id: req.body.subscription.id,
         })
@@ -113,7 +112,6 @@ export const createRouter = (
           return
         }
         const userId = row.user_id as number
-        // const userId = 2
         const user = await bot.getUsers().getById(userId)
         if (!user) {
           log.info('unknown user')

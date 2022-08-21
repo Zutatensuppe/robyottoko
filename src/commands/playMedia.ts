@@ -17,7 +17,7 @@ const downloadVideo = async (originalUrl: string): Promise<string> => {
   const filename = `${hash(originalUrl)}-clip.mp4`
   const outfile = `./data/uploads/${filename}`
   if (!fs.existsSync(outfile)) {
-    log.debug(`downloading the video to ${outfile}`)
+    log.debug({ outfile }, 'downloading the video')
     const child = childProcess.execFile(
       config.youtubeDlBinary,
       [originalUrl, '-o', outfile]
@@ -26,7 +26,7 @@ const downloadVideo = async (originalUrl: string): Promise<string> => {
       child.on('close', resolve)
     })
   } else {
-    log.debug(`video exists at ${outfile}`)
+    log.debug({ outfile }, 'video exists')
   }
   return `/uploads/${filename}`
 }
@@ -46,13 +46,13 @@ const prepareData = async (
     return data
   }
 
-  log.debug(`video url is defined: ${data.video.url}`)
+  log.debug({ url: data.video.url }, 'video url is defined')
   data.video.url = await doReplaces(data.video.url)
   if (!data.video.url) {
     log.debug('no video url found')
   } else if (isTwitchClipUrl(data.video.url)) {
     // video url looks like a twitch clip url, dl it first
-    log.debug(`twitch clip found: ${data.video.url}`)
+    log.debug({ url: data.video.url }, 'twitch clip found')
     data.video.url = await downloadVideo(data.video.url)
   } else {
     // otherwise assume it is already a playable video url

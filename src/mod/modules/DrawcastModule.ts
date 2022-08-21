@@ -136,7 +136,7 @@ class DrawcastModule implements Module {
         const image = this.data.images.find(item => item.path === path)
         if (!image) {
           // should not happen
-          log.error(`approve_image: image not found: ${path}`)
+          log.error({ path }, 'approve_image: image not found')
           return
         }
         image.approved = true
@@ -152,7 +152,7 @@ class DrawcastModule implements Module {
         const image = this.data.images.find(item => item.path === path)
         if (!image) {
           // should not happen
-          log.error(`deny_image: image not found: ${path}`)
+          log.error({ path }, 'deny_image: image not found')
           return
         }
         this.data.images = this.data.images.filter(item => item.path !== image.path)

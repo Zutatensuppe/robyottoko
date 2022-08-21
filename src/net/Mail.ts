@@ -64,9 +64,9 @@ class Mail {
 
   send(mail: SibApiV3Sdk.SendSmtpEmail) {
     this.apiInstance.sendTransacEmail(mail).then(function (data: TransacEmailResponseData) {
-      log.info('API called successfully. Returned data: ' + JSON.stringify(data))
+      log.info({ data }, 'API called successfully')
     }, function (error: TransacEmailError) {
-      log.error(error)
+      log.error({ error })
     });
   }
 }
