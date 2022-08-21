@@ -3781,7 +3781,9 @@ class TwitchClientManager {
             });
             this.log.info({ type: subscriptionType }, 'subscription registered');
         }
-        this.log.debug({ resp });
+        else {
+            this.log.debug({ resp, subscription });
+        }
     }
     async _disconnectChatClient() {
         if (this.chatClient) {
@@ -7366,7 +7368,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-08-21T23:03:32.279Z",
+    buildDate: "2022-08-21T23:30:05.045Z",
     // @ts-ignore
     buildVersion: "1.23.5",
 };

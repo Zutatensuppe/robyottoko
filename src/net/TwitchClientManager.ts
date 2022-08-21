@@ -233,8 +233,9 @@ class TwitchClientManager {
         subscription_id: resp.data[0].id,
       })
       this.log.info({ type: subscriptionType }, 'subscription registered')
+    } else {
+      this.log.debug({ resp, subscription })
     }
-    this.log.debug({ resp })
   }
 
   async _disconnectChatClient() {
