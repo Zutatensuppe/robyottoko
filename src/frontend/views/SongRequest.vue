@@ -1,83 +1,179 @@
 <template>
   <div class="view">
-    <div id="top" ref="top">
-      <navbar />
-      <div id="actionbar" class="p-1">
-        <button class="button is-small mr-1" :disabled="inited ? null : true" @click="sendCtrl(control.ctrl, [])"
-          :title="control.title" v-for="(control, idx) in controlDefinitions" :key="idx">
-          <i class="fa" :class="control.icon" />
+    <div
+      id="top"
+      ref="top"
+    >
+      <navbar-element />
+      <div
+        id="actionbar"
+        class="p-1"
+      >
+        <button
+          v-for="(control, idx) in controlDefinitions"
+          :key="idx"
+          class="button is-small mr-1"
+          :disabled="inited ? undefined : true"
+          :title="control.title"
+          @click="sendCtrl(control.ctrl, [])"
+        >
+          <i
+            class="fa"
+            :class="control.icon"
+          />
         </button>
-        <button class="button is-small mr-1" :disabled="inited ? null : true" @click="sendCtrl('setAllToPlayed', [])"
-          title="Sets all songs to at least 1x played">
+        <button
+          class="button is-small mr-1"
+          :disabled="inited ? undefined : true"
+          title="Sets all songs to at least 1x played"
+          @click="sendCtrl('setAllToPlayed', [])"
+        >
           <span class="txt">Set all to played</span>
         </button>
-        <button class="button is-small mr-1" :disabled="inited ? null : true" @click="togglePlayer"
-          :title="togglePlayerButtonText">
+        <button
+          class="button is-small mr-1"
+          :disabled="inited ? undefined : true"
+          :title="togglePlayerButtonText"
+          @click="togglePlayer"
+        >
           <i class="fa fa-tv mr-1" /><span class="txt">
             {{ togglePlayerButtonText }}</span>
         </button>
 
         <div class="field has-addons mr-1">
           <div class="control">
-            <input class="input is-small" :disabled="inited ? null : true" v-model="resrinput" @keyup.enter="resr" />
+            <input
+              v-model="resrinput"
+              class="input is-small"
+              :disabled="inited ? undefined : true"
+              @keyup.enter="resr"
+            >
           </div>
           <div class="control">
-            <button class="button is-small" :disabled="inited ? null : true" @click="resr">
-              <i class="fa fa-search mr-1"></i> from playlist
+            <button
+              class="button is-small"
+              :disabled="inited ? undefined : true"
+              @click="resr"
+            >
+              <i class="fa fa-search mr-1" /> from playlist
             </button>
           </div>
         </div>
 
         <div class="field has-addons mr-1">
           <div class="control">
-            <input class="input is-small" :disabled="inited ? null : true" v-model="srinput" @keyup.enter="sr" />
+            <input
+              v-model="srinput"
+              class="input is-small"
+              :disabled="inited ? undefined : true"
+              @keyup.enter="sr"
+            >
           </div>
           <div class="control">
-            <button class="button is-small" :disabled="inited ? null : true" @click="sr">
-              <i class="fa fa-plus mr-1"></i> from YouTube
+            <button
+              class="button is-small"
+              :disabled="inited ? undefined : true"
+              @click="sr"
+            >
+              <i class="fa fa-plus mr-1" /> from YouTube
             </button>
           </div>
         </div>
-        <a class="button is-small mr-1" :disabled="inited ? null : true" :href="widgetUrl" target="_blank">Open SR
+        <a
+          class="button is-small mr-1"
+          :disabled="inited ? undefined : true"
+          :href="widgetUrl"
+          target="_blank"
+        >Open SR
           widget</a>
       </div>
     </div>
-    <div id="main" ref="main">
+    <div
+      id="main"
+      ref="main"
+    >
       <div style="width: 640px; max-width: 100%">
-        <div id="player" class="video-16-9" :style="playerstyle">
-          <youtube ref="youtube" @ended="ended" :visible="playerVisible" />
+        <div
+          id="player"
+          class="video-16-9"
+          :style="playerstyle"
+        >
+          <youtube-player
+            ref="youtube"
+            :visible="playerVisible"
+            @ended="ended"
+          />
         </div>
       </div>
       <div class="tabs">
         <ul>
-          <li v-for="(def, idx) in tabDefinitions" :key="idx" :class="{ 'is-active': tab === def.tab }"
-            @click="tab = def.tab">
+          <li
+            v-for="(def, idx) in tabDefinitions"
+            :key="idx"
+            :class="{ 'is-active': tab === def.tab }"
+            @click="tab = def.tab"
+          >
             <a>{{ def.title }}</a>
           </li>
         </ul>
       </div>
       <div v-if="inited && tab === 'import'">
         <div class="mb-1">
-          <a class="button is-small mr-1" :href="exportPlaylistUrl" target="_blank"><i class="fa fa-download mr-1" />
+          <a
+            class="button is-small mr-1"
+            :href="exportPlaylistUrl"
+            target="_blank"
+          ><i class="fa fa-download mr-1" />
             Export playlist</a>
-          <button class="button is-small" @click="doImportPlaylist">
+          <button
+            class="button is-small"
+            @click="doImportPlaylist"
+          >
             <i class="fa fa-upload mr-1" /> Import playlist
           </button>
         </div>
-        <textarea class="textarea mb-1" v-model="importPlaylist"></textarea>
+        <textarea
+          v-model="importPlaylist"
+          class="textarea mb-1"
+        />
       </div>
-      <div id="tags" v-if="inited && tab === 'tags'">
-        <tags-editor :tags="tags" @updateTag="onTagUpdated" />
+      <div
+        v-if="inited && tab === 'tags'"
+        id="tags"
+      >
+        <tags-editor
+          :tags="tags"
+          @updateTag="onTagUpdated"
+        />
       </div>
-      <song-request-settings id="settings" v-if="inited && tab === 'settings'" v-model="settings"
-        @update:modelValue="sendSave" />
-      <div id="playlist" class="table-container" v-if="inited && tab === 'playlist'">
-        <playlist-editor :playlist="playlist" :filter="filter" @stopPlayer="player.stop()" @filterChange="applyFilter"
-          @ctrl="onPlaylistCtrl" />
+      <song-request-settings
+        v-if="inited && tab === 'settings'"
+        id="settings"
+        v-model="settings"
+        @update:modelValue="sendSave"
+      />
+      <div
+        v-if="inited && tab === 'playlist'"
+        id="playlist"
+        class="table-container"
+      >
+        <playlist-editor
+          :playlist="playlist"
+          :filter="filter"
+          @stopPlayer="player.stop()"
+          @filterChange="applyFilter"
+          @ctrl="onPlaylistCtrl"
+        />
       </div>
-      <commands-editor v-if="inited && tab === 'commands'" v-model="commands" @update:modelValue="sendSave"
-        :globalVariables="globalVariables" :channelPointsCustomRewards="channelPointsCustomRewards"
-        :possibleActions="possibleActions" :baseVolume="100" />
+      <commands-editor
+        v-if="inited && tab === 'commands'"
+        v-model="commands"
+        :global-variables="globalVariables"
+        :channel-points-custom-rewards="channelPointsCustomRewards"
+        :possible-actions="possibleActions"
+        :base-volume="100"
+        @update:modelValue="sendSave"
+      />
     </div>
   </div>
 </template>
@@ -146,6 +242,10 @@ interface Player {
   setVolume: (volume: number) => void;
   setLoop: (loop: boolean) => void;
   playing: () => boolean;
+}
+
+const noop = () => {
+  // noop
 }
 
 export default defineComponent({
@@ -260,13 +360,13 @@ export default defineComponent({
     },
     player(): Player {
       return (this.$refs.youtube || {
-        stop: () => { },
-        play: () => { },
-        pause: () => { },
-        unpause: () => { },
-        setVolume: () => { },
-        setLoop: () => { },
-        playing: () => { },
+        stop: noop,
+        play: noop,
+        pause: noop,
+        unpause: noop,
+        setVolume: noop,
+        setLoop: noop,
+        playing: noop,
       }) as Player;
     },
     filteredPlaylist(): PlaylistItem[] {
@@ -293,96 +393,6 @@ export default defineComponent({
     },
     exportPlaylistUrl(): string {
       return `${location.protocol}//${location.host}/api/sr/export`;
-    },
-  },
-  methods: {
-    sendSave() {
-      this.sendMsg({
-        event: "save",
-        commands: this.commands,
-        settings: this.settings,
-      });
-    },
-    onTagUpdated(evt: [string, string]) {
-      this.updateTag(evt[0], evt[1]);
-    },
-    onPlaylistCtrl(evt: [string, any[]]) {
-      this.sendCtrl(evt[0], evt[1]);
-    },
-    applyFilter(tag: string) {
-      this.sendCtrl("filter", [{ tag }]);
-    },
-    async doImportPlaylist() {
-      const res = await api.importPlaylist(this.importPlaylist);
-      if (res.status === 200) {
-        this.tab = "playlist";
-        this.toast.success("Import successful");
-      } else {
-        this.toast.error("Import failed");
-      }
-    },
-    togglePlayer() {
-      this.playerVisible = !this.playerVisible;
-      if (this.playerVisible) {
-        if (!this.player.playing()) {
-          this.play();
-        }
-      } else {
-        this.player.stop();
-      }
-    },
-    resr() {
-      if (this.resrinput !== "") {
-        this.sendCtrl("resr", [this.resrinput]);
-        this.resrinput = ''
-      }
-    },
-    sr() {
-      if (this.srinput !== "") {
-        this.sendCtrl("sr", [this.srinput]);
-        this.srinput = ''
-      }
-    },
-    sendCtrl(ctrl: string, args: any[]) {
-      this.sendMsg({ event: "ctrl", ctrl, args });
-    },
-    ended() {
-      this.sendMsg({ event: "ended" });
-    },
-    sendMsg(data: Record<string, any>) {
-      if (this.ws) {
-        this.ws.send(JSON.stringify(data));
-      } else {
-        console.warn("sendMsg: this.ws not initialized");
-      }
-    },
-    play() {
-      this.adjustVolume(this.settings.volume);
-      if (this.playerVisible && this.hasItems) {
-        this.player.play(this.item.yt);
-        this.sendMsg({ event: "play", id: this.item.id });
-      }
-    },
-    unpause() {
-      if (this.hasItems) {
-        this.player.unpause();
-        this.sendMsg({ event: "unpause", id: this.item.id });
-      }
-    },
-    pause() {
-      if (this.playerVisible && this.hasItems) {
-        this.player.pause();
-        this.sendMsg({ event: "pause" });
-      }
-    },
-    adjustVolume(volume: number) {
-      this.player.setVolume(volume);
-    },
-    updateTag(oldTag: string, newTag: string) {
-      if (oldTag === newTag) {
-        return;
-      }
-      this.sendCtrl("updatetag", [oldTag, newTag]);
     },
   },
   async mounted() {
@@ -482,6 +492,96 @@ export default defineComponent({
     if (this.ws) {
       this.ws.disconnect();
     }
+  },
+  methods: {
+    sendSave() {
+      this.sendMsg({
+        event: "save",
+        commands: this.commands,
+        settings: this.settings,
+      });
+    },
+    onTagUpdated(evt: [string, string]) {
+      this.updateTag(evt[0], evt[1]);
+    },
+    onPlaylistCtrl(evt: [string, any[]]) {
+      this.sendCtrl(evt[0], evt[1]);
+    },
+    applyFilter(tag: string) {
+      this.sendCtrl("filter", [{ tag }]);
+    },
+    async doImportPlaylist() {
+      const res = await api.importPlaylist(this.importPlaylist);
+      if (res.status === 200) {
+        this.tab = "playlist";
+        this.toast.success("Import successful");
+      } else {
+        this.toast.error("Import failed");
+      }
+    },
+    togglePlayer() {
+      this.playerVisible = !this.playerVisible;
+      if (this.playerVisible) {
+        if (!this.player.playing()) {
+          this.play();
+        }
+      } else {
+        this.player.stop();
+      }
+    },
+    resr() {
+      if (this.resrinput !== "") {
+        this.sendCtrl("resr", [this.resrinput]);
+        this.resrinput = ''
+      }
+    },
+    sr() {
+      if (this.srinput !== "") {
+        this.sendCtrl("sr", [this.srinput]);
+        this.srinput = ''
+      }
+    },
+    sendCtrl(ctrl: string, args: any[]) {
+      this.sendMsg({ event: "ctrl", ctrl, args });
+    },
+    ended() {
+      this.sendMsg({ event: "ended" });
+    },
+    sendMsg(data: Record<string, any>) {
+      if (this.ws) {
+        this.ws.send(JSON.stringify(data));
+      } else {
+        console.warn("sendMsg: this.ws not initialized");
+      }
+    },
+    play() {
+      this.adjustVolume(this.settings.volume);
+      if (this.playerVisible && this.hasItems) {
+        this.player.play(this.item.yt);
+        this.sendMsg({ event: "play", id: this.item.id });
+      }
+    },
+    unpause() {
+      if (this.hasItems) {
+        this.player.unpause();
+        this.sendMsg({ event: "unpause", id: this.item.id });
+      }
+    },
+    pause() {
+      if (this.playerVisible && this.hasItems) {
+        this.player.pause();
+        this.sendMsg({ event: "pause" });
+      }
+    },
+    adjustVolume(volume: number) {
+      this.player.setVolume(volume);
+    },
+    updateTag(oldTag: string, newTag: string) {
+      if (oldTag === newTag) {
+        return;
+      }
+      this.sendCtrl("updatetag", [oldTag, newTag]);
+    },
   },
 });
 </script>

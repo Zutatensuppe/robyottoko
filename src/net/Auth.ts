@@ -5,15 +5,10 @@ import Users, { User } from "../services/Users"
 import { ApiUserData } from "../types"
 
 class Auth {
-  private userRepo: Users
-  private tokenRepo: Tokens
-
   constructor(
-    userRepo: Users,
-    tokenRepo: Tokens,
+    private readonly userRepo: Users,
+    private readonly tokenRepo: Tokens
   ) {
-    this.userRepo = userRepo
-    this.tokenRepo = tokenRepo
   }
 
   async getTokenInfoByTokenAndType(token: string, type: string): Promise<Token | null> {

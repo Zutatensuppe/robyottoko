@@ -1,11 +1,22 @@
 <template>
-  <div :style="imgstyle" class="image-container" :class="{
-    'm-fadeIn': showimage,
-    'm-fadeOut': !showimage,
-  }"></div>
-  <div v-if="videosrc" class="video-container">
+  <div
+    :style="imgstyle"
+    class="image-container"
+    :class="{
+      'm-fadeIn': showimage,
+      'm-fadeOut': !showimage,
+    }"
+  />
+  <div
+    v-if="videosrc"
+    class="video-container"
+  >
     <div class="video-16-9">
-      <video :src="videosrc" ref="video" autoplay />
+      <video
+        ref="video"
+        :src="videosrc"
+        autoplay
+      />
     </div>
   </div>
 </template>
@@ -24,6 +35,23 @@ interface ComponentData {
   imgstyle: undefined | Record<string, string>;
   videosrc: string;
   latestResolved: boolean;
+}
+
+const playSound = (path: string, volume: number): Promise<void> => {
+  return new Promise((res) => {
+    const audio = new Audio(path);
+    audio.addEventListener("ended", () => {
+      res();
+    });
+    audio.volume = fn.clamp(0, volume, 1);
+    audio.play();
+  })
+}
+
+const wait = (ms: number): Promise<void> => {
+  return new Promise((resolve1) => {
+    setTimeout(resolve1, ms);
+  })
 }
 
 const MediaQueueElement = defineComponent({
@@ -70,50 +98,35 @@ const MediaQueueElement = defineComponent({
             })
           );
         }
+
+        let imageUrl = ''
         if (media.image_url) {
-          this.showimage = true;
-          this.imgstyle = {
-            backgroundImage: `url(${media.image_url})`,
-          };
+          imageUrl = media.image_url
         } else if (media.image && media.image.file) {
-          await this._prepareImage(media.image.urlpath);
-          this.showimage = true;
-          this.imgstyle = {
-            backgroundImage: `url(${media.image.urlpath})`,
-          };
+          imageUrl = media.image.urlpath
+        }
+        if (imageUrl) {
+          await this._prepareImage(imageUrl);
+          this.showimage = true
+          this.imgstyle = { backgroundImage: `url(${imageUrl})` }
         }
 
         if (media.minDurationMs) {
-          promises.push(
-            new Promise((res) => {
-              setTimeout(res, fn.parseHumanDuration(media.minDurationMs));
-            })
-          );
+          promises.push(wait(fn.parseHumanDuration(media.minDurationMs)))
         }
 
         if (media.sound && media.sound.file) {
-          promises.push(
-            new Promise((res) => {
-              const audio = new Audio(media.sound.urlpath);
-              audio.addEventListener("ended", () => {
-                res();
-              });
-              const maxVolume = this.baseVolume / 100.0;
-              const soundVolume = media.sound.volume / 100.0;
-              audio.volume = fn.clamp(0, maxVolume * soundVolume, 1);
-              audio.play();
-            })
-          );
+          const path = media.sound.urlpath
+          const maxVolume = this.baseVolume / 100.0
+          const soundVolume = media.sound.volume / 100.0
+          const volume = maxVolume * soundVolume
+          promises.push(playSound(path, volume))
         }
 
         if (promises.length === 0) {
           // show images at least 1 sek by default (only if there
           // are no other conditions)
-          promises.push(
-            new Promise((resolve1) => {
-              setTimeout(resolve1, 1000);
-            })
-          );
+          promises.push(wait(1000));
         }
 
         Promise.all(promises).then((_) => {

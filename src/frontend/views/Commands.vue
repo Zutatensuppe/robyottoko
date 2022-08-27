@@ -1,31 +1,62 @@
 <template>
   <div class="view">
-    <div id="top" ref="top">
-      <navbar />
+    <div
+      id="top"
+      ref="top"
+    >
+      <navbar-element />
     </div>
-    <div id="main" ref="main">
+    <div
+      id="main"
+      ref="main"
+    >
       <div class="tabs">
         <ul>
-          <li v-for="(def, idx) in tabDefinitions" :key="idx" :class="{ 'is-active': tab === def.tab }"
-            @click="tab = def.tab">
+          <li
+            v-for="(def, idx) in tabDefinitions"
+            :key="idx"
+            :class="{ 'is-active': tab === def.tab }"
+            @click="tab = def.tab"
+          >
             <a>{{ def.title }}</a>
           </li>
           <li>
-            <a class="button is-small mr-1" :href="widgetUrl" target="_blank">Open Media widget</a>
+            <a
+              class="button is-small mr-1"
+              :href="widgetUrl"
+              target="_blank"
+            >Open Media widget</a>
           </li>
         </ul>
       </div>
-      <commands-editor v-if="inited && tab === 'commands'" v-model="commands" @update:modelValue="sendSave"
-        :globalVariables="globalVariables" :channelPointsCustomRewards="channelPointsCustomRewards"
-        :possibleActions="possibleActions" :baseVolume="baseVolume" :showToggleImages="true" :showFilterActions="true"
-        :widgetUrl="widgetUrl" :showImages="adminSettings.showImages" @showImagesChange="updateShowImages" />
+      <commands-editor
+        v-if="inited && tab === 'commands'"
+        v-model="commands"
+        :global-variables="globalVariables"
+        :channel-points-custom-rewards="channelPointsCustomRewards"
+        :possible-actions="possibleActions"
+        :base-volume="baseVolume"
+        :show-toggle-images="true"
+        :show-filter-actions="true"
+        :widget-url="widgetUrl"
+        :show-images="adminSettings.showImages"
+        @update:modelValue="sendSave"
+        @showImagesChange="updateShowImages"
+      />
       <div v-if="inited && tab === 'settings'">
-        <table class="table is-striped" ref="table" v-if="settings">
+        <table
+          v-if="settings"
+          ref="table"
+          class="table is-striped"
+        >
           <tbody>
             <tr>
               <td><code>settings.volume</code></td>
               <td>
-                <volume-slider v-model="settings.volume" @update:modelValue="sendSave" />
+                <volume-slider
+                  v-model="settings.volume"
+                  @update:modelValue="sendSave"
+                />
               </td>
               <td>Base volume for all media playing from commands</td>
             </tr>

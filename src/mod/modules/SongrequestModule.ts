@@ -71,10 +71,6 @@ class SongrequestModule implements Module {
   public name = MODULE_NAME.SR
 
   // @ts-ignore
-  public bot: Bot
-  // @ts-ignore
-  public user: User
-  // @ts-ignore
   private data: SongrequestModuleData
   // @ts-ignore
   private commands: FunctionCommand[]
@@ -82,14 +78,11 @@ class SongrequestModule implements Module {
   private channelPointsCustomRewards: Record<string, string[]> = {}
 
   constructor(
-    bot: Bot,
-    user: User,
+    public readonly bot: Bot,
+    public user: User,
   ) {
     // @ts-ignore
     return (async () => {
-      this.bot = bot
-      this.user = user
-
       const initData = await this.reinit()
       this.data = {
         filter: initData.data.filter,

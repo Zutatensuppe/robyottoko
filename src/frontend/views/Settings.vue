@@ -1,16 +1,28 @@
 <template>
   <div class="view">
-    <div id="top" ref="top">
-      <navbar />
-      <div id="actionbar" class="p-1">
-        <button class="button is-small is-primary" :disabled="!changed" @click="sendSave">
+    <div
+      id="top"
+      ref="top"
+    >
+      <navbar-element />
+      <div
+        id="actionbar"
+        class="p-1"
+      >
+        <button
+          class="button is-small is-primary"
+          :disabled="!changed"
+          @click="sendSave"
+        >
           Save
         </button>
       </div>
     </div>
     <div id="main">
       <div class="mb-4">
-        <h1 class="title mb-2">User</h1>
+        <h1 class="title mb-2">
+          User
+        </h1>
         <table class="table is-striped">
           <tbody>
             <tr>
@@ -19,46 +31,80 @@
             </tr>
             <tr>
               <td>Email:</td>
-              <td><input type="email" v-model="user.email" /></td>
+              <td>
+                <input
+                  v-model="user.email"
+                  type="email"
+                >
+              </td>
             </tr>
             <tr>
               <td>Password:</td>
-              <td><input type="password" v-model="user.pass" /></td>
+              <td>
+                <input
+                  v-model="user.pass"
+                  type="password"
+                >
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <div class="mb-4" v-if="isAdmin">
-        <h1 class="title mb-2">Twitch-Bot</h1>
+      <div
+        v-if="isAdmin"
+        class="mb-4"
+      >
+        <h1 class="title mb-2">
+          Twitch-Bot
+        </h1>
         <p>
           Please refer to
-          <a href="https://dev.twitch.tv/docs/irc/#building-the-bot" target="_blank">building the bot</a>.
+          <a
+            href="https://dev.twitch.tv/docs/irc/#building-the-bot"
+            target="_blank"
+          >building the bot</a>.
         </p>
         <table class="table is-striped">
           <tbody>
             <tr>
               <td>Bot name:</td>
               <td>
-                <input class="input is-small" type="text" v-model="user.tmi_identity_username" />
+                <input
+                  v-model="user.tmi_identity_username"
+                  class="input is-small"
+                  type="text"
+                >
               </td>
             </tr>
             <tr>
               <td>Bot oauth (pass):</td>
               <td>
-                <input class="input is-small" type="password" v-model="user.tmi_identity_password" />
+                <input
+                  v-model="user.tmi_identity_password"
+                  class="input is-small"
+                  type="password"
+                >
               </td>
             </tr>
             <tr>
               <td>Bot client_id:</td>
               <td>
-                <input class="input is-small" type="text" v-model="user.tmi_identity_client_id" />
+                <input
+                  v-model="user.tmi_identity_client_id"
+                  class="input is-small"
+                  type="text"
+                >
               </td>
             </tr>
             <tr>
               <td>Bot client_secret:</td>
               <td>
-                <input class="input is-small" type="password" v-model="user.tmi_identity_client_secret" />
+                <input
+                  v-model="user.tmi_identity_client_secret"
+                  class="input is-small"
+                  type="password"
+                >
               </td>
             </tr>
           </tbody>
@@ -66,64 +112,113 @@
       </div>
 
       <div class="mb-4">
-        <h1 class="title mb-2">Twitch Channels</h1>
+        <h1 class="title mb-2">
+          Twitch Channels
+        </h1>
         <p>
           List of twitch channels where the bot will connect to.
           <span v-if="twitch_channels.length === 0">
             Currently no channels are configured.
           </span>
         </p>
-        <table class="table is-striped" v-if="twitch_channels.length > 0">
+        <table
+          v-if="twitch_channels.length > 0"
+          class="table is-striped"
+        >
           <thead>
             <tr>
               <td>Channel name</td>
               <td>Chat status updates</td>
               <td>Channel id*</td>
               <td>Access Token*</td>
-              <td></td>
+              <td />
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(channel, idx) in twitch_channels" :key="idx">
+            <tr
+              v-for="(channel, idx) in twitch_channels"
+              :key="idx"
+            >
               <td>
-                <input class="input is-small" type="text" v-model="channel.channel_name" />
+                <input
+                  v-model="channel.channel_name"
+                  class="input is-small"
+                  type="text"
+                >
               </td>
               <td>
-                <checkbox class="is-small" :onValue="1" :offValue="0" v-model="channel.bot_status_messages" />
+                <checkbox-input
+                  v-model="channel.bot_status_messages"
+                  class="is-small"
+                  :on-value="1"
+                  :off-value="0"
+                />
               </td>
               <td>
-                <input class="input is-small" type="text" v-model="channel.channel_id" v-if="channel.channel_id" />
-                <button class="button is-small" @click="loadid(idx)" v-if="!channel.channel_id">
+                <input
+                  v-if="channel.channel_id"
+                  v-model="channel.channel_id"
+                  class="input is-small"
+                  type="text"
+                >
+                <button
+                  v-if="!channel.channel_id"
+                  class="button is-small"
+                  @click="loadid(idx)"
+                >
                   Load id
                 </button>
               </td>
               <td>
-                <input class="input is-small" type="password" v-model="channel.access_token" />
+                <input
+                  v-model="channel.access_token"
+                  class="input is-small"
+                  type="password"
+                >
               </td>
               <td>
-                <button class="button is-small" @click="rmchannel(idx)">
+                <button
+                  class="button is-small"
+                  @click="rmchannel(idx)"
+                >
                   <i class="fa fa-remove" />
                 </button>
               </td>
             </tr>
           </tbody>
         </table>
-        <button class="button is-small" @click="addchannel()">
+        <button
+          class="button is-small"
+          @click="addchannel()"
+        >
           Add channel
         </button>
       </div>
 
-      <div class="content" v-if="twitch_channels.length > 0">
+      <div
+        v-if="twitch_channels.length > 0"
+        class="content"
+      >
         <p>
           Channel Id* and Access Token*: You may not need the client id or
           access token. They are required for channel point reward redemption
           triggers only.
         </p>
-        <p v-if="accessTokenLink">To get an access token, do the following:</p>
-        <ol v-if="accessTokenLink" class="list">
-          <li class="list-item">Login to twitch as the channel owner</li>
+        <p v-if="accessTokenLink">
+          To get an access token, do the following:
+        </p>
+        <ol
+          v-if="accessTokenLink"
+          class="list"
+        >
           <li class="list-item">
-            Click <a @click="openAuth" target="_blank">here</a> to
+            Login to twitch as the channel owner
+          </li>
+          <li class="list-item">
+            Click <a
+              target="_blank"
+              @click="openAuth"
+            >here</a> to
             authorize the bot with the channel
           </li>
           <li class="list-item">
@@ -226,6 +321,32 @@ export default defineComponent({
       );
     },
   },
+  watch: {
+    user: {
+      deep: true,
+      handler() {
+        this.setChanged();
+      },
+    },
+    twitch_channels: {
+      deep: true,
+      handler() {
+        this.setChanged();
+      },
+    },
+  },
+  async mounted() {
+    const res = await api.getPageSettingsData();
+    if (res.status !== 200) {
+      this.$router.push({ name: "login" });
+      return;
+    }
+
+    const data = await res.json();
+    this.user = data.user;
+    this.twitch_channels = data.twitchChannels;
+    this.setUnchanged();
+  },
   methods: {
     openAuth() {
       window.open(this.accessTokenLink)
@@ -255,7 +376,8 @@ export default defineComponent({
         channel_id: "",
         channel_name: "",
         access_token: "",
-      });
+        is_streaming: false,
+      })
     },
     async loadid(idx: number) {
       this.twitch_channels[idx].channel_id = await this.getTwitchUserIdByName(
@@ -284,32 +406,6 @@ export default defineComponent({
       });
       this.setUnchanged();
     },
-  },
-  watch: {
-    user: {
-      deep: true,
-      handler() {
-        this.setChanged();
-      },
-    },
-    twitch_channels: {
-      deep: true,
-      handler() {
-        this.setChanged();
-      },
-    },
-  },
-  async mounted() {
-    const res = await api.getPageSettingsData();
-    if (res.status !== 200) {
-      this.$router.push({ name: "login" });
-      return;
-    }
-
-    const data = await res.json();
-    this.user = data.user;
-    this.twitch_channels = data.twitchChannels;
-    this.setUnchanged();
   },
 });
 </script>

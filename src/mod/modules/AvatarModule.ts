@@ -40,20 +40,14 @@ class AvatarModule implements Module {
   public name = MODULE_NAME.AVATAR
 
   // @ts-ignore
-  public bot: Bot
-  // @ts-ignore
-  public user: User
-  // @ts-ignore
   private data: AvatarModuleData
 
   constructor(
-    bot: Bot,
-    user: User,
+    public readonly bot: Bot,
+    public user: User,
   ) {
     // @ts-ignore
     return (async () => {
-      this.bot = bot
-      this.user = user
       this.data = await this.reinit()
       return this;
     })();

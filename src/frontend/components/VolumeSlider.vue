@@ -1,6 +1,13 @@
 <template>
-  <slider class="volume-slider" iconLeft="fa-volume-down" iconRight="fa-volume-up" :min="0" :max="100" v-model="volume"
-    @update:modelValue="valChange" />
+  <slider
+    v-model="volume"
+    class="volume-slider"
+    icon-left="fa-volume-down"
+    icon-right="fa-volume-up"
+    :min="0"
+    :max="100"
+    @update:modelValue="valChange"
+  />
 </template>
 <script setup lang="ts">
 import { ref } from "vue";

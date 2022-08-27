@@ -2,18 +2,35 @@
   <div class="columns">
     <div class="column is-four-fifth">
       <div class="control has-icons-left has-icons-right range slider">
-        <input type="range" class="input is-small" :min="min" :max="max" v-model="curVal"
-          @update:modelValue="valChange" />
+        <input
+          v-model="curVal"
+          type="range"
+          class="input is-small"
+          :min="min"
+          :max="max"
+          @update:modelValue="valChange"
+        >
         <span class="icon is-small is-left">
-          <i class="fa" :class="iconLeft" />
+          <i
+            class="fa"
+            :class="iconLeft"
+          />
         </span>
         <span class="icon is-small is-right">
-          <i class="fa" :class="iconRight" />
+          <i
+            class="fa"
+            :class="iconRight"
+          />
         </span>
       </div>
     </div>
     <div class="column is-one-fifth">
-      <input type="number" class="input is-small" v-model="curVal" @update:modelValue="valChange" />
+      <input
+        v-model="curVal"
+        type="number"
+        class="input is-small"
+        @update:modelValue="valChange"
+      >
     </div>
   </div>
 </template>

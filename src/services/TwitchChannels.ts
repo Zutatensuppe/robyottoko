@@ -21,10 +21,7 @@ interface UpdateTwitchChannel {
 }
 
 class TwitchChannels {
-  private db: Db
-
-  constructor(db: Db) {
-    this.db = db
+  constructor(private readonly db: Db) {
   }
 
   async save(channel: UpdateTwitchChannel | TwitchChannel): Promise<void> {

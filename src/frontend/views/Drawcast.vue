@@ -1,8 +1,14 @@
 <template>
   <div class="view">
-    <div id="top" ref="top">
-      <navbar />
-      <div id="actionbar" class="p-1">
+    <div
+      id="top"
+      ref="top"
+    >
+      <navbar-element />
+      <div
+        id="actionbar"
+        class="p-1"
+      >
         <button
           class="button is-small is-primary mr-1"
           :disabled="!changed"
@@ -10,29 +16,44 @@
         >
           Save
         </button>
-        <a class="button is-small mr-1" :href="receiveWidgetUrl" target="_blank"
-          >Open widget</a
-        >
-        <a class="button is-small" :href="drawUrl" target="_blank">Open draw</a>
+        <a
+          class="button is-small mr-1"
+          :href="receiveWidgetUrl"
+          target="_blank"
+        >Open widget</a>
+        <a
+          class="button is-small"
+          :href="drawUrl"
+          target="_blank"
+        >Open draw</a>
       </div>
     </div>
-    <div id="main" ref="main">
-      <table class="table is-striped" ref="table" v-if="inited">
+    <div
+      id="main"
+      ref="main"
+    >
+      <table
+        v-if="inited"
+        ref="table"
+        class="table is-striped"
+      >
         <tbody>
           <tr>
-            <td colspan="3">General</td>
+            <td colspan="3">
+              General
+            </td>
           </tr>
           <tr>
             <td><code>settings.canvasWidth</code></td>
             <td>
               <input
+                v-model="settings.canvasWidth"
                 class="input is-small"
                 type="text"
-                v-model="settings.canvasWidth"
-              />
+              >
             </td>
             <td>
-              Width of the drawing area.<br />
+              Width of the drawing area.<br>
               Caution: changing this will clear the area for currenty connected
               users.
             </td>
@@ -41,13 +62,13 @@
             <td><code>settings.canvasHeight</code></td>
             <td>
               <input
+                v-model="settings.canvasHeight"
                 class="input is-small"
                 type="text"
-                v-model="settings.canvasHeight"
-              />
+              >
             </td>
             <td>
-              Height of the drawing area.<br />
+              Height of the drawing area.<br>
               Caution: changing this will clear the area for currenty connected
               users.
             </td>
@@ -56,10 +77,10 @@
             <td><code>settings.displayDuration</code></td>
             <td>
               <input
+                v-model="settings.displayDuration"
                 class="input is-small"
                 type="text"
-                v-model="settings.displayDuration"
-              />
+              >
             </td>
             <td>
               The duration in Milliseconds that each drawing will be shown
@@ -70,7 +91,10 @@
               <code>settings.requireManualApproval</code>
             </td>
             <td>
-              <input type="checkbox" v-model="settings.requireManualApproval" />
+              <input
+                v-model="settings.requireManualApproval"
+                type="checkbox"
+              >
             </td>
             <td>
               If checked, new drawings need to be approved before being
@@ -80,23 +104,26 @@
           <tr>
             <td>
               Pending approval
-              <br />
+              <br>
               <a
                 class="button is-small mr-1"
                 :href="controlWidgetUrl"
                 target="_blank"
-                >Open in separate tab</a
-              >
+              >Open in separate tab</a>
             </td>
             <td>
               <div v-if="manualApproval.items.length">
                 <div
-                  class="image-to-approve card mr-1"
                   v-for="(url, idx2) in manualApproval.items"
                   :key="idx2"
+                  class="image-to-approve card mr-1"
                 >
                   <div class="card-body">
-                    <img :src="url" width="250" class="thumbnail mr-1" />
+                    <img
+                      :src="url"
+                      width="250"
+                      class="thumbnail mr-1"
+                    >
                   </div>
                   <div class="card-footer">
                     <span
@@ -126,12 +153,15 @@
                 Currently there are no drawings awaiting approval.
               </div>
             </td>
-            <td></td>
+            <td />
           </tr>
           <tr>
             <td><code>settings.displayLatestForever</code></td>
             <td>
-              <input type="checkbox" v-model="settings.displayLatestForever" />
+              <input
+                v-model="settings.displayLatestForever"
+                type="checkbox"
+              >
             </td>
             <td>If checked, the latest drawing will be shown indefinately.</td>
           </tr>
@@ -139,9 +169,9 @@
             <td><code>settings.displayLatestAutomatically</code></td>
             <td>
               <input
-                type="checkbox"
                 v-model="settings.displayLatestAutomatically"
-              />
+                type="checkbox"
+              >
             </td>
             <td>
               If checked, the latest drawing will be shown in widget
@@ -151,7 +181,10 @@
           <tr>
             <td><code>settings.autofillLatest</code></td>
             <td>
-              <input type="checkbox" v-model="settings.autofillLatest" />
+              <input
+                v-model="settings.autofillLatest"
+                type="checkbox"
+              >
             </td>
             <td>
               Fill the latest submitted drawing into the draw panel when opening
@@ -162,21 +195,21 @@
             <td><code>settings.submitButtonText</code></td>
             <td>
               <input
+                v-model="settings.submitButtonText"
                 class="input is-small"
                 type="text"
-                v-model="settings.submitButtonText"
-              />
+              >
             </td>
-            <td></td>
+            <td />
           </tr>
           <tr>
             <td><code>settings.submitConfirm</code></td>
             <td>
               <input
+                v-model="settings.submitConfirm"
                 class="input is-small"
                 type="text"
-                v-model="settings.submitConfirm"
-              />
+              >
             </td>
             <td>
               Leave empty if no confirm is required by user before sending.
@@ -186,10 +219,10 @@
             <td><code>settings.recentImagesTitle</code></td>
             <td>
               <input
+                v-model="settings.recentImagesTitle"
                 class="input is-small"
                 type="text"
-                v-model="settings.recentImagesTitle"
-              />
+              >
             </td>
             <td>Title for the recently submitted images gallery.</td>
           </tr>
@@ -197,9 +230,9 @@
             <td><code>settings.customDescription</code></td>
             <td>
               <textarea
-                class="textarea"
                 v-model="settings.customDescription"
-              ></textarea>
+                class="textarea"
+              />
             </td>
             <td>Description text below the drawing panel.</td>
           </tr>
@@ -208,10 +241,10 @@
             <td>
               <image-upload
                 v-model="settings.customProfileImage"
-                @update:modelValue="customProfileImageChanged"
                 width="100px"
                 height="50px"
                 class="spacerow media-holder"
+                @update:modelValue="customProfileImageChanged"
               />
             </td>
             <td>
@@ -223,18 +256,21 @@
             <td><code>settings.palette</code></td>
             <td>
               <label
-                class="square"
                 v-for="(c, idx) in settings.palette"
                 :key="idx"
+                class="square"
               >
-                <input type="color" v-model="settings.palette[idx]" />
+                <input
+                  v-model="settings.palette[idx]"
+                  type="color"
+                >
                 <span
                   class="square-inner"
                   :style="{ backgroundColor: c }"
-                ></span>
+                />
               </label>
-              <br />
-              <br />
+              <br>
+              <br>
               <button
                 class="button is-small"
                 @click="settings.palette = defaultSettings.palette"
@@ -243,7 +279,7 @@
               </button>
             </td>
             <td>
-              Default colors appearing on the draw page.<br />
+              Default colors appearing on the draw page.<br>
               Caution: Changing this will change selected color for currenty
               connected users.
             </td>
@@ -253,12 +289,12 @@
             <td>
               <sound-upload
                 v-model="settings.notificationSound"
-                @update:modelValue="notificationSoundChanged"
                 class="spacerow media-holder"
+                @update:modelValue="notificationSoundChanged"
               />
             </td>
             <td>
-              Add a sound here that plays when new drawings arrive. <br />
+              Add a sound here that plays when new drawings arrive. <br>
               This is played in this window, if approval is necessary, otherwise
               it will play in the display widget. It won't play in the draw
               widget.
@@ -268,53 +304,51 @@
             <td>
               <div><code>settings.favoriteLists</code></div>
               <div>
-                <span class="button is-small" @click="addFavoriteList"
-                  >Add a list</span
-                >
+                <span
+                  class="button is-small"
+                  @click="addFavoriteList"
+                >Add a list</span>
               </div>
               <div class="preview">
                 <img
                   v-if="favoriteSelection.hovered"
                   :src="favoriteSelection.hovered"
-                />
+                >
               </div>
             </td>
             <td>
               <div
-                class="card p-2 mb-2"
                 v-for="(favoriteList, idx) in settings.favoriteLists"
                 :key="idx"
+                class="card p-2 mb-2"
               >
                 <div v-if="settings.favoriteLists.length > 1">
                   <span
                     class="button is-small ml-1"
-                    @click="moveFavoriteListUp(idx)"
                     :class="{ 'is-disabled': idx > 0 }"
-                    ><i class="fa fa-chevron-up"
-                  /></span>
+                    @click="moveFavoriteListUp(idx)"
+                  ><i class="fa fa-chevron-up" /></span>
                   <span
                     class="button is-small ml-1"
-                    @click="moveFavoriteListDown(idx)"
                     :class="{
                       'is-disabled': idx < settings.favoriteLists.length - 1,
                     }"
-                    ><i class="fa fa-chevron-down"
-                  /></span>
+                    @click="moveFavoriteListDown(idx)"
+                  ><i class="fa fa-chevron-down" /></span>
                   <span
                     class="button is-small ml-1"
                     @click="removeFavoriteList(idx)"
-                    ><i class="fa fa-trash"
-                  /></span>
+                  ><i class="fa fa-trash" /></span>
                 </div>
                 <table>
                   <tr>
                     <td>Title:</td>
                     <td>
                       <input
+                        v-model="favoriteList.title"
                         class="input is-small"
                         type="text"
-                        v-model="favoriteList.title"
-                      />
+                      >
                     </td>
                   </tr>
                   <tr>
@@ -322,16 +356,16 @@
                     <td>
                       <div class="favorites">
                         <img
-                          :src="url"
                           v-for="(url, idx2) in favoriteList.list"
                           :key="idx2"
+                          :src="url"
                           width="50"
                           height="50"
+                          class="thumbnail is-favorited mr-1"
                           @click="toggleFavorite(idx, url)"
                           @mouseover="favoriteSelection.hovered = url"
                           @mouseleave="favoriteSelection.hovered = ''"
-                          class="thumbnail is-favorited mr-1"
-                        />
+                        >
                       </div>
                     </td>
                   </tr>
@@ -340,45 +374,43 @@
                     <td>
                       <div class="favorites-select">
                         <img
-                          :src="url"
                           v-for="(url, idx2) in currentFavoriteSelectionItems"
                           :key="idx2"
+                          :src="url"
                           width="50"
                           height="50"
-                          @click="toggleFavorite(idx, url)"
-                          @mouseover="favoriteSelection.hovered = url"
-                          @mouseleave="favoriteSelection.hovered = ''"
                           class="thumbnail mr-1"
                           :class="{
                             'is-favorited': favoriteList.list.includes(url),
                           }"
-                        />
+                          @click="toggleFavorite(idx, url)"
+                          @mouseover="favoriteSelection.hovered = url"
+                          @mouseleave="favoriteSelection.hovered = ''"
+                        >
                       </div>
                       <span
                         class="button is-small mr-1"
+                        :disabled="
+                          favoriteSelection.pagination.page > 1 ? undefined : true
+                        "
                         @click="
                           favoriteSelection.pagination.page =
                             favoriteSelection.pagination.page - 1
                         "
-                        :disabled="
-                          favoriteSelection.pagination.page > 1 ? null : true
-                        "
-                        >Prev</span
-                      >
+                      >Prev</span>
                       <span
                         class="button is-small"
+                        :disabled="
+                          favoriteSelection.pagination.page <
+                            favoriteSelectionTotalPages
+                            ? undefined
+                            : true
+                        "
                         @click="
                           favoriteSelection.pagination.page =
                             favoriteSelection.pagination.page + 1
                         "
-                        :disabled="
-                          favoriteSelection.pagination.page <
-                          favoriteSelectionTotalPages
-                            ? null
-                            : true
-                        "
-                        >Next</span
-                      >
+                      >Next</span>
                     </td>
                   </tr>
                 </table>
@@ -462,6 +494,41 @@ export default defineComponent({
     controlWidgetUrl: "",
     receiveWidgetUrl: "",
   }),
+  computed: {
+    changed() {
+      return this.unchangedJson !== this.changedJson;
+    },
+    favoriteSelectionTotalPages() {
+      return (
+        Math.floor(
+          this.favoriteSelection.items.length /
+            this.favoriteSelection.pagination.perPage
+        ) +
+        (this.favoriteSelection.items.length %
+          this.favoriteSelection.pagination.perPage ===
+        0
+          ? 0
+          : 1)
+      );
+    },
+    currentFavoriteSelectionItems() {
+      const start =
+        (this.favoriteSelection.pagination.page - 1) *
+        this.favoriteSelection.pagination.perPage;
+      return this.favoriteSelection.items.slice(
+        start,
+        start + this.favoriteSelection.pagination.perPage
+      );
+    },
+  },
+  watch: {
+    settings: {
+      deep: true,
+      handler(ch) {
+        this.changedJson = JSON.stringify(ch);
+      },
+    },
+  },
   async created() {
     this.ws = util.wsClient("drawcast");
     this.ws.onMessage("init", async (data: DrawcastData) => {
@@ -538,40 +605,10 @@ export default defineComponent({
     );
     this.ws.connect();
   },
-  watch: {
-    settings: {
-      deep: true,
-      handler(ch) {
-        this.changedJson = JSON.stringify(ch);
-      },
-    },
-  },
-  computed: {
-    changed() {
-      return this.unchangedJson !== this.changedJson;
-    },
-    favoriteSelectionTotalPages() {
-      return (
-        Math.floor(
-          this.favoriteSelection.items.length /
-            this.favoriteSelection.pagination.perPage
-        ) +
-        (this.favoriteSelection.items.length %
-          this.favoriteSelection.pagination.perPage ===
-        0
-          ? 0
-          : 1)
-      );
-    },
-    currentFavoriteSelectionItems() {
-      const start =
-        (this.favoriteSelection.pagination.page - 1) *
-        this.favoriteSelection.pagination.perPage;
-      return this.favoriteSelection.items.slice(
-        start,
-        start + this.favoriteSelection.pagination.perPage
-      );
-    },
+  unmounted() {
+    if (this.ws) {
+      this.ws.disconnect();
+    }
   },
   methods: {
     approveImage(path: string) {
@@ -676,11 +713,6 @@ export default defineComponent({
       }
       this.ws.send(JSON.stringify(data));
     },
-  },
-  unmounted() {
-    if (this.ws) {
-      this.ws.disconnect();
-    }
   },
 });
 </script>

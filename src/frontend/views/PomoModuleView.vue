@@ -1,8 +1,14 @@
 <template>
   <div class="view">
-    <div id="top" ref="top">
-      <navbar />
-      <div id="actionbar" class="p-1">
+    <div
+      id="top"
+      ref="top"
+    >
+      <navbar-element />
+      <div
+        id="actionbar"
+        class="p-1"
+      >
         <button
           class="button is-small is-primary mr-1"
           :disabled="!changed"
@@ -10,25 +16,36 @@
         >
           Save
         </button>
-        <a class="button is-small mr-1" :href="widgetUrl" target="_blank"
-          >Open widget</a
-        >
+        <a
+          class="button is-small mr-1"
+          :href="widgetUrl"
+          target="_blank"
+        >Open widget</a>
       </div>
     </div>
-    <div id="main" ref="main">
-      <table class="table is-striped" ref="table" v-if="inited">
+    <div
+      id="main"
+      ref="main"
+    >
+      <table
+        v-if="inited"
+        ref="table"
+        class="table is-striped"
+      >
         <tbody>
           <tr>
-            <td colspan="2">Pomo</td>
+            <td colspan="2">
+              Pomo
+            </td>
           </tr>
           <tr>
             <td><code>settings.color</code></td>
             <td>
               <input
+                v-model="settings.color"
                 class="input is-small"
                 type="color"
-                v-model="settings.color"
-              />
+              >
             </td>
             <td>The text color in the widget.</td>
           </tr>
@@ -36,10 +53,10 @@
             <td><code>settings.fontFamily</code></td>
             <td>
               <input
+                v-model="settings.fontFamily"
                 class="input is-small"
                 type="text"
-                v-model="settings.fontFamily"
-              />
+              >
             </td>
             <td>The font in the widget.</td>
           </tr>
@@ -47,10 +64,10 @@
             <td><code>settings.fontSize</code></td>
             <td>
               <input
+                v-model="settings.fontSize"
                 class="input is-small"
                 type="text"
-                v-model="settings.fontSize"
-              />
+              >
             </td>
             <td>
               The text size in the widget, for example <code>12px</code>,
@@ -61,10 +78,10 @@
             <td><code>settings.timerFormat</code></td>
             <td>
               <input
+                v-model="settings.timerFormat"
                 class="input is-small"
                 type="text"
-                v-model="settings.timerFormat"
-              />
+              >
             </td>
             <td>
               Format of the timer, you can use the following placeholders:
@@ -77,10 +94,10 @@
             <td><code>settings.finishedText</code></td>
             <td>
               <input
+                v-model="settings.finishedText"
                 class="input is-small"
                 type="text"
-                v-model="settings.finishedText"
-              />
+              >
             </td>
             <td>Text that is displayed when the timer reaches 0.</td>
           </tr>
@@ -88,10 +105,10 @@
             <td><code>settings.showTimerWhenFinished</code></td>
             <td>
               <input
+                v-model="settings.showTimerWhenFinished"
                 class="is-small"
                 type="checkbox"
-                v-model="settings.showTimerWhenFinished"
-              />
+              >
             </td>
             <td>
               If enabled, the timer will be displayed even when it reached 0.
@@ -101,10 +118,10 @@
             <td><code>settings.startEffect.chatMessage</code></td>
             <td>
               <input
+                v-model="settings.startEffect.chatMessage"
                 class="input is-small"
                 type="text"
-                v-model="settings.startEffect.chatMessage"
-              />
+              >
             </td>
             <td>Chat message that is sent when pomo is started.</td>
           </tr>
@@ -113,7 +130,7 @@
             <td>
               <sound-upload
                 v-model="settings.startEffect.sound"
-                :baseVolume="100"
+                :base-volume="100"
               />
             </td>
             <td>Sound that will be displayed when pomo is started.</td>
@@ -122,10 +139,10 @@
             <td><code>settings.endEffect.chatMessage</code></td>
             <td>
               <input
+                v-model="settings.endEffect.chatMessage"
                 class="input is-small"
                 type="text"
-                v-model="settings.endEffect.chatMessage"
-              />
+              >
             </td>
             <td>Chat message that is sent when pomo reaches 0.</td>
           </tr>
@@ -134,7 +151,7 @@
             <td>
               <sound-upload
                 v-model="settings.endEffect.sound"
-                :baseVolume="100"
+                :base-volume="100"
               />
             </td>
             <td>Sound that will be displayed when pomo reaches 0.</td>
@@ -143,10 +160,10 @@
             <td><code>settings.stopEffect.chatMessage</code></td>
             <td>
               <input
+                v-model="settings.stopEffect.chatMessage"
                 class="input is-small"
                 type="text"
-                v-model="settings.stopEffect.chatMessage"
-              />
+              >
             </td>
             <td>
               Chat message that is sent when pomo is stopped (via pomo exit).
@@ -157,7 +174,7 @@
             <td>
               <sound-upload
                 v-model="settings.stopEffect.sound"
-                :baseVolume="100"
+                :base-volume="100"
               />
             </td>
             <td>
@@ -167,22 +184,27 @@
           <tr>
             <td>
               <code>settings.notifications</code>
-              <span class="button is-small" @click="addNotification"
-                >Add notification</span
-              >
+              <span
+                class="button is-small"
+                @click="addNotification"
+              >Add notification</span>
             </td>
             <td>
-              <div v-for="(n, idx) in settings.notifications" :key="idx">
-                <span class="button is-small" @click="removeNotification(idx)"
-                  >Remove</span
-                >
+              <div
+                v-for="(n, idx) in settings.notifications"
+                :key="idx"
+              >
+                <span
+                  class="button is-small"
+                  @click="removeNotification(idx)"
+                >Remove</span>
                 <table>
                   <tr>
                     <td><code>offsetMs</code></td>
                     <td>
                       <duration-input
                         v-model="n.offsetMs"
-                        :allowNegative="true"
+                        :allow-negative="true"
                       />
                     </td>
                     <td>
@@ -194,10 +216,10 @@
                     <td><code>chatMessage</code></td>
                     <td>
                       <input
+                        v-model="n.effect.chatMessage"
                         class="input is-small"
                         type="text"
-                        v-model="n.effect.chatMessage"
-                      />
+                      >
                     </td>
                     <td>Chat message sent at the set offset.</td>
                   </tr>
@@ -206,7 +228,7 @@
                     <td>
                       <sound-upload
                         v-model="n.effect.sound"
-                        :baseVolume="100"
+                        :base-volume="100"
                       />
                     </td>
                     <td>Sound played at the set offset.</td>
@@ -240,6 +262,11 @@ export default defineComponent({
     ws: null as WsClient | null,
     widgetUrl: "",
   }),
+  computed: {
+    changed(): boolean {
+      return this.unchangedJson !== this.changedJson;
+    },
+  },
   watch: {
     settings: {
       deep: true,
@@ -248,10 +275,20 @@ export default defineComponent({
       },
     },
   },
-  computed: {
-    changed(): boolean {
-      return this.unchangedJson !== this.changedJson;
-    },
+  async mounted() {
+    this.ws = util.wsClient("pomo");
+    this.ws.onMessage("init", (data: PomoModuleWsDataData) => {
+      this.settings = data.settings;
+      this.unchangedJson = JSON.stringify(data.settings);
+      this.widgetUrl = data.widgetUrl;
+      this.inited = true;
+    });
+    this.ws.connect();
+  },
+  unmounted() {
+    if (this.ws) {
+      this.ws.disconnect();
+    }
   },
   methods: {
     sendMsg(data: PomoModuleWsSaveData) {
@@ -283,21 +320,6 @@ export default defineComponent({
         (val, index) => index !== idx
       );
     },
-  },
-  async mounted() {
-    this.ws = util.wsClient("pomo");
-    this.ws.onMessage("init", (data: PomoModuleWsDataData) => {
-      this.settings = data.settings;
-      this.unchangedJson = JSON.stringify(data.settings);
-      this.widgetUrl = data.widgetUrl;
-      this.inited = true;
-    });
-    this.ws.connect();
-  },
-  unmounted() {
-    if (this.ws) {
-      this.ws.disconnect();
-    }
   },
 });
 </script>

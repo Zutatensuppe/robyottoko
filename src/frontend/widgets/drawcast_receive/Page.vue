@@ -1,5 +1,9 @@
 <template>
-  <media-queue-element ref="q" :timeBetweenMediaMs="500" :displayLatestForever="displayLatestForever" />
+  <media-queue-element
+    ref="q"
+    :time-between-media-ms="500"
+    :display-latest-forever="displayLatestForever"
+  />
 </template>
 <script lang="ts">
 import { defineComponent, PropType } from "vue";

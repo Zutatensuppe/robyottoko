@@ -3,37 +3,65 @@
     <div class="level avatar-slot-definition-editor-title p-1">
       <div class="level-left">
         <div class="level-item">
-          <avatar-animation :frames="defaultAnimation" :width="32" :height="32" />
+          <avatar-animation
+            :frames="defaultAnimation"
+            :width="32"
+            :height="32"
+          />
         </div>
         <div class="level-item">
-          <input class="input is-small avatar-slot-definition-editor-title-input"
-            :class="{ 'is-static': !titleFocused }" @focus="titleFocused = true" @blur="titleFocused = false"
-            v-model="modelValue.slot" />
+          <input
+            v-model="modelValue.slot"
+            class="input is-small avatar-slot-definition-editor-title-input"
+            :class="{ 'is-static': !titleFocused }"
+            @focus="titleFocused = true"
+            @blur="titleFocused = false"
+          >
         </div>
       </div>
       <div class="level-right">
         <div class="level-item">
-          <i class="fa fa-chevron-up is-clickable ml-1" @click="$emit('moveUp')"></i>
+          <i
+            class="fa fa-chevron-up is-clickable ml-1"
+            @click="$emit('moveUp')"
+          />
         </div>
         <div class="level-item">
-          <i class="fa fa-chevron-down is-clickable ml-1" @click="$emit('moveDown')"></i>
+          <i
+            class="fa fa-chevron-down is-clickable ml-1"
+            @click="$emit('moveDown')"
+          />
         </div>
         <div class="level-item">
-          <span class="button is-small" @click="$emit('remove')">
-            <i class="fa fa-trash"></i>
+          <span
+            class="button is-small"
+            @click="$emit('remove')"
+          >
+            <i class="fa fa-trash" />
           </span>
         </div>
       </div>
     </div>
     <div class="p-1">
-      <avatar-slot-item-editor class="card mb-1" :class="{ 'is-default': idx === modelValue.defaultItemIndex }"
-        v-for="(item, idx) in modelValue.items" :key="idx" :modelValue="item"
-        :isDefault="idx === modelValue.defaultItemIndex" @moveUp="moveItemUp(idx)" @moveDown="moveItemDown(idx)"
-        @update:modelValue="updateItem(idx, $event)" @remove="removeItem(idx, $event)"
-        @makeDefault="makeItemDefault(idx, $event)" />
+      <avatar-slot-item-editor
+        v-for="(item, idx) in modelValue.items"
+        :key="idx"
+        class="card mb-1"
+        :class="{ 'is-default': idx === modelValue.defaultItemIndex }"
+        :model-value="item"
+        :is-default="idx === modelValue.defaultItemIndex"
+        @moveUp="moveItemUp(idx)"
+        @moveDown="moveItemDown(idx)"
+        @update:modelValue="updateItem(idx, $event)"
+        @remove="removeItem(idx, $event)"
+        @makeDefault="makeItemDefault(idx, $event)"
+      />
     </div>
 
-    <span class="button is-small" @click="addItem">Add item</span>
+    <span
+      class="button is-small"
+      @click="addItem"
+    >Add item</span>
   </div>
 </template>
 

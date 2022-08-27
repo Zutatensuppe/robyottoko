@@ -1,77 +1,156 @@
 <template>
-  <div class="avatar-editor modal is-active" v-if="item">
-    <div class="modal-background" @click="onOverlayClick"></div>
+  <div
+    v-if="item"
+    class="avatar-editor modal is-active"
+  >
+    <div
+      class="modal-background"
+      @click="onOverlayClick"
+    />
     <div class="modal-card">
       <header class="modal-card-head">
-        <p class="modal-card-title">Edit Avatar</p>
-        <button class="delete" aria-label="close" @click="onCloseClick"></button>
+        <p class="modal-card-title">
+          Edit Avatar
+        </p>
+        <button
+          class="delete"
+          aria-label="close"
+          @click="onCloseClick"
+        />
       </header>
-      <section class="modal-card-body" ref="cardBody">
+      <section
+        ref="cardBody"
+        class="modal-card-body"
+      >
         <div class="columns">
           <div class="column is-three-quarters">
             <table class="table is-striped">
               <tbody>
                 <tr>
                   <td>Name:</td>
-                  <td><input class="input is-small" v-model="item.name" /></td>
+                  <td>
+                    <input
+                      v-model="item.name"
+                      class="input is-small"
+                    >
+                  </td>
                 </tr>
                 <tr>
                   <td>Dimensions:</td>
                   <td>
-                    <input class="input is-small number-input" v-model="item.width" />✖<input
-                      class="input is-small number-input" v-model="item.height" />
+                    <input
+                      v-model="item.width"
+                      class="input is-small number-input"
+                    >✖<input
+                      v-model="item.height"
+                      class="input is-small number-input"
+                    >
                     Pixels
-                    <span v-if="allImages.length" class="button is-small"
-                      @click="autoDetectDimensions">Auto-detect</span>
+                    <span
+                      v-if="allImages.length"
+                      class="button is-small"
+                      @click="autoDetectDimensions"
+                    >Auto-detect</span>
                   </td>
                 </tr>
                 <tr>
                   <td>States:</td>
                   <td>
-                    <span class="tag" v-for="(stateDef, idx) in item.stateDefinitions" :key="idx">
+                    <span
+                      v-for="(stateDef, idx) in item.stateDefinitions"
+                      :key="idx"
+                      class="tag"
+                    >
                       <span>{{ stateDef.value }}</span>
-                      <span class="ml-1 is-clickable" v-if="stateDef.deletable" @click="removeStateDefinition(idx)"><i
-                          class="fa fa-trash"></i></span>
+                      <span
+                        v-if="stateDef.deletable"
+                        class="ml-1 is-clickable"
+                        @click="removeStateDefinition(idx)"
+                      ><i
+                        class="fa fa-trash"
+                      /></span>
                     </span>
 
-                    <input class="input is-small" type="text" v-model="newState" placeholder="State" />
-                    <span class="button is-small" @click="addStateDefinition"
-                      :disabled="isStateAddable ? null : true">Add custom state</span>
+                    <input
+                      v-model="newState"
+                      class="input is-small"
+                      type="text"
+                      placeholder="State"
+                    >
+                    <span
+                      class="button is-small"
+                      :disabled="isStateAddable ? undefined : true"
+                      @click="addStateDefinition"
+                    >Add custom state</span>
                   </td>
                 </tr>
                 <tr>
                   <td>Slots</td>
                   <td>
-                    <avatar-slot-definition-editor class="card mb-2"
-                      v-for="(slotDefinition, idx) in item.slotDefinitions" :key="idx" :modelValue="slotDefinition"
-                      :avatarDef="item" @update:modelValue="updateSlotDefinition(idx, $event)" @moveUp="moveSlotUp(idx)"
-                      @moveDown="moveSlotDown(idx)" @remove="removeSlotDefinition(idx)" />
+                    <avatar-slot-definition-editor
+                      v-for="(slotDefinition, idx) in item.slotDefinitions"
+                      :key="idx"
+                      class="card mb-2"
+                      :model-value="slotDefinition"
+                      :avatar-def="item"
+                      @update:modelValue="updateSlotDefinition(idx, $event)"
+                      @moveUp="moveSlotUp(idx)"
+                      @moveDown="moveSlotDown(idx)"
+                      @remove="removeSlotDefinition(idx)"
+                    />
                   </td>
                 </tr>
               </tbody>
             </table>
 
-            <span class="button is-small" @click="addSlotDefinition">Add slot</span>
+            <span
+              class="button is-small"
+              @click="addSlotDefinition"
+            >Add slot</span>
           </div>
           <div class="column">
             <div>JSON:</div>
-            <textarea class="textarea mb-2" v-model="itemStr"></textarea>
+            <textarea
+              v-model="itemStr"
+              class="textarea mb-2"
+            />
             <div>All images in use:</div>
-            <div class="avatar-all-images" ref="allImagesDiv">
-              <img v-for="(img, idx) in allImages" :key="idx" :src="img" draggable="true" class="mr-1 mb-1"
-                @dragstart="imageDragStart" :data-src="img" />
+            <div
+              ref="allImagesDiv"
+              class="avatar-all-images"
+            >
+              <img
+                v-for="(img, idx) in allImages"
+                :key="idx"
+                :src="img"
+                draggable="true"
+                class="mr-1 mb-1"
+                :data-src="img"
+                @dragstart="imageDragStart"
+              >
             </div>
           </div>
         </div>
       </section>
       <footer class="modal-card-foot">
-        <button class="button is-small is-primary" @click="onSaveClick">
+        <button
+          class="button is-small is-primary"
+          @click="onSaveClick"
+        >
           Save
         </button>
-        <button class="button is-small is-primary" @click="onSaveAndCloseClick">
+        <button
+          class="button is-small is-primary"
+          @click="onSaveAndCloseClick"
+        >
           Save and close
         </button>
-        <button class="button is-small" @click="onCancelClick">Cancel</button>
+        <button
+          class="button is-small"
+          @click="onCancelClick"
+        >
+          Cancel
+        </button>
       </footer>
     </div>
   </div>
@@ -108,41 +187,6 @@ export default defineComponent({
     newState: "",
     newSlotDefinitionName: "",
   }),
-  mounted() {
-    this.itemStr = JSON.stringify(this.modelValue);
-    this.item = JSON.parse(this.itemStr);
-    this.adjustAllImagesDivSize();
-    window.addEventListener("resize", this.adjustAllImagesDivSize);
-  },
-  unmounted() {
-    window.removeEventListener("resize", this.adjustAllImagesDivSize);
-  },
-  watch: {
-    modelValue: {
-      handler(v) {
-        this.item = JSON.parse(this.itemStr);
-      },
-    },
-    item: {
-      handler(v) {
-        this.itemStr = JSON.stringify(v);
-      },
-      deep: true,
-    },
-    itemStr: {
-      handler(v) {
-        const current = JSON.stringify(this.item);
-        try {
-          const updated = JSON.parse(v);
-          if (current !== updated) {
-            this.item = updated;
-          }
-        } catch (e) {
-          console.warn(e);
-        }
-      },
-    },
-  },
   computed: {
     cardBody(): HTMLElement | null {
       if (!this.$refs.cardBody) {
@@ -183,6 +227,41 @@ export default defineComponent({
       }
       return true;
     },
+  },
+  watch: {
+    modelValue: {
+      handler(v) {
+        this.item = JSON.parse(this.itemStr);
+      },
+    },
+    item: {
+      handler(v) {
+        this.itemStr = JSON.stringify(v);
+      },
+      deep: true,
+    },
+    itemStr: {
+      handler(v) {
+        const current = JSON.stringify(this.item);
+        try {
+          const updated = JSON.parse(v);
+          if (current !== updated) {
+            this.item = updated;
+          }
+        } catch (e) {
+          console.warn(e);
+        }
+      },
+    },
+  },
+  mounted() {
+    this.itemStr = JSON.stringify(this.modelValue);
+    this.item = JSON.parse(this.itemStr);
+    this.adjustAllImagesDivSize();
+    window.addEventListener("resize", this.adjustAllImagesDivSize);
+  },
+  unmounted() {
+    window.removeEventListener("resize", this.adjustAllImagesDivSize);
   },
   methods: {
     autoDetectDimensions(): void {

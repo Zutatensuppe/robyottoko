@@ -5,10 +5,8 @@ import { logger } from '../common/fn'
 const log = logger('Templates.ts')
 
 class Templates {
-  private baseDir: string
   private templates: Record<string, { templatePathAbsolute: string, templateContents: string | null }> = {}
-  constructor(baseDir: string) {
-    this.baseDir = baseDir
+  constructor(private readonly baseDir: string) {
   }
 
   add(templatePath: string) {

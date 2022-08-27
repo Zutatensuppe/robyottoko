@@ -1166,11 +1166,11 @@ const moduleByWidgetType = (widgetType) => {
 };
 class Widgets {
     constructor(db, tokenRepo) {
+        this.db = db;
+        this.tokenRepo = tokenRepo;
         this._widgetUrl = (type, token) => {
             return `/widget/${type}/${token}/`;
         };
-        this.db = db;
-        this.tokenRepo = tokenRepo;
     }
     async createWidgetUrl(type, userId) {
         let t = await this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`);
@@ -1374,8 +1374,8 @@ class WebSocketServer {
 const log$v = logger('Templates.ts');
 class Templates {
     constructor(baseDir) {
-        this.templates = {};
         this.baseDir = baseDir;
+        this.templates = {};
     }
     add(templatePath) {
         const templatePathAbsolute = path.join(this.baseDir, templatePath);
@@ -3622,11 +3622,11 @@ const shouldDeleteSubscription = (configuredTransport, subscription, twitchChann
 };
 class TwitchClientManager {
     constructor(bot, user) {
+        this.bot = bot;
+        this.user = user;
         this.chatClient = null;
         this.helixClient = null;
         this.identity = null;
-        this.bot = bot;
-        this.user = user;
         this.log = logger('TwitchClientManager.ts', `${user.name}|`);
     }
     async accessTokenRefreshed(user) {
@@ -4910,13 +4910,13 @@ const removeStreamTags = (originalCmd, bot, user) => async (ctx) => {
 logger('GeneralModule.ts');
 class GeneralModule {
     constructor(bot, user) {
+        this.bot = bot;
+        this.user = user;
         this.name = MODULE_NAME.GENERAL;
         this.interval = null;
         this.channelPointsCustomRewards = {};
         // @ts-ignore
         return (async () => {
-            this.bot = bot;
-            this.user = user;
             const initData = await this.reinit();
             this.data = initData.data;
             this.commands = initData.commands;
@@ -5422,12 +5422,12 @@ const default_playlist = (list = null) => {
 };
 class SongrequestModule {
     constructor(bot, user) {
+        this.bot = bot;
+        this.user = user;
         this.name = MODULE_NAME.SR;
         this.channelPointsCustomRewards = {};
         // @ts-ignore
         return (async () => {
-            this.bot = bot;
-            this.user = user;
             const initData = await this.reinit();
             this.data = {
                 filter: initData.data.filter,
@@ -6578,12 +6578,12 @@ class SongrequestModule {
 
 class VoteModule {
     constructor(bot, user) {
+        this.bot = bot;
+        this.user = user;
         this.name = MODULE_NAME.VOTE;
+        this.storage = this.bot.getUserModuleStorage(this.user);
         // @ts-ignore
         return (async () => {
-            this.bot = bot;
-            this.user = user;
-            this.storage = bot.getUserModuleStorage(user);
             this.data = await this.reinit();
             return this;
         })();
@@ -6746,11 +6746,11 @@ const default_settings$3 = (obj = null) => ({
 
 class SpeechToTextModule {
     constructor(bot, user) {
+        this.bot = bot;
+        this.user = user;
         this.name = MODULE_NAME.SPEECH_TO_TEXT;
         // @ts-ignore
         return (async () => {
-            this.bot = bot;
-            this.user = user;
             this.data = await this.reinit();
             return this;
         })();
@@ -6889,11 +6889,11 @@ const default_images = (list = null) => {
 const log$2 = logger('DrawcastModule.ts');
 class DrawcastModule {
     constructor(bot, user) {
+        this.bot = bot;
+        this.user = user;
         this.name = MODULE_NAME.DRAWCAST;
         // @ts-ignore
         return (async () => {
-            this.bot = bot;
-            this.user = user;
             this.data = await this.reinit();
             return this;
         })();
@@ -7079,11 +7079,11 @@ const default_settings$1 = (obj = null) => ({
 const log$1 = logger('AvatarModule.ts');
 class AvatarModule {
     constructor(bot, user) {
+        this.bot = bot;
+        this.user = user;
         this.name = MODULE_NAME.AVATAR;
         // @ts-ignore
         return (async () => {
-            this.bot = bot;
-            this.user = user;
             this.data = await this.reinit();
             return this;
         })();
@@ -7208,12 +7208,12 @@ const default_state = (obj = null) => ({
 logger('PomoModule.ts');
 class PomoModule {
     constructor(bot, user) {
+        this.bot = bot;
+        this.user = user;
         this.name = MODULE_NAME.POMO;
         this.timeout = null;
         // @ts-ignore
         return (async () => {
-            this.bot = bot;
-            this.user = user;
             this.data = await this.reinit();
             this.tick(null, null);
             this.commands = [
@@ -7368,9 +7368,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-08-21T23:30:05.045Z",
+    buildDate: "2022-08-27T09:51:32.872Z",
     // @ts-ignore
-    buildVersion: "1.23.5",
+    buildVersion: "1.23.6",
 };
 
 const TABLE = 'robyottoko.chat_log';
@@ -7447,7 +7447,6 @@ const createBot = async () => {
             this.userVariableInstances = {};
             this.userModuleStorageInstances = {};
             this.userTwitchClientManagerInstances = {};
-            // pass
         }
         getBuildVersion() { return buildEnv.buildVersion; }
         getBuildDate() { return buildEnv.buildDate; }

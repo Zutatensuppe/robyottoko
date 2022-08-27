@@ -8,16 +8,19 @@
     <code>{{ trigger.data.command }}</code>
   </div>
   <div v-else-if="trigger.type === 'reward_redemption'">
-    <span class="is-small" title="Channel Point Reward"><i class="fa fa-bullseye"></i>:
+    <span
+      class="is-small"
+      title="Channel Point Reward"
+    ><i class="fa fa-bullseye" />:
     </span>
     <code>{{ trigger.data.command }}</code>
   </div>
   <div v-else-if="trigger.type === 'timer'">
     <span class="is-small">Timer: </span>
     <code>{{ trigger.data.minLines }} lines,
-      <duration
+      <duration-display
         :value="trigger.data.minInterval"
-    /></code>
+      /></code>
   </div>
   <div v-else-if="trigger.type === 'sub'">
     <span class="is-small">Sub</span>

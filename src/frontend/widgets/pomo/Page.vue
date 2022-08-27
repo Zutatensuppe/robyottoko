@@ -1,12 +1,20 @@
 <template>
-  <div :style="widgetStyles" v-if="running">
-    <div v-if="!finishined">{{ timeLeftHumanReadable }}</div>
+  <div
+    v-if="running"
+    :style="widgetStyles"
+  >
+    <div v-if="!finishined">
+      {{ timeLeftHumanReadable }}
+    </div>
     <div v-else>
       <span v-if="showTimerWhenFinished">{{ timeLeftHumanReadable }}</span>
       <span v-if="finishedText">{{ finishedText }}</span>
     </div>
   </div>
-  <media-queue-element ref="q" :timeBetweenMediaMs="100" />
+  <media-queue-element
+    ref="q"
+    :time-between-media-ms="100"
+  />
 </template>
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
@@ -108,19 +116,6 @@ export default defineComponent({
       return this.$refs.q as MediaQueueElementInstance
     },
   },
-  methods: {
-    tick(): void {
-      if (this.timeout) {
-        clearTimeout(this.timeout);
-      }
-      this.timeout = setTimeout(() => {
-        this.now = new Date();
-        if (this.data && this.data.state.running) {
-          this.tick();
-        }
-      }, 1000);
-    },
-  },
   created() {
     // @ts-ignore
     import("./main.scss");
@@ -146,6 +141,19 @@ export default defineComponent({
     if (this.ws) {
       this.ws.disconnect()
     }
+  },
+  methods: {
+    tick(): void {
+      if (this.timeout) {
+        clearTimeout(this.timeout);
+      }
+      this.timeout = setTimeout(() => {
+        this.now = new Date();
+        if (this.data && this.data.state.running) {
+          this.tick();
+        }
+      }, 1000);
+    },
   },
 });
 </script>

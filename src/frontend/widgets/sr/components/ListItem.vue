@@ -49,7 +49,6 @@ export default defineComponent({
       required: true,
     },
   },
-  template: ` `,
   computed: {
     thumbnail() {
       return `https://i.ytimg.com/vi/${this.item.yt}/mqdefault.jpg`;

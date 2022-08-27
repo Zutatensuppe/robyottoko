@@ -1,5 +1,8 @@
 <template>
-  <media-queue-element ref="q" :baseVolume="settings.volume" />
+  <media-queue-element
+    ref="q"
+    :base-volume="settings.volume"
+  />
 </template>
 <script lang="ts">
 import { defineComponent, PropType } from "vue";

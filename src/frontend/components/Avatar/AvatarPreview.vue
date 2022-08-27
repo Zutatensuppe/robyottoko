@@ -1,7 +1,15 @@
 <template>
-  <div class="avatar-preview" :style="{ width: `${width}px`, height: `${height}px` }">
-    <avatar-animation :frames="anim.frames" v-for="(anim, idx) in animations" :key="idx" :width="width"
-      :height="height" />
+  <div
+    class="avatar-preview"
+    :style="{ width: `${width}px`, height: `${height}px` }"
+  >
+    <avatar-animation
+      v-for="(anim, idx) in animations"
+      :key="idx"
+      :frames="anim.frames"
+      :width="width"
+      :height="height"
+    />
   </div>
 </template>
 
@@ -32,7 +40,11 @@ const animations = computed((): AvatarModuleSlotItemStateDefinition[] => {
     if (!item) {
       return { state: "", frames: [] };
     }
-    return item.states.find(({ state }) => state === "default");
+    const stateDef = item.states.find(({ state }) => state === "default");
+    if (!stateDef) {
+      return { state: "", frames: [] };
+    }
+    return stateDef
   });
 })
 </script>

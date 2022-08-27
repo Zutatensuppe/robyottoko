@@ -1,25 +1,43 @@
 <template>
-  <div class="view" v-if="widgets">
-    <div id="top" ref="top">
-      <navbar />
+  <div
+    v-if="widgets"
+    class="view"
+  >
+    <div
+      id="top"
+      ref="top"
+    >
+      <navbar-element />
     </div>
-    <div id="main" ref="main">
+    <div
+      id="main"
+      ref="main"
+    >
       <table class="table is-striped is-fullwidth">
         <thead>
           <tr>
             <th>Widget</th>
             <th>Hint</th>
-            <th></th>
+            <th />
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(widget, idx) in widgets" :key="idx">
+          <tr
+            v-for="(widget, idx) in widgets"
+            :key="idx"
+          >
             <td>
-              <a :href="widget.url" target="blank">{{ widget.title }}</a>
+              <a
+                :href="widget.url"
+                target="blank"
+              >{{ widget.title }}</a>
             </td>
             <td>{{ widget.hint }}</td>
             <td>
-              <span class="button is-small ml-1" @click="newUrl(widget)">Generate new url</span>
+              <span
+                class="button is-small ml-1"
+                @click="newUrl(widget)"
+              >Generate new url</span>
             </td>
           </tr>
         </tbody>

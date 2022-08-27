@@ -1,10 +1,22 @@
 <template>
-  <div class="modal is-active" v-if="item">
-    <div class="modal-background" @click="onOverlayClick"></div>
+  <div
+    v-if="item"
+    class="modal is-active"
+  >
+    <div
+      class="modal-background"
+      @click="onOverlayClick"
+    />
     <div class="modal-card">
       <header class="modal-card-head">
-        <p class="modal-card-title">{{ title }}</p>
-        <button class="delete" aria-label="close" @click="onCloseClick"></button>
+        <p class="modal-card-title">
+          {{ title }}
+        </p>
+        <button
+          class="delete"
+          aria-label="close"
+          @click="onCloseClick"
+        />
       </header>
       <section class="modal-card-body">
         <table class="table is-striped">
@@ -12,16 +24,26 @@
             <tr>
               <td>Triggers:</td>
               <td>
-                <trigger-editor v-for="(trigger, idx) in item.triggers" :key="idx" class="spacerow"
-                  :modelValue="trigger" :channelPointsCustomRewards="channelPointsCustomRewards"
-                  :removable="item.triggers.length > 1" @update:modelValue="item.triggers[idx] = $event"
-                  @remove="rmtrigger(idx)" />
-                <dropdown-button :actions="possibleTriggerActions" label="Add trigger" @click="addtrigger" />
+                <trigger-editor
+                  v-for="(trigger, idx) in item.triggers"
+                  :key="idx"
+                  class="spacerow"
+                  :model-value="trigger"
+                  :channel-points-custom-rewards="channelPointsCustomRewards"
+                  :removable="item.triggers.length > 1"
+                  @update:modelValue="item.triggers[idx] = $event"
+                  @remove="rmtrigger(idx)"
+                />
+                <dropdown-button
+                  :actions="possibleTriggerActions"
+                  label="Add trigger"
+                  @click="addtrigger"
+                />
               </td>
             </tr>
             <tr v-if="actionDescription">
               <td>Description:</td>
-              <td v-html="actionDescription"></td>
+              <td v-html="actionDescription" />
             </tr>
             <tr v-if="requiresAccessToken">
               <td>Attention:</td>
@@ -35,20 +57,36 @@
             <tr>
               <td>Response:</td>
               <td>
-                <div v-for="(txt, idx) in item.data.text" :key="idx" class="field textarea-holder">
-                  <textarea class="textarea" type="text" v-model="item.data.text[idx]" :class="{
-                    'has-background-danger-light': !item.data.text[idx],
-                    'has-text-danger-dark': !item.data.text[idx],
-                  }" />
+                <div
+                  v-for="(txt, idx) in item.data.text"
+                  :key="idx"
+                  class="field textarea-holder"
+                >
+                  <textarea
+                    v-model="item.data.text[idx]"
+                    class="textarea"
+                    type="text"
+                    :class="{
+                      'has-background-danger-light': !item.data.text[idx],
+                      'has-text-danger-dark': !item.data.text[idx],
+                    }"
+                  />
                   <div class="help">
                     <macro-select @selected="insertMacro(idx, $event)" />
                   </div>
-                  <button class="button is-small" :disabled="item.data.text.length <= 1" @click="rmtxt(idx)">
+                  <button
+                    class="button is-small"
+                    :disabled="item.data.text.length <= 1"
+                    @click="rmtxt(idx)"
+                  >
                     <i class="fa fa-remove" />
                   </button>
                 </div>
                 <div class="field">
-                  <button class="button is-small" @click="addtxt">
+                  <button
+                    class="button is-small"
+                    @click="addtxt"
+                  >
                     <i class="fa fa-plus mr-1" /> Add response
                   </button>
                 </div>
@@ -71,27 +109,47 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(v, idx) in item.variables" :key="idx">
+                    <tr
+                      v-for="(v, idx) in item.variables"
+                      :key="idx"
+                    >
                       <td>
-                        <input type="text" class="input is-small" v-model="v.name" />
+                        <input
+                          v-model="v.name"
+                          type="text"
+                          class="input is-small"
+                        >
                       </td>
                       <td>
-                        <input type="text" class="input is-small" v-model="v.value" />
+                        <input
+                          v-model="v.value"
+                          type="text"
+                          class="input is-small"
+                        >
                       </td>
                       <td>
-                        <button class="button is-small" @click="rmVariable(idx)">
+                        <button
+                          class="button is-small"
+                          @click="rmVariable(idx)"
+                        >
                           <i class="fa fa-remove" />
                         </button>
                       </td>
                     </tr>
                   </tbody>
                 </table>
-                <span class="button is-small" @click="onAddVariable">Add Variable</span>
+                <span
+                  class="button is-small"
+                  @click="onAddVariable"
+                >Add Variable</span>
                 <div class="help">
                   Variables can be used from the command with
                   <code>$var(variable_name)</code>. If the referenced variable
                   is not defined here,
-                  <a href="/variables/" target="_blank">global variables</a> are
+                  <a
+                    href="/variables/"
+                    target="_blank"
+                  >global variables</a> are
                   used.
                 </div>
               </td>
@@ -105,36 +163,57 @@
                       <td>Name</td>
                       <td>Change</td>
                       <td>Value</td>
-                      <td></td>
+                      <td />
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(v, idx) in item.variableChanges" :key="idx">
+                    <tr
+                      v-for="(v, idx) in item.variableChanges"
+                      :key="idx"
+                    >
                       <td>
-                        <dropdown-input v-model="v.name"
-                          :values="autocompletableVariables().map(a => ({ value: a.var.name, label: `${a.var.name} (${a.type}), <code>${a.var.value}</code>` }))" />
+                        <dropdown-input
+                          v-model="v.name"
+                          :values="autocompletableVariables().map(a => ({ value: a.var.name, label: `${a.var.name} (${a.type}), <code>${a.var.value}</code>` }))"
+                        />
                       </td>
                       <td>
                         <div class="select is-small">
                           <select v-model="v.change">
-                            <option value="set">set</option>
-                            <option value="increase_by">increase by</option>
-                            <option value="decrease_by">decrease by</option>
+                            <option value="set">
+                              set
+                            </option>
+                            <option value="increase_by">
+                              increase by
+                            </option>
+                            <option value="decrease_by">
+                              decrease by
+                            </option>
                           </select>
                         </div>
                       </td>
                       <td>
-                        <input type="text" class="input is-small" v-model="v.value" />
+                        <input
+                          v-model="v.value"
+                          type="text"
+                          class="input is-small"
+                        >
                       </td>
                       <td>
-                        <button class="button is-small" @click="rmVariableChange(idx)">
+                        <button
+                          class="button is-small"
+                          @click="rmVariableChange(idx)"
+                        >
                           <i class="fa fa-remove" />
                         </button>
                       </td>
                     </tr>
                   </tbody>
                 </table>
-                <span class="button is-small" @click="onAddVariableChange">Add Variable Change</span>
+                <span
+                  class="button is-small"
+                  @click="onAddVariableChange"
+                >Add Variable Change</span>
                 <div class="help">
                   Variable changes are performed when the command is executed,
                   before anything else.
@@ -144,8 +223,16 @@
             <tr>
               <td>Permissions:</td>
               <td>
-                <label v-for="(perm, idx) in possiblePermissions" :key="idx" class="mr-1">
-                  <input type="checkbox" v-model="item.restrict_to" :value="perm.value" />
+                <label
+                  v-for="(perm, idx) in possiblePermissions"
+                  :key="idx"
+                  class="mr-1"
+                >
+                  <input
+                    v-model="item.restrict_to"
+                    type="checkbox"
+                    :value="perm.value"
+                  >
                   {{ perm.label }}
                 </label>
               </td>
@@ -154,10 +241,19 @@
         </table>
       </section>
       <footer class="modal-card-foot">
-        <button class="button is-small is-primary" :disabled="!valid" @click="onSaveClick">
+        <button
+          class="button is-small is-primary"
+          :disabled="!valid"
+          @click="onSaveClick"
+        >
           Save changes
         </button>
-        <button class="button is-small" @click="onCancelClick">Cancel</button>
+        <button
+          class="button is-small"
+          @click="onCancelClick"
+        >
+          Cancel
+        </button>
       </footer>
     </div>
   </div>
@@ -223,12 +319,53 @@ export default defineComponent({
     variableChangeFocusIdx: -1,
     possiblePermissions: permissions,
   }),
-  mounted() {
-    this.item = JSON.parse(JSON.stringify(this.modelValue));
-    this.$nextTick(() => {
-      const el = this.$el.querySelector('input[type="text"]');
-      el.focus();
-    });
+  computed: {
+    requiresAccessToken(): boolean {
+      if (!this.item) {
+        return false;
+      }
+      return commands[this.item.action].RequiresAccessToken();
+    },
+    possibleTriggerActions() {
+      return possibleTriggerActions()
+    },
+    valid(): boolean {
+      if (!this.item) {
+        return false;
+      }
+
+      // check if all triggers are correct
+      for (const trigger of this.item.triggers) {
+        if (!isValidTrigger(trigger)) {
+          return false;
+        }
+      }
+
+      // check if settings are correct
+      for (const t of this.item.data.text) {
+        if (t === "") {
+          return false;
+        }
+      }
+
+      return true;
+    },
+    actionDescription(): string {
+      if (!this.item) {
+        return "";
+      }
+      return commands[this.item.action].Description();
+    },
+    title(): string {
+      if (!this.item) {
+        return "";
+      }
+      const verb = {
+        create: "Create new ",
+        edit: "Edit ",
+      };
+      return `${verb[this.mode]}${commands[this.item.action].Name()}`;
+    },
   },
   watch: {
     modelValue: {
@@ -236,6 +373,13 @@ export default defineComponent({
         this.item = JSON.parse(JSON.stringify(v));
       },
     },
+  },
+  mounted() {
+    this.item = JSON.parse(JSON.stringify(this.modelValue));
+    this.$nextTick(() => {
+      const el = this.$el.querySelector('input[type="text"]');
+      el.focus();
+    });
   },
   methods: {
     addtxt(): void {
@@ -350,54 +494,6 @@ export default defineComponent({
         }
       });
       return variables
-    },
-  },
-  computed: {
-    requiresAccessToken(): boolean {
-      if (!this.item) {
-        return false;
-      }
-      return commands[this.item.action].RequiresAccessToken();
-    },
-    possibleTriggerActions() {
-      return possibleTriggerActions()
-    },
-    valid(): boolean {
-      if (!this.item) {
-        return false;
-      }
-
-      // check if all triggers are correct
-      for (const trigger of this.item.triggers) {
-        if (!isValidTrigger(trigger)) {
-          return false;
-        }
-      }
-
-      // check if settings are correct
-      for (const t of this.item.data.text) {
-        if (t === "") {
-          return false;
-        }
-      }
-
-      return true;
-    },
-    actionDescription(): string {
-      if (!this.item) {
-        return "";
-      }
-      return commands[this.item.action].Description();
-    },
-    title(): string {
-      if (!this.item) {
-        return "";
-      }
-      const verb = {
-        create: "Create new ",
-        edit: "Edit ",
-      };
-      return `${verb[this.mode]}${commands[this.item.action].Name()}`;
     },
   },
 });

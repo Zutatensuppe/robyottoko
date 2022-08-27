@@ -1,38 +1,73 @@
 <template>
   <div class="view">
-    <div id="top" ref="top">
-      <navbar />
-      <div id="actionbar" class="p-1">
-        <a class="button is-small mr-1" :href="controlWidgetUrl" target="_blank">Open control widget</a>
-        <a class="button is-small mr-1" :href="displayWidgetUrl" target="_blank">Open display widget</a>
+    <div
+      id="top"
+      ref="top"
+    >
+      <navbar-element />
+      <div
+        id="actionbar"
+        class="p-1"
+      >
+        <a
+          class="button is-small mr-1"
+          :href="controlWidgetUrl"
+          target="_blank"
+        >Open control widget</a>
+        <a
+          class="button is-small mr-1"
+          :href="displayWidgetUrl"
+          target="_blank"
+        >Open display widget</a>
       </div>
     </div>
-    <div id="main" ref="main" v-if="inited">
+    <div
+      v-if="inited"
+      id="main"
+      ref="main"
+    >
       <div class="tabs">
         <ul>
-          <li v-for="(def, idx) in tabDefinitions" :key="idx" :class="{ 'is-active': tab === def.tab }"
-            @click="tab = def.tab">
+          <li
+            v-for="(def, idx) in tabDefinitions"
+            :key="idx"
+            :class="{ 'is-active': tab === def.tab }"
+            @click="tab = def.tab"
+          >
             <a>{{ def.title }}</a>
           </li>
         </ul>
       </div>
-      <table class="table is-striped" v-if="tab === 'settings'">
+      <table
+        v-if="tab === 'settings'"
+        class="table is-striped"
+      >
         <tbody>
           <tr>
-            <td colspan="3">General</td>
+            <td colspan="3">
+              General
+            </td>
           </tr>
           <tr>
             <td><code>settings.style.bgColor</code></td>
             <td>
-              <input class="input is-small" type="color" v-model="settings.styles.bgColor"
-                @update:modelValue="sendSave" />
+              <input
+                v-model="settings.styles.bgColor"
+                class="input is-small"
+                type="color"
+                @update:modelValue="sendSave"
+              >
             </td>
             <td>
-              <button class="button is-small" :disabled="
-                settings.styles.bgColor === defaultSettings.styles.bgColor
-              " @click="
+              <button
+                class="button is-small"
+                :disabled="
+                  settings.styles.bgColor === defaultSettings.styles.bgColor
+                "
+                @click="
                   settings.styles.bgColor = defaultSettings.styles.bgColor
-                ">
+                "
+              >
                 Reset to default
               </button>
             </td>
@@ -40,7 +75,11 @@
           <tr>
             <td><code>settings.style.bgColorEnabled</code></td>
             <td>
-              <input type="checkbox" v-model="settings.styles.bgColorEnabled" @update:modelValue="sendSave" />
+              <input
+                v-model="settings.styles.bgColorEnabled"
+                type="checkbox"
+                @update:modelValue="sendSave"
+              >
             </td>
           </tr>
         </tbody>
@@ -49,21 +88,30 @@
         <table class="table is-striped">
           <thead>
             <tr>
-              <th></th>
-              <th></th>
+              <th />
+              <th />
               <th>Preview</th>
               <th>Name</th>
               <th>Actions</th>
             </tr>
           </thead>
-          <draggable :modelValue="settings.avatarDefinitions" @end="dragEnd" tag="tbody" handle=".handle" item-key="id">
+          <vue-draggable
+            :model-value="settings.avatarDefinitions"
+            tag="tbody"
+            handle=".handle"
+            item-key="id"
+            @end="dragEnd"
+          >
             <template #item="{ element, index }">
               <tr>
                 <td class="pt-4 handle">
-                  <i class="fa fa-arrows"></i>
+                  <i class="fa fa-arrows" />
                 </td>
                 <td class="pl-0 pr-0">
-                  <button class="button is-small" @click="edit(index)">
+                  <button
+                    class="button is-small"
+                    @click="edit(index)"
+                  >
                     <i class="fa fa-pencil" />
                   </button>
                 </td>
@@ -74,26 +122,53 @@
                   {{ element.name }}
                 </td>
                 <td class="pl-0 pr-0">
-                  <doubleclick-button class="button is-small mr-1" message="Are you sure?" :timeout="1000"
-                    @doubleclick="remove(index)"><i class="fa fa-trash" /></doubleclick-button>
-                  <button class="button is-small mr-1" @click="duplicate(index)">
+                  <doubleclick-button
+                    class="button is-small mr-1"
+                    message="Are you sure?"
+                    :timeout="1000"
+                    @doubleclick="remove(index)"
+                  >
+                    <i class="fa fa-trash" />
+                  </doubleclick-button>
+                  <button
+                    class="button is-small mr-1"
+                    @click="duplicate(index)"
+                  >
                     <i class="fa fa-clone" />
                   </button>
-                  <a class="button is-small mr-1" :href="controlWidgetUrl + '?avatar=' + element.name"
-                    target="_blank"><i class="fa fa-external-link mr-1" /> Control widget</a>
-                  <a class="button is-small" :href="displayWidgetUrl + '?avatar=' + element.name" target="_blank"><i
-                      class="fa fa-external-link mr-1" /> Display widget</a>
+                  <a
+                    class="button is-small mr-1"
+                    :href="controlWidgetUrl + '?avatar=' + element.name"
+                    target="_blank"
+                  ><i class="fa fa-external-link mr-1" /> Control widget</a>
+                  <a
+                    class="button is-small"
+                    :href="displayWidgetUrl + '?avatar=' + element.name"
+                    target="_blank"
+                  ><i
+                    class="fa fa-external-link mr-1"
+                  /> Display widget</a>
                 </td>
               </tr>
             </template>
-          </draggable>
+          </vue-draggable>
         </table>
 
-        <avatar-editor v-if="editEntity" :modelValue="editEntity" @update:modelValue="updatedAvatar"
-          @cancel="editEntity = null" />
+        <avatar-editor
+          v-if="editEntity"
+          :model-value="editEntity"
+          @update:modelValue="updatedAvatar"
+          @cancel="editEntity = null"
+        />
 
-        <span class="button is-small mr-1" @click="addAvatar">Add new avatar</span>
-        <span class="button is-small" @click="addExampleAvatar">Add example avatar (Hyottoko-Chan)</span>
+        <span
+          class="button is-small mr-1"
+          @click="addAvatar"
+        >Add new avatar</span>
+        <span
+          class="button is-small"
+          @click="addExampleAvatar"
+        >Add example avatar (Hyottoko-Chan)</span>
       </div>
     </div>
   </div>
@@ -157,6 +232,11 @@ export default defineComponent({
     controlWidgetUrl: "",
     displayWidgetUrl: "",
   }),
+  computed: {
+    changed(): boolean {
+      return this.unchangedJson !== this.changedJson;
+    },
+  },
   watch: {
     settings: {
       deep: true,
@@ -165,10 +245,21 @@ export default defineComponent({
       },
     },
   },
-  computed: {
-    changed(): boolean {
-      return this.unchangedJson !== this.changedJson;
-    },
+  async mounted() {
+    this.ws = util.wsClient("avatar");
+    this.ws.onMessage("init", (data: AvatarModuleWsInitData) => {
+      this.settings = data.settings;
+      this.unchangedJson = JSON.stringify(data.settings);
+      this.controlWidgetUrl = data.controlWidgetUrl;
+      this.displayWidgetUrl = data.displayWidgetUrl;
+      this.inited = true;
+    });
+    this.ws.connect();
+  },
+  unmounted() {
+    if (this.ws) {
+      this.ws.disconnect();
+    }
   },
   methods: {
     edit(idx: number) {
@@ -264,22 +355,6 @@ export default defineComponent({
       );
       this.sendSave();
     },
-  },
-  async mounted() {
-    this.ws = util.wsClient("avatar");
-    this.ws.onMessage("init", (data: AvatarModuleWsInitData) => {
-      this.settings = data.settings;
-      this.unchangedJson = JSON.stringify(data.settings);
-      this.controlWidgetUrl = data.controlWidgetUrl;
-      this.displayWidgetUrl = data.displayWidgetUrl;
-      this.inited = true;
-    });
-    this.ws.connect();
-  },
-  unmounted() {
-    if (this.ws) {
-      this.ws.disconnect();
-    }
   },
 });
 </script>

@@ -1,82 +1,151 @@
 <template>
   <div>
     <div class="actions">
-      <dropdown-button :actions="possibleActionsMapped" label="Add command" @click="add" />
-      <div class="mr-1">Filter:</div>
+      <dropdown-button
+        :actions="possibleActionsMapped"
+        label="Add command"
+        @click="add"
+      />
+      <div class="mr-1">
+        Filter:
+      </div>
       <div class="field has-addons mr-1 mb-0">
         <div class="control">
-          <input class="input is-small" v-model="filter.search" />
+          <input
+            v-model="filter.search"
+            class="input is-small"
+          >
         </div>
       </div>
-      <div class="field" v-if="showFilterActions">
-        <label class="mr-1" v-for="(a, idx) in possibleActionsWithCount" :key="idx"><input class="mr-1" type="checkbox"
-            :value="a.action" v-model="filter.actions" />{{ a.action }} ({{ a.count }})</label>
+      <div
+        v-if="showFilterActions"
+        class="field"
+      >
+        <label
+          v-for="(a, idx) in possibleActionsWithCount"
+          :key="idx"
+          class="mr-1"
+        ><input
+          v-model="filter.actions"
+          class="mr-1"
+          type="checkbox"
+          :value="a.action"
+        >{{ a.action }} ({{ a.count }})</label>
       </div>
     </div>
 
-    <div class="table-container" v-if="commands.length > 0">
-      <table class="table is-striped" ref="table">
+    <div
+      v-if="commands.length > 0"
+      class="table-container"
+    >
+      <table
+        ref="table"
+        class="table is-striped"
+      >
         <thead>
           <tr>
-            <th></th>
-            <th></th>
+            <th />
+            <th />
             <th>Trigger</th>
             <th>
               Response
               <label v-if="showToggleImages">
-                <input type="checkbox" v-model="imagesVisible" @update:modelValue="onImageVisibleChange" />
+                <input
+                  v-model="imagesVisible"
+                  type="checkbox"
+                  @update:modelValue="onImageVisibleChange"
+                >
                 Show images
               </label>
             </th>
             <th>Type</th>
             <th>Permissions</th>
             <th>Widgets</th>
-            <th></th>
-            <th></th>
+            <th />
+            <th />
           </tr>
         </thead>
-        <draggable :modelValue="commands" @end="dragEnd" tag="tbody" handle=".handle" item-key="id">
+        <vue-draggable
+          :model-value="commands"
+          tag="tbody"
+          handle=".handle"
+          item-key="id"
+          @end="dragEnd"
+        >
           <template #item="{ element, index }">
             <tr v-show="!filteredOut(element)">
               <td class="pt-4 handle">
-                <i class="fa fa-arrows"></i>
+                <i class="fa fa-arrows" />
               </td>
               <td class="pl-0 pr-0">
-                <button class="button is-small" @click="edit(index)">
+                <button
+                  class="button is-small"
+                  @click="edit(index)"
+                >
                   <i class="fa fa-pencil" />
                 </button>
               </td>
               <td class="col-triggers">
-                <div v-for="(trigger, idx2) in element.triggers" :key="idx2" class="spacerow">
+                <div
+                  v-for="(trigger, idx2) in element.triggers"
+                  :key="idx2"
+                  class="spacerow"
+                >
                   <trigger-info :trigger="trigger" />
                 </div>
               </td>
               <td>
                 <div v-if="element.action === 'text'">
-                  <template v-for="(txt, idx2) in element.data.text" :key="idx2" class="field has-addons">
+                  <template
+                    v-for="(txt, idx2) in element.data.text"
+                    :key="idx2"
+                  >
                     <code>{{ element.data.text[idx2] }}</code>
                     <span v-if="idx2 < element.data.text.length - 1">or</span>
                   </template>
                 </div>
-                <div v-else-if="element.action === 'media'" :class="element.action">
-                  <div class="spacerow media-holder media-holder-inline"
-                    v-if="element.data.image.file || element.data.sound.file">
-                    <responsive-image v-if="element.data.image.file && imagesVisible" :src="element.data.image.urlpath"
-                      :title="element.data.image.filename" width="100px" height="50px" style="display: inline-block" />
+                <div
+                  v-else-if="element.action === 'media'"
+                  :class="element.action"
+                >
+                  <div
+                    v-if="element.data.image.file || element.data.sound.file"
+                    class="spacerow media-holder media-holder-inline"
+                  >
+                    <responsive-image
+                      v-if="element.data.image.file && imagesVisible"
+                      :src="element.data.image.urlpath"
+                      :title="element.data.image.filename"
+                      width="100px"
+                      height="50px"
+                      style="display: inline-block"
+                    />
                     <code v-else-if="element.data.image.file">{{
-                        element.data.image.filename
+                      element.data.image.filename
                     }}</code>
 
-                    <i class="fa fa-plus is-justify-content-center mr-2 ml-2"
-                      v-if="element.data.image.file && element.data.sound.file" />
-                    <player :src="element.data.sound.urlpath" :name="element.data.sound.filename"
-                      :volume="element.data.sound.volume" :baseVolume="baseVolume"
-                      class="button is-small is-justify-content-center" />
-                    <span class="ml-2" v-if="element.data.image.file && element.data.sound.file">for at least
-                      <duration :value="element.data.minDurationMs" />
+                    <i
+                      v-if="element.data.image.file && element.data.sound.file"
+                      class="fa fa-plus is-justify-content-center mr-2 ml-2"
+                    />
+                    <audio-player
+                      :src="element.data.sound.urlpath"
+                      :name="element.data.sound.filename"
+                      :volume="element.data.sound.volume"
+                      :base-volume="baseVolume"
+                      class="button is-small is-justify-content-center"
+                    />
+                    <span
+                      v-if="element.data.image.file && element.data.sound.file"
+                      class="ml-2"
+                    >for at least
+                      <duration-display :value="element.data.minDurationMs" />
                     </span>
-                    <span class="ml-2" v-else-if="element.data.image.file">for
-                      <duration :value="element.data.minDurationMs" />
+                    <span
+                      v-else-if="element.data.image.file"
+                      class="ml-2"
+                    >for
+                      <duration-display :value="element.data.minDurationMs" />
                     </span>
                   </div>
                 </div>
@@ -85,30 +154,35 @@
                     <code>{{ element.data.intro }}</code>
                     <span>→</span>
                     <code>{{ element.data.steps }}</code> ✕
-                    <duration :value="element.data.interval" />
+                    <duration-display :value="element.data.interval" />
                     <span>→</span>
                     <code>{{ element.data.outro }}</code>
                   </div>
                   <div v-else>
-                    <template v-for="(a, idxActions) in element.data.actions" :key="idxActions">
-                      <duration v-if="a.type === 'delay'" :value="a.value" />
+                    <template
+                      v-for="(a, idxActions) in element.data.actions"
+                      :key="idxActions"
+                    >
+                      <duration-display
+                        v-if="a.type === 'delay'"
+                        :value="a.value"
+                      />
                       <code v-if="a.type === 'text'">{{ a.value }}</code>
                       <code v-if="a.type === 'media'">
                         Media(<span v-if="a.value.image.file">{{
-                            a.value.image.filename
-                        }}</span
-                        ><span v-if="a.value.image.file && a.value.sound.file"
-                          >+</span
-                        ><span v-if="a.value.sound.file">{{
-                            a.value.sound.filename
-                        }}</span
-                        >)
+                          a.value.image.filename
+                        }}</span><span v-if="a.value.image.file && a.value.sound.file">+</span><span v-if="a.value.sound.file">{{
+                          a.value.sound.filename
+                        }}</span>)
                       </code>
                       <span v-if="idxActions < element.data.actions.length - 1">→</span>
                     </template>
                   </div>
                 </div>
-                <div v-else-if="actionDescription(element.action)" v-html="actionDescription(element.action)"></div>
+                <div
+                  v-else-if="actionDescription(element.action)"
+                  v-html="actionDescription(element.action)"
+                />
               </td>
               <td>
                 {{ element.action }}
@@ -118,53 +192,103 @@
               </td>
               <td>
                 <div v-if="element.action === 'media'">
-                  <a class="button is-small mr-1" :href="`${widgetUrl}`" target="_blank"
-                    v-if="element.data.widgetIds.length === 0">Default widget</a>
-                  <a class="button is-small mr-1" :href="`${widgetUrl}?id=${encodeURIComponent(id)}`" target="_blank"
-                    v-for="(id, idx) in element.data.widgetIds" :key="idx">
+                  <a
+                    v-if="element.data.widgetIds.length === 0"
+                    class="button is-small mr-1"
+                    :href="`${widgetUrl}`"
+                    target="_blank"
+                  >Default widget</a>
+                  <a
+                    v-for="(id, idx) in element.data.widgetIds"
+                    :key="idx"
+                    class="button is-small mr-1"
+                    :href="`${widgetUrl}?id=${encodeURIComponent(id)}`"
+                    target="_blank"
+                  >
                     <code>{{ id }}</code> Widget
                   </a>
                 </div>
-                <div v-else>-</div>
+                <div v-else>
+                  -
+                </div>
               </td>
               <td class="pl-0 pr-0">
-                <doubleclick-button class="button is-small mr-1" message="Are you sure?" :timeout="1000"
-                  @doubleclick="remove(index)"><i class="fa fa-trash" /></doubleclick-button>
-                <button class="button is-small" @click="duplicate(index)">
+                <doubleclick-button
+                  class="button is-small mr-1"
+                  message="Are you sure?"
+                  :timeout="1000"
+                  @doubleclick="remove(index)"
+                >
+                  <i class="fa fa-trash" />
+                </doubleclick-button>
+                <button
+                  class="button is-small"
+                  @click="duplicate(index)"
+                >
                   <i class="fa fa-clone" />
                 </button>
               </td>
             </tr>
           </template>
-        </draggable>
+        </vue-draggable>
       </table>
     </div>
-    <div v-else>No commands set up</div>
+    <div v-else>
+      No commands set up
+    </div>
 
-    <text-command-editor v-if="editCommand && editCommand.action === 'text'" :globalVariables="globalVariables"
-      :channelPointsCustomRewards="channelPointsCustomRewards" :modelValue="editCommand"
-      :mode="editIdx >= commands.length ? 'create' : 'edit'" @update:modelValue="editedCommand"
-      @cancel="editCommand = null" />
+    <text-command-editor
+      v-if="editIdx !== null && editCommand && editCommand.action === 'text'"
+      :global-variables="globalVariables"
+      :channel-points-custom-rewards="channelPointsCustomRewards"
+      :model-value="editCommand"
+      :mode="editIdx >= commands.length ? 'create' : 'edit'"
+      @update:modelValue="editedCommand"
+      @cancel="editCommand = null"
+    />
 
-    <media-command-editor v-else-if="editCommand && editCommand.action === 'media'" :globalVariables="globalVariables"
-      :channelPointsCustomRewards="channelPointsCustomRewards" :modelValue="editCommand"
-      :mode="editIdx >= commands.length ? 'create' : 'edit'" :baseVolume="baseVolume" :widgetUrl="widgetUrl"
-      @update:modelValue="editedCommand" @cancel="editCommand = null" />
+    <media-command-editor
+      v-else-if="editIdx !== null && editCommand && editCommand.action === 'media'"
+      :global-variables="globalVariables"
+      :channel-points-custom-rewards="channelPointsCustomRewards"
+      :model-value="editCommand"
+      :mode="editIdx >= commands.length ? 'create' : 'edit'"
+      :base-volume="baseVolume"
+      :widget-url="widgetUrl"
+      @update:modelValue="editedCommand"
+      @cancel="editCommand = null"
+    />
 
-    <dict-lookup-command-editor v-else-if="editCommand && editCommand.action === 'dict_lookup'"
-      :globalVariables="globalVariables" :channelPointsCustomRewards="channelPointsCustomRewards"
-      :modelValue="editCommand" :mode="editIdx >= commands.length ? 'create' : 'edit'"
-      @update:modelValue="editedCommand" @cancel="editCommand = null" />
+    <dict-lookup-command-editor
+      v-else-if="editIdx !== null && editCommand && editCommand.action === 'dict_lookup'"
+      :global-variables="globalVariables"
+      :channel-points-custom-rewards="channelPointsCustomRewards"
+      :model-value="editCommand"
+      :mode="editIdx >= commands.length ? 'create' : 'edit'"
+      @update:modelValue="editedCommand"
+      @cancel="editCommand = null"
+    />
 
-    <madochan-createword-command-editor v-else-if="editCommand && editCommand.action === 'madochan_createword'"
-      :globalVariables="globalVariables" :channelPointsCustomRewards="channelPointsCustomRewards"
-      :modelValue="editCommand" :mode="editIdx >= commands.length ? 'create' : 'edit'"
-      @update:modelValue="editedCommand" @cancel="editCommand = null" />
+    <madochan-createword-command-editor
+      v-else-if="editIdx !== null && editCommand && editCommand.action === 'madochan_createword'"
+      :global-variables="globalVariables"
+      :channel-points-custom-rewards="channelPointsCustomRewards"
+      :model-value="editCommand"
+      :mode="editIdx >= commands.length ? 'create' : 'edit'"
+      @update:modelValue="editedCommand"
+      @cancel="editCommand = null"
+    />
 
-    <command-editor v-else-if="editCommand" :globalVariables="globalVariables"
-      :channelPointsCustomRewards="channelPointsCustomRewards" :modelValue="editCommand"
-      :mode="editIdx >= commands.length ? 'create' : 'edit'" :baseVolume="baseVolume" @update:modelValue="editedCommand"
-      @cancel="editCommand = null" />
+    <command-editor
+      v-else-if="editIdx !== null && editCommand"
+      :global-variables="globalVariables"
+      :channel-points-custom-rewards="channelPointsCustomRewards"
+      :model-value="editCommand"
+      :mode="editIdx >= commands.length ? 'create' : 'edit'"
+      :base-volume="baseVolume"
+      @update:modelValue="editedCommand"
+      @cancel="editCommand = null"
+    />
   </div>
 </template>
 <script lang="ts">
@@ -259,6 +383,10 @@ export default defineComponent({
         })
         .filter((a) => a.count > 0);
     },
+  },
+  created() {
+    this.commands = JSON.parse(JSON.stringify(this.modelValue));
+    this.imagesVisible = this.showImages;
   },
   methods: {
     onImageVisibleChange() {
@@ -356,10 +484,6 @@ export default defineComponent({
     actionName(action: CommandAction) {
       return commands[action].Name();
     },
-  },
-  created() {
-    this.commands = JSON.parse(JSON.stringify(this.modelValue));
-    this.imagesVisible = this.showImages;
   },
 });
 </script>

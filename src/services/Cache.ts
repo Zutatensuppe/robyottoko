@@ -7,10 +7,7 @@ const TABLE = 'robyottoko.cache'
 const log = logger('Cache.ts')
 
 class Cache {
-  private db: Db
-
-  constructor(db: Db) {
-    this.db = db
+  constructor(private readonly db: Db) {
   }
 
   async set(key: string, value: CacheValue, lifetime: number): Promise<void> {

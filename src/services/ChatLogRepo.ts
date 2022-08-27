@@ -6,10 +6,7 @@ import { TwitchChatContext } from "../types"
 const TABLE = 'robyottoko.chat_log'
 
 export class ChatLogRepo {
-  private db: Db
-
-  constructor(db: Db) {
-    this.db = db
+  constructor(private readonly db: Db) {
   }
 
   async insert(context: TwitchChatContext, msg: string) {

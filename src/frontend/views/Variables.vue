@@ -1,17 +1,34 @@
 <template>
   <div class="view">
-    <div id="top" ref="top">
-      <navbar />
-      <div id="actionbar" class="p-1">
-        <button class="button is-small" @click="onAdd">Add</button>
-        <button class="button is-small is-primary" :disabled="!changed" @click="sendSave">
+    <div
+      id="top"
+      ref="top"
+    >
+      <navbar-element />
+      <div
+        id="actionbar"
+        class="p-1"
+      >
+        <button
+          class="button is-small"
+          @click="onAdd"
+        >
+          Add
+        </button>
+        <button
+          class="button is-small is-primary"
+          :disabled="!changed"
+          @click="sendSave"
+        >
           Save
         </button>
       </div>
     </div>
     <div id="main">
       <div class="mb-4">
-        <h1 class="title mb-2">Global Variables</h1>
+        <h1 class="title mb-2">
+          Global Variables
+        </h1>
         <div class="help">
           Variables can be used from commands with
           <code>$var(variable_name)</code>. In addition to the global variables
@@ -23,20 +40,37 @@
             <tr>
               <th>Name</th>
               <th>Value</th>
-              <th></th>
+              <th />
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(v, idx) in variables" :key="idx">
+            <tr
+              v-for="(v, idx) in variables"
+              :key="idx"
+            >
               <td>
-                <input type="text" class="input is-small" v-model="v.name" />
+                <input
+                  v-model="v.name"
+                  type="text"
+                  class="input is-small"
+                >
               </td>
               <td>
-                <input type="text" class="input is-small" v-model="v.value" />
+                <input
+                  v-model="v.value"
+                  type="text"
+                  class="input is-small"
+                >
               </td>
               <td>
-                <doubleclick-button class="button is-small mr-1" message="Are you sure?" :timeout="1000"
-                  @doubleclick="remove(idx)"><i class="fa fa-trash" /></doubleclick-button>
+                <doubleclick-button
+                  class="button is-small mr-1"
+                  message="Are you sure?"
+                  :timeout="1000"
+                  @doubleclick="remove(idx)"
+                >
+                  <i class="fa fa-trash" />
+                </doubleclick-button>
               </td>
             </tr>
           </tbody>
