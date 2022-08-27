@@ -2,5 +2,8 @@
 
 Set-Location $env:RUN_DIR
 
+npx vue-tsc --noEmit
+ThrowOnNativeFailure
+
 npx eslint src
 ThrowOnNativeFailure

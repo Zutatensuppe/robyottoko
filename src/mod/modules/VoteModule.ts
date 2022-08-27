@@ -12,23 +12,18 @@ class VoteModule implements Module {
   public name = MODULE_NAME.VOTE
 
   // @ts-ignore
-  public bot: Bot
-  // @ts-ignore
-  public user: User
-  // @ts-ignore
   private storage: ModuleStorage
   // @ts-ignore
   private data: VoteModuleData
 
   constructor(
-    bot: Bot,
-    user: User,
+    public readonly bot: Bot,
+    public user: User,
   ) {
+    this.storage = this.bot.getUserModuleStorage(this.user)
+
     // @ts-ignore
     return (async () => {
-      this.bot = bot
-      this.user = user
-      this.storage = bot.getUserModuleStorage(user)
       this.data = await this.reinit()
       return this;
     })();

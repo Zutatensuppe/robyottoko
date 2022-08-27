@@ -50,11 +50,11 @@ export default defineComponent({
     this.error = ''
     const res = this.$route.name === 'pub'
       ? await api.getPubData(
-        this.$route.params.pub_id,
+        `${this.$route.params.pub_id}`,
       )
       : await api.getWidgetData(
-        this.$route.params.widget_type,
-        this.$route.params.widget_token,
+        `${this.$route.params.widget_type}`,
+        `${this.$route.params.widget_token}`,
       )
     if (res.status !== 200) {
       this.error = 'Widget not found...'

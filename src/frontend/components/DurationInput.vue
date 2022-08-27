@@ -1,5 +1,9 @@
 <template>
-  <input class="input is-small spaceinput" :class="classes" v-model="v" />
+  <input
+    v-model="v"
+    class="input is-small spaceinput"
+    :class="classes"
+  >
 </template>
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";

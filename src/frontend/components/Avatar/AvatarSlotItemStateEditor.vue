@@ -1,24 +1,53 @@
 <template>
-  <div class="avatar-slot-item-state-editor card" :class="{ 'dragging-over': draggingOver }" @dragover="onDragOver"
-    @dragenter="onDragEnter" @dragleave="onDragLeave" @drop="onDrop">
+  <div
+    class="avatar-slot-item-state-editor card"
+    :class="{ 'dragging-over': draggingOver }"
+    @dragover="onDragOver"
+    @dragenter="onDragEnter"
+    @dragleave="onDragLeave"
+    @drop="onDrop"
+  >
     <div class="avatar-slot-item-state-editor-title">
       {{ modelValue.state }}
     </div>
-    <avatar-animation :frames="modelValue.frames" v-if="modelValue.frames.length" />
-    <avatar-animation v-else :frames="defaultState.frames" class="avatar-fallback-animation" />
+    <avatar-animation
+      v-if="modelValue.frames.length"
+      :frames="modelValue.frames"
+    />
+    <avatar-animation
+      v-else
+      :frames="defaultState.frames"
+      class="avatar-fallback-animation"
+    />
     <div>
-      <div class="avatar-animation-card mr-1" v-for="(frame, idx) in modelValue.frames" :key="idx">
-        <avatar-frame-upload :modelValue="frame" @update:modelValue="frameChanged(idx, $event)" />
+      <div
+        v-for="(frame, idx) in modelValue.frames"
+        :key="idx"
+        class="avatar-animation-card mr-1"
+      >
+        <avatar-frame-upload
+          :model-value="frame"
+          @update:modelValue="frameChanged(idx, $event)"
+        />
       </div>
 
       <div class="avatar-animation-card mr-1">
         <span class="avatar-animation-frame">
-          <span class="button is-small" @click="addFrame"><i class="fa fa-plus"></i></span>
+          <span
+            class="button is-small"
+            @click="addFrame"
+          ><i class="fa fa-plus" /></span>
         </span>
       </div>
     </div>
 
-    <upload v-show="false" @uploaded="onUploaded" accept="image/*" label="" ref="uploadComponent" />
+    <upload
+      v-show="false"
+      ref="uploadComponent"
+      accept="image/*"
+      label=""
+      @uploaded="onUploaded"
+    />
   </div>
 </template>
 
@@ -29,6 +58,7 @@ import {
   AvatarModuleAnimationFrameDefinition,
 } from "../../../mod/modules/AvatarModuleCommon";
 import { MediaFile } from "../../../types";
+import { getFileFromDropEvent } from "../../util";
 import { UploadInstance } from "../Upload.vue";
 
 export default defineComponent({
@@ -89,23 +119,7 @@ export default defineComponent({
         };
         this.modelValue.frames.push(frame);
       } else {
-        let file = null;
-        if (e.dataTransfer.items) {
-          // Use DataTransferItemList interface to access the file(s)
-          for (var i = 0; i < e.dataTransfer.items.length; i++) {
-            // If dropped items aren't files, reject them
-            if (e.dataTransfer.items[i].kind === "file") {
-              file = e.dataTransfer.items[i].getAsFile();
-              break;
-            }
-          }
-        } else {
-          // Use DataTransfer interface to access the file(s)
-          for (var i = 0; i < e.dataTransfer.files.length; i++) {
-            file = e.dataTransfer.files[i];
-            break;
-          }
-        }
+        const file = getFileFromDropEvent(e)
         if (file) {
           this.uploadComponent.uploadFile(file);
         }

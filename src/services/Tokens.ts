@@ -34,10 +34,7 @@ function generateToken(length: number): string {
 }
 
 class Tokens {
-  private db: Db
-
-  constructor(db: Db) {
-    this.db = db
+  constructor(private readonly db: Db) {
   }
 
   async getByUserIdAndType(user_id: number, type: string): Promise<Token> {

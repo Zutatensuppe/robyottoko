@@ -1,5 +1,5 @@
 <template>
-  <div :id="id"></div>
+  <div :id="id" />
 </template>
 
 <script lang="ts">
@@ -75,7 +75,6 @@ interface ComponentData {
 }
 
 const Youtube = defineComponent({
-  name: "youtube",
   props: {
     visible: {
       type: Boolean,
@@ -94,6 +93,32 @@ const Youtube = defineComponent({
     this.id = `yt-${Math.floor(
       Math.random() * 99 + 1
     )}-${new Date().getTime()}`;
+  },
+  async mounted() {
+    this.yt = await prepareYt(this.id);
+
+    if (this.tovolume !== null) {
+      this.yt.setVolume(this.tovolume);
+    }
+    if (this.toplay !== null) {
+      log("trying to play..");
+      this.play(this.toplay);
+    }
+    this.yt.addEventListener("onStateChange", (event) => {
+      // no knowledge about YT.PlayerState :(
+      // @ts-ignore
+      if (event.data === YT.PlayerState.CUED) {
+        this.tryPlay();
+        // no knowledge about YT.PlayerState :(
+        // @ts-ignore
+      } else if (event.data === YT.PlayerState.ENDED) {
+        if (this.loop) {
+          this.tryPlay();
+        } else {
+          this.$emit("ended");
+        }
+      }
+    });
   },
   methods: {
     getDuration(): number {
@@ -181,32 +206,6 @@ const Youtube = defineComponent({
       }
       return this.yt.getPlayerState() === 1;
     },
-  },
-  async mounted() {
-    this.yt = await prepareYt(this.id);
-
-    if (this.tovolume !== null) {
-      this.yt.setVolume(this.tovolume);
-    }
-    if (this.toplay !== null) {
-      log("trying to play..");
-      this.play(this.toplay);
-    }
-    this.yt.addEventListener("onStateChange", (event) => {
-      // no knowledge about YT.PlayerState :(
-      // @ts-ignore
-      if (event.data === YT.PlayerState.CUED) {
-        this.tryPlay();
-        // no knowledge about YT.PlayerState :(
-        // @ts-ignore
-      } else if (event.data === YT.PlayerState.ENDED) {
-        if (this.loop) {
-          this.tryPlay();
-        } else {
-          this.$emit("ended");
-        }
-      }
-    });
   },
 });
 export type YoutubeInstance = InstanceType<typeof Youtube>

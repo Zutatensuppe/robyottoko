@@ -1,9 +1,19 @@
 <template>
   <div id="drawcast">
-    <div class="drawcast_body" :class="{ blurred: dialog }">
-      <div class="streamer_info" v-if="customDescription" :class="{ 'no-avatar': !customProfileImageUrl }">
-        <div class="streamer_avatar" v-if="customProfileImageUrl"
-          :style="{ backgroundImage: `url(${customProfileImageUrl})` }"></div>
+    <div
+      class="drawcast_body"
+      :class="{ blurred: dialog }"
+    >
+      <div
+        v-if="customDescription"
+        class="streamer_info"
+        :class="{ 'no-avatar': !customProfileImageUrl }"
+      >
+        <div
+          v-if="customProfileImageUrl"
+          class="streamer_avatar"
+          :style="{ backgroundImage: `url(${customProfileImageUrl})` }"
+        />
         <div class="streamer_message">
           <span class="streamer_message_inner">{{ customDescription }} </span>
         </div>
@@ -12,74 +22,138 @@
         <div class="draw_panel_inner">
           <div class="draw_panel_top">
             <div class="draw_canvas_holder">
-              <div class="draw_canvas_holder_inner" :class="canvasClasses" :style="canvasHolderStyle">
-                <canvas ref="finalcanvas" :width="canvasWidth" :height="canvasHeight" :style="styles"></canvas>
-                <canvas ref="draftcanvas" :width="canvasWidth" :height="canvasHeight" :style="styles"
-                  @touchstart.prevent="touchstart" @touchmove.prevent="touchmove" @mousedown="mousedown"></canvas>
+              <div
+                class="draw_canvas_holder_inner"
+                :class="canvasClasses"
+                :style="canvasHolderStyle"
+              >
+                <canvas
+                  ref="finalcanvas"
+                  :width="canvasWidth"
+                  :height="canvasHeight"
+                  :style="styles"
+                />
+                <canvas
+                  ref="draftcanvas"
+                  :width="canvasWidth"
+                  :height="canvasHeight"
+                  :style="styles"
+                  @touchstart.prevent="touchstart"
+                  @touchmove.prevent="touchmove"
+                  @mousedown="mousedown"
+                />
               </div>
             </div>
             <div class="v355_1274">
               <div class="card draw_tools_panel">
                 <div class="draw_tools_tool_buttons">
-                  <div class="draw_tools_tool_button clickable tool-pen" :class="{
-                    'is-current': tool === 'pen',
-                  }" title="Pen" @click="tool = 'pen'">
+                  <div
+                    class="draw_tools_tool_button clickable tool-pen"
+                    :class="{
+                      'is-current': tool === 'pen',
+                    }"
+                    title="Pen"
+                    @click="tool = 'pen'"
+                  >
                     <icon-pen />
                   </div>
-                  <div class="draw_tools_tool_button clickable tool-eraser" :class="{
-                    'is-current': tool === 'eraser',
-                  }" title="Eraser" @click="tool = 'eraser'">
+                  <div
+                    class="draw_tools_tool_button clickable tool-eraser"
+                    :class="{
+                      'is-current': tool === 'eraser',
+                    }"
+                    title="Eraser"
+                    @click="tool = 'eraser'"
+                  >
                     <icon-eraser />
                   </div>
-                  <div class="draw_tools_tool_button clickable tool-eyedropper" :class="{
-                    'is-current': tool === 'color-sampler',
-                  }" title="Color Sampler" @click="tool = 'color-sampler'">
+                  <div
+                    class="draw_tools_tool_button clickable tool-eyedropper"
+                    :class="{
+                      'is-current': tool === 'color-sampler',
+                    }"
+                    title="Color Sampler"
+                    @click="tool = 'color-sampler'"
+                  >
                     <icon-eyedropper />
                   </div>
-                  <div class="draw_tools_tool_button clickable tool-undo" title="Undo" @click="undo">
+                  <div
+                    class="draw_tools_tool_button clickable tool-undo"
+                    title="Undo"
+                    @click="undo"
+                  >
                     <icon-undo />
                   </div>
-                  <div class="draw_tools_tool_button clickable tool-clear" title="Clear the canvas"
-                    @click="showClearDialog">
+                  <div
+                    class="draw_tools_tool_button clickable tool-clear"
+                    title="Clear the canvas"
+                    @click="showClearDialog"
+                  >
                     <icon-clear />
                   </div>
                 </div>
                 <div class="slider">
                   <div class="bubble bubble-left">
-                    <div class="bubble-small bubble-dark"></div>
+                    <div class="bubble-small bubble-dark" />
                   </div>
                   <div class="slider-input-holder">
-                    <input v-model="sizeIdx" type="range" min="0" :max="sizes.length - 1" step="1" />
+                    <input
+                      v-model="sizeIdx"
+                      type="range"
+                      min="0"
+                      :max="sizes.length - 1"
+                      step="1"
+                    >
                   </div>
                   <div class="bubble bubble-right">
-                    <div class="bubble-big bubble-dark"></div>
+                    <div class="bubble-big bubble-dark" />
                   </div>
                 </div>
                 <div class="slider">
                   <div class="bubble bubble-left">
-                    <div class="bubble-big bubble-light"></div>
+                    <div class="bubble-big bubble-light" />
                   </div>
                   <div class="slider-input-holder">
-                    <input v-model="transparencyIdx" type="range" min="0" :max="transparencies.length - 1" step="1"
-                      @update:modelValue="updateTransparency" />
+                    <input
+                      v-model="transparencyIdx"
+                      type="range"
+                      min="0"
+                      :max="transparencies.length - 1"
+                      step="1"
+                      @update:modelValue="updateTransparency"
+                    >
                   </div>
                   <div class="bubble bubble-right">
-                    <div class="bubble-big bubble-dark"></div>
+                    <div class="bubble-big bubble-dark" />
                   </div>
                 </div>
 
                 <div class="visual_background">
-                  <div class="visual_background_title">Visual Background:</div>
+                  <div class="visual_background_title">
+                    Visual Background:
+                  </div>
                   <div class="visual_background_colors">
-                    <div v-for="(bg, idx) of ['transparent-light', 'transparent-dark']" :key="idx"
-                      @click="opt('canvasBg', bg)" class="visual_background_button clickable"
-                      :class="{ 'is-current': canvasBg === bg, [`bg-${bg}`]: true }"></div>
+                    <div
+                      v-for="(bg, idx) of ['transparent-light', 'transparent-dark']"
+                      :key="idx"
+                      class="visual_background_button clickable"
+                      :class="{ 'is-current': canvasBg === bg, [`bg-${bg}`]: true }"
+                      @click="opt('canvasBg', bg)"
+                    />
                   </div>
                 </div>
               </div>
               <div class="hotkey-help">
-                <div class="hotkey-help-title">Hotkeys</div>
-                <div class="hotkey-help-item" v-for="(item, idx) of hotkeys">{{ item }}</div>
+                <div class="hotkey-help-title">
+                  Hotkeys
+                </div>
+                <div
+                  v-for="(item, idx) of hotkeys"
+                  :key="idx"
+                  class="hotkey-help-item"
+                >
+                  {{ item }}
+                </div>
               </div>
             </div>
           </div>
@@ -87,29 +161,47 @@
             <div class="draw_colors">
               <div class="draw_colors_current">
                 <label class="draw_colors_current_label clickable">
-                  <input type="color" v-model="color" />
-                  <span class="draw_colors_current_inner" :class="{ active: tool === 'pen' }"
-                    :style="currentColorStyle">
-                  </span>
+                  <input
+                    v-model="color"
+                    type="color"
+                  >
+                  <span
+                    class="draw_colors_current_inner"
+                    :class="{ active: tool === 'pen' }"
+                    :style="currentColorStyle"
+                  />
                   <div class="draw_colors_current_icon">
                     <icon-eyedropper />
                   </div>
                 </label>
               </div>
               <div class="draw_colors_palette">
-                <div class="palette_color clickable" v-for="(c, idx) in palette" :style="{ backgroundColor: c }"
-                  :key="idx" @click="
-  color = c;
-tool = 'pen';
-                  "></div>
+                <div
+                  v-for="(c, idx) in palette"
+                  :key="idx"
+                  class="palette_color clickable"
+                  :style="{ backgroundColor: c }"
+                  @click="
+                    color = c;
+                    tool = 'pen';
+                  "
+                />
               </div>
             </div>
-            <div></div>
+            <div />
             <div class="drawing_panel_bottom_right">
-              <div v-if="sending.nonce" class="button button-primary send_button" @click="prepareSubmitImage">
+              <div
+                v-if="sending.nonce"
+                class="button button-primary send_button"
+                @click="prepareSubmitImage"
+              >
                 <span class="send_button_text">⏳ Sending...</span>
               </div>
-              <div v-else class="button button-primary send_button clickable" @click="prepareSubmitImage">
+              <div
+                v-else
+                class="button button-primary send_button clickable"
+                @click="prepareSubmitImage"
+              >
                 <icon-send />
                 <span class="send_button_text">
                   {{ submitButtonText }}
@@ -119,15 +211,28 @@ tool = 'pen';
           </div>
         </div>
       </div>
-      <div v-for="(fav, idx) in favoriteListsFiltered" :key="idx" class="drawings-panel favorite-drawings-panel">
+      <div
+        v-for="(fav, idx) in favoriteListsFiltered"
+        :key="idx"
+        class="drawings-panel favorite-drawings-panel"
+      >
         <div class="drawings_panel_title">
           <span class="drawings_panel_title_inner">{{
             fav.title || "Streamer's favorites:"
           }}</span>
         </div>
-        <div class="drawing_panel_drawings" v-if="nonfavorites.length">
-          <img class="image favorite clickable" v-for="(img, idx) in fav.list" :key="idx" @click="prepareModify(img)"
-            :src="img" height="190" />
+        <div
+          v-if="nonfavorites.length"
+          class="drawing_panel_drawings"
+        >
+          <img
+            v-for="(tmpImg, idx2) in fav.list"
+            :key="idx2"
+            class="image favorite clickable"
+            :src="tmpImg"
+            height="190"
+            @click="prepareModify(tmpImg)"
+          >
         </div>
       </div>
       <div class="drawings-panel recent-drawings-panel">
@@ -137,81 +242,171 @@ tool = 'pen';
           }}</span>
         </div>
         <div class="drawing_panel_drawings">
-          <img class="image clickable" v-for="(img, idx) in nonfavorites" :key="idx" @click="prepareModify(img)"
-            :src="img" height="190" />
-          <div class="dotdotdot"></div>
+          <img
+            v-for="(tmpImg, idx) in nonfavorites"
+            :key="idx"
+            class="image clickable"
+            :src="tmpImg"
+            height="190"
+            @click="prepareModify(tmpImg)"
+          >
+          <div class="dotdotdot" />
         </div>
       </div>
     </div>
 
-    <div class="drawcast_footer" :class="{ blurred: dialog }">
+    <div
+      class="drawcast_footer"
+      :class="{ blurred: dialog }"
+    >
       <span class="drawcast_footer_left">Hyottoko.club | Developed by
-        <a href="https://github.com/zutatensuppe" target="_blank">para</a>. UI
+        <a
+          href="https://github.com/zutatensuppe"
+          target="_blank"
+        >para</a>. UI
         Design by
-        <a href="https://www.artstation.com/lisadikaprio" target="_blank">LisadiKaprio</a></span><span
-        class="drawcast_footer_right"><a href="https://github.com/zutatensuppe/robyottoko" target="_blank">Source code
-          on Github</a>
+        <a
+          href="https://www.artstation.com/lisadikaprio"
+          target="_blank"
+        >LisadiKaprio</a></span><span
+        class="drawcast_footer_right"
+      ><a
+        href="https://github.com/zutatensuppe/robyottoko"
+        target="_blank"
+      >Source code
+        on Github</a>
         |
-        <a href="https://twitch.tv/nc_para_" target="_blank">Developer’s Twitch channel</a>
+        <a
+          href="https://twitch.tv/nc_para_"
+          target="_blank"
+        >Developer’s Twitch channel</a>
         |
-        <a href="https://jigsaw.hyottoko.club" target="_blank">Jigsaw Puzzle Multiplayer</a></span>
+        <a
+          href="https://jigsaw.hyottoko.club"
+          target="_blank"
+        >Jigsaw Puzzle Multiplayer</a></span>
     </div>
 
-    <div class="dialog success-dialog" v-if="dialog === 'success'">
-      <div class="dialog-bg" @click="dialogClose"></div>
+    <div
+      v-if="dialog === 'success'"
+      class="dialog success-dialog"
+    >
+      <div
+        class="dialog-bg"
+        @click="dialogClose"
+      />
       <div class="dialog-container">
         <div class="dialog-image">
-          <div class="responsive-image" :style="successImageUrlStyle"></div>
+          <div
+            class="responsive-image"
+            :style="successImageUrlStyle"
+          />
         </div>
-        <div class="dialog-title">Success!</div>
-        <div class="dialog-body" v-html="dialogBody"></div>
+        <div class="dialog-title">
+          Success!
+        </div>
+        <div
+          class="dialog-body"
+          v-html="dialogBody"
+        />
         <div class="dialog-footer">
-          <div class="button button-ok clickable" @click="dialogClose">
+          <div
+            class="button button-ok clickable"
+            @click="dialogClose"
+          >
             Draw another one
           </div>
         </div>
       </div>
     </div>
-    <div class="dialog confirm-dialog" v-if="dialog === 'replace'">
-      <div class="dialog-bg" @click="dialogClose"></div>
+    <div
+      v-if="dialog === 'replace'"
+      class="dialog confirm-dialog"
+    >
+      <div
+        class="dialog-bg"
+        @click="dialogClose"
+      />
       <div class="dialog-container">
-        <div class="dialog-body" v-html="dialogBody"></div>
+        <div
+          class="dialog-body"
+          v-html="dialogBody"
+        />
         <div class="dialog-footer">
-          <div class="button button-no-button clickable" @click="dialogClose">
+          <div
+            class="button button-no-button clickable"
+            @click="dialogClose"
+          >
             Cancel
           </div>
-          <div class="button button-danger clickable" @click="dialogConfirm">
+          <div
+            class="button button-danger clickable"
+            @click="dialogConfirm"
+          >
             Replace image
           </div>
         </div>
       </div>
     </div>
-    <div class="dialog confirm-dialog" v-if="dialog === 'confirm-submit'">
-      <div class="dialog-bg" @click="dialogClose"></div>
+    <div
+      v-if="dialog === 'confirm-submit'"
+      class="dialog confirm-dialog"
+    >
+      <div
+        class="dialog-bg"
+        @click="dialogClose"
+      />
       <div class="dialog-container">
-        <div class="dialog-body" v-html="dialogBody"></div>
+        <div
+          class="dialog-body"
+          v-html="dialogBody"
+        />
         <div class="dialog-footer">
-          <div class="button button-no-button clickable" @click="dialogClose">
+          <div
+            class="button button-no-button clickable"
+            @click="dialogClose"
+          >
             Cancel
           </div>
-          <div class="button button-ok clickable" @click="dialogConfirm">
+          <div
+            class="button button-ok clickable"
+            @click="dialogConfirm"
+          >
             Send
           </div>
         </div>
       </div>
     </div>
-    <div class="dialog clear-dialog" v-if="dialog === 'clear'">
-      <div class="dialog-bg" @click="dialogClose"></div>
+    <div
+      v-if="dialog === 'clear'"
+      class="dialog clear-dialog"
+    >
+      <div
+        class="dialog-bg"
+        @click="dialogClose"
+      />
       <div class="dialog-container">
         <div class="dialog-image">
-          <div class="responsive-image" :style="clearImageUrlStyle"></div>
+          <div
+            class="responsive-image"
+            :style="clearImageUrlStyle"
+          />
         </div>
-        <div class="dialog-body" v-html="dialogBody"></div>
+        <div
+          class="dialog-body"
+          v-html="dialogBody"
+        />
         <div class="dialog-footer">
-          <div class="button button-no-button clickable" @click="dialogClose">
+          <div
+            class="button button-no-button clickable"
+            @click="dialogClose"
+          >
             Cancel
           </div>
-          <div class="button button-danger clickable" @click="dialogConfirm">
+          <div
+            class="button button-danger clickable"
+            @click="dialogConfirm"
+          >
             Clear
           </div>
         </div>
@@ -450,6 +645,133 @@ export default defineComponent({
       return createCursor(this.tool, this.size, this.color)
     },
   },
+  created() {
+    // @ts-ignore
+    import("./main.scss");
+  },
+  mounted() {
+    this.ctx = this.draftcanvas.getContext("2d") as CanvasRenderingContext2D;
+    this.finalctx = this.finalcanvas.getContext(
+      "2d"
+    ) as CanvasRenderingContext2D;
+
+    this.ws = util.wsClient(this.wdata);
+
+    const opts = window.localStorage.getItem("drawcastOpts");
+    this.opts = opts ? JSON.parse(opts) : { canvasBg: "transparent" };
+
+    this.ws.onMessage("init", (data: DrawcastModuleWsDataData) => {
+      console.log('inited', data)
+      // submit button may not be empty
+      this.submitButtonText = data.settings.submitButtonText || "Send";
+      this.submitConfirm = data.settings.submitConfirm;
+      this.canvasWidth = data.settings.canvasWidth;
+      this.canvasHeight = data.settings.canvasHeight;
+      this.customDescription = data.settings.customDescription || "";
+      this.customProfileImageUrl =
+        data.settings.customProfileImage &&
+          data.settings.customProfileImage.urlpath
+          ? data.settings.customProfileImage.urlpath
+          : "";
+      this.recentImagesTitle =
+        data.settings.recentImagesTitle || "Newest submitted:";
+      this.palette = data.settings.palette || this.palette;
+      this.favoriteLists = data.settings.favoriteLists;
+      this.color = this.palette[0];
+      this.images = data.images.map((image) => image.path);
+
+      if (this.images.length > 0 && data.settings.autofillLatest) {
+        this.modify(this.images[0]);
+      }
+
+      // test data
+      // this.submitButtonText = "Send this image to the striiim";
+      // this.customProfileImageUrl =
+      //   "https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_783ce3fc0013443695c62933da3669c5/default/dark/3.0";
+      // this.customDescription = `💙👀 Please draw something cute. This will appear on my stream
+      //           screen!~ Click any of the drawings in the gallery to continue
+      //           drawing on them!`;
+    });
+    this.ws.onMessage(
+      "image_received",
+      (data: { nonce: string; img: string }) => {
+        if (
+          this.sending.date &&
+          this.sending.nonce &&
+          data.nonce === this.sending.nonce
+        ) {
+          // we want to have the 'sending' state for at least minMs ms
+          // for images that we have just sent, for other images they may
+          // be added immediately
+          const minMs = 500;
+          const now = new Date();
+          const timeoutMs = this.sending.date.getTime() + minMs - now.getTime();
+          setTimeout(() => {
+            this.successImageUrlStyle = {
+              backgroundImage: `url(${data.img})`,
+            };
+            this.dialog = "success";
+            this.dialogBody = "Your drawing was sent and is pending approval.";
+            this.sending.nonce = "";
+            this.sending.date = null;
+          }, Math.max(0, timeoutMs));
+        }
+      }
+    );
+    this.ws.onMessage(
+      "approved_image_received",
+      (data: { nonce: string; img: string }) => {
+        if (
+          this.sending.date &&
+          this.sending.nonce &&
+          data.nonce === this.sending.nonce
+        ) {
+          // we want to have the 'sending' state for at least minMs ms
+          // for images that we have just sent, for other images they may
+          // be added immediately
+          const minMs = 500;
+          const now = new Date();
+          const timeoutMs = this.sending.date.getTime() + minMs - now.getTime();
+          setTimeout(() => {
+            this.successImageUrlStyle = {
+              backgroundImage: `url(${data.img})`,
+            };
+            this.dialog = "success";
+            this.dialogBody = "Your drawing was sent to the stream.";
+            this.sending.nonce = "";
+            this.sending.date = null;
+
+            this.images.unshift(data.img);
+            this.images = this.images.slice(0, 20);
+          }, Math.max(0, timeoutMs));
+        } else {
+          this.images.unshift(data.img);
+          this.images = this.images.slice(0, 20);
+        }
+      }
+    );
+    this.ws.connect();
+
+    window.addEventListener("mousemove", this.mousemove);
+    window.addEventListener("mouseup", this.cancelDraw);
+    window.addEventListener("touchend", this.cancelDraw);
+    window.addEventListener("touchcancel", this.cancelDraw);
+    window.addEventListener("keyup", this.keyup);
+
+    this.$watch("color", () => {
+      this.tool = "pen";
+    });
+  },
+  unmounted() {
+    if (this.ws) {
+      this.ws.disconnect()
+    }
+    window.removeEventListener("mousemove", this.mousemove);
+    window.removeEventListener("mouseup", this.cancelDraw);
+    window.removeEventListener("touchend", this.cancelDraw);
+    window.removeEventListener("touchcancel", this.cancelDraw);
+    window.removeEventListener("keyup", this.keyup);
+  },
   methods: {
     updateTransparency() {
       this.draftcanvas.style.opacity = `${this.transparency / 100}`;
@@ -460,13 +782,14 @@ export default defineComponent({
     },
     async modify(imageUrl: string) {
       const image = new Image();
-      return new Promise(async (resolve) => {
+      return new Promise<void>((resolve) => {
         image.src = imageUrl;
-        image.onload = async (ev) => {
+        image.onload = () => {
           this.img(image);
           this.stack = [];
           this.drawing = false;
           this.stack.push(this.getImageData());
+          resolve()
         };
       });
     },
@@ -704,133 +1027,6 @@ export default defineComponent({
         this.undo();
       }
     },
-  },
-  created() {
-    // @ts-ignore
-    import("./main.scss");
-  },
-  mounted() {
-    this.ctx = this.draftcanvas.getContext("2d") as CanvasRenderingContext2D;
-    this.finalctx = this.finalcanvas.getContext(
-      "2d"
-    ) as CanvasRenderingContext2D;
-
-    this.ws = util.wsClient(this.wdata);
-
-    const opts = window.localStorage.getItem("drawcastOpts");
-    this.opts = opts ? JSON.parse(opts) : { canvasBg: "transparent" };
-
-    this.ws.onMessage("init", (data: DrawcastModuleWsDataData) => {
-      console.log('inited', data)
-      // submit button may not be empty
-      this.submitButtonText = data.settings.submitButtonText || "Send";
-      this.submitConfirm = data.settings.submitConfirm;
-      this.canvasWidth = data.settings.canvasWidth;
-      this.canvasHeight = data.settings.canvasHeight;
-      this.customDescription = data.settings.customDescription || "";
-      this.customProfileImageUrl =
-        data.settings.customProfileImage &&
-          data.settings.customProfileImage.urlpath
-          ? data.settings.customProfileImage.urlpath
-          : "";
-      this.recentImagesTitle =
-        data.settings.recentImagesTitle || "Newest submitted:";
-      this.palette = data.settings.palette || this.palette;
-      this.favoriteLists = data.settings.favoriteLists;
-      this.color = this.palette[0];
-      this.images = data.images.map((image) => image.path);
-
-      if (this.images.length > 0 && data.settings.autofillLatest) {
-        this.modify(this.images[0]);
-      }
-
-      // test data
-      // this.submitButtonText = "Send this image to the striiim";
-      // this.customProfileImageUrl =
-      //   "https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_783ce3fc0013443695c62933da3669c5/default/dark/3.0";
-      // this.customDescription = `💙👀 Please draw something cute. This will appear on my stream
-      //           screen!~ Click any of the drawings in the gallery to continue
-      //           drawing on them!`;
-    });
-    this.ws.onMessage(
-      "image_received",
-      (data: { nonce: string; img: string }) => {
-        if (
-          this.sending.date &&
-          this.sending.nonce &&
-          data.nonce === this.sending.nonce
-        ) {
-          // we want to have the 'sending' state for at least minMs ms
-          // for images that we have just sent, for other images they may
-          // be added immediately
-          const minMs = 500;
-          const now = new Date();
-          const timeoutMs = this.sending.date.getTime() + minMs - now.getTime();
-          setTimeout(() => {
-            this.successImageUrlStyle = {
-              backgroundImage: `url(${data.img})`,
-            };
-            this.dialog = "success";
-            this.dialogBody = "Your drawing was sent and is pending approval.";
-            this.sending.nonce = "";
-            this.sending.date = null;
-          }, Math.max(0, timeoutMs));
-        }
-      }
-    );
-    this.ws.onMessage(
-      "approved_image_received",
-      (data: { nonce: string; img: string }) => {
-        if (
-          this.sending.date &&
-          this.sending.nonce &&
-          data.nonce === this.sending.nonce
-        ) {
-          // we want to have the 'sending' state for at least minMs ms
-          // for images that we have just sent, for other images they may
-          // be added immediately
-          const minMs = 500;
-          const now = new Date();
-          const timeoutMs = this.sending.date.getTime() + minMs - now.getTime();
-          setTimeout(() => {
-            this.successImageUrlStyle = {
-              backgroundImage: `url(${data.img})`,
-            };
-            this.dialog = "success";
-            this.dialogBody = "Your drawing was sent to the stream.";
-            this.sending.nonce = "";
-            this.sending.date = null;
-
-            this.images.unshift(data.img);
-            this.images = this.images.slice(0, 20);
-          }, Math.max(0, timeoutMs));
-        } else {
-          this.images.unshift(data.img);
-          this.images = this.images.slice(0, 20);
-        }
-      }
-    );
-    this.ws.connect();
-
-    window.addEventListener("mousemove", this.mousemove);
-    window.addEventListener("mouseup", this.cancelDraw);
-    window.addEventListener("touchend", this.cancelDraw);
-    window.addEventListener("touchcancel", this.cancelDraw);
-    window.addEventListener("keyup", this.keyup);
-
-    this.$watch("color", () => {
-      this.tool = "pen";
-    });
-  },
-  unmounted() {
-    if (this.ws) {
-      this.ws.disconnect()
-    }
-    window.removeEventListener("mousemove", this.mousemove);
-    window.removeEventListener("mouseup", this.cancelDraw);
-    window.removeEventListener("touchend", this.cancelDraw);
-    window.removeEventListener("touchcancel", this.cancelDraw);
-    window.removeEventListener("keyup", this.keyup);
   },
 });
 </script>

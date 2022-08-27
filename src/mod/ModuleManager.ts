@@ -1,11 +1,7 @@
 import { Module } from "../types"
 
 class ModuleManager {
-  private instances: Record<number, Module[]>
-
-  constructor() {
-    this.instances = {}
-  }
+  private instances: Record<number, Module[]> = {}
 
   add(userId: number, mod: Module) {
     this.instances[userId] = this.instances[userId] || []

@@ -30,11 +30,9 @@ interface Where {
 }
 
 class Db {
-  patchesDir: string
-  dbh: pg.Client
+  private dbh: pg.Client
 
-  constructor(connectStr: string, patchesDir: string) {
-    this.patchesDir = patchesDir
+  constructor(connectStr: string, private readonly patchesDir: string) {
     this.dbh = new Client(connectStr)
   }
 

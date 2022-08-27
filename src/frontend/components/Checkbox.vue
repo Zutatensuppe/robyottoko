@@ -1,5 +1,9 @@
 <template>
-  <input type="checkbox" v-model="value" @update:modelValue="emitUpdate" />
+  <input
+    v-model="value"
+    type="checkbox"
+    @update:modelValue="emitUpdate"
+  >
 </template>
 <script setup lang="ts">
 import { PropType, ref } from "vue";

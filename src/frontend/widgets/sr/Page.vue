@@ -1,17 +1,40 @@
 <template>
-  <div class="wrapper" :class="classes">
+  <div
+    class="wrapper"
+    :class="classes"
+  >
     <div class="player video-16-9">
-      <responsive-image class="hide-video" v-if="hidevideo && settings.hideVideoImage.file"
-        :src="settings.hideVideoImage.urlpath" />
-      <div class="hide-video" v-else-if="hidevideo"></div>
-      <div class="progress" v-if="settings.showProgressBar">
-        <div class="progress-value" :style="progressValueStyle"></div>
+      <responsive-image
+        v-if="hidevideo && settings.hideVideoImage.file"
+        class="hide-video"
+        :src="settings.hideVideoImage.urlpath"
+      />
+      <div
+        v-else-if="hidevideo"
+        class="hide-video"
+      />
+      <div
+        v-if="settings.showProgressBar"
+        class="progress"
+      >
+        <div
+          class="progress-value"
+          :style="progressValueStyle"
+        />
       </div>
-      <youtube ref="youtube" @ended="ended" />
+      <youtube
+        ref="youtube"
+        @ended="ended"
+      />
     </div>
     <ol class="list">
-      <list-item v-for="(item, idx) in playlistItems" :class="idx === 0 ? 'playing' : 'not-playing'" :key="idx"
-        :item="item" :showThumbnails="settings.showThumbnails" />
+      <list-item
+        v-for="(tmpItem, idx) in playlistItems"
+        :key="idx"
+        :class="idx === 0 ? 'playing' : 'not-playing'"
+        :item="tmpItem"
+        :show-thumbnails="settings.showThumbnails"
+      />
     </ol>
   </div>
 </template>
@@ -68,18 +91,6 @@ export default defineComponent({
       inited: false,
     };
   },
-  watch: {
-    playlist: function (newVal: PlaylistItem[], _oldVal: PlaylistItem[]): void {
-      if (!newVal.find((item: PlaylistItem, idx: number) => !this.isFilteredOut(item, idx))) {
-        this.player.stop();
-      }
-    },
-    filter: function (_newVal: PlaylistItem[], _oldVal: PlaylistItem[]): void {
-      if (!this.playlist.find((item: PlaylistItem, idx: number) => !this.isFilteredOut(item, idx))) {
-        this.player.stop();
-      }
-    },
-  },
   computed: {
     thumbnailClass(): string {
       if (this.settings.showThumbnails === "left") {
@@ -134,76 +145,16 @@ export default defineComponent({
       return this.filteredPlaylist[0];
     },
   },
-  methods: {
-    isFilteredOut(item: PlaylistItem, idx: number): boolean {
-      if (
-        this.settings.maxItemsShown >= 0 &&
-        this.settings.maxItemsShown - 1 < idx
-      ) {
-        return true;
-      }
-      return this.filter.tag !== "" && !item.tags.includes(this.filter.tag);
-    },
-    ended(): void {
-      this.sendMsg({ event: "ended" });
-    },
-    sendMsg(data: { event: string, id?: number }): void {
-      if (!this.ws) {
-        log.error('sendMsg, ws not defined')
-        return
-      }
-      this.ws.send(JSON.stringify(data));
-    },
-    play(): void {
-      this.hasPlayed = true;
-      this.adjustVolume();
-      if (this.item) {
-        this.player.play(this.item.yt);
-        this.sendMsg({ event: "play", id: this.item.id });
+  watch: {
+    playlist: function (newVal: PlaylistItem[], _oldVal: PlaylistItem[]): void {
+      if (!newVal.find((item: PlaylistItem, idx: number) => !this.isFilteredOut(item, idx))) {
+        this.player.stop();
       }
     },
-    unpause(): void {
-      if (this.item) {
-        this.player.unpause();
-        this.sendMsg({ event: "unpause", id: this.item.id });
+    filter: function (_newVal: PlaylistItem[], _oldVal: PlaylistItem[]): void {
+      if (!this.playlist.find((item: PlaylistItem, idx: number) => !this.isFilteredOut(item, idx))) {
+        this.player.stop();
       }
-    },
-    pause(): void {
-      if (this.item) {
-        this.player.pause();
-        this.sendMsg({ event: "pause" });
-      }
-    },
-    adjustVolume(): void {
-      if (this.player) {
-        this.player.setVolume(this.settings.volume);
-      }
-    },
-    applySettings(settings: SongrequestModuleSettings): void {
-      if (this.settings.customCss !== settings.customCss) {
-        let el = document.getElementById("customCss");
-        if (el && el.parentElement) {
-          el.parentElement.removeChild(el);
-        }
-        el = document.createElement("style");
-        el.id = "customCss";
-        el.textContent = settings.customCss;
-        document.head.appendChild(el);
-      }
-      if (this.settings.showProgressBar !== settings.showProgressBar) {
-        if (this.progressInterval) {
-          window.clearInterval(this.progressInterval);
-        }
-        if (settings.showProgressBar) {
-          this.progressInterval = window.setInterval(() => {
-            if (this.player) {
-              this.progress = this.player.getProgress();
-            }
-          }, 500);
-        }
-      }
-      this.settings = settings;
-      this.adjustVolume();
     },
   },
   created() {
@@ -284,6 +235,78 @@ export default defineComponent({
     if (this.ws) {
       this.ws.disconnect()
     }
+  },
+  methods: {
+    isFilteredOut(item: PlaylistItem, idx: number): boolean {
+      if (
+        this.settings.maxItemsShown >= 0 &&
+        this.settings.maxItemsShown - 1 < idx
+      ) {
+        return true;
+      }
+      return this.filter.tag !== "" && !item.tags.includes(this.filter.tag);
+    },
+    ended(): void {
+      this.sendMsg({ event: "ended" });
+    },
+    sendMsg(data: { event: string, id?: number }): void {
+      if (!this.ws) {
+        log.error('sendMsg, ws not defined')
+        return
+      }
+      this.ws.send(JSON.stringify(data));
+    },
+    play(): void {
+      this.hasPlayed = true;
+      this.adjustVolume();
+      if (this.item) {
+        this.player.play(this.item.yt);
+        this.sendMsg({ event: "play", id: this.item.id });
+      }
+    },
+    unpause(): void {
+      if (this.item) {
+        this.player.unpause();
+        this.sendMsg({ event: "unpause", id: this.item.id });
+      }
+    },
+    pause(): void {
+      if (this.item) {
+        this.player.pause();
+        this.sendMsg({ event: "pause" });
+      }
+    },
+    adjustVolume(): void {
+      if (this.player) {
+        this.player.setVolume(this.settings.volume);
+      }
+    },
+    applySettings(settings: SongrequestModuleSettings): void {
+      if (this.settings.customCss !== settings.customCss) {
+        let el = document.getElementById("customCss");
+        if (el && el.parentElement) {
+          el.parentElement.removeChild(el);
+        }
+        el = document.createElement("style");
+        el.id = "customCss";
+        el.textContent = settings.customCss;
+        document.head.appendChild(el);
+      }
+      if (this.settings.showProgressBar !== settings.showProgressBar) {
+        if (this.progressInterval) {
+          window.clearInterval(this.progressInterval);
+        }
+        if (settings.showProgressBar) {
+          this.progressInterval = window.setInterval(() => {
+            if (this.player) {
+              this.progress = this.player.getProgress();
+            }
+          }, 500);
+        }
+      }
+      this.settings = settings;
+      this.adjustVolume();
+    },
   },
 });
 </script>

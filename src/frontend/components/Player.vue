@@ -1,5 +1,12 @@
 <template>
-  <span class="player" v-if="src" @click="toggle">{{ name }} <i class="fa ml-1" :class="cls"></i></span>
+  <span
+    v-if="src"
+    class="player"
+    @click="toggle"
+  >{{ name }} <i
+    class="fa ml-1"
+    :class="cls"
+  /></span>
 </template>
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";

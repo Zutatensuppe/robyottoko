@@ -1,6 +1,10 @@
 module.exports = {
   root: true,
-  parser: '@typescript-eslint/parser',
+  parser: 'vue-eslint-parser',
+  overrides: [{
+    files: ['*.ts'],
+    parser: '@typescript-eslint/parser',
+  }],
   plugins: [
     '@typescript-eslint',
   ],
@@ -9,9 +13,13 @@ module.exports = {
     browser: true,
   },
   parserOptions: {
-    ecmaVersion: 2020,
+    ecmaVersion: 'latest',
+    parser: {
+      ts: '@typescript-eslint/parser',
+    },
   },
   extends: [
+    'plugin:vue/vue3-recommended',
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
   ],

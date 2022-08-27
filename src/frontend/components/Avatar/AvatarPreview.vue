@@ -1,7 +1,15 @@
 <template>
-  <div class="avatar-preview" :style="{ width: `${width}px`, height: `${height}px` }">
-    <avatar-animation :frames="anim.frames" v-for="(anim, idx) in animations" :key="idx" :width="width"
-      :height="height" />
+  <div
+    class="avatar-preview"
+    :style="{ width: `${width}px`, height: `${height}px` }"
+  >
+    <avatar-animation
+      v-for="(anim, idx) in animations"
+      :key="idx"
+      :frames="anim.frames"
+      :width="width"
+      :height="height"
+    />
   </div>
 </template>
 

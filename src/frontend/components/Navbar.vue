@@ -48,20 +48,6 @@ interface ComponentData {
 }
 
 export default defineComponent({
-  name: "navbar",
-  computed: {
-    user() {
-      return this.me?.user?.name || "";
-    },
-  },
-  created() {
-    this.me = user.getMe();
-    this.darkmode = user.isDarkmode();
-    eventBus.on("status", this.statusChanged);
-  },
-  beforeUnmount() {
-    eventBus.off("status", this.statusChanged);
-  },
   data: (): ComponentData => ({
     me: null,
     showProblems: false,
@@ -107,6 +93,19 @@ export default defineComponent({
     burgerActive: false,
     darkmode: false,
   }),
+  computed: {
+    user() {
+      return this.me?.user?.name || "";
+    },
+  },
+  created() {
+    this.me = user.getMe();
+    this.darkmode = user.isDarkmode();
+    eventBus.on("status", this.statusChanged);
+  },
+  beforeUnmount() {
+    eventBus.off("status", this.statusChanged);
+  },
   methods: {
     onDarkmodeSwitch() {
       user.setDarkmode(this.darkmode);

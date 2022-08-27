@@ -1,10 +1,22 @@
 <template>
   <label class="upload">
-    <input type="file" :disabled="uploading" style="display: none" @change="upload" :accept="accept" />
-    <span class="button is-small"><i class="fa fa-upload" :class="{ 'mr-1': buttonText }" />{{
+    <input
+      type="file"
+      :disabled="uploading"
+      style="display: none"
+      :accept="accept"
+      @change="upload"
+    >
+    <span class="button is-small"><i
+      class="fa fa-upload"
+      :class="{ 'mr-1': buttonText }"
+    />{{
       buttonText
     }}</span>
-    <span class="progress" :style="progressStyle"></span>
+    <span
+      class="progress"
+      :style="progressStyle"
+    />
   </label>
 </template>
 
@@ -14,7 +26,6 @@ import { UploadedFile } from "../../types";
 import api from "../api";
 
 const Upload = defineComponent({
-  name: "upload",
   props: {
     accept: String,
     label: {

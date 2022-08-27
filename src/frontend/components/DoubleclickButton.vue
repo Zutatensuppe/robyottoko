@@ -1,9 +1,18 @@
 <template>
-  <button class="doubleclick-button" @click="onClick">
+  <button
+    class="doubleclick-button"
+    @click="onClick"
+  >
     <slot />
-    <span class="doubleclick-button-message mr-2 p-1 has-text-danger" v-if="timer">
+    <span
+      v-if="timer"
+      class="doubleclick-button-message mr-2 p-1 has-text-danger"
+    >
       {{ message }}
-      <span class="doubleclick-button-timout-indicator" :style="indicatorStyle"></span>
+      <span
+        class="doubleclick-button-timout-indicator"
+        :style="indicatorStyle"
+      />
     </span>
   </button>
 </template>

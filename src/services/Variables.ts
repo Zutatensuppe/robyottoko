@@ -4,15 +4,7 @@ import { GlobalVariable, VariableValue } from "../types"
 const TABLE = 'robyottoko.variables'
 
 class Variables {
-  private db: Db
-  private userId: number
-
-  constructor(
-    db: Db,
-    userId: number,
-  ) {
-    this.db = db
-    this.userId = userId
+  constructor(private readonly db: Db, private readonly userId: number) {
   }
 
   async set(name: string, value: VariableValue): Promise<void> {

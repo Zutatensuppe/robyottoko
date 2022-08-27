@@ -1,16 +1,40 @@
 <template>
-  <span @drop="onDrop" @dragover="onDragover" @dragleave="onDragleave" class="avatar-animation-frame"
-    :class="{ 'dragging-over': draggingOver }">
+  <span
+    class="avatar-animation-frame"
+    :class="{ 'dragging-over': draggingOver }"
+    @drop="onDrop"
+    @dragover="onDragover"
+    @dragleave="onDragleave"
+  >
     <div class="avatar-animation-frame-remove">
-      <span class="button is-small" @click="onRemove">
-        <i class="fa fa-trash"></i>
+      <span
+        class="button is-small"
+        @click="onRemove"
+      >
+        <i class="fa fa-trash" />
       </span>
     </div>
-    <img v-if="value.url" :src="value.url" width="64" height="64" />
+    <img
+      v-if="value.url"
+      :src="value.url"
+      width="64"
+      height="64"
+    >
 
-    <upload v-show="!value.url" @uploaded="onUploaded" accept="image/*" label="" class="avatar-animation-frame-upload"
-      ref="uploadComponent" />
-    <input class="input is-small" type="text" v-model="value.duration" @update:modelValue="onDurationChange" />
+    <upload
+      v-show="!value.url"
+      ref="uploadComponent"
+      accept="image/*"
+      label=""
+      class="avatar-animation-frame-upload"
+      @uploaded="onUploaded"
+    />
+    <input
+      v-model="value.duration"
+      class="input is-small"
+      type="text"
+      @update:modelValue="onDurationChange"
+    >
   </span>
 </template>
 
@@ -18,6 +42,7 @@
 import { onMounted, Ref, ref, watch } from "vue";
 import { AvatarModuleAnimationFrameDefinition } from "../../../mod/modules/AvatarModuleCommon";
 import { UploadedFile } from "../../../types";
+import { getFileFromDropEvent } from "../../util";
 import { UploadInstance } from "../Upload.vue";
 
 const props = defineProps({
@@ -55,23 +80,8 @@ const onDrop = (e: any) => {
   draggingOver.value = false;
   e.preventDefault();
   e.stopPropagation();
-  let file = null;
-  if (e.dataTransfer.items) {
-    // Use DataTransferItemList interface to access the file(s)
-    for (var i = 0; i < e.dataTransfer.items.length; i++) {
-      // If dropped items aren't files, reject them
-      if (e.dataTransfer.items[i].kind === "file") {
-        file = e.dataTransfer.items[i].getAsFile();
-        break;
-      }
-    }
-  } else {
-    // Use DataTransfer interface to access the file(s)
-    for (var i = 0; i < e.dataTransfer.files.length; i++) {
-      file = e.dataTransfer.files[i];
-      break;
-    }
-  }
+
+  const file = getFileFromDropEvent(e)
   if (file) {
     value.value.url = "";
     uploadComponent.value.uploadFile(file);

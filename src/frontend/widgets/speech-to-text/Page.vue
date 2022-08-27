@@ -1,37 +1,79 @@
 <template>
-  <div class="big" ref="result_text" v-if="settings">
+  <div
+    v-if="settings"
+    ref="result_text"
+    class="big"
+  >
     <div v-if="settings.status.enabled">
       {{ status }}
       <div v-if="errors.length > 0">
         <div>Latest errors:</div>
         <ul>
-          <li v-for="(error, idx) in errors" :key="idx">{{ error }}</li>
+          <li
+            v-for="(error, idx) in errors"
+            :key="idx"
+          >
+            {{ error }}
+          </li>
         </ul>
       </div>
     </div>
-    <button @click="initSpeech" v-if="controls && wantsSpeech && !initedSpeech">
+    <button
+      v-if="controls && wantsSpeech && !initedSpeech"
+      @click="initSpeech"
+    >
       Enable Speech Synthesis
     </button>
-    <table ref="text_table" class="btm_table">
+    <table
+      ref="text_table"
+      class="btm_table"
+    >
       <tr>
-        <td align="center" valign="bottom">
-          <div v-if="settings.recognition.display" class="stroke-single-bg" ref="speech_text-bg">
+        <td
+          align="center"
+          valign="bottom"
+        >
+          <div
+            v-if="settings.recognition.display"
+            ref="speech_text-bg"
+            class="stroke-single-bg"
+          >
             {{ recognizedText }}
           </div>
-          <div v-if="settings.recognition.display" class="stroke-single-fg" ref="speech_text-fg">
+          <div
+            v-if="settings.recognition.display"
+            ref="speech_text-fg"
+            class="stroke-single-fg"
+          >
             {{ recognizedText }}
           </div>
-          <div v-if="settings.recognition.display" class="stroke-single-imb" ref="speech_text-imb">
+          <div
+            v-if="settings.recognition.display"
+            ref="speech_text-imb"
+            class="stroke-single-imb"
+          >
             {{ recognizedText }}
           </div>
 
-          <div v-if="settings.translation.enabled" class="stroke-single-bg" ref="trans_text-bg">
+          <div
+            v-if="settings.translation.enabled"
+            ref="trans_text-bg"
+            class="stroke-single-bg"
+          >
             {{ translatedText }}
           </div>
-          <div v-if="settings.translation.enabled" class="stroke-single-fg" ref="trans_text-fg">
+          <div
+            v-if="settings.translation.enabled"
+            ref="trans_text-fg"
+            class="stroke-single-fg"
+          >
             {{ translatedText }}
           </div>
-          <div v-if="settings.translation.enabled" class="stroke-single-imb" ref="trans_text-imb">
+          <div
+            v-if="settings.translation.enabled"
+            ref="trans_text-imb"
+            class="stroke-single-imb"
+          >
             {{ translatedText }}
           </div>
         </td>
@@ -133,6 +175,34 @@ export default defineComponent({
     textTable(): HTMLTableElement {
       return this.$refs["text_table"] as HTMLTableElement
     },
+  },
+  created() {
+    // @ts-ignore
+    import("./main.css");
+  },
+  mounted() {
+    this.ws = util.wsClient(this.wdata);
+    this.ws.onMessage("text", (data: { recognized: string, translated: string }) => {
+      this.texts.push({
+        recognized: data.recognized,
+        translated: data.translated,
+        ready: true,
+      });
+      this._next();
+    });
+    this.ws.onMessage("init", (data: SpeechToTextWsInitData) => {
+      this.settings = data.settings;
+      this.$nextTick(() => {
+        this.applyStyles();
+        this.initVoiceRecognition();
+      });
+    });
+    this.ws.connect();
+  },
+  unmounted() {
+    if (this.ws) {
+      this.ws.disconnect()
+    }
   },
   methods: {
     initSpeech(): void {
@@ -359,34 +429,6 @@ export default defineComponent({
         break;
       }
     },
-  },
-  created() {
-    // @ts-ignore
-    import("./main.css");
-  },
-  mounted() {
-    this.ws = util.wsClient(this.wdata);
-    this.ws.onMessage("text", (data: { recognized: string, translated: string }) => {
-      this.texts.push({
-        recognized: data.recognized,
-        translated: data.translated,
-        ready: true,
-      });
-      this._next();
-    });
-    this.ws.onMessage("init", (data: SpeechToTextWsInitData) => {
-      this.settings = data.settings;
-      this.$nextTick(() => {
-        this.applyStyles();
-        this.initVoiceRecognition();
-      });
-    });
-    this.ws.connect();
-  },
-  unmounted() {
-    if (this.ws) {
-      this.ws.disconnect()
-    }
   },
 });
 </script>

@@ -1,42 +1,68 @@
 <template>
-  <div class="base" v-if="initialized">
-    <div class="avatar" :style="{
-      width: `${tuberDef.width}px`,
-      height: `${tuberDef.height}px`,
-    }">
-      <avatar-animation v-for="(anim, idx) in animations" :key="idx" :frames="anim.frames" :width="tuberDef.width"
-        :height="tuberDef.height" />
+  <div
+    v-if="initialized"
+    class="base"
+  >
+    <div
+      class="avatar"
+      :style="{
+        width: `${tuberDef.width}px`,
+        height: `${tuberDef.height}px`,
+      }"
+    >
+      <avatar-animation
+        v-for="(anim, idx) in animations"
+        :key="idx"
+        :frames="anim.frames"
+        :width="tuberDef.width"
+        :height="tuberDef.height"
+      />
     </div>
 
     <table v-if="controls && showControls">
       <tr v-if="!avatarFixed">
         <td>Tubers:</td>
         <td>
-          <button v-for="(avatarDef, idx) in settings.avatarDefinitions" :key="idx" @click="setTuber(idx, true)"
-            :class="{ active: tuberIdx === idx }">
+          <button
+            v-for="(avatarDef, idx) in settings.avatarDefinitions"
+            :key="idx"
+            :class="{ active: tuberIdx === idx }"
+            @click="setTuber(idx, true)"
+          >
             {{ avatarDef.name }}
           </button>
         </td>
       </tr>
       <tr v-if="!avatarFixed">
         <td colspan="2">
-          <hr />
+          <hr>
         </td>
       </tr>
       <tr>
         <td>Start Mic</td>
-        <td><button @click="startMic">Start</button></td>
+        <td>
+          <button @click="startMic">
+            Start
+          </button>
+        </td>
       </tr>
       <tr>
         <td colspan="2">
-          <hr />
+          <hr>
         </td>
       </tr>
-      <tr v-for="(def, idx) in tuberDef.slotDefinitions" :key="idx">
+      <tr
+        v-for="(def, idx) in tuberDef.slotDefinitions"
+        :key="idx"
+      >
         <td>{{ def.slot }}:</td>
         <td>
-          <button v-for="(item, idx2) in def.items" :key="idx2" @click="setSlot(def.slot, idx2, true)"
-            :class="{ active: slots[def.slot] === idx2 }">
+          <button
+            v-for="(item, idx2) in def.items"
+            :key="idx2"
+            :class="{ active: slots[def.slot] === idx2 }"
+            @click="setSlot(def.slot, idx2, true)"
+          >
             {{ item.title }}
           </button>
         </td>
@@ -44,15 +70,24 @@
       <tr>
         <td>State:</td>
         <td>
-          <button v-for="(def, idx) in tuberDef.stateDefinitions" :key="idx" @click="lockState(def.value, true)"
-            :class="{ active: lockedState === def.value }">
+          <button
+            v-for="(def, idx) in tuberDef.stateDefinitions"
+            :key="idx"
+            :class="{ active: lockedState === def.value }"
+            @click="lockState(def.value, true)"
+          >
             {{ def.value }}
           </button>
         </td>
       </tr>
     </table>
-    <div class="toggle-controls" v-if="controls">
-      <button @click="showControls = !showControls">Toggle controls</button>
+    <div
+      v-if="controls"
+      class="toggle-controls"
+    >
+      <button @click="showControls = !showControls">
+        Toggle controls
+      </button>
     </div>
   </div>
 </template>
@@ -146,6 +181,59 @@ export default defineComponent({
       }
       return this.tuberDef.slotDefinitions.map(this.getSlotStateDefinition);
     },
+  },
+  created() {
+    // @ts-ignore
+    import('./main.css');
+    this.avatarFixed = util.getParam('avatar')
+  },
+  mounted() {
+    this.ws = util.wsClient(this.wdata);
+    this.ws.onMessage("init", (data: AvatarModuleWsInitData) => {
+      this.settings = data.settings;
+      this.$nextTick(() => {
+        this.applyStyles();
+      });
+      let tuberIdx = data.state.tuberIdx;
+      if (this.avatarFixed) {
+        tuberIdx = this.settings.avatarDefinitions.findIndex(
+          (def) => def.name === this.avatarFixed
+        );
+      }
+      this.setTuber(tuberIdx === -1 ? 0 : tuberIdx);
+      this.initialized = true;
+    });
+    this.ws.onMessage("ctrl", ({ data }) => {
+      if (data.ctrl === "setSlot") {
+        const tuberIdx = data.args[0];
+        if (this.tuberIdx === tuberIdx) {
+          const slotName = data.args[1];
+          const itemIdx = data.args[2];
+          this.setSlot(slotName, itemIdx);
+        }
+      } else if (data.ctrl === "setSpeaking") {
+        const tuberIdx = data.args[0];
+        if (this.tuberIdx === tuberIdx) {
+          const speaking = data.args[1];
+          this.setSpeaking(speaking);
+        }
+      } else if (data.ctrl === "lockState") {
+        const tuberIdx = data.args[0];
+        if (this.tuberIdx === tuberIdx) {
+          const lockedState = data.args[1];
+          this.lockState(lockedState);
+        }
+      } else if (data.ctrl === "setTuber") {
+        const tuberIdx = data.args[0];
+        this.setTuber(tuberIdx);
+      }
+    });
+    this.ws.connect();
+  },
+  unmounted() {
+    if (this.ws) {
+      this.ws.disconnect()
+    }
   },
   methods: {
     getSlotStateDefinition(
@@ -297,59 +385,6 @@ export default defineComponent({
         document.body.style.backgroundColor = "";
       }
     },
-  },
-  created() {
-    // @ts-ignore
-    import('./main.css');
-    this.avatarFixed = util.getParam('avatar')
-  },
-  mounted() {
-    this.ws = util.wsClient(this.wdata);
-    this.ws.onMessage("init", (data: AvatarModuleWsInitData) => {
-      this.settings = data.settings;
-      this.$nextTick(() => {
-        this.applyStyles();
-      });
-      let tuberIdx = data.state.tuberIdx;
-      if (this.avatarFixed) {
-        tuberIdx = this.settings.avatarDefinitions.findIndex(
-          (def) => def.name === this.avatarFixed
-        );
-      }
-      this.setTuber(tuberIdx === -1 ? 0 : tuberIdx);
-      this.initialized = true;
-    });
-    this.ws.onMessage("ctrl", ({ data }) => {
-      if (data.ctrl === "setSlot") {
-        const tuberIdx = data.args[0];
-        if (this.tuberIdx === tuberIdx) {
-          const slotName = data.args[1];
-          const itemIdx = data.args[2];
-          this.setSlot(slotName, itemIdx);
-        }
-      } else if (data.ctrl === "setSpeaking") {
-        const tuberIdx = data.args[0];
-        if (this.tuberIdx === tuberIdx) {
-          const speaking = data.args[1];
-          this.setSpeaking(speaking);
-        }
-      } else if (data.ctrl === "lockState") {
-        const tuberIdx = data.args[0];
-        if (this.tuberIdx === tuberIdx) {
-          const lockedState = data.args[1];
-          this.lockState(lockedState);
-        }
-      } else if (data.ctrl === "setTuber") {
-        const tuberIdx = data.args[0];
-        this.setTuber(tuberIdx);
-      }
-    });
-    this.ws.connect();
-  },
-  unmounted() {
-    if (this.ws) {
-      this.ws.disconnect()
-    }
   },
 });
 </script>

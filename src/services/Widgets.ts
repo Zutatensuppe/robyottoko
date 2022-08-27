@@ -94,12 +94,7 @@ export const moduleByWidgetType = (widgetType: string): string | null => {
 }
 
 class Widgets {
-  private db: Db
-  private tokenRepo: Tokens
-
-  constructor(db: Db, tokenRepo: Tokens) {
-    this.db = db
-    this.tokenRepo = tokenRepo
+  constructor(private readonly db: Db, private readonly tokenRepo: Tokens) {
   }
 
   _widgetUrl = (type: string, token: string): string => {

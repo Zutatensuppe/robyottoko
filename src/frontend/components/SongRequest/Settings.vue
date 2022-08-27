@@ -1,21 +1,34 @@
 <template>
   <div>
-    <table class="table is-striped" ref="table" v-if="settings">
+    <table
+      v-if="settings"
+      ref="table"
+      class="table is-striped"
+    >
       <tbody>
         <tr>
-          <td colspan="3">General</td>
+          <td colspan="3">
+            General
+          </td>
         </tr>
         <tr>
           <td><code>settings.volume</code></td>
           <td>
-            <volume-slider v-model="settings.volume" @update:modelValue="sendSettings" />
+            <volume-slider
+              v-model="settings.volume"
+              @update:modelValue="sendSettings"
+            />
           </td>
           <td>Base volume for all songs played.</td>
         </tr>
         <tr>
           <td><code>settings.initAutoplay</code></td>
           <td>
-            <input type="checkbox" v-model="settings.initAutoplay" @update:modelValue="sendSettings" />
+            <input
+              v-model="settings.initAutoplay"
+              type="checkbox"
+              @update:modelValue="sendSettings"
+            >
           </td>
           <td>If checked, the widget will autoplay when first opened.</td>
         </tr>
@@ -24,11 +37,11 @@
           <td>
             <image-upload
               v-model="settings.hideVideoImage"
-              @update:modelValue="hideVideoImageChanged"
               width="100px"
               height="50px"
               class="mb-1"
-              />
+              @update:modelValue="hideVideoImageChanged"
+            />
           </td>
           <td>Image to display when a video is hidden.</td>
         </tr>
@@ -38,7 +51,7 @@
             <duration-input
               v-model="settings.maxSongLength.viewer"
               @update:modelValue="sendSettings"
-              />
+            />
           </td>
           <td>
             Limits the maximum duration of songs that viewers can add/request.
@@ -51,7 +64,7 @@
             <duration-input
               v-model="settings.maxSongLength.mod"
               @update:modelValue="sendSettings"
-              />
+            />
           </td>
           <td>
             Limits the maximum duration of songs that mods can add/request.
@@ -64,7 +77,7 @@
             <duration-input
               v-model="settings.maxSongLength.sub"
               @update:modelValue="sendSettings"
-              />
+            />
           </td>
           <td>
             Limits the maximum duration of songs that subscribers can add/request.
@@ -74,56 +87,91 @@
         <tr>
           <td><code>settings.maxSongsQueued.viewer</code></td>
           <td>
-            <input class="input is-small" type="number"
+            <input
               v-model="settings.maxSongsQueued.viewer"
+              class="input is-small"
+              type="number"
               @update:modelValue="sendSettings"
-              />
+            >
           </td>
           <td>Number of new songs that viewers can request. (0 = unlimited)</td>
         </tr>
         <tr>
           <td><code>settings.maxSongsQueued.mod</code></td>
           <td>
-            <input class="input is-small" type="number"
+            <input
               v-model="settings.maxSongsQueued.mod"
+              class="input is-small"
+              type="number"
               @update:modelValue="sendSettings"
-              />
+            >
           </td>
           <td>Number of new songs that mods can request. (0 = unlimited)</td>
         </tr>
         <tr>
           <td><code>settings.maxSongsQueued.sub</code></td>
           <td>
-            <input class="input is-small" type="number"
+            <input
               v-model="settings.maxSongsQueued.sub"
+              class="input is-small"
+              type="number"
               @update:modelValue="sendSettings"
-              />
+            >
           </td>
           <td>Number of new songs that subscribers can request. (0 = unlimited)</td>
         </tr>
         <tr>
-          <td colspan="3">Visuals</td>
+          <td colspan="3">
+            Visuals
+          </td>
         </tr>
         <tr>
           <td><code>settings.showProgressBar</code></td>
           <td>
-            <input type="checkbox" v-model="settings.showProgressBar" @update:modelValue="sendSettings" />
+            <input
+              v-model="settings.showProgressBar"
+              type="checkbox"
+              @update:modelValue="sendSettings"
+            >
           </td>
           <td>Render a progress bar in the bottom part of the video in the widget.</td>
         </tr>
         <tr>
           <td><code>settings.showThumbnails</code></td>
           <td>
-            <label class="mr-1"><input class="mr-1" type="radio" v-model="settings.showThumbnails" :value="false" @update:modelValue="sendSettings"/>Off</label>
-            <label class="mr-1"><input class="mr-1" type="radio" v-model="settings.showThumbnails" :value="'left'" @update:modelValue="sendSettings"/>Left</label>
-            <label class="mr-1"><input class="mr-1" type="radio" v-model="settings.showThumbnails" :value="'right'" @update:modelValue="sendSettings"/>Right</label>
+            <label class="mr-1"><input
+              v-model="settings.showThumbnails"
+              class="mr-1"
+              type="radio"
+              :value="false"
+              @update:modelValue="sendSettings"
+            >Off</label>
+            <label class="mr-1"><input
+              v-model="settings.showThumbnails"
+              class="mr-1"
+              type="radio"
+              :value="'left'"
+              @update:modelValue="sendSettings"
+            >Left</label>
+            <label class="mr-1"><input
+              v-model="settings.showThumbnails"
+              class="mr-1"
+              type="radio"
+              :value="'right'"
+              @update:modelValue="sendSettings"
+            >Right</label>
           </td>
           <td>Render video thumbnails in the widget.</td>
         </tr>
         <tr>
           <td><code>settings.maxItemsShown</code></td>
           <td>
-            <input type="number" min="-1" v-model="settings.maxItemsShown" @update:modelValue="sendSettings" />
+            <input
+              v-model="settings.maxItemsShown"
+              type="number"
+              min="-1"
+              @update:modelValue="sendSettings"
+            >
           </td>
           <td>Max. number of items displayed in the playlist. Set to -1 for no limit.</td>
         </tr>
@@ -133,24 +181,42 @@
 
             <div class="field has-addons mr-1">
               <div class="control is-expanded">
-                <input class="input is-small" v-model="cssPresetName" @focus="cssPresetDropdownActive = true" @blur="cssPresetDropdownActive = false"/>
+                <input
+                  v-model="cssPresetName"
+                  class="input is-small"
+                  @focus="cssPresetDropdownActive = true"
+                  @blur="cssPresetDropdownActive = false"
+                >
               </div>
               <div class="control">
-                <span class="button is-small" @click="savePreset">Save preset</span>
+                <span
+                  class="button is-small"
+                  @click="savePreset"
+                >Save preset</span>
               </div>
             </div>
 
-            <div class="mb-1" v-for="(preset, idx) in settings.customCssPresets" :key="idx">
-              <span class="button is-small" @click="loadPreset(preset.name)">{{preset.name}}</span>
-              <span class="button is-small ml-1" @click="removePreset(preset.name)"><i class="fa fa-remove" /></span>
+            <div
+              v-for="(preset, idx) in settings.customCssPresets"
+              :key="idx"
+              class="mb-1"
+            >
+              <span
+                class="button is-small"
+                @click="loadPreset(preset.name)"
+              >{{ preset.name }}</span>
+              <span
+                class="button is-small ml-1"
+                @click="removePreset(preset.name)"
+              ><i class="fa fa-remove" /></span>
             </div>
           </td>
           <td>
             <textarea
-              class="textarea"
               v-model="settings.customCss"
+              class="textarea"
               @update:modelValue="sendSettings"
-            ></textarea>
+            />
           </td>
           <td>
             <p>Classes that can be used for styling:</p>
@@ -159,16 +225,22 @@
                 <tr><th>Class</th><th>Description</th></tr>
               </thead>
               <tbody>
-                <tr v-for="(ex, idx) in css.classExamples" :key="idx">
-                  <td><code>{{ex.class}}</code></td>
-                  <td>{{ex.desc}}</td>
+                <tr
+                  v-for="(ex, idx) in css.classExamples"
+                  :key="idx"
+                >
+                  <td><code>{{ ex.class }}</code></td>
+                  <td>{{ ex.desc }}</td>
                 </tr>
               </tbody>
             </table>
 
             <p><b>Examples:</b></p>
-            <p v-for="(ex, idx) in css.codeExamples" :key="idx">
-              {{ex.desc}}
+            <p
+              v-for="(ex, idx) in css.codeExamples"
+              :key="idx"
+            >
+              {{ ex.desc }}
               <pre><code>{{ ex.code }}</code></pre>
             </p>
           </td>
@@ -204,61 +276,6 @@ export default defineComponent({
   },
   emits: {
     "update:modelValue": null,
-  },
-  created() {
-    this.settings = this.modelValue;
-  },
-  methods: {
-    loadPreset(presetName: string) {
-      const preset = this.settings.customCssPresets.find(
-        (preset) => preset.name === presetName
-      );
-      if (preset) {
-        this.settings.customCss = preset.css;
-        this.settings.showProgressBar = preset.showProgressBar;
-        this.settings.showThumbnails = preset.showThumbnails;
-        this.settings.maxItemsShown = preset.maxItemsShown;
-      } else {
-        console.warn(`preset not found: ${presetName}`);
-      }
-      this.sendSettings();
-    },
-    removePreset(presetName: string) {
-      this.settings.customCssPresets = this.settings.customCssPresets.filter(
-        (preset) => preset.name !== presetName
-      );
-      this.sendSettings();
-    },
-    savePreset() {
-      const idx = this.settings.customCssPresets.findIndex(
-        (preset) => preset.name === this.cssPresetName
-      );
-      if (idx >= 0) {
-        this.settings.customCssPresets[idx].css = this.settings.customCss;
-        this.settings.customCssPresets[idx].showProgressBar =
-          this.settings.showProgressBar;
-        this.settings.customCssPresets[idx].showThumbnails =
-          this.settings.showThumbnails;
-        this.settings.customCssPresets[idx].maxItemsShown =
-          this.settings.maxItemsShown;
-      } else {
-        this.settings.customCssPresets.push({
-          name: this.cssPresetName,
-          css: this.settings.customCss,
-          showProgressBar: this.settings.showProgressBar,
-          showThumbnails: this.settings.showThumbnails,
-          maxItemsShown: this.settings.maxItemsShown,
-        });
-      }
-      this.sendSettings();
-    },
-    hideVideoImageChanged(file: MediaFile) {
-      this.settings.hideVideoImage = file;
-      this.sendSettings();
-    },
-    sendSettings() {
-      this.$emit("update:modelValue", this.settings);
-    },
   },
   data: (): ComponentData => ({
     cssPresetName: "",
@@ -416,6 +433,61 @@ body { font-family: 'Shadows into Light'; font-size: 30px; }`,
       ],
     },
   }),
+  created() {
+    this.settings = this.modelValue;
+  },
+  methods: {
+    loadPreset(presetName: string) {
+      const preset = this.settings.customCssPresets.find(
+        (preset) => preset.name === presetName
+      );
+      if (preset) {
+        this.settings.customCss = preset.css;
+        this.settings.showProgressBar = preset.showProgressBar;
+        this.settings.showThumbnails = preset.showThumbnails;
+        this.settings.maxItemsShown = preset.maxItemsShown;
+      } else {
+        console.warn(`preset not found: ${presetName}`);
+      }
+      this.sendSettings();
+    },
+    removePreset(presetName: string) {
+      this.settings.customCssPresets = this.settings.customCssPresets.filter(
+        (preset) => preset.name !== presetName
+      );
+      this.sendSettings();
+    },
+    savePreset() {
+      const idx = this.settings.customCssPresets.findIndex(
+        (preset) => preset.name === this.cssPresetName
+      );
+      if (idx >= 0) {
+        this.settings.customCssPresets[idx].css = this.settings.customCss;
+        this.settings.customCssPresets[idx].showProgressBar =
+          this.settings.showProgressBar;
+        this.settings.customCssPresets[idx].showThumbnails =
+          this.settings.showThumbnails;
+        this.settings.customCssPresets[idx].maxItemsShown =
+          this.settings.maxItemsShown;
+      } else {
+        this.settings.customCssPresets.push({
+          name: this.cssPresetName,
+          css: this.settings.customCss,
+          showProgressBar: this.settings.showProgressBar,
+          showThumbnails: this.settings.showThumbnails,
+          maxItemsShown: this.settings.maxItemsShown,
+        });
+      }
+      this.sendSettings();
+    },
+    hideVideoImageChanged(file: MediaFile) {
+      this.settings.hideVideoImage = file;
+      this.sendSettings();
+    },
+    sendSettings() {
+      this.$emit("update:modelValue", this.settings);
+    },
+  },
 });
 </script>
 

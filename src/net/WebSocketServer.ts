@@ -40,11 +40,7 @@ const determineUserIdAndModuleName = async (
 }
 
 class WebSocketServer {
-  private _websocketserver: WebSocket.Server | null
-
-  constructor() {
-    this._websocketserver = null
-  }
+  private _websocketserver: WebSocket.Server | null = null
 
   listen(bot: Bot) {
     this._websocketserver = new WebSocket.Server(bot.getConfig().ws)

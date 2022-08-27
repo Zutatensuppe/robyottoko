@@ -1,15 +1,40 @@
 <template>
-  <div class="dropdown" :class="{ 'is-active': active }" ref="dropdown">
+  <div
+    ref="dropdown"
+    class="dropdown"
+    :class="{ 'is-active': active }"
+  >
     <div class="dropdown-trigger">
-      <input type="text" class="input is-small" :class="$attrs.class" v-model="value" @focus="openDropdown" />
-      <span class="icon is-small is-left" v-if="icon">
-        <i class="fa" :class="[`fa-${icon}`]"></i>
+      <input
+        v-model="value"
+        type="text"
+        class="input is-small"
+        :class="$attrs.class"
+        @focus="openDropdown"
+      >
+      <span
+        v-if="icon"
+        class="icon is-small is-left"
+      >
+        <i
+          class="fa"
+          :class="[`fa-${icon}`]"
+        />
       </span>
     </div>
-    <div class="dropdown-menu" id="dropdown-menu" role="menu">
+    <div
+      id="dropdown-menu"
+      class="dropdown-menu"
+      role="menu"
+    >
       <div class="dropdown-content">
-        <a class="dropdown-item" v-for="(autocompleteVar, idx) in autocompletableVariables(value)" :key="idx"
-          @click="onClick(autocompleteVar)" v-html="autocompleteVar.label"></a>
+        <a
+          v-for="(autocompleteVar, idx) in autocompletableVariables(value)"
+          :key="idx"
+          class="dropdown-item"
+          @click="onClick(autocompleteVar)"
+          v-html="autocompleteVar.label"
+        />
       </div>
     </div>
   </div>

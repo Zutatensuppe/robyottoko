@@ -226,6 +226,32 @@ export default defineComponent({
       );
     },
   },
+  watch: {
+    user: {
+      deep: true,
+      handler() {
+        this.setChanged();
+      },
+    },
+    twitch_channels: {
+      deep: true,
+      handler() {
+        this.setChanged();
+      },
+    },
+  },
+  async mounted() {
+    const res = await api.getPageSettingsData();
+    if (res.status !== 200) {
+      this.$router.push({ name: "login" });
+      return;
+    }
+
+    const data = await res.json();
+    this.user = data.user;
+    this.twitch_channels = data.twitchChannels;
+    this.setUnchanged();
+  },
   methods: {
     openAuth() {
       window.open(this.accessTokenLink)
@@ -255,7 +281,8 @@ export default defineComponent({
         channel_id: "",
         channel_name: "",
         access_token: "",
-      });
+        is_streaming: false,
+      })
     },
     async loadid(idx: number) {
       this.twitch_channels[idx].channel_id = await this.getTwitchUserIdByName(
@@ -284,32 +311,6 @@ export default defineComponent({
       });
       this.setUnchanged();
     },
-  },
-  watch: {
-    user: {
-      deep: true,
-      handler() {
-        this.setChanged();
-      },
-    },
-    twitch_channels: {
-      deep: true,
-      handler() {
-        this.setChanged();
-      },
-    },
-  },
-  async mounted() {
-    const res = await api.getPageSettingsData();
-    if (res.status !== 200) {
-      this.$router.push({ name: "login" });
-      return;
-    }
-
-    const data = await res.json();
-    this.user = data.user;
-    this.twitch_channels = data.twitchChannels;
-    this.setUnchanged();
   },
 });
 </script>

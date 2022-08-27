@@ -1,83 +1,144 @@
 <template>
   <div class="trigger-editor">
-    <div v-if="value.type === 'first_chat'" class="field has-addons">
+    <div
+      v-if="value.type === 'first_chat'"
+      class="field has-addons"
+    >
       <span class="mr-1">First chat by user</span>
       <div class="control">
         <label class="mr-1">
-          <input type="radio" class="checkbox mr-1" v-model="value.data.since" :value="'alltime'"
-            @update:modelValue="emitUpdate" />
+          <input
+            v-model="value.data.since"
+            type="radio"
+            class="checkbox mr-1"
+            :value="'alltime'"
+            @update:modelValue="emitUpdate"
+          >
           Alltime
         </label>
         <label class="mr-1">
-          <input type="radio" class="checkbox mr-1" v-model="value.data.since" :value="'stream'"
-            @update:modelValue="emitUpdate" />
+          <input
+            v-model="value.data.since"
+            type="radio"
+            class="checkbox mr-1"
+            :value="'stream'"
+            @update:modelValue="emitUpdate"
+          >
           Current Stream
         </label>
       </div>
       <div class="control">
-        <button class="button is-small" :disabled="!removable" @click="emitRemove">
+        <button
+          class="button is-small"
+          :disabled="!removable"
+          @click="emitRemove"
+        >
           <i class="fa fa-remove" />
         </button>
       </div>
     </div>
-    <div v-else-if="value.type === 'command'" class="field has-addons">
+    <div
+      v-else-if="value.type === 'command'"
+      class="field has-addons"
+    >
       <div class="control has-icons-left mr-1">
-        <input class="input is-small" :class="{
-          'has-background-danger-light': !value.data.command,
-          'has-text-danger-dark': !value.data.command,
-        }" type="text" v-model="value.data.command" @update:modelValue="emitUpdate" />
+        <input
+          v-model="value.data.command"
+          class="input is-small"
+          :class="{
+            'has-background-danger-light': !value.data.command,
+            'has-text-danger-dark': !value.data.command,
+          }"
+          type="text"
+          @update:modelValue="emitUpdate"
+        >
         <span class="icon is-small is-left">
-          <i class="fa fa-comments-o"></i>
+          <i class="fa fa-comments-o" />
         </span>
       </div>
-      <div class="control mr-1"
-        title="Check if command should only be executed if it matches exactly (= no arguments come after it).">
+      <div
+        class="control mr-1"
+        title="Check if command should only be executed if it matches exactly (= no arguments come after it)."
+      >
         <label>
-          <input type="checkbox" class="checkbox mr-1" v-model="value.data.commandExact"
-            @update:modelValue="emitUpdate" />
+          <input
+            v-model="value.data.commandExact"
+            type="checkbox"
+            class="checkbox mr-1"
+            @update:modelValue="emitUpdate"
+          >
           <span class="is-small is-left">exact</span>
         </label>
       </div>
       <div class="control">
-        <button class="button is-small" :disabled="!removable" @click="emitRemove">
+        <button
+          class="button is-small"
+          :disabled="!removable"
+          @click="emitRemove"
+        >
           <i class="fa fa-remove" />
         </button>
       </div>
     </div>
-    <div v-else-if="value.type === 'reward_redemption'" class="field has-addons">
+    <div
+      v-else-if="value.type === 'reward_redemption'"
+      class="field has-addons"
+    >
       <div class="control has-icons-left">
-        <dropdown-input v-model="value.data.command" @update:modelValue="emitUpdate"
-          :values="rewardRedemptionActions.map(a => ({ value: a.type, label: a.label }))" :class="{
+        <dropdown-input
+          v-model="value.data.command"
+          :values="rewardRedemptionActions.map(a => ({ value: a.type, label: a.label }))"
+          :class="{
             'has-background-danger-light': !value.data.command,
             'has-text-danger-dark': !value.data.command,
-          }" icon="bullseye" />
+          }"
+          icon="bullseye"
+          @update:modelValue="emitUpdate"
+        />
       </div>
       <div class="control">
-        <button class="button is-small" :disabled="!removable" @click="emitRemove">
+        <button
+          class="button is-small"
+          :disabled="!removable"
+          @click="emitRemove"
+        >
           <i class="fa fa-remove" />
         </button>
       </div>
     </div>
-    <div v-else-if="value.type === 'timer'" class="timer-trigger">
+    <div
+      v-else-if="value.type === 'timer'"
+      class="timer-trigger"
+    >
       <div class="control remove-control">
-        <button class="button is-small" :disabled="!removable" @click="emitRemove">
+        <button
+          class="button is-small"
+          :disabled="!removable"
+          @click="emitRemove"
+        >
           <i class="fa fa-remove" />
         </button>
       </div>
       <div class="timer-trigger-inner">
         <label class="mr-1">Messages ≥</label>
         <div class="control has-icons-left mr-1">
-          <input class="input is-small" v-model="value.data.minLines" @update:modelValue="emitUpdate" />
+          <input
+            v-model="value.data.minLines"
+            class="input is-small"
+            @update:modelValue="emitUpdate"
+          >
           <span class="icon is-small is-left">
-            <i class="fa fa-comments-o"></i>
+            <i class="fa fa-comments-o" />
           </span>
         </div>
         <label class="mr-1">Interval ≥</label>
         <div class="control has-icons-left has-icons-right mr-1">
-          <duration-input :modelValue="value.data.minInterval"
-            @update:modelValue="value.data.minInterval = $event; emitUpdate(); " />
+          <duration-input
+            :model-value="value.data.minInterval"
+            @update:modelValue="value.data.minInterval = $event; emitUpdate(); "
+          />
           <span class="icon is-small is-left">
-            <i class="fa fa-hourglass"></i>
+            <i class="fa fa-hourglass" />
           </span>
         </div>
       </div>
@@ -86,34 +147,62 @@
         messages arrived AND <code>Interval</code> have passed.
       </p>
     </div>
-    <div v-else-if="value.type === 'sub'" class="field has-addons">
+    <div
+      v-else-if="value.type === 'sub'"
+      class="field has-addons"
+    >
       Sub
       <div class="control">
-        <button class="button is-small" :disabled="!removable" @click="emitRemove">
+        <button
+          class="button is-small"
+          :disabled="!removable"
+          @click="emitRemove"
+        >
           <i class="fa fa-remove" />
         </button>
       </div>
     </div>
-    <div v-else-if="value.type === 'bits'" class="field has-addons">
+    <div
+      v-else-if="value.type === 'bits'"
+      class="field has-addons"
+    >
       Bits
       <div class="control">
-        <button class="button is-small" :disabled="!removable" @click="emitRemove">
+        <button
+          class="button is-small"
+          :disabled="!removable"
+          @click="emitRemove"
+        >
           <i class="fa fa-remove" />
         </button>
       </div>
     </div>
-    <div v-else-if="value.type === 'follow'" class="field has-addons">
+    <div
+      v-else-if="value.type === 'follow'"
+      class="field has-addons"
+    >
       Follow
       <div class="control">
-        <button class="button is-small" :disabled="!removable" @click="emitRemove">
+        <button
+          class="button is-small"
+          :disabled="!removable"
+          @click="emitRemove"
+        >
           <i class="fa fa-remove" />
         </button>
       </div>
     </div>
-    <div v-else-if="value.type === 'raid'" class="field has-addons">
+    <div
+      v-else-if="value.type === 'raid'"
+      class="field has-addons"
+    >
       Raid
       <div class="control">
-        <button class="button is-small" :disabled="!removable" @click="emitRemove">
+        <button
+          class="button is-small"
+          :disabled="!removable"
+          @click="emitRemove"
+        >
           <i class="fa fa-remove" />
         </button>
       </div>
@@ -121,7 +210,11 @@
     <div v-else>
       Unknown trigger: {{ value }}
       <div class="control">
-        <button class="button is-small" :disabled="!removable" @click="emitRemove">
+        <button
+          class="button is-small"
+          :disabled="!removable"
+          @click="emitRemove"
+        >
           <i class="fa fa-remove" />
         </button>
       </div>
@@ -162,12 +255,9 @@ export default defineComponent({
       },
     };
   },
-  created() {
-    this.apply(this.modelValue);
-  },
   computed: {
     rewardRedemptionActions() {
-      const actions = [];
+      const actions: { type: string, title: string, label: string }[] = [];
       for (let key in this.channelPointsCustomRewards) {
         actions.push(
           ...this.channelPointsCustomRewards[key].map((r) => ({
@@ -183,6 +273,14 @@ export default defineComponent({
       return actions;
     },
   },
+  watch: {
+    modelValue(newValue, oldValue) {
+      this.apply(newValue);
+    },
+  },
+  created() {
+    this.apply(this.modelValue);
+  },
   methods: {
     emitRemove() {
       this.$emit("remove");
@@ -192,11 +290,6 @@ export default defineComponent({
     },
     apply(value: CommandTrigger) {
       this.value = JSON.parse(JSON.stringify(value));
-    },
-  },
-  watch: {
-    modelValue(newValue, oldValue) {
-      this.apply(newValue);
     },
   },
 });

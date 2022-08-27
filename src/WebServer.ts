@@ -16,11 +16,7 @@ const __dirname = dirname(__filename)
 const log = logger('WebServer.ts')
 
 class WebServer {
-  private handle: http.Server | null
-
-  constructor() {
-    this.handle = null
-  }
+  private handle: http.Server | null = null
 
   async listen(bot: Bot) {
     const app = express()

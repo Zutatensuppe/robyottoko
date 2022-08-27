@@ -1,22 +1,39 @@
 <template>
   <div class="p-2">
-    <h1 class="title">Drawings awaiting approval</h1>
+    <h1 class="title">
+      Drawings awaiting approval
+    </h1>
     <div v-if="manualApproval.items.length">
-      <div class="image-to-approve card mr-1" v-for="(url, idx2) in manualApproval.items" :key="idx2">
+      <div
+        v-for="(url, idx2) in manualApproval.items"
+        :key="idx2"
+        class="image-to-approve card mr-1"
+      >
         <div class="card-body">
-          <img :src="url" class="thumbnail mr-1" />
+          <img
+            :src="url"
+            class="thumbnail mr-1"
+          >
         </div>
         <div class="card-footer">
-          <span class="card-footer-item button is-small is-success is-light" @click="approveImage(url)">
+          <span
+            class="card-footer-item button is-small is-success is-light"
+            @click="approveImage(url)"
+          >
             Approve!
           </span>
-          <span class="card-footer-item button is-small is-danger is-light" @click="denyImage(url)">
+          <span
+            class="card-footer-item button is-small is-danger is-light"
+            @click="denyImage(url)"
+          >
             Deny!
           </span>
         </div>
       </div>
     </div>
-    <div v-else>Currently there are no drawings awaiting approval.</div>
+    <div v-else>
+      Currently there are no drawings awaiting approval.
+    </div>
   </div>
 </template>
 <script lang="ts">
@@ -54,21 +71,6 @@ export default defineComponent({
         items: [],
       },
     };
-  },
-  methods: {
-    approveImage(path: string) {
-      this.sendMsg({ event: "approve_image", path });
-    },
-    denyImage(path: string) {
-      this.sendMsg({ event: "deny_image", path });
-    },
-    sendMsg(data: any) {
-      if (!this.ws) {
-        console.warn("sendMsg: this.ws not initialized");
-        return;
-      }
-      this.ws.send(JSON.stringify(data));
-    },
   },
   created() {
     // @ts-ignore
@@ -130,6 +132,21 @@ export default defineComponent({
     if (this.ws) {
       this.ws.disconnect()
     }
+  },
+  methods: {
+    approveImage(path: string) {
+      this.sendMsg({ event: "approve_image", path });
+    },
+    denyImage(path: string) {
+      this.sendMsg({ event: "deny_image", path });
+    },
+    sendMsg(data: any) {
+      if (!this.ws) {
+        console.warn("sendMsg: this.ws not initialized");
+        return;
+      }
+      this.ws.send(JSON.stringify(data));
+    },
   },
 });
 </script>

@@ -246,15 +246,7 @@ async function executeRequestWithRetry(
 }
 
 class TwitchHelixClient {
-  private clientId: string
-  private clientSecret: string
-
-  constructor(
-    clientId: string,
-    clientSecret: string,
-  ) {
-    this.clientId = clientId
-    this.clientSecret = clientSecret
+  constructor(private readonly clientId: string, private readonly clientSecret: string) {
   }
 
   _authHeaders(accessToken: string) {

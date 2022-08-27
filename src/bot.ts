@@ -65,10 +65,6 @@ const createBot = async (): Promise<Bot> => {
     private userModuleStorageInstances: Record<number, ModuleStorage> = {}
     private userTwitchClientManagerInstances: Record<number, TwitchClientManager> = {}
 
-    constructor() {
-      // pass
-    }
-
     getBuildVersion() { return buildEnv.buildVersion }
     getBuildDate() { return buildEnv.buildDate }
     getModuleManager() { return moduleManager }

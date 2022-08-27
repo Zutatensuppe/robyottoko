@@ -1,10 +1,16 @@
 <template>
-  <div class="field has-text-grey-light" v-if="global.registeredUserCount">
+  <div
+    v-if="global.registeredUserCount"
+    class="field has-text-grey-light"
+  >
     There are currently {{ global.registeredUserCount }} streamer{{ global.registeredUserCount > 1 ? 's' : '' }}
     registered
     ✨.
   </div>
-  <div class="field has-text-grey-light" v-if="global.streamingUserCount">
+  <div
+    v-if="global.streamingUserCount"
+    class="field has-text-grey-light"
+  >
     {{ global.streamingUserCount }} streamer {{ global.streamingUserCount > 1 ? 'are' : 'is' }} live right now.
   </div>
 </template>

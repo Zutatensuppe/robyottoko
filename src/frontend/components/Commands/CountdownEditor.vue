@@ -2,11 +2,19 @@
   <div>
     <div class="control">
       <label class="radio">
-        <input type="radio" value="manual" v-model="countdown.type" />
+        <input
+          v-model="countdown.type"
+          type="radio"
+          value="manual"
+        >
         Manual
       </label>
       <label class="radio">
-        <input type="radio" value="auto" v-model="countdown.type" />
+        <input
+          v-model="countdown.type"
+          type="radio"
+          value="auto"
+        >
         Auto
       </label>
     </div>
@@ -14,63 +22,105 @@
     <div v-if="countdown.type === 'auto'">
       <div class="spacerow">
         <label class="spacelabel">Steps </label>
-        <input class="input is-small spaceinput" v-model="countdown.steps" />
+        <input
+          v-model="countdown.steps"
+          class="input is-small spaceinput"
+        >
       </div>
       <div class="spacerow">
         <label class="spacelabel">Interval </label>
-        <duration-input :modelValue="countdown.interval" @update:modelValue="countdown.interval = $event" />
+        <duration-input
+          :model-value="countdown.interval"
+          @update:modelValue="countdown.interval = $event"
+        />
       </div>
       <div class="spacerow">
         <label class="spacelabel">Intro </label>
-        <input class="input is-small spaceinput" v-model="countdown.intro" />
+        <input
+          v-model="countdown.intro"
+          class="input is-small spaceinput"
+        >
       </div>
       <div class="spacerow">
         <label class="spacelabel">Outro </label>
-        <input class="input is-small spaceinput" v-model="countdown.outro" />
+        <input
+          v-model="countdown.outro"
+          class="input is-small spaceinput"
+        >
       </div>
     </div>
     <div v-else>
-      <draggable :modelValue="countdown.actions" @end="dragEnd" handle=".handle" item-key="id">
+      <draggable
+        :model-value="countdown.actions"
+        handle=".handle"
+        item-key="id"
+        @end="dragEnd"
+      >
         <template #item="{ element, index }">
           <div class="field has-addons mr-1">
-            <span class="handle p-2"><i class="fa fa-arrows"></i></span>
+            <span class="handle p-2"><i class="fa fa-arrows" /></span>
 
-            <div class="control has-icons-left" v-if="element.type === 'delay'">
-              <duration-input :modelValue="element.value" @update:modelValue="element.value = $event" />
+            <div
+              v-if="element.type === 'delay'"
+              class="control has-icons-left"
+            >
+              <duration-input
+                :model-value="element.value"
+                @update:modelValue="element.value = $event"
+              />
               <span class="icon is-small is-left">
-                <i class="fa fa-hourglass"></i>
+                <i class="fa fa-hourglass" />
               </span>
             </div>
-            <div class="control has-icons-left" v-else-if="element.type === 'text'">
-              <input class="input is-small" type="text" v-model="element.value" />
+            <div
+              v-else-if="element.type === 'text'"
+              class="control has-icons-left"
+            >
+              <input
+                v-model="element.value"
+                class="input is-small"
+                type="text"
+              >
               <span class="icon is-small is-left">
-                <i class="fa fa-comments-o"></i>
+                <i class="fa fa-comments-o" />
               </span>
             </div>
-            <div class="control has-icons-left" v-else-if="element.type === 'media'">
+            <div
+              v-else-if="element.type === 'media'"
+              class="control has-icons-left"
+            >
               <table>
                 <tr>
                   <td>Image:</td>
                   <td>
-                    <image-upload v-model="element.value.image" @update:modelValue="mediaImgChanged(index, $event)" />
+                    <image-upload
+                      v-model="element.value.image"
+                      @update:modelValue="mediaImgChanged(index, $event)"
+                    />
                   </td>
                 </tr>
                 <tr>
                   <td>Sound:</td>
                   <td>
-                    <sound-upload v-model="element.value.sound" @update:modelValue="mediaSndChanged(index, $event)"
-                      :baseVolume="baseVolume" />
+                    <sound-upload
+                      v-model="element.value.sound"
+                      :base-volume="baseVolume"
+                      @update:modelValue="mediaSndChanged(index, $event)"
+                    />
                   </td>
                 </tr>
                 <tr>
                   <td>Duration:</td>
                   <td>
                     <div class="control has-icons-left">
-                      <duration-input :modelValue="element.value.minDurationMs" @update:modelValue="
-                        element.value.minDurationMs = $event
-                      " />
+                      <duration-input
+                        :model-value="element.value.minDurationMs"
+                        @update:modelValue="
+                          element.value.minDurationMs = $event
+                        "
+                      />
                       <span class="icon is-small is-left">
-                        <i class="fa fa-hourglass"></i>
+                        <i class="fa fa-hourglass" />
                       </span>
                     </div>
                   </td>
@@ -78,20 +128,32 @@
               </table>
             </div>
             <div class="control">
-              <button class="button is-small" @click="rmaction(index)">
+              <button
+                class="button is-small"
+                @click="rmaction(index)"
+              >
                 <i class="fa fa-remove" />
               </button>
             </div>
           </div>
         </template>
       </draggable>
-      <button class="button is-small" @click="onAddDelay">
+      <button
+        class="button is-small"
+        @click="onAddDelay"
+      >
         <i class="fa fa-hourglass mr-1" /> Add Delay
       </button>
-      <button class="button is-small" @click="onAddText">
+      <button
+        class="button is-small"
+        @click="onAddText"
+      >
         <i class="fa fa-comments-o mr-1" /> Add Chat
       </button>
-      <button class="button is-small" @click="onAddMedia">
+      <button
+        class="button is-small"
+        @click="onAddMedia"
+      >
         <i class="fa fa-picture-o mr-1" /> Add Media
       </button>
     </div>
@@ -124,7 +186,6 @@ interface ComponentData {
 }
 
 export default defineComponent({
-  name: "countdown-edit",
   props: {
     baseVolume: {
       default: 100,
@@ -148,6 +209,34 @@ export default defineComponent({
       outro: "",
     },
   }),
+  created() {
+    // old countdowns are automatic
+    this.countdown.type = this.modelValue.type || "auto";
+
+    this.countdown.actions = this.modelValue.actions || [];
+
+    this.countdown.steps = this.modelValue.steps;
+    this.countdown.interval = this.modelValue.interval;
+    this.countdown.intro = this.modelValue.intro;
+    this.countdown.outro = this.modelValue.outro;
+
+    this.$watch(
+      "countdown",
+      () => {
+        this.$emit("update:modelValue", {
+          type: this.countdown.type,
+
+          actions: this.countdown.actions,
+
+          steps: this.countdown.steps,
+          interval: this.countdown.interval,
+          intro: this.countdown.intro,
+          outro: this.countdown.outro,
+        });
+      },
+      { deep: true }
+    );
+  },
   methods: {
     dragEnd(evt: DragEndEvent): void {
       this.countdown.actions = fn.arrayMove(
@@ -176,34 +265,6 @@ export default defineComponent({
     mediaImgChanged(idx: number, file: MediaFile): void {
       this.countdown.actions[idx].value.image = file;
     },
-  },
-  created() {
-    // old countdowns are automatic
-    this.countdown.type = this.modelValue.type || "auto";
-
-    this.countdown.actions = this.modelValue.actions || [];
-
-    this.countdown.steps = this.modelValue.steps;
-    this.countdown.interval = this.modelValue.interval;
-    this.countdown.intro = this.modelValue.intro;
-    this.countdown.outro = this.modelValue.outro;
-
-    this.$watch(
-      "countdown",
-      () => {
-        this.$emit("update:modelValue", {
-          type: this.countdown.type,
-
-          actions: this.countdown.actions,
-
-          steps: this.countdown.steps,
-          interval: this.countdown.interval,
-          intro: this.countdown.intro,
-          outro: this.countdown.outro,
-        });
-      },
-      { deep: true }
-    );
   },
 });
 </script>

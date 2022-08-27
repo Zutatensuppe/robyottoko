@@ -33,9 +33,6 @@ const shouldDeleteSubscription = (
 }
 
 class TwitchClientManager {
-  private bot: Bot
-  private user: User
-
   private chatClient: TwitchChatClient | null = null
   private helixClient: TwitchHelixClient | null = null
   private identity: Identity | null = null
@@ -43,11 +40,9 @@ class TwitchClientManager {
   private log: Logger
 
   constructor(
-    bot: Bot,
-    user: User,
+    private readonly bot: Bot,
+    private user: User,
   ) {
-    this.bot = bot
-    this.user = user
     this.log = logger('TwitchClientManager.ts', `${user.name}|`)
   }
 

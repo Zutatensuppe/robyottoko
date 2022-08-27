@@ -22,13 +22,12 @@ export default class WsWrapper {
   // buffer for 'send'
   sendBuffer: string[] = []
 
-  addr: string
-
-  protocols: string
-
   timerId: any = 0;
   gotPong: boolean = false;
   pongWaitTimerId: any = 0;
+
+  constructor(private readonly addr: string, private readonly protocols: string) {
+  }
 
   public onopen: (e: Event) => void = () => {
     // pass
@@ -63,11 +62,6 @@ export default class WsWrapper {
     if (this.timerId) {
       clearTimeout(this.timerId);
     }
-  }
-
-  constructor(addr: string, protocols: string) {
-    this.addr = addr
-    this.protocols = protocols
   }
 
   send(txt: string) {

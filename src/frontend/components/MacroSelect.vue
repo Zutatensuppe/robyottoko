@@ -1,11 +1,20 @@
 <template>
   <div class="macro-select">
     <a @click="show = !show">Select macro</a>
-    <div class="table-holder" v-if="show">
+    <div
+      v-if="show"
+      class="table-holder"
+    >
       <table>
-        <tr v-for="(m, idx) in macros" :key="idx">
+        <tr
+          v-for="(m, idx) in macros"
+          :key="idx"
+        >
           <td :title="m.title">
-            <code class="is-clickable" @click="onMacroClicked(m)">{{
+            <code
+              class="is-clickable"
+              @click="onMacroClicked(m)"
+            >{{
               m.value
             }}</code>
           </td>
@@ -30,6 +39,7 @@ interface ComponentData {
 }
 
 export default defineComponent({
+  emits: ['selected'],
   data: (): ComponentData => ({
     show: false,
     macros: [

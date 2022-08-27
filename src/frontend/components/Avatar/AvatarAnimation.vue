@@ -1,14 +1,25 @@
 <template>
-  <span class="avatar-animation" :style="{
-    width: `${width}px`,
-    height: `${width}px`,
-  }">
-    <img v-if="src" :src="src" :width="width" :height="height" />
-    <span v-else :style="{
+  <span
+    class="avatar-animation"
+    :style="{
       width: `${width}px`,
       height: `${width}px`,
-      display: 'inline-block',
-    }" />
+    }"
+  >
+    <img
+      v-if="src"
+      :src="src"
+      :width="width"
+      :height="height"
+    >
+    <span
+      v-else
+      :style="{
+        width: `${width}px`,
+        height: `${width}px`,
+        display: 'inline-block',
+      }"
+    />
   </span>
 </template>
 <script setup lang="ts">

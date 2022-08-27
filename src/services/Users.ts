@@ -41,9 +41,7 @@ export interface CreateUser {
 }
 
 class Users {
-  private db: Db
-  constructor(db: Db) {
-    this.db = db
+  constructor(private readonly db: Db) {
   }
 
   async get(by: WhereRaw): Promise<User | null> {

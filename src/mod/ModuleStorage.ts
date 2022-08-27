@@ -6,12 +6,7 @@ const log = logger('ModuleStorage.ts')
 const TABLE = 'robyottoko.module'
 
 class ModuleStorage {
-  private db: Db
-  private userId: number
-
-  constructor(db: Db, userId: number) {
-    this.db = db
-    this.userId = userId
+  constructor(private readonly db: Db, private readonly userId: number) {
   }
 
   async load(key: string, def: Record<string, any>): Promise<Record<string, any>> {

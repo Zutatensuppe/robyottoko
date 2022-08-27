@@ -57,10 +57,6 @@ class GeneralModule implements Module {
   public name = MODULE_NAME.GENERAL
 
   // @ts-ignore
-  public bot: Bot
-  // @ts-ignore
-  public user: User
-  // @ts-ignore
   private data: GeneralModuleData
   // @ts-ignore
   private commands: FunctionCommand[]
@@ -72,13 +68,11 @@ class GeneralModule implements Module {
   private channelPointsCustomRewards: Record<string, string[]> = {}
 
   constructor(
-    bot: Bot,
-    user: User,
+    public readonly bot: Bot,
+    public user: User,
   ) {
     // @ts-ignore
     return (async () => {
-      this.bot = bot
-      this.user = user
       const initData = await this.reinit()
       this.data = initData.data
       this.commands = initData.commands
