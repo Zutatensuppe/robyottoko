@@ -5,6 +5,7 @@
 Robyottoko provides an interface for your twitch bots.
 
 Features are:
+
 - Respond to twitch chat or channel reward redemptions with:
   - static text
   - countdown
@@ -34,38 +35,46 @@ which lets you use the features without setting the bot up yourself.
 ## Getting Started
 
 1. Launch the database. By default the database will be exposed on localhost port 5434.
-    ```
-    docker-compose up
+
+    ```console
+    ./run dev-services
     ```
 
 2. Create a `config.json`. The example can be copied, for some
 features you have to provide an api key directly in the config atm.
 
-    ```
+    ```shell
     cp config.json.example config.json
     ```
 
 3. Install the dependencies
 
-    ```
+    ```shell
     npm install
     ```
 
 4. Create a user. You will be asked for a user name and password.
 The rest of the settings can be changed via the bot admin ui.
 
-    ```
+    ```shell
     ./run ts scripts/create-user.ts
     ```
 
-5. Run the bot
+5. Build (optional, only required if you made code changes)
 
+    ```shell
+    ./run build
     ```
+
+6. Run the bot
+
+    ```shell
     ./run bot
     ```
 
     This should output the url of the server, like this:
-    ```
+
+    ```shell
     [WebServer.ts] server running on http://localhost:1337
     ```
 
