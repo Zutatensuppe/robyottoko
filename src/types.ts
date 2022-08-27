@@ -198,6 +198,14 @@ export interface GlobalVariable {
   value: VariableValue
 }
 
+type TwitchChatEvent = 'connected' | 'message'
+
+type TwitchChatEventCallbackFn<T> = (
+  T extends 'connected' ? ((addr: string, port: number) => Promise<void>) : (
+    T extends 'message' ? ((target: string, context: TwitchChatContext, msg: string, self: boolean) => Promise<void>) : never
+  )
+)
+
 // TODO: use type definitions for tmi.js
 export interface TwitchChatClient extends Client {
   opts: {
@@ -206,7 +214,7 @@ export interface TwitchChatClient extends Client {
   say: (target: string, msg: string) => Promise<any>
   connect: () => Promise<any>
   disconnect: () => Promise<any>
-  on: (event: string, callback: (target: string, context: TwitchChatContext, msg: string, self: boolean) => Promise<void>) => void
+  on: <T extends TwitchChatEvent>(event: T, callback: TwitchChatEventCallbackFn<T>) => void
 }
 
 export interface TwitchChatContext {

@@ -89,7 +89,7 @@ class TwitchClientManager {
     this.identity = identity
 
     // connect to chat via tmi (to all channels configured)
-    const chatClient = new tmi.client({
+    this.chatClient = new tmi.client({
       identity: {
         username: identity.username,
         password: identity.password,
@@ -100,54 +100,44 @@ class TwitchClientManager {
         reconnect: true,
       }
     })
-    this.chatClient = chatClient
-
-    chatClient.on('message', async (
-      target: string,
-      context: TwitchChatContext,
-      msg: string,
-      self: boolean,
-    ) => {
-      if (self) { return; } // Ignore messages from the bot
-
-      await (new ChatEventHandler()).handle(this.bot, this.user, target, context, msg)
-    })
-
-    // Called every time the bot connects to Twitch chat
-    chatClient.on('connected', (addr: string, port: number) => {
-      this.log.info({ addr, port }, 'Connected')
-      for (const channel of twitchChannels) {
-        if (!channel.bot_status_messages) {
-          continue;
-        }
-        // note: this can lead to multiple messages if multiple users
-        //       have the same channels set up
-        const say = this.bot.sayFn(user, channel.channel_name)
-        if (connectReason === 'init') {
-          say('⚠️ Bot rebooted - please restart timers...')
-        } else if (connectReason === 'access_token_refreshed') {
-          // dont say anything
-        } else if (connectReason === 'user_change') {
-          say('✅ User settings updated...')
-        } else {
-          say('✅ Reconnected...')
-        }
-      }
-
-      // set connectReason to empty, everything from now is just a reconnect
-      // due to disconnect from twitch
-      connectReason = ''
-    })
-
-    // register EventSub
-    // @see https://dev.twitch.tv/docs/eventsub
-    const helixClient = new TwitchHelixClient(
-      identity.client_id,
-      identity.client_secret,
-    )
-    this.helixClient = helixClient
 
     if (this.chatClient) {
+      this.chatClient.on('message', async (
+        target: string,
+        context: TwitchChatContext,
+        msg: string,
+        self: boolean,
+      ) => {
+        if (self) { return; } // Ignore messages from the bot
+
+        await (new ChatEventHandler()).handle(this.bot, this.user, target, context, msg)
+      })
+
+      // Called every time the bot connects to Twitch chat
+      this.chatClient.on('connected', async (addr: string, port: number) => {
+        this.log.info({ addr, port }, 'Connected')
+        for (const channel of twitchChannels) {
+          if (!channel.bot_status_messages) {
+            continue;
+          }
+          // note: this can lead to multiple messages if multiple users
+          //       have the same channels set up
+          const say = this.bot.sayFn(user, channel.channel_name)
+          if (connectReason === 'init') {
+            say('⚠️ Bot rebooted - please restart timers...')
+          } else if (connectReason === 'access_token_refreshed') {
+            // dont say anything
+          } else if (connectReason === 'user_change') {
+            say('✅ User settings updated...')
+          } else {
+            say('✅ Reconnected...')
+          }
+        }
+
+        // set connectReason to empty, everything from now is just a reconnect
+        // due to disconnect from twitch
+        connectReason = ''
+      })
       try {
         await this.chatClient.connect()
       } catch (e) {
@@ -156,6 +146,13 @@ class TwitchClientManager {
         this.log.error({ e }, 'error when connecting')
       }
     }
+
+    // register EventSub
+    // @see https://dev.twitch.tv/docs/eventsub
+    this.helixClient = new TwitchHelixClient(
+      identity.client_id,
+      identity.client_secret,
+    )
 
     await this.registerSubscriptions(twitchChannels)
   }
