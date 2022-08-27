@@ -128,7 +128,7 @@
                       v-if="element.data.image.file && element.data.sound.file"
                       class="fa fa-plus is-justify-content-center mr-2 ml-2"
                     />
-                    <player
+                    <audio-player
                       :src="element.data.sound.urlpath"
                       :name="element.data.sound.filename"
                       :volume="element.data.sound.volume"
