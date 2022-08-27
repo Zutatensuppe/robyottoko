@@ -37,7 +37,7 @@ which lets you use the features without setting the bot up yourself.
 1. Launch the database. By default the database will be exposed on localhost port 5434.
 
     ```console
-    docker-compose up
+    ./run dev-services
     ```
 
 2. Create a `config.json`. The example can be copied, for some
@@ -60,7 +60,13 @@ The rest of the settings can be changed via the bot admin ui.
     ./run ts scripts/create-user.ts
     ```
 
-5. Run the bot
+5. Build (optional, only required if you made code changes)
+
+    ```shell
+    ./run build
+    ```
+
+6. Run the bot
 
     ```shell
     ./run bot
