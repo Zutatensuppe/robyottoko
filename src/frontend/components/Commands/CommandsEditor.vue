@@ -230,7 +230,6 @@
               </td>
             </tr>
           </template>
-          </draggable>
         </vue-draggable>
       </table>
     </div>

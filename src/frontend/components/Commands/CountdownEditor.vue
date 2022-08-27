@@ -137,26 +137,25 @@
             </div>
           </div>
         </template>
-        </draggable>
-        <button
-          class="button is-small"
-          @click="onAddDelay"
-        >
-          <i class="fa fa-hourglass mr-1" /> Add Delay
-        </button>
-        <button
-          class="button is-small"
-          @click="onAddText"
-        >
-          <i class="fa fa-comments-o mr-1" /> Add Chat
-        </button>
-        <button
-          class="button is-small"
-          @click="onAddMedia"
-        >
-          <i class="fa fa-picture-o mr-1" /> Add Media
-        </button>
       </vue-draggable>
+      <button
+        class="button is-small"
+        @click="onAddDelay"
+      >
+        <i class="fa fa-hourglass mr-1" /> Add Delay
+      </button>
+      <button
+        class="button is-small"
+        @click="onAddText"
+      >
+        <i class="fa fa-comments-o mr-1" /> Add Chat
+      </button>
+      <button
+        class="button is-small"
+        @click="onAddMedia"
+      >
+        <i class="fa fa-picture-o mr-1" /> Add Media
+      </button>
     </div>
   </div>
 </template>
