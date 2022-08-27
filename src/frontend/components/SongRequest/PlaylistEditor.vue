@@ -55,7 +55,7 @@
             <th />
           </tr>
         </thead>
-        <draggable
+        <vue-draggable
           :model-value="enhancedPlaylist"
           tag="tbody"
           handle=".handle"
@@ -197,7 +197,8 @@
               </td>
             </tr>
           </template>
-        </draggable>
+          </draggable>
+        </vue-draggable>
       </table>
       <div>
         <span

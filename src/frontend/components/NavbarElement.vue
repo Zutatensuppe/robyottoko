@@ -1,45 +1,94 @@
 <template>
-  <nav class="navbar" role="navigation" aria-label="main navigation">
+  <nav
+    class="navbar"
+    role="navigation"
+    aria-label="main navigation"
+  >
     <div class="navbar-brand">
-      <router-link class="navbar-item" :to="{ name: 'index' }">
-        <img src="/hyottoko.png" width="32" height="32" alt="hyottoko.club" class="flip-horizontal mr-1" />
+      <router-link
+        class="navbar-item"
+        :to="{ name: 'index' }"
+      >
+        <img
+          src="/hyottoko.png"
+          width="32"
+          height="32"
+          alt="hyottoko.club"
+          class="flip-horizontal mr-1"
+        >
         <span class="greeting">Welcome back, {{ user }}</span>
       </router-link>
 
-      <a role="button" class="navbar-burger" :class="{ 'is-active': burgerActive }" aria-label="menu"
-        aria-expanded="false" data-target="navbarBasicExample" @click="toggleBurgerMenu">
-        <span aria-hidden="true"></span>
-        <span aria-hidden="true"></span>
-        <span aria-hidden="true"></span>
+      <a
+        role="button"
+        class="navbar-burger"
+        :class="{ 'is-active': burgerActive }"
+        aria-label="menu"
+        aria-expanded="false"
+        data-target="navbarBasicExample"
+        @click="toggleBurgerMenu"
+      >
+        <span aria-hidden="true" />
+        <span aria-hidden="true" />
+        <span aria-hidden="true" />
       </a>
     </div>
-    <div id="navbarBasicExample" class="navbar-menu" :class="{ 'is-active': burgerActive }">
+    <div
+      id="navbarBasicExample"
+      class="navbar-menu"
+      :class="{ 'is-active': burgerActive }"
+    >
       <div class="navbar-start">
-        <router-link class="navbar-item" v-for="(l, idx) in linksStart" :key="idx" :to="l.to">{{ l.text }}</router-link>
+        <router-link
+          v-for="(l, idx) in linksStart"
+          :key="idx"
+          class="navbar-item"
+          :to="l.to"
+        >
+          {{ l.text }}
+        </router-link>
       </div>
       <div class="navbar-end">
-        <a class="navbar-item has-text-danger" v-if="problems.length" @click="showProblems = true"><i
-            class="fa fa-warning mr-1" /> {{ problems.length }} Problem{{
-              problems.length > 1 ? "s" : ""
-            }}</a>
+        <a
+          v-if="problems.length"
+          class="navbar-item has-text-danger"
+          @click="showProblems = true"
+        ><i
+          class="fa fa-warning mr-1"
+        /> {{ problems.length }} Problem{{
+          problems.length > 1 ? "s" : ""
+        }}</a>
         <span class="navbar-item">
-          <input type="checkbox" id="darkmode-switch" class="mr-1" v-model="darkmode" @change="onDarkmodeSwitch" />
+          <input
+            id="darkmode-switch"
+            v-model="darkmode"
+            type="checkbox"
+            class="mr-1"
+            @change="onDarkmodeSwitch"
+          >
           <label for="darkmode-switch">Switch dark/light mode</label>
         </span>
-        <a class="navbar-item" @click="onLogoutClick">Logout</a>
+        <a
+          class="navbar-item"
+          @click="onLogoutClick"
+        >Logout</a>
       </div>
     </div>
   </nav>
-  <problems-dialog :problems="problems" v-if="showProblems" @close="showProblems = false" />
+  <problems-dialog
+    v-if="showProblems"
+    :problems="problems"
+    @close="showProblems = false"
+  />
 </template>
 <script lang="ts">
 import { defineComponent } from "vue";
 import user from "../user";
 import { eventBus } from "../wsstatus";
-import { ApiUser } from '../../types';
+import { ApiUserData } from '../../types';
 
 interface ComponentData {
-  me: ApiUser | null
+  me: ApiUserData | null
   showProblems: boolean
   linksStart: { to: { name: string }, text: string }[]
   problems: { message: string, details: any }[]

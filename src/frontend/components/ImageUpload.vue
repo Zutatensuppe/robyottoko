@@ -22,7 +22,7 @@
       <i class="fa fa-remove mr-1" /> Remove
     </button>
     <br v-if="value.file">
-    <upload
+    <upload-input
       ref="uploadComponent"
       accept="image/*"
       label="Upload Image"
@@ -36,7 +36,7 @@ import { defineComponent } from "vue";
 import { mediaFileFromUploadedFile } from "../../common/fn";
 import { MediaFile, UploadedFile } from "../../types";
 import { getFileFromDropEvent } from "../util";
-import { UploadInstance } from "./Upload.vue";
+import { UploadInstance } from "./UploadInput.vue";
 
 interface ComponentData {
   value: MediaFile;

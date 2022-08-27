@@ -4,7 +4,7 @@
       id="top"
       ref="top"
     >
-      <navbar />
+      <navbar-element />
       <div
         id="actionbar"
         class="p-1"

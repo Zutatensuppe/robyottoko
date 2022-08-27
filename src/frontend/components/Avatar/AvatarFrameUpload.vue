@@ -21,7 +21,7 @@
       height="64"
     >
 
-    <upload
+    <upload-input
       v-show="!value.url"
       ref="uploadComponent"
       accept="image/*"
@@ -43,7 +43,7 @@ import { onMounted, Ref, ref, watch } from "vue";
 import { AvatarModuleAnimationFrameDefinition } from "../../../mod/modules/AvatarModuleCommon";
 import { UploadedFile } from "../../../types";
 import { getFileFromDropEvent } from "../../util";
-import { UploadInstance } from "../Upload.vue";
+import { UploadInstance } from "../UploadInput.vue";
 
 const props = defineProps({
   modelValue: { /* type: Object as PropType<MediaFile | null>, */ required: true },

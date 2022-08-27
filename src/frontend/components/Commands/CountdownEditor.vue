@@ -50,7 +50,7 @@
       </div>
     </div>
     <div v-else>
-      <draggable
+      <vue-draggable
         :model-value="countdown.actions"
         handle=".handle"
         item-key="id"
@@ -137,25 +137,26 @@
             </div>
           </div>
         </template>
-      </draggable>
-      <button
-        class="button is-small"
-        @click="onAddDelay"
-      >
-        <i class="fa fa-hourglass mr-1" /> Add Delay
-      </button>
-      <button
-        class="button is-small"
-        @click="onAddText"
-      >
-        <i class="fa fa-comments-o mr-1" /> Add Chat
-      </button>
-      <button
-        class="button is-small"
-        @click="onAddMedia"
-      >
-        <i class="fa fa-picture-o mr-1" /> Add Media
-      </button>
+        </draggable>
+        <button
+          class="button is-small"
+          @click="onAddDelay"
+        >
+          <i class="fa fa-hourglass mr-1" /> Add Delay
+        </button>
+        <button
+          class="button is-small"
+          @click="onAddText"
+        >
+          <i class="fa fa-comments-o mr-1" /> Add Chat
+        </button>
+        <button
+          class="button is-small"
+          @click="onAddMedia"
+        >
+          <i class="fa fa-picture-o mr-1" /> Add Media
+        </button>
+      </vue-draggable>
     </div>
   </div>
 </template>
@@ -260,10 +261,12 @@ export default defineComponent({
       );
     },
     mediaSndChanged(idx: number, file: SoundMediaFile): void {
-      this.countdown.actions[idx].value.sound = file;
+      // @ts-ignore
+      this.countdown.actions[idx].value.sound = file
     },
     mediaImgChanged(idx: number, file: MediaFile): void {
-      this.countdown.actions[idx].value.image = file;
+      // @ts-ignore
+      this.countdown.actions[idx].value.image = file
     },
   },
 });

@@ -40,7 +40,11 @@ const animations = computed((): AvatarModuleSlotItemStateDefinition[] => {
     if (!item) {
       return { state: "", frames: [] };
     }
-    return item.states.find(({ state }) => state === "default");
+    const stateDef = item.states.find(({ state }) => state === "default");
+    if (!stateDef) {
+      return { state: "", frames: [] };
+    }
+    return stateDef
   });
 })
 </script>

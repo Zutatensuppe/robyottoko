@@ -4,7 +4,7 @@
       id="top"
       ref="top"
     >
-      <navbar />
+      <navbar-element />
       <div
         id="actionbar"
         class="p-1"
@@ -95,7 +95,7 @@
               <th>Actions</th>
             </tr>
           </thead>
-          <draggable
+          <vue-draggable
             :model-value="settings.avatarDefinitions"
             tag="tbody"
             handle=".handle"
@@ -151,7 +151,8 @@
                 </td>
               </tr>
             </template>
-          </draggable>
+            </draggable>
+          </vue-draggable>
         </table>
 
         <avatar-editor

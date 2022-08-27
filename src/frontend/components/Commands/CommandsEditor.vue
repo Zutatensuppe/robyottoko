@@ -65,7 +65,7 @@
             <th />
           </tr>
         </thead>
-        <draggable
+        <vue-draggable
           :model-value="commands"
           tag="tbody"
           handle=".handle"
@@ -139,13 +139,13 @@
                       v-if="element.data.image.file && element.data.sound.file"
                       class="ml-2"
                     >for at least
-                      <duration :value="element.data.minDurationMs" />
+                      <duration-display :value="element.data.minDurationMs" />
                     </span>
                     <span
                       v-else-if="element.data.image.file"
                       class="ml-2"
                     >for
-                      <duration :value="element.data.minDurationMs" />
+                      <duration-display :value="element.data.minDurationMs" />
                     </span>
                   </div>
                 </div>
@@ -154,7 +154,7 @@
                     <code>{{ element.data.intro }}</code>
                     <span>→</span>
                     <code>{{ element.data.steps }}</code> ✕
-                    <duration :value="element.data.interval" />
+                    <duration-display :value="element.data.interval" />
                     <span>→</span>
                     <code>{{ element.data.outro }}</code>
                   </div>
@@ -163,7 +163,7 @@
                       v-for="(a, idxActions) in element.data.actions"
                       :key="idxActions"
                     >
-                      <duration
+                      <duration-display
                         v-if="a.type === 'delay'"
                         :value="a.value"
                       />
@@ -230,7 +230,8 @@
               </td>
             </tr>
           </template>
-        </draggable>
+          </draggable>
+        </vue-draggable>
       </table>
     </div>
     <div v-else>

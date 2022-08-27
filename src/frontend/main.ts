@@ -19,25 +19,25 @@ import PasswordReset from './views/PasswordReset.vue'
 import ForgotPassword from './views/ForgotPassword.vue'
 import PomoModuleView from './views/PomoModuleView.vue'
 
-import Checkbox from "./components/Checkbox.vue";
+import CheckboxInput from "./components/CheckboxInput.vue";
 import DoubleclickButton from "./components/DoubleclickButton.vue";
 import draggable from "vuedraggable";
 import DropdownButton from "./components/DropdownButton.vue";
 import DropdownInput from "./components/DropdownInput.vue";
-import Duration from "./components/Duration.vue";
+import DurationDisplay from "./components/DurationDisplay.vue";
 import DurationInput from "./components/DurationInput.vue";
 import GlobalUserInfo from "./components/GlobalUserInfo.vue";
 import ImageUpload from './components/ImageUpload.vue'
 import MacroSelect from "./components/MacroSelect.vue";
-import Navbar from "./components/Navbar.vue";
-import Player from "./components/Player.vue";
+import NavbarElement from "./components/NavbarElement.vue";
+import AudioPlayer from "./components/AudioPlayer.vue";
 import ProblemsDialog from "./components/ProblemsDialog.vue";
 import ResponsiveImage from "./components/ResponsiveImage.vue";
-import Slider from "./components/Slider.vue";
+import SliderInput from "./components/SliderInput.vue";
 import SoundUpload from './components/SoundUpload.vue'
-import Upload from "./components/Upload.vue";
+import UploadInput from "./components/UploadInput.vue";
 import VolumeSlider from "./components/VolumeSlider.vue";
-import Youtube from "./components/Youtube.vue";
+import YoutubePlayer from "./components/YoutubePlayer.vue";
 
 import CommandsCommandEditor from "./components/Commands/CommandEditor.vue";
 import CommandsMediaCommandEditor from "./components/Commands/MediaCommandEditor.vue";
@@ -221,46 +221,46 @@ const run = async () => {
   const app = Vue.createApp(App)
   app.use(router)
   app.use(Toast, {})
-  app.component('global-user-info', GlobalUserInfo)
-  app.component('doubleclick-button', DoubleclickButton)
-  app.component('dropdown-button', DropdownButton)
-  app.component('dropdown-input', DropdownInput)
-  app.component('checkbox', Checkbox)
-  app.component('draggable', draggable)
-  app.component('duration-input', DurationInput)
-  app.component('duration', Duration)
-  app.component('macro-select', MacroSelect)
-  app.component('navbar', Navbar)
-  app.component('player', Player)
-  app.component('problems-dialog', ProblemsDialog)
-  app.component('responsive-image', ResponsiveImage)
-  app.component('slider', Slider)
-  app.component('upload', Upload)
-  app.component('image-upload', ImageUpload)
-  app.component('sound-upload', SoundUpload)
-  app.component('volume-slider', VolumeSlider)
-  app.component('youtube', Youtube)
-  app.component('commands-editor', CommandsCommandsEditor)
-  app.component('command-editor', CommandsCommandEditor)
-  app.component('media-command-editor', CommandsMediaCommandEditor)
-  app.component('text-command-editor', CommandsTextCommandEditor)
-  app.component('dict-lookup-command-editor', CommandsDictLookupCommandEditor)
-  app.component('madochan-createword-command-editor', CommandsMadochanCreatewordCommandEditor)
-  app.component('countdown-editor', CommandsCountdownEditor)
-  app.component('trigger-editor', CommandsTriggerEditor)
-  app.component('trigger-info', CommandsTriggerInfo)
+  app.component('GlobalUserInfo', GlobalUserInfo)
+  app.component('DoubleclickButton', DoubleclickButton)
+  app.component('DropdownButton', DropdownButton)
+  app.component('DropdownInput', DropdownInput)
+  app.component('CheckboxInput', CheckboxInput)
+  app.component('VueDraggable', draggable)
+  app.component('DurationInput', DurationInput)
+  app.component('DurationDisplay', DurationDisplay)
+  app.component('MacroSelect', MacroSelect)
+  app.component('NavbarElement', NavbarElement)
+  app.component('AudioPlayer', AudioPlayer)
+  app.component('ProblemsDialog', ProblemsDialog)
+  app.component('ResponsiveImage', ResponsiveImage)
+  app.component('SliderInput', SliderInput)
+  app.component('UploadInput', UploadInput)
+  app.component('ImageUpload', ImageUpload)
+  app.component('SoundUpload', SoundUpload)
+  app.component('VolumeSlider', VolumeSlider)
+  app.component('YoutubePlayer', YoutubePlayer)
+  app.component('CommandsEditor', CommandsCommandsEditor)
+  app.component('CommandEditor', CommandsCommandEditor)
+  app.component('MediaCommandEditor', CommandsMediaCommandEditor)
+  app.component('TextCommandEditor', CommandsTextCommandEditor)
+  app.component('DictLookupCommandEditor', CommandsDictLookupCommandEditor)
+  app.component('MadochanCreatewordCommandEditor', CommandsMadochanCreatewordCommandEditor)
+  app.component('CountdownEditor', CommandsCountdownEditor)
+  app.component('TriggerEditor', CommandsTriggerEditor)
+  app.component('TriggerInfo', CommandsTriggerInfo)
   // songrequest - maybe dont register these globally?
-  app.component('playlist-editor', SongRequestPlaylistEditor)
-  app.component('tags-editor', SongRequestTagsEditor)
-  app.component('song-request-settings', SongRequestSettings)
+  app.component('PlaylistEditor', SongRequestPlaylistEditor)
+  app.component('TagsEditor', SongRequestTagsEditor)
+  app.component('SongRequestSettings', SongRequestSettings)
   // avatar - maybe dont register these globally?
-  app.component('avatar-editor', AvatarEditor)
-  app.component('avatar-slot-definition-editor', AvatarSlotDefinitionEditor)
-  app.component('avatar-slot-item-editor', AvatarSlotItemEditor)
-  app.component('avatar-preview', AvatarPreview)
-  app.component('avatar-slot-item-state-editor', AvatarSlotItemStateEditor)
-  app.component('avatar-frame-upload', AvatarFrameUpload)
-  app.component('avatar-animation', AvatarAnimation)
+  app.component('AvatarEditor', AvatarEditor)
+  app.component('AvatarSlotDefinitionEditor', AvatarSlotDefinitionEditor)
+  app.component('AvatarSlotItemEditor', AvatarSlotItemEditor)
+  app.component('AvatarPreview', AvatarPreview)
+  app.component('AvatarSlotItemStateEditor', AvatarSlotItemStateEditor)
+  app.component('AvatarFrameUpload', AvatarFrameUpload)
+  app.component('AvatarAnimation', AvatarAnimation)
   app.mount('#app')
 }
 

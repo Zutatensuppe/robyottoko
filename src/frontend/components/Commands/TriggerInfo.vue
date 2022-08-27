@@ -18,7 +18,7 @@
   <div v-else-if="trigger.type === 'timer'">
     <span class="is-small">Timer: </span>
     <code>{{ trigger.data.minLines }} lines,
-      <duration
+      <duration-display
         :value="trigger.data.minInterval"
       /></code>
   </div>

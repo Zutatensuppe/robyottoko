@@ -22,7 +22,7 @@
           :style="progressValueStyle"
         />
       </div>
-      <youtube
+      <youtube-player
         ref="youtube"
         @ended="ended"
       />
@@ -42,7 +42,7 @@
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
 import { logger } from "../../../common/fn";
-import { YoutubeInstance } from "../../components/Youtube.vue";
+import YoutubePlayer, { YoutubeInstance } from "../../components/YoutubePlayer.vue";
 import WsClient from "../../WsClient";
 import {
   SongRequestModuleFilter,
@@ -53,7 +53,6 @@ import { PlaylistItem } from "../../../types";
 import util, { WidgetApiData } from "../util";
 
 import ResponsiveImage from './../../components/ResponsiveImage.vue'
-import Youtube from './../../components/Youtube.vue'
 import ListItem from './components/ListItem.vue'
 
 const log = logger('Page.vue')
@@ -72,7 +71,7 @@ interface ComponentData {
 export default defineComponent({
   components: {
     ResponsiveImage,
-    Youtube,
+    Youtube: YoutubePlayer,
     ListItem,
   },
   props: {

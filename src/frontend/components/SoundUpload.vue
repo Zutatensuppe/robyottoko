@@ -6,7 +6,7 @@
     @dragover="onDragover"
     @dragleave="onDragleave"
   >
-    <player
+    <audio-player
       v-if="value.file"
       :src="value.urlpath"
       :name="value.filename"
@@ -27,7 +27,7 @@
       <i class="fa fa-remove mr-1" /> Remove
     </button>
     <br v-if="value.file">
-    <upload
+    <upload-input
       ref="uploadComponent"
       accept="audio/*"
       label="Upload Sound"
@@ -41,7 +41,7 @@ import { defineComponent } from "vue";
 import { soundMediaFileFromUploadedFile } from "../../common/fn";
 import { SoundMediaFile, UploadedFile } from "../../types";
 import { getFileFromDropEvent } from "../util";
-import { UploadInstance } from "./Upload.vue";
+import { UploadInstance } from "./UploadInput.vue";
 
 interface ComponentData {
   value: SoundMediaFile;

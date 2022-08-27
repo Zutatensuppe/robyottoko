@@ -4,7 +4,7 @@
       id="top"
       ref="top"
     >
-      <navbar />
+      <navbar-element />
       <div
         id="actionbar"
         class="p-1"
@@ -98,7 +98,7 @@
           class="video-16-9"
           :style="playerstyle"
         >
-          <youtube
+          <youtube-player
             ref="youtube"
             :visible="playerVisible"
             @ended="ended"

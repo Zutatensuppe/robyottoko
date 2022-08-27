@@ -4,7 +4,7 @@
       id="top"
       ref="top"
     >
-      <navbar />
+      <navbar-element />
     </div>
     <div
       id="main"
