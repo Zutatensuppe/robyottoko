@@ -215,6 +215,8 @@ export interface TwitchChatClient extends Client {
   connect: () => Promise<any>
   disconnect: () => Promise<any>
   on: <T extends TwitchChatEvent>(event: T, callback: TwitchChatEventCallbackFn<T>) => void
+  off: <T extends TwitchChatEvent>(event: T, callback: TwitchChatEventCallbackFn<T>) => void
+  removeAllListeners: (type?: string) => TwitchChatClient
 }
 
 export interface TwitchChatContext {
