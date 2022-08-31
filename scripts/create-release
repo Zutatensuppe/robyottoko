@@ -1,0 +1,18 @@
+#!/bin/bash -eu
+
+VERSION=$(node -p -e "require('./package.json').version")
+NAME="robyottoko-${VERSION}"
+DIST_DIR="dist"
+ARCHIVE="${DIST_DIR}/${NAME}.tar.gz"
+
+rm -rf "${ARCHIVE}"
+mkdir -p "${DIST_DIR}"
+
+tar --create \
+  --gzip \
+  --dereference \
+  --file "${ARCHIVE}" \
+  --transform="s,^,${NAME}/," \
+  build
+
+echo "${ARCHIVE}"
