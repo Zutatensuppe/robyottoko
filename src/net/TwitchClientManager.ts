@@ -232,11 +232,13 @@ class TwitchClientManager {
 
   async _disconnectChatClient() {
     if (this.chatClient) {
+      this.chatClient.removeAllListeners('message')
       try {
         await this.chatClient.disconnect()
-        this.chatClient = null
       } catch (e) {
         this.log.info({ e })
+      } finally {
+        this.chatClient = null
       }
     }
   }
