@@ -3785,12 +3785,15 @@ class TwitchClientManager {
     }
     async _disconnectChatClient() {
         if (this.chatClient) {
+            this.chatClient.removeAllListeners('message');
             try {
                 await this.chatClient.disconnect();
-                this.chatClient = null;
             }
             catch (e) {
                 this.log.info({ e });
+            }
+            finally {
+                this.chatClient = null;
             }
         }
     }
@@ -7366,9 +7369,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-08-27T10:37:26.193Z",
+    buildDate: "2022-08-31T23:25:43.792Z",
     // @ts-ignore
-    buildVersion: "1.23.7",
+    buildVersion: "1.23.8",
 };
 
 const TABLE = 'robyottoko.chat_log';
