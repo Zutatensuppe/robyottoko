@@ -298,6 +298,32 @@ const getRandomInt = (min, max) => {
 const getRandom = (array) => {
     return array[getRandomInt(0, array.length - 1)];
 };
+const daysUntil = (s, templateN, template1, template0, templateErr) => {
+    const date00 = (date) => new Date(`${pad(date.getFullYear(), '0000')}-${pad(date.getMonth() + 1, '00')}-${pad(date.getDate(), '00')}`);
+    try {
+        const date = new Date(s);
+        if (isNaN(date.getTime())) {
+            return templateErr;
+        }
+        const now = new Date();
+        const diffMs = date00(date).getTime() - date00(now).getTime();
+        const days = Math.ceil(diffMs / 1000 / 60 / 60 / 24);
+        let template = '{days}';
+        if (days === 0) {
+            template = template0;
+        }
+        else if (days === 1) {
+            template = template1;
+        }
+        else {
+            template = templateN;
+        }
+        return template.replace('{days}', `${days}`);
+    }
+    catch (e) {
+        return templateErr;
+    }
+};
 
 const log$x = logger('fn.ts');
 function mimeToExt(mime) {
@@ -459,6 +485,18 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return '';
                 }
                 return rawCmd.args.slice(from, to + 1).join(' ');
+            },
+        },
+        {
+            regex: /\$daysuntil\("([^"]+)"\)/g,
+            replacer: async (_m0, m1) => {
+                return daysUntil(m1, '{days}', '{days}', '{days}', '???');
+            },
+        },
+        {
+            regex: /\$daysuntil\("([^"]+)",\s*?"([^"]*)"\s*,\s*?"([^"]*)"\s*,\s*?"([^"]*)"\s*\)/g,
+            replacer: async (_m0, m1, m2, m3, m4) => {
+                return daysUntil(m1, m2, m3, m4, '???');
             },
         },
         {
@@ -7369,9 +7407,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-08-31T23:25:43.792Z",
+    buildDate: "2022-09-10T16:36:51.331Z",
     // @ts-ignore
-    buildVersion: "1.23.8",
+    buildVersion: "1.24.0",
 };
 
 const TABLE = 'robyottoko.chat_log';
