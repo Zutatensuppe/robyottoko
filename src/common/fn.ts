@@ -400,14 +400,14 @@ export const daysUntil = (
   template0: string,
   templateErr: string,
 ): string => {
+  const date00 = (date: Date) => new Date(`${pad(date.getFullYear(), '0000')}-${pad(date.getMonth() + 1, '00')}-${pad(date.getDate(), '00')}`)
   try {
     const date = new Date(s)
-    const seconds = date.getTime()
-    if (isNaN(seconds)) {
+    if (isNaN(date.getTime())) {
       return templateErr
     }
     const now = new Date()
-    const diffMs = date.getTime() - now.getTime()
+    const diffMs = date00(date).getTime() - date00(now).getTime()
     const days = Math.ceil(diffMs / 1000 / 60 / 60 / 24)
     let template = '{days}'
     if (days === 0) {
