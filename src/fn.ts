@@ -1,7 +1,7 @@
 import config from './config'
 import crypto from 'crypto'
 import xhr from './net/xhr'
-import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, nonce, getRandom, getRandomInt } from './common/fn'
+import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, nonce, getRandom, getRandomInt, daysUntil } from './common/fn'
 
 import { Command, GlobalVariable, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module, CommandTrigger, Bot } from './types'
 import { User } from './services/Users'
@@ -220,6 +220,18 @@ export const doReplacements = async (
           return ''
         }
         return rawCmd.args.slice(from, to + 1).join(' ')
+      },
+    },
+    {
+      regex: /\$daysuntil\("([^"]+)"\)/g,
+      replacer: async (_m0: string, m1: string): Promise<string> => {
+        return daysUntil(m1, '{days}', '{days}', '{days}', '???')
+      },
+    },
+    {
+      regex: /\$daysuntil\("([^"]+)",\s*?"([^"]*)"\s*,\s*?"([^"]*)"\s*,\s*?"([^"]*)"\s*\)/g,
+      replacer: async (_m0: string, m1: string, m2: string, m3: string, m4: string): Promise<string> => {
+        return daysUntil(m1, m2, m3, m4, '???')
       },
     },
     {

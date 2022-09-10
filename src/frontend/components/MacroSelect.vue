@@ -66,6 +66,14 @@ export default defineComponent({
         value: "$rand(1,100)",
         title: "Random number between (inclusive) 1 and 100",
       },
+      {
+        value: "$daysuntil(\"2023-12-24\")",
+        title: "Days until a specified date in the format YYYY-MM-DD.",
+      },
+      {
+        value: "$daysuntil(\"2023-12-24\", \"{days} days left\", \"One day left\", \"It is today\")",
+        title: "Days until a specified date in the format YYYY-MM-DD, with more control over output.",
+      },
       { value: "$user.name", title: "Name of user who executed the command" },
       {
         value: "$user.profile_image_url",
