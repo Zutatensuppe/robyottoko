@@ -173,6 +173,10 @@ input[type="color"] {
     max-height: 300px;
     overflow-y: scroll;
     overscroll-behavior: contain;
+
+    code {
+      white-space: normal;
+    }
   }
 }
 

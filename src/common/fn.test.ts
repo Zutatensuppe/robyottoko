@@ -4,6 +4,7 @@ import {
   arraySwap,
   calculateOptimalSubtitleDisplayTimeMs,
   clamp,
+  daysUntil,
   toNumberUnitString,
   humanDuration,
   parseHumanDuration,
@@ -15,6 +16,7 @@ import {
   MS,
   getProp,
   withoutLeading,
+  pad,
 } from './fn'
 
 test.each`
@@ -307,6 +309,43 @@ describe('withoutLeading', () => {
     },
   ])('$_name', ({ _name, string, prefix, expected }) => {
     const actual = withoutLeading(string, prefix)
+    expect(actual).toBe(expected)
+  })
+})
+
+describe('daysUntil', () => {
+  const dateStr = (date: Date) => `${pad(date.getFullYear(), '0000')}-${pad(date.getMonth() + 1, '00')}-${pad(date.getDate(), '00')}`
+  const now = new Date()
+  test.each([
+    {
+      _name: '2 days ago',
+      date: dateStr(new Date(now.getTime() - 2 * DAY)),
+      expected: '-2 days until XXX',
+    },
+    {
+      _name: 'today',
+      date: dateStr(now),
+      expected: 'Today is XXX',
+    },
+    {
+      _name: 'in 1 day',
+      date: dateStr(new Date(now.getTime() + 1 * DAY)),
+      expected: '1 day until XXX',
+    },
+    {
+      _name: 'invalid date',
+      date: 'bla',
+      expected: '???',
+    },
+  ])('$_name', ({ _name, date, expected }) => {
+    console.log(date)
+    const actual = daysUntil(
+      date,
+      '{days} days until XXX',
+      '{days} day until XXX',
+      'Today is XXX',
+      '???',
+    )
     expect(actual).toBe(expected)
   })
 })

@@ -252,6 +252,8 @@ const doDummyReplacements = (text: string, str: string) => {
     // regexes must match the ones in src/fn.ts doReplaces function
     /\$args(?:\((\d*)(:?)(\d*)\))?/g,
     /\$rand\(\s*(\d+)?\s*,\s*?(\d+)?\s*\)/g,
+    /\$daysuntil\("([^"]+)"\)/g,
+    /\$daysuntil\("([^"]+)",\s*?"([^"]*)"\s*,\s*?"([^"]*)"\s*,\s*?"([^"]*)"\s*\)/g,
     /\$var\(([^)]+)\)/g,
     /\$bot\.(version|date|website|github|features)/g,
     /\$user(?:\(([^)]+)\)|())\.(name|profile_image_url|recent_clip_url|last_stream_category)/g,
@@ -391,10 +393,41 @@ export const getRandom = <T>(array: T[]): T => {
   return array[getRandomInt(0, array.length - 1)]
 }
 
+export const daysUntil = (
+  s: string,
+  templateN: string,
+  template1: string,
+  template0: string,
+  templateErr: string,
+): string => {
+  const date00 = (date: Date) => new Date(`${pad(date.getFullYear(), '0000')}-${pad(date.getMonth() + 1, '00')}-${pad(date.getDate(), '00')}`)
+  try {
+    const date = new Date(s)
+    if (isNaN(date.getTime())) {
+      return templateErr
+    }
+    const now = new Date()
+    const diffMs = date00(date).getTime() - date00(now).getTime()
+    const days = Math.ceil(diffMs / 1000 / 60 / 60 / 24)
+    let template = '{days}'
+    if (days === 0) {
+      template = template0
+    } else if (days === 1) {
+      template = template1
+    } else {
+      template = templateN
+    }
+    return template.replace('{days}', `${days}`)
+  } catch (e) {
+    return templateErr
+  }
+}
+
 export default {
   arrayMove,
   arraySwap,
   clamp,
+  daysUntil,
   doDummyReplacements,
   getRandom,
   getRandomInt,
