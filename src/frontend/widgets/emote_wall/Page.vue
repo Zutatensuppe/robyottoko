@@ -1,6 +1,5 @@
 <template>
   <div class="emote-wall">
-    {{ emotes.length }}
     <img
       v-for="(emote,idx) in activeEmotes"
       :key="idx"
