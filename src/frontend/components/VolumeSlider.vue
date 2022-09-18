@@ -1,5 +1,5 @@
 <template>
-  <slider
+  <slider-input
     v-model="volume"
     class="volume-slider"
     icon-left="fa-volume-down"
