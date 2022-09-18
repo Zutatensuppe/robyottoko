@@ -20,6 +20,26 @@ export const default_admin_settings = (): GeneralModuleAdminSettings => ({
   autocommands: [],
 })
 
+export enum EMOTE_DISPLAY_FN {
+  BALLOON = 'balloon',
+  BOUNCY = 'bouncy',
+  EXPLODE = 'explode',
+  FLOATING_SPACE = 'floatingSpace',
+  FOUNTAIN = 'fountain',
+  RAIN = 'rain',
+  RANDOM_BEZIER = 'randomBezier',
+}
+
+export interface GeneralModuleEmotesEventData {
+  displayFn: {
+    fn: EMOTE_DISPLAY_FN,
+    args: string[]
+  }[]
+  emotes: {
+    url: string
+  }[]
+}
+
 export interface GeneralModuleWsEventData {
   commands: Command[]
   settings: GeneralModuleSettings

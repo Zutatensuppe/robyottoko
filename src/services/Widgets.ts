@@ -31,6 +31,13 @@ const widgets: WidgetDefinition[] = [
     pub: false,
   },
   {
+    type: WIDGET_TYPE.EMOTE_WALL,
+    module: MODULE_NAME.GENERAL,
+    title: 'Emote Wall',
+    hint: 'Browser source, or open in browser and capture window',
+    pub: false,
+  },
+  {
     type: WIDGET_TYPE.SPEECH_TO_TEXT_CONTROL,
     module: MODULE_NAME.SPEECH_TO_TEXT,
     title: 'Speech-to-Text',

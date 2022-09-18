@@ -10,8 +10,9 @@ import {
   parseCommandFromTriggerAndMessage,
   parseISO8601Duration,
   safeFileName,
+  extractEmotes,
 } from './fn'
-import { Command, CommandTrigger } from './types'
+import { ChatMessageContext, Command, CommandTrigger } from './types'
 
 test('accentFolded', () => {
   const actual = accentFolded('Błogosławieni Miłosierni (Krysiek Remix)')
@@ -323,5 +324,64 @@ describe('fn.safeFileName', () => {
   ])('$_name', ({ _name, string, expected }) => {
     const actual = safeFileName(string)
     expect(actual).toBe(expected)
+  })
+})
+
+describe('fn.extractEmotes', () => {
+  test.each([
+    {
+      _name: 'no emotes',
+      ctx: {
+        msg: 'lalahdlfadofho  sadf ',
+        context: {},
+      },
+      expected: []
+    },
+    {
+      _name: 'unicode emotes 1',
+      ctx: {
+        msg: '👩‍⚕️',
+        context: {},
+      },
+      expected: [
+        {
+          url: 'https://twemoji.maxcdn.com/v/14.0.2/72x72/1f469-200d-2695-fe0f.png',
+        },
+      ],
+    },
+    {
+      _name: 'unicode emotes 2',
+      ctx: {
+        msg: ' 👨‍👩‍👧‍👦 ',
+        context: {},
+      },
+      expected: [
+        {
+          url: 'https://twemoji.maxcdn.com/v/14.0.2/72x72/1f468-200d-1f469-200d-1f467-200d-1f466.png',
+        },
+      ],
+    },
+    {
+      _name: 'twitch emotes',
+      ctx: {
+        msg: 'blub bla bla',
+        context: {
+          emotes: {
+            emotesv2_6087b156a30f4741a1d96acdc39e1905: [ '0-9', '10-19' ],
+          },
+        },
+      },
+      expected: [
+        {
+          url: 'https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_6087b156a30f4741a1d96acdc39e1905/default/dark/2.0',
+        },
+        {
+          url: 'https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_6087b156a30f4741a1d96acdc39e1905/default/dark/2.0',
+        },
+      ],
+    },
+  ])('$_name', ({ _name, ctx, expected }) => {
+    const actual = extractEmotes(ctx as ChatMessageContext)
+    expect(actual).toStrictEqual(expected)
   })
 })

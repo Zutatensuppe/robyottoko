@@ -229,6 +229,8 @@ export interface TwitchChatContext {
   badges: {
     broadcaster?: string
   }
+  // map of 'id' => position(s) in message, or null (or undefined for simplicity)
+  emotes?: Record<string, string[]> | null
   // incomplete
 }
 
@@ -509,6 +511,7 @@ export enum MODULE_NAME {
 export enum WIDGET_TYPE {
   SR = 'sr',
   MEDIA = 'media',
+  EMOTE_WALL = 'emote_wall',
   SPEECH_TO_TEXT_CONTROL = 'speech-to-text',
   SPEECH_TO_TEXT_RECEIVE = 'speech-to-text_receive',
   AVATAR_CONTROL = 'avatar',

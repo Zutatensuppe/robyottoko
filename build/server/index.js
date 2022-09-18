@@ -850,8 +850,26 @@ const determineNewVolume = (input, currentVal) => {
     }
     return val;
 };
+const extractEmotes = (context) => {
+    const emotes = [];
+    const matches = context.msg.match(/(\p{EPres}|\p{ExtPict})(\u200d(\p{EPres}|\p{ExtPict})\ufe0f?)*/gu);
+    matches?.forEach((m) => {
+        // @ts-ignore
+        const code = [...m].map(e => e.codePointAt(0).toString(16)).join(`-`);
+        emotes.push({ url: `https://twemoji.maxcdn.com/v/14.0.2/72x72/${code}.png` });
+    });
+    if (context.context.emotes) {
+        for (const emoteId in context.context.emotes) {
+            for (let i = 0; i < context.context.emotes[emoteId].length; i++) {
+                emotes.push({ url: `https://static-cdn.jtvnw.net/emoticons/v2/${emoteId}/default/dark/2.0` });
+            }
+        }
+    }
+    return emotes;
+};
 var fn = {
     applyVariableChanges,
+    extractEmotes,
     logger,
     mimeToExt,
     decodeBase64Image,
@@ -1116,6 +1134,7 @@ var WIDGET_TYPE;
 (function (WIDGET_TYPE) {
     WIDGET_TYPE["SR"] = "sr";
     WIDGET_TYPE["MEDIA"] = "media";
+    WIDGET_TYPE["EMOTE_WALL"] = "emote_wall";
     WIDGET_TYPE["SPEECH_TO_TEXT_CONTROL"] = "speech-to-text";
     WIDGET_TYPE["SPEECH_TO_TEXT_RECEIVE"] = "speech-to-text_receive";
     WIDGET_TYPE["AVATAR_CONTROL"] = "avatar";
@@ -1138,6 +1157,13 @@ const widgets = [
         type: WIDGET_TYPE.MEDIA,
         module: MODULE_NAME.GENERAL,
         title: 'Media',
+        hint: 'Browser source, or open in browser and capture window',
+        pub: false,
+    },
+    {
+        type: WIDGET_TYPE.EMOTE_WALL,
+        module: MODULE_NAME.GENERAL,
+        title: 'Emote Wall',
         hint: 'Browser source, or open in browser and capture window',
         pub: false,
     },
@@ -2457,7 +2483,7 @@ class ChannelPointRedeemEventHandler {
             username: data.event.user_login,
             mod: false,
             subscriber: false,
-            badges: {}
+            badges: {},
         };
         const trigger = newRewardRedemptionTrigger(data.event.reward.title);
         const exec = new CommandExecutor();
@@ -4835,6 +4861,17 @@ const dictLookup = (originalCmd, bot, user) => async (ctx) => {
     }
 };
 
+var EMOTE_DISPLAY_FN;
+(function (EMOTE_DISPLAY_FN) {
+    EMOTE_DISPLAY_FN["BALLOON"] = "balloon";
+    EMOTE_DISPLAY_FN["BOUNCY"] = "bouncy";
+    EMOTE_DISPLAY_FN["EXPLODE"] = "explode";
+    EMOTE_DISPLAY_FN["FLOATING_SPACE"] = "floatingSpace";
+    EMOTE_DISPLAY_FN["FOUNTAIN"] = "fountain";
+    EMOTE_DISPLAY_FN["RAIN"] = "rain";
+    EMOTE_DISPLAY_FN["RANDOM_BEZIER"] = "randomBezier";
+})(EMOTE_DISPLAY_FN || (EMOTE_DISPLAY_FN = {}));
+
 const log$6 = logger('setStreamTags.ts');
 const addStreamTags = (originalCmd, bot, user) => async (ctx) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
@@ -5280,10 +5317,31 @@ class GeneralModule {
     getCommands() {
         return this.commands;
     }
-    async onChatMsg(_chatMessageContext) {
+    async onChatMsg(chatMessageContext) {
         this.timers.forEach(t => {
             t.lines++;
         });
+        const emotes = extractEmotes(chatMessageContext);
+        if (emotes) {
+            const data = {
+                // todo: use settings that user has set up
+                displayFn: [
+                    { fn: EMOTE_DISPLAY_FN.BALLOON, args: [], },
+                    { fn: EMOTE_DISPLAY_FN.BOUNCY, args: [], },
+                    { fn: EMOTE_DISPLAY_FN.EXPLODE, args: [], },
+                    { fn: EMOTE_DISPLAY_FN.FLOATING_SPACE, args: [], },
+                    { fn: EMOTE_DISPLAY_FN.FOUNTAIN, args: [], },
+                    { fn: EMOTE_DISPLAY_FN.RAIN, args: [], },
+                    { fn: EMOTE_DISPLAY_FN.RANDOM_BEZIER, args: [], },
+                ],
+                emotes,
+            };
+            // extract emotes and send them to the clients
+            this.bot.getWebSocketServer().notifyAll([this.user.id], 'general', {
+                event: 'emotes',
+                data,
+            });
+        }
     }
 }
 
@@ -7407,9 +7465,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-09-18T15:39:43.429Z",
+    buildDate: "2022-09-18T21:16:10.015Z",
     // @ts-ignore
-    buildVersion: "1.24.1",
+    buildVersion: "1.25.0",
 };
 
 const TABLE = 'robyottoko.chat_log';
