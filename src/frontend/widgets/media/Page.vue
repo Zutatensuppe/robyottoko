@@ -10,8 +10,9 @@ import MediaQueueElement, { MediaQueueElementInstance } from "../MediaQueueEleme
 import util, { WidgetApiData } from "../util";
 import WsClient from "../../WsClient";
 import {
-  GeneralModuleSettings,
   default_settings,
+  GeneralModuleSettings,
+  GeneralModuleWsEventData,
 } from "../../../mod/modules/GeneralModuleCommon";
 import { newMedia } from "../../../common/commands";
 
@@ -47,7 +48,7 @@ export default defineComponent({
   },
   mounted() {
     this.ws = util.wsClient(this.wdata);
-    this.ws.onMessage("init", (data) => {
+    this.ws.onMessage("init", (data: GeneralModuleWsEventData) => {
       this.settings = data.settings;
     });
     this.ws.onMessage("playmedia", (data) => {

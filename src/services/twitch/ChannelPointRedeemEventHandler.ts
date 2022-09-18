@@ -27,7 +27,7 @@ export class ChannelPointRedeemEventHandler {
       username: data.event.user_login,
       mod: false, // no way to tell without further looking up user somehow
       subscriber: false, // unknown
-      badges: {}
+      badges: {},
     }
     const trigger = newRewardRedemptionTrigger(data.event.reward.title)
     const exec = new CommandExecutor()

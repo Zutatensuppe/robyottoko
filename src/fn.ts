@@ -3,7 +3,7 @@ import crypto from 'crypto'
 import xhr from './net/xhr'
 import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, nonce, getRandom, getRandomInt, daysUntil } from './common/fn'
 
-import { Command, GlobalVariable, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module, CommandTrigger, Bot } from './types'
+import { Command, GlobalVariable, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module, CommandTrigger, Bot, ChatMessageContext } from './types'
 import { User } from './services/Users'
 import TwitchHelixClient, { TwitchHelixUserSearchResponseDataEntry } from './services/TwitchHelixClient'
 
@@ -661,8 +661,29 @@ export const determineNewVolume = (
   return val
 }
 
+export const extractEmotes = (context: ChatMessageContext) => {
+  const emotes: {
+    url: string
+  }[] = []
+  const matches = context.msg.match(/(\p{EPres}|\p{ExtPict})(\u200d(\p{EPres}|\p{ExtPict})\ufe0f?)*/gu)
+  matches?.forEach((m: string) => {
+    // @ts-ignore
+    const code = [...m].map(e => e.codePointAt(0).toString(16)).join(`-`)
+    emotes.push({ url: `https://twemoji.maxcdn.com/v/14.0.2/72x72/${code}.png` })
+  })
+  if (context.context.emotes) {
+    for (const emoteId in context.context.emotes) {
+      for (let i = 0; i < context.context.emotes[emoteId].length; i++) {
+        emotes.push({ url: `https://static-cdn.jtvnw.net/emoticons/v2/${emoteId}/default/dark/2.0` })
+      }
+    }
+  }
+  return emotes
+}
+
 export default {
   applyVariableChanges,
+  extractEmotes,
   logger,
   mimeToExt,
   decodeBase64Image,

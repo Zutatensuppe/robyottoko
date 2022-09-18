@@ -2,7 +2,7 @@ import countdown from '../../commands/countdown'
 import madochanCreateWord from '../../commands/madochanCreateWord'
 import randomText from '../../commands/randomText'
 import playMedia from '../../commands/playMedia'
-import fn, { determineNewVolume } from '../../fn'
+import fn, { determineNewVolume, extractEmotes } from '../../fn'
 import { logger, nonce, parseHumanDuration, SECOND } from '../../common/fn'
 import chatters from '../../commands/chatters'
 import { commands as commonCommands, newCommandTrigger } from '../../common/commands'
@@ -17,10 +17,10 @@ import {
   MadochanCommand, MediaVolumeCommand, ChattersCommand,
   RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand,
   CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand,
-  CommandTriggerType, CommandAction, CommandExecutionContext, MODULE_NAME, WIDGET_TYPE,
+  CommandTriggerType, CommandAction, CommandExecutionContext, MODULE_NAME, WIDGET_TYPE, TwitchChatContext,
 } from '../../types'
 import dictLookup from '../../commands/dictLookup'
-import { GeneralModuleAdminSettings, GeneralModuleSettings, GeneralModuleWsEventData, GeneralSaveEventData } from './GeneralModuleCommon'
+import { EMOTE_DISPLAY_FN, GeneralModuleAdminSettings, GeneralModuleEmotesEventData, GeneralModuleSettings, GeneralModuleWsEventData, GeneralSaveEventData } from './GeneralModuleCommon'
 import addStreamTags from '../../commands/addStreamTags'
 import removeStreamTags from '../../commands/removeStreamTags'
 
@@ -420,10 +420,32 @@ class GeneralModule implements Module {
     return this.commands
   }
 
-  async onChatMsg(_chatMessageContext: ChatMessageContext) {
+  async onChatMsg(chatMessageContext: ChatMessageContext) {
     this.timers.forEach(t => {
       t.lines++
     })
+
+    const emotes = extractEmotes(chatMessageContext)
+    if (emotes) {
+      const data: GeneralModuleEmotesEventData = {
+        // todo: use settings that user has set up
+        displayFn: [
+          { fn: EMOTE_DISPLAY_FN.BALLOON, args: [], },
+          { fn: EMOTE_DISPLAY_FN.BOUNCY, args: [], },
+          { fn: EMOTE_DISPLAY_FN.EXPLODE, args: [], },
+          { fn: EMOTE_DISPLAY_FN.FLOATING_SPACE, args: [], },
+          { fn: EMOTE_DISPLAY_FN.FOUNTAIN, args: [], },
+          { fn: EMOTE_DISPLAY_FN.RAIN, args: [], },
+          { fn: EMOTE_DISPLAY_FN.RANDOM_BEZIER, args: [], },
+        ],
+        emotes,
+      }
+      // extract emotes and send them to the clients
+      this.bot.getWebSocketServer().notifyAll([this.user.id], 'general', {
+        event: 'emotes',
+        data,
+      })
+    }
   }
 }
 
