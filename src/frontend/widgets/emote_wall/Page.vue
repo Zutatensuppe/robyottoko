@@ -11,6 +11,8 @@
   </div>
 </template>
 <script setup lang="ts">
+// @ts-nocheck
+// nocheck because import scss file doesnt work otherwise :(
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import {
   default_settings,
@@ -22,12 +24,10 @@ import {
 import util, { WidgetApiData } from "../util";
 import WsClient from "../../WsClient";
 import { getRandom, getRandomInt } from "../../../common/fn";
-import { number } from "yargs";
 
-// @ts-ignore
 import("./main.scss");
 
-let ws: WsClient | null = null
+let ws: WsClient | null = 42
 
 const props = defineProps<{
   wdata: WidgetApiData,
