@@ -22,6 +22,7 @@ import {
 import util, { WidgetApiData } from "../util";
 import WsClient from "../../WsClient";
 import { getRandom, getRandomInt } from "../../../common/fn";
+import { number } from "yargs";
 
 // @ts-ignore
 import("./main.scss");
@@ -71,7 +72,12 @@ const frame = () => {
 
 raf(frame)
 
-const bezier = (t, p0, p1, p2, p3) => {
+interface Point {
+  x: number
+  y: number
+}
+
+const bezier = (t: number, p0: Point, p1: Point, p2: Point, p3: Point) => {
   var cX = 3 * (p1.x - p0.x),
       bX = 3 * (p2.x - p1.x) - cX,
       aX = p3.x - p0.x - cX - bX;
