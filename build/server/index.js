@@ -3129,6 +3129,29 @@ const createRouter$2 = (bot) => {
         const userNames = await getChatters(bot.getDb(), channelId, dateSince);
         res.status(200).send({ ok: true, data: { chatters: userNames, since: dateSince } });
     });
+    router.get('/drawcast/images', async (req, res) => {
+        if (!req.query.apiKey) {
+            res.status(403).send({ ok: false, error: 'api key missing' });
+            return;
+        }
+        const apiKey = String(req.query.apiKey);
+        const t = await bot.getTokens().getByTokenAndType(apiKey, TokenType.API_KEY);
+        if (!t) {
+            res.status(403).send({ ok: false, error: 'invalid api key' });
+            return;
+        }
+        const user = await bot.getUsers().getById(t.user_id);
+        if (!user) {
+            res.status(400).send({ ok: false, error: 'user_not_found' });
+            return;
+        }
+        const drawcastModule = bot.getModuleManager().get(user.id, 'drawcast');
+        if (!drawcastModule) {
+            res.status(400).send({ ok: false, error: 'module_not_found' });
+            return;
+        }
+        res.status(200).send({ ok: true, data: { images: drawcastModule.getImages() } });
+    });
     return router;
 };
 
@@ -7038,10 +7061,13 @@ class DrawcastModule {
         return {
             get: {
                 '/api/drawcast/all-images/': async (_req, res, _next) => {
-                    res.send(this.data.images);
+                    res.send(this.getImages());
                 },
             },
         };
+    }
+    getImages() {
+        return this.data.images;
     }
     async drawUrl() {
         return await this.bot.getWidgets().getPublicWidgetUrl(WIDGET_TYPE.DRAWCAST_DRAW, this.user.id);
@@ -7465,9 +7491,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-09-18T21:21:36.521Z",
+    buildDate: "2022-09-19T07:14:07.847Z",
     // @ts-ignore
-    buildVersion: "1.25.0",
+    buildVersion: "1.25.1",
 };
 
 const TABLE = 'robyottoko.chat_log';
