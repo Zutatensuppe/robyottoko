@@ -81,10 +81,14 @@ class DrawcastModule implements Module {
     return {
       get: {
         '/api/drawcast/all-images/': async (_req: any, res: Response, _next: NextFunction) => {
-          res.send(this.data.images)
+          res.send(this.getImages())
         },
       },
     }
+  }
+
+  getImages() {
+    return this.data.images
   }
 
   async drawUrl(): Promise<string> {
