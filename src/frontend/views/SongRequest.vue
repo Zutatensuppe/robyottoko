@@ -405,20 +405,20 @@ export default defineComponent({
         this.globalVariables = data.globalVariables;
         this.channelPointsCustomRewards = data.channelPointsCustomRewards;
       });
-      this.ws.onMessage(["pause"], (data: SongrequestModuleWsEventData) => {
+      this.ws.onMessage(["pause"], (_data: SongrequestModuleWsEventData) => {
         if (this.player.playing()) {
           this.pause();
         }
       });
-      this.ws.onMessage(["unpause"], (data: SongrequestModuleWsEventData) => {
+      this.ws.onMessage(["unpause"], (_data: SongrequestModuleWsEventData) => {
         if (!this.player.playing()) {
           this.unpause();
         }
       });
-      this.ws.onMessage(["loop"], (data: SongrequestModuleWsEventData) => {
+      this.ws.onMessage(["loop"], (_data: SongrequestModuleWsEventData) => {
         this.player.setLoop(true);
       });
-      this.ws.onMessage(["noloop"], (data: SongrequestModuleWsEventData) => {
+      this.ws.onMessage(["noloop"], (_data: SongrequestModuleWsEventData) => {
         this.player.setLoop(false);
       });
       this.ws.onMessage(

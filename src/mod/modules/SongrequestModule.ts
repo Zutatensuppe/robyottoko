@@ -1,4 +1,4 @@
-import fn, { determineNewVolume, findIdxFuzzy } from '../../fn'
+import fn, { determineNewVolume, findIdxFuzzy, getChannelPointsCustomRewards } from '../../fn'
 import { shuffle, arrayMove, logger, humanDuration, parseHumanDuration, nonce } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
 import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
@@ -261,26 +261,10 @@ class SongrequestModule implements Module {
     this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, await this.wsdata(eventName))
   }
 
-  async _channelPointsCustomRewards(): Promise<Record<string, string[]>> {
-    const helixClient = this.bot.getUserTwitchClientManager(this.user).getHelixClient()
-    if (!helixClient) {
-      return {}
-    }
-    const twitchChannels = await this.bot.getTwitchChannels().allByUserId(this.user.id)
-    if (!twitchChannels) {
-      return {}
-    }
-    return await helixClient.getAllChannelPointsCustomRewards(
-      twitchChannels,
-      this.bot,
-      this.user
-    )
-  }
-
   getWsEvents() {
     return {
       'conn': async (ws: Socket) => {
-        this.channelPointsCustomRewards = await this._channelPointsCustomRewards()
+        this.channelPointsCustomRewards = await getChannelPointsCustomRewards(this.bot, this.user)
         await this.updateClient('init', ws)
       },
       'play': async (_ws: Socket, { id }: { id: number }) => {
