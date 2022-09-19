@@ -6,6 +6,7 @@ import { TokenType } from '../../../../services/Tokens'
 import { Bot } from '../../../../types'
 import TwitchHelixClient from '../../../../services/TwitchHelixClient'
 import { getChatters } from '../../../../services/Chatters'
+import DrawcastModule from '../../../../mod/modules/DrawcastModule'
 
 export const createRouter = (
   bot: Bot,
@@ -63,5 +64,31 @@ export const createRouter = (
     const userNames = await getChatters(bot.getDb(), channelId, dateSince)
     res.status(200).send({ ok: true, data: { chatters: userNames, since: dateSince } })
   })
+
+  router.get('/drawcast/images', async (req, res: Response) => {
+    if (!req.query.apiKey) {
+      res.status(403).send({ ok: false, error: 'api key missing' })
+      return
+    }
+    const apiKey = String(req.query.apiKey)
+    const t = await bot.getTokens().getByTokenAndType(apiKey, TokenType.API_KEY)
+    if (!t) {
+      res.status(403).send({ ok: false, error: 'invalid api key' })
+      return
+    }
+    const user = await bot.getUsers().getById(t.user_id)
+    if (!user) {
+      res.status(400).send({ ok: false, error: 'user_not_found' })
+      return
+    }
+    const drawcastModule = bot.getModuleManager().get(user.id, 'drawcast') as (DrawcastModule | null)
+    if (!drawcastModule) {
+      res.status(400).send({ ok: false, error: 'module_not_found' })
+      return
+    }
+
+    res.status(200).send({ok: true, data: { images: drawcastModule.getImages() }})
+  })
+
   return router
 }
