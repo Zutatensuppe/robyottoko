@@ -680,7 +680,12 @@ export default defineComponent({
       this.color = this.palette[0];
       this.images = data.images.map((image) => image.path);
 
-      if (this.images.length > 0 && data.settings.autofillLatest) {
+      if (
+        this.images.length > 0
+        && data.settings.autofillLatest
+        && this.stack.length === 0
+        && !this.drawing
+      ) {
         this.modify(this.images[0]);
       }
 
@@ -750,6 +755,7 @@ export default defineComponent({
         }
       }
     );
+
     this.ws.connect();
 
     window.addEventListener("mousemove", this.mousemove);
