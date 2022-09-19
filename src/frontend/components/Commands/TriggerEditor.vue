@@ -12,7 +12,7 @@
             type="radio"
             class="checkbox mr-1"
             :value="'alltime'"
-            @update:modelValue="emitUpdate"
+            @input="emitUpdate"
           >
           Alltime
         </label>
@@ -22,7 +22,7 @@
             type="radio"
             class="checkbox mr-1"
             :value="'stream'"
-            @update:modelValue="emitUpdate"
+            @input="emitUpdate"
           >
           Current Stream
         </label>
@@ -50,7 +50,7 @@
             'has-text-danger-dark': !value.data.command,
           }"
           type="text"
-          @update:modelValue="emitUpdate"
+          @input="emitUpdate"
         >
         <span class="icon is-small is-left">
           <i class="fa fa-comments-o" />
@@ -65,7 +65,7 @@
             v-model="value.data.commandExact"
             type="checkbox"
             class="checkbox mr-1"
-            @update:modelValue="emitUpdate"
+            @input="emitUpdate"
           >
           <span class="is-small is-left">exact</span>
         </label>
@@ -122,11 +122,10 @@
       <div class="timer-trigger-inner">
         <label class="mr-1">Messages ≥</label>
         <div class="control has-icons-left mr-1">
-          <input
+          <IntegerInput
             v-model="value.data.minLines"
-            class="input is-small"
-            @update:modelValue="emitUpdate"
-          >
+            @update:model-value="emitUpdate"
+          />
           <span class="icon is-small is-left">
             <i class="fa fa-comments-o" />
           </span>
@@ -221,78 +220,63 @@
     </div>
   </div>
 </template>
-<script lang="ts">
-import { defineComponent, PropType } from "vue";
-import { CommandTrigger } from "../../../types";
+<script setup lang="ts">
+import { computed, ref, watch } from "vue";
+import { CommandTrigger, CommandTriggerType } from "../../../types";
+import IntegerInput from "../IntegerInput.vue";
 
-export default defineComponent({
-  props: {
-    modelValue: {
-      type: Object as PropType<CommandTrigger>,
-      required: true,
-    },
-    removable: {
-      type: Boolean,
-      required: true,
-    },
-    channelPointsCustomRewards: {
-      type: Object as PropType<Record<string, string[]>>,
-      required: true,
-    },
+const props = defineProps<{
+  modelValue: CommandTrigger,
+  removable: boolean,
+  channelPointsCustomRewards: Record<string, string[]>,
+}>()
+
+const emit = defineEmits(['update:modelValue', 'remove'])
+
+const value = ref<CommandTrigger>({
+  type: "" as CommandTriggerType,
+  data: {
+    since: "",
+    command: "",
+    commandExact: false,
+    minInterval: 0,
+    minLines: 0,
   },
-  emits: ["update:modelValue", "remove"],
-  data() {
-    return {
-      value: {
-        type: "",
-        data: {
-          since: "",
-          command: "",
-          commandExact: false,
-          minInterval: 0,
-          minLines: 0,
-        },
-      },
-    };
-  },
-  computed: {
-    rewardRedemptionActions() {
-      const actions: { type: string, title: string, label: string }[] = [];
-      for (let key in this.channelPointsCustomRewards) {
-        actions.push(
-          ...this.channelPointsCustomRewards[key].map((r) => ({
-            type: r,
-            title: r,
-            label: r,
-          }))
-        );
-      }
-      actions.sort((a, b) =>
-        a.title === b.title ? 0 : a.title < b.title ? -1 : 1
-      );
-      return actions;
-    },
-  },
-  watch: {
-    modelValue(newValue, oldValue) {
-      this.apply(newValue);
-    },
-  },
-  created() {
-    this.apply(this.modelValue);
-  },
-  methods: {
-    emitRemove() {
-      this.$emit("remove");
-    },
-    emitUpdate() {
-      this.$emit("update:modelValue", this.value);
-    },
-    apply(value: CommandTrigger) {
-      this.value = JSON.parse(JSON.stringify(value));
-    },
-  },
-});
+})
+
+const rewardRedemptionActions = computed(() => {
+  const actions: { type: string, title: string, label: string }[] = [];
+  for (let key in props.channelPointsCustomRewards) {
+    actions.push(
+      ...props.channelPointsCustomRewards[key].map((r) => ({
+        type: r,
+        title: r,
+        label: r,
+      }))
+    );
+  }
+  actions.sort((a, b) =>
+    a.title === b.title ? 0 : a.title < b.title ? -1 : 1
+  );
+  return actions;
+})
+
+const emitRemove = () => {
+  emit("remove");
+}
+const emitUpdate = () => {
+  console.log('update')
+  emit("update:modelValue", value.value);
+}
+const apply = (v: CommandTrigger) => {
+  value.value = JSON.parse(JSON.stringify(v)) as CommandTrigger;
+}
+
+apply(props.modelValue)
+
+watch(() => props.modelValue, (v: CommandTrigger) => {
+  value.value = v
+})
 </script>
 <style lang="scss" scoped>
 @import "../../vars.scss";

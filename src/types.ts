@@ -267,7 +267,7 @@ export interface CommandTrigger {
     minLines: number
 
     // for trigger type "first_chat"
-    since: 'alltime' | 'stream'
+    since: 'alltime' | 'stream' | ''
   }
 }
 export interface CommandVariable {

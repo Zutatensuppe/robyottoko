@@ -110,11 +110,7 @@
           <tr>
             <td><code>settings.recognition.lang</code></td>
             <td>
-              <input
-                v-model="settings.recognition.lang"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.recognition.lang" />
             </td>
             <td>
               <button
@@ -158,11 +154,7 @@
           <tr>
             <td><code>settings.recognition.synthesizeLang</code></td>
             <td>
-              <input
-                v-model="settings.recognition.synthesizeLang"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.recognition.synthesizeLang" />
             </td>
             <td>
               <button
@@ -233,11 +225,7 @@
           <tr>
             <td><code>settings.styles.recognition.strokeWidth</code></td>
             <td>
-              <input
-                v-model="settings.styles.recognition.strokeWidth"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.styles.recognition.strokeWidth" />
             </td>
             <td>
               <button
@@ -283,11 +271,7 @@
           <tr>
             <td><code>settings.styles.recognition.fontFamily</code></td>
             <td>
-              <input
-                v-model="settings.styles.recognition.fontFamily"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.styles.recognition.fontFamily" />
             </td>
             <td>
               <button
@@ -308,11 +292,7 @@
           <tr>
             <td><code>settings.styles.recognition.fontSize</code></td>
             <td>
-              <input
-                v-model="settings.styles.recognition.fontSize"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.styles.recognition.fontSize" />
             </td>
             <td>
               <button
@@ -333,11 +313,7 @@
           <tr>
             <td><code>settings.styles.recognition.fontWeight</code></td>
             <td>
-              <input
-                v-model="settings.styles.recognition.fontWeight"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.styles.recognition.fontWeight" />
             </td>
             <td>
               <button
@@ -346,7 +322,7 @@
                   settings.styles.recognition.fontWeight ===
                     defaultSettings.styles.recognition.fontWeight
                 "
-                @click="settings.styles.weight = defaultSettings.styles.weight"
+                @click="settings.styles.recognition.fontWeight = defaultSettings.styles.recognition.fontWeight"
               >
                 <i class="fa fa-remove" />
               </button>
@@ -411,11 +387,7 @@
           <tr>
             <td><code>settings.translation.synthesizeLang</code></td>
             <td>
-              <input
-                v-model="settings.translation.synthesizeLang"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.translation.synthesizeLang" />
             </td>
             <td>
               <button
@@ -436,11 +408,7 @@
           <tr>
             <td><code>settings.translation.langSrc</code></td>
             <td>
-              <input
-                v-model="settings.translation.langSrc"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.translation.langSrc" />
             </td>
             <td>
               <button
@@ -461,11 +429,7 @@
           <tr>
             <td><code>settings.translation.langDst</code></td>
             <td>
-              <input
-                v-model="settings.translation.langDst"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.translation.langDst" />
             </td>
             <td>
               <button
@@ -511,11 +475,7 @@
           <tr>
             <td><code>settings.styles.translation.strokeWidth</code></td>
             <td>
-              <input
-                v-model="settings.styles.translation.strokeWidth"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.styles.translation.strokeWidth" />
             </td>
             <td>
               <button
@@ -561,11 +521,7 @@
           <tr>
             <td><code>settings.styles.translation.fontFamily</code></td>
             <td>
-              <input
-                v-model="settings.styles.translation.fontFamily"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.styles.translation.fontFamily" />
             </td>
             <td>
               <button
@@ -586,11 +542,7 @@
           <tr>
             <td><code>settings.styles.translation.fontSize</code></td>
             <td>
-              <input
-                v-model="settings.styles.translation.fontSize"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.styles.translation.fontSize" />
             </td>
             <td>
               <button
@@ -611,11 +563,7 @@
           <tr>
             <td><code>settings.styles.translation.fontWeight</code></td>
             <td>
-              <input
-                v-model="settings.styles.translation.fontWeight"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.styles.translation.fontWeight" />
             </td>
             <td>
               <button
@@ -624,7 +572,7 @@
                   settings.styles.translation.fontWeight ===
                     defaultSettings.styles.translation.fontWeight
                 "
-                @click="settings.styles.weight = defaultSettings.styles.weight"
+                @click="settings.styles.translation.fontWeight = defaultSettings.styles.translation.fontWeight"
               >
                 <i class="fa fa-remove" />
               </button>
@@ -675,6 +623,7 @@ import {
   SpeechToTextWsInitData,
 } from "../../mod/modules/SpeechToTextModuleCommon";
 import util from "../util";
+import StringInput from "../components/StringInput.vue";
 
 interface ComponentData {
   unchangedJson: string;
@@ -688,60 +637,61 @@ interface ComponentData {
 }
 
 export default defineComponent({
-  data: (): ComponentData => ({
-    unchangedJson: "{}",
-    changedJson: "{}",
-    settings: default_settings(),
-    defaultSettings: default_settings(),
-    ws: null,
-    inited: false,
-    controlWidgetUrl: '',
-    displayWidgetUrl: '',
-  }),
-  computed: {
-    changed(): boolean {
-      return this.unchangedJson !== this.changedJson;
+    components: { StringInput },
+    data: (): ComponentData => ({
+        unchangedJson: "{}",
+        changedJson: "{}",
+        settings: default_settings(),
+        defaultSettings: default_settings(),
+        ws: null,
+        inited: false,
+        controlWidgetUrl: "",
+        displayWidgetUrl: "",
+    }),
+    computed: {
+        changed(): boolean {
+            return this.unchangedJson !== this.changedJson;
+        },
     },
-  },
-  watch: {
-    settings: {
-      deep: true,
-      handler(ch) {
-        this.changedJson = JSON.stringify(ch);
-      },
+    watch: {
+        settings: {
+            deep: true,
+            handler(ch) {
+                this.changedJson = JSON.stringify(ch);
+            },
+        },
     },
-  },
-  async mounted() {
-    this.ws = util.wsClient("speech-to-text");
-    this.ws.onMessage("init", (data: SpeechToTextWsInitData) => {
-      this.settings = data.settings;
-      this.unchangedJson = JSON.stringify(data.settings);
-      this.controlWidgetUrl = data.controlWidgetUrl
-      this.displayWidgetUrl = data.displayWidgetUrl
-      this.inited = true;
-    });
-    this.ws.connect();
-  },
-  unmounted() {
-    if (this.ws) {
-      this.ws.disconnect();
+    async mounted() {
+        this.ws = util.wsClient("speech-to-text");
+        this.ws.onMessage("init", (data: SpeechToTextWsInitData) => {
+            this.settings = data.settings;
+            this.unchangedJson = JSON.stringify(data.settings);
+            this.controlWidgetUrl = data.controlWidgetUrl;
+            this.displayWidgetUrl = data.displayWidgetUrl;
+            this.inited = true;
+        });
+        this.ws.connect();
+    },
+    unmounted() {
+        if (this.ws) {
+            this.ws.disconnect();
+        }
+    },
+    methods: {
+        sendSave() {
+            if (!this.settings) {
+                console.warn("sendSave: this.settings not initialized");
+                return;
+            }
+            this.sendMsg({ event: "save", settings: this.settings });
+        },
+        sendMsg(data: SpeechToTextSaveEventData) {
+            if (!this.ws) {
+                console.warn("sendMsg: this.ws not initialized");
+                return;
+            }
+            this.ws.send(JSON.stringify(data));
+        },
     }
-  },
-  methods: {
-    sendSave() {
-      if (!this.settings) {
-        console.warn("sendSave: this.settings not initialized");
-        return;
-      }
-      this.sendMsg({ event: "save", settings: this.settings });
-    },
-    sendMsg(data: SpeechToTextSaveEventData) {
-      if (!this.ws) {
-        console.warn("sendMsg: this.ws not initialized");
-        return;
-      }
-      this.ws.send(JSON.stringify(data));
-    },
-  },
 });
 </script>

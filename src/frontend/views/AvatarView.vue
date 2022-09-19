@@ -190,7 +190,7 @@ import WsClient from "../WsClient";
 import hyottokoChan from "./avatar_hyottoko_chan";
 
 interface TabDefinition {
-  tab: string;
+  tab: "settings" | "avatars";
   title: string;
 }
 
