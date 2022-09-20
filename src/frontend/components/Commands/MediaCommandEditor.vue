@@ -73,11 +73,7 @@
                   class="field has-addons"
                 >
                   <div class="control mr-1">
-                    <input
-                      v-model="item.data.widgetIds[idx]"
-                      type="text"
-                      class="input is-small"
-                    >
+                    <StringInput v-model="item.data.widgetIds[idx]" />
                   </div>
                   <a
                     class="button is-small mr-1"
@@ -163,11 +159,7 @@
             <tr v-if="type === 'image' || type === 'image,sound'">
               <td>Image (by URL):</td>
               <td>
-                <input
-                  v-model="item.data.image_url"
-                  type="text"
-                  class="input is-small"
-                >
+                <StringInput v-model="item.data.image_url" />
                 <div>
                   <span
                     class="button is-small"
@@ -201,11 +193,7 @@
                   <tr>
                     <td>Url:</td>
                     <td>
-                      <input
-                        v-model="item.data.video.url"
-                        type="text"
-                        class="input is-small"
-                      >
+                      <StringInput v-model="item.data.video.url" />
                     </td>
                   </tr>
                   <tr>
@@ -253,18 +241,10 @@
                       :key="idx"
                     >
                       <td>
-                        <input
-                          v-model="v.name"
-                          type="text"
-                          class="input is-small"
-                        >
+                        <StringInput v-model="v.name" />
                       </td>
                       <td>
-                        <input
-                          v-model="v.value"
-                          type="text"
-                          class="input is-small"
-                        >
+                        <StringInput v-model="v.value" />
                       </td>
                       <td>
                         <button
@@ -332,11 +312,7 @@
                         </div>
                       </td>
                       <td>
-                        <input
-                          v-model="v.value"
-                          type="text"
-                          class="input is-small"
-                        >
+                        <StringInput v-model="v.value" />
                       </td>
                       <td>
                         <button
@@ -417,6 +393,7 @@ import {
   SoundMediaFile,
 } from "../../../types";
 import { possibleTriggerActions } from "../../../common/triggers";
+import StringInput from "../StringInput.vue";
 
 interface AutocompletableVariable {
   var: CommandVariable | GlobalVariable;
@@ -465,7 +442,7 @@ export default defineComponent({
   emits: ["update:modelValue", "cancel"],
   data: (): ComponentData => ({
     item: null,
-    type: '',
+    type: "",
     variableChangeFocusIdx: -1,
     possiblePermissions: permissions,
   }),
@@ -477,20 +454,18 @@ export default defineComponent({
       return commands[this.item.action].RequiresAccessToken();
     },
     possibleTriggerActions() {
-      return possibleTriggerActions()
+      return possibleTriggerActions();
     },
     valid(): boolean {
       if (!this.item) {
         return false;
       }
-
       // check if all triggers are correct
       for (const trigger of this.item.triggers) {
         if (!isValidTrigger(trigger)) {
           return false;
         }
       }
-
       return true;
     },
     actionDescription(): string {
@@ -521,19 +496,22 @@ export default defineComponent({
     this.item = JSON.parse(JSON.stringify(this.modelValue));
     if (this.item) {
       if (this.item.data.video.url) {
-        this.type = 'video'
-      } else if (this.item.data.sound.file) {
+        this.type = "video";
+      }
+      else if (this.item.data.sound.file) {
         if (this.item.data.image.file || this.item.data.image_url) {
-          this.type = 'image,sound'
-        } else {
-          this.type = 'sound'
+          this.type = "image,sound";
         }
-      } else {
-        this.type = 'image'
+        else {
+          this.type = "sound";
+        }
+      }
+      else {
+        this.type = "image";
       }
     }
     this.$nextTick(() => {
-      const el = this.$el.querySelector('input[type="text"]');
+      const el = this.$el.querySelector("input[type=\"text\"]");
       el.focus();
     });
   },
@@ -543,7 +521,7 @@ export default defineComponent({
         console.warn("addWidgetId: this.item not initialized");
         return;
       }
-      this.item.data.widgetIds.push('');
+      this.item.data.widgetIds.push("");
     },
     addtrigger(trigger: any): void {
       if (!this.item) {
@@ -568,9 +546,7 @@ export default defineComponent({
         console.warn("rmVariableChange: this.item not initialized");
         return;
       }
-      this.item.variableChanges = this.item.variableChanges.filter(
-        (_val: CommandVariableChange, index: number) => index !== idx
-      );
+      this.item.variableChanges = this.item.variableChanges.filter((_val: CommandVariableChange, index: number) => index !== idx);
     },
     onAddVariable(): void {
       if (!this.item) {
@@ -587,9 +563,7 @@ export default defineComponent({
         console.warn("rmVariable: this.item not initialized");
         return;
       }
-      this.item.variables = this.item.variables.filter(
-        (_val: CommandVariable, index: number) => index !== idx
-      );
+      this.item.variables = this.item.variables.filter((_val: CommandVariable, index: number) => index !== idx);
     },
     onSaveClick(): void {
       this.$emit("update:modelValue", this.item);
@@ -622,18 +596,14 @@ export default defineComponent({
         console.warn("rmWidgetId: this.item not initialized");
         return;
       }
-      this.item.data.widgetIds = this.item.data.widgetIds.filter(
-        (_val: string, index: number) => index !== idx
-      );
+      this.item.data.widgetIds = this.item.data.widgetIds.filter((_val: string, index: number) => index !== idx);
     },
     rmtrigger(idx: number): void {
       if (!this.item) {
         console.warn("rmtrigger: this.item not initialized");
         return;
       }
-      this.item.triggers = this.item.triggers.filter(
-        (_val: CommandTrigger, index: number) => index !== idx
-      );
+      this.item.triggers = this.item.triggers.filter((_val: CommandTrigger, index: number) => index !== idx);
     },
     autocompletableVariables(): AutocompletableVariable[] {
       if (!this.item) {
@@ -647,17 +617,16 @@ export default defineComponent({
         };
       });
       this.globalVariables.forEach((globalVar: GlobalVariable) => {
-        if (
-          !variables.find((localVar) => localVar.var.name === globalVar.name)
-        ) {
+        if (!variables.find((localVar) => localVar.var.name === globalVar.name)) {
           variables.push({
             var: globalVar,
             type: "global",
           });
         }
       });
-      return variables
+      return variables;
     },
   },
+  components: { StringInput }
 });
 </script>

@@ -70,11 +70,7 @@
             <tr>
               <td>Bot name:</td>
               <td>
-                <input
-                  v-model="user.tmi_identity_username"
-                  class="input is-small"
-                  type="text"
-                >
+                <StringInput v-model="user.tmi_identity_username" />
               </td>
             </tr>
             <tr>
@@ -90,11 +86,7 @@
             <tr>
               <td>Bot client_id:</td>
               <td>
-                <input
-                  v-model="user.tmi_identity_client_id"
-                  class="input is-small"
-                  type="text"
-                >
+                <StringInput v-model="user.tmi_identity_client_id" />
               </td>
             </tr>
             <tr>
@@ -140,11 +132,7 @@
               :key="idx"
             >
               <td>
-                <input
-                  v-model="channel.channel_name"
-                  class="input is-small"
-                  type="text"
-                >
+                <StringInput v-model="channel.channel_name" />
               </td>
               <td>
                 <checkbox-input
@@ -155,12 +143,10 @@
                 />
               </td>
               <td>
-                <input
+                <StringInput
                   v-if="channel.channel_id"
                   v-model="channel.channel_id"
-                  class="input is-small"
-                  type="text"
-                >
+                />
                 <button
                   v-if="!channel.channel_id"
                   class="button is-small"
@@ -240,6 +226,7 @@
 import { defineComponent } from "vue";
 import { TwitchChannel } from "../../services/TwitchChannels";
 import api from "../api";
+import StringInput from "../components/StringInput.vue";
 
 interface ComponentData {
   unchangedJson: string
@@ -259,6 +246,7 @@ interface ComponentData {
 }
 
 export default defineComponent({
+  components: { StringInput },
   data: (): ComponentData => ({
     unchangedJson: "[]",
     changedJson: "[]",
@@ -312,13 +300,11 @@ export default defineComponent({
       ];
       const loc = document.location;
       const redirectUri = `${loc.protocol}//${loc.host}/twitch/redirect_uri`;
-      return (
-        "https://id.twitch.tv/oauth2/authorize" +
+      return ("https://id.twitch.tv/oauth2/authorize" +
         "?response_type=code" +
         `&client_id=${this.user.tmi_identity_client_id}` +
         `&redirect_uri=${redirectUri}` +
-        `&scope=${scopes.join("+")}`
-      );
+        `&scope=${scopes.join("+")}`);
     },
   },
   watch: {
@@ -341,7 +327,6 @@ export default defineComponent({
       this.$router.push({ name: "login" });
       return;
     }
-
     const data = await res.json();
     this.user = data.user;
     this.twitch_channels = data.twitchChannels;
@@ -349,7 +334,7 @@ export default defineComponent({
   },
   methods: {
     openAuth() {
-      window.open(this.accessTokenLink)
+      window.open(this.accessTokenLink);
     },
     setChanged() {
       this.changedJson = JSON.stringify({
@@ -365,9 +350,7 @@ export default defineComponent({
       this.changedJson = this.unchangedJson;
     },
     rmchannel(idx: number) {
-      this.twitch_channels = this.twitch_channels.filter(
-        (val, index) => index !== idx
-      );
+      this.twitch_channels = this.twitch_channels.filter((val, index) => index !== idx);
     },
     addchannel() {
       this.twitch_channels.push({
@@ -377,12 +360,10 @@ export default defineComponent({
         channel_name: "",
         access_token: "",
         is_streaming: false,
-      })
+      });
     },
     async loadid(idx: number) {
-      this.twitch_channels[idx].channel_id = await this.getTwitchUserIdByName(
-        this.twitch_channels[idx].channel_name
-      );
+      this.twitch_channels[idx].channel_id = await this.getTwitchUserIdByName(this.twitch_channels[idx].channel_name);
     },
     async getTwitchUserIdByName(name: string): Promise<string> {
       const data = {
@@ -394,7 +375,8 @@ export default defineComponent({
       try {
         const json = await res.json();
         return `${json.id}`;
-      } catch (e) {
+      }
+      catch (e) {
         // TODO: display error message
         return "";
       }
@@ -406,6 +388,6 @@ export default defineComponent({
       });
       this.setUnchanged();
     },
-  },
+  }
 });
 </script>

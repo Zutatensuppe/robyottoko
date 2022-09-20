@@ -29,12 +29,10 @@
       class="avatar-animation-frame-upload"
       @uploaded="onUploaded"
     />
-    <input
+    <IntegerInput
       v-model="value.duration"
-      class="input is-small"
-      type="text"
       @update:modelValue="onDurationChange"
-    >
+    />
   </span>
 </template>
 
@@ -44,6 +42,7 @@ import { AvatarModuleAnimationFrameDefinition } from "../../../mod/modules/Avata
 import { UploadedFile } from "../../../types";
 import { getFileFromDropEvent } from "../../util";
 import { UploadInstance } from "../UploadInput.vue";
+import IntegerInput from "../IntegerInput.vue";
 
 const props = defineProps({
   modelValue: { /* type: Object as PropType<MediaFile | null>, */ required: true },

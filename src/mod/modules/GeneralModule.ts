@@ -2,7 +2,7 @@ import countdown from '../../commands/countdown'
 import madochanCreateWord from '../../commands/madochanCreateWord'
 import randomText from '../../commands/randomText'
 import playMedia from '../../commands/playMedia'
-import fn, { determineNewVolume, extractEmotes } from '../../fn'
+import fn, { determineNewVolume, extractEmotes, getChannelPointsCustomRewards } from '../../fn'
 import { logger, nonce, parseHumanDuration, SECOND } from '../../common/fn'
 import chatters from '../../commands/chatters'
 import { commands as commonCommands, newCommandTrigger } from '../../common/commands'
@@ -328,15 +328,6 @@ class GeneralModule implements Module {
     return {}
   }
 
-  async _channelPointsCustomRewards(): Promise<Record<string, string[]>> {
-    const helixClient = this.bot.getUserTwitchClientManager(this.user).getHelixClient()
-    if (helixClient) {
-      const twitchChannels = await this.bot.getTwitchChannels().allByUserId(this.user.id)
-      return await helixClient.getAllChannelPointsCustomRewards(twitchChannels, this.bot, this.user)
-    }
-    return {}
-  }
-
   async wsdata(eventName: string): Promise<WsData> {
     return {
       event: eventName,
@@ -374,7 +365,7 @@ class GeneralModule implements Module {
   getWsEvents() {
     return {
       'conn': async (ws: Socket) => {
-        this.channelPointsCustomRewards = await this._channelPointsCustomRewards()
+        this.channelPointsCustomRewards = await getChannelPointsCustomRewards(this.bot, this.user)
         await this.updateClient('init', ws)
       },
       'save': async (_ws: Socket, data: GeneralSaveEventData) => {

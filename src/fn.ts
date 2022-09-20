@@ -681,6 +681,25 @@ export const extractEmotes = (context: ChatMessageContext) => {
   return emotes
 }
 
+export const getChannelPointsCustomRewards = async (
+  bot: Bot,
+  user: User
+): Promise<Record<string, string[]>> => {
+  const helixClient = bot.getUserTwitchClientManager(user).getHelixClient()
+  if (!helixClient) {
+    return {}
+  }
+  const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id)
+  if (!twitchChannels) {
+    return {}
+  }
+  return await helixClient.getAllChannelPointsCustomRewards(
+    twitchChannels,
+    bot,
+    user
+  )
+}
+
 export default {
   applyVariableChanges,
   extractEmotes,
@@ -702,4 +721,5 @@ export default {
   findIdxBySearchExactPart,
   findIdxBySearchInOrder,
   findIdxBySearch,
+  getChannelPointsCustomRewards,
 }

@@ -49,18 +49,10 @@
               :key="idx"
             >
               <td>
-                <input
-                  v-model="v.name"
-                  type="text"
-                  class="input is-small"
-                >
+                <StringInput v-model="v.name" />
               </td>
               <td>
-                <input
-                  v-model="v.value"
-                  type="text"
-                  class="input is-small"
-                >
+                <StringInput v-model="v.value" />
               </td>
               <td>
                 <doubleclick-button
@@ -85,6 +77,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { GlobalVariable } from "../../types";
 import api from "../api";
+import StringInput from "../components/StringInput.vue";
 
 const unchangedJson = ref<string>('[]')
 const changedJson = ref<string>('[]')

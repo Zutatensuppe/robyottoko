@@ -867,6 +867,17 @@ const extractEmotes = (context) => {
     }
     return emotes;
 };
+const getChannelPointsCustomRewards = async (bot, user) => {
+    const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
+    if (!helixClient) {
+        return {};
+    }
+    const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id);
+    if (!twitchChannels) {
+        return {};
+    }
+    return await helixClient.getAllChannelPointsCustomRewards(twitchChannels, bot, user);
+};
 var fn = {
     applyVariableChanges,
     extractEmotes,
@@ -888,6 +899,7 @@ var fn = {
     findIdxBySearchExactPart,
     findIdxBySearchInOrder,
     findIdxBySearch,
+    getChannelPointsCustomRewards,
 };
 
 const TABLE$7 = 'robyottoko.token';
@@ -5261,14 +5273,6 @@ class GeneralModule {
     getRoutes() {
         return {};
     }
-    async _channelPointsCustomRewards() {
-        const helixClient = this.bot.getUserTwitchClientManager(this.user).getHelixClient();
-        if (helixClient) {
-            const twitchChannels = await this.bot.getTwitchChannels().allByUserId(this.user.id);
-            return await helixClient.getAllChannelPointsCustomRewards(twitchChannels, this.bot, this.user);
-        }
-        return {};
-    }
     async wsdata(eventName) {
         return {
             event: eventName,
@@ -5301,7 +5305,7 @@ class GeneralModule {
     getWsEvents() {
         return {
             'conn': async (ws) => {
-                this.channelPointsCustomRewards = await this._channelPointsCustomRewards();
+                this.channelPointsCustomRewards = await getChannelPointsCustomRewards(this.bot, this.user);
                 await this.updateClient('init', ws);
             },
             'save': async (_ws, data) => {
@@ -5714,21 +5718,10 @@ class SongrequestModule {
     async updateClients(eventName) {
         this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, await this.wsdata(eventName));
     }
-    async _channelPointsCustomRewards() {
-        const helixClient = this.bot.getUserTwitchClientManager(this.user).getHelixClient();
-        if (!helixClient) {
-            return {};
-        }
-        const twitchChannels = await this.bot.getTwitchChannels().allByUserId(this.user.id);
-        if (!twitchChannels) {
-            return {};
-        }
-        return await helixClient.getAllChannelPointsCustomRewards(twitchChannels, this.bot, this.user);
-    }
     getWsEvents() {
         return {
             'conn': async (ws) => {
-                this.channelPointsCustomRewards = await this._channelPointsCustomRewards();
+                this.channelPointsCustomRewards = await getChannelPointsCustomRewards(this.bot, this.user);
                 await this.updateClient('init', ws);
             },
             'play': async (_ws, { id }) => {
@@ -7491,9 +7484,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-09-19T16:55:18.299Z",
+    buildDate: "2022-09-20T19:14:19.886Z",
     // @ts-ignore
-    buildVersion: "1.25.2",
+    buildVersion: "1.25.3",
 };
 
 const TABLE = 'robyottoko.chat_log';

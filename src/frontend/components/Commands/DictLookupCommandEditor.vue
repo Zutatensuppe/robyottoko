@@ -121,18 +121,10 @@
                       :key="idx"
                     >
                       <td>
-                        <input
-                          v-model="v.name"
-                          type="text"
-                          class="input is-small"
-                        >
+                        <StringInput v-model="v.name" />
                       </td>
                       <td>
-                        <input
-                          v-model="v.value"
-                          type="text"
-                          class="input is-small"
-                        >
+                        <StringInput v-model="v.value" />
                       </td>
                       <td>
                         <button
@@ -200,11 +192,7 @@
                         </div>
                       </td>
                       <td>
-                        <input
-                          v-model="v.value"
-                          type="text"
-                          class="input is-small"
-                        >
+                        <StringInput v-model="v.value" />
                       </td>
                       <td>
                         <button
@@ -283,6 +271,7 @@ import {
   GlobalVariable,
 } from "../../../types";
 import { possibleTriggerActions } from "../../../common/triggers";
+import StringInput from "../StringInput.vue";
 
 interface AutocompletableVariable {
   var: CommandVariable | GlobalVariable;
@@ -348,20 +337,18 @@ export default defineComponent({
       return commands[this.item.action].RequiresAccessToken();
     },
     possibleTriggerActions() {
-      return possibleTriggerActions()
+      return possibleTriggerActions();
     },
     valid(): boolean {
       if (!this.item) {
         return false;
       }
-
       // check if all triggers are correct
       for (const trigger of this.item.triggers) {
         if (!isValidTrigger(trigger)) {
           return false;
         }
       }
-
       return true;
     },
     actionDescription(): string {
@@ -391,7 +378,7 @@ export default defineComponent({
   mounted() {
     this.item = JSON.parse(JSON.stringify(this.modelValue));
     this.$nextTick(() => {
-      const el = this.$el.querySelector('input[type="text"]');
+      const el = this.$el.querySelector("input[type=\"text\"]");
       el.focus();
     });
   },
@@ -419,9 +406,7 @@ export default defineComponent({
         console.warn("rmVariableChange: this.item not initialized");
         return;
       }
-      this.item.variableChanges = this.item.variableChanges.filter(
-        (_val: CommandVariableChange, index: number) => index !== idx
-      );
+      this.item.variableChanges = this.item.variableChanges.filter((_val: CommandVariableChange, index: number) => index !== idx);
     },
     onAddVariable(): void {
       if (!this.item) {
@@ -438,9 +423,7 @@ export default defineComponent({
         console.warn("rmVariable: this.item not initialized");
         return;
       }
-      this.item.variables = this.item.variables.filter(
-        (_val: CommandVariable, index: number) => index !== idx
-      );
+      this.item.variables = this.item.variables.filter((_val: CommandVariable, index: number) => index !== idx);
     },
     onSaveClick(): void {
       this.$emit("update:modelValue", this.item);
@@ -459,9 +442,7 @@ export default defineComponent({
         console.warn("rmtrigger: this.item not initialized");
         return;
       }
-      this.item.triggers = this.item.triggers.filter(
-        (_val: CommandTrigger, index: number) => index !== idx
-      );
+      this.item.triggers = this.item.triggers.filter((_val: CommandTrigger, index: number) => index !== idx);
     },
     autocompletableVariables(): AutocompletableVariable[] {
       if (!this.item) {
@@ -475,17 +456,16 @@ export default defineComponent({
         };
       });
       this.globalVariables.forEach((globalVar: GlobalVariable) => {
-        if (
-          !variables.find((localVar) => localVar.var.name === globalVar.name)
-        ) {
+        if (!variables.find((localVar) => localVar.var.name === globalVar.name)) {
           variables.push({
             var: globalVar,
             type: "global",
           });
         }
       });
-      return variables
+      return variables;
     },
   },
+  components: { StringInput }
 });
 </script>

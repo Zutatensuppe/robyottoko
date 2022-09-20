@@ -46,11 +46,7 @@
           <tr>
             <td><code>settings.canvasWidth</code></td>
             <td>
-              <input
-                v-model="settings.canvasWidth"
-                class="input is-small"
-                type="text"
-              >
+              <IntegerInput v-model="settings.canvasWidth" />
             </td>
             <td>
               Width of the drawing area.<br>
@@ -61,11 +57,7 @@
           <tr>
             <td><code>settings.canvasHeight</code></td>
             <td>
-              <input
-                v-model="settings.canvasHeight"
-                class="input is-small"
-                type="text"
-              >
+              <IntegerInput v-model="settings.canvasHeight" />
             </td>
             <td>
               Height of the drawing area.<br>
@@ -76,11 +68,7 @@
           <tr>
             <td><code>settings.displayDuration</code></td>
             <td>
-              <input
-                v-model="settings.displayDuration"
-                class="input is-small"
-                type="text"
-              >
+              <IntegerInput v-model="settings.displayDuration" />
             </td>
             <td>
               The duration in Milliseconds that each drawing will be shown
@@ -194,22 +182,14 @@
           <tr>
             <td><code>settings.submitButtonText</code></td>
             <td>
-              <input
-                v-model="settings.submitButtonText"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.submitButtonText" />
             </td>
             <td />
           </tr>
           <tr>
             <td><code>settings.submitConfirm</code></td>
             <td>
-              <input
-                v-model="settings.submitConfirm"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.submitConfirm" />
             </td>
             <td>
               Leave empty if no confirm is required by user before sending.
@@ -218,11 +198,7 @@
           <tr>
             <td><code>settings.recentImagesTitle</code></td>
             <td>
-              <input
-                v-model="settings.recentImagesTitle"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.recentImagesTitle" />
             </td>
             <td>Title for the recently submitted images gallery.</td>
           </tr>
@@ -344,11 +320,7 @@
                   <tr>
                     <td>Title:</td>
                     <td>
-                      <input
-                        v-model="favoriteList.title"
-                        class="input is-small"
-                        type="text"
-                      >
+                      <StringInput v-model="favoriteList.title" />
                     </td>
                   </tr>
                   <tr>
@@ -443,6 +415,8 @@ import {
 import api from "../api";
 import util from "../util";
 import WsClient from "../WsClient";
+import StringInput from "../components/StringInput.vue";
+import IntegerInput from "../components/IntegerInput.vue";
 
 interface ComponentData {
   unchangedJson: string;
@@ -470,6 +444,7 @@ interface ComponentData {
 }
 
 export default defineComponent({
+  components: { StringInput, IntegerInput },
   data: (): ComponentData => ({
     unchangedJson: "{}",
     changedJson: "{}",
@@ -499,26 +474,18 @@ export default defineComponent({
       return this.unchangedJson !== this.changedJson;
     },
     favoriteSelectionTotalPages() {
-      return (
-        Math.floor(
-          this.favoriteSelection.items.length /
-            this.favoriteSelection.pagination.perPage
-        ) +
+      return (Math.floor(this.favoriteSelection.items.length /
+        this.favoriteSelection.pagination.perPage) +
         (this.favoriteSelection.items.length %
           this.favoriteSelection.pagination.perPage ===
-        0
+          0
           ? 0
-          : 1)
-      );
+          : 1));
     },
     currentFavoriteSelectionItems() {
-      const start =
-        (this.favoriteSelection.pagination.page - 1) *
+      const start = (this.favoriteSelection.pagination.page - 1) *
         this.favoriteSelection.pagination.perPage;
-      return this.favoriteSelection.items.slice(
-        start,
-        start + this.favoriteSelection.pagination.perPage
-      );
+      return this.favoriteSelection.items.slice(start, start + this.favoriteSelection.pagination.perPage);
     },
   },
   watch: {
@@ -537,72 +504,52 @@ export default defineComponent({
       this.drawUrl = data.drawUrl;
       this.controlWidgetUrl = data.controlWidgetUrl;
       this.receiveWidgetUrl = data.receiveWidgetUrl;
-
       const res = await api.getDrawcastAllImages();
       const images = await res.json();
-      this.favoriteSelection.items = images.map(
-        (item: DrawcastImage) => item.path
-      );
-
+      this.favoriteSelection.items = images.map((item: DrawcastImage) => item.path);
       if (this.settings.notificationSound) {
-        this.notificationSoundAudio = new Audio(
-          this.settings.notificationSound.urlpath
-        );
+        this.notificationSoundAudio = new Audio(this.settings.notificationSound.urlpath);
         this.notificationSoundAudio.volume =
-          this.settings.notificationSound.volume / 100.0;
+          this.settings.notificationSound.volume / 100;
       }
-
       this.manualApproval.items = images
         .filter((item: DrawcastImage) => !item.approved)
         .map((item: DrawcastImage) => item.path);
       this.inited = true;
     });
-    this.ws.onMessage(
-      "approved_image_received",
-      (data: { nonce: string; img: string; mayNotify: boolean }) => {
-        this.favoriteSelection.items = this.favoriteSelection.items.filter(
-          (img) => img !== data.img
-        );
-        this.manualApproval.items = this.manualApproval.items.filter(
-          (img) => img !== data.img
-        );
-
-        this.favoriteSelection.items.unshift(data.img);
-        this.favoriteSelection.items = this.favoriteSelection.items.slice();
+    this.ws.onMessage("approved_image_received", (data: {
+      nonce: string;
+      img: string;
+      mayNotify: boolean;
+    }) => {
+      this.favoriteSelection.items = this.favoriteSelection.items.filter((img) => img !== data.img);
+      this.manualApproval.items = this.manualApproval.items.filter((img) => img !== data.img);
+      this.favoriteSelection.items.unshift(data.img);
+      this.favoriteSelection.items = this.favoriteSelection.items.slice();
+    });
+    this.ws.onMessage("denied_image_received", (data: {
+      nonce: string;
+      img: string;
+      mayNotify: boolean;
+    }) => {
+      this.favoriteSelection.items = this.favoriteSelection.items.filter((img) => img !== data.img);
+      this.manualApproval.items = this.manualApproval.items.filter((img) => img !== data.img);
+    });
+    this.ws.onMessage("image_received", (data: {
+      nonce: string;
+      img: string;
+      mayNotify: boolean;
+    }) => {
+      this.favoriteSelection.items = this.favoriteSelection.items.filter((img) => img !== data.img);
+      this.manualApproval.items = this.manualApproval.items.filter((img) => img !== data.img);
+      this.favoriteSelection.items.unshift(data.img);
+      this.favoriteSelection.items = this.favoriteSelection.items.slice();
+      this.manualApproval.items.push(data.img);
+      this.manualApproval.items = this.manualApproval.items.slice();
+      if (data.mayNotify && this.notificationSoundAudio) {
+        this.notificationSoundAudio.play();
       }
-    );
-    this.ws.onMessage(
-      "denied_image_received",
-      (data: { nonce: string; img: string; mayNotify: boolean }) => {
-        this.favoriteSelection.items = this.favoriteSelection.items.filter(
-          (img) => img !== data.img
-        );
-        this.manualApproval.items = this.manualApproval.items.filter(
-          (img) => img !== data.img
-        );
-      }
-    );
-    this.ws.onMessage(
-      "image_received",
-      (data: { nonce: string; img: string; mayNotify: boolean }) => {
-        this.favoriteSelection.items = this.favoriteSelection.items.filter(
-          (img) => img !== data.img
-        );
-        this.manualApproval.items = this.manualApproval.items.filter(
-          (img) => img !== data.img
-        );
-
-        this.favoriteSelection.items.unshift(data.img);
-        this.favoriteSelection.items = this.favoriteSelection.items.slice();
-
-        this.manualApproval.items.push(data.img);
-        this.manualApproval.items = this.manualApproval.items.slice();
-
-        if (data.mayNotify && this.notificationSoundAudio) {
-          this.notificationSoundAudio.play();
-        }
-      }
-    );
+    });
     this.ws.connect();
   },
   unmounted() {
@@ -656,18 +603,15 @@ export default defineComponent({
         return;
       }
       if (this.settings.favoriteLists[index].list.includes(url)) {
-        this.settings.favoriteLists[index].list = this.settings.favoriteLists[
-          index
-        ].list.filter((u: string) => u !== url);
-      } else {
+        this.settings.favoriteLists[index].list = this.settings.favoriteLists[index].list.filter((u: string) => u !== url);
+      }
+      else {
         this.settings.favoriteLists[index].list.push(url);
       }
     },
     customProfileImageChanged(file: MediaFile) {
       if (!this.settings) {
-        console.warn(
-          "customProfileImageChanged: this.settings not initialized"
-        );
+        console.warn("customProfileImageChanged: this.settings not initialized");
         return;
       }
       this.settings.customProfileImage = file.file ? file : null;
@@ -695,8 +639,7 @@ export default defineComponent({
           customDescription: this.settings.customDescription,
           customProfileImage: this.settings.customProfileImage,
           palette: this.settings.palette,
-          displayDuration:
-            parseInt(`${this.settings.displayDuration}`, 10) || 5000,
+          displayDuration: parseInt(`${this.settings.displayDuration}`, 10) || 5000,
           displayLatestForever: this.settings.displayLatestForever,
           displayLatestAutomatically: this.settings.displayLatestAutomatically,
           autofillLatest: this.settings.autofillLatest,
@@ -713,7 +656,7 @@ export default defineComponent({
       }
       this.ws.send(JSON.stringify(data));
     },
-  },
+  }
 });
 </script>
 
@@ -725,12 +668,14 @@ export default defineComponent({
   cursor: pointer;
   line-height: 0;
 }
+
 .square .square-inner {
   display: inline-block;
   width: 20px;
   height: 20px;
   margin: 1px;
 }
+
 .square input {
   display: none;
 }
@@ -738,6 +683,7 @@ export default defineComponent({
 .preview {
   width: 250px;
 }
+
 .preview img {
   width: 100%;
 }
@@ -745,10 +691,12 @@ export default defineComponent({
 .favorites-select img {
   border: solid 1px transparent;
 }
+
 .is-favorited,
 .favorites-select img.is-favorited {
   border: solid 1px black;
 }
+
 .image-to-approve {
   display: inline-block;
 }

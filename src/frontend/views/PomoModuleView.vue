@@ -52,22 +52,14 @@
           <tr>
             <td><code>settings.fontFamily</code></td>
             <td>
-              <input
-                v-model="settings.fontFamily"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.fontFamily" />
             </td>
             <td>The font in the widget.</td>
           </tr>
           <tr>
             <td><code>settings.fontSize</code></td>
             <td>
-              <input
-                v-model="settings.fontSize"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.fontSize" />
             </td>
             <td>
               The text size in the widget, for example <code>12px</code>,
@@ -77,11 +69,7 @@
           <tr>
             <td><code>settings.timerFormat</code></td>
             <td>
-              <input
-                v-model="settings.timerFormat"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.timerFormat" />
             </td>
             <td>
               Format of the timer, you can use the following placeholders:
@@ -93,11 +81,7 @@
           <tr>
             <td><code>settings.finishedText</code></td>
             <td>
-              <input
-                v-model="settings.finishedText"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.finishedText" />
             </td>
             <td>Text that is displayed when the timer reaches 0.</td>
           </tr>
@@ -117,11 +101,7 @@
           <tr>
             <td><code>settings.startEffect.chatMessage</code></td>
             <td>
-              <input
-                v-model="settings.startEffect.chatMessage"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.startEffect.chatMessage" />
             </td>
             <td>Chat message that is sent when pomo is started.</td>
           </tr>
@@ -138,11 +118,7 @@
           <tr>
             <td><code>settings.endEffect.chatMessage</code></td>
             <td>
-              <input
-                v-model="settings.endEffect.chatMessage"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.endEffect.chatMessage" />
             </td>
             <td>Chat message that is sent when pomo reaches 0.</td>
           </tr>
@@ -159,11 +135,7 @@
           <tr>
             <td><code>settings.stopEffect.chatMessage</code></td>
             <td>
-              <input
-                v-model="settings.stopEffect.chatMessage"
-                class="input is-small"
-                type="text"
-              >
+              <StringInput v-model="settings.stopEffect.chatMessage" />
             </td>
             <td>
               Chat message that is sent when pomo is stopped (via pomo exit).
@@ -215,11 +187,7 @@
                   <tr>
                     <td><code>chatMessage</code></td>
                     <td>
-                      <input
-                        v-model="n.effect.chatMessage"
-                        class="input is-small"
-                        type="text"
-                      >
+                      <StringInput v-model="n.effect.chatMessage" />
                     </td>
                     <td>Chat message sent at the set offset.</td>
                   </tr>
@@ -252,8 +220,10 @@ import {
   default_notification,
 } from "../../mod/modules/PomoModuleCommon";
 import WsClient from "../WsClient";
+import StringInput from "../components/StringInput.vue";
 
 export default defineComponent({
+  components: { StringInput },
   data: () => ({
     unchangedJson: "{}",
     changedJson: "{}",
@@ -316,10 +286,8 @@ export default defineComponent({
         console.warn("remove: this.settings not initialized");
         return;
       }
-      this.settings.notifications = this.settings.notifications.filter(
-        (val, index) => index !== idx
-      );
+      this.settings.notifications = this.settings.notifications.filter((val, index) => index !== idx);
     },
-  },
+  }
 });
 </script>

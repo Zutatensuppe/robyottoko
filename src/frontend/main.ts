@@ -5,19 +5,19 @@ import Toast from "vue-toastification";
 import "vue-toastification/dist/index.css";
 
 import App from './App.vue'
-import Index from './views/Index.vue'
-import Login from './views/Login.vue'
-import Drawcast from './views/Drawcast.vue'
-import Variables from './views/Variables.vue'
-import Register from './views/Register.vue'
-import Settings from './views/Settings.vue'
-import SongRequest from './views/SongRequest.vue'
-import Commands from './views/Commands.vue'
-import SpeechToText from './views/SpeechToText.vue'
-import Avatar from './views/Avatar.vue'
-import PasswordReset from './views/PasswordReset.vue'
-import ForgotPassword from './views/ForgotPassword.vue'
+import AvatarView from './views/AvatarView.vue'
+import CommandsView from './views/CommandsView.vue'
+import DrawcastView from './views/DrawcastView.vue'
+import ForgotPasswordView from './views/ForgotPasswordView.vue'
+import IndexView from './views/IndexView.vue'
+import LoginView from './views/LoginView.vue'
+import PasswordResetView from './views/PasswordResetView.vue'
 import PomoModuleView from './views/PomoModuleView.vue'
+import RegisterView from './views/RegisterView.vue'
+import SettingsView from './views/SettingsView.vue'
+import SongRequestView from './views/SongRequestView.vue'
+import SpeechToTextView from './views/SpeechToTextView.vue'
+import VariablesView from './views/VariablesView.vue'
 
 import CheckboxInput from "./components/CheckboxInput.vue";
 import DoubleclickButton from "./components/DoubleclickButton.vue";
@@ -73,61 +73,61 @@ const run = async () => {
     history: VueRouter.createWebHistory(),
     routes: [
       {
-        name: 'index', path: '/', component: Index, meta: {
+        name: 'index', path: '/', component: IndexView, meta: {
           title: 'Hyottoko.club',
           protected: true,
         }
       },
       {
-        name: 'login', path: '/login', component: Login, meta: {
+        name: 'login', path: '/login', component: LoginView, meta: {
           title: 'Login',
           protected: false,
         }
       },
       {
-        name: 'register', path: '/register', component: Register, meta: {
+        name: 'register', path: '/register', component: RegisterView, meta: {
           title: 'Register',
           protected: false,
         }
       },
       {
-        name: 'password-reset', path: '/password-reset', component: PasswordReset, meta: {
+        name: 'password-reset', path: '/password-reset', component: PasswordResetView, meta: {
           title: 'Password Reset',
           protected: false,
         }
       },
       {
-        name: 'forgot-password', path: '/forgot-password', component: ForgotPassword, meta: {
+        name: 'forgot-password', path: '/forgot-password', component: ForgotPasswordView, meta: {
           title: 'Forgot Password',
           protected: false,
         }
       },
       {
-        name: 'commands', path: '/commands/', component: Commands, meta: {
+        name: 'commands', path: '/commands/', component: CommandsView, meta: {
           title: 'Commands',
           protected: true,
         }
       },
       {
-        name: 'variables', path: '/variables/', component: Variables, meta: {
+        name: 'variables', path: '/variables/', component: VariablesView, meta: {
           title: 'Variables',
           protected: true,
         }
       },
       {
-        name: 'sr', path: '/sr/', component: SongRequest, meta: {
+        name: 'sr', path: '/sr/', component: SongRequestView, meta: {
           title: 'Song Request',
           protected: true,
         }
       },
       {
-        name: 'speech-to-text', path: '/speech-to-text/', component: SpeechToText, meta: {
+        name: 'speech-to-text', path: '/speech-to-text/', component: SpeechToTextView, meta: {
           title: 'Speech to text',
           protected: true,
         }
       },
       {
-        name: 'avatar', path: '/avatar/', component: Avatar, meta: {
+        name: 'avatar', path: '/avatar/', component: AvatarView, meta: {
           title: 'Avatar',
           protected: true,
         }
@@ -139,13 +139,13 @@ const run = async () => {
         }
       },
       {
-        name: 'drawcast', path: '/drawcast/', component: Drawcast, meta: {
+        name: 'drawcast', path: '/drawcast/', component: DrawcastView, meta: {
           title: 'Drawcast',
           protected: true,
         }
       },
       {
-        name: 'settings', path: '/settings/', component: Settings, meta: {
+        name: 'settings', path: '/settings/', component: SettingsView, meta: {
           title: 'Settings',
           protected: true,
         }
