@@ -66,7 +66,7 @@ class WebServer {
 
     app.all('*', requireLogin, express.json({ limit: '50mb' }), async (req: any, res: Response, next: NextFunction) => {
       const method = req.method.toLowerCase()
-      const key = req.url
+      const key = req.url.replace(/\?.*$/, '')
       for (const m of bot.getModuleManager().all(req.user.id)) {
         const map = m.getRoutes()
         if (map && map[method] && map[method][key]) {

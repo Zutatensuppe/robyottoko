@@ -50,6 +50,20 @@ const postJsonStr = async (url: string, jsonStr: string) => request('post', url,
 })
 const postJson = async (url: string, data: any) => postJsonStr(url, JSON.stringify(data))
 
+
+type QueryArgsData = Record<string, string | number>
+function asQueryArgs(data: QueryArgsData) {
+  const q = []
+  for (const k in data) {
+    const pair = [k, data[k]].map(encodeURIComponent)
+    q.push(pair.join('='))
+  }
+  if (q.length === 0) {
+    return ''
+  }
+  return `?${q.join('&')}`
+}
+
 export default {
   resendVerificationMail: async (data: { email: string }) => postJson("/api/user/_resend_verification_mail", data),
   requestPasswordReset: async (data: { email: string }) => postJson("/api/user/_request_password_reset", data),
@@ -74,6 +88,8 @@ export default {
   },
   importPlaylist: async (playlistJsonString: string) => postJsonStr("/api/sr/import", playlistJsonString),
   getDrawcastAllImages: async () => get("/api/drawcast/all-images/"),
+  getGeneralGlobalEmotes: async () => get("/api/general/global-emotes"),
+  getGeneralChannelEmotes: async (channelName: string) => get("/api/general/channel-emotes" + asQueryArgs({ channel_name: channelName })),
   createWidgetUrl: async (data: { type: string, pub: boolean }) => postJson("/api/widget/create_url", data),
   getWidgetData: async (widgetType: string, widgetToken: string) => get(`/api/widget/${widgetType}/${widgetToken}/`),
   getPubData: async (pubId: string) => get(`/api/pub/${pubId}`),

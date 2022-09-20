@@ -1088,6 +1088,7 @@ var CommandAction;
     // general
     CommandAction["TEXT"] = "text";
     CommandAction["MEDIA"] = "media";
+    CommandAction["EMOTES"] = "emotes";
     CommandAction["MEDIA_VOLUME"] = "media_volume";
     CommandAction["COUNTDOWN"] = "countdown";
     CommandAction["DICT_LOOKUP"] = "dict_lookup";
@@ -1865,6 +1866,24 @@ const commands = {
             variables: [],
             variableChanges: [],
             data: newMedia(),
+        }),
+        RequiresAccessToken: () => false,
+    },
+    emotes: {
+        Name: () => "emote command",
+        Description: () => "Display emotes.",
+        NewCommand: () => ({
+            id: nonce(10),
+            createdAt: JSON.stringify(new Date()),
+            triggers: [newCommandTrigger()],
+            action: CommandAction.EMOTES,
+            restrict_to: [],
+            variables: [],
+            variableChanges: [],
+            data: {
+                displayFn: [],
+                emotes: [],
+            },
         }),
         RequiresAccessToken: () => false,
     },
@@ -2795,6 +2814,35 @@ class TwitchHelixClient {
             return '';
         }
     }
+    // https://dev.twitch.tv/docs/irc/emotes
+    async getChannelEmotes(broadcasterId) {
+        // eg. /chat/emotes?broadcaster_id=141981764
+        const url = apiUrl('/chat/emotes') + asQueryArgs({ broadcaster_id: broadcasterId });
+        let json;
+        try {
+            const resp = await xhr.get(url, await this.withAuthHeaders());
+            json = (await resp.json());
+            return json;
+        }
+        catch (e) {
+            log$k.error({ url, json, e });
+            return null;
+        }
+    }
+    // https://dev.twitch.tv/docs/irc/emotes
+    async getGlobalEmotes() {
+        const url = apiUrl('/chat/emotes/global');
+        let json;
+        try {
+            const resp = await xhr.get(url, await this.withAuthHeaders());
+            json = (await resp.json());
+            return json;
+        }
+        catch (e) {
+            log$k.error({ url, json, e });
+            return null;
+        }
+    }
     async getUser(accessToken) {
         const url = apiUrl(`/users`);
         let json;
@@ -3578,7 +3626,7 @@ class WebServer {
         });
         app.all('*', requireLogin, express.json({ limit: '50mb' }), async (req, res, next) => {
             const method = req.method.toLowerCase();
-            const key = req.url;
+            const key = req.url.replace(/\?.*$/, '');
             for (const m of bot.getModuleManager().all(req.user.id)) {
                 const map = m.getRoutes();
                 if (map && map[method] && map[method][key]) {
@@ -5018,6 +5066,14 @@ const removeStreamTags = (originalCmd, bot, user) => async (ctx) => {
     say(`✨ Removed tag: ${manualTags[idx].localization_names['en-us']}`);
 };
 
+logger('emotes.ts');
+const emotes = (originalCmd, bot, user) => async (_ctx) => {
+    bot.getWebSocketServer().notifyAll([user.id], 'general', {
+        event: 'emotes',
+        data: originalCmd.data,
+    });
+};
+
 logger('GeneralModule.ts');
 class GeneralModule {
     constructor(bot, user) {
@@ -5204,6 +5260,9 @@ class GeneralModule {
                 case CommandAction.MEDIA:
                     cmdObj = Object.assign({}, cmd, { fn: playMedia(cmd, this.bot, this.user) });
                     break;
+                case CommandAction.EMOTES:
+                    cmdObj = Object.assign({}, cmd, { fn: emotes(cmd, this.bot, this.user) });
+                    break;
                 case CommandAction.COUNTDOWN:
                     cmdObj = Object.assign({}, cmd, { fn: countdown(cmd, this.bot, this.user) });
                     break;
@@ -5271,7 +5330,22 @@ class GeneralModule {
         return { data, commands: commands$1, timers, shouldSave: fixed.shouldSave };
     }
     getRoutes() {
-        return {};
+        return {
+            get: {
+                '/api/general/channel-emotes': async (req, res, _next) => {
+                    const client = this.bot.getUserTwitchClientManager(this.user).getHelixClient();
+                    const channelId = await client?.getUserIdByNameCached(req.query.channel_name, this.bot.getCache());
+                    console.log(channelId);
+                    const emotes = channelId ? await client?.getChannelEmotes(channelId) : null;
+                    res.send(emotes);
+                },
+                '/api/general/global-emotes': async (_req, res, _next) => {
+                    const client = this.bot.getUserTwitchClientManager(this.user).getHelixClient();
+                    const emotes = await client?.getGlobalEmotes();
+                    res.send(emotes);
+                },
+            },
+        };
     }
     async wsdata(eventName) {
         return {
@@ -7484,9 +7558,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-09-20T19:14:19.886Z",
+    buildDate: "2022-09-20T22:43:35.216Z",
     // @ts-ignore
-    buildVersion: "1.25.3",
+    buildVersion: "1.26.0",
 };
 
 const TABLE = 'robyottoko.chat_log';

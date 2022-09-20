@@ -17,12 +17,14 @@ import {
   MadochanCommand, MediaVolumeCommand, ChattersCommand,
   RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand,
   CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand,
-  CommandTriggerType, CommandAction, CommandExecutionContext, MODULE_NAME, WIDGET_TYPE, TwitchChatContext,
+  CommandTriggerType, CommandAction, CommandExecutionContext, MODULE_NAME, WIDGET_TYPE, EmotesCommand,
 } from '../../types'
 import dictLookup from '../../commands/dictLookup'
 import { EMOTE_DISPLAY_FN, GeneralModuleAdminSettings, GeneralModuleEmotesEventData, GeneralModuleSettings, GeneralModuleWsEventData, GeneralSaveEventData } from './GeneralModuleCommon'
 import addStreamTags from '../../commands/addStreamTags'
 import removeStreamTags from '../../commands/removeStreamTags'
+import emotes from '../../commands/emotes'
+import { NextFunction, Response } from 'express'
 
 const log = logger('GeneralModule.ts')
 
@@ -243,7 +245,9 @@ class GeneralModule implements Module {
     data.commands.forEach((cmd: MediaCommand | MediaVolumeCommand | MadochanCommand
       | DictLookupCommand | RandomTextCommand | CountdownCommand | ChattersCommand
       | SetChannelTitleCommand | SetChannelGameIdCommand
-      | AddStreamTagCommand | RemoveStreamTagCommand) => {
+      | AddStreamTagCommand | RemoveStreamTagCommand
+      | EmotesCommand
+      ) => {
       if (cmd.triggers.length === 0) {
         return
       }
@@ -263,6 +267,9 @@ class GeneralModule implements Module {
           break;
         case CommandAction.MEDIA:
           cmdObj = Object.assign({}, cmd, { fn: playMedia(cmd, this.bot, this.user) })
+          break;
+        case CommandAction.EMOTES:
+          cmdObj = Object.assign({}, cmd, { fn: emotes(cmd, this.bot, this.user) })
           break;
         case CommandAction.COUNTDOWN:
           cmdObj = Object.assign({}, cmd, { fn: countdown(cmd, this.bot, this.user) })
@@ -325,7 +332,22 @@ class GeneralModule implements Module {
   }
 
   getRoutes() {
-    return {}
+    return {
+      get: {
+        '/api/general/channel-emotes': async (req: any, res: Response, _next: NextFunction) => {
+          const client = this.bot.getUserTwitchClientManager(this.user).getHelixClient()
+          const channelId = await client?.getUserIdByNameCached(req.query.channel_name, this.bot.getCache())
+          console.log(channelId)
+          const emotes = channelId ? await client?.getChannelEmotes(channelId) : null
+          res.send(emotes)
+        },
+        '/api/general/global-emotes': async (_req: any, res: Response, _next: NextFunction) => {
+          const client = this.bot.getUserTwitchClientManager(this.user).getHelixClient()
+          const emotes = await client?.getGlobalEmotes()
+          res.send(emotes)
+        },
+      },
+    }
   }
 
   async wsdata(eventName: string): Promise<WsData> {

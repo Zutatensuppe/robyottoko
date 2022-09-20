@@ -279,6 +279,17 @@
       @cancel="editCommand = null"
     />
 
+    <emotes-command-editor
+      v-else-if="editIdx !== null && editCommand && editCommand.action === 'emotes'"
+      :global-variables="globalVariables"
+      :channel-points-custom-rewards="channelPointsCustomRewards"
+      :model-value="editCommand"
+      :mode="editIdx >= commands.length ? 'create' : 'edit'"
+      :base-volume="baseVolume"
+      @update:modelValue="editedCommand"
+      @cancel="editCommand = null"
+    />
+
     <command-editor
       v-else-if="editIdx !== null && editCommand"
       :global-variables="globalVariables"

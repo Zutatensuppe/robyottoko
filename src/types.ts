@@ -6,6 +6,7 @@ import { LogLevel } from './common/fn'
 import { CommandRestrict } from './common/permissions'
 import Db from './DbPostgres'
 import ModuleManager from './mod/ModuleManager'
+import { GeneralModuleEmotesEventData } from './mod/modules/GeneralModuleCommon'
 import ModuleStorage from './mod/ModuleStorage'
 import Auth from './net/Auth'
 import TwitchClientManager from './net/TwitchClientManager'
@@ -290,6 +291,7 @@ export enum CommandAction {
   // general
   TEXT = 'text',
   MEDIA = 'media',
+  EMOTES = 'emotes',
   MEDIA_VOLUME = 'media_volume',
   COUNTDOWN = 'countdown',
   DICT_LOOKUP = 'dict_lookup',
@@ -397,6 +399,12 @@ export interface RandomTextCommand extends Command {
 
 export interface MediaVolumeCommand extends Command {
   action: CommandAction.MEDIA_VOLUME
+}
+
+export interface EmotesCommand extends Command {
+  action: CommandAction.EMOTES
+  // TODO: check if this data is fine
+  data: GeneralModuleEmotesEventData
 }
 
 export interface MediaCommand extends Command {
