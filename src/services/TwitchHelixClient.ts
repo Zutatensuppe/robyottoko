@@ -58,6 +58,41 @@ interface TwitchHelixOauthTokenResponseData {
   token_type: string
 }
 
+interface TwitchHelixChannelEmotesResponseData {
+  data: {
+    id: string
+    name: string
+    images: {
+      "url_1x": string
+      "url_2x": string
+      "url_4x": string
+    },
+    tier: string
+    emote_type: string
+    emote_set_id: string
+    format: string[]
+    scale: string[]
+    theme_mode: string[]
+  }[]
+  template: string
+}
+
+interface TwitchHelixGlobalEmotesResponseData {
+  data: {
+    id: string
+    name: string
+    images: {
+      "url_1x": string
+      "url_2x": string
+      "url_4x": string
+    },
+    format: string[]
+    scale: string[]
+    theme_mode: string[]
+  }[]
+  template: string
+}
+
 export interface TwitchHelixUserSearchResponseDataEntry {
   id: string
   login: string
@@ -338,6 +373,37 @@ class TwitchHelixClient {
     }
   }
 
+  // https://dev.twitch.tv/docs/irc/emotes
+  async getChannelEmotes(
+    broadcasterId: string,
+  ): Promise<TwitchHelixChannelEmotesResponseData | null> {
+    // eg. /chat/emotes?broadcaster_id=141981764
+    const url = apiUrl('/chat/emotes') + asQueryArgs({ broadcaster_id: broadcasterId })
+    let json
+    try {
+      const resp = await xhr.get(url, await this.withAuthHeaders())
+      json = (await resp.json()) as TwitchHelixChannelEmotesResponseData
+      return json
+    } catch (e) {
+      log.error({ url, json, e })
+      return null
+    }
+  }
+
+  // https://dev.twitch.tv/docs/irc/emotes
+  async getGlobalEmotes(): Promise<TwitchHelixGlobalEmotesResponseData | null> {
+    const url = apiUrl('/chat/emotes/global')
+    let json
+    try {
+      const resp = await xhr.get(url, await this.withAuthHeaders())
+      json = (await resp.json()) as TwitchHelixGlobalEmotesResponseData
+      return json
+    } catch (e) {
+      log.error({ url, json, e })
+      return null
+    }
+  }
+
   async getUser(accessToken: string): Promise<TwitchHelixUserSearchResponseDataEntry | null> {
     const url = apiUrl(`/users`)
     let json
@@ -548,7 +614,9 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/api/reference#get-stream-tags
-  async getStreamTags(broadcasterId: string): Promise<TwitchHelixGetStreamTagsResponseData | null> {
+  async getStreamTags(
+    broadcasterId: string,
+  ): Promise<TwitchHelixGetStreamTagsResponseData | null> {
     const url = apiUrl('/streams/tags') + asQueryArgs({ broadcaster_id: broadcasterId })
     try {
       const resp = await xhr.get(url, await this.withAuthHeaders())
@@ -626,7 +694,10 @@ class TwitchHelixClient {
     }
   }
 
-  async validateOAuthToken(broadcasterId: string, accessToken: string): Promise<ValidateOAuthTokenResponse> {
+  async validateOAuthToken(
+    broadcasterId: string,
+    accessToken: string,
+  ): Promise<ValidateOAuthTokenResponse> {
     const url = apiUrl('/channels') + asQueryArgs({ broadcaster_id: broadcasterId })
     let json
     try {

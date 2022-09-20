@@ -45,6 +45,83 @@
               <td>Description:</td>
               <td v-html="actionDescription" />
             </tr>
+            <tr>
+              <td>Display Functions</td>
+              <td>
+                <div
+                  v-for="(displayFn, idx) in item.data.displayFn"
+                  :key="idx"
+                  class="field has-addons mb-1"
+                >
+                  <div class="control">
+                    <div
+                      class="select is-small"
+                    >
+                      <select v-model="item.data.displayFn[idx].fn">
+                        <option
+                          v-for="(fn, idx2) in possibleEmoteDisplayFunctions"
+                          :key="idx2"
+                          :value="fn"
+                        >
+                          {{ fn }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                  <button
+                    class="button is-small"
+                    @click="rmFn(idx)"
+                  >
+                    <i class="fa fa-remove" />
+                  </button>
+                </div>
+                <button
+                  class="button is-small"
+                  @click="addFn()"
+                >
+                  <i class="fa fa-plus mr-1" /> Add
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td>Emotes</td>
+              <td>
+                <div class="emote-select">
+                  <img
+                    v-for="(emote, idx) in item.data.emotes"
+                    :key="idx"
+                    :src="emote.url"
+                    @click="removeEmote(idx)"
+                  >
+                </div>
+                <div class="field has-addons">
+                  <div class="control">
+                    <StringInput v-model="channelNameInput" />
+                  </div>
+                  <button
+                    class="button is-small"
+                    @click="loadChannelEmotes"
+                  >
+                    <i class="fa fa-plus mr-1" /> Add emotes from channel
+                  </button>
+                </div>
+                <div class="emote-select">
+                  Select emotes to display:
+                  <div
+                    v-for="(emotesSet, idx) in possibleEmoteSets"
+                    :key="idx"
+                  >
+                    <div>{{ emotesSet.name }}</div>
+                    <img
+                      v-for="(emote, idx2) in emotesSet.emotes"
+                      :key="idx2"
+                      :src="emote"
+                      @click="addEmote(emote)"
+                    >
+                  </div>
+                </div>
+              </td>
+            </tr>
             <tr v-if="requiresAccessToken">
               <td>Attention:</td>
               <td>
@@ -52,84 +129,6 @@
                   This requires <code>Access Token</code> to be set in the user
                   settings.
                 </div>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'set_channel_title'">
-              <td>Stream title:</td>
-              <td>
-                <input
-                  v-model="item.data.title"
-                  class="input is-small spaceinput mb-1"
-                >
-                <span
-                  class="button is-small mr-1"
-                  @click="item.data.title = ''"
-                >All args</span>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'set_channel_game_id'">
-              <td>Stream category:</td>
-              <td>
-                <input
-                  v-model="item.data.game_id"
-                  class="input is-small spaceinput mb-1"
-                >
-                <span
-                  class="button is-small mr-1"
-                  @click="item.data.game_id = ''"
-                >All args</span>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'add_stream_tags'">
-              <td>Tag to add:</td>
-              <td>
-                <input
-                  v-model="item.data.tag"
-                  class="input is-small spaceinput mb-1"
-                >
-                <span
-                  class="button is-small mr-1"
-                  @click="item.data.tag = ''"
-                >All args</span>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'remove_stream_tags'">
-              <td>Tag to remove:</td>
-              <td>
-                <input
-                  v-model="item.data.tag"
-                  class="input is-small spaceinput mb-1"
-                >
-                <span
-                  class="button is-small mr-1"
-                  @click="item.data.tag = ''"
-                >All args</span>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'sr_addtag'">
-              <td>Tag:</td>
-              <td>
-                <input
-                  v-model="item.data.tag"
-                  class="input is-small spaceinput mb-1"
-                >
-                <span
-                  class="button is-small mr-1"
-                  @click="item.data.tag = ''"
-                >All args</span>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'chatters'">
-              <td>Response:</td>
-              <td>Outputs the people who chatted during the stream.</td>
-            </tr>
-            <tr v-if="item.action === 'countdown'">
-              <td>Settings</td>
-              <td>
-                <countdown-editor
-                  v-model="item.data"
-                  :base-volume="baseVolume"
-                />
               </td>
             </tr>
             <tr>
@@ -291,14 +290,16 @@ import {
   newTrigger,
 } from "../../../common/commands";
 import {
-  Command,
   CommandTrigger,
   CommandVariable,
   CommandVariableChange,
+  EmotesCommand,
   GlobalVariable,
 } from "../../../types";
 import { possibleTriggerActions } from "../../../common/triggers";
 import StringInput from "../StringInput.vue";
+import { EMOTE_DISPLAY_FN } from "../../../mod/modules/GeneralModuleCommon";
+import api from '../../api'
 
 interface AutocompletableVariable {
   var: CommandVariable | GlobalVariable;
@@ -311,16 +312,22 @@ interface ComponentDataPermission {
 }
 
 interface ComponentData {
-  item: Command | null;
-  variableChangeFocusIdx: number;
-  possiblePermissions: ComponentDataPermission[];
+  item: EmotesCommand | null
+  variableChangeFocusIdx: number
+  channelNameInput: string
+  possiblePermissions: ComponentDataPermission[]
+  possibleEmoteDisplayFunctions: EMOTE_DISPLAY_FN[]
+  possibleEmoteSets: {
+    name: string
+    emotes: string[]
+  }[]
 }
 
 export default defineComponent({
   components: { StringInput },
   props: {
     modelValue: {
-      type: Object,
+      type: Object as PropType<EmotesCommand>,
       required: true,
     },
     mode: {
@@ -335,15 +342,37 @@ export default defineComponent({
       type: Object as PropType<Record<string, string[]>>,
       required: true,
     },
-    baseVolume: {
-      default: 100,
-    },
   },
   emits: ["update:modelValue", "cancel"],
   data: (): ComponentData => ({
     item: null,
     variableChangeFocusIdx: -1,
     possiblePermissions: permissions,
+    possibleEmoteDisplayFunctions: [
+      EMOTE_DISPLAY_FN.BALLOON,
+      EMOTE_DISPLAY_FN.BOUNCY,
+      EMOTE_DISPLAY_FN.EXPLODE,
+      EMOTE_DISPLAY_FN.FLOATING_SPACE,
+      EMOTE_DISPLAY_FN.FOUNTAIN,
+      EMOTE_DISPLAY_FN.RAIN,
+      EMOTE_DISPLAY_FN.RANDOM_BEZIER,
+    ],
+    channelNameInput: '',
+    possibleEmoteSets: []
+    // [
+    //   // default emotes
+
+    //   // emotes from channels
+
+    //   // unicode emotes 🐞🐞🐞🐞🐞🐞🐞🐞🐞🐞🐞🐞🐞🐞
+
+    //   // 'https://static-cdn.jtvnw.net/emoticons/v2/160401/default/dark/2.0',
+    //   // 'https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_ad4a8fd9089e4a1ca32d4210e9fea6da/default/dark/2.0',
+    //   // 'https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_9e4dc93d7f8c4bbfbd131d1ef9052db6/default/dark/2.0',
+    //   // 'https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_9fb4c620616841d5b8ee6072070dfac7/default/dark/2.0',
+    //   // 'https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_783ce3fc0013443695c62933da3669c5/default/dark/2.0',
+    //   // 'https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_8a87841061234510b354ebd3bc3ae524/default/dark/2.0',
+    // ],
   }),
   computed: {
     requiresAccessToken(): boolean {
@@ -391,6 +420,15 @@ export default defineComponent({
       },
     },
   },
+  async created() {
+    this.possibleEmoteSets = []
+    const res = await api.getGeneralGlobalEmotes()
+    const json = await res.json()
+    this.possibleEmoteSets.push({
+      name: 'global',
+      emotes: json.data.map(emoteData => `https://static-cdn.jtvnw.net/emoticons/v2/${emoteData.id}/default/dark/3.0`),
+    })
+  },
   mounted() {
     this.item = JSON.parse(JSON.stringify(this.modelValue));
     this.$nextTick(() => {
@@ -399,6 +437,50 @@ export default defineComponent({
     });
   },
   methods: {
+    async loadChannelEmotes(): Promise<void> {
+      const channelName = this.channelNameInput
+      if (this.possibleEmoteSets.find(set => set.name === channelName)) {
+        return
+      }
+
+      const res = await api.getGeneralChannelEmotes(channelName)
+      const json = await res.json()
+      this.possibleEmoteSets.unshift({
+        name: channelName,
+        emotes: json.data.map(emoteData => `https://static-cdn.jtvnw.net/emoticons/v2/${emoteData.id}/default/dark/3.0`),
+      })
+    },
+    rmFn(idx: number): void {
+      if (!this.item) {
+        console.warn("addtrigger: this.item not initialized");
+        return;
+      }
+      this.item.data.displayFn = this.item.data.displayFn.filter((_value, index) => index !== idx)
+    },
+    addFn(): void {
+      if (!this.item) {
+        console.warn("addtrigger: this.item not initialized");
+        return;
+      }
+      this.item.data.displayFn.push({
+        fn: EMOTE_DISPLAY_FN.FLOATING_SPACE,
+        args: []
+      })
+    },
+    removeEmote(idx: number): void {
+      if (!this.item) {
+        console.warn("addtrigger: this.item not initialized");
+        return;
+      }
+      this.item.data.emotes = this.item.data.emotes.filter((_value, index) => index !== idx)
+    },
+    addEmote(url: string): void {
+      if (!this.item) {
+        console.warn("addtrigger: this.item not initialized");
+        return;
+      }
+      this.item.data.emotes.push({ url })
+    },
     addtrigger(trigger: any): void {
       if (!this.item) {
         console.warn("addtrigger: this.item not initialized");
@@ -484,3 +566,8 @@ export default defineComponent({
   }
 });
 </script>
+<style lang="scss">
+.emote-select {
+  img { width: 32px; }
+}
+</style>
