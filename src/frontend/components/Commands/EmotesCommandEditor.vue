@@ -426,7 +426,7 @@ export default defineComponent({
     const json = await res.json()
     this.possibleEmoteSets.push({
       name: 'global',
-      emotes: json.data.map(emoteData => `https://static-cdn.jtvnw.net/emoticons/v2/${emoteData.id}/default/dark/3.0`),
+      emotes: json.data.map((emoteData: any) => `https://static-cdn.jtvnw.net/emoticons/v2/${emoteData.id}/default/dark/3.0`),
     })
   },
   mounted() {
@@ -447,7 +447,7 @@ export default defineComponent({
       const json = await res.json()
       this.possibleEmoteSets.unshift({
         name: channelName,
-        emotes: json.data.map(emoteData => `https://static-cdn.jtvnw.net/emoticons/v2/${emoteData.id}/default/dark/3.0`),
+        emotes: json.data.map((emoteData: any) => `https://static-cdn.jtvnw.net/emoticons/v2/${emoteData.id}/default/dark/3.0`),
       })
     },
     rmFn(idx: number): void {

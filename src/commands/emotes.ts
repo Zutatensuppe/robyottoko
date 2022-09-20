@@ -8,7 +8,7 @@ const emotes = (
   originalCmd: EmotesCommand,
   bot: Bot,
   user: User,
-): CommandFunction => async (ctx: CommandExecutionContext) => {
+): CommandFunction => async (_ctx: CommandExecutionContext) => {
   bot.getWebSocketServer().notifyAll([user.id], 'general', {
     event: 'emotes',
     data: originalCmd.data,

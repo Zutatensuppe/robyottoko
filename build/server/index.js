@@ -5067,7 +5067,7 @@ const removeStreamTags = (originalCmd, bot, user) => async (ctx) => {
 };
 
 logger('emotes.ts');
-const emotes = (originalCmd, bot, user) => async (ctx) => {
+const emotes = (originalCmd, bot, user) => async (_ctx) => {
     bot.getWebSocketServer().notifyAll([user.id], 'general', {
         event: 'emotes',
         data: originalCmd.data,
@@ -7558,7 +7558,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-09-20T22:38:24.975Z",
+    buildDate: "2022-09-20T22:43:35.216Z",
     // @ts-ignore
     buildVersion: "1.26.0",
 };
