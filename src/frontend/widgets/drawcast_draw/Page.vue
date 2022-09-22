@@ -37,7 +37,7 @@
                   ref="draftcanvas"
                   :width="canvasWidth"
                   :height="canvasHeight"
-                  :style="styles"
+                  :style="draftstyles"
                   @touchstart.prevent="touchstart"
                   @touchmove.prevent="touchmove"
                   @mousedown="mousedown"
@@ -120,7 +120,6 @@
                       min="0"
                       :max="transparencies.length - 1"
                       step="1"
-                      @update:modelValue="updateTransparency"
                     >
                   </div>
                   <div class="bubble bubble-right">
@@ -636,6 +635,15 @@ export default defineComponent({
     canvasClasses(): string[] {
       return [`bg-${this.canvasBg}`];
     },
+    draftstyles(): {
+      cursor: string,
+      opacity: string,
+    } {
+      return {
+        cursor: this.cursor,
+        opacity: `${this.transparency / 100}`,
+      };
+    },
     styles(): { cursor: string } {
       return {
         cursor: this.cursor,
@@ -779,9 +787,6 @@ export default defineComponent({
     window.removeEventListener("keyup", this.keyup);
   },
   methods: {
-    updateTransparency() {
-      this.draftcanvas.style.opacity = `${this.transparency / 100}`;
-    },
     opt(option: string, value: string) {
       this.opts[option] = value;
       window.localStorage.setItem("drawcastOpts", JSON.stringify(this.opts));
