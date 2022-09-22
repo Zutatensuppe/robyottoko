@@ -1,5 +1,6 @@
 @import "./vars.scss";
 
+// https://fontawesome.com/v4/icons/
 @import "font-awesome/css/font-awesome.min.css";
 
 html {
@@ -104,8 +105,7 @@ a {
 
 body {
   color: $main_color;
-  font-size: 15px;
-  font-family: Verdana, Arial, Helvetica, sans-serif;
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
 }
 
 #top {

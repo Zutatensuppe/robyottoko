@@ -69,10 +69,7 @@
           <tr>
             <td><code>settings.style.bgColorEnabled</code></td>
             <td>
-              <input
-                v-model="settings.styles.bgColorEnabled"
-                type="checkbox"
-              >
+              <CheckboxInput v-model="settings.styles.bgColorEnabled" />
             </td>
           </tr>
           <tr>
@@ -129,11 +126,7 @@
           <tr>
             <td><code>settings.recognition.synthesize</code></td>
             <td>
-              <input
-                v-model="settings.recognition.synthesize"
-                class="is-small"
-                type="checkbox"
-              >
+              <CheckboxInput v-model="settings.recognition.synthesize" />
             </td>
             <td>
               <button
@@ -175,11 +168,7 @@
           <tr>
             <td><code>settings.recognition.display</code></td>
             <td>
-              <input
-                v-model="settings.recognition.display"
-                class="is-small"
-                type="checkbox"
-              >
+              <CheckboxInput v-model="settings.recognition.display" />
             </td>
             <td>
               <button
@@ -337,11 +326,7 @@
           <tr>
             <td><code>settings.translation.enabled</code></td>
             <td>
-              <input
-                v-model="settings.translation.enabled"
-                class="is-small"
-                type="checkbox"
-              >
+              <CheckboxInput v-model="settings.translation.enabled" />
             </td>
             <td>
               <button
@@ -362,11 +347,7 @@
           <tr>
             <td><code>settings.translation.synthesize</code></td>
             <td>
-              <input
-                v-model="settings.translation.synthesize"
-                class="is-small"
-                type="checkbox"
-              >
+              <CheckboxInput v-model="settings.translation.synthesize" />
             </td>
             <td>
               <button
@@ -587,11 +568,7 @@
           <tr>
             <td><code>settings.status.enabled</code></td>
             <td>
-              <input
-                v-model="settings.status.enabled"
-                class="is-small"
-                type="checkbox"
-              >
+              <CheckboxInput v-model="settings.status.enabled" />
             </td>
             <td>
               <button
@@ -624,6 +601,7 @@ import {
 } from "../../mod/modules/SpeechToTextModuleCommon";
 import util from "../util";
 import StringInput from "../components/StringInput.vue";
+import CheckboxInput from "../components/CheckboxInput.vue";
 
 interface ComponentData {
   unchangedJson: string;
@@ -637,7 +615,7 @@ interface ComponentData {
 }
 
 export default defineComponent({
-    components: { StringInput },
+    components: { StringInput, CheckboxInput },
     data: (): ComponentData => ({
         unchangedJson: "{}",
         changedJson: "{}",

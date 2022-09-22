@@ -283,6 +283,7 @@ interface ComponentData {
 }
 
 export default defineComponent({
+  components: { StringInput },
   props: {
     modelValue: {
       type: Object as PropType<RandomTextCommand>,
@@ -473,8 +474,7 @@ export default defineComponent({
       });
       return variables;
     },
-  },
-  components: { StringInput }
+  }
 });
 </script>
 <style scoped>

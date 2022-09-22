@@ -31,11 +31,9 @@
             >Apply filter</span>
           </div>
         </div>
-        <label class="pt-1"><input
+        <label class="pt-1"><CheckboxInput
           v-model="hideFilteredOut"
-          class="checkbox"
-          type="checkbox"
-        >
+        />
           Hide filtered out</label>
       </div>
     </div>

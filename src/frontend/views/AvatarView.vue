@@ -75,11 +75,10 @@
           <tr>
             <td><code>settings.style.bgColorEnabled</code></td>
             <td>
-              <input
+              <CheckboxInput
                 v-model="settings.styles.bgColorEnabled"
-                type="checkbox"
                 @update:modelValue="sendSave"
-              >
+              />
             </td>
           </tr>
         </tbody>

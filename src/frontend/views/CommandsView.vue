@@ -29,7 +29,7 @@
           </li>
         </ul>
       </div>
-      <commands-editor
+      <CommandsEditor
         v-if="inited && tab === 'commands'"
         v-model="commands"
         :global-variables="globalVariables"
@@ -80,6 +80,7 @@ import {
 } from "../../mod/modules/GeneralModuleCommon";
 import { Command, CommandAction, GlobalVariable } from "../../types";
 import util from "../util";
+import CommandsEditor from "../components/Commands/CommandsEditor.vue";
 
 type TabType = "commands" | "settings"
 interface TabDefinition {

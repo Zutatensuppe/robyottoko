@@ -12,7 +12,7 @@
             type="radio"
             class="checkbox mr-1"
             :value="'alltime'"
-            @input="emitUpdate"
+            @change="emitUpdate"
           >
           Alltime
         </label>
@@ -22,7 +22,7 @@
             type="radio"
             class="checkbox mr-1"
             :value="'stream'"
-            @input="emitUpdate"
+            @change="emitUpdate"
           >
           Current Stream
         </label>
@@ -61,12 +61,11 @@
         title="Check if command should only be executed if it matches exactly (= no arguments come after it)."
       >
         <label>
-          <input
+          <CheckboxInput
             v-model="value.data.commandExact"
-            type="checkbox"
-            class="checkbox mr-1"
-            @input="emitUpdate"
-          >
+            class="mr-1"
+            @update:modelValue="emitUpdate"
+          />
           <span class="is-small is-left">exact</span>
         </label>
       </div>
