@@ -79,10 +79,7 @@
               <code>settings.requireManualApproval</code>
             </td>
             <td>
-              <input
-                v-model="settings.requireManualApproval"
-                type="checkbox"
-              >
+              <CheckboxInput v-model="settings.requireManualApproval" />
             </td>
             <td>
               If checked, new drawings need to be approved before being
@@ -146,20 +143,14 @@
           <tr>
             <td><code>settings.displayLatestForever</code></td>
             <td>
-              <input
-                v-model="settings.displayLatestForever"
-                type="checkbox"
-              >
+              <CheckboxInput v-model="settings.displayLatestForever" />
             </td>
             <td>If checked, the latest drawing will be shown indefinately.</td>
           </tr>
           <tr>
             <td><code>settings.displayLatestAutomatically</code></td>
             <td>
-              <input
-                v-model="settings.displayLatestAutomatically"
-                type="checkbox"
-              >
+              <CheckboxInput v-model="settings.displayLatestAutomatically" />
             </td>
             <td>
               If checked, the latest drawing will be shown in widget
@@ -169,10 +160,7 @@
           <tr>
             <td><code>settings.autofillLatest</code></td>
             <td>
-              <input
-                v-model="settings.autofillLatest"
-                type="checkbox"
-              >
+              <CheckboxInput v-model="settings.autofillLatest" />
             </td>
             <td>
               Fill the latest submitted drawing into the draw panel when opening
@@ -417,6 +405,7 @@ import util from "../util";
 import WsClient from "../WsClient";
 import StringInput from "../components/StringInput.vue";
 import IntegerInput from "../components/IntegerInput.vue";
+import CheckboxInput from "../components/CheckboxInput.vue";
 
 interface ComponentData {
   unchangedJson: string;
@@ -444,7 +433,7 @@ interface ComponentData {
 }
 
 export default defineComponent({
-  components: { StringInput, IntegerInput },
+  components: { StringInput, IntegerInput, CheckboxInput },
   data: (): ComponentData => ({
     unchangedJson: "{}",
     changedJson: "{}",

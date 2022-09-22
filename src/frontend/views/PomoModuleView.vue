@@ -88,11 +88,7 @@
           <tr>
             <td><code>settings.showTimerWhenFinished</code></td>
             <td>
-              <input
-                v-model="settings.showTimerWhenFinished"
-                class="is-small"
-                type="checkbox"
-              >
+              <CheckboxInput v-model="settings.showTimerWhenFinished" />
             </td>
             <td>
               If enabled, the timer will be displayed even when it reached 0.

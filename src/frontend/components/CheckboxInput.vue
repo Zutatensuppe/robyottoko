@@ -2,25 +2,19 @@
   <input
     v-model="value"
     type="checkbox"
-    @update:modelValue="emitUpdate"
+    @change="emitUpdate"
   >
 </template>
 <script setup lang="ts">
-import { PropType, ref } from "vue";
+import { ref } from "vue";
 
-const props = defineProps({
-  modelValue: {
-    type: Object as PropType<any>,
-    required: true,
-  },
-  onValue: {
-    type: Object as PropType<any>,
-    default: true,
-  },
-  offValue: {
-    type: Object as PropType<any>,
-    default: false,
-  },
+const props = withDefaults(defineProps<{
+  modelValue: any,
+  onValue?: any,
+  offValue?: any,
+}>(), {
+  onValue: true,
+  offValue: false,
 })
 const emit = defineEmits(["update:modelValue"])
 

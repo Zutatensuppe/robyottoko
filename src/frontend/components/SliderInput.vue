@@ -8,7 +8,7 @@
           class="input is-small"
           :min="min"
           :max="max"
-          @update:modelValue="valChange"
+          @input="valChange"
         >
         <span class="icon is-small is-left">
           <i
@@ -29,7 +29,7 @@
         v-model="curVal"
         type="number"
         class="input is-small"
-        @update:modelValue="valChange"
+        @input="valChange"
       >
     </div>
   </div>

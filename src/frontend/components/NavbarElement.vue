@@ -59,13 +59,12 @@
           problems.length > 1 ? "s" : ""
         }}</a>
         <span class="navbar-item">
-          <input
+          <checkbox-input
             id="darkmode-switch"
             v-model="darkmode"
-            type="checkbox"
             class="mr-1"
-            @change="onDarkmodeSwitch"
-          >
+            @update:model-value="onDarkmodeSwitch"
+          />
           <label for="darkmode-switch">Switch dark/light mode</label>
         </span>
         <a
@@ -86,6 +85,7 @@ import { defineComponent } from "vue";
 import user from "../user";
 import { eventBus } from "../wsstatus";
 import { ApiUserData } from '../../types';
+import CheckboxInput from "./CheckboxInput.vue";
 
 interface ComponentData {
   me: ApiUserData | null
@@ -97,82 +97,84 @@ interface ComponentData {
 }
 
 export default defineComponent({
-  data: (): ComponentData => ({
-    me: null,
-    showProblems: false,
-    linksStart: [
-      {
-        to: { name: "index" },
-        text: "Widgets",
-      },
-      {
-        to: { name: "commands" },
-        text: "Commands",
-      },
-      {
-        to: { name: "variables" },
-        text: "Variables",
-      },
-      {
-        to: { name: "sr" },
-        text: "Song Request",
-      },
-      {
-        to: { name: "speech-to-text" },
-        text: "Speech-To-Text",
-      },
-      {
-        to: { name: "avatar" },
-        text: "Avatar",
-      },
-      {
-        to: { name: "drawcast" },
-        text: "Drawcast",
-      },
-      {
-        to: { name: "pomo" },
-        text: "Pomo",
-      },
-      {
-        to: { name: "settings" },
-        text: "Settings",
-      },
-    ],
-    problems: [],
-    burgerActive: false,
-    darkmode: false,
-  }),
-  computed: {
-    user() {
-      return this.me?.user?.name || "";
+    components: { CheckboxInput },
+    data: (): ComponentData => ({
+        me: null,
+        showProblems: false,
+        linksStart: [
+            {
+                to: { name: "index" },
+                text: "Widgets",
+            },
+            {
+                to: { name: "commands" },
+                text: "Commands",
+            },
+            {
+                to: { name: "variables" },
+                text: "Variables",
+            },
+            {
+                to: { name: "sr" },
+                text: "Song Request",
+            },
+            {
+                to: { name: "speech-to-text" },
+                text: "Speech-To-Text",
+            },
+            {
+                to: { name: "avatar" },
+                text: "Avatar",
+            },
+            {
+                to: { name: "drawcast" },
+                text: "Drawcast",
+            },
+            {
+                to: { name: "pomo" },
+                text: "Pomo",
+            },
+            {
+                to: { name: "settings" },
+                text: "Settings",
+            },
+        ],
+        problems: [],
+        burgerActive: false,
+        darkmode: false,
+    }),
+    computed: {
+        user() {
+            return this.me?.user?.name || "";
+        },
     },
-  },
-  created() {
-    this.me = user.getMe();
-    this.darkmode = user.isDarkmode();
-    eventBus.on("status", this.statusChanged);
-  },
-  beforeUnmount() {
-    eventBus.off("status", this.statusChanged);
-  },
-  methods: {
-    onDarkmodeSwitch() {
-      user.setDarkmode(this.darkmode);
+    created() {
+        this.me = user.getMe();
+        this.darkmode = user.isDarkmode();
+        eventBus.on("status", this.statusChanged);
     },
-    statusChanged(status: any) {
-      this.problems = status.problems;
+    beforeUnmount() {
+        eventBus.off("status", this.statusChanged);
     },
-    toggleBurgerMenu() {
-      this.burgerActive = !this.burgerActive;
-    },
-    async onLogoutClick() {
-      const res = await user.logout();
-      if (res.error) {
-        throw new Error(res.error);
-      } else {
-        this.$router.push({ name: "login" });
-      }
-    },
-  },
+    methods: {
+        onDarkmodeSwitch() {
+            user.setDarkmode(this.darkmode);
+        },
+        statusChanged(status: any) {
+            this.problems = status.problems;
+        },
+        toggleBurgerMenu() {
+            this.burgerActive = !this.burgerActive;
+        },
+        async onLogoutClick() {
+            const res = await user.logout();
+            if (res.error) {
+                throw new Error(res.error);
+            }
+            else {
+                this.$router.push({ name: "login" });
+            }
+        },
+    }
 });
 </script>

@@ -165,7 +165,7 @@
           @ctrl="onPlaylistCtrl"
         />
       </div>
-      <commands-editor
+      <CommandsEditor
         v-if="inited && tab === 'commands'"
         v-model="commands"
         :global-variables="globalVariables"
@@ -178,8 +178,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { computed, nextTick, onMounted, onUnmounted, ref } from "vue";
 import WsClient from "../WsClient";
 import {
   Command,
@@ -196,6 +196,7 @@ import {
 import { useToast } from "vue-toastification";
 import util from "../util";
 import api from "../api";
+import CommandsEditor from "../components/Commands/CommandsEditor.vue";
 
 interface ControlDefinition {
   title: string;
@@ -207,31 +208,6 @@ type Tab = "playlist" | "commands" | "settings" | "import" | "tags"
 interface TabDefinition {
   title: string
   tab: Tab
-}
-
-interface ComponentData {
-  playerVisible: boolean;
-  playlist: PlaylistItem[];
-  commands: Command[];
-  settings: SongrequestModuleSettings;
-  filter: {
-    tag: string;
-  };
-  ws: WsClient | null;
-  resrinput: string;
-  srinput: string;
-  inited: boolean;
-  tab: Tab;
-  importPlaylist: string;
-
-  widgetUrl: string;
-
-  toast: any;
-  controlDefinitions: ControlDefinition[];
-  tabDefinitions: TabDefinition[];
-  globalVariables: GlobalVariable[];
-  channelPointsCustomRewards: Record<string, string[]>;
-  possibleActions: CommandAction[];
 }
 
 interface Player {
@@ -248,342 +224,345 @@ const noop = () => {
   // noop
 }
 
-export default defineComponent({
-  data: (): ComponentData => ({
-    playerVisible: false,
-    playlist: [],
-    commands: [],
-    globalVariables: [],
-    channelPointsCustomRewards: {},
-    settings: default_settings(),
-    filter: { tag: "" },
-    ws: null,
-    resrinput: "",
-    srinput: "",
+const playerVisible = ref<boolean>(false)
+const playlist = ref<PlaylistItem[]>([])
+const commands = ref<Command[]>([])
+const globalVariables = ref<GlobalVariable[]>([])
+const channelPointsCustomRewards = ref<Record<string, string[]>>({})
+const settings = ref<SongrequestModuleSettings>(default_settings())
+const filter = ref<{ tag: string }>({ tag: '' })
+const resrinput = ref<string>('')
+const srinput = ref<string>('')
+const inited = ref<boolean>(false)
+const tab = ref<Tab>('playlist')
+const importPlaylist = ref<string>('')
+const widgetUrl = ref<string>('')
 
-    inited: false,
+let ws: WsClient | null = null
+const toast = useToast()
 
-    tab: "playlist", // playlist|import|tags
-    importPlaylist: "",
-
-    widgetUrl: "",
-
-    toast: useToast(),
-    controlDefinitions: [
-      {
-        title: "Reset stats",
-        ctrl: "resetStats",
-        icon: "fa-eraser",
-      },
-      {
-        title: "Clear playlist",
-        ctrl: "clear",
-        icon: "fa-eject",
-      },
-      {
-        title: "Shuffle",
-        ctrl: "shuffle",
-        icon: "fa-random",
-      },
-      {
-        title: "Play",
-        ctrl: "unpause",
-        icon: "fa-play",
-      },
-      {
-        title: "Pause",
-        ctrl: "pause",
-        icon: "fa-pause",
-      },
-      {
-        title: "Prev",
-        ctrl: "prev",
-        icon: "fa-step-backward",
-      },
-      {
-        title: "Next",
-        ctrl: "skip",
-        icon: "fa-step-forward",
-      },
-    ],
-    tabDefinitions: [
-      { tab: "playlist", title: "Playlist" },
-      { tab: "commands", title: "Commands" },
-      { tab: "settings", title: "Settings" },
-      { tab: "tags", title: "Tags" },
-      { tab: "import", title: "Import/Export" },
-    ],
-
-    possibleActions: [
-      CommandAction.SR_CURRENT,
-      CommandAction.SR_UNDO,
-      CommandAction.SR_GOOD,
-      CommandAction.SR_BAD,
-      CommandAction.SR_STATS,
-      CommandAction.SR_PREV,
-      CommandAction.SR_NEXT,
-      CommandAction.SR_JUMPTONEW,
-      CommandAction.SR_CLEAR,
-      CommandAction.SR_RM,
-      CommandAction.SR_SHUFFLE,
-      CommandAction.SR_RESET_STATS,
-      CommandAction.SR_LOOP,
-      CommandAction.SR_NOLOOP,
-      CommandAction.SR_PAUSE,
-      CommandAction.SR_UNPAUSE,
-      CommandAction.SR_HIDEVIDEO,
-      CommandAction.SR_SHOWVIDEO,
-      CommandAction.SR_REQUEST,
-      CommandAction.SR_RE_REQUEST,
-      CommandAction.SR_ADDTAG,
-      CommandAction.SR_RMTAG,
-      CommandAction.SR_VOLUME,
-      CommandAction.SR_FILTER,
-      CommandAction.SR_PRESET,
-      CommandAction.SR_QUEUE,
-    ],
-  }),
-  computed: {
-    tags() {
-      const tags: TagInfo[] = [];
-      this.playlist.forEach((item: PlaylistItem) => {
-        item.tags.forEach((tag) => {
-          const index = tags.findIndex((t) => t.value === tag);
-          if (index === -1) {
-            tags.push({ value: tag, count: 1 });
-          } else {
-            tags[index].count++;
-          }
-        });
-      });
-      return tags;
-    },
-    player(): Player {
-      return (this.$refs.youtube || {
-        stop: noop,
-        play: noop,
-        pause: noop,
-        unpause: noop,
-        setVolume: noop,
-        setLoop: noop,
-        playing: noop,
-      }) as Player;
-    },
-    filteredPlaylist(): PlaylistItem[] {
-      if (this.filter.tag === "") {
-        return this.playlist;
-      }
-      return this.playlist.filter((item: PlaylistItem) =>
-        item.tags.includes(this.filter.tag)
-      );
-    },
-    item() {
-      return this.filteredPlaylist[0];
-    },
-    hasItems(): boolean {
-      return this.filteredPlaylist.length !== 0;
-    },
-    playerstyle(): string {
-      return this.playerVisible
-        ? ""
-        : "width:0;height:0;padding:0;margin-bottom:0;";
-    },
-    togglePlayerButtonText(): string {
-      return this.playerVisible ? "Hide Player" : "Show Player";
-    },
-    exportPlaylistUrl(): string {
-      return `${location.protocol}//${location.host}/api/sr/export`;
-    },
+const controlDefinitions: ControlDefinition[] = [
+  {
+    title: "Reset stats",
+    ctrl: "resetStats",
+    icon: "fa-eraser",
   },
-  async mounted() {
-    this.$nextTick(() => {
-      this.ws = util.wsClient("sr");
-      this.ws.onMessage("save", (data: SongrequestModuleWsEventData) => {
-        this.settings = data.settings;
-        this.widgetUrl = data.widgetUrl;
-        this.commands = data.commands;
-        this.globalVariables = data.globalVariables;
-        this.channelPointsCustomRewards = data.channelPointsCustomRewards;
-      });
-      this.ws.onMessage(["pause"], (_data: SongrequestModuleWsEventData) => {
-        if (this.player.playing()) {
-          this.pause();
-        }
-      });
-      this.ws.onMessage(["unpause"], (_data: SongrequestModuleWsEventData) => {
-        if (!this.player.playing()) {
-          this.unpause();
-        }
-      });
-      this.ws.onMessage(["loop"], (_data: SongrequestModuleWsEventData) => {
-        this.player.setLoop(true);
-      });
-      this.ws.onMessage(["noloop"], (_data: SongrequestModuleWsEventData) => {
-        this.player.setLoop(false);
-      });
-      this.ws.onMessage(
-        ["onEnded", "prev", "skip", "remove", "move", "tags"],
-        (data: SongrequestModuleWsEventData) => {
-          this.settings = data.settings;
-          this.commands = data.commands;
-          this.globalVariables = data.globalVariables;
-          this.channelPointsCustomRewards = data.channelPointsCustomRewards;
-          const oldId =
-            this.filteredPlaylist.length > 0
-              ? this.filteredPlaylist[0].id
-              : null;
-          this.filter = data.filter;
-          this.playlist = data.playlist;
-          const newId =
-            this.filteredPlaylist.length > 0
-              ? this.filteredPlaylist[0].id
-              : null;
-          if (oldId !== newId) {
-            this.play();
-          }
-        }
-      );
-      this.ws.onMessage(["filter"], (data: SongrequestModuleWsEventData) => {
-        this.settings = data.settings;
-        this.commands = data.commands;
-        this.globalVariables = data.globalVariables;
-        this.channelPointsCustomRewards = data.channelPointsCustomRewards;
-        const oldId =
-          this.filteredPlaylist.length > 0 ? this.filteredPlaylist[0].id : null;
-        this.filter = data.filter;
-        this.playlist = data.playlist;
-        // play only if old id is not in new playlist
-        if (!this.filteredPlaylist.find((item) => item.id === oldId)) {
-          this.play();
-        }
-      });
-      this.ws.onMessage(
-        ["stats", "video", "playIdx", "resetStats", "shuffle"],
-        (data: SongrequestModuleWsEventData) => {
-          this.settings = data.settings;
-          this.commands = data.commands;
-          this.globalVariables = data.globalVariables;
-          this.channelPointsCustomRewards = data.channelPointsCustomRewards;
-          this.filter = data.filter;
-          this.playlist = data.playlist;
-        }
-      );
-      this.ws.onMessage(
-        ["add", "init"],
-        (data: SongrequestModuleWsEventData) => {
-          this.settings = data.settings;
-          this.widgetUrl = data.widgetUrl;
-          this.commands = data.commands;
-          this.globalVariables = data.globalVariables;
-          this.channelPointsCustomRewards = data.channelPointsCustomRewards;
-          this.filter = data.filter;
-          this.playlist = data.playlist;
-          if (!this.inited && !this.player.playing()) {
-            this.play();
-          }
-          this.inited = true;
-        }
-      );
-      this.ws.connect();
-      this.play();
+  {
+    title: "Clear playlist",
+    ctrl: "clear",
+    icon: "fa-eject",
+  },
+  {
+    title: "Shuffle",
+    ctrl: "shuffle",
+    icon: "fa-random",
+  },
+  {
+    title: "Play",
+    ctrl: "unpause",
+    icon: "fa-play",
+  },
+  {
+    title: "Pause",
+    ctrl: "pause",
+    icon: "fa-pause",
+  },
+  {
+    title: "Prev",
+    ctrl: "prev",
+    icon: "fa-step-backward",
+  },
+  {
+    title: "Next",
+    ctrl: "skip",
+    icon: "fa-step-forward",
+  },
+]
+
+const tabDefinitions: TabDefinition[] = [
+  { tab: "playlist", title: "Playlist" },
+  { tab: "commands", title: "Commands" },
+  { tab: "settings", title: "Settings" },
+  { tab: "tags", title: "Tags" },
+  { tab: "import", title: "Import/Export" },
+]
+
+const possibleActions: CommandAction[] = [
+  CommandAction.SR_CURRENT,
+  CommandAction.SR_UNDO,
+  CommandAction.SR_GOOD,
+  CommandAction.SR_BAD,
+  CommandAction.SR_STATS,
+  CommandAction.SR_PREV,
+  CommandAction.SR_NEXT,
+  CommandAction.SR_JUMPTONEW,
+  CommandAction.SR_CLEAR,
+  CommandAction.SR_RM,
+  CommandAction.SR_SHUFFLE,
+  CommandAction.SR_RESET_STATS,
+  CommandAction.SR_LOOP,
+  CommandAction.SR_NOLOOP,
+  CommandAction.SR_PAUSE,
+  CommandAction.SR_UNPAUSE,
+  CommandAction.SR_HIDEVIDEO,
+  CommandAction.SR_SHOWVIDEO,
+  CommandAction.SR_REQUEST,
+  CommandAction.SR_RE_REQUEST,
+  CommandAction.SR_ADDTAG,
+  CommandAction.SR_RMTAG,
+  CommandAction.SR_VOLUME,
+  CommandAction.SR_FILTER,
+  CommandAction.SR_PRESET,
+  CommandAction.SR_QUEUE,
+]
+
+const tags = computed(() => {
+  const tags: TagInfo[] = [];
+  playlist.value.forEach((item: PlaylistItem) => {
+    item.tags.forEach((tag) => {
+      const index = tags.findIndex((t) => t.value === tag);
+      if (index === -1) {
+        tags.push({ value: tag, count: 1 });
+      }
+      else {
+        tags[index].count++;
+      }
     });
-  },
-  unmounted() {
-    if (this.ws) {
-      this.ws.disconnect();
+  });
+  return tags;
+})
+
+const youtube = ref<any>(null)
+
+const player = computed((): Player => {
+  return (youtube.value || {
+    stop: noop,
+    play: noop,
+    pause: noop,
+    unpause: noop,
+    setVolume: noop,
+    setLoop: noop,
+    playing: noop,
+  }) as Player;
+})
+
+const filteredPlaylist = computed((): PlaylistItem[] => {
+  if (filter.value.tag === "") {
+    return playlist.value;
+  }
+  return playlist.value.filter((item: PlaylistItem) => item.tags.includes(filter.value.tag));
+})
+
+const item = computed(() => {
+  return filteredPlaylist.value[0];
+})
+
+const hasItems = computed((): boolean => {
+  return filteredPlaylist.value.length !== 0;
+})
+
+const playerstyle = computed((): string => {
+  return playerVisible.value
+    ? ""
+    : "width:0;height:0;padding:0;margin-bottom:0;";
+})
+
+const togglePlayerButtonText = computed((): string => {
+  return playerVisible.value ? "Hide Player" : "Show Player";
+})
+const exportPlaylistUrl = computed((): string => {
+  return `${location.protocol}//${location.host}/api/sr/export`;
+})
+
+const sendSave = () => {
+  sendMsg({
+    event: "save",
+    commands: commands.value,
+    settings: settings.value,
+  });
+}
+
+const onTagUpdated = (evt: [
+  string,
+  string
+]) => {
+  updateTag(evt[0], evt[1]);
+}
+
+const onPlaylistCtrl = (evt: [
+  string,
+  any[]
+]) => {
+  sendCtrl(evt[0], evt[1]);
+}
+
+const applyFilter = (tag: string) => {
+  sendCtrl("filter", [{ tag }]);
+}
+
+const doImportPlaylist = async () => {
+  const res = await api.importPlaylist(importPlaylist.value);
+  if (res.status === 200) {
+    tab.value = "playlist";
+    toast.success("Import successful");
+  }
+  else {
+    toast.error("Import failed");
+  }
+}
+const togglePlayer = () => {
+  playerVisible.value = !playerVisible.value;
+  if (playerVisible.value) {
+    if (!player.value.playing()) {
+      play();
     }
-  },
-  methods: {
-    sendSave() {
-      this.sendMsg({
-        event: "save",
-        commands: this.commands,
-        settings: this.settings,
-      });
-    },
-    onTagUpdated(evt: [string, string]) {
-      this.updateTag(evt[0], evt[1]);
-    },
-    onPlaylistCtrl(evt: [string, any[]]) {
-      this.sendCtrl(evt[0], evt[1]);
-    },
-    applyFilter(tag: string) {
-      this.sendCtrl("filter", [{ tag }]);
-    },
-    async doImportPlaylist() {
-      const res = await api.importPlaylist(this.importPlaylist);
-      if (res.status === 200) {
-        this.tab = "playlist";
-        this.toast.success("Import successful");
-      } else {
-        this.toast.error("Import failed");
+  }
+  else {
+    player.value.stop();
+  }
+}
+const resr = () => {
+  if (resrinput.value !== "") {
+    sendCtrl("resr", [resrinput.value]);
+    resrinput.value = "";
+  }
+}
+const sr = () => {
+  if (srinput.value !== "") {
+    sendCtrl("sr", [srinput.value]);
+    srinput.value = "";
+  }
+}
+const sendCtrl = (ctrl: string, args: any[]) => {
+  sendMsg({ event: "ctrl", ctrl, args });
+}
+const ended = () => {
+  sendMsg({ event: "ended" });
+}
+const sendMsg = (data: Record<string, any>) => {
+  if (ws) {
+    ws.send(JSON.stringify(data));
+  }
+  else {
+    console.warn("sendMsg: this.ws not initialized");
+  }
+}
+const play = () => {
+  adjustVolume(settings.value.volume);
+  if (playerVisible.value && hasItems.value) {
+    player.value.play(item.value.yt);
+    sendMsg({ event: "play", id: item.value.id });
+  }
+}
+const unpause = () => {
+  if (hasItems.value) {
+    player.value.unpause();
+    sendMsg({ event: "unpause", id: item.value.id });
+  }
+}
+const pause = () => {
+  if (playerVisible.value && hasItems.value) {
+    player.value.pause();
+    sendMsg({ event: "pause" });
+  }
+}
+const adjustVolume = (volume: number) => {
+  player.value.setVolume(volume);
+}
+const updateTag = (oldTag: string, newTag: string) => {
+  if (oldTag === newTag) {
+    return;
+  }
+  sendCtrl("updatetag", [oldTag, newTag]);
+}
+
+onMounted(async () => {
+  nextTick(() => {
+    ws = util.wsClient("sr");
+    ws.onMessage("save", (data: SongrequestModuleWsEventData) => {
+      settings.value = data.settings;
+      widgetUrl.value = data.widgetUrl;
+      commands.value = data.commands;
+      globalVariables.value = data.globalVariables;
+      channelPointsCustomRewards.value = data.channelPointsCustomRewards;
+    });
+    ws.onMessage(["pause"], (_data: SongrequestModuleWsEventData) => {
+      if (player.value.playing()) {
+        pause();
       }
-    },
-    togglePlayer() {
-      this.playerVisible = !this.playerVisible;
-      if (this.playerVisible) {
-        if (!this.player.playing()) {
-          this.play();
-        }
-      } else {
-        this.player.stop();
+    });
+    ws.onMessage(["unpause"], (_data: SongrequestModuleWsEventData) => {
+      if (!player.value.playing()) {
+        unpause();
       }
-    },
-    resr() {
-      if (this.resrinput !== "") {
-        this.sendCtrl("resr", [this.resrinput]);
-        this.resrinput = ''
+    });
+    ws.onMessage(["loop"], (_data: SongrequestModuleWsEventData) => {
+      player.value.setLoop(true);
+    });
+    ws.onMessage(["noloop"], (_data: SongrequestModuleWsEventData) => {
+      player.value.setLoop(false);
+    });
+    ws.onMessage(["onEnded", "prev", "skip", "remove", "move", "tags"], (data: SongrequestModuleWsEventData) => {
+      settings.value = data.settings;
+      commands.value = data.commands;
+      globalVariables.value = data.globalVariables;
+      channelPointsCustomRewards.value = data.channelPointsCustomRewards;
+      const oldId = filteredPlaylist.value.length > 0
+        ? filteredPlaylist.value[0].id
+        : null;
+      filter.value = data.filter;
+      playlist.value = data.playlist;
+      const newId = filteredPlaylist.value.length > 0
+        ? filteredPlaylist.value[0].id
+        : null;
+      if (oldId !== newId) {
+        play();
       }
-    },
-    sr() {
-      if (this.srinput !== "") {
-        this.sendCtrl("sr", [this.srinput]);
-        this.srinput = ''
+    });
+    ws.onMessage(["filter"], (data: SongrequestModuleWsEventData) => {
+      settings.value = data.settings;
+      commands.value = data.commands;
+      globalVariables.value = data.globalVariables;
+      channelPointsCustomRewards.value = data.channelPointsCustomRewards;
+      const oldId = filteredPlaylist.value.length > 0 ? filteredPlaylist.value[0].id : null;
+      filter.value = data.filter;
+      playlist.value = data.playlist;
+      // play only if old id is not in new playlist
+      if (!filteredPlaylist.value.find((item) => item.id === oldId)) {
+        play();
       }
-    },
-    sendCtrl(ctrl: string, args: any[]) {
-      this.sendMsg({ event: "ctrl", ctrl, args });
-    },
-    ended() {
-      this.sendMsg({ event: "ended" });
-    },
-    sendMsg(data: Record<string, any>) {
-      if (this.ws) {
-        this.ws.send(JSON.stringify(data));
-      } else {
-        console.warn("sendMsg: this.ws not initialized");
+    });
+    ws.onMessage(["stats", "video", "playIdx", "resetStats", "shuffle"], (data: SongrequestModuleWsEventData) => {
+      settings.value = data.settings;
+      commands.value = data.commands;
+      globalVariables.value = data.globalVariables;
+      channelPointsCustomRewards.value = data.channelPointsCustomRewards;
+      filter.value = data.filter;
+      playlist.value = data.playlist;
+    });
+    ws.onMessage(["add", "init"], (data: SongrequestModuleWsEventData) => {
+      settings.value = data.settings;
+      widgetUrl.value = data.widgetUrl;
+      commands.value = data.commands;
+      globalVariables.value = data.globalVariables;
+      channelPointsCustomRewards.value = data.channelPointsCustomRewards;
+      filter.value = data.filter;
+      playlist.value = data.playlist;
+      if (!inited.value && !player.value.playing()) {
+        play();
       }
-    },
-    play() {
-      this.adjustVolume(this.settings.volume);
-      if (this.playerVisible && this.hasItems) {
-        this.player.play(this.item.yt);
-        this.sendMsg({ event: "play", id: this.item.id });
-      }
-    },
-    unpause() {
-      if (this.hasItems) {
-        this.player.unpause();
-        this.sendMsg({ event: "unpause", id: this.item.id });
-      }
-    },
-    pause() {
-      if (this.playerVisible && this.hasItems) {
-        this.player.pause();
-        this.sendMsg({ event: "pause" });
-      }
-    },
-    adjustVolume(volume: number) {
-      this.player.setVolume(volume);
-    },
-    updateTag(oldTag: string, newTag: string) {
-      if (oldTag === newTag) {
-        return;
-      }
-      this.sendCtrl("updatetag", [oldTag, newTag]);
-    },
-  },
-});
+      inited.value = true;
+    });
+    ws.connect();
+    play();
+  });
+})
+
+onUnmounted(() => {
+  if (ws) {
+    ws.disconnect();
+  }
+})
 </script>
 
 <style scoped>
