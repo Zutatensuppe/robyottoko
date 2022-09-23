@@ -1,3 +1,5 @@
+import { DrawcastImage } from "../mod/modules/DrawcastModuleCommon"
+
 interface RequestOptions {
   headers?: Record<string, string>
   body?: XMLHttpRequestBodyInit,
@@ -87,7 +89,7 @@ export default {
     return request('post', "/api/upload", { body, onUploadProgress });
   },
   importPlaylist: async (playlistJsonString: string) => postJsonStr("/api/sr/import", playlistJsonString),
-  getDrawcastAllImages: async () => get("/api/drawcast/all-images/"),
+  getDrawcastAllImages: async () => get("/api/drawcast/all-images"),
   getGeneralGlobalEmotes: async () => get("/api/general/global-emotes"),
   getGeneralChannelEmotes: async (channelName: string) => get("/api/general/channel-emotes" + asQueryArgs({ channel_name: channelName })),
   createWidgetUrl: async (data: { type: string, pub: boolean }) => postJson("/api/widget/create_url", data),

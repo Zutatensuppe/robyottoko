@@ -330,23 +330,46 @@
                     </td>
                   </tr>
                   <tr>
-                    <td>Select favorites:</td>
+                    <td>All images:</td>
                     <td>
                       <div class="favorites-select">
-                        <img
+                        <template
                           v-for="(url, idx2) in currentFavoriteSelectionItems"
                           :key="idx2"
-                          :src="url"
-                          width="50"
-                          height="50"
-                          class="thumbnail mr-1"
-                          :class="{
-                            'is-favorited': favoriteList.list.includes(url),
-                          }"
-                          @click="toggleFavorite(idx, url)"
-                          @mouseover="favoriteSelection.hovered = url"
-                          @mouseleave="favoriteSelection.hovered = ''"
                         >
+                          <div class="favorites-select-image">
+                            <img
+                              :src="url"
+                              width="100"
+                              height="100"
+                              class="thumbnail mr-1"
+                              :class="{
+                                'is-favorited': favoriteList.list.includes(url),
+                              }"
+                              @mouseover="favoriteSelection.hovered = url"
+                              @mouseleave="favoriteSelection.hovered = ''"
+                            >
+                            <div class="buttons">
+                              <span class="button is-small">
+                                <i
+                                  class="fa fa-star"
+                                  :class="{
+                                    'has-text-warning': favoriteList.list.includes(url),
+                                  }"
+                                  @click="toggleFavorite(idx, url)"
+                                />
+                              </span>
+                              <DoubleclickButton
+                                class="button is-small"
+                                message="Are you sure?"
+                                :timeout="1000"
+                                @doubleclick="deleteImage(url)"
+                              >
+                                <i class="fa fa-trash" />
+                              </DoubleclickButton>
+                            </div>
+                          </div>
+                        </template>
                       </div>
                       <span
                         class="button is-small mr-1"
@@ -406,6 +429,7 @@ import WsClient from "../WsClient";
 import StringInput from "../components/StringInput.vue";
 import IntegerInput from "../components/IntegerInput.vue";
 import CheckboxInput from "../components/CheckboxInput.vue";
+import DoubleclickButton from "../components/DoubleclickButton.vue";
 
 interface ComponentData {
   unchangedJson: string;
@@ -433,7 +457,7 @@ interface ComponentData {
 }
 
 export default defineComponent({
-  components: { StringInput, IntegerInput, CheckboxInput },
+  components: { StringInput, IntegerInput, CheckboxInput, DoubleclickButton },
   data: (): ComponentData => ({
     unchangedJson: "{}",
     changedJson: "{}",
@@ -516,6 +540,16 @@ export default defineComponent({
       this.favoriteSelection.items.unshift(data.img);
       this.favoriteSelection.items = this.favoriteSelection.items.slice();
     });
+    this.ws.onMessage("image_deleted", (data: {
+      img: string;
+    }) => {
+      this.settings.favoriteLists = this.settings.favoriteLists.map(favoriteList => {
+        favoriteList.list = favoriteList.list.filter(img => img !== data.img)
+        return favoriteList
+      })
+      this.favoriteSelection.items = this.favoriteSelection.items.filter((img) => img !== data.img);
+      this.manualApproval.items = this.manualApproval.items.filter((img) => img !== data.img);
+    });
     this.ws.onMessage("denied_image_received", (data: {
       nonce: string;
       img: string;
@@ -547,6 +581,9 @@ export default defineComponent({
     }
   },
   methods: {
+    deleteImage(path: string) {
+      this.sendMsg({ event: "delete_image", path });
+    },
     approveImage(path: string) {
       this.sendMsg({ event: "approve_image", path });
     },
@@ -649,7 +686,7 @@ export default defineComponent({
 });
 </script>
 
-<style>
+<style lang="scss">
 .square {
   display: inline-block;
   padding: 1px;
@@ -684,6 +721,25 @@ export default defineComponent({
 .is-favorited,
 .favorites-select img.is-favorited {
   border: solid 1px black;
+}
+
+.favorites-select {
+  .favorites-select-image {
+    position: relative;
+    display: inline-block;
+
+    .buttons {
+      display: none;
+    }
+    &:hover {
+      .buttons {
+        display: block;
+        position: absolute;
+        top: 0;
+        right: 0;
+      }
+    }
+  }
 }
 
 .image-to-approve {

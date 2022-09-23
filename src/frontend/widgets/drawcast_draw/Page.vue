@@ -220,10 +220,7 @@
             fav.title || "Streamer's favorites:"
           }}</span>
         </div>
-        <div
-          v-if="nonfavorites.length"
-          class="drawing_panel_drawings"
-        >
+        <div class="drawing_panel_drawings">
           <img
             v-for="(tmpImg, idx2) in fav.list"
             :key="idx2"
@@ -705,6 +702,17 @@ export default defineComponent({
       //           screen!~ Click any of the drawings in the gallery to continue
       //           drawing on them!`;
     });
+
+    this.ws.onMessage(
+      "image_deleted"
+    , (data: { img: string }) => {
+      this.favoriteLists = this.favoriteLists.map(favoriteList => {
+        favoriteList.list = favoriteList.list.filter(img => img !== data.img)
+        return favoriteList
+      })
+      this.images = this.images.filter((img) => img !== data.img);
+    });
+
     this.ws.onMessage(
       "image_received",
       (data: { nonce: string; img: string }) => {
