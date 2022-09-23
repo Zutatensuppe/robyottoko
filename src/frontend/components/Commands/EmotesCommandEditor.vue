@@ -96,13 +96,16 @@
                 </div>
                 <div class="field has-addons">
                   <div class="control">
-                    <StringInput v-model="channelNameInput" />
+                    <StringInput
+                      v-model="channelNameInput"
+                      placeholder="Enter channel name here"
+                    />
                   </div>
                   <button
                     class="button is-small"
                     @click="loadChannelEmotes"
                   >
-                    <i class="fa fa-plus mr-1" /> Add emotes from channel
+                    <i class="fa fa-plus mr-1" /> Show emotes from channel
                   </button>
                 </div>
                 <div class="emote-select">
@@ -111,7 +114,9 @@
                     v-for="(emotesSet, idx) in possibleEmoteSets"
                     :key="idx"
                   >
-                    <div>{{ emotesSet.name }}</div>
+                    <div class="emote-set-name">
+                      {{ emotesSet.name }}
+                    </div>
                     <img
                       v-for="(emote, idx2) in emotesSet.emotes"
                       :key="idx2"
@@ -569,5 +574,8 @@ export default defineComponent({
 <style lang="scss">
 .emote-select {
   img { width: 32px; }
+}
+.emote-set-name {
+  font-weight: bold;
 }
 </style>
