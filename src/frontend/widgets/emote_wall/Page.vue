@@ -95,7 +95,7 @@ const easeInOutSine = (x: number): number => {
   return -(Math.cos(Math.PI * x) - 1) / 2;
 }
 
-const randomBezierEmote: EmoteFn = (url: string) => {
+const randomBezierEmote: EmoteFn = (img: Image) => {
   const w = window.innerWidth
   const h = window.innerHeight
   const rand = (n: number): number => Math.floor(Math.random() * n)
@@ -107,12 +107,16 @@ const randomBezierEmote: EmoteFn = (url: string) => {
   const delayTicks = getRandomInt(0, 50)
   let tick = 0
   let t = 0
+
+  const emoteW = DEFAULT_EMOTE_SIZE
+  const emoteH = img.height * emoteW / img.width
+
   return {
-    url,
+    url: img.src,
     x: -DEFAULT_EMOTE_SIZE,
     y: -DEFAULT_EMOTE_SIZE,
-    w: DEFAULT_EMOTE_SIZE,
-    h: DEFAULT_EMOTE_SIZE,
+    w: emoteW,
+    h: emoteH,
     rot: 0,
     active: true,
     dead: false,
@@ -127,8 +131,8 @@ const randomBezierEmote: EmoteFn = (url: string) => {
       const p = bezier(easeInOutSine(t), p0, p1, p2, p3)
       this.x = p.x
       this.y = p.y
-      this.w = easeInOutSine(t) * DEFAULT_EMOTE_SIZE
-      this.h = easeInOutSine(t) * DEFAULT_EMOTE_SIZE
+      this.w = easeInOutSine(t) * emoteW
+      this.h = easeInOutSine(t) * emoteH
 
       if (t >= 2) {
         this.dead = true
@@ -138,7 +142,7 @@ const randomBezierEmote: EmoteFn = (url: string) => {
   }
 }
 
-const bouncyEmote: EmoteFn = (url: string) => {
+const bouncyEmote: EmoteFn = (img: Image) => {
   const from = getRandom(['right', 'left'])
 
   let vx = Math.random() * 2 + 2
@@ -154,12 +158,15 @@ const bouncyEmote: EmoteFn = (url: string) => {
   const w = window.innerWidth
   const h = window.innerHeight
 
+  const emoteW = DEFAULT_EMOTE_SIZE
+  const emoteH = img.height * emoteW / img.width
+
   return {
-    url,
+    url: img.src,
     x: (from === 'right' ? w : 0) - DEFAULT_EMOTE_SIZE / 2,
     y: getRandomInt(0, h - DEFAULT_EMOTE_SIZE / 2),
-    w: DEFAULT_EMOTE_SIZE,
-    h: DEFAULT_EMOTE_SIZE,
+    w: emoteW,
+    h: emoteH,
     rot: 0,
     active: false,
     dead: false,
@@ -195,7 +202,7 @@ const bouncyEmote: EmoteFn = (url: string) => {
   }
 }
 
-const rainEmote: EmoteFn = (url: string) => {
+const rainEmote: EmoteFn = (img: Image) => {
   let vy = 4 + Math.random() * 4
   const minVelocityY = vy
   let size = getRandomInt(-20, 20)
@@ -206,12 +213,15 @@ const rainEmote: EmoteFn = (url: string) => {
   const w = window.innerWidth
   const h = window.innerHeight
 
+  const emoteW = DEFAULT_EMOTE_SIZE + size
+  const emoteH = img.height * emoteW / img.width
+
   return {
-    url,
+    url: img.src,
     x: getRandomInt(0, w) - DEFAULT_EMOTE_SIZE / 2,
     y: 0 - (DEFAULT_EMOTE_SIZE / 2),
-    w: DEFAULT_EMOTE_SIZE + size,
-    h: DEFAULT_EMOTE_SIZE + size,
+    w: emoteW,
+    h: emoteH,
     rot: 0,
     active: false,
     dead: false,
@@ -235,7 +245,7 @@ const rainEmote: EmoteFn = (url: string) => {
   }
 }
 
-const balloonEmote: EmoteFn = (url: string) => {
+const balloonEmote: EmoteFn = (img: Image) => {
   let vx = 0
   let size = getRandomInt(-10, 10)
   let vyUp = -5 + size / 5
@@ -247,12 +257,14 @@ const balloonEmote: EmoteFn = (url: string) => {
   const w = window.innerWidth
   const h = window.innerHeight
 
+  const emoteW = DEFAULT_EMOTE_SIZE + size
+  const emoteH = img.height * emoteW / img.width
   return {
-    url,
+    url: img.src,
     x: getRandomInt(0, w) - DEFAULT_EMOTE_SIZE / 2,
     y: h - (DEFAULT_EMOTE_SIZE / 2),
-    w: DEFAULT_EMOTE_SIZE + size,
-    h: DEFAULT_EMOTE_SIZE + size,
+    w: emoteW,
+    h: emoteH,
     rot: 0,
     active: false,
     dead: false,
@@ -284,7 +296,7 @@ const balloonEmote: EmoteFn = (url: string) => {
   }
 }
 
-const floatingSpaceEmote: EmoteFn = (url: string) => {
+const floatingSpaceEmote: EmoteFn = (img: Image) => {
   let vx = (Math.random() * 1.5 + .5) * getRandom([-1, 1])
   let vy = (Math.random() * 1.5 + .5) * getRandom([-1, 1])
   const rotDir = (Math.random() * 2 + 1) * getRandom([-1, 1])
@@ -292,12 +304,16 @@ const floatingSpaceEmote: EmoteFn = (url: string) => {
   let tick = 0
   const w = window.innerWidth
   const h = window.innerHeight
+
+  const emoteW = DEFAULT_EMOTE_SIZE
+  const emoteH = img.height * emoteW / img.width
+
   return {
-    url,
+    url: img.src,
     x: w / 2 - DEFAULT_EMOTE_SIZE / 2,
     y: h / 2 - DEFAULT_EMOTE_SIZE / 2,
-    w: DEFAULT_EMOTE_SIZE,
-    h: DEFAULT_EMOTE_SIZE,
+    w: emoteW,
+    h: emoteH,
     rot: 0,
     active: false,
     dead: false,
@@ -332,7 +348,7 @@ const floatingSpaceEmote: EmoteFn = (url: string) => {
   }
 }
 
-const explodeEmote: EmoteFn = (url: string) => {
+const explodeEmote: EmoteFn = (img: Image) => {
   let vx = Math.random() * 3.5 + .5
   if (Math.random() < .5) {
     vx *= -1
@@ -345,12 +361,16 @@ const explodeEmote: EmoteFn = (url: string) => {
   let tick = 0
   const w = window.innerWidth
   const h = window.innerHeight
+
+  const emoteW = DEFAULT_EMOTE_SIZE
+  const emoteH = img.height * emoteW / img.width
+
   return {
-    url,
+    url: img.src,
     x: w / 2 - DEFAULT_EMOTE_SIZE / 2,
     y: h / 2 - DEFAULT_EMOTE_SIZE / 2,
-    w: DEFAULT_EMOTE_SIZE,
-    h: DEFAULT_EMOTE_SIZE,
+    w: emoteW,
+    h: emoteH,
     rot: 0,
     active: false,
     dead: false,
@@ -384,7 +404,7 @@ const explodeEmote: EmoteFn = (url: string) => {
   }
 }
 
-const fountainEmote: EmoteFn = (url: string) => {
+const fountainEmote: EmoteFn = (img: Image) => {
   let vx = Math.random() * 3.5 + .5
   if (Math.random() < .5) {
     vx *= -1
@@ -398,12 +418,15 @@ const fountainEmote: EmoteFn = (url: string) => {
   const w = window.innerWidth
   const h = window.innerHeight
 
+  const emoteW = DEFAULT_EMOTE_SIZE
+  const emoteH = img.height * emoteW / img.width
+
   return {
-    url,
+    url: img.src,
     x: w / 2 - DEFAULT_EMOTE_SIZE / 2,
     y: h - DEFAULT_EMOTE_SIZE,
-    w: DEFAULT_EMOTE_SIZE,
-    h: DEFAULT_EMOTE_SIZE,
+    w: emoteW,
+    h: emoteH,
     rot: 0,
     active: false,
     dead: false,
@@ -440,12 +463,22 @@ const fountainEmote: EmoteFn = (url: string) => {
   }
 }
 
+const loadImage = async (url: string): Promise<Image> => {
+  return new Promise<Image>((resolve) => {
+    const img = new Image()
+    img.onload = () => {
+      resolve(img)
+    }
+    img.src = url
+  })
+}
+
 onMounted(() => {
   ws = util.wsClient(props.wdata);
   ws.onMessage("init", (data: GeneralModuleWsEventData) => {
     settings.value = data.settings;
   })
-  ws.onMessage("emotes", (data: GeneralModuleEmotesEventData) => {
+  ws.onMessage("emotes", async (data: GeneralModuleEmotesEventData) => {
 
     const displayFn = getRandom(data.displayFn)
     let emoteFn: EmoteFn
@@ -461,7 +494,8 @@ onMounted(() => {
     }
 
     for (const emote of data.emotes) {
-      emotes.value.push(emoteFn(emote.url, displayFn.args))
+      const image = await loadImage(emote.url)
+      emotes.value.push(emoteFn(image, displayFn.args))
     }
   })
   ws.connect()
