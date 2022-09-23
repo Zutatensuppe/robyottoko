@@ -350,13 +350,15 @@
                               @mouseleave="favoriteSelection.hovered = ''"
                             >
                             <div class="buttons">
-                              <span class="button is-small">
+                              <span
+                                class="button is-small"
+                                @click="toggleFavorite(idx, url)"
+                              >
                                 <i
                                   class="fa fa-star"
                                   :class="{
                                     'has-text-warning': favoriteList.list.includes(url),
                                   }"
-                                  @click="toggleFavorite(idx, url)"
                                 />
                               </span>
                               <DoubleclickButton
@@ -628,6 +630,7 @@ export default defineComponent({
         console.warn("toggleFavorite: this.settings not initialized");
         return;
       }
+      console.log(index, url)
       if (this.settings.favoriteLists[index].list.includes(url)) {
         this.settings.favoriteLists[index].list = this.settings.favoriteLists[index].list.filter((u: string) => u !== url);
       }
