@@ -52,6 +52,11 @@ export interface SongrequestModuleSettings {
   maxItemsShown: number
 }
 
+export interface SongrequestModuleLimits {
+  maxLenMs: number
+  maxQueued: number
+}
+
 export interface SongRequestModuleFilter {
   tag: string
 }

@@ -7,11 +7,12 @@ import {
   ChatMessageContext, PlaylistItem,
   FunctionCommand, Command,
   Bot, CommandFunction, Module, CommandExecutionContext,
-  MODULE_NAME, WIDGET_TYPE
+  MODULE_NAME, WIDGET_TYPE, TwitchChatContext
 } from '../../types'
 import {
   default_commands,
   default_settings, SongerquestModuleInitData, SongrequestModuleData,
+  SongrequestModuleLimits,
   SongrequestModuleSettings, SongrequestModuleWsEventData
 } from './SongrequestModuleCommon'
 import { NextFunction, Response } from 'express'
@@ -65,6 +66,46 @@ const default_playlist = (list: any = null): PlaylistItem[] => {
     return list.map(item => default_playlist_item(item))
   }
   return []
+}
+
+const noLimits = (): SongrequestModuleLimits => ({ maxLenMs: 0, maxQueued: 0 })
+const determineLimits = (
+  ctx: TwitchChatContext,
+  settings: SongrequestModuleSettings,
+): SongrequestModuleLimits => {
+  if (isBroadcaster(ctx)) {
+    return noLimits()
+  }
+
+  // use the longest set up maxLenMs and maxQueued that fits for the user
+  // a user can be both moderator and subscriber, in that case the longest setting will be used
+  // also, 0 is handled as 'unlimited', so have to check that too..
+  const check: ('mod' | 'sub' | 'viewer')[] = []
+  if (isMod(ctx)) {
+    check.push('mod')
+  }
+  if (isSubscriber(ctx)) {
+    check.push('sub')
+  }
+  if (check.length === 0) {
+    check.push('viewer')
+  }
+
+  let maxLenMs: number = -1
+  let maxQueued: number = -1
+  for (const prop of check) {
+    const lenMs = parseHumanDuration(settings.maxSongLength[prop])
+    maxLenMs = (lenMs === 0 || maxLenMs === -1) ? lenMs : Math.max(maxLenMs, lenMs)
+
+    const queued = settings.maxSongsQueued[prop]
+    maxQueued = (queued === 0 || maxQueued === -1) ? queued : Math.max(maxQueued, queued)
+  }
+
+  // make sure that the limits are >= 0
+  maxLenMs = Math.max(maxLenMs, 0)
+  maxQueued = Math.max(maxQueued, 0)
+
+  return { maxLenMs, maxQueued }
 }
 
 class SongrequestModule implements Module {
@@ -333,19 +374,19 @@ class SongrequestModule implements Module {
     }
   }
 
-  async add(str: string, userName: string, maxLenMs: number, maxQueued: number): Promise<AddResponseData> {
+  async add(str: string, userName: string, limits: SongrequestModuleLimits): Promise<AddResponseData> {
     const countQueuedSongsByUser = () => this.data.playlist.filter(item => item.user === userName && item.plays === 0).length
     const isTooLong = (ytData: YoutubeVideosResponseDataEntry) => {
-      if (maxLenMs > 0) {
+      if (limits.maxLenMs > 0) {
         const songLenMs = fn.parseISO8601Duration(ytData.contentDetails.duration)
-        if (maxLenMs < songLenMs) {
+        if (limits.maxLenMs < songLenMs) {
           return true
         }
       }
       return false
     }
 
-    if (maxQueued > 0 && countQueuedSongsByUser() >= maxQueued) {
+    if (limits.maxQueued > 0 && countQueuedSongsByUser() >= limits.maxQueued) {
       return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_MANY_QUEUED }
     }
 
@@ -365,10 +406,14 @@ class SongrequestModule implements Module {
         youtubeData = tmpYoutubeData
       }
     }
+
     if (!youtubeData) {
-      const youtubeIds = await Youtube.getYoutubeIdsBySearch(youtubeUrl)
-      if (youtubeIds) {
-        const reasons = []
+      const reasons = []
+      for (const duration of Youtube.msToVideoDurations(limits.maxLenMs)) {
+        const youtubeIds = await Youtube.getYoutubeIdsBySearch(youtubeUrl, duration)
+        if (!youtubeIds) {
+          continue
+        }
         for (const tmpYoutubeId of youtubeIds) {
           const tmpYoutubeData = await this.loadYoutubeData(tmpYoutubeId)
           if (!tmpYoutubeData) {
@@ -382,13 +427,17 @@ class SongrequestModule implements Module {
           youtubeData = tmpYoutubeData
           break
         }
-        if (!youtubeId || !youtubeData) {
-          if (reasons.includes(NOT_ADDED_REASON.TOO_LONG)) {
-            return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_LONG }
-          }
+        if (youtubeId && youtubeData) {
+          break
+        }
+      }
+      if (!youtubeId || !youtubeData) {
+        if (reasons.includes(NOT_ADDED_REASON.TOO_LONG)) {
+          return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_LONG }
         }
       }
     }
+
     if (!youtubeId || !youtubeData) {
       return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.NOT_FOUND }
     }
@@ -564,9 +613,7 @@ class SongrequestModule implements Module {
 
   async request(str: string) {
     // this comes from backend, always unlimited length
-    const maxLen = 0
-    const maxQueued = 0
-    await this.add(str, this.user.name, maxLen, maxQueued)
+    await this.add(str, this.user.name, noLimits())
   }
 
   findSongIdxByYoutubeId(youtubeId: string) {
@@ -779,7 +826,10 @@ class SongrequestModule implements Module {
     return item
   }
 
-  async answerAddRequest(addResponseData: AddResponseData) {
+  async answerAddRequest(
+    addResponseData: AddResponseData,
+    limits: SongrequestModuleLimits,
+  ): Promise<string> {
     const idx = addResponseData.idx
     const reason = addResponseData.reason
     const addType = addResponseData.addType
@@ -790,9 +840,9 @@ class SongrequestModule implements Module {
       } else if (reason === NOT_ADDED_REASON.NOT_FOUND_IN_PLAYLIST) {
         return `Song not found in playlist`
       } else if (reason === NOT_ADDED_REASON.TOO_LONG) {
-        return `Song too long`
+        return `Song too long (max. ${humanDuration(limits.maxLenMs)})`
       } else if (reason === NOT_ADDED_REASON.TOO_MANY_QUEUED) {
-        return `Too many songs queued`
+        return `Too many songs queued (max. ${limits.maxQueued})`
       } else {
         return `Could not process that song request`
       }
@@ -874,7 +924,7 @@ class SongrequestModule implements Module {
 
       const searchterm = ctx.rawCmd.args.join(' ')
       const addResponseData = await this.resr(searchterm)
-      say(await this.answerAddRequest(addResponseData))
+      say(await this.answerAddRequest(addResponseData, noLimits()))
     }
   }
 
@@ -1132,24 +1182,9 @@ class SongrequestModule implements Module {
 
       const str = ctx.rawCmd.args.join(' ')
 
-      let maxLenMs: number
-      let maxQueued: number
-      if (isBroadcaster(ctx.context)) {
-        maxLenMs = 0
-        maxQueued = 0
-      } else if (isMod(ctx.context)) {
-        maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.mod)
-        maxQueued = this.data.settings.maxSongsQueued.mod
-      } else if (isSubscriber(ctx.context)) {
-        maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.sub)
-        maxQueued = this.data.settings.maxSongsQueued.sub
-      } else {
-        maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.viewer)
-        maxQueued = this.data.settings.maxSongsQueued.viewer
-      }
-
-      const addResponseData = await this.add(str, ctx.context['display-name'], maxLenMs, maxQueued)
-      say(await this.answerAddRequest(addResponseData))
+      const limits = determineLimits(ctx.context, this.data.settings)
+      const addResponseData = await this.add(str, ctx.context['display-name'], limits)
+      say(await this.answerAddRequest(addResponseData, limits))
     }
   }
 

@@ -1,5 +1,5 @@
 import config from '../config'
-import { logger } from '../common/fn'
+import { logger, MINUTE } from '../common/fn'
 import xhr, { asQueryArgs, QueryArgsData } from '../net/xhr'
 
 const log = logger('Youtube.ts')
@@ -68,7 +68,57 @@ const extractYoutubeId = (str: string): string | null => {
   return null
 }
 
-const getYoutubeIdsBySearch = async (searchterm: string): Promise<string[]> => {
+
+export enum YoutubeVideoDuration {
+  ANY = 'any',
+  LONG = 'long',
+  MEDIUM = 'medium',
+  SHORT = 'short',
+}
+
+const msToVideoDurations = (durationMs: number): YoutubeVideoDuration[] => {
+  if (durationMs <= 0) {
+    return [
+      YoutubeVideoDuration.ANY,
+      YoutubeVideoDuration.SHORT,
+      YoutubeVideoDuration.MEDIUM,
+      YoutubeVideoDuration.LONG,
+    ]
+  }
+
+  if (durationMs < 4 * MINUTE) {
+    return [
+      YoutubeVideoDuration.ANY,
+      YoutubeVideoDuration.SHORT,
+    ]
+  }
+
+  if (durationMs <= 20 * MINUTE) {
+    return [
+      YoutubeVideoDuration.ANY,
+      YoutubeVideoDuration.SHORT,
+      YoutubeVideoDuration.MEDIUM,
+    ]
+  }
+
+  return [
+    YoutubeVideoDuration.ANY,
+    YoutubeVideoDuration.SHORT,
+    YoutubeVideoDuration.MEDIUM,
+    YoutubeVideoDuration.LONG,
+  ]
+}
+
+// @see https://developers.google.com/youtube/v3/docs/search/list
+// videoDuration
+//   any – Do not filter video search results based on their duration. This is the default value.
+//   long – Only include videos longer than 20 minutes.
+//   medium – Only include videos that are between four and 20 minutes long (inclusive).
+//   short – Only include videos that are less than four minutes long.
+const getYoutubeIdsBySearch = async (
+  searchterm: string,
+  videoDuration: YoutubeVideoDuration = YoutubeVideoDuration.ANY,
+): Promise<string[]> => {
   const searches = [
     `"${searchterm}"`,
     searchterm,
@@ -80,6 +130,7 @@ const getYoutubeIdsBySearch = async (searchterm: string): Promise<string[]> => {
       q: q,
       type: 'video',
       videoEmbeddable: 'true',
+      videoDuration,
     }) as YoutubeSearchResponseData
     try {
       for (const item of json.items) {
@@ -97,6 +148,7 @@ const getUrlById = (id: string) => `https://youtu.be/${id}`
 export default {
   fetchDataByYoutubeId,
   extractYoutubeId,
+  msToVideoDurations,
   getYoutubeIdsBySearch,
   getUrlById,
 }

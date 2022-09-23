@@ -5485,7 +5485,49 @@ const extractYoutubeId = (str) => {
     }
     return null;
 };
-const getYoutubeIdsBySearch = async (searchterm) => {
+var YoutubeVideoDuration;
+(function (YoutubeVideoDuration) {
+    YoutubeVideoDuration["ANY"] = "any";
+    YoutubeVideoDuration["LONG"] = "long";
+    YoutubeVideoDuration["MEDIUM"] = "medium";
+    YoutubeVideoDuration["SHORT"] = "short";
+})(YoutubeVideoDuration || (YoutubeVideoDuration = {}));
+const msToVideoDurations = (durationMs) => {
+    if (durationMs <= 0) {
+        return [
+            YoutubeVideoDuration.ANY,
+            YoutubeVideoDuration.SHORT,
+            YoutubeVideoDuration.MEDIUM,
+            YoutubeVideoDuration.LONG,
+        ];
+    }
+    if (durationMs < 4 * MINUTE) {
+        return [
+            YoutubeVideoDuration.ANY,
+            YoutubeVideoDuration.SHORT,
+        ];
+    }
+    if (durationMs <= 20 * MINUTE) {
+        return [
+            YoutubeVideoDuration.ANY,
+            YoutubeVideoDuration.SHORT,
+            YoutubeVideoDuration.MEDIUM,
+        ];
+    }
+    return [
+        YoutubeVideoDuration.ANY,
+        YoutubeVideoDuration.SHORT,
+        YoutubeVideoDuration.MEDIUM,
+        YoutubeVideoDuration.LONG,
+    ];
+};
+// @see https://developers.google.com/youtube/v3/docs/search/list
+// videoDuration
+//   any – Do not filter video search results based on their duration. This is the default value.
+//   long – Only include videos longer than 20 minutes.
+//   medium – Only include videos that are between four and 20 minutes long (inclusive).
+//   short – Only include videos that are less than four minutes long.
+const getYoutubeIdsBySearch = async (searchterm, videoDuration = YoutubeVideoDuration.ANY) => {
     const searches = [
         `"${searchterm}"`,
         searchterm,
@@ -5497,6 +5539,7 @@ const getYoutubeIdsBySearch = async (searchterm) => {
             q: q,
             type: 'video',
             videoEmbeddable: 'true',
+            videoDuration,
         });
         try {
             for (const item of json.items) {
@@ -5513,6 +5556,7 @@ const getUrlById = (id) => `https://youtu.be/${id}`;
 var Youtube = {
     fetchDataByYoutubeId,
     extractYoutubeId,
+    msToVideoDurations,
     getYoutubeIdsBySearch,
     getUrlById,
 };
@@ -5617,6 +5661,37 @@ const default_playlist = (list = null) => {
         return list.map(item => default_playlist_item(item));
     }
     return [];
+};
+const noLimits = () => ({ maxLenMs: 0, maxQueued: 0 });
+const determineLimits = (ctx, settings) => {
+    if (isBroadcaster(ctx)) {
+        return noLimits();
+    }
+    // use the longest set up maxLenMs and maxQueued that fits for the user
+    // a user can be both moderator and subscriber, in that case the longest setting will be used
+    // also, 0 is handled as 'unlimited', so have to check that too..
+    const check = [];
+    if (isMod(ctx)) {
+        check.push('mod');
+    }
+    if (isSubscriber(ctx)) {
+        check.push('sub');
+    }
+    if (check.length === 0) {
+        check.push('viewer');
+    }
+    let maxLenMs = -1;
+    let maxQueued = -1;
+    for (const prop of check) {
+        const lenMs = parseHumanDuration(settings.maxSongLength[prop]);
+        maxLenMs = (lenMs === 0 || maxLenMs === -1) ? lenMs : Math.max(maxLenMs, lenMs);
+        const queued = settings.maxSongsQueued[prop];
+        maxQueued = (queued === 0 || maxQueued === -1) ? queued : Math.max(maxQueued, queued);
+    }
+    // make sure that the limits are >= 0
+    maxLenMs = Math.max(maxLenMs, 0);
+    maxQueued = Math.max(maxQueued, 0);
+    return { maxLenMs, maxQueued };
 };
 class SongrequestModule {
     constructor(bot, user) {
@@ -5913,18 +5988,18 @@ class SongrequestModule {
             },
         };
     }
-    async add(str, userName, maxLenMs, maxQueued) {
+    async add(str, userName, limits) {
         const countQueuedSongsByUser = () => this.data.playlist.filter(item => item.user === userName && item.plays === 0).length;
         const isTooLong = (ytData) => {
-            if (maxLenMs > 0) {
+            if (limits.maxLenMs > 0) {
                 const songLenMs = fn.parseISO8601Duration(ytData.contentDetails.duration);
-                if (maxLenMs < songLenMs) {
+                if (limits.maxLenMs < songLenMs) {
                     return true;
                 }
             }
             return false;
         };
-        if (maxQueued > 0 && countQueuedSongsByUser() >= maxQueued) {
+        if (limits.maxQueued > 0 && countQueuedSongsByUser() >= limits.maxQueued) {
             return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_MANY_QUEUED };
         }
         const youtubeUrl = str.trim();
@@ -5942,9 +6017,12 @@ class SongrequestModule {
             }
         }
         if (!youtubeData) {
-            const youtubeIds = await Youtube.getYoutubeIdsBySearch(youtubeUrl);
-            if (youtubeIds) {
-                const reasons = [];
+            const reasons = [];
+            for (const duration of Youtube.msToVideoDurations(limits.maxLenMs)) {
+                const youtubeIds = await Youtube.getYoutubeIdsBySearch(youtubeUrl, duration);
+                if (!youtubeIds) {
+                    continue;
+                }
                 for (const tmpYoutubeId of youtubeIds) {
                     const tmpYoutubeData = await this.loadYoutubeData(tmpYoutubeId);
                     if (!tmpYoutubeData) {
@@ -5958,10 +6036,13 @@ class SongrequestModule {
                     youtubeData = tmpYoutubeData;
                     break;
                 }
-                if (!youtubeId || !youtubeData) {
-                    if (reasons.includes(NOT_ADDED_REASON.TOO_LONG)) {
-                        return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_LONG };
-                    }
+                if (youtubeId && youtubeData) {
+                    break;
+                }
+            }
+            if (!youtubeId || !youtubeData) {
+                if (reasons.includes(NOT_ADDED_REASON.TOO_LONG)) {
+                    return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_LONG };
                 }
             }
         }
@@ -6126,9 +6207,7 @@ class SongrequestModule {
     }
     async request(str) {
         // this comes from backend, always unlimited length
-        const maxLen = 0;
-        const maxQueued = 0;
-        await this.add(str, this.user.name, maxLen, maxQueued);
+        await this.add(str, this.user.name, noLimits());
     }
     findSongIdxByYoutubeId(youtubeId) {
         return this.data.playlist.findIndex(item => item.yt === youtubeId);
@@ -6309,7 +6388,7 @@ class SongrequestModule {
         await this.rmIdx(idx);
         return item;
     }
-    async answerAddRequest(addResponseData) {
+    async answerAddRequest(addResponseData, limits) {
         const idx = addResponseData.idx;
         const reason = addResponseData.reason;
         const addType = addResponseData.addType;
@@ -6321,10 +6400,10 @@ class SongrequestModule {
                 return `Song not found in playlist`;
             }
             else if (reason === NOT_ADDED_REASON.TOO_LONG) {
-                return `Song too long`;
+                return `Song too long (max. ${humanDuration(limits.maxLenMs)})`;
             }
             else if (reason === NOT_ADDED_REASON.TOO_MANY_QUEUED) {
-                return `Too many songs queued`;
+                return `Too many songs queued (max. ${limits.maxQueued})`;
             }
             else {
                 return `Could not process that song request`;
@@ -6405,7 +6484,7 @@ class SongrequestModule {
             }
             const searchterm = ctx.rawCmd.args.join(' ');
             const addResponseData = await this.resr(searchterm);
-            say(await this.answerAddRequest(addResponseData));
+            say(await this.answerAddRequest(addResponseData, noLimits()));
         };
     }
     cmdSrGood(_originalCommand) {
@@ -6635,26 +6714,9 @@ class SongrequestModule {
                 return;
             }
             const str = ctx.rawCmd.args.join(' ');
-            let maxLenMs;
-            let maxQueued;
-            if (isBroadcaster(ctx.context)) {
-                maxLenMs = 0;
-                maxQueued = 0;
-            }
-            else if (isMod(ctx.context)) {
-                maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.mod);
-                maxQueued = this.data.settings.maxSongsQueued.mod;
-            }
-            else if (isSubscriber(ctx.context)) {
-                maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.sub);
-                maxQueued = this.data.settings.maxSongsQueued.sub;
-            }
-            else {
-                maxLenMs = parseHumanDuration(this.data.settings.maxSongLength.viewer);
-                maxQueued = this.data.settings.maxSongsQueued.viewer;
-            }
-            const addResponseData = await this.add(str, ctx.context['display-name'], maxLenMs, maxQueued);
-            say(await this.answerAddRequest(addResponseData));
+            const limits = determineLimits(ctx.context, this.data.settings);
+            const addResponseData = await this.add(str, ctx.context['display-name'], limits);
+            say(await this.answerAddRequest(addResponseData, limits));
         };
     }
     async loadYoutubeData(youtubeId) {
@@ -7595,9 +7657,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-09-23T19:48:46.497Z",
+    buildDate: "2022-09-23T21:35:06.638Z",
     // @ts-ignore
-    buildVersion: "1.27.1",
+    buildVersion: "1.27.2",
 };
 
 const TABLE = 'robyottoko.chat_log';
