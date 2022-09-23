@@ -7088,6 +7088,19 @@ class DrawcastModule {
     async userChanged(user) {
         this.user = user;
     }
+    _deleteImage(image) {
+        const rel = `/uploads/drawcast/${this.user.id}`;
+        if (!image.path.startsWith(rel)) {
+            return false;
+        }
+        const name = image.path.substring(rel.length).replace('/', '').replace('\\', '');
+        const path = `./data${rel}`;
+        if (fs.existsSync(`${path}/${name}`)) {
+            fs.rmSync(`${path}/${name}`);
+            return true;
+        }
+        return false;
+    }
     _loadAllImages() {
         try {
             // todo: probably better to store latest x images in db
@@ -7127,7 +7140,7 @@ class DrawcastModule {
     getRoutes() {
         return {
             get: {
-                '/api/drawcast/all-images/': async (_req, res, _next) => {
+                '/api/drawcast/all-images': async (_req, res, _next) => {
                     res.send(this.getImages());
                 },
             },
@@ -7198,6 +7211,30 @@ class DrawcastModule {
                 await this.save();
                 this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
                     event: 'denied_image_received',
+                    data: { nonce: '', img: image.path, mayNotify: false },
+                });
+            },
+            'delete_image': async (_ws, { path }) => {
+                const image = this.data.images.find(item => item.path === path);
+                if (!image) {
+                    // should not happen
+                    log$2.error({ path }, 'delete_image: image not found');
+                    return;
+                }
+                const deleted = this._deleteImage(image);
+                if (!deleted) {
+                    // should not happen
+                    log$2.error({ path }, 'delete_image: image not deleted');
+                    return;
+                }
+                this.data.settings.favoriteLists = this.data.settings.favoriteLists.map(favoriteList => {
+                    favoriteList.list = favoriteList.list.filter(img => img !== image.path);
+                    return favoriteList;
+                });
+                this.data.images = this.data.images.filter(item => item.path !== image.path);
+                await this.save();
+                this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
+                    event: 'image_deleted',
                     data: { nonce: '', img: image.path, mayNotify: false },
                 });
             },
@@ -7558,9 +7595,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-09-22T08:20:40.541Z",
+    buildDate: "2022-09-23T19:11:27.048Z",
     // @ts-ignore
-    buildVersion: "1.26.1",
+    buildVersion: "1.27.0",
 };
 
 const TABLE = 'robyottoko.chat_log';
