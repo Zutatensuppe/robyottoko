@@ -3865,7 +3865,9 @@ class TwitchClientManager {
         // register EventSub
         // @see https://dev.twitch.tv/docs/eventsub
         this.helixClient = new TwitchHelixClient(identity.client_id, identity.client_secret);
-        await this.registerSubscriptions(twitchChannels);
+        if (this.bot.getConfig().twitch.eventSub.enabled) {
+            await this.registerSubscriptions(twitchChannels);
+        }
     }
     async registerSubscriptions(twitchChannels) {
         if (!this.helixClient) {
@@ -3910,13 +3912,14 @@ class TwitchClientManager {
         if (!twitchChannel.channel_id) {
             return;
         }
+        const condition = subscriptionType === SubscriptionType.ChannelRaid
+            ? { to_broadcaster_user_id: `${twitchChannel.channel_id}` }
+            : { broadcaster_user_id: `${twitchChannel.channel_id}` };
         const subscription = {
             type: subscriptionType,
             version: '1',
             transport: this.bot.getConfig().twitch.eventSub.transport,
-            condition: {
-                broadcaster_user_id: `${twitchChannel.channel_id}`,
-            },
+            condition,
         };
         const resp = await this.helixClient.createSubscription(subscription);
         if (resp && resp.data && resp.data.length > 0) {
@@ -7657,9 +7660,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-09-23T21:35:06.638Z",
+    buildDate: "2022-09-28T19:11:30.301Z",
     // @ts-ignore
-    buildVersion: "1.27.2",
+    buildVersion: "1.27.3",
 };
 
 const TABLE = 'robyottoko.chat_log';
