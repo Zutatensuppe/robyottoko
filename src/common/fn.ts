@@ -383,6 +383,10 @@ export const withoutLeading = (string: string, prefix: string): string => {
   return tmp
 }
 
+export const getRandomFloat = (min: number, max: number): number => {
+  return Math.random() * (max - min) + min;
+}
+
 export const getRandomInt = (min: number, max: number): number => {
   min = Math.ceil(min);
   max = Math.floor(max);
@@ -430,6 +434,7 @@ export default {
   daysUntil,
   doDummyReplacements,
   getRandom,
+  getRandomFloat,
   getRandomInt,
   humanDuration,
   mediaFileFromUploadedFile,

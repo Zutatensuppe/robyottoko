@@ -65,6 +65,7 @@ export interface EventSubTransport {
 export interface TwitchConfig {
   eventSub: {
     transport: EventSubTransport
+    enabled: boolean
   }
   tmi: {
     identity: {

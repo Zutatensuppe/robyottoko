@@ -22,11 +22,11 @@ import {
 } from "../../../mod/modules/GeneralModuleCommon";
 import util, { WidgetApiData } from "../util";
 import WsClient from "../../WsClient";
-import { getRandom, getRandomInt } from "../../../common/fn";
+import { getRandom, getRandomFloat, getRandomInt } from "../../../common/fn";
 
 import("./main.scss");
 
-let ws: WsClient | null = 42
+let ws: WsClient | null = null
 
 const props = defineProps<{
   wdata: WidgetApiData,
@@ -46,7 +46,7 @@ interface Emote {
   update: () => void,
 }
 
-type EmoteFn = (url: string, args: string[]) => Emote
+type EmoteFn = (img: HTMLImageElement, args: string[]) => Emote
 
 const emotes = ref<Emote[]>([])
 
@@ -77,32 +77,51 @@ interface Point {
 }
 
 const bezier = (t: number, p0: Point, p1: Point, p2: Point, p3: Point) => {
-  var cX = 3 * (p1.x - p0.x),
-      bX = 3 * (p2.x - p1.x) - cX,
-      aX = p3.x - p0.x - cX - bX;
+  const cX = 3 * (p1.x - p0.x),
+    bX = 3 * (p2.x - p1.x) - cX,
+    aX = p3.x - p0.x - cX - bX;
 
-  var cY = 3 * (p1.y - p0.y),
-      bY = 3 * (p2.y - p1.y) - cY,
-      aY = p3.y - p0.y - cY - bY;
+  const cY = 3 * (p1.y - p0.y),
+    bY = 3 * (p2.y - p1.y) - cY,
+    aY = p3.y - p0.y - cY - bY;
 
-  var x = (aX * Math.pow(t, 3)) + (bX * Math.pow(t, 2)) + (cX * t) + p0.x;
-  var y = (aY * Math.pow(t, 3)) + (bY * Math.pow(t, 2)) + (cY * t) + p0.y;
+  const x = (aX * Math.pow(t, 3)) + (bX * Math.pow(t, 2)) + (cX * t) + p0.x;
+  const y = (aY * Math.pow(t, 3)) + (bY * Math.pow(t, 2)) + (cY * t) + p0.y;
 
-  return {x: x, y: y};
+  return { x: x, y: y };
 }
 
 const easeInOutSine = (x: number): number => {
   return -(Math.cos(Math.PI * x) - 1) / 2;
 }
 
-const randomBezierEmote: EmoteFn = (img: Image) => {
-  const w = window.innerWidth
-  const h = window.innerHeight
-  const rand = (n: number): number => Math.floor(Math.random() * n)
-  const p0 = { x: rand(w), y: rand(h) }
-  const p1 = { x: rand(w), y: rand(h) }
-  const p2 = { x: rand(w), y: rand(h) }
-  const p3 = { x: rand(w), y: rand(h) }
+const TO_LEFT = -1
+const TO_RIGHT = 1
+const TO_UP = -1
+const TO_DOWN = 1
+const BACKWARD = -1
+const FORWARD = 1
+
+const randomX = (): number => getRandomInt(0, window.innerWidth)
+const centerX = (): number => window.innerWidth / 2
+const centerY = (): number => window.innerHeight / 2
+const randomY = (): number => getRandomInt(0, window.innerHeight)
+const floor = (): number => window.innerHeight
+const right = (): number => window.innerWidth
+
+const isOffScreenLeft = (emote: Emote): boolean => emote.x + emote.w <= 0
+const isOffScreenRight = (emote: Emote): boolean => emote.x > window.innerWidth
+const isOffScreenTop = (emote: Emote): boolean => emote.y + emote.h <= 0
+const isOffScreenBottom = (emote: Emote): boolean => emote.y > window.innerHeight
+const isOffScreen = (emote: Emote): boolean => isOffScreenLeft(emote) || isOffScreenRight(emote) || isOffScreenTop(emote) || isOffScreenBottom(emote)
+const isAtCeiling = (emote: Emote): boolean => emote.y <= 0
+const isAtFloor = (emote: Emote): boolean => emote.y + emote.h >= floor()
+
+const randomBezierEmote: EmoteFn = (img: HTMLImageElement) => {
+  const p0 = { x: randomX(), y: randomY() }
+  const p1 = { x: randomX(), y: randomY() }
+  const p2 = { x: randomX(), y: randomY() }
+  const p3 = { x: randomX(), y: randomY() }
 
   const delayTicks = getRandomInt(0, 50)
   let tick = 0
@@ -113,8 +132,8 @@ const randomBezierEmote: EmoteFn = (img: Image) => {
 
   return {
     url: img.src,
-    x: -DEFAULT_EMOTE_SIZE,
-    y: -DEFAULT_EMOTE_SIZE,
+    x: -emoteW,
+    y: -emoteH,
     w: emoteW,
     h: emoteH,
     rot: 0,
@@ -124,9 +143,8 @@ const randomBezierEmote: EmoteFn = (img: Image) => {
       tick++
       if (tick < delayTicks) {
         return
-      } else {
-        this.active = true
       }
+      this.active = true
       t += .005
       const p = bezier(easeInOutSine(t), p0, p1, p2, p3)
       this.x = p.x
@@ -142,29 +160,23 @@ const randomBezierEmote: EmoteFn = (img: Image) => {
   }
 }
 
-const bouncyEmote: EmoteFn = (img: Image) => {
+const bouncyEmote: EmoteFn = (img: HTMLImageElement) => {
   const from = getRandom(['right', 'left'])
 
-  let vx = Math.random() * 2 + 2
-  if (from === 'right') {
-    vx *= -1
-  }
+  const vx = getRandomFloat(2, 4) * (from === 'right' ? TO_LEFT : TO_RIGHT)
   let vy = -10
-  let gravity = 0.1
-  let bounce = 0.7
+  const gravity = 0.1
+  const bounce = 0.7
   const delayTicks = getRandomInt(0, 50)
   let tick = 0
-
-  const w = window.innerWidth
-  const h = window.innerHeight
 
   const emoteW = DEFAULT_EMOTE_SIZE
   const emoteH = img.height * emoteW / img.width
 
   return {
     url: img.src,
-    x: (from === 'right' ? w : 0) - DEFAULT_EMOTE_SIZE / 2,
-    y: getRandomInt(0, h - DEFAULT_EMOTE_SIZE / 2),
+    x: (from === 'right' ? right() : 0) - emoteW / 2,
+    y: randomY() - emoteH / 2,
     w: emoteW,
     h: emoteH,
     rot: 0,
@@ -174,52 +186,42 @@ const bouncyEmote: EmoteFn = (img: Image) => {
       tick++
       if (tick < delayTicks) {
         return
-      } else {
-        this.active = true
       }
+      this.active = true
       this.x += vx
       this.y += vy
       vy += gravity
-      if (
-        // off screen left
-        this.x + this.w <= 0
-        ||
-        // off screen right
-        this.x > w
-      ) {
+      if (isOffScreenLeft(this) || isOffScreenRight(this)) {
         this.dead = true
         console.log('bouncy dead')
       }
-      if (this.y <= 0) {
+      if (isAtCeiling(this)) {
         this.y = 0
         vy = 5
       }
-      if (this.y + this.h >= h) {
-        this.y = h - this.h
+      if (isAtFloor(this)) {
+        this.y = floor() - this.h
         vy *= -bounce
       }
     },
   }
 }
 
-const rainEmote: EmoteFn = (img: Image) => {
-  let vy = 4 + Math.random() * 4
+const rainEmote: EmoteFn = (img: HTMLImageElement) => {
+  let vy = getRandomFloat(4, 8)
   const minVelocityY = vy
-  let size = getRandomInt(-20, 20)
-  let gravity = 0.1 + (size / 50)
+  const size = getRandomInt(-20, 20)
+  const gravity = 0.1 + (size / 50)
   const delayTicks = getRandomInt(0, 50)
   let tick = 0
-
-  const w = window.innerWidth
-  const h = window.innerHeight
 
   const emoteW = DEFAULT_EMOTE_SIZE + size
   const emoteH = img.height * emoteW / img.width
 
   return {
     url: img.src,
-    x: getRandomInt(0, w) - DEFAULT_EMOTE_SIZE / 2,
-    y: 0 - (DEFAULT_EMOTE_SIZE / 2),
+    x: randomX() - emoteW / 2,
+    y: 0 - (emoteH / 2),
     w: emoteW,
     h: emoteH,
     rot: 0,
@@ -229,15 +231,12 @@ const rainEmote: EmoteFn = (img: Image) => {
       tick++
       if (tick < delayTicks) {
         return
-      } else {
-        this.active = true
       }
+      this.active = true
       this.y += vy
       vy += gravity
       vy = Math.max(minVelocityY, vy)
-      if (
-        this.y > h
-      ) {
+      if (isOffScreenBottom(this)) {
         this.dead = true
         console.log('rain dead')
       }
@@ -245,24 +244,21 @@ const rainEmote: EmoteFn = (img: Image) => {
   }
 }
 
-const balloonEmote: EmoteFn = (img: Image) => {
+const balloonEmote: EmoteFn = (img: HTMLImageElement) => {
+  const size = getRandomInt(-10, 10)
+  const vyUp = -5 + size / 5
+  const vyVertical = vyUp / 2
   let vx = 0
-  let size = getRandomInt(-10, 10)
-  let vyUp = -5 + size / 5
-  let vyVertical = vyUp / 2
   let vy = vyUp
   const delayTicks = getRandomInt(0, 50)
   let tick = 0
-
-  const w = window.innerWidth
-  const h = window.innerHeight
 
   const emoteW = DEFAULT_EMOTE_SIZE + size
   const emoteH = img.height * emoteW / img.width
   return {
     url: img.src,
-    x: getRandomInt(0, w) - DEFAULT_EMOTE_SIZE / 2,
-    y: h - (DEFAULT_EMOTE_SIZE / 2),
+    x: randomX() - emoteW / 2,
+    y: floor() - (emoteH / 2),
     w: emoteW,
     h: emoteH,
     rot: 0,
@@ -272,12 +268,11 @@ const balloonEmote: EmoteFn = (img: Image) => {
       tick++
       if (tick < delayTicks) {
         return
-      } else {
-        this.active = true
       }
+      this.active = true
       this.y += vy
       this.x += vx
-      if (tick % 20 === 0 && Math.random() < .4) {
+      if (tick % 20 === 0 && getRandomFloat(0, 1) < .4) {
         if (vx === 0) {
           vx = getRandomInt(-1, 1)
           vy = Math.min(vyVertical, vy)
@@ -286,32 +281,28 @@ const balloonEmote: EmoteFn = (img: Image) => {
           vy += .1
         }
       }
-      if (
-        this.y > h
-      ) {
+      if (isOffScreenTop(this)) {
         this.dead = true
-        console.log('rain dead')
+        console.log('balloon dead')
       }
     },
   }
 }
 
-const floatingSpaceEmote: EmoteFn = (img: Image) => {
-  let vx = (Math.random() * 1.5 + .5) * getRandom([-1, 1])
-  let vy = (Math.random() * 1.5 + .5) * getRandom([-1, 1])
-  const rotDir = (Math.random() * 2 + 1) * getRandom([-1, 1])
+const floatingSpaceEmote: EmoteFn = (img: HTMLImageElement) => {
+  const vx = getRandomFloat(.5, 2) * getRandom([TO_LEFT, TO_RIGHT])
+  const vy = getRandomFloat(.5, 2) * getRandom([TO_UP, TO_DOWN])
+  const rotDir = getRandomFloat(1, 3) * getRandom([BACKWARD, FORWARD])
   const delayTicks = getRandomInt(0, 50)
   let tick = 0
-  const w = window.innerWidth
-  const h = window.innerHeight
 
   const emoteW = DEFAULT_EMOTE_SIZE
   const emoteH = img.height * emoteW / img.width
 
   return {
     url: img.src,
-    x: w / 2 - DEFAULT_EMOTE_SIZE / 2,
-    y: h / 2 - DEFAULT_EMOTE_SIZE / 2,
+    x: centerX() - emoteW / 2,
+    y: centerY() - emoteH / 2,
     w: emoteW,
     h: emoteH,
     rot: 0,
@@ -321,25 +312,12 @@ const floatingSpaceEmote: EmoteFn = (img: Image) => {
       tick++
       if (tick < delayTicks) {
         return
-      } else {
-        this.active = true
       }
+      this.active = true
       this.rot += rotDir
       this.x += vx
       this.y += vy
-      if (
-        // off screen left
-        this.x + this.w <= 0
-        ||
-        // off screen right
-        this.x > w
-        ||
-        // off screen top
-        this.y + this.h <= 0
-        ||
-        // off screen bottom
-        this.y > h
-      ) {
+      if (isOffScreen(this)) {
         // remove
         this.dead = true
         console.log('floating space dead')
@@ -348,27 +326,19 @@ const floatingSpaceEmote: EmoteFn = (img: Image) => {
   }
 }
 
-const explodeEmote: EmoteFn = (img: Image) => {
-  let vx = Math.random() * 3.5 + .5
-  if (Math.random() < .5) {
-    vx *= -1
-  }
-  let vy = Math.random() * 3.5 + .5
-  if (Math.random() < .5) {
-    vy *= -1
-  }
+const explodeEmote: EmoteFn = (img: HTMLImageElement) => {
+  const vx = getRandomFloat(.5, 4) * getRandom([TO_LEFT, TO_RIGHT])
+  const vy = getRandomFloat(.5, 4) * getRandom([TO_UP, TO_DOWN])
   const delayTicks = getRandomInt(0, 50)
   let tick = 0
-  const w = window.innerWidth
-  const h = window.innerHeight
 
   const emoteW = DEFAULT_EMOTE_SIZE
   const emoteH = img.height * emoteW / img.width
 
   return {
     url: img.src,
-    x: w / 2 - DEFAULT_EMOTE_SIZE / 2,
-    y: h / 2 - DEFAULT_EMOTE_SIZE / 2,
+    x: centerX() - emoteW / 2,
+    y: centerY() - emoteH / 2,
     w: emoteW,
     h: emoteH,
     rot: 0,
@@ -378,24 +348,11 @@ const explodeEmote: EmoteFn = (img: Image) => {
       tick++
       if (tick < delayTicks) {
         return
-      } else {
-        this.active = true
       }
+      this.active = true
       this.x += vx
       this.y += vy
-      if (
-        // off screen left
-        this.x + this.w <= 0
-        ||
-        // off screen right
-        this.x > w
-        ||
-        // off screen top
-        this.y + this.h <= 0
-        ||
-        // off screen bottom
-        this.y > h
-      ) {
+      if (isOffScreen(this)) {
         // remove
         this.dead = true
         console.log('explode dead')
@@ -404,27 +361,21 @@ const explodeEmote: EmoteFn = (img: Image) => {
   }
 }
 
-const fountainEmote: EmoteFn = (img: Image) => {
-  let vx = Math.random() * 3.5 + .5
-  if (Math.random() < .5) {
-    vx *= -1
-  }
-  let vy = -10 + Math.random() * -5
-  let gravity = 0.1
-  let bounce = 0.7
+const fountainEmote: EmoteFn = (img: HTMLImageElement) => {
+  const vx = getRandomFloat(.5, 4) * getRandom([TO_LEFT, TO_RIGHT])
+  let vy = getRandomFloat(-15, -10)
+  const gravity = 0.1
+  const bounce = 0.7
   const delayTicks = getRandomInt(0, 50)
   let tick = 0
-
-  const w = window.innerWidth
-  const h = window.innerHeight
 
   const emoteW = DEFAULT_EMOTE_SIZE
   const emoteH = img.height * emoteW / img.width
 
   return {
     url: img.src,
-    x: w / 2 - DEFAULT_EMOTE_SIZE / 2,
-    y: h - DEFAULT_EMOTE_SIZE,
+    x: centerX() - emoteW / 2,
+    y: floor() - emoteH,
     w: emoteW,
     h: emoteH,
     rot: 0,
@@ -434,37 +385,30 @@ const fountainEmote: EmoteFn = (img: Image) => {
       tick++
       if (tick < delayTicks) {
         return
-      } else {
-        this.active = true
       }
+      this.active = true
       this.x += vx
       this.y += vy
       vy += gravity
-      if (
-        // off screen left
-        this.x + this.w <= 0
-        ||
-        // off screen right
-        this.x > w
-      ) {
+      if (isOffScreenLeft(this) || isOffScreenRight(this)) {
         // remove
         this.dead = true
         console.log('fountain dead')
       }
-      if (this.y <= 0) {
+      if (isAtCeiling(this)) {
         this.y = 0
         vy = -vy
       }
-      if (this.y + this.h >= h) {
-        this.y = h - this.h
+      if (isAtFloor(this)) {
+        this.y = floor() - this.h
         vy *= -bounce
       }
     },
   }
 }
 
-const loadImage = async (url: string): Promise<Image> => {
-  return new Promise<Image>((resolve) => {
+const loadImage = async (url: string): Promise<HTMLImageElement> => {
+  return new Promise<HTMLImageElement>((resolve) => {
     const img = new Image()
     img.onload = () => {
       resolve(img)
