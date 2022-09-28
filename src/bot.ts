@@ -147,28 +147,30 @@ const initForUser = async (bot: Bot, user: User) => {
       return setTimeout(updateUserFrontendStatus, 5 * SECOND)
     }
     const problems = []
-    const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id)
-    for (const twitchChannel of twitchChannels) {
-      const result = await refreshExpiredTwitchChannelAccessToken(
-        twitchChannel,
-        bot,
-        user,
-      )
-      if (result.error) {
-        log.error('Unable to validate or refresh OAuth token.')
-        log.error(`user: ${user.name}, channel: ${twitchChannel.channel_name}, error: ${result.error}`)
-        problems.push({
-          message: 'access_token_invalid',
-          details: {
-            channel_name: twitchChannel.channel_name,
-          },
-        })
-      } else if (result.refreshed) {
-        const changedUser = await bot.getUsers().getById(user.id)
-        if (changedUser) {
-          bot.getEventHub().emit('access_token_refreshed', changedUser)
-        } else {
-          log.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`)
+    if (bot.getConfig().bot.supportTwitchAccessTokens) {
+      const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id)
+      for (const twitchChannel of twitchChannels) {
+        const result = await refreshExpiredTwitchChannelAccessToken(
+          twitchChannel,
+          bot,
+          user,
+        )
+        if (result.error) {
+          log.error('Unable to validate or refresh OAuth token.')
+          log.error(`user: ${user.name}, channel: ${twitchChannel.channel_name}, error: ${result.error}`)
+          problems.push({
+            message: 'access_token_invalid',
+            details: {
+              channel_name: twitchChannel.channel_name,
+            },
+          })
+        } else if (result.refreshed) {
+          const changedUser = await bot.getUsers().getById(user.id)
+          if (changedUser) {
+            bot.getEventHub().emit('access_token_refreshed', changedUser)
+          } else {
+            log.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`)
+          }
         }
       }
     }
