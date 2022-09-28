@@ -3831,22 +3831,25 @@ class TwitchClientManager {
             // Called every time the bot connects to Twitch chat
             this.chatClient.on('connected', async (addr, port) => {
                 this.log.info({ addr, port }, 'Connected');
-                for (const channel of twitchChannels) {
-                    if (!channel.bot_status_messages) {
-                        continue;
-                    }
-                    // note: this can lead to multiple messages if multiple users
-                    //       have the same channels set up
-                    const say = this.bot.sayFn(user, channel.channel_name);
-                    if (connectReason === 'init') {
-                        say('⚠️ Bot rebooted - please restart timers...');
-                    }
-                    else if (connectReason === 'access_token_refreshed') ;
-                    else if (connectReason === 'user_change') {
-                        say('✅ User settings updated...');
-                    }
-                    else {
-                        say('✅ Reconnected...');
+                // if status reporting is disabled, dont print messages
+                if (this.bot.getConfig().bot.reportStatus) {
+                    for (const channel of twitchChannels) {
+                        if (!channel.bot_status_messages) {
+                            continue;
+                        }
+                        // note: this can lead to multiple messages if multiple users
+                        //       have the same channels set up
+                        const say = this.bot.sayFn(user, channel.channel_name);
+                        if (connectReason === 'init') {
+                            say('⚠️ Bot rebooted - please restart timers...');
+                        }
+                        else if (connectReason === 'access_token_refreshed') ;
+                        else if (connectReason === 'user_change') {
+                            say('✅ User settings updated...');
+                        }
+                        else {
+                            say('✅ Reconnected...');
+                        }
                     }
                 }
                 // set connectReason to empty, everything from now is just a reconnect
@@ -7660,9 +7663,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-09-28T19:11:30.301Z",
+    buildDate: "2022-09-28T20:12:49.198Z",
     // @ts-ignore
-    buildVersion: "1.27.3",
+    buildVersion: "1.27.4",
 };
 
 const TABLE = 'robyottoko.chat_log';
@@ -7811,26 +7814,28 @@ const initForUser = async (bot, user) => {
             return setTimeout(updateUserFrontendStatus, 5 * SECOND);
         }
         const problems = [];
-        const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id);
-        for (const twitchChannel of twitchChannels) {
-            const result = await refreshExpiredTwitchChannelAccessToken(twitchChannel, bot, user);
-            if (result.error) {
-                log.error('Unable to validate or refresh OAuth token.');
-                log.error(`user: ${user.name}, channel: ${twitchChannel.channel_name}, error: ${result.error}`);
-                problems.push({
-                    message: 'access_token_invalid',
-                    details: {
-                        channel_name: twitchChannel.channel_name,
-                    },
-                });
-            }
-            else if (result.refreshed) {
-                const changedUser = await bot.getUsers().getById(user.id);
-                if (changedUser) {
-                    bot.getEventHub().emit('access_token_refreshed', changedUser);
+        if (bot.getConfig().bot.supportTwitchAccessTokens) {
+            const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id);
+            for (const twitchChannel of twitchChannels) {
+                const result = await refreshExpiredTwitchChannelAccessToken(twitchChannel, bot, user);
+                if (result.error) {
+                    log.error('Unable to validate or refresh OAuth token.');
+                    log.error(`user: ${user.name}, channel: ${twitchChannel.channel_name}, error: ${result.error}`);
+                    problems.push({
+                        message: 'access_token_invalid',
+                        details: {
+                            channel_name: twitchChannel.channel_name,
+                        },
+                    });
                 }
-                else {
-                    log.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`);
+                else if (result.refreshed) {
+                    const changedUser = await bot.getUsers().getById(user.id);
+                    if (changedUser) {
+                        bot.getEventHub().emit('access_token_refreshed', changedUser);
+                    }
+                    else {
+                        log.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`);
+                    }
                 }
             }
         }
