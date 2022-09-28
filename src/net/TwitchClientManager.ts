@@ -5,7 +5,7 @@ import { logger, Logger } from '../common/fn'
 import { TwitchChannel } from '../services/TwitchChannels'
 import { User } from '../services/Users'
 import { Bot, EventSubTransport, TwitchChatClient, TwitchChatContext } from '../types'
-import { ALL_SUBSCRIPTIONS_TYPES } from '../services/twitch/EventSub'
+import { ALL_SUBSCRIPTIONS_TYPES, SubscriptionType } from '../services/twitch/EventSub'
 import { ChatEventHandler } from '../services/twitch/ChatEventHandler'
 
 const log = logger('TwitchClientManager.ts')
@@ -154,7 +154,9 @@ class TwitchClientManager {
       identity.client_secret,
     )
 
-    await this.registerSubscriptions(twitchChannels)
+    if (this.bot.getConfig().twitch.eventSub.enabled) {
+      await this.registerSubscriptions(twitchChannels)
+    }
   }
 
   async registerSubscriptions(twitchChannels: TwitchChannel[]) {
@@ -200,7 +202,7 @@ class TwitchClientManager {
   }
 
   async registerSubscription(
-    subscriptionType: string,
+    subscriptionType: SubscriptionType,
     twitchChannel: TwitchChannel,
   ): Promise<void> {
     if (!this.helixClient) {
@@ -210,13 +212,14 @@ class TwitchClientManager {
       return
     }
 
+    const condition = subscriptionType === SubscriptionType.ChannelRaid
+      ? { to_broadcaster_user_id: `${twitchChannel.channel_id}` }
+      : { broadcaster_user_id: `${twitchChannel.channel_id}` }
     const subscription = {
       type: subscriptionType,
       version: '1',
       transport: this.bot.getConfig().twitch.eventSub.transport,
-      condition: {
-        broadcaster_user_id: `${twitchChannel.channel_id}`,
-      },
+      condition,
     }
     const resp = await this.helixClient.createSubscription(subscription)
     if (resp && resp.data && resp.data.length > 0) {

@@ -12,6 +12,7 @@
         "callback": "https://c45bf59aed34.ngrok.io/twitch/event-sub/",
         "secret": "s3cRe7_blabla_superduper",
       },
+      "enabled": true
     },
     // default chat bot identity for users that dont have their own bot
     "tmi": {

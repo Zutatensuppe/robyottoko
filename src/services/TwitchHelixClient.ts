@@ -5,6 +5,7 @@ import xhr, { asJson, withHeaders, asQueryArgs } from '../net/xhr'
 import { tryRefreshAccessToken } from '../oauth'
 import { Bot } from '../types'
 import Cache from './Cache'
+import { SubscriptionType } from './twitch/EventSub'
 import { TwitchChannel } from './TwitchChannels'
 import { User } from './Users'
 
@@ -15,11 +16,14 @@ const TOKEN_ENDPOINT = 'https://id.twitch.tv/oauth2/token'
 
 const apiUrl = (path: string): string => `${API_BASE}${path}`
 
+// TODO: condition can be different depending on type
 interface TwitchHelixSubscription {
-  type: string // todo: define exact types
+  type: SubscriptionType
   version: string
   condition: {
     broadcaster_user_id: string
+  } | {
+    to_broadcaster_user_id: string
   }
   transport: {
     method: string
