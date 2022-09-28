@@ -81,6 +81,10 @@ export interface TwitchConfig {
 
 export interface Config {
   secret: string
+  bot: {
+    reportStatus: boolean
+    supportTwitchAccessTokens: boolean
+  }
   log: {
     level: LogLevel
   }

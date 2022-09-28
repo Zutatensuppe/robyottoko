@@ -116,21 +116,25 @@ class TwitchClientManager {
       // Called every time the bot connects to Twitch chat
       this.chatClient.on('connected', async (addr: string, port: number) => {
         this.log.info({ addr, port }, 'Connected')
-        for (const channel of twitchChannels) {
-          if (!channel.bot_status_messages) {
-            continue;
-          }
-          // note: this can lead to multiple messages if multiple users
-          //       have the same channels set up
-          const say = this.bot.sayFn(user, channel.channel_name)
-          if (connectReason === 'init') {
-            say('⚠️ Bot rebooted - please restart timers...')
-          } else if (connectReason === 'access_token_refreshed') {
-            // dont say anything
-          } else if (connectReason === 'user_change') {
-            say('✅ User settings updated...')
-          } else {
-            say('✅ Reconnected...')
+
+        // if status reporting is disabled, dont print messages
+        if (this.bot.getConfig().bot.reportStatus) {
+          for (const channel of twitchChannels) {
+            if (!channel.bot_status_messages) {
+              continue;
+            }
+            // note: this can lead to multiple messages if multiple users
+            //       have the same channels set up
+            const say = this.bot.sayFn(user, channel.channel_name)
+            if (connectReason === 'init') {
+              say('⚠️ Bot rebooted - please restart timers...')
+            } else if (connectReason === 'access_token_refreshed') {
+              // dont say anything
+            } else if (connectReason === 'user_change') {
+              say('✅ User settings updated...')
+            } else {
+              say('✅ Reconnected...')
+            }
           }
         }
 

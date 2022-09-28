@@ -3,6 +3,10 @@
   "log": {
     "level": "info"
   },
+  "bot": {
+    "reportStatus": true,
+    "supportTwitchAccessTokens": true
+  },
   "twitch": {
     "eventSub": {
       "transport": {
