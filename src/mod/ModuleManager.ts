@@ -1,3 +1,4 @@
+import { User } from "../services/Users"
 import { Module } from "../types"
 
 class ModuleManager {
@@ -19,6 +20,14 @@ class ModuleManager {
       }
     }
     return null
+  }
+
+  async updateForUser(userId: number, changedUser: User): Promise<void> {
+    const promises: Promise<void>[] = []
+    for (const mod of this.all(userId)) {
+      promises.push(mod.userChanged(changedUser))
+    }
+    await Promise.all(promises)
   }
 }
 

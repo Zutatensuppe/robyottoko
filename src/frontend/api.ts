@@ -1,5 +1,3 @@
-import { DrawcastImage } from "../mod/modules/DrawcastModuleCommon"
-
 interface RequestOptions {
   headers?: Record<string, string>
   body?: XMLHttpRequestBodyInit,

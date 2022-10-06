@@ -5,7 +5,7 @@ import WebSocketServer from './net/WebSocketServer'
 import WebServer from './WebServer'
 import TwitchClientManager from './net/TwitchClientManager'
 import ModuleStorage from './mod/ModuleStorage'
-import { logger, MINUTE, SECOND, setLogLevel } from './common/fn'
+import { logger, setLogLevel } from './common/fn'
 import Users, { User } from './services/Users'
 import Tokens from './services/Tokens'
 import TwitchChannels from './services/TwitchChannels'
@@ -23,11 +23,13 @@ import AvatarModule from './mod/modules/AvatarModule'
 import PomoModule from './mod/modules/PomoModule'
 import buildEnv from './buildEnv'
 import Widgets from './services/Widgets'
-import { refreshExpiredTwitchChannelAccessToken } from './oauth'
 
 import { Bot } from './types'
 import { ChatLogRepo } from './services/ChatLogRepo'
 import fn from './fn'
+import { Timer } from './Timer'
+import { StreamStatusUpdater } from './services/StreamStatusUpdater'
+import { FrontendStatusUpdater } from './services/FrontendStatusUpdater'
 
 setLogLevel(config.log.level)
 const log = logger('bot.ts')
@@ -64,6 +66,8 @@ const createBot = async (): Promise<Bot> => {
     private userVariableInstances: Record<number, Variables> = {}
     private userModuleStorageInstances: Record<number, ModuleStorage> = {}
     private userTwitchClientManagerInstances: Record<number, TwitchClientManager> = {}
+    private streamStatusUpdater: StreamStatusUpdater | null = null
+    private frontendStatusUpdater: FrontendStatusUpdater | null = null
 
     getBuildVersion() { return buildEnv.buildVersion }
     getBuildDate() { return buildEnv.buildDate }
@@ -81,6 +85,18 @@ const createBot = async (): Promise<Bot> => {
     getWidgets() { return widgets }
     getEventHub() { return eventHub }
     getChatLog() { return chatLog }
+    getStreamStatusUpdater(): StreamStatusUpdater {
+      if (!this.streamStatusUpdater) {
+        this.streamStatusUpdater = new StreamStatusUpdater(this)
+      }
+      return this.streamStatusUpdater
+    }
+    getFrontendStatusUpdater(): FrontendStatusUpdater {
+      if (!this.frontendStatusUpdater) {
+        this.frontendStatusUpdater = new FrontendStatusUpdater(this)
+      }
+      return this.frontendStatusUpdater
+    }
 
     // user specific
     // -----------------------------------------------------------------
@@ -123,126 +139,74 @@ const createBot = async (): Promise<Bot> => {
 // changes to user will be handled by user_changed event
 const initForUser = async (bot: Bot, user: User) => {
   const clientManager = bot.getUserTwitchClientManager(user)
+  const timer = new Timer()
+  timer.reset()
+
   await clientManager.init('init')
+
+  // note: even tho we await the init,
+  //       we may not be connected to twitch chat or event sub yet
+  //       because those connects are not awaited, or the server
+  //       startup will take forever
+
+  timer.split()
+  log.debug(`initiating client manager took ${timer.lastSplitMs()}ms`)
+
   for (const moduleClass of modules) {
     bot.getModuleManager().add(user.id, await new moduleClass(bot, user))
   }
 
-  let updateUserFrontendStatusTimeout: NodeJS.Timeout | null = null
-  const updateUserFrontendStatus = async (): Promise<NodeJS.Timeout> => {
-    if (updateUserFrontendStatusTimeout) {
-      clearTimeout(updateUserFrontendStatusTimeout)
-      updateUserFrontendStatusTimeout = null
-    }
-    const client = clientManager.getHelixClient()
-    if (!client) {
-      return setTimeout(updateUserFrontendStatus, 5 * SECOND)
-    }
+  timer.split()
+  log.debug(`initiating all modules took ${timer.lastSplitMs()}ms`)
 
-    // status for the user that should show in frontend
-    // (eg. problems with their settings)
-    // this only is relevant if the user is at the moment connected
-    // to a websocket
-    if (!bot.getWebSocketServer().isUserConnected(user.id)) {
-      return setTimeout(updateUserFrontendStatus, 5 * SECOND)
-    }
-    const problems = []
-    if (bot.getConfig().bot.supportTwitchAccessTokens) {
-      const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id)
-      for (const twitchChannel of twitchChannels) {
-        const result = await refreshExpiredTwitchChannelAccessToken(
-          twitchChannel,
-          bot,
-          user,
-        )
-        if (result.error) {
-          log.error('Unable to validate or refresh OAuth token.')
-          log.error(`user: ${user.name}, channel: ${twitchChannel.channel_name}, error: ${result.error}`)
-          problems.push({
-            message: 'access_token_invalid',
-            details: {
-              channel_name: twitchChannel.channel_name,
-            },
-          })
-        } else if (result.refreshed) {
-          const changedUser = await bot.getUsers().getById(user.id)
-          if (changedUser) {
-            bot.getEventHub().emit('access_token_refreshed', changedUser)
-          } else {
-            log.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`)
-          }
-        }
-      }
-    }
-
-    const data = { event: 'status', data: { problems } }
-    bot.getWebSocketServer().notifyAll([user.id], 'core', data)
-    return setTimeout(updateUserFrontendStatus, 1 * MINUTE)
-  }
-  updateUserFrontendStatusTimeout = await updateUserFrontendStatus()
-
-  let updateUserStreamStatusTimeout: NodeJS.Timeout | null = null
-  const updateUserStreamStatus = async (): Promise<NodeJS.Timeout> => {
-    if (updateUserStreamStatusTimeout) {
-      clearTimeout(updateUserStreamStatusTimeout)
-      updateUserStreamStatusTimeout = null
-    }
-    const client = clientManager.getHelixClient()
-    if (!client) {
-      return setTimeout(updateUserFrontendStatus, 5 * SECOND)
-    }
-    const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id)
-    for (const twitchChannel of twitchChannels) {
-      if (!twitchChannel.channel_id) {
-        const channelId = await client.getUserIdByNameCached(twitchChannel.channel_name, bot.getCache())
-        if (!channelId) {
-          continue
-        }
-        twitchChannel.channel_id = channelId
-      }
-      const stream = await client.getStreamByUserId(twitchChannel.channel_id)
-      twitchChannel.is_streaming = !!stream
-      bot.getTwitchChannels().save(twitchChannel)
-    }
-    return setTimeout(updateUserStreamStatus, 5 * MINUTE)
-  }
-  updateUserStreamStatusTimeout = await updateUserStreamStatus()
+  bot.getFrontendStatusUpdater().addUser(user)
+  bot.getStreamStatusUpdater().addUser(user)
 
   bot.getEventHub().on('wss_user_connected', async (socket: any /* Socket */) => {
     if (socket.user_id === user.id && socket.module === 'core') {
-      updateUserFrontendStatusTimeout = await updateUserFrontendStatus()
-      updateUserStreamStatusTimeout = await updateUserStreamStatus()
+      await bot.getFrontendStatusUpdater().updateForUser(user.id)
+      await bot.getStreamStatusUpdater().updateForUser(user.id)
     }
   })
   bot.getEventHub().on('access_token_refreshed', async (changedUser: any /* User */) => {
     if (changedUser.id === user.id) {
       await clientManager.accessTokenRefreshed(changedUser)
-      updateUserFrontendStatusTimeout = await updateUserFrontendStatus()
-      updateUserStreamStatusTimeout = await updateUserStreamStatus()
-      for (const mod of bot.getModuleManager().all(user.id)) {
-        await mod.userChanged(changedUser)
-      }
+      await bot.getFrontendStatusUpdater().updateForUser(user.id)
+      await bot.getStreamStatusUpdater().updateForUser(user.id)
+      await bot.getModuleManager().updateForUser(user.id, changedUser)
     }
   })
   bot.getEventHub().on('user_changed', async (changedUser: any /* User */) => {
     if (changedUser.id === user.id) {
       await clientManager.userChanged(changedUser)
-      updateUserFrontendStatusTimeout = await updateUserFrontendStatus()
-      updateUserStreamStatusTimeout = await updateUserStreamStatus()
-      for (const mod of bot.getModuleManager().all(user.id)) {
-        await mod.userChanged(changedUser)
-      }
+      await bot.getFrontendStatusUpdater().updateForUser(user.id)
+      await bot.getStreamStatusUpdater().updateForUser(user.id)
+      await bot.getModuleManager().updateForUser(user.id, changedUser)
     }
   })
+
+  timer.split()
+  log.debug(`init for user took ${timer.totalMs()}ms`)
 }
 
 export const run = async () => {
+  const timer = new Timer()
+  timer.reset()
+
   const bot = await createBot()
 
-  // one for each user
+  timer.split()
+  log.debug(`creating bot took ${timer.lastSplitMs()}ms`)
+
+  // one for each user, all in parallel
+  const initializers: Promise<void>[] = []
   for (const user of await bot.getUsers().all()) {
-    await initForUser(bot, user)
+    initializers.push(initForUser(bot, user))
   }
+  await Promise.all(initializers)
+
+  timer.split()
+  log.debug(`initializing users took ${timer.lastSplitMs()}ms`)
 
   bot.getEventHub().on('user_registration_complete', async (user: any /* User */) => {
     await initForUser(bot, user)
@@ -254,6 +218,15 @@ export const run = async () => {
   // at the point of connection from outside
   bot.getWebSocketServer().listen(bot)
   await bot.getWebServer().listen(bot)
+
+  // start 'workers'
+  bot.getFrontendStatusUpdater().start()
+  bot.getStreamStatusUpdater().start()
+
+  timer.split()
+  log.debug(`starting server (websocket+web) took ${timer.lastSplitMs()}ms`)
+
+  log.info(`bot started in ${timer.totalMs()}ms`)
 
   const gracefulShutdown = (signal: 'SIGUSR2' | 'SIGINT' | 'SIGTERM') => {
     log.info(`${signal} received...`)

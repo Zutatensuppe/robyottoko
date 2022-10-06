@@ -7,6 +7,7 @@ import { User } from '../services/Users'
 import { Bot, EventSubTransport, TwitchChatClient, TwitchChatContext } from '../types'
 import { ALL_SUBSCRIPTIONS_TYPES, SubscriptionType } from '../services/twitch/EventSub'
 import { ChatEventHandler } from '../services/twitch/ChatEventHandler'
+import { Timer } from '../Timer'
 
 const log = logger('TwitchClientManager.ts')
 
@@ -57,6 +58,9 @@ class TwitchClientManager {
   }
 
   async init(reason: string) {
+    const timer = new Timer()
+    timer.reset()
+
     let connectReason = reason
     const cfg = this.bot.getConfig().twitch
     const user = this.user
@@ -64,6 +68,9 @@ class TwitchClientManager {
     this.log = logger('TwitchClientManager.ts', `${user.name}|`)
 
     await this._disconnectChatClient()
+
+    timer.split()
+    this.log.debug(`disconnecting chat client took ${timer.lastSplitMs()}ms`)
 
     const twitchChannels = await this.bot.getTwitchChannels().allByUserId(user.id)
     if (twitchChannels.length === 0) {
@@ -142,14 +149,18 @@ class TwitchClientManager {
         // due to disconnect from twitch
         connectReason = ''
       })
-      try {
-        await this.chatClient.connect()
-      } catch (e) {
+
+      // do NOT await
+      // awaiting the connect will add ~1sec per user on server startup
+      this.chatClient.connect().catch((e) => {
         // this can happen when calling close before the connection
         // could be established
         this.log.error({ e }, 'error when connecting')
-      }
+      })
     }
+
+    timer.split()
+    this.log.debug(`connecting chat client took ${timer.lastSplitMs()}ms`)
 
     // register EventSub
     // @see https://dev.twitch.tv/docs/eventsub
@@ -159,8 +170,13 @@ class TwitchClientManager {
     )
 
     if (this.bot.getConfig().twitch.eventSub.enabled) {
-      await this.registerSubscriptions(twitchChannels)
+      // do NOT await
+      // awaiting the connect will add ~2sec per user on server startup
+      this.registerSubscriptions(twitchChannels)
     }
+
+    timer.split()
+    this.log.debug(`registering subscriptions took ${timer.lastSplitMs()}ms`)
   }
 
   async registerSubscriptions(twitchChannels: TwitchChannel[]) {
@@ -171,12 +187,35 @@ class TwitchClientManager {
     const twitchChannelIds: string[] = twitchChannels.map(ch => `${ch.channel_id}`)
     const transport = this.bot.getConfig().twitch.eventSub.transport
 
-    // delete all subscriptions
-    const deletePromises: Promise<void>[] = []
+    // TODO: maybe get all subscriptions from database to not
+    //       do the one 'getSubscriptions' request. depending on how long that
+    //       one needs
+
     const allSubscriptions: any = await this.helixClient.getSubscriptions()
+
+    // map that holds status for each subscription type
+    // (true if callback is already registered, false if not)
+    // @ts-ignore (map filled in for loop)
+    const existsMap: Record<SubscriptionType, Record<string, boolean>> = {}
+
+    for (const subscriptionType of ALL_SUBSCRIPTIONS_TYPES) {
+      existsMap[subscriptionType] = {}
+      for (const twitchChannelId of twitchChannelIds) {
+        existsMap[subscriptionType][twitchChannelId] = false
+      }
+    }
+
+    // delete all subscriptions (but keep at least one of each type)
+    const deletePromises: Promise<void>[] = []
     for (const subscription of allSubscriptions.data) {
-      if (shouldDeleteSubscription(transport, subscription, twitchChannelIds)) {
-        deletePromises.push(this.deleteSubscription(subscription))
+      for (const twitchChannelId of twitchChannelIds) {
+        if (existsMap[subscription.type as SubscriptionType][twitchChannelId]) {
+          if (shouldDeleteSubscription(transport, subscription, [twitchChannelId])) {
+            deletePromises.push(this.deleteSubscription(subscription))
+          }
+        } else {
+          existsMap[subscription.type as SubscriptionType][twitchChannelId] = true
+        }
       }
     }
     await Promise.all(deletePromises)
@@ -185,7 +224,9 @@ class TwitchClientManager {
     // create all subscriptions
     for (const twitchChannel of twitchChannels) {
       for (const subscriptionType of ALL_SUBSCRIPTIONS_TYPES) {
-        createPromises.push(this.registerSubscription(subscriptionType, twitchChannel))
+        if (!existsMap[subscriptionType][twitchChannel.channel_id]) {
+          createPromises.push(this.registerSubscription(subscriptionType, twitchChannel))
+        }
       }
     }
     await Promise.all(createPromises)
@@ -230,6 +271,7 @@ class TwitchClientManager {
       await this.bot.getDb().insert('robyottoko.event_sub', {
         user_id: this.user.id,
         subscription_id: resp.data[0].id,
+        subscription_type: subscriptionType,
       })
       this.log.info({ type: subscriptionType }, 'subscription registered')
     } else {
