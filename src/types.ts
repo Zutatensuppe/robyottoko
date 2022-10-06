@@ -13,6 +13,8 @@ import TwitchClientManager from './net/TwitchClientManager'
 import WebSocketServer, { Socket } from './net/WebSocketServer'
 import Cache from './services/Cache'
 import { ChatLogRepo } from './services/ChatLogRepo'
+import { FrontendStatusUpdater } from './services/FrontendStatusUpdater'
+import { StreamStatusUpdater } from './services/StreamStatusUpdater'
 import Tokens, { Token } from './services/Tokens'
 import TwitchChannels from './services/TwitchChannels'
 import Users, { User } from './services/Users'
@@ -552,6 +554,8 @@ export interface Bot {
   getWidgets: () => Widgets
   getEventHub: () => Emitter<Record<EventType, unknown>>
   getChatLog: () => ChatLogRepo
+  getStreamStatusUpdater: () => StreamStatusUpdater
+  getFrontendStatusUpdater: () => FrontendStatusUpdater
 
   sayFn: (user: User, target: string | null) => (msg: string) => void
   getUserVariables: (user: User) => Variables
