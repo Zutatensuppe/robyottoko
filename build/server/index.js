@@ -325,7 +325,7 @@ const daysUntil = (s, templateN, template1, template0, templateErr) => {
     }
 };
 
-const log$x = logger('fn.ts');
+const log$z = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
         return mime.replace('image/', '');
@@ -360,9 +360,9 @@ const sayFn = (client, target) => (msg) => {
         // TODO: fix this somewhere else?
         // client can only say things in lowercase channels
         t = t.toLowerCase();
-        log$x.info(`saying in ${t}: ${msg}`);
+        log$z.info(`saying in ${t}: ${msg}`);
         client.say(t, msg).catch((e) => {
-            log$x.info(e);
+            log$z.info(e);
         });
     });
 };
@@ -562,7 +562,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return String(`twitch.tv/${context.username}`);
                 }
                 if (!bot || !user) {
-                    log$x.info('no bot, no user, no watch');
+                    log$z.info('no bot, no user, no watch');
                     return '';
                 }
                 const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
@@ -571,7 +571,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                 }
                 const twitchUser = await getTwitchUser(username, helixClient, bot);
                 if (!twitchUser) {
-                    log$x.info('no twitch user found', username);
+                    log$z.info('no twitch user found', username);
                     return '';
                 }
                 if (m3 === 'name') {
@@ -611,7 +611,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return String(JSON.parse(txt)[m2]);
                 }
                 catch (e) {
-                    log$x.error(e);
+                    log$z.error(e);
                     return '';
                 }
             },
@@ -625,7 +625,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return await resp.text();
                 }
                 catch (e) {
-                    log$x.error(e);
+                    log$z.error(e);
                     return '';
                 }
             },
@@ -1070,6 +1070,13 @@ class ModuleManager {
         }
         return null;
     }
+    async updateForUser(userId, changedUser) {
+        const promises = [];
+        for (const mod of this.all(userId)) {
+            promises.push(mod.userChanged(changedUser));
+        }
+        await Promise.all(promises);
+    }
 }
 
 var CommandTriggerType;
@@ -1305,7 +1312,7 @@ class Widgets {
     }
 }
 
-const log$w = logger("WebSocketServer.ts");
+const log$y = logger("WebSocketServer.ts");
 const determineUserIdAndModuleName = async (basePath, requestUrl, socket, bot) => {
     const relativePath = requestUrl.substring(basePath.length) || '';
     const relpath = withoutLeading(relativePath, '/');
@@ -1336,24 +1343,24 @@ class WebSocketServer {
             const { userId, moduleName } = await determineUserIdAndModuleName(basePath, requestUrl, socket, bot);
             socket.user_id = userId;
             socket.module = moduleName;
-            log$w.info({
+            log$y.info({
                 moduleName,
                 socket: { protocol: socket.protocol },
             }, 'added socket');
-            log$w.info({
+            log$y.info({
                 count: this.sockets().filter(s => s.module === socket.module).length,
             }, 'socket_count');
             socket.on('close', () => {
-                log$w.info({
+                log$y.info({
                     moduleName,
                     socket: { protocol: socket.protocol },
                 }, 'removed socket');
-                log$w.info({
+                log$y.info({
                     count: this.sockets().filter(s => s.module === socket.module).length,
                 }, 'socket count');
             });
             if (!socket.user_id) {
-                log$w.info({
+                log$y.info({
                     requestUrl,
                     socket: { protocol: socket.protocol },
                 }, 'not found token');
@@ -1361,7 +1368,7 @@ class WebSocketServer {
                 return;
             }
             if (!socket.module) {
-                log$w.info({ requestUrl }, 'bad request url');
+                log$y.info({ requestUrl }, 'bad request url');
                 socket.close();
                 return;
             }
@@ -1392,7 +1399,7 @@ class WebSocketServer {
                     }
                 }
                 catch (e) {
-                    log$w.error({ e }, 'socket on message');
+                    log$y.error({ e }, 'socket on message');
                 }
             });
         });
@@ -1401,7 +1408,7 @@ class WebSocketServer {
         return !!this.sockets().find(s => s.user_id === user_id);
     }
     _notify(socket, data) {
-        log$w.info({ user_id: socket.user_id, module: socket.module, event: data.event }, 'notifying');
+        log$y.info({ user_id: socket.user_id, module: socket.module, event: data.event }, 'notifying');
         socket.send(JSON.stringify(data));
     }
     notifyOne(user_ids, moduleName, data, socket) {
@@ -1413,7 +1420,7 @@ class WebSocketServer {
             this._notify(socket, data);
         }
         else {
-            log$w.error({
+            log$y.error({
                 socket: {
                     user_id: socket.user_id,
                     module: socket.module,
@@ -1448,7 +1455,7 @@ class WebSocketServer {
     }
 }
 
-const log$v = logger('Templates.ts');
+const log$x = logger('Templates.ts');
 class Templates {
     constructor(baseDir) {
         this.baseDir = baseDir;
@@ -1465,7 +1472,7 @@ class Templates {
                 tmpl.templateContents = (await promises.readFile(tmpl.templatePathAbsolute)).toString();
             }
             catch (e) {
-                log$v.error({ e }, 'error loading template');
+                log$x.error({ e }, 'error loading template');
                 tmpl.templateContents = '';
             }
         }
@@ -1475,7 +1482,7 @@ class Templates {
     }
 }
 
-const log$u = logger('oauth.ts');
+const log$w = logger('oauth.ts');
 const TABLE$6 = 'robyottoko.oauth_token';
 const getMatchingAccessToken = async (channelId, bot, user) => {
     const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id);
@@ -1523,7 +1530,7 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
     });
     twitchChannel.access_token = refreshResp.access_token;
     await bot.getTwitchChannels().save(twitchChannel);
-    log$u.info('tryRefreshAccessToken - refreshed an access token');
+    log$w.info('tryRefreshAccessToken - refreshed an access token');
     return refreshResp.access_token;
 };
 // TODO: check if anything has to be put in a try catch block
@@ -1574,7 +1581,7 @@ const refreshExpiredTwitchChannelAccessToken = async (twitchChannel, bot, user) 
     // update the twitch channel in the database
     twitchChannel.access_token = refreshResp.access_token;
     await bot.getTwitchChannels().save(twitchChannel);
-    log$u.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
+    log$w.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
     return { error: false, refreshed: true };
 };
 // TODO: check if anything has to be put in a try catch block
@@ -2380,7 +2387,7 @@ const commands = {
     },
 };
 
-const log$t = logger('CommandExecutor.ts');
+const log$v = logger('CommandExecutor.ts');
 class CommandExecutor {
     async executeMatchingCommands(bot, user, rawCmd, target, context, triggers) {
         const promises = [];
@@ -2397,7 +2404,7 @@ class CommandExecutor {
             if (!ctx.context || !mayExecute(ctx.context, cmdDef)) {
                 continue;
             }
-            log$t.info({
+            log$v.info({
                 target: ctx.target,
                 command: ctx.rawCmd?.name || '<unknown>',
             }, 'Executing command');
@@ -2406,12 +2413,12 @@ class CommandExecutor {
                 await fn.applyVariableChanges(cmdDef, contextModule, ctx.rawCmd, ctx.context);
                 const r = await cmdDef.fn(ctx);
                 if (r) {
-                    log$t.info({
+                    log$v.info({
                         target: ctx.target,
                         return: r,
                     }, 'Returned from command');
                 }
-                log$t.info({
+                log$v.info({
                     target: ctx.target,
                     command: ctx.rawCmd?.name || '<unknown>',
                 }, 'Executed command');
@@ -2423,11 +2430,11 @@ class CommandExecutor {
     }
 }
 
-const log$s = logger('SubscribeEventHandler.ts');
+const log$u = logger('SubscribeEventHandler.ts');
 class SubscribeEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$s.info('handle');
+        log$u.info('handle');
         const rawCmd = {
             name: 'channel.subscribe',
             args: [],
@@ -2448,11 +2455,11 @@ class SubscribeEventHandler {
     }
 }
 
-const log$r = logger('FollowEventHandler.ts');
+const log$t = logger('FollowEventHandler.ts');
 class FollowEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$r.info('handle');
+        log$t.info('handle');
         const rawCmd = {
             name: 'channel.follow',
             args: [],
@@ -2473,11 +2480,11 @@ class FollowEventHandler {
     }
 }
 
-const log$q = logger('CheerEventHandler.ts');
+const log$s = logger('CheerEventHandler.ts');
 class CheerEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$q.info('handle');
+        log$s.info('handle');
         const rawCmd = {
             name: 'channel.cheer',
             args: [],
@@ -2498,10 +2505,10 @@ class CheerEventHandler {
     }
 }
 
-const log$p = logger('ChannelPointRedeemEventHandler.ts');
+const log$r = logger('ChannelPointRedeemEventHandler.ts');
 class ChannelPointRedeemEventHandler {
     async handle(bot, user, data) {
-        log$p.info('handle');
+        log$r.info('handle');
         const rawCmd = {
             name: data.event.reward.title,
             args: data.event.user_input ? [data.event.user_input] : [],
@@ -2535,10 +2542,10 @@ var SubscriptionType;
 })(SubscriptionType || (SubscriptionType = {}));
 const ALL_SUBSCRIPTIONS_TYPES = Object.values(SubscriptionType);
 
-const log$o = logger('StreamOnlineEventHandler.ts');
+const log$q = logger('StreamOnlineEventHandler.ts');
 class StreamOnlineEventHandler {
     async handle(bot, data) {
-        log$o.info('handle');
+        log$q.info('handle');
         // insert new stream
         await bot.getDb().insert('robyottoko.streams', {
             broadcaster_user_id: data.event.broadcaster_user_id,
@@ -2547,10 +2554,10 @@ class StreamOnlineEventHandler {
     }
 }
 
-const log$n = logger('StreamOfflineEventHandler.ts');
+const log$p = logger('StreamOfflineEventHandler.ts');
 class StreamOfflineEventHandler {
     async handle(bot, data) {
-        log$n.info('handle');
+        log$p.info('handle');
         // get last started stream for broadcaster
         // if it exists and it didnt end yet set ended_at date
         const stream = await bot.getDb().get('robyottoko.streams', {
@@ -2566,11 +2573,11 @@ class StreamOfflineEventHandler {
     }
 }
 
-const log$m = logger('RaidEventHandler.ts');
+const log$o = logger('RaidEventHandler.ts');
 class RaidEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$m.info('handle');
+        log$o.info('handle');
         const rawCmd = {
             name: 'channel.raid',
             args: [],
@@ -2591,7 +2598,7 @@ class RaidEventHandler {
     }
 }
 
-const log$l = logger('twitch/index.ts');
+const log$n = logger('twitch/index.ts');
 const createRouter$3 = (templates, bot) => {
     const verifyTwitchSignature = (req, res, next) => {
         const body = Buffer.from(req.rawBody, 'utf8');
@@ -2600,8 +2607,8 @@ const createRouter$3 = (templates, bot) => {
         hmac.update(msg);
         const expected = `sha256=${hmac.digest('hex')}`;
         if (req.headers['twitch-eventsub-message-signature'] !== expected) {
-            log$l.debug({ req });
-            log$l.error({
+            log$n.debug({ req });
+            log$n.error({
                 got: req.headers['twitch-eventsub-message-signature'],
                 expected,
             }, 'bad message signature');
@@ -2638,7 +2645,7 @@ const createRouter$3 = (templates, bot) => {
                     bot.getEventHub().emit('user_changed', changedUser);
                 }
                 else {
-                    log$l.error({
+                    log$n.error({
                         user_id: req.user.id,
                     }, 'updating user twitch channels: user doesn\'t exist after saving it');
                 }
@@ -2655,25 +2662,25 @@ const createRouter$3 = (templates, bot) => {
     });
     router.post('/event-sub/', express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
         if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-            log$l.info({ challenge: req.body.challenge }, 'got verification request');
+            log$n.info({ challenge: req.body.challenge }, 'got verification request');
             res.write(req.body.challenge);
             res.send();
             return;
         }
         if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-            log$l.info({ type: req.body.subscription.type }, 'got notification request');
+            log$n.info({ type: req.body.subscription.type }, 'got notification request');
             const row = await bot.getDb().get('robyottoko.event_sub', {
                 subscription_id: req.body.subscription.id,
             });
             if (!row) {
-                log$l.info('unknown subscription_id');
+                log$n.info('unknown subscription_id');
                 res.status(400).send({ reason: 'unknown subscription_id' });
                 return;
             }
             const userId = row.user_id;
             const user = await bot.getUsers().getById(userId);
             if (!user) {
-                log$l.info('unknown user');
+                log$n.info('unknown user');
                 res.status(400).send({ reason: 'unknown user' });
                 return;
             }
@@ -2706,7 +2713,7 @@ const createRouter$3 = (templates, bot) => {
     return router;
 };
 
-const log$k = logger('TwitchHelixClient.ts');
+const log$m = logger('TwitchHelixClient.ts');
 const API_BASE = 'https://api.twitch.tv/helix';
 const TOKEN_ENDPOINT = 'https://id.twitch.tv/oauth2/token';
 const apiUrl = (path) => `${API_BASE}${path}`;
@@ -2724,7 +2731,7 @@ async function executeRequestWithRetry(accessToken, req, bot, user) {
     if (!newAccessToken) {
         return resp;
     }
-    log$k.warn('retrying with refreshed token');
+    log$m.warn('retrying with refreshed token');
     return await req(newAccessToken);
 }
 class TwitchHelixClient {
@@ -2754,13 +2761,13 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$k.warn({ txt }, 'unable to get access_token by code');
+                log$m.warn({ txt }, 'unable to get access_token by code');
                 return null;
             }
             return (await resp.json());
         }
         catch (e) {
-            log$k.error({ url, e });
+            log$m.error({ url, e });
             return null;
         }
     }
@@ -2776,18 +2783,18 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (resp.status === 401) {
                 const txt = await resp.text();
-                log$k.warn({ txt }, 'tried to refresh access_token with an invalid refresh token');
+                log$m.warn({ txt }, 'tried to refresh access_token with an invalid refresh token');
                 return null;
             }
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$k.warn({ txt }, 'unable to refresh access_token');
+                log$m.warn({ txt }, 'unable to refresh access_token');
                 return null;
             }
             return (await resp.json());
         }
         catch (e) {
-            log$k.error({ url, e });
+            log$m.error({ url, e });
             return null;
         }
     }
@@ -2803,14 +2810,14 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$k.warn({ txt }, 'unable to get access_token');
+                log$m.warn({ txt }, 'unable to get access_token');
                 return '';
             }
             json = (await resp.json());
             return json.access_token;
         }
         catch (e) {
-            log$k.error({ url, json, e });
+            log$m.error({ url, json, e });
             return '';
         }
     }
@@ -2825,7 +2832,7 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$k.error({ url, json, e });
+            log$m.error({ url, json, e });
             return null;
         }
     }
@@ -2839,7 +2846,7 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$k.error({ url, json, e });
+            log$m.error({ url, json, e });
             return null;
         }
     }
@@ -2852,7 +2859,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$k.error({ url, json, e });
+            log$m.error({ url, json, e });
             return null;
         }
     }
@@ -2866,7 +2873,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$k.error({ url, json, e });
+            log$m.error({ url, json, e });
             return null;
         }
     }
@@ -2904,7 +2911,7 @@ class TwitchHelixClient {
             return getRandom(filtered);
         }
         catch (e) {
-            log$k.error({ url, json, e });
+            log$m.error({ url, json, e });
             return null;
         }
     }
@@ -2927,7 +2934,7 @@ class TwitchHelixClient {
             return json.data[0] || null;
         }
         catch (e) {
-            log$k.error({ url, json, e });
+            log$m.error({ url, json, e });
             return null;
         }
     }
@@ -2938,7 +2945,7 @@ class TwitchHelixClient {
             return await resp.json();
         }
         catch (e) {
-            log$k.error({ url, e });
+            log$m.error({ url, e });
             return null;
         }
     }
@@ -2949,7 +2956,7 @@ class TwitchHelixClient {
             return await resp.text();
         }
         catch (e) {
-            log$k.error({ url, e });
+            log$m.error({ url, e });
             return null;
         }
     }
@@ -2962,7 +2969,7 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$k.error({ url, e });
+            log$m.error({ url, e });
             return null;
         }
     }
@@ -2976,7 +2983,7 @@ class TwitchHelixClient {
             return getBestEntryFromCategorySearchItems(searchString, json);
         }
         catch (e) {
-            log$k.error({ url, json });
+            log$m.error({ url, json });
             return null;
         }
     }
@@ -2990,7 +2997,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$k.error({ url, json });
+            log$m.error({ url, json });
             return null;
         }
     }
@@ -3004,7 +3011,7 @@ class TwitchHelixClient {
             return await executeRequestWithRetry(accessToken, req, bot, user);
         }
         catch (e) {
-            log$k.error({ url, e });
+            log$m.error({ url, e });
             return null;
         }
     }
@@ -3030,7 +3037,7 @@ class TwitchHelixClient {
             return (await resp.json());
         }
         catch (e) {
-            log$k.error({ url, e });
+            log$m.error({ url, e });
             return null;
         }
     }
@@ -3330,7 +3337,7 @@ const createRouter$1 = (bot, requireLoginApi) => {
     return router;
 };
 
-const log$j = logger('api/index.ts');
+const log$l = logger('api/index.ts');
 const createRouter = (bot) => {
     const requireLoginApi = (req, res, next) => {
         if (!req.token) {
@@ -3351,12 +3358,12 @@ const createRouter = (bot) => {
     router.post('/upload', requireLoginApi, (req, res) => {
         upload(req, res, (err) => {
             if (err) {
-                log$j.error({ err });
+                log$l.error({ err });
                 res.status(400).send("Something went wrong!");
                 return;
             }
             if (!req.file) {
-                log$j.error({ err });
+                log$l.error({ err });
                 res.status(400).send("Something went wrong!");
                 return;
             }
@@ -3407,7 +3414,7 @@ const createRouter = (bot) => {
             bot.getEventHub().emit('user_registration_complete', user);
         }
         else {
-            log$j.error({
+            log$l.error({
                 user_id: tokenObj.user_id,
             }, `registration: user doesn't exist after saving it`);
         }
@@ -3479,7 +3486,7 @@ const createRouter = (bot) => {
             res.status(404).send();
             return;
         }
-        log$j.debug({ route: `/widget/:widget_type/:widget_token/`, type, token });
+        log$l.debug({ route: `/widget/:widget_type/:widget_token/`, type, token });
         const w = bot.getWidgets().getWidgetDefinitionByType(type);
         if (w) {
             res.send({
@@ -3531,7 +3538,7 @@ const createRouter = (bot) => {
             bot.getEventHub().emit('user_changed', changedUser);
         }
         else {
-            log$j.error({
+            log$l.error({
                 user_id: user.id,
             }, 'save-settings: user doesn\'t exist after saving it');
         }
@@ -3583,7 +3590,7 @@ const createRouter = (bot) => {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const log$i = logger('WebServer.ts');
+const log$k = logger('WebServer.ts');
 class WebServer {
     constructor() {
         this.handle = null;
@@ -3637,7 +3644,7 @@ class WebServer {
             res.sendFile(indexFile);
         });
         const httpConf = bot.getConfig().http;
-        this.handle = app.listen(httpConf.port, httpConf.hostname, () => log$i.info(`server running on http://${httpConf.hostname}:${httpConf.port}`));
+        this.handle = app.listen(httpConf.port, httpConf.hostname, () => log$k.info(`server running on http://${httpConf.hostname}:${httpConf.port}`));
     }
     close() {
         if (this.handle) {
@@ -3646,7 +3653,7 @@ class WebServer {
     }
 }
 
-const log$h = logger('ChatEventHandler.ts');
+const log$j = logger('ChatEventHandler.ts');
 const rolesLettersFromTwitchChatContext = (context) => {
     const roles = [];
     if (isMod(context)) {
@@ -3666,7 +3673,7 @@ const determineStreamStartDate = async (context, helixClient) => {
         return new Date(stream.started_at);
     }
     const date = new Date(new Date().getTime() - (5 * MINUTE));
-    log$h.info({
+    log$j.info({
         roomId: context['room-id'],
         date: date,
     }, `No stream is running atm, using fake start date.`);
@@ -3683,7 +3690,7 @@ const determineIsFirstChatStream = async (bot, user, context) => {
 class ChatEventHandler {
     async handle(bot, user, target, context, msg) {
         const roles = rolesLettersFromTwitchChatContext(context);
-        log$h.debug({
+        log$j.debug({
             username: context.username,
             roles,
             target,
@@ -3758,6 +3765,34 @@ class ChatEventHandler {
     }
 }
 
+// TODO: think of a better name
+class Timer {
+    constructor() {
+        this.splits = [];
+    }
+    reset() {
+        this.splits = [];
+        this.split();
+    }
+    split() {
+        this.splits.push(performance.now());
+    }
+    lastSplitMs() {
+        const len = this.splits.length;
+        if (len < 2) {
+            return NaN;
+        }
+        return this.splits[len - 1] - this.splits[len - 2];
+    }
+    totalMs() {
+        const len = this.splits.length;
+        if (len < 2) {
+            return NaN;
+        }
+        return this.splits[len - 1] - this.splits[0];
+    }
+}
+
 // @ts-ignore
 logger('TwitchClientManager.ts');
 const isDevTunnel = (url) => url.match(/^https:\/\/[a-z0-9-]+\.(?:loca\.lt|ngrok\.io)\//);
@@ -3785,11 +3820,15 @@ class TwitchClientManager {
         await this.init('user_change');
     }
     async init(reason) {
+        const timer = new Timer();
+        timer.reset();
         let connectReason = reason;
         const cfg = this.bot.getConfig().twitch;
         const user = this.user;
         this.log = logger('TwitchClientManager.ts', `${user.name}|`);
         await this._disconnectChatClient();
+        timer.split();
+        this.log.debug(`disconnecting chat client took ${timer.lastSplitMs()}ms`);
         const twitchChannels = await this.bot.getTwitchChannels().allByUserId(user.id);
         if (twitchChannels.length === 0) {
             this.log.info(`* No twitch channels configured at all`);
@@ -3856,21 +3895,26 @@ class TwitchClientManager {
                 // due to disconnect from twitch
                 connectReason = '';
             });
-            try {
-                await this.chatClient.connect();
-            }
-            catch (e) {
+            // do NOT await
+            // awaiting the connect will add ~1sec per user on server startup
+            this.chatClient.connect().catch((e) => {
                 // this can happen when calling close before the connection
                 // could be established
                 this.log.error({ e }, 'error when connecting');
-            }
+            });
         }
+        timer.split();
+        this.log.debug(`connecting chat client took ${timer.lastSplitMs()}ms`);
         // register EventSub
         // @see https://dev.twitch.tv/docs/eventsub
         this.helixClient = new TwitchHelixClient(identity.client_id, identity.client_secret);
         if (this.bot.getConfig().twitch.eventSub.enabled) {
-            await this.registerSubscriptions(twitchChannels);
+            // do NOT await
+            // awaiting the connect will add ~2sec per user on server startup
+            this.registerSubscriptions(twitchChannels);
         }
+        timer.split();
+        this.log.debug(`registering subscriptions took ${timer.lastSplitMs()}ms`);
     }
     async registerSubscriptions(twitchChannels) {
         if (!this.helixClient) {
@@ -3879,12 +3923,32 @@ class TwitchClientManager {
         }
         const twitchChannelIds = twitchChannels.map(ch => `${ch.channel_id}`);
         const transport = this.bot.getConfig().twitch.eventSub.transport;
-        // delete all subscriptions
-        const deletePromises = [];
+        // TODO: maybe get all subscriptions from database to not
+        //       do the one 'getSubscriptions' request. depending on how long that
+        //       one needs
         const allSubscriptions = await this.helixClient.getSubscriptions();
+        // map that holds status for each subscription type
+        // (true if callback is already registered, false if not)
+        // @ts-ignore (map filled in for loop)
+        const existsMap = {};
+        for (const subscriptionType of ALL_SUBSCRIPTIONS_TYPES) {
+            existsMap[subscriptionType] = {};
+            for (const twitchChannelId of twitchChannelIds) {
+                existsMap[subscriptionType][twitchChannelId] = false;
+            }
+        }
+        // delete all subscriptions (but keep at least one of each type)
+        const deletePromises = [];
         for (const subscription of allSubscriptions.data) {
-            if (shouldDeleteSubscription(transport, subscription, twitchChannelIds)) {
-                deletePromises.push(this.deleteSubscription(subscription));
+            for (const twitchChannelId of twitchChannelIds) {
+                if (existsMap[subscription.type][twitchChannelId]) {
+                    if (shouldDeleteSubscription(transport, subscription, [twitchChannelId])) {
+                        deletePromises.push(this.deleteSubscription(subscription));
+                    }
+                }
+                else {
+                    existsMap[subscription.type][twitchChannelId] = true;
+                }
             }
         }
         await Promise.all(deletePromises);
@@ -3892,7 +3956,9 @@ class TwitchClientManager {
         // create all subscriptions
         for (const twitchChannel of twitchChannels) {
             for (const subscriptionType of ALL_SUBSCRIPTIONS_TYPES) {
-                createPromises.push(this.registerSubscription(subscriptionType, twitchChannel));
+                if (!existsMap[subscriptionType][twitchChannel.channel_id]) {
+                    createPromises.push(this.registerSubscription(subscriptionType, twitchChannel));
+                }
             }
         }
         await Promise.all(createPromises);
@@ -3929,6 +3995,7 @@ class TwitchClientManager {
             await this.bot.getDb().insert('robyottoko.event_sub', {
                 user_id: this.user.id,
                 subscription_id: resp.data[0].id,
+                subscription_type: subscriptionType,
             });
             this.log.info({ type: subscriptionType }, 'subscription registered');
         }
@@ -3961,7 +4028,7 @@ class TwitchClientManager {
     }
 }
 
-const log$g = logger('ModuleStorage.ts');
+const log$i = logger('ModuleStorage.ts');
 const TABLE$4 = 'robyottoko.module';
 class ModuleStorage {
     constructor(db, userId) {
@@ -3976,7 +4043,7 @@ class ModuleStorage {
             return data ? Object.assign({}, def, data) : def;
         }
         catch (e) {
-            log$g.error({ e });
+            log$i.error({ e });
             return def;
         }
     }
@@ -4058,14 +4125,14 @@ class TwitchChannels {
 }
 
 const TABLE$1 = 'robyottoko.cache';
-const log$f = logger('Cache.ts');
+const log$h = logger('Cache.ts');
 class Cache {
     constructor(db) {
         this.db = db;
     }
     async set(key, value, lifetime) {
         if (value === undefined) {
-            log$f.error({ key }, 'unable to store undefined value for cache key');
+            log$h.error({ key }, 'unable to store undefined value for cache key');
             return;
         }
         const expiresAt = lifetime === Infinity ? null : (new Date(new Date().getTime() + lifetime));
@@ -4206,7 +4273,7 @@ class Mutex {
 
 // @ts-ignore
 const { Client } = pg.default;
-const log$e = logger('Db.ts');
+const log$g = logger('Db.ts');
 const mutex = new Mutex();
 class Db {
     constructor(connectStr, patchesDir) {
@@ -4226,7 +4293,7 @@ class Db {
         for (const f of files) {
             if (patches.includes(f)) {
                 if (verbose) {
-                    log$e.info(`➡ skipping already applied db patch: ${f}`);
+                    log$g.info(`➡ skipping already applied db patch: ${f}`);
                 }
                 continue;
             }
@@ -4245,10 +4312,10 @@ class Db {
                     throw e;
                 }
                 await this.insert('public.db_patches', { id: f });
-                log$e.info(`✓ applied db patch: ${f}`);
+                log$g.info(`✓ applied db patch: ${f}`);
             }
             catch (e) {
-                log$e.error(`✖ unable to apply patch: ${f} ${e}`);
+                log$g.error(`✖ unable to apply patch: ${f} ${e}`);
                 return;
             }
         }
@@ -4339,7 +4406,7 @@ class Db {
             return (await this.dbh.query(query, params)).rows[0] || null;
         }
         catch (e) {
-            log$e.info({ fn: '_get', query, params });
+            log$g.info({ fn: '_get', query, params });
             console.error(e);
             throw e;
         }
@@ -4349,7 +4416,7 @@ class Db {
             return await this.dbh.query(query, params);
         }
         catch (e) {
-            log$e.info({ fn: 'run', query, params });
+            log$g.info({ fn: 'run', query, params });
             console.error(e);
             throw e;
         }
@@ -4359,7 +4426,7 @@ class Db {
             return (await this.dbh.query(query, params)).rows || [];
         }
         catch (e) {
-            log$e.info({ fn: '_getMany', query, params });
+            log$g.info({ fn: '_getMany', query, params });
             console.error(e);
             throw e;
         }
@@ -4425,7 +4492,7 @@ class Db {
 }
 
 // @ts-ignore
-const log$d = logger('Mail.ts');
+const log$f = logger('Mail.ts');
 class Mail {
     constructor(cfg) {
         const defaultClient = SibApiV3Sdk.ApiClient.instance;
@@ -4477,16 +4544,16 @@ class Mail {
     }
     send(mail) {
         this.apiInstance.sendTransacEmail(mail).then(function (data) {
-            log$d.info({ data }, 'API called successfully');
+            log$f.info({ data }, 'API called successfully');
         }, function (error) {
-            log$d.error({ error });
+            log$f.error({ error });
         });
     }
 }
 
 function mitt(n){return {all:n=n||new Map,on:function(t,e){var i=n.get(t);i?i.push(e):n.set(t,[e]);},off:function(t,e){var i=n.get(t);i&&(e?i.splice(i.indexOf(e)>>>0,1):n.set(t,[]));},emit:function(t,e){var i=n.get(t);i&&i.slice().map(function(n){n(e);}),(i=n.get("*"))&&i.slice().map(function(n){n(t,e);});}}}
 
-const log$c = logger('countdown.ts');
+const log$e = logger('countdown.ts');
 const countdown = (originalCmd, bot, user) => async (ctx) => {
     const sayFn = bot.sayFn(user, ctx.target);
     const doReplacements = async (text) => {
@@ -4543,7 +4610,7 @@ const countdown = (originalCmd, bot, user) => async (ctx) => {
                 duration = (await parseDuration(`${a.value}`)) || 0;
             }
             catch (e) {
-                log$c.error({ message: e.message, value: a.value });
+                log$e.error({ message: e.message, value: a.value });
                 return;
             }
             actions.push(async () => await fn.sleep(duration));
@@ -4566,7 +4633,7 @@ var Madochan = {
     defaultWeirdness: 1,
 };
 
-const log$b = logger('madochanCreateWord.ts');
+const log$d = logger('madochanCreateWord.ts');
 const madochanCreateWord = (originalCmd, bot, user) => async (ctx) => {
     if (!ctx.rawCmd) {
         return;
@@ -4586,7 +4653,7 @@ const madochanCreateWord = (originalCmd, bot, user) => async (ctx) => {
         }
     }
     catch (e) {
-        log$b.error({ e });
+        log$d.error({ e });
         say(`Error occured, unable to generate a word :("`);
     }
 };
@@ -4597,7 +4664,7 @@ const randomText = (originalCmd, bot, user) => async (ctx) => {
     say(await fn.doReplacements(getRandom(texts), ctx.rawCmd, ctx.context, originalCmd, bot, user));
 };
 
-const log$a = logger('playMedia.ts');
+const log$c = logger('playMedia.ts');
 const isTwitchClipUrl = (url) => {
     return !!url.match(/^https:\/\/clips\.twitch\.tv\/.+/);
 };
@@ -4606,14 +4673,14 @@ const downloadVideo = async (originalUrl) => {
     const filename = `${hash(originalUrl)}-clip.mp4`;
     const outfile = `./data/uploads/${filename}`;
     if (!fs.existsSync(outfile)) {
-        log$a.debug({ outfile }, 'downloading the video');
+        log$c.debug({ outfile }, 'downloading the video');
         const child = childProcess.execFile(config.youtubeDlBinary, [originalUrl, '-o', outfile]);
         await new Promise((resolve) => {
             child.on('close', resolve);
         });
     }
     else {
-        log$a.debug({ outfile }, 'video exists');
+        log$c.debug({ outfile }, 'video exists');
     }
     return `/uploads/${filename}`;
 };
@@ -4626,20 +4693,20 @@ const prepareData = async (ctx, originalCmd, bot, user) => {
     if (!data.video.url) {
         return data;
     }
-    log$a.debug({ url: data.video.url }, 'video url is defined');
+    log$c.debug({ url: data.video.url }, 'video url is defined');
     data.video.url = await doReplaces(data.video.url);
     if (!data.video.url) {
-        log$a.debug('no video url found');
+        log$c.debug('no video url found');
     }
     else if (isTwitchClipUrl(data.video.url)) {
         // video url looks like a twitch clip url, dl it first
-        log$a.debug({ url: data.video.url }, 'twitch clip found');
+        log$c.debug({ url: data.video.url }, 'twitch clip found');
         data.video.url = await downloadVideo(data.video.url);
     }
     else {
         // otherwise assume it is already a playable video url
         // TODO: youtube videos maybe should also be downloaded
-        log$a.debug('video is assumed to be directly playable via html5 video element');
+        log$c.debug('video is assumed to be directly playable via html5 video element');
     }
     return data;
 };
@@ -4651,11 +4718,11 @@ const playMedia = (originalCmd, bot, user) => async (ctx) => {
     });
 };
 
-const log$9 = logger('chatters.ts');
+const log$b = logger('chatters.ts');
 const chatters = (bot, user) => async (ctx) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!ctx.context || !helixClient) {
-        log$9.info({
+        log$b.info({
             context: ctx.context,
             helixClient,
         }, 'unable to execute chatters command, client, context, or helixClient missing');
@@ -4678,11 +4745,11 @@ const chatters = (bot, user) => async (ctx) => {
     });
 };
 
-const log$8 = logger('setChannelTitle.ts');
+const log$a = logger('setChannelTitle.ts');
 const setChannelTitle = (originalCmd, bot, user) => async (ctx) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!ctx.rawCmd || !ctx.context || !helixClient) {
-        log$8.info({
+        log$a.info({
             rawCmd: ctx.rawCmd,
             context: ctx.context,
             helixClient,
@@ -4725,11 +4792,11 @@ const setChannelTitle = (originalCmd, bot, user) => async (ctx) => {
     }
 };
 
-const log$7 = logger('setChannelGameId.ts');
+const log$9 = logger('setChannelGameId.ts');
 const setChannelGameId = (originalCmd, bot, user) => async (ctx) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!ctx.rawCmd || !ctx.context || !helixClient) {
-        log$7.info({
+        log$9.info({
             rawCmd: ctx.rawCmd,
             context: ctx.context,
             helixClient,
@@ -4961,11 +5028,11 @@ var EMOTE_DISPLAY_FN;
     EMOTE_DISPLAY_FN["RANDOM_BEZIER"] = "randomBezier";
 })(EMOTE_DISPLAY_FN || (EMOTE_DISPLAY_FN = {}));
 
-const log$6 = logger('setStreamTags.ts');
+const log$8 = logger('setStreamTags.ts');
 const addStreamTags = (originalCmd, bot, user) => async (ctx) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!ctx.rawCmd || !ctx.context || !helixClient) {
-        log$6.info({
+        log$8.info({
             rawCmd: ctx.rawCmd,
             context: ctx.context,
             helixClient,
@@ -5012,18 +5079,18 @@ const addStreamTags = (originalCmd, bot, user) => async (ctx) => {
     }
     const resp = await helixClient.replaceStreamTags(accessToken, channelId, newSettableTagIds, bot, user);
     if (!resp || resp.status < 200 || resp.status >= 300) {
-        log$6.error(resp);
+        log$8.error(resp);
         say(`❌ Unable to add tag: ${tagEntry.name}`);
         return;
     }
     say(`✨ Added tag: ${tagEntry.name}`);
 };
 
-const log$5 = logger('setStreamTags.ts');
+const log$7 = logger('setStreamTags.ts');
 const removeStreamTags = (originalCmd, bot, user) => async (ctx) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!ctx.rawCmd || !ctx.context || !helixClient) {
-        log$5.info({
+        log$7.info({
             rawCmd: ctx.rawCmd,
             context: ctx.context,
             helixClient,
@@ -5452,7 +5519,7 @@ class GeneralModule {
     }
 }
 
-const log$4 = logger('Youtube.ts');
+const log$6 = logger('Youtube.ts');
 const get = async (url, args) => {
     args.key = config.modules.sr.google.api_key;
     const resp = await xhr.get(url + asQueryArgs(args));
@@ -5469,7 +5536,7 @@ const fetchDataByYoutubeId = async (youtubeId) => {
         return json.items[0];
     }
     catch (e) {
-        log$4.error({ e, json, youtubeId });
+        log$6.error({ e, json, youtubeId });
         return null;
     }
 };
@@ -5553,7 +5620,7 @@ const getYoutubeIdsBySearch = async (searchterm, videoDuration = YoutubeVideoDur
             }
         }
         catch (e) {
-            log$4.info({ e });
+            log$6.info({ e });
         }
     }
     return ids;
@@ -5634,7 +5701,7 @@ const default_settings$4 = (obj = null) => ({
     maxItemsShown: getProp(obj, ['maxItemsShown'], -1),
 });
 
-const log$3 = logger('SongrequestModule.ts');
+const log$5 = logger('SongrequestModule.ts');
 const ADD_TYPE = {
     NOT_ADDED: 0,
     ADDED: 1,
@@ -6480,7 +6547,7 @@ class SongrequestModule {
     cmdResr(_originalCommand) {
         return async (ctx) => {
             if (!ctx.rawCmd || !ctx.context) {
-                log$3.error('cmdResr: client, command or context empty');
+                log$5.error('cmdResr: client, command or context empty');
                 return;
             }
             const say = this.bot.sayFn(this.user, ctx.target);
@@ -7141,7 +7208,7 @@ const default_images = (list = null) => {
     return [];
 };
 
-const log$2 = logger('DrawcastModule.ts');
+const log$4 = logger('DrawcastModule.ts');
 class DrawcastModule {
     constructor(bot, user) {
         this.bot = bot;
@@ -7256,7 +7323,7 @@ class DrawcastModule {
                 const image = this.data.images.find(item => item.path === path);
                 if (!image) {
                     // should not happen
-                    log$2.error({ path }, 'approve_image: image not found');
+                    log$4.error({ path }, 'approve_image: image not found');
                     return;
                 }
                 image.approved = true;
@@ -7272,7 +7339,7 @@ class DrawcastModule {
                 const image = this.data.images.find(item => item.path === path);
                 if (!image) {
                     // should not happen
-                    log$2.error({ path }, 'deny_image: image not found');
+                    log$4.error({ path }, 'deny_image: image not found');
                     return;
                 }
                 this.data.images = this.data.images.filter(item => item.path !== image.path);
@@ -7286,13 +7353,13 @@ class DrawcastModule {
                 const image = this.data.images.find(item => item.path === path);
                 if (!image) {
                     // should not happen
-                    log$2.error({ path }, 'delete_image: image not found');
+                    log$4.error({ path }, 'delete_image: image not found');
                     return;
                 }
                 const deleted = this._deleteImage(image);
                 if (!deleted) {
                     // should not happen
-                    log$2.error({ path }, 'delete_image: image not deleted');
+                    log$4.error({ path }, 'delete_image: image not deleted');
                     return;
                 }
                 this.data.settings.favoriteLists = this.data.settings.favoriteLists.map(favoriteList => {
@@ -7371,7 +7438,7 @@ const default_settings$1 = (obj = null) => ({
     avatarDefinitions: getProp(obj, ['avatarDefinitions'], []).map(default_avatar_definition),
 });
 
-const log$1 = logger('AvatarModule.ts');
+const log$3 = logger('AvatarModule.ts');
 class AvatarModule {
     constructor(bot, user) {
         this.bot = bot;
@@ -7440,7 +7507,7 @@ class AvatarModule {
                         await this.save();
                     }
                     catch (e) {
-                        log$1.error({ tuberIdx, slotName, itemIdx }, 'ws ctrl: unable to setSlot');
+                        log$3.error({ tuberIdx, slotName, itemIdx }, 'ws ctrl: unable to setSlot');
                     }
                 }
                 else if (data.data.ctrl === "lockState") {
@@ -7451,7 +7518,7 @@ class AvatarModule {
                         await this.save();
                     }
                     catch (e) {
-                        log$1.error({ tuberIdx, lockedState }, 'ws ctrl: unable to lockState');
+                        log$3.error({ tuberIdx, lockedState }, 'ws ctrl: unable to lockState');
                     }
                 }
                 else if (data.data.ctrl === "setTuber") {
@@ -7663,9 +7730,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-09-28T20:12:49.198Z",
+    buildDate: "2022-10-06T18:36:05.260Z",
     // @ts-ignore
-    buildVersion: "1.27.4",
+    buildVersion: "1.28.0",
 };
 
 const TABLE = 'robyottoko.chat_log';
@@ -7710,6 +7777,132 @@ class ChatLogRepo {
     }
 }
 
+const log$2 = logger('StreamStatusUpdater.ts');
+class StreamStatusUpdater {
+    constructor(bot) {
+        this.bot = bot;
+        this.users = [];
+        // pass
+    }
+    addUser(user) {
+        this.users.push(user);
+    }
+    async updateForUser(userId) {
+        for (const user of this.users) {
+            if (user.id === userId) {
+                await this._doUpdateForUser(user);
+                return;
+            }
+        }
+    }
+    async _doUpdateForUser(user) {
+        const client = this.bot.getUserTwitchClientManager(user).getHelixClient();
+        if (!client) {
+            return;
+        }
+        const twitchChannels = await this.bot.getTwitchChannels().allByUserId(user.id);
+        for (const twitchChannel of twitchChannels) {
+            if (!twitchChannel.channel_id) {
+                const channelId = await client.getUserIdByNameCached(twitchChannel.channel_name, this.bot.getCache());
+                if (!channelId) {
+                    continue;
+                }
+                twitchChannel.channel_id = channelId;
+            }
+            const stream = await client.getStreamByUserId(twitchChannel.channel_id);
+            twitchChannel.is_streaming = !!stream;
+            this.bot.getTwitchChannels().save(twitchChannel);
+        }
+    }
+    async _doUpdate() {
+        log$2.info('doing update');
+        const updatePromises = [];
+        for (const user of this.users) {
+            updatePromises.push(this._doUpdateForUser(user));
+        }
+        await Promise.all(updatePromises);
+        setTimeout(() => this._doUpdate(), 5 * MINUTE);
+        log$2.info('done update');
+    }
+    start() {
+        this._doUpdate();
+    }
+}
+
+const log$1 = logger('FrontendStatusUpdater.ts');
+class FrontendStatusUpdater {
+    constructor(bot) {
+        this.bot = bot;
+        this.users = [];
+        // pass
+    }
+    addUser(user) {
+        this.users.push(user);
+    }
+    async updateForUser(userId) {
+        for (const user of this.users) {
+            if (user.id === userId) {
+                await this._doUpdateForUser(user);
+                return;
+            }
+        }
+    }
+    async _doUpdateForUser(user) {
+        const client = this.bot.getUserTwitchClientManager(user).getHelixClient();
+        if (!client) {
+            return;
+        }
+        // status for the user that should show in frontend
+        // (eg. problems with their settings)
+        // this only is relevant if the user is at the moment connected
+        // to a websocket
+        if (!this.bot.getWebSocketServer().isUserConnected(user.id)) {
+            return;
+        }
+        const problems = [];
+        if (this.bot.getConfig().bot.supportTwitchAccessTokens) {
+            const twitchChannels = await this.bot.getTwitchChannels().allByUserId(user.id);
+            for (const twitchChannel of twitchChannels) {
+                const result = await refreshExpiredTwitchChannelAccessToken(twitchChannel, this.bot, user);
+                if (result.error) {
+                    log$1.error('Unable to validate or refresh OAuth token.');
+                    log$1.error(`user: ${user.name}, channel: ${twitchChannel.channel_name}, error: ${result.error}`);
+                    problems.push({
+                        message: 'access_token_invalid',
+                        details: {
+                            channel_name: twitchChannel.channel_name,
+                        },
+                    });
+                }
+                else if (result.refreshed) {
+                    const changedUser = await this.bot.getUsers().getById(user.id);
+                    if (changedUser) {
+                        this.bot.getEventHub().emit('access_token_refreshed', changedUser);
+                    }
+                    else {
+                        log$1.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`);
+                    }
+                }
+            }
+        }
+        const data = { event: 'status', data: { problems } };
+        this.bot.getWebSocketServer().notifyAll([user.id], 'core', data);
+    }
+    async _doUpdate() {
+        log$1.info('doing update');
+        const updatePromises = [];
+        for (const user of this.users) {
+            updatePromises.push(this._doUpdateForUser(user));
+        }
+        await Promise.all(updatePromises);
+        setTimeout(() => this._doUpdate(), 1 * MINUTE);
+        log$1.info('done update');
+    }
+    start() {
+        this._doUpdate();
+    }
+}
+
 setLogLevel(config.log.level);
 const log = logger('bot.ts');
 const modules = [
@@ -7742,6 +7935,8 @@ const createBot = async () => {
             this.userVariableInstances = {};
             this.userModuleStorageInstances = {};
             this.userTwitchClientManagerInstances = {};
+            this.streamStatusUpdater = null;
+            this.frontendStatusUpdater = null;
         }
         getBuildVersion() { return buildEnv.buildVersion; }
         getBuildDate() { return buildEnv.buildDate; }
@@ -7759,6 +7954,18 @@ const createBot = async () => {
         getWidgets() { return widgets; }
         getEventHub() { return eventHub; }
         getChatLog() { return chatLog; }
+        getStreamStatusUpdater() {
+            if (!this.streamStatusUpdater) {
+                this.streamStatusUpdater = new StreamStatusUpdater(this);
+            }
+            return this.streamStatusUpdater;
+        }
+        getFrontendStatusUpdater() {
+            if (!this.frontendStatusUpdater) {
+                this.frontendStatusUpdater = new FrontendStatusUpdater(this);
+            }
+            return this.frontendStatusUpdater;
+        }
         // user specific
         // -----------------------------------------------------------------
         sayFn(user, target) {
@@ -7792,117 +7999,61 @@ const createBot = async () => {
 // changes to user will be handled by user_changed event
 const initForUser = async (bot, user) => {
     const clientManager = bot.getUserTwitchClientManager(user);
+    const timer = new Timer();
+    timer.reset();
     await clientManager.init('init');
+    // note: even tho we await the init,
+    //       we may not be connected to twitch chat or event sub yet
+    //       because those connects are not awaited, or the server
+    //       startup will take forever
+    timer.split();
+    log.debug(`initiating client manager took ${timer.lastSplitMs()}ms`);
     for (const moduleClass of modules) {
         bot.getModuleManager().add(user.id, await new moduleClass(bot, user));
     }
-    let updateUserFrontendStatusTimeout = null;
-    const updateUserFrontendStatus = async () => {
-        if (updateUserFrontendStatusTimeout) {
-            clearTimeout(updateUserFrontendStatusTimeout);
-            updateUserFrontendStatusTimeout = null;
-        }
-        const client = clientManager.getHelixClient();
-        if (!client) {
-            return setTimeout(updateUserFrontendStatus, 5 * SECOND);
-        }
-        // status for the user that should show in frontend
-        // (eg. problems with their settings)
-        // this only is relevant if the user is at the moment connected
-        // to a websocket
-        if (!bot.getWebSocketServer().isUserConnected(user.id)) {
-            return setTimeout(updateUserFrontendStatus, 5 * SECOND);
-        }
-        const problems = [];
-        if (bot.getConfig().bot.supportTwitchAccessTokens) {
-            const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id);
-            for (const twitchChannel of twitchChannels) {
-                const result = await refreshExpiredTwitchChannelAccessToken(twitchChannel, bot, user);
-                if (result.error) {
-                    log.error('Unable to validate or refresh OAuth token.');
-                    log.error(`user: ${user.name}, channel: ${twitchChannel.channel_name}, error: ${result.error}`);
-                    problems.push({
-                        message: 'access_token_invalid',
-                        details: {
-                            channel_name: twitchChannel.channel_name,
-                        },
-                    });
-                }
-                else if (result.refreshed) {
-                    const changedUser = await bot.getUsers().getById(user.id);
-                    if (changedUser) {
-                        bot.getEventHub().emit('access_token_refreshed', changedUser);
-                    }
-                    else {
-                        log.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`);
-                    }
-                }
-            }
-        }
-        const data = { event: 'status', data: { problems } };
-        bot.getWebSocketServer().notifyAll([user.id], 'core', data);
-        return setTimeout(updateUserFrontendStatus, 1 * MINUTE);
-    };
-    updateUserFrontendStatusTimeout = await updateUserFrontendStatus();
-    let updateUserStreamStatusTimeout = null;
-    const updateUserStreamStatus = async () => {
-        if (updateUserStreamStatusTimeout) {
-            clearTimeout(updateUserStreamStatusTimeout);
-            updateUserStreamStatusTimeout = null;
-        }
-        const client = clientManager.getHelixClient();
-        if (!client) {
-            return setTimeout(updateUserFrontendStatus, 5 * SECOND);
-        }
-        const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id);
-        for (const twitchChannel of twitchChannels) {
-            if (!twitchChannel.channel_id) {
-                const channelId = await client.getUserIdByNameCached(twitchChannel.channel_name, bot.getCache());
-                if (!channelId) {
-                    continue;
-                }
-                twitchChannel.channel_id = channelId;
-            }
-            const stream = await client.getStreamByUserId(twitchChannel.channel_id);
-            twitchChannel.is_streaming = !!stream;
-            bot.getTwitchChannels().save(twitchChannel);
-        }
-        return setTimeout(updateUserStreamStatus, 5 * MINUTE);
-    };
-    updateUserStreamStatusTimeout = await updateUserStreamStatus();
+    timer.split();
+    log.debug(`initiating all modules took ${timer.lastSplitMs()}ms`);
+    bot.getFrontendStatusUpdater().addUser(user);
+    bot.getStreamStatusUpdater().addUser(user);
     bot.getEventHub().on('wss_user_connected', async (socket /* Socket */) => {
         if (socket.user_id === user.id && socket.module === 'core') {
-            updateUserFrontendStatusTimeout = await updateUserFrontendStatus();
-            updateUserStreamStatusTimeout = await updateUserStreamStatus();
+            await bot.getFrontendStatusUpdater().updateForUser(user.id);
+            await bot.getStreamStatusUpdater().updateForUser(user.id);
         }
     });
     bot.getEventHub().on('access_token_refreshed', async (changedUser /* User */) => {
         if (changedUser.id === user.id) {
             await clientManager.accessTokenRefreshed(changedUser);
-            updateUserFrontendStatusTimeout = await updateUserFrontendStatus();
-            updateUserStreamStatusTimeout = await updateUserStreamStatus();
-            for (const mod of bot.getModuleManager().all(user.id)) {
-                await mod.userChanged(changedUser);
-            }
+            await bot.getFrontendStatusUpdater().updateForUser(user.id);
+            await bot.getStreamStatusUpdater().updateForUser(user.id);
+            await bot.getModuleManager().updateForUser(user.id, changedUser);
         }
     });
     bot.getEventHub().on('user_changed', async (changedUser /* User */) => {
         if (changedUser.id === user.id) {
             await clientManager.userChanged(changedUser);
-            updateUserFrontendStatusTimeout = await updateUserFrontendStatus();
-            updateUserStreamStatusTimeout = await updateUserStreamStatus();
-            for (const mod of bot.getModuleManager().all(user.id)) {
-                await mod.userChanged(changedUser);
-            }
+            await bot.getFrontendStatusUpdater().updateForUser(user.id);
+            await bot.getStreamStatusUpdater().updateForUser(user.id);
+            await bot.getModuleManager().updateForUser(user.id, changedUser);
         }
     });
+    timer.split();
+    log.debug(`init for user took ${timer.totalMs()}ms`);
 };
 const run = async () => {
+    const timer = new Timer();
+    timer.reset();
     const bot = await createBot();
-    // one for each user
+    timer.split();
+    log.debug(`creating bot took ${timer.lastSplitMs()}ms`);
+    // one for each user, all in parallel
+    const initializers = [];
     for (const user of await bot.getUsers().all()) {
-        await initForUser(bot, user);
+        initializers.push(initForUser(bot, user));
     }
+    await Promise.all(initializers);
+    timer.split();
+    log.debug(`initializing users took ${timer.lastSplitMs()}ms`);
     bot.getEventHub().on('user_registration_complete', async (user /* User */) => {
         await initForUser(bot, user);
     });
@@ -7912,6 +8063,12 @@ const run = async () => {
     // at the point of connection from outside
     bot.getWebSocketServer().listen(bot);
     await bot.getWebServer().listen(bot);
+    // start 'workers'
+    bot.getFrontendStatusUpdater().start();
+    bot.getStreamStatusUpdater().start();
+    timer.split();
+    log.debug(`starting server (websocket+web) took ${timer.lastSplitMs()}ms`);
+    log.info(`bot started in ${timer.totalMs()}ms`);
     const gracefulShutdown = (signal) => {
         log.info(`${signal} received...`);
         log.info('shutting down webserver...');
