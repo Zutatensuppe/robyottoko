@@ -21,6 +21,7 @@ import Users, { User } from './services/Users'
 import Variables from './services/Variables'
 import Widgets from './services/Widgets'
 import WebServer from './WebServer'
+import { TwitchTmiClientManager } from './services/TwitchTmiClientManager'
 
 type int = number
 
@@ -537,6 +538,13 @@ export enum WIDGET_TYPE {
   POMO = 'pomo',
 }
 
+export interface TwitchBotIdentity {
+  username: string
+  password: string
+  client_id: string
+  client_secret: string
+}
+
 export interface Bot {
   getBuildVersion: () => string
   getBuildDate: () => string
@@ -556,6 +564,7 @@ export interface Bot {
   getChatLog: () => ChatLogRepo
   getStreamStatusUpdater: () => StreamStatusUpdater
   getFrontendStatusUpdater: () => FrontendStatusUpdater
+  getTwitchTmiClientManager: () => TwitchTmiClientManager
 
   sayFn: (user: User, target: string | null) => (msg: string) => void
   getUserVariables: (user: User) => Variables

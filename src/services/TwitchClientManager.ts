@@ -1,22 +1,13 @@
-// @ts-ignore
-import tmi from 'tmi.js'
 import TwitchHelixClient from './TwitchHelixClient'
 import { logger, Logger } from '../common/fn'
 import { TwitchChannel } from './TwitchChannels'
 import { User } from './Users'
-import { Bot, EventSubTransport, TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
+import { Bot, EventSubTransport, TwitchBotIdentity, TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
 import { ALL_SUBSCRIPTIONS_TYPES, SubscriptionType } from './twitch/EventSub'
 import { ChatEventHandler } from './twitch/ChatEventHandler'
 import { Timer } from '../Timer'
 
 const log = logger('TwitchClientManager.ts')
-
-interface Identity {
-  username: string
-  password: string
-  client_id: string
-  client_secret: string
-}
 
 const isDevTunnel = (url: string) => url.match(/^https:\/\/[a-z0-9-]+\.(?:loca\.lt|ngrok\.io)\//)
 
@@ -33,7 +24,7 @@ const shouldDeleteSubscription = (
     && twitchChannelIds.includes(subscription.condition.broadcaster_user_id)
 }
 
-const determineIdentity = (user: User, cfg: TwitchConfig): Identity => {
+const determineIdentity = (user: User, cfg: TwitchConfig): TwitchBotIdentity => {
   return (
     user.tmi_identity_username
     && user.tmi_identity_password
@@ -98,17 +89,7 @@ class TwitchClientManager {
     const identity = determineIdentity(user, cfg)
 
     // connect to chat via tmi (to all channels configured)
-    this.chatClient = new tmi.client({
-      identity: {
-        username: identity.username,
-        password: identity.password,
-        client_id: identity.client_id,
-      },
-      channels: twitchChannels.map(ch => ch.channel_name),
-      connection: {
-        reconnect: true,
-      }
-    })
+    this.chatClient = this.bot.getTwitchTmiClientManager().get(identity, twitchChannels.map(ch => ch.channel_name))
 
     const reportStatusToChannel = (channel: TwitchChannel, reason: string) => {
       if (!channel.bot_status_messages) {
