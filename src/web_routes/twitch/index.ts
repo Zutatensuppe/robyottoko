@@ -4,7 +4,7 @@ import express, { NextFunction, Response, Router } from 'express'
 import crypto from 'crypto'
 import { logger, YEAR } from '../../common/fn'
 import { Bot } from '../../types'
-import { handleOAuthCodeCallback } from '../../oauth'
+import { HandleCodeCallbackResult, handleOAuthCodeCallback } from '../../oauth'
 import { SubscribeEventHandler } from '../../services/twitch/SubscribeEventHandler'
 import { FollowEventHandler } from '../../services/twitch/FollowEventHandler'
 import { CheerEventHandler } from '../../services/twitch/CheerEventHandler'
@@ -49,14 +49,25 @@ export const createRouter = (
     // &state=c3ab8aa609ea11e793ae92361f002671
     if (req.query.code) {
       const code = `${req.query.code}`
-      const redirectUri = `${req.protocol}://${req.headers.host}/twitch/redirect_uri`
-      const result = await handleOAuthCodeCallback(
-        code,
-        redirectUri,
-        bot,
-        req.user || null,
-      )
-      if (result.error || !result.user) {
+      const redirectUris = [
+        `${bot.getConfig().http.url}/twitch/redirect_uri`,
+        `${req.protocol}://${req.headers.host}/twitch/redirect_uri`,
+      ]
+      let result: HandleCodeCallbackResult | null = null
+      for (const redirectUri of redirectUris) {
+        const tmpResult = await handleOAuthCodeCallback(
+          code,
+          redirectUri,
+          bot,
+          req.user || null,
+        )
+        if (tmpResult.error || !tmpResult.user) {
+          continue
+        }
+        result = tmpResult
+        break
+      }
+      if (result === null || result.error || !result.user) {
         res.status(500).send("Something went wrong!");
         return
       }
