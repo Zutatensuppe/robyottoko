@@ -4,11 +4,10 @@ const TABLE = 'robyottoko.user'
 
 export interface User {
   id: number
+  twitch_id: string
+  twitch_login: string
   name: string
-  pass: string
-  salt: string
   email: string
-  status: string // 'verification_pending' |
   tmi_identity_username: string
   tmi_identity_password: string
   tmi_identity_client_id: string
@@ -17,11 +16,10 @@ export interface User {
 
 export interface UpdateUser {
   id: number
+  twitch_id?: string
+  twitch_login?: string
   name?: string
-  pass?: string
-  salt?: string
   email?: string
-  status?: string // 'verification_pending' |
   tmi_identity_username?: string
   tmi_identity_password?: string
   tmi_identity_client_id?: string
@@ -29,11 +27,10 @@ export interface UpdateUser {
 }
 
 export interface CreateUser {
+  twitch_id: string
+  twitch_login: string
   name: string
-  pass: string
-  salt: string
   email: string
-  status: string // 'verification_pending' |
   tmi_identity_username: string
   tmi_identity_password: string
   tmi_identity_client_id: string
@@ -54,6 +51,10 @@ class Users {
 
   async getById(id: number): Promise<User | null> {
     return await this.get({ id })
+  }
+
+  async getByTwitchId(twitchId: string): Promise<User | null> {
+    return await this.get({ twitch_id: twitchId })
   }
 
   async getByEmail(email: string): Promise<User | null> {
@@ -77,11 +78,11 @@ where x.user_id = $1`, [id])
   }
 
   async createUser(user: CreateUser): Promise<number> {
-    return (await this.db.insert(TABLE, user)) as number
+    return (await this.db.insert(TABLE, user, 'id')) as number
   }
 
-  async countVerifiedUsers(): Promise<number> {
-    const rows = await this.db.getMany(TABLE, { status: 'verified' })
+  async countUsers(): Promise<number> {
+    const rows = await this.db.getMany(TABLE)
     return rows.length
   }
 }

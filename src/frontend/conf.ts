@@ -1,5 +1,6 @@
 import api from "./api";
 
+// TODO: don't use any :)
 let conf: any = null;
 
 const init = async () => {

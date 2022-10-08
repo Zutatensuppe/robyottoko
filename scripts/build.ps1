@@ -8,9 +8,6 @@ Remove-Item -Recurse -Force build/*
 npx rollup -c rollup.server.config.js
 ThrowOnNativeFailure
 
-Copy-Item -r src/templates build/server/
-ThrowOnNativeFailure
-
 Copy-Item -r src/config_data build/server/
 ThrowOnNativeFailure
 

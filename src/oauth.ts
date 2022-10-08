@@ -1,5 +1,6 @@
 import { logger } from "./common/fn";
 import { TwitchChannel } from "./services/TwitchChannels";
+import TwitchHelixClient from "./services/TwitchHelixClient";
 import { User } from "./services/Users";
 import { Bot } from "./types";
 
@@ -146,6 +147,7 @@ export const refreshExpiredTwitchChannelAccessToken = async (
 interface HandleCodeCallbackResult {
   error: boolean
   updated: boolean
+  user: User | null
 }
 
 // TODO: check if anything has to be put in a try catch block
@@ -153,21 +155,58 @@ export const handleOAuthCodeCallback = async (
   code: string,
   redirectUri: string,
   bot: Bot,
-  user: User,
+  loggedInUser: User | null,
 ): Promise<HandleCodeCallbackResult> => {
-  const client = bot.getUserTwitchClientManager(user).getHelixClient()
-  if (!client) {
-    return { error: true, updated: false }
-  }
-  const resp = await client.getAccessTokenByCode(code, redirectUri)
+  const helixClient = new TwitchHelixClient(
+    bot.getConfig().twitch.tmi.identity.client_id,
+    bot.getConfig().twitch.tmi.identity.client_secret
+  )
+  const resp = await helixClient.getAccessTokenByCode(code, redirectUri)
   if (!resp) {
-    return { error: true, updated: false }
+    return { error: true, updated: false, user: loggedInUser }
   }
 
   // get the user that corresponds to the token
-  const userResp = await client.getUser(resp.access_token)
+  const userResp = await helixClient.getUser(resp.access_token)
   if (!userResp) {
-    return { error: true, updated: false }
+    return { error: true, updated: false, user: loggedInUser }
+  }
+
+  // update currently logged in user if they dont have a twitch id set yet
+  if (loggedInUser && !loggedInUser.twitch_id) {
+    loggedInUser.twitch_id = userResp.id
+    loggedInUser.twitch_login = userResp.login
+    await bot.getUsers().save(loggedInUser)
+  }
+
+  let user = await bot.getUsers().getByTwitchId(userResp.id)
+  if (!user) {
+    user = await bot.getUsers().getByName(userResp.login)
+    if (user) {
+      console.log(user)
+      user.twitch_id = userResp.id
+      user.twitch_login = userResp.login
+      await bot.getUsers().save(user)
+    }
+  }
+
+  if (!user) {
+    // create user
+    const userId = await bot.getUsers().createUser({
+      twitch_id: userResp.id,
+      twitch_login: userResp.login,
+      name: userResp.login,
+      email: userResp.email,
+      tmi_identity_username: '',
+      tmi_identity_password: '',
+      tmi_identity_client_id: '',
+      tmi_identity_client_secret: '',
+    })
+    console.log(userId)
+    user = await bot.getUsers().getById(userId)
+    if (!user) {
+      return { error: true, updated: false, user: loggedInUser }
+    }
   }
 
   // store the token
@@ -185,7 +224,7 @@ export const handleOAuthCodeCallback = async (
   const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id)
   for (const twitchChannel of twitchChannels) {
     if (!twitchChannel.channel_id) {
-      const channelId = await client.getUserIdByNameCached(twitchChannel.channel_name, bot.getCache())
+      const channelId = await helixClient.getUserIdByNameCached(twitchChannel.channel_name, bot.getCache())
       if (!channelId) {
         continue
       }
@@ -199,5 +238,5 @@ export const handleOAuthCodeCallback = async (
     updated = true
   }
 
-  return { error: false, updated }
+  return { error: false, updated, user }
 }

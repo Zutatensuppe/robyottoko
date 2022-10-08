@@ -5,9 +5,7 @@ const TABLE = 'robyottoko.token'
 export enum TokenType {
   API_KEY = 'api_key',
   AUTH = 'auth',
-  PASSWORD_RESET = 'password_reset',
   PUB = 'pub',
-  REGISTRATION = 'registration',
 }
 
 export interface Token {

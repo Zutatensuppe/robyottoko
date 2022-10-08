@@ -3,7 +3,6 @@ import { fileURLToPath } from 'url'
 import cookieParser from 'cookie-parser'
 import express, { NextFunction, Response } from 'express'
 import path from 'path'
-import Templates from './services/Templates'
 import http from 'http'
 import { logger } from './common/fn'
 import { Bot } from './types'
@@ -20,9 +19,6 @@ class WebServer {
 
   async listen(bot: Bot) {
     const app = express()
-
-    const templates = new Templates(__dirname)
-    templates.add('templates/twitch_redirect_uri.html')
 
     const indexFile = path.resolve(`${__dirname}/../../build/public/index.html`)
 
@@ -46,7 +42,7 @@ class WebServer {
 
     app.use('/api', createApiRouter(bot))
 
-    app.use('/twitch', createTwitchRouter(templates, bot))
+    app.use('/twitch', createTwitchRouter(bot))
 
     app.all('/login', async (_req, res: Response, _next: NextFunction) => {
       res.sendFile(indexFile);

@@ -28,9 +28,6 @@
       }
     }
   },
-  "mail": {
-    "sendinblue_api_key": "some_api_key"
-  },
   "http": {
     "hostname": "localhost",
     "port": 1337,

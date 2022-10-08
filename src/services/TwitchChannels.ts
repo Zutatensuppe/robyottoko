@@ -31,6 +31,7 @@ class TwitchChannels {
     })
   }
 
+  // TODO: remove,replace
   async countUniqueUsersStreaming(): Promise<number> {
     const channels = await this.db.getMany(TABLE, { is_streaming: true })
     const userIds = [...new Set(channels.map(c => c.user_id))]

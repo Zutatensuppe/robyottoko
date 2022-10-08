@@ -8,12 +8,9 @@ import App from './App.vue'
 import AvatarView from './views/AvatarView.vue'
 import CommandsView from './views/CommandsView.vue'
 import DrawcastView from './views/DrawcastView.vue'
-import ForgotPasswordView from './views/ForgotPasswordView.vue'
 import IndexView from './views/IndexView.vue'
 import LoginView from './views/LoginView.vue'
-import PasswordResetView from './views/PasswordResetView.vue'
 import PomoModuleView from './views/PomoModuleView.vue'
-import RegisterView from './views/RegisterView.vue'
 import SettingsView from './views/SettingsView.vue'
 import SongRequestView from './views/SongRequestView.vue'
 import SpeechToTextView from './views/SpeechToTextView.vue'
@@ -79,24 +76,6 @@ const run = async () => {
       {
         name: 'login', path: '/login', component: LoginView, meta: {
           title: 'Login',
-          protected: false,
-        }
-      },
-      {
-        name: 'register', path: '/register', component: RegisterView, meta: {
-          title: 'Register',
-          protected: false,
-        }
-      },
-      {
-        name: 'password-reset', path: '/password-reset', component: PasswordResetView, meta: {
-          title: 'Password Reset',
-          protected: false,
-        }
-      },
-      {
-        name: 'forgot-password', path: '/forgot-password', component: ForgotPasswordView, meta: {
-          title: 'Forgot Password',
           protected: false,
         }
       },

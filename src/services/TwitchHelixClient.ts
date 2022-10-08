@@ -435,10 +435,6 @@ class TwitchHelixClient {
     }
   }
 
-  async getUserById(userId: string): Promise<TwitchHelixUserSearchResponseDataEntry | null> {
-    return await this._getUserBy({ id: userId })
-  }
-
   async getUserByName(userName: string): Promise<TwitchHelixUserSearchResponseDataEntry | null> {
     return await this._getUserBy({ login: userName })
   }

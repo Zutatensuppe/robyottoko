@@ -31,21 +31,15 @@
             </tr>
             <tr>
               <td>Email:</td>
-              <td>
-                <input
-                  v-model="user.email"
-                  type="email"
-                >
-              </td>
+              <td>{{ user.email }}</td>
             </tr>
             <tr>
-              <td>Password:</td>
-              <td>
-                <input
-                  v-model="user.pass"
-                  type="password"
-                >
-              </td>
+              <td>Twitch Id:</td>
+              <td>{{ user.twitch_id }}</td>
+            </tr>
+            <tr>
+              <td>Twitch Login:</td>
+              <td>{{ user.twitch_login }}</td>
             </tr>
           </tbody>
         </table>
@@ -226,6 +220,8 @@
 import { defineComponent } from "vue";
 import { TwitchChannel } from "../../services/TwitchChannels";
 import api from "../api";
+import conf from "../conf";
+import twitch from "../twitch";
 import StringInput from "../components/StringInput.vue";
 
 interface ComponentData {
@@ -233,9 +229,10 @@ interface ComponentData {
   changedJson: string
   user: {
     id: number
+    twitch_id: string
+    twitch_login: string
     name: string
     email: string
-    pass: string
     groups: string[]
     tmi_identity_client_id: string
     tmi_identity_client_secret: string
@@ -252,9 +249,10 @@ export default defineComponent({
     changedJson: "[]",
     user: {
       id: 0,
+      twitch_id: '',
+      twitch_login: '',
       name: "",
       email: "",
-      pass: "",
       groups: [],
       tmi_identity_client_id: "",
       tmi_identity_client_secret: "",
@@ -271,40 +269,10 @@ export default defineComponent({
       return this.unchangedJson !== this.changedJson;
     },
     accessTokenLink() {
-      if (!this.user.tmi_identity_client_id) {
-        return;
-      }
-      // all scopes, see https://dev.twitch.tv/docs/authentication/#scopes
-      const scopes = [
-        "analytics:read:extensions",
-        "analytics:read:games",
-        "bits:read",
-        "channel:edit:commercial",
-        "channel:manage:broadcast",
-        "channel:manage:extensions",
-        "channel:manage:redemptions",
-        "channel:manage:videos",
-        "channel:read:editors",
-        "channel:read:hype_train",
-        "channel:read:redemptions",
-        "channel:read:stream_key",
-        "channel:read:subscriptions",
-        "clips:edit",
-        "moderation:read",
-        "user:edit",
-        "user:edit:follows",
-        "user:read:blocked_users",
-        "user:manage:blocked_users",
-        "user:read:broadcast",
-        "user:read:email",
-      ];
-      const loc = document.location;
-      const redirectUri = `${loc.protocol}//${loc.host}/twitch/redirect_uri`;
-      return ("https://id.twitch.tv/oauth2/authorize" +
-        "?response_type=code" +
-        `&client_id=${this.user.tmi_identity_client_id}` +
-        `&redirect_uri=${redirectUri}` +
-        `&scope=${scopes.join("+")}`);
+      const twitchClientId = this.isAdmin
+         ? this.user.tmi_identity_client_id || conf.getConf().twitchClientId
+         : conf.getConf().twitchClientId
+      return twitch.accessTokenLink(twitchClientId)
     },
   },
   watch: {

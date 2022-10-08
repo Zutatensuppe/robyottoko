@@ -2,8 +2,7 @@
 
 import express, { NextFunction, Response, Router } from 'express'
 import crypto from 'crypto'
-import { logger } from '../../common/fn'
-import Templates from '../../services/Templates'
+import { logger, YEAR } from '../../common/fn'
 import { Bot } from '../../types'
 import { handleOAuthCodeCallback } from '../../oauth'
 import { SubscribeEventHandler } from '../../services/twitch/SubscribeEventHandler'
@@ -18,7 +17,6 @@ import { RaidEventHandler } from '../../services/twitch/RaidEventHandler'
 const log = logger('twitch/index.ts')
 
 export const createRouter = (
-  templates: Templates,
   bot: Bot,
 ): Router => {
   const verifyTwitchSignature = (req: any, res: any, next: NextFunction) => {
@@ -44,11 +42,6 @@ export const createRouter = (
   // twitch calls this url after auth
   // from here we render a js that reads the token and shows it to the user
   router.get('/redirect_uri', async (req: any, res: Response) => {
-    if (!req.user) {
-      // a user that is not logged in may not visit to redirect_uri
-      res.status(401).send({ reason: 'not logged in' })
-      return
-    }
     // in success case:
     // http://localhost:3000/
     // ?code=gulfwdmys5lsm6qyz4xiz9q32l10
@@ -56,28 +49,31 @@ export const createRouter = (
     // &state=c3ab8aa609ea11e793ae92361f002671
     if (req.query.code) {
       const code = `${req.query.code}`
-      const redirectUri = `${bot.getConfig().http.url}/twitch/redirect_uri`
+      const redirectUri = `${req.protocol}://${req.headers.host}/twitch/redirect_uri`
       const result = await handleOAuthCodeCallback(
         code,
         redirectUri,
         bot,
-        req.user,
+        req.user || null,
       )
-      if (result.error) {
+      if (result.error || !result.user) {
         res.status(500).send("Something went wrong!");
         return
       }
       if (result.updated) {
-        const changedUser = await bot.getUsers().getById(req.user.id)
+        const changedUser = await bot.getUsers().getById(result.user.id)
         if (changedUser) {
           bot.getEventHub().emit('user_changed', changedUser)
         } else {
           log.error({
-            user_id: req.user.id,
+            user_id: result.user.id,
           }, 'updating user twitch channels: user doesn\'t exist after saving it')
         }
       }
-      res.send(await templates.render('templates/twitch_redirect_uri.html', {}))
+
+      const token = await bot.getAuth().getUserAuthToken(result.user.id)
+      res.cookie('x-token', token, { maxAge: 1 * YEAR, httpOnly: true })
+      res.redirect('/')
       return
     }
 

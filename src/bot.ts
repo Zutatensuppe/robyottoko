@@ -12,7 +12,6 @@ import TwitchChannels from './services/TwitchChannels'
 import Cache from './services/Cache'
 import Db from './DbPostgres'
 import Variables from './services/Variables'
-import Mail from './net/Mail'
 import mitt from 'mitt'
 import GeneralModule from './mod/modules/GeneralModule'
 import SongrequestModule from './mod/modules/SongrequestModule'
@@ -55,7 +54,6 @@ const createBot = async (): Promise<Bot> => {
   const twitchChannelRepo = new TwitchChannels(db)
   const cache = new Cache(db)
   const auth = new Auth(userRepo, tokenRepo)
-  const mail = new Mail(config.mail)
   const widgets = new Widgets(db, tokenRepo)
   const eventHub = mitt()
   const moduleManager = new ModuleManager()
@@ -80,7 +78,6 @@ const createBot = async (): Promise<Bot> => {
     getTokens() { return tokenRepo }
     getTwitchChannels() { return twitchChannelRepo }
     getCache() { return cache }
-    getMail() { return mail }
     getAuth() { return auth }
     getWebServer() { return webServer }
     getWebSocketServer() { return webSocketServer }
