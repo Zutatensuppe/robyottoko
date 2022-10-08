@@ -3,7 +3,7 @@ import Auth from './net/Auth'
 import ModuleManager from './mod/ModuleManager'
 import WebSocketServer from './net/WebSocketServer'
 import WebServer from './WebServer'
-import TwitchClientManager from './net/TwitchClientManager'
+import TwitchClientManager from './services/TwitchClientManager'
 import ModuleStorage from './mod/ModuleStorage'
 import { logger, setLogLevel } from './common/fn'
 import Users, { User } from './services/Users'
@@ -30,6 +30,7 @@ import fn from './fn'
 import { Timer } from './Timer'
 import { StreamStatusUpdater } from './services/StreamStatusUpdater'
 import { FrontendStatusUpdater } from './services/FrontendStatusUpdater'
+import { TwitchTmiClientManager } from './services/TwitchTmiClientManager'
 
 setLogLevel(config.log.level)
 const log = logger('bot.ts')
@@ -61,6 +62,7 @@ const createBot = async (): Promise<Bot> => {
   const webSocketServer = new WebSocketServer()
   const webServer = new WebServer()
   const chatLog = new ChatLogRepo(db)
+  const twitchTmiClientManager = new TwitchTmiClientManager()
 
   class BotImpl implements Bot {
     private userVariableInstances: Record<number, Variables> = {}
@@ -97,6 +99,7 @@ const createBot = async (): Promise<Bot> => {
       }
       return this.frontendStatusUpdater
     }
+    getTwitchTmiClientManager(): TwitchTmiClientManager { return twitchTmiClientManager }
 
     // user specific
     // -----------------------------------------------------------------

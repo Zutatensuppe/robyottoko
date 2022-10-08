@@ -1,22 +1,13 @@
-// @ts-ignore
-import tmi from 'tmi.js'
-import TwitchHelixClient from '../services/TwitchHelixClient'
+import TwitchHelixClient from './TwitchHelixClient'
 import { logger, Logger } from '../common/fn'
-import { TwitchChannel } from '../services/TwitchChannels'
-import { User } from '../services/Users'
-import { Bot, EventSubTransport, TwitchChatClient, TwitchChatContext } from '../types'
-import { ALL_SUBSCRIPTIONS_TYPES, SubscriptionType } from '../services/twitch/EventSub'
-import { ChatEventHandler } from '../services/twitch/ChatEventHandler'
+import { TwitchChannel } from './TwitchChannels'
+import { User } from './Users'
+import { Bot, EventSubTransport, TwitchBotIdentity, TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
+import { ALL_SUBSCRIPTIONS_TYPES, SubscriptionType } from './twitch/EventSub'
+import { ChatEventHandler } from './twitch/ChatEventHandler'
 import { Timer } from '../Timer'
 
 const log = logger('TwitchClientManager.ts')
-
-interface Identity {
-  username: string
-  password: string
-  client_id: string
-  client_secret: string
-}
 
 const isDevTunnel = (url: string) => url.match(/^https:\/\/[a-z0-9-]+\.(?:loca\.lt|ngrok\.io)\//)
 
@@ -33,10 +24,27 @@ const shouldDeleteSubscription = (
     && twitchChannelIds.includes(subscription.condition.broadcaster_user_id)
 }
 
+const determineIdentity = (user: User, cfg: TwitchConfig): TwitchBotIdentity => {
+  return (
+    user.tmi_identity_username
+    && user.tmi_identity_password
+    && user.tmi_identity_client_id
+  ) ? {
+    username: user.tmi_identity_username,
+    password: user.tmi_identity_password,
+    client_id: user.tmi_identity_client_id,
+    client_secret: user.tmi_identity_client_secret,
+  } : {
+    username: cfg.tmi.identity.username,
+    password: cfg.tmi.identity.password,
+    client_id: cfg.tmi.identity.client_id,
+    client_secret: cfg.tmi.identity.client_secret,
+  }
+}
+
 class TwitchClientManager {
   private chatClient: TwitchChatClient | null = null
   private helixClient: TwitchHelixClient | null = null
-  private identity: Identity | null = null
 
   private log: Logger
 
@@ -78,35 +86,34 @@ class TwitchClientManager {
       return
     }
 
-    const identity = (
-      user.tmi_identity_username
-      && user.tmi_identity_password
-      && user.tmi_identity_client_id
-    ) ? {
-      username: user.tmi_identity_username,
-      password: user.tmi_identity_password,
-      client_id: user.tmi_identity_client_id,
-      client_secret: user.tmi_identity_client_secret,
-    } : {
-      username: cfg.tmi.identity.username,
-      password: cfg.tmi.identity.password,
-      client_id: cfg.tmi.identity.client_id,
-      client_secret: cfg.tmi.identity.client_secret,
-    }
-    this.identity = identity
+    const identity = determineIdentity(user, cfg)
 
     // connect to chat via tmi (to all channels configured)
-    this.chatClient = new tmi.client({
-      identity: {
-        username: identity.username,
-        password: identity.password,
-        client_id: identity.client_id,
-      },
-      channels: twitchChannels.map(ch => ch.channel_name),
-      connection: {
-        reconnect: true,
+    this.chatClient = this.bot.getTwitchTmiClientManager().get(identity, twitchChannels.map(ch => ch.channel_name))
+
+    const reportStatusToChannel = (channel: TwitchChannel, reason: string) => {
+      if (!channel.bot_status_messages) {
+        return
       }
-    })
+      const say = this.bot.sayFn(user, channel.channel_name)
+      if (reason === 'init') {
+        say('⚠️ Bot rebooted - please restart timers...')
+      } else if (reason === 'access_token_refreshed') {
+        // dont say anything
+      } else if (reason === 'user_change') {
+        say('✅ User settings updated...')
+      } else {
+        say('✅ Reconnected...')
+      }
+    }
+
+    const reportStatusToChannels = (channels: TwitchChannel[], reason: string) => {
+      for (const channel of channels) {
+        // note: this can lead to multiple messages if multiple users
+        //       have the same channels set up
+        reportStatusToChannel(channel, reason)
+      }
+    }
 
     if (this.chatClient) {
       this.chatClient.on('message', async (
@@ -126,23 +133,7 @@ class TwitchClientManager {
 
         // if status reporting is disabled, dont print messages
         if (this.bot.getConfig().bot.reportStatus) {
-          for (const channel of twitchChannels) {
-            if (!channel.bot_status_messages) {
-              continue;
-            }
-            // note: this can lead to multiple messages if multiple users
-            //       have the same channels set up
-            const say = this.bot.sayFn(user, channel.channel_name)
-            if (connectReason === 'init') {
-              say('⚠️ Bot rebooted - please restart timers...')
-            } else if (connectReason === 'access_token_refreshed') {
-              // dont say anything
-            } else if (connectReason === 'user_change') {
-              say('✅ User settings updated...')
-            } else {
-              say('✅ Reconnected...')
-            }
-          }
+          reportStatusToChannels(twitchChannels, connectReason)
         }
 
         // set connectReason to empty, everything from now is just a reconnect
@@ -298,10 +289,6 @@ class TwitchClientManager {
 
   getHelixClient() {
     return this.helixClient
-  }
-
-  getIdentity() {
-    return this.identity
   }
 }
 
