@@ -144,7 +144,7 @@ export const refreshExpiredTwitchChannelAccessToken = async (
   return { error: false, refreshed: true }
 }
 
-interface HandleCodeCallbackResult {
+export interface HandleCodeCallbackResult {
   error: boolean
   updated: boolean
   user: User | null
