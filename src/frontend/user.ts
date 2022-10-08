@@ -37,24 +37,11 @@ async function logout(): Promise<{ error: string | false }> {
   }
 }
 
-async function login(user: string, pass: string): Promise<{ error: string | false }> {
-  const res = await api.login({ user, pass });
-  if (res.status === 200) {
-    await init()
-    return { error: false }
-  } else if (res.status === 401) {
-    return { error: (await res.json()).reason }
-  } else {
-    return { error: "Unknown error" }
-  }
-}
-
 export default {
   getMe: () => me,
   isDarkmode,
   setDarkmode,
   eventBus,
   logout,
-  login,
   init,
 }

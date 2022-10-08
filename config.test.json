@@ -20,9 +20,6 @@
       }
     }
   },
-  "mail": {
-    "sendinblue_api_key": ""
-  },
   "http": {
     "hostname": "localhost",
     "port": 0,

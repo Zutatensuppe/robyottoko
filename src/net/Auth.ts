@@ -1,5 +1,4 @@
 import { NextFunction, Response } from "express"
-import { passwordHash } from "../fn"
 import Tokens, { Token, TokenType } from "../services/Tokens"
 import Users, { User } from "../services/Users"
 import { ApiUserData } from "../types"
@@ -15,16 +14,8 @@ class Auth {
     return await this.tokenRepo.getByTokenAndType(token, type)
   }
 
-  async getUserById(id: number): Promise<User | null> {
-    return await this.userRepo.get({ id, status: 'verified' })
-  }
-
-  async getUserByNameAndPass(name: string, plainPass: string): Promise<User | null> {
-    const user = await this.userRepo.get({ name, status: 'verified' })
-    if (!user || user.pass !== passwordHash(plainPass, user.salt)) {
-      return null
-    }
-    return user
+  async _getUserById(id: number): Promise<User | null> {
+    return await this.userRepo.getById(id)
   }
 
   async getUserAuthToken(user_id: number): Promise<string> {
@@ -55,7 +46,6 @@ class Auth {
         id: user.id,
         name: user.name,
         email: user.email,
-        status: user.status,
         groups: await this.userRepo.getGroups(user.id)
       },
     }
@@ -74,7 +64,7 @@ class Auth {
   async userFromWidgetToken(token: string, type: string): Promise<User | null> {
     const tokenInfo = await this.getTokenInfoByTokenAndType(token, `widget_${type}`)
     if (tokenInfo) {
-      return await this.getUserById(tokenInfo.user_id)
+      return await this._getUserById(tokenInfo.user_id)
     }
     return null
   }
@@ -82,7 +72,7 @@ class Auth {
   async userFromPubToken(token: string): Promise<User | null> {
     const tokenInfo = await this.getTokenInfoByTokenAndType(token, TokenType.PUB)
     if (tokenInfo) {
-      return await this.getUserById(tokenInfo.user_id)
+      return await this._getUserById(tokenInfo.user_id)
     }
     return null
   }

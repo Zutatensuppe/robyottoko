@@ -1,7 +1,5 @@
-import config from './config'
-import crypto from 'crypto'
 import xhr from './net/xhr'
-import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, nonce, getRandom, getRandomInt, daysUntil } from './common/fn'
+import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, getRandom, getRandomInt, daysUntil } from './common/fn'
 
 import { Command, GlobalVariable, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module, CommandTrigger, Bot, ChatMessageContext } from './types'
 import { User } from './services/Users'
@@ -463,19 +461,6 @@ export const parseISO8601Duration = (
   )
 }
 
-export const passwordSalt = () => {
-  return nonce(10)
-}
-
-export const passwordHash = (
-  plainPass: string,
-  salt: string,
-): string => {
-  const hash = crypto.createHmac('sha512', config.secret)
-  hash.update(`${salt}${plainPass}`)
-  return hash.digest('hex')
-}
-
 export const findIdxFuzzy = <T>(
   array: T[],
   search: string,
@@ -710,8 +695,6 @@ export default {
   sayFn,
   parseCommandFromTriggerAndMessage,
   parseCommandFromCmdAndMessage,
-  passwordSalt,
-  passwordHash,
   sleep,
   fnRandom,
   parseISO8601Duration,

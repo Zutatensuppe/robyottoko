@@ -219,3 +219,12 @@ html.darkmode {
     background: white;
   }
 }
+
+.button.is-twitch {
+  background: $twitch_color_primary;
+  color: white;
+
+  &:hover {
+    background: darken($twitch_color_primary, 5);
+  }
+}

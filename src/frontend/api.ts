@@ -65,11 +65,6 @@ function asQueryArgs(data: QueryArgsData) {
 }
 
 export default {
-  resendVerificationMail: async (data: { email: string }) => postJson("/api/user/_resend_verification_mail", data),
-  requestPasswordReset: async (data: { email: string }) => postJson("/api/user/_request_password_reset", data),
-  register: async (data: { user: string, pass: string, email: string }) => postJson("/api/user/_register", data),
-  resetPassword: async (data: { pass: string, token: string | null }) => postJson("/api/user/_reset_password", data),
-  handleToken: async (data: { token: string }) => postJson("/api/_handle-token", data),
   saveVariables: async (data: { variables: any }) => postJson("/api/save-variables", data),
   twitchUserIdByName: async (data: { name: string, client_id: string | null, client_secret: string | null }) => postJson("/api/twitch/user-id-by-name", data),
   saveUserSettings: async (data: { user: any, twitch_channels: any[] }) => postJson("/api/save-settings", data),
@@ -79,7 +74,6 @@ export default {
   getDataGlobal: async () => get("/api/data/global"),
   getMe: async () => get("/api/user/me"),
   logout: async () => post("/api/logout"),
-  login: async (data: { user: string, pass: string }) => postJson("/api/auth", data),
   getConf: async () => get("/api/conf"),
   upload: async (file: File, onUploadProgress: (evt: ProgressEvent<XMLHttpRequestEventTarget>) => void) => {
     const body = new FormData();

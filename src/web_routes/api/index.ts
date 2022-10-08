@@ -2,9 +2,7 @@
 
 import express, { NextFunction, Response, Router } from 'express'
 import multer from 'multer'
-import { logger, nonce, YEAR } from '../../common/fn'
-import fn from '../../fn'
-import { TokenType } from '../../services/Tokens'
+import { logger, nonce } from '../../common/fn'
 import { TwitchChannel } from '../../services/TwitchChannels'
 import TwitchHelixClient from '../../services/TwitchHelixClient'
 import { UpdateUser, User } from '../../services/Users'
@@ -66,8 +64,10 @@ export const createRouter = (
   })
 
   router.get('/conf', async (req, res: Response) => {
+    const conf = bot.getConfig()
     res.send({
-      wsBase: bot.getConfig().ws.connectstring,
+      wsBase: conf.ws.connectstring,
+      twitchClientId: conf.twitch.tmi.identity.client_id,
     })
   })
 
@@ -77,34 +77,6 @@ export const createRouter = (
       res.clearCookie("x-token")
     }
     res.send({ success: true })
-  })
-
-  router.post('/_handle-token', express.json(), async (req, res) => {
-    const token = req.body.token || null
-    if (!token) {
-      res.status(400).send({ reason: 'invalid_token' })
-      return
-    }
-    const tokenObj = await bot.getTokens().getByTokenAndType(token, TokenType.REGISTRATION)
-    if (!tokenObj) {
-      res.status(400).send({ reason: 'invalid_token' })
-      return
-    }
-    await bot.getUsers().save({ status: 'verified', id: tokenObj.user_id })
-    await bot.getTokens().delete(tokenObj.token)
-    res.send({ type: 'registration-verified' })
-
-    // new user was registered. module manager should be notified about this
-    // so that bot doesnt need to be restarted :O
-    const user = await bot.getUsers().getById(tokenObj.user_id)
-    if (user) {
-      bot.getEventHub().emit('user_registration_complete', user)
-    } else {
-      log.error({
-        user_id: tokenObj.user_id,
-      }, `registration: user doesn't exist after saving it`)
-    }
-    return
   })
 
   router.post('/widget/create_url', requireLoginApi, express.json(), async (req: any, res: Response) => {
@@ -134,7 +106,7 @@ export const createRouter = (
 
   router.get('/data/global', async (req: any, res: Response) => {
     res.send({
-      registeredUserCount: await bot.getUsers().countVerifiedUsers(),
+      registeredUserCount: await bot.getUsers().countUsers(),
       streamingUserCount: await bot.getTwitchChannels().countUniqueUsersStreaming(),
     })
   })
@@ -144,10 +116,10 @@ export const createRouter = (
     res.send({
       user: {
         id: user.id,
+        twitch_id: user.twitch_id,
+        twitch_login: user.twitch_login,
         name: user.name,
-        salt: user.salt,
         email: user.email,
-        status: user.status,
         tmi_identity_username: user.tmi_identity_username,
         tmi_identity_password: user.tmi_identity_password,
         tmi_identity_client_id: user.tmi_identity_client_id,
@@ -212,12 +184,6 @@ export const createRouter = (
     const user: UpdateUser = {
       id: req.body.user.id,
     }
-    if (req.body.user.pass) {
-      user.pass = fn.passwordHash(req.body.user.pass, originalUser.salt)
-    }
-    if (req.body.user.email) {
-      user.email = req.body.user.email
-    }
     if (req.user.groups.includes('admin')) {
       user.tmi_identity_client_id = req.body.user.tmi_identity_client_id
       user.tmi_identity_client_secret = req.body.user.tmi_identity_client_secret
@@ -273,19 +239,7 @@ export const createRouter = (
     }
   })
 
-  router.post('/auth', express.json(), async (req, res: Response) => {
-    const user = await bot.getAuth().getUserByNameAndPass(req.body.user, req.body.pass)
-    if (!user) {
-      res.status(401).send({ reason: 'bad credentials' })
-      return
-    }
-
-    const token = await bot.getAuth().getUserAuthToken(user.id)
-    res.cookie('x-token', token, { maxAge: 1 * YEAR, httpOnly: true })
-    res.send()
-  })
-
-  router.use('/user', createUserRouter(bot, requireLoginApi))
+  router.use('/user', createUserRouter(requireLoginApi))
   router.use('/pub/v1', createApiPubV1Router(bot))
   return router
 }

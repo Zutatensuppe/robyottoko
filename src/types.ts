@@ -15,7 +15,7 @@ import Cache from './services/Cache'
 import { ChatLogRepo } from './services/ChatLogRepo'
 import { FrontendStatusUpdater } from './services/FrontendStatusUpdater'
 import { StreamStatusUpdater } from './services/StreamStatusUpdater'
-import Tokens, { Token } from './services/Tokens'
+import Tokens from './services/Tokens'
 import TwitchChannels from './services/TwitchChannels'
 import Users, { User } from './services/Users'
 import Variables from './services/Variables'
@@ -29,7 +29,6 @@ export interface ApiUser {
   id: number
   name: string
   email: string
-  status: string
   groups: string[]
 }
 
@@ -47,10 +46,6 @@ export interface WsConfig {
   hostname: string
   port: int
   connectstring: string
-}
-
-export interface MailConfig {
-  sendinblue_api_key: string
 }
 
 export interface HttpConfig {
@@ -92,7 +87,6 @@ export interface Config {
     level: LogLevel
   }
   twitch: TwitchConfig
-  mail: MailConfig
   http: HttpConfig
   ws: WsConfig
   db: DbConfig
@@ -493,26 +487,6 @@ export interface Module {
   onChatMsg: (chatMessageContext: ChatMessageContext) => Promise<void>
 }
 
-interface MailServiceUser {
-  email: string
-  name: string
-}
-
-export interface MailServicePasswordResetData {
-  user: MailServiceUser
-  token: Token
-}
-
-export interface MailServiceRegistrationData {
-  user: MailServiceUser
-  token: Token
-}
-
-export interface MailService {
-  sendPasswordResetMail: (data: MailServicePasswordResetData) => any
-  sendRegistrationMail: (data: MailServiceRegistrationData) => any
-}
-
 export enum MODULE_NAME {
   CORE = 'core', // not really a module
   AVATAR = 'avatar',
@@ -555,7 +529,6 @@ export interface Bot {
   getTokens: () => Tokens
   getTwitchChannels: () => TwitchChannels
   getCache: () => Cache
-  getMail: () => MailService
   getAuth: () => Auth
   getWebServer: () => WebServer
   getWebSocketServer: () => WebSocketServer
