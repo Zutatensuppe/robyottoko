@@ -2996,9 +2996,20 @@ const createRouter$3 = (bot) => {
         // &state=c3ab8aa609ea11e793ae92361f002671
         if (req.query.code) {
             const code = `${req.query.code}`;
-            const redirectUri = `${req.protocol}://${req.headers.host}/twitch/redirect_uri`;
-            const result = await handleOAuthCodeCallback(code, redirectUri, bot, req.user || null);
-            if (result.error || !result.user) {
+            const redirectUris = [
+                `${bot.getConfig().http.url}/twitch/redirect_uri`,
+                `${req.protocol}://${req.headers.host}/twitch/redirect_uri`,
+            ];
+            let result = null;
+            for (const redirectUri of redirectUris) {
+                const tmpResult = await handleOAuthCodeCallback(code, redirectUri, bot, req.user || null);
+                if (tmpResult.error || !tmpResult.user) {
+                    continue;
+                }
+                result = tmpResult;
+                break;
+            }
+            if (result === null || result.error || !result.user) {
                 res.status(500).send("Something went wrong!");
                 return;
             }
@@ -7513,9 +7524,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-10-08T13:48:53.854Z",
+    buildDate: "2022-10-08T14:12:27.384Z",
     // @ts-ignore
-    buildVersion: "1.28.2",
+    buildVersion: "1.28.3",
 };
 
 const TABLE = 'robyottoko.chat_log';
