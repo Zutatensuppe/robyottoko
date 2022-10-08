@@ -8,10 +8,10 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 import multer from 'multer';
 import cors from 'cors';
-import tmi from 'tmi.js';
 import * as pg from 'pg';
 import SibApiV3Sdk from 'sib-api-v3-sdk';
 import childProcess from 'child_process';
+import tmi from 'tmi.js';
 
 const absPath = (path) => new URL(path, import.meta.url);
 const readJson = (path) => JSON.parse(String(readFileSync(path)));
@@ -3793,14 +3793,32 @@ class Timer {
     }
 }
 
-// @ts-ignore
 logger('TwitchClientManager.ts');
 const isDevTunnel = (url) => url.match(/^https:\/\/[a-z0-9-]+\.(?:loca\.lt|ngrok\.io)\//);
-const shouldDeleteSubscription = (configuredTransport, subscription, twitchChannelIds) => {
+const isRelevantSubscription = (configuredTransport, subscription, twitchChannelIds) => {
     return configuredTransport.method === subscription.transport.method
         && (configuredTransport.callback === subscription.transport.callback
             || (isDevTunnel(configuredTransport.callback) && isDevTunnel(subscription.transport.callback)))
-        && twitchChannelIds.includes(subscription.condition.broadcaster_user_id);
+        && (
+        // normal subscription
+        (subscription.type !== 'channel.raid' && twitchChannelIds.includes(subscription.condition.broadcaster_user_id))
+            // raid subscription
+            || (subscription.type === 'channel.raid' && twitchChannelIds.includes(subscription.condition.to_broadcaster_user_id)));
+};
+const determineIdentity = (user, cfg) => {
+    return (user.tmi_identity_username
+        && user.tmi_identity_password
+        && user.tmi_identity_client_id) ? {
+        username: user.tmi_identity_username,
+        password: user.tmi_identity_password,
+        client_id: user.tmi_identity_client_id,
+        client_secret: user.tmi_identity_client_secret,
+    } : {
+        username: cfg.tmi.identity.username,
+        password: cfg.tmi.identity.password,
+        client_id: cfg.tmi.identity.client_id,
+        client_secret: cfg.tmi.identity.client_secret,
+    };
 };
 class TwitchClientManager {
     constructor(bot, user) {
@@ -3808,7 +3826,6 @@ class TwitchClientManager {
         this.user = user;
         this.chatClient = null;
         this.helixClient = null;
-        this.identity = null;
         this.log = logger('TwitchClientManager.ts', `${user.name}|`);
     }
     async accessTokenRefreshed(user) {
@@ -3834,32 +3851,32 @@ class TwitchClientManager {
             this.log.info(`* No twitch channels configured at all`);
             return;
         }
-        const identity = (user.tmi_identity_username
-            && user.tmi_identity_password
-            && user.tmi_identity_client_id) ? {
-            username: user.tmi_identity_username,
-            password: user.tmi_identity_password,
-            client_id: user.tmi_identity_client_id,
-            client_secret: user.tmi_identity_client_secret,
-        } : {
-            username: cfg.tmi.identity.username,
-            password: cfg.tmi.identity.password,
-            client_id: cfg.tmi.identity.client_id,
-            client_secret: cfg.tmi.identity.client_secret,
-        };
-        this.identity = identity;
+        const identity = determineIdentity(user, cfg);
         // connect to chat via tmi (to all channels configured)
-        this.chatClient = new tmi.client({
-            identity: {
-                username: identity.username,
-                password: identity.password,
-                client_id: identity.client_id,
-            },
-            channels: twitchChannels.map(ch => ch.channel_name),
-            connection: {
-                reconnect: true,
+        this.chatClient = this.bot.getTwitchTmiClientManager().get(identity, twitchChannels.map(ch => ch.channel_name));
+        const reportStatusToChannel = (channel, reason) => {
+            if (!channel.bot_status_messages) {
+                return;
             }
-        });
+            const say = this.bot.sayFn(user, channel.channel_name);
+            if (reason === 'init') {
+                say('⚠️ Bot rebooted - please restart timers...');
+            }
+            else if (reason === 'access_token_refreshed') ;
+            else if (reason === 'user_change') {
+                say('✅ User settings updated...');
+            }
+            else {
+                say('✅ Reconnected...');
+            }
+        };
+        const reportStatusToChannels = (channels, reason) => {
+            for (const channel of channels) {
+                // note: this can lead to multiple messages if multiple users
+                //       have the same channels set up
+                reportStatusToChannel(channel, reason);
+            }
+        };
         if (this.chatClient) {
             this.chatClient.on('message', async (target, context, msg, self) => {
                 if (self) {
@@ -3872,24 +3889,7 @@ class TwitchClientManager {
                 this.log.info({ addr, port }, 'Connected');
                 // if status reporting is disabled, dont print messages
                 if (this.bot.getConfig().bot.reportStatus) {
-                    for (const channel of twitchChannels) {
-                        if (!channel.bot_status_messages) {
-                            continue;
-                        }
-                        // note: this can lead to multiple messages if multiple users
-                        //       have the same channels set up
-                        const say = this.bot.sayFn(user, channel.channel_name);
-                        if (connectReason === 'init') {
-                            say('⚠️ Bot rebooted - please restart timers...');
-                        }
-                        else if (connectReason === 'access_token_refreshed') ;
-                        else if (connectReason === 'user_change') {
-                            say('✅ User settings updated...');
-                        }
-                        else {
-                            say('✅ Reconnected...');
-                        }
-                    }
+                    reportStatusToChannels(twitchChannels, connectReason);
                 }
                 // set connectReason to empty, everything from now is just a reconnect
                 // due to disconnect from twitch
@@ -3923,6 +3923,7 @@ class TwitchClientManager {
         }
         const twitchChannelIds = twitchChannels.map(ch => `${ch.channel_id}`);
         const transport = this.bot.getConfig().twitch.eventSub.transport;
+        this.log.debug(`registering subscriptions for ${twitchChannels.length} channels`);
         // TODO: maybe get all subscriptions from database to not
         //       do the one 'getSubscriptions' request. depending on how long that
         //       one needs
@@ -3941,17 +3942,26 @@ class TwitchClientManager {
         const deletePromises = [];
         for (const subscription of allSubscriptions.data) {
             for (const twitchChannelId of twitchChannelIds) {
+                if (!isRelevantSubscription(transport, subscription, [twitchChannelId])) {
+                    continue;
+                }
                 if (existsMap[subscription.type][twitchChannelId]) {
-                    if (shouldDeleteSubscription(transport, subscription, [twitchChannelId])) {
-                        deletePromises.push(this.deleteSubscription(subscription));
-                    }
+                    deletePromises.push(this.deleteSubscription(subscription));
                 }
                 else {
                     existsMap[subscription.type][twitchChannelId] = true;
+                    await this.bot.getDb().upsert('robyottoko.event_sub', {
+                        user_id: this.user.id,
+                        subscription_id: subscription.id,
+                        subscription_type: subscription.type,
+                    }, {
+                        subscription_id: subscription.id,
+                    });
                 }
             }
         }
         await Promise.all(deletePromises);
+        this.log.debug(`deleted ${deletePromises.length} subscriptions`);
         const createPromises = [];
         // create all subscriptions
         for (const twitchChannel of twitchChannels) {
@@ -3962,6 +3972,7 @@ class TwitchClientManager {
             }
         }
         await Promise.all(createPromises);
+        this.log.debug(`registered ${createPromises.length} subscriptions`);
     }
     async deleteSubscription(subscription) {
         if (!this.helixClient) {
@@ -4022,9 +4033,6 @@ class TwitchClientManager {
     }
     getHelixClient() {
         return this.helixClient;
-    }
-    getIdentity() {
-        return this.identity;
     }
 }
 
@@ -7730,9 +7738,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-10-06T18:36:05.260Z",
+    buildDate: "2022-10-08T10:29:05.435Z",
     // @ts-ignore
-    buildVersion: "1.28.0",
+    buildVersion: "1.28.1",
 };
 
 const TABLE = 'robyottoko.chat_log';
@@ -7903,6 +7911,27 @@ class FrontendStatusUpdater {
     }
 }
 
+// @ts-ignore
+class TwitchTmiClientManager {
+    constructor() {
+        // pass
+    }
+    get(identity, channels) {
+        const client = new tmi.client({
+            identity: {
+                username: identity.username,
+                password: identity.password,
+                client_id: identity.client_id,
+            },
+            channels,
+            connection: {
+                reconnect: true,
+            }
+        });
+        return client;
+    }
+}
+
 setLogLevel(config.log.level);
 const log = logger('bot.ts');
 const modules = [
@@ -7930,6 +7959,7 @@ const createBot = async () => {
     const webSocketServer = new WebSocketServer();
     const webServer = new WebServer();
     const chatLog = new ChatLogRepo(db);
+    const twitchTmiClientManager = new TwitchTmiClientManager();
     class BotImpl {
         constructor() {
             this.userVariableInstances = {};
@@ -7966,6 +7996,7 @@ const createBot = async () => {
             }
             return this.frontendStatusUpdater;
         }
+        getTwitchTmiClientManager() { return twitchTmiClientManager; }
         // user specific
         // -----------------------------------------------------------------
         sayFn(user, target) {
