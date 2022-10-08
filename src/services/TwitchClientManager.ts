@@ -11,7 +11,7 @@ const log = logger('TwitchClientManager.ts')
 
 const isDevTunnel = (url: string) => url.match(/^https:\/\/[a-z0-9-]+\.(?:loca\.lt|ngrok\.io)\//)
 
-const shouldDeleteSubscription = (
+const isRelevantSubscription = (
   configuredTransport: EventSubTransport,
   subscription: any,
   twitchChannelIds: string[]
@@ -21,7 +21,13 @@ const shouldDeleteSubscription = (
       configuredTransport.callback === subscription.transport.callback
       || (isDevTunnel(configuredTransport.callback) && isDevTunnel(subscription.transport.callback))
     )
-    && twitchChannelIds.includes(subscription.condition.broadcaster_user_id)
+    && (
+      // normal subscription
+      (subscription.type !== 'channel.raid' && twitchChannelIds.includes(subscription.condition.broadcaster_user_id))
+
+      // raid subscription
+      || (subscription.type === 'channel.raid' && twitchChannelIds.includes(subscription.condition.to_broadcaster_user_id))
+    )
 }
 
 const determineIdentity = (user: User, cfg: TwitchConfig): TwitchBotIdentity => {
@@ -177,6 +183,7 @@ class TwitchClientManager {
     }
     const twitchChannelIds: string[] = twitchChannels.map(ch => `${ch.channel_id}`)
     const transport = this.bot.getConfig().twitch.eventSub.transport
+    this.log.debug(`registering subscriptions for ${twitchChannels.length} channels`)
 
     // TODO: maybe get all subscriptions from database to not
     //       do the one 'getSubscriptions' request. depending on how long that
@@ -200,16 +207,27 @@ class TwitchClientManager {
     const deletePromises: Promise<void>[] = []
     for (const subscription of allSubscriptions.data) {
       for (const twitchChannelId of twitchChannelIds) {
+        if (!isRelevantSubscription(transport, subscription, [twitchChannelId])) {
+          continue
+        }
+
         if (existsMap[subscription.type as SubscriptionType][twitchChannelId]) {
-          if (shouldDeleteSubscription(transport, subscription, [twitchChannelId])) {
-            deletePromises.push(this.deleteSubscription(subscription))
-          }
+          deletePromises.push(this.deleteSubscription(subscription))
         } else {
           existsMap[subscription.type as SubscriptionType][twitchChannelId] = true
+
+          await this.bot.getDb().upsert('robyottoko.event_sub', {
+            user_id: this.user.id,
+            subscription_id: subscription.id,
+            subscription_type: subscription.type,
+          }, {
+            subscription_id: subscription.id,
+          })
         }
       }
     }
     await Promise.all(deletePromises)
+    this.log.debug(`deleted ${deletePromises.length} subscriptions`)
 
     const createPromises: Promise<void>[] = []
     // create all subscriptions
@@ -221,6 +239,7 @@ class TwitchClientManager {
       }
     }
     await Promise.all(createPromises)
+    this.log.debug(`registered ${createPromises.length} subscriptions`)
   }
 
   async deleteSubscription(
