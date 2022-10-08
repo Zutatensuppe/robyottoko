@@ -6,7 +6,6 @@ rm build/* -rf
 
 # server build
 npx rollup -c rollup.server.config.js
-cp -r src/templates build/server/
 cp -r src/config_data build/server/
 
 # frontend build
