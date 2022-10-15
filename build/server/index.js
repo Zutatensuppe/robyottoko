@@ -3908,7 +3908,7 @@ class Users {
         return await this.get({ email });
     }
     async getByName(name) {
-        return await this.get({ name });
+        return await this.db._get(`SELECT * FROM ${TABLE$2} WHERE LOWER(name) = LOWER($1)`, [name]);
     }
     async save(user) {
         await this.db.upsert(TABLE$2, user, { id: user.id });
@@ -7479,9 +7479,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-10-15T16:05:30.778Z",
+    buildDate: "2022-10-15T16:40:35.723Z",
     // @ts-ignore
-    buildVersion: "1.29.0",
+    buildVersion: "1.29.1",
 };
 
 const TABLE = 'robyottoko.chat_log';
