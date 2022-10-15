@@ -244,8 +244,11 @@ const unicodeLength = (str) => {
     return [...str].length;
 };
 const dateformat = (format, date) => {
-    return format.replace(/(hh|mm|ss)/g, (m0, m1) => {
+    return format.replace(/(YYYY|MM|DD|hh|mm|ss)/g, (m0, m1) => {
         switch (m1) {
+            case 'YYYY': return pad(date.getFullYear(), '0000');
+            case 'MM': return pad(date.getMonth() + 1, '00');
+            case 'DD': return pad(date.getDate(), '00');
             case 'hh': return pad(date.getHours(), '00');
             case 'mm': return pad(date.getMinutes(), '00');
             case 'ss': return pad(date.getSeconds(), '00');
@@ -5389,6 +5392,7 @@ const default_custom_css_preset = (obj = null) => ({
     showProgressBar: getProp(obj, ['showProgressBar'], false),
     showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
     maxItemsShown: getProp(obj, ['maxItemsShown'], -1),
+    timestampFormat: typeof obj?.timestampFormat === 'undefined' ? '' : obj.timestampFormat,
 });
 const default_commands = (list = null) => {
     if (Array.isArray(list)) {
@@ -5447,6 +5451,7 @@ const default_settings$4 = (obj = null) => ({
     customCssPresets: getProp(obj, ['customCssPresets'], []).map(default_custom_css_preset),
     showProgressBar: getProp(obj, ['showProgressBar'], false),
     showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
+    timestampFormat: typeof obj?.timestampFormat === 'undefined' ? '' : obj.timestampFormat,
     maxItemsShown: getProp(obj, ['maxItemsShown'], -1),
 });
 
@@ -7479,9 +7484,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-10-15T16:40:35.723Z",
+    buildDate: "2022-10-15T17:39:52.039Z",
     // @ts-ignore
-    buildVersion: "1.29.1",
+    buildVersion: "1.30.0",
 };
 
 const TABLE = 'robyottoko.chat_log';
