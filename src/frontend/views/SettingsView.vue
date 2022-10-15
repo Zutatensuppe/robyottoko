@@ -41,6 +41,24 @@
               <td>Twitch Login:</td>
               <td>{{ user.twitch_login }}</td>
             </tr>
+            <tr>
+              <td>Bot enabled:</td>
+              <td>
+                <input
+                  v-model="user.bot_enabled"
+                  type="checkbox"
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>Bot status messages:</td>
+              <td>
+                <input
+                  v-model="user.bot_status_messages"
+                  type="checkbox"
+                >
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -96,129 +114,12 @@
           </tbody>
         </table>
       </div>
-
-      <div class="mb-4">
-        <h1 class="title mb-2">
-          Twitch Channels
-        </h1>
-        <p>
-          List of twitch channels where the bot will connect to.
-          <span v-if="twitch_channels.length === 0">
-            Currently no channels are configured.
-          </span>
-        </p>
-        <table
-          v-if="twitch_channels.length > 0"
-          class="table is-striped"
-        >
-          <thead>
-            <tr>
-              <td>Channel name</td>
-              <td>Chat status updates</td>
-              <td>Channel id*</td>
-              <td>Access Token*</td>
-              <td />
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(channel, idx) in twitch_channels"
-              :key="idx"
-            >
-              <td>
-                <StringInput v-model="channel.channel_name" />
-              </td>
-              <td>
-                <checkbox-input
-                  v-model="channel.bot_status_messages"
-                  class="is-small"
-                  :on-value="1"
-                  :off-value="0"
-                />
-              </td>
-              <td>
-                <StringInput
-                  v-if="channel.channel_id"
-                  v-model="channel.channel_id"
-                />
-                <button
-                  v-if="!channel.channel_id"
-                  class="button is-small"
-                  @click="loadid(idx)"
-                >
-                  Load id
-                </button>
-              </td>
-              <td>
-                <input
-                  v-model="channel.access_token"
-                  class="input is-small"
-                  type="password"
-                >
-              </td>
-              <td>
-                <button
-                  class="button is-small"
-                  @click="rmchannel(idx)"
-                >
-                  <i class="fa fa-remove" />
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <button
-          class="button is-small"
-          @click="addchannel()"
-        >
-          Add channel
-        </button>
-      </div>
-
-      <div
-        v-if="twitch_channels.length > 0"
-        class="content"
-      >
-        <p>
-          Channel Id* and Access Token*: You may not need the client id or
-          access token. They are required for channel point reward redemption
-          triggers only.
-        </p>
-        <p v-if="accessTokenLink">
-          To get an access token, do the following:
-        </p>
-        <ol
-          v-if="accessTokenLink"
-          class="list"
-        >
-          <li class="list-item">
-            Login to twitch as the channel owner
-          </li>
-          <li class="list-item">
-            Click <a
-              target="_blank"
-              @click="openAuth"
-            >here</a> to
-            authorize the bot with the channel
-          </li>
-          <li class="list-item">
-            If authorized, you get redirected back to hyottoko.club. If there
-            is a success message, the access token will have been set and
-            this page should automatically reload.
-          </li>
-        </ol>
-        <p v-else-if="isAdmin">
-          To configure an access token, please configure the "Bot client_id"
-          above.
-        </p>
-      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { TwitchChannel } from "../../services/TwitchChannels";
 import api from "../api";
 import conf from "../conf";
 import twitch from "../twitch";
@@ -238,8 +139,9 @@ interface ComponentData {
     tmi_identity_client_secret: string
     tmi_identity_password: string
     tmi_identity_username: string
+    bot_enabled: boolean
+    bot_status_messages: boolean
   };
-  twitch_channels: TwitchChannel[]
 }
 
 export default defineComponent({
@@ -258,8 +160,9 @@ export default defineComponent({
       tmi_identity_client_secret: "",
       tmi_identity_password: "",
       tmi_identity_username: "",
+      bot_enabled: false,
+      bot_status_messages: false,
     },
-    twitch_channels: [],
   }),
   computed: {
     isAdmin() {
@@ -282,12 +185,6 @@ export default defineComponent({
         this.setChanged();
       },
     },
-    twitch_channels: {
-      deep: true,
-      handler() {
-        this.setChanged();
-      },
-    },
   },
   async mounted() {
     const res = await api.getPageSettingsData();
@@ -297,7 +194,6 @@ export default defineComponent({
     }
     const data = await res.json();
     this.user = data.user;
-    this.twitch_channels = data.twitchChannels;
     this.setUnchanged();
   },
   methods: {
@@ -307,52 +203,17 @@ export default defineComponent({
     setChanged() {
       this.changedJson = JSON.stringify({
         user: this.user,
-        twitch_channels: this.twitch_channels,
       });
     },
     setUnchanged() {
       this.unchangedJson = JSON.stringify({
         user: this.user,
-        twitch_channels: this.twitch_channels,
       });
       this.changedJson = this.unchangedJson;
-    },
-    rmchannel(idx: number) {
-      this.twitch_channels = this.twitch_channels.filter((val, index) => index !== idx);
-    },
-    addchannel() {
-      this.twitch_channels.push({
-        user_id: this.user.id,
-        bot_status_messages: 1,
-        channel_id: "",
-        channel_name: "",
-        access_token: "",
-        is_streaming: false,
-      });
-    },
-    async loadid(idx: number) {
-      this.twitch_channels[idx].channel_id = await this.getTwitchUserIdByName(this.twitch_channels[idx].channel_name);
-    },
-    async getTwitchUserIdByName(name: string): Promise<string> {
-      const data = {
-        name,
-        client_id: this.user.tmi_identity_client_id || null,
-        client_secret: this.user.tmi_identity_client_secret || null,
-      };
-      const res = await api.twitchUserIdByName(data);
-      try {
-        const json = await res.json();
-        return `${json.id}`;
-      }
-      catch (e) {
-        // TODO: display error message
-        return "";
-      }
     },
     async sendSave() {
       await api.saveUserSettings({
         user: this.user,
-        twitch_channels: this.twitch_channels,
       });
       this.setUnchanged();
     },

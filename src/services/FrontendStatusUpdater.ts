@@ -41,29 +41,25 @@ export class FrontendStatusUpdater {
 
     const problems = []
     if (this.bot.getConfig().bot.supportTwitchAccessTokens) {
-      const twitchChannels = await this.bot.getTwitchChannels().allByUserId(user.id)
-      for (const twitchChannel of twitchChannels) {
-        const result = await refreshExpiredTwitchChannelAccessToken(
-          twitchChannel,
-          this.bot,
-          user,
-        )
-        if (result.error) {
-          log.error('Unable to validate or refresh OAuth token.')
-          log.error(`user: ${user.name}, channel: ${twitchChannel.channel_name}, error: ${result.error}`)
-          problems.push({
-            message: 'access_token_invalid',
-            details: {
-              channel_name: twitchChannel.channel_name,
-            },
-          })
-        } else if (result.refreshed) {
-          const changedUser = await this.bot.getUsers().getById(user.id)
-          if (changedUser) {
-            this.bot.getEventHub().emit('access_token_refreshed', changedUser)
-          } else {
-            log.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`)
-          }
+      const result = await refreshExpiredTwitchChannelAccessToken(
+        this.bot,
+        user,
+      )
+      if (result.error) {
+        log.error('Unable to validate or refresh OAuth token.')
+        log.error(`user: ${user.name}, channel: ${user.twitch_login}, error: ${result.error}`)
+        problems.push({
+          message: 'access_token_invalid',
+          details: {
+            channel_name: user.twitch_login,
+          },
+        })
+      } else if (result.refreshed) {
+        const changedUser = await this.bot.getUsers().getById(user.id)
+        if (changedUser) {
+          this.bot.getEventHub().emit('access_token_refreshed', changedUser)
+        } else {
+          log.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`)
         }
       }
     }

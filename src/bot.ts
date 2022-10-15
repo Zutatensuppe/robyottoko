@@ -8,7 +8,6 @@ import ModuleStorage from './mod/ModuleStorage'
 import { logger, setLogLevel } from './common/fn'
 import Users, { User } from './services/Users'
 import Tokens from './services/Tokens'
-import TwitchChannels from './services/TwitchChannels'
 import Cache from './services/Cache'
 import Db from './DbPostgres'
 import Variables from './services/Variables'
@@ -51,7 +50,7 @@ const createBot = async (): Promise<Bot> => {
 
   const userRepo = new Users(db)
   const tokenRepo = new Tokens(db)
-  const twitchChannelRepo = new TwitchChannels(db)
+
   const cache = new Cache(db)
   const auth = new Auth(userRepo, tokenRepo)
   const widgets = new Widgets(db, tokenRepo)
@@ -76,7 +75,6 @@ const createBot = async (): Promise<Bot> => {
     getConfig() { return config }
     getUsers() { return userRepo }
     getTokens() { return tokenRepo }
-    getTwitchChannels() { return twitchChannelRepo }
     getCache() { return cache }
     getAuth() { return auth }
     getWebServer() { return webServer }

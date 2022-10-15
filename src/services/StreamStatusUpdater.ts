@@ -26,23 +26,14 @@ export class StreamStatusUpdater {
 
   async _doUpdateForUser (user: User) {
     const client = this.bot.getUserTwitchClientManager(user).getHelixClient()
-    if (!client) {
+    if (!client || !user.twitch_id) {
       return
     }
-
-    const twitchChannels = await this.bot.getTwitchChannels().allByUserId(user.id)
-    for (const twitchChannel of twitchChannels) {
-      if (!twitchChannel.channel_id) {
-        const channelId = await client.getUserIdByNameCached(twitchChannel.channel_name, this.bot.getCache())
-        if (!channelId) {
-          continue
-        }
-        twitchChannel.channel_id = channelId
-      }
-      const stream = await client.getStreamByUserId(twitchChannel.channel_id)
-      twitchChannel.is_streaming = !!stream
-      this.bot.getTwitchChannels().save(twitchChannel)
-    }
+    const stream = await client.getStreamByUserId(user.twitch_id)
+    this.bot.getUsers().save({
+      id: user.id,
+      is_streaming: !!stream,
+    })
   }
 
   async _doUpdate (): Promise<void> {

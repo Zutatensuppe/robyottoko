@@ -12,6 +12,9 @@ export interface User {
   tmi_identity_password: string
   tmi_identity_client_id: string
   tmi_identity_client_secret: string
+  bot_enabled: boolean
+  bot_status_messages: boolean
+  is_streaming: boolean
 }
 
 export interface UpdateUser {
@@ -24,6 +27,9 @@ export interface UpdateUser {
   tmi_identity_password?: string
   tmi_identity_client_id?: string
   tmi_identity_client_secret?: string
+  bot_enabled?: boolean
+  bot_status_messages?: boolean
+  is_streaming?: boolean
 }
 
 export interface CreateUser {
@@ -35,6 +41,9 @@ export interface CreateUser {
   tmi_identity_password: string
   tmi_identity_client_id: string
   tmi_identity_client_secret: string
+  bot_enabled: boolean
+  bot_status_messages: boolean
+  is_streaming: boolean
 }
 
 class Users {
@@ -83,6 +92,11 @@ where x.user_id = $1`, [id])
 
   async countUsers(): Promise<number> {
     const rows = await this.db.getMany(TABLE)
+    return rows.length
+  }
+
+  async countUniqueUsersStreaming(): Promise<number> {
+    const rows = await this.db.getMany(TABLE, { is_streaming: true })
     return rows.length
   }
 }

@@ -40,7 +40,7 @@ const setChannelGameId = (
     return
   }
 
-  const accessToken = await getMatchingAccessToken(channelId, bot, user)
+  const accessToken = await getMatchingAccessToken(bot, user)
   if (!accessToken) {
     say(`❌ Not authorized to update category.`)
     return

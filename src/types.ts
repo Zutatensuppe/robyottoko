@@ -16,7 +16,6 @@ import { ChatLogRepo } from './services/ChatLogRepo'
 import { FrontendStatusUpdater } from './services/FrontendStatusUpdater'
 import { StreamStatusUpdater } from './services/StreamStatusUpdater'
 import Tokens from './services/Tokens'
-import TwitchChannels from './services/TwitchChannels'
 import Users, { User } from './services/Users'
 import Variables from './services/Variables'
 import Widgets from './services/Widgets'
@@ -527,7 +526,6 @@ export interface Bot {
   getConfig: () => Config
   getUsers: () => Users
   getTokens: () => Tokens
-  getTwitchChannels: () => TwitchChannels
   getCache: () => Cache
   getAuth: () => Auth
   getWebServer: () => WebServer

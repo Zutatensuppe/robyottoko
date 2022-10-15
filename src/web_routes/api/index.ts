@@ -3,7 +3,6 @@
 import express, { NextFunction, Response, Router } from 'express'
 import multer from 'multer'
 import { logger, nonce } from '../../common/fn'
-import { TwitchChannel } from '../../services/TwitchChannels'
 import TwitchHelixClient from '../../services/TwitchHelixClient'
 import { UpdateUser, User } from '../../services/Users'
 import Variables from '../../services/Variables'
@@ -107,7 +106,7 @@ export const createRouter = (
   router.get('/data/global', async (req: any, res: Response) => {
     res.send({
       registeredUserCount: await bot.getUsers().countUsers(),
-      streamingUserCount: await bot.getTwitchChannels().countUniqueUsersStreaming(),
+      streamingUserCount: await bot.getUsers().countUniqueUsersStreaming(),
     })
   })
 
@@ -124,9 +123,10 @@ export const createRouter = (
         tmi_identity_password: user.tmi_identity_password,
         tmi_identity_client_id: user.tmi_identity_client_id,
         tmi_identity_client_secret: user.tmi_identity_client_secret,
+        bot_enabled: user.bot_enabled,
+        bot_status_messages: user.bot_status_messages,
         groups: await bot.getUsers().getGroups(user.id)
       },
-      twitchChannels: await bot.getTwitchChannels().allByUserId(req.user.id),
     })
   })
 
@@ -183,6 +183,8 @@ export const createRouter = (
 
     const user: UpdateUser = {
       id: req.body.user.id,
+      bot_enabled: req.body.user.bot_enabled,
+      bot_status_messages: req.body.user.bot_status_messages,
     }
     if (req.user.groups.includes('admin')) {
       user.tmi_identity_client_id = req.body.user.tmi_identity_client_id
@@ -191,13 +193,7 @@ export const createRouter = (
       user.tmi_identity_password = req.body.user.tmi_identity_password
     }
 
-    const twitch_channels = req.body.twitch_channels.map((channel: TwitchChannel) => {
-      channel.user_id = user.id
-      return channel
-    })
-
     await bot.getUsers().save(user)
-    await bot.getTwitchChannels().saveUserChannels(user.id, twitch_channels)
 
     const changedUser = await bot.getUsers().getById(user.id)
     if (changedUser) {
@@ -231,7 +227,6 @@ export const createRouter = (
     }
 
     try {
-      // todo: maybe fill twitchChannels instead of empty array
       const client = new TwitchHelixClient(clientId, clientSecret)
       res.send({ id: await client.getUserIdByNameCached(req.body.name, bot.getCache()) })
     } catch (e) {

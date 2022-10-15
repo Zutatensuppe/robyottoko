@@ -56,7 +56,7 @@ const addStreamTags = (
     return
   }
 
-  const accessToken = await getMatchingAccessToken(channelId, bot, user)
+  const accessToken = await getMatchingAccessToken(bot, user)
   if (!accessToken) {
     say(`❌ Not authorized to add tag: ${tagEntry.name}`)
     return
