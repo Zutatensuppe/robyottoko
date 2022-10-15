@@ -71,7 +71,10 @@ class Users {
   }
 
   async getByName(name: string): Promise<User | null> {
-    return await this.get({ name })
+    return await this.db._get(
+      `SELECT * FROM ${TABLE} WHERE LOWER(name) = LOWER($1)`,
+      [name]
+    )
   }
 
   async save(user: UpdateUser): Promise<void> {
