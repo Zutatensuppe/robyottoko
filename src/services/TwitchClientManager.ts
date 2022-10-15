@@ -85,7 +85,6 @@ class TwitchClientManager {
     timer.split()
     this.log.debug(`disconnecting chat client took ${timer.lastSplitMs()}ms`)
 
-    console.log(user)
     if (!user.twitch_id || !user.twitch_login || !user.bot_enabled) {
       this.log.info(`* twitch bot not enabled`)
       return
