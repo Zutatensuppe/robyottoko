@@ -171,7 +171,6 @@ export const handleOAuthCodeCallback = async (
   if (!user) {
     user = await bot.getUsers().getByName(userResp.login)
     if (user) {
-      console.log(user)
       user.twitch_id = userResp.id
       user.twitch_login = userResp.login
       await bot.getUsers().save(user)

@@ -30,8 +30,10 @@ export class StreamStatusUpdater {
       return
     }
     const stream = await client.getStreamByUserId(user.twitch_id)
-    user.is_streaming = !!stream
-    this.bot.getUsers().save(user)
+    this.bot.getUsers().save({
+      id: user.id,
+      is_streaming: !!stream,
+    })
   }
 
   async _doUpdate (): Promise<void> {
