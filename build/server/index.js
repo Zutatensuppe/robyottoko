@@ -1930,7 +1930,11 @@ const handleOAuthCodeCallback = async (code, redirectUri, bot, loggedInUser) => 
     if (loggedInUser && !loggedInUser.twitch_id) {
         loggedInUser.twitch_id = userResp.id;
         loggedInUser.twitch_login = userResp.login;
-        await bot.getUsers().save(loggedInUser);
+        await bot.getUsers().save({
+            id: loggedInUser.id,
+            twitch_id: loggedInUser.twitch_id,
+            twitch_login: loggedInUser.twitch_login,
+        });
     }
     let user = await bot.getUsers().getByTwitchId(userResp.id);
     if (!user) {
@@ -7476,7 +7480,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-10-15T15:49:20.700Z",
+    buildDate: "2022-10-15T15:57:40.490Z",
     // @ts-ignore
     buildVersion: "1.29.0",
 };
