@@ -1937,13 +1937,16 @@ const handleOAuthCodeCallback = async (code, redirectUri, bot, loggedInUser) => 
     if (loggedInUser && !loggedInUser.twitch_id) {
         loggedInUser.twitch_id = userResp.id;
         loggedInUser.twitch_login = userResp.login;
-        await bot.getUsers().save(loggedInUser);
+        await bot.getUsers().save({
+            id: loggedInUser.id,
+            twitch_id: loggedInUser.twitch_id,
+            twitch_login: loggedInUser.twitch_login,
+        });
     }
     let user = await bot.getUsers().getByTwitchId(userResp.id);
     if (!user) {
         user = await bot.getUsers().getByName(userResp.login);
         if (user) {
-            console.log(user);
             user.twitch_id = userResp.id;
             user.twitch_login = userResp.login;
             await bot.getUsers().save(user);
@@ -7524,9 +7527,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-10-08T14:12:27.384Z",
+    buildDate: "2022-10-15T15:06:31.686Z",
     // @ts-ignore
-    buildVersion: "1.28.3",
+    buildVersion: "1.28.4",
 };
 
 const TABLE = 'robyottoko.chat_log';
