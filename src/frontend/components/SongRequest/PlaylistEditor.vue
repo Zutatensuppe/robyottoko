@@ -46,6 +46,7 @@
             <th />
             <th>Title</th>
             <th>User</th>
+            <th>Date</th>
             <th>Plays</th>
             <th />
             <th />
@@ -126,7 +127,12 @@
                   </div>
                 </div>
               </td>
-              <td>{{ element.user }}</td>
+              <td>
+                {{ element.user }}
+              </td>
+              <td>
+                {{ formatTimestamp(element.timestamp) }}
+              </td>
               <td>
                 {{ element.plays }}x
                 <button
@@ -219,6 +225,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
+import { dateformat } from "../../../common/fn";
 import { DragEndEvent, PlaylistItem } from "../../../types";
 
 interface EnhancedPlaylistItem extends PlaylistItem {
@@ -284,6 +291,9 @@ export default defineComponent({
     },
   },
   methods: {
+    formatTimestamp(ms: number) {
+      return dateformat('YYYY-MM-DD hh:mm:ss', new Date(ms));
+    },
     toggleVisibility(item: PlaylistItem, idx: number) {
       const visible = !!item.hidevideo;
       this.sendCtrl("videoVisibility", [visible, idx]);
