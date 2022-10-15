@@ -34,6 +34,7 @@
         :class="idx === 0 ? 'playing' : 'not-playing'"
         :item="tmpItem"
         :show-thumbnails="settings.showThumbnails"
+        :timestamp-format="settings.timestampFormat"
       />
     </ol>
   </div>
@@ -303,6 +304,7 @@ export default defineComponent({
           }, 500);
         }
       }
+      console.log(settings)
       this.settings = settings;
       this.adjustVolume();
     },

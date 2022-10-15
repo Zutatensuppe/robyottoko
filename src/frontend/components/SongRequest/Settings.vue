@@ -162,6 +162,29 @@
           <td>Render video thumbnails in the widget.</td>
         </tr>
         <tr>
+          <td><code>settings.timestampFormat</code></td>
+          <td>
+            <StringInput
+              v-model="settings.timestampFormat"
+              @update:modelValue="sendSettings"
+            />
+          </td>
+          <td>
+            Define how to display the timestamp. <br>
+            Leave empty to not display the timestamp. <br>
+
+            Example: <code>YYYY-MM-DD hh:mm:ss</code> <br>
+
+            Reference: <br>
+            <code>YYYY</code> Year <br>
+            <code>MM</code> Month <br>
+            <code>DD</code> Day <br>
+            <code>hh</code> Hour <br>
+            <code>mm</code> Minute <br>
+            <code>ss</code> Second <br>
+          </td>
+        </tr>
+        <tr>
           <td><code>settings.maxItemsShown</code></td>
           <td>
             <input
@@ -255,6 +278,7 @@ import {
 } from "../../../mod/modules/SongrequestModuleCommon";
 import { MediaFile } from "../../../types";
 import CheckboxInput from "../CheckboxInput.vue";
+import StringInput from "../StringInput.vue";
 
 interface ComponentData {
   settings: SongrequestModuleSettings;
@@ -267,7 +291,7 @@ interface ComponentData {
 }
 
 export default defineComponent({
-    components: { CheckboxInput },
+    components: { CheckboxInput, StringInput },
     props: {
         modelValue: {
             type: Object as PropType<SongrequestModuleSettings>,
@@ -304,6 +328,7 @@ export default defineComponent({
                 { class: ".vote-down", desc: "Down vote element" },
                 { class: ".meta", desc: "Meta info about an item" },
                 { class: ".meta-user", desc: "User who requested the song" },
+                { class: ".meta-timestamp", desc: "Time at which the song was requested" },
                 { class: ".meta-plays", desc: "How many times the song was played" },
             ],
             codeExamples: [
@@ -444,6 +469,7 @@ body { font-family: 'Shadows into Light'; font-size: 30px; }`,
                 this.settings.showProgressBar = preset.showProgressBar;
                 this.settings.showThumbnails = preset.showThumbnails;
                 this.settings.maxItemsShown = preset.maxItemsShown;
+                this.settings.timestampFormat = preset.timestampFormat;
             }
             else {
                 console.warn(`preset not found: ${presetName}`);
@@ -464,6 +490,8 @@ body { font-family: 'Shadows into Light'; font-size: 30px; }`,
                     this.settings.showThumbnails;
                 this.settings.customCssPresets[idx].maxItemsShown =
                     this.settings.maxItemsShown;
+                this.settings.customCssPresets[idx].timestampFormat =
+                    this.settings.timestampFormat;
             }
             else {
                 this.settings.customCssPresets.push({
@@ -472,6 +500,7 @@ body { font-family: 'Shadows into Light'; font-size: 30px; }`,
                     showProgressBar: this.settings.showProgressBar,
                     showThumbnails: this.settings.showThumbnails,
                     maxItemsShown: this.settings.maxItemsShown,
+                    timestampFormat: this.settings.timestampFormat,
                 });
             }
             this.sendSettings();

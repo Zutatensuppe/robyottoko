@@ -117,6 +117,10 @@ body {
   content: ','
 }
 
+.meta-timestamp:after {
+  content: ','
+}
+
 .meta-right {
   text-align: right;
   grid-area: meta-right;

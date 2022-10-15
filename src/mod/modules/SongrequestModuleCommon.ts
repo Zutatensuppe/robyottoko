@@ -14,6 +14,7 @@ interface SongrequestModuleCustomCssPreset {
   css: string
   showProgressBar: boolean
   showThumbnails: string | false
+  timestampFormat: string
   maxItemsShown: number
 }
 
@@ -49,6 +50,7 @@ export interface SongrequestModuleSettings {
   customCssPresets: SongrequestModuleCustomCssPreset[]
   showProgressBar: boolean
   showThumbnails: string | false
+  timestampFormat: string
   maxItemsShown: number
 }
 
@@ -79,6 +81,7 @@ const default_custom_css_preset = (obj: any = null): SongrequestModuleCustomCssP
   showProgressBar: getProp(obj, ['showProgressBar'], false),
   showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
   maxItemsShown: getProp(obj, ['maxItemsShown'], -1),
+  timestampFormat: typeof obj?.timestampFormat === 'undefined' ? '' : obj.timestampFormat,
 })
 
 export const default_commands = (list: any = null) => {
@@ -141,5 +144,6 @@ export const default_settings = (obj: any = null): SongrequestModuleSettings => 
   customCssPresets: getProp(obj, ['customCssPresets'], []).map(default_custom_css_preset),
   showProgressBar: getProp(obj, ['showProgressBar'], false),
   showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
+  timestampFormat: typeof obj?.timestampFormat === 'undefined' ? '' : obj.timestampFormat,
   maxItemsShown: getProp(obj, ['maxItemsShown'], -1),
 })

@@ -58,12 +58,15 @@ export const unicodeLength = (str: string): number => {
   return [...str].length
 }
 
-const dateformat = (
+export const dateformat = (
   format: string,
   date: Date,
 ): string => {
-  return format.replace(/(hh|mm|ss)/g, (m0: string, m1: string) => {
+  return format.replace(/(YYYY|MM|DD|hh|mm|ss)/g, (m0: string, m1: string) => {
     switch (m1) {
+      case 'YYYY': return pad(date.getFullYear(), '0000')
+      case 'MM': return pad(date.getMonth() + 1, '00')
+      case 'DD': return pad(date.getDate(), '00')
       case 'hh': return pad(date.getHours(), '00')
       case 'mm': return pad(date.getMinutes(), '00')
       case 'ss': return pad(date.getSeconds(), '00')
