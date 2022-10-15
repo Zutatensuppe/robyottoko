@@ -2,11 +2,10 @@ import { RequestInit, Response } from 'node-fetch'
 import { getRandom, logger, SECOND } from '../common/fn'
 import { findIdxFuzzy } from '../fn'
 import xhr, { asJson, withHeaders, asQueryArgs } from '../net/xhr'
-import { tryRefreshAccessToken } from '../oauth'
+import { getMatchingAccessToken, tryRefreshAccessToken } from '../oauth'
 import { Bot } from '../types'
 import Cache from './Cache'
 import { SubscriptionType } from './twitch/EventSub'
-import { TwitchChannel } from './TwitchChannels'
 import { User } from './Users'
 
 const log = logger('TwitchHelixClient.ts')
@@ -652,24 +651,26 @@ class TwitchHelixClient {
   }
 
   async getAllChannelPointsCustomRewards(
-    twitchChannels: TwitchChannel[],
     bot: Bot,
     user: User,
   ): Promise<Record<string, string[]>> {
     const rewards: Record<string, string[]> = {}
-    for (const twitchChannel of twitchChannels) {
-      if (!twitchChannel.access_token || !twitchChannel.channel_id) {
-        continue;
-      }
-      const res = await this.getChannelPointsCustomRewards(
-        twitchChannel.access_token,
-        twitchChannel.channel_id,
-        bot,
-        user
-      )
-      if (res) {
-        rewards[twitchChannel.channel_name] = res.data.map(entry => entry.title);
-      }
+    if (!user.twitch_id || !user.twitch_login) {
+      return rewards
+    }
+    const accessToken = await getMatchingAccessToken(bot, user)
+    if (!accessToken) {
+      return rewards
+    }
+
+    const res = await this.getChannelPointsCustomRewards(
+      accessToken,
+      user.twitch_id,
+      bot,
+      user
+    )
+    if (res) {
+      rewards[user.twitch_login] = res.data.map(entry => entry.title);
     }
     return rewards
   }

@@ -67,7 +67,7 @@ function asQueryArgs(data: QueryArgsData) {
 export default {
   saveVariables: async (data: { variables: any }) => postJson("/api/save-variables", data),
   twitchUserIdByName: async (data: { name: string, client_id: string | null, client_secret: string | null }) => postJson("/api/twitch/user-id-by-name", data),
-  saveUserSettings: async (data: { user: any, twitch_channels: any[] }) => postJson("/api/save-settings", data),
+  saveUserSettings: async (data: { user: any }) => postJson("/api/save-settings", data),
   getPageVariablesData: async () => get("/api/page/variables"),
   getPageIndexData: async () => get("/api/page/index"),
   getPageSettingsData: async () => get("/api/page/settings"),

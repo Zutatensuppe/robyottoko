@@ -1,6 +1,5 @@
 import TwitchHelixClient from './TwitchHelixClient'
 import { logger, Logger } from '../common/fn'
-import { TwitchChannel } from './TwitchChannels'
 import { User } from './Users'
 import { Bot, EventSubTransport, TwitchBotIdentity, TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
 import { ALL_SUBSCRIPTIONS_TYPES, SubscriptionType } from './twitch/EventSub'
@@ -86,22 +85,22 @@ class TwitchClientManager {
     timer.split()
     this.log.debug(`disconnecting chat client took ${timer.lastSplitMs()}ms`)
 
-    const twitchChannels = await this.bot.getTwitchChannels().allByUserId(user.id)
-    if (twitchChannels.length === 0) {
-      this.log.info(`* No twitch channels configured at all`)
+    console.log(user)
+    if (!user.twitch_id || !user.twitch_login || !user.bot_enabled) {
+      this.log.info(`* twitch bot not enabled`)
       return
     }
 
     const identity = determineIdentity(user, cfg)
 
     // connect to chat via tmi (to all channels configured)
-    this.chatClient = this.bot.getTwitchTmiClientManager().get(identity, twitchChannels.map(ch => ch.channel_name))
+    this.chatClient = this.bot.getTwitchTmiClientManager().get(identity, [user.twitch_login])
 
-    const reportStatusToChannel = (channel: TwitchChannel, reason: string) => {
-      if (!channel.bot_status_messages) {
+    const reportStatusToChannel = (user: User, reason: string) => {
+      if (!user.bot_status_messages) {
         return
       }
-      const say = this.bot.sayFn(user, channel.channel_name)
+      const say = this.bot.sayFn(user, user.twitch_login)
       if (reason === 'init') {
         say('⚠️ Bot rebooted - please restart timers...')
       } else if (reason === 'access_token_refreshed') {
@@ -110,14 +109,6 @@ class TwitchClientManager {
         say('✅ User settings updated...')
       } else {
         say('✅ Reconnected...')
-      }
-    }
-
-    const reportStatusToChannels = (channels: TwitchChannel[], reason: string) => {
-      for (const channel of channels) {
-        // note: this can lead to multiple messages if multiple users
-        //       have the same channels set up
-        reportStatusToChannel(channel, reason)
       }
     }
 
@@ -139,7 +130,7 @@ class TwitchClientManager {
 
         // if status reporting is disabled, dont print messages
         if (this.bot.getConfig().bot.reportStatus) {
-          reportStatusToChannels(twitchChannels, connectReason)
+          reportStatusToChannel(this.user, connectReason)
         }
 
         // set connectReason to empty, everything from now is just a reconnect
@@ -169,21 +160,25 @@ class TwitchClientManager {
     if (this.bot.getConfig().twitch.eventSub.enabled) {
       // do NOT await
       // awaiting the connect will add ~2sec per user on server startup
-      this.registerSubscriptions(twitchChannels)
+      this.registerSubscriptions(this.user)
     }
 
     timer.split()
     this.log.debug(`registering subscriptions took ${timer.lastSplitMs()}ms`)
   }
 
-  async registerSubscriptions(twitchChannels: TwitchChannel[]) {
+  async registerSubscriptions(user: User) {
     if (!this.helixClient) {
       this.log.error('registerSubscriptions: helixClient not initialized')
       return
     }
-    const twitchChannelIds: string[] = twitchChannels.map(ch => `${ch.channel_id}`)
+    if (!user.twitch_login || !user.twitch_id) {
+      this.log.error('registerSubscriptions: user twitch information not set')
+      return
+    }
+    const twitchChannelId = user.twitch_id
     const transport = this.bot.getConfig().twitch.eventSub.transport
-    this.log.debug(`registering subscriptions for ${twitchChannels.length} channels`)
+    this.log.debug(`registering subscriptions for ${user.twitch_login} channels`)
 
     // TODO: maybe get all subscriptions from database to not
     //       do the one 'getSubscriptions' request. depending on how long that
@@ -198,19 +193,29 @@ class TwitchClientManager {
 
     for (const subscriptionType of ALL_SUBSCRIPTIONS_TYPES) {
       existsMap[subscriptionType] = {}
-      for (const twitchChannelId of twitchChannelIds) {
-        existsMap[subscriptionType][twitchChannelId] = false
-      }
+      existsMap[subscriptionType][twitchChannelId] = false
     }
 
-    // delete all subscriptions (but keep at least one of each type)
     const deletePromises: Promise<void>[] = []
-    for (const subscription of allSubscriptions.data) {
-      for (const twitchChannelId of twitchChannelIds) {
+    if (isDevTunnel(transport.callback)) {
+      for (const subscription of allSubscriptions.data) {
         if (!isRelevantSubscription(transport, subscription, [twitchChannelId])) {
           continue
         }
 
+        // on dev, we still want to delete all subscriptions because
+        // new ngrok urls will be created
+        deletePromises.push(this.deleteSubscription(subscription))
+      }
+    } else {
+      // delete all subscriptions (but keep at least one of each type)
+      const deletePromises: Promise<void>[] = []
+      for (const subscription of allSubscriptions.data) {
+        if (!isRelevantSubscription(transport, subscription, [twitchChannelId])) {
+          continue
+        }
+
+        // not dev
         if (existsMap[subscription.type as SubscriptionType][twitchChannelId]) {
           deletePromises.push(this.deleteSubscription(subscription))
         } else {
@@ -231,11 +236,9 @@ class TwitchClientManager {
 
     const createPromises: Promise<void>[] = []
     // create all subscriptions
-    for (const twitchChannel of twitchChannels) {
-      for (const subscriptionType of ALL_SUBSCRIPTIONS_TYPES) {
-        if (!existsMap[subscriptionType][twitchChannel.channel_id]) {
-          createPromises.push(this.registerSubscription(subscriptionType, twitchChannel))
-        }
+    for (const subscriptionType of ALL_SUBSCRIPTIONS_TYPES) {
+      if (!existsMap[subscriptionType][user.twitch_id]) {
+        createPromises.push(this.registerSubscription(subscriptionType, user))
       }
     }
     await Promise.all(createPromises)
@@ -258,18 +261,18 @@ class TwitchClientManager {
 
   async registerSubscription(
     subscriptionType: SubscriptionType,
-    twitchChannel: TwitchChannel,
+    user: User,
   ): Promise<void> {
     if (!this.helixClient) {
       return
     }
-    if (!twitchChannel.channel_id) {
+    if (!user.twitch_id) {
       return
     }
 
     const condition = subscriptionType === SubscriptionType.ChannelRaid
-      ? { to_broadcaster_user_id: `${twitchChannel.channel_id}` }
-      : { broadcaster_user_id: `${twitchChannel.channel_id}` }
+      ? { to_broadcaster_user_id: `${user.twitch_id}` }
+      : { broadcaster_user_id: `${user.twitch_id}` }
     const subscription = {
       type: subscriptionType,
       version: '1',

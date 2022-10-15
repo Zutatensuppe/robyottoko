@@ -674,12 +674,7 @@ export const getChannelPointsCustomRewards = async (
   if (!helixClient) {
     return {}
   }
-  const twitchChannels = await bot.getTwitchChannels().allByUserId(user.id)
-  if (!twitchChannels) {
-    return {}
-  }
   return await helixClient.getAllChannelPointsCustomRewards(
-    twitchChannels,
     bot,
     user
   )
