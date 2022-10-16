@@ -23,7 +23,7 @@ class Cache {
   async get(key: string): Promise<CacheValue | undefined> {
     // get *non-expired* cache entry from db
     const row = await this.db._get(
-      'SELECT * from robyottoko.cache WHERE key = $1 AND (expires_at IS NULL OR expires_at > $2)',
+      'SELECT * from ' + TABLE + ' WHERE key = $1 AND (expires_at IS NULL OR expires_at > $2)',
       [key, new Date()]
     )
     return row ? JSON.parse(row.value) : undefined

@@ -2,12 +2,12 @@ import config from './config'
 import Auth from './net/Auth'
 import ModuleManager from './mod/ModuleManager'
 import WebSocketServer from './net/WebSocketServer'
-import WebServer from './WebServer'
+import WebServer from './net/WebServer'
 import TwitchClientManager from './services/TwitchClientManager'
 import ModuleStorage from './mod/ModuleStorage'
 import { logger, setLogLevel } from './common/fn'
-import Users, { User } from './services/Users'
-import Tokens from './services/Tokens'
+import Users, { User } from './repo/Users'
+import Tokens from './repo/Tokens'
 import Cache from './services/Cache'
 import Db from './DbPostgres'
 import Variables from './services/Variables'
@@ -23,12 +23,16 @@ import buildEnv from './buildEnv'
 import Widgets from './services/Widgets'
 
 import { Bot } from './types'
-import { ChatLogRepo } from './services/ChatLogRepo'
+import { ChatLogRepo } from './repo/ChatLogRepo'
 import fn from './fn'
 import { Timer } from './Timer'
 import { StreamStatusUpdater } from './services/StreamStatusUpdater'
 import { FrontendStatusUpdater } from './services/FrontendStatusUpdater'
 import { TwitchTmiClientManager } from './services/TwitchTmiClientManager'
+import { EventSubRepo } from './repo/EventSubRepo'
+import { PubRepo } from './repo/PubRepo'
+import { StreamsRepo } from './repo/StreamsRepo'
+import { OauthTokenRepo } from './repo/OauthTokenRepo'
 
 setLogLevel(config.log.level)
 const log = logger('bot.ts')
@@ -50,15 +54,19 @@ const createBot = async (): Promise<Bot> => {
 
   const userRepo = new Users(db)
   const tokenRepo = new Tokens(db)
+  const pubRepo = new PubRepo(db)
+  const streamsRepo = new StreamsRepo(db)
+  const oauthTokenRepo = new OauthTokenRepo(db)
 
   const cache = new Cache(db)
   const auth = new Auth(userRepo, tokenRepo)
-  const widgets = new Widgets(db, tokenRepo)
+  const widgets = new Widgets(pubRepo, tokenRepo)
   const eventHub = mitt()
   const moduleManager = new ModuleManager()
   const webSocketServer = new WebSocketServer()
   const webServer = new WebServer()
   const chatLog = new ChatLogRepo(db)
+  const eventSubRepo = new EventSubRepo(db)
   const twitchTmiClientManager = new TwitchTmiClientManager()
 
   class BotImpl implements Bot {
@@ -82,6 +90,10 @@ const createBot = async (): Promise<Bot> => {
     getWidgets() { return widgets }
     getEventHub() { return eventHub }
     getChatLog() { return chatLog }
+    getPubRepo() { return pubRepo }
+    getEventSubRepo() { return eventSubRepo }
+    getStreamsRepo() { return streamsRepo }
+    getOauthTokenRepo() { return oauthTokenRepo }
     getStreamStatusUpdater(): StreamStatusUpdater {
       if (!this.streamStatusUpdater) {
         this.streamStatusUpdater = new StreamStatusUpdater(this)

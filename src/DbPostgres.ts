@@ -203,11 +203,11 @@ class Db {
     }
   }
 
-  async get(
+  async get<T>(
     table: string,
     whereRaw: WhereRaw = {},
     orderBy: OrderBy = []
-  ): Promise<any> {
+  ): Promise<T> {
     const where = this._buildWhere(whereRaw)
     const orderBySql = this._buildOrderBy(orderBy)
     const sql = 'SELECT * FROM ' + table + where.sql + orderBySql
@@ -235,11 +235,11 @@ class Db {
     return !!await this.get(table, whereRaw)
   }
 
-  async upsert(
+  async upsert<T extends Data>(
     table: string,
-    data: Data,
+    data: T,
     check: WhereRaw,
-    idcol: string | null = null
+    idcol: string | null = null,
   ): Promise<any> {
     return mutex.runExclusive(async () => {
       if (!await this.exists(table, check)) {
@@ -249,11 +249,15 @@ class Db {
       if (idcol === null) {
         return 0 // dont care about id
       }
-      return (await this.get(table, check))[idcol] // get id manually
+      return (await this.get<any>(table, check))[idcol] // get id manually
     })
   }
 
-  async insert(table: string, data: Data, idcol: string | null = null): Promise<number | bigint> {
+  async insert<T extends Data>(
+    table: string,
+    data: T,
+    idcol: string | null = null,
+  ): Promise<number | bigint> {
     const keys = Object.keys(data)
     const values = keys.map(k => data[k])
 

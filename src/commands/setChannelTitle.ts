@@ -1,8 +1,7 @@
 import { Bot, CommandExecutionContext, CommandFunction, SetChannelTitleCommand } from '../types'
 import fn from './../fn'
 import { logger, unicodeLength } from './../common/fn'
-import { User } from '../services/Users'
-import { getMatchingAccessToken } from '../oauth'
+import { User } from '../repo/Users'
 
 const log = logger('setChannelTitle.ts')
 
@@ -43,7 +42,7 @@ const setChannelTitle = (
     return
   }
 
-  const accessToken = await getMatchingAccessToken(bot, user)
+  const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user)
   if (!accessToken) {
     say(`❌ Not authorized to change title.`)
     return

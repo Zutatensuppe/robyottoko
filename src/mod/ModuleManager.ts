@@ -1,4 +1,4 @@
-import { User } from "../services/Users"
+import { User } from "../repo/Users"
 import { Module } from "../types"
 
 class ModuleManager {

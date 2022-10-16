@@ -4,25 +4,17 @@ import express, { NextFunction, Response, Router } from 'express'
 import multer from 'multer'
 import { logger, nonce } from '../../common/fn'
 import TwitchHelixClient from '../../services/TwitchHelixClient'
-import { UpdateUser, User } from '../../services/Users'
-import Variables from '../../services/Variables'
+import { UpdateUser, User } from '../../repo/Users'
 import { Bot, UploadedFile } from '../../types'
 import { createRouter as createApiPubV1Router } from './pub/v1'
 import { createRouter as createUserRouter } from './user'
+import { RequireLoginApiMiddleware } from '../../net/middleware/RequireLoginApiMiddleware'
 
 const log = logger('api/index.ts')
 
 export const createRouter = (
   bot: Bot,
 ): Router => {
-
-  const requireLoginApi = (req: any, res: any, next: NextFunction) => {
-    if (!req.token) {
-      res.status(401).send({})
-      return
-    }
-    return next()
-  }
 
   const uploadDir = './data/uploads'
   const storage = multer.diskStorage({
@@ -34,7 +26,7 @@ export const createRouter = (
   const upload = multer({ storage }).single('file');
 
   const router = express.Router()
-  router.post('/upload', requireLoginApi, (req, res: Response) => {
+  router.post('/upload', RequireLoginApiMiddleware, (req, res: Response) => {
     upload(req, res, (err) => {
       if (err) {
         log.error({ err })
@@ -70,7 +62,7 @@ export const createRouter = (
     })
   })
 
-  router.post('/logout', requireLoginApi, async (req: any, res: Response) => {
+  router.post('/logout', RequireLoginApiMiddleware, async (req: any, res: Response) => {
     if (req.token) {
       await bot.getAuth().destroyToken(req.token)
       res.clearCookie("x-token")
@@ -78,7 +70,7 @@ export const createRouter = (
     res.send({ success: true })
   })
 
-  router.post('/widget/create_url', requireLoginApi, express.json(), async (req: any, res: Response) => {
+  router.post('/widget/create_url', RequireLoginApiMiddleware, express.json(), async (req: any, res: Response) => {
     const type = req.body.type
     const pub = req.body.pub
     const url = await bot.getWidgets().createWidgetUrl(type, req.user.id)
@@ -87,18 +79,18 @@ export const createRouter = (
     })
   })
 
-  router.get('/page/index', requireLoginApi, async (req: any, res: Response) => {
+  router.get('/page/index', RequireLoginApiMiddleware, async (req: any, res: Response) => {
     const mappedWidgets = await bot.getWidgets().getWidgetInfos(req.user.id)
     res.send({ widgets: mappedWidgets })
   })
 
-  router.get('/page/variables', requireLoginApi, async (req: any, res: Response) => {
-    const variables = new Variables(bot.getDb(), req.user.id)
+  router.get('/page/variables', RequireLoginApiMiddleware, async (req: any, res: Response) => {
+    const variables = bot.getUserVariables(req.user)
     res.send({ variables: await variables.all() })
   })
 
-  router.post('/save-variables', requireLoginApi, express.json(), async (req: any, res: Response) => {
-    const variables = new Variables(bot.getDb(), req.user.id)
+  router.post('/save-variables', RequireLoginApiMiddleware, express.json(), async (req: any, res: Response) => {
+    const variables = bot.getUserVariables(req.user)
     await variables.replace(req.body.variables || [])
     res.send()
   })
@@ -110,7 +102,7 @@ export const createRouter = (
     })
   })
 
-  router.get('/page/settings', requireLoginApi, async (req: any, res: Response) => {
+  router.get('/page/settings', RequireLoginApiMiddleware, async (req: any, res: Response) => {
     const user = await bot.getUsers().getById(req.user.id) as User
     res.send({
       user: {
@@ -131,9 +123,7 @@ export const createRouter = (
   })
 
   router.get('/pub/:id', async (req, res, _next) => {
-    const row = await bot.getDb().get('robyottoko.pub', {
-      id: req.params.id,
-    })
+    const row = await bot.getPubRepo().getById(req.params.id)
     if (row && row.target) {
       req.url = row.target
       // @ts-ignore
@@ -166,7 +156,7 @@ export const createRouter = (
     res.status(404).send()
   })
 
-  router.post('/save-settings', requireLoginApi, express.json(), async (req: any, res: Response) => {
+  router.post('/save-settings', RequireLoginApiMiddleware, express.json(), async (req: any, res: Response) => {
     if (!req.user.groups.includes('admin')) {
       if (req.user.id !== req.body.user.id) {
         // editing other user than self
@@ -206,7 +196,7 @@ export const createRouter = (
     res.send()
   })
 
-  router.post('/twitch/user-id-by-name', requireLoginApi, express.json(), async (req: any, res: Response) => {
+  router.post('/twitch/user-id-by-name', RequireLoginApiMiddleware, express.json(), async (req: any, res: Response) => {
     let clientId
     let clientSecret
     if (!req.user.groups.includes('admin')) {
@@ -234,7 +224,7 @@ export const createRouter = (
     }
   })
 
-  router.use('/user', createUserRouter(requireLoginApi))
+  router.use('/user', createUserRouter())
   router.use('/pub/v1', createApiPubV1Router(bot))
   return router
 }

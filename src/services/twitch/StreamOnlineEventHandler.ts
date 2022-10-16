@@ -11,8 +11,8 @@ export class StreamOnlineEventHandler {
     data: { subscription: any, event: any },
   ) {
     log.info('handle')
-    // insert new stream
-    await bot.getDb().insert('robyottoko.streams', {
+
+    await bot.getStreamsRepo().insert({
       broadcaster_user_id: data.event.broadcaster_user_id,
       started_at: new Date(data.event.started_at),
     })

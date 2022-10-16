@@ -1,4 +1,4 @@
-import { User } from "../services/Users"
+import { User } from "../repo/Users"
 import { Bot, CommandExecutionContext, CommandFunction, MediaCommand, MediaCommandData } from "../types"
 import fn from './../fn'
 import { hash, logger } from './../common/fn'

@@ -1,6 +1,6 @@
 import TwitchHelixClient from './TwitchHelixClient'
 import { logger, Logger } from '../common/fn'
-import { User } from './Users'
+import { User } from '../repo/Users'
 import { Bot, EventSubTransport, TwitchBotIdentity, TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
 import { ALL_SUBSCRIPTIONS_TYPES, SubscriptionType } from './twitch/EventSub'
 import { ChatEventHandler } from './twitch/ChatEventHandler'
@@ -85,69 +85,68 @@ class TwitchClientManager {
     timer.split()
     this.log.debug(`disconnecting chat client took ${timer.lastSplitMs()}ms`)
 
-    if (!user.twitch_id || !user.twitch_login || !user.bot_enabled) {
-      this.log.info(`* twitch bot not enabled`)
-      return
-    }
-
     const identity = determineIdentity(user, cfg)
 
-    // connect to chat via tmi (to all channels configured)
-    this.chatClient = this.bot.getTwitchTmiClientManager().get(identity, [user.twitch_login])
+    if (user.twitch_id && user.twitch_login && user.bot_enabled) {
+      this.log.info(`* twitch bot enabled`)
 
-    const reportStatusToChannel = (user: User, reason: string) => {
-      if (!user.bot_status_messages) {
-        return
-      }
-      const say = this.bot.sayFn(user, user.twitch_login)
-      if (reason === 'init') {
-        say('⚠️ Bot rebooted - please restart timers...')
-      } else if (reason === 'access_token_refreshed') {
-        // dont say anything
-      } else if (reason === 'user_change') {
-        say('✅ User settings updated...')
-      } else {
-        say('✅ Reconnected...')
-      }
-    }
+      // connect to chat via tmi (to all channels configured)
+      this.chatClient = this.bot.getTwitchTmiClientManager().get(identity, [user.twitch_login])
 
-    if (this.chatClient) {
-      this.chatClient.on('message', async (
-        target: string,
-        context: TwitchChatContext,
-        msg: string,
-        self: boolean,
-      ) => {
-        if (self) { return; } // Ignore messages from the bot
-
-        await (new ChatEventHandler()).handle(this.bot, this.user, target, context, msg)
-      })
-
-      // Called every time the bot connects to Twitch chat
-      this.chatClient.on('connected', async (addr: string, port: number) => {
-        this.log.info({ addr, port }, 'Connected')
-
-        // if status reporting is disabled, dont print messages
-        if (this.bot.getConfig().bot.reportStatus) {
-          reportStatusToChannel(this.user, connectReason)
+      const reportStatusToChannel = (user: User, reason: string) => {
+        if (!user.bot_status_messages) {
+          return
         }
+        const say = this.bot.sayFn(user, user.twitch_login)
+        if (reason === 'init') {
+          say('⚠️ Bot rebooted - please restart timers...')
+        } else if (reason === 'access_token_refreshed') {
+          // dont say anything
+        } else if (reason === 'user_change') {
+          say('✅ User settings updated...')
+        } else {
+          say('✅ Reconnected...')
+        }
+      }
 
-        // set connectReason to empty, everything from now is just a reconnect
-        // due to disconnect from twitch
-        connectReason = ''
-      })
+      if (this.chatClient) {
+        this.chatClient.on('message', async (
+          target: string,
+          context: TwitchChatContext,
+          msg: string,
+          self: boolean,
+        ) => {
+          if (self) { return; } // Ignore messages from the bot
 
-      // do NOT await
-      // awaiting the connect will add ~1sec per user on server startup
-      this.chatClient.connect().catch((e) => {
-        // this can happen when calling close before the connection
-        // could be established
-        this.log.error({ e }, 'error when connecting')
-      })
+          await (new ChatEventHandler()).handle(this.bot, this.user, target, context, msg)
+        })
+
+        // Called every time the bot connects to Twitch chat
+        this.chatClient.on('connected', async (addr: string, port: number) => {
+          this.log.info({ addr, port }, 'Connected')
+
+          // if status reporting is disabled, dont print messages
+          if (this.bot.getConfig().bot.reportStatus) {
+            reportStatusToChannel(this.user, connectReason)
+          }
+
+          // set connectReason to empty, everything from now is just a reconnect
+          // due to disconnect from twitch
+          connectReason = ''
+        })
+
+        // do NOT await
+        // awaiting the connect will add ~1sec per user on server startup
+        this.chatClient.connect().catch((e) => {
+          // this can happen when calling close before the connection
+          // could be established
+          this.log.error({ e }, 'error when connecting')
+        })
+      }
+
+      timer.split()
+      this.log.debug(`connecting chat client took ${timer.lastSplitMs()}ms`)
     }
-
-    timer.split()
-    this.log.debug(`connecting chat client took ${timer.lastSplitMs()}ms`)
 
     // register EventSub
     // @see https://dev.twitch.tv/docs/eventsub
@@ -220,12 +219,10 @@ class TwitchClientManager {
         } else {
           existsMap[subscription.type as SubscriptionType][twitchChannelId] = true
 
-          await this.bot.getDb().upsert('robyottoko.event_sub', {
+          await this.bot.getEventSubRepo().insert({
             user_id: this.user.id,
             subscription_id: subscription.id,
             subscription_type: subscription.type,
-          }, {
-            subscription_id: subscription.id,
           })
         }
       }
@@ -251,7 +248,7 @@ class TwitchClientManager {
       return
     }
     await this.helixClient.deleteSubscription(subscription.id)
-    await this.bot.getDb().delete('robyottoko.event_sub', {
+    await this.bot.getEventSubRepo().delete({
       user_id: this.user.id,
       subscription_id: subscription.id,
     })
@@ -280,7 +277,7 @@ class TwitchClientManager {
     }
     const resp = await this.helixClient.createSubscription(subscription)
     if (resp && resp.data && resp.data.length > 0) {
-      await this.bot.getDb().insert('robyottoko.event_sub', {
+      await this.bot.getEventSubRepo().insert({
         user_id: this.user.id,
         subscription_id: resp.data[0].id,
         subscription_type: subscriptionType,

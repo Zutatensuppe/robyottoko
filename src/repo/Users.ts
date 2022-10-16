@@ -1,4 +1,5 @@
-import Db, { WhereRaw } from "../DbPostgres"
+import { WhereRaw } from "../DbPostgres"
+import { Repo } from "./Repo"
 
 const TABLE = 'robyottoko.user'
 
@@ -46,10 +47,7 @@ export interface CreateUser {
   is_streaming: boolean
 }
 
-class Users {
-  constructor(private readonly db: Db) {
-  }
-
+class Users extends Repo {
   async get(by: WhereRaw): Promise<User | null> {
     return await this.db.get(TABLE, by) || null
   }

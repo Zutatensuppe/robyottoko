@@ -1,7 +1,7 @@
 import { nonce } from "../common/fn"
-import Db from "../DbPostgres"
 import { MODULE_NAME, WIDGET_TYPE } from "../types"
-import Tokens from "./Tokens"
+import Tokens from "../repo/Tokens"
+import { PubRepo } from "../repo/PubRepo"
 
 interface WidgetDefinition {
   type: WIDGET_TYPE
@@ -100,8 +100,9 @@ export const moduleByWidgetType = (widgetType: string): string | null => {
   return found ? found.module : null
 }
 
+
 class Widgets {
-  constructor(private readonly db: Db, private readonly tokenRepo: Tokens) {
+  constructor(private readonly pubRepo: PubRepo, private readonly tokenRepo: Tokens) {
   }
 
   _widgetUrl = (type: string, token: string): string => {
@@ -129,13 +130,13 @@ class Widgets {
   }
 
   async pubUrl(target: string): Promise<string> {
-    const row = await this.db.get('robyottoko.pub', { target })
+    const row = await this.pubRepo.getByTarget(target)
     let id
     if (!row) {
       do {
         id = nonce(6)
-      } while (await this.db.get('robyottoko.pub', { id }))
-      await this.db.insert('robyottoko.pub', { id, target })
+      } while (await this.pubRepo.getById(id))
+      await this.pubRepo.insert({ id, target })
     } else {
       id = row.id
     }

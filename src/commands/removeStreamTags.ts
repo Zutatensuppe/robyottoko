@@ -2,8 +2,7 @@ import { Bot, CommandExecutionContext, CommandFunction, RemoveStreamTagCommand }
 import fn, { findIdxFuzzy } from './../fn'
 import { logger } from './../common/fn'
 import config from '../config'
-import { User } from '../services/Users'
-import { getMatchingAccessToken } from '../oauth'
+import { User } from '../repo/Users'
 
 const log = logger('setStreamTags.ts')
 
@@ -50,7 +49,7 @@ const removeStreamTags = (
   const newTagIds = manualTags.filter((_value, index) => index !== idx).map(entry => entry.tag_id)
   const newSettableTagIds: string[] = newTagIds.filter(tagId => !config.twitch.auto_tags.find(t => t.id === tagId))
 
-  const accessToken = await getMatchingAccessToken(bot, user)
+  const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user)
   if (!accessToken) {
     say(`❌ Not authorized to remove tag: ${manualTags[idx].localization_names['en-us']}`)
     return

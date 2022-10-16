@@ -1,27 +1,13 @@
 import { logger } from "./common/fn";
 import TwitchHelixClient from "./services/TwitchHelixClient";
-import { User } from "./services/Users";
+import { User } from "./repo/Users";
 import { Bot } from "./types";
 
 const log = logger('oauth.ts')
 
-const TABLE = 'robyottoko.oauth_token'
-
 interface TokenRefreshResult {
   error: false | string
   refreshed: boolean
-}
-
-export const getMatchingAccessToken = async (
-  bot: Bot,
-  user: User,
-): Promise<string | null> => {
-  const row = await bot.getDb().get(TABLE, {
-    user_id: user.id,
-    channel_id: user.twitch_id,
-    expires_at: { '$gt': new Date() },
-  })
-  return row ? row.access_token : null
 }
 
 /**
@@ -43,9 +29,7 @@ export const tryRefreshAccessToken = async (
   }
 
   // try to refresh the token, if possible
-  const row = await bot.getDb().get(TABLE, {
-    access_token: accessToken,
-  })
+  const row = await bot.getOauthTokenRepo().getByAccessToken(accessToken)
   if (!row || !row.refresh_token) {
     // we have no information about that token
     // or at least no way to refresh it
@@ -58,7 +42,7 @@ export const tryRefreshAccessToken = async (
   }
 
   // update the token in the database
-  await bot.getDb().insert(TABLE, {
+  await bot.getOauthTokenRepo().insert({
     user_id: user.id,
     channel_id: user.twitch_id,
     access_token: refreshResp.access_token,
@@ -81,7 +65,7 @@ export const refreshExpiredTwitchChannelAccessToken = async (
   if (!client) {
     return { error: false, refreshed: false }
   }
-  const accessToken = await getMatchingAccessToken(bot, user)
+  const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user)
   if (!accessToken) {
     return { error: false, refreshed: false }
   }
@@ -102,9 +86,7 @@ export const refreshExpiredTwitchChannelAccessToken = async (
   }
 
   // try to refresh the token, if possible
-  const row = await bot.getDb().get(TABLE, {
-    access_token: accessToken,
-  })
+  const row = await bot.getOauthTokenRepo().getByAccessToken(accessToken)
   if (!row || !row.refresh_token) {
     // we have no information about that token
     // or at least no way to refresh it
@@ -118,7 +100,7 @@ export const refreshExpiredTwitchChannelAccessToken = async (
   }
 
   // update the token in the database
-  await bot.getDb().insert(TABLE, {
+  await bot.getOauthTokenRepo().insert({
     user_id: user.id,
     channel_id: channelId,
     access_token: refreshResp.access_token,
@@ -203,7 +185,7 @@ export const handleOAuthCodeCallback = async (
   }
 
   // store the token
-  await bot.getDb().insert(TABLE, {
+  await bot.getOauthTokenRepo().insert({
     user_id: user.id,
     channel_id: userResp.id,
     access_token: resp.access_token,

@@ -1,8 +1,7 @@
 import { Bot, CommandExecutionContext, CommandFunction } from '../types'
 import fn from './../fn'
 import { logger } from './../common/fn'
-import { User } from '../services/Users'
-import { getChatters } from '../services/Chatters'
+import { User } from '../repo/Users'
 
 const log = logger('chatters.ts')
 
@@ -27,7 +26,7 @@ const chatters = (
     return
   }
 
-  const userNames = await getChatters(bot.getDb(), ctx.context['room-id'], new Date(stream.started_at))
+  const userNames = await bot.getChatLog().getChatters(ctx.context['room-id'], new Date(stream.started_at))
   if (userNames.length === 0) {
     say(`It seems nobody chatted? :(`)
     return

@@ -1,5 +1,5 @@
 import { getRandom } from '../common/fn'
-import { User } from '../services/Users'
+import { User } from '../repo/Users'
 import { Bot, CommandExecutionContext, CommandFunction, RandomTextCommand } from '../types'
 import fn from './../fn'
 

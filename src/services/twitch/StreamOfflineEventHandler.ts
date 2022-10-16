@@ -13,14 +13,10 @@ export class StreamOfflineEventHandler {
     log.info('handle')
     // get last started stream for broadcaster
     // if it exists and it didnt end yet set ended_at date
-    const stream = await bot.getDb().get('robyottoko.streams', {
-      broadcaster_user_id: data.event.broadcaster_user_id,
-    }, [{ started_at: -1 }])
+    const stream = await bot.getStreamsRepo().getLatestByChannelId(data.event.broadcaster_user_id)
     if (stream) {
       if (!stream.ended_at) {
-        await bot.getDb().update('robyottoko.streams', {
-          ended_at: new Date(),
-        }, { id: stream.id })
+        await bot.getStreamsRepo().setEndDate(`${stream.id}`, new Date())
       } else {
         // stream end date is already set
       }

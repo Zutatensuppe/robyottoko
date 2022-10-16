@@ -1,4 +1,4 @@
-import Db from "../DbPostgres"
+import { Repo } from "./Repo"
 
 const TABLE = 'robyottoko.token'
 
@@ -31,10 +31,7 @@ function generateToken(length: number): string {
   return b.join('')
 }
 
-class Tokens {
-  constructor(private readonly db: Db) {
-  }
-
+class Tokens extends Repo {
   async getByUserIdAndType(user_id: number, type: string): Promise<Token> {
     return await this.db.get(TABLE, { user_id, type })
   }

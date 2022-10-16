@@ -2,8 +2,7 @@ import { CommandFunction, AddStreamTagCommand, Bot, CommandExecutionContext } fr
 import fn, { findIdxFuzzy } from './../fn'
 import { logger } from './../common/fn'
 import config from '../config'
-import { User } from '../services/Users'
-import { getMatchingAccessToken } from '../oauth'
+import { User } from '../repo/Users'
 
 const log = logger('setStreamTags.ts')
 
@@ -56,7 +55,7 @@ const addStreamTags = (
     return
   }
 
-  const accessToken = await getMatchingAccessToken(bot, user)
+  const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user)
   if (!accessToken) {
     say(`❌ Not authorized to add tag: ${tagEntry.name}`)
     return

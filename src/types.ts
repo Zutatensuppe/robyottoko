@@ -12,15 +12,19 @@ import Auth from './net/Auth'
 import TwitchClientManager from './services/TwitchClientManager'
 import WebSocketServer, { Socket } from './net/WebSocketServer'
 import Cache from './services/Cache'
-import { ChatLogRepo } from './services/ChatLogRepo'
+import { ChatLogRepo } from './repo/ChatLogRepo'
 import { FrontendStatusUpdater } from './services/FrontendStatusUpdater'
 import { StreamStatusUpdater } from './services/StreamStatusUpdater'
-import Tokens from './services/Tokens'
-import Users, { User } from './services/Users'
+import Tokens from './repo/Tokens'
+import Users, { User } from './repo/Users'
 import Variables from './services/Variables'
 import Widgets from './services/Widgets'
-import WebServer from './WebServer'
+import WebServer from './net/WebServer'
 import { TwitchTmiClientManager } from './services/TwitchTmiClientManager'
+import { EventSubRepo } from './repo/EventSubRepo'
+import { PubRepo } from './repo/PubRepo'
+import { StreamsRepo } from './repo/StreamsRepo'
+import { OauthTokenRepo } from './repo/OauthTokenRepo'
 
 type int = number
 
@@ -533,6 +537,10 @@ export interface Bot {
   getWidgets: () => Widgets
   getEventHub: () => Emitter<Record<EventType, unknown>>
   getChatLog: () => ChatLogRepo
+  getPubRepo: () => PubRepo
+  getEventSubRepo: () => EventSubRepo
+  getStreamsRepo: () => StreamsRepo
+  getOauthTokenRepo: () => OauthTokenRepo
   getStreamStatusUpdater: () => StreamStatusUpdater
   getFrontendStatusUpdater: () => FrontendStatusUpdater
   getTwitchTmiClientManager: () => TwitchTmiClientManager

@@ -9,7 +9,7 @@ import { commands as commonCommands, newCommandTrigger } from '../../common/comm
 import setChannelTitle from '../../commands/setChannelTitle'
 import setChannelGameId from '../../commands/setChannelGameId'
 import { Socket } from '../../net/WebSocketServer'
-import { User } from '../../services/Users'
+import { User } from '../../repo/Users'
 import {
   ChatMessageContext, Command, FunctionCommand,
   Bot, Module,

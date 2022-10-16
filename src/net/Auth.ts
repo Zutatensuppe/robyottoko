@@ -1,6 +1,6 @@
 import { NextFunction, Response } from "express"
-import Tokens, { Token, TokenType } from "../services/Tokens"
-import Users, { User } from "../services/Users"
+import Tokens, { Token, TokenType } from "../repo/Tokens"
+import Users, { User } from "../repo/Users"
 import { ApiUserData } from "../types"
 
 class Auth {

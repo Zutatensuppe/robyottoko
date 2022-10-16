@@ -26,7 +26,13 @@ const init = () => {
 };
 const config = init();
 
-const TABLE$6 = 'robyottoko.token';
+class Repo {
+    constructor(db) {
+        this.db = db;
+    }
+}
+
+const TABLE$9 = 'robyottoko.token';
 var TokenType;
 (function (TokenType) {
     TokenType["API_KEY"] = "api_key";
@@ -43,15 +49,12 @@ function generateToken(length) {
     }
     return b.join('');
 }
-class Tokens {
-    constructor(db) {
-        this.db = db;
-    }
+class Tokens extends Repo {
     async getByUserIdAndType(user_id, type) {
-        return await this.db.get(TABLE$6, { user_id, type });
+        return await this.db.get(TABLE$9, { user_id, type });
     }
     async insert(tokenInfo) {
-        return await this.db.insert(TABLE$6, tokenInfo);
+        return await this.db.insert(TABLE$9, tokenInfo);
     }
     async createToken(user_id, type) {
         const token = generateToken(32);
@@ -64,10 +67,10 @@ class Tokens {
             || (await this.createToken(user_id, type));
     }
     async getByTokenAndType(token, type) {
-        return (await this.db.get(TABLE$6, { token, type })) || null;
+        return (await this.db.get(TABLE$9, { token, type })) || null;
     }
     async delete(token) {
-        return await this.db.delete(TABLE$6, { token });
+        return await this.db.delete(TABLE$9, { token });
     }
     async generateAuthTokenForUserId(user_id) {
         return await this.createToken(user_id, TokenType.AUTH);
@@ -623,8 +626,8 @@ const moduleByWidgetType = (widgetType) => {
     return found ? found.module : null;
 };
 class Widgets {
-    constructor(db, tokenRepo) {
-        this.db = db;
+    constructor(pubRepo, tokenRepo) {
+        this.pubRepo = pubRepo;
         this.tokenRepo = tokenRepo;
         this._widgetUrl = (type, token) => {
             return `/widget/${type}/${token}/`;
@@ -646,13 +649,13 @@ class Widgets {
         return await this.createWidgetUrl(type, userId);
     }
     async pubUrl(target) {
-        const row = await this.db.get('robyottoko.pub', { target });
+        const row = await this.pubRepo.getByTarget(target);
         let id;
         if (!row) {
             do {
                 id = nonce(6);
-            } while (await this.db.get('robyottoko.pub', { id }));
-            await this.db.insert('robyottoko.pub', { id, target });
+            } while (await this.pubRepo.getById(id));
+            await this.pubRepo.insert({ id, target });
         }
         else {
             id = row.id;
@@ -1407,6 +1410,7 @@ const extractEmotes = (context) => {
 const getChannelPointsCustomRewards = async (bot, user) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!helixClient) {
+        log$w.info('getChannelPointsCustomRewards: no helix client');
         return {};
     }
     return await helixClient.getAllChannelPointsCustomRewards(bot, user);
@@ -1780,16 +1784,19 @@ class TwitchHelixClient {
     async getAllChannelPointsCustomRewards(bot, user) {
         const rewards = {};
         if (!user.twitch_id || !user.twitch_login) {
+            log$v.info('getAllChannelPointsCustomRewards: no twitch id and login');
             return rewards;
         }
-        const accessToken = await getMatchingAccessToken(bot, user);
+        const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user);
         if (!accessToken) {
+            log$v.info('getAllChannelPointsCustomRewards: no access token');
             return rewards;
         }
         const res = await this.getChannelPointsCustomRewards(accessToken, user.twitch_id, bot, user);
         if (res) {
             rewards[user.twitch_login] = res.data.map(entry => entry.title);
         }
+        console.log(rewards);
         return rewards;
     }
     // https://dev.twitch.tv/docs/api/reference#replace-stream-tags
@@ -1821,15 +1828,6 @@ class TwitchHelixClient {
 }
 
 const log$u = logger('oauth.ts');
-const TABLE$5 = 'robyottoko.oauth_token';
-const getMatchingAccessToken = async (bot, user) => {
-    const row = await bot.getDb().get(TABLE$5, {
-        user_id: user.id,
-        channel_id: user.twitch_id,
-        expires_at: { '$gt': new Date() },
-    });
-    return row ? row.access_token : null;
-};
 /**
  * Tries to refresh the access token and returns the new token
  * if successful, otherwise null.
@@ -1843,9 +1841,7 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
         return null;
     }
     // try to refresh the token, if possible
-    const row = await bot.getDb().get(TABLE$5, {
-        access_token: accessToken,
-    });
+    const row = await bot.getOauthTokenRepo().getByAccessToken(accessToken);
     if (!row || !row.refresh_token) {
         // we have no information about that token
         // or at least no way to refresh it
@@ -1856,7 +1852,7 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
         return null;
     }
     // update the token in the database
-    await bot.getDb().insert(TABLE$5, {
+    await bot.getOauthTokenRepo().insert({
         user_id: user.id,
         channel_id: user.twitch_id,
         access_token: refreshResp.access_token,
@@ -1874,7 +1870,7 @@ const refreshExpiredTwitchChannelAccessToken = async (bot, user) => {
     if (!client) {
         return { error: false, refreshed: false };
     }
-    const accessToken = await getMatchingAccessToken(bot, user);
+    const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user);
     if (!accessToken) {
         return { error: false, refreshed: false };
     }
@@ -1891,9 +1887,7 @@ const refreshExpiredTwitchChannelAccessToken = async (bot, user) => {
         return { error: false, refreshed: false };
     }
     // try to refresh the token, if possible
-    const row = await bot.getDb().get(TABLE$5, {
-        access_token: accessToken,
-    });
+    const row = await bot.getOauthTokenRepo().getByAccessToken(accessToken);
     if (!row || !row.refresh_token) {
         // we have no information about that token
         // or at least no way to refresh it
@@ -1905,7 +1899,7 @@ const refreshExpiredTwitchChannelAccessToken = async (bot, user) => {
         return { error: 'refresh_oauth_token_failed', refreshed: false };
     }
     // update the token in the database
-    await bot.getDb().insert(TABLE$5, {
+    await bot.getOauthTokenRepo().insert({
         user_id: user.id,
         channel_id: channelId,
         access_token: refreshResp.access_token,
@@ -1969,7 +1963,7 @@ const handleOAuthCodeCallback = async (code, redirectUri, bot, loggedInUser) => 
         }
     }
     // store the token
-    await bot.getDb().insert(TABLE$5, {
+    await bot.getOauthTokenRepo().insert({
         user_id: user.id,
         channel_id: userResp.id,
         access_token: resp.access_token,
@@ -2898,8 +2892,7 @@ const log$o = logger('StreamOnlineEventHandler.ts');
 class StreamOnlineEventHandler {
     async handle(bot, data) {
         log$o.info('handle');
-        // insert new stream
-        await bot.getDb().insert('robyottoko.streams', {
+        await bot.getStreamsRepo().insert({
             broadcaster_user_id: data.event.broadcaster_user_id,
             started_at: new Date(data.event.started_at),
         });
@@ -2912,14 +2905,10 @@ class StreamOfflineEventHandler {
         log$n.info('handle');
         // get last started stream for broadcaster
         // if it exists and it didnt end yet set ended_at date
-        const stream = await bot.getDb().get('robyottoko.streams', {
-            broadcaster_user_id: data.event.broadcaster_user_id,
-        }, [{ started_at: -1 }]);
+        const stream = await bot.getStreamsRepo().getLatestByChannelId(data.event.broadcaster_user_id);
         if (stream) {
             if (!stream.ended_at) {
-                await bot.getDb().update('robyottoko.streams', {
-                    ended_at: new Date(),
-                }, { id: stream.id });
+                await bot.getStreamsRepo().setEndDate(`${stream.id}`, new Date());
             }
         }
     }
@@ -3029,7 +3018,7 @@ const createRouter$3 = (bot) => {
         }
         if (req.headers['twitch-eventsub-message-type'] === 'notification') {
             log$l.info({ type: req.body.subscription.type }, 'got notification request');
-            const row = await bot.getDb().get('robyottoko.event_sub', {
+            const row = await bot.getEventSubRepo().getOne({
                 subscription_id: req.body.subscription.id,
             });
             if (!row) {
@@ -3037,8 +3026,7 @@ const createRouter$3 = (bot) => {
                 res.status(400).send({ reason: 'unknown subscription_id' });
                 return;
             }
-            const userId = row.user_id;
-            const user = await bot.getUsers().getById(userId);
+            const user = await bot.getUsers().getById(row.user_id);
             if (!user) {
                 log$l.info('unknown user');
                 res.status(400).send({ reason: 'unknown user' });
@@ -3071,50 +3059,6 @@ const createRouter$3 = (bot) => {
         res.status(400).send({ reason: 'unhandled sub type' });
     });
     return router;
-};
-
-const TABLE$4 = 'robyottoko.variables';
-class Variables {
-    constructor(db, userId) {
-        this.db = db;
-        this.userId = userId;
-    }
-    async set(name, value) {
-        await this.db.upsert(TABLE$4, {
-            name,
-            user_id: this.userId,
-            value: JSON.stringify(value),
-        }, {
-            name,
-            user_id: this.userId,
-        });
-    }
-    async get(name) {
-        const row = await this.db.get(TABLE$4, { name, user_id: this.userId });
-        return row ? JSON.parse(row.value) : null;
-    }
-    async all() {
-        const rows = await this.db.getMany(TABLE$4, { user_id: this.userId });
-        return rows.map(row => ({
-            name: row.name,
-            value: JSON.parse(row.value),
-        }));
-    }
-    async replace(variables) {
-        const names = variables.map(v => v.name);
-        await this.db.delete(TABLE$4, { user_id: this.userId, name: { '$nin': names } });
-        for (const { name, value } of variables) {
-            await this.set(name, value);
-        }
-    }
-}
-
-const getChatters = async (db, channelId, since) => {
-    const whereObject = db._buildWhere({
-        broadcaster_user_id: channelId,
-        created_at: { '$gte': since },
-    });
-    return (await db._getMany(`select display_name from robyottoko.chat_log ${whereObject.sql} group by display_name`, whereObject.values)).map(r => r.display_name);
 };
 
 const createRouter$2 = (bot) => {
@@ -3165,7 +3109,7 @@ const createRouter$2 = (bot) => {
             }
             dateSince = new Date(stream.started_at);
         }
-        const userNames = await getChatters(bot.getDb(), channelId, dateSince);
+        const userNames = await bot.getChatLog().getChatters(channelId, dateSince);
         res.status(200).send({ ok: true, data: { chatters: userNames, since: dateSince } });
     });
     router.get('/drawcast/images', async (req, res) => {
@@ -3194,9 +3138,17 @@ const createRouter$2 = (bot) => {
     return router;
 };
 
-const createRouter$1 = (requireLoginApi) => {
+const RequireLoginApiMiddleware = (req, res, next) => {
+    if (!req.token) {
+        res.status(401).send({});
+        return;
+    }
+    return next();
+};
+
+const createRouter$1 = () => {
     const router = express.Router();
-    router.get('/me', requireLoginApi, async (req, res) => {
+    router.get('/me', RequireLoginApiMiddleware, async (req, res) => {
         const apiUser = {
             user: req.user,
             token: req.cookies['x-token'],
@@ -3208,13 +3160,6 @@ const createRouter$1 = (requireLoginApi) => {
 
 const log$k = logger('api/index.ts');
 const createRouter = (bot) => {
-    const requireLoginApi = (req, res, next) => {
-        if (!req.token) {
-            res.status(401).send({});
-            return;
-        }
-        return next();
-    };
     const uploadDir = './data/uploads';
     const storage = multer.diskStorage({
         destination: uploadDir,
@@ -3224,7 +3169,7 @@ const createRouter = (bot) => {
     });
     const upload = multer({ storage }).single('file');
     const router = express.Router();
-    router.post('/upload', requireLoginApi, (req, res) => {
+    router.post('/upload', RequireLoginApiMiddleware, (req, res) => {
         upload(req, res, (err) => {
             if (err) {
                 log$k.error({ err });
@@ -3257,14 +3202,14 @@ const createRouter = (bot) => {
             twitchClientId: conf.twitch.tmi.identity.client_id,
         });
     });
-    router.post('/logout', requireLoginApi, async (req, res) => {
+    router.post('/logout', RequireLoginApiMiddleware, async (req, res) => {
         if (req.token) {
             await bot.getAuth().destroyToken(req.token);
             res.clearCookie("x-token");
         }
         res.send({ success: true });
     });
-    router.post('/widget/create_url', requireLoginApi, express.json(), async (req, res) => {
+    router.post('/widget/create_url', RequireLoginApiMiddleware, express.json(), async (req, res) => {
         const type = req.body.type;
         const pub = req.body.pub;
         const url = await bot.getWidgets().createWidgetUrl(type, req.user.id);
@@ -3272,16 +3217,16 @@ const createRouter = (bot) => {
             url: pub ? (await bot.getWidgets().pubUrl(url)) : url
         });
     });
-    router.get('/page/index', requireLoginApi, async (req, res) => {
+    router.get('/page/index', RequireLoginApiMiddleware, async (req, res) => {
         const mappedWidgets = await bot.getWidgets().getWidgetInfos(req.user.id);
         res.send({ widgets: mappedWidgets });
     });
-    router.get('/page/variables', requireLoginApi, async (req, res) => {
-        const variables = new Variables(bot.getDb(), req.user.id);
+    router.get('/page/variables', RequireLoginApiMiddleware, async (req, res) => {
+        const variables = bot.getUserVariables(req.user);
         res.send({ variables: await variables.all() });
     });
-    router.post('/save-variables', requireLoginApi, express.json(), async (req, res) => {
-        const variables = new Variables(bot.getDb(), req.user.id);
+    router.post('/save-variables', RequireLoginApiMiddleware, express.json(), async (req, res) => {
+        const variables = bot.getUserVariables(req.user);
         await variables.replace(req.body.variables || []);
         res.send();
     });
@@ -3291,7 +3236,7 @@ const createRouter = (bot) => {
             streamingUserCount: await bot.getUsers().countUniqueUsersStreaming(),
         });
     });
-    router.get('/page/settings', requireLoginApi, async (req, res) => {
+    router.get('/page/settings', RequireLoginApiMiddleware, async (req, res) => {
         const user = await bot.getUsers().getById(req.user.id);
         res.send({
             user: {
@@ -3311,9 +3256,7 @@ const createRouter = (bot) => {
         });
     });
     router.get('/pub/:id', async (req, res, _next) => {
-        const row = await bot.getDb().get('robyottoko.pub', {
-            id: req.params.id,
-        });
+        const row = await bot.getPubRepo().getById(req.params.id);
         if (row && row.target) {
             req.url = row.target;
             // @ts-ignore
@@ -3344,7 +3287,7 @@ const createRouter = (bot) => {
         }
         res.status(404).send();
     });
-    router.post('/save-settings', requireLoginApi, express.json(), async (req, res) => {
+    router.post('/save-settings', RequireLoginApiMiddleware, express.json(), async (req, res) => {
         if (!req.user.groups.includes('admin')) {
             if (req.user.id !== req.body.user.id) {
                 // editing other user than self
@@ -3380,7 +3323,7 @@ const createRouter = (bot) => {
         }
         res.send();
     });
-    router.post('/twitch/user-id-by-name', requireLoginApi, express.json(), async (req, res) => {
+    router.post('/twitch/user-id-by-name', RequireLoginApiMiddleware, express.json(), async (req, res) => {
         let clientId;
         let clientSecret;
         if (!req.user.groups.includes('admin')) {
@@ -3408,9 +3351,21 @@ const createRouter = (bot) => {
             res.status(500).send("Something went wrong!");
         }
     });
-    router.use('/user', createRouter$1(requireLoginApi));
+    router.use('/user', createRouter$1());
     router.use('/pub/v1', createRouter$2(bot));
     return router;
+};
+
+const RequireLoginMiddleware = (req, res, next) => {
+    if (req.token) {
+        return next();
+    }
+    if (req.method === 'GET') {
+        res.redirect(302, '/login');
+    }
+    else {
+        res.status(401).send('not allowed');
+    }
 };
 
 const __filename = fileURLToPath(import.meta.url);
@@ -3422,19 +3377,7 @@ class WebServer {
     }
     async listen(bot) {
         const app = express();
-        const indexFile = path.resolve(`${__dirname}/../../build/public/index.html`);
-        const requireLogin = (req, res, next) => {
-            if (!req.token) {
-                if (req.method === 'GET') {
-                    res.redirect(302, '/login');
-                }
-                else {
-                    res.status(401).send('not allowed');
-                }
-                return;
-            }
-            return next();
-        };
+        const indexFile = path.resolve(__dirname, '..', '..', '..', 'build', 'public', 'index.html');
         app.use(cookieParser());
         app.use(bot.getAuth().addAuthInfoMiddleware());
         app.use('/', express.static('./build/public'));
@@ -3454,7 +3397,7 @@ class WebServer {
         app.all('/pub/*', async (_req, res, _next) => {
             res.sendFile(indexFile);
         });
-        app.all('*', requireLogin, express.json({ limit: '50mb' }), async (req, res, next) => {
+        app.all('*', RequireLoginMiddleware, express.json({ limit: '50mb' }), async (req, res, next) => {
             const method = req.method.toLowerCase();
             const key = req.url.replace(/\?.*$/, '');
             for (const m of bot.getModuleManager().all(req.user.id)) {
@@ -3669,57 +3612,56 @@ class TwitchClientManager {
         await this._disconnectChatClient();
         timer.split();
         this.log.debug(`disconnecting chat client took ${timer.lastSplitMs()}ms`);
-        if (!user.twitch_id || !user.twitch_login || !user.bot_enabled) {
-            this.log.info(`* twitch bot not enabled`);
-            return;
-        }
         const identity = determineIdentity(user, cfg);
-        // connect to chat via tmi (to all channels configured)
-        this.chatClient = this.bot.getTwitchTmiClientManager().get(identity, [user.twitch_login]);
-        const reportStatusToChannel = (user, reason) => {
-            if (!user.bot_status_messages) {
-                return;
-            }
-            const say = this.bot.sayFn(user, user.twitch_login);
-            if (reason === 'init') {
-                say('⚠️ Bot rebooted - please restart timers...');
-            }
-            else if (reason === 'access_token_refreshed') ;
-            else if (reason === 'user_change') {
-                say('✅ User settings updated...');
-            }
-            else {
-                say('✅ Reconnected...');
-            }
-        };
-        if (this.chatClient) {
-            this.chatClient.on('message', async (target, context, msg, self) => {
-                if (self) {
+        if (user.twitch_id && user.twitch_login && user.bot_enabled) {
+            this.log.info(`* twitch bot enabled`);
+            // connect to chat via tmi (to all channels configured)
+            this.chatClient = this.bot.getTwitchTmiClientManager().get(identity, [user.twitch_login]);
+            const reportStatusToChannel = (user, reason) => {
+                if (!user.bot_status_messages) {
                     return;
-                } // Ignore messages from the bot
-                await (new ChatEventHandler()).handle(this.bot, this.user, target, context, msg);
-            });
-            // Called every time the bot connects to Twitch chat
-            this.chatClient.on('connected', async (addr, port) => {
-                this.log.info({ addr, port }, 'Connected');
-                // if status reporting is disabled, dont print messages
-                if (this.bot.getConfig().bot.reportStatus) {
-                    reportStatusToChannel(this.user, connectReason);
                 }
-                // set connectReason to empty, everything from now is just a reconnect
-                // due to disconnect from twitch
-                connectReason = '';
-            });
-            // do NOT await
-            // awaiting the connect will add ~1sec per user on server startup
-            this.chatClient.connect().catch((e) => {
-                // this can happen when calling close before the connection
-                // could be established
-                this.log.error({ e }, 'error when connecting');
-            });
+                const say = this.bot.sayFn(user, user.twitch_login);
+                if (reason === 'init') {
+                    say('⚠️ Bot rebooted - please restart timers...');
+                }
+                else if (reason === 'access_token_refreshed') ;
+                else if (reason === 'user_change') {
+                    say('✅ User settings updated...');
+                }
+                else {
+                    say('✅ Reconnected...');
+                }
+            };
+            if (this.chatClient) {
+                this.chatClient.on('message', async (target, context, msg, self) => {
+                    if (self) {
+                        return;
+                    } // Ignore messages from the bot
+                    await (new ChatEventHandler()).handle(this.bot, this.user, target, context, msg);
+                });
+                // Called every time the bot connects to Twitch chat
+                this.chatClient.on('connected', async (addr, port) => {
+                    this.log.info({ addr, port }, 'Connected');
+                    // if status reporting is disabled, dont print messages
+                    if (this.bot.getConfig().bot.reportStatus) {
+                        reportStatusToChannel(this.user, connectReason);
+                    }
+                    // set connectReason to empty, everything from now is just a reconnect
+                    // due to disconnect from twitch
+                    connectReason = '';
+                });
+                // do NOT await
+                // awaiting the connect will add ~1sec per user on server startup
+                this.chatClient.connect().catch((e) => {
+                    // this can happen when calling close before the connection
+                    // could be established
+                    this.log.error({ e }, 'error when connecting');
+                });
+            }
+            timer.split();
+            this.log.debug(`connecting chat client took ${timer.lastSplitMs()}ms`);
         }
-        timer.split();
-        this.log.debug(`connecting chat client took ${timer.lastSplitMs()}ms`);
         // register EventSub
         // @see https://dev.twitch.tv/docs/eventsub
         this.helixClient = new TwitchHelixClient(identity.client_id, identity.client_secret);
@@ -3779,12 +3721,10 @@ class TwitchClientManager {
                 }
                 else {
                     existsMap[subscription.type][twitchChannelId] = true;
-                    await this.bot.getDb().upsert('robyottoko.event_sub', {
+                    await this.bot.getEventSubRepo().insert({
                         user_id: this.user.id,
                         subscription_id: subscription.id,
                         subscription_type: subscription.type,
-                    }, {
-                        subscription_id: subscription.id,
                     });
                 }
             }
@@ -3806,7 +3746,7 @@ class TwitchClientManager {
             return;
         }
         await this.helixClient.deleteSubscription(subscription.id);
-        await this.bot.getDb().delete('robyottoko.event_sub', {
+        await this.bot.getEventSubRepo().delete({
             user_id: this.user.id,
             subscription_id: subscription.id,
         });
@@ -3830,7 +3770,7 @@ class TwitchClientManager {
         };
         const resp = await this.helixClient.createSubscription(subscription);
         if (resp && resp.data && resp.data.length > 0) {
-            await this.bot.getDb().insert('robyottoko.event_sub', {
+            await this.bot.getEventSubRepo().insert({
                 user_id: this.user.id,
                 subscription_id: resp.data[0].id,
                 subscription_type: subscriptionType,
@@ -3864,7 +3804,7 @@ class TwitchClientManager {
 }
 
 const log$h = logger('ModuleStorage.ts');
-const TABLE$3 = 'robyottoko.module';
+const TABLE$8 = 'robyottoko.module';
 class ModuleStorage {
     constructor(db, userId) {
         this.db = db;
@@ -3873,7 +3813,7 @@ class ModuleStorage {
     async load(key, def) {
         try {
             const where = { user_id: this.userId, key };
-            const row = await this.db.get(TABLE$3, where);
+            const row = await this.db.get(TABLE$8, where);
             const data = row ? JSON.parse('' + row.data) : null;
             return data ? Object.assign({}, def, data) : def;
         }
@@ -3886,20 +3826,17 @@ class ModuleStorage {
         const where = { user_id: this.userId, key };
         const data = JSON.stringify(rawData);
         const dbData = Object.assign({}, where, { data });
-        await this.db.upsert(TABLE$3, dbData, where);
+        await this.db.upsert(TABLE$8, dbData, where);
     }
 }
 
-const TABLE$2 = 'robyottoko.user';
-class Users {
-    constructor(db) {
-        this.db = db;
-    }
+const TABLE$7 = 'robyottoko.user';
+class Users extends Repo {
     async get(by) {
-        return await this.db.get(TABLE$2, by) || null;
+        return await this.db.get(TABLE$7, by) || null;
     }
     async all() {
-        return await this.db.getMany(TABLE$2);
+        return await this.db.getMany(TABLE$7);
     }
     async getById(id) {
         return await this.get({ id });
@@ -3911,10 +3848,10 @@ class Users {
         return await this.get({ email });
     }
     async getByName(name) {
-        return await this.db._get(`SELECT * FROM ${TABLE$2} WHERE LOWER(name) = LOWER($1)`, [name]);
+        return await this.db._get(`SELECT * FROM ${TABLE$7} WHERE LOWER(name) = LOWER($1)`, [name]);
     }
     async save(user) {
-        await this.db.upsert(TABLE$2, user, { id: user.id });
+        await this.db.upsert(TABLE$7, user, { id: user.id });
     }
     async getGroups(id) {
         const rows = await this.db._getMany(`
@@ -3924,19 +3861,19 @@ where x.user_id = $1`, [id]);
         return rows.map(r => r.name);
     }
     async createUser(user) {
-        return (await this.db.insert(TABLE$2, user, 'id'));
+        return (await this.db.insert(TABLE$7, user, 'id'));
     }
     async countUsers() {
-        const rows = await this.db.getMany(TABLE$2);
+        const rows = await this.db.getMany(TABLE$7);
         return rows.length;
     }
     async countUniqueUsersStreaming() {
-        const rows = await this.db.getMany(TABLE$2, { is_streaming: true });
+        const rows = await this.db.getMany(TABLE$7, { is_streaming: true });
         return rows.length;
     }
 }
 
-const TABLE$1 = 'robyottoko.cache';
+const TABLE$6 = 'robyottoko.cache';
 const log$g = logger('Cache.ts');
 class Cache {
     constructor(db) {
@@ -3949,11 +3886,11 @@ class Cache {
         }
         const expiresAt = lifetime === Infinity ? null : (new Date(new Date().getTime() + lifetime));
         const valueStr = JSON.stringify(value);
-        await this.db.upsert(TABLE$1, { key, value: valueStr, expires_at: expiresAt }, { key });
+        await this.db.upsert(TABLE$6, { key, value: valueStr, expires_at: expiresAt }, { key });
     }
     async get(key) {
         // get *non-expired* cache entry from db
-        const row = await this.db._get('SELECT * from robyottoko.cache WHERE key = $1 AND (expires_at IS NULL OR expires_at > $2)', [key, new Date()]);
+        const row = await this.db._get('SELECT * from ' + TABLE$6 + ' WHERE key = $1 AND (expires_at IS NULL OR expires_at > $2)', [key, new Date()]);
         return row ? JSON.parse(row.value) : undefined;
     }
 }
@@ -4303,6 +4240,42 @@ class Db {
     }
 }
 
+const TABLE$5 = 'robyottoko.variables';
+class Variables {
+    constructor(db, userId) {
+        this.db = db;
+        this.userId = userId;
+    }
+    async set(name, value) {
+        await this.db.upsert(TABLE$5, {
+            user_id: this.userId,
+            name,
+            value: JSON.stringify(value),
+        }, {
+            name,
+            user_id: this.userId,
+        });
+    }
+    async get(name) {
+        const row = await this.db.get(TABLE$5, { name, user_id: this.userId });
+        return row ? JSON.parse(row.value) : null;
+    }
+    async all() {
+        const rows = await this.db.getMany(TABLE$5, { user_id: this.userId });
+        return rows.map(row => ({
+            name: row.name,
+            value: JSON.parse(row.value),
+        }));
+    }
+    async replace(variables) {
+        const names = variables.map(v => v.name);
+        await this.db.delete(TABLE$5, { user_id: this.userId, name: { '$nin': names } });
+        for (const { name, value } of variables) {
+            await this.set(name, value);
+        }
+    }
+}
+
 function mitt(n){return {all:n=n||new Map,on:function(t,e){var i=n.get(t);i?i.push(e):n.set(t,[e]);},off:function(t,e){var i=n.get(t);i&&(e?i.splice(i.indexOf(e)>>>0,1):n.set(t,[]));},emit:function(t,e){var i=n.get(t);i&&i.slice().map(function(n){n(e);}),(i=n.get("*"))&&i.slice().map(function(n){n(t,e);});}}}
 
 const log$e = logger('countdown.ts');
@@ -4486,7 +4459,7 @@ const chatters = (bot, user) => async (ctx) => {
         say(`It seems this channel is not live at the moment...`);
         return;
     }
-    const userNames = await getChatters(bot.getDb(), ctx.context['room-id'], new Date(stream.started_at));
+    const userNames = await bot.getChatLog().getChatters(ctx.context['room-id'], new Date(stream.started_at));
     if (userNames.length === 0) {
         say(`It seems nobody chatted? :(`);
         return;
@@ -4530,7 +4503,7 @@ const setChannelTitle = (originalCmd, bot, user) => async (ctx) => {
         say(`❌ Unable to change title because it is too long (${len}/${max} characters).`);
         return;
     }
-    const accessToken = await getMatchingAccessToken(bot, user);
+    const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user);
     if (!accessToken) {
         say(`❌ Not authorized to change title.`);
         return;
@@ -4574,7 +4547,7 @@ const setChannelGameId = (originalCmd, bot, user) => async (ctx) => {
         say('🔎 Category not found.');
         return;
     }
-    const accessToken = await getMatchingAccessToken(bot, user);
+    const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user);
     if (!accessToken) {
         say(`❌ Not authorized to update category.`);
         return;
@@ -4824,7 +4797,7 @@ const addStreamTags = (originalCmd, bot, user) => async (ctx) => {
         say(`❌ Too many tags already exist, current tags: ${names.join(', ')}`);
         return;
     }
-    const accessToken = await getMatchingAccessToken(bot, user);
+    const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user);
     if (!accessToken) {
         say(`❌ Not authorized to add tag: ${tagEntry.name}`);
         return;
@@ -4878,7 +4851,7 @@ const removeStreamTags = (originalCmd, bot, user) => async (ctx) => {
     }
     const newTagIds = manualTags.filter((_value, index) => index !== idx).map(entry => entry.tag_id);
     const newSettableTagIds = newTagIds.filter(tagId => !config.twitch.auto_tags.find(t => t.id === tagId));
-    const accessToken = await getMatchingAccessToken(bot, user);
+    const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user);
     if (!accessToken) {
         say(`❌ Not authorized to remove tag: ${manualTags[idx].localization_names['en-us']}`);
         return;
@@ -7484,18 +7457,15 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-10-15T17:39:52.039Z",
+    buildDate: "2022-10-16T11:22:26.262Z",
     // @ts-ignore
-    buildVersion: "1.30.0",
+    buildVersion: "1.30.1",
 };
 
-const TABLE = 'robyottoko.chat_log';
-class ChatLogRepo {
-    constructor(db) {
-        this.db = db;
-    }
+const TABLE$4 = 'robyottoko.chat_log';
+class ChatLogRepo extends Repo {
     async insert(context, msg) {
-        await this.db.insert(TABLE, {
+        await this.db.insert(TABLE$4, {
             created_at: new Date(),
             broadcaster_user_id: context['room-id'],
             user_name: context.username,
@@ -7505,7 +7475,7 @@ class ChatLogRepo {
     }
     async count(where) {
         const whereObject = this.db._buildWhere(where);
-        const row = await this.db._get(`select COUNT(*) as c from ${TABLE} ${whereObject.sql}`, whereObject.values);
+        const row = await this.db._get(`select COUNT(*) as c from ${TABLE$4} ${whereObject.sql}`, whereObject.values);
         return parseInt(`${row.c}`, 10);
     }
     async isFirstChatAllTime(context) {
@@ -7524,10 +7494,17 @@ class ChatLogRepo {
     // HACK: we have no other way of getting a user name by user display name atm
     // TODO: replace this functionality
     async getUsernameByUserDisplayName(displayName) {
-        const row = await this.db.get(TABLE, {
+        const row = await this.db.get(TABLE$4, {
             display_name: displayName,
         });
         return row ? row.user_name : null;
+    }
+    async getChatters(channelId, since) {
+        const whereObject = this.db._buildWhere({
+            broadcaster_user_id: channelId,
+            created_at: { '$gte': since },
+        });
+        return (await this.db._getMany(`select display_name from robyottoko.chat_log ${whereObject.sql} group by display_name`, whereObject.values)).map(r => r.display_name);
     }
 }
 
@@ -7667,6 +7644,69 @@ class TwitchTmiClientManager {
     }
 }
 
+const TABLE$3 = 'robyottoko.event_sub';
+class EventSubRepo extends Repo {
+    async insert(sub) {
+        await this.db.upsert(TABLE$3, sub, {
+            subscription_id: sub.subscription_id,
+        });
+    }
+    async delete(where) {
+        await this.db.delete(TABLE$3, where);
+    }
+    async getOne(where) {
+        return await this.db.get(TABLE$3, where);
+    }
+}
+
+const TABLE$2 = 'robyottoko.pub';
+class PubRepo extends Repo {
+    async getByTarget(target) {
+        return await this.db.get(TABLE$2, { target });
+    }
+    async getById(id) {
+        return await this.db.get(TABLE$2, { id });
+    }
+    async insert(row) {
+        await this.db.insert(TABLE$2, row);
+    }
+}
+
+const TABLE$1 = 'robyottoko.streams';
+class StreamsRepo extends Repo {
+    async getLatestByChannelId(channelId) {
+        return await this.db.get(TABLE$1, {
+            broadcaster_user_id: channelId,
+        }, [{ started_at: -1 }]);
+    }
+    async setEndDate(streamId, date) {
+        await this.db.update(TABLE$1, {
+            ended_at: date,
+        }, { id: streamId });
+    }
+    async insert(data) {
+        await this.db.insert(TABLE$1, data);
+    }
+}
+
+const TABLE = 'robyottoko.oauth_token';
+class OauthTokenRepo extends Repo {
+    // get the newest access token (even if it is already expired)
+    async getMatchingAccessToken(user) {
+        const row = await this.db.get(TABLE, {
+            user_id: user.id,
+            channel_id: user.twitch_id,
+        }, [{ expires_at: -1 }]);
+        return row ? row.access_token : null;
+    }
+    async getByAccessToken(accessToken) {
+        return await this.db.get(TABLE, { access_token: accessToken });
+    }
+    async insert(row) {
+        await this.db.insert(TABLE, row);
+    }
+}
+
 setLogLevel(config.log.level);
 const log = logger('bot.ts');
 const modules = [
@@ -7684,14 +7724,18 @@ const createBot = async () => {
     await db.patch();
     const userRepo = new Users(db);
     const tokenRepo = new Tokens(db);
+    const pubRepo = new PubRepo(db);
+    const streamsRepo = new StreamsRepo(db);
+    const oauthTokenRepo = new OauthTokenRepo(db);
     const cache = new Cache(db);
     const auth = new Auth(userRepo, tokenRepo);
-    const widgets = new Widgets(db, tokenRepo);
+    const widgets = new Widgets(pubRepo, tokenRepo);
     const eventHub = mitt();
     const moduleManager = new ModuleManager();
     const webSocketServer = new WebSocketServer();
     const webServer = new WebServer();
     const chatLog = new ChatLogRepo(db);
+    const eventSubRepo = new EventSubRepo(db);
     const twitchTmiClientManager = new TwitchTmiClientManager();
     class BotImpl {
         constructor() {
@@ -7715,6 +7759,10 @@ const createBot = async () => {
         getWidgets() { return widgets; }
         getEventHub() { return eventHub; }
         getChatLog() { return chatLog; }
+        getPubRepo() { return pubRepo; }
+        getEventSubRepo() { return eventSubRepo; }
+        getStreamsRepo() { return streamsRepo; }
+        getOauthTokenRepo() { return oauthTokenRepo; }
         getStreamStatusUpdater() {
             if (!this.streamStatusUpdater) {
                 this.streamStatusUpdater = new StreamStatusUpdater(this);

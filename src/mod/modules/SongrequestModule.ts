@@ -2,7 +2,7 @@ import fn, { determineNewVolume, findIdxFuzzy, getChannelPointsCustomRewards } f
 import { shuffle, arrayMove, logger, humanDuration, parseHumanDuration, nonce } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
 import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
-import { User } from '../../services/Users'
+import { User } from '../../repo/Users'
 import {
   ChatMessageContext, PlaylistItem,
   FunctionCommand, Command,

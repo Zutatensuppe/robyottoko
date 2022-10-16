@@ -1,7 +1,7 @@
 import config from '../../config'
 import { Socket } from '../../net/WebSocketServer'
 import xhr, { asQueryArgs } from '../../net/xhr'
-import { User } from '../../services/Users'
+import { User } from '../../repo/Users'
 import { Bot, ChatMessageContext, Module, MODULE_NAME, WIDGET_TYPE } from '../../types'
 import { default_settings, SpeechToTextModuleData, SpeechToTextModuleSettings, SpeechToTextWsData } from './SpeechToTextModuleCommon'
 
