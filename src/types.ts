@@ -4,27 +4,19 @@ import { Emitter, EventType } from 'mitt'
 import { Client } from 'tmi.js'
 import { LogLevel } from './common/fn'
 import { CommandRestrict } from './common/permissions'
-import Db from './DbPostgres'
 import ModuleManager from './mod/ModuleManager'
 import { GeneralModuleEmotesEventData } from './mod/modules/GeneralModuleCommon'
-import ModuleStorage from './mod/ModuleStorage'
 import Auth from './net/Auth'
 import TwitchClientManager from './services/TwitchClientManager'
 import WebSocketServer, { Socket } from './net/WebSocketServer'
 import Cache from './services/Cache'
-import { ChatLogRepo } from './repo/ChatLogRepo'
 import { FrontendStatusUpdater } from './services/FrontendStatusUpdater'
 import { StreamStatusUpdater } from './services/StreamStatusUpdater'
-import Tokens from './repo/Tokens'
-import Users, { User } from './repo/Users'
-import Variables from './services/Variables'
+import { User } from './repo/Users'
 import Widgets from './services/Widgets'
 import WebServer from './net/WebServer'
 import { TwitchTmiClientManager } from './services/TwitchTmiClientManager'
-import { EventSubRepo } from './repo/EventSubRepo'
-import { PubRepo } from './repo/PubRepo'
-import { StreamsRepo } from './repo/StreamsRepo'
-import { OauthTokenRepo } from './repo/OauthTokenRepo'
+import { Repos } from './repo/Repos'
 
 type int = number
 
@@ -526,27 +518,18 @@ export interface Bot {
   getBuildVersion: () => string
   getBuildDate: () => string
   getModuleManager: () => ModuleManager
-  getDb: () => Db
   getConfig: () => Config
-  getUsers: () => Users
-  getTokens: () => Tokens
   getCache: () => Cache
   getAuth: () => Auth
   getWebServer: () => WebServer
   getWebSocketServer: () => WebSocketServer
   getWidgets: () => Widgets
   getEventHub: () => Emitter<Record<EventType, unknown>>
-  getChatLog: () => ChatLogRepo
-  getPubRepo: () => PubRepo
-  getEventSubRepo: () => EventSubRepo
-  getStreamsRepo: () => StreamsRepo
-  getOauthTokenRepo: () => OauthTokenRepo
+  getRepos: () => Repos
   getStreamStatusUpdater: () => StreamStatusUpdater
   getFrontendStatusUpdater: () => FrontendStatusUpdater
   getTwitchTmiClientManager: () => TwitchTmiClientManager
 
   sayFn: (user: User, target: string | null) => (msg: string) => void
-  getUserVariables: (user: User) => Variables
-  getUserModuleStorage: (user: User) => ModuleStorage
   getUserTwitchClientManager: (user: User) => TwitchClientManager
 }

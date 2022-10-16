@@ -30,7 +30,7 @@ export class StreamStatusUpdater {
       return
     }
     const stream = await client.getStreamByUserId(user.twitch_id)
-    this.bot.getUsers().save({
+    this.bot.getRepos().user.save({
       id: user.id,
       is_streaming: !!stream,
     })

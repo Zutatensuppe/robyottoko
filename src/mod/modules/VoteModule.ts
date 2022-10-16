@@ -1,6 +1,5 @@
 import { User } from '../../repo/Users'
 import { Bot, ChatMessageContext, CommandExecutionContext, Module, MODULE_NAME, TwitchChatContext } from '../../types'
-import ModuleStorage from '../ModuleStorage'
 import { newCommandTrigger } from '../../common/commands'
 import { isBroadcaster, isMod } from '../../common/permissions'
 
@@ -12,16 +11,12 @@ class VoteModule implements Module {
   public name = MODULE_NAME.VOTE
 
   // @ts-ignore
-  private storage: ModuleStorage
-  // @ts-ignore
   private data: VoteModuleData
 
   constructor(
     public readonly bot: Bot,
     public user: User,
   ) {
-    this.storage = this.bot.getUserModuleStorage(this.user)
-
     // @ts-ignore
     return (async () => {
       this.data = await this.reinit()
@@ -34,14 +29,14 @@ class VoteModule implements Module {
   }
 
   async reinit(): Promise<VoteModuleData> {
-    const data = await this.storage.load(this.name, {
+    const data = await this.bot.getRepos().module.load(this.user.id, this.name, {
       votes: {},
     })
     return data as VoteModuleData
   }
 
   async save(): Promise<void> {
-    await this.storage.save(this.name, {
+    await this.bot.getRepos().module.save(this.user.id, this.name, {
       votes: this.data.votes,
     })
   }

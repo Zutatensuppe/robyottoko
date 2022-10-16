@@ -1,29 +1,28 @@
 import { NextFunction, Response } from "express"
-import Tokens, { Token, TokenType } from "../repo/Tokens"
-import Users, { User } from "../repo/Users"
+import { Repos } from "../repo/Repos"
+import { Token, TokenType } from "../repo/Tokens"
+import { User } from "../repo/Users"
 import { ApiUserData } from "../types"
 
 class Auth {
-  constructor(
-    private readonly userRepo: Users,
-    private readonly tokenRepo: Tokens
-  ) {
+  constructor(private readonly repos: Repos) {
+    // pass
   }
 
   async getTokenInfoByTokenAndType(token: string, type: string): Promise<Token | null> {
-    return await this.tokenRepo.getByTokenAndType(token, type)
+    return await this.repos.token.getByTokenAndType(token, type)
   }
 
   async _getUserById(id: number): Promise<User | null> {
-    return await this.userRepo.getById(id)
+    return await this.repos.user.getById(id)
   }
 
   async getUserAuthToken(user_id: number): Promise<string> {
-    return (await this.tokenRepo.generateAuthTokenForUserId(user_id)).token
+    return (await this.repos.token.generateAuthTokenForUserId(user_id)).token
   }
 
   async destroyToken(token: string): Promise<any> {
-    return await this.tokenRepo.delete(token)
+    return await this.repos.token.delete(token)
   }
 
   async _determineApiUserData(token: string | null): Promise<ApiUserData | null> {
@@ -35,7 +34,7 @@ class Auth {
       return null
     }
 
-    const user = await this.userRepo.getById(tokenInfo.user_id)
+    const user = await this.repos.user.getById(tokenInfo.user_id)
     if (!user) {
       return null
     }
@@ -46,7 +45,7 @@ class Auth {
         id: user.id,
         name: user.name,
         email: user.email,
-        groups: await this.userRepo.getGroups(user.id)
+        groups: await this.repos.user.getGroups(user.id)
       },
     }
   }

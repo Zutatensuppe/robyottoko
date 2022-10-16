@@ -78,7 +78,7 @@ class DrawcastModule implements Module {
   }
 
   async reinit(): Promise<DrawcastModuleData> {
-    const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {})
+    const data = await this.bot.getRepos().module.load(this.user.id, this.name, {})
     if (!data.images) {
       data.images = this._loadAllImages()
     }
@@ -89,7 +89,7 @@ class DrawcastModule implements Module {
   }
 
   async save(): Promise<void> {
-    await this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
+    await this.bot.getRepos().module.save(this.user.id, this.name, this.data)
   }
 
   getRoutes() {

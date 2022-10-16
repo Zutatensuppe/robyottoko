@@ -29,7 +29,7 @@ export const tryRefreshAccessToken = async (
   }
 
   // try to refresh the token, if possible
-  const row = await bot.getOauthTokenRepo().getByAccessToken(accessToken)
+  const row = await bot.getRepos().oauthToken.getByAccessToken(accessToken)
   if (!row || !row.refresh_token) {
     // we have no information about that token
     // or at least no way to refresh it
@@ -42,7 +42,7 @@ export const tryRefreshAccessToken = async (
   }
 
   // update the token in the database
-  await bot.getOauthTokenRepo().insert({
+  await bot.getRepos().oauthToken.insert({
     user_id: user.id,
     channel_id: user.twitch_id,
     access_token: refreshResp.access_token,
@@ -65,7 +65,7 @@ export const refreshExpiredTwitchChannelAccessToken = async (
   if (!client) {
     return { error: false, refreshed: false }
   }
-  const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user)
+  const accessToken = await bot.getRepos().oauthToken.getMatchingAccessToken(user)
   if (!accessToken) {
     return { error: false, refreshed: false }
   }
@@ -86,7 +86,7 @@ export const refreshExpiredTwitchChannelAccessToken = async (
   }
 
   // try to refresh the token, if possible
-  const row = await bot.getOauthTokenRepo().getByAccessToken(accessToken)
+  const row = await bot.getRepos().oauthToken.getByAccessToken(accessToken)
   if (!row || !row.refresh_token) {
     // we have no information about that token
     // or at least no way to refresh it
@@ -100,7 +100,7 @@ export const refreshExpiredTwitchChannelAccessToken = async (
   }
 
   // update the token in the database
-  await bot.getOauthTokenRepo().insert({
+  await bot.getRepos().oauthToken.insert({
     user_id: user.id,
     channel_id: channelId,
     access_token: refreshResp.access_token,
@@ -146,26 +146,26 @@ export const handleOAuthCodeCallback = async (
   if (loggedInUser && !loggedInUser.twitch_id) {
     loggedInUser.twitch_id = userResp.id
     loggedInUser.twitch_login = userResp.login
-    await bot.getUsers().save({
+    await bot.getRepos().user.save({
       id: loggedInUser.id,
       twitch_id: loggedInUser.twitch_id,
       twitch_login: loggedInUser.twitch_login,
     })
   }
 
-  let user = await bot.getUsers().getByTwitchId(userResp.id)
+  let user = await bot.getRepos().user.getByTwitchId(userResp.id)
   if (!user) {
-    user = await bot.getUsers().getByName(userResp.login)
+    user = await bot.getRepos().user.getByName(userResp.login)
     if (user) {
       user.twitch_id = userResp.id
       user.twitch_login = userResp.login
-      await bot.getUsers().save(user)
+      await bot.getRepos().user.save(user)
     }
   }
 
   if (!user) {
     // create user
-    const userId = await bot.getUsers().createUser({
+    const userId = await bot.getRepos().user.createUser({
       twitch_id: userResp.id,
       twitch_login: userResp.login,
       name: userResp.login,
@@ -178,14 +178,14 @@ export const handleOAuthCodeCallback = async (
       bot_status_messages: false,
       is_streaming: false,
     })
-    user = await bot.getUsers().getById(userId)
+    user = await bot.getRepos().user.getById(userId)
     if (!user) {
       return { error: true, updated: false, user: loggedInUser }
     }
   }
 
   // store the token
-  await bot.getOauthTokenRepo().insert({
+  await bot.getRepos().oauthToken.insert({
     user_id: user.id,
     channel_id: userResp.id,
     access_token: resp.access_token,

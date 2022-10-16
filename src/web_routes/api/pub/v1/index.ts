@@ -18,12 +18,12 @@ export const createRouter = (
       return
     }
     const apiKey = String(req.query.apiKey)
-    const t = await bot.getTokens().getByTokenAndType(apiKey, TokenType.API_KEY)
+    const t = await bot.getRepos().token.getByTokenAndType(apiKey, TokenType.API_KEY)
     if (!t) {
       res.status(403).send({ ok: false, error: 'invalid api key' })
       return
     }
-    const user = await bot.getUsers().getById(t.user_id)
+    const user = await bot.getRepos().user.getById(t.user_id)
     if (!user) {
       res.status(400).send({ ok: false, error: 'user_not_found' })
       return
@@ -60,7 +60,7 @@ export const createRouter = (
       }
       dateSince = new Date(stream.started_at)
     }
-    const userNames = await bot.getChatLog().getChatters(channelId, dateSince)
+    const userNames = await bot.getRepos().chatLog.getChatters(channelId, dateSince)
     res.status(200).send({ ok: true, data: { chatters: userNames, since: dateSince } })
   })
 
@@ -70,12 +70,12 @@ export const createRouter = (
       return
     }
     const apiKey = String(req.query.apiKey)
-    const t = await bot.getTokens().getByTokenAndType(apiKey, TokenType.API_KEY)
+    const t = await bot.getRepos().token.getByTokenAndType(apiKey, TokenType.API_KEY)
     if (!t) {
       res.status(403).send({ ok: false, error: 'invalid api key' })
       return
     }
-    const user = await bot.getUsers().getById(t.user_id)
+    const user = await bot.getRepos().user.getById(t.user_id)
     if (!user) {
       res.status(400).send({ ok: false, error: 'user_not_found' })
       return

@@ -219,7 +219,7 @@ class TwitchClientManager {
         } else {
           existsMap[subscription.type as SubscriptionType][twitchChannelId] = true
 
-          await this.bot.getEventSubRepo().insert({
+          await this.bot.getRepos().eventSub.insert({
             user_id: this.user.id,
             subscription_id: subscription.id,
             subscription_type: subscription.type,
@@ -248,7 +248,7 @@ class TwitchClientManager {
       return
     }
     await this.helixClient.deleteSubscription(subscription.id)
-    await this.bot.getEventSubRepo().delete({
+    await this.bot.getRepos().eventSub.delete({
       user_id: this.user.id,
       subscription_id: subscription.id,
     })
@@ -277,7 +277,7 @@ class TwitchClientManager {
     }
     const resp = await this.helixClient.createSubscription(subscription)
     if (resp && resp.data && resp.data.length > 0) {
-      await this.bot.getEventSubRepo().insert({
+      await this.bot.getRepos().eventSub.insert({
         user_id: this.user.id,
         subscription_id: resp.data[0].id,
         subscription_type: subscriptionType,

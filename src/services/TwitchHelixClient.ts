@@ -659,7 +659,7 @@ class TwitchHelixClient {
       log.info('getAllChannelPointsCustomRewards: no twitch id and login')
       return rewards
     }
-    const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user)
+    const accessToken = await bot.getRepos().oauthToken.getMatchingAccessToken(user)
     if (!accessToken) {
       log.info('getAllChannelPointsCustomRewards: no access token')
       return rewards

@@ -12,7 +12,7 @@ export class StreamOnlineEventHandler {
   ) {
     log.info('handle')
 
-    await bot.getStreamsRepo().insert({
+    await bot.getRepos().streams.insert({
       broadcaster_user_id: data.event.broadcaster_user_id,
       started_at: new Date(data.event.started_at),
     })

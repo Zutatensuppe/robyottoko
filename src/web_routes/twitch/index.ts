@@ -72,7 +72,7 @@ export const createRouter = (
         return
       }
       if (result.updated) {
-        const changedUser = await bot.getUsers().getById(result.user.id)
+        const changedUser = await bot.getRepos().user.getById(result.user.id)
         if (changedUser) {
           bot.getEventHub().emit('user_changed', changedUser)
         } else {
@@ -110,7 +110,7 @@ export const createRouter = (
 
       if (req.headers['twitch-eventsub-message-type'] === 'notification') {
         log.info({ type: req.body.subscription.type }, 'got notification request')
-        const row = await bot.getEventSubRepo().getOne({
+        const row = await bot.getRepos().eventSub.getOne({
           subscription_id: req.body.subscription.id,
         })
         if (!row) {
@@ -118,7 +118,7 @@ export const createRouter = (
           res.status(400).send({ reason: 'unknown subscription_id' })
           return
         }
-        const user = await bot.getUsers().getById(row.user_id)
+        const user = await bot.getRepos().user.getById(row.user_id)
         if (!user) {
           log.info('unknown user')
           res.status(400).send({ reason: 'unknown user' })
