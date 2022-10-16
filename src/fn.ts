@@ -103,7 +103,7 @@ const applyVariableChanges = async (
   if (!originalCmd.variableChanges) {
     return
   }
-  const variables = contextModule.bot.getUserVariables(contextModule.user)
+  const variables = contextModule.bot.getRepos().variables
   const doReplace = async (value: string) => await doReplacements(value, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
 
   for (const variableChange of originalCmd.variableChanges) {
@@ -126,15 +126,15 @@ const applyVariableChanges = async (
       }
     }
 
-    const globalVars: GlobalVariable[] = await variables.all()
+    const globalVars: GlobalVariable[] = await variables.all(contextModule.user.id)
     const idx = globalVars.findIndex(v => (v.name === name))
     if (idx !== -1) {
       if (op === 'set') {
-        await variables.set(name, value)
+        await variables.set(contextModule.user.id, name, value)
       } else if (op === 'increase_by') {
-        await variables.set(name, _increase(globalVars[idx].value, value))
+        await variables.set(contextModule.user.id, name, _increase(globalVars[idx].value, value))
       } else if (op === 'decrease_by') {
-        await variables.set(name, _decrease(globalVars[idx].value, value))
+        await variables.set(contextModule.user.id, name, _decrease(globalVars[idx].value, value))
       }
       //
       continue
@@ -174,7 +174,7 @@ const getTwitchUser = async (
   // look up the username in the local chat log
   // TODO: keep a record of userNames -> userDisplayNames in db instead
   //       of relying on the chat log
-  const username = await bot.getChatLog().getUsernameByUserDisplayName(usernameOrDisplayname)
+  const username = await bot.getRepos().chatLog.getUsernameByUserDisplayName(usernameOrDisplayname)
   if (username === null || username === usernameOrDisplayname) {
     return null
   }
@@ -250,7 +250,7 @@ export const doReplacements = async (
           return ''
         }
         const v = originalCmd.variables.find(v => v.name === m1)
-        const val = v ? v.value : (await bot.getUserVariables(user).get(m1))
+        const val = v ? v.value : (await bot.getRepos().variables.get(user.id, m1))
         return val === null ? '' : String(val)
       },
     },

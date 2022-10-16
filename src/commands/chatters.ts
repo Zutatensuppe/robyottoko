@@ -26,7 +26,7 @@ const chatters = (
     return
   }
 
-  const userNames = await bot.getChatLog().getChatters(ctx.context['room-id'], new Date(stream.started_at))
+  const userNames = await bot.getRepos().chatLog.getChatters(ctx.context['room-id'], new Date(stream.started_at))
   if (userNames.length === 0) {
     say(`It seems nobody chatted? :(`)
     return

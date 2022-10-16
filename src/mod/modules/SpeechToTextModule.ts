@@ -27,7 +27,7 @@ class SpeechToTextModule implements Module {
   }
 
   async reinit() {
-    const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {})
+    const data = await this.bot.getRepos().module.load(this.user.id, this.name, {})
     return {
       settings: default_settings(data.settings),
     }
@@ -87,7 +87,7 @@ class SpeechToTextModule implements Module {
       },
       'save': async (_ws: Socket, { settings }: { settings: SpeechToTextModuleSettings }) => {
         this.data.settings = settings
-        this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
+        this.bot.getRepos().module.save(this.user.id, this.name, this.data)
         await this.reinit()
         await this.updateClients('init')
       },

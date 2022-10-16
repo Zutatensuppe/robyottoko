@@ -51,7 +51,7 @@ const determineIsFirstChatStream = async (
     return false
   }
   const minDate = await determineStreamStartDate(context, helixClient)
-  return await bot.getChatLog().isFirstChatSince(context, minDate)
+  return await bot.getRepos().chatLog.isFirstChatSince(context, minDate)
 }
 
 export class ChatEventHandler {
@@ -70,12 +70,12 @@ export class ChatEventHandler {
       msg,
     })
 
-    bot.getChatLog().insert(context, msg)
+    bot.getRepos().chatLog.insert(context, msg)
 
     let _isFirstChatAlltime: null | boolean = null
     const isFirstChatAlltime = async (): Promise<boolean> => {
       if (_isFirstChatAlltime === null) {
-        _isFirstChatAlltime = await bot.getChatLog().isFirstChatAllTime(context)
+        _isFirstChatAlltime = await bot.getRepos().chatLog.isFirstChatAllTime(context)
       }
       return _isFirstChatAlltime
     }

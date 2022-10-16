@@ -42,7 +42,7 @@ const setChannelTitle = (
     return
   }
 
-  const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user)
+  const accessToken = await bot.getRepos().oauthToken.getMatchingAccessToken(user)
   if (!accessToken) {
     say(`❌ Not authorized to change title.`)
     return

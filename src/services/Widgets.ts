@@ -1,7 +1,6 @@
 import { nonce } from "../common/fn"
 import { MODULE_NAME, WIDGET_TYPE } from "../types"
-import Tokens from "../repo/Tokens"
-import { PubRepo } from "../repo/PubRepo"
+import { Repos } from "../repo/Repos"
 
 interface WidgetDefinition {
   type: WIDGET_TYPE
@@ -102,7 +101,8 @@ export const moduleByWidgetType = (widgetType: string): string | null => {
 
 
 class Widgets {
-  constructor(private readonly pubRepo: PubRepo, private readonly tokenRepo: Tokens) {
+  constructor(private readonly repos: Repos) {
+    // pass
   }
 
   _widgetUrl = (type: string, token: string): string => {
@@ -110,11 +110,11 @@ class Widgets {
   }
 
   async createWidgetUrl(type: string, userId: number): Promise<string> {
-    let t = await this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`)
+    let t = await this.repos.token.getByUserIdAndType(userId, `widget_${type}`)
     if (t) {
-      await this.tokenRepo.delete(t.token)
+      await this.repos.token.delete(t.token)
     }
-    t = await this.tokenRepo.createToken(userId, `widget_${type}`)
+    t = await this.repos.token.createToken(userId, `widget_${type}`)
     return this._widgetUrl(type, t.token)
   }
 
@@ -122,7 +122,7 @@ class Widgets {
     type: WIDGET_TYPE,
     userId: number,
   ): Promise<string> {
-    const t = await this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`)
+    const t = await this.repos.token.getByUserIdAndType(userId, `widget_${type}`)
     if (t) {
       return this._widgetUrl(type, t.token)
     }
@@ -130,13 +130,13 @@ class Widgets {
   }
 
   async pubUrl(target: string): Promise<string> {
-    const row = await this.pubRepo.getByTarget(target)
+    const row = await this.repos.pub.getByTarget(target)
     let id
     if (!row) {
       do {
         id = nonce(6)
-      } while (await this.pubRepo.getById(id))
-      await this.pubRepo.insert({ id, target })
+      } while (await this.repos.pub.getById(id))
+      await this.repos.pub.insert({ id, target })
     } else {
       id = row.id
     }

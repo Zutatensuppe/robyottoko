@@ -134,7 +134,7 @@ class SongrequestModule implements Module {
       }
       this.commands = initData.commands
       if (initData.shouldSave) {
-        await this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
+        await this.bot.getRepos().module.save(this.user.id, this.name, this.data)
       }
       return this;
     })();
@@ -146,7 +146,7 @@ class SongrequestModule implements Module {
 
   async reinit(): Promise<SongerquestModuleInitData> {
     let shouldSave = false
-    const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {
+    const data = await this.bot.getRepos().module.load(this.user.id, this.name, {
       filter: {
         tag: '',
       },
@@ -259,7 +259,7 @@ class SongrequestModule implements Module {
   }
 
   async save(): Promise<void> {
-    await this.bot.getUserModuleStorage(this.user).save(this.name, {
+    await this.bot.getRepos().module.save(this.user.id, this.name, {
       filter: this.data.filter,
       playlist: this.data.playlist.map(item => {
         item.title = item.title || ''
@@ -287,7 +287,7 @@ class SongrequestModule implements Module {
         playlist: this.data.playlist,
         settings: this.data.settings,
         commands: this.data.commands,
-        globalVariables: await this.bot.getUserVariables(this.user).all(),
+        globalVariables: await this.bot.getRepos().variables.all(this.user.id),
         channelPointsCustomRewards: this.channelPointsCustomRewards,
         widgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.SR, this.user.id),
       }

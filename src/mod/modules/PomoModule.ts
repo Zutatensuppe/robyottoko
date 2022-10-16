@@ -153,7 +153,7 @@ class PomoModule implements Module {
   }
 
   async save(): Promise<void> {
-    await this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
+    await this.bot.getRepos().module.save(this.user.id, this.name, this.data)
   }
 
   saveCommands() {
@@ -161,7 +161,7 @@ class PomoModule implements Module {
   }
 
   async reinit(): Promise<PomoModuleData> {
-    const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {})
+    const data = await this.bot.getRepos().module.load(this.user.id, this.name, {})
 
     return {
       settings: default_settings(data.settings),

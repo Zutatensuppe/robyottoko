@@ -85,25 +85,23 @@ export const createRouter = (
   })
 
   router.get('/page/variables', RequireLoginApiMiddleware, async (req: any, res: Response) => {
-    const variables = bot.getUserVariables(req.user)
-    res.send({ variables: await variables.all() })
+    res.send({ variables: await bot.getRepos().variables.all(req.user.id) })
   })
 
   router.post('/save-variables', RequireLoginApiMiddleware, express.json(), async (req: any, res: Response) => {
-    const variables = bot.getUserVariables(req.user)
-    await variables.replace(req.body.variables || [])
+    await bot.getRepos().variables.replace(req.user.id, req.body.variables || [])
     res.send()
   })
 
   router.get('/data/global', async (req: any, res: Response) => {
     res.send({
-      registeredUserCount: await bot.getUsers().countUsers(),
-      streamingUserCount: await bot.getUsers().countUniqueUsersStreaming(),
+      registeredUserCount: await bot.getRepos().user.countUsers(),
+      streamingUserCount: await bot.getRepos().user.countUniqueUsersStreaming(),
     })
   })
 
   router.get('/page/settings', RequireLoginApiMiddleware, async (req: any, res: Response) => {
-    const user = await bot.getUsers().getById(req.user.id) as User
+    const user = await bot.getRepos().user.getById(req.user.id) as User
     res.send({
       user: {
         id: user.id,
@@ -117,13 +115,13 @@ export const createRouter = (
         tmi_identity_client_secret: user.tmi_identity_client_secret,
         bot_enabled: user.bot_enabled,
         bot_status_messages: user.bot_status_messages,
-        groups: await bot.getUsers().getGroups(user.id)
+        groups: await bot.getRepos().user.getGroups(user.id)
       },
     })
   })
 
   router.get('/pub/:id', async (req, res, _next) => {
-    const row = await bot.getPubRepo().getById(req.params.id)
+    const row = await bot.getRepos().pub.getById(req.params.id)
     if (row && row.target) {
       req.url = row.target
       // @ts-ignore
@@ -165,7 +163,7 @@ export const createRouter = (
       }
     }
 
-    const originalUser = await bot.getUsers().getById(req.body.user.id)
+    const originalUser = await bot.getRepos().user.getById(req.body.user.id)
     if (!originalUser) {
       res.status(404).send({ reason: 'user_does_not_exist' })
       return
@@ -183,9 +181,9 @@ export const createRouter = (
       user.tmi_identity_password = req.body.user.tmi_identity_password
     }
 
-    await bot.getUsers().save(user)
+    await bot.getRepos().user.save(user)
 
-    const changedUser = await bot.getUsers().getById(user.id)
+    const changedUser = await bot.getRepos().user.getById(user.id)
     if (changedUser) {
       bot.getEventHub().emit('user_changed', changedUser)
     } else {
@@ -200,7 +198,7 @@ export const createRouter = (
     let clientId
     let clientSecret
     if (!req.user.groups.includes('admin')) {
-      const u = await bot.getUsers().getById(req.user.id) as User
+      const u = await bot.getRepos().user.getById(req.user.id) as User
       clientId = u.tmi_identity_client_id || bot.getConfig().twitch.tmi.identity.client_id
       clientSecret = u.tmi_identity_client_secret || bot.getConfig().twitch.tmi.identity.client_secret
     } else {

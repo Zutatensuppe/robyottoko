@@ -4,13 +4,10 @@ import ModuleManager from './mod/ModuleManager'
 import WebSocketServer from './net/WebSocketServer'
 import WebServer from './net/WebServer'
 import TwitchClientManager from './services/TwitchClientManager'
-import ModuleStorage from './mod/ModuleStorage'
 import { logger, setLogLevel } from './common/fn'
-import Users, { User } from './repo/Users'
-import Tokens from './repo/Tokens'
+import { User } from './repo/Users'
 import Cache from './services/Cache'
 import Db from './DbPostgres'
-import Variables from './services/Variables'
 import mitt from 'mitt'
 import GeneralModule from './mod/modules/GeneralModule'
 import SongrequestModule from './mod/modules/SongrequestModule'
@@ -23,16 +20,12 @@ import buildEnv from './buildEnv'
 import Widgets from './services/Widgets'
 
 import { Bot } from './types'
-import { ChatLogRepo } from './repo/ChatLogRepo'
 import fn from './fn'
 import { Timer } from './Timer'
 import { StreamStatusUpdater } from './services/StreamStatusUpdater'
 import { FrontendStatusUpdater } from './services/FrontendStatusUpdater'
 import { TwitchTmiClientManager } from './services/TwitchTmiClientManager'
-import { EventSubRepo } from './repo/EventSubRepo'
-import { PubRepo } from './repo/PubRepo'
-import { StreamsRepo } from './repo/StreamsRepo'
-import { OauthTokenRepo } from './repo/OauthTokenRepo'
+import { Repos } from './repo/Repos'
 
 setLogLevel(config.log.level)
 const log = logger('bot.ts')
@@ -52,26 +45,17 @@ const createBot = async (): Promise<Bot> => {
   await db.connect()
   await db.patch()
 
-  const userRepo = new Users(db)
-  const tokenRepo = new Tokens(db)
-  const pubRepo = new PubRepo(db)
-  const streamsRepo = new StreamsRepo(db)
-  const oauthTokenRepo = new OauthTokenRepo(db)
-
+  const repos = new Repos(db)
   const cache = new Cache(db)
-  const auth = new Auth(userRepo, tokenRepo)
-  const widgets = new Widgets(pubRepo, tokenRepo)
+  const auth = new Auth(repos)
+  const widgets = new Widgets(repos)
   const eventHub = mitt()
   const moduleManager = new ModuleManager()
   const webSocketServer = new WebSocketServer()
   const webServer = new WebServer()
-  const chatLog = new ChatLogRepo(db)
-  const eventSubRepo = new EventSubRepo(db)
   const twitchTmiClientManager = new TwitchTmiClientManager()
 
   class BotImpl implements Bot {
-    private userVariableInstances: Record<number, Variables> = {}
-    private userModuleStorageInstances: Record<number, ModuleStorage> = {}
     private userTwitchClientManagerInstances: Record<number, TwitchClientManager> = {}
     private streamStatusUpdater: StreamStatusUpdater | null = null
     private frontendStatusUpdater: FrontendStatusUpdater | null = null
@@ -79,21 +63,14 @@ const createBot = async (): Promise<Bot> => {
     getBuildVersion() { return buildEnv.buildVersion }
     getBuildDate() { return buildEnv.buildDate }
     getModuleManager() { return moduleManager }
-    getDb() { return db }
     getConfig() { return config }
-    getUsers() { return userRepo }
-    getTokens() { return tokenRepo }
+    getRepos() { return repos }
     getCache() { return cache }
     getAuth() { return auth }
     getWebServer() { return webServer }
     getWebSocketServer() { return webSocketServer }
     getWidgets() { return widgets }
     getEventHub() { return eventHub }
-    getChatLog() { return chatLog }
-    getPubRepo() { return pubRepo }
-    getEventSubRepo() { return eventSubRepo }
-    getStreamsRepo() { return streamsRepo }
-    getOauthTokenRepo() { return oauthTokenRepo }
     getStreamStatusUpdater(): StreamStatusUpdater {
       if (!this.streamStatusUpdater) {
         this.streamStatusUpdater = new StreamStatusUpdater(this)
@@ -116,20 +93,6 @@ const createBot = async (): Promise<Bot> => {
       return chatClient
         ? fn.sayFn(chatClient, target)
         : ((msg: string) => { log.info('say(), client not set, msg', msg) })
-    }
-
-    getUserVariables(user: User) {
-      if (!this.userVariableInstances[user.id]) {
-        this.userVariableInstances[user.id] = new Variables(this.getDb(), user.id)
-      }
-      return this.userVariableInstances[user.id]
-    }
-
-    getUserModuleStorage(user: User) {
-      if (!this.userModuleStorageInstances[user.id]) {
-        this.userModuleStorageInstances[user.id] = new ModuleStorage(this.getDb(), user.id)
-      }
-      return this.userModuleStorageInstances[user.id]
     }
 
     getUserTwitchClientManager(user: User) {
@@ -210,7 +173,7 @@ export const run = async () => {
 
   // one for each user, all in parallel
   const initializers: Promise<void>[] = []
-  for (const user of await bot.getUsers().all()) {
+  for (const user of await bot.getRepos().user.all()) {
     initializers.push(initForUser(bot, user))
   }
   await Promise.all(initializers)

@@ -55,7 +55,7 @@ export class FrontendStatusUpdater {
           },
         })
       } else if (result.refreshed) {
-        const changedUser = await this.bot.getUsers().getById(user.id)
+        const changedUser = await this.bot.getRepos().user.getById(user.id)
         if (changedUser) {
           this.bot.getEventHub().emit('access_token_refreshed', changedUser)
         } else {

@@ -80,7 +80,7 @@ class GeneralModule implements Module {
       this.commands = initData.commands
       this.timers = initData.timers
       if (initData.shouldSave) {
-        await this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
+        await this.bot.getRepos().module.save(this.user.id, this.name, this.data)
       }
       this.inittimers()
       return this;
@@ -208,7 +208,7 @@ class GeneralModule implements Module {
   }
 
   async reinit(): Promise<GeneralModuleInitData> {
-    const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {
+    const data = await this.bot.getRepos().module.load(this.user.id, this.name, {
       commands: [],
       settings: {
         volume: 100,
@@ -357,7 +357,7 @@ class GeneralModule implements Module {
         commands: this.data.commands,
         settings: this.data.settings,
         adminSettings: this.data.adminSettings,
-        globalVariables: await this.bot.getUserVariables(this.user).all(),
+        globalVariables: await this.bot.getRepos().variables.all(this.user.id),
         channelPointsCustomRewards: this.channelPointsCustomRewards,
         mediaWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.MEDIA, this.user.id),
       },
@@ -373,7 +373,7 @@ class GeneralModule implements Module {
   }
 
   async save(): Promise<void> {
-    await this.bot.getUserModuleStorage(this.user).save(this.name, this.data)
+    await this.bot.getRepos().module.save(this.user.id, this.name, this.data)
     const initData = await this.reinit()
     this.data = initData.data
     this.commands = initData.commands
