@@ -3375,7 +3375,7 @@ class WebServer {
     }
     async listen(bot) {
         const app = express();
-        const indexFile = path.resolve(__dirname, '..', '..', '..', 'build', 'public', 'index.html');
+        const indexFile = path.resolve(__dirname, '..', '..', 'build', 'public', 'index.html');
         app.use(cookieParser());
         app.use(bot.getAuth().addAuthInfoMiddleware());
         app.use('/', express.static('./build/public'));
@@ -7348,9 +7348,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-10-16T13:39:05.715Z",
+    buildDate: "2022-10-16T16:07:56.036Z",
     // @ts-ignore
-    buildVersion: "1.30.2",
+    buildVersion: "1.30.3",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
