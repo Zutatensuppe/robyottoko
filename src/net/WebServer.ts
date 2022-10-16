@@ -21,7 +21,7 @@ class WebServer {
   async listen(bot: Bot) {
     const app = express()
 
-    const indexFile = path.resolve(__dirname, '..', '..', '..', 'build', 'public', 'index.html')
+    const indexFile = path.resolve(__dirname, '..', '..', 'build', 'public', 'index.html')
 
     app.use(cookieParser())
     app.use(bot.getAuth().addAuthInfoMiddleware())
