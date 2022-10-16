@@ -78,21 +78,21 @@ class Tokens extends Repo {
 }
 
 class Auth {
-    constructor(userRepo, tokenRepo) {
-        this.userRepo = userRepo;
-        this.tokenRepo = tokenRepo;
+    constructor(repos) {
+        this.repos = repos;
+        // pass
     }
     async getTokenInfoByTokenAndType(token, type) {
-        return await this.tokenRepo.getByTokenAndType(token, type);
+        return await this.repos.token.getByTokenAndType(token, type);
     }
     async _getUserById(id) {
-        return await this.userRepo.getById(id);
+        return await this.repos.user.getById(id);
     }
     async getUserAuthToken(user_id) {
-        return (await this.tokenRepo.generateAuthTokenForUserId(user_id)).token;
+        return (await this.repos.token.generateAuthTokenForUserId(user_id)).token;
     }
     async destroyToken(token) {
-        return await this.tokenRepo.delete(token);
+        return await this.repos.token.delete(token);
     }
     async _determineApiUserData(token) {
         if (token === null) {
@@ -102,7 +102,7 @@ class Auth {
         if (!tokenInfo) {
             return null;
         }
-        const user = await this.userRepo.getById(tokenInfo.user_id);
+        const user = await this.repos.user.getById(tokenInfo.user_id);
         if (!user) {
             return null;
         }
@@ -112,7 +112,7 @@ class Auth {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                groups: await this.userRepo.getGroups(user.id)
+                groups: await this.repos.user.getGroups(user.id)
             },
         };
     }
@@ -626,36 +626,36 @@ const moduleByWidgetType = (widgetType) => {
     return found ? found.module : null;
 };
 class Widgets {
-    constructor(pubRepo, tokenRepo) {
-        this.pubRepo = pubRepo;
-        this.tokenRepo = tokenRepo;
+    constructor(repos) {
+        this.repos = repos;
         this._widgetUrl = (type, token) => {
             return `/widget/${type}/${token}/`;
         };
+        // pass
     }
     async createWidgetUrl(type, userId) {
-        let t = await this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`);
+        let t = await this.repos.token.getByUserIdAndType(userId, `widget_${type}`);
         if (t) {
-            await this.tokenRepo.delete(t.token);
+            await this.repos.token.delete(t.token);
         }
-        t = await this.tokenRepo.createToken(userId, `widget_${type}`);
+        t = await this.repos.token.createToken(userId, `widget_${type}`);
         return this._widgetUrl(type, t.token);
     }
     async widgetUrlByTypeAndUserId(type, userId) {
-        const t = await this.tokenRepo.getByUserIdAndType(userId, `widget_${type}`);
+        const t = await this.repos.token.getByUserIdAndType(userId, `widget_${type}`);
         if (t) {
             return this._widgetUrl(type, t.token);
         }
         return await this.createWidgetUrl(type, userId);
     }
     async pubUrl(target) {
-        const row = await this.pubRepo.getByTarget(target);
+        const row = await this.repos.pub.getByTarget(target);
         let id;
         if (!row) {
             do {
                 id = nonce(6);
-            } while (await this.pubRepo.getById(id));
-            await this.pubRepo.insert({ id, target });
+            } while (await this.repos.pub.getById(id));
+            await this.repos.pub.insert({ id, target });
         }
         else {
             id = row.id;
@@ -936,7 +936,7 @@ const applyVariableChanges = async (originalCmd, contextModule, rawCmd, context)
     if (!originalCmd.variableChanges) {
         return;
     }
-    const variables = contextModule.bot.getUserVariables(contextModule.user);
+    const variables = contextModule.bot.getRepos().variables;
     const doReplace = async (value) => await doReplacements(value, rawCmd, context, originalCmd, contextModule.bot, contextModule.user);
     for (const variableChange of originalCmd.variableChanges) {
         const op = variableChange.change;
@@ -958,17 +958,17 @@ const applyVariableChanges = async (originalCmd, contextModule, rawCmd, context)
                 continue;
             }
         }
-        const globalVars = await variables.all();
+        const globalVars = await variables.all(contextModule.user.id);
         const idx = globalVars.findIndex(v => (v.name === name));
         if (idx !== -1) {
             if (op === 'set') {
-                await variables.set(name, value);
+                await variables.set(contextModule.user.id, name, value);
             }
             else if (op === 'increase_by') {
-                await variables.set(name, _increase(globalVars[idx].value, value));
+                await variables.set(contextModule.user.id, name, _increase(globalVars[idx].value, value));
             }
             else if (op === 'decrease_by') {
-                await variables.set(name, _decrease(globalVars[idx].value, value));
+                await variables.set(contextModule.user.id, name, _decrease(globalVars[idx].value, value));
             }
             //
             continue;
@@ -998,7 +998,7 @@ const getTwitchUser = async (usernameOrDisplayname, helixClient, bot) => {
     // look up the username in the local chat log
     // TODO: keep a record of userNames -> userDisplayNames in db instead
     //       of relying on the chat log
-    const username = await bot.getChatLog().getUsernameByUserDisplayName(usernameOrDisplayname);
+    const username = await bot.getRepos().chatLog.getUsernameByUserDisplayName(usernameOrDisplayname);
     if (username === null || username === usernameOrDisplayname) {
         return null;
     }
@@ -1065,7 +1065,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return '';
                 }
                 const v = originalCmd.variables.find(v => v.name === m1);
-                const val = v ? v.value : (await bot.getUserVariables(user).get(m1));
+                const val = v ? v.value : (await bot.getRepos().variables.get(user.id, m1));
                 return val === null ? '' : String(val);
             },
         },
@@ -1787,7 +1787,7 @@ class TwitchHelixClient {
             log$v.info('getAllChannelPointsCustomRewards: no twitch id and login');
             return rewards;
         }
-        const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user);
+        const accessToken = await bot.getRepos().oauthToken.getMatchingAccessToken(user);
         if (!accessToken) {
             log$v.info('getAllChannelPointsCustomRewards: no access token');
             return rewards;
@@ -1841,7 +1841,7 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
         return null;
     }
     // try to refresh the token, if possible
-    const row = await bot.getOauthTokenRepo().getByAccessToken(accessToken);
+    const row = await bot.getRepos().oauthToken.getByAccessToken(accessToken);
     if (!row || !row.refresh_token) {
         // we have no information about that token
         // or at least no way to refresh it
@@ -1852,7 +1852,7 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
         return null;
     }
     // update the token in the database
-    await bot.getOauthTokenRepo().insert({
+    await bot.getRepos().oauthToken.insert({
         user_id: user.id,
         channel_id: user.twitch_id,
         access_token: refreshResp.access_token,
@@ -1870,7 +1870,7 @@ const refreshExpiredTwitchChannelAccessToken = async (bot, user) => {
     if (!client) {
         return { error: false, refreshed: false };
     }
-    const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user);
+    const accessToken = await bot.getRepos().oauthToken.getMatchingAccessToken(user);
     if (!accessToken) {
         return { error: false, refreshed: false };
     }
@@ -1887,7 +1887,7 @@ const refreshExpiredTwitchChannelAccessToken = async (bot, user) => {
         return { error: false, refreshed: false };
     }
     // try to refresh the token, if possible
-    const row = await bot.getOauthTokenRepo().getByAccessToken(accessToken);
+    const row = await bot.getRepos().oauthToken.getByAccessToken(accessToken);
     if (!row || !row.refresh_token) {
         // we have no information about that token
         // or at least no way to refresh it
@@ -1899,7 +1899,7 @@ const refreshExpiredTwitchChannelAccessToken = async (bot, user) => {
         return { error: 'refresh_oauth_token_failed', refreshed: false };
     }
     // update the token in the database
-    await bot.getOauthTokenRepo().insert({
+    await bot.getRepos().oauthToken.insert({
         user_id: user.id,
         channel_id: channelId,
         access_token: refreshResp.access_token,
@@ -1927,24 +1927,24 @@ const handleOAuthCodeCallback = async (code, redirectUri, bot, loggedInUser) => 
     if (loggedInUser && !loggedInUser.twitch_id) {
         loggedInUser.twitch_id = userResp.id;
         loggedInUser.twitch_login = userResp.login;
-        await bot.getUsers().save({
+        await bot.getRepos().user.save({
             id: loggedInUser.id,
             twitch_id: loggedInUser.twitch_id,
             twitch_login: loggedInUser.twitch_login,
         });
     }
-    let user = await bot.getUsers().getByTwitchId(userResp.id);
+    let user = await bot.getRepos().user.getByTwitchId(userResp.id);
     if (!user) {
-        user = await bot.getUsers().getByName(userResp.login);
+        user = await bot.getRepos().user.getByName(userResp.login);
         if (user) {
             user.twitch_id = userResp.id;
             user.twitch_login = userResp.login;
-            await bot.getUsers().save(user);
+            await bot.getRepos().user.save(user);
         }
     }
     if (!user) {
         // create user
-        const userId = await bot.getUsers().createUser({
+        const userId = await bot.getRepos().user.createUser({
             twitch_id: userResp.id,
             twitch_login: userResp.login,
             name: userResp.login,
@@ -1957,13 +1957,13 @@ const handleOAuthCodeCallback = async (code, redirectUri, bot, loggedInUser) => 
             bot_status_messages: false,
             is_streaming: false,
         });
-        user = await bot.getUsers().getById(userId);
+        user = await bot.getRepos().user.getById(userId);
         if (!user) {
             return { error: true, updated: false, user: loggedInUser };
         }
     }
     // store the token
-    await bot.getOauthTokenRepo().insert({
+    await bot.getRepos().oauthToken.insert({
         user_id: user.id,
         channel_id: userResp.id,
         access_token: resp.access_token,
@@ -2892,7 +2892,7 @@ const log$o = logger('StreamOnlineEventHandler.ts');
 class StreamOnlineEventHandler {
     async handle(bot, data) {
         log$o.info('handle');
-        await bot.getStreamsRepo().insert({
+        await bot.getRepos().streams.insert({
             broadcaster_user_id: data.event.broadcaster_user_id,
             started_at: new Date(data.event.started_at),
         });
@@ -2905,10 +2905,10 @@ class StreamOfflineEventHandler {
         log$n.info('handle');
         // get last started stream for broadcaster
         // if it exists and it didnt end yet set ended_at date
-        const stream = await bot.getStreamsRepo().getLatestByChannelId(data.event.broadcaster_user_id);
+        const stream = await bot.getRepos().streams.getLatestByChannelId(data.event.broadcaster_user_id);
         if (stream) {
             if (!stream.ended_at) {
-                await bot.getStreamsRepo().setEndDate(`${stream.id}`, new Date());
+                await bot.getRepos().streams.setEndDate(`${stream.id}`, new Date());
             }
         }
     }
@@ -2987,7 +2987,7 @@ const createRouter$3 = (bot) => {
                 return;
             }
             if (result.updated) {
-                const changedUser = await bot.getUsers().getById(result.user.id);
+                const changedUser = await bot.getRepos().user.getById(result.user.id);
                 if (changedUser) {
                     bot.getEventHub().emit('user_changed', changedUser);
                 }
@@ -3018,7 +3018,7 @@ const createRouter$3 = (bot) => {
         }
         if (req.headers['twitch-eventsub-message-type'] === 'notification') {
             log$l.info({ type: req.body.subscription.type }, 'got notification request');
-            const row = await bot.getEventSubRepo().getOne({
+            const row = await bot.getRepos().eventSub.getOne({
                 subscription_id: req.body.subscription.id,
             });
             if (!row) {
@@ -3026,7 +3026,7 @@ const createRouter$3 = (bot) => {
                 res.status(400).send({ reason: 'unknown subscription_id' });
                 return;
             }
-            const user = await bot.getUsers().getById(row.user_id);
+            const user = await bot.getRepos().user.getById(row.user_id);
             if (!user) {
                 log$l.info('unknown user');
                 res.status(400).send({ reason: 'unknown user' });
@@ -3070,12 +3070,12 @@ const createRouter$2 = (bot) => {
             return;
         }
         const apiKey = String(req.query.apiKey);
-        const t = await bot.getTokens().getByTokenAndType(apiKey, TokenType.API_KEY);
+        const t = await bot.getRepos().token.getByTokenAndType(apiKey, TokenType.API_KEY);
         if (!t) {
             res.status(403).send({ ok: false, error: 'invalid api key' });
             return;
         }
-        const user = await bot.getUsers().getById(t.user_id);
+        const user = await bot.getRepos().user.getById(t.user_id);
         if (!user) {
             res.status(400).send({ ok: false, error: 'user_not_found' });
             return;
@@ -3109,7 +3109,7 @@ const createRouter$2 = (bot) => {
             }
             dateSince = new Date(stream.started_at);
         }
-        const userNames = await bot.getChatLog().getChatters(channelId, dateSince);
+        const userNames = await bot.getRepos().chatLog.getChatters(channelId, dateSince);
         res.status(200).send({ ok: true, data: { chatters: userNames, since: dateSince } });
     });
     router.get('/drawcast/images', async (req, res) => {
@@ -3118,12 +3118,12 @@ const createRouter$2 = (bot) => {
             return;
         }
         const apiKey = String(req.query.apiKey);
-        const t = await bot.getTokens().getByTokenAndType(apiKey, TokenType.API_KEY);
+        const t = await bot.getRepos().token.getByTokenAndType(apiKey, TokenType.API_KEY);
         if (!t) {
             res.status(403).send({ ok: false, error: 'invalid api key' });
             return;
         }
-        const user = await bot.getUsers().getById(t.user_id);
+        const user = await bot.getRepos().user.getById(t.user_id);
         if (!user) {
             res.status(400).send({ ok: false, error: 'user_not_found' });
             return;
@@ -3222,22 +3222,20 @@ const createRouter = (bot) => {
         res.send({ widgets: mappedWidgets });
     });
     router.get('/page/variables', RequireLoginApiMiddleware, async (req, res) => {
-        const variables = bot.getUserVariables(req.user);
-        res.send({ variables: await variables.all() });
+        res.send({ variables: await bot.getRepos().variables.all(req.user.id) });
     });
     router.post('/save-variables', RequireLoginApiMiddleware, express.json(), async (req, res) => {
-        const variables = bot.getUserVariables(req.user);
-        await variables.replace(req.body.variables || []);
+        await bot.getRepos().variables.replace(req.user.id, req.body.variables || []);
         res.send();
     });
     router.get('/data/global', async (req, res) => {
         res.send({
-            registeredUserCount: await bot.getUsers().countUsers(),
-            streamingUserCount: await bot.getUsers().countUniqueUsersStreaming(),
+            registeredUserCount: await bot.getRepos().user.countUsers(),
+            streamingUserCount: await bot.getRepos().user.countUniqueUsersStreaming(),
         });
     });
     router.get('/page/settings', RequireLoginApiMiddleware, async (req, res) => {
-        const user = await bot.getUsers().getById(req.user.id);
+        const user = await bot.getRepos().user.getById(req.user.id);
         res.send({
             user: {
                 id: user.id,
@@ -3251,12 +3249,12 @@ const createRouter = (bot) => {
                 tmi_identity_client_secret: user.tmi_identity_client_secret,
                 bot_enabled: user.bot_enabled,
                 bot_status_messages: user.bot_status_messages,
-                groups: await bot.getUsers().getGroups(user.id)
+                groups: await bot.getRepos().user.getGroups(user.id)
             },
         });
     });
     router.get('/pub/:id', async (req, res, _next) => {
-        const row = await bot.getPubRepo().getById(req.params.id);
+        const row = await bot.getRepos().pub.getById(req.params.id);
         if (row && row.target) {
             req.url = row.target;
             // @ts-ignore
@@ -3295,7 +3293,7 @@ const createRouter = (bot) => {
                 return;
             }
         }
-        const originalUser = await bot.getUsers().getById(req.body.user.id);
+        const originalUser = await bot.getRepos().user.getById(req.body.user.id);
         if (!originalUser) {
             res.status(404).send({ reason: 'user_does_not_exist' });
             return;
@@ -3311,8 +3309,8 @@ const createRouter = (bot) => {
             user.tmi_identity_username = req.body.user.tmi_identity_username;
             user.tmi_identity_password = req.body.user.tmi_identity_password;
         }
-        await bot.getUsers().save(user);
-        const changedUser = await bot.getUsers().getById(user.id);
+        await bot.getRepos().user.save(user);
+        const changedUser = await bot.getRepos().user.getById(user.id);
         if (changedUser) {
             bot.getEventHub().emit('user_changed', changedUser);
         }
@@ -3327,7 +3325,7 @@ const createRouter = (bot) => {
         let clientId;
         let clientSecret;
         if (!req.user.groups.includes('admin')) {
-            const u = await bot.getUsers().getById(req.user.id);
+            const u = await bot.getRepos().user.getById(req.user.id);
             clientId = u.tmi_identity_client_id || bot.getConfig().twitch.tmi.identity.client_id;
             clientSecret = u.tmi_identity_client_secret || bot.getConfig().twitch.tmi.identity.client_secret;
         }
@@ -3451,7 +3449,7 @@ const determineIsFirstChatStream = async (bot, user, context) => {
         return false;
     }
     const minDate = await determineStreamStartDate(context, helixClient);
-    return await bot.getChatLog().isFirstChatSince(context, minDate);
+    return await bot.getRepos().chatLog.isFirstChatSince(context, minDate);
 };
 class ChatEventHandler {
     async handle(bot, user, target, context, msg) {
@@ -3462,11 +3460,11 @@ class ChatEventHandler {
             target,
             msg,
         });
-        bot.getChatLog().insert(context, msg);
+        bot.getRepos().chatLog.insert(context, msg);
         let _isFirstChatAlltime = null;
         const isFirstChatAlltime = async () => {
             if (_isFirstChatAlltime === null) {
-                _isFirstChatAlltime = await bot.getChatLog().isFirstChatAllTime(context);
+                _isFirstChatAlltime = await bot.getRepos().chatLog.isFirstChatAllTime(context);
             }
             return _isFirstChatAlltime;
         };
@@ -3721,7 +3719,7 @@ class TwitchClientManager {
                 }
                 else {
                     existsMap[subscription.type][twitchChannelId] = true;
-                    await this.bot.getEventSubRepo().insert({
+                    await this.bot.getRepos().eventSub.insert({
                         user_id: this.user.id,
                         subscription_id: subscription.id,
                         subscription_type: subscription.type,
@@ -3746,7 +3744,7 @@ class TwitchClientManager {
             return;
         }
         await this.helixClient.deleteSubscription(subscription.id);
-        await this.bot.getEventSubRepo().delete({
+        await this.bot.getRepos().eventSub.delete({
             user_id: this.user.id,
             subscription_id: subscription.id,
         });
@@ -3770,7 +3768,7 @@ class TwitchClientManager {
         };
         const resp = await this.helixClient.createSubscription(subscription);
         if (resp && resp.data && resp.data.length > 0) {
-            await this.bot.getEventSubRepo().insert({
+            await this.bot.getRepos().eventSub.insert({
                 user_id: this.user.id,
                 subscription_id: resp.data[0].id,
                 subscription_type: subscriptionType,
@@ -3803,94 +3801,24 @@ class TwitchClientManager {
     }
 }
 
-const log$h = logger('ModuleStorage.ts');
-const TABLE$8 = 'robyottoko.module';
-class ModuleStorage {
-    constructor(db, userId) {
-        this.db = db;
-        this.userId = userId;
-    }
-    async load(key, def) {
-        try {
-            const where = { user_id: this.userId, key };
-            const row = await this.db.get(TABLE$8, where);
-            const data = row ? JSON.parse('' + row.data) : null;
-            return data ? Object.assign({}, def, data) : def;
-        }
-        catch (e) {
-            log$h.error({ e });
-            return def;
-        }
-    }
-    async save(key, rawData) {
-        const where = { user_id: this.userId, key };
-        const data = JSON.stringify(rawData);
-        const dbData = Object.assign({}, where, { data });
-        await this.db.upsert(TABLE$8, dbData, where);
-    }
-}
-
-const TABLE$7 = 'robyottoko.user';
-class Users extends Repo {
-    async get(by) {
-        return await this.db.get(TABLE$7, by) || null;
-    }
-    async all() {
-        return await this.db.getMany(TABLE$7);
-    }
-    async getById(id) {
-        return await this.get({ id });
-    }
-    async getByTwitchId(twitchId) {
-        return await this.get({ twitch_id: twitchId });
-    }
-    async getByEmail(email) {
-        return await this.get({ email });
-    }
-    async getByName(name) {
-        return await this.db._get(`SELECT * FROM ${TABLE$7} WHERE LOWER(name) = LOWER($1)`, [name]);
-    }
-    async save(user) {
-        await this.db.upsert(TABLE$7, user, { id: user.id });
-    }
-    async getGroups(id) {
-        const rows = await this.db._getMany(`
-select g.name from robyottoko.user_group g
-inner join robyottoko.user_x_user_group x on x.user_group_id = g.id
-where x.user_id = $1`, [id]);
-        return rows.map(r => r.name);
-    }
-    async createUser(user) {
-        return (await this.db.insert(TABLE$7, user, 'id'));
-    }
-    async countUsers() {
-        const rows = await this.db.getMany(TABLE$7);
-        return rows.length;
-    }
-    async countUniqueUsersStreaming() {
-        const rows = await this.db.getMany(TABLE$7, { is_streaming: true });
-        return rows.length;
-    }
-}
-
-const TABLE$6 = 'robyottoko.cache';
-const log$g = logger('Cache.ts');
+const TABLE$8 = 'robyottoko.cache';
+const log$h = logger('Cache.ts');
 class Cache {
     constructor(db) {
         this.db = db;
     }
     async set(key, value, lifetime) {
         if (value === undefined) {
-            log$g.error({ key }, 'unable to store undefined value for cache key');
+            log$h.error({ key }, 'unable to store undefined value for cache key');
             return;
         }
         const expiresAt = lifetime === Infinity ? null : (new Date(new Date().getTime() + lifetime));
         const valueStr = JSON.stringify(value);
-        await this.db.upsert(TABLE$6, { key, value: valueStr, expires_at: expiresAt }, { key });
+        await this.db.upsert(TABLE$8, { key, value: valueStr, expires_at: expiresAt }, { key });
     }
     async get(key) {
         // get *non-expired* cache entry from db
-        const row = await this.db._get('SELECT * from ' + TABLE$6 + ' WHERE key = $1 AND (expires_at IS NULL OR expires_at > $2)', [key, new Date()]);
+        const row = await this.db._get('SELECT * from ' + TABLE$8 + ' WHERE key = $1 AND (expires_at IS NULL OR expires_at > $2)', [key, new Date()]);
         return row ? JSON.parse(row.value) : undefined;
     }
 }
@@ -4022,7 +3950,7 @@ class Mutex {
 
 // @ts-ignore
 const { Client } = pg.default;
-const log$f = logger('Db.ts');
+const log$g = logger('Db.ts');
 const mutex = new Mutex();
 class Db {
     constructor(connectStr, patchesDir) {
@@ -4042,7 +3970,7 @@ class Db {
         for (const f of files) {
             if (patches.includes(f)) {
                 if (verbose) {
-                    log$f.info(`➡ skipping already applied db patch: ${f}`);
+                    log$g.info(`➡ skipping already applied db patch: ${f}`);
                 }
                 continue;
             }
@@ -4061,10 +3989,10 @@ class Db {
                     throw e;
                 }
                 await this.insert('public.db_patches', { id: f });
-                log$f.info(`✓ applied db patch: ${f}`);
+                log$g.info(`✓ applied db patch: ${f}`);
             }
             catch (e) {
-                log$f.error(`✖ unable to apply patch: ${f} ${e}`);
+                log$g.error(`✖ unable to apply patch: ${f} ${e}`);
                 return;
             }
         }
@@ -4155,7 +4083,7 @@ class Db {
             return (await this.dbh.query(query, params)).rows[0] || null;
         }
         catch (e) {
-            log$f.info({ fn: '_get', query, params });
+            log$g.info({ fn: '_get', query, params });
             console.error(e);
             throw e;
         }
@@ -4165,7 +4093,7 @@ class Db {
             return await this.dbh.query(query, params);
         }
         catch (e) {
-            log$f.info({ fn: 'run', query, params });
+            log$g.info({ fn: 'run', query, params });
             console.error(e);
             throw e;
         }
@@ -4175,7 +4103,7 @@ class Db {
             return (await this.dbh.query(query, params)).rows || [];
         }
         catch (e) {
-            log$f.info({ fn: '_getMany', query, params });
+            log$g.info({ fn: '_getMany', query, params });
             console.error(e);
             throw e;
         }
@@ -4240,45 +4168,9 @@ class Db {
     }
 }
 
-const TABLE$5 = 'robyottoko.variables';
-class Variables {
-    constructor(db, userId) {
-        this.db = db;
-        this.userId = userId;
-    }
-    async set(name, value) {
-        await this.db.upsert(TABLE$5, {
-            user_id: this.userId,
-            name,
-            value: JSON.stringify(value),
-        }, {
-            name,
-            user_id: this.userId,
-        });
-    }
-    async get(name) {
-        const row = await this.db.get(TABLE$5, { name, user_id: this.userId });
-        return row ? JSON.parse(row.value) : null;
-    }
-    async all() {
-        const rows = await this.db.getMany(TABLE$5, { user_id: this.userId });
-        return rows.map(row => ({
-            name: row.name,
-            value: JSON.parse(row.value),
-        }));
-    }
-    async replace(variables) {
-        const names = variables.map(v => v.name);
-        await this.db.delete(TABLE$5, { user_id: this.userId, name: { '$nin': names } });
-        for (const { name, value } of variables) {
-            await this.set(name, value);
-        }
-    }
-}
-
 function mitt(n){return {all:n=n||new Map,on:function(t,e){var i=n.get(t);i?i.push(e):n.set(t,[e]);},off:function(t,e){var i=n.get(t);i&&(e?i.splice(i.indexOf(e)>>>0,1):n.set(t,[]));},emit:function(t,e){var i=n.get(t);i&&i.slice().map(function(n){n(e);}),(i=n.get("*"))&&i.slice().map(function(n){n(t,e);});}}}
 
-const log$e = logger('countdown.ts');
+const log$f = logger('countdown.ts');
 const countdown = (originalCmd, bot, user) => async (ctx) => {
     const sayFn = bot.sayFn(user, ctx.target);
     const doReplacements = async (text) => {
@@ -4335,7 +4227,7 @@ const countdown = (originalCmd, bot, user) => async (ctx) => {
                 duration = (await parseDuration(`${a.value}`)) || 0;
             }
             catch (e) {
-                log$e.error({ message: e.message, value: a.value });
+                log$f.error({ message: e.message, value: a.value });
                 return;
             }
             actions.push(async () => await fn.sleep(duration));
@@ -4358,7 +4250,7 @@ var Madochan = {
     defaultWeirdness: 1,
 };
 
-const log$d = logger('madochanCreateWord.ts');
+const log$e = logger('madochanCreateWord.ts');
 const madochanCreateWord = (originalCmd, bot, user) => async (ctx) => {
     if (!ctx.rawCmd) {
         return;
@@ -4378,7 +4270,7 @@ const madochanCreateWord = (originalCmd, bot, user) => async (ctx) => {
         }
     }
     catch (e) {
-        log$d.error({ e });
+        log$e.error({ e });
         say(`Error occured, unable to generate a word :("`);
     }
 };
@@ -4389,7 +4281,7 @@ const randomText = (originalCmd, bot, user) => async (ctx) => {
     say(await fn.doReplacements(getRandom(texts), ctx.rawCmd, ctx.context, originalCmd, bot, user));
 };
 
-const log$c = logger('playMedia.ts');
+const log$d = logger('playMedia.ts');
 const isTwitchClipUrl = (url) => {
     return !!url.match(/^https:\/\/clips\.twitch\.tv\/.+/);
 };
@@ -4398,14 +4290,14 @@ const downloadVideo = async (originalUrl) => {
     const filename = `${hash(originalUrl)}-clip.mp4`;
     const outfile = `./data/uploads/${filename}`;
     if (!fs.existsSync(outfile)) {
-        log$c.debug({ outfile }, 'downloading the video');
+        log$d.debug({ outfile }, 'downloading the video');
         const child = childProcess.execFile(config.youtubeDlBinary, [originalUrl, '-o', outfile]);
         await new Promise((resolve) => {
             child.on('close', resolve);
         });
     }
     else {
-        log$c.debug({ outfile }, 'video exists');
+        log$d.debug({ outfile }, 'video exists');
     }
     return `/uploads/${filename}`;
 };
@@ -4418,20 +4310,20 @@ const prepareData = async (ctx, originalCmd, bot, user) => {
     if (!data.video.url) {
         return data;
     }
-    log$c.debug({ url: data.video.url }, 'video url is defined');
+    log$d.debug({ url: data.video.url }, 'video url is defined');
     data.video.url = await doReplaces(data.video.url);
     if (!data.video.url) {
-        log$c.debug('no video url found');
+        log$d.debug('no video url found');
     }
     else if (isTwitchClipUrl(data.video.url)) {
         // video url looks like a twitch clip url, dl it first
-        log$c.debug({ url: data.video.url }, 'twitch clip found');
+        log$d.debug({ url: data.video.url }, 'twitch clip found');
         data.video.url = await downloadVideo(data.video.url);
     }
     else {
         // otherwise assume it is already a playable video url
         // TODO: youtube videos maybe should also be downloaded
-        log$c.debug('video is assumed to be directly playable via html5 video element');
+        log$d.debug('video is assumed to be directly playable via html5 video element');
     }
     return data;
 };
@@ -4443,11 +4335,11 @@ const playMedia = (originalCmd, bot, user) => async (ctx) => {
     });
 };
 
-const log$b = logger('chatters.ts');
+const log$c = logger('chatters.ts');
 const chatters = (bot, user) => async (ctx) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!ctx.context || !helixClient) {
-        log$b.info({
+        log$c.info({
             context: ctx.context,
             helixClient,
         }, 'unable to execute chatters command, client, context, or helixClient missing');
@@ -4459,7 +4351,7 @@ const chatters = (bot, user) => async (ctx) => {
         say(`It seems this channel is not live at the moment...`);
         return;
     }
-    const userNames = await bot.getChatLog().getChatters(ctx.context['room-id'], new Date(stream.started_at));
+    const userNames = await bot.getRepos().chatLog.getChatters(ctx.context['room-id'], new Date(stream.started_at));
     if (userNames.length === 0) {
         say(`It seems nobody chatted? :(`);
         return;
@@ -4470,11 +4362,11 @@ const chatters = (bot, user) => async (ctx) => {
     });
 };
 
-const log$a = logger('setChannelTitle.ts');
+const log$b = logger('setChannelTitle.ts');
 const setChannelTitle = (originalCmd, bot, user) => async (ctx) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!ctx.rawCmd || !ctx.context || !helixClient) {
-        log$a.info({
+        log$b.info({
             rawCmd: ctx.rawCmd,
             context: ctx.context,
             helixClient,
@@ -4503,7 +4395,7 @@ const setChannelTitle = (originalCmd, bot, user) => async (ctx) => {
         say(`❌ Unable to change title because it is too long (${len}/${max} characters).`);
         return;
     }
-    const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user);
+    const accessToken = await bot.getRepos().oauthToken.getMatchingAccessToken(user);
     if (!accessToken) {
         say(`❌ Not authorized to change title.`);
         return;
@@ -4517,11 +4409,11 @@ const setChannelTitle = (originalCmd, bot, user) => async (ctx) => {
     }
 };
 
-const log$9 = logger('setChannelGameId.ts');
+const log$a = logger('setChannelGameId.ts');
 const setChannelGameId = (originalCmd, bot, user) => async (ctx) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!ctx.rawCmd || !ctx.context || !helixClient) {
-        log$9.info({
+        log$a.info({
             rawCmd: ctx.rawCmd,
             context: ctx.context,
             helixClient,
@@ -4547,7 +4439,7 @@ const setChannelGameId = (originalCmd, bot, user) => async (ctx) => {
         say('🔎 Category not found.');
         return;
     }
-    const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user);
+    const accessToken = await bot.getRepos().oauthToken.getMatchingAccessToken(user);
     if (!accessToken) {
         say(`❌ Not authorized to update category.`);
         return;
@@ -4753,11 +4645,11 @@ var EMOTE_DISPLAY_FN;
     EMOTE_DISPLAY_FN["RANDOM_BEZIER"] = "randomBezier";
 })(EMOTE_DISPLAY_FN || (EMOTE_DISPLAY_FN = {}));
 
-const log$8 = logger('setStreamTags.ts');
+const log$9 = logger('setStreamTags.ts');
 const addStreamTags = (originalCmd, bot, user) => async (ctx) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!ctx.rawCmd || !ctx.context || !helixClient) {
-        log$8.info({
+        log$9.info({
             rawCmd: ctx.rawCmd,
             context: ctx.context,
             helixClient,
@@ -4797,25 +4689,25 @@ const addStreamTags = (originalCmd, bot, user) => async (ctx) => {
         say(`❌ Too many tags already exist, current tags: ${names.join(', ')}`);
         return;
     }
-    const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user);
+    const accessToken = await bot.getRepos().oauthToken.getMatchingAccessToken(user);
     if (!accessToken) {
         say(`❌ Not authorized to add tag: ${tagEntry.name}`);
         return;
     }
     const resp = await helixClient.replaceStreamTags(accessToken, channelId, newSettableTagIds, bot, user);
     if (!resp || resp.status < 200 || resp.status >= 300) {
-        log$8.error(resp);
+        log$9.error(resp);
         say(`❌ Unable to add tag: ${tagEntry.name}`);
         return;
     }
     say(`✨ Added tag: ${tagEntry.name}`);
 };
 
-const log$7 = logger('setStreamTags.ts');
+const log$8 = logger('setStreamTags.ts');
 const removeStreamTags = (originalCmd, bot, user) => async (ctx) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!ctx.rawCmd || !ctx.context || !helixClient) {
-        log$7.info({
+        log$8.info({
             rawCmd: ctx.rawCmd,
             context: ctx.context,
             helixClient,
@@ -4851,7 +4743,7 @@ const removeStreamTags = (originalCmd, bot, user) => async (ctx) => {
     }
     const newTagIds = manualTags.filter((_value, index) => index !== idx).map(entry => entry.tag_id);
     const newSettableTagIds = newTagIds.filter(tagId => !config.twitch.auto_tags.find(t => t.id === tagId));
-    const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user);
+    const accessToken = await bot.getRepos().oauthToken.getMatchingAccessToken(user);
     if (!accessToken) {
         say(`❌ Not authorized to remove tag: ${manualTags[idx].localization_names['en-us']}`);
         return;
@@ -4887,7 +4779,7 @@ class GeneralModule {
             this.commands = initData.commands;
             this.timers = initData.timers;
             if (initData.shouldSave) {
-                await this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
+                await this.bot.getRepos().module.save(this.user.id, this.name, this.data);
             }
             this.inittimers();
             return this;
@@ -5006,7 +4898,7 @@ class GeneralModule {
         };
     }
     async reinit() {
-        const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {
+        const data = await this.bot.getRepos().module.load(this.user.id, this.name, {
             commands: [],
             settings: {
                 volume: 100,
@@ -5152,7 +5044,7 @@ class GeneralModule {
                 commands: this.data.commands,
                 settings: this.data.settings,
                 adminSettings: this.data.adminSettings,
-                globalVariables: await this.bot.getUserVariables(this.user).all(),
+                globalVariables: await this.bot.getRepos().variables.all(this.user.id),
                 channelPointsCustomRewards: this.channelPointsCustomRewards,
                 mediaWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.MEDIA, this.user.id),
             },
@@ -5165,7 +5057,7 @@ class GeneralModule {
         this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, await this.wsdata(eventName));
     }
     async save() {
-        await this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
+        await this.bot.getRepos().module.save(this.user.id, this.name, this.data);
         const initData = await this.reinit();
         this.data = initData.data;
         this.commands = initData.commands;
@@ -5244,7 +5136,7 @@ class GeneralModule {
     }
 }
 
-const log$6 = logger('Youtube.ts');
+const log$7 = logger('Youtube.ts');
 const get = async (url, args) => {
     args.key = config.modules.sr.google.api_key;
     const resp = await xhr.get(url + asQueryArgs(args));
@@ -5261,7 +5153,7 @@ const fetchDataByYoutubeId = async (youtubeId) => {
         return json.items[0];
     }
     catch (e) {
-        log$6.error({ e, json, youtubeId });
+        log$7.error({ e, json, youtubeId });
         return null;
     }
 };
@@ -5345,7 +5237,7 @@ const getYoutubeIdsBySearch = async (searchterm, videoDuration = YoutubeVideoDur
             }
         }
         catch (e) {
-            log$6.info({ e });
+            log$7.info({ e });
         }
     }
     return ids;
@@ -5428,7 +5320,7 @@ const default_settings$4 = (obj = null) => ({
     maxItemsShown: getProp(obj, ['maxItemsShown'], -1),
 });
 
-const log$5 = logger('SongrequestModule.ts');
+const log$6 = logger('SongrequestModule.ts');
 const ADD_TYPE = {
     NOT_ADDED: 0,
     ADDED: 1,
@@ -5511,7 +5403,7 @@ class SongrequestModule {
             };
             this.commands = initData.commands;
             if (initData.shouldSave) {
-                await this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
+                await this.bot.getRepos().module.save(this.user.id, this.name, this.data);
             }
             return this;
         })();
@@ -5521,7 +5413,7 @@ class SongrequestModule {
     }
     async reinit() {
         let shouldSave = false;
-        const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {
+        const data = await this.bot.getRepos().module.load(this.user.id, this.name, {
             filter: {
                 tag: '',
             },
@@ -5628,7 +5520,7 @@ class SongrequestModule {
         };
     }
     async save() {
-        await this.bot.getUserModuleStorage(this.user).save(this.name, {
+        await this.bot.getRepos().module.save(this.user.id, this.name, {
             filter: this.data.filter,
             playlist: this.data.playlist.map(item => {
                 item.title = item.title || '';
@@ -5655,7 +5547,7 @@ class SongrequestModule {
                 playlist: this.data.playlist,
                 settings: this.data.settings,
                 commands: this.data.commands,
-                globalVariables: await this.bot.getUserVariables(this.user).all(),
+                globalVariables: await this.bot.getRepos().variables.all(this.user.id),
                 channelPointsCustomRewards: this.channelPointsCustomRewards,
                 widgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.SR, this.user.id),
             }
@@ -6274,7 +6166,7 @@ class SongrequestModule {
     cmdResr(_originalCommand) {
         return async (ctx) => {
             if (!ctx.rawCmd || !ctx.context) {
-                log$5.error('cmdResr: client, command or context empty');
+                log$6.error('cmdResr: client, command or context empty');
                 return;
             }
             const say = this.bot.sayFn(this.user, ctx.target);
@@ -6630,7 +6522,6 @@ class VoteModule {
         this.bot = bot;
         this.user = user;
         this.name = MODULE_NAME.VOTE;
-        this.storage = this.bot.getUserModuleStorage(this.user);
         // @ts-ignore
         return (async () => {
             this.data = await this.reinit();
@@ -6641,13 +6532,13 @@ class VoteModule {
         this.user = user;
     }
     async reinit() {
-        const data = await this.storage.load(this.name, {
+        const data = await this.bot.getRepos().module.load(this.user.id, this.name, {
             votes: {},
         });
         return data;
     }
     async save() {
-        await this.storage.save(this.name, {
+        await this.bot.getRepos().module.save(this.user.id, this.name, {
             votes: this.data.votes,
         });
     }
@@ -6808,7 +6699,7 @@ class SpeechToTextModule {
         this.user = user;
     }
     async reinit() {
-        const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {});
+        const data = await this.bot.getRepos().module.load(this.user.id, this.name, {});
         return {
             settings: default_settings$3(data.settings),
         };
@@ -6862,7 +6753,7 @@ class SpeechToTextModule {
             },
             'save': async (_ws, { settings }) => {
                 this.data.settings = settings;
-                this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
+                this.bot.getRepos().module.save(this.user.id, this.name, this.data);
                 await this.reinit();
                 await this.updateClients('init');
             },
@@ -6935,7 +6826,7 @@ const default_images = (list = null) => {
     return [];
 };
 
-const log$4 = logger('DrawcastModule.ts');
+const log$5 = logger('DrawcastModule.ts');
 class DrawcastModule {
     constructor(bot, user) {
         this.bot = bot;
@@ -6987,7 +6878,7 @@ class DrawcastModule {
         // pass
     }
     async reinit() {
-        const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {});
+        const data = await this.bot.getRepos().module.load(this.user.id, this.name, {});
         if (!data.images) {
             data.images = this._loadAllImages();
         }
@@ -6997,7 +6888,7 @@ class DrawcastModule {
         };
     }
     async save() {
-        await this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
+        await this.bot.getRepos().module.save(this.user.id, this.name, this.data);
     }
     getRoutes() {
         return {
@@ -7050,7 +6941,7 @@ class DrawcastModule {
                 const image = this.data.images.find(item => item.path === path);
                 if (!image) {
                     // should not happen
-                    log$4.error({ path }, 'approve_image: image not found');
+                    log$5.error({ path }, 'approve_image: image not found');
                     return;
                 }
                 image.approved = true;
@@ -7066,7 +6957,7 @@ class DrawcastModule {
                 const image = this.data.images.find(item => item.path === path);
                 if (!image) {
                     // should not happen
-                    log$4.error({ path }, 'deny_image: image not found');
+                    log$5.error({ path }, 'deny_image: image not found');
                     return;
                 }
                 this.data.images = this.data.images.filter(item => item.path !== image.path);
@@ -7080,13 +6971,13 @@ class DrawcastModule {
                 const image = this.data.images.find(item => item.path === path);
                 if (!image) {
                     // should not happen
-                    log$4.error({ path }, 'delete_image: image not found');
+                    log$5.error({ path }, 'delete_image: image not found');
                     return;
                 }
                 const deleted = this._deleteImage(image);
                 if (!deleted) {
                     // should not happen
-                    log$4.error({ path }, 'delete_image: image not deleted');
+                    log$5.error({ path }, 'delete_image: image not deleted');
                     return;
                 }
                 this.data.settings.favoriteLists = this.data.settings.favoriteLists.map(favoriteList => {
@@ -7165,7 +7056,7 @@ const default_settings$1 = (obj = null) => ({
     avatarDefinitions: getProp(obj, ['avatarDefinitions'], []).map(default_avatar_definition),
 });
 
-const log$3 = logger('AvatarModule.ts');
+const log$4 = logger('AvatarModule.ts');
 class AvatarModule {
     constructor(bot, user) {
         this.bot = bot;
@@ -7181,13 +7072,13 @@ class AvatarModule {
         this.user = user;
     }
     async save() {
-        await this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
+        await this.bot.getRepos().module.save(this.user.id, this.name, this.data);
     }
     saveCommands() {
         // pass
     }
     async reinit() {
-        const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {});
+        const data = await this.bot.getRepos().module.load(this.user.id, this.name, {});
         return {
             settings: default_settings$1(data.settings),
             state: default_state$1(data.state),
@@ -7234,7 +7125,7 @@ class AvatarModule {
                         await this.save();
                     }
                     catch (e) {
-                        log$3.error({ tuberIdx, slotName, itemIdx }, 'ws ctrl: unable to setSlot');
+                        log$4.error({ tuberIdx, slotName, itemIdx }, 'ws ctrl: unable to setSlot');
                     }
                 }
                 else if (data.data.ctrl === "lockState") {
@@ -7245,7 +7136,7 @@ class AvatarModule {
                         await this.save();
                     }
                     catch (e) {
-                        log$3.error({ tuberIdx, lockedState }, 'ws ctrl: unable to lockState');
+                        log$4.error({ tuberIdx, lockedState }, 'ws ctrl: unable to lockState');
                     }
                 }
                 else if (data.data.ctrl === "setTuber") {
@@ -7403,13 +7294,13 @@ class PomoModule {
         this.user = user;
     }
     async save() {
-        await this.bot.getUserModuleStorage(this.user).save(this.name, this.data);
+        await this.bot.getRepos().module.save(this.user.id, this.name, this.data);
     }
     saveCommands() {
         // pass
     }
     async reinit() {
-        const data = await this.bot.getUserModuleStorage(this.user).load(this.name, {});
+        const data = await this.bot.getRepos().module.load(this.user.id, this.name, {});
         return {
             settings: default_settings(data.settings),
             state: default_state(data.state),
@@ -7457,58 +7348,12 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-10-16T11:22:26.262Z",
+    buildDate: "2022-10-16T13:39:05.715Z",
     // @ts-ignore
-    buildVersion: "1.30.1",
+    buildVersion: "1.30.2",
 };
 
-const TABLE$4 = 'robyottoko.chat_log';
-class ChatLogRepo extends Repo {
-    async insert(context, msg) {
-        await this.db.insert(TABLE$4, {
-            created_at: new Date(),
-            broadcaster_user_id: context['room-id'],
-            user_name: context.username,
-            display_name: context['display-name'],
-            message: msg,
-        });
-    }
-    async count(where) {
-        const whereObject = this.db._buildWhere(where);
-        const row = await this.db._get(`select COUNT(*) as c from ${TABLE$4} ${whereObject.sql}`, whereObject.values);
-        return parseInt(`${row.c}`, 10);
-    }
-    async isFirstChatAllTime(context) {
-        return await this.count({
-            broadcaster_user_id: context['room-id'],
-            user_name: context.username,
-        }) === 1;
-    }
-    async isFirstChatSince(context, date) {
-        return await this.count({
-            broadcaster_user_id: context['room-id'],
-            user_name: context.username,
-            created_at: { '$gte': date },
-        }) === 1;
-    }
-    // HACK: we have no other way of getting a user name by user display name atm
-    // TODO: replace this functionality
-    async getUsernameByUserDisplayName(displayName) {
-        const row = await this.db.get(TABLE$4, {
-            display_name: displayName,
-        });
-        return row ? row.user_name : null;
-    }
-    async getChatters(channelId, since) {
-        const whereObject = this.db._buildWhere({
-            broadcaster_user_id: channelId,
-            created_at: { '$gte': since },
-        });
-        return (await this.db._getMany(`select display_name from robyottoko.chat_log ${whereObject.sql} group by display_name`, whereObject.values)).map(r => r.display_name);
-    }
-}
-
-const log$2 = logger('StreamStatusUpdater.ts');
+const log$3 = logger('StreamStatusUpdater.ts');
 class StreamStatusUpdater {
     constructor(bot) {
         this.bot = bot;
@@ -7532,27 +7377,27 @@ class StreamStatusUpdater {
             return;
         }
         const stream = await client.getStreamByUserId(user.twitch_id);
-        this.bot.getUsers().save({
+        this.bot.getRepos().user.save({
             id: user.id,
             is_streaming: !!stream,
         });
     }
     async _doUpdate() {
-        log$2.info('doing update');
+        log$3.info('doing update');
         const updatePromises = [];
         for (const user of this.users) {
             updatePromises.push(this._doUpdateForUser(user));
         }
         await Promise.all(updatePromises);
         setTimeout(() => this._doUpdate(), 5 * MINUTE);
-        log$2.info('done update');
+        log$3.info('done update');
     }
     start() {
         this._doUpdate();
     }
 }
 
-const log$1 = logger('FrontendStatusUpdater.ts');
+const log$2 = logger('FrontendStatusUpdater.ts');
 class FrontendStatusUpdater {
     constructor(bot) {
         this.bot = bot;
@@ -7586,8 +7431,8 @@ class FrontendStatusUpdater {
         if (this.bot.getConfig().bot.supportTwitchAccessTokens) {
             const result = await refreshExpiredTwitchChannelAccessToken(this.bot, user);
             if (result.error) {
-                log$1.error('Unable to validate or refresh OAuth token.');
-                log$1.error(`user: ${user.name}, channel: ${user.twitch_login}, error: ${result.error}`);
+                log$2.error('Unable to validate or refresh OAuth token.');
+                log$2.error(`user: ${user.name}, channel: ${user.twitch_login}, error: ${result.error}`);
                 problems.push({
                     message: 'access_token_invalid',
                     details: {
@@ -7596,12 +7441,12 @@ class FrontendStatusUpdater {
                 });
             }
             else if (result.refreshed) {
-                const changedUser = await this.bot.getUsers().getById(user.id);
+                const changedUser = await this.bot.getRepos().user.getById(user.id);
                 if (changedUser) {
                     this.bot.getEventHub().emit('access_token_refreshed', changedUser);
                 }
                 else {
-                    log$1.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`);
+                    log$2.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`);
                 }
             }
         }
@@ -7609,14 +7454,14 @@ class FrontendStatusUpdater {
         this.bot.getWebSocketServer().notifyAll([user.id], 'core', data);
     }
     async _doUpdate() {
-        log$1.info('doing update');
+        log$2.info('doing update');
         const updatePromises = [];
         for (const user of this.users) {
             updatePromises.push(this._doUpdateForUser(user));
         }
         await Promise.all(updatePromises);
         setTimeout(() => this._doUpdate(), 1 * MINUTE);
-        log$1.info('done update');
+        log$2.info('done update');
     }
     start() {
         this._doUpdate();
@@ -7644,66 +7489,224 @@ class TwitchTmiClientManager {
     }
 }
 
-const TABLE$3 = 'robyottoko.event_sub';
+const TABLE$7 = 'robyottoko.chat_log';
+class ChatLogRepo extends Repo {
+    async insert(context, msg) {
+        await this.db.insert(TABLE$7, {
+            created_at: new Date(),
+            broadcaster_user_id: context['room-id'],
+            user_name: context.username,
+            display_name: context['display-name'],
+            message: msg,
+        });
+    }
+    async count(where) {
+        const whereObject = this.db._buildWhere(where);
+        const row = await this.db._get(`select COUNT(*) as c from ${TABLE$7} ${whereObject.sql}`, whereObject.values);
+        return parseInt(`${row.c}`, 10);
+    }
+    async isFirstChatAllTime(context) {
+        return await this.count({
+            broadcaster_user_id: context['room-id'],
+            user_name: context.username,
+        }) === 1;
+    }
+    async isFirstChatSince(context, date) {
+        return await this.count({
+            broadcaster_user_id: context['room-id'],
+            user_name: context.username,
+            created_at: { '$gte': date },
+        }) === 1;
+    }
+    // HACK: we have no other way of getting a user name by user display name atm
+    // TODO: replace this functionality
+    async getUsernameByUserDisplayName(displayName) {
+        const row = await this.db.get(TABLE$7, {
+            display_name: displayName,
+        });
+        return row ? row.user_name : null;
+    }
+    async getChatters(channelId, since) {
+        const whereObject = this.db._buildWhere({
+            broadcaster_user_id: channelId,
+            created_at: { '$gte': since },
+        });
+        return (await this.db._getMany(`select display_name from robyottoko.chat_log ${whereObject.sql} group by display_name`, whereObject.values)).map(r => r.display_name);
+    }
+}
+
+const TABLE$6 = 'robyottoko.event_sub';
 class EventSubRepo extends Repo {
     async insert(sub) {
-        await this.db.upsert(TABLE$3, sub, {
+        await this.db.upsert(TABLE$6, sub, {
             subscription_id: sub.subscription_id,
         });
     }
     async delete(where) {
-        await this.db.delete(TABLE$3, where);
+        await this.db.delete(TABLE$6, where);
     }
     async getOne(where) {
-        return await this.db.get(TABLE$3, where);
+        return await this.db.get(TABLE$6, where);
     }
 }
 
-const TABLE$2 = 'robyottoko.pub';
-class PubRepo extends Repo {
-    async getByTarget(target) {
-        return await this.db.get(TABLE$2, { target });
+const TABLE$5 = 'robyottoko.module';
+const log$1 = logger('ModuleRepo.ts');
+class ModuleRepo extends Repo {
+    async load(userId, key, def) {
+        try {
+            const where = { user_id: userId, key };
+            const row = await this.db.get(TABLE$5, where);
+            const data = row ? JSON.parse('' + row.data) : null;
+            return data ? Object.assign({}, def, data) : def;
+        }
+        catch (e) {
+            log$1.error({ e });
+            return def;
+        }
     }
-    async getById(id) {
-        return await this.db.get(TABLE$2, { id });
-    }
-    async insert(row) {
-        await this.db.insert(TABLE$2, row);
-    }
-}
-
-const TABLE$1 = 'robyottoko.streams';
-class StreamsRepo extends Repo {
-    async getLatestByChannelId(channelId) {
-        return await this.db.get(TABLE$1, {
-            broadcaster_user_id: channelId,
-        }, [{ started_at: -1 }]);
-    }
-    async setEndDate(streamId, date) {
-        await this.db.update(TABLE$1, {
-            ended_at: date,
-        }, { id: streamId });
-    }
-    async insert(data) {
-        await this.db.insert(TABLE$1, data);
+    async save(userId, key, rawData) {
+        const where = { user_id: userId, key };
+        const data = JSON.stringify(rawData);
+        const dbData = Object.assign({}, where, { data });
+        await this.db.upsert(TABLE$5, dbData, where);
     }
 }
 
-const TABLE = 'robyottoko.oauth_token';
+const TABLE$4 = 'robyottoko.oauth_token';
 class OauthTokenRepo extends Repo {
     // get the newest access token (even if it is already expired)
     async getMatchingAccessToken(user) {
-        const row = await this.db.get(TABLE, {
+        const row = await this.db.get(TABLE$4, {
             user_id: user.id,
             channel_id: user.twitch_id,
         }, [{ expires_at: -1 }]);
         return row ? row.access_token : null;
     }
     async getByAccessToken(accessToken) {
-        return await this.db.get(TABLE, { access_token: accessToken });
+        return await this.db.get(TABLE$4, { access_token: accessToken });
     }
     async insert(row) {
-        await this.db.insert(TABLE, row);
+        await this.db.insert(TABLE$4, row);
+    }
+}
+
+const TABLE$3 = 'robyottoko.pub';
+class PubRepo extends Repo {
+    async getByTarget(target) {
+        return await this.db.get(TABLE$3, { target });
+    }
+    async getById(id) {
+        return await this.db.get(TABLE$3, { id });
+    }
+    async insert(row) {
+        await this.db.insert(TABLE$3, row);
+    }
+}
+
+const TABLE$2 = 'robyottoko.streams';
+class StreamsRepo extends Repo {
+    async getLatestByChannelId(channelId) {
+        return await this.db.get(TABLE$2, {
+            broadcaster_user_id: channelId,
+        }, [{ started_at: -1 }]);
+    }
+    async setEndDate(streamId, date) {
+        await this.db.update(TABLE$2, {
+            ended_at: date,
+        }, { id: streamId });
+    }
+    async insert(data) {
+        await this.db.insert(TABLE$2, data);
+    }
+}
+
+const TABLE$1 = 'robyottoko.user';
+class Users extends Repo {
+    async get(by) {
+        return await this.db.get(TABLE$1, by) || null;
+    }
+    async all() {
+        return await this.db.getMany(TABLE$1);
+    }
+    async getById(id) {
+        return await this.get({ id });
+    }
+    async getByTwitchId(twitchId) {
+        return await this.get({ twitch_id: twitchId });
+    }
+    async getByEmail(email) {
+        return await this.get({ email });
+    }
+    async getByName(name) {
+        return await this.db._get(`SELECT * FROM ${TABLE$1} WHERE LOWER(name) = LOWER($1)`, [name]);
+    }
+    async save(user) {
+        await this.db.upsert(TABLE$1, user, { id: user.id });
+    }
+    async getGroups(id) {
+        const rows = await this.db._getMany(`
+select g.name from robyottoko.user_group g
+inner join robyottoko.user_x_user_group x on x.user_group_id = g.id
+where x.user_id = $1`, [id]);
+        return rows.map(r => r.name);
+    }
+    async createUser(user) {
+        return (await this.db.insert(TABLE$1, user, 'id'));
+    }
+    async countUsers() {
+        const rows = await this.db.getMany(TABLE$1);
+        return rows.length;
+    }
+    async countUniqueUsersStreaming() {
+        const rows = await this.db.getMany(TABLE$1, { is_streaming: true });
+        return rows.length;
+    }
+}
+
+const TABLE = 'robyottoko.variables';
+class VariablesRepo extends Repo {
+    async set(userId, name, value) {
+        await this.db.upsert(TABLE, {
+            user_id: userId,
+            name,
+            value: JSON.stringify(value),
+        }, {
+            name,
+            user_id: userId,
+        });
+    }
+    async get(userId, name) {
+        const row = await this.db.get(TABLE, { name, user_id: userId });
+        return row ? JSON.parse(row.value) : null;
+    }
+    async all(userId) {
+        const rows = await this.db.getMany(TABLE, { user_id: userId });
+        return rows.map(row => ({
+            name: row.name,
+            value: JSON.parse(row.value),
+        }));
+    }
+    async replace(userId, variables) {
+        const names = variables.map(v => v.name);
+        await this.db.delete(TABLE, { user_id: userId, name: { '$nin': names } });
+        for (const { name, value } of variables) {
+            await this.set(userId, name, value);
+        }
+    }
+}
+
+class Repos {
+    constructor(db) {
+        this.user = new Users(db);
+        this.token = new Tokens(db);
+        this.pub = new PubRepo(db);
+        this.streams = new StreamsRepo(db);
+        this.variables = new VariablesRepo(db);
+        this.oauthToken = new OauthTokenRepo(db);
+        this.module = new ModuleRepo(db);
+        this.chatLog = new ChatLogRepo(db);
+        this.eventSub = new EventSubRepo(db);
     }
 }
 
@@ -7722,25 +7725,17 @@ const createBot = async () => {
     const db = new Db(config.db.connectStr, config.db.patchesDir);
     await db.connect();
     await db.patch();
-    const userRepo = new Users(db);
-    const tokenRepo = new Tokens(db);
-    const pubRepo = new PubRepo(db);
-    const streamsRepo = new StreamsRepo(db);
-    const oauthTokenRepo = new OauthTokenRepo(db);
+    const repos = new Repos(db);
     const cache = new Cache(db);
-    const auth = new Auth(userRepo, tokenRepo);
-    const widgets = new Widgets(pubRepo, tokenRepo);
+    const auth = new Auth(repos);
+    const widgets = new Widgets(repos);
     const eventHub = mitt();
     const moduleManager = new ModuleManager();
     const webSocketServer = new WebSocketServer();
     const webServer = new WebServer();
-    const chatLog = new ChatLogRepo(db);
-    const eventSubRepo = new EventSubRepo(db);
     const twitchTmiClientManager = new TwitchTmiClientManager();
     class BotImpl {
         constructor() {
-            this.userVariableInstances = {};
-            this.userModuleStorageInstances = {};
             this.userTwitchClientManagerInstances = {};
             this.streamStatusUpdater = null;
             this.frontendStatusUpdater = null;
@@ -7748,21 +7743,14 @@ const createBot = async () => {
         getBuildVersion() { return buildEnv.buildVersion; }
         getBuildDate() { return buildEnv.buildDate; }
         getModuleManager() { return moduleManager; }
-        getDb() { return db; }
         getConfig() { return config; }
-        getUsers() { return userRepo; }
-        getTokens() { return tokenRepo; }
+        getRepos() { return repos; }
         getCache() { return cache; }
         getAuth() { return auth; }
         getWebServer() { return webServer; }
         getWebSocketServer() { return webSocketServer; }
         getWidgets() { return widgets; }
         getEventHub() { return eventHub; }
-        getChatLog() { return chatLog; }
-        getPubRepo() { return pubRepo; }
-        getEventSubRepo() { return eventSubRepo; }
-        getStreamsRepo() { return streamsRepo; }
-        getOauthTokenRepo() { return oauthTokenRepo; }
         getStreamStatusUpdater() {
             if (!this.streamStatusUpdater) {
                 this.streamStatusUpdater = new StreamStatusUpdater(this);
@@ -7783,18 +7771,6 @@ const createBot = async () => {
             return chatClient
                 ? fn.sayFn(chatClient, target)
                 : ((msg) => { log.info('say(), client not set, msg', msg); });
-        }
-        getUserVariables(user) {
-            if (!this.userVariableInstances[user.id]) {
-                this.userVariableInstances[user.id] = new Variables(this.getDb(), user.id);
-            }
-            return this.userVariableInstances[user.id];
-        }
-        getUserModuleStorage(user) {
-            if (!this.userModuleStorageInstances[user.id]) {
-                this.userModuleStorageInstances[user.id] = new ModuleStorage(this.getDb(), user.id);
-            }
-            return this.userModuleStorageInstances[user.id];
         }
         getUserTwitchClientManager(user) {
             if (!this.userTwitchClientManagerInstances[user.id]) {
@@ -7858,7 +7834,7 @@ const run = async () => {
     log.debug(`creating bot took ${timer.lastSplitMs()}ms`);
     // one for each user, all in parallel
     const initializers = [];
-    for (const user of await bot.getUsers().all()) {
+    for (const user of await bot.getRepos().user.all()) {
         initializers.push(initForUser(bot, user));
     }
     await Promise.all(initializers);
