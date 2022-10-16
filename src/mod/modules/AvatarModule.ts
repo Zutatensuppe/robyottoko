@@ -1,7 +1,7 @@
 import { logger } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
 import { Bot, ChatMessageContext, Module, MODULE_NAME, WIDGET_TYPE } from '../../types'
-import { User } from '../../services/Users'
+import { User } from '../../repo/Users'
 import { AvatarModuleSettings, AvatarModuleState, AvatarModuleWsSaveData, default_settings, default_state } from './AvatarModuleCommon'
 
 const log = logger('AvatarModule.ts')

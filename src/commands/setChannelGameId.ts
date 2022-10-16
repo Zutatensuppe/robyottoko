@@ -1,8 +1,7 @@
 import { Bot, CommandExecutionContext, CommandFunction, SetChannelGameIdCommand } from '../types'
 import fn from './../fn'
 import { logger } from './../common/fn'
-import { User } from '../services/Users'
-import { getMatchingAccessToken } from '../oauth'
+import { User } from '../repo/Users'
 
 const log = logger('setChannelGameId.ts')
 
@@ -40,7 +39,7 @@ const setChannelGameId = (
     return
   }
 
-  const accessToken = await getMatchingAccessToken(bot, user)
+  const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user)
   if (!accessToken) {
     say(`❌ Not authorized to update category.`)
     return

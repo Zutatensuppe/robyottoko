@@ -110,7 +110,7 @@ export const createRouter = (
 
       if (req.headers['twitch-eventsub-message-type'] === 'notification') {
         log.info({ type: req.body.subscription.type }, 'got notification request')
-        const row = await bot.getDb().get('robyottoko.event_sub', {
+        const row = await bot.getEventSubRepo().getOne({
           subscription_id: req.body.subscription.id,
         })
         if (!row) {
@@ -118,8 +118,7 @@ export const createRouter = (
           res.status(400).send({ reason: 'unknown subscription_id' })
           return
         }
-        const userId = row.user_id as number
-        const user = await bot.getUsers().getById(userId)
+        const user = await bot.getUsers().getById(row.user_id)
         if (!user) {
           log.info('unknown user')
           res.status(400).send({ reason: 'unknown user' })

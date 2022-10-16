@@ -5,6 +5,12 @@ const log = logger('ModuleStorage.ts')
 
 const TABLE = 'robyottoko.module'
 
+interface Row {
+  user_id: number
+  key: string
+  data: string
+}
+
 class ModuleStorage {
   constructor(private readonly db: Db, private readonly userId: number) {
   }
@@ -12,7 +18,7 @@ class ModuleStorage {
   async load(key: string, def: Record<string, any>): Promise<Record<string, any>> {
     try {
       const where = { user_id: this.userId, key }
-      const row = await this.db.get(TABLE, where)
+      const row = await this.db.get<Row>(TABLE, where)
       const data = row ? JSON.parse('' + row.data) : null
       return data ? Object.assign({}, def, data) : def
     } catch (e) {

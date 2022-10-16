@@ -3,7 +3,7 @@ import { nonce, logger } from '../../common/fn'
 import fs from 'fs'
 import { Socket } from '../../net/WebSocketServer'
 import { Bot, ChatMessageContext, DrawcastSettings, Module, MODULE_NAME, WIDGET_TYPE } from '../../types'
-import { User } from '../../services/Users'
+import { User } from '../../repo/Users'
 import { default_settings, default_images, DrawcastModuleData, DrawcastImage, DrawcastModuleWsData } from './DrawcastModuleCommon'
 import { NextFunction, Response } from 'express'
 

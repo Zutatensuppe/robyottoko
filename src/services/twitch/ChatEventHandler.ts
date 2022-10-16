@@ -6,7 +6,7 @@ import fn from "../../fn";
 import { Bot, CommandTrigger, CommandTriggerType, Module, RawCommand, TwitchChatContext } from "../../types";
 import { CommandExecutor } from "../CommandExecutor";
 import TwitchHelixClient from "../TwitchHelixClient";
-import { User } from "../Users";
+import { User } from "../../repo/Users";
 
 const log = logger('ChatEventHandler.ts')
 

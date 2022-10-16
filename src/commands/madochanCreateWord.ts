@@ -1,5 +1,5 @@
 import { logger } from '../common/fn'
-import { User } from '../services/Users'
+import { User } from '../repo/Users'
 import { Bot, CommandExecutionContext, CommandFunction, MadochanCommand } from '../types'
 import Madochan from './../services/Madochan'
 

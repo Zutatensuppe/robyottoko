@@ -1,4 +1,4 @@
-import { User } from '../../services/Users'
+import { User } from '../../repo/Users'
 import { Bot, ChatMessageContext, CommandExecutionContext, Module, MODULE_NAME, TwitchChatContext } from '../../types'
 import ModuleStorage from '../ModuleStorage'
 import { newCommandTrigger } from '../../common/commands'

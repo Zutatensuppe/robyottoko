@@ -4,10 +4,11 @@ import cookieParser from 'cookie-parser'
 import express, { NextFunction, Response } from 'express'
 import path from 'path'
 import http from 'http'
-import { logger } from './common/fn'
-import { Bot } from './types'
-import { createRouter as createTwitchRouter } from './web_routes/twitch'
-import { createRouter as createApiRouter } from './web_routes/api'
+import { logger } from '../common/fn'
+import { Bot } from '../types'
+import { createRouter as createTwitchRouter } from '../web_routes/twitch'
+import { createRouter as createApiRouter } from '../web_routes/api'
+import { RequireLoginMiddleware } from './middleware/RequireLoginMiddleware'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -20,19 +21,7 @@ class WebServer {
   async listen(bot: Bot) {
     const app = express()
 
-    const indexFile = path.resolve(`${__dirname}/../../build/public/index.html`)
-
-    const requireLogin = (req: any, res: any, next: NextFunction) => {
-      if (!req.token) {
-        if (req.method === 'GET') {
-          res.redirect(302, '/login')
-        } else {
-          res.status(401).send('not allowed')
-        }
-        return
-      }
-      return next()
-    }
+    const indexFile = path.resolve(__dirname, '..', '..', '..', 'build', 'public', 'index.html')
 
     app.use(cookieParser())
     app.use(bot.getAuth().addAuthInfoMiddleware())
@@ -60,7 +49,7 @@ class WebServer {
       res.sendFile(indexFile);
     })
 
-    app.all('*', requireLogin, express.json({ limit: '50mb' }), async (req: any, res: Response, next: NextFunction) => {
+    app.all('*', RequireLoginMiddleware, express.json({ limit: '50mb' }), async (req: any, res: Response, next: NextFunction) => {
       const method = req.method.toLowerCase()
       const key = req.url.replace(/\?.*$/, '')
       for (const m of bot.getModuleManager().all(req.user.id)) {

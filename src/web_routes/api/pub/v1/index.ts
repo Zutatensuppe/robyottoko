@@ -2,10 +2,9 @@
 
 import express, { Response, Router } from 'express'
 import cors from 'cors'
-import { TokenType } from '../../../../services/Tokens'
+import { TokenType } from '../../../../repo/Tokens'
 import { Bot } from '../../../../types'
 import TwitchHelixClient from '../../../../services/TwitchHelixClient'
-import { getChatters } from '../../../../services/Chatters'
 import DrawcastModule from '../../../../mod/modules/DrawcastModule'
 
 export const createRouter = (
@@ -61,7 +60,7 @@ export const createRouter = (
       }
       dateSince = new Date(stream.started_at)
     }
-    const userNames = await getChatters(bot.getDb(), channelId, dateSince)
+    const userNames = await bot.getChatLog().getChatters(channelId, dateSince)
     res.status(200).send({ ok: true, data: { chatters: userNames, since: dateSince } })
   })
 

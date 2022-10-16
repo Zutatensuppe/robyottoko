@@ -2,7 +2,7 @@ import xhr from './net/xhr'
 import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, getRandom, getRandomInt, daysUntil } from './common/fn'
 
 import { Command, GlobalVariable, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module, CommandTrigger, Bot, ChatMessageContext } from './types'
-import { User } from './services/Users'
+import { User } from './repo/Users'
 import TwitchHelixClient, { TwitchHelixUserSearchResponseDataEntry } from './services/TwitchHelixClient'
 
 const log = logger('fn.ts')
@@ -672,12 +672,10 @@ export const getChannelPointsCustomRewards = async (
 ): Promise<Record<string, string[]>> => {
   const helixClient = bot.getUserTwitchClientManager(user).getHelixClient()
   if (!helixClient) {
+    log.info('getChannelPointsCustomRewards: no helix client')
     return {}
   }
-  return await helixClient.getAllChannelPointsCustomRewards(
-    bot,
-    user
-  )
+  return await helixClient.getAllChannelPointsCustomRewards(bot, user)
 }
 
 export default {

@@ -2,11 +2,11 @@ import { RequestInit, Response } from 'node-fetch'
 import { getRandom, logger, SECOND } from '../common/fn'
 import { findIdxFuzzy } from '../fn'
 import xhr, { asJson, withHeaders, asQueryArgs } from '../net/xhr'
-import { getMatchingAccessToken, tryRefreshAccessToken } from '../oauth'
+import { tryRefreshAccessToken } from '../oauth'
 import { Bot } from '../types'
 import Cache from './Cache'
 import { SubscriptionType } from './twitch/EventSub'
-import { User } from './Users'
+import { User } from '../repo/Users'
 
 const log = logger('TwitchHelixClient.ts')
 
@@ -656,10 +656,12 @@ class TwitchHelixClient {
   ): Promise<Record<string, string[]>> {
     const rewards: Record<string, string[]> = {}
     if (!user.twitch_id || !user.twitch_login) {
+      log.info('getAllChannelPointsCustomRewards: no twitch id and login')
       return rewards
     }
-    const accessToken = await getMatchingAccessToken(bot, user)
+    const accessToken = await bot.getOauthTokenRepo().getMatchingAccessToken(user)
     if (!accessToken) {
+      log.info('getAllChannelPointsCustomRewards: no access token')
       return rewards
     }
 
@@ -672,6 +674,7 @@ class TwitchHelixClient {
     if (res) {
       rewards[user.twitch_login] = res.data.map(entry => entry.title);
     }
+    console.log(rewards)
     return rewards
   }
 

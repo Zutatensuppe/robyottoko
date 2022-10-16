@@ -5,7 +5,7 @@ import { logger } from "../common/fn"
 import { mayExecute } from "../common/permissions"
 import fn from "../fn"
 import { Bot, CommandExecutionContext, CommandTrigger, FunctionCommand, Module, RawCommand, TwitchChatContext } from "../types"
-import { User } from "./Users"
+import { User } from "../repo/Users"
 
 const log = logger('CommandExecutor.ts')
 

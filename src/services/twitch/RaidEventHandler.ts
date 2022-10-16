@@ -4,7 +4,7 @@ import { newRaidTrigger } from "../../common/commands"
 import { logger } from "../../common/fn"
 import { Bot, RawCommand, TwitchChatContext } from "../../types"
 import { CommandExecutor } from "../CommandExecutor"
-import { User } from "../Users"
+import { User } from "../../repo/Users"
 
 const log = logger('RaidEventHandler.ts')
 

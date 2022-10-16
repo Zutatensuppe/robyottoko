@@ -1,7 +1,7 @@
 import { logger, humanDuration, parseHumanDuration, SECOND } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
 import { Bot, ChatMessageContext, CommandExecutionContext, FunctionCommand, Module, MODULE_NAME, RawCommand, TwitchChatContext, WIDGET_TYPE } from '../../types'
-import { User } from '../../services/Users'
+import { User } from '../../repo/Users'
 import { default_settings, default_state, PomoEffect, PomoModuleData, PomoModuleWsData, PomoModuleWsEffectData, PomoModuleWsSaveData } from './PomoModuleCommon'
 import { doReplacements } from '../../fn'
 import { newCommandTrigger } from '../../common/commands'

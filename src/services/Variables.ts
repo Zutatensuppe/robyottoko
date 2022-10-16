@@ -3,14 +3,20 @@ import { GlobalVariable, VariableValue } from "../types"
 
 const TABLE = 'robyottoko.variables'
 
+interface Row {
+  user_id: number
+  name: string
+  value: string
+}
+
 class Variables {
   constructor(private readonly db: Db, private readonly userId: number) {
   }
 
   async set(name: string, value: VariableValue): Promise<void> {
-    await this.db.upsert(TABLE, {
-      name,
+    await this.db.upsert<Row>(TABLE, {
       user_id: this.userId,
+      name,
       value: JSON.stringify(value),
     }, {
       name,
@@ -19,7 +25,7 @@ class Variables {
   }
 
   async get(name: string): Promise<VariableValue> {
-    const row = await this.db.get(TABLE, { name, user_id: this.userId })
+    const row = await this.db.get<Row>(TABLE, { name, user_id: this.userId })
     return row ? JSON.parse(row.value) : null
   }
 

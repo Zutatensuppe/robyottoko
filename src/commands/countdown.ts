@@ -1,7 +1,7 @@
 import { Bot, CommandExecutionContext, CommandFunction, CountdownAction, CountdownActionType, CountdownCommand } from '../types'
 import fn from './../fn'
 import { logger, mustParseHumanDuration } from './../common/fn'
-import { User } from '../services/Users'
+import { User } from '../repo/Users'
 
 const log = logger('countdown.ts')
 

@@ -2,7 +2,7 @@ import { Bot, CommandExecutionContext, CommandFunction, DictLookupCommand, DictS
 import JishoOrg from './../services/JishoOrg'
 import DictCc from './../services/DictCc'
 import fn from './../fn'
-import { User } from '../services/Users'
+import { User } from '../repo/Users'
 
 type DictFn = (phrase: string) => Promise<DictSearchResponseDataEntry[]>
 
