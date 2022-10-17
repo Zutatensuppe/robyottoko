@@ -1723,8 +1723,8 @@ class TwitchHelixClient {
         }
     }
     // https://dev.twitch.tv/docs/api/reference#modify-channel-information
-    async modifyChannelInformation(accessToken, broadcasterId, data, bot, user) {
-        const url = apiUrl('/channels') + asQueryArgs({ broadcaster_id: broadcasterId });
+    async modifyChannelInformation(accessToken, data, bot, user) {
+        const url = apiUrl('/channels') + asQueryArgs({ broadcaster_id: user.twitch_id });
         const req = async (token) => {
             return await xhr.patch(url, withHeaders(this._authHeaders(token), asJson(data)));
         };
@@ -1800,8 +1800,8 @@ class TwitchHelixClient {
         return rewards;
     }
     // https://dev.twitch.tv/docs/api/reference#replace-stream-tags
-    async replaceStreamTags(accessToken, broadcasterId, tagIds, bot, user) {
-        const url = apiUrl('/streams/tags') + asQueryArgs({ broadcaster_id: broadcasterId });
+    async replaceStreamTags(accessToken, tagIds, bot, user) {
+        const url = apiUrl('/streams/tags') + asQueryArgs({ broadcaster_id: user.twitch_id });
         const req = async (token) => {
             return await xhr.put(url, withHeaders(this._authHeaders(token), asJson({ tag_ids: tagIds })));
         };
@@ -2056,6 +2056,8 @@ const newRewardRedemptionTrigger = (command = '') => {
     trigger.data.command = command;
     return trigger;
 };
+const newJsonDate = () => new Date().toJSON();
+const newCommandId = () => nonce(10);
 const newCommandTrigger = (command = '', commandExact = false) => {
     const trigger = newTrigger(CommandTriggerType.COMMAND);
     trigger.data.command = command;
@@ -2119,8 +2121,8 @@ const commands = {
         Name: () => "add_stream_tags command",
         Description: () => "Add streamtag",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             triggers: [newCommandTrigger()],
             action: CommandAction.ADD_STREAM_TAGS,
             restrict_to: MOD_OR_ABOVE,
@@ -2136,8 +2138,8 @@ const commands = {
         Name: () => "chatters command",
         Description: () => "Outputs the people who chatted during the stream.",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             triggers: [newCommandTrigger()],
             action: CommandAction.CHATTERS,
             restrict_to: [],
@@ -2151,8 +2153,8 @@ const commands = {
         Name: () => "countdown",
         Description: () => "Add a countdown or messages spaced by time intervals.",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             triggers: [newCommandTrigger()],
             action: CommandAction.COUNTDOWN,
             restrict_to: [],
@@ -2174,8 +2176,8 @@ const commands = {
         Name: () => "dictionary lookup",
         Description: () => "Outputs the translation for the searched word.",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             triggers: [newCommandTrigger()],
             action: CommandAction.DICT_LOOKUP,
             restrict_to: [],
@@ -2192,8 +2194,8 @@ const commands = {
         Name: () => "madochan",
         Description: () => "Creates a word for a definition.",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             triggers: [newCommandTrigger()],
             action: CommandAction.MADOCHAN_CREATEWORD,
             restrict_to: [],
@@ -2211,8 +2213,8 @@ const commands = {
         Name: () => "media command",
         Description: () => "Display an image and/or play a sound.",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             triggers: [newCommandTrigger()],
             action: CommandAction.MEDIA,
             restrict_to: [],
@@ -2226,8 +2228,8 @@ const commands = {
         Name: () => "emote command",
         Description: () => "Display emotes.",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             triggers: [newCommandTrigger()],
             action: CommandAction.EMOTES,
             restrict_to: [],
@@ -2246,8 +2248,8 @@ const commands = {
     <br />
     If no argument is given, just outputs the current volume`,
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             triggers: [newCommandTrigger()],
             action: CommandAction.MEDIA_VOLUME,
             restrict_to: MOD_OR_ABOVE,
@@ -2261,8 +2263,8 @@ const commands = {
         Name: () => "command",
         Description: () => "Send a message to chat",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             triggers: [newCommandTrigger()],
             action: CommandAction.TEXT,
             restrict_to: [],
@@ -2278,8 +2280,8 @@ const commands = {
         Name: () => "remove_stream_tags command",
         Description: () => "Remove streamtag",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             triggers: [newCommandTrigger()],
             action: CommandAction.REMOVE_STREAM_TAGS,
             restrict_to: MOD_OR_ABOVE,
@@ -2295,8 +2297,8 @@ const commands = {
         Name: () => "change stream category command",
         Description: () => "Change the stream category",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             triggers: [newCommandTrigger()],
             action: CommandAction.SET_CHANNEL_GAME_ID,
             restrict_to: MOD_OR_ABOVE,
@@ -2312,8 +2314,8 @@ const commands = {
         Name: () => "change stream title command",
         Description: () => "Change the stream title",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             triggers: [newCommandTrigger()],
             action: CommandAction.SET_CHANNEL_TITLE,
             restrict_to: MOD_OR_ABOVE,
@@ -2329,8 +2331,8 @@ const commands = {
         Name: () => "sr_current",
         Description: () => "Show what song is currently playing",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_CURRENT,
             triggers: [newCommandTrigger('!sr current', true)],
             restrict_to: [],
@@ -2344,8 +2346,8 @@ const commands = {
         Name: () => "sr_undo",
         Description: () => "Remove the song that was last added by oneself.",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_UNDO,
             triggers: [newCommandTrigger('!sr undo', true)],
             restrict_to: [],
@@ -2359,8 +2361,8 @@ const commands = {
         Name: () => "sr_good",
         Description: () => "Vote the current song up",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_GOOD,
             triggers: [newCommandTrigger('!sr good', true)],
             restrict_to: [],
@@ -2374,8 +2376,8 @@ const commands = {
         Name: () => "sr_bad",
         Description: () => "Vote the current song down",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_BAD,
             triggers: [newCommandTrigger('!sr bad', true)],
             restrict_to: [],
@@ -2389,8 +2391,8 @@ const commands = {
         Name: () => "sr_stats",
         Description: () => "Show stats about the playlist",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_STATS,
             triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)],
             restrict_to: [],
@@ -2404,8 +2406,8 @@ const commands = {
         Name: () => "sr_prev",
         Description: () => "Skip to the previous song",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_PREV,
             triggers: [newCommandTrigger('!sr prev', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2419,8 +2421,8 @@ const commands = {
         Name: () => "sr_next",
         Description: () => "Skip to the next song",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_NEXT,
             triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2434,8 +2436,8 @@ const commands = {
         Name: () => "sr_jumptonew",
         Description: () => "Jump to the next unplayed song",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_JUMPTONEW,
             triggers: [newCommandTrigger('!sr jumptonew', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2449,8 +2451,8 @@ const commands = {
         Name: () => "sr_clear",
         Description: () => "Clear the playlist",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_CLEAR,
             triggers: [newCommandTrigger('!sr clear', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2464,8 +2466,8 @@ const commands = {
         Name: () => "sr_rm",
         Description: () => "Remove the current song from the playlist",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_RM,
             triggers: [newCommandTrigger('!sr rm', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2482,8 +2484,8 @@ const commands = {
     Non-played and played songs will be shuffled separately and non-played
     songs will be put after currently playing song.`,
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_SHUFFLE,
             triggers: [newCommandTrigger('!sr shuffle', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2497,8 +2499,8 @@ const commands = {
         Name: () => "sr_reset_stats",
         Description: () => "Reset all statistics of all songs",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_RESET_STATS,
             triggers: [newCommandTrigger('!sr resetStats', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2512,8 +2514,8 @@ const commands = {
         Name: () => "sr_loop",
         Description: () => "Loop the current song",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_LOOP,
             triggers: [newCommandTrigger('!sr loop', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2527,8 +2529,8 @@ const commands = {
         Name: () => "sr_noloop",
         Description: () => "Stop looping the current song",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_NOLOOP,
             triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2542,8 +2544,8 @@ const commands = {
         Name: () => "sr_pause",
         Description: () => "Pause currently playing song",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_PAUSE,
             triggers: [newCommandTrigger('!sr pause', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2557,8 +2559,8 @@ const commands = {
         Name: () => "sr_unpause",
         Description: () => "Unpause currently paused song",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_UNPAUSE,
             triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2572,8 +2574,8 @@ const commands = {
         Name: () => "sr_hidevideo",
         Description: () => "Hide video for current song",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_HIDEVIDEO,
             triggers: [newCommandTrigger('!sr hidevideo', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2587,8 +2589,8 @@ const commands = {
         Name: () => "sr_showvideo",
         Description: () => "Show video for current song",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_SHOWVIDEO,
             triggers: [newCommandTrigger('!sr showvideo', true)],
             restrict_to: MOD_OR_ABOVE,
@@ -2606,8 +2608,8 @@ const commands = {
     and queue the first result in the playlist (after the first found
     batch of unplayed songs).`,
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_REQUEST,
             triggers: [newCommandTrigger('!sr')],
             restrict_to: [],
@@ -2624,8 +2626,8 @@ const commands = {
     in the current playlist and queue the first result in the playlist
     (after the first found batch of unplayed songs).`,
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_RE_REQUEST,
             triggers: [newCommandTrigger('!resr')],
             restrict_to: [],
@@ -2639,8 +2641,8 @@ const commands = {
         Name: () => "sr_addtag",
         Description: () => "Add tag <code>&lt;TAG&gt;</code> (argument to this command) to the current song",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_ADDTAG,
             triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')],
             restrict_to: MOD_OR_ABOVE,
@@ -2656,8 +2658,8 @@ const commands = {
         Name: () => "sr_rmtag",
         Description: () => "Remove tag <code>&lt;TAG&gt;</code> (argument to this command) from the current song",
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_RMTAG,
             triggers: [newCommandTrigger('!sr rmtag')],
             restrict_to: MOD_OR_ABOVE,
@@ -2673,8 +2675,8 @@ const commands = {
     <br />
     If no argument is given, just outputs the current volume`,
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_VOLUME,
             triggers: [newCommandTrigger('!sr volume')],
             restrict_to: MOD_OR_ABOVE,
@@ -2689,8 +2691,8 @@ const commands = {
         Description: () => `Play only songs with the given tag <code>&lt;TAG&gt;</code> (argument to this command). If no tag
   is given, play all songs.`,
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_FILTER,
             triggers: [newCommandTrigger('!sr filter')],
             restrict_to: MOD_OR_ABOVE,
@@ -2705,8 +2707,8 @@ const commands = {
         Description: () => `Switches to the preset <code>&lt;PRESET&gt;</code> (argument to this command) if it exists.
   If no arguments are given, outputs all available presets.`,
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_PRESET,
             triggers: [newCommandTrigger('!sr preset')],
             restrict_to: MOD_OR_ABOVE,
@@ -2720,8 +2722,8 @@ const commands = {
         Name: () => "sr_queue",
         Description: () => `Shows the next 3 songs that will play.`,
         NewCommand: () => ({
-            id: nonce(10),
-            createdAt: JSON.stringify(new Date()),
+            id: newCommandId(),
+            createdAt: newJsonDate(),
             action: CommandAction.SR_QUEUE,
             triggers: [newCommandTrigger('!sr queue')],
             restrict_to: [],
@@ -2776,8 +2778,11 @@ class CommandExecutor {
     }
 }
 
+class EventSubEventHandler {
+}
+
 const log$s = logger('SubscribeEventHandler.ts');
-class SubscribeEventHandler {
+class SubscribeEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
         log$s.info('handle');
@@ -2802,7 +2807,7 @@ class SubscribeEventHandler {
 }
 
 const log$r = logger('FollowEventHandler.ts');
-class FollowEventHandler {
+class FollowEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
         log$r.info('handle');
@@ -2827,7 +2832,7 @@ class FollowEventHandler {
 }
 
 const log$q = logger('CheerEventHandler.ts');
-class CheerEventHandler {
+class CheerEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
         log$q.info('handle');
@@ -2852,7 +2857,7 @@ class CheerEventHandler {
 }
 
 const log$p = logger('ChannelPointRedeemEventHandler.ts');
-class ChannelPointRedeemEventHandler {
+class ChannelPointRedeemEventHandler extends EventSubEventHandler {
     async handle(bot, user, data) {
         log$p.info('handle');
         const rawCmd = {
@@ -2889,8 +2894,8 @@ var SubscriptionType;
 const ALL_SUBSCRIPTIONS_TYPES = Object.values(SubscriptionType);
 
 const log$o = logger('StreamOnlineEventHandler.ts');
-class StreamOnlineEventHandler {
-    async handle(bot, data) {
+class StreamOnlineEventHandler extends EventSubEventHandler {
+    async handle(bot, _user, data) {
         log$o.info('handle');
         await bot.getRepos().streams.insert({
             broadcaster_user_id: data.event.broadcaster_user_id,
@@ -2900,8 +2905,8 @@ class StreamOnlineEventHandler {
 }
 
 const log$n = logger('StreamOfflineEventHandler.ts');
-class StreamOfflineEventHandler {
-    async handle(bot, data) {
+class StreamOfflineEventHandler extends EventSubEventHandler {
+    async handle(bot, _user, data) {
         log$n.info('handle');
         // get last started stream for broadcaster
         // if it exists and it didnt end yet set ended_at date
@@ -2915,7 +2920,7 @@ class StreamOfflineEventHandler {
 }
 
 const log$m = logger('RaidEventHandler.ts');
-class RaidEventHandler {
+class RaidEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
         log$m.info('handle');
@@ -2923,7 +2928,7 @@ class RaidEventHandler {
             name: 'channel.raid',
             args: [],
         };
-        const target = data.event.broadcaster_user_name;
+        const target = data.event.to_broadcaster_user_name;
         const context = {
             "room-id": data.event.to_broadcaster_user_id,
             "user-id": data.event.from_broadcaster_user_id,
@@ -2941,22 +2946,44 @@ class RaidEventHandler {
 
 const log$l = logger('twitch/index.ts');
 const createRouter$3 = (bot) => {
+    const handlers = {
+        [SubscriptionType.ChannelSubscribe]: new SubscribeEventHandler(),
+        [SubscriptionType.ChannelFollow]: new FollowEventHandler(),
+        [SubscriptionType.ChannelCheer]: new CheerEventHandler(),
+        [SubscriptionType.ChannelRaid]: new RaidEventHandler(),
+        [SubscriptionType.ChannelPointsCustomRewardRedemptionAdd]: new ChannelPointRedeemEventHandler(),
+        [SubscriptionType.StreamOnline]: new StreamOnlineEventHandler(),
+        [SubscriptionType.StreamOffline]: new StreamOfflineEventHandler(),
+    };
     const verifyTwitchSignature = (req, res, next) => {
         const body = Buffer.from(req.rawBody, 'utf8');
         const msg = `${req.headers['twitch-eventsub-message-id']}${req.headers['twitch-eventsub-message-timestamp']}${body}`;
         const hmac = crypto.createHmac('sha256', bot.getConfig().twitch.eventSub.transport.secret);
         hmac.update(msg);
         const expected = `sha256=${hmac.digest('hex')}`;
-        if (req.headers['twitch-eventsub-message-signature'] !== expected) {
-            log$l.debug({ req });
-            log$l.error({
-                got: req.headers['twitch-eventsub-message-signature'],
-                expected,
-            }, 'bad message signature');
-            res.status(403).send({ reason: 'bad message signature' });
-            return;
+        if (req.headers['twitch-eventsub-message-signature'] === expected) {
+            return next();
         }
-        return next();
+        log$l.debug({ req });
+        log$l.error({
+            got: req.headers['twitch-eventsub-message-signature'],
+            expected,
+        }, 'bad message signature');
+        res.status(403).send({ reason: 'bad message signature' });
+    };
+    const getCodeCallbackResult = async (req) => {
+        const redirectUris = [
+            `${bot.getConfig().http.url}/twitch/redirect_uri`,
+            `${req.protocol}://${req.headers.host}/twitch/redirect_uri`,
+        ];
+        const user = await bot.getRepos().user.getById(req.user.id);
+        for (const redirectUri of redirectUris) {
+            const tmpResult = await handleOAuthCodeCallback(`${req.query.code}`, redirectUri, bot, user);
+            if (!tmpResult.error && tmpResult.user) {
+                return tmpResult;
+            }
+        }
+        return null;
     };
     const router = express.Router();
     // twitch calls this url after auth
@@ -2968,20 +2995,7 @@ const createRouter$3 = (bot) => {
         // &scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls
         // &state=c3ab8aa609ea11e793ae92361f002671
         if (req.query.code) {
-            const code = `${req.query.code}`;
-            const redirectUris = [
-                `${bot.getConfig().http.url}/twitch/redirect_uri`,
-                `${req.protocol}://${req.headers.host}/twitch/redirect_uri`,
-            ];
-            let result = null;
-            for (const redirectUri of redirectUris) {
-                const tmpResult = await handleOAuthCodeCallback(code, redirectUri, bot, req.user || null);
-                if (tmpResult.error || !tmpResult.user) {
-                    continue;
-                }
-                result = tmpResult;
-                break;
-            }
+            const result = await getCodeCallbackResult(req);
             if (result === null || result.error || !result.user) {
                 res.status(500).send("Something went wrong!");
                 return;
@@ -3018,9 +3032,7 @@ const createRouter$3 = (bot) => {
         }
         if (req.headers['twitch-eventsub-message-type'] === 'notification') {
             log$l.info({ type: req.body.subscription.type }, 'got notification request');
-            const row = await bot.getRepos().eventSub.getOne({
-                subscription_id: req.body.subscription.id,
-            });
+            const row = await bot.getRepos().eventSub.getBySubscriptionId(req.body.subscription.id);
             if (!row) {
                 log$l.info('unknown subscription_id');
                 res.status(400).send({ reason: 'unknown subscription_id' });
@@ -3032,27 +3044,13 @@ const createRouter$3 = (bot) => {
                 res.status(400).send({ reason: 'unknown user' });
                 return;
             }
-            if (req.body.subscription.type === SubscriptionType.ChannelSubscribe) {
-                await (new SubscribeEventHandler()).handle(bot, user, req.body);
+            const handler = handlers[req.body.subscription.type];
+            if (!handler) {
+                log$l.info('unknown subscription type');
+                res.status(400).send({ reason: 'unknown subscription type' });
+                return;
             }
-            else if (req.body.subscription.type === SubscriptionType.ChannelFollow) {
-                await (new FollowEventHandler()).handle(bot, user, req.body);
-            }
-            else if (req.body.subscription.type === SubscriptionType.ChannelCheer) {
-                await (new CheerEventHandler()).handle(bot, user, req.body);
-            }
-            else if (req.body.subscription.type === SubscriptionType.ChannelRaid) {
-                await (new RaidEventHandler()).handle(bot, user, req.body);
-            }
-            else if (req.body.subscription.type === SubscriptionType.ChannelPointsCustomRewardRedemptionAdd) {
-                await (new ChannelPointRedeemEventHandler()).handle(bot, user, req.body);
-            }
-            else if (req.body.subscription.type === SubscriptionType.StreamOnline) {
-                await (new StreamOnlineEventHandler()).handle(bot, req.body);
-            }
-            else if (req.body.subscription.type === SubscriptionType.StreamOffline) {
-                await (new StreamOfflineEventHandler()).handle(bot, req.body);
-            }
+            handler.handle(bot, user, req.body);
             res.send();
             return;
         }
@@ -3218,8 +3216,7 @@ const createRouter = (bot) => {
         });
     });
     router.get('/page/index', RequireLoginApiMiddleware, async (req, res) => {
-        const mappedWidgets = await bot.getWidgets().getWidgetInfos(req.user.id);
-        res.send({ widgets: mappedWidgets });
+        res.send({ widgets: await bot.getWidgets().getWidgetInfos(req.user.id) });
     });
     router.get('/page/variables', RequireLoginApiMiddleware, async (req, res) => {
         res.send({ variables: await bot.getRepos().variables.all(req.user.id) });
@@ -3320,34 +3317,6 @@ const createRouter = (bot) => {
             }, 'save-settings: user doesn\'t exist after saving it');
         }
         res.send();
-    });
-    router.post('/twitch/user-id-by-name', RequireLoginApiMiddleware, express.json(), async (req, res) => {
-        let clientId;
-        let clientSecret;
-        if (!req.user.groups.includes('admin')) {
-            const u = await bot.getRepos().user.getById(req.user.id);
-            clientId = u.tmi_identity_client_id || bot.getConfig().twitch.tmi.identity.client_id;
-            clientSecret = u.tmi_identity_client_secret || bot.getConfig().twitch.tmi.identity.client_secret;
-        }
-        else {
-            clientId = req.body.client_id;
-            clientSecret = req.body.client_secret;
-        }
-        if (!clientId) {
-            res.status(400).send({ reason: 'need client id' });
-            return;
-        }
-        if (!clientSecret) {
-            res.status(400).send({ reason: 'need client secret' });
-            return;
-        }
-        try {
-            const client = new TwitchHelixClient(clientId, clientSecret);
-            res.send({ id: await client.getUserIdByNameCached(req.body.name, bot.getCache()) });
-        }
-        catch (e) {
-            res.status(500).send("Something went wrong!");
-        }
     });
     router.use('/user', createRouter$1());
     router.use('/pub/v1', createRouter$2(bot));
@@ -3584,6 +3553,7 @@ const determineIdentity = (user, cfg) => {
         client_secret: cfg.tmi.identity.client_secret,
     };
 };
+const chatEventHandler = new ChatEventHandler();
 class TwitchClientManager {
     constructor(bot, user) {
         this.bot = bot;
@@ -3636,7 +3606,7 @@ class TwitchClientManager {
                     if (self) {
                         return;
                     } // Ignore messages from the bot
-                    await (new ChatEventHandler()).handle(this.bot, this.user, target, context, msg);
+                    await (chatEventHandler).handle(this.bot, this.user, target, context, msg);
                 });
                 // Called every time the bot connects to Twitch chat
                 this.chatClient.on('connected', async (addr, port) => {
@@ -4346,12 +4316,12 @@ const chatters = (bot, user) => async (ctx) => {
         return;
     }
     const say = bot.sayFn(user, ctx.target);
-    const stream = await helixClient.getStreamByUserId(ctx.context['room-id']);
+    const stream = await helixClient.getStreamByUserId(user.twitch_id);
     if (!stream) {
         say(`It seems this channel is not live at the moment...`);
         return;
     }
-    const userNames = await bot.getRepos().chatLog.getChatters(ctx.context['room-id'], new Date(stream.started_at));
+    const userNames = await bot.getRepos().chatLog.getChatters(user.twitch_id, new Date(stream.started_at));
     if (userNames.length === 0) {
         say(`It seems nobody chatted? :(`);
         return;
@@ -4373,12 +4343,11 @@ const setChannelTitle = (originalCmd, bot, user) => async (ctx) => {
         }, 'unable to execute setChannelTitle, client, command, context, or helixClient missing');
         return;
     }
-    const channelId = ctx.context['room-id'];
     const say = bot.sayFn(user, ctx.target);
     const title = originalCmd.data.title === '' ? '$args()' : originalCmd.data.title;
     const tmpTitle = await fn.doReplacements(title, ctx.rawCmd, ctx.context, originalCmd, bot, user);
     if (tmpTitle === '') {
-        const info = await helixClient.getChannelInformation(channelId);
+        const info = await helixClient.getChannelInformation(user.twitch_id);
         if (info) {
             say(`Current title is "${info.title}".`);
         }
@@ -4400,7 +4369,7 @@ const setChannelTitle = (originalCmd, bot, user) => async (ctx) => {
         say(`❌ Not authorized to change title.`);
         return;
     }
-    const resp = await helixClient.modifyChannelInformation(accessToken, channelId, { title: tmpTitle }, bot, user);
+    const resp = await helixClient.modifyChannelInformation(accessToken, { title: tmpTitle }, bot, user);
     if (resp?.status === 204) {
         say(`✨ Changed title to "${tmpTitle}".`);
     }
@@ -4420,12 +4389,11 @@ const setChannelGameId = (originalCmd, bot, user) => async (ctx) => {
         }, 'unable to execute setChannelGameId, client, command, context, or helixClient missing');
         return;
     }
-    const channelId = ctx.context['room-id'];
     const say = bot.sayFn(user, ctx.target);
     const gameId = originalCmd.data.game_id === '' ? '$args()' : originalCmd.data.game_id;
     const tmpGameId = await fn.doReplacements(gameId, ctx.rawCmd, ctx.context, originalCmd, bot, user);
     if (tmpGameId === '') {
-        const info = await helixClient.getChannelInformation(channelId);
+        const info = await helixClient.getChannelInformation(user.twitch_id);
         if (info) {
             say(`Current category is "${info.game_name}".`);
         }
@@ -4444,7 +4412,7 @@ const setChannelGameId = (originalCmd, bot, user) => async (ctx) => {
         say(`❌ Not authorized to update category.`);
         return;
     }
-    const resp = await helixClient.modifyChannelInformation(accessToken, channelId, { game_id: category.id }, bot, user);
+    const resp = await helixClient.modifyChannelInformation(accessToken, { game_id: category.id }, bot, user);
     if (resp?.status === 204) {
         say(`✨ Changed category to "${category.name}".`);
     }
@@ -4656,11 +4624,10 @@ const addStreamTags = (originalCmd, bot, user) => async (ctx) => {
         }, 'unable to execute addStreamTags, client, command, context, or helixClient missing');
         return;
     }
-    const channelId = ctx.context['room-id'];
     const say = bot.sayFn(user, ctx.target);
     const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag;
     const tmpTag = await fn.doReplacements(tag, ctx.rawCmd, ctx.context, originalCmd, bot, user);
-    const tagsResponse = await helixClient.getStreamTags(channelId);
+    const tagsResponse = await helixClient.getStreamTags(user.twitch_id);
     if (!tagsResponse) {
         say(`❌ Unable to fetch current tags.`);
         return;
@@ -4694,7 +4661,7 @@ const addStreamTags = (originalCmd, bot, user) => async (ctx) => {
         say(`❌ Not authorized to add tag: ${tagEntry.name}`);
         return;
     }
-    const resp = await helixClient.replaceStreamTags(accessToken, channelId, newSettableTagIds, bot, user);
+    const resp = await helixClient.replaceStreamTags(accessToken, newSettableTagIds, bot, user);
     if (!resp || resp.status < 200 || resp.status >= 300) {
         log$9.error(resp);
         say(`❌ Unable to add tag: ${tagEntry.name}`);
@@ -4714,11 +4681,10 @@ const removeStreamTags = (originalCmd, bot, user) => async (ctx) => {
         }, 'unable to execute removeStreamTags, client, command, context, or helixClient missing');
         return;
     }
-    const channelId = ctx.context['room-id'];
     const say = bot.sayFn(user, ctx.target);
     const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag;
     const tmpTag = await fn.doReplacements(tag, ctx.rawCmd, ctx.context, originalCmd, bot, user);
-    const tagsResponse = await helixClient.getStreamTags(channelId);
+    const tagsResponse = await helixClient.getStreamTags(user.twitch_id);
     if (!tagsResponse) {
         say(`❌ Unable to fetch current tags.`);
         return;
@@ -4748,7 +4714,7 @@ const removeStreamTags = (originalCmd, bot, user) => async (ctx) => {
         say(`❌ Not authorized to remove tag: ${manualTags[idx].localization_names['en-us']}`);
         return;
     }
-    const resp = await helixClient.replaceStreamTags(accessToken, channelId, newSettableTagIds, bot, user);
+    const resp = await helixClient.replaceStreamTags(accessToken, newSettableTagIds, bot, user);
     if (!resp || resp.status < 200 || resp.status >= 300) {
         say(`❌ Unable to remove tag: ${manualTags[idx].localization_names['en-us']}`);
         return;
@@ -4888,7 +4854,7 @@ class GeneralModule {
                 shouldSave = true;
             }
             if (!command.createdAt) {
-                command.createdAt = JSON.stringify(new Date());
+                command.createdAt = newJsonDate();
                 shouldSave = true;
             }
         }
@@ -5435,7 +5401,7 @@ class SongrequestModule {
                 shouldSave = true;
             }
             if (!command.createdAt) {
-                command.createdAt = JSON.stringify(new Date());
+                command.createdAt = newJsonDate();
                 shouldSave = true;
             }
         }
@@ -7348,9 +7314,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-10-16T16:07:56.036Z",
+    buildDate: "2022-10-17T18:05:09.521Z",
     // @ts-ignore
-    buildVersion: "1.30.3",
+    buildVersion: "1.30.4",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
@@ -7545,8 +7511,8 @@ class EventSubRepo extends Repo {
     async delete(where) {
         await this.db.delete(TABLE$6, where);
     }
-    async getOne(where) {
-        return await this.db.get(TABLE$6, where);
+    async getBySubscriptionId(subscriptionId) {
+        return await this.db.get(TABLE$6, { subscription_id: subscriptionId });
     }
 }
 
