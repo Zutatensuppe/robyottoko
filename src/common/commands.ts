@@ -143,7 +143,7 @@ export const getUniqueCommandsByTriggers = (
   return tmp.filter((item, i, ar) => ar.indexOf(item) === i)
 }
 
-export const isValidEffect = (effect: CommandEffect): boolean => {
+export const isValidEffect = (_effect: CommandEffect): boolean => {
   // TODO: check if effects are actually valid
   return true
 }

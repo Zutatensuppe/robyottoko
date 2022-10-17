@@ -3,7 +3,6 @@
 import express, { NextFunction, Response, Router } from 'express'
 import multer from 'multer'
 import { logger, nonce } from '../../common/fn'
-import TwitchHelixClient from '../../services/TwitchHelixClient'
 import { UpdateUser, User } from '../../repo/Users'
 import { Bot, UploadedFile } from '../../types'
 import { createRouter as createApiPubV1Router } from './pub/v1'
