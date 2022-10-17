@@ -4,10 +4,12 @@ import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, getRandom, getRandomInt
 import {
   Command, GlobalVariable, RawCommand, TwitchChatContext,
   TwitchChatClient, FunctionCommand, Module, CommandTrigger,
-  Bot, ChatMessageContext, CommandEffectType, CommandVariableChange,
+  Bot, ChatMessageContext, CommandEffectType, CommandVariableChange, DictSearchResponseDataEntry,
 } from './types'
 import { User } from './repo/Users'
 import TwitchHelixClient, { TwitchHelixUserSearchResponseDataEntry } from './services/TwitchHelixClient'
+import JishoOrg from './services/JishoOrg'
+import DictCc from './services/DictCc'
 
 const log = logger('fn.ts')
 
@@ -98,6 +100,33 @@ const _increase = (value: any, by: any) => (_toInt(value) + _toInt(by))
 
 const _decrease = (value: any, by: any) => (_toInt(value) - _toInt(by))
 
+
+type DictFn = (phrase: string) => Promise<DictSearchResponseDataEntry[]>
+
+const jishoOrgLookup = async (
+  phrase: string,
+) => {
+  const data = await JishoOrg.searchWord(phrase)
+  if (data.length === 0) {
+    return []
+  }
+  const e = data[0]
+  const j = e.japanese[0]
+  const d = e.senses[0].english_definitions
+
+  return [{
+    from: phrase,
+    to: [`${j.word} (${j.reading}) ${d.join(', ')}`],
+  }]
+}
+
+const LANG_TO_FN: Record<string, DictFn> = {
+  ja: jishoOrgLookup,
+}
+for (const key of Object.keys(DictCc.LANG_TO_URL_MAP)) {
+  LANG_TO_FN[key] = (phrase) => DictCc.searchWord(phrase, key)
+}
+
 const applyEffects = async (
   originalCmd: FunctionCommand,
   contextModule: Module,
@@ -111,6 +140,7 @@ const applyEffects = async (
   const doReplace = async (value: string) => await doReplacements(value, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
 
   for (const effect of originalCmd.effects) {
+    // TODO: extract each if to some class
     if (effect.type === CommandEffectType.VARIABLE_CHANGE) {
 
       const variableChange = effect.data as CommandVariableChange
@@ -153,6 +183,29 @@ const applyEffects = async (
       const texts = effect.data.text
       const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
       say(await doReplacements(getRandom(texts), rawCmd, context, originalCmd, contextModule.bot, contextModule.user))
+
+    } else if (effect.type === CommandEffectType.DICT_LOOKUP) {
+
+      const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
+      const tmpLang = await doReplacements(effect.data.lang, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
+      const dictFn = LANG_TO_FN[tmpLang] || null
+      if (!dictFn) {
+        say(`Sorry, language not supported: "${tmpLang}"`)
+        continue
+      }
+
+      // if no phrase is setup, use all args given to command
+      const phrase = effect.data.phrase === '' ? '$args()' : effect.data.phrase
+      const tmpPhrase = await doReplacements(phrase, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
+
+      const items = await dictFn(tmpPhrase)
+      if (items.length === 0) {
+        say(`Sorry, I didn't find anything for "${tmpPhrase}" in language "${tmpLang}"`)
+        continue
+      }
+      for (const item of items) {
+        say(`Phrase "${item.from}": ${item.to.join(", ")}`)
+      }
 
     }
   }

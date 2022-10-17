@@ -2,8 +2,8 @@ import { getProp, mustParseHumanDuration, nonce } from "../common/fn"
 import {
   AddStreamTagCommand,
   ChattersCommand,
-  Command, CommandAction, CommandTrigger, CommandTriggerType,
-  CountdownAction, CountdownActionType, CountdownCommand, DictLookupCommand, EmotesCommand, FunctionCommand,
+  Command, CommandAction, CommandEffect, CommandTrigger, CommandTriggerType,
+  CountdownAction, CountdownActionType, CountdownCommand, EmotesCommand, FunctionCommand,
   MadochanCommand,
   MediaCommand,
   MediaCommandData, MediaFile, MediaVideo, MediaVolumeCommand, RandomTextCommand, RemoveStreamTagCommand, SetChannelGameIdCommand, SetChannelTitleCommand, SoundMediaFile,
@@ -143,6 +143,11 @@ export const getUniqueCommandsByTriggers = (
   return tmp.filter((item, i, ar) => ar.indexOf(item) === i)
 }
 
+export const isValidEffect = (effect: CommandEffect): boolean => {
+  // TODO: check if effects are actually valid
+  return true
+}
+
 export const isValidTrigger = (trigger: CommandTrigger): boolean => {
   if (trigger.type === CommandTriggerType.COMMAND) {
     if (!trigger.data.command) {
@@ -226,24 +231,6 @@ export const commands: Record<CommandAction, CommandDef> = {
         intro: 'Starting countdown...',
         outro: 'Done!',
         actions: [] as CountdownAction[]
-      },
-    }),
-    RequiresAccessToken: () => false,
-  },
-  dict_lookup: {
-    Name: () => "dictionary lookup",
-    Description: () => "Outputs the translation for the searched word.",
-    NewCommand: (): DictLookupCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
-      triggers: [newCommandTrigger()],
-      effects: [],
-      action: CommandAction.DICT_LOOKUP,
-      restrict_to: [],
-      variables: [],
-      data: {
-        lang: 'ja',
-        phrase: '',
       },
     }),
     RequiresAccessToken: () => false,

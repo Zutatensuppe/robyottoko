@@ -158,7 +158,7 @@ import { permissions } from "../../../common/permissions";
 import {
   commands,
   isValidTrigger,
-  newText,
+  isValidEffect,
   newTrigger,
 } from "../../../common/commands";
 import {
@@ -220,21 +220,30 @@ export default defineComponent({
     },
     valid(): boolean {
       if (!this.item) {
-        return false;
+        return false
       }
-      // check if all triggers are correct
+
+      if (this.item.triggers.length === 0) {
+        return false
+      }
+
       for (const trigger of this.item.triggers) {
         if (!isValidTrigger(trigger)) {
-          return false;
+          return false
         }
       }
-      // check if settings are correct
-      for (const t of this.item.data.text) {
-        if (t === "") {
-          return false;
+
+      if (this.item.effects.length === 0) {
+        return false
+      }
+
+      for (const effect of this.item.effects) {
+        if (!isValidEffect(effect)) {
+          return false
         }
       }
-      return true;
+
+      return true
     },
     actionDescription(): string {
       if (!this.item) {

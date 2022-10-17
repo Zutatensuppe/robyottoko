@@ -1,4 +1,4 @@
-import { ChatEffect, CommandEffectType, CommandVariableChange, VariableChangeEffect } from "../types"
+import { ChatEffect, CommandEffectType, CommandVariableChange, DictLookupEffect, VariableChangeEffect } from "../types"
 
 const variableChangeToCommandEffect = (variableChange: CommandVariableChange): VariableChangeEffect => {
   return {
@@ -12,11 +12,22 @@ const textToCommandEffect = (cmd: any): ChatEffect => {
     type: CommandEffectType.CHAT,
     data: {
       text: !Array.isArray(cmd.data.text) ? [cmd.data.text] : cmd.data.text
-    }
+    },
+  }
+}
+
+const dictLookupToCommandEffect = (cmd: any): DictLookupEffect => {
+  return {
+    type: CommandEffectType.DICT_LOOKUP,
+    data: {
+      lang: cmd.data.lang,
+      phrase: cmd.data.phrase,
+    },
   }
 }
 
 export default {
-  variableChangeToCommandEffect,
+  dictLookupToCommandEffect,
   textToCommandEffect,
+  variableChangeToCommandEffect,
 }

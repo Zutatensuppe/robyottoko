@@ -272,6 +272,7 @@ export interface CommandTrigger {
 export enum CommandEffectType {
   VARIABLE_CHANGE = 'variable_change',
   CHAT = 'chat',
+  DICT_LOOKUP = 'dict_lookup',
 }
 
 export interface CommandEffect {
@@ -288,6 +289,14 @@ export interface ChatEffect {
   type: CommandEffectType.CHAT
   data: {
     text: string[]
+  }
+}
+
+export interface DictLookupEffect {
+  type: CommandEffectType.DICT_LOOKUP
+  data: {
+    lang: string
+    phrase: string
   }
 }
 
@@ -314,7 +323,6 @@ export enum CommandAction {
   EMOTES = 'emotes',
   MEDIA_VOLUME = 'media_volume',
   COUNTDOWN = 'countdown',
-  DICT_LOOKUP = 'dict_lookup',
   MADOCHAN_CREATEWORD = 'madochan_createword',
   CHATTERS = 'chatters',
   SET_CHANNEL_TITLE = 'set_channel_title',
@@ -389,14 +397,6 @@ export interface SetChannelGameIdCommand extends Command {
   action: CommandAction.SET_CHANNEL_GAME_ID
   data: {
     game_id: string
-  }
-}
-
-export interface DictLookupCommand extends Command {
-  action: CommandAction.DICT_LOOKUP
-  data: {
-    lang: string
-    phrase: string
   }
 }
 

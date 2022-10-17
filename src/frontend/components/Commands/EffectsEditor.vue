@@ -14,8 +14,11 @@
       <TrChatEffect
         v-if="item.type === CommandEffectType.CHAT"
         v-model="val[idx]"
-        :item-variables="itemVariables"
-        :global-variables="globalVariables"
+        @remove-click="onRmEffectClick(idx)"
+      />
+      <TrDictLookupEffect
+        v-if="item.type === CommandEffectType.DICT_LOOKUP"
+        v-model="val[idx]"
         @remove-click="onRmEffectClick(idx)"
       />
     </table>
@@ -28,6 +31,10 @@
       class="button is-small"
       @click="addChat"
     >Add chat</span>
+    <span
+      class="button is-small"
+      @click="addDictLookup"
+    >Add dict lookup</span>
   </div>
 </template>
 <script setup lang="ts">
@@ -35,6 +42,7 @@ import { ref, watch } from 'vue';
 import { CommandEffect, CommandEffectType, CommandVariable, GlobalVariable } from '../../../types';
 import TrVariableChangeEffect from './Effects/TrVariableChangeEffect.vue';
 import TrChatEffect from './Effects/TrChatEffect.vue';
+import TrDictLookupEffect from './Effects/TrDictLookupEffect.vue';
 
 export interface AutocompletableVariable {
   var: CommandVariable | GlobalVariable;
@@ -70,6 +78,15 @@ const addChat = () => {
     type: CommandEffectType.CHAT,
     data: {
       text: [''],
+    },
+  })
+}
+const addDictLookup = () => {
+  val.value.push({
+    type: CommandEffectType.DICT_LOOKUP,
+    data: {
+      lang: 'ja',
+      phrase: '',
     },
   })
 }

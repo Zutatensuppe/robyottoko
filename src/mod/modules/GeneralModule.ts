@@ -12,13 +12,12 @@ import { User } from '../../repo/Users'
 import {
   ChatMessageContext, Command, FunctionCommand,
   Bot, Module,
-  MediaCommand, DictLookupCommand, CountdownCommand,
+  MediaCommand, CountdownCommand,
   MadochanCommand, MediaVolumeCommand, ChattersCommand,
   RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand,
   CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand,
   CommandTriggerType, CommandAction, CommandExecutionContext, MODULE_NAME, WIDGET_TYPE, EmotesCommand, CommandEffectType, CommandEffect,
 } from '../../types'
-import dictLookup from '../../commands/dictLookup'
 import { EMOTE_DISPLAY_FN, GeneralModuleAdminSettings, GeneralModuleEmotesEventData, GeneralModuleSettings, GeneralModuleWsEventData, GeneralSaveEventData } from './GeneralModuleCommon'
 import addStreamTags from '../../commands/addStreamTags'
 import removeStreamTags from '../../commands/removeStreamTags'
@@ -135,6 +134,11 @@ class GeneralModule implements Module {
         cmd.effects.push(legacy.textToCommandEffect(cmd))
       }
 
+      if (cmd.action === 'dict_lookup') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.dictLookupToCommandEffect(cmd))
+      }
+
       if (cmd.action === CommandAction.MEDIA) {
         if (cmd.data.excludeFromGlobalWidget) {
           cmd.data.widgetIds = [cmd.id]
@@ -182,10 +186,6 @@ class GeneralModule implements Module {
           }
           return action
         })
-      }
-      if (cmd.action === 'jisho_org_lookup') {
-        cmd.action = CommandAction.DICT_LOOKUP
-        cmd.data = { lang: 'ja', phrase: '' }
       }
       cmd.triggers = (cmd.triggers || []).map((trigger: any) => {
         trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0
@@ -256,7 +256,7 @@ class GeneralModule implements Module {
     const timers: GeneralModuleTimer[] = []
 
     data.commands.forEach((cmd: MediaCommand | MediaVolumeCommand | MadochanCommand
-      | DictLookupCommand | RandomTextCommand | CountdownCommand | ChattersCommand
+      | RandomTextCommand | CountdownCommand | ChattersCommand
       | SetChannelTitleCommand | SetChannelGameIdCommand
       | AddStreamTagCommand | RemoveStreamTagCommand
       | EmotesCommand
@@ -271,9 +271,6 @@ class GeneralModule implements Module {
           break;
         case CommandAction.MADOCHAN_CREATEWORD:
           cmdObj = Object.assign({}, cmd, { fn: madochanCreateWord(cmd, this.bot, this.user) })
-          break;
-        case CommandAction.DICT_LOOKUP:
-          cmdObj = Object.assign({}, cmd, { fn: dictLookup(cmd, this.bot, this.user) })
           break;
         case CommandAction.TEXT:
           cmdObj = Object.assign({}, cmd, { fn: noop })

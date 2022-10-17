@@ -100,7 +100,6 @@ const possibleActions: CommandAction[] = [
   CommandAction.EMOTES,
   CommandAction.MEDIA_VOLUME,
   CommandAction.COUNTDOWN,
-  CommandAction.DICT_LOOKUP,
   CommandAction.MADOCHAN_CREATEWORD,
   CommandAction.CHATTERS,
   CommandAction.SET_CHANNEL_TITLE,
