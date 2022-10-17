@@ -97,7 +97,6 @@ let ws: WsClient | null = null
 const possibleActions: CommandAction[] = [
   CommandAction.TEXT,
   CommandAction.MEDIA,
-  CommandAction.EMOTES,
   CommandAction.MEDIA_VOLUME,
   CommandAction.COUNTDOWN,
   CommandAction.MADOCHAN_CREATEWORD,

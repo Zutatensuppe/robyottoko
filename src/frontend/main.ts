@@ -38,7 +38,6 @@ import YoutubePlayer from "./components/YoutubePlayer.vue";
 
 import CommandsMediaCommandEditor from "./components/Commands/MediaCommandEditor.vue";
 import CommandsTextCommandEditor from "./components/Commands/TextCommandEditor.vue";
-import CommandsDictLookupCommandEditor from "./components/Commands/DictLookupCommandEditor.vue";
 import CommandsMadochanCreatewordCommandEditor from "./components/Commands/MadochanCreatewordCommandEditor.vue";
 import CommandsCountdownEditor from "./components/Commands/CountdownEditor.vue";
 import CommandsTriggerEditor from "./components/Commands/TriggerEditor.vue";
@@ -219,7 +218,6 @@ const run = async () => {
   app.component('YoutubePlayer', YoutubePlayer)
   app.component('MediaCommandEditor', CommandsMediaCommandEditor)
   app.component('TextCommandEditor', CommandsTextCommandEditor)
-  app.component('DictLookupCommandEditor', CommandsDictLookupCommandEditor)
   app.component('MadochanCreatewordCommandEditor', CommandsMadochanCreatewordCommandEditor)
   app.component('CountdownEditor', CommandsCountdownEditor)
   app.component('TriggerEditor', CommandsTriggerEditor)

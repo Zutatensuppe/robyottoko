@@ -21,6 +21,11 @@
         v-model="val[idx]"
         @remove-click="onRmEffectClick(idx)"
       />
+      <TrEmotesEffect
+        v-if="item.type === CommandEffectType.EMOTES"
+        v-model="val[idx]"
+        @remove-click="onRmEffectClick(idx)"
+      />
     </table>
 
     <span
@@ -35,6 +40,10 @@
       class="button is-small"
       @click="addDictLookup"
     >Add dict lookup</span>
+    <span
+      class="button is-small"
+      @click="addEmotes"
+    >Add emotes</span>
   </div>
 </template>
 <script setup lang="ts">
@@ -43,6 +52,7 @@ import { CommandEffect, CommandEffectType, CommandVariable, GlobalVariable } fro
 import TrVariableChangeEffect from './Effects/TrVariableChangeEffect.vue';
 import TrChatEffect from './Effects/TrChatEffect.vue';
 import TrDictLookupEffect from './Effects/TrDictLookupEffect.vue';
+import TrEmotesEffect from './Effects/TrEmotesEffect.vue';
 
 export interface AutocompletableVariable {
   var: CommandVariable | GlobalVariable;
@@ -87,6 +97,15 @@ const addDictLookup = () => {
     data: {
       lang: 'ja',
       phrase: '',
+    },
+  })
+}
+const addEmotes = () => {
+  val.value.push({
+    type: CommandEffectType.EMOTES,
+    data: {
+      displayFn: [],
+      emotes: [],
     },
   })
 }

@@ -41,19 +41,6 @@
                 />
               </td>
             </tr>
-            <tr v-if="actionDescription">
-              <td>Description:</td>
-              <td v-html="actionDescription" />
-            </tr>
-            <tr v-if="requiresAccessToken">
-              <td>Attention:</td>
-              <td>
-                <div class="help">
-                  This requires <code>Access Token</code> to be set in the user
-                  settings.
-                </div>
-              </td>
-            </tr>
             <tr>
               <td>Effects:</td>
               <td>
@@ -209,12 +196,6 @@ export default defineComponent({
     possiblePermissions: permissions,
   }),
   computed: {
-    requiresAccessToken(): boolean {
-      if (!this.item) {
-        return false;
-      }
-      return commands[this.item.action].RequiresAccessToken();
-    },
     possibleTriggerActions() {
       return possibleTriggerActions();
     },
@@ -244,12 +225,6 @@ export default defineComponent({
       }
 
       return true
-    },
-    actionDescription(): string {
-      if (!this.item) {
-        return "";
-      }
-      return commands[this.item.action].Description();
     },
     title(): string {
       if (!this.item) {

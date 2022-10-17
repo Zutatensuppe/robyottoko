@@ -207,6 +207,13 @@ const applyEffects = async (
         say(`Phrase "${item.from}": ${item.to.join(", ")}`)
       }
 
+    } else if (effect.type === CommandEffectType.EMOTES) {
+
+      contextModule.bot.getWebSocketServer().notifyAll([contextModule.user.id], 'general', {
+        event: 'emotes',
+        data: effect.data,
+      })
+
     }
   }
   contextModule.saveCommands()

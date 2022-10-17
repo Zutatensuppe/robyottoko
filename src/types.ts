@@ -273,6 +273,7 @@ export enum CommandEffectType {
   VARIABLE_CHANGE = 'variable_change',
   CHAT = 'chat',
   DICT_LOOKUP = 'dict_lookup',
+  EMOTES = 'emotes',
 }
 
 export interface CommandEffect {
@@ -300,6 +301,11 @@ export interface DictLookupEffect {
   }
 }
 
+export interface EmotesEffect {
+  type: CommandEffectType.EMOTES
+  data: GeneralModuleEmotesEventData
+}
+
 export interface CommandVariable {
   name: string
   value: any
@@ -308,6 +314,11 @@ export interface CommandVariableChange {
   change: string // 'set' | ...
   name: string
   value: string
+}
+
+export interface EmoteSet {
+  name: string
+  emotes: string[]
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -320,7 +331,6 @@ export enum CommandAction {
   // general
   TEXT = 'text',
   MEDIA = 'media',
-  EMOTES = 'emotes',
   MEDIA_VOLUME = 'media_volume',
   COUNTDOWN = 'countdown',
   MADOCHAN_CREATEWORD = 'madochan_createword',
@@ -422,12 +432,6 @@ export interface RandomTextCommand extends Command {
 
 export interface MediaVolumeCommand extends Command {
   action: CommandAction.MEDIA_VOLUME
-}
-
-export interface EmotesCommand extends Command {
-  action: CommandAction.EMOTES
-  // TODO: check if this data is fine
-  data: GeneralModuleEmotesEventData
 }
 
 export interface MediaCommand extends Command {

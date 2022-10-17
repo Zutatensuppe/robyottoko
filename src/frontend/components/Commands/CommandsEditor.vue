@@ -268,17 +268,6 @@
       @cancel="editCommand = null"
     />
 
-    <EmotesCommandEditor
-      v-else-if="editIdx !== null && editCommand && editCommand.action === 'emotes'"
-      :global-variables="globalVariables"
-      :channel-points-custom-rewards="channelPointsCustomRewards"
-      :model-value="(editCommand as EmotesCommand)"
-      :mode="editIdx >= commands.length ? 'create' : 'edit'"
-      :base-volume="baseVolume"
-      @update:modelValue="editedCommand"
-      @cancel="editCommand = null"
-    />
-
     <CommandEditor
       v-else-if="editIdx !== null && editCommand"
       :global-variables="globalVariables"
@@ -293,12 +282,11 @@
 </template>
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import { Command, CommandAction, CommandTriggerType, EmotesCommand, GlobalVariable, RandomTextCommand } from "../../../types";
+import { Command, CommandAction, CommandTriggerType, GlobalVariable, RandomTextCommand } from "../../../types";
 import { permissionsStr } from "../../../common/permissions";
 import { commands } from "../../../common/commands";
 import fn from "../../../common/fn";
 import CommandEditor from "./CommandEditor.vue";
-import EmotesCommandEditor from "./EmotesCommandEditor.vue";
 
 interface ComponentData {
   commands: Command[];
@@ -312,7 +300,7 @@ interface ComponentData {
 }
 
 export default defineComponent({
-    components: { CommandEditor, EmotesCommandEditor },
+    components: { CommandEditor },
     props: {
         globalVariables: {
             type: Array as PropType<GlobalVariable[]>,

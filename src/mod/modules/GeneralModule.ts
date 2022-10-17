@@ -16,12 +16,11 @@ import {
   MadochanCommand, MediaVolumeCommand, ChattersCommand,
   RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand,
   CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand,
-  CommandTriggerType, CommandAction, CommandExecutionContext, MODULE_NAME, WIDGET_TYPE, EmotesCommand, CommandEffectType, CommandEffect,
+  CommandTriggerType, CommandAction, CommandExecutionContext, MODULE_NAME, WIDGET_TYPE, CommandEffectType, CommandEffect,
 } from '../../types'
 import { EMOTE_DISPLAY_FN, GeneralModuleAdminSettings, GeneralModuleEmotesEventData, GeneralModuleSettings, GeneralModuleWsEventData, GeneralSaveEventData } from './GeneralModuleCommon'
 import addStreamTags from '../../commands/addStreamTags'
 import removeStreamTags from '../../commands/removeStreamTags'
-import emotes from '../../commands/emotes'
 import { NextFunction, Response } from 'express'
 import legacy from '../../common/legacy'
 
@@ -137,6 +136,11 @@ class GeneralModule implements Module {
       if (cmd.action === 'dict_lookup') {
         cmd.action = 'text'
         cmd.effects.push(legacy.dictLookupToCommandEffect(cmd))
+      }
+
+      if (cmd.action === 'emotes') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.emotesToCommandEffect(cmd))
       }
 
       if (cmd.action === CommandAction.MEDIA) {
@@ -259,7 +263,6 @@ class GeneralModule implements Module {
       | RandomTextCommand | CountdownCommand | ChattersCommand
       | SetChannelTitleCommand | SetChannelGameIdCommand
       | AddStreamTagCommand | RemoveStreamTagCommand
-      | EmotesCommand
       ) => {
       if (cmd.triggers.length === 0) {
         return
@@ -277,9 +280,6 @@ class GeneralModule implements Module {
           break;
         case CommandAction.MEDIA:
           cmdObj = Object.assign({}, cmd, { fn: playMedia(cmd, this.bot, this.user) })
-          break;
-        case CommandAction.EMOTES:
-          cmdObj = Object.assign({}, cmd, { fn: emotes(cmd, this.bot, this.user) })
           break;
         case CommandAction.COUNTDOWN:
           cmdObj = Object.assign({}, cmd, { fn: countdown(cmd, this.bot, this.user) })
