@@ -80,8 +80,7 @@ export const createRouter = (
   })
 
   router.get('/page/index', RequireLoginApiMiddleware, async (req: any, res: Response) => {
-    const mappedWidgets = await bot.getWidgets().getWidgetInfos(req.user.id)
-    res.send({ widgets: mappedWidgets })
+    res.send({ widgets: await bot.getWidgets().getWidgetInfos(req.user.id) })
   })
 
   router.get('/page/variables', RequireLoginApiMiddleware, async (req: any, res: Response) => {
@@ -192,34 +191,6 @@ export const createRouter = (
       }, 'save-settings: user doesn\'t exist after saving it')
     }
     res.send()
-  })
-
-  router.post('/twitch/user-id-by-name', RequireLoginApiMiddleware, express.json(), async (req: any, res: Response) => {
-    let clientId
-    let clientSecret
-    if (!req.user.groups.includes('admin')) {
-      const u = await bot.getRepos().user.getById(req.user.id) as User
-      clientId = u.tmi_identity_client_id || bot.getConfig().twitch.tmi.identity.client_id
-      clientSecret = u.tmi_identity_client_secret || bot.getConfig().twitch.tmi.identity.client_secret
-    } else {
-      clientId = req.body.client_id
-      clientSecret = req.body.client_secret
-    }
-    if (!clientId) {
-      res.status(400).send({ reason: 'need client id' });
-      return
-    }
-    if (!clientSecret) {
-      res.status(400).send({ reason: 'need client secret' });
-      return
-    }
-
-    try {
-      const client = new TwitchHelixClient(clientId, clientSecret)
-      res.send({ id: await client.getUserIdByNameCached(req.body.name, bot.getCache()) })
-    } catch (e) {
-      res.status(500).send("Something went wrong!");
-    }
   })
 
   router.use('/user', createUserRouter())

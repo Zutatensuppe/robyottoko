@@ -47,6 +47,8 @@ const determineIdentity = (user: User, cfg: TwitchConfig): TwitchBotIdentity => 
   }
 }
 
+const chatEventHandler = new ChatEventHandler()
+
 class TwitchClientManager {
   private chatClient: TwitchChatClient | null = null
   private helixClient: TwitchHelixClient | null = null
@@ -118,7 +120,7 @@ class TwitchClientManager {
         ) => {
           if (self) { return; } // Ignore messages from the bot
 
-          await (new ChatEventHandler()).handle(this.bot, this.user, target, context, msg)
+          await (chatEventHandler).handle(this.bot, this.user, target, context, msg)
         })
 
         // Called every time the bot connects to Twitch chat

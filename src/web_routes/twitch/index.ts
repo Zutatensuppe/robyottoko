@@ -13,29 +13,59 @@ import { SubscriptionType } from '../../services/twitch/EventSub'
 import { StreamOnlineEventHandler } from '../../services/twitch/StreamOnlineEventHandler'
 import { StreamOfflineEventHandler } from '../../services/twitch/StreamOfflineEventHandler'
 import { RaidEventHandler } from '../../services/twitch/RaidEventHandler'
+import { EventSubEventHandler } from '../../services/twitch/EventSubEventHandler'
 
 const log = logger('twitch/index.ts')
 
 export const createRouter = (
   bot: Bot,
 ): Router => {
+  const handlers: Record<SubscriptionType, EventSubEventHandler<any>> = {
+    [SubscriptionType.ChannelSubscribe]: new SubscribeEventHandler(),
+    [SubscriptionType.ChannelFollow]: new FollowEventHandler(),
+    [SubscriptionType.ChannelCheer]: new CheerEventHandler(),
+    [SubscriptionType.ChannelRaid]: new RaidEventHandler(),
+    [SubscriptionType.ChannelPointsCustomRewardRedemptionAdd]: new ChannelPointRedeemEventHandler(),
+    [SubscriptionType.StreamOnline]: new StreamOnlineEventHandler(),
+    [SubscriptionType.StreamOffline]: new StreamOfflineEventHandler(),
+  }
+
   const verifyTwitchSignature = (req: any, res: any, next: NextFunction) => {
     const body = Buffer.from(req.rawBody, 'utf8')
     const msg = `${req.headers['twitch-eventsub-message-id']}${req.headers['twitch-eventsub-message-timestamp']}${body}`
     const hmac = crypto.createHmac('sha256', bot.getConfig().twitch.eventSub.transport.secret)
     hmac.update(msg)
     const expected = `sha256=${hmac.digest('hex')}`
-    if (req.headers['twitch-eventsub-message-signature'] !== expected) {
-      log.debug({ req })
-      log.error({
-        got: req.headers['twitch-eventsub-message-signature'],
-        expected,
-      }, 'bad message signature')
-      res.status(403).send({ reason: 'bad message signature' })
-      return
+    if (req.headers['twitch-eventsub-message-signature'] === expected) {
+      return next()
     }
 
-    return next()
+    log.debug({ req })
+    log.error({
+      got: req.headers['twitch-eventsub-message-signature'],
+      expected,
+    }, 'bad message signature')
+    res.status(403).send({ reason: 'bad message signature' })
+  }
+
+  const getCodeCallbackResult = async (req: any): Promise<HandleCodeCallbackResult | null> => {
+    const redirectUris = [
+      `${bot.getConfig().http.url}/twitch/redirect_uri`,
+      `${req.protocol}://${req.headers.host}/twitch/redirect_uri`,
+    ]
+    const user = await bot.getRepos().user.getById(req.user.id)
+    for (const redirectUri of redirectUris) {
+      const tmpResult = await handleOAuthCodeCallback(
+        `${req.query.code}`,
+        redirectUri,
+        bot,
+        user,
+      )
+      if (!tmpResult.error && tmpResult.user) {
+        return tmpResult
+      }
+    }
+    return null
   }
 
   const router = express.Router()
@@ -48,25 +78,7 @@ export const createRouter = (
     // &scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls
     // &state=c3ab8aa609ea11e793ae92361f002671
     if (req.query.code) {
-      const code = `${req.query.code}`
-      const redirectUris = [
-        `${bot.getConfig().http.url}/twitch/redirect_uri`,
-        `${req.protocol}://${req.headers.host}/twitch/redirect_uri`,
-      ]
-      let result: HandleCodeCallbackResult | null = null
-      for (const redirectUri of redirectUris) {
-        const tmpResult = await handleOAuthCodeCallback(
-          code,
-          redirectUri,
-          bot,
-          req.user || null,
-        )
-        if (tmpResult.error || !tmpResult.user) {
-          continue
-        }
-        result = tmpResult
-        break
-      }
+      const result: HandleCodeCallbackResult | null = await getCodeCallbackResult(req)
       if (result === null || result.error || !result.user) {
         res.status(500).send("Something went wrong!");
         return
@@ -110,9 +122,7 @@ export const createRouter = (
 
       if (req.headers['twitch-eventsub-message-type'] === 'notification') {
         log.info({ type: req.body.subscription.type }, 'got notification request')
-        const row = await bot.getRepos().eventSub.getOne({
-          subscription_id: req.body.subscription.id,
-        })
+        const row = await bot.getRepos().eventSub.getBySubscriptionId(req.body.subscription.id)
         if (!row) {
           log.info('unknown subscription_id')
           res.status(400).send({ reason: 'unknown subscription_id' })
@@ -125,22 +135,14 @@ export const createRouter = (
           return
         }
 
-        if (req.body.subscription.type === SubscriptionType.ChannelSubscribe) {
-          await (new SubscribeEventHandler()).handle(bot, user, req.body)
-        } else if (req.body.subscription.type === SubscriptionType.ChannelFollow) {
-          await (new FollowEventHandler()).handle(bot, user, req.body)
-        } else if (req.body.subscription.type === SubscriptionType.ChannelCheer) {
-          await (new CheerEventHandler()).handle(bot, user, req.body)
-        } else if (req.body.subscription.type === SubscriptionType.ChannelRaid) {
-          await (new RaidEventHandler()).handle(bot, user, req.body)
-        } else if (req.body.subscription.type === SubscriptionType.ChannelPointsCustomRewardRedemptionAdd) {
-          await (new ChannelPointRedeemEventHandler()).handle(bot, user, req.body)
-        } else if (req.body.subscription.type === SubscriptionType.StreamOnline) {
-          await (new StreamOnlineEventHandler()).handle(bot, req.body)
-        } else if (req.body.subscription.type === SubscriptionType.StreamOffline) {
-          await (new StreamOfflineEventHandler()).handle(bot, req.body)
+        const handler = handlers[req.body.subscription.type as SubscriptionType]
+        if (!handler) {
+          log.info('unknown subscription type')
+          res.status(400).send({ reason: 'unknown subscription type' })
+          return
         }
 
+        handler.handle(bot, user, req.body)
         res.send()
         return
       }

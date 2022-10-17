@@ -20,11 +20,10 @@ const removeStreamTags = (
     }, 'unable to execute removeStreamTags, client, command, context, or helixClient missing')
     return
   }
-  const channelId = ctx.context['room-id']
   const say = bot.sayFn(user, ctx.target)
   const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag
   const tmpTag = await fn.doReplacements(tag, ctx.rawCmd, ctx.context, originalCmd, bot, user)
-  const tagsResponse = await helixClient.getStreamTags(channelId)
+  const tagsResponse = await helixClient.getStreamTags(user.twitch_id)
   if (!tagsResponse) {
     say(`❌ Unable to fetch current tags.`)
     return
@@ -57,7 +56,6 @@ const removeStreamTags = (
 
   const resp = await helixClient.replaceStreamTags(
     accessToken,
-    channelId,
     newSettableTagIds,
     bot,
     user,

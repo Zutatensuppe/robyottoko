@@ -19,12 +19,11 @@ const setChannelTitle = (
     }, 'unable to execute setChannelTitle, client, command, context, or helixClient missing')
     return
   }
-  const channelId = ctx.context['room-id']
   const say = bot.sayFn(user, ctx.target)
   const title = originalCmd.data.title === '' ? '$args()' : originalCmd.data.title
   const tmpTitle = await fn.doReplacements(title, ctx.rawCmd, ctx.context, originalCmd, bot, user)
   if (tmpTitle === '') {
-    const info = await helixClient.getChannelInformation(channelId)
+    const info = await helixClient.getChannelInformation(user.twitch_id)
     if (info) {
       say(`Current title is "${info.title}".`)
     } else {
@@ -50,7 +49,6 @@ const setChannelTitle = (
 
   const resp = await helixClient.modifyChannelInformation(
     accessToken,
-    channelId,
     { title: tmpTitle },
     bot,
     user,

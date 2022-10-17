@@ -578,12 +578,11 @@ class TwitchHelixClient {
   // https://dev.twitch.tv/docs/api/reference#modify-channel-information
   async modifyChannelInformation(
     accessToken: string,
-    broadcasterId: string,
     data: ModifyChannelInformationData,
     bot: Bot,
     user: User,
   ): Promise<Response | null> {
-    const url = apiUrl('/channels') + asQueryArgs({ broadcaster_id: broadcasterId })
+    const url = apiUrl('/channels') + asQueryArgs({ broadcaster_id: user.twitch_id })
     const req = async (token: string): Promise<Response> => {
       return await xhr.patch(url, withHeaders(this._authHeaders(token), asJson(data)))
     }
@@ -681,12 +680,11 @@ class TwitchHelixClient {
   // https://dev.twitch.tv/docs/api/reference#replace-stream-tags
   async replaceStreamTags(
     accessToken: string,
-    broadcasterId: string,
     tagIds: string[],
     bot: Bot,
     user: User,
   ): Promise<Response | null> {
-    const url = apiUrl('/streams/tags') + asQueryArgs({ broadcaster_id: broadcasterId })
+    const url = apiUrl('/streams/tags') + asQueryArgs({ broadcaster_id: user.twitch_id })
     const req = async (token: string): Promise<Response> => {
       return await xhr.put(url, withHeaders(this._authHeaders(token), asJson({ tag_ids: tagIds })))
     }

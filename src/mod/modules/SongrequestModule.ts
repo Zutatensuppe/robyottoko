@@ -17,6 +17,7 @@ import {
 } from './SongrequestModuleCommon'
 import { NextFunction, Response } from 'express'
 import { isBroadcaster, isMod, isSubscriber } from '../../common/permissions'
+import { newJsonDate } from '../../common/commands'
 
 const log = logger('SongrequestModule.ts')
 
@@ -170,7 +171,7 @@ class SongrequestModule implements Module {
         shouldSave = true
       }
       if (!command.createdAt) {
-        command.createdAt = JSON.stringify(new Date())
+        command.createdAt = newJsonDate()
         shouldSave = true
       }
     }

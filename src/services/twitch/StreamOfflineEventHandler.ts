@@ -1,14 +1,23 @@
 'use strict'
 
 import { logger } from "../../common/fn";
+import { User } from "../../repo/Users";
 import { Bot } from "../../types";
+import { EventSubEventHandler } from "./EventSubEventHandler";
 
 const log = logger('StreamOfflineEventHandler.ts')
 
-export class StreamOfflineEventHandler {
+interface StreamOfflineEvent {
+  broadcaster_user_id: string
+  broadcaster_user_login: string
+  broadcaster_user_name: string
+}
+
+export class StreamOfflineEventHandler extends EventSubEventHandler<StreamOfflineEvent> {
   async handle(
     bot: Bot,
-    data: { subscription: any, event: any },
+    _user: User,
+    data: { subscription: any, event: StreamOfflineEvent },
   ) {
     log.info('handle')
     // get last started stream for broadcaster

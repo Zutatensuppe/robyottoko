@@ -5,7 +5,7 @@ import playMedia from '../../commands/playMedia'
 import fn, { determineNewVolume, extractEmotes, getChannelPointsCustomRewards } from '../../fn'
 import { logger, nonce, parseHumanDuration, SECOND } from '../../common/fn'
 import chatters from '../../commands/chatters'
-import { commands as commonCommands, newCommandTrigger } from '../../common/commands'
+import { commands as commonCommands, newCommandTrigger, newJsonDate } from '../../common/commands'
 import setChannelTitle from '../../commands/setChannelTitle'
 import setChannelGameId from '../../commands/setChannelGameId'
 import { Socket } from '../../net/WebSocketServer'
@@ -197,7 +197,7 @@ class GeneralModule implements Module {
         shouldSave = true
       }
       if (!command.createdAt) {
-        command.createdAt = JSON.stringify(new Date())
+        command.createdAt = newJsonDate()
         shouldSave = true
       }
     }
