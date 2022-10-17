@@ -5,7 +5,6 @@ import {
   Command, CommandAction, CommandEffect, CommandTrigger, CommandTriggerType,
   CountdownAction, CountdownActionType, CountdownCommand, FunctionCommand,
   MadochanCommand,
-  MediaCommand,
   MediaCommandData, MediaFile, MediaVideo, MediaVolumeCommand, RandomTextCommand, RemoveStreamTagCommand, SetChannelGameIdCommand, SetChannelTitleCommand, SoundMediaFile,
 } from "../types"
 import { MOD_OR_ABOVE } from './permissions'
@@ -251,21 +250,6 @@ export const commands: Record<CommandAction, CommandDef> = {
         model: '100epochs800lenhashingbidirectional.h5',
         weirdness: '1',
       },
-    }),
-    RequiresAccessToken: () => false,
-  },
-  media: {
-    Name: () => "media command",
-    Description: () => "Display an image and/or play a sound.",
-    NewCommand: (): MediaCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
-      triggers: [newCommandTrigger()],
-      effects: [],
-      action: CommandAction.MEDIA,
-      restrict_to: [],
-      variables: [],
-      data: newMedia(),
     }),
     RequiresAccessToken: () => false,
   },

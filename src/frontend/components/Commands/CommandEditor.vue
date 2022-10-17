@@ -187,6 +187,8 @@
                   v-model="item.effects"
                   :item-variables="item.variables"
                   :global-variables="globalVariables"
+                  :base-volume="baseVolume"
+                  :widget-url="widgetUrl"
                 />
               </td>
             </tr>
@@ -280,6 +282,11 @@ export default defineComponent({
     },
     baseVolume: {
       default: 100,
+    },
+    widgetUrl: {
+      type: String,
+      required: false,
+      default: "",
     },
   },
   emits: ["update:modelValue", "cancel"],

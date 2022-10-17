@@ -274,6 +274,7 @@ export enum CommandEffectType {
   CHAT = 'chat',
   DICT_LOOKUP = 'dict_lookup',
   EMOTES = 'emotes',
+  MEDIA = 'media',
 }
 
 export interface CommandEffect {
@@ -306,6 +307,11 @@ export interface EmotesEffect {
   data: GeneralModuleEmotesEventData
 }
 
+export interface MediaEffect {
+  type: CommandEffectType.MEDIA
+  data: MediaCommandData
+}
+
 export interface CommandVariable {
   name: string
   value: any
@@ -330,7 +336,6 @@ export type CommandFunction = (ctx: CommandExecutionContext) => any
 export enum CommandAction {
   // general
   TEXT = 'text',
-  MEDIA = 'media',
   MEDIA_VOLUME = 'media_volume',
   COUNTDOWN = 'countdown',
   MADOCHAN_CREATEWORD = 'madochan_createword',
@@ -434,11 +439,6 @@ export interface MediaVolumeCommand extends Command {
   action: CommandAction.MEDIA_VOLUME
 }
 
-export interface MediaCommand extends Command {
-  action: CommandAction.MEDIA
-  data: MediaCommandData
-}
-
 export interface ChattersCommand extends Command {
   action: CommandAction.CHATTERS
 }
@@ -484,6 +484,7 @@ export interface CountdownCommand extends Command {
 }
 
 export interface FunctionCommand {
+  id: string
   triggers: CommandTrigger[]
   action?: CommandAction
   restrict_to?: CommandRestrict[]

@@ -163,7 +163,7 @@ onBeforeMount(async () => {
 
 watch(val, (newValue: EmotesEffect) => {
   emit('update:modelValue', newValue)
-})
+}, { deep: true })
 </script>
 
 <style lang="scss">

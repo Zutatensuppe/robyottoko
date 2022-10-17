@@ -70,5 +70,5 @@ const autocompletableVariables = (): AutocompletableVariable[] => {
 
 watch(val, (newValue: VariableChangeEffect) => {
   emit('update:modelValue', newValue)
-})
+}, { deep: true })
 </script>

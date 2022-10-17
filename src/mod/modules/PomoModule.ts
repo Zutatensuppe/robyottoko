@@ -30,11 +30,13 @@ class PomoModule implements Module {
 
       this.commands = [
         {
+          id: 'pomo',
           triggers: [newCommandTrigger('!pomo')],
           restrict_to: MOD_OR_ABOVE,
           fn: this.cmdPomoStart.bind(this),
         },
         {
+          id: 'pomo_exit',
           triggers: [newCommandTrigger('!pomo exit', true)],
           restrict_to: MOD_OR_ABOVE,
           fn: this.cmdPomoExit.bind(this),

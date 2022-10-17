@@ -1,5 +1,7 @@
+import childProcess from 'child_process'
+import fs from 'fs'
 import xhr from './net/xhr'
-import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, getRandom, getRandomInt, daysUntil } from './common/fn'
+import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, getRandom, getRandomInt, daysUntil, hash } from './common/fn'
 
 import {
   Command, GlobalVariable, RawCommand, TwitchChatContext,
@@ -10,6 +12,7 @@ import { User } from './repo/Users'
 import TwitchHelixClient, { TwitchHelixUserSearchResponseDataEntry } from './services/TwitchHelixClient'
 import JishoOrg from './services/JishoOrg'
 import DictCc from './services/DictCc'
+import config from './config'
 
 const log = logger('fn.ts')
 
@@ -127,6 +130,29 @@ for (const key of Object.keys(DictCc.LANG_TO_URL_MAP)) {
   LANG_TO_FN[key] = (phrase) => DictCc.searchWord(phrase, key)
 }
 
+const isTwitchClipUrl = (url: string): boolean => {
+  return !!url.match(/^https:\/\/clips\.twitch\.tv\/.+/)
+}
+
+const downloadVideo = async (originalUrl: string): Promise<string> => {
+  // if video url looks like a twitch clip url, dl it first
+  const filename = `${hash(originalUrl)}-clip.mp4`
+  const outfile = `./data/uploads/${filename}`
+  if (!fs.existsSync(outfile)) {
+    log.debug({ outfile }, 'downloading the video')
+    const child = childProcess.execFile(
+      config.youtubeDlBinary,
+      [originalUrl, '-o', outfile]
+    )
+    await new Promise((resolve) => {
+      child.on('close', resolve)
+    })
+  } else {
+    log.debug({ outfile }, 'video exists')
+  }
+  return `/uploads/${filename}`
+}
+
 const applyEffects = async (
   originalCmd: FunctionCommand,
   contextModule: Module,
@@ -212,6 +238,35 @@ const applyEffects = async (
       contextModule.bot.getWebSocketServer().notifyAll([contextModule.user.id], 'general', {
         event: 'emotes',
         data: effect.data,
+      })
+
+    } else if (effect.type === CommandEffectType.MEDIA) {
+
+      const doReplaces = async (str: string) => {
+        return await doReplacements(str, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
+      }
+      const data = effect.data
+      data.image_url = await doReplaces(data.image_url)
+      if (data.video.url) {
+        log.debug({ url: data.video.url }, 'video url is defined')
+        data.video.url = await doReplaces(data.video.url)
+        if (!data.video.url) {
+          log.debug('no video url found')
+        } else if (isTwitchClipUrl(data.video.url)) {
+          // video url looks like a twitch clip url, dl it first
+          log.debug({ url: data.video.url }, 'twitch clip found')
+          data.video.url = await downloadVideo(data.video.url)
+        } else {
+          // otherwise assume it is already a playable video url
+          // TODO: youtube videos maybe should also be downloaded
+          log.debug('video is assumed to be directly playable via html5 video element')
+        }
+      }
+
+      contextModule.bot.getWebSocketServer().notifyAll([contextModule.user.id], 'general', {
+        event: 'playmedia',
+        data: data,
+        id: originalCmd.id
       })
 
     }

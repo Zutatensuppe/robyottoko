@@ -1,6 +1,5 @@
 import countdown from '../../commands/countdown'
 import madochanCreateWord from '../../commands/madochanCreateWord'
-import playMedia from '../../commands/playMedia'
 import fn, { determineNewVolume, extractEmotes, getChannelPointsCustomRewards } from '../../fn'
 import { logger, nonce, parseHumanDuration, SECOND } from '../../common/fn'
 import chatters from '../../commands/chatters'
@@ -12,7 +11,7 @@ import { User } from '../../repo/Users'
 import {
   ChatMessageContext, Command, FunctionCommand,
   Bot, Module,
-  MediaCommand, CountdownCommand,
+  CountdownCommand,
   MadochanCommand, MediaVolumeCommand, ChattersCommand,
   RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand,
   CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand,
@@ -129,7 +128,7 @@ class GeneralModule implements Module {
         }
       }
 
-      if (cmd.action === 'text' && !cmd.effects.find((effect: CommandEffect) => effect.type === CommandEffectType.CHAT)) {
+      if (cmd.action === 'text' && !cmd.effects.find((effect: CommandEffect) => effect.type !== CommandEffectType.VARIABLE_CHANGE)) {
         cmd.effects.push(legacy.textToCommandEffect(cmd))
       }
 
@@ -143,39 +142,11 @@ class GeneralModule implements Module {
         cmd.effects.push(legacy.emotesToCommandEffect(cmd))
       }
 
-      if (cmd.action === CommandAction.MEDIA) {
-        if (cmd.data.excludeFromGlobalWidget) {
-          cmd.data.widgetIds = [cmd.id]
-        } else if (typeof cmd.data.widgetIds === 'undefined') {
-          cmd.data.widgetIds = []
-        }
-        if (typeof cmd.data.excludeFromGlobalWidget !== 'undefined') {
-          delete cmd.data.excludeFromGlobalWidget
-        }
-        cmd.data.minDurationMs = cmd.data.minDurationMs || 0
-        cmd.data.sound.volume = cmd.data.sound.volume || 100
-
-        if (!cmd.data.sound.urlpath && cmd.data.sound.file) {
-          cmd.data.sound.urlpath = `/uploads/${encodeURIComponent(cmd.data.sound.file)}`
-        }
-
-        if (!cmd.data.image.urlpath && cmd.data.image.file) {
-          cmd.data.image.urlpath = `/uploads/${encodeURIComponent(cmd.data.image.file)}`
-        }
-
-        if (!cmd.data.image_url || cmd.data.image_url === 'undefined') {
-          cmd.data.image_url = ''
-        }
-        if (!cmd.data.video) {
-          cmd.data.video = {
-            url: cmd.data.video || cmd.data.twitch_clip?.url || '',
-            volume: cmd.data.twitch_clip?.volume || 100,
-          }
-        }
-        if (typeof cmd.data.twitch_clip !== 'undefined') {
-          delete cmd.data.twitch_clip
-        }
+      if (cmd.action === 'media') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.mediaToCommandEffect(cmd))
       }
+
       if (cmd.action === CommandAction.COUNTDOWN) {
         cmd.data.actions = (cmd.data.actions || []).map((action: CountdownAction) => {
           if (typeof action.value === 'string') {
@@ -259,7 +230,7 @@ class GeneralModule implements Module {
     const commands: FunctionCommand[] = []
     const timers: GeneralModuleTimer[] = []
 
-    data.commands.forEach((cmd: MediaCommand | MediaVolumeCommand | MadochanCommand
+    data.commands.forEach((cmd: MediaVolumeCommand | MadochanCommand
       | RandomTextCommand | CountdownCommand | ChattersCommand
       | SetChannelTitleCommand | SetChannelGameIdCommand
       | AddStreamTagCommand | RemoveStreamTagCommand
@@ -277,9 +248,6 @@ class GeneralModule implements Module {
           break;
         case CommandAction.TEXT:
           cmdObj = Object.assign({}, cmd, { fn: noop })
-          break;
-        case CommandAction.MEDIA:
-          cmdObj = Object.assign({}, cmd, { fn: playMedia(cmd, this.bot, this.user) })
           break;
         case CommandAction.COUNTDOWN:
           cmdObj = Object.assign({}, cmd, { fn: countdown(cmd, this.bot, this.user) })

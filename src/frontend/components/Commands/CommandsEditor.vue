@@ -242,16 +242,6 @@
       :channel-points-custom-rewards="channelPointsCustomRewards"
       :model-value="editCommand"
       :mode="editIdx >= commands.length ? 'create' : 'edit'"
-      @update:modelValue="editedCommand"
-      @cancel="editCommand = null"
-    />
-
-    <media-command-editor
-      v-else-if="editIdx !== null && editCommand && editCommand.action === 'media'"
-      :global-variables="globalVariables"
-      :channel-points-custom-rewards="channelPointsCustomRewards"
-      :model-value="editCommand"
-      :mode="editIdx >= commands.length ? 'create' : 'edit'"
       :base-volume="baseVolume"
       :widget-url="widgetUrl"
       @update:modelValue="editedCommand"

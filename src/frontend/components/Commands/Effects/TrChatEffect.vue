@@ -79,7 +79,7 @@ const rmtxt = (idx: number): void => {
 
 watch(val, (newValue: ChatEffect) => {
   emit('update:modelValue', newValue)
-})
+}, { deep: true })
 </script>
 <style scoped>
 .textarea-holder {

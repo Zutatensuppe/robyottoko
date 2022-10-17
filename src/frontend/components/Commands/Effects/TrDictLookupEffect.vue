@@ -83,5 +83,5 @@ const emit = defineEmits(['update:modelValue', 'removeClick'])
 
 watch(val, (newValue: DictLookupEffect) => {
   emit('update:modelValue', newValue)
-})
+}, { deep: true })
 </script>

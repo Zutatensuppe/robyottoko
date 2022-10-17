@@ -26,6 +26,13 @@
         v-model="val[idx]"
         @remove-click="onRmEffectClick(idx)"
       />
+      <TrMediaEffect
+        v-if="item.type === CommandEffectType.MEDIA"
+        v-model="val[idx]"
+        :base-volume="baseVolume"
+        :widget-url="widgetUrl"
+        @remove-click="onRmEffectClick(idx)"
+      />
     </table>
 
     <span
@@ -44,6 +51,10 @@
       class="button is-small"
       @click="addEmotes"
     >Add emotes</span>
+    <span
+      class="button is-small"
+      @click="addMedia"
+    >Add media</span>
   </div>
 </template>
 <script setup lang="ts">
@@ -53,6 +64,8 @@ import TrVariableChangeEffect from './Effects/TrVariableChangeEffect.vue';
 import TrChatEffect from './Effects/TrChatEffect.vue';
 import TrDictLookupEffect from './Effects/TrDictLookupEffect.vue';
 import TrEmotesEffect from './Effects/TrEmotesEffect.vue';
+import TrMediaEffect from './Effects/TrMediaEffect.vue';
+import { newMedia } from '../../../common/commands';
 
 export interface AutocompletableVariable {
   var: CommandVariable | GlobalVariable;
@@ -63,6 +76,8 @@ const props = defineProps<{
   modelValue: CommandEffect[],
   itemVariables: CommandVariable[],
   globalVariables: GlobalVariable[],
+  baseVolume: number,
+  widgetUrl: string,
 }>()
 
 const val = ref<CommandEffect[]>(props.modelValue)
@@ -107,6 +122,12 @@ const addEmotes = () => {
       displayFn: [],
       emotes: [],
     },
+  })
+}
+const addMedia = () => {
+  val.value.push({
+    type: CommandEffectType.MEDIA,
+    data: newMedia(),
   })
 }
 
