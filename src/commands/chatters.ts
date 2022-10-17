@@ -20,13 +20,13 @@ const chatters = (
 
   const say = bot.sayFn(user, ctx.target)
 
-  const stream = await helixClient.getStreamByUserId(ctx.context['room-id'])
+  const stream = await helixClient.getStreamByUserId(user.twitch_id)
   if (!stream) {
     say(`It seems this channel is not live at the moment...`)
     return
   }
 
-  const userNames = await bot.getRepos().chatLog.getChatters(ctx.context['room-id'], new Date(stream.started_at))
+  const userNames = await bot.getRepos().chatLog.getChatters(user.twitch_id, new Date(stream.started_at))
   if (userNames.length === 0) {
     say(`It seems nobody chatted? :(`)
     return

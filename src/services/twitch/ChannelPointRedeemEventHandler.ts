@@ -5,10 +5,11 @@ import { logger } from "../../common/fn"
 import { Bot, RawCommand, TwitchChatContext } from "../../types"
 import { CommandExecutor } from "../CommandExecutor"
 import { User } from "../../repo/Users"
+import { EventSubEventHandler } from "./EventSubEventHandler"
 
 const log = logger('ChannelPointRedeemEventHandler.ts')
 
-export class ChannelPointRedeemEventHandler {
+export class ChannelPointRedeemEventHandler extends EventSubEventHandler<any> {
   async handle(
     bot: Bot,
     user: User,

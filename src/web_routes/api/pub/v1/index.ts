@@ -86,7 +86,7 @@ export const createRouter = (
       return
     }
 
-    res.status(200).send({ok: true, data: { images: drawcastModule.getImages() }})
+    res.status(200).send({ ok: true, data: { images: drawcastModule.getImages() } })
   })
 
   return router

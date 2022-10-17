@@ -22,7 +22,7 @@ export class EventSubRepo extends Repo {
     await this.db.delete(TABLE, where)
   }
 
-  async getOne(where: { subscription_id: string }): Promise<Row | null> {
-    return await this.db.get(TABLE, where)
+  async getBySubscriptionId(subscriptionId: string): Promise<Row | null> {
+    return await this.db.get(TABLE, { subscription_id: subscriptionId })
   }
 }

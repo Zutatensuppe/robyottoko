@@ -19,12 +19,11 @@ const setChannelGameId = (
     }, 'unable to execute setChannelGameId, client, command, context, or helixClient missing')
     return
   }
-  const channelId = ctx.context['room-id']
   const say = bot.sayFn(user, ctx.target)
   const gameId = originalCmd.data.game_id === '' ? '$args()' : originalCmd.data.game_id
   const tmpGameId = await fn.doReplacements(gameId, ctx.rawCmd, ctx.context, originalCmd, bot, user)
   if (tmpGameId === '') {
-    const info = await helixClient.getChannelInformation(channelId)
+    const info = await helixClient.getChannelInformation(user.twitch_id)
     if (info) {
       say(`Current category is "${info.game_name}".`)
     } else {
@@ -47,7 +46,6 @@ const setChannelGameId = (
 
   const resp = await helixClient.modifyChannelInformation(
     accessToken,
-    channelId,
     { game_id: category.id },
     bot,
     user,

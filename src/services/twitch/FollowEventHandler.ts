@@ -5,15 +5,26 @@ import { logger } from "../../common/fn"
 import { Bot, RawCommand, TwitchChatContext } from "../../types"
 import { CommandExecutor } from "../CommandExecutor"
 import { User } from "../../repo/Users"
+import { EventSubEventHandler } from "./EventSubEventHandler"
 
 const log = logger('FollowEventHandler.ts')
 
-export class FollowEventHandler {
+interface FollowEvent {
+  user_id: string
+  user_login: string
+  user_name: string
+  broadcaster_user_id: string
+  broadcaster_user_login: string
+  broadcaster_user_name: string
+  followed_at: string // json date string
+}
+
+export class FollowEventHandler extends EventSubEventHandler<FollowEvent> {
   // TODO: use better type info
   async handle(
     bot: Bot,
     user: User,
-    data: { subscription: any, event: any },
+    data: { subscription: any, event: FollowEvent },
   ): Promise<void> {
     log.info('handle')
     const rawCmd: RawCommand = {

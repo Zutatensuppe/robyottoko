@@ -1,14 +1,26 @@
 'use strict'
 
 import { logger } from "../../common/fn";
+import { User } from "../../repo/Users";
 import { Bot } from "../../types";
+import { EventSubEventHandler } from "./EventSubEventHandler";
 
 const log = logger('StreamOnlineEventHandler.ts')
 
-export class StreamOnlineEventHandler {
+interface StreamOnlineEvent {
+  id: string
+  broadcaster_user_id: string
+  broadcaster_user_login: string
+  broadcaster_user_name: string
+  type: string
+  started_at: string // json date string
+}
+
+export class StreamOnlineEventHandler extends EventSubEventHandler<StreamOnlineEvent> {
   async handle(
     bot: Bot,
-    data: { subscription: any, event: any },
+    _user: User,
+    data: { subscription: any, event: StreamOnlineEvent },
   ) {
     log.info('handle')
 
