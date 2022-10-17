@@ -1,7 +1,11 @@
 import xhr from './net/xhr'
 import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, getRandom, getRandomInt, daysUntil } from './common/fn'
 
-import { Command, GlobalVariable, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module, CommandTrigger, Bot, ChatMessageContext } from './types'
+import {
+  Command, GlobalVariable, RawCommand, TwitchChatContext,
+  TwitchChatClient, FunctionCommand, Module, CommandTrigger,
+  Bot, ChatMessageContext, CommandEffectType, CommandVariableChange,
+} from './types'
 import { User } from './repo/Users'
 import TwitchHelixClient, { TwitchHelixUserSearchResponseDataEntry } from './services/TwitchHelixClient'
 
@@ -100,13 +104,18 @@ const applyVariableChanges = async (
   rawCmd: RawCommand | null,
   context: TwitchChatContext | null,
 ) => {
-  if (!originalCmd.variableChanges) {
+  if (!originalCmd.effects) {
     return
   }
   const variables = contextModule.bot.getRepos().variables
   const doReplace = async (value: string) => await doReplacements(value, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
 
-  for (const variableChange of originalCmd.variableChanges) {
+  for (const effect of originalCmd.effects) {
+    if (effect.type !== CommandEffectType.VARIABLE_CHANGE) {
+      continue;
+    }
+    const variableChange = effect.data as CommandVariableChange
+
     const op = variableChange.change
     const name = await doReplace(variableChange.name)
     const value = await doReplace(variableChange.value)

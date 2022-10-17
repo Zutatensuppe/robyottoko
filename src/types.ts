@@ -268,6 +268,16 @@ export interface CommandTrigger {
     since: 'alltime' | 'stream' | ''
   }
 }
+
+export enum CommandEffectType {
+  VARIABLE_CHANGE = 'variable_change'
+}
+
+export interface CommandEffect {
+  type: CommandEffectType
+  data: any
+}
+
 export interface CommandVariable {
   name: string
   value: any
@@ -330,11 +340,14 @@ export enum CommandAction {
 export interface Command {
   id: string
   createdAt: string // json date string
-  triggers: CommandTrigger[]
-  action: CommandAction
   restrict_to: CommandRestrict[]
+  triggers: CommandTrigger[]
+  effects: CommandEffect[]
   variables: CommandVariable[]
-  variableChanges: CommandVariableChange[]
+
+  // DEPRECATED:
+  // -----------------------------------------------------------------
+  action: CommandAction
   data: CommandData
 }
 
@@ -458,7 +471,7 @@ export interface FunctionCommand {
   action?: CommandAction
   restrict_to?: CommandRestrict[]
   variables?: CommandVariable[]
-  variableChanges?: CommandVariableChange[]
+  effects?: CommandEffect[]
   data?: CommandData
   fn: CommandFunction
 }

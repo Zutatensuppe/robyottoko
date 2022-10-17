@@ -25,6 +25,7 @@ import addStreamTags from '../../commands/addStreamTags'
 import removeStreamTags from '../../commands/removeStreamTags'
 import emotes from '../../commands/emotes'
 import { NextFunction, Response } from 'express'
+import legacy from '../../common/legacy'
 
 const log = logger('GeneralModule.ts')
 
@@ -121,7 +122,14 @@ class GeneralModule implements Module {
         delete cmd.command
       }
       cmd.variables = cmd.variables || []
-      cmd.variableChanges = cmd.variableChanges || []
+      cmd.effects = cmd.effects || []
+
+      if (cmd.variableChanges) {
+        for (const variableChange of cmd.variableChanges) {
+          cmd.effects.push(legacy.variableChangeToCommandEffect(variableChange))
+        }
+      }
+
       if (cmd.action === CommandAction.TEXT) {
         if (!Array.isArray(cmd.data.text)) {
           cmd.data.text = [cmd.data.text]

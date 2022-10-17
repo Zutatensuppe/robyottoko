@@ -146,65 +146,13 @@
               </td>
             </tr>
             <tr>
-              <td>Variable changes:</td>
+              <td>Effects:</td>
               <td>
-                <table v-if="item.variableChanges.length > 0">
-                  <thead>
-                    <tr>
-                      <td>Name</td>
-                      <td>Change</td>
-                      <td>Value</td>
-                      <td />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr
-                      v-for="(v, idx) in item.variableChanges"
-                      :key="idx"
-                    >
-                      <td>
-                        <dropdown-input
-                          v-model="v.name"
-                          :values="autocompletableVariables().map(a => ({ value: a.var.name, label: `${a.var.name} (${a.type}), <code>${a.var.value}</code>` }))"
-                        />
-                      </td>
-                      <td>
-                        <div class="select is-small">
-                          <select v-model="v.change">
-                            <option value="set">
-                              set
-                            </option>
-                            <option value="increase_by">
-                              increase by
-                            </option>
-                            <option value="decrease_by">
-                              decrease by
-                            </option>
-                          </select>
-                        </div>
-                      </td>
-                      <td>
-                        <StringInput v-model="v.value" />
-                      </td>
-                      <td>
-                        <button
-                          class="button is-small"
-                          @click="rmVariableChange(idx)"
-                        >
-                          <i class="fa fa-remove" />
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                <span
-                  class="button is-small"
-                  @click="onAddVariableChange"
-                >Add Variable Change</span>
-                <div class="help">
-                  Variable changes are performed when the command is executed,
-                  before anything else.
-                </div>
+                <EffectsEditor
+                  v-model="item.effects"
+                  :item-variables="item.variables"
+                  :global-variables="globalVariables"
+                />
               </td>
             </tr>
             <tr>
@@ -259,17 +207,12 @@ import {
 import {
   CommandTrigger,
   CommandVariable,
-  CommandVariableChange,
   GlobalVariable,
   RandomTextCommand,
 } from "../../../types";
 import { possibleTriggerActions } from "../../../common/triggers";
 import StringInput from "../StringInput.vue";
-
-interface AutocompletableVariable {
-  var: CommandVariable | GlobalVariable;
-  type: string;
-}
+import EffectsEditor from "./EffectsEditor.vue";
 
 interface ComponentDataPermission {
   value: string;
@@ -283,7 +226,7 @@ interface ComponentData {
 }
 
 export default defineComponent({
-  components: { StringInput },
+  components: { StringInput, EffectsEditor },
   props: {
     modelValue: {
       type: Object as PropType<RandomTextCommand>,
@@ -393,23 +336,6 @@ export default defineComponent({
         value: "",
       });
     },
-    rmVariableChange(idx: number): void {
-      if (!this.item) {
-        console.warn("rmVariableChange: this.item not initialized");
-        return;
-      }
-      this.item.variableChanges = this.item.variableChanges.filter((_val: CommandVariableChange, index: number) => index !== idx);
-    },
-    onAddVariable(): void {
-      if (!this.item) {
-        console.warn("onAddVariable: this.item not initialized");
-        return;
-      }
-      this.item.variables.push({
-        name: "",
-        value: "",
-      });
-    },
     rmVariable(idx: number): void {
       if (!this.item) {
         console.warn("rmVariable: this.item not initialized");
@@ -452,27 +378,6 @@ export default defineComponent({
         return;
       }
       this.item.data.text[idx] += macro.value;
-    },
-    autocompletableVariables(): AutocompletableVariable[] {
-      if (!this.item) {
-        console.warn("autocompletableVariables: this.item not initialized");
-        return [];
-      }
-      const variables: AutocompletableVariable[] = this.item.variables.slice().map((localVar: CommandVariable) => {
-        return {
-          var: localVar,
-          type: "local",
-        };
-      });
-      this.globalVariables.forEach((globalVar: GlobalVariable) => {
-        if (!variables.find((localVar) => localVar.var.name === globalVar.name)) {
-          variables.push({
-            var: globalVar,
-            type: "global",
-          });
-        }
-      });
-      return variables;
     },
   }
 });
