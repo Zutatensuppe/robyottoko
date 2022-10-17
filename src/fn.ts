@@ -98,7 +98,7 @@ const _increase = (value: any, by: any) => (_toInt(value) + _toInt(by))
 
 const _decrease = (value: any, by: any) => (_toInt(value) - _toInt(by))
 
-const applyVariableChanges = async (
+const applyEffects = async (
   originalCmd: FunctionCommand,
   contextModule: Module,
   rawCmd: RawCommand | null,
@@ -111,42 +111,49 @@ const applyVariableChanges = async (
   const doReplace = async (value: string) => await doReplacements(value, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
 
   for (const effect of originalCmd.effects) {
-    if (effect.type !== CommandEffectType.VARIABLE_CHANGE) {
-      continue;
-    }
-    const variableChange = effect.data as CommandVariableChange
+    if (effect.type === CommandEffectType.VARIABLE_CHANGE) {
 
-    const op = variableChange.change
-    const name = await doReplace(variableChange.name)
-    const value = await doReplace(variableChange.value)
+      const variableChange = effect.data as CommandVariableChange
 
-    // check if there is a local variable for the change
-    if (originalCmd.variables) {
-      const idx = originalCmd.variables.findIndex(v => (v.name === name))
+      const op = variableChange.change
+      const name = await doReplace(variableChange.name)
+      const value = await doReplace(variableChange.value)
+
+      // check if there is a local variable for the change
+      if (originalCmd.variables) {
+        const idx = originalCmd.variables.findIndex(v => (v.name === name))
+        if (idx !== -1) {
+          if (op === 'set') {
+            originalCmd.variables[idx].value = value
+          } else if (op === 'increase_by') {
+            originalCmd.variables[idx].value = _increase(originalCmd.variables[idx].value, value)
+          } else if (op === 'decrease_by') {
+            originalCmd.variables[idx].value = _decrease(originalCmd.variables[idx].value, value)
+          }
+          continue
+        }
+      }
+
+      const globalVars: GlobalVariable[] = await variables.all(contextModule.user.id)
+      const idx = globalVars.findIndex(v => (v.name === name))
       if (idx !== -1) {
         if (op === 'set') {
-          originalCmd.variables[idx].value = value
+          await variables.set(contextModule.user.id, name, value)
         } else if (op === 'increase_by') {
-          originalCmd.variables[idx].value = _increase(originalCmd.variables[idx].value, value)
+          await variables.set(contextModule.user.id, name, _increase(globalVars[idx].value, value))
         } else if (op === 'decrease_by') {
-          originalCmd.variables[idx].value = _decrease(originalCmd.variables[idx].value, value)
+          await variables.set(contextModule.user.id, name, _decrease(globalVars[idx].value, value))
         }
+        //
         continue
       }
-    }
 
-    const globalVars: GlobalVariable[] = await variables.all(contextModule.user.id)
-    const idx = globalVars.findIndex(v => (v.name === name))
-    if (idx !== -1) {
-      if (op === 'set') {
-        await variables.set(contextModule.user.id, name, value)
-      } else if (op === 'increase_by') {
-        await variables.set(contextModule.user.id, name, _increase(globalVars[idx].value, value))
-      } else if (op === 'decrease_by') {
-        await variables.set(contextModule.user.id, name, _decrease(globalVars[idx].value, value))
-      }
-      //
-      continue
+    } else if (effect.type === CommandEffectType.CHAT) {
+
+      const texts = effect.data.text
+      const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
+      say(await doReplacements(getRandom(texts), rawCmd, context, originalCmd, contextModule.bot, contextModule.user))
+
     }
   }
   contextModule.saveCommands()
@@ -688,7 +695,7 @@ export const getChannelPointsCustomRewards = async (
 }
 
 export default {
-  applyVariableChanges,
+  applyEffects,
   extractEmotes,
   logger,
   mimeToExt,

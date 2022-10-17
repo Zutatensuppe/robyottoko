@@ -270,12 +270,25 @@ export interface CommandTrigger {
 }
 
 export enum CommandEffectType {
-  VARIABLE_CHANGE = 'variable_change'
+  VARIABLE_CHANGE = 'variable_change',
+  CHAT = 'chat',
 }
 
 export interface CommandEffect {
   type: CommandEffectType
   data: any
+}
+
+export interface VariableChangeEffect {
+  type: CommandEffectType.VARIABLE_CHANGE
+  data: CommandVariableChange
+}
+
+export interface ChatEffect {
+  type: CommandEffectType.CHAT
+  data: {
+    text: string[]
+  }
 }
 
 export interface CommandVariable {

@@ -55,46 +55,13 @@
               </td>
             </tr>
             <tr>
-              <td>Response:</td>
+              <td>Effects:</td>
               <td>
-                <div
-                  v-for="(txt, idx) in item.data.text"
-                  :key="idx"
-                  class="field textarea-holder"
-                >
-                  <textarea
-                    v-model="item.data.text[idx]"
-                    class="textarea"
-                    :class="{
-                      'has-background-danger-light': !item.data.text[idx],
-                      'has-text-danger-dark': !item.data.text[idx],
-                    }"
-                  />
-                  <div class="help">
-                    <macro-select @selected="insertMacro(idx, $event)" />
-                  </div>
-                  <button
-                    class="button is-small"
-                    :disabled="item.data.text.length <= 1"
-                    @click="rmtxt(idx)"
-                  >
-                    <i class="fa fa-remove" />
-                  </button>
-                </div>
-                <div class="field">
-                  <button
-                    class="button is-small"
-                    @click="addtxt"
-                  >
-                    <i class="fa fa-plus mr-1" /> Add response
-                  </button>
-                </div>
-                <div>
-                  <p class="help">
-                    If multiple responses exist, a random one will be used when
-                    the command is triggered.
-                  </p>
-                </div>
+                <EffectsEditor
+                  v-model="item.effects"
+                  :item-variables="item.variables"
+                  :global-variables="globalVariables"
+                />
               </td>
             </tr>
             <tr>
@@ -143,16 +110,6 @@
                   >global variables</a> are
                   used.
                 </div>
-              </td>
-            </tr>
-            <tr>
-              <td>Effects:</td>
-              <td>
-                <EffectsEditor
-                  v-model="item.effects"
-                  :item-variables="item.variables"
-                  :global-variables="globalVariables"
-                />
               </td>
             </tr>
             <tr>
@@ -311,30 +268,12 @@ export default defineComponent({
     });
   },
   methods: {
-    addtxt(): void {
-      if (!this.item) {
-        console.warn("addtxt: this.item not initialized");
-        return;
-      }
-      this.item.data.text.push(newText());
-    },
     addtrigger(trigger: any): void {
       if (!this.item) {
         console.warn("addtrigger: this.item not initialized");
         return;
       }
       this.item.triggers.push(newTrigger(trigger.type));
-    },
-    onAddVariableChange(): void {
-      if (!this.item) {
-        console.warn("onAddVariableChange: this.item not initialized");
-        return;
-      }
-      this.item.variableChanges.push({
-        name: "",
-        change: "set",
-        value: "",
-      });
     },
     rmVariable(idx: number): void {
       if (!this.item) {
@@ -355,13 +294,6 @@ export default defineComponent({
     onOverlayClick(): void {
       this.$emit("cancel");
     },
-    rmtxt(idx: number): void {
-      if (!this.item) {
-        console.warn("rmtxt: this.item not initialized");
-        return;
-      }
-      this.item.data.text = this.item.data.text.filter((_val: string, index: number) => index !== idx);
-    },
     rmtrigger(idx: number): void {
       if (!this.item) {
         console.warn("rmtrigger: this.item not initialized");
@@ -369,28 +301,6 @@ export default defineComponent({
       }
       this.item.triggers = this.item.triggers.filter((_val: CommandTrigger, index: number) => index !== idx);
     },
-    insertMacro(idx: number, macro: {
-      value: string;
-      title: string;
-    }): void {
-      if (!this.item) {
-        console.warn("insertMacro: this.item not initialized");
-        return;
-      }
-      this.item.data.text[idx] += macro.value;
-    },
   }
 });
 </script>
-<style scoped>
-.textarea-holder {
-  position: relative;
-  padding-right: 2em;
-}
-
-.textarea-holder .button {
-  position: absolute;
-  right: -2px;
-  top: 0;
-}
-</style>

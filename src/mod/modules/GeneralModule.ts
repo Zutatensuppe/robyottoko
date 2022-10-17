@@ -1,6 +1,5 @@
 import countdown from '../../commands/countdown'
 import madochanCreateWord from '../../commands/madochanCreateWord'
-import randomText from '../../commands/randomText'
 import playMedia from '../../commands/playMedia'
 import fn, { determineNewVolume, extractEmotes, getChannelPointsCustomRewards } from '../../fn'
 import { logger, nonce, parseHumanDuration, SECOND } from '../../common/fn'
@@ -17,7 +16,7 @@ import {
   MadochanCommand, MediaVolumeCommand, ChattersCommand,
   RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand,
   CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand,
-  CommandTriggerType, CommandAction, CommandExecutionContext, MODULE_NAME, WIDGET_TYPE, EmotesCommand,
+  CommandTriggerType, CommandAction, CommandExecutionContext, MODULE_NAME, WIDGET_TYPE, EmotesCommand, CommandEffectType, CommandEffect,
 } from '../../types'
 import dictLookup from '../../commands/dictLookup'
 import { EMOTE_DISPLAY_FN, GeneralModuleAdminSettings, GeneralModuleEmotesEventData, GeneralModuleSettings, GeneralModuleWsEventData, GeneralSaveEventData } from './GeneralModuleCommon'
@@ -55,6 +54,8 @@ interface WsData {
   event: string
   data: GeneralModuleWsEventData
 }
+
+const noop = () => { return }
 
 class GeneralModule implements Module {
   public name = MODULE_NAME.GENERAL
@@ -106,7 +107,7 @@ class GeneralModule implements Module {
           const rawCmd = null
           const target = null
           const context = null
-          await fn.applyVariableChanges(cmdDef, this, rawCmd, context)
+          await fn.applyEffects(cmdDef, this, rawCmd, context)
           await cmdDef.fn({ rawCmd, target, context })
           t.lines = 0
           t.next = now + t.minInterval
@@ -130,11 +131,10 @@ class GeneralModule implements Module {
         }
       }
 
-      if (cmd.action === CommandAction.TEXT) {
-        if (!Array.isArray(cmd.data.text)) {
-          cmd.data.text = [cmd.data.text]
-        }
+      if (cmd.action === 'text' && !cmd.effects.find((effect: CommandEffect) => effect.type === CommandEffectType.CHAT)) {
+        cmd.effects.push(legacy.textToCommandEffect(cmd))
       }
+
       if (cmd.action === CommandAction.MEDIA) {
         if (cmd.data.excludeFromGlobalWidget) {
           cmd.data.widgetIds = [cmd.id]
@@ -239,10 +239,15 @@ class GeneralModule implements Module {
       data.adminSettings.autocommands = []
     }
     if (!data.adminSettings.autocommands.includes('!bot')) {
-      const txtCommand = commonCommands.text.NewCommand() as RandomTextCommand
-      txtCommand.triggers = [newCommandTrigger('!bot')]
-      txtCommand.data.text = ['Version $bot.version $bot.website < - $bot.features - Source code at $bot.github']
-      data.commands.push(txtCommand)
+      const command = commonCommands.text.NewCommand() as RandomTextCommand
+      command.triggers = [newCommandTrigger('!bot')]
+      command.effects.push({
+        type: CommandEffectType.CHAT,
+        data: {
+          text: ['Version $bot.version $bot.website < - $bot.features - Source code at $bot.github']
+        }
+      })
+      data.commands.push(command)
       data.adminSettings.autocommands.push('!bot')
       fixed.shouldSave = true
     }
@@ -271,7 +276,7 @@ class GeneralModule implements Module {
           cmdObj = Object.assign({}, cmd, { fn: dictLookup(cmd, this.bot, this.user) })
           break;
         case CommandAction.TEXT:
-          cmdObj = Object.assign({}, cmd, { fn: randomText(cmd, this.bot, this.user) })
+          cmdObj = Object.assign({}, cmd, { fn: noop })
           break;
         case CommandAction.MEDIA:
           cmdObj = Object.assign({}, cmd, { fn: playMedia(cmd, this.bot, this.user) })
