@@ -249,7 +249,7 @@ class GeneralModule implements Module {
 
     data.commands.forEach((cmd: MediaVolumeCommand
       | RandomTextCommand | CountdownCommand | ChattersCommand
-      | AddStreamTagCommand | RemoveStreamTagCommand
+      | RemoveStreamTagCommand
       ) => {
       if (cmd.triggers.length === 0) {
         return
