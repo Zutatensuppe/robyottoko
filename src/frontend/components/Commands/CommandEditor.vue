@@ -67,15 +67,6 @@
                 >All args</span>
               </td>
             </tr>
-            <tr v-if="item.action === 'countdown'">
-              <td>Settings</td>
-              <td>
-                <countdown-editor
-                  v-model="item.data"
-                  :base-volume="baseVolume"
-                />
-              </td>
-            </tr>
             <tr>
               <td>Variables:</td>
               <td>

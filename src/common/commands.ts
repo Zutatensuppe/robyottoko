@@ -1,7 +1,7 @@
 import { getProp, mustParseHumanDuration, nonce } from "../common/fn"
 import {
   Command, CommandAction, CommandEffect, CommandTrigger, CommandTriggerType,
-  CountdownAction, CountdownActionType, CountdownCommand, FunctionCommand,
+  CountdownAction, CountdownActionType, FunctionCommand,
   MediaCommandData, MediaFile, MediaVideo, MediaVolumeCommand, RandomTextCommand, SoundMediaFile,
 } from "../types"
 import { MOD_OR_ABOVE } from './permissions'
@@ -176,29 +176,6 @@ interface CommandDef {
 }
 
 export const commands: Record<CommandAction, CommandDef> = {
-  countdown: {
-    Name: () => "countdown",
-    Description: () => "Add a countdown or messages spaced by time intervals.",
-    NewCommand: (): CountdownCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
-      triggers: [newCommandTrigger()],
-      effects: [],
-      action: CommandAction.COUNTDOWN,
-      restrict_to: [],
-      variables: [],
-      data: {
-        type: 'auto',
-        step: '',
-        steps: '3',
-        interval: '1s',
-        intro: 'Starting countdown...',
-        outro: 'Done!',
-        actions: [] as CountdownAction[]
-      },
-    }),
-    RequiresAccessToken: () => false,
-  },
   media_volume: {
     Name: () => "media volume command",
     Description: () => `Sets the media volume to <code>&lt;VOLUME&gt;</code> (argument to this command, min 0, max 100).

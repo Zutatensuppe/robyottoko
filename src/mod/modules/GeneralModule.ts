@@ -1,4 +1,3 @@
-import countdown from '../../commands/countdown'
 import fn, { determineNewVolume, extractEmotes, getChannelPointsCustomRewards } from '../../fn'
 import { logger, nonce, parseHumanDuration, SECOND } from '../../common/fn'
 import { commands as commonCommands, newCommandTrigger, newJsonDate } from '../../common/commands'
@@ -10,10 +9,8 @@ import {
   FunctionCommand,
   Bot,
   Module,
-  CountdownCommand,
   MediaVolumeCommand,
   RandomTextCommand,
-  CountdownAction,
   CommandTriggerType,
   CommandAction,
   CommandExecutionContext,
@@ -180,21 +177,11 @@ class GeneralModule implements Module {
         cmd.effects.push(legacy.chattersToCommandEffect(cmd))
       }
 
-      if (cmd.action === CommandAction.COUNTDOWN) {
-        cmd.data.actions = (cmd.data.actions || []).map((action: CountdownAction) => {
-          if (typeof action.value === 'string') {
-            return action
-          }
-          if (action.value.sound && !action.value.sound.urlpath && action.value.sound.file) {
-            action.value.sound.urlpath = `/uploads/${encodeURIComponent(action.value.sound.file)}`
-          }
-
-          if (action.value.image && !action.value.image.urlpath && action.value.image.file) {
-            action.value.image.urlpath = `/uploads/${encodeURIComponent(action.value.image.file)}`
-          }
-          return action
-        })
+      if (cmd.action === 'countdown') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.countdownToCommandEffect(cmd))
       }
+
       cmd.triggers = (cmd.triggers || []).map((trigger: any) => {
         trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0
         if (trigger.data.minSeconds) {
@@ -263,7 +250,7 @@ class GeneralModule implements Module {
     const commands: FunctionCommand[] = []
     const timers: GeneralModuleTimer[] = []
 
-    data.commands.forEach((cmd: MediaVolumeCommand | RandomTextCommand | CountdownCommand) => {
+    data.commands.forEach((cmd: MediaVolumeCommand | RandomTextCommand) => {
       if (cmd.triggers.length === 0) {
         return
       }
@@ -274,9 +261,6 @@ class GeneralModule implements Module {
           break;
         case CommandAction.TEXT:
           cmdObj = Object.assign({}, cmd, { fn: noop })
-          break;
-        case CommandAction.COUNTDOWN:
-          cmdObj = Object.assign({}, cmd, { fn: countdown(cmd, this.bot, this.user) })
           break;
       }
       if (!cmdObj) {

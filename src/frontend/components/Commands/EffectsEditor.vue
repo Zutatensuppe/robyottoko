@@ -63,6 +63,12 @@
         v-model="val[idx]"
         @remove-click="onRmEffectClick(idx)"
       />
+      <TrCountdownEffect
+        v-if="item.type === CommandEffectType.COUNTDOWN"
+        v-model="val[idx]"
+        :base-volume="baseVolume"
+        @remove-click="onRmEffectClick(idx)"
+      />
     </table>
 
     <span
@@ -109,6 +115,10 @@
       class="button is-small"
       @click="addChatters"
     >Add chatters</span>
+    <span
+      class="button is-small"
+      @click="addCountdown"
+    >Add countdown</span>
   </div>
 </template>
 <script setup lang="ts">
@@ -126,6 +136,7 @@ import TrSetChannelGameIdEffect from './Effects/TrSetChannelGameIdEffect.vue';
 import TrAddStreamTagsEffect from './Effects/TrAddStreamTagsEffect.vue';
 import TrRemoveStreamTagsEffect from './Effects/TrRemoveStreamTagsEffect.vue';
 import TrChattersEffect from './Effects/TrChattersEffect.vue';
+import TrCountdownEffect from './Effects/TrCountdownEffect.vue';
 
 export interface AutocompletableVariable {
   var: CommandVariable | GlobalVariable;
@@ -239,6 +250,21 @@ const addChatters = () => {
   val.value.push({
     type: CommandEffectType.CHATTERS,
     data: {},
+  })
+}
+
+const addCountdown = () => {
+  val.value.push({
+    type: CommandEffectType.COUNTDOWN,
+    data: {
+      type: 'auto',
+      step: '',
+      steps: '3',
+      interval: '1s',
+      intro: 'Starting countdown...',
+      outro: 'Done!',
+      actions: []
+    }
   })
 }
 

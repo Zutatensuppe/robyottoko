@@ -1,12 +1,12 @@
 import childProcess from 'child_process'
 import fs from 'fs'
 import xhr from './net/xhr'
-import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, getRandom, getRandomInt, daysUntil, hash, unicodeLength } from './common/fn'
+import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, getRandom, getRandomInt, daysUntil, hash, unicodeLength, mustParseHumanDuration } from './common/fn'
 
 import {
   Command, GlobalVariable, RawCommand, TwitchChatContext,
   TwitchChatClient, FunctionCommand, Module, CommandTrigger,
-  Bot, ChatMessageContext, CommandEffectType, CommandVariableChange, DictSearchResponseDataEntry,
+  Bot, ChatMessageContext, CommandEffectType, CommandVariableChange, DictSearchResponseDataEntry, CountdownActionType, CountdownAction, CountdownCommandData,
 } from './types'
 import { User } from './repo/Users'
 import TwitchHelixClient, { TwitchHelixUserSearchResponseDataEntry } from './services/TwitchHelixClient'
@@ -563,6 +563,81 @@ const applyEffects = async (
       }
 
       await chatters()
+
+    } else if (effect.type === CommandEffectType.COUNTDOWN) {
+
+      const countdown = async () => {
+        const sayFn = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
+        const doReplacements2 = async (text: string) => {
+          return await doReplacements(text, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
+        }
+        const say = async (text: string) => {
+          return sayFn(await doReplacements2(text))
+        }
+        const parseDuration = async (str: string) => {
+          return mustParseHumanDuration(await doReplacements2(str))
+        }
+
+        const settings: CountdownCommandData = effect.data
+
+        const t = (settings.type || 'auto')
+
+        let actionDefs: CountdownAction[] = []
+        if (t === 'auto') {
+          const steps = parseInt(await doReplacements2(`${settings.steps}`), 10)
+          const msgStep = settings.step || "{step}"
+          const msgIntro = settings.intro || null
+          const msgOutro = settings.outro || null
+
+          if (msgIntro) {
+            actionDefs.push({ type: CountdownActionType.TEXT, value: msgIntro.replace(/\{steps\}/g, `${steps}`) })
+            actionDefs.push({ type: CountdownActionType.DELAY, value: settings.interval || '1s' })
+          }
+
+          for (let step = steps; step > 0; step--) {
+            actionDefs.push({
+              type: CountdownActionType.TEXT,
+              value: msgStep.replace(/\{steps\}/g, `${steps}`).replace(/\{step\}/g, `${step}`),
+            })
+            actionDefs.push({ type: CountdownActionType.DELAY, value: settings.interval || '1s' })
+          }
+
+          if (msgOutro) {
+            actionDefs.push({ type: CountdownActionType.TEXT, value: msgOutro.replace(/\{steps\}/g, `${steps}`) })
+          }
+        } else if (t === 'manual') {
+          actionDefs = settings.actions
+        }
+
+        const actions = []
+        for (const a of actionDefs) {
+          if (a.type === CountdownActionType.TEXT) {
+            actions.push(async () => say(`${a.value}`))
+          } else if (a.type === CountdownActionType.MEDIA) {
+            actions.push(async () => {
+              contextModule.bot.getWebSocketServer().notifyAll([contextModule.user.id], 'general', {
+                event: 'playmedia',
+                data: a.value,
+              })
+            })
+          } else if (a.type === CountdownActionType.DELAY) {
+            let duration: number
+            try {
+              duration = (await parseDuration(`${a.value}`)) || 0
+            } catch (e: any) {
+              log.error({ message: e.message, value: a.value })
+              return
+            }
+            actions.push(async () => await sleep(duration))
+          }
+        }
+
+        for (let i = 0; i < actions.length; i++) {
+          await actions[i]()
+        }
+      }
+
+      await countdown()
 
     } else {
 

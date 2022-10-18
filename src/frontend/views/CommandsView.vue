@@ -97,7 +97,6 @@ let ws: WsClient | null = null
 const possibleActions: CommandAction[] = [
   CommandAction.TEXT,
   CommandAction.MEDIA_VOLUME,
-  CommandAction.COUNTDOWN,
 ]
 const tabDefinitions: TabDefinition[] = [
   { tab: "commands", title: "Commands" },
