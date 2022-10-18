@@ -1,4 +1,4 @@
-import { ChatEffect, CommandEffectType, CommandVariableChange, DictLookupEffect, EmotesEffect, MadochanEffect, MediaEffect, SetChannelGameIdEffect, SetChannelTitleEffect, VariableChangeEffect } from "../types"
+import { AddStreamTagEffect, ChatEffect, CommandEffectType, CommandVariableChange, DictLookupEffect, EmotesEffect, MadochanEffect, MediaEffect, SetChannelGameIdEffect, SetChannelTitleEffect, VariableChangeEffect } from "../types"
 
 const variableChangeToCommandEffect = (variableChange: CommandVariableChange): VariableChangeEffect => {
   return {
@@ -110,7 +110,17 @@ const setChannelGameIdToCommandEffect = (cmd: any): SetChannelGameIdEffect => {
   }
 }
 
+const addStreamTagsToCommandEffect = (cmd: any): AddStreamTagEffect => {
+  return {
+    type: CommandEffectType.ADD_STREAM_TAGS,
+    data: {
+      tag: cmd.data.tag,
+    },
+  }
+}
+
 export default {
+  addStreamTagsToCommandEffect,
   setChannelTitleToCommandEffect,
   setChannelGameIdToCommandEffect,
   dictLookupToCommandEffect,

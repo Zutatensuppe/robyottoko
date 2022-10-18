@@ -1,6 +1,5 @@
 import { getProp, mustParseHumanDuration, nonce } from "../common/fn"
 import {
-  AddStreamTagCommand,
   ChattersCommand,
   Command, CommandAction, CommandEffect, CommandTrigger, CommandTriggerType,
   CountdownAction, CountdownActionType, CountdownCommand, FunctionCommand,
@@ -178,23 +177,6 @@ interface CommandDef {
 }
 
 export const commands: Record<CommandAction, CommandDef> = {
-  add_stream_tags: {
-    Name: () => "add_stream_tags command",
-    Description: () => "Add streamtag",
-    NewCommand: (): AddStreamTagCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
-      triggers: [newCommandTrigger()],
-      effects: [],
-      action: CommandAction.ADD_STREAM_TAGS,
-      restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {
-        tag: ''
-      },
-    }),
-    RequiresAccessToken: () => true,
-  },
   chatters: {
     Name: () => "chatters command",
     Description: () => "Outputs the people who chatted during the stream.",

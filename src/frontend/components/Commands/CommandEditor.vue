@@ -54,19 +54,6 @@
                 </div>
               </td>
             </tr>
-            <tr v-if="item.action === 'add_stream_tags'">
-              <td>Tag to add:</td>
-              <td>
-                <input
-                  v-model="item.data.tag"
-                  class="input is-small spaceinput mb-1"
-                >
-                <span
-                  class="button is-small mr-1"
-                  @click="item.data.tag = ''"
-                >All args</span>
-              </td>
-            </tr>
             <tr v-if="item.action === 'remove_stream_tags'">
               <td>Tag to remove:</td>
               <td>

@@ -160,6 +160,11 @@ class GeneralModule implements Module {
         cmd.effects.push(legacy.setChannelGameIdToCommandEffect(cmd))
       }
 
+      if (cmd.action === 'add_stream_tags') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.addStreamTagsToCommandEffect(cmd))
+      }
+
       if (cmd.action === CommandAction.COUNTDOWN) {
         cmd.data.actions = (cmd.data.actions || []).map((action: CountdownAction) => {
           if (typeof action.value === 'string') {
@@ -263,9 +268,6 @@ class GeneralModule implements Module {
           break;
         case CommandAction.CHATTERS:
           cmdObj = Object.assign({}, cmd, { fn: chatters(this.bot, this.user) })
-          break;
-        case CommandAction.ADD_STREAM_TAGS:
-          cmdObj = Object.assign({}, cmd, { fn: addStreamTags(cmd, this.bot, this.user) })
           break;
         case CommandAction.REMOVE_STREAM_TAGS:
           cmdObj = Object.assign({}, cmd, { fn: removeStreamTags(cmd, this.bot, this.user) })
