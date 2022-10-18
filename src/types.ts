@@ -277,6 +277,7 @@ export enum CommandEffectType {
   MEDIA = 'media',
   MADOCHAN = 'madochan',
   SET_CHANNEL_TITLE = 'set_channel_title',
+  SET_CHANNEL_GAME_ID = 'set_channel_game_id',
 }
 
 export interface CommandEffect {
@@ -323,9 +324,16 @@ export interface MadochanEffect {
 }
 
 export interface SetChannelTitleEffect {
-  action: CommandEffectType.SET_CHANNEL_TITLE
+  type: CommandEffectType.SET_CHANNEL_TITLE
   data: {
     title: string
+  }
+}
+
+export interface SetChannelGameIdEffect {
+  type: CommandEffectType.SET_CHANNEL_GAME_ID
+  data: {
+    game_id: string
   }
 }
 
@@ -356,7 +364,6 @@ export enum CommandAction {
   MEDIA_VOLUME = 'media_volume',
   COUNTDOWN = 'countdown',
   CHATTERS = 'chatters',
-  SET_CHANNEL_GAME_ID = 'set_channel_game_id',
   ADD_STREAM_TAGS = 'add_stream_tags',
   REMOVE_STREAM_TAGS = 'remove_stream_tags',
   // song request
@@ -413,13 +420,6 @@ export interface RemoveStreamTagCommand extends Command {
   action: CommandAction.REMOVE_STREAM_TAGS
   data: {
     tag: string
-  }
-}
-
-export interface SetChannelGameIdCommand extends Command {
-  action: CommandAction.SET_CHANNEL_GAME_ID
-  data: {
-    game_id: string
   }
 }
 

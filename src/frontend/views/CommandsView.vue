@@ -99,7 +99,6 @@ const possibleActions: CommandAction[] = [
   CommandAction.MEDIA_VOLUME,
   CommandAction.COUNTDOWN,
   CommandAction.CHATTERS,
-  CommandAction.SET_CHANNEL_GAME_ID,
   CommandAction.ADD_STREAM_TAGS,
   CommandAction.REMOVE_STREAM_TAGS,
 ]

@@ -54,32 +54,6 @@
                 </div>
               </td>
             </tr>
-            <tr v-if="item.action === 'set_channel_title'">
-              <td>Stream title:</td>
-              <td>
-                <input
-                  v-model="item.data.title"
-                  class="input is-small spaceinput mb-1"
-                >
-                <span
-                  class="button is-small mr-1"
-                  @click="item.data.title = ''"
-                >All args</span>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'set_channel_game_id'">
-              <td>Stream category:</td>
-              <td>
-                <input
-                  v-model="item.data.game_id"
-                  class="input is-small spaceinput mb-1"
-                >
-                <span
-                  class="button is-small mr-1"
-                  @click="item.data.game_id = ''"
-                >All args</span>
-              </td>
-            </tr>
             <tr v-if="item.action === 'add_stream_tags'">
               <td>Tag to add:</td>
               <td>

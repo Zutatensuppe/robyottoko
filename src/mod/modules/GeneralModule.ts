@@ -3,16 +3,15 @@ import fn, { determineNewVolume, extractEmotes, getChannelPointsCustomRewards } 
 import { logger, nonce, parseHumanDuration, SECOND } from '../../common/fn'
 import chatters from '../../commands/chatters'
 import { commands as commonCommands, newCommandTrigger, newJsonDate } from '../../common/commands'
-import setChannelTitle from '../../commands/setChannelTitle'
-import setChannelGameId from '../../commands/setChannelGameId'
 import { Socket } from '../../net/WebSocketServer'
 import { User } from '../../repo/Users'
 import {
   ChatMessageContext, Command, FunctionCommand,
   Bot, Module,
   CountdownCommand,
-  MediaVolumeCommand, ChattersCommand,
-  RandomTextCommand, SetChannelGameIdCommand,
+  MediaVolumeCommand,
+  ChattersCommand,
+  RandomTextCommand,
   CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand,
   CommandTriggerType, CommandAction, CommandExecutionContext, MODULE_NAME, WIDGET_TYPE, CommandEffectType, CommandEffect,
 } from '../../types'
@@ -146,9 +145,19 @@ class GeneralModule implements Module {
         cmd.effects.push(legacy.mediaToCommandEffect(cmd))
       }
 
-      if (cmd.actio === 'madochan_createword') {
+      if (cmd.action === 'madochan_createword') {
         cmd.action = 'text'
         cmd.effects.push(legacy.madochanToCommandEffect(cmd))
+      }
+
+      if (cmd.action === 'set_channel_title') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.setChannelTitleToCommandEffect(cmd))
+      }
+
+      if (cmd.action === 'set_channel_game_id') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.setChannelGameIdToCommandEffect(cmd))
       }
 
       if (cmd.action === CommandAction.COUNTDOWN) {
@@ -236,7 +245,6 @@ class GeneralModule implements Module {
 
     data.commands.forEach((cmd: MediaVolumeCommand
       | RandomTextCommand | CountdownCommand | ChattersCommand
-      | SetChannelGameIdCommand
       | AddStreamTagCommand | RemoveStreamTagCommand
       ) => {
       if (cmd.triggers.length === 0) {
@@ -255,9 +263,6 @@ class GeneralModule implements Module {
           break;
         case CommandAction.CHATTERS:
           cmdObj = Object.assign({}, cmd, { fn: chatters(this.bot, this.user) })
-          break;
-        case CommandAction.SET_CHANNEL_GAME_ID:
-          cmdObj = Object.assign({}, cmd, { fn: setChannelGameId(cmd, this.bot, this.user) })
           break;
         case CommandAction.ADD_STREAM_TAGS:
           cmdObj = Object.assign({}, cmd, { fn: addStreamTags(cmd, this.bot, this.user) })

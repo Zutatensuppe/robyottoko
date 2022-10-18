@@ -1,4 +1,4 @@
-import { ChatEffect, CommandEffectType, CommandVariableChange, DictLookupEffect, EmotesEffect, MadochanEffect, MediaEffect, VariableChangeEffect } from "../types"
+import { ChatEffect, CommandEffectType, CommandVariableChange, DictLookupEffect, EmotesEffect, MadochanEffect, MediaEffect, SetChannelGameIdEffect, SetChannelTitleEffect, VariableChangeEffect } from "../types"
 
 const variableChangeToCommandEffect = (variableChange: CommandVariableChange): VariableChangeEffect => {
   return {
@@ -88,11 +88,31 @@ const madochanToCommandEffect = (cmd: any): MadochanEffect => {
     data: {
       model: cmd.data.model,
       weirdness: cmd.data.weirdness,
-    }
+    },
+  }
+}
+
+const setChannelTitleToCommandEffect = (cmd: any): SetChannelTitleEffect => {
+  return {
+    type: CommandEffectType.SET_CHANNEL_TITLE,
+    data: {
+      title: cmd.data.title,
+    },
+  }
+}
+
+const setChannelGameIdToCommandEffect = (cmd: any): SetChannelGameIdEffect => {
+  return {
+    type: CommandEffectType.SET_CHANNEL_GAME_ID,
+    data: {
+      game_id: cmd.data.game_id,
+    },
   }
 }
 
 export default {
+  setChannelTitleToCommandEffect,
+  setChannelGameIdToCommandEffect,
   dictLookupToCommandEffect,
   emotesToCommandEffect,
   madochanToCommandEffect,

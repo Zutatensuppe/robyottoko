@@ -349,6 +349,58 @@ const applyEffects = async (
 
       await setChannelTitle()
 
+    } else if (effect.type === CommandEffectType.SET_CHANNEL_GAME_ID) {
+
+      const setChannelGameId = async () => {
+        const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient()
+        if (!rawCmd || !context || !helixClient) {
+          log.info({
+            rawCmd: rawCmd,
+            context: context,
+            helixClient,
+          }, 'unable to execute setChannelGameId, client, command, context, or helixClient missing')
+          return
+        }
+        const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
+        const gameId = effect.data.game_id === '' ? '$args()' : effect.data.game_id
+        const tmpGameId = await doReplacements(gameId, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
+        if (tmpGameId === '') {
+          const info = await helixClient.getChannelInformation(contextModule.user.twitch_id)
+          if (info) {
+            say(`Current category is "${info.game_name}".`)
+          } else {
+            say(`❌ Unable to determine current category.`)
+          }
+          return
+        }
+
+        const category = await helixClient.searchCategory(tmpGameId)
+        if (!category) {
+          say('🔎 Category not found.')
+          return
+        }
+
+        const accessToken = await contextModule.bot.getRepos().oauthToken.getMatchingAccessToken(contextModule.user)
+        if (!accessToken) {
+          say(`❌ Not authorized to update category.`)
+          return
+        }
+
+        const resp = await helixClient.modifyChannelInformation(
+          accessToken,
+          { game_id: category.id },
+          contextModule.bot,
+          contextModule.user,
+        )
+        if (resp?.status === 204) {
+          say(`✨ Changed category to "${category.name}".`)
+        } else {
+          say('❌ Unable to update category.')
+        }
+      }
+
+      await setChannelGameId()
+
     }
   }
   contextModule.saveCommands()
