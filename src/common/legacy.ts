@@ -1,4 +1,4 @@
-import { AddStreamTagEffect, ChatEffect, CommandEffectType, CommandVariableChange, DictLookupEffect, EmotesEffect, MadochanEffect, MediaEffect, RemoveStreamTagEffect, SetChannelGameIdEffect, SetChannelTitleEffect, VariableChangeEffect } from "../types"
+import { AddStreamTagEffect, ChatEffect, ChattersEffect, CommandEffectType, CommandVariableChange, DictLookupEffect, EmotesEffect, MadochanEffect, MediaEffect, RemoveStreamTagEffect, SetChannelGameIdEffect, SetChannelTitleEffect, VariableChangeEffect } from "../types"
 
 const variableChangeToCommandEffect = (variableChange: CommandVariableChange): VariableChangeEffect => {
   return {
@@ -128,8 +128,16 @@ const removeStreamTagsToCommandEffect = (cmd: any): RemoveStreamTagEffect => {
   }
 }
 
+const chattersToCommandEffect = (_cmd: any): ChattersEffect => {
+  return {
+    type: CommandEffectType.CHATTERS,
+    data: {},
+  }
+}
+
 export default {
   addStreamTagsToCommandEffect,
+  chattersToCommandEffect,
   setChannelTitleToCommandEffect,
   setChannelGameIdToCommandEffect,
   dictLookupToCommandEffect,

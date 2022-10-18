@@ -530,6 +530,40 @@ const applyEffects = async (
 
       await removeStreamTags()
 
+    } else if (effect.type === CommandEffectType.CHATTERS) {
+
+      const chatters = async () => {
+        const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient()
+        if (!context || !helixClient) {
+          log.info({
+            context: context,
+            helixClient,
+          }, 'unable to execute chatters command, client, context, or helixClient missing')
+          return
+        }
+
+        const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
+
+        const stream = await helixClient.getStreamByUserId(contextModule.user.twitch_id)
+        if (!stream) {
+          say(`It seems this channel is not live at the moment...`)
+          return
+        }
+
+        const userNames = await contextModule.bot.getRepos().chatLog.getChatters(contextModule.user.twitch_id, new Date(stream.started_at))
+        if (userNames.length === 0) {
+          say(`It seems nobody chatted? :(`)
+          return
+        }
+
+        say(`Thank you for chatting!`)
+        joinIntoChunks(userNames, ', ', 500).forEach(msg => {
+          say(msg)
+        })
+      }
+
+      await chatters()
+
     } else {
 
       // nothing :(

@@ -98,7 +98,6 @@ const possibleActions: CommandAction[] = [
   CommandAction.TEXT,
   CommandAction.MEDIA_VOLUME,
   CommandAction.COUNTDOWN,
-  CommandAction.CHATTERS,
 ]
 const tabDefinitions: TabDefinition[] = [
   { tab: "commands", title: "Commands" },

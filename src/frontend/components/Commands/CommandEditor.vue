@@ -54,19 +54,6 @@
                 </div>
               </td>
             </tr>
-            <tr v-if="item.action === 'remove_stream_tags'">
-              <td>Tag to remove:</td>
-              <td>
-                <input
-                  v-model="item.data.tag"
-                  class="input is-small spaceinput mb-1"
-                >
-                <span
-                  class="button is-small mr-1"
-                  @click="item.data.tag = ''"
-                >All args</span>
-              </td>
-            </tr>
             <tr v-if="item.action === 'sr_addtag'">
               <td>Tag:</td>
               <td>
@@ -79,10 +66,6 @@
                   @click="item.data.tag = ''"
                 >All args</span>
               </td>
-            </tr>
-            <tr v-if="item.action === 'chatters'">
-              <td>Response:</td>
-              <td>Outputs the people who chatted during the stream.</td>
             </tr>
             <tr v-if="item.action === 'countdown'">
               <td>Settings</td>

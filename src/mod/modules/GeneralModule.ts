@@ -1,7 +1,6 @@
 import countdown from '../../commands/countdown'
 import fn, { determineNewVolume, extractEmotes, getChannelPointsCustomRewards } from '../../fn'
 import { logger, nonce, parseHumanDuration, SECOND } from '../../common/fn'
-import chatters from '../../commands/chatters'
 import { commands as commonCommands, newCommandTrigger, newJsonDate } from '../../common/commands'
 import { Socket } from '../../net/WebSocketServer'
 import { User } from '../../repo/Users'
@@ -13,7 +12,6 @@ import {
   Module,
   CountdownCommand,
   MediaVolumeCommand,
-  ChattersCommand,
   RandomTextCommand,
   CountdownAction,
   CommandTriggerType,
@@ -177,6 +175,11 @@ class GeneralModule implements Module {
         cmd.effects.push(legacy.removeStreamTagsToCommandEffect(cmd))
       }
 
+      if (cmd.action === 'chatters') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.chattersToCommandEffect(cmd))
+      }
+
       if (cmd.action === CommandAction.COUNTDOWN) {
         cmd.data.actions = (cmd.data.actions || []).map((action: CountdownAction) => {
           if (typeof action.value === 'string') {
@@ -260,7 +263,7 @@ class GeneralModule implements Module {
     const commands: FunctionCommand[] = []
     const timers: GeneralModuleTimer[] = []
 
-    data.commands.forEach((cmd: MediaVolumeCommand | RandomTextCommand | CountdownCommand | ChattersCommand) => {
+    data.commands.forEach((cmd: MediaVolumeCommand | RandomTextCommand | CountdownCommand) => {
       if (cmd.triggers.length === 0) {
         return
       }
@@ -274,9 +277,6 @@ class GeneralModule implements Module {
           break;
         case CommandAction.COUNTDOWN:
           cmdObj = Object.assign({}, cmd, { fn: countdown(cmd, this.bot, this.user) })
-          break;
-        case CommandAction.CHATTERS:
-          cmdObj = Object.assign({}, cmd, { fn: chatters(this.bot, this.user) })
           break;
       }
       if (!cmdObj) {

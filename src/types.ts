@@ -280,6 +280,7 @@ export enum CommandEffectType {
   SET_CHANNEL_GAME_ID = 'set_channel_game_id',
   ADD_STREAM_TAGS = 'add_stream_tags',
   REMOVE_STREAM_TAGS = 'remove_stream_tags',
+  CHATTERS = 'chatters',
 }
 
 export interface CommandEffect {
@@ -353,6 +354,11 @@ export interface RemoveStreamTagEffect {
   }
 }
 
+export interface ChattersEffect {
+  type: CommandEffectType.CHATTERS
+  data: object // empty object for now
+}
+
 export interface CommandVariable {
   name: string
   value: any
@@ -379,7 +385,6 @@ export enum CommandAction {
   TEXT = 'text',
   MEDIA_VOLUME = 'media_volume',
   COUNTDOWN = 'countdown',
-  CHATTERS = 'chatters',
   // song request
   SR_CURRENT = 'sr_current',
   SR_UNDO = 'sr_undo',
@@ -437,10 +442,6 @@ export interface RandomTextCommand extends Command {
 
 export interface MediaVolumeCommand extends Command {
   action: CommandAction.MEDIA_VOLUME
-}
-
-export interface ChattersCommand extends Command {
-  action: CommandAction.CHATTERS
 }
 
 export interface MediaVideo {

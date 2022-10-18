@@ -1,6 +1,5 @@
 import { getProp, mustParseHumanDuration, nonce } from "../common/fn"
 import {
-  ChattersCommand,
   Command, CommandAction, CommandEffect, CommandTrigger, CommandTriggerType,
   CountdownAction, CountdownActionType, CountdownCommand, FunctionCommand,
   MediaCommandData, MediaFile, MediaVideo, MediaVolumeCommand, RandomTextCommand, SoundMediaFile,
@@ -177,21 +176,6 @@ interface CommandDef {
 }
 
 export const commands: Record<CommandAction, CommandDef> = {
-  chatters: {
-    Name: () => "chatters command",
-    Description: () => "Outputs the people who chatted during the stream.",
-    NewCommand: (): ChattersCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
-      triggers: [newCommandTrigger()],
-      effects: [],
-      action: CommandAction.CHATTERS,
-      restrict_to: [],
-      variables: [],
-      data: {},
-    }),
-    RequiresAccessToken: () => false,
-  },
   countdown: {
     Name: () => "countdown",
     Description: () => "Add a countdown or messages spaced by time intervals.",
