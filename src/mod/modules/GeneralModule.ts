@@ -1,5 +1,4 @@
 import countdown from '../../commands/countdown'
-import madochanCreateWord from '../../commands/madochanCreateWord'
 import fn, { determineNewVolume, extractEmotes, getChannelPointsCustomRewards } from '../../fn'
 import { logger, nonce, parseHumanDuration, SECOND } from '../../common/fn'
 import chatters from '../../commands/chatters'
@@ -12,7 +11,7 @@ import {
   ChatMessageContext, Command, FunctionCommand,
   Bot, Module,
   CountdownCommand,
-  MadochanCommand, MediaVolumeCommand, ChattersCommand,
+  MediaVolumeCommand, ChattersCommand,
   RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand,
   CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand,
   CommandTriggerType, CommandAction, CommandExecutionContext, MODULE_NAME, WIDGET_TYPE, CommandEffectType, CommandEffect,
@@ -147,6 +146,11 @@ class GeneralModule implements Module {
         cmd.effects.push(legacy.mediaToCommandEffect(cmd))
       }
 
+      if (cmd.actio === 'madochan_createword') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.madochanToCommandEffect(cmd))
+      }
+
       if (cmd.action === CommandAction.COUNTDOWN) {
         cmd.data.actions = (cmd.data.actions || []).map((action: CountdownAction) => {
           if (typeof action.value === 'string') {
@@ -230,7 +234,7 @@ class GeneralModule implements Module {
     const commands: FunctionCommand[] = []
     const timers: GeneralModuleTimer[] = []
 
-    data.commands.forEach((cmd: MediaVolumeCommand | MadochanCommand
+    data.commands.forEach((cmd: MediaVolumeCommand
       | RandomTextCommand | CountdownCommand | ChattersCommand
       | SetChannelTitleCommand | SetChannelGameIdCommand
       | AddStreamTagCommand | RemoveStreamTagCommand
@@ -242,9 +246,6 @@ class GeneralModule implements Module {
       switch (cmd.action) {
         case CommandAction.MEDIA_VOLUME:
           cmdObj = Object.assign({}, cmd, { fn: this.mediaVolumeCmd.bind(this) })
-          break;
-        case CommandAction.MADOCHAN_CREATEWORD:
-          cmdObj = Object.assign({}, cmd, { fn: madochanCreateWord(cmd, this.bot, this.user) })
           break;
         case CommandAction.TEXT:
           cmdObj = Object.assign({}, cmd, { fn: noop })

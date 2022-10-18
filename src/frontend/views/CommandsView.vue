@@ -98,7 +98,6 @@ const possibleActions: CommandAction[] = [
   CommandAction.TEXT,
   CommandAction.MEDIA_VOLUME,
   CommandAction.COUNTDOWN,
-  CommandAction.MADOCHAN_CREATEWORD,
   CommandAction.CHATTERS,
   CommandAction.SET_CHANNEL_TITLE,
   CommandAction.SET_CHANNEL_GAME_ID,

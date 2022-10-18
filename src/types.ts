@@ -275,6 +275,7 @@ export enum CommandEffectType {
   DICT_LOOKUP = 'dict_lookup',
   EMOTES = 'emotes',
   MEDIA = 'media',
+  MADOCHAN = 'madochan',
 }
 
 export interface CommandEffect {
@@ -312,6 +313,14 @@ export interface MediaEffect {
   data: MediaCommandData
 }
 
+export interface MadochanEffect {
+  type: CommandEffectType.MADOCHAN
+  data: {
+    model: string
+    weirdness: string
+  }
+}
+
 export interface CommandVariable {
   name: string
   value: any
@@ -338,7 +347,6 @@ export enum CommandAction {
   TEXT = 'text',
   MEDIA_VOLUME = 'media_volume',
   COUNTDOWN = 'countdown',
-  MADOCHAN_CREATEWORD = 'madochan_createword',
   CHATTERS = 'chatters',
   SET_CHANNEL_TITLE = 'set_channel_title',
   SET_CHANNEL_GAME_ID = 'set_channel_game_id',
@@ -412,14 +420,6 @@ export interface SetChannelGameIdCommand extends Command {
   action: CommandAction.SET_CHANNEL_GAME_ID
   data: {
     game_id: string
-  }
-}
-
-export interface MadochanCommand extends Command {
-  action: CommandAction.MADOCHAN_CREATEWORD
-  data: {
-    model: string
-    weirdness: string
   }
 }
 

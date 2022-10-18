@@ -4,7 +4,6 @@ import {
   ChattersCommand,
   Command, CommandAction, CommandEffect, CommandTrigger, CommandTriggerType,
   CountdownAction, CountdownActionType, CountdownCommand, FunctionCommand,
-  MadochanCommand,
   MediaCommandData, MediaFile, MediaVideo, MediaVolumeCommand, RandomTextCommand, RemoveStreamTagCommand, SetChannelGameIdCommand, SetChannelTitleCommand, SoundMediaFile,
 } from "../types"
 import { MOD_OR_ABOVE } from './permissions'
@@ -230,25 +229,6 @@ export const commands: Record<CommandAction, CommandDef> = {
         intro: 'Starting countdown...',
         outro: 'Done!',
         actions: [] as CountdownAction[]
-      },
-    }),
-    RequiresAccessToken: () => false,
-  },
-  madochan_createword: {
-    Name: () => "madochan",
-    Description: () => "Creates a word for a definition.",
-    NewCommand: (): MadochanCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
-      triggers: [newCommandTrigger()],
-      effects: [],
-      action: CommandAction.MADOCHAN_CREATEWORD,
-      restrict_to: [],
-      variables: [],
-      data: {
-        // TODO: use from same resource as server
-        model: '100epochs800lenhashingbidirectional.h5',
-        weirdness: '1',
       },
     }),
     RequiresAccessToken: () => false,

@@ -248,16 +248,6 @@
       @cancel="editCommand = null"
     />
 
-    <madochan-createword-command-editor
-      v-else-if="editIdx !== null && editCommand && editCommand.action === 'madochan_createword'"
-      :global-variables="globalVariables"
-      :channel-points-custom-rewards="channelPointsCustomRewards"
-      :model-value="editCommand"
-      :mode="editIdx >= commands.length ? 'create' : 'edit'"
-      @update:modelValue="editedCommand"
-      @cancel="editCommand = null"
-    />
-
     <CommandEditor
       v-else-if="editIdx !== null && editCommand"
       :global-variables="globalVariables"

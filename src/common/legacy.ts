@@ -1,4 +1,4 @@
-import { ChatEffect, CommandEffectType, CommandVariableChange, DictLookupEffect, EmotesEffect, MediaEffect, VariableChangeEffect } from "../types"
+import { ChatEffect, CommandEffectType, CommandVariableChange, DictLookupEffect, EmotesEffect, MadochanEffect, MediaEffect, VariableChangeEffect } from "../types"
 
 const variableChangeToCommandEffect = (variableChange: CommandVariableChange): VariableChangeEffect => {
   return {
@@ -82,9 +82,20 @@ const mediaToCommandEffect = (cmd: any): MediaEffect => {
   }
 }
 
+const madochanToCommandEffect = (cmd: any): MadochanEffect => {
+  return {
+    type: CommandEffectType.MADOCHAN,
+    data: {
+      model: cmd.data.model,
+      weirdness: cmd.data.weirdness,
+    }
+  }
+}
+
 export default {
   dictLookupToCommandEffect,
   emotesToCommandEffect,
+  madochanToCommandEffect,
   mediaToCommandEffect,
   textToCommandEffect,
   variableChangeToCommandEffect,

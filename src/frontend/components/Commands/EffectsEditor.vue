@@ -33,6 +33,11 @@
         :widget-url="widgetUrl"
         @remove-click="onRmEffectClick(idx)"
       />
+      <TrMadochanEffect
+        v-if="item.type === CommandEffectType.MADOCHAN"
+        v-model="val[idx]"
+        @remove-click="onRmEffectClick(idx)"
+      />
     </table>
 
     <span
@@ -55,6 +60,10 @@
       class="button is-small"
       @click="addMedia"
     >Add media</span>
+    <span
+      class="button is-small"
+      @click="addMadochan"
+    >Add madochan</span>
   </div>
 </template>
 <script setup lang="ts">
@@ -66,6 +75,7 @@ import TrDictLookupEffect from './Effects/TrDictLookupEffect.vue';
 import TrEmotesEffect from './Effects/TrEmotesEffect.vue';
 import TrMediaEffect from './Effects/TrMediaEffect.vue';
 import { newMedia } from '../../../common/commands';
+import TrMadochanEffect from './Effects/TrMadochanEffect.vue';
 
 export interface AutocompletableVariable {
   var: CommandVariable | GlobalVariable;
@@ -128,6 +138,16 @@ const addMedia = () => {
   val.value.push({
     type: CommandEffectType.MEDIA,
     data: newMedia(),
+  })
+}
+const addMadochan = () => {
+  val.value.push({
+    type: CommandEffectType.MADOCHAN,
+    data: {
+      // TODO: use from same resource as server
+      model: '100epochs800lenhashingbidirectional.h5',
+      weirdness: '1',
+    },
   })
 }
 

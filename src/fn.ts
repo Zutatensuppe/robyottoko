@@ -13,6 +13,7 @@ import TwitchHelixClient, { TwitchHelixUserSearchResponseDataEntry } from './ser
 import JishoOrg from './services/JishoOrg'
 import DictCc from './services/DictCc'
 import config from './config'
+import Madochan from './services/Madochan'
 
 const log = logger('fn.ts')
 
@@ -268,6 +269,30 @@ const applyEffects = async (
         data: data,
         id: originalCmd.id
       })
+
+    } else if (effect.type === CommandEffectType.MADOCHAN) {
+
+      const model = `${effect.data.model}` || Madochan.defaultModel
+      const weirdness = parseInt(effect.data.weirdness, 10) || Madochan.defaultWeirdness
+
+      const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
+      if (rawCmd) {
+        const definition = rawCmd.args.join(' ')
+        if (definition) {
+          say(`Generating word for "${definition}"...`)
+          try {
+            const data = await Madochan.createWord({ model, weirdness, definition })
+            if (data.word === '') {
+              say(`Sorry, I could not generate a word :("`)
+            } else {
+              say(`"${definition}": ${data.word}`)
+            }
+          } catch (e: any) {
+            log.error({ e })
+            say(`Error occured, unable to generate a word :("`)
+          }
+        }
+      }
 
     }
   }

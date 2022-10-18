@@ -37,7 +37,6 @@ import VolumeSlider from "./components/VolumeSlider.vue";
 import YoutubePlayer from "./components/YoutubePlayer.vue";
 
 import CommandsTextCommandEditor from "./components/Commands/TextCommandEditor.vue";
-import CommandsMadochanCreatewordCommandEditor from "./components/Commands/MadochanCreatewordCommandEditor.vue";
 import CommandsCountdownEditor from "./components/Commands/CountdownEditor.vue";
 import CommandsTriggerEditor from "./components/Commands/TriggerEditor.vue";
 import CommandsTriggerInfo from "./components/Commands/TriggerInfo.vue";
@@ -216,7 +215,6 @@ const run = async () => {
   app.component('VolumeSlider', VolumeSlider)
   app.component('YoutubePlayer', YoutubePlayer)
   app.component('TextCommandEditor', CommandsTextCommandEditor)
-  app.component('MadochanCreatewordCommandEditor', CommandsMadochanCreatewordCommandEditor)
   app.component('CountdownEditor', CommandsCountdownEditor)
   app.component('TriggerEditor', CommandsTriggerEditor)
   app.component('TriggerInfo', CommandsTriggerInfo)
