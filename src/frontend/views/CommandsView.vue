@@ -99,7 +99,6 @@ const possibleActions: CommandAction[] = [
   CommandAction.MEDIA_VOLUME,
   CommandAction.COUNTDOWN,
   CommandAction.CHATTERS,
-  CommandAction.REMOVE_STREAM_TAGS,
 ]
 const tabDefinitions: TabDefinition[] = [
   { tab: "commands", title: "Commands" },

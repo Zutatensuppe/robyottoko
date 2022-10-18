@@ -53,6 +53,11 @@
         v-model="val[idx]"
         @remove-click="onRmEffectClick(idx)"
       />
+      <TrRemoveStreamTagsEffect
+        v-if="item.type === CommandEffectType.REMOVE_STREAM_TAGS"
+        v-model="val[idx]"
+        @remove-click="onRmEffectClick(idx)"
+      />
     </table>
 
     <span
@@ -91,6 +96,10 @@
       class="button is-small"
       @click="addAddStreamTags"
     >Add 'add stream tags'</span>
+    <span
+      class="button is-small"
+      @click="addRemoveStreamTags"
+    >Add 'remove stream tags'</span>
   </div>
 </template>
 <script setup lang="ts">
@@ -106,6 +115,7 @@ import TrMadochanEffect from './Effects/TrMadochanEffect.vue';
 import TrSetChannelTitleEffect from './Effects/TrSetChannelTitleEffect.vue';
 import TrSetChannelGameIdEffect from './Effects/TrSetChannelGameIdEffect.vue';
 import TrAddStreamTagsEffect from './Effects/TrAddStreamTagsEffect.vue';
+import TrRemoveStreamTagsEffect from './Effects/TrRemoveStreamTagsEffect.vue';
 
 export interface AutocompletableVariable {
   var: CommandVariable | GlobalVariable;
@@ -196,9 +206,19 @@ const addSetChannelGameId = () => {
     },
   })
 }
+
 const addAddStreamTags = () => {
   val.value.push({
     type: CommandEffectType.ADD_STREAM_TAGS,
+    data: {
+      tag: '',
+    },
+  })
+}
+
+const addRemoveStreamTags = () => {
+  val.value.push({
+    type: CommandEffectType.REMOVE_STREAM_TAGS,
     data: {
       tag: '',
     },

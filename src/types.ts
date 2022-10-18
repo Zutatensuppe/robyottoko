@@ -279,6 +279,7 @@ export enum CommandEffectType {
   SET_CHANNEL_TITLE = 'set_channel_title',
   SET_CHANNEL_GAME_ID = 'set_channel_game_id',
   ADD_STREAM_TAGS = 'add_stream_tags',
+  REMOVE_STREAM_TAGS = 'remove_stream_tags',
 }
 
 export interface CommandEffect {
@@ -345,6 +346,13 @@ export interface AddStreamTagEffect {
   }
 }
 
+export interface RemoveStreamTagEffect {
+  type: CommandEffectType.REMOVE_STREAM_TAGS
+  data: {
+    tag: string
+  }
+}
+
 export interface CommandVariable {
   name: string
   value: any
@@ -372,7 +380,6 @@ export enum CommandAction {
   MEDIA_VOLUME = 'media_volume',
   COUNTDOWN = 'countdown',
   CHATTERS = 'chatters',
-  REMOVE_STREAM_TAGS = 'remove_stream_tags',
   // song request
   SR_CURRENT = 'sr_current',
   SR_UNDO = 'sr_undo',
@@ -414,13 +421,6 @@ export interface Command {
   // -----------------------------------------------------------------
   action: CommandAction
   data: CommandData
-}
-
-export interface RemoveStreamTagCommand extends Command {
-  action: CommandAction.REMOVE_STREAM_TAGS
-  data: {
-    tag: string
-  }
 }
 
 export interface DictSearchResponseDataEntry {

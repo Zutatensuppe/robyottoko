@@ -469,6 +469,67 @@ const applyEffects = async (
 
       await addStreamTags()
 
+    } else if (effect.type === CommandEffectType.REMOVE_STREAM_TAGS) {
+
+      const removeStreamTags = async () => {
+        const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient()
+        if (!rawCmd || !context || !helixClient) {
+          log.info({
+            rawCmd: rawCmd,
+            context: context,
+            helixClient,
+          }, 'unable to execute removeStreamTags, client, command, context, or helixClient missing')
+          return
+        }
+        const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
+        const tag = effect.data.tag === '' ? '$args()' : effect.data.tag
+        const tmpTag = await doReplacements(tag, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
+        const tagsResponse = await helixClient.getStreamTags(contextModule.user.twitch_id)
+        if (!tagsResponse) {
+          say(`❌ Unable to fetch current tags.`)
+          return
+        }
+        if (tmpTag === '') {
+          const names = tagsResponse.data.map(entry => entry.localization_names['en-us'])
+          say(`Current tags: ${names.join(', ')}`)
+          return
+        }
+        const manualTags = tagsResponse.data.filter(entry => !entry.is_auto)
+        const idx = findIdxFuzzy(manualTags, tmpTag, (item) => item.localization_names['en-us'])
+        if (idx === -1) {
+          const autoTags = tagsResponse.data.filter(entry => entry.is_auto)
+          const idx = findIdxFuzzy(autoTags, tmpTag, (item) => item.localization_names['en-us'])
+          if (idx === -1) {
+            say(`❌ No such tag is currently set: ${tmpTag}`)
+          } else {
+            say(`❌ Unable to remove automatic tag: ${autoTags[idx].localization_names['en-us']}`)
+          }
+          return
+        }
+        const newTagIds = manualTags.filter((_value, index) => index !== idx).map(entry => entry.tag_id)
+        const newSettableTagIds: string[] = newTagIds.filter(tagId => !config.twitch.auto_tags.find(t => t.id === tagId))
+
+        const accessToken = await contextModule.bot.getRepos().oauthToken.getMatchingAccessToken(contextModule.user)
+        if (!accessToken) {
+          say(`❌ Not authorized to remove tag: ${manualTags[idx].localization_names['en-us']}`)
+          return
+        }
+
+        const resp = await helixClient.replaceStreamTags(
+          accessToken,
+          newSettableTagIds,
+          contextModule.bot,
+          contextModule.user,
+        )
+        if (!resp || resp.status < 200 || resp.status >= 300) {
+          say(`❌ Unable to remove tag: ${manualTags[idx].localization_names['en-us']}`)
+          return
+        }
+        say(`✨ Removed tag: ${manualTags[idx].localization_names['en-us']}`)
+      }
+
+      await removeStreamTags()
+
     } else {
 
       // nothing :(

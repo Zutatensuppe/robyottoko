@@ -6,17 +6,25 @@ import { commands as commonCommands, newCommandTrigger, newJsonDate } from '../.
 import { Socket } from '../../net/WebSocketServer'
 import { User } from '../../repo/Users'
 import {
-  ChatMessageContext, Command, FunctionCommand,
-  Bot, Module,
+  ChatMessageContext,
+  Command,
+  FunctionCommand,
+  Bot,
+  Module,
   CountdownCommand,
   MediaVolumeCommand,
   ChattersCommand,
   RandomTextCommand,
-  CountdownAction, RemoveStreamTagCommand,
-  CommandTriggerType, CommandAction, CommandExecutionContext, MODULE_NAME, WIDGET_TYPE, CommandEffectType, CommandEffect,
+  CountdownAction,
+  CommandTriggerType,
+  CommandAction,
+  CommandExecutionContext,
+  MODULE_NAME,
+  WIDGET_TYPE,
+  CommandEffectType,
+  CommandEffect,
 } from '../../types'
 import { EMOTE_DISPLAY_FN, GeneralModuleAdminSettings, GeneralModuleEmotesEventData, GeneralModuleSettings, GeneralModuleWsEventData, GeneralSaveEventData } from './GeneralModuleCommon'
-import removeStreamTags from '../../commands/removeStreamTags'
 import { NextFunction, Response } from 'express'
 import legacy from '../../common/legacy'
 
@@ -164,6 +172,11 @@ class GeneralModule implements Module {
         cmd.effects.push(legacy.addStreamTagsToCommandEffect(cmd))
       }
 
+      if (cmd.action === 'remove_stream_tags') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.removeStreamTagsToCommandEffect(cmd))
+      }
+
       if (cmd.action === CommandAction.COUNTDOWN) {
         cmd.data.actions = (cmd.data.actions || []).map((action: CountdownAction) => {
           if (typeof action.value === 'string') {
@@ -247,10 +260,7 @@ class GeneralModule implements Module {
     const commands: FunctionCommand[] = []
     const timers: GeneralModuleTimer[] = []
 
-    data.commands.forEach((cmd: MediaVolumeCommand
-      | RandomTextCommand | CountdownCommand | ChattersCommand
-      | RemoveStreamTagCommand
-      ) => {
+    data.commands.forEach((cmd: MediaVolumeCommand | RandomTextCommand | CountdownCommand | ChattersCommand) => {
       if (cmd.triggers.length === 0) {
         return
       }
@@ -267,9 +277,6 @@ class GeneralModule implements Module {
           break;
         case CommandAction.CHATTERS:
           cmdObj = Object.assign({}, cmd, { fn: chatters(this.bot, this.user) })
-          break;
-        case CommandAction.REMOVE_STREAM_TAGS:
-          cmdObj = Object.assign({}, cmd, { fn: removeStreamTags(cmd, this.bot, this.user) })
           break;
       }
       if (!cmdObj) {

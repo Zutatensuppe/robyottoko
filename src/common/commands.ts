@@ -3,7 +3,7 @@ import {
   ChattersCommand,
   Command, CommandAction, CommandEffect, CommandTrigger, CommandTriggerType,
   CountdownAction, CountdownActionType, CountdownCommand, FunctionCommand,
-  MediaCommandData, MediaFile, MediaVideo, MediaVolumeCommand, RandomTextCommand, RemoveStreamTagCommand, SoundMediaFile,
+  MediaCommandData, MediaFile, MediaVideo, MediaVolumeCommand, RandomTextCommand, SoundMediaFile,
 } from "../types"
 import { MOD_OR_ABOVE } from './permissions'
 
@@ -248,23 +248,6 @@ export const commands: Record<CommandAction, CommandDef> = {
       },
     }),
     RequiresAccessToken: () => false,
-  },
-  remove_stream_tags: {
-    Name: () => "remove_stream_tags command",
-    Description: () => "Remove streamtag",
-    NewCommand: (): RemoveStreamTagCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
-      triggers: [newCommandTrigger()],
-      effects: [],
-      action: CommandAction.REMOVE_STREAM_TAGS,
-      restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {
-        tag: ''
-      },
-    }),
-    RequiresAccessToken: () => true,
   },
   sr_current: {
     Name: () => "sr_current",
