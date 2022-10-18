@@ -12,11 +12,10 @@ import {
   MediaVolumeCommand,
   ChattersCommand,
   RandomTextCommand,
-  CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand,
+  CountdownAction, RemoveStreamTagCommand,
   CommandTriggerType, CommandAction, CommandExecutionContext, MODULE_NAME, WIDGET_TYPE, CommandEffectType, CommandEffect,
 } from '../../types'
 import { EMOTE_DISPLAY_FN, GeneralModuleAdminSettings, GeneralModuleEmotesEventData, GeneralModuleSettings, GeneralModuleWsEventData, GeneralSaveEventData } from './GeneralModuleCommon'
-import addStreamTags from '../../commands/addStreamTags'
 import removeStreamTags from '../../commands/removeStreamTags'
 import { NextFunction, Response } from 'express'
 import legacy from '../../common/legacy'
