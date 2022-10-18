@@ -276,6 +276,7 @@ export enum CommandEffectType {
   EMOTES = 'emotes',
   MEDIA = 'media',
   MADOCHAN = 'madochan',
+  SET_CHANNEL_TITLE = 'set_channel_title',
 }
 
 export interface CommandEffect {
@@ -321,6 +322,13 @@ export interface MadochanEffect {
   }
 }
 
+export interface SetChannelTitleEffect {
+  action: CommandEffectType.SET_CHANNEL_TITLE
+  data: {
+    title: string
+  }
+}
+
 export interface CommandVariable {
   name: string
   value: any
@@ -348,7 +356,6 @@ export enum CommandAction {
   MEDIA_VOLUME = 'media_volume',
   COUNTDOWN = 'countdown',
   CHATTERS = 'chatters',
-  SET_CHANNEL_TITLE = 'set_channel_title',
   SET_CHANNEL_GAME_ID = 'set_channel_game_id',
   ADD_STREAM_TAGS = 'add_stream_tags',
   REMOVE_STREAM_TAGS = 'remove_stream_tags',
@@ -393,13 +400,6 @@ export interface Command {
   // -----------------------------------------------------------------
   action: CommandAction
   data: CommandData
-}
-
-export interface SetChannelTitleCommand extends Command {
-  action: CommandAction.SET_CHANNEL_TITLE
-  data: {
-    title: string
-  }
 }
 
 export interface AddStreamTagCommand extends Command {

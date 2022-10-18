@@ -4,7 +4,7 @@ import {
   ChattersCommand,
   Command, CommandAction, CommandEffect, CommandTrigger, CommandTriggerType,
   CountdownAction, CountdownActionType, CountdownCommand, FunctionCommand,
-  MediaCommandData, MediaFile, MediaVideo, MediaVolumeCommand, RandomTextCommand, RemoveStreamTagCommand, SetChannelGameIdCommand, SetChannelTitleCommand, SoundMediaFile,
+  MediaCommandData, MediaFile, MediaVideo, MediaVolumeCommand, RandomTextCommand, RemoveStreamTagCommand, SetChannelGameIdCommand, SoundMediaFile,
 } from "../types"
 import { MOD_OR_ABOVE } from './permissions'
 
@@ -297,23 +297,6 @@ export const commands: Record<CommandAction, CommandDef> = {
       variables: [],
       data: {
         game_id: ''
-      },
-    }),
-    RequiresAccessToken: () => true,
-  },
-  set_channel_title: {
-    Name: () => "change stream title command",
-    Description: () => "Change the stream title",
-    NewCommand: (): SetChannelTitleCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
-      triggers: [newCommandTrigger()],
-      effects: [],
-      action: CommandAction.SET_CHANNEL_TITLE,
-      restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {
-        title: ''
       },
     }),
     RequiresAccessToken: () => true,

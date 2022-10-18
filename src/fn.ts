@@ -1,7 +1,7 @@
 import childProcess from 'child_process'
 import fs from 'fs'
 import xhr from './net/xhr'
-import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, getRandom, getRandomInt, daysUntil, hash } from './common/fn'
+import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, getRandom, getRandomInt, daysUntil, hash, unicodeLength } from './common/fn'
 
 import {
   Command, GlobalVariable, RawCommand, TwitchChatContext,
@@ -293,6 +293,61 @@ const applyEffects = async (
           }
         }
       }
+
+    } else if (effect.type === CommandEffectType.SET_CHANNEL_TITLE) {
+
+      const setChannelTitle = async () => {
+        const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient()
+        if (!rawCmd || !context || !helixClient) {
+          log.info({
+            rawCmd: rawCmd,
+            context: context,
+            helixClient,
+          }, 'unable to execute setChannelTitle, client, command, context, or helixClient missing')
+          return
+        }
+        const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
+        const title = effect.data.title === '' ? '$args()' : effect.data.title
+        const tmpTitle = await doReplacements(title, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
+        if (tmpTitle === '') {
+          const info = await helixClient.getChannelInformation(contextModule.user.twitch_id)
+          if (info) {
+            say(`Current title is "${info.title}".`)
+          } else {
+            say(`❌ Unable to determine current title.`)
+          }
+          return
+        }
+
+        // helix api returns 204 status code even if the title is too long and
+        // cant actually be set. but there is no error returned in that case :(
+        const len = unicodeLength(tmpTitle)
+        const max = 140
+        if (len > max) {
+          say(`❌ Unable to change title because it is too long (${len}/${max} characters).`)
+          return
+        }
+
+        const accessToken = await contextModule.bot.getRepos().oauthToken.getMatchingAccessToken(contextModule.user)
+        if (!accessToken) {
+          say(`❌ Not authorized to change title.`)
+          return
+        }
+
+        const resp = await helixClient.modifyChannelInformation(
+          accessToken,
+          { title: tmpTitle },
+          contextModule.bot,
+          contextModule.user,
+        )
+        if (resp?.status === 204) {
+          say(`✨ Changed title to "${tmpTitle}".`)
+        } else {
+          say('❌ Unable to change title.')
+        }
+      }
+
+      await setChannelTitle()
 
     }
   }

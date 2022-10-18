@@ -38,6 +38,11 @@
         v-model="val[idx]"
         @remove-click="onRmEffectClick(idx)"
       />
+      <TrSetChannelTitleEffect
+        v-if="item.type === CommandEffectType.SET_CHANNEL_TITLE"
+        v-model="val[idx]"
+        @remove-click="onRmEffectClick(idx)"
+      />
     </table>
 
     <span
@@ -64,6 +69,10 @@
       class="button is-small"
       @click="addMadochan"
     >Add madochan</span>
+    <span
+      class="button is-small"
+      @click="addSetChannelTitle"
+    >Add set channel title</span>
   </div>
 </template>
 <script setup lang="ts">
@@ -76,6 +85,7 @@ import TrEmotesEffect from './Effects/TrEmotesEffect.vue';
 import TrMediaEffect from './Effects/TrMediaEffect.vue';
 import { newMedia } from '../../../common/commands';
 import TrMadochanEffect from './Effects/TrMadochanEffect.vue';
+import TrSetChannelTitleEffect from './Effects/TrSetChannelTitleEffect.vue';
 
 export interface AutocompletableVariable {
   var: CommandVariable | GlobalVariable;
@@ -147,6 +157,14 @@ const addMadochan = () => {
       // TODO: use from same resource as server
       model: '100epochs800lenhashingbidirectional.h5',
       weirdness: '1',
+    },
+  })
+}
+const addSetChannelTitle = () => {
+  val.value.push({
+    type: CommandEffectType.SET_CHANNEL_TITLE,
+    data: {
+      title: ''
     },
   })
 }

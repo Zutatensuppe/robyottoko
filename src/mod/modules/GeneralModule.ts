@@ -12,7 +12,7 @@ import {
   Bot, Module,
   CountdownCommand,
   MediaVolumeCommand, ChattersCommand,
-  RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand,
+  RandomTextCommand, SetChannelGameIdCommand,
   CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand,
   CommandTriggerType, CommandAction, CommandExecutionContext, MODULE_NAME, WIDGET_TYPE, CommandEffectType, CommandEffect,
 } from '../../types'
@@ -236,7 +236,7 @@ class GeneralModule implements Module {
 
     data.commands.forEach((cmd: MediaVolumeCommand
       | RandomTextCommand | CountdownCommand | ChattersCommand
-      | SetChannelTitleCommand | SetChannelGameIdCommand
+      | SetChannelGameIdCommand
       | AddStreamTagCommand | RemoveStreamTagCommand
       ) => {
       if (cmd.triggers.length === 0) {
@@ -255,9 +255,6 @@ class GeneralModule implements Module {
           break;
         case CommandAction.CHATTERS:
           cmdObj = Object.assign({}, cmd, { fn: chatters(this.bot, this.user) })
-          break;
-        case CommandAction.SET_CHANNEL_TITLE:
-          cmdObj = Object.assign({}, cmd, { fn: setChannelTitle(cmd, this.bot, this.user) })
           break;
         case CommandAction.SET_CHANNEL_GAME_ID:
           cmdObj = Object.assign({}, cmd, { fn: setChannelGameId(cmd, this.bot, this.user) })
