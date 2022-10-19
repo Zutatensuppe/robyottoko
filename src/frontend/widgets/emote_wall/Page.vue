@@ -22,7 +22,8 @@ import {
 } from "../../../mod/modules/GeneralModuleCommon";
 import util, { WidgetApiData } from "../util";
 import WsClient from "../../WsClient";
-import { getRandom, getRandomFloat, getRandomInt } from "../../../common/fn";
+import { getRandom, getRandomFloat, getRandomInt, logger } from "../../../common/fn";
+const log = logger('emote_wall/Page.vue')
 
 import("./main.scss");
 
@@ -154,7 +155,7 @@ const randomBezierEmote: EmoteFn = (img: HTMLImageElement) => {
 
       if (t >= 2) {
         this.dead = true
-        console.log('bezier dead')
+        log.info('bezier dead')
       }
     },
   }
@@ -193,7 +194,7 @@ const bouncyEmote: EmoteFn = (img: HTMLImageElement) => {
       vy += gravity
       if (isOffScreenLeft(this) || isOffScreenRight(this)) {
         this.dead = true
-        console.log('bouncy dead')
+        log.info('bouncy dead')
       }
       if (isAtCeiling(this)) {
         this.y = 0
@@ -238,7 +239,7 @@ const rainEmote: EmoteFn = (img: HTMLImageElement) => {
       vy = Math.max(minVelocityY, vy)
       if (isOffScreenBottom(this)) {
         this.dead = true
-        console.log('rain dead')
+        log.info('rain dead')
       }
     },
   }
@@ -283,7 +284,7 @@ const balloonEmote: EmoteFn = (img: HTMLImageElement) => {
       }
       if (isOffScreenTop(this)) {
         this.dead = true
-        console.log('balloon dead')
+        log.info('balloon dead')
       }
     },
   }
@@ -320,7 +321,7 @@ const floatingSpaceEmote: EmoteFn = (img: HTMLImageElement) => {
       if (isOffScreen(this)) {
         // remove
         this.dead = true
-        console.log('floating space dead')
+        log.info('floating space dead')
       }
     },
   }
@@ -355,7 +356,7 @@ const explodeEmote: EmoteFn = (img: HTMLImageElement) => {
       if (isOffScreen(this)) {
         // remove
         this.dead = true
-        console.log('explode dead')
+        log.info('explode dead')
       }
     },
   }
@@ -393,7 +394,7 @@ const fountainEmote: EmoteFn = (img: HTMLImageElement) => {
       if (isOffScreenLeft(this) || isOffScreenRight(this)) {
         // remove
         this.dead = true
-        console.log('fountain dead')
+        log.info('fountain dead')
       }
       if (isAtCeiling(this)) {
         this.y = 0

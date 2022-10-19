@@ -630,7 +630,6 @@ export default defineComponent({
         console.warn("toggleFavorite: this.settings not initialized");
         return;
       }
-      console.log(index, url)
       if (this.settings.favoriteLists[index].list.includes(url)) {
         this.settings.favoriteLists[index].list = this.settings.favoriteLists[index].list.filter((u: string) => u !== url);
       }

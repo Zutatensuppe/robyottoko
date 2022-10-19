@@ -304,7 +304,6 @@ export default defineComponent({
           }, 500);
         }
       }
-      console.log(settings)
       this.settings = settings;
       this.adjustVolume();
     },

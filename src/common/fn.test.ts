@@ -338,7 +338,6 @@ describe('daysUntil', () => {
       expected: '???',
     },
   ])('$_name', ({ _name, date, expected }) => {
-    console.log(date)
     const actual = daysUntil(
       date,
       '{days} days until XXX',
