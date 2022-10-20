@@ -644,7 +644,7 @@ class TwitchHelixClient {
       }
       return json as TwitchHelixGetChannelPointsCustomRewardsResponseData
     } catch (e) {
-      console.log(url, e)
+      log.error({ url, e })
       return null
     }
   }
@@ -673,7 +673,6 @@ class TwitchHelixClient {
     if (res) {
       rewards[user.twitch_login] = res.data.map(entry => entry.title);
     }
-    console.log(rewards)
     return rewards
   }
 
@@ -691,7 +690,7 @@ class TwitchHelixClient {
     try {
       return await executeRequestWithRetry(accessToken, req, bot, user)
     } catch (e) {
-      console.log(url, e)
+      log.error({ url, e })
       return null
     }
   }
