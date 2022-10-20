@@ -310,7 +310,6 @@ class GeneralModule implements Module {
         '/api/general/channel-emotes': async (req: any, res: Response, _next: NextFunction) => {
           const client = this.bot.getUserTwitchClientManager(this.user).getHelixClient()
           const channelId = await client?.getUserIdByNameCached(req.query.channel_name, this.bot.getCache())
-          console.log(channelId)
           const emotes = channelId ? await client?.getChannelEmotes(channelId) : null
           res.send(emotes)
         },

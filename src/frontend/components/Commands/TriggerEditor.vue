@@ -264,7 +264,6 @@ const emitRemove = () => {
   emit("remove");
 }
 const emitUpdate = () => {
-  console.log('update')
   emit("update:modelValue", value.value);
 }
 const apply = (v: CommandTrigger) => {

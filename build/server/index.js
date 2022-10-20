@@ -832,6 +832,29 @@ class WebSocketServer {
     }
 }
 
+// https://stackoverflow.com/a/59854446/392905
+const delay = (ms) => new Promise((resolve) => setTimeout(() => resolve(), ms));
+const retryFetch = async (url, opts, retries = 3, retryDelay = 1000, timeout = 0) => {
+    return new Promise((resolve, reject) => {
+        if (timeout) {
+            setTimeout(() => reject('error: timeout'), timeout);
+        }
+        const wrapper = (n) => {
+            fetch(url, opts)
+                .then((res) => resolve(res))
+                .catch(async (err) => {
+                if (n > 0) {
+                    await delay(retryDelay);
+                    wrapper(--n);
+                }
+                else {
+                    reject(err);
+                }
+            });
+        };
+        wrapper(retries);
+    });
+};
 function withHeaders(headers, opts = {}) {
     const options = opts || {};
     options.headers = (options.headers || {});
@@ -860,7 +883,7 @@ function asQueryArgs(data) {
 const request = async (method, url, opts = {}) => {
     const options = opts || {};
     options.method = method;
-    return await fetch(url, options);
+    return await retryFetch(url, options);
 };
 var xhr = {
     withHeaders,
@@ -1777,7 +1800,7 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            console.log(url, e);
+            log$v.error({ url, e });
             return null;
         }
     }
@@ -1796,7 +1819,6 @@ class TwitchHelixClient {
         if (res) {
             rewards[user.twitch_login] = res.data.map(entry => entry.title);
         }
-        console.log(rewards);
         return rewards;
     }
     // https://dev.twitch.tv/docs/api/reference#replace-stream-tags
@@ -1809,7 +1831,7 @@ class TwitchHelixClient {
             return await executeRequestWithRetry(accessToken, req, bot, user);
         }
         catch (e) {
-            console.log(url, e);
+            log$v.error({ url, e });
             return null;
         }
     }
@@ -4991,7 +5013,6 @@ class GeneralModule {
                 '/api/general/channel-emotes': async (req, res, _next) => {
                     const client = this.bot.getUserTwitchClientManager(this.user).getHelixClient();
                     const channelId = await client?.getUserIdByNameCached(req.query.channel_name, this.bot.getCache());
-                    console.log(channelId);
                     const emotes = channelId ? await client?.getChannelEmotes(channelId) : null;
                     res.send(emotes);
                 },
@@ -7314,9 +7335,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-10-17T18:05:09.521Z",
+    buildDate: "2022-10-20T15:53:48.421Z",
     // @ts-ignore
-    buildVersion: "1.30.4",
+    buildVersion: "1.30.5",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');

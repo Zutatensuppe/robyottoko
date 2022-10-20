@@ -666,7 +666,6 @@ export default defineComponent({
     this.opts = opts ? JSON.parse(opts) : { canvasBg: "transparent" };
 
     this.ws.onMessage("init", (data: DrawcastModuleWsDataData) => {
-      console.log('inited', data)
       // submit button may not be empty
       this.submitButtonText = data.settings.submitButtonText || "Send";
       this.submitConfirm = data.settings.submitConfirm;
