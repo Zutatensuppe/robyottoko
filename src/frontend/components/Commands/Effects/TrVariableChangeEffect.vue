@@ -1,38 +1,29 @@
 <template>
-  <tr>
-    <td>
-      Variable change:
-      <div>
-        Name:
-        <dropdown-input
-          v-model="val.data.name"
-          :values="autocompletableVariables().map(a => ({ value: a.var.name, label: `${a.var.name} (${a.type}), <code>${a.var.value}</code>` }))"
-        />
-        Change:
-        <div class="select is-small">
-          <select v-model="val.data.change">
-            <option value="set">
-              set
-            </option>
-            <option value="increase_by">
-              increase by
-            </option>
-            <option value="decrease_by">
-              decrease by
-            </option>
-          </select>
-        </div>
-        Value:
-        <StringInput v-model="val.data.value" />
+  <div>
+    <div>
+      Name:
+      <dropdown-input
+        v-model="val.data.name"
+        :values="autocompletableVariables().map(a => ({ value: a.var.name, label: `${a.var.name} (${a.type}), <code>${a.var.value}</code>` }))"
+      />
+      Change:
+      <div class="select is-small">
+        <select v-model="val.data.change">
+          <option value="set">
+            set
+          </option>
+          <option value="increase_by">
+            increase by
+          </option>
+          <option value="decrease_by">
+            decrease by
+          </option>
+        </select>
       </div>
-      <button
-        class="button is-small"
-        @click="emit('removeClick')"
-      >
-        <i class="fa fa-remove" />
-      </button>
-    </td>
-  </tr>
+      Value:
+      <StringInput v-model="val.data.value" />
+    </div>
+  </div>
 </template>
 <script setup lang="ts">
 import { VariableChangeEffect, CommandVariable, GlobalVariable } from '../../../../types';
@@ -48,7 +39,7 @@ const props = defineProps<{
 
 const val = ref<VariableChangeEffect>(props.modelValue)
 
-const emit = defineEmits(['update:modelValue', 'removeClick'])
+const emit = defineEmits(['update:modelValue'])
 
 const autocompletableVariables = (): AutocompletableVariable[] => {
   const variables: AutocompletableVariable[] = props.itemVariables.slice().map((localVar: CommandVariable) => {

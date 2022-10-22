@@ -1,181 +1,172 @@
 <template>
-  <tr ref="el">
-    <td>
-      <div>
-        Widgets:
-        <div
-          v-if="val.data.widgetIds.length === 0"
-          class="field has-addons"
-        >
-          This media will show in the&nbsp;
-          <a
-            :href="`${widgetUrl}`"
-            target="_blank"
-          >default widget</a>.
-        </div>
-        <div
-          v-for="(id, idx) in val.data.widgetIds"
-          :key="idx"
-          class="field has-addons"
-        >
-          <div class="control mr-1">
-            <StringInput v-model="val.data.widgetIds[idx]" />
-          </div>
-          <a
-            class="button is-small mr-1"
-            :href="`${widgetUrl}?id=${encodeURIComponent(id)}`"
-            target="_blank"
-          >Open widget</a>
-          <button
-            class="button is-small"
-            @click="rmWidgetId(idx)"
-          >
-            <i class="fa fa-remove" />
-          </button>
-        </div>
-        <div class="field">
-          <button
-            class="button is-small"
-            @click="addWidgetId"
-          >
-            <i class="fa fa-plus mr-1" /> Add widget
-          </button>
-        </div>
-        <div>
-          <p class="help">
-            Define in which widgets this media should show up in.
-            Leave the list empty to only show in the default widget.
-          </p>
-        </div>
-      </div>
-      <div>
-        Type:
-        <div>
-          <label class="mr-1"><input
-            v-model="type"
-            type="radio"
-            value="image"
-          > Image</label>
-          <label class="mr-1"><input
-            v-model="type"
-            type="radio"
-            value="image,sound"
-          > Image + Sound</label>
-          <label class="mr-1"><input
-            v-model="type"
-            type="radio"
-            value="sound"
-          > Sound</label>
-          <label class="mr-1"><input
-            v-model="type"
-            type="radio"
-            value="video"
-          > Video</label>
-        </div>
-      </div>
-      <div v-if="type === 'image' || type === 'image,sound'">
-        Display-Duration:
-        <div class="control has-icons-left">
-          <duration-input
-            :model-value="val.data.minDurationMs"
-            @update:modelValue="val.data.minDurationMs = $event"
-          />
-          <span class="icon is-small is-left">
-            <i class="fa fa-hourglass" />
-          </span>
-        </div>
-        <div class="help">
-          The minimum duration that images will be displayed.
-          Sound will always play for their full length
-          regardless of this setting.
-        </div>
-      </div>
-      <div v-if="type === 'image' || type === 'image,sound'">
-        Image:
-        <div>
-          <image-upload
-            v-model="val.data.image"
-            @update:modelValue="mediaImgChanged"
-          />
-        </div>
-      </div>
-      <div v-if="type === 'image' || type === 'image,sound'">
-        Image (by URL):
-        <div>
-          <StringInput v-model="val.data.image_url" />
-        </div>
-        <div>
-          <span
-            class="button is-small"
-            @click="
-              val.data.image_url = '$user($args).profile_image_url'
-            "
-          >Twitch profile image of user given by args</span>
-          <span
-            class="button is-small"
-            @click="val.data.image_url = '$user.profile_image_url'"
-          >Twitch profile
-            image
-            of user who executes the command</span>
-        </div>
-      </div>
-      <div v-if="type === 'sound' || type === 'image,sound'">
-        Sound:
-        <div>
-          <sound-upload
-            v-model="val.data.sound"
-            :base-volume="baseVolume"
-            @update:modelValue="mediaSndChanged"
-          />
-        </div>
-      </div>
-      <div v-if="type === 'video'">
-        Video:
-
-        <table>
-          <tr>
-            <td>Url:</td>
-            <td>
-              <StringInput v-model="val.data.video.url" />
-            </td>
-          </tr>
-          <tr>
-            <td>Volume:</td>
-            <td>
-              <volume-slider v-model="val.data.video.volume" />
-            </td>
-          </tr>
-        </table>
-        <div class="help">
-          The video url has to be a twitch clip url
-          (<code>https://clips.twitch.tv/...</code>) or a URL to a
-          video file (a URL usually ending in <code>.mp4</code> or
-          similar).
-          Currently Youtube or other Video Hosters are not supported.
-        </div>
-        <div>
-          <span
-            class="button is-small"
-            @click="
-              val.data.video.url = '$user($args).recent_clip_url'
-            "
-          >A recent twitch clip of user given by args</span>
-          <span
-            class="button is-small"
-            @click="val.data.video.url = '$user.recent_clip_url'"
-          >A recent
-            twitch clip of user who executes the command</span>
-        </div>
-      </div>
-
-      <button
-        class="button is-small"
-        @click="emit('removeClick')"
+  <div ref="el">
+    <div>
+      Widgets:
+      <div
+        v-if="val.data.widgetIds.length === 0"
+        class="field has-addons"
       >
-        <i class="fa fa-remove" />
-      </button>
-    </td>
-  </tr>
+        This media will show in the&nbsp;
+        <a
+          :href="`${widgetUrl}`"
+          target="_blank"
+        >default widget</a>.
+      </div>
+      <div
+        v-for="(id, idx) in val.data.widgetIds"
+        :key="idx"
+        class="field has-addons"
+      >
+        <div class="control mr-1">
+          <StringInput v-model="val.data.widgetIds[idx]" />
+        </div>
+        <a
+          class="button is-small mr-1"
+          :href="`${widgetUrl}?id=${encodeURIComponent(id)}`"
+          target="_blank"
+        >Open widget</a>
+        <button
+          class="button is-small"
+          @click="rmWidgetId(idx)"
+        >
+          <i class="fa fa-remove" />
+        </button>
+      </div>
+      <div class="field">
+        <button
+          class="button is-small"
+          @click="addWidgetId"
+        >
+          <i class="fa fa-plus mr-1" /> Add widget
+        </button>
+      </div>
+      <div>
+        <p class="help">
+          Define in which widgets this media should show up in.
+          Leave the list empty to only show in the default widget.
+        </p>
+      </div>
+    </div>
+    <div>
+      Type:
+      <div>
+        <label class="mr-1"><input
+          v-model="type"
+          type="radio"
+          value="image"
+        > Image</label>
+        <label class="mr-1"><input
+          v-model="type"
+          type="radio"
+          value="image,sound"
+        > Image + Sound</label>
+        <label class="mr-1"><input
+          v-model="type"
+          type="radio"
+          value="sound"
+        > Sound</label>
+        <label class="mr-1"><input
+          v-model="type"
+          type="radio"
+          value="video"
+        > Video</label>
+      </div>
+    </div>
+    <div v-if="type === 'image' || type === 'image,sound'">
+      Display-Duration:
+      <div class="control has-icons-left">
+        <duration-input
+          :model-value="val.data.minDurationMs"
+          @update:modelValue="val.data.minDurationMs = $event"
+        />
+        <span class="icon is-small is-left">
+          <i class="fa fa-hourglass" />
+        </span>
+      </div>
+      <div class="help">
+        The minimum duration that images will be displayed.
+        Sound will always play for their full length
+        regardless of this setting.
+      </div>
+    </div>
+    <div v-if="type === 'image' || type === 'image,sound'">
+      Image:
+      <div>
+        <image-upload
+          v-model="val.data.image"
+          @update:modelValue="mediaImgChanged"
+        />
+      </div>
+    </div>
+    <div v-if="type === 'image' || type === 'image,sound'">
+      Image (by URL):
+      <div>
+        <StringInput v-model="val.data.image_url" />
+      </div>
+      <div>
+        <span
+          class="button is-small"
+          @click="
+            val.data.image_url = '$user($args).profile_image_url'
+          "
+        >Twitch profile image of user given by args</span>
+        <span
+          class="button is-small"
+          @click="val.data.image_url = '$user.profile_image_url'"
+        >Twitch profile
+          image
+          of user who executes the command</span>
+      </div>
+    </div>
+    <div v-if="type === 'sound' || type === 'image,sound'">
+      Sound:
+      <div>
+        <sound-upload
+          v-model="val.data.sound"
+          :base-volume="baseVolume"
+          @update:modelValue="mediaSndChanged"
+        />
+      </div>
+    </div>
+    <div v-if="type === 'video'">
+      Video:
+
+      <table>
+        <tr>
+          <td>Url:</td>
+          <td>
+            <StringInput v-model="val.data.video.url" />
+          </td>
+        </tr>
+        <tr>
+          <td>Volume:</td>
+          <td>
+            <volume-slider v-model="val.data.video.volume" />
+          </td>
+        </tr>
+      </table>
+      <div class="help">
+        The video url has to be a twitch clip url
+        (<code>https://clips.twitch.tv/...</code>) or a URL to a
+        video file (a URL usually ending in <code>.mp4</code> or
+        similar).
+        Currently Youtube or other Video Hosters are not supported.
+      </div>
+      <div>
+        <span
+          class="button is-small"
+          @click="
+            val.data.video.url = '$user($args).recent_clip_url'
+          "
+        >A recent twitch clip of user given by args</span>
+        <span
+          class="button is-small"
+          @click="val.data.video.url = '$user.recent_clip_url'"
+        >A recent
+          twitch clip of user who executes the command</span>
+      </div>
+    </div>
+  </div>
 </template>
 <script setup lang="ts">
 
@@ -191,7 +182,7 @@ const props = defineProps<{
 
 const val = ref<MediaEffect>(props.modelValue)
 
-const emit = defineEmits(['update:modelValue', 'removeClick'])
+const emit = defineEmits(['update:modelValue'])
 
 const type = ref<string>('')
 

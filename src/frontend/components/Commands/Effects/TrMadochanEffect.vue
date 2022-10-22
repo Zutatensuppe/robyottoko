@@ -1,47 +1,40 @@
 <template>
-  <tr>
-    <td>
-      <div>
-        Model:
-        <div class="control">
+  <div>
+    <table>
+      <tr>
+        <td>Model:</td>
+        <td>
           <input
             v-model="val.data.model"
             class="input is-small spaceinput"
           >
-        </div>
-        <div class="help">
+        </td>
+        <td class="help">
           For possible values refer to
           <a
             href="https://madochan.hyottoko.club/"
             target="_blank"
           >madochan</a>
-        </div>
-      </div>
-      <div>
-        Weirdness:
-        <div class="control">
+        </td>
+      </tr>
+      <tr>
+        <td>Weirdness:</td>
+        <td>
           <input
             v-model="val.data.weirdness"
             class="input is-small spaceinput"
           >
-        </div>
-        <div class="help">
+        </td>
+        <td class="help">
           For possible values refer to
           <a
             href="https://madochan.hyottoko.club/"
             target="_blank"
           >madochan</a>
-        </div>
-      </div>
-
-      <button
-        class="button is-small"
-        @click="emit('removeClick')"
-      >
-        <i class="fa fa-remove" />
-      </button>
-    </td>
-  </tr>
+        </td>
+      </tr>
+    </table>
+  </div>
 </template>
 <script setup lang="ts">
 import { MadochanEffect } from '../../../../types';
@@ -53,7 +46,7 @@ const props = defineProps<{
 
 const val = ref<MadochanEffect>(props.modelValue)
 
-const emit = defineEmits(['update:modelValue', 'removeClick'])
+const emit = defineEmits(['update:modelValue'])
 
 watch(val, (newValue: MadochanEffect) => {
   emit('update:modelValue', newValue)

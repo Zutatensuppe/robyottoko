@@ -1,94 +1,85 @@
 <template>
-  <tr>
-    <td>
-      <div>
-        Display Functions:
-        <div
-          v-for="(displayFn, idx) in val.data.displayFn"
-          :key="idx"
-          class="field has-addons mb-1"
-        >
-          <div class="control">
-            <div
-              class="select is-small"
-            >
-              <select v-model="val.data.displayFn[idx].fn">
-                <option
-                  v-for="(fn, idx2) in possibleEmoteDisplayFunctions"
-                  :key="idx2"
-                  :value="fn"
-                >
-                  {{ fn }}
-                </option>
-              </select>
-            </div>
-          </div>
-          <button
-            class="button is-small"
-            @click="rmFn(idx)"
+  <div>
+    <div>
+      Display Functions:
+      <div
+        v-for="(displayFn, idx) in val.data.displayFn"
+        :key="idx"
+        class="field has-addons mb-1"
+      >
+        <div class="control">
+          <div
+            class="select is-small"
           >
-            <i class="fa fa-remove" />
-          </button>
+            <select v-model="val.data.displayFn[idx].fn">
+              <option
+                v-for="(fn, idx2) in possibleEmoteDisplayFunctions"
+                :key="idx2"
+                :value="fn"
+              >
+                {{ fn }}
+              </option>
+            </select>
+          </div>
         </div>
         <button
           class="button is-small"
-          @click="addFn()"
+          @click="rmFn(idx)"
         >
-          <i class="fa fa-plus mr-1" /> Add
+          <i class="fa fa-remove" />
         </button>
       </div>
-      <div>
-        Emotes:
-
-        <div class="emote-select">
-          <img
-            v-for="(emote, idx) in val.data.emotes"
-            :key="idx"
-            :src="emote.url"
-            @click="removeEmote(idx)"
-          >
-        </div>
-        <div class="field has-addons">
-          <div class="control">
-            <StringInput
-              v-model="channelNameInput"
-              placeholder="Enter channel name here"
-            />
-          </div>
-          <button
-            class="button is-small"
-            @click="loadChannelEmotes"
-          >
-            <i class="fa fa-plus mr-1" /> Show emotes from channel
-          </button>
-        </div>
-        <div class="emote-select">
-          Select emotes to display:
-          <div
-            v-for="(emotesSet, idx) in possibleEmoteSets"
-            :key="idx"
-          >
-            <div class="emote-set-name">
-              {{ emotesSet.name }}
-            </div>
-            <img
-              v-for="(emote, idx2) in emotesSet.emotes"
-              :key="idx2"
-              :src="emote"
-              @click="addEmote(emote)"
-            >
-          </div>
-        </div>
-      </div>
-
       <button
         class="button is-small"
-        @click="emit('removeClick')"
+        @click="addFn()"
       >
-        <i class="fa fa-remove" />
+        <i class="fa fa-plus mr-1" /> Add
       </button>
-    </td>
-  </tr>
+    </div>
+    <div>
+      Emotes:
+
+      <div class="emote-select">
+        <img
+          v-for="(emote, idx) in val.data.emotes"
+          :key="idx"
+          :src="emote.url"
+          @click="removeEmote(idx)"
+        >
+      </div>
+      <div class="field has-addons">
+        <div class="control">
+          <StringInput
+            v-model="channelNameInput"
+            placeholder="Enter channel name here"
+          />
+        </div>
+        <button
+          class="button is-small"
+          @click="loadChannelEmotes"
+        >
+          <i class="fa fa-plus mr-1" /> Show emotes from channel
+        </button>
+      </div>
+      <div class="emote-select">
+        Select emotes to display:
+        <div
+          v-for="(emotesSet, idx) in possibleEmoteSets"
+          :key="idx"
+        >
+          <div class="emote-set-name">
+            {{ emotesSet.name }}
+          </div>
+          <img
+            v-for="(emote, idx2) in emotesSet.emotes"
+            :key="idx2"
+            :src="emote"
+            @click="addEmote(emote)"
+          >
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 <script setup lang="ts">
 import { EmotesEffect, EmoteSet } from '../../../../types';
@@ -114,7 +105,7 @@ const props = defineProps<{
 const val = ref<EmotesEffect>(props.modelValue)
 const possibleEmoteSets = ref<EmoteSet[]>([])
 
-const emit = defineEmits(['update:modelValue', 'removeClick'])
+const emit = defineEmits(['update:modelValue'])
 
 const rmFn = (idx: number): void => {
   val.value.data.displayFn = val.value.data.displayFn.filter((_value, index) => index !== idx)

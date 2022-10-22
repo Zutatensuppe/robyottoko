@@ -46,9 +46,9 @@
           <tr>
             <th />
             <th />
-            <th>Trigger</th>
+            <th>Triggers</th>
             <th>
-              Response
+              Effects
               <label v-if="showToggleImages">
                 <CheckboxInput
                   v-model="imagesVisible"

@@ -180,6 +180,10 @@ input[type="color"] {
   }
 }
 
+.modal-card-body {
+  padding: 0;
+}
+
 .modal-card-body .dropdown-content {
   max-height: 300px;
   overflow: auto;

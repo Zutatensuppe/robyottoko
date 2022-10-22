@@ -1,26 +1,19 @@
 <template>
-  <tr>
-    <td>
-      Tag to remove:
-      <div>
-        <input
-          v-model="val.data.tag"
-          class="input is-small spaceinput mb-1"
-        >
-        <span
-          class="button is-small mr-1"
-          @click="val.data.tag = ''"
-        >All args</span>
-      </div>
-
-      <button
-        class="button is-small"
-        @click="emit('removeClick')"
-      >
-        <i class="fa fa-remove" />
-      </button>
-    </td>
-  </tr>
+  <div>
+    <table>
+      <tr>
+        <td>
+          <input
+            v-model="val.data.tag"
+            class="input is-small spaceinput mb-1"
+          >
+        </td>
+        <td class="help">
+          <macro-select @selected="insertMacro($event)" />
+        </td>
+      </tr>
+    </table>
+  </div>
 </template>
 <script setup lang="ts">
 import { RemoveStreamTagEffect } from '../../../../types';
@@ -32,7 +25,14 @@ const props = defineProps<{
 
 const val = ref<RemoveStreamTagEffect>(props.modelValue)
 
-const emit = defineEmits(['update:modelValue', 'removeClick'])
+const insertMacro = (macro: {
+  value: string;
+  title: string;
+}): void => {
+  val.value.data.tag += macro.value;
+}
+
+const emit = defineEmits(['update:modelValue'])
 
 watch(val, (newValue: RemoveStreamTagEffect) => {
   emit('update:modelValue', newValue)

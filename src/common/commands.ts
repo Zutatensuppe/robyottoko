@@ -193,7 +193,7 @@ export const commands: Record<CommandAction, CommandDef> = {
   },
   text: {
     Name: () => "command",
-    Description: () => "Send a message to chat",
+    Description: () => "",
     NewCommand: (): RandomTextCommand => ({
       id: newCommandId(),
       createdAt: newJsonDate(),
@@ -590,18 +590,18 @@ export const commands: Record<CommandAction, CommandDef> = {
 }
 
 export const possibleEffectActions = () => ([
-  { type: CommandEffectType.VARIABLE_CHANGE, label: 'Add variable_change', title: 'variable_change' },
   { type: CommandEffectType.CHAT, label: 'Add chat', title: 'chat' },
-  { type: CommandEffectType.DICT_LOOKUP, label: 'Add dict_lookup', title: 'dict_lookup' },
-  { type: CommandEffectType.EMOTES, label: 'Add emotes', title: 'emotes' },
   { type: CommandEffectType.MEDIA, label: 'Add media', title: 'media' },
-  { type: CommandEffectType.MADOCHAN, label: 'Add madochan', title: 'madochan' },
+  { type: CommandEffectType.EMOTES, label: 'Add emotes', title: 'emotes' },
   { type: CommandEffectType.SET_CHANNEL_TITLE, label: 'Add set_channel_title', title: 'set_channel_title' },
   { type: CommandEffectType.SET_CHANNEL_GAME_ID, label: 'Add set_channel_game_id', title: 'set_channel_game_id' },
+  { type: CommandEffectType.CHATTERS, label: 'Add chatters', title: 'chatters' },
+  { type: CommandEffectType.DICT_LOOKUP, label: 'Add dict_lookup', title: 'dict_lookup' },
   { type: CommandEffectType.ADD_STREAM_TAGS, label: 'Add add_stream_tags', title: 'add_stream_tags' },
   { type: CommandEffectType.REMOVE_STREAM_TAGS, label: 'Add remove_stream_tags', title: 'remove_stream_tags' },
-  { type: CommandEffectType.CHATTERS, label: 'Add chatters', title: 'chatters' },
+  { type: CommandEffectType.MADOCHAN, label: 'Add madochan', title: 'madochan' },
   { type: CommandEffectType.COUNTDOWN, label: 'Add countdown', title: 'countdown' },
+  { type: CommandEffectType.VARIABLE_CHANGE, label: 'Add variable_change', title: 'variable_change' },
 ])
 
 const newEffectData = (type: CommandEffectType): any => {

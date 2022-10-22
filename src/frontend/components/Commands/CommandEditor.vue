@@ -9,9 +9,15 @@
     />
     <div class="modal-card">
       <header class="modal-card-head">
-        <p class="modal-card-title">
+        <div class="modal-card-title">
           {{ title }}
-        </p>
+          <div
+            v-if="actionDescription"
+            class="help"
+          >
+            <div v-html="actionDescription" />
+          </div>
+        </div>
         <button
           class="delete"
           aria-label="close"
@@ -22,7 +28,14 @@
         <table class="table is-striped">
           <tbody>
             <tr>
-              <td>Triggers:</td>
+              <td>
+                <div>Triggers:</div>
+                <dropdown-button
+                  :actions="possibleTriggerActions()"
+                  label="Add trigger"
+                  @click="addTrigger"
+                />
+              </td>
               <td>
                 <trigger-editor
                   v-for="(trigger, idx) in item.triggers"
@@ -34,16 +47,7 @@
                   @update:modelValue="item.triggers[idx] = $event"
                   @remove="rmtrigger(idx)"
                 />
-                <dropdown-button
-                  :actions="possibleTriggerActions()"
-                  label="Add trigger"
-                  @click="addtrigger"
-                />
               </td>
-            </tr>
-            <tr v-if="actionDescription">
-              <td>Description:</td>
-              <td v-html="actionDescription" />
             </tr>
             <tr v-if="item.action === 'sr_addtag'">
               <td>Tag:</td>
@@ -56,6 +60,42 @@
                   class="button is-small mr-1"
                   @click="item.data.tag = ''"
                 >All args</span>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div>Effects:</div>
+                <dropdown-button
+                  :actions="possibleEffectActions()"
+                  label="Add effect"
+                  @click="addEffect"
+                />
+              </td>
+              <td>
+                <EffectsEditor
+                  v-model="item.effects"
+                  :item-variables="item.variables"
+                  :global-variables="globalVariables"
+                  :base-volume="baseVolume"
+                  :widget-url="widgetUrl"
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>Permissions:</td>
+              <td>
+                <label
+                  v-for="(perm, idx) in possiblePermissions"
+                  :key="idx"
+                  class="mr-1"
+                >
+                  <input
+                    v-model="item.restrict_to"
+                    type="checkbox"
+                    :value="perm.value"
+                  >
+                  {{ perm.label }}
+                </label>
               </td>
             </tr>
             <tr>
@@ -106,35 +146,6 @@
                 </div>
               </td>
             </tr>
-            <tr>
-              <td>Effects:</td>
-              <td>
-                <EffectsEditor
-                  v-model="item.effects"
-                  :item-variables="item.variables"
-                  :global-variables="globalVariables"
-                  :base-volume="baseVolume"
-                  :widget-url="widgetUrl"
-                />
-              </td>
-            </tr>
-            <tr>
-              <td>Permissions:</td>
-              <td>
-                <label
-                  v-for="(perm, idx) in possiblePermissions"
-                  :key="idx"
-                  class="mr-1"
-                >
-                  <input
-                    v-model="item.restrict_to"
-                    type="checkbox"
-                    :value="perm.value"
-                  >
-                  {{ perm.label }}
-                </label>
-              </td>
-            </tr>
           </tbody>
         </table>
       </section>
@@ -165,6 +176,8 @@ import {
   commands,
   isValidTrigger,
   newTrigger,
+  newEffect,
+  possibleEffectActions
 } from "../../../common/commands";
 import {
   Command,
@@ -214,7 +227,12 @@ const verb = {
 };
 const title = `${verb[props.mode]}${commands[item.value.action].Name()}`;
 
-const addtrigger = (trigger: any): void => {
+
+const addEffect = (effect: any): void => {
+  item.value.effects.push(newEffect(effect.type));
+}
+
+const addTrigger = (trigger: any): void => {
   item.value.triggers.push(newTrigger(trigger.type));
 }
 
@@ -259,3 +277,9 @@ onMounted(() => {
   })
 })
 </script>
+<style scoped>
+.modal-card {
+  width: auto;
+  /* width: calc(100% - 2em); */
+}
+</style>

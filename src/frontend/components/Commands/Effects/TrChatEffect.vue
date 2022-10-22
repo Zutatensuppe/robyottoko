@@ -1,54 +1,44 @@
 <template>
-  <tr>
-    <td>
-      Chat:
-      <div
-        v-for="(txt, idx) in val.data.text"
-        :key="idx"
-        class="field textarea-holder"
-      >
-        <textarea
-          v-model="val.data.text[idx]"
-          class="textarea"
-          :class="{
-            'has-background-danger-light': !val.data.text[idx],
-            'has-text-danger-dark': !val.data.text[idx],
-          }"
-        />
-        <div class="help">
-          <macro-select @selected="insertMacro(idx, $event)" />
-        </div>
-        <button
-          class="button is-small"
-          :disabled="val.data.text.length <= 1"
-          @click="rmtxt(idx)"
-        >
-          <i class="fa fa-remove" />
-        </button>
+  <div>
+    <div
+      v-for="(txt, idx) in val.data.text"
+      :key="idx"
+      class="field textarea-holder"
+    >
+      <textarea
+        v-model="val.data.text[idx]"
+        class="textarea"
+        :class="{
+          'has-background-danger-light': !val.data.text[idx],
+          'has-text-danger-dark': !val.data.text[idx],
+        }"
+      />
+      <div class="help">
+        <macro-select @selected="insertMacro(idx, $event)" />
       </div>
-      <div class="field">
-        <button
-          class="button is-small"
-          @click="addtxt"
-        >
-          <i class="fa fa-plus mr-1" /> Add response
-        </button>
-      </div>
-      <div>
-        <p class="help">
-          If multiple responses exist, a random one will be used when
-          the command is triggered.
-        </p>
-      </div>
-
       <button
         class="button is-small"
-        @click="emit('removeClick')"
+        :disabled="val.data.text.length <= 1"
+        @click="rmtxt(idx)"
       >
         <i class="fa fa-remove" />
       </button>
-    </td>
-  </tr>
+    </div>
+    <div class="field">
+      <button
+        class="button is-small"
+        @click="addtxt"
+      >
+        <i class="fa fa-plus mr-1" /> Add response
+      </button>
+    </div>
+    <div>
+      <p class="help">
+        If multiple responses exist, a random one will be used when
+        the command is triggered.
+      </p>
+    </div>
+  </div>
 </template>
 <script setup lang="ts">
 import { ChatEffect } from '../../../../types';
@@ -61,7 +51,7 @@ const props = defineProps<{
 
 const val = ref<ChatEffect>(props.modelValue)
 
-const emit = defineEmits(['update:modelValue', 'removeClick'])
+const emit = defineEmits(['update:modelValue'])
 
 const insertMacro = (idx: number, macro: {
   value: string;
