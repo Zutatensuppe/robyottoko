@@ -219,10 +219,7 @@ const addtrigger = (trigger: any): void => {
 }
 
 const onAddVariable = (): void => {
-  item.value.variables.push({
-    name: "",
-    value: "",
-  });
+  item.value.variables.push({ name: "", value: "" });
 }
 
 const rmVariable = (idx: number): void => {

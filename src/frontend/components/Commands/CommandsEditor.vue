@@ -236,25 +236,14 @@
       No commands set up
     </div>
 
-    <text-command-editor
-      v-if="editIdx !== null && editCommand && editCommand.action === 'text'"
+    <CommandEditor
+      v-if="editIdx !== null && editCommand"
       :global-variables="globalVariables"
       :channel-points-custom-rewards="channelPointsCustomRewards"
       :model-value="editCommand"
       :mode="editIdx >= commands.length ? 'create' : 'edit'"
       :base-volume="baseVolume"
       :widget-url="widgetUrl"
-      @update:modelValue="editedCommand"
-      @cancel="editCommand = null"
-    />
-
-    <CommandEditor
-      v-else-if="editIdx !== null && editCommand"
-      :global-variables="globalVariables"
-      :channel-points-custom-rewards="channelPointsCustomRewards"
-      :model-value="editCommand"
-      :mode="editIdx >= commands.length ? 'create' : 'edit'"
-      :base-volume="baseVolume"
       @update:modelValue="editedCommand"
       @cancel="editCommand = null"
     />

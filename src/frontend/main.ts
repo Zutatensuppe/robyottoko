@@ -36,7 +36,6 @@ import UploadInput from "./components/UploadInput.vue";
 import VolumeSlider from "./components/VolumeSlider.vue";
 import YoutubePlayer from "./components/YoutubePlayer.vue";
 
-import CommandsTextCommandEditor from "./components/Commands/TextCommandEditor.vue";
 import CommandsCountdownEditor from "./components/Commands/CountdownEditor.vue";
 import CommandsTriggerEditor from "./components/Commands/TriggerEditor.vue";
 import CommandsTriggerInfo from "./components/Commands/TriggerInfo.vue";
@@ -214,7 +213,6 @@ const run = async () => {
   app.component('SoundUpload', SoundUpload)
   app.component('VolumeSlider', VolumeSlider)
   app.component('YoutubePlayer', YoutubePlayer)
-  app.component('TextCommandEditor', CommandsTextCommandEditor)
   app.component('CountdownEditor', CommandsCountdownEditor)
   app.component('TriggerEditor', CommandsTriggerEditor)
   app.component('TriggerInfo', CommandsTriggerInfo)
