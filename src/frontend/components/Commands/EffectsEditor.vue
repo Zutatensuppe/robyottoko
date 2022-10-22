@@ -71,54 +71,11 @@
       />
     </table>
 
-    <span
-      class="button is-small"
-      @click="addVariableChange"
-    >Add variable change</span>
-    <span
-      class="button is-small"
-      @click="addChat"
-    >Add chat</span>
-    <span
-      class="button is-small"
-      @click="addDictLookup"
-    >Add dict lookup</span>
-    <span
-      class="button is-small"
-      @click="addEmotes"
-    >Add emotes</span>
-    <span
-      class="button is-small"
-      @click="addMedia"
-    >Add media</span>
-    <span
-      class="button is-small"
-      @click="addMadochan"
-    >Add madochan</span>
-    <span
-      class="button is-small"
-      @click="addSetChannelTitle"
-    >Add set stream title</span>
-    <span
-      class="button is-small"
-      @click="addSetChannelGameId"
-    >Add set stream category</span>
-    <span
-      class="button is-small"
-      @click="addAddStreamTags"
-    >Add 'add stream tags'</span>
-    <span
-      class="button is-small"
-      @click="addRemoveStreamTags"
-    >Add 'remove stream tags'</span>
-    <span
-      class="button is-small"
-      @click="addChatters"
-    >Add chatters</span>
-    <span
-      class="button is-small"
-      @click="addCountdown"
-    >Add countdown</span>
+    <dropdown-button
+      :actions="possibleEffectActions()"
+      label="Add effect"
+      @click="addEffect"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -129,7 +86,7 @@ import TrChatEffect from './Effects/TrChatEffect.vue';
 import TrDictLookupEffect from './Effects/TrDictLookupEffect.vue';
 import TrEmotesEffect from './Effects/TrEmotesEffect.vue';
 import TrMediaEffect from './Effects/TrMediaEffect.vue';
-import { newMedia } from '../../../common/commands';
+import { newEffect, possibleEffectActions } from '../../../common/commands';
 import TrMadochanEffect from './Effects/TrMadochanEffect.vue';
 import TrSetChannelTitleEffect from './Effects/TrSetChannelTitleEffect.vue';
 import TrSetChannelGameIdEffect from './Effects/TrSetChannelGameIdEffect.vue';
@@ -159,113 +116,8 @@ const onRmEffectClick = (idx: number) => {
   val.value = val.value.filter((_v, tmpIdx) => tmpIdx !== idx)
 }
 
-const addVariableChange = () => {
-  val.value.push({
-    type: CommandEffectType.VARIABLE_CHANGE,
-    data: {
-      name: "",
-      change: "set",
-      value: "",
-    },
-  })
-}
-const addChat = () => {
-  val.value.push({
-    type: CommandEffectType.CHAT,
-    data: {
-      text: [''],
-    },
-  })
-}
-const addDictLookup = () => {
-  val.value.push({
-    type: CommandEffectType.DICT_LOOKUP,
-    data: {
-      lang: 'ja',
-      phrase: '',
-    },
-  })
-}
-const addEmotes = () => {
-  val.value.push({
-    type: CommandEffectType.EMOTES,
-    data: {
-      displayFn: [],
-      emotes: [],
-    },
-  })
-}
-const addMedia = () => {
-  val.value.push({
-    type: CommandEffectType.MEDIA,
-    data: newMedia(),
-  })
-}
-const addMadochan = () => {
-  val.value.push({
-    type: CommandEffectType.MADOCHAN,
-    data: {
-      // TODO: use from same resource as server
-      model: '100epochs800lenhashingbidirectional.h5',
-      weirdness: '1',
-    },
-  })
-}
-const addSetChannelTitle = () => {
-  val.value.push({
-    type: CommandEffectType.SET_CHANNEL_TITLE,
-    data: {
-      title: ''
-    },
-  })
-}
-const addSetChannelGameId = () => {
-  val.value.push({
-    type: CommandEffectType.SET_CHANNEL_GAME_ID,
-    data: {
-      title: ''
-    },
-  })
-}
-
-const addAddStreamTags = () => {
-  val.value.push({
-    type: CommandEffectType.ADD_STREAM_TAGS,
-    data: {
-      tag: '',
-    },
-  })
-}
-
-const addRemoveStreamTags = () => {
-  val.value.push({
-    type: CommandEffectType.REMOVE_STREAM_TAGS,
-    data: {
-      tag: '',
-    },
-  })
-}
-
-const addChatters = () => {
-  val.value.push({
-    type: CommandEffectType.CHATTERS,
-    data: {},
-  })
-}
-
-const addCountdown = () => {
-  val.value.push({
-    type: CommandEffectType.COUNTDOWN,
-    data: {
-      type: 'auto',
-      step: '',
-      steps: '3',
-      interval: '1s',
-      intro: 'Starting countdown...',
-      outro: 'Done!',
-      actions: []
-    }
-  })
+const addEffect = (effect: any): void => {
+  val.value.push(newEffect(effect.type));
 }
 
 watch(val, (newValue: CommandEffect[]) => {

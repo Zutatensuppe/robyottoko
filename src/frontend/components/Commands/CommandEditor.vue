@@ -35,7 +35,7 @@
                   @remove="rmtrigger(idx)"
                 />
                 <dropdown-button
-                  :actions="possibleTriggerActions"
+                  :actions="possibleTriggerActions()"
                   label="Add trigger"
                   @click="addtrigger"
                 />

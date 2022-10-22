@@ -1,6 +1,6 @@
 import { getProp, mustParseHumanDuration, nonce } from "../common/fn"
 import {
-  Command, CommandAction, CommandEffect, CommandTrigger, CommandTriggerType,
+  Command, CommandAction, CommandEffect, CommandEffectType, CommandTrigger, CommandTriggerType,
   CountdownAction, CountdownActionType, FunctionCommand,
   MediaCommandData, MediaFile, MediaVideo, MediaVolumeCommand, RandomTextCommand, SoundMediaFile,
 } from "../types"
@@ -589,6 +589,68 @@ export const commands: Record<CommandAction, CommandDef> = {
   },
 }
 
+export const possibleEffectActions = () => ([
+  { type: CommandEffectType.VARIABLE_CHANGE, label: 'Add variable_change', title: 'variable_change' },
+  { type: CommandEffectType.CHAT, label: 'Add chat', title: 'chat' },
+  { type: CommandEffectType.DICT_LOOKUP, label: 'Add dict_lookup', title: 'dict_lookup' },
+  { type: CommandEffectType.EMOTES, label: 'Add emotes', title: 'emotes' },
+  { type: CommandEffectType.MEDIA, label: 'Add media', title: 'media' },
+  { type: CommandEffectType.MADOCHAN, label: 'Add madochan', title: 'madochan' },
+  { type: CommandEffectType.SET_CHANNEL_TITLE, label: 'Add set_channel_title', title: 'set_channel_title' },
+  { type: CommandEffectType.SET_CHANNEL_GAME_ID, label: 'Add set_channel_game_id', title: 'set_channel_game_id' },
+  { type: CommandEffectType.ADD_STREAM_TAGS, label: 'Add add_stream_tags', title: 'add_stream_tags' },
+  { type: CommandEffectType.REMOVE_STREAM_TAGS, label: 'Add remove_stream_tags', title: 'remove_stream_tags' },
+  { type: CommandEffectType.CHATTERS, label: 'Add chatters', title: 'chatters' },
+  { type: CommandEffectType.COUNTDOWN, label: 'Add countdown', title: 'countdown' },
+])
+
+const newEffectData = (type: CommandEffectType): any => {
+  switch (type) {
+    case CommandEffectType.VARIABLE_CHANGE:
+      return { name: "", change: "set", value: "" }
+    case CommandEffectType.CHAT:
+      return { text: [''] }
+    case CommandEffectType.DICT_LOOKUP:
+      return { lang: 'ja', phrase: '' }
+    case CommandEffectType.EMOTES:
+      return { displayFn: [], emotes: [] }
+    case CommandEffectType.MEDIA:
+      return newMedia()
+    case CommandEffectType.MADOCHAN:
+      // TODO: use from same resource as server
+      return { model: '100epochs800lenhashingbidirectional.h5', weirdness: '1' }
+    case CommandEffectType.SET_CHANNEL_TITLE:
+      return { title: '' }
+    case CommandEffectType.SET_CHANNEL_GAME_ID:
+      return { title: '' }
+    case CommandEffectType.ADD_STREAM_TAGS:
+      return { tag: '' }
+    case CommandEffectType.REMOVE_STREAM_TAGS:
+      return { tag: '' }
+    case CommandEffectType.CHATTERS:
+      return {}
+    case CommandEffectType.COUNTDOWN:
+      return {
+          type: 'auto',
+          step: '',
+          steps: '3',
+          interval: '1s',
+          intro: 'Starting countdown...',
+          outro: 'Done!',
+          actions: []
+      }
+    default:
+      // should not occur, all possible cases are handled
+      return {}
+  }
+}
+
+export const newEffect = (type: CommandEffectType): CommandEffect => {
+  return { type, data: newEffectData(type) }
+}
+
 export default {
   commands,
+  newEffect,
+  possibleEffectActions,
 }
