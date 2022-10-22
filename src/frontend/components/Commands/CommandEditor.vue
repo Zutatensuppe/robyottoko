@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="item"
+    ref="el"
     class="modal is-active"
   >
     <div
@@ -157,8 +157,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from "vue";
+<script setup lang="ts">
+import { computed, nextTick, onMounted, Ref, ref, watch } from "vue";
 
 import { permissions } from "../../../common/permissions";
 import {
@@ -181,137 +181,84 @@ interface ComponentDataPermission {
   label: string;
 }
 
-interface ComponentData {
-  item: Command | null;
-  variableChangeFocusIdx: number;
-  possiblePermissions: ComponentDataPermission[];
+const props = defineProps<{
+  modelValue: any,
+  mode: 'create' | 'edit',
+  globalVariables: GlobalVariable[],
+  channelPointsCustomRewards: Record<string, string[]>,
+  baseVolume: any, // number | undefined ???
+  widgetUrl: string,
+}>()
+
+const emit = defineEmits(["update:modelValue", "cancel"])
+
+const item = ref<Command>(JSON.parse(JSON.stringify(props.modelValue)))
+const el = ref<HTMLDivElement | null>(null) as Ref<HTMLDivElement>
+const possiblePermissions = ref<ComponentDataPermission[]>(permissions)
+
+const valid = computed((): boolean => {
+  // check if all triggers are correct
+  for (const trigger of item.value.triggers) {
+    if (!isValidTrigger(trigger)) {
+      return false;
+    }
+  }
+  return true;
+})
+
+const actionDescription = commands[item.value.action].Description()
+
+const verb = {
+  create: "Create new ",
+  edit: "Edit ",
+};
+const title = `${verb[props.mode]}${commands[item.value.action].Name()}`;
+
+const addtrigger = (trigger: any): void => {
+  item.value.triggers.push(newTrigger(trigger.type));
 }
 
-export default defineComponent({
-  components: { StringInput, EffectsEditor },
-  props: {
-    modelValue: {
-      type: Object,
-      required: true,
-    },
-    mode: {
-      type: String as PropType<"create" | "edit">,
-      required: true,
-    },
-    globalVariables: {
-      type: Array as PropType<GlobalVariable[]>,
-      required: true,
-    },
-    channelPointsCustomRewards: {
-      type: Object as PropType<Record<string, string[]>>,
-      required: true,
-    },
-    baseVolume: {
-      default: 100,
-    },
-    widgetUrl: {
-      type: String,
-      required: false,
-      default: "",
-    },
-  },
-  emits: ["update:modelValue", "cancel"],
-  data: (): ComponentData => ({
-    item: null,
-    variableChangeFocusIdx: -1,
-    possiblePermissions: permissions,
-  }),
-  computed: {
-    possibleTriggerActions() {
-      return possibleTriggerActions();
-    },
-    valid(): boolean {
-      if (!this.item) {
-        return false;
-      }
-      // check if all triggers are correct
-      for (const trigger of this.item.triggers) {
-        if (!isValidTrigger(trigger)) {
-          return false;
-        }
-      }
-      return true;
-    },
-    actionDescription(): string {
-      if (!this.item) {
-        return "";
-      }
-      return commands[this.item.action].Description();
-    },
-    title(): string {
-      if (!this.item) {
-        return "";
-      }
-      const verb = {
-        create: "Create new ",
-        edit: "Edit ",
-      };
-      return `${verb[this.mode]}${commands[this.item.action].Name()}`;
-    },
-  },
-  watch: {
-    modelValue: {
-      handler(v) {
-        this.item = JSON.parse(JSON.stringify(v));
-      },
-    },
-  },
-  mounted() {
-    this.item = JSON.parse(JSON.stringify(this.modelValue));
-    this.$nextTick(() => {
-      const el = this.$el.querySelector("input[type=\"text\"]");
-      el.focus();
-    });
-  },
-  methods: {
-    addtrigger(trigger: any): void {
-      if (!this.item) {
-        console.warn("addtrigger: this.item not initialized");
-        return;
-      }
-      this.item.triggers.push(newTrigger(trigger.type));
-    },
-    onAddVariable(): void {
-      if (!this.item) {
-        console.warn("onAddVariable: this.item not initialized");
-        return;
-      }
-      this.item.variables.push({
-        name: "",
-        value: "",
-      });
-    },
-    rmVariable(idx: number): void {
-      if (!this.item) {
-        console.warn("rmVariable: this.item not initialized");
-        return;
-      }
-      this.item.variables = this.item.variables.filter((_val: CommandVariable, index: number) => index !== idx);
-    },
-    onSaveClick(): void {
-      this.$emit("update:modelValue", this.item);
-    },
-    onCancelClick(): void {
-      this.$emit("cancel");
-    },
-    onCloseClick(): void {
-      this.$emit("cancel");
-    },
-    onOverlayClick(): void {
-      this.$emit("cancel");
-    },
-    rmtrigger(idx: number): void {
-      if (!this.item) {
-        console.warn("rmtrigger: this.item not initialized");
-        return;
-      }
-      this.item.triggers = this.item.triggers.filter((_val: CommandTrigger, index: number) => index !== idx);
-    },
-  }
-});
+const onAddVariable = (): void => {
+  item.value.variables.push({
+    name: "",
+    value: "",
+  });
+}
+
+const rmVariable = (idx: number): void => {
+  item.value.variables = item.value.variables.filter((_val: CommandVariable, index: number) => index !== idx);
+}
+
+const onSaveClick = (): void => {
+  emit("update:modelValue", item.value);
+}
+
+const onCancelClick = (): void => {
+  emit("cancel");
+}
+
+const onCloseClick = (): void => {
+  emit("cancel");
+}
+
+const onOverlayClick = (): void => {
+  emit("cancel");
+}
+
+const rmtrigger = (idx: number): void => {
+  item.value.triggers = item.value.triggers.filter((_val: CommandTrigger, index: number) => index !== idx);
+}
+
+watch(() => props.modelValue, (newValue: Command) => {
+  item.value = JSON.parse(JSON.stringify(newValue));
+}, { deep: true })
+
+onMounted(() => {
+  nextTick(() => {
+    const inputEl = el.value.querySelector("input[type=\"text\"]");
+    if (inputEl) {
+      (inputEl as HTMLInputElement).focus();
+    }
+  })
+})
 </script>
