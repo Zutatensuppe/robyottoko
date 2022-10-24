@@ -109,6 +109,23 @@ const determineLimits = (
   return { maxLenMs, maxQueued }
 }
 
+export const findInsertIndex = (playlist: PlaylistItem[]): number => {
+  if (playlist.length === 0) {
+    return 0
+  }
+
+  let found = -1
+  for (let i = 0; i < playlist.length; i++) {
+    if (playlist[i].plays === 0) {
+      found = i
+    } else if (found >= 0) {
+      break
+    }
+  }
+  return (found === -1 ? 0 : found) + 1
+}
+
+
 class SongrequestModule implements Module {
   public name = MODULE_NAME.SR
 
@@ -1201,18 +1218,6 @@ class SongrequestModule implements Module {
     return d
   }
 
-  findInsertIndex() {
-    let found = -1
-    for (let i = 0; i < this.data.playlist.length; i++) {
-      if (this.data.playlist[i].plays === 0) {
-        found = i
-      } else if (found >= 0) {
-        break
-      }
-    }
-    return (found === -1 ? 0 : found) + 1
-  }
-
   createItem(
     youtubeId: string,
     youtubeData: YoutubeVideosResponseDataEntry,
@@ -1234,7 +1239,7 @@ class SongrequestModule implements Module {
 
   async addToPlaylist(tmpItem: PlaylistItem): Promise<AddResponseData> {
     const idx = this.findSongIdxByYoutubeId(tmpItem.yt)
-    let insertIndex = this.findInsertIndex()
+    let insertIndex = findInsertIndex(this.data.playlist)
 
     if (idx < 0) {
       this.data.playlist.splice(insertIndex, 0, tmpItem)
@@ -1279,7 +1284,7 @@ class SongrequestModule implements Module {
       }
     }
 
-    let insertIndex = this.findInsertIndex()
+    let insertIndex = findInsertIndex(this.data.playlist)
 
     if (insertIndex > idx) {
       insertIndex = insertIndex - 1
