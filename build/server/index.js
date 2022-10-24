@@ -5387,6 +5387,21 @@ const determineLimits = (ctx, settings) => {
     maxQueued = Math.max(maxQueued, 0);
     return { maxLenMs, maxQueued };
 };
+const findInsertIndex = (playlist) => {
+    if (playlist.length === 0) {
+        return 0;
+    }
+    let found = -1;
+    for (let i = 0; i < playlist.length; i++) {
+        if (playlist[i].plays === 0) {
+            found = i;
+        }
+        else if (found >= 0) {
+            break;
+        }
+    }
+    return (found === -1 ? 0 : found) + 1;
+};
 class SongrequestModule {
     constructor(bot, user) {
         this.bot = bot;
@@ -6424,18 +6439,6 @@ class SongrequestModule {
         }
         return d;
     }
-    findInsertIndex() {
-        let found = -1;
-        for (let i = 0; i < this.data.playlist.length; i++) {
-            if (this.data.playlist[i].plays === 0) {
-                found = i;
-            }
-            else if (found >= 0) {
-                break;
-            }
-        }
-        return (found === -1 ? 0 : found) + 1;
-    }
     createItem(youtubeId, youtubeData, userName) {
         return {
             id: Math.random(),
@@ -6452,7 +6455,7 @@ class SongrequestModule {
     }
     async addToPlaylist(tmpItem) {
         const idx = this.findSongIdxByYoutubeId(tmpItem.yt);
-        let insertIndex = this.findInsertIndex();
+        let insertIndex = findInsertIndex(this.data.playlist);
         if (idx < 0) {
             this.data.playlist.splice(insertIndex, 0, tmpItem);
             await this.save();
@@ -6491,7 +6494,7 @@ class SongrequestModule {
                 reason: NOT_ADDED_REASON.NOT_FOUND_IN_PLAYLIST,
             };
         }
-        let insertIndex = this.findInsertIndex();
+        let insertIndex = findInsertIndex(this.data.playlist);
         if (insertIndex > idx) {
             insertIndex = insertIndex - 1;
         }
@@ -7350,9 +7353,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-10-24T17:47:37.332Z",
+    buildDate: "2022-10-24T18:07:18.355Z",
     // @ts-ignore
-    buildVersion: "1.30.7",
+    buildVersion: "1.30.8",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
