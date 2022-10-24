@@ -1938,12 +1938,12 @@ const handleOAuthCodeCallback = async (code, redirectUri, bot, loggedInUser) => 
     const helixClient = new TwitchHelixClient(bot.getConfig().twitch.tmi.identity.client_id, bot.getConfig().twitch.tmi.identity.client_secret);
     const resp = await helixClient.getAccessTokenByCode(code, redirectUri);
     if (!resp) {
-        return { error: true, updated: false, user: loggedInUser };
+        return null;
     }
     // get the user that corresponds to the token
     const userResp = await helixClient.getUser(resp.access_token);
     if (!userResp) {
-        return { error: true, updated: false, user: loggedInUser };
+        return null;
     }
     // update currently logged in user if they dont have a twitch id set yet
     if (loggedInUser && !loggedInUser.twitch_id) {
@@ -1964,6 +1964,8 @@ const handleOAuthCodeCallback = async (code, redirectUri, bot, loggedInUser) => 
             await bot.getRepos().user.save(user);
         }
     }
+    let created = false;
+    let updated = true;
     if (!user) {
         // create user
         const userId = await bot.getRepos().user.createUser({
@@ -1980,8 +1982,10 @@ const handleOAuthCodeCallback = async (code, redirectUri, bot, loggedInUser) => 
             is_streaming: false,
         });
         user = await bot.getRepos().user.getById(userId);
+        created = true;
+        updated = false;
         if (!user) {
-            return { error: true, updated: false, user: loggedInUser };
+            return null;
         }
     }
     // store the token
@@ -1994,7 +1998,7 @@ const handleOAuthCodeCallback = async (code, redirectUri, bot, loggedInUser) => 
         token_type: resp.token_type,
         expires_at: new Date(new Date().getTime() + resp.expires_in * 1000),
     });
-    return { error: false, updated: true, user };
+    return { updated, created, user };
 };
 
 var CommandRestrict;
@@ -3001,7 +3005,7 @@ const createRouter$3 = (bot) => {
         const user = req.user?.id ? await bot.getRepos().user.getById(req.user.id) : null;
         for (const redirectUri of redirectUris) {
             const tmpResult = await handleOAuthCodeCallback(`${req.query.code}`, redirectUri, bot, user);
-            if (!tmpResult.error && tmpResult.user) {
+            if (tmpResult) {
                 return tmpResult;
             }
         }
@@ -3018,20 +3022,15 @@ const createRouter$3 = (bot) => {
         // &state=c3ab8aa609ea11e793ae92361f002671
         if (req.query.code) {
             const result = await getCodeCallbackResult(req);
-            if (result === null || result.error || !result.user) {
-                res.status(500).send("Something went wrong!");
+            if (!result) {
+                res.status(500).send('Something went wrong!');
                 return;
             }
             if (result.updated) {
-                const changedUser = await bot.getRepos().user.getById(result.user.id);
-                if (changedUser) {
-                    bot.getEventHub().emit('user_changed', changedUser);
-                }
-                else {
-                    log$l.error({
-                        user_id: result.user.id,
-                    }, 'updating user twitch channels: user doesn\'t exist after saving it');
-                }
+                bot.getEventHub().emit('user_changed', result.user);
+            }
+            else if (result.created) {
+                bot.getEventHub().emit('user_registration_complete', result.user);
             }
             const token = await bot.getAuth().getUserAuthToken(result.user.id);
             res.cookie('x-token', token, { maxAge: 1 * YEAR, httpOnly: true });
@@ -7335,9 +7334,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-10-24T07:02:54.358Z",
+    buildDate: "2022-10-24T17:16:00.873Z",
     // @ts-ignore
-    buildVersion: "1.30.5",
+    buildVersion: "1.30.6",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
