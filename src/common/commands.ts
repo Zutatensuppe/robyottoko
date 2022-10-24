@@ -2,7 +2,7 @@ import { getProp, mustParseHumanDuration, nonce } from "../common/fn"
 import {
   Command, CommandAction, CommandEffect, CommandEffectType, CommandTrigger, CommandTriggerType,
   CountdownAction, CountdownActionType, FunctionCommand,
-  MediaCommandData, MediaFile, MediaVideo, MediaVolumeCommand, RandomTextCommand, SoundMediaFile,
+  MediaCommandData, MediaFile, MediaVideo, RandomTextCommand, SoundMediaFile,
 } from "../types"
 import { MOD_OR_ABOVE } from './permissions'
 
@@ -175,22 +175,6 @@ interface CommandDef {
 }
 
 export const commands: Record<CommandAction, CommandDef> = {
-  media_volume: {
-    Name: () => "media volume command",
-    Description: () => `Sets the media volume to <code>&lt;VOLUME&gt;</code> (argument to this command, min 0, max 100).
-    <br />
-    If no argument is given, just outputs the current volume`,
-    NewCommand: (): MediaVolumeCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
-      triggers: [newCommandTrigger()],
-      effects: [],
-      action: CommandAction.MEDIA_VOLUME,
-      restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {},
-    }),
-  },
   text: {
     Name: () => "command",
     Description: () => "",

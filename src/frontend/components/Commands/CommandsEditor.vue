@@ -1,7 +1,13 @@
 <template>
   <div>
     <div class="actions">
+      <span
+        v-if="possibleActionsMapped.length === 1"
+        class="button is-small mr-1"
+        @click="add(possibleActionsMapped[0])"
+      >Add command</span>
       <dropdown-button
+        v-else
         :actions="possibleActionsMapped"
         label="Add command"
         @click="add"

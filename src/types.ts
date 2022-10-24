@@ -282,6 +282,7 @@ export enum CommandEffectType {
   REMOVE_STREAM_TAGS = 'remove_stream_tags',
   CHATTERS = 'chatters',
   COUNTDOWN = 'countdown',
+  MEDIA_VOLUME = 'media_volume',
 }
 
 export interface CommandEffect {
@@ -360,6 +361,11 @@ export interface ChattersEffect {
   data: object // empty object for now
 }
 
+export interface MediaVolumeEffect {
+  type: CommandEffectType.MEDIA_VOLUME
+  data: object // empty object for now
+}
+
 export interface CountdownEffect {
   type: CommandEffectType.COUNTDOWN
   data: CountdownCommandData
@@ -389,7 +395,6 @@ export type CommandFunction = (ctx: CommandExecutionContext) => any
 export enum CommandAction {
   // general
   TEXT = 'text',
-  MEDIA_VOLUME = 'media_volume',
   // song request
   SR_CURRENT = 'sr_current',
   SR_UNDO = 'sr_undo',
@@ -443,10 +448,6 @@ export interface RandomTextCommand extends Command {
   data: {
     text: string[]
   }
-}
-
-export interface MediaVolumeCommand extends Command {
-  action: CommandAction.MEDIA_VOLUME
 }
 
 export interface MediaVideo {

@@ -1,4 +1,4 @@
-import fn, { determineNewVolume, extractEmotes, getChannelPointsCustomRewards } from '../../fn'
+import fn, { extractEmotes, getChannelPointsCustomRewards } from '../../fn'
 import { logger, nonce, parseHumanDuration, SECOND } from '../../common/fn'
 import { commands as commonCommands, newCommandTrigger, newJsonDate } from '../../common/commands'
 import { Socket } from '../../net/WebSocketServer'
@@ -9,11 +9,9 @@ import {
   FunctionCommand,
   Bot,
   Module,
-  MediaVolumeCommand,
   RandomTextCommand,
   CommandTriggerType,
   CommandAction,
-  CommandExecutionContext,
   MODULE_NAME,
   WIDGET_TYPE,
   CommandEffectType,
@@ -84,6 +82,10 @@ class GeneralModule implements Module {
       this.inittimers()
       return this;
     })();
+  }
+
+  getCurrentMediaVolume() {
+    return this.data.settings.volume
   }
 
   async userChanged(user: User) {
@@ -250,15 +252,12 @@ class GeneralModule implements Module {
     const commands: FunctionCommand[] = []
     const timers: GeneralModuleTimer[] = []
 
-    data.commands.forEach((cmd: MediaVolumeCommand | RandomTextCommand) => {
+    data.commands.forEach((cmd: RandomTextCommand) => {
       if (cmd.triggers.length === 0) {
         return
       }
       let cmdObj = null
       switch (cmd.action) {
-        case CommandAction.MEDIA_VOLUME:
-          cmdObj = Object.assign({}, cmd, { fn: this.mediaVolumeCmd.bind(this) })
-          break;
         case CommandAction.TEXT:
           cmdObj = Object.assign({}, cmd, { fn: noop })
           break;
@@ -381,24 +380,6 @@ class GeneralModule implements Module {
     }
     this.data.settings.volume = vol
     await this.save()
-  }
-
-  async mediaVolumeCmd(ctx: CommandExecutionContext) {
-    if (!ctx.rawCmd) {
-      return
-    }
-
-    const say = this.bot.sayFn(this.user, ctx.target)
-    if (ctx.rawCmd.args.length === 0) {
-      say(`Current volume: ${this.data.settings.volume}`)
-    } else {
-      const newVolume = determineNewVolume(
-        ctx.rawCmd.args[0],
-        this.data.settings.volume,
-      )
-      await this.volume(newVolume)
-      say(`New volume: ${this.data.settings.volume}`)
-    }
   }
 
   getCommands() {

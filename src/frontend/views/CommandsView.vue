@@ -96,7 +96,6 @@ const channelPointsCustomRewards = ref<Record<string, string[]>>({})
 let ws: WsClient | null = null
 const possibleActions: CommandAction[] = [
   CommandAction.TEXT,
-  CommandAction.MEDIA_VOLUME,
 ]
 const tabDefinitions: TabDefinition[] = [
   { tab: "commands", title: "Commands" },

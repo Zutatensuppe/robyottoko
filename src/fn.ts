@@ -14,6 +14,7 @@ import JishoOrg from './services/JishoOrg'
 import DictCc from './services/DictCc'
 import config from './config'
 import Madochan from './services/Madochan'
+import GeneralModule from './mod/modules/GeneralModule'
 
 const log = logger('fn.ts')
 
@@ -655,6 +656,28 @@ const applyEffects = async (
       }
 
       await countdown()
+
+    } else if (effect.type === CommandEffectType.MEDIA_VOLUME) {
+
+      const mediaVolumeCmd = async () => {
+        if (!rawCmd) {
+          return
+        }
+        const m = contextModule as GeneralModule
+        const say = m.bot.sayFn(m.user, m.user.twitch_login)
+        if (rawCmd.args.length === 0) {
+          say(`Current volume: ${m.getCurrentMediaVolume()}`)
+        } else {
+          const newVolume = determineNewVolume(
+            rawCmd.args[0],
+            m.getCurrentMediaVolume(),
+          )
+          await m.volume(newVolume)
+          say(`New volume: ${m.getCurrentMediaVolume()}`)
+        }
+      }
+
+      await mediaVolumeCmd()
 
     } else {
 
