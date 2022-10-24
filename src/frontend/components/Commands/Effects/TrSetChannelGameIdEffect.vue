@@ -9,8 +9,11 @@
             class="input is-small spaceinput mb-1"
           >
         </td>
-        <td class="help">
-          <macro-select @selected="insertMacro($event)" />
+        <td>
+          <macro-select
+            class="help"
+            @selected="val.data.game_id += $event.value"
+          />
         </td>
       </tr>
     </table>
@@ -25,13 +28,6 @@ const props = defineProps<{
 }>()
 
 const val = ref<SetChannelGameIdEffect>(props.modelValue)
-
-const insertMacro = (macro: {
-  value: string;
-  title: string;
-}): void => {
-  val.value.data.game_id += macro.value;
-}
 
 const emit = defineEmits(['update:modelValue'])
 

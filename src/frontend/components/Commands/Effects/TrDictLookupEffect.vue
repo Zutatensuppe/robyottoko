@@ -11,8 +11,11 @@
             class="input is-small spaceinput mb-1"
           >
         </td>
-        <td class="help">
-          <macro-select @selected="insertMacroLang($event)" />
+        <td>
+          <macro-select
+            class="help"
+            @selected="val.data.lang += $event.value"
+          />
         </td>
       </tr>
       <tr>
@@ -36,8 +39,11 @@
             class="input is-small spaceinput mb-1"
           >
         </td>
-        <td class="help">
-          <macro-select @selected="insertMacroPhrase($event)" />
+        <td>
+          <macro-select
+            class="help"
+            @selected="val.data.phrase += $event.value"
+          />
         </td>
       </tr>
       <tr>
@@ -79,20 +85,6 @@ const dictLangs = [
 const val = ref<DictLookupEffect>(props.modelValue)
 
 const emit = defineEmits(['update:modelValue'])
-
-const insertMacroLang = (macro: {
-  value: string;
-  title: string;
-}): void => {
-  val.value.data.lang += macro.value;
-}
-
-const insertMacroPhrase = (macro: {
-  value: string;
-  title: string;
-}): void => {
-  val.value.data.phrase += macro.value;
-}
 
 watch(val, (newValue: DictLookupEffect) => {
   emit('update:modelValue', newValue)

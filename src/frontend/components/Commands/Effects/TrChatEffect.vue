@@ -13,8 +13,11 @@
           'has-text-danger-dark': !val.data.text[idx],
         }"
       />
-      <div class="help">
-        <macro-select @selected="insertMacro(idx, $event)" />
+      <div>
+        <macro-select
+          class="help"
+          @selected="val.data.text[idx] += $event.value"
+        />
       </div>
       <button
         class="button is-small"
@@ -52,13 +55,6 @@ const props = defineProps<{
 const val = ref<ChatEffect>(props.modelValue)
 
 const emit = defineEmits(['update:modelValue'])
-
-const insertMacro = (idx: number, macro: {
-  value: string;
-  title: string;
-}): void => {
-  val.value.data.text[idx] += macro.value;
-}
 
 const addtxt = (): void => {
   val.value.data.text.push(newText());
