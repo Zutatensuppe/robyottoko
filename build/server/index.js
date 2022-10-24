@@ -2998,7 +2998,7 @@ const createRouter$3 = (bot) => {
             `${bot.getConfig().http.url}/twitch/redirect_uri`,
             `${req.protocol}://${req.headers.host}/twitch/redirect_uri`,
         ];
-        const user = await bot.getRepos().user.getById(req.user.id);
+        const user = req.user?.id ? await bot.getRepos().user.getById(req.user.id) : null;
         for (const redirectUri of redirectUris) {
             const tmpResult = await handleOAuthCodeCallback(`${req.query.code}`, redirectUri, bot, user);
             if (!tmpResult.error && tmpResult.user) {
@@ -7335,7 +7335,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-10-20T15:53:48.421Z",
+    buildDate: "2022-10-24T07:02:54.358Z",
     // @ts-ignore
     buildVersion: "1.30.5",
 };

@@ -53,7 +53,7 @@ export const createRouter = (
       `${bot.getConfig().http.url}/twitch/redirect_uri`,
       `${req.protocol}://${req.headers.host}/twitch/redirect_uri`,
     ]
-    const user = await bot.getRepos().user.getById(req.user.id)
+    const user = req.user?.id ? await bot.getRepos().user.getById(req.user.id) : null
     for (const redirectUri of redirectUris) {
       const tmpResult = await handleOAuthCodeCallback(
         `${req.query.code}`,
