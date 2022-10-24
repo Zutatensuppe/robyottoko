@@ -53,7 +53,7 @@ export const createRouter = (
       `${bot.getConfig().http.url}/twitch/redirect_uri`,
       `${req.protocol}://${req.headers.host}/twitch/redirect_uri`,
     ]
-    const user = await bot.getRepos().user.getById(req.user.id)
+    const user = req.user?.id ? await bot.getRepos().user.getById(req.user.id) : null
     for (const redirectUri of redirectUris) {
       const tmpResult = await handleOAuthCodeCallback(
         `${req.query.code}`,
@@ -61,7 +61,7 @@ export const createRouter = (
         bot,
         user,
       )
-      if (!tmpResult.error && tmpResult.user) {
+      if (tmpResult) {
         return tmpResult
       }
     }
@@ -78,20 +78,16 @@ export const createRouter = (
     // &scope=channel%3Amanage%3Apolls+channel%3Aread%3Apolls
     // &state=c3ab8aa609ea11e793ae92361f002671
     if (req.query.code) {
-      const result: HandleCodeCallbackResult | null = await getCodeCallbackResult(req)
-      if (result === null || result.error || !result.user) {
-        res.status(500).send("Something went wrong!");
+      const result = await getCodeCallbackResult(req)
+      if (!result) {
+        res.status(500).send('Something went wrong!');
         return
       }
+
       if (result.updated) {
-        const changedUser = await bot.getRepos().user.getById(result.user.id)
-        if (changedUser) {
-          bot.getEventHub().emit('user_changed', changedUser)
-        } else {
-          log.error({
-            user_id: result.user.id,
-          }, 'updating user twitch channels: user doesn\'t exist after saving it')
-        }
+        bot.getEventHub().emit('user_changed', result.user)
+      } else if (result.created) {
+        bot.getEventHub().emit('user_registration_complete', result.user)
       }
 
       const token = await bot.getAuth().getUserAuthToken(result.user.id)

@@ -5,6 +5,7 @@ import { Bot, EventSubTransport, TwitchBotIdentity, TwitchChatClient, TwitchChat
 import { ALL_SUBSCRIPTIONS_TYPES, SubscriptionType } from './twitch/EventSub'
 import { ChatEventHandler } from './twitch/ChatEventHandler'
 import { Timer } from '../Timer'
+import { normalizeChatMessage } from '../fn'
 
 const log = logger('TwitchClientManager.ts')
 
@@ -120,6 +121,9 @@ class TwitchClientManager {
         ) => {
           if (self) { return; } // Ignore messages from the bot
 
+          // sometimes chat contains imprintable characters
+          // they are removed here
+          msg = normalizeChatMessage(msg)
           await (chatEventHandler).handle(this.bot, this.user, target, context, msg)
         })
 

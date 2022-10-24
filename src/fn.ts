@@ -82,6 +82,23 @@ export const parseCommandFromTriggerAndMessage = (
   )
 }
 
+export const normalizeChatMessage = (text: string): string => {
+  // strip control chars
+  text = text.replace(/\p{C}/gu, '')
+
+  // other common tasks are to normalize newlines and other whitespace
+
+  // normalize newline
+  text = text.replace(/\n\r/g, '\n')
+  text = text.replace(/\p{Zl}/gu, '\n')
+  text = text.replace(/\p{Zp}/gu, '\n')
+
+  // normalize space
+  text = text.replace(/\p{Zs}/gu, ' ')
+
+  return text.trim()
+}
+
 export const parseCommandFromCmdAndMessage = (
   msg: string,
   command: string,
@@ -1191,6 +1208,7 @@ export default {
   decodeBase64Image,
   safeFileName,
   sayFn,
+  normalizeChatMessage,
   parseCommandFromTriggerAndMessage,
   parseCommandFromCmdAndMessage,
   sleep,

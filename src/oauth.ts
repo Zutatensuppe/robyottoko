@@ -115,9 +115,9 @@ export const refreshExpiredTwitchChannelAccessToken = async (
 }
 
 export interface HandleCodeCallbackResult {
-  error: boolean
   updated: boolean
-  user: User | null
+  created: boolean
+  user: User
 }
 
 // TODO: check if anything has to be put in a try catch block
@@ -126,20 +126,20 @@ export const handleOAuthCodeCallback = async (
   redirectUri: string,
   bot: Bot,
   loggedInUser: User | null,
-): Promise<HandleCodeCallbackResult> => {
+): Promise<HandleCodeCallbackResult | null> => {
   const helixClient = new TwitchHelixClient(
     bot.getConfig().twitch.tmi.identity.client_id,
     bot.getConfig().twitch.tmi.identity.client_secret
   )
   const resp = await helixClient.getAccessTokenByCode(code, redirectUri)
   if (!resp) {
-    return { error: true, updated: false, user: loggedInUser }
+    return null
   }
 
   // get the user that corresponds to the token
   const userResp = await helixClient.getUser(resp.access_token)
   if (!userResp) {
-    return { error: true, updated: false, user: loggedInUser }
+    return null
   }
 
   // update currently logged in user if they dont have a twitch id set yet
@@ -163,6 +163,8 @@ export const handleOAuthCodeCallback = async (
     }
   }
 
+  let created = false
+  let updated = true
   if (!user) {
     // create user
     const userId = await bot.getRepos().user.createUser({
@@ -179,8 +181,10 @@ export const handleOAuthCodeCallback = async (
       is_streaming: false,
     })
     user = await bot.getRepos().user.getById(userId)
+    created = true
+    updated = false
     if (!user) {
-      return { error: true, updated: false, user: loggedInUser }
+      return null
     }
   }
 
@@ -195,5 +199,5 @@ export const handleOAuthCodeCallback = async (
     expires_at: new Date(new Date().getTime() + resp.expires_in * 1000),
   })
 
-  return { error: false, updated: true, user }
+  return { updated, created, user }
 }
