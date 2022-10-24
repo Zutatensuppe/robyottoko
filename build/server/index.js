@@ -943,7 +943,20 @@ const parseCommandFromTriggerAndMessage = (msg, trigger) => {
     }
     return parseCommandFromCmdAndMessage(msg, trigger.data.command, trigger.data.commandExact);
 };
+const normalizeChatMessage = (text) => {
+    // strip control chars
+    text = text.replace(/\p{C}/gu, '');
+    // other common tasks are to normalize newlines and other whitespace
+    // normalize newline
+    text = text.replace(/\n\r/g, '\n');
+    text = text.replace(/\p{Zl}/gu, '\n');
+    text = text.replace(/\p{Zp}/gu, '\n');
+    // normalize space
+    text = text.replace(/\p{Zs}/gu, ' ');
+    return text.trim();
+};
 const parseCommandFromCmdAndMessage = (msg, command, commandExact) => {
+    msg = normalizeChatMessage(msg).trim();
     if (msg === command
         || (!commandExact && msg.startsWith(command + ' '))) {
         const name = msg.substring(0, command.length).trim();
@@ -1446,6 +1459,7 @@ var fn = {
     decodeBase64Image,
     safeFileName,
     sayFn,
+    stripNonPrintableAndNormalize: normalizeChatMessage,
     parseCommandFromTriggerAndMessage,
     parseCommandFromCmdAndMessage,
     sleep,
@@ -3627,6 +3641,9 @@ class TwitchClientManager {
                     if (self) {
                         return;
                     } // Ignore messages from the bot
+                    // sometimes chat contains imprintable characters
+                    // they are removed here
+                    msg = normalizeChatMessage(msg);
                     await (chatEventHandler).handle(this.bot, this.user, target, context, msg);
                 });
                 // Called every time the bot connects to Twitch chat
@@ -7334,9 +7351,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-10-24T17:16:00.873Z",
+    buildDate: "2022-10-24T17:45:23.982Z",
     // @ts-ignore
-    buildVersion: "1.30.6",
+    buildVersion: "1.30.7",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
