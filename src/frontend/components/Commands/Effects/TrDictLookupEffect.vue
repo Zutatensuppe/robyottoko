@@ -1,54 +1,62 @@
 <template>
   <div>
-    <div>
-      Language:
-      <div>
-        <input
-          v-model="val.data.lang"
-          class="input is-small spaceinput mb-1"
-        >
-        <span
-          v-for="(lang, idx) in dictLangs"
-          :key="idx"
-          class="button is-small mr-1"
-          :title="lang.title"
-          @click="val.data.lang = lang.value"
-        >{{ lang.flag }}</span>
-        <span
-          class="button is-small mr-1"
-          @click="val.data.lang = '$args(0)'"
-        ><code>$args(0)</code></span>
-      </div>
-      <div>
-        Phrase:
-        <div>
+    <table>
+      <tr>
+        <td>
+          Language:
+        </td>
+        <td>
+          <input
+            v-model="val.data.lang"
+            class="input is-small spaceinput mb-1"
+          >
+        </td>
+        <td class="help">
+          <macro-select @selected="insertMacroLang($event)" />
+        </td>
+      </tr>
+      <tr>
+        <td colspan="3">
+          <span
+            v-for="(lang, idx) in dictLangs"
+            :key="idx"
+            class="button is-small mr-1"
+            :title="lang.title"
+            @click="val.data.lang = lang.value"
+          >{{ lang.flag }}</span>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          Phrase:
+        </td>
+        <td>
           <input
             v-model="val.data.phrase"
             class="input is-small spaceinput mb-1"
           >
-          <span
-            class="button is-small mr-1"
-            @click="val.data.phrase = ''"
-          >All args</span>
-          <span
-            class="button is-small mr-1"
-            @click="val.data.phrase = '$args(1:)'"
-          ><code>$args(1:)</code></span>
-        </div>
-      </div>
-      <div>
-        Response:
-        <div class="help">
-          Outputs the translation for the input phrase. The
-          translation is always from/to english. <br>
-          To let the user decide on the language use
-          <code>$args(0)</code> as language, and
-          <code>$args(1:)</code> as phrase. <br>
-          If phrase is left empty, all arguments to the command will
-          be used as the phrase.
-        </div>
-      </div>
-    </div>
+        </td>
+        <td class="help">
+          <macro-select @selected="insertMacroPhrase($event)" />
+        </td>
+      </tr>
+      <tr>
+        <td colspan="3">
+          <div>
+            Response:
+            <div class="help">
+              Outputs the translation for the input phrase. The
+              translation is always from/to english. <br>
+              To let the user decide on the language use
+              <code>$args(0)</code> as language, and
+              <code>$args(1:)</code> as phrase. <br>
+              If phrase is left empty, all arguments to the command will
+              be used as the phrase.
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>
   </div>
 </template>
 <script setup lang="ts">
@@ -71,6 +79,20 @@ const dictLangs = [
 const val = ref<DictLookupEffect>(props.modelValue)
 
 const emit = defineEmits(['update:modelValue'])
+
+const insertMacroLang = (macro: {
+  value: string;
+  title: string;
+}): void => {
+  val.value.data.lang += macro.value;
+}
+
+const insertMacroPhrase = (macro: {
+  value: string;
+  title: string;
+}): void => {
+  val.value.data.phrase += macro.value;
+}
 
 watch(val, (newValue: DictLookupEffect) => {
   emit('update:modelValue', newValue)

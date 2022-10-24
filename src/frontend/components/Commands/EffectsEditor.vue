@@ -1,11 +1,6 @@
 <template>
   <div>
     <table class="table">
-      <tr>
-        <td>Type</td>
-        <td>Settings</td>
-        <td />
-      </tr>
       <tr
         v-for="(item, idx) in val"
         :key="idx"

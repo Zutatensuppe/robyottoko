@@ -282,4 +282,7 @@ onMounted(() => {
   width: auto;
   /* width: calc(100% - 2em); */
 }
+.modal-card-body {
+  min-height: 450px;
+}
 </style>

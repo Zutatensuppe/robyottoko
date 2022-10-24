@@ -5,6 +5,7 @@
         <td>
           <input
             v-model="val.data.title"
+            placeholder="Add the stream title here"
             class="input is-small spaceinput mb-1"
           >
         </td>

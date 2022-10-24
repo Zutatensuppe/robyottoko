@@ -1,28 +1,42 @@
 <template>
   <div>
-    <div>
-      Name:
-      <dropdown-input
-        v-model="val.data.name"
-        :values="autocompletableVariables().map(a => ({ value: a.var.name, label: `${a.var.name} (${a.type}), <code>${a.var.value}</code>` }))"
-      />
-      Change:
-      <div class="select is-small">
-        <select v-model="val.data.change">
-          <option value="set">
-            set
-          </option>
-          <option value="increase_by">
-            increase by
-          </option>
-          <option value="decrease_by">
-            decrease by
-          </option>
-        </select>
-      </div>
-      Value:
-      <StringInput v-model="val.data.value" />
-    </div>
+    <table>
+      <tr>
+        <td>
+          Name:
+        </td>
+        <td>
+          Change:
+        </td>
+        <td>
+          Value:
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <dropdown-input
+            v-model="val.data.name"
+            :values="autocompletableVariables().map(a => ({ value: a.var.name, label: `${a.var.name} (${a.type}), <code>${a.var.value}</code>` }))"
+          />
+        </td>
+        <td class="select is-small">
+          <select v-model="val.data.change">
+            <option value="set">
+              set
+            </option>
+            <option value="increase_by">
+              increase by
+            </option>
+            <option value="decrease_by">
+              decrease by
+            </option>
+          </select>
+        </td>
+        <td>
+          <StringInput v-model="val.data.value" />
+        </td>
+      </tr>
+    </table>
   </div>
 </template>
 <script setup lang="ts">

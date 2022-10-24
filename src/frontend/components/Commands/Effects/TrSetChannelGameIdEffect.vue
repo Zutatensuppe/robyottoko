@@ -5,6 +5,7 @@
         <td>
           <input
             v-model="val.data.game_id"
+            placeholder="Add the stream category here"
             class="input is-small spaceinput mb-1"
           >
         </td>

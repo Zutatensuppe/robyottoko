@@ -5,6 +5,7 @@
         <td>
           <input
             v-model="val.data.tag"
+            placeholder="Add a tag to remove here"
             class="input is-small spaceinput mb-1"
           >
         </td>
