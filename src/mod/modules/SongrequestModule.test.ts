@@ -23,9 +23,21 @@ describe('SongrequestModule', () => {
       expected: 0,
     },
     {
+      name: 'no-non-played',
+      playlist: [
+        playlistItem(1),
+        playlistItem(1),
+        playlistItem(1),
+      ],
+      // should be inserted at position 1, because song a pos 0 is still playing
+      expected: 1,
+    },
+    {
       name: 'non-played-at-beginning',
       playlist: [
         playlistItem(0),
+        playlistItem(1),
+        playlistItem(1),
       ],
       expected: 1,
     },
