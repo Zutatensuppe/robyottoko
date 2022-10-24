@@ -956,7 +956,6 @@ const normalizeChatMessage = (text) => {
     return text.trim();
 };
 const parseCommandFromCmdAndMessage = (msg, command, commandExact) => {
-    msg = normalizeChatMessage(msg).trim();
     if (msg === command
         || (!commandExact && msg.startsWith(command + ' '))) {
         const name = msg.substring(0, command.length).trim();
@@ -1459,7 +1458,7 @@ var fn = {
     decodeBase64Image,
     safeFileName,
     sayFn,
-    stripNonPrintableAndNormalize: normalizeChatMessage,
+    normalizeChatMessage,
     parseCommandFromTriggerAndMessage,
     parseCommandFromCmdAndMessage,
     sleep,
@@ -7351,7 +7350,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-10-24T17:45:23.982Z",
+    buildDate: "2022-10-24T17:47:37.332Z",
     // @ts-ignore
     buildVersion: "1.30.7",
 };

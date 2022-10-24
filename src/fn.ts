@@ -94,7 +94,6 @@ export const parseCommandFromCmdAndMessage = (
   command: string,
   commandExact: boolean,
 ): RawCommand | null => {
-  msg = normalizeChatMessage(msg).trim()
   if (
     msg === command
     || (!commandExact && msg.startsWith(command + ' '))
@@ -704,7 +703,7 @@ export default {
   decodeBase64Image,
   safeFileName,
   sayFn,
-  stripNonPrintableAndNormalize: normalizeChatMessage,
+  normalizeChatMessage,
   parseCommandFromTriggerAndMessage,
   parseCommandFromCmdAndMessage,
   sleep,
