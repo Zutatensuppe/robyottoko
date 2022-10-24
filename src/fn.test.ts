@@ -11,6 +11,7 @@ import {
   parseISO8601Duration,
   safeFileName,
   extractEmotes,
+  normalizeChatMessage,
 } from './fn'
 import { ChatMessageContext, Command, CommandTrigger } from './types'
 
@@ -212,6 +213,18 @@ describe('fn.parseKnownCommandFromTriggerAndMessage', () => {
     const trigger = { type: 'command', data: { command, commandExact } } as CommandTrigger
     const actual = parseCommandFromTriggerAndMessage(msg, trigger)
     expect(actual).toStrictEqual(expected)
+  })
+})
+
+describe('fn', () => {
+  test.each([
+    {
+      text: '!sr next 󠀀',
+      expected: '!sr next',
+    },
+  ])('normalizeChatMessage $text', ({ text, expected }) => {
+    const actual = normalizeChatMessage(text)
+    expect(actual).toBe(expected)
   })
 })
 
