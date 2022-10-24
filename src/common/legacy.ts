@@ -1,4 +1,4 @@
-import { AddStreamTagEffect, ChatEffect, ChattersEffect, CommandEffectType, CommandVariableChange, CountdownAction, CountdownEffect, DictLookupEffect, EmotesEffect, MadochanEffect, MediaEffect, RemoveStreamTagEffect, SetChannelGameIdEffect, SetChannelTitleEffect, VariableChangeEffect } from "../types"
+import { AddStreamTagEffect, ChatEffect, ChattersEffect, CommandEffectType, CommandVariableChange, CountdownAction, CountdownEffect, DictLookupEffect, EmotesEffect, MadochanEffect, MediaEffect, MediaVolumeEffect, RemoveStreamTagEffect, SetChannelGameIdEffect, SetChannelTitleEffect, VariableChangeEffect } from "../types"
 
 const variableChangeToCommandEffect = (variableChange: CommandVariableChange): VariableChangeEffect => {
   return {
@@ -135,6 +135,13 @@ const chattersToCommandEffect = (_cmd: any): ChattersEffect => {
   }
 }
 
+const mediaVolumeToCommandEffect = (_cmd: any): MediaVolumeEffect => {
+  return {
+    type: CommandEffectType.MEDIA_VOLUME,
+    data: {},
+  }
+}
+
 const countdownToCommandEffect = (cmd: any): CountdownEffect => {
   cmd.data.actions = (cmd.data.actions || []).map((action: CountdownAction) => {
     if (typeof action.value === 'string') {
@@ -160,13 +167,14 @@ export default {
   addStreamTagsToCommandEffect,
   chattersToCommandEffect,
   countdownToCommandEffect,
-  setChannelTitleToCommandEffect,
-  setChannelGameIdToCommandEffect,
   dictLookupToCommandEffect,
   emotesToCommandEffect,
   madochanToCommandEffect,
   mediaToCommandEffect,
+  mediaVolumeToCommandEffect,
+  removeStreamTagsToCommandEffect,
+  setChannelGameIdToCommandEffect,
+  setChannelTitleToCommandEffect,
   textToCommandEffect,
   variableChangeToCommandEffect,
-  removeStreamTagsToCommandEffect,
 }

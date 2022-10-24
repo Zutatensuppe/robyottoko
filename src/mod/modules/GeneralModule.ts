@@ -184,6 +184,11 @@ class GeneralModule implements Module {
         cmd.effects.push(legacy.countdownToCommandEffect(cmd))
       }
 
+      if (cmd.action === 'media_volume') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.mediaVolumeToCommandEffect(cmd))
+      }
+
       cmd.triggers = (cmd.triggers || []).map((trigger: any) => {
         trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0
         if (trigger.data.minSeconds) {
