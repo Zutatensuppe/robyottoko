@@ -5,11 +5,11 @@ import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import crypto from 'crypto';
+import childProcess from 'child_process';
 import fetch from 'node-fetch';
 import multer from 'multer';
 import cors from 'cors';
 import * as pg from 'pg';
-import childProcess from 'child_process';
 import tmi from 'tmi.js';
 
 const absPath = (path) => new URL(path, import.meta.url);
@@ -467,21 +467,26 @@ var CommandTriggerType;
     CommandTriggerType["TIMER"] = "timer";
     CommandTriggerType["FIRST_CHAT"] = "first_chat";
 })(CommandTriggerType || (CommandTriggerType = {}));
+var CommandEffectType;
+(function (CommandEffectType) {
+    CommandEffectType["VARIABLE_CHANGE"] = "variable_change";
+    CommandEffectType["CHAT"] = "chat";
+    CommandEffectType["DICT_LOOKUP"] = "dict_lookup";
+    CommandEffectType["EMOTES"] = "emotes";
+    CommandEffectType["MEDIA"] = "media";
+    CommandEffectType["MADOCHAN"] = "madochan";
+    CommandEffectType["SET_CHANNEL_TITLE"] = "set_channel_title";
+    CommandEffectType["SET_CHANNEL_GAME_ID"] = "set_channel_game_id";
+    CommandEffectType["ADD_STREAM_TAGS"] = "add_stream_tags";
+    CommandEffectType["REMOVE_STREAM_TAGS"] = "remove_stream_tags";
+    CommandEffectType["CHATTERS"] = "chatters";
+    CommandEffectType["COUNTDOWN"] = "countdown";
+    CommandEffectType["MEDIA_VOLUME"] = "media_volume";
+})(CommandEffectType || (CommandEffectType = {}));
 var CommandAction;
 (function (CommandAction) {
     // general
     CommandAction["TEXT"] = "text";
-    CommandAction["MEDIA"] = "media";
-    CommandAction["EMOTES"] = "emotes";
-    CommandAction["MEDIA_VOLUME"] = "media_volume";
-    CommandAction["COUNTDOWN"] = "countdown";
-    CommandAction["DICT_LOOKUP"] = "dict_lookup";
-    CommandAction["MADOCHAN_CREATEWORD"] = "madochan_createword";
-    CommandAction["CHATTERS"] = "chatters";
-    CommandAction["SET_CHANNEL_TITLE"] = "set_channel_title";
-    CommandAction["SET_CHANNEL_GAME_ID"] = "set_channel_game_id";
-    CommandAction["ADD_STREAM_TAGS"] = "add_stream_tags";
-    CommandAction["REMOVE_STREAM_TAGS"] = "remove_stream_tags";
     // song request
     CommandAction["SR_CURRENT"] = "sr_current";
     CommandAction["SR_UNDO"] = "sr_undo";
@@ -689,7 +694,7 @@ class Widgets {
     }
 }
 
-const log$x = logger("WebSocketServer.ts");
+const log$p = logger("WebSocketServer.ts");
 const determineUserIdAndModuleName = async (basePath, requestUrl, socket, bot) => {
     const relativePath = requestUrl.substring(basePath.length) || '';
     const relpath = withoutLeading(relativePath, '/');
@@ -720,24 +725,24 @@ class WebSocketServer {
             const { userId, moduleName } = await determineUserIdAndModuleName(basePath, requestUrl, socket, bot);
             socket.user_id = userId;
             socket.module = moduleName;
-            log$x.info({
+            log$p.info({
                 moduleName,
                 socket: { protocol: socket.protocol },
             }, 'added socket');
-            log$x.info({
+            log$p.info({
                 count: this.sockets().filter(s => s.module === socket.module).length,
             }, 'socket_count');
             socket.on('close', () => {
-                log$x.info({
+                log$p.info({
                     moduleName,
                     socket: { protocol: socket.protocol },
                 }, 'removed socket');
-                log$x.info({
+                log$p.info({
                     count: this.sockets().filter(s => s.module === socket.module).length,
                 }, 'socket count');
             });
             if (!socket.user_id) {
-                log$x.info({
+                log$p.info({
                     requestUrl,
                     socket: { protocol: socket.protocol },
                 }, 'not found token');
@@ -745,7 +750,7 @@ class WebSocketServer {
                 return;
             }
             if (!socket.module) {
-                log$x.info({ requestUrl }, 'bad request url');
+                log$p.info({ requestUrl }, 'bad request url');
                 socket.close();
                 return;
             }
@@ -776,7 +781,7 @@ class WebSocketServer {
                     }
                 }
                 catch (e) {
-                    log$x.error({ e }, 'socket on message');
+                    log$p.error({ e }, 'socket on message');
                 }
             });
         });
@@ -785,7 +790,7 @@ class WebSocketServer {
         return !!this.sockets().find(s => s.user_id === user_id);
     }
     _notify(socket, data) {
-        log$x.info({ user_id: socket.user_id, module: socket.module, event: data.event }, 'notifying');
+        log$p.info({ user_id: socket.user_id, module: socket.module, event: data.event }, 'notifying');
         socket.send(JSON.stringify(data));
     }
     notifyOne(user_ids, moduleName, data, socket) {
@@ -797,7 +802,7 @@ class WebSocketServer {
             this._notify(socket, data);
         }
         else {
-            log$x.error({
+            log$p.error({
                 socket: {
                     user_id: socket.user_id,
                     module: socket.module,
@@ -896,7 +901,157 @@ var xhr = {
     put: async (url, opts = {}) => request('put', url, opts),
 };
 
-const log$w = logger('fn.ts');
+const searchWord$1 = async (keyword, page = 1) => {
+    const url = 'https://jisho.org/api/v1/search/words' + asQueryArgs({
+        keyword: keyword,
+        page: page,
+    });
+    const resp = await xhr.get(url);
+    const json = (await resp.json());
+    return json.data;
+};
+var JishoOrg = {
+    searchWord: searchWord$1,
+};
+
+const LANG_TO_URL_MAP = {
+    de: 'https://www.dict.cc/',
+    ru: 'https://enru.dict.cc/',
+    es: 'https://enes.dict.cc/',
+    it: 'https://enit.dict.cc/',
+    fr: 'https://enfr.dict.cc/',
+    pt: 'https://enpt.dict.cc/',
+};
+/**
+ * Exctract searched words and word lists for both languages
+ * from a dict.cc result html
+ * TODO: change from regex to parsing the html ^^
+ */
+const extractInfo = (text) => {
+    const stringToArray = (str) => {
+        const arr = [];
+        str.replace(/"([^"]*)"/g, (m, m1) => {
+            arr.push(m1);
+            return m;
+        });
+        return arr;
+    };
+    const arrayByRegex = (regex) => {
+        const m = text.match(regex);
+        return m ? stringToArray(m[1]) : [];
+    };
+    const m = text.match(/<link rel="canonical" href="https:\/\/[^.]+\.dict\.cc\/\?s=([^"]+)">/);
+    const words = m ? decodeURIComponent(m[1]).split('+') : [];
+    if (!words.length) {
+        return { words, arr1: [], arr2: [] };
+    }
+    return {
+        words,
+        arr1: arrayByRegex(/var c1Arr = new Array\((.*)\);/),
+        arr2: arrayByRegex(/var c2Arr = new Array\((.*)\);/),
+    };
+};
+const parseResult = (text) => {
+    const normalize = (str) => {
+        return str.toLowerCase().replace(/[.!?]/, '');
+    };
+    const info = extractInfo(text);
+    const matchedWords = info.words;
+    if (!matchedWords) {
+        return [];
+    }
+    const arr1 = info.arr1;
+    const arr2 = info.arr2;
+    const arr1NoPunct = arr1.map(item => normalize(item));
+    const arr2NoPunct = arr2.map(item => normalize(item));
+    const results = [];
+    const collectResults = (searchWords, fromArrSearch, fromArr, toArr) => {
+        const _results = [];
+        for (const i in fromArr) {
+            if (!fromArrSearch[i]) {
+                continue;
+            }
+            if (!searchWords.includes(fromArrSearch[i])) {
+                continue;
+            }
+            if (fromArr[i] === toArr[i]) {
+                // from and to is exactly the same, so skip it
+                continue;
+            }
+            const idx = _results.findIndex(item => item.from === fromArr[i]);
+            if (idx < 0) {
+                _results.push({ from: fromArr[i], to: [toArr[i]] });
+            }
+            else if (!_results[idx].to.includes(toArr[i])) {
+                _results[idx].to.push(toArr[i]);
+            }
+        }
+        results.push(..._results);
+    };
+    const matchedSentence = normalize(matchedWords.join(' '));
+    if (arr1NoPunct.includes(matchedSentence)) {
+        const fromArrSearch = arr1NoPunct;
+        const fromArr = arr1;
+        const toArr = arr2;
+        const searchWords = [matchedSentence];
+        collectResults(searchWords, fromArrSearch, fromArr, toArr);
+    }
+    if (arr2NoPunct.includes(matchedSentence)) {
+        const fromArrSearch = arr2NoPunct;
+        const fromArr = arr2;
+        const toArr = arr1;
+        const searchWords = [matchedSentence];
+        collectResults(searchWords, fromArrSearch, fromArr, toArr);
+    }
+    if (results.length === 0) {
+        let fromArrSearch = [];
+        let fromArr = [];
+        let toArr = [];
+        let searchWords = [];
+        for (const matchedWord of matchedWords) {
+            if (arr1.includes(matchedWord)) {
+                fromArr = fromArrSearch = arr1;
+                toArr = arr2;
+            }
+            else {
+                fromArr = fromArrSearch = arr2;
+                toArr = arr1;
+            }
+        }
+        searchWords = matchedWords;
+        collectResults(searchWords, fromArrSearch, fromArr, toArr);
+    }
+    return results;
+};
+const searchWord = async (keyword, lang) => {
+    const baseUrl = LANG_TO_URL_MAP[lang];
+    if (!baseUrl) {
+        return [];
+    }
+    const url = baseUrl + asQueryArgs({ s: keyword });
+    const resp = await xhr.get(url);
+    const text = await resp.text();
+    return parseResult(text);
+};
+var DictCc = {
+    searchWord,
+    parseResult,
+    LANG_TO_URL_MAP,
+};
+
+const createWord = async (createWordRequestData) => {
+    const url = 'https://madochan.hyottoko.club/api/v1/_create_word';
+    const resp = await xhr.post(url, asJson(createWordRequestData));
+    const json = (await resp.json());
+    return json;
+};
+var Madochan = {
+    createWord,
+    defaultModel: '100epochs800lenhashingbidirectional.h5',
+    defaultWeirdness: 1,
+};
+
+const log$o = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
         return mime.replace('image/', '');
@@ -931,9 +1086,9 @@ const sayFn = (client, target) => (msg) => {
         // TODO: fix this somewhere else?
         // client can only say things in lowercase channels
         t = t.toLowerCase();
-        log$w.info(`saying in ${t}: ${msg}`);
+        log$o.info(`saying in ${t}: ${msg}`);
         client.say(t, msg).catch((e) => {
-            log$w.info(e);
+            log$o.info(e);
         });
     });
 };
@@ -967,47 +1122,491 @@ const parseCommandFromCmdAndMessage = (msg, command, commandExact) => {
 const _toInt = (value) => parseInt(`${value}`, 10);
 const _increase = (value, by) => (_toInt(value) + _toInt(by));
 const _decrease = (value, by) => (_toInt(value) - _toInt(by));
-const applyVariableChanges = async (originalCmd, contextModule, rawCmd, context) => {
-    if (!originalCmd.variableChanges) {
+const jishoOrgLookup = async (phrase) => {
+    const data = await JishoOrg.searchWord(phrase);
+    if (data.length === 0) {
+        return [];
+    }
+    const e = data[0];
+    const j = e.japanese[0];
+    const d = e.senses[0].english_definitions;
+    return [{
+            from: phrase,
+            to: [`${j.word} (${j.reading}) ${d.join(', ')}`],
+        }];
+};
+const LANG_TO_FN = {
+    ja: jishoOrgLookup,
+};
+for (const key of Object.keys(DictCc.LANG_TO_URL_MAP)) {
+    LANG_TO_FN[key] = (phrase) => DictCc.searchWord(phrase, key);
+}
+const isTwitchClipUrl = (url) => {
+    return !!url.match(/^https:\/\/clips\.twitch\.tv\/.+/);
+};
+const downloadVideo = async (originalUrl) => {
+    // if video url looks like a twitch clip url, dl it first
+    const filename = `${hash(originalUrl)}-clip.mp4`;
+    const outfile = `./data/uploads/${filename}`;
+    if (!fs.existsSync(outfile)) {
+        log$o.debug({ outfile }, 'downloading the video');
+        const child = childProcess.execFile(config.youtubeDlBinary, [originalUrl, '-o', outfile]);
+        await new Promise((resolve) => {
+            child.on('close', resolve);
+        });
+    }
+    else {
+        log$o.debug({ outfile }, 'video exists');
+    }
+    return `/uploads/${filename}`;
+};
+const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
+    if (!originalCmd.effects) {
         return;
     }
     const variables = contextModule.bot.getRepos().variables;
     const doReplace = async (value) => await doReplacements(value, rawCmd, context, originalCmd, contextModule.bot, contextModule.user);
-    for (const variableChange of originalCmd.variableChanges) {
-        const op = variableChange.change;
-        const name = await doReplace(variableChange.name);
-        const value = await doReplace(variableChange.value);
-        // check if there is a local variable for the change
-        if (originalCmd.variables) {
-            const idx = originalCmd.variables.findIndex(v => (v.name === name));
+    for (const effect of originalCmd.effects) {
+        // TODO: extract each if to some class
+        if (effect.type === CommandEffectType.VARIABLE_CHANGE) {
+            const variableChange = effect.data;
+            const op = variableChange.change;
+            const name = await doReplace(variableChange.name);
+            const value = await doReplace(variableChange.value);
+            // check if there is a local variable for the change
+            if (originalCmd.variables) {
+                const idx = originalCmd.variables.findIndex(v => (v.name === name));
+                if (idx !== -1) {
+                    if (op === 'set') {
+                        originalCmd.variables[idx].value = value;
+                    }
+                    else if (op === 'increase_by') {
+                        originalCmd.variables[idx].value = _increase(originalCmd.variables[idx].value, value);
+                    }
+                    else if (op === 'decrease_by') {
+                        originalCmd.variables[idx].value = _decrease(originalCmd.variables[idx].value, value);
+                    }
+                    continue;
+                }
+            }
+            const globalVars = await variables.all(contextModule.user.id);
+            const idx = globalVars.findIndex(v => (v.name === name));
             if (idx !== -1) {
                 if (op === 'set') {
-                    originalCmd.variables[idx].value = value;
+                    await variables.set(contextModule.user.id, name, value);
                 }
                 else if (op === 'increase_by') {
-                    originalCmd.variables[idx].value = _increase(originalCmd.variables[idx].value, value);
+                    await variables.set(contextModule.user.id, name, _increase(globalVars[idx].value, value));
                 }
                 else if (op === 'decrease_by') {
-                    originalCmd.variables[idx].value = _decrease(originalCmd.variables[idx].value, value);
+                    await variables.set(contextModule.user.id, name, _decrease(globalVars[idx].value, value));
                 }
+                //
                 continue;
             }
         }
-        const globalVars = await variables.all(contextModule.user.id);
-        const idx = globalVars.findIndex(v => (v.name === name));
-        if (idx !== -1) {
-            if (op === 'set') {
-                await variables.set(contextModule.user.id, name, value);
-            }
-            else if (op === 'increase_by') {
-                await variables.set(contextModule.user.id, name, _increase(globalVars[idx].value, value));
-            }
-            else if (op === 'decrease_by') {
-                await variables.set(contextModule.user.id, name, _decrease(globalVars[idx].value, value));
-            }
-            //
-            continue;
+        else if (effect.type === CommandEffectType.CHAT) {
+            const texts = effect.data.text;
+            const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login);
+            say(await doReplacements(getRandom(texts), rawCmd, context, originalCmd, contextModule.bot, contextModule.user));
         }
+        else if (effect.type === CommandEffectType.DICT_LOOKUP) {
+            const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login);
+            const tmpLang = await doReplacements(effect.data.lang, rawCmd, context, originalCmd, contextModule.bot, contextModule.user);
+            const dictFn = LANG_TO_FN[tmpLang] || null;
+            if (!dictFn) {
+                say(`Sorry, language not supported: "${tmpLang}"`);
+                continue;
+            }
+            // if no phrase is setup, use all args given to command
+            const phrase = effect.data.phrase === '' ? '$args()' : effect.data.phrase;
+            const tmpPhrase = await doReplacements(phrase, rawCmd, context, originalCmd, contextModule.bot, contextModule.user);
+            const items = await dictFn(tmpPhrase);
+            if (items.length === 0) {
+                say(`Sorry, I didn't find anything for "${tmpPhrase}" in language "${tmpLang}"`);
+                continue;
+            }
+            for (const item of items) {
+                say(`Phrase "${item.from}": ${item.to.join(", ")}`);
+            }
+        }
+        else if (effect.type === CommandEffectType.EMOTES) {
+            contextModule.bot.getWebSocketServer().notifyAll([contextModule.user.id], 'general', {
+                event: 'emotes',
+                data: effect.data,
+            });
+        }
+        else if (effect.type === CommandEffectType.MEDIA) {
+            const doReplaces = async (str) => {
+                return await doReplacements(str, rawCmd, context, originalCmd, contextModule.bot, contextModule.user);
+            };
+            const data = effect.data;
+            data.image_url = await doReplaces(data.image_url);
+            if (data.video.url) {
+                log$o.debug({ url: data.video.url }, 'video url is defined');
+                data.video.url = await doReplaces(data.video.url);
+                if (!data.video.url) {
+                    log$o.debug('no video url found');
+                }
+                else if (isTwitchClipUrl(data.video.url)) {
+                    // video url looks like a twitch clip url, dl it first
+                    log$o.debug({ url: data.video.url }, 'twitch clip found');
+                    data.video.url = await downloadVideo(data.video.url);
+                }
+                else {
+                    // otherwise assume it is already a playable video url
+                    // TODO: youtube videos maybe should also be downloaded
+                    log$o.debug('video is assumed to be directly playable via html5 video element');
+                }
+            }
+            contextModule.bot.getWebSocketServer().notifyAll([contextModule.user.id], 'general', {
+                event: 'playmedia',
+                data: data,
+                id: originalCmd.id
+            });
+        }
+        else if (effect.type === CommandEffectType.MADOCHAN) {
+            const model = `${effect.data.model}` || Madochan.defaultModel;
+            const weirdness = parseInt(effect.data.weirdness, 10) || Madochan.defaultWeirdness;
+            const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login);
+            if (rawCmd) {
+                const definition = rawCmd.args.join(' ');
+                if (definition) {
+                    say(`Generating word for "${definition}"...`);
+                    try {
+                        const data = await Madochan.createWord({ model, weirdness, definition });
+                        if (data.word === '') {
+                            say(`Sorry, I could not generate a word :("`);
+                        }
+                        else {
+                            say(`"${definition}": ${data.word}`);
+                        }
+                    }
+                    catch (e) {
+                        log$o.error({ e });
+                        say(`Error occured, unable to generate a word :("`);
+                    }
+                }
+            }
+        }
+        else if (effect.type === CommandEffectType.SET_CHANNEL_TITLE) {
+            const setChannelTitle = async () => {
+                const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient();
+                if (!rawCmd || !context || !helixClient) {
+                    log$o.info({
+                        rawCmd: rawCmd,
+                        context: context,
+                        helixClient,
+                    }, 'unable to execute setChannelTitle, client, command, context, or helixClient missing');
+                    return;
+                }
+                const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login);
+                const title = effect.data.title === '' ? '$args()' : effect.data.title;
+                const tmpTitle = await doReplacements(title, rawCmd, context, originalCmd, contextModule.bot, contextModule.user);
+                if (tmpTitle === '') {
+                    const info = await helixClient.getChannelInformation(contextModule.user.twitch_id);
+                    if (info) {
+                        say(`Current title is "${info.title}".`);
+                    }
+                    else {
+                        say(`❌ Unable to determine current title.`);
+                    }
+                    return;
+                }
+                // helix api returns 204 status code even if the title is too long and
+                // cant actually be set. but there is no error returned in that case :(
+                const len = unicodeLength(tmpTitle);
+                const max = 140;
+                if (len > max) {
+                    say(`❌ Unable to change title because it is too long (${len}/${max} characters).`);
+                    return;
+                }
+                const accessToken = await contextModule.bot.getRepos().oauthToken.getMatchingAccessToken(contextModule.user);
+                if (!accessToken) {
+                    say(`❌ Not authorized to change title.`);
+                    return;
+                }
+                const resp = await helixClient.modifyChannelInformation(accessToken, { title: tmpTitle }, contextModule.bot, contextModule.user);
+                if (resp?.status === 204) {
+                    say(`✨ Changed title to "${tmpTitle}".`);
+                }
+                else {
+                    say('❌ Unable to change title.');
+                }
+            };
+            await setChannelTitle();
+        }
+        else if (effect.type === CommandEffectType.SET_CHANNEL_GAME_ID) {
+            const setChannelGameId = async () => {
+                const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient();
+                if (!rawCmd || !context || !helixClient) {
+                    log$o.info({
+                        rawCmd: rawCmd,
+                        context: context,
+                        helixClient,
+                    }, 'unable to execute setChannelGameId, client, command, context, or helixClient missing');
+                    return;
+                }
+                const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login);
+                const gameId = effect.data.game_id === '' ? '$args()' : effect.data.game_id;
+                const tmpGameId = await doReplacements(gameId, rawCmd, context, originalCmd, contextModule.bot, contextModule.user);
+                if (tmpGameId === '') {
+                    const info = await helixClient.getChannelInformation(contextModule.user.twitch_id);
+                    if (info) {
+                        say(`Current category is "${info.game_name}".`);
+                    }
+                    else {
+                        say(`❌ Unable to determine current category.`);
+                    }
+                    return;
+                }
+                const category = await helixClient.searchCategory(tmpGameId);
+                if (!category) {
+                    say('🔎 Category not found.');
+                    return;
+                }
+                const accessToken = await contextModule.bot.getRepos().oauthToken.getMatchingAccessToken(contextModule.user);
+                if (!accessToken) {
+                    say(`❌ Not authorized to update category.`);
+                    return;
+                }
+                const resp = await helixClient.modifyChannelInformation(accessToken, { game_id: category.id }, contextModule.bot, contextModule.user);
+                if (resp?.status === 204) {
+                    say(`✨ Changed category to "${category.name}".`);
+                }
+                else {
+                    say('❌ Unable to update category.');
+                }
+            };
+            await setChannelGameId();
+        }
+        else if (effect.type === CommandEffectType.ADD_STREAM_TAGS) {
+            const addStreamTags = async () => {
+                const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient();
+                if (!rawCmd || !context || !helixClient) {
+                    log$o.info({
+                        rawCmd: rawCmd,
+                        context: context,
+                        helixClient,
+                    }, 'unable to execute addStreamTags, client, command, context, or helixClient missing');
+                    return;
+                }
+                const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login);
+                const tag = effect.data.tag === '' ? '$args()' : effect.data.tag;
+                const tmpTag = await doReplacements(tag, rawCmd, context, originalCmd, contextModule.bot, contextModule.user);
+                const tagsResponse = await helixClient.getStreamTags(contextModule.user.twitch_id);
+                if (!tagsResponse) {
+                    say(`❌ Unable to fetch current tags.`);
+                    return;
+                }
+                if (tmpTag === '') {
+                    const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
+                    say(`Current tags: ${names.join(', ')}`);
+                    return;
+                }
+                const idx = findIdxFuzzy(config.twitch.manual_tags, tmpTag, (item) => item.name);
+                if (idx === -1) {
+                    say(`❌ No such tag: ${tmpTag}`);
+                    return;
+                }
+                const tagEntry = config.twitch.manual_tags[idx];
+                const newTagIds = tagsResponse.data.map(entry => entry.tag_id);
+                if (newTagIds.includes(tagEntry.id)) {
+                    const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
+                    say(`✨ Tag ${tagEntry.name} already exists, current tags: ${names.join(', ')}`);
+                    return;
+                }
+                newTagIds.push(tagEntry.id);
+                const newSettableTagIds = newTagIds.filter(tagId => !config.twitch.auto_tags.find(t => t.id === tagId));
+                if (newSettableTagIds.length > 5) {
+                    const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
+                    say(`❌ Too many tags already exist, current tags: ${names.join(', ')}`);
+                    return;
+                }
+                const accessToken = await contextModule.bot.getRepos().oauthToken.getMatchingAccessToken(contextModule.user);
+                if (!accessToken) {
+                    say(`❌ Not authorized to add tag: ${tagEntry.name}`);
+                    return;
+                }
+                const resp = await helixClient.replaceStreamTags(accessToken, newSettableTagIds, contextModule.bot, contextModule.user);
+                if (!resp || resp.status < 200 || resp.status >= 300) {
+                    log$o.error(resp);
+                    say(`❌ Unable to add tag: ${tagEntry.name}`);
+                    return;
+                }
+                say(`✨ Added tag: ${tagEntry.name}`);
+            };
+            await addStreamTags();
+        }
+        else if (effect.type === CommandEffectType.REMOVE_STREAM_TAGS) {
+            const removeStreamTags = async () => {
+                const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient();
+                if (!rawCmd || !context || !helixClient) {
+                    log$o.info({
+                        rawCmd: rawCmd,
+                        context: context,
+                        helixClient,
+                    }, 'unable to execute removeStreamTags, client, command, context, or helixClient missing');
+                    return;
+                }
+                const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login);
+                const tag = effect.data.tag === '' ? '$args()' : effect.data.tag;
+                const tmpTag = await doReplacements(tag, rawCmd, context, originalCmd, contextModule.bot, contextModule.user);
+                const tagsResponse = await helixClient.getStreamTags(contextModule.user.twitch_id);
+                if (!tagsResponse) {
+                    say(`❌ Unable to fetch current tags.`);
+                    return;
+                }
+                if (tmpTag === '') {
+                    const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
+                    say(`Current tags: ${names.join(', ')}`);
+                    return;
+                }
+                const manualTags = tagsResponse.data.filter(entry => !entry.is_auto);
+                const idx = findIdxFuzzy(manualTags, tmpTag, (item) => item.localization_names['en-us']);
+                if (idx === -1) {
+                    const autoTags = tagsResponse.data.filter(entry => entry.is_auto);
+                    const idx = findIdxFuzzy(autoTags, tmpTag, (item) => item.localization_names['en-us']);
+                    if (idx === -1) {
+                        say(`❌ No such tag is currently set: ${tmpTag}`);
+                    }
+                    else {
+                        say(`❌ Unable to remove automatic tag: ${autoTags[idx].localization_names['en-us']}`);
+                    }
+                    return;
+                }
+                const newTagIds = manualTags.filter((_value, index) => index !== idx).map(entry => entry.tag_id);
+                const newSettableTagIds = newTagIds.filter(tagId => !config.twitch.auto_tags.find(t => t.id === tagId));
+                const accessToken = await contextModule.bot.getRepos().oauthToken.getMatchingAccessToken(contextModule.user);
+                if (!accessToken) {
+                    say(`❌ Not authorized to remove tag: ${manualTags[idx].localization_names['en-us']}`);
+                    return;
+                }
+                const resp = await helixClient.replaceStreamTags(accessToken, newSettableTagIds, contextModule.bot, contextModule.user);
+                if (!resp || resp.status < 200 || resp.status >= 300) {
+                    say(`❌ Unable to remove tag: ${manualTags[idx].localization_names['en-us']}`);
+                    return;
+                }
+                say(`✨ Removed tag: ${manualTags[idx].localization_names['en-us']}`);
+            };
+            await removeStreamTags();
+        }
+        else if (effect.type === CommandEffectType.CHATTERS) {
+            const chatters = async () => {
+                const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient();
+                if (!context || !helixClient) {
+                    log$o.info({
+                        context: context,
+                        helixClient,
+                    }, 'unable to execute chatters command, client, context, or helixClient missing');
+                    return;
+                }
+                const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login);
+                const stream = await helixClient.getStreamByUserId(contextModule.user.twitch_id);
+                if (!stream) {
+                    say(`It seems this channel is not live at the moment...`);
+                    return;
+                }
+                const userNames = await contextModule.bot.getRepos().chatLog.getChatters(contextModule.user.twitch_id, new Date(stream.started_at));
+                if (userNames.length === 0) {
+                    say(`It seems nobody chatted? :(`);
+                    return;
+                }
+                say(`Thank you for chatting!`);
+                joinIntoChunks(userNames, ', ', 500).forEach(msg => {
+                    say(msg);
+                });
+            };
+            await chatters();
+        }
+        else if (effect.type === CommandEffectType.COUNTDOWN) {
+            const countdown = async () => {
+                const sayFn = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login);
+                const doReplacements2 = async (text) => {
+                    return await doReplacements(text, rawCmd, context, originalCmd, contextModule.bot, contextModule.user);
+                };
+                const say = async (text) => {
+                    return sayFn(await doReplacements2(text));
+                };
+                const parseDuration = async (str) => {
+                    return mustParseHumanDuration(await doReplacements2(str));
+                };
+                const settings = effect.data;
+                const t = (settings.type || 'auto');
+                let actionDefs = [];
+                if (t === 'auto') {
+                    const steps = parseInt(await doReplacements2(`${settings.steps}`), 10);
+                    const msgStep = settings.step || "{step}";
+                    const msgIntro = settings.intro || null;
+                    const msgOutro = settings.outro || null;
+                    if (msgIntro) {
+                        actionDefs.push({ type: CountdownActionType.TEXT, value: msgIntro.replace(/\{steps\}/g, `${steps}`) });
+                        actionDefs.push({ type: CountdownActionType.DELAY, value: settings.interval || '1s' });
+                    }
+                    for (let step = steps; step > 0; step--) {
+                        actionDefs.push({
+                            type: CountdownActionType.TEXT,
+                            value: msgStep.replace(/\{steps\}/g, `${steps}`).replace(/\{step\}/g, `${step}`),
+                        });
+                        actionDefs.push({ type: CountdownActionType.DELAY, value: settings.interval || '1s' });
+                    }
+                    if (msgOutro) {
+                        actionDefs.push({ type: CountdownActionType.TEXT, value: msgOutro.replace(/\{steps\}/g, `${steps}`) });
+                    }
+                }
+                else if (t === 'manual') {
+                    actionDefs = settings.actions;
+                }
+                const actions = [];
+                for (const a of actionDefs) {
+                    if (a.type === CountdownActionType.TEXT) {
+                        actions.push(async () => say(`${a.value}`));
+                    }
+                    else if (a.type === CountdownActionType.MEDIA) {
+                        actions.push(async () => {
+                            contextModule.bot.getWebSocketServer().notifyAll([contextModule.user.id], 'general', {
+                                event: 'playmedia',
+                                data: a.value,
+                            });
+                        });
+                    }
+                    else if (a.type === CountdownActionType.DELAY) {
+                        let duration;
+                        try {
+                            duration = (await parseDuration(`${a.value}`)) || 0;
+                        }
+                        catch (e) {
+                            log$o.error({ message: e.message, value: a.value });
+                            return;
+                        }
+                        actions.push(async () => await sleep(duration));
+                    }
+                }
+                for (let i = 0; i < actions.length; i++) {
+                    await actions[i]();
+                }
+            };
+            await countdown();
+        }
+        else if (effect.type === CommandEffectType.MEDIA_VOLUME) {
+            const mediaVolumeCmd = async () => {
+                if (!rawCmd) {
+                    return;
+                }
+                const m = contextModule;
+                const say = m.bot.sayFn(m.user, m.user.twitch_login);
+                if (rawCmd.args.length === 0) {
+                    say(`Current volume: ${m.getCurrentMediaVolume()}`);
+                }
+                else {
+                    const newVolume = determineNewVolume(rawCmd.args[0], m.getCurrentMediaVolume());
+                    await m.volume(newVolume);
+                    say(`New volume: ${m.getCurrentMediaVolume()}`);
+                }
+            };
+            await mediaVolumeCmd();
+        }
+        else ;
     }
     contextModule.saveCommands();
 };
@@ -1145,7 +1744,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return String(`twitch.tv/${context.username}`);
                 }
                 if (!bot || !user) {
-                    log$w.info('no bot, no user, no watch');
+                    log$o.info('no bot, no user, no watch');
                     return '';
                 }
                 const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
@@ -1154,7 +1753,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                 }
                 const twitchUser = await getTwitchUser(username, helixClient, bot);
                 if (!twitchUser) {
-                    log$w.info('no twitch user found', username);
+                    log$o.info('no twitch user found', username);
                     return '';
                 }
                 if (m3 === 'name') {
@@ -1194,7 +1793,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return String(JSON.parse(txt)[m2]);
                 }
                 catch (e) {
-                    log$w.error(e);
+                    log$o.error(e);
                     return '';
                 }
             },
@@ -1208,7 +1807,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return await resp.text();
                 }
                 catch (e) {
-                    log$w.error(e);
+                    log$o.error(e);
                     return '';
                 }
             },
@@ -1445,13 +2044,13 @@ const extractEmotes = (context) => {
 const getChannelPointsCustomRewards = async (bot, user) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!helixClient) {
-        log$w.info('getChannelPointsCustomRewards: no helix client');
+        log$o.info('getChannelPointsCustomRewards: no helix client');
         return {};
     }
     return await helixClient.getAllChannelPointsCustomRewards(bot, user);
 };
 var fn = {
-    applyVariableChanges,
+    applyEffects,
     extractEmotes,
     logger,
     mimeToExt,
@@ -1473,7 +2072,7 @@ var fn = {
     getChannelPointsCustomRewards,
 };
 
-const log$v = logger('TwitchHelixClient.ts');
+const log$n = logger('TwitchHelixClient.ts');
 const API_BASE = 'https://api.twitch.tv/helix';
 const TOKEN_ENDPOINT = 'https://id.twitch.tv/oauth2/token';
 const apiUrl = (path) => `${API_BASE}${path}`;
@@ -1491,7 +2090,7 @@ async function executeRequestWithRetry(accessToken, req, bot, user) {
     if (!newAccessToken) {
         return resp;
     }
-    log$v.warn('retrying with refreshed token');
+    log$n.warn('retrying with refreshed token');
     return await req(newAccessToken);
 }
 class TwitchHelixClient {
@@ -1521,13 +2120,13 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$v.warn({ txt }, 'unable to get access_token by code');
+                log$n.warn({ txt }, 'unable to get access_token by code');
                 return null;
             }
             return (await resp.json());
         }
         catch (e) {
-            log$v.error({ url, e });
+            log$n.error({ url, e });
             return null;
         }
     }
@@ -1543,18 +2142,18 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (resp.status === 401) {
                 const txt = await resp.text();
-                log$v.warn({ txt }, 'tried to refresh access_token with an invalid refresh token');
+                log$n.warn({ txt }, 'tried to refresh access_token with an invalid refresh token');
                 return null;
             }
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$v.warn({ txt }, 'unable to refresh access_token');
+                log$n.warn({ txt }, 'unable to refresh access_token');
                 return null;
             }
             return (await resp.json());
         }
         catch (e) {
-            log$v.error({ url, e });
+            log$n.error({ url, e });
             return null;
         }
     }
@@ -1570,14 +2169,14 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$v.warn({ txt }, 'unable to get access_token');
+                log$n.warn({ txt }, 'unable to get access_token');
                 return '';
             }
             json = (await resp.json());
             return json.access_token;
         }
         catch (e) {
-            log$v.error({ url, json, e });
+            log$n.error({ url, json, e });
             return '';
         }
     }
@@ -1592,7 +2191,7 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$v.error({ url, json, e });
+            log$n.error({ url, json, e });
             return null;
         }
     }
@@ -1606,7 +2205,7 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$v.error({ url, json, e });
+            log$n.error({ url, json, e });
             return null;
         }
     }
@@ -1619,7 +2218,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$v.error({ url, json, e });
+            log$n.error({ url, json, e });
             return null;
         }
     }
@@ -1633,7 +2232,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$v.error({ url, json, e });
+            log$n.error({ url, json, e });
             return null;
         }
     }
@@ -1668,7 +2267,7 @@ class TwitchHelixClient {
             return getRandom(filtered);
         }
         catch (e) {
-            log$v.error({ url, json, e });
+            log$n.error({ url, json, e });
             return null;
         }
     }
@@ -1691,7 +2290,7 @@ class TwitchHelixClient {
             return json.data[0] || null;
         }
         catch (e) {
-            log$v.error({ url, json, e });
+            log$n.error({ url, json, e });
             return null;
         }
     }
@@ -1702,7 +2301,7 @@ class TwitchHelixClient {
             return await resp.json();
         }
         catch (e) {
-            log$v.error({ url, e });
+            log$n.error({ url, e });
             return null;
         }
     }
@@ -1713,7 +2312,7 @@ class TwitchHelixClient {
             return await resp.text();
         }
         catch (e) {
-            log$v.error({ url, e });
+            log$n.error({ url, e });
             return null;
         }
     }
@@ -1726,7 +2325,7 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$v.error({ url, e });
+            log$n.error({ url, e });
             return null;
         }
     }
@@ -1740,7 +2339,7 @@ class TwitchHelixClient {
             return getBestEntryFromCategorySearchItems(searchString, json);
         }
         catch (e) {
-            log$v.error({ url, json });
+            log$n.error({ url, json });
             return null;
         }
     }
@@ -1754,7 +2353,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$v.error({ url, json });
+            log$n.error({ url, json });
             return null;
         }
     }
@@ -1768,7 +2367,7 @@ class TwitchHelixClient {
             return await executeRequestWithRetry(accessToken, req, bot, user);
         }
         catch (e) {
-            log$v.error({ url, e });
+            log$n.error({ url, e });
             return null;
         }
     }
@@ -1794,7 +2393,7 @@ class TwitchHelixClient {
             return (await resp.json());
         }
         catch (e) {
-            log$v.error({ url, e });
+            log$n.error({ url, e });
             return null;
         }
     }
@@ -1813,19 +2412,19 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$v.error({ url, e });
+            log$n.error({ url, e });
             return null;
         }
     }
     async getAllChannelPointsCustomRewards(bot, user) {
         const rewards = {};
         if (!user.twitch_id || !user.twitch_login) {
-            log$v.info('getAllChannelPointsCustomRewards: no twitch id and login');
+            log$n.info('getAllChannelPointsCustomRewards: no twitch id and login');
             return rewards;
         }
         const accessToken = await bot.getRepos().oauthToken.getMatchingAccessToken(user);
         if (!accessToken) {
-            log$v.info('getAllChannelPointsCustomRewards: no access token');
+            log$n.info('getAllChannelPointsCustomRewards: no access token');
             return rewards;
         }
         const res = await this.getChannelPointsCustomRewards(accessToken, user.twitch_id, bot, user);
@@ -1844,7 +2443,7 @@ class TwitchHelixClient {
             return await executeRequestWithRetry(accessToken, req, bot, user);
         }
         catch (e) {
-            log$v.error({ url, e });
+            log$n.error({ url, e });
             return null;
         }
     }
@@ -1862,7 +2461,7 @@ class TwitchHelixClient {
     }
 }
 
-const log$u = logger('oauth.ts');
+const log$m = logger('oauth.ts');
 /**
  * Tries to refresh the access token and returns the new token
  * if successful, otherwise null.
@@ -1896,7 +2495,7 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
         token_type: refreshResp.token_type,
         expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
     });
-    log$u.info('tryRefreshAccessToken - refreshed an access token');
+    log$m.info('tryRefreshAccessToken - refreshed an access token');
     return refreshResp.access_token;
 };
 // TODO: check if anything has to be put in a try catch block
@@ -1943,7 +2542,7 @@ const refreshExpiredTwitchChannelAccessToken = async (bot, user) => {
         token_type: refreshResp.token_type,
         expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
     });
-    log$u.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
+    log$m.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
     return { error: false, refreshed: true };
 };
 // TODO: check if anything has to be put in a try catch block
@@ -2049,30 +2648,6 @@ const mayExecute = (context, cmd) => {
 };
 
 const newText = () => '';
-const newSoundMediaFile = (obj = null) => ({
-    filename: getProp(obj, ['filename'], ''),
-    file: getProp(obj, ['file'], ''),
-    urlpath: getProp(obj, ['urlpath'], ''),
-    volume: getProp(obj, ['volume'], 100),
-});
-const newMediaFile = (obj = null) => ({
-    filename: getProp(obj, ['filename'], ''),
-    file: getProp(obj, ['file'], ''),
-    urlpath: getProp(obj, ['urlpath'], ''),
-});
-const newMediaVideo = (obj = null) => ({
-    // video identified by url
-    url: getProp(obj, ['url'], ''),
-    volume: getProp(obj, ['volume'], 100),
-});
-const newMedia = (obj = null) => ({
-    widgetIds: getProp(obj, ['widgetIds'], []),
-    sound: newSoundMediaFile(obj?.sound),
-    image: newMediaFile(obj?.image),
-    image_url: getProp(obj, ['image_url'], ''),
-    video: newMediaVideo(obj?.video),
-    minDurationMs: getProp(obj, ['minDurationMs'], '1s'),
-});
 const newTrigger = (type) => ({
     type,
     data: {
@@ -2156,215 +2731,21 @@ const getUniqueCommandsByTriggers = (commands, triggers) => {
     return tmp.filter((item, i, ar) => ar.indexOf(item) === i);
 };
 const commands = {
-    add_stream_tags: {
-        Name: () => "add_stream_tags command",
-        Description: () => "Add streamtag",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.ADD_STREAM_TAGS,
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {
-                tag: ''
-            },
-        }),
-        RequiresAccessToken: () => true,
-    },
-    chatters: {
-        Name: () => "chatters command",
-        Description: () => "Outputs the people who chatted during the stream.",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.CHATTERS,
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
-    countdown: {
-        Name: () => "countdown",
-        Description: () => "Add a countdown or messages spaced by time intervals.",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.COUNTDOWN,
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {
-                type: 'auto',
-                step: '',
-                steps: '3',
-                interval: '1s',
-                intro: 'Starting countdown...',
-                outro: 'Done!',
-                actions: []
-            },
-        }),
-        RequiresAccessToken: () => false,
-    },
-    dict_lookup: {
-        Name: () => "dictionary lookup",
-        Description: () => "Outputs the translation for the searched word.",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.DICT_LOOKUP,
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {
-                lang: 'ja',
-                phrase: '',
-            },
-        }),
-        RequiresAccessToken: () => false,
-    },
-    madochan_createword: {
-        Name: () => "madochan",
-        Description: () => "Creates a word for a definition.",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.MADOCHAN_CREATEWORD,
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {
-                // TODO: use from same resource as server
-                model: '100epochs800lenhashingbidirectional.h5',
-                weirdness: '1',
-            },
-        }),
-        RequiresAccessToken: () => false,
-    },
-    media: {
-        Name: () => "media command",
-        Description: () => "Display an image and/or play a sound.",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.MEDIA,
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: newMedia(),
-        }),
-        RequiresAccessToken: () => false,
-    },
-    emotes: {
-        Name: () => "emote command",
-        Description: () => "Display emotes.",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.EMOTES,
-            restrict_to: [],
-            variables: [],
-            variableChanges: [],
-            data: {
-                displayFn: [],
-                emotes: [],
-            },
-        }),
-        RequiresAccessToken: () => false,
-    },
-    media_volume: {
-        Name: () => "media volume command",
-        Description: () => `Sets the media volume to <code>&lt;VOLUME&gt;</code> (argument to this command, min 0, max 100).
-    <br />
-    If no argument is given, just outputs the current volume`,
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.MEDIA_VOLUME,
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {},
-        }),
-        RequiresAccessToken: () => false,
-    },
     text: {
         Name: () => "command",
-        Description: () => "Send a message to chat",
+        Description: () => "",
         NewCommand: () => ({
             id: newCommandId(),
             createdAt: newJsonDate(),
             triggers: [newCommandTrigger()],
+            effects: [],
             action: CommandAction.TEXT,
             restrict_to: [],
             variables: [],
-            variableChanges: [],
             data: {
                 text: [newText()],
             },
         }),
-        RequiresAccessToken: () => false,
-    },
-    remove_stream_tags: {
-        Name: () => "remove_stream_tags command",
-        Description: () => "Remove streamtag",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.REMOVE_STREAM_TAGS,
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {
-                tag: ''
-            },
-        }),
-        RequiresAccessToken: () => true,
-    },
-    set_channel_game_id: {
-        Name: () => "change stream category command",
-        Description: () => "Change the stream category",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.SET_CHANNEL_GAME_ID,
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {
-                game_id: ''
-            },
-        }),
-        RequiresAccessToken: () => true,
-    },
-    set_channel_title: {
-        Name: () => "change stream title command",
-        Description: () => "Change the stream title",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
-            triggers: [newCommandTrigger()],
-            action: CommandAction.SET_CHANNEL_TITLE,
-            restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            variableChanges: [],
-            data: {
-                title: ''
-            },
-        }),
-        RequiresAccessToken: () => true,
     },
     sr_current: {
         Name: () => "sr_current",
@@ -2374,12 +2755,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_CURRENT,
             triggers: [newCommandTrigger('!sr current', true)],
+            effects: [],
             restrict_to: [],
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_undo: {
         Name: () => "sr_undo",
@@ -2389,12 +2769,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_UNDO,
             triggers: [newCommandTrigger('!sr undo', true)],
+            effects: [],
             restrict_to: [],
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_good: {
         Name: () => "sr_good",
@@ -2404,12 +2783,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_GOOD,
             triggers: [newCommandTrigger('!sr good', true)],
+            effects: [],
             restrict_to: [],
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_bad: {
         Name: () => "sr_bad",
@@ -2419,12 +2797,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_BAD,
             triggers: [newCommandTrigger('!sr bad', true)],
+            effects: [],
             restrict_to: [],
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_stats: {
         Name: () => "sr_stats",
@@ -2434,12 +2811,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_STATS,
             triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)],
+            effects: [],
             restrict_to: [],
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_prev: {
         Name: () => "sr_prev",
@@ -2449,12 +2825,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_PREV,
             triggers: [newCommandTrigger('!sr prev', true)],
+            effects: [],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_next: {
         Name: () => "sr_next",
@@ -2464,12 +2839,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_NEXT,
             triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)],
+            effects: [],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_jumptonew: {
         Name: () => "sr_jumptonew",
@@ -2479,12 +2853,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_JUMPTONEW,
             triggers: [newCommandTrigger('!sr jumptonew', true)],
+            effects: [],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_clear: {
         Name: () => "sr_clear",
@@ -2494,12 +2867,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_CLEAR,
             triggers: [newCommandTrigger('!sr clear', true)],
+            effects: [],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_rm: {
         Name: () => "sr_rm",
@@ -2509,12 +2881,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_RM,
             triggers: [newCommandTrigger('!sr rm', true)],
+            effects: [],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_shuffle: {
         Name: () => "sr_shuffle",
@@ -2527,12 +2898,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_SHUFFLE,
             triggers: [newCommandTrigger('!sr shuffle', true)],
+            effects: [],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_reset_stats: {
         Name: () => "sr_reset_stats",
@@ -2542,12 +2912,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_RESET_STATS,
             triggers: [newCommandTrigger('!sr resetStats', true)],
+            effects: [],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_loop: {
         Name: () => "sr_loop",
@@ -2557,12 +2926,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_LOOP,
             triggers: [newCommandTrigger('!sr loop', true)],
+            effects: [],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_noloop: {
         Name: () => "sr_noloop",
@@ -2572,12 +2940,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_NOLOOP,
             triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)],
+            effects: [],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_pause: {
         Name: () => "sr_pause",
@@ -2587,12 +2954,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_PAUSE,
             triggers: [newCommandTrigger('!sr pause', true)],
+            effects: [],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_unpause: {
         Name: () => "sr_unpause",
@@ -2602,12 +2968,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_UNPAUSE,
             triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)],
+            effects: [],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_hidevideo: {
         Name: () => "sr_hidevideo",
@@ -2617,12 +2982,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_HIDEVIDEO,
             triggers: [newCommandTrigger('!sr hidevideo', true)],
+            effects: [],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_showvideo: {
         Name: () => "sr_showvideo",
@@ -2632,12 +2996,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_SHOWVIDEO,
             triggers: [newCommandTrigger('!sr showvideo', true)],
+            effects: [],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_request: {
         Name: () => "sr_request",
@@ -2651,12 +3014,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_REQUEST,
             triggers: [newCommandTrigger('!sr')],
+            effects: [],
             restrict_to: [],
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_re_request: {
         Name: () => "sr_re_request",
@@ -2669,12 +3031,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_RE_REQUEST,
             triggers: [newCommandTrigger('!resr')],
+            effects: [],
             restrict_to: [],
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_addtag: {
         Name: () => "sr_addtag",
@@ -2684,14 +3045,13 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_ADDTAG,
             triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')],
+            effects: [],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
-            variableChanges: [],
             data: {
                 tag: "",
             },
         }),
-        RequiresAccessToken: () => false,
     },
     sr_rmtag: {
         Name: () => "sr_rmtag",
@@ -2701,12 +3061,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_RMTAG,
             triggers: [newCommandTrigger('!sr rmtag')],
+            effects: [],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_volume: {
         Name: () => "sr_volume",
@@ -2718,12 +3077,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_VOLUME,
             triggers: [newCommandTrigger('!sr volume')],
+            effects: [],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_filter: {
         Name: () => "sr_filter",
@@ -2734,12 +3092,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_FILTER,
             triggers: [newCommandTrigger('!sr filter')],
+            effects: [],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_preset: {
         Name: () => "sr_preset",
@@ -2750,12 +3107,11 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_PRESET,
             triggers: [newCommandTrigger('!sr preset')],
+            effects: [],
             restrict_to: MOD_OR_ABOVE,
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
     sr_queue: {
         Name: () => "sr_queue",
@@ -2765,16 +3121,15 @@ const commands = {
             createdAt: newJsonDate(),
             action: CommandAction.SR_QUEUE,
             triggers: [newCommandTrigger('!sr queue')],
+            effects: [],
             restrict_to: [],
             variables: [],
-            variableChanges: [],
             data: {},
         }),
-        RequiresAccessToken: () => false,
     },
 };
 
-const log$t = logger('CommandExecutor.ts');
+const log$l = logger('CommandExecutor.ts');
 class CommandExecutor {
     async executeMatchingCommands(bot, user, rawCmd, target, context, triggers) {
         const promises = [];
@@ -2791,21 +3146,21 @@ class CommandExecutor {
             if (!ctx.context || !mayExecute(ctx.context, cmdDef)) {
                 continue;
             }
-            log$t.info({
+            log$l.info({
                 target: ctx.target,
                 command: ctx.rawCmd?.name || '<unknown>',
             }, 'Executing command');
             // eslint-disable-next-line no-async-promise-executor
             const p = new Promise(async (resolve) => {
-                await fn.applyVariableChanges(cmdDef, contextModule, ctx.rawCmd, ctx.context);
+                await fn.applyEffects(cmdDef, contextModule, ctx.rawCmd, ctx.context);
                 const r = await cmdDef.fn(ctx);
                 if (r) {
-                    log$t.info({
+                    log$l.info({
                         target: ctx.target,
                         return: r,
                     }, 'Returned from command');
                 }
-                log$t.info({
+                log$l.info({
                     target: ctx.target,
                     command: ctx.rawCmd?.name || '<unknown>',
                 }, 'Executed command');
@@ -2820,11 +3175,11 @@ class CommandExecutor {
 class EventSubEventHandler {
 }
 
-const log$s = logger('SubscribeEventHandler.ts');
+const log$k = logger('SubscribeEventHandler.ts');
 class SubscribeEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$s.info('handle');
+        log$k.info('handle');
         const rawCmd = {
             name: 'channel.subscribe',
             args: [],
@@ -2845,11 +3200,11 @@ class SubscribeEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$r = logger('FollowEventHandler.ts');
+const log$j = logger('FollowEventHandler.ts');
 class FollowEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$r.info('handle');
+        log$j.info('handle');
         const rawCmd = {
             name: 'channel.follow',
             args: [],
@@ -2870,11 +3225,11 @@ class FollowEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$q = logger('CheerEventHandler.ts');
+const log$i = logger('CheerEventHandler.ts');
 class CheerEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$q.info('handle');
+        log$i.info('handle');
         const rawCmd = {
             name: 'channel.cheer',
             args: [],
@@ -2895,10 +3250,10 @@ class CheerEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$p = logger('ChannelPointRedeemEventHandler.ts');
+const log$h = logger('ChannelPointRedeemEventHandler.ts');
 class ChannelPointRedeemEventHandler extends EventSubEventHandler {
     async handle(bot, user, data) {
-        log$p.info('handle');
+        log$h.info('handle');
         const rawCmd = {
             name: data.event.reward.title,
             args: data.event.user_input ? [data.event.user_input] : [],
@@ -2932,10 +3287,10 @@ var SubscriptionType;
 })(SubscriptionType || (SubscriptionType = {}));
 const ALL_SUBSCRIPTIONS_TYPES = Object.values(SubscriptionType);
 
-const log$o = logger('StreamOnlineEventHandler.ts');
+const log$g = logger('StreamOnlineEventHandler.ts');
 class StreamOnlineEventHandler extends EventSubEventHandler {
     async handle(bot, _user, data) {
-        log$o.info('handle');
+        log$g.info('handle');
         await bot.getRepos().streams.insert({
             broadcaster_user_id: data.event.broadcaster_user_id,
             started_at: new Date(data.event.started_at),
@@ -2943,10 +3298,10 @@ class StreamOnlineEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$n = logger('StreamOfflineEventHandler.ts');
+const log$f = logger('StreamOfflineEventHandler.ts');
 class StreamOfflineEventHandler extends EventSubEventHandler {
     async handle(bot, _user, data) {
-        log$n.info('handle');
+        log$f.info('handle');
         // get last started stream for broadcaster
         // if it exists and it didnt end yet set ended_at date
         const stream = await bot.getRepos().streams.getLatestByChannelId(data.event.broadcaster_user_id);
@@ -2958,11 +3313,11 @@ class StreamOfflineEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$m = logger('RaidEventHandler.ts');
+const log$e = logger('RaidEventHandler.ts');
 class RaidEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$m.info('handle');
+        log$e.info('handle');
         const rawCmd = {
             name: 'channel.raid',
             args: [],
@@ -2983,7 +3338,7 @@ class RaidEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$l = logger('twitch/index.ts');
+const log$d = logger('twitch/index.ts');
 const createRouter$3 = (bot) => {
     const handlers = {
         [SubscriptionType.ChannelSubscribe]: new SubscribeEventHandler(),
@@ -3003,8 +3358,8 @@ const createRouter$3 = (bot) => {
         if (req.headers['twitch-eventsub-message-signature'] === expected) {
             return next();
         }
-        log$l.debug({ req });
-        log$l.error({
+        log$d.debug({ req });
+        log$d.error({
             got: req.headers['twitch-eventsub-message-signature'],
             expected,
         }, 'bad message signature');
@@ -3059,28 +3414,28 @@ const createRouter$3 = (bot) => {
     });
     router.post('/event-sub/', express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
         if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-            log$l.info({ challenge: req.body.challenge }, 'got verification request');
+            log$d.info({ challenge: req.body.challenge }, 'got verification request');
             res.write(req.body.challenge);
             res.send();
             return;
         }
         if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-            log$l.info({ type: req.body.subscription.type }, 'got notification request');
+            log$d.info({ type: req.body.subscription.type }, 'got notification request');
             const row = await bot.getRepos().eventSub.getBySubscriptionId(req.body.subscription.id);
             if (!row) {
-                log$l.info('unknown subscription_id');
+                log$d.info('unknown subscription_id');
                 res.status(400).send({ reason: 'unknown subscription_id' });
                 return;
             }
             const user = await bot.getRepos().user.getById(row.user_id);
             if (!user) {
-                log$l.info('unknown user');
+                log$d.info('unknown user');
                 res.status(400).send({ reason: 'unknown user' });
                 return;
             }
             const handler = handlers[req.body.subscription.type];
             if (!handler) {
-                log$l.info('unknown subscription type');
+                log$d.info('unknown subscription type');
                 res.status(400).send({ reason: 'unknown subscription type' });
                 return;
             }
@@ -3190,7 +3545,7 @@ const createRouter$1 = () => {
     return router;
 };
 
-const log$k = logger('api/index.ts');
+const log$c = logger('api/index.ts');
 const createRouter = (bot) => {
     const uploadDir = './data/uploads';
     const storage = multer.diskStorage({
@@ -3204,12 +3559,12 @@ const createRouter = (bot) => {
     router.post('/upload', RequireLoginApiMiddleware, (req, res) => {
         upload(req, res, (err) => {
             if (err) {
-                log$k.error({ err });
+                log$c.error({ err });
                 res.status(400).send("Something went wrong!");
                 return;
             }
             if (!req.file) {
-                log$k.error({ err });
+                log$c.error({ err });
                 res.status(400).send("Something went wrong!");
                 return;
             }
@@ -3303,7 +3658,7 @@ const createRouter = (bot) => {
             res.status(404).send();
             return;
         }
-        log$k.debug({ route: `/widget/:widget_type/:widget_token/`, type, token });
+        log$c.debug({ route: `/widget/:widget_type/:widget_token/`, type, token });
         const w = bot.getWidgets().getWidgetDefinitionByType(type);
         if (w) {
             res.send({
@@ -3346,7 +3701,7 @@ const createRouter = (bot) => {
             bot.getEventHub().emit('user_changed', changedUser);
         }
         else {
-            log$k.error({
+            log$c.error({
                 user_id: user.id,
             }, 'save-settings: user doesn\'t exist after saving it');
         }
@@ -3371,7 +3726,7 @@ const RequireLoginMiddleware = (req, res, next) => {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const log$j = logger('WebServer.ts');
+const log$b = logger('WebServer.ts');
 class WebServer {
     constructor() {
         this.handle = null;
@@ -3411,7 +3766,7 @@ class WebServer {
             res.sendFile(indexFile);
         });
         const httpConf = bot.getConfig().http;
-        this.handle = app.listen(httpConf.port, httpConf.hostname, () => log$j.info(`server running on http://${httpConf.hostname}:${httpConf.port}`));
+        this.handle = app.listen(httpConf.port, httpConf.hostname, () => log$b.info(`server running on http://${httpConf.hostname}:${httpConf.port}`));
     }
     close() {
         if (this.handle) {
@@ -3420,7 +3775,7 @@ class WebServer {
     }
 }
 
-const log$i = logger('ChatEventHandler.ts');
+const log$a = logger('ChatEventHandler.ts');
 const rolesLettersFromTwitchChatContext = (context) => {
     const roles = [];
     if (isMod(context)) {
@@ -3440,7 +3795,7 @@ const determineStreamStartDate = async (context, helixClient) => {
         return new Date(stream.started_at);
     }
     const date = new Date(new Date().getTime() - (5 * MINUTE));
-    log$i.info({
+    log$a.info({
         roomId: context['room-id'],
         date: date,
     }, `No stream is running atm, using fake start date.`);
@@ -3457,7 +3812,7 @@ const determineIsFirstChatStream = async (bot, user, context) => {
 class ChatEventHandler {
     async handle(bot, user, target, context, msg) {
         const roles = rolesLettersFromTwitchChatContext(context);
-        log$i.debug({
+        log$a.debug({
             username: context.username,
             roles,
             target,
@@ -3809,14 +4164,14 @@ class TwitchClientManager {
 }
 
 const TABLE$8 = 'robyottoko.cache';
-const log$h = logger('Cache.ts');
+const log$9 = logger('Cache.ts');
 class Cache {
     constructor(db) {
         this.db = db;
     }
     async set(key, value, lifetime) {
         if (value === undefined) {
-            log$h.error({ key }, 'unable to store undefined value for cache key');
+            log$9.error({ key }, 'unable to store undefined value for cache key');
             return;
         }
         const expiresAt = lifetime === Infinity ? null : (new Date(new Date().getTime() + lifetime));
@@ -3957,7 +4312,7 @@ class Mutex {
 
 // @ts-ignore
 const { Client } = pg.default;
-const log$g = logger('Db.ts');
+const log$8 = logger('Db.ts');
 const mutex = new Mutex();
 class Db {
     constructor(connectStr, patchesDir) {
@@ -3977,7 +4332,7 @@ class Db {
         for (const f of files) {
             if (patches.includes(f)) {
                 if (verbose) {
-                    log$g.info(`➡ skipping already applied db patch: ${f}`);
+                    log$8.info(`➡ skipping already applied db patch: ${f}`);
                 }
                 continue;
             }
@@ -3996,10 +4351,10 @@ class Db {
                     throw e;
                 }
                 await this.insert('public.db_patches', { id: f });
-                log$g.info(`✓ applied db patch: ${f}`);
+                log$8.info(`✓ applied db patch: ${f}`);
             }
             catch (e) {
-                log$g.error(`✖ unable to apply patch: ${f} ${e}`);
+                log$8.error(`✖ unable to apply patch: ${f} ${e}`);
                 return;
             }
         }
@@ -4090,7 +4445,7 @@ class Db {
             return (await this.dbh.query(query, params)).rows[0] || null;
         }
         catch (e) {
-            log$g.info({ fn: '_get', query, params });
+            log$8.info({ fn: '_get', query, params });
             console.error(e);
             throw e;
         }
@@ -4100,7 +4455,7 @@ class Db {
             return await this.dbh.query(query, params);
         }
         catch (e) {
-            log$g.info({ fn: 'run', query, params });
+            log$8.info({ fn: 'run', query, params });
             console.error(e);
             throw e;
         }
@@ -4110,7 +4465,7 @@ class Db {
             return (await this.dbh.query(query, params)).rows || [];
         }
         catch (e) {
-            log$g.info({ fn: '_getMany', query, params });
+            log$8.info({ fn: '_getMany', query, params });
             console.error(e);
             throw e;
         }
@@ -4177,468 +4532,6 @@ class Db {
 
 function mitt(n){return {all:n=n||new Map,on:function(t,e){var i=n.get(t);i?i.push(e):n.set(t,[e]);},off:function(t,e){var i=n.get(t);i&&(e?i.splice(i.indexOf(e)>>>0,1):n.set(t,[]));},emit:function(t,e){var i=n.get(t);i&&i.slice().map(function(n){n(e);}),(i=n.get("*"))&&i.slice().map(function(n){n(t,e);});}}}
 
-const log$f = logger('countdown.ts');
-const countdown = (originalCmd, bot, user) => async (ctx) => {
-    const sayFn = bot.sayFn(user, ctx.target);
-    const doReplacements = async (text) => {
-        return await fn.doReplacements(text, ctx.rawCmd, ctx.context, originalCmd, bot, user);
-    };
-    const say = async (text) => {
-        return sayFn(await doReplacements(text));
-    };
-    const parseDuration = async (str) => {
-        return mustParseHumanDuration(await doReplacements(str));
-    };
-    const settings = originalCmd.data;
-    const t = (settings.type || 'auto');
-    let actionDefs = [];
-    if (t === 'auto') {
-        const steps = parseInt(await doReplacements(`${settings.steps}`), 10);
-        const msgStep = settings.step || "{step}";
-        const msgIntro = settings.intro || null;
-        const msgOutro = settings.outro || null;
-        if (msgIntro) {
-            actionDefs.push({ type: CountdownActionType.TEXT, value: msgIntro.replace(/\{steps\}/g, `${steps}`) });
-            actionDefs.push({ type: CountdownActionType.DELAY, value: settings.interval || '1s' });
-        }
-        for (let step = steps; step > 0; step--) {
-            actionDefs.push({
-                type: CountdownActionType.TEXT,
-                value: msgStep.replace(/\{steps\}/g, `${steps}`).replace(/\{step\}/g, `${step}`),
-            });
-            actionDefs.push({ type: CountdownActionType.DELAY, value: settings.interval || '1s' });
-        }
-        if (msgOutro) {
-            actionDefs.push({ type: CountdownActionType.TEXT, value: msgOutro.replace(/\{steps\}/g, `${steps}`) });
-        }
-    }
-    else if (t === 'manual') {
-        actionDefs = settings.actions;
-    }
-    const actions = [];
-    for (const a of actionDefs) {
-        if (a.type === CountdownActionType.TEXT) {
-            actions.push(async () => say(`${a.value}`));
-        }
-        else if (a.type === CountdownActionType.MEDIA) {
-            actions.push(async () => {
-                bot.getWebSocketServer().notifyAll([user.id], 'general', {
-                    event: 'playmedia',
-                    data: a.value,
-                });
-            });
-        }
-        else if (a.type === CountdownActionType.DELAY) {
-            let duration;
-            try {
-                duration = (await parseDuration(`${a.value}`)) || 0;
-            }
-            catch (e) {
-                log$f.error({ message: e.message, value: a.value });
-                return;
-            }
-            actions.push(async () => await fn.sleep(duration));
-        }
-    }
-    for (let i = 0; i < actions.length; i++) {
-        await actions[i]();
-    }
-};
-
-const createWord = async (createWordRequestData) => {
-    const url = 'https://madochan.hyottoko.club/api/v1/_create_word';
-    const resp = await xhr.post(url, asJson(createWordRequestData));
-    const json = (await resp.json());
-    return json;
-};
-var Madochan = {
-    createWord,
-    defaultModel: '100epochs800lenhashingbidirectional.h5',
-    defaultWeirdness: 1,
-};
-
-const log$e = logger('madochanCreateWord.ts');
-const madochanCreateWord = (originalCmd, bot, user) => async (ctx) => {
-    if (!ctx.rawCmd) {
-        return;
-    }
-    const model = `${originalCmd.data.model}` || Madochan.defaultModel;
-    const weirdness = parseInt(originalCmd.data.weirdness, 10) || Madochan.defaultWeirdness;
-    const say = bot.sayFn(user, ctx.target);
-    const definition = ctx.rawCmd.args.join(' ');
-    say(`Generating word for "${definition}"...`);
-    try {
-        const data = await Madochan.createWord({ model, weirdness, definition });
-        if (data.word === '') {
-            say(`Sorry, I could not generate a word :("`);
-        }
-        else {
-            say(`"${definition}": ${data.word}`);
-        }
-    }
-    catch (e) {
-        log$e.error({ e });
-        say(`Error occured, unable to generate a word :("`);
-    }
-};
-
-const randomText = (originalCmd, bot, user) => async (ctx) => {
-    const texts = originalCmd.data.text;
-    const say = bot.sayFn(user, ctx.target);
-    say(await fn.doReplacements(getRandom(texts), ctx.rawCmd, ctx.context, originalCmd, bot, user));
-};
-
-const log$d = logger('playMedia.ts');
-const isTwitchClipUrl = (url) => {
-    return !!url.match(/^https:\/\/clips\.twitch\.tv\/.+/);
-};
-const downloadVideo = async (originalUrl) => {
-    // if video url looks like a twitch clip url, dl it first
-    const filename = `${hash(originalUrl)}-clip.mp4`;
-    const outfile = `./data/uploads/${filename}`;
-    if (!fs.existsSync(outfile)) {
-        log$d.debug({ outfile }, 'downloading the video');
-        const child = childProcess.execFile(config.youtubeDlBinary, [originalUrl, '-o', outfile]);
-        await new Promise((resolve) => {
-            child.on('close', resolve);
-        });
-    }
-    else {
-        log$d.debug({ outfile }, 'video exists');
-    }
-    return `/uploads/${filename}`;
-};
-const prepareData = async (ctx, originalCmd, bot, user) => {
-    const doReplaces = async (str) => {
-        return await fn.doReplacements(str, ctx.rawCmd, ctx.context, originalCmd, bot, user);
-    };
-    const data = originalCmd.data;
-    data.image_url = await doReplaces(data.image_url);
-    if (!data.video.url) {
-        return data;
-    }
-    log$d.debug({ url: data.video.url }, 'video url is defined');
-    data.video.url = await doReplaces(data.video.url);
-    if (!data.video.url) {
-        log$d.debug('no video url found');
-    }
-    else if (isTwitchClipUrl(data.video.url)) {
-        // video url looks like a twitch clip url, dl it first
-        log$d.debug({ url: data.video.url }, 'twitch clip found');
-        data.video.url = await downloadVideo(data.video.url);
-    }
-    else {
-        // otherwise assume it is already a playable video url
-        // TODO: youtube videos maybe should also be downloaded
-        log$d.debug('video is assumed to be directly playable via html5 video element');
-    }
-    return data;
-};
-const playMedia = (originalCmd, bot, user) => async (ctx) => {
-    bot.getWebSocketServer().notifyAll([user.id], 'general', {
-        event: 'playmedia',
-        data: await prepareData(ctx, originalCmd, bot, user),
-        id: originalCmd.id
-    });
-};
-
-const log$c = logger('chatters.ts');
-const chatters = (bot, user) => async (ctx) => {
-    const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
-    if (!ctx.context || !helixClient) {
-        log$c.info({
-            context: ctx.context,
-            helixClient,
-        }, 'unable to execute chatters command, client, context, or helixClient missing');
-        return;
-    }
-    const say = bot.sayFn(user, ctx.target);
-    const stream = await helixClient.getStreamByUserId(user.twitch_id);
-    if (!stream) {
-        say(`It seems this channel is not live at the moment...`);
-        return;
-    }
-    const userNames = await bot.getRepos().chatLog.getChatters(user.twitch_id, new Date(stream.started_at));
-    if (userNames.length === 0) {
-        say(`It seems nobody chatted? :(`);
-        return;
-    }
-    say(`Thank you for chatting!`);
-    fn.joinIntoChunks(userNames, ', ', 500).forEach(msg => {
-        say(msg);
-    });
-};
-
-const log$b = logger('setChannelTitle.ts');
-const setChannelTitle = (originalCmd, bot, user) => async (ctx) => {
-    const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
-    if (!ctx.rawCmd || !ctx.context || !helixClient) {
-        log$b.info({
-            rawCmd: ctx.rawCmd,
-            context: ctx.context,
-            helixClient,
-        }, 'unable to execute setChannelTitle, client, command, context, or helixClient missing');
-        return;
-    }
-    const say = bot.sayFn(user, ctx.target);
-    const title = originalCmd.data.title === '' ? '$args()' : originalCmd.data.title;
-    const tmpTitle = await fn.doReplacements(title, ctx.rawCmd, ctx.context, originalCmd, bot, user);
-    if (tmpTitle === '') {
-        const info = await helixClient.getChannelInformation(user.twitch_id);
-        if (info) {
-            say(`Current title is "${info.title}".`);
-        }
-        else {
-            say(`❌ Unable to determine current title.`);
-        }
-        return;
-    }
-    // helix api returns 204 status code even if the title is too long and
-    // cant actually be set. but there is no error returned in that case :(
-    const len = unicodeLength(tmpTitle);
-    const max = 140;
-    if (len > max) {
-        say(`❌ Unable to change title because it is too long (${len}/${max} characters).`);
-        return;
-    }
-    const accessToken = await bot.getRepos().oauthToken.getMatchingAccessToken(user);
-    if (!accessToken) {
-        say(`❌ Not authorized to change title.`);
-        return;
-    }
-    const resp = await helixClient.modifyChannelInformation(accessToken, { title: tmpTitle }, bot, user);
-    if (resp?.status === 204) {
-        say(`✨ Changed title to "${tmpTitle}".`);
-    }
-    else {
-        say('❌ Unable to change title.');
-    }
-};
-
-const log$a = logger('setChannelGameId.ts');
-const setChannelGameId = (originalCmd, bot, user) => async (ctx) => {
-    const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
-    if (!ctx.rawCmd || !ctx.context || !helixClient) {
-        log$a.info({
-            rawCmd: ctx.rawCmd,
-            context: ctx.context,
-            helixClient,
-        }, 'unable to execute setChannelGameId, client, command, context, or helixClient missing');
-        return;
-    }
-    const say = bot.sayFn(user, ctx.target);
-    const gameId = originalCmd.data.game_id === '' ? '$args()' : originalCmd.data.game_id;
-    const tmpGameId = await fn.doReplacements(gameId, ctx.rawCmd, ctx.context, originalCmd, bot, user);
-    if (tmpGameId === '') {
-        const info = await helixClient.getChannelInformation(user.twitch_id);
-        if (info) {
-            say(`Current category is "${info.game_name}".`);
-        }
-        else {
-            say(`❌ Unable to determine current category.`);
-        }
-        return;
-    }
-    const category = await helixClient.searchCategory(tmpGameId);
-    if (!category) {
-        say('🔎 Category not found.');
-        return;
-    }
-    const accessToken = await bot.getRepos().oauthToken.getMatchingAccessToken(user);
-    if (!accessToken) {
-        say(`❌ Not authorized to update category.`);
-        return;
-    }
-    const resp = await helixClient.modifyChannelInformation(accessToken, { game_id: category.id }, bot, user);
-    if (resp?.status === 204) {
-        say(`✨ Changed category to "${category.name}".`);
-    }
-    else {
-        say('❌ Unable to update category.');
-    }
-};
-
-const searchWord$1 = async (keyword, page = 1) => {
-    const url = 'https://jisho.org/api/v1/search/words' + asQueryArgs({
-        keyword: keyword,
-        page: page,
-    });
-    const resp = await xhr.get(url);
-    const json = (await resp.json());
-    return json.data;
-};
-var JishoOrg = {
-    searchWord: searchWord$1,
-};
-
-const LANG_TO_URL_MAP = {
-    de: 'https://www.dict.cc/',
-    ru: 'https://enru.dict.cc/',
-    es: 'https://enes.dict.cc/',
-    it: 'https://enit.dict.cc/',
-    fr: 'https://enfr.dict.cc/',
-    pt: 'https://enpt.dict.cc/',
-};
-/**
- * Exctract searched words and word lists for both languages
- * from a dict.cc result html
- * TODO: change from regex to parsing the html ^^
- */
-const extractInfo = (text) => {
-    const stringToArray = (str) => {
-        const arr = [];
-        str.replace(/"([^"]*)"/g, (m, m1) => {
-            arr.push(m1);
-            return m;
-        });
-        return arr;
-    };
-    const arrayByRegex = (regex) => {
-        const m = text.match(regex);
-        return m ? stringToArray(m[1]) : [];
-    };
-    const m = text.match(/<link rel="canonical" href="https:\/\/[^.]+\.dict\.cc\/\?s=([^"]+)">/);
-    const words = m ? decodeURIComponent(m[1]).split('+') : [];
-    if (!words.length) {
-        return { words, arr1: [], arr2: [] };
-    }
-    return {
-        words,
-        arr1: arrayByRegex(/var c1Arr = new Array\((.*)\);/),
-        arr2: arrayByRegex(/var c2Arr = new Array\((.*)\);/),
-    };
-};
-const parseResult = (text) => {
-    const normalize = (str) => {
-        return str.toLowerCase().replace(/[.!?]/, '');
-    };
-    const info = extractInfo(text);
-    const matchedWords = info.words;
-    if (!matchedWords) {
-        return [];
-    }
-    const arr1 = info.arr1;
-    const arr2 = info.arr2;
-    const arr1NoPunct = arr1.map(item => normalize(item));
-    const arr2NoPunct = arr2.map(item => normalize(item));
-    const results = [];
-    const collectResults = (searchWords, fromArrSearch, fromArr, toArr) => {
-        const _results = [];
-        for (const i in fromArr) {
-            if (!fromArrSearch[i]) {
-                continue;
-            }
-            if (!searchWords.includes(fromArrSearch[i])) {
-                continue;
-            }
-            if (fromArr[i] === toArr[i]) {
-                // from and to is exactly the same, so skip it
-                continue;
-            }
-            const idx = _results.findIndex(item => item.from === fromArr[i]);
-            if (idx < 0) {
-                _results.push({ from: fromArr[i], to: [toArr[i]] });
-            }
-            else if (!_results[idx].to.includes(toArr[i])) {
-                _results[idx].to.push(toArr[i]);
-            }
-        }
-        results.push(..._results);
-    };
-    const matchedSentence = normalize(matchedWords.join(' '));
-    if (arr1NoPunct.includes(matchedSentence)) {
-        const fromArrSearch = arr1NoPunct;
-        const fromArr = arr1;
-        const toArr = arr2;
-        const searchWords = [matchedSentence];
-        collectResults(searchWords, fromArrSearch, fromArr, toArr);
-    }
-    if (arr2NoPunct.includes(matchedSentence)) {
-        const fromArrSearch = arr2NoPunct;
-        const fromArr = arr2;
-        const toArr = arr1;
-        const searchWords = [matchedSentence];
-        collectResults(searchWords, fromArrSearch, fromArr, toArr);
-    }
-    if (results.length === 0) {
-        let fromArrSearch = [];
-        let fromArr = [];
-        let toArr = [];
-        let searchWords = [];
-        for (const matchedWord of matchedWords) {
-            if (arr1.includes(matchedWord)) {
-                fromArr = fromArrSearch = arr1;
-                toArr = arr2;
-            }
-            else {
-                fromArr = fromArrSearch = arr2;
-                toArr = arr1;
-            }
-        }
-        searchWords = matchedWords;
-        collectResults(searchWords, fromArrSearch, fromArr, toArr);
-    }
-    return results;
-};
-const searchWord = async (keyword, lang) => {
-    const baseUrl = LANG_TO_URL_MAP[lang];
-    if (!baseUrl) {
-        return [];
-    }
-    const url = baseUrl + asQueryArgs({ s: keyword });
-    const resp = await xhr.get(url);
-    const text = await resp.text();
-    return parseResult(text);
-};
-var DictCc = {
-    searchWord,
-    parseResult,
-    LANG_TO_URL_MAP,
-};
-
-const jishoOrgLookup = async (phrase) => {
-    const data = await JishoOrg.searchWord(phrase);
-    if (data.length === 0) {
-        return [];
-    }
-    const e = data[0];
-    const j = e.japanese[0];
-    const d = e.senses[0].english_definitions;
-    return [{
-            from: phrase,
-            to: [`${j.word} (${j.reading}) ${d.join(', ')}`],
-        }];
-};
-const LANG_TO_FN = {
-    ja: jishoOrgLookup,
-};
-for (const key of Object.keys(DictCc.LANG_TO_URL_MAP)) {
-    LANG_TO_FN[key] = (phrase) => DictCc.searchWord(phrase, key);
-}
-const dictLookup = (originalCmd, bot, user) => async (ctx) => {
-    if (!ctx.rawCmd) {
-        return [];
-    }
-    const say = bot.sayFn(user, ctx.target);
-    const tmpLang = await fn.doReplacements(originalCmd.data.lang, ctx.rawCmd, ctx.context, originalCmd, bot, user);
-    const dictFn = LANG_TO_FN[tmpLang] || null;
-    if (!dictFn) {
-        say(`Sorry, language not supported: "${tmpLang}"`);
-        return;
-    }
-    // if no phrase is setup, use all args given to command
-    const phrase = originalCmd.data.phrase === '' ? '$args()' : originalCmd.data.phrase;
-    const tmpPhrase = await fn.doReplacements(phrase, ctx.rawCmd, ctx.context, originalCmd, bot, user);
-    const items = await dictFn(tmpPhrase);
-    if (items.length === 0) {
-        say(`Sorry, I didn't find anything for "${tmpPhrase}" in language "${tmpLang}"`);
-        return;
-    }
-    for (const item of items) {
-        say(`Phrase "${item.from}": ${item.to.join(", ")}`);
-    }
-};
-
 var EMOTE_DISPLAY_FN;
 (function (EMOTE_DISPLAY_FN) {
     EMOTE_DISPLAY_FN["BALLOON"] = "balloon";
@@ -4650,124 +4543,169 @@ var EMOTE_DISPLAY_FN;
     EMOTE_DISPLAY_FN["RANDOM_BEZIER"] = "randomBezier";
 })(EMOTE_DISPLAY_FN || (EMOTE_DISPLAY_FN = {}));
 
-const log$9 = logger('setStreamTags.ts');
-const addStreamTags = (originalCmd, bot, user) => async (ctx) => {
-    const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
-    if (!ctx.rawCmd || !ctx.context || !helixClient) {
-        log$9.info({
-            rawCmd: ctx.rawCmd,
-            context: ctx.context,
-            helixClient,
-        }, 'unable to execute addStreamTags, client, command, context, or helixClient missing');
-        return;
-    }
-    const say = bot.sayFn(user, ctx.target);
-    const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag;
-    const tmpTag = await fn.doReplacements(tag, ctx.rawCmd, ctx.context, originalCmd, bot, user);
-    const tagsResponse = await helixClient.getStreamTags(user.twitch_id);
-    if (!tagsResponse) {
-        say(`❌ Unable to fetch current tags.`);
-        return;
-    }
-    if (tmpTag === '') {
-        const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
-        say(`Current tags: ${names.join(', ')}`);
-        return;
-    }
-    const idx = findIdxFuzzy(config.twitch.manual_tags, tmpTag, (item) => item.name);
-    if (idx === -1) {
-        say(`❌ No such tag: ${tmpTag}`);
-        return;
-    }
-    const tagEntry = config.twitch.manual_tags[idx];
-    const newTagIds = tagsResponse.data.map(entry => entry.tag_id);
-    if (newTagIds.includes(tagEntry.id)) {
-        const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
-        say(`✨ Tag ${tagEntry.name} already exists, current tags: ${names.join(', ')}`);
-        return;
-    }
-    newTagIds.push(tagEntry.id);
-    const newSettableTagIds = newTagIds.filter(tagId => !config.twitch.auto_tags.find(t => t.id === tagId));
-    if (newSettableTagIds.length > 5) {
-        const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
-        say(`❌ Too many tags already exist, current tags: ${names.join(', ')}`);
-        return;
-    }
-    const accessToken = await bot.getRepos().oauthToken.getMatchingAccessToken(user);
-    if (!accessToken) {
-        say(`❌ Not authorized to add tag: ${tagEntry.name}`);
-        return;
-    }
-    const resp = await helixClient.replaceStreamTags(accessToken, newSettableTagIds, bot, user);
-    if (!resp || resp.status < 200 || resp.status >= 300) {
-        log$9.error(resp);
-        say(`❌ Unable to add tag: ${tagEntry.name}`);
-        return;
-    }
-    say(`✨ Added tag: ${tagEntry.name}`);
+const variableChangeToCommandEffect = (variableChange) => {
+    return {
+        type: CommandEffectType.VARIABLE_CHANGE,
+        data: variableChange,
+    };
 };
-
-const log$8 = logger('setStreamTags.ts');
-const removeStreamTags = (originalCmd, bot, user) => async (ctx) => {
-    const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
-    if (!ctx.rawCmd || !ctx.context || !helixClient) {
-        log$8.info({
-            rawCmd: ctx.rawCmd,
-            context: ctx.context,
-            helixClient,
-        }, 'unable to execute removeStreamTags, client, command, context, or helixClient missing');
-        return;
-    }
-    const say = bot.sayFn(user, ctx.target);
-    const tag = originalCmd.data.tag === '' ? '$args()' : originalCmd.data.tag;
-    const tmpTag = await fn.doReplacements(tag, ctx.rawCmd, ctx.context, originalCmd, bot, user);
-    const tagsResponse = await helixClient.getStreamTags(user.twitch_id);
-    if (!tagsResponse) {
-        say(`❌ Unable to fetch current tags.`);
-        return;
-    }
-    if (tmpTag === '') {
-        const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
-        say(`Current tags: ${names.join(', ')}`);
-        return;
-    }
-    const manualTags = tagsResponse.data.filter(entry => !entry.is_auto);
-    const idx = findIdxFuzzy(manualTags, tmpTag, (item) => item.localization_names['en-us']);
-    if (idx === -1) {
-        const autoTags = tagsResponse.data.filter(entry => entry.is_auto);
-        const idx = findIdxFuzzy(autoTags, tmpTag, (item) => item.localization_names['en-us']);
-        if (idx === -1) {
-            say(`❌ No such tag is currently set: ${tmpTag}`);
-        }
-        else {
-            say(`❌ Unable to remove automatic tag: ${autoTags[idx].localization_names['en-us']}`);
-        }
-        return;
-    }
-    const newTagIds = manualTags.filter((_value, index) => index !== idx).map(entry => entry.tag_id);
-    const newSettableTagIds = newTagIds.filter(tagId => !config.twitch.auto_tags.find(t => t.id === tagId));
-    const accessToken = await bot.getRepos().oauthToken.getMatchingAccessToken(user);
-    if (!accessToken) {
-        say(`❌ Not authorized to remove tag: ${manualTags[idx].localization_names['en-us']}`);
-        return;
-    }
-    const resp = await helixClient.replaceStreamTags(accessToken, newSettableTagIds, bot, user);
-    if (!resp || resp.status < 200 || resp.status >= 300) {
-        say(`❌ Unable to remove tag: ${manualTags[idx].localization_names['en-us']}`);
-        return;
-    }
-    say(`✨ Removed tag: ${manualTags[idx].localization_names['en-us']}`);
+const textToCommandEffect = (cmd) => {
+    return {
+        type: CommandEffectType.CHAT,
+        data: {
+            text: !Array.isArray(cmd.data.text) ? [cmd.data.text] : cmd.data.text
+        },
+    };
 };
-
-logger('emotes.ts');
-const emotes = (originalCmd, bot, user) => async (_ctx) => {
-    bot.getWebSocketServer().notifyAll([user.id], 'general', {
-        event: 'emotes',
-        data: originalCmd.data,
+const dictLookupToCommandEffect = (cmd) => {
+    return {
+        type: CommandEffectType.DICT_LOOKUP,
+        data: {
+            lang: cmd.data.lang,
+            phrase: cmd.data.phrase,
+        },
+    };
+};
+const emotesToCommandEffect = (cmd) => {
+    return {
+        type: CommandEffectType.EMOTES,
+        data: {
+            displayFn: cmd.data.displayFn,
+            emotes: cmd.data.emotes,
+        },
+    };
+};
+const mediaToCommandEffect = (cmd) => {
+    if (cmd.data.excludeFromGlobalWidget) {
+        cmd.data.widgetIds = [cmd.id];
+    }
+    else if (typeof cmd.data.widgetIds === 'undefined') {
+        cmd.data.widgetIds = [];
+    }
+    if (typeof cmd.data.excludeFromGlobalWidget !== 'undefined') {
+        delete cmd.data.excludeFromGlobalWidget;
+    }
+    cmd.data.minDurationMs = cmd.data.minDurationMs || 0;
+    cmd.data.sound.volume = cmd.data.sound.volume || 100;
+    if (!cmd.data.sound.urlpath && cmd.data.sound.file) {
+        cmd.data.sound.urlpath = `/uploads/${encodeURIComponent(cmd.data.sound.file)}`;
+    }
+    if (!cmd.data.image.urlpath && cmd.data.image.file) {
+        cmd.data.image.urlpath = `/uploads/${encodeURIComponent(cmd.data.image.file)}`;
+    }
+    if (!cmd.data.image_url || cmd.data.image_url === 'undefined') {
+        cmd.data.image_url = '';
+    }
+    if (!cmd.data.video) {
+        cmd.data.video = {
+            url: cmd.data.video || cmd.data.twitch_clip?.url || '',
+            volume: cmd.data.twitch_clip?.volume || 100,
+        };
+    }
+    if (typeof cmd.data.twitch_clip !== 'undefined') {
+        delete cmd.data.twitch_clip;
+    }
+    return {
+        type: CommandEffectType.MEDIA,
+        data: {
+            image: cmd.data.image,
+            image_url: cmd.data.image_url,
+            minDurationMs: cmd.data.minDurationMs,
+            sound: cmd.data.sound,
+            video: cmd.data.video,
+            widgetIds: cmd.data.widgetIds,
+        },
+    };
+};
+const madochanToCommandEffect = (cmd) => {
+    return {
+        type: CommandEffectType.MADOCHAN,
+        data: {
+            model: cmd.data.model,
+            weirdness: cmd.data.weirdness,
+        },
+    };
+};
+const setChannelTitleToCommandEffect = (cmd) => {
+    return {
+        type: CommandEffectType.SET_CHANNEL_TITLE,
+        data: {
+            title: cmd.data.title,
+        },
+    };
+};
+const setChannelGameIdToCommandEffect = (cmd) => {
+    return {
+        type: CommandEffectType.SET_CHANNEL_GAME_ID,
+        data: {
+            game_id: cmd.data.game_id,
+        },
+    };
+};
+const addStreamTagsToCommandEffect = (cmd) => {
+    return {
+        type: CommandEffectType.ADD_STREAM_TAGS,
+        data: {
+            tag: cmd.data.tag,
+        },
+    };
+};
+const removeStreamTagsToCommandEffect = (cmd) => {
+    return {
+        type: CommandEffectType.REMOVE_STREAM_TAGS,
+        data: {
+            tag: cmd.data.tag,
+        },
+    };
+};
+const chattersToCommandEffect = (_cmd) => {
+    return {
+        type: CommandEffectType.CHATTERS,
+        data: {},
+    };
+};
+const mediaVolumeToCommandEffect = (_cmd) => {
+    return {
+        type: CommandEffectType.MEDIA_VOLUME,
+        data: {},
+    };
+};
+const countdownToCommandEffect = (cmd) => {
+    cmd.data.actions = (cmd.data.actions || []).map((action) => {
+        if (typeof action.value === 'string') {
+            return action;
+        }
+        if (action.value.sound && !action.value.sound.urlpath && action.value.sound.file) {
+            action.value.sound.urlpath = `/uploads/${encodeURIComponent(action.value.sound.file)}`;
+        }
+        if (action.value.image && !action.value.image.urlpath && action.value.image.file) {
+            action.value.image.urlpath = `/uploads/${encodeURIComponent(action.value.image.file)}`;
+        }
+        return action;
     });
+    return {
+        type: CommandEffectType.COUNTDOWN,
+        data: cmd.data
+    };
+};
+var legacy = {
+    addStreamTagsToCommandEffect,
+    chattersToCommandEffect,
+    countdownToCommandEffect,
+    dictLookupToCommandEffect,
+    emotesToCommandEffect,
+    madochanToCommandEffect,
+    mediaToCommandEffect,
+    mediaVolumeToCommandEffect,
+    removeStreamTagsToCommandEffect,
+    setChannelGameIdToCommandEffect,
+    setChannelTitleToCommandEffect,
+    textToCommandEffect,
+    variableChangeToCommandEffect,
 };
 
 logger('GeneralModule.ts');
+const noop = () => { return; };
 class GeneralModule {
     constructor(bot, user) {
         this.bot = bot;
@@ -4788,6 +4726,9 @@ class GeneralModule {
             return this;
         })();
     }
+    getCurrentMediaVolume() {
+        return this.data.settings.volume;
+    }
     async userChanged(user) {
         this.user = user;
     }
@@ -4804,7 +4745,7 @@ class GeneralModule {
                     const rawCmd = null;
                     const target = null;
                     const context = null;
-                    await fn.applyVariableChanges(cmdDef, this, rawCmd, context);
+                    await fn.applyEffects(cmdDef, this, rawCmd, context);
                     await cmdDef.fn({ rawCmd, target, context });
                     t.lines = 0;
                     t.next = now + t.minInterval;
@@ -4819,60 +4760,58 @@ class GeneralModule {
                 delete cmd.command;
             }
             cmd.variables = cmd.variables || [];
-            cmd.variableChanges = cmd.variableChanges || [];
-            if (cmd.action === CommandAction.TEXT) {
-                if (!Array.isArray(cmd.data.text)) {
-                    cmd.data.text = [cmd.data.text];
+            cmd.effects = cmd.effects || [];
+            if (cmd.variableChanges) {
+                for (const variableChange of cmd.variableChanges) {
+                    cmd.effects.push(legacy.variableChangeToCommandEffect(variableChange));
                 }
             }
-            if (cmd.action === CommandAction.MEDIA) {
-                if (cmd.data.excludeFromGlobalWidget) {
-                    cmd.data.widgetIds = [cmd.id];
-                }
-                else if (typeof cmd.data.widgetIds === 'undefined') {
-                    cmd.data.widgetIds = [];
-                }
-                if (typeof cmd.data.excludeFromGlobalWidget !== 'undefined') {
-                    delete cmd.data.excludeFromGlobalWidget;
-                }
-                cmd.data.minDurationMs = cmd.data.minDurationMs || 0;
-                cmd.data.sound.volume = cmd.data.sound.volume || 100;
-                if (!cmd.data.sound.urlpath && cmd.data.sound.file) {
-                    cmd.data.sound.urlpath = `/uploads/${encodeURIComponent(cmd.data.sound.file)}`;
-                }
-                if (!cmd.data.image.urlpath && cmd.data.image.file) {
-                    cmd.data.image.urlpath = `/uploads/${encodeURIComponent(cmd.data.image.file)}`;
-                }
-                if (!cmd.data.image_url || cmd.data.image_url === 'undefined') {
-                    cmd.data.image_url = '';
-                }
-                if (!cmd.data.video) {
-                    cmd.data.video = {
-                        url: cmd.data.video || cmd.data.twitch_clip?.url || '',
-                        volume: cmd.data.twitch_clip?.volume || 100,
-                    };
-                }
-                if (typeof cmd.data.twitch_clip !== 'undefined') {
-                    delete cmd.data.twitch_clip;
-                }
+            if (cmd.action === 'text' && !cmd.effects.find((effect) => effect.type !== CommandEffectType.VARIABLE_CHANGE)) {
+                cmd.effects.push(legacy.textToCommandEffect(cmd));
             }
-            if (cmd.action === CommandAction.COUNTDOWN) {
-                cmd.data.actions = (cmd.data.actions || []).map((action) => {
-                    if (typeof action.value === 'string') {
-                        return action;
-                    }
-                    if (action.value.sound && !action.value.sound.urlpath && action.value.sound.file) {
-                        action.value.sound.urlpath = `/uploads/${encodeURIComponent(action.value.sound.file)}`;
-                    }
-                    if (action.value.image && !action.value.image.urlpath && action.value.image.file) {
-                        action.value.image.urlpath = `/uploads/${encodeURIComponent(action.value.image.file)}`;
-                    }
-                    return action;
-                });
+            if (cmd.action === 'dict_lookup') {
+                cmd.action = 'text';
+                cmd.effects.push(legacy.dictLookupToCommandEffect(cmd));
             }
-            if (cmd.action === 'jisho_org_lookup') {
-                cmd.action = CommandAction.DICT_LOOKUP;
-                cmd.data = { lang: 'ja', phrase: '' };
+            if (cmd.action === 'emotes') {
+                cmd.action = 'text';
+                cmd.effects.push(legacy.emotesToCommandEffect(cmd));
+            }
+            if (cmd.action === 'media') {
+                cmd.action = 'text';
+                cmd.effects.push(legacy.mediaToCommandEffect(cmd));
+            }
+            if (cmd.action === 'madochan_createword') {
+                cmd.action = 'text';
+                cmd.effects.push(legacy.madochanToCommandEffect(cmd));
+            }
+            if (cmd.action === 'set_channel_title') {
+                cmd.action = 'text';
+                cmd.effects.push(legacy.setChannelTitleToCommandEffect(cmd));
+            }
+            if (cmd.action === 'set_channel_game_id') {
+                cmd.action = 'text';
+                cmd.effects.push(legacy.setChannelGameIdToCommandEffect(cmd));
+            }
+            if (cmd.action === 'add_stream_tags') {
+                cmd.action = 'text';
+                cmd.effects.push(legacy.addStreamTagsToCommandEffect(cmd));
+            }
+            if (cmd.action === 'remove_stream_tags') {
+                cmd.action = 'text';
+                cmd.effects.push(legacy.removeStreamTagsToCommandEffect(cmd));
+            }
+            if (cmd.action === 'chatters') {
+                cmd.action = 'text';
+                cmd.effects.push(legacy.chattersToCommandEffect(cmd));
+            }
+            if (cmd.action === 'countdown') {
+                cmd.action = 'text';
+                cmd.effects.push(legacy.countdownToCommandEffect(cmd));
+            }
+            if (cmd.action === 'media_volume') {
+                cmd.action = 'text';
+                cmd.effects.push(legacy.mediaVolumeToCommandEffect(cmd));
             }
             cmd.triggers = (cmd.triggers || []).map((trigger) => {
                 trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0;
@@ -4892,6 +4831,10 @@ class GeneralModule {
             }
             if (!command.createdAt) {
                 command.createdAt = newJsonDate();
+                shouldSave = true;
+            }
+            if (command.variableChanges) {
+                delete command.variableChanges;
                 shouldSave = true;
             }
         }
@@ -4923,10 +4866,15 @@ class GeneralModule {
             data.adminSettings.autocommands = [];
         }
         if (!data.adminSettings.autocommands.includes('!bot')) {
-            const txtCommand = commands.text.NewCommand();
-            txtCommand.triggers = [newCommandTrigger('!bot')];
-            txtCommand.data.text = ['Version $bot.version $bot.website < - $bot.features - Source code at $bot.github'];
-            data.commands.push(txtCommand);
+            const command = commands.text.NewCommand();
+            command.triggers = [newCommandTrigger('!bot')];
+            command.effects.push({
+                type: CommandEffectType.CHAT,
+                data: {
+                    text: ['Version $bot.version $bot.website < - $bot.features - Source code at $bot.github']
+                }
+            });
+            data.commands.push(command);
             data.adminSettings.autocommands.push('!bot');
             fixed.shouldSave = true;
         }
@@ -4938,41 +4886,8 @@ class GeneralModule {
             }
             let cmdObj = null;
             switch (cmd.action) {
-                case CommandAction.MEDIA_VOLUME:
-                    cmdObj = Object.assign({}, cmd, { fn: this.mediaVolumeCmd.bind(this) });
-                    break;
-                case CommandAction.MADOCHAN_CREATEWORD:
-                    cmdObj = Object.assign({}, cmd, { fn: madochanCreateWord(cmd, this.bot, this.user) });
-                    break;
-                case CommandAction.DICT_LOOKUP:
-                    cmdObj = Object.assign({}, cmd, { fn: dictLookup(cmd, this.bot, this.user) });
-                    break;
                 case CommandAction.TEXT:
-                    cmdObj = Object.assign({}, cmd, { fn: randomText(cmd, this.bot, this.user) });
-                    break;
-                case CommandAction.MEDIA:
-                    cmdObj = Object.assign({}, cmd, { fn: playMedia(cmd, this.bot, this.user) });
-                    break;
-                case CommandAction.EMOTES:
-                    cmdObj = Object.assign({}, cmd, { fn: emotes(cmd, this.bot, this.user) });
-                    break;
-                case CommandAction.COUNTDOWN:
-                    cmdObj = Object.assign({}, cmd, { fn: countdown(cmd, this.bot, this.user) });
-                    break;
-                case CommandAction.CHATTERS:
-                    cmdObj = Object.assign({}, cmd, { fn: chatters(this.bot, this.user) });
-                    break;
-                case CommandAction.SET_CHANNEL_TITLE:
-                    cmdObj = Object.assign({}, cmd, { fn: setChannelTitle(cmd, this.bot, this.user) });
-                    break;
-                case CommandAction.SET_CHANNEL_GAME_ID:
-                    cmdObj = Object.assign({}, cmd, { fn: setChannelGameId(cmd, this.bot, this.user) });
-                    break;
-                case CommandAction.ADD_STREAM_TAGS:
-                    cmdObj = Object.assign({}, cmd, { fn: addStreamTags(cmd, this.bot, this.user) });
-                    break;
-                case CommandAction.REMOVE_STREAM_TAGS:
-                    cmdObj = Object.assign({}, cmd, { fn: removeStreamTags(cmd, this.bot, this.user) });
+                    cmdObj = Object.assign({}, cmd, { fn: noop });
                     break;
             }
             if (!cmdObj) {
@@ -5092,20 +5007,6 @@ class GeneralModule {
         }
         this.data.settings.volume = vol;
         await this.save();
-    }
-    async mediaVolumeCmd(ctx) {
-        if (!ctx.rawCmd) {
-            return;
-        }
-        const say = this.bot.sayFn(this.user, ctx.target);
-        if (ctx.rawCmd.args.length === 0) {
-            say(`Current volume: ${this.data.settings.volume}`);
-        }
-        else {
-            const newVolume = determineNewVolume(ctx.rawCmd.args[0], this.data.settings.volume);
-            await this.volume(newVolume);
-            say(`New volume: ${this.data.settings.volume}`);
-        }
     }
     getCommands() {
         return this.commands;
@@ -6635,9 +6536,9 @@ class VoteModule {
     }
     getCommands() {
         return [
-            { triggers: [newCommandTrigger('!vote')], fn: this.voteCmd.bind(this) },
+            { id: 'vote', triggers: [newCommandTrigger('!vote')], fn: this.voteCmd.bind(this) },
             // make configurable
-            { triggers: [newCommandTrigger('!play')], fn: this.playCmd.bind(this) },
+            { id: 'play', triggers: [newCommandTrigger('!play')], fn: this.playCmd.bind(this) },
         ];
     }
     async onChatMsg(_chatMessageContext) {
@@ -7203,11 +7104,13 @@ class PomoModule {
             this.tick(null, null);
             this.commands = [
                 {
+                    id: 'pomo',
                     triggers: [newCommandTrigger('!pomo')],
                     restrict_to: MOD_OR_ABOVE,
                     fn: this.cmdPomoStart.bind(this),
                 },
                 {
+                    id: 'pomo_exit',
                     triggers: [newCommandTrigger('!pomo exit', true)],
                     restrict_to: MOD_OR_ABOVE,
                     fn: this.cmdPomoExit.bind(this),
@@ -7353,7 +7256,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-10-24T18:07:18.355Z",
+    buildDate: "2022-11-09T18:16:07.356Z",
     // @ts-ignore
     buildVersion: "1.30.8",
 };
