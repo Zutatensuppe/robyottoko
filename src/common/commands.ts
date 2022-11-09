@@ -576,6 +576,7 @@ export const commands: Record<CommandAction, CommandDef> = {
 export const possibleEffectActions = () => ([
   { type: CommandEffectType.CHAT, label: 'Add chat', title: 'chat' },
   { type: CommandEffectType.MEDIA, label: 'Add media', title: 'media' },
+  { type: CommandEffectType.MEDIA_VOLUME, label: 'Add media volume', title: 'media_volume' },
   { type: CommandEffectType.EMOTES, label: 'Add emotes', title: 'emotes' },
   { type: CommandEffectType.SET_CHANNEL_TITLE, label: 'Add set_channel_title', title: 'set_channel_title' },
   { type: CommandEffectType.SET_CHANNEL_GAME_ID, label: 'Add set_channel_game_id', title: 'set_channel_game_id' },
@@ -606,7 +607,7 @@ const newEffectData = (type: CommandEffectType): any => {
     case CommandEffectType.SET_CHANNEL_TITLE:
       return { title: '' }
     case CommandEffectType.SET_CHANNEL_GAME_ID:
-      return { title: '' }
+      return { game_id: '' }
     case CommandEffectType.ADD_STREAM_TAGS:
       return { tag: '' }
     case CommandEffectType.REMOVE_STREAM_TAGS:

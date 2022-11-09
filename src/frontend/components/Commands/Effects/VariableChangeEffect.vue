@@ -19,18 +19,20 @@
             :values="autocompletableVariables().map(a => ({ value: a.var.name, label: `${a.var.name} (${a.type}), <code>${a.var.value}</code>` }))"
           />
         </td>
-        <td class="select is-small">
-          <select v-model="val.data.change">
-            <option value="set">
-              set
-            </option>
-            <option value="increase_by">
-              increase by
-            </option>
-            <option value="decrease_by">
-              decrease by
-            </option>
-          </select>
+        <td>
+          <div class="select is-small">
+            <select v-model="val.data.change">
+              <option value="set">
+                set
+              </option>
+              <option value="increase_by">
+                increase by
+              </option>
+              <option value="decrease_by">
+                decrease by
+              </option>
+            </select>
+          </div>
         </td>
         <td>
           <StringInput v-model="val.data.value" />

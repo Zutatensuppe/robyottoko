@@ -63,9 +63,10 @@
                 Show images
               </label>
             </th>
-            <th>Type</th>
+            <th v-if="possibleActionsMapped.length > 1">
+              Type
+            </th>
             <th>Permissions</th>
-            <th>Widgets</th>
             <th />
             <th />
           </tr>
@@ -100,122 +101,27 @@
                 </div>
               </td>
               <td>
-                <div v-if="element.action === 'text'">
-                  <template
-                    v-for="(txt, idx2) in element.data.text"
+                <table>
+                  <tr
+                    v-for="(effect, idx2) in element.effects"
                     :key="idx2"
                   >
-                    <code>{{ element.data.text[idx2] }}</code>
-                    <span v-if="idx2 < element.data.text.length - 1">or</span>
-                  </template>
-                </div>
-                <div
-                  v-else-if="element.action === 'media'"
-                  :class="element.action"
-                >
-                  <div
-                    v-if="element.data.image.file || element.data.sound.file"
-                    class="spacerow media-holder media-holder-inline"
-                  >
-                    <responsive-image
-                      v-if="element.data.image.file && imagesVisible"
-                      :src="element.data.image.urlpath"
-                      :title="element.data.image.filename"
-                      width="100px"
-                      height="50px"
-                      style="display: inline-block"
-                    />
-                    <code v-else-if="element.data.image.file">{{
-                      element.data.image.filename
-                    }}</code>
-
-                    <i
-                      v-if="element.data.image.file && element.data.sound.file"
-                      class="fa fa-plus is-justify-content-center mr-2 ml-2"
-                    />
-                    <audio-player
-                      :src="element.data.sound.urlpath"
-                      :name="element.data.sound.filename"
-                      :volume="element.data.sound.volume"
-                      :base-volume="baseVolume"
-                      class="button is-small is-justify-content-center"
-                    />
-                    <span
-                      v-if="element.data.image.file && element.data.sound.file"
-                      class="ml-2"
-                    >for at least
-                      <duration-display :value="element.data.minDurationMs" />
-                    </span>
-                    <span
-                      v-else-if="element.data.image.file"
-                      class="ml-2"
-                    >for
-                      <duration-display :value="element.data.minDurationMs" />
-                    </span>
-                  </div>
-                </div>
-                <div v-else-if="element.action === 'countdown'">
-                  <div v-if="(element.data.type || 'auto') === 'auto'">
-                    <code>{{ element.data.intro }}</code>
-                    <span>→</span>
-                    <code>{{ element.data.steps }}</code> ✕
-                    <duration-display :value="element.data.interval" />
-                    <span>→</span>
-                    <code>{{ element.data.outro }}</code>
-                  </div>
-                  <div v-else>
-                    <template
-                      v-for="(a, idxActions) in element.data.actions"
-                      :key="idxActions"
-                    >
-                      <duration-display
-                        v-if="a.type === 'delay'"
-                        :value="a.value"
+                    <td>
+                      <EffectInfo
+                        :effect="effect"
+                        :images-visible="imagesVisible"
+                        :base-volume="baseVolume"
+                        :widget-url="widgetUrl"
                       />
-                      <code v-if="a.type === 'text'">{{ a.value }}</code>
-                      <code v-if="a.type === 'media'">
-                        Media(<span v-if="a.value.image.file">{{
-                          a.value.image.filename
-                        }}</span><span v-if="a.value.image.file && a.value.sound.file">+</span><span v-if="a.value.sound.file">{{
-                          a.value.sound.filename
-                        }}</span>)
-                      </code>
-                      <span v-if="idxActions < element.data.actions.length - 1">→</span>
-                    </template>
-                  </div>
-                </div>
-                <div
-                  v-else-if="actionDescription(element.action)"
-                  v-html="actionDescription(element.action)"
-                />
+                    </td>
+                  </tr>
+                </table>
               </td>
-              <td>
+              <td v-if="possibleActionsMapped.length > 1">
                 {{ element.action }}
               </td>
               <td>
                 {{ permissionsStr(element) }}
-              </td>
-              <td>
-                <div v-if="element.action === 'media'">
-                  <a
-                    v-if="element.data.widgetIds.length === 0"
-                    class="button is-small mr-1"
-                    :href="`${widgetUrl}`"
-                    target="_blank"
-                  >Default widget</a>
-                  <a
-                    v-for="(id, idx) in element.data.widgetIds"
-                    :key="idx"
-                    class="button is-small mr-1"
-                    :href="`${widgetUrl}?id=${encodeURIComponent(id)}`"
-                    target="_blank"
-                  >
-                    <code>{{ id }}</code> Widget
-                  </a>
-                </div>
-                <div v-else>
-                  -
-                </div>
               </td>
               <td class="pl-0 pr-0">
                 <doubleclick-button
@@ -262,6 +168,7 @@ import { permissionsStr } from "../../../common/permissions";
 import { commands } from "../../../common/commands";
 import fn from "../../../common/fn";
 import CommandEditor from "./CommandEditor.vue";
+import EffectInfo from "./EffectInfo.vue";
 
 interface ComponentData {
   commands: Command[];
@@ -275,7 +182,7 @@ interface ComponentData {
 }
 
 export default defineComponent({
-    components: { CommandEditor },
+    components: { CommandEditor, EffectInfo },
     props: {
         globalVariables: {
             type: Array as PropType<GlobalVariable[]>,

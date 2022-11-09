@@ -290,19 +290,19 @@ export interface CommandEffect {
   data: any
 }
 
-export interface VariableChangeEffect {
+export interface VariableChangeEffect extends CommandEffect {
   type: CommandEffectType.VARIABLE_CHANGE
   data: CommandVariableChange
 }
 
-export interface ChatEffect {
+export interface ChatEffect extends CommandEffect {
   type: CommandEffectType.CHAT
   data: {
     text: string[]
   }
 }
 
-export interface DictLookupEffect {
+export interface DictLookupEffect extends CommandEffect {
   type: CommandEffectType.DICT_LOOKUP
   data: {
     lang: string
@@ -310,17 +310,17 @@ export interface DictLookupEffect {
   }
 }
 
-export interface EmotesEffect {
+export interface EmotesEffect extends CommandEffect {
   type: CommandEffectType.EMOTES
   data: GeneralModuleEmotesEventData
 }
 
-export interface MediaEffect {
+export interface MediaEffect extends CommandEffect {
   type: CommandEffectType.MEDIA
   data: MediaCommandData
 }
 
-export interface MadochanEffect {
+export interface MadochanEffect extends CommandEffect {
   type: CommandEffectType.MADOCHAN
   data: {
     model: string
@@ -328,45 +328,45 @@ export interface MadochanEffect {
   }
 }
 
-export interface SetChannelTitleEffect {
+export interface SetChannelTitleEffect extends CommandEffect {
   type: CommandEffectType.SET_CHANNEL_TITLE
   data: {
     title: string
   }
 }
 
-export interface SetChannelGameIdEffect {
+export interface SetChannelGameIdEffect extends CommandEffect {
   type: CommandEffectType.SET_CHANNEL_GAME_ID
   data: {
     game_id: string
   }
 }
 
-export interface AddStreamTagEffect {
+export interface AddStreamTagEffect extends CommandEffect {
   type: CommandEffectType.ADD_STREAM_TAGS
   data: {
     tag: string
   }
 }
 
-export interface RemoveStreamTagEffect {
+export interface RemoveStreamTagEffect extends CommandEffect {
   type: CommandEffectType.REMOVE_STREAM_TAGS
   data: {
     tag: string
   }
 }
 
-export interface ChattersEffect {
+export interface ChattersEffect extends CommandEffect {
   type: CommandEffectType.CHATTERS
   data: object // empty object for now
 }
 
-export interface MediaVolumeEffect {
+export interface MediaVolumeEffect extends CommandEffect {
   type: CommandEffectType.MEDIA_VOLUME
   data: object // empty object for now
 }
 
-export interface CountdownEffect {
+export interface CountdownEffect extends CommandEffect {
   type: CommandEffectType.COUNTDOWN
   data: CountdownCommandData
 }

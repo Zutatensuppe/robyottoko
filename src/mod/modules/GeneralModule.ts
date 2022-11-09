@@ -210,6 +210,10 @@ class GeneralModule implements Module {
         command.createdAt = newJsonDate()
         shouldSave = true
       }
+      if (command.variableChanges) {
+        delete command.variableChanges
+        shouldSave = true
+      }
     }
     return {
       commands: fixedCommands,

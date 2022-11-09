@@ -47,18 +47,18 @@
         </td>
       </tr>
       <tr>
-        <td colspan="3">
-          <div>
-            Response:
-            <div class="help">
-              Outputs the translation for the input phrase. The
-              translation is always from/to english. <br>
-              To let the user decide on the language use
-              <code>$args(0)</code> as language, and
-              <code>$args(1:)</code> as phrase. <br>
-              If phrase is left empty, all arguments to the command will
-              be used as the phrase.
-            </div>
+        <td>
+          Response:
+        </td>
+        <td colspan="2">
+          <div class="help">
+            Outputs the translation for the input phrase. The
+            translation is always from/to english. <br>
+            To let the user decide on the language use
+            <code>$args(0)</code> as language, and
+            <code>$args(1:)</code> as phrase. <br>
+            If phrase is left empty, all arguments to the command will
+            be used as the phrase.
           </div>
         </td>
       </tr>
