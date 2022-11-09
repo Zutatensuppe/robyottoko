@@ -182,184 +182,184 @@ interface ComponentData {
 }
 
 export default defineComponent({
-    components: { CommandEditor, EffectInfo },
-    props: {
-        globalVariables: {
-            type: Array as PropType<GlobalVariable[]>,
-            required: true,
-        },
-        channelPointsCustomRewards: {
-            type: Object as PropType<Record<string, string[]>>,
-            required: true,
-        },
-        possibleActions: {
-            type: Array as PropType<CommandAction[]>,
-            required: true,
-        },
-        baseVolume: {
-            type: Number,
-            required: true,
-        },
-        modelValue: {
-            type: Array as PropType<Command[]>,
-            required: true,
-        },
-        showToggleImages: {
-            type: Boolean,
-            required: false,
-            default: false,
-        },
-        showFilterActions: {
-            type: Boolean,
-            required: false,
-            default: false,
-        },
-        showImages: {
-            type: Boolean,
-            required: false,
-            default: false,
-        },
-        widgetUrl: {
-            type: String,
-            required: false,
-            default: "",
-        },
+  components: { CommandEditor, EffectInfo },
+  props: {
+    globalVariables: {
+      type: Array as PropType<GlobalVariable[]>,
+      required: true,
     },
-    emits: ["update:modelValue", "showImagesChange"],
-    data(): ComponentData {
-        return {
-            commands: [],
-            editIdx: null,
-            editCommand: null,
-            filter: {
-                search: "",
-                actions: [],
-            },
-            imagesVisible: false,
-        };
+    channelPointsCustomRewards: {
+      type: Object as PropType<Record<string, string[]>>,
+      required: true,
     },
-    computed: {
-        possibleActionsMapped() {
-            return this.possibleActions.map((action) => ({
-                type: action,
-                title: this.actionDescription(action),
-                label: `Add ${this.actionName(action)}`,
-            }));
-        },
-        possibleActionsWithCount() {
-            return this.possibleActions
-                .map((action) => {
-                return {
-                    action,
-                    count: this.commandCount(action),
-                };
-            })
-                .filter((a) => a.count > 0);
-        },
+    possibleActions: {
+      type: Array as PropType<CommandAction[]>,
+      required: true,
     },
-    created() {
-        this.commands = JSON.parse(JSON.stringify(this.modelValue));
-        this.imagesVisible = this.showImages;
+    baseVolume: {
+      type: Number,
+      required: true,
     },
-    methods: {
-        onImageVisibleChange() {
-            // TODO: use value from event?
-            this.$emit("showImagesChange", this.imagesVisible);
-        },
-        emitChange() {
-            this.$emit("update:modelValue", this.commands);
-        },
-        commandCount(action: string): number {
-            let count = 0;
-            for (const cmd of this.commands) {
-                if (cmd.action === action) {
-                    count++;
-                }
-            }
-            return count;
-        },
-        filteredOut(item: Command) {
-            if (this.filter.actions.length > 0 &&
-                !this.filter.actions.includes(item.action)) {
-                return true;
-            }
-            if (!this.filter.search) {
-                return false;
-            }
-            const search = this.filter.search.toLowerCase();
-            // search in triggers:
-            const foundInTriggers = item.triggers.find(trigger => {
-                if (trigger.type === CommandTriggerType.COMMAND) {
-                    return trigger.data.command.toLowerCase().indexOf(search) >= 0;
-                }
-                if (trigger.type === CommandTriggerType.REWARD_REDEMPTION) {
-                    return trigger.data.command.toLowerCase().indexOf(search) >= 0;
-                }
-                return false;
-            });
-            if (foundInTriggers) {
-                return false;
-            }
-            if (item.action === CommandAction.TEXT) {
-                const foundInText = ((item as RandomTextCommand).data.text).find((text) => {
-                    return text.toLowerCase().indexOf(search) >= 0;
-                });
-                if (foundInText) {
-                    return false;
-                }
-            }
-            return true;
-        },
-        permissionsStr(item: Command) {
-            return permissionsStr(item.restrict_to);
-        },
-        remove(idx: number) {
-            this.commands = this.commands.filter((_val, index: number) => index !== idx);
-            this.emitChange();
-        },
-        add(mappedAction: any) {
-            const type: CommandAction = mappedAction.type;
-            this.editIdx = -1;
-            this.editCommand = commands[type].NewCommand();
-        },
-        edit(idx: number) {
-            this.editIdx = idx;
-            this.editCommand = this.commands[idx];
-        },
-        duplicate(idx: number) {
-            this.editIdx = -1;
-            this.editCommand = JSON.parse(JSON.stringify(this.commands[idx]));
-        },
-        editedCommand(command: Command): void {
-            if (this.editIdx === null) {
-                return;
-            }
-            if (this.editIdx === -1) {
-                // put new commands on top of the list
-                this.commands.unshift(command);
-            }
-            else {
-                // otherwise edit the edited command
-                this.commands[this.editIdx] = command;
-            }
-            this.emitChange();
-            this.editIdx = null;
-            this.editCommand = null;
-        },
-        dragEnd(evt: {
-            oldIndex: number;
-            newIndex: number;
-        }) {
-            this.commands = fn.arrayMove(this.commands, evt.oldIndex, evt.newIndex);
-            this.emitChange();
-        },
-        actionDescription(action: CommandAction) {
-            return commands[action].Description();
-        },
-        actionName(action: CommandAction) {
-            return commands[action].Name();
-        },
-    }
+    modelValue: {
+      type: Array as PropType<Command[]>,
+      required: true,
+    },
+    showToggleImages: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    showFilterActions: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    showImages: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    widgetUrl: {
+      type: String,
+      required: false,
+      default: "",
+    },
+  },
+  emits: ["update:modelValue", "showImagesChange"],
+  data(): ComponentData {
+    return {
+      commands: [],
+      editIdx: null,
+      editCommand: null,
+      filter: {
+        search: "",
+        actions: [],
+      },
+      imagesVisible: false,
+    };
+  },
+  computed: {
+    possibleActionsMapped() {
+      return this.possibleActions.map((action) => ({
+        type: action,
+        title: this.actionDescription(action),
+        label: `Add ${this.actionName(action)}`,
+      }));
+    },
+    possibleActionsWithCount() {
+      return this.possibleActions
+        .map((action) => {
+          return {
+            action,
+            count: this.commandCount(action),
+          };
+        })
+        .filter((a) => a.count > 0);
+    },
+  },
+  created() {
+    this.commands = JSON.parse(JSON.stringify(this.modelValue));
+    this.imagesVisible = this.showImages;
+  },
+  methods: {
+    onImageVisibleChange() {
+      // TODO: use value from event?
+      this.$emit("showImagesChange", this.imagesVisible);
+    },
+    emitChange() {
+      this.$emit("update:modelValue", this.commands);
+    },
+    commandCount(action: string): number {
+      let count = 0;
+      for (const cmd of this.commands) {
+        if (cmd.action === action) {
+          count++;
+        }
+      }
+      return count;
+    },
+    filteredOut(item: Command) {
+      if (this.filter.actions.length > 0 &&
+        !this.filter.actions.includes(item.action)) {
+        return true;
+      }
+      if (!this.filter.search) {
+        return false;
+      }
+      const search = this.filter.search.toLowerCase();
+      // search in triggers:
+      const foundInTriggers = item.triggers.find(trigger => {
+        if (trigger.type === CommandTriggerType.COMMAND) {
+          return trigger.data.command.toLowerCase().indexOf(search) >= 0;
+        }
+        if (trigger.type === CommandTriggerType.REWARD_REDEMPTION) {
+          return trigger.data.command.toLowerCase().indexOf(search) >= 0;
+        }
+        return false;
+      });
+      if (foundInTriggers) {
+        return false;
+      }
+      if (item.action === CommandAction.TEXT) {
+        const foundInText = ((item as RandomTextCommand).data.text).find((text) => {
+          return text.toLowerCase().indexOf(search) >= 0;
+        });
+        if (foundInText) {
+          return false;
+        }
+      }
+      return true;
+    },
+    permissionsStr(item: Command) {
+      return permissionsStr(item.restrict_to);
+    },
+    remove(idx: number) {
+      this.commands = this.commands.filter((_val, index: number) => index !== idx);
+      this.emitChange();
+    },
+    add(mappedAction: any) {
+      const type: CommandAction = mappedAction.type;
+      this.editIdx = -1;
+      this.editCommand = commands[type].NewCommand();
+    },
+    edit(idx: number) {
+      this.editIdx = idx;
+      this.editCommand = this.commands[idx];
+    },
+    duplicate(idx: number) {
+      this.editIdx = -1;
+      this.editCommand = JSON.parse(JSON.stringify(this.commands[idx]));
+    },
+    editedCommand(command: Command): void {
+      if (this.editIdx === null) {
+        return;
+      }
+      if (this.editIdx === -1) {
+        // put new commands on top of the list
+        this.commands.unshift(command);
+      }
+      else {
+        // otherwise edit the edited command
+        this.commands[this.editIdx] = command;
+      }
+      this.emitChange();
+      this.editIdx = null;
+      this.editCommand = null;
+    },
+    dragEnd(evt: {
+      oldIndex: number;
+      newIndex: number;
+    }) {
+      this.commands = fn.arrayMove(this.commands, evt.oldIndex, evt.newIndex);
+      this.emitChange();
+    },
+    actionDescription(action: CommandAction) {
+      return commands[action].Description();
+    },
+    actionName(action: CommandAction) {
+      return commands[action].Name();
+    },
+  }
 });
 </script>
 
