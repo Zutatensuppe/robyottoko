@@ -1,12 +1,8 @@
 import { getProp, mustParseHumanDuration, nonce } from "../common/fn"
 import {
-  AddStreamTagCommand,
-  ChattersCommand,
-  Command, CommandAction, CommandTrigger, CommandTriggerType,
-  CountdownAction, CountdownActionType, CountdownCommand, DictLookupCommand, EmotesCommand, FunctionCommand,
-  MadochanCommand,
-  MediaCommand,
-  MediaCommandData, MediaFile, MediaVideo, MediaVolumeCommand, RandomTextCommand, RemoveStreamTagCommand, SetChannelGameIdCommand, SetChannelTitleCommand, SoundMediaFile,
+  Command, CommandAction, CommandEffect, CommandEffectType, CommandTrigger, CommandTriggerType,
+  CountdownAction, CountdownActionType, FunctionCommand,
+  MediaCommandData, MediaFile, MediaVideo, RandomTextCommand, SoundMediaFile,
 } from "../types"
 import { MOD_OR_ABOVE } from './permissions'
 
@@ -143,6 +139,11 @@ export const getUniqueCommandsByTriggers = (
   return tmp.filter((item, i, ar) => ar.indexOf(item) === i)
 }
 
+export const isValidEffect = (_effect: CommandEffect): boolean => {
+  // TODO: check if effects are actually valid
+  return true
+}
+
 export const isValidTrigger = (trigger: CommandTrigger): boolean => {
   if (trigger.type === CommandTriggerType.COMMAND) {
     if (!trigger.data.command) {
@@ -171,219 +172,24 @@ interface CommandDef {
   Name: () => string
   Description: () => string
   NewCommand: () => Command
-  RequiresAccessToken: () => boolean
 }
 
 export const commands: Record<CommandAction, CommandDef> = {
-  add_stream_tags: {
-    Name: () => "add_stream_tags command",
-    Description: () => "Add streamtag",
-    NewCommand: (): AddStreamTagCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
-      triggers: [newCommandTrigger()],
-      action: CommandAction.ADD_STREAM_TAGS,
-      restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      variableChanges: [],
-      data: {
-        tag: ''
-      },
-    }),
-    RequiresAccessToken: () => true,
-  },
-  chatters: {
-    Name: () => "chatters command",
-    Description: () => "Outputs the people who chatted during the stream.",
-    NewCommand: (): ChattersCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
-      triggers: [newCommandTrigger()],
-      action: CommandAction.CHATTERS,
-      restrict_to: [],
-      variables: [],
-      variableChanges: [],
-      data: {},
-    }),
-    RequiresAccessToken: () => false,
-  },
-  countdown: {
-    Name: () => "countdown",
-    Description: () => "Add a countdown or messages spaced by time intervals.",
-    NewCommand: (): CountdownCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
-      triggers: [newCommandTrigger()],
-      action: CommandAction.COUNTDOWN,
-      restrict_to: [],
-      variables: [],
-      variableChanges: [],
-      data: {
-        type: 'auto',
-        step: '',
-        steps: '3',
-        interval: '1s',
-        intro: 'Starting countdown...',
-        outro: 'Done!',
-        actions: [] as CountdownAction[]
-      },
-    }),
-    RequiresAccessToken: () => false,
-  },
-  dict_lookup: {
-    Name: () => "dictionary lookup",
-    Description: () => "Outputs the translation for the searched word.",
-    NewCommand: (): DictLookupCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
-      triggers: [newCommandTrigger()],
-      action: CommandAction.DICT_LOOKUP,
-      restrict_to: [],
-      variables: [],
-      variableChanges: [],
-      data: {
-        lang: 'ja',
-        phrase: '',
-      },
-    }),
-    RequiresAccessToken: () => false,
-  },
-  madochan_createword: {
-    Name: () => "madochan",
-    Description: () => "Creates a word for a definition.",
-    NewCommand: (): MadochanCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
-      triggers: [newCommandTrigger()],
-      action: CommandAction.MADOCHAN_CREATEWORD,
-      restrict_to: [],
-      variables: [],
-      variableChanges: [],
-      data: {
-        // TODO: use from same resource as server
-        model: '100epochs800lenhashingbidirectional.h5',
-        weirdness: '1',
-      },
-    }),
-    RequiresAccessToken: () => false,
-  },
-  media: {
-    Name: () => "media command",
-    Description: () => "Display an image and/or play a sound.",
-    NewCommand: (): MediaCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
-      triggers: [newCommandTrigger()],
-      action: CommandAction.MEDIA,
-      restrict_to: [],
-      variables: [],
-      variableChanges: [],
-      data: newMedia(),
-    }),
-    RequiresAccessToken: () => false,
-  },
-  emotes: {
-    Name: () => "emote command",
-    Description: () => "Display emotes.",
-    NewCommand: (): EmotesCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
-      triggers: [newCommandTrigger()],
-      action: CommandAction.EMOTES,
-      restrict_to: [],
-      variables: [],
-      variableChanges: [],
-      data: {
-        displayFn: [],
-        emotes: [],
-      },
-    }),
-    RequiresAccessToken: () => false,
-  },
-  media_volume: {
-    Name: () => "media volume command",
-    Description: () => `Sets the media volume to <code>&lt;VOLUME&gt;</code> (argument to this command, min 0, max 100).
-    <br />
-    If no argument is given, just outputs the current volume`,
-    NewCommand: (): MediaVolumeCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
-      triggers: [newCommandTrigger()],
-      action: CommandAction.MEDIA_VOLUME,
-      restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      variableChanges: [],
-      data: {},
-    }),
-    RequiresAccessToken: () => false,
-  },
   text: {
     Name: () => "command",
-    Description: () => "Send a message to chat",
+    Description: () => "",
     NewCommand: (): RandomTextCommand => ({
       id: newCommandId(),
       createdAt: newJsonDate(),
       triggers: [newCommandTrigger()],
+      effects: [],
       action: CommandAction.TEXT,
       restrict_to: [],
       variables: [],
-      variableChanges: [],
       data: {
         text: [newText()],
       },
     }),
-    RequiresAccessToken: () => false,
-  },
-  remove_stream_tags: {
-    Name: () => "remove_stream_tags command",
-    Description: () => "Remove streamtag",
-    NewCommand: (): RemoveStreamTagCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
-      triggers: [newCommandTrigger()],
-      action: CommandAction.REMOVE_STREAM_TAGS,
-      restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      variableChanges: [],
-      data: {
-        tag: ''
-      },
-    }),
-    RequiresAccessToken: () => true,
-  },
-  set_channel_game_id: {
-    Name: () => "change stream category command",
-    Description: () => "Change the stream category",
-    NewCommand: (): SetChannelGameIdCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
-      triggers: [newCommandTrigger()],
-      action: CommandAction.SET_CHANNEL_GAME_ID,
-      restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      variableChanges: [],
-      data: {
-        game_id: ''
-      },
-    }),
-    RequiresAccessToken: () => true,
-  },
-  set_channel_title: {
-    Name: () => "change stream title command",
-    Description: () => "Change the stream title",
-    NewCommand: (): SetChannelTitleCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
-      triggers: [newCommandTrigger()],
-      action: CommandAction.SET_CHANNEL_TITLE,
-      restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      variableChanges: [],
-      data: {
-        title: ''
-      },
-    }),
-    RequiresAccessToken: () => true,
   },
   sr_current: {
     Name: () => "sr_current",
@@ -393,12 +199,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_CURRENT,
       triggers: [newCommandTrigger('!sr current', true)],
+      effects: [],
       restrict_to: [],
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_undo: {
     Name: () => "sr_undo",
@@ -408,12 +213,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_UNDO,
       triggers: [newCommandTrigger('!sr undo', true)],
+      effects: [],
       restrict_to: [],
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_good: {
     Name: () => "sr_good",
@@ -423,12 +227,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_GOOD,
       triggers: [newCommandTrigger('!sr good', true)],
+      effects: [],
       restrict_to: [],
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_bad: {
     Name: () => "sr_bad",
@@ -438,12 +241,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_BAD,
       triggers: [newCommandTrigger('!sr bad', true)],
+      effects: [],
       restrict_to: [],
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_stats: {
     Name: () => "sr_stats",
@@ -453,12 +255,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_STATS,
       triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)],
+      effects: [],
       restrict_to: [],
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_prev: {
     Name: () => "sr_prev",
@@ -468,12 +269,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_PREV,
       triggers: [newCommandTrigger('!sr prev', true)],
+      effects: [],
       restrict_to: MOD_OR_ABOVE,
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_next: {
     Name: () => "sr_next",
@@ -483,12 +283,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_NEXT,
       triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)],
+      effects: [],
       restrict_to: MOD_OR_ABOVE,
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_jumptonew: {
     Name: () => "sr_jumptonew",
@@ -498,12 +297,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_JUMPTONEW,
       triggers: [newCommandTrigger('!sr jumptonew', true)],
+      effects: [],
       restrict_to: MOD_OR_ABOVE,
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_clear: {
     Name: () => "sr_clear",
@@ -513,12 +311,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_CLEAR,
       triggers: [newCommandTrigger('!sr clear', true)],
+      effects: [],
       restrict_to: MOD_OR_ABOVE,
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_rm: {
     Name: () => "sr_rm",
@@ -528,12 +325,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_RM,
       triggers: [newCommandTrigger('!sr rm', true)],
+      effects: [],
       restrict_to: MOD_OR_ABOVE,
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_shuffle: {
     Name: () => "sr_shuffle",
@@ -546,12 +342,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_SHUFFLE,
       triggers: [newCommandTrigger('!sr shuffle', true)],
+      effects: [],
       restrict_to: MOD_OR_ABOVE,
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_reset_stats: {
     Name: () => "sr_reset_stats",
@@ -561,12 +356,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_RESET_STATS,
       triggers: [newCommandTrigger('!sr resetStats', true)],
+      effects: [],
       restrict_to: MOD_OR_ABOVE,
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_loop: {
     Name: () => "sr_loop",
@@ -576,12 +370,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_LOOP,
       triggers: [newCommandTrigger('!sr loop', true)],
+      effects: [],
       restrict_to: MOD_OR_ABOVE,
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_noloop: {
     Name: () => "sr_noloop",
@@ -591,12 +384,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_NOLOOP,
       triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)],
+      effects: [],
       restrict_to: MOD_OR_ABOVE,
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_pause: {
     Name: () => "sr_pause",
@@ -606,12 +398,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_PAUSE,
       triggers: [newCommandTrigger('!sr pause', true)],
+      effects: [],
       restrict_to: MOD_OR_ABOVE,
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_unpause: {
     Name: () => "sr_unpause",
@@ -621,12 +412,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_UNPAUSE,
       triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)],
+      effects: [],
       restrict_to: MOD_OR_ABOVE,
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_hidevideo: {
     Name: () => "sr_hidevideo",
@@ -636,12 +426,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_HIDEVIDEO,
       triggers: [newCommandTrigger('!sr hidevideo', true)],
+      effects: [],
       restrict_to: MOD_OR_ABOVE,
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_showvideo: {
     Name: () => "sr_showvideo",
@@ -651,12 +440,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_SHOWVIDEO,
       triggers: [newCommandTrigger('!sr showvideo', true)],
+      effects: [],
       restrict_to: MOD_OR_ABOVE,
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_request: {
     Name: () => "sr_request",
@@ -670,12 +458,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_REQUEST,
       triggers: [newCommandTrigger('!sr')],
+      effects: [],
       restrict_to: [],
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_re_request: {
     Name: () => "sr_re_request",
@@ -688,12 +475,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_RE_REQUEST,
       triggers: [newCommandTrigger('!resr')],
+      effects: [],
       restrict_to: [],
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_addtag: {
     Name: () => "sr_addtag",
@@ -703,14 +489,13 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_ADDTAG,
       triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')],
+      effects: [],
       restrict_to: MOD_OR_ABOVE,
       variables: [],
-      variableChanges: [],
       data: {
         tag: "",
       },
     }),
-    RequiresAccessToken: () => false,
   },
   sr_rmtag: {
     Name: () => "sr_rmtag",
@@ -720,12 +505,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_RMTAG,
       triggers: [newCommandTrigger('!sr rmtag')],
+      effects: [],
       restrict_to: MOD_OR_ABOVE,
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_volume: {
     Name: () => "sr_volume",
@@ -737,12 +521,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_VOLUME,
       triggers: [newCommandTrigger('!sr volume')],
+      effects: [],
       restrict_to: MOD_OR_ABOVE,
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_filter: {
     Name: () => "sr_filter",
@@ -753,12 +536,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_FILTER,
       triggers: [newCommandTrigger('!sr filter')],
+      effects: [],
       restrict_to: MOD_OR_ABOVE,
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_preset: {
     Name: () => "sr_preset",
@@ -769,12 +551,11 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_PRESET,
       triggers: [newCommandTrigger('!sr preset')],
+      effects: [],
       restrict_to: MOD_OR_ABOVE,
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
   sr_queue: {
     Name: () => "sr_queue",
@@ -784,15 +565,77 @@ export const commands: Record<CommandAction, CommandDef> = {
       createdAt: newJsonDate(),
       action: CommandAction.SR_QUEUE,
       triggers: [newCommandTrigger('!sr queue')],
+      effects: [],
       restrict_to: [],
       variables: [],
-      variableChanges: [],
       data: {},
     }),
-    RequiresAccessToken: () => false,
   },
+}
+
+export const possibleEffectActions = () => ([
+  { type: CommandEffectType.CHAT, label: 'Add chat', title: 'chat' },
+  { type: CommandEffectType.MEDIA, label: 'Add media', title: 'media' },
+  { type: CommandEffectType.MEDIA_VOLUME, label: 'Add media volume', title: 'media_volume' },
+  { type: CommandEffectType.EMOTES, label: 'Add emotes', title: 'emotes' },
+  { type: CommandEffectType.SET_CHANNEL_TITLE, label: 'Add set_channel_title', title: 'set_channel_title' },
+  { type: CommandEffectType.SET_CHANNEL_GAME_ID, label: 'Add set_channel_game_id', title: 'set_channel_game_id' },
+  { type: CommandEffectType.CHATTERS, label: 'Add chatters', title: 'chatters' },
+  { type: CommandEffectType.DICT_LOOKUP, label: 'Add dict_lookup', title: 'dict_lookup' },
+  { type: CommandEffectType.ADD_STREAM_TAGS, label: 'Add add_stream_tags', title: 'add_stream_tags' },
+  { type: CommandEffectType.REMOVE_STREAM_TAGS, label: 'Add remove_stream_tags', title: 'remove_stream_tags' },
+  { type: CommandEffectType.MADOCHAN, label: 'Add madochan', title: 'madochan' },
+  { type: CommandEffectType.COUNTDOWN, label: 'Add countdown', title: 'countdown' },
+  { type: CommandEffectType.VARIABLE_CHANGE, label: 'Add variable_change', title: 'variable_change' },
+])
+
+const newEffectData = (type: CommandEffectType): any => {
+  switch (type) {
+    case CommandEffectType.VARIABLE_CHANGE:
+      return { name: "", change: "set", value: "" }
+    case CommandEffectType.CHAT:
+      return { text: [''] }
+    case CommandEffectType.DICT_LOOKUP:
+      return { lang: 'ja', phrase: '' }
+    case CommandEffectType.EMOTES:
+      return { displayFn: [], emotes: [] }
+    case CommandEffectType.MEDIA:
+      return newMedia()
+    case CommandEffectType.MADOCHAN:
+      // TODO: use from same resource as server
+      return { model: '100epochs800lenhashingbidirectional.h5', weirdness: '1' }
+    case CommandEffectType.SET_CHANNEL_TITLE:
+      return { title: '' }
+    case CommandEffectType.SET_CHANNEL_GAME_ID:
+      return { game_id: '' }
+    case CommandEffectType.ADD_STREAM_TAGS:
+      return { tag: '' }
+    case CommandEffectType.REMOVE_STREAM_TAGS:
+      return { tag: '' }
+    case CommandEffectType.CHATTERS:
+      return {}
+    case CommandEffectType.COUNTDOWN:
+      return {
+          type: 'auto',
+          step: '',
+          steps: '3',
+          interval: '1s',
+          intro: 'Starting countdown...',
+          outro: 'Done!',
+          actions: []
+      }
+    default:
+      // should not occur, all possible cases are handled
+      return {}
+  }
+}
+
+export const newEffect = (type: CommandEffectType): CommandEffect => {
+  return { type, data: newEffectData(type) }
 }
 
 export default {
   commands,
+  newEffect,
+  possibleEffectActions,
 }

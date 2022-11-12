@@ -43,18 +43,19 @@ export default defineComponent({
   data: (): ComponentData => ({
     show: false,
     macros: [
-      { value: "$args", title: "All args, joined with spaces" },
+      { value: "$args", title: "All arguments, joined with spaces" },
+      { value: "$args(0)", title: "First argument" },
       {
         value: "$args(1:)",
-        title: "Args starting from the second one, joined with spaces",
+        title: "Arguments starting from the second one, joined with spaces",
       },
       {
         value: "$args(1:4)",
-        title: "Second to fifth args, joined with spaces",
+        title: "Second to fifth arguments, joined with spaces",
       },
       {
         value: "$args(:4)",
-        title: "All args up to and including the fifth, joined with spaces",
+        title: "All arguments up to and including the fifth, joined with spaces",
       },
       { value: "$var(VARNAME)", title: "Value of variable VARNAME" },
       { value: "$bot.version", title: "Bot version" },

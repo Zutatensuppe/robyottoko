@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="item"
+    ref="el"
     class="modal is-active"
   >
     <div
@@ -9,9 +9,15 @@
     />
     <div class="modal-card">
       <header class="modal-card-head">
-        <p class="modal-card-title">
+        <div class="modal-card-title">
           {{ title }}
-        </p>
+          <div
+            v-if="actionDescription"
+            class="help"
+          >
+            <div v-html="actionDescription" />
+          </div>
+        </div>
         <button
           class="delete"
           aria-label="close"
@@ -22,7 +28,14 @@
         <table class="table is-striped">
           <tbody>
             <tr>
-              <td>Triggers:</td>
+              <td>
+                <div>Triggers:</div>
+                <dropdown-button
+                  :actions="possibleTriggerActions()"
+                  label="Add trigger"
+                  @click="addTrigger"
+                />
+              </td>
               <td>
                 <trigger-editor
                   v-for="(trigger, idx) in item.triggers"
@@ -34,76 +47,6 @@
                   @update:modelValue="item.triggers[idx] = $event"
                   @remove="rmtrigger(idx)"
                 />
-                <dropdown-button
-                  :actions="possibleTriggerActions"
-                  label="Add trigger"
-                  @click="addtrigger"
-                />
-              </td>
-            </tr>
-            <tr v-if="actionDescription">
-              <td>Description:</td>
-              <td v-html="actionDescription" />
-            </tr>
-            <tr v-if="requiresAccessToken">
-              <td>Attention:</td>
-              <td>
-                <div class="help">
-                  This requires <code>Access Token</code> to be set in the user
-                  settings.
-                </div>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'set_channel_title'">
-              <td>Stream title:</td>
-              <td>
-                <input
-                  v-model="item.data.title"
-                  class="input is-small spaceinput mb-1"
-                >
-                <span
-                  class="button is-small mr-1"
-                  @click="item.data.title = ''"
-                >All args</span>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'set_channel_game_id'">
-              <td>Stream category:</td>
-              <td>
-                <input
-                  v-model="item.data.game_id"
-                  class="input is-small spaceinput mb-1"
-                >
-                <span
-                  class="button is-small mr-1"
-                  @click="item.data.game_id = ''"
-                >All args</span>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'add_stream_tags'">
-              <td>Tag to add:</td>
-              <td>
-                <input
-                  v-model="item.data.tag"
-                  class="input is-small spaceinput mb-1"
-                >
-                <span
-                  class="button is-small mr-1"
-                  @click="item.data.tag = ''"
-                >All args</span>
-              </td>
-            </tr>
-            <tr v-if="item.action === 'remove_stream_tags'">
-              <td>Tag to remove:</td>
-              <td>
-                <input
-                  v-model="item.data.tag"
-                  class="input is-small spaceinput mb-1"
-                >
-                <span
-                  class="button is-small mr-1"
-                  @click="item.data.tag = ''"
-                >All args</span>
               </td>
             </tr>
             <tr v-if="item.action === 'sr_addtag'">
@@ -119,17 +62,40 @@
                 >All args</span>
               </td>
             </tr>
-            <tr v-if="item.action === 'chatters'">
-              <td>Response:</td>
-              <td>Outputs the people who chatted during the stream.</td>
-            </tr>
-            <tr v-if="item.action === 'countdown'">
-              <td>Settings</td>
+            <tr>
               <td>
-                <countdown-editor
-                  v-model="item.data"
-                  :base-volume="baseVolume"
+                <div>Effects:</div>
+                <dropdown-button
+                  :actions="possibleEffectActions()"
+                  label="Add effect"
+                  @click="addEffect"
                 />
+              </td>
+              <td>
+                <EffectsEditor
+                  v-model="item.effects"
+                  :item-variables="item.variables"
+                  :global-variables="globalVariables"
+                  :base-volume="baseVolume"
+                  :widget-url="widgetUrl"
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>Permissions:</td>
+              <td>
+                <label
+                  v-for="(perm, idx) in possiblePermissions"
+                  :key="idx"
+                  class="mr-1"
+                >
+                  <input
+                    v-model="item.restrict_to"
+                    type="checkbox"
+                    :value="perm.value"
+                  >
+                  {{ perm.label }}
+                </label>
               </td>
             </tr>
             <tr>
@@ -180,85 +146,6 @@
                 </div>
               </td>
             </tr>
-            <tr>
-              <td>Variable changes:</td>
-              <td>
-                <table v-if="item.variableChanges.length > 0">
-                  <thead>
-                    <tr>
-                      <td>Name</td>
-                      <td>Change</td>
-                      <td>Value</td>
-                      <td />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr
-                      v-for="(v, idx) in item.variableChanges"
-                      :key="idx"
-                    >
-                      <td>
-                        <dropdown-input
-                          v-model="v.name"
-                          :values="autocompletableVariables().map(a => ({ value: a.var.name, label: `${a.var.name} (${a.type}), <code>${a.var.value}</code>` }))"
-                        />
-                      </td>
-                      <td>
-                        <div class="select is-small">
-                          <select v-model="v.change">
-                            <option value="set">
-                              set
-                            </option>
-                            <option value="increase_by">
-                              increase by
-                            </option>
-                            <option value="decrease_by">
-                              decrease by
-                            </option>
-                          </select>
-                        </div>
-                      </td>
-                      <td>
-                        <StringInput v-model="v.value" />
-                      </td>
-                      <td>
-                        <button
-                          class="button is-small"
-                          @click="rmVariableChange(idx)"
-                        >
-                          <i class="fa fa-remove" />
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                <span
-                  class="button is-small"
-                  @click="onAddVariableChange"
-                >Add Variable Change</span>
-                <div class="help">
-                  Variable changes are performed when the command is executed,
-                  before anything else.
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td>Permissions:</td>
-              <td>
-                <label
-                  v-for="(perm, idx) in possiblePermissions"
-                  :key="idx"
-                  class="mr-1"
-                >
-                  <input
-                    v-model="item.restrict_to"
-                    type="checkbox"
-                    :value="perm.value"
-                  >
-                  {{ perm.label }}
-                </label>
-              </td>
-            </tr>
           </tbody>
         </table>
       </section>
@@ -268,7 +155,14 @@
           :disabled="!valid"
           @click="onSaveClick"
         >
-          Save changes
+          Save
+        </button>
+        <button
+          class="button is-small is-primary"
+          :disabled="!valid"
+          @click="onSaveAndCloseClick"
+        >
+          Save and close
         </button>
         <button
           class="button is-small"
@@ -281,206 +175,125 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from "vue";
+<script setup lang="ts">
+import { computed, nextTick, onMounted, Ref, ref, watch } from "vue";
 
 import { permissions } from "../../../common/permissions";
 import {
   commands,
   isValidTrigger,
   newTrigger,
+  newEffect,
+  possibleEffectActions
 } from "../../../common/commands";
 import {
   Command,
   CommandTrigger,
   CommandVariable,
-  CommandVariableChange,
   GlobalVariable,
 } from "../../../types";
 import { possibleTriggerActions } from "../../../common/triggers";
 import StringInput from "../StringInput.vue";
-
-interface AutocompletableVariable {
-  var: CommandVariable | GlobalVariable;
-  type: string;
-}
+import EffectsEditor from "./EffectsEditor.vue";
 
 interface ComponentDataPermission {
   value: string;
   label: string;
 }
 
-interface ComponentData {
-  item: Command | null;
-  variableChangeFocusIdx: number;
-  possiblePermissions: ComponentDataPermission[];
+const props = defineProps<{
+  modelValue: any,
+  mode: 'create' | 'edit',
+  globalVariables: GlobalVariable[],
+  channelPointsCustomRewards: Record<string, string[]>,
+  baseVolume: any, // number | undefined ???
+  widgetUrl: string,
+}>()
+
+const emit = defineEmits(["save-and-close", "save", "cancel"])
+
+const item = ref<Command>(JSON.parse(JSON.stringify(props.modelValue)))
+const el = ref<HTMLDivElement | null>(null) as Ref<HTMLDivElement>
+const possiblePermissions = ref<ComponentDataPermission[]>(permissions)
+
+const valid = computed((): boolean => {
+  // check if all triggers are correct
+  for (const trigger of item.value.triggers) {
+    if (!isValidTrigger(trigger)) {
+      return false;
+    }
+  }
+  return true;
+})
+
+const actionDescription = commands[item.value.action].Description()
+
+const verb = {
+  create: "Create new ",
+  edit: "Edit ",
+};
+const title = `${verb[props.mode]}${commands[item.value.action].Name()}`;
+
+
+const addEffect = (effect: any): void => {
+  item.value.effects.push(newEffect(effect.type));
 }
 
-export default defineComponent({
-  components: { StringInput },
-  props: {
-    modelValue: {
-      type: Object,
-      required: true,
-    },
-    mode: {
-      type: String as PropType<"create" | "edit">,
-      required: true,
-    },
-    globalVariables: {
-      type: Array as PropType<GlobalVariable[]>,
-      required: true,
-    },
-    channelPointsCustomRewards: {
-      type: Object as PropType<Record<string, string[]>>,
-      required: true,
-    },
-    baseVolume: {
-      default: 100,
-    },
-  },
-  emits: ["update:modelValue", "cancel"],
-  data: (): ComponentData => ({
-    item: null,
-    variableChangeFocusIdx: -1,
-    possiblePermissions: permissions,
-  }),
-  computed: {
-    requiresAccessToken(): boolean {
-      if (!this.item) {
-        return false;
-      }
-      return commands[this.item.action].RequiresAccessToken();
-    },
-    possibleTriggerActions() {
-      return possibleTriggerActions();
-    },
-    valid(): boolean {
-      if (!this.item) {
-        return false;
-      }
-      // check if all triggers are correct
-      for (const trigger of this.item.triggers) {
-        if (!isValidTrigger(trigger)) {
-          return false;
-        }
-      }
-      return true;
-    },
-    actionDescription(): string {
-      if (!this.item) {
-        return "";
-      }
-      return commands[this.item.action].Description();
-    },
-    title(): string {
-      if (!this.item) {
-        return "";
-      }
-      const verb = {
-        create: "Create new ",
-        edit: "Edit ",
-      };
-      return `${verb[this.mode]}${commands[this.item.action].Name()}`;
-    },
-  },
-  watch: {
-    modelValue: {
-      handler(v) {
-        this.item = JSON.parse(JSON.stringify(v));
-      },
-    },
-  },
-  mounted() {
-    this.item = JSON.parse(JSON.stringify(this.modelValue));
-    this.$nextTick(() => {
-      const el = this.$el.querySelector("input[type=\"text\"]");
-      el.focus();
-    });
-  },
-  methods: {
-    addtrigger(trigger: any): void {
-      if (!this.item) {
-        console.warn("addtrigger: this.item not initialized");
-        return;
-      }
-      this.item.triggers.push(newTrigger(trigger.type));
-    },
-    onAddVariableChange(): void {
-      if (!this.item) {
-        console.warn("onAddVariableChange: this.item not initialized");
-        return;
-      }
-      this.item.variableChanges.push({
-        name: "",
-        change: "set",
-        value: "",
-      });
-    },
-    rmVariableChange(idx: number): void {
-      if (!this.item) {
-        console.warn("rmVariableChange: this.item not initialized");
-        return;
-      }
-      this.item.variableChanges = this.item.variableChanges.filter((_val: CommandVariableChange, index: number) => index !== idx);
-    },
-    onAddVariable(): void {
-      if (!this.item) {
-        console.warn("onAddVariable: this.item not initialized");
-        return;
-      }
-      this.item.variables.push({
-        name: "",
-        value: "",
-      });
-    },
-    rmVariable(idx: number): void {
-      if (!this.item) {
-        console.warn("rmVariable: this.item not initialized");
-        return;
-      }
-      this.item.variables = this.item.variables.filter((_val: CommandVariable, index: number) => index !== idx);
-    },
-    onSaveClick(): void {
-      this.$emit("update:modelValue", this.item);
-    },
-    onCancelClick(): void {
-      this.$emit("cancel");
-    },
-    onCloseClick(): void {
-      this.$emit("cancel");
-    },
-    onOverlayClick(): void {
-      this.$emit("cancel");
-    },
-    rmtrigger(idx: number): void {
-      if (!this.item) {
-        console.warn("rmtrigger: this.item not initialized");
-        return;
-      }
-      this.item.triggers = this.item.triggers.filter((_val: CommandTrigger, index: number) => index !== idx);
-    },
-    autocompletableVariables(): AutocompletableVariable[] {
-      if (!this.item) {
-        console.warn("autocompletableVariables: this.item not initialized");
-        return [];
-      }
-      const variables: AutocompletableVariable[] = this.item.variables.slice().map((localVar: CommandVariable) => {
-        return {
-          var: localVar,
-          type: "local",
-        };
-      });
-      this.globalVariables.forEach((globalVar: GlobalVariable) => {
-        if (!variables.find((localVar) => localVar.var.name === globalVar.name)) {
-          variables.push({
-            var: globalVar,
-            type: "global",
-          });
-        }
-      });
-      return variables;
-    },
-  }
-});
+const addTrigger = (trigger: any): void => {
+  item.value.triggers.push(newTrigger(trigger.type));
+}
+
+const onAddVariable = (): void => {
+  item.value.variables.push({ name: "", value: "" });
+}
+
+const rmVariable = (idx: number): void => {
+  item.value.variables = item.value.variables.filter((_val: CommandVariable, index: number) => index !== idx);
+}
+
+const onSaveClick = (): void => {
+  emit("save", item.value);
+}
+
+const onSaveAndCloseClick = (): void => {
+  emit("save-and-close", item.value);
+}
+
+const onCancelClick = (): void => {
+  emit("cancel");
+}
+
+const onCloseClick = (): void => {
+  emit("cancel");
+}
+
+const onOverlayClick = (): void => {
+  emit("cancel");
+}
+
+const rmtrigger = (idx: number): void => {
+  item.value.triggers = item.value.triggers.filter((_val: CommandTrigger, index: number) => index !== idx);
+}
+
+watch(() => props.modelValue, (newValue: Command) => {
+  item.value = JSON.parse(JSON.stringify(newValue));
+}, { deep: true })
+
+onMounted(() => {
+  nextTick(() => {
+    const inputEl = el.value.querySelector("input[type=\"text\"]");
+    if (inputEl) {
+      (inputEl as HTMLInputElement).focus();
+    }
+  })
+})
 </script>
+<style scoped>
+.modal-card {
+  width: auto;
+  /* width: calc(100% - 2em); */
+}
+.modal-card-body {
+  min-height: 450px;
+}
+</style>

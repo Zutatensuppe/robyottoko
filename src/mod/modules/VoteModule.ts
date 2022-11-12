@@ -151,9 +151,9 @@ class VoteModule implements Module {
 
   getCommands() {
     return [
-      { triggers: [newCommandTrigger('!vote')], fn: this.voteCmd.bind(this) },
+      { id: 'vote', triggers: [newCommandTrigger('!vote')], fn: this.voteCmd.bind(this) },
       // make configurable
-      { triggers: [newCommandTrigger('!play')], fn: this.playCmd.bind(this) },
+      { id: 'play', triggers: [newCommandTrigger('!play')], fn: this.playCmd.bind(this) },
     ]
   }
 

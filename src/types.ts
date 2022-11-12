@@ -268,6 +268,109 @@ export interface CommandTrigger {
     since: 'alltime' | 'stream' | ''
   }
 }
+
+export enum CommandEffectType {
+  VARIABLE_CHANGE = 'variable_change',
+  CHAT = 'chat',
+  DICT_LOOKUP = 'dict_lookup',
+  EMOTES = 'emotes',
+  MEDIA = 'media',
+  MADOCHAN = 'madochan',
+  SET_CHANNEL_TITLE = 'set_channel_title',
+  SET_CHANNEL_GAME_ID = 'set_channel_game_id',
+  ADD_STREAM_TAGS = 'add_stream_tags',
+  REMOVE_STREAM_TAGS = 'remove_stream_tags',
+  CHATTERS = 'chatters',
+  COUNTDOWN = 'countdown',
+  MEDIA_VOLUME = 'media_volume',
+}
+
+export interface CommandEffect {
+  type: CommandEffectType
+  data: any
+}
+
+export interface VariableChangeEffect extends CommandEffect {
+  type: CommandEffectType.VARIABLE_CHANGE
+  data: CommandVariableChange
+}
+
+export interface ChatEffect extends CommandEffect {
+  type: CommandEffectType.CHAT
+  data: {
+    text: string[]
+  }
+}
+
+export interface DictLookupEffect extends CommandEffect {
+  type: CommandEffectType.DICT_LOOKUP
+  data: {
+    lang: string
+    phrase: string
+  }
+}
+
+export interface EmotesEffect extends CommandEffect {
+  type: CommandEffectType.EMOTES
+  data: GeneralModuleEmotesEventData
+}
+
+export interface MediaEffect extends CommandEffect {
+  type: CommandEffectType.MEDIA
+  data: MediaCommandData
+}
+
+export interface MadochanEffect extends CommandEffect {
+  type: CommandEffectType.MADOCHAN
+  data: {
+    model: string
+    weirdness: string
+  }
+}
+
+export interface SetChannelTitleEffect extends CommandEffect {
+  type: CommandEffectType.SET_CHANNEL_TITLE
+  data: {
+    title: string
+  }
+}
+
+export interface SetChannelGameIdEffect extends CommandEffect {
+  type: CommandEffectType.SET_CHANNEL_GAME_ID
+  data: {
+    game_id: string
+  }
+}
+
+export interface AddStreamTagEffect extends CommandEffect {
+  type: CommandEffectType.ADD_STREAM_TAGS
+  data: {
+    tag: string
+  }
+}
+
+export interface RemoveStreamTagEffect extends CommandEffect {
+  type: CommandEffectType.REMOVE_STREAM_TAGS
+  data: {
+    tag: string
+  }
+}
+
+export interface ChattersEffect extends CommandEffect {
+  type: CommandEffectType.CHATTERS
+  data: object // empty object for now
+}
+
+export interface MediaVolumeEffect extends CommandEffect {
+  type: CommandEffectType.MEDIA_VOLUME
+  data: object // empty object for now
+}
+
+export interface CountdownEffect extends CommandEffect {
+  type: CommandEffectType.COUNTDOWN
+  data: CountdownCommandData
+}
+
 export interface CommandVariable {
   name: string
   value: any
@@ -276,6 +379,11 @@ export interface CommandVariableChange {
   change: string // 'set' | ...
   name: string
   value: string
+}
+
+export interface EmoteSet {
+  name: string
+  emotes: string[]
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -287,17 +395,6 @@ export type CommandFunction = (ctx: CommandExecutionContext) => any
 export enum CommandAction {
   // general
   TEXT = 'text',
-  MEDIA = 'media',
-  EMOTES = 'emotes',
-  MEDIA_VOLUME = 'media_volume',
-  COUNTDOWN = 'countdown',
-  DICT_LOOKUP = 'dict_lookup',
-  MADOCHAN_CREATEWORD = 'madochan_createword',
-  CHATTERS = 'chatters',
-  SET_CHANNEL_TITLE = 'set_channel_title',
-  SET_CHANNEL_GAME_ID = 'set_channel_game_id',
-  ADD_STREAM_TAGS = 'add_stream_tags',
-  REMOVE_STREAM_TAGS = 'remove_stream_tags',
   // song request
   SR_CURRENT = 'sr_current',
   SR_UNDO = 'sr_undo',
@@ -330,56 +427,15 @@ export enum CommandAction {
 export interface Command {
   id: string
   createdAt: string // json date string
-  triggers: CommandTrigger[]
-  action: CommandAction
   restrict_to: CommandRestrict[]
+  triggers: CommandTrigger[]
+  effects: CommandEffect[]
   variables: CommandVariable[]
-  variableChanges: CommandVariableChange[]
+
+  // DEPRECATED:
+  // -----------------------------------------------------------------
+  action: CommandAction
   data: CommandData
-}
-
-export interface SetChannelTitleCommand extends Command {
-  action: CommandAction.SET_CHANNEL_TITLE
-  data: {
-    title: string
-  }
-}
-
-export interface AddStreamTagCommand extends Command {
-  action: CommandAction.ADD_STREAM_TAGS
-  data: {
-    tag: string
-  }
-}
-
-export interface RemoveStreamTagCommand extends Command {
-  action: CommandAction.REMOVE_STREAM_TAGS
-  data: {
-    tag: string
-  }
-}
-
-export interface SetChannelGameIdCommand extends Command {
-  action: CommandAction.SET_CHANNEL_GAME_ID
-  data: {
-    game_id: string
-  }
-}
-
-export interface DictLookupCommand extends Command {
-  action: CommandAction.DICT_LOOKUP
-  data: {
-    lang: string
-    phrase: string
-  }
-}
-
-export interface MadochanCommand extends Command {
-  action: CommandAction.MADOCHAN_CREATEWORD
-  data: {
-    model: string
-    weirdness: string
-  }
 }
 
 export interface DictSearchResponseDataEntry {
@@ -392,25 +448,6 @@ export interface RandomTextCommand extends Command {
   data: {
     text: string[]
   }
-}
-
-export interface MediaVolumeCommand extends Command {
-  action: CommandAction.MEDIA_VOLUME
-}
-
-export interface EmotesCommand extends Command {
-  action: CommandAction.EMOTES
-  // TODO: check if this data is fine
-  data: GeneralModuleEmotesEventData
-}
-
-export interface MediaCommand extends Command {
-  action: CommandAction.MEDIA
-  data: MediaCommandData
-}
-
-export interface ChattersCommand extends Command {
-  action: CommandAction.CHATTERS
 }
 
 export interface MediaVideo {
@@ -448,17 +485,13 @@ export interface CountdownCommandData {
   actions: CountdownAction[]
 }
 
-export interface CountdownCommand extends Command {
-  action: CommandAction.COUNTDOWN
-  data: CountdownCommandData
-}
-
 export interface FunctionCommand {
+  id: string
   triggers: CommandTrigger[]
   action?: CommandAction
   restrict_to?: CommandRestrict[]
   variables?: CommandVariable[]
-  variableChanges?: CommandVariableChange[]
+  effects?: CommandEffect[]
   data?: CommandData
   fn: CommandFunction
 }

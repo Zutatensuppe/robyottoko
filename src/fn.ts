@@ -1,9 +1,20 @@
+import childProcess from 'child_process'
+import fs from 'fs'
 import xhr from './net/xhr'
-import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, getRandom, getRandomInt, daysUntil } from './common/fn'
+import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, getRandom, getRandomInt, daysUntil, hash, unicodeLength, mustParseHumanDuration } from './common/fn'
 
-import { Command, GlobalVariable, RawCommand, TwitchChatContext, TwitchChatClient, FunctionCommand, Module, CommandTrigger, Bot, ChatMessageContext } from './types'
+import {
+  Command, GlobalVariable, RawCommand, TwitchChatContext,
+  TwitchChatClient, FunctionCommand, Module, CommandTrigger,
+  Bot, ChatMessageContext, CommandEffectType, CommandVariableChange, DictSearchResponseDataEntry, CountdownActionType, CountdownAction, CountdownCommandData,
+} from './types'
 import { User } from './repo/Users'
 import TwitchHelixClient, { TwitchHelixUserSearchResponseDataEntry } from './services/TwitchHelixClient'
+import JishoOrg from './services/JishoOrg'
+import DictCc from './services/DictCc'
+import config from './config'
+import Madochan from './services/Madochan'
+import GeneralModule from './mod/modules/GeneralModule'
 
 const log = logger('fn.ts')
 
@@ -111,50 +122,567 @@ const _increase = (value: any, by: any) => (_toInt(value) + _toInt(by))
 
 const _decrease = (value: any, by: any) => (_toInt(value) - _toInt(by))
 
-const applyVariableChanges = async (
+
+type DictFn = (phrase: string) => Promise<DictSearchResponseDataEntry[]>
+
+const jishoOrgLookup = async (
+  phrase: string,
+) => {
+  const data = await JishoOrg.searchWord(phrase)
+  if (data.length === 0) {
+    return []
+  }
+  const e = data[0]
+  const j = e.japanese[0]
+  const d = e.senses[0].english_definitions
+
+  return [{
+    from: phrase,
+    to: [`${j.word} (${j.reading}) ${d.join(', ')}`],
+  }]
+}
+
+const LANG_TO_FN: Record<string, DictFn> = {
+  ja: jishoOrgLookup,
+}
+for (const key of Object.keys(DictCc.LANG_TO_URL_MAP)) {
+  LANG_TO_FN[key] = (phrase) => DictCc.searchWord(phrase, key)
+}
+
+const isTwitchClipUrl = (url: string): boolean => {
+  return !!url.match(/^https:\/\/clips\.twitch\.tv\/.+/)
+}
+
+const downloadVideo = async (originalUrl: string): Promise<string> => {
+  // if video url looks like a twitch clip url, dl it first
+  const filename = `${hash(originalUrl)}-clip.mp4`
+  const outfile = `./data/uploads/${filename}`
+  if (!fs.existsSync(outfile)) {
+    log.debug({ outfile }, 'downloading the video')
+    const child = childProcess.execFile(
+      config.youtubeDlBinary,
+      [originalUrl, '-o', outfile]
+    )
+    await new Promise((resolve) => {
+      child.on('close', resolve)
+    })
+  } else {
+    log.debug({ outfile }, 'video exists')
+  }
+  return `/uploads/${filename}`
+}
+
+const applyEffects = async (
   originalCmd: FunctionCommand,
   contextModule: Module,
   rawCmd: RawCommand | null,
   context: TwitchChatContext | null,
 ) => {
-  if (!originalCmd.variableChanges) {
+  if (!originalCmd.effects) {
     return
   }
   const variables = contextModule.bot.getRepos().variables
   const doReplace = async (value: string) => await doReplacements(value, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
 
-  for (const variableChange of originalCmd.variableChanges) {
-    const op = variableChange.change
-    const name = await doReplace(variableChange.name)
-    const value = await doReplace(variableChange.value)
+  for (const effect of originalCmd.effects) {
+    // TODO: extract each if to some class
+    if (effect.type === CommandEffectType.VARIABLE_CHANGE) {
 
-    // check if there is a local variable for the change
-    if (originalCmd.variables) {
-      const idx = originalCmd.variables.findIndex(v => (v.name === name))
+      const variableChange = effect.data as CommandVariableChange
+
+      const op = variableChange.change
+      const name = await doReplace(variableChange.name)
+      const value = await doReplace(variableChange.value)
+
+      // check if there is a local variable for the change
+      if (originalCmd.variables) {
+        const idx = originalCmd.variables.findIndex(v => (v.name === name))
+        if (idx !== -1) {
+          if (op === 'set') {
+            originalCmd.variables[idx].value = value
+          } else if (op === 'increase_by') {
+            originalCmd.variables[idx].value = _increase(originalCmd.variables[idx].value, value)
+          } else if (op === 'decrease_by') {
+            originalCmd.variables[idx].value = _decrease(originalCmd.variables[idx].value, value)
+          }
+          continue
+        }
+      }
+
+      const globalVars: GlobalVariable[] = await variables.all(contextModule.user.id)
+      const idx = globalVars.findIndex(v => (v.name === name))
       if (idx !== -1) {
         if (op === 'set') {
-          originalCmd.variables[idx].value = value
+          await variables.set(contextModule.user.id, name, value)
         } else if (op === 'increase_by') {
-          originalCmd.variables[idx].value = _increase(originalCmd.variables[idx].value, value)
+          await variables.set(contextModule.user.id, name, _increase(globalVars[idx].value, value))
         } else if (op === 'decrease_by') {
-          originalCmd.variables[idx].value = _decrease(originalCmd.variables[idx].value, value)
+          await variables.set(contextModule.user.id, name, _decrease(globalVars[idx].value, value))
         }
+        //
         continue
       }
-    }
 
-    const globalVars: GlobalVariable[] = await variables.all(contextModule.user.id)
-    const idx = globalVars.findIndex(v => (v.name === name))
-    if (idx !== -1) {
-      if (op === 'set') {
-        await variables.set(contextModule.user.id, name, value)
-      } else if (op === 'increase_by') {
-        await variables.set(contextModule.user.id, name, _increase(globalVars[idx].value, value))
-      } else if (op === 'decrease_by') {
-        await variables.set(contextModule.user.id, name, _decrease(globalVars[idx].value, value))
+    } else if (effect.type === CommandEffectType.CHAT) {
+
+      const texts = effect.data.text
+      const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
+      say(await doReplacements(getRandom(texts), rawCmd, context, originalCmd, contextModule.bot, contextModule.user))
+
+    } else if (effect.type === CommandEffectType.DICT_LOOKUP) {
+
+      const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
+      const tmpLang = await doReplacements(effect.data.lang, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
+      const dictFn = LANG_TO_FN[tmpLang] || null
+      if (!dictFn) {
+        say(`Sorry, language not supported: "${tmpLang}"`)
+        continue
       }
-      //
-      continue
+
+      // if no phrase is setup, use all args given to command
+      const phrase = effect.data.phrase === '' ? '$args()' : effect.data.phrase
+      const tmpPhrase = await doReplacements(phrase, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
+
+      const items = await dictFn(tmpPhrase)
+      if (items.length === 0) {
+        say(`Sorry, I didn't find anything for "${tmpPhrase}" in language "${tmpLang}"`)
+        continue
+      }
+      for (const item of items) {
+        say(`Phrase "${item.from}": ${item.to.join(", ")}`)
+      }
+
+    } else if (effect.type === CommandEffectType.EMOTES) {
+
+      contextModule.bot.getWebSocketServer().notifyAll([contextModule.user.id], 'general', {
+        event: 'emotes',
+        data: effect.data,
+      })
+
+    } else if (effect.type === CommandEffectType.MEDIA) {
+
+      const doReplaces = async (str: string) => {
+        return await doReplacements(str, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
+      }
+      const data = effect.data
+      data.image_url = await doReplaces(data.image_url)
+      if (data.video.url) {
+        log.debug({ url: data.video.url }, 'video url is defined')
+        data.video.url = await doReplaces(data.video.url)
+        if (!data.video.url) {
+          log.debug('no video url found')
+        } else if (isTwitchClipUrl(data.video.url)) {
+          // video url looks like a twitch clip url, dl it first
+          log.debug({ url: data.video.url }, 'twitch clip found')
+          data.video.url = await downloadVideo(data.video.url)
+        } else {
+          // otherwise assume it is already a playable video url
+          // TODO: youtube videos maybe should also be downloaded
+          log.debug('video is assumed to be directly playable via html5 video element')
+        }
+      }
+
+      contextModule.bot.getWebSocketServer().notifyAll([contextModule.user.id], 'general', {
+        event: 'playmedia',
+        data: data,
+        id: originalCmd.id
+      })
+
+    } else if (effect.type === CommandEffectType.MADOCHAN) {
+
+      const model = `${effect.data.model}` || Madochan.defaultModel
+      const weirdness = parseInt(effect.data.weirdness, 10) || Madochan.defaultWeirdness
+
+      const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
+      if (rawCmd) {
+        const definition = rawCmd.args.join(' ')
+        if (definition) {
+          say(`Generating word for "${definition}"...`)
+          try {
+            const data = await Madochan.createWord({ model, weirdness, definition })
+            if (data.word === '') {
+              say(`Sorry, I could not generate a word :("`)
+            } else {
+              say(`"${definition}": ${data.word}`)
+            }
+          } catch (e: any) {
+            log.error({ e })
+            say(`Error occured, unable to generate a word :("`)
+          }
+        }
+      }
+
+    } else if (effect.type === CommandEffectType.SET_CHANNEL_TITLE) {
+
+      const setChannelTitle = async () => {
+        const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient()
+        if (!rawCmd || !context || !helixClient) {
+          log.info({
+            rawCmd: rawCmd,
+            context: context,
+            helixClient,
+          }, 'unable to execute setChannelTitle, client, command, context, or helixClient missing')
+          return
+        }
+        const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
+        const title = effect.data.title === '' ? '$args()' : effect.data.title
+        const tmpTitle = await doReplacements(title, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
+        if (tmpTitle === '') {
+          const info = await helixClient.getChannelInformation(contextModule.user.twitch_id)
+          if (info) {
+            say(`Current title is "${info.title}".`)
+          } else {
+            say(`❌ Unable to determine current title.`)
+          }
+          return
+        }
+
+        // helix api returns 204 status code even if the title is too long and
+        // cant actually be set. but there is no error returned in that case :(
+        const len = unicodeLength(tmpTitle)
+        const max = 140
+        if (len > max) {
+          say(`❌ Unable to change title because it is too long (${len}/${max} characters).`)
+          return
+        }
+
+        const accessToken = await contextModule.bot.getRepos().oauthToken.getMatchingAccessToken(contextModule.user)
+        if (!accessToken) {
+          say(`❌ Not authorized to change title.`)
+          return
+        }
+
+        const resp = await helixClient.modifyChannelInformation(
+          accessToken,
+          { title: tmpTitle },
+          contextModule.bot,
+          contextModule.user,
+        )
+        if (resp?.status === 204) {
+          say(`✨ Changed title to "${tmpTitle}".`)
+        } else {
+          say('❌ Unable to change title.')
+        }
+      }
+
+      await setChannelTitle()
+
+    } else if (effect.type === CommandEffectType.SET_CHANNEL_GAME_ID) {
+
+      const setChannelGameId = async () => {
+        const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient()
+        if (!rawCmd || !context || !helixClient) {
+          log.info({
+            rawCmd: rawCmd,
+            context: context,
+            helixClient,
+          }, 'unable to execute setChannelGameId, client, command, context, or helixClient missing')
+          return
+        }
+        const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
+        const gameId = effect.data.game_id === '' ? '$args()' : effect.data.game_id
+        const tmpGameId = await doReplacements(gameId, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
+        if (tmpGameId === '') {
+          const info = await helixClient.getChannelInformation(contextModule.user.twitch_id)
+          if (info) {
+            say(`Current category is "${info.game_name}".`)
+          } else {
+            say(`❌ Unable to determine current category.`)
+          }
+          return
+        }
+
+        const category = await helixClient.searchCategory(tmpGameId)
+        if (!category) {
+          say('🔎 Category not found.')
+          return
+        }
+
+        const accessToken = await contextModule.bot.getRepos().oauthToken.getMatchingAccessToken(contextModule.user)
+        if (!accessToken) {
+          say(`❌ Not authorized to update category.`)
+          return
+        }
+
+        const resp = await helixClient.modifyChannelInformation(
+          accessToken,
+          { game_id: category.id },
+          contextModule.bot,
+          contextModule.user,
+        )
+        if (resp?.status === 204) {
+          say(`✨ Changed category to "${category.name}".`)
+        } else {
+          say('❌ Unable to update category.')
+        }
+      }
+
+      await setChannelGameId()
+
+    } else if (effect.type === CommandEffectType.ADD_STREAM_TAGS) {
+
+      const addStreamTags = async () => {
+        const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient()
+        if (!rawCmd || !context || !helixClient) {
+          log.info({
+            rawCmd: rawCmd,
+            context: context,
+            helixClient,
+          }, 'unable to execute addStreamTags, client, command, context, or helixClient missing')
+          return
+        }
+        const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
+        const tag = effect.data.tag === '' ? '$args()' : effect.data.tag
+        const tmpTag = await doReplacements(tag, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
+        const tagsResponse = await helixClient.getStreamTags(contextModule.user.twitch_id)
+        if (!tagsResponse) {
+          say(`❌ Unable to fetch current tags.`)
+          return
+        }
+        if (tmpTag === '') {
+          const names = tagsResponse.data.map(entry => entry.localization_names['en-us'])
+          say(`Current tags: ${names.join(', ')}`)
+          return
+        }
+        const idx = findIdxFuzzy(config.twitch.manual_tags, tmpTag, (item) => item.name)
+        if (idx === -1) {
+          say(`❌ No such tag: ${tmpTag}`)
+          return
+        }
+        const tagEntry = config.twitch.manual_tags[idx]
+        const newTagIds = tagsResponse.data.map(entry => entry.tag_id)
+        if (newTagIds.includes(tagEntry.id)) {
+          const names = tagsResponse.data.map(entry => entry.localization_names['en-us'])
+          say(`✨ Tag ${tagEntry.name} already exists, current tags: ${names.join(', ')}`)
+          return
+        }
+
+        newTagIds.push(tagEntry.id)
+        const newSettableTagIds: string[] = newTagIds.filter(tagId => !config.twitch.auto_tags.find(t => t.id === tagId))
+        if (newSettableTagIds.length > 5) {
+          const names = tagsResponse.data.map(entry => entry.localization_names['en-us'])
+          say(`❌ Too many tags already exist, current tags: ${names.join(', ')}`)
+          return
+        }
+
+        const accessToken = await contextModule.bot.getRepos().oauthToken.getMatchingAccessToken(contextModule.user)
+        if (!accessToken) {
+          say(`❌ Not authorized to add tag: ${tagEntry.name}`)
+          return
+        }
+
+        const resp = await helixClient.replaceStreamTags(
+          accessToken,
+          newSettableTagIds,
+          contextModule.bot,
+          contextModule.user,
+        )
+        if (!resp || resp.status < 200 || resp.status >= 300) {
+          log.error(resp)
+          say(`❌ Unable to add tag: ${tagEntry.name}`)
+          return
+        }
+        say(`✨ Added tag: ${tagEntry.name}`)
+      }
+
+      await addStreamTags()
+
+    } else if (effect.type === CommandEffectType.REMOVE_STREAM_TAGS) {
+
+      const removeStreamTags = async () => {
+        const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient()
+        if (!rawCmd || !context || !helixClient) {
+          log.info({
+            rawCmd: rawCmd,
+            context: context,
+            helixClient,
+          }, 'unable to execute removeStreamTags, client, command, context, or helixClient missing')
+          return
+        }
+        const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
+        const tag = effect.data.tag === '' ? '$args()' : effect.data.tag
+        const tmpTag = await doReplacements(tag, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
+        const tagsResponse = await helixClient.getStreamTags(contextModule.user.twitch_id)
+        if (!tagsResponse) {
+          say(`❌ Unable to fetch current tags.`)
+          return
+        }
+        if (tmpTag === '') {
+          const names = tagsResponse.data.map(entry => entry.localization_names['en-us'])
+          say(`Current tags: ${names.join(', ')}`)
+          return
+        }
+        const manualTags = tagsResponse.data.filter(entry => !entry.is_auto)
+        const idx = findIdxFuzzy(manualTags, tmpTag, (item) => item.localization_names['en-us'])
+        if (idx === -1) {
+          const autoTags = tagsResponse.data.filter(entry => entry.is_auto)
+          const idx = findIdxFuzzy(autoTags, tmpTag, (item) => item.localization_names['en-us'])
+          if (idx === -1) {
+            say(`❌ No such tag is currently set: ${tmpTag}`)
+          } else {
+            say(`❌ Unable to remove automatic tag: ${autoTags[idx].localization_names['en-us']}`)
+          }
+          return
+        }
+        const newTagIds = manualTags.filter((_value, index) => index !== idx).map(entry => entry.tag_id)
+        const newSettableTagIds: string[] = newTagIds.filter(tagId => !config.twitch.auto_tags.find(t => t.id === tagId))
+
+        const accessToken = await contextModule.bot.getRepos().oauthToken.getMatchingAccessToken(contextModule.user)
+        if (!accessToken) {
+          say(`❌ Not authorized to remove tag: ${manualTags[idx].localization_names['en-us']}`)
+          return
+        }
+
+        const resp = await helixClient.replaceStreamTags(
+          accessToken,
+          newSettableTagIds,
+          contextModule.bot,
+          contextModule.user,
+        )
+        if (!resp || resp.status < 200 || resp.status >= 300) {
+          say(`❌ Unable to remove tag: ${manualTags[idx].localization_names['en-us']}`)
+          return
+        }
+        say(`✨ Removed tag: ${manualTags[idx].localization_names['en-us']}`)
+      }
+
+      await removeStreamTags()
+
+    } else if (effect.type === CommandEffectType.CHATTERS) {
+
+      const chatters = async () => {
+        const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient()
+        if (!context || !helixClient) {
+          log.info({
+            context: context,
+            helixClient,
+          }, 'unable to execute chatters command, client, context, or helixClient missing')
+          return
+        }
+
+        const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
+
+        const stream = await helixClient.getStreamByUserId(contextModule.user.twitch_id)
+        if (!stream) {
+          say(`It seems this channel is not live at the moment...`)
+          return
+        }
+
+        const userNames = await contextModule.bot.getRepos().chatLog.getChatters(contextModule.user.twitch_id, new Date(stream.started_at))
+        if (userNames.length === 0) {
+          say(`It seems nobody chatted? :(`)
+          return
+        }
+
+        say(`Thank you for chatting!`)
+        joinIntoChunks(userNames, ', ', 500).forEach(msg => {
+          say(msg)
+        })
+      }
+
+      await chatters()
+
+    } else if (effect.type === CommandEffectType.COUNTDOWN) {
+
+      const countdown = async () => {
+        const sayFn = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
+        const doReplacements2 = async (text: string) => {
+          return await doReplacements(text, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
+        }
+        const say = async (text: string) => {
+          return sayFn(await doReplacements2(text))
+        }
+        const parseDuration = async (str: string) => {
+          return mustParseHumanDuration(await doReplacements2(str))
+        }
+
+        const settings: CountdownCommandData = effect.data
+
+        const t = (settings.type || 'auto')
+
+        let actionDefs: CountdownAction[] = []
+        if (t === 'auto') {
+          const steps = parseInt(await doReplacements2(`${settings.steps}`), 10)
+          const msgStep = settings.step || "{step}"
+          const msgIntro = settings.intro || null
+          const msgOutro = settings.outro || null
+
+          if (msgIntro) {
+            actionDefs.push({ type: CountdownActionType.TEXT, value: msgIntro.replace(/\{steps\}/g, `${steps}`) })
+            actionDefs.push({ type: CountdownActionType.DELAY, value: settings.interval || '1s' })
+          }
+
+          for (let step = steps; step > 0; step--) {
+            actionDefs.push({
+              type: CountdownActionType.TEXT,
+              value: msgStep.replace(/\{steps\}/g, `${steps}`).replace(/\{step\}/g, `${step}`),
+            })
+            actionDefs.push({ type: CountdownActionType.DELAY, value: settings.interval || '1s' })
+          }
+
+          if (msgOutro) {
+            actionDefs.push({ type: CountdownActionType.TEXT, value: msgOutro.replace(/\{steps\}/g, `${steps}`) })
+          }
+        } else if (t === 'manual') {
+          actionDefs = settings.actions
+        }
+
+        const actions = []
+        for (const a of actionDefs) {
+          if (a.type === CountdownActionType.TEXT) {
+            actions.push(async () => say(`${a.value}`))
+          } else if (a.type === CountdownActionType.MEDIA) {
+            actions.push(async () => {
+              contextModule.bot.getWebSocketServer().notifyAll([contextModule.user.id], 'general', {
+                event: 'playmedia',
+                data: a.value,
+              })
+            })
+          } else if (a.type === CountdownActionType.DELAY) {
+            let duration: number
+            try {
+              duration = (await parseDuration(`${a.value}`)) || 0
+            } catch (e: any) {
+              log.error({ message: e.message, value: a.value })
+              return
+            }
+            actions.push(async () => await sleep(duration))
+          }
+        }
+
+        for (let i = 0; i < actions.length; i++) {
+          await actions[i]()
+        }
+      }
+
+      await countdown()
+
+    } else if (effect.type === CommandEffectType.MEDIA_VOLUME) {
+
+      const mediaVolumeCmd = async () => {
+        if (!rawCmd) {
+          return
+        }
+        const m = contextModule as GeneralModule
+        const say = m.bot.sayFn(m.user, m.user.twitch_login)
+        if (rawCmd.args.length === 0) {
+          say(`Current volume: ${m.getCurrentMediaVolume()}`)
+        } else {
+          const newVolume = determineNewVolume(
+            rawCmd.args[0],
+            m.getCurrentMediaVolume(),
+          )
+          await m.volume(newVolume)
+          say(`New volume: ${m.getCurrentMediaVolume()}`)
+        }
+      }
+
+      await mediaVolumeCmd()
+
+    } else {
+
+      // nothing :(
+
     }
   }
   contextModule.saveCommands()
@@ -696,7 +1224,7 @@ export const getChannelPointsCustomRewards = async (
 }
 
 export default {
-  applyVariableChanges,
+  applyEffects,
   extractEmotes,
   logger,
   mimeToExt,

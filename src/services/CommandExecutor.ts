@@ -43,7 +43,7 @@ export class CommandExecutor {
       }, 'Executing command')
       // eslint-disable-next-line no-async-promise-executor
       const p = new Promise(async (resolve) => {
-        await fn.applyVariableChanges(cmdDef, contextModule, ctx.rawCmd, ctx.context)
+        await fn.applyEffects(cmdDef, contextModule, ctx.rawCmd, ctx.context)
         const r = await cmdDef.fn(ctx)
         if (r) {
           log.info({

@@ -1,30 +1,25 @@
-import countdown from '../../commands/countdown'
-import madochanCreateWord from '../../commands/madochanCreateWord'
-import randomText from '../../commands/randomText'
-import playMedia from '../../commands/playMedia'
-import fn, { determineNewVolume, extractEmotes, getChannelPointsCustomRewards } from '../../fn'
+import fn, { extractEmotes, getChannelPointsCustomRewards } from '../../fn'
 import { logger, nonce, parseHumanDuration, SECOND } from '../../common/fn'
-import chatters from '../../commands/chatters'
 import { commands as commonCommands, newCommandTrigger, newJsonDate } from '../../common/commands'
-import setChannelTitle from '../../commands/setChannelTitle'
-import setChannelGameId from '../../commands/setChannelGameId'
 import { Socket } from '../../net/WebSocketServer'
 import { User } from '../../repo/Users'
 import {
-  ChatMessageContext, Command, FunctionCommand,
-  Bot, Module,
-  MediaCommand, DictLookupCommand, CountdownCommand,
-  MadochanCommand, MediaVolumeCommand, ChattersCommand,
-  RandomTextCommand, SetChannelGameIdCommand, SetChannelTitleCommand,
-  CountdownAction, AddStreamTagCommand, RemoveStreamTagCommand,
-  CommandTriggerType, CommandAction, CommandExecutionContext, MODULE_NAME, WIDGET_TYPE, EmotesCommand,
+  ChatMessageContext,
+  Command,
+  FunctionCommand,
+  Bot,
+  Module,
+  RandomTextCommand,
+  CommandTriggerType,
+  CommandAction,
+  MODULE_NAME,
+  WIDGET_TYPE,
+  CommandEffectType,
+  CommandEffect,
 } from '../../types'
-import dictLookup from '../../commands/dictLookup'
 import { EMOTE_DISPLAY_FN, GeneralModuleAdminSettings, GeneralModuleEmotesEventData, GeneralModuleSettings, GeneralModuleWsEventData, GeneralSaveEventData } from './GeneralModuleCommon'
-import addStreamTags from '../../commands/addStreamTags'
-import removeStreamTags from '../../commands/removeStreamTags'
-import emotes from '../../commands/emotes'
 import { NextFunction, Response } from 'express'
+import legacy from '../../common/legacy'
 
 const log = logger('GeneralModule.ts')
 
@@ -54,6 +49,8 @@ interface WsData {
   event: string
   data: GeneralModuleWsEventData
 }
+
+const noop = () => { return }
 
 class GeneralModule implements Module {
   public name = MODULE_NAME.GENERAL
@@ -87,6 +84,10 @@ class GeneralModule implements Module {
     })();
   }
 
+  getCurrentMediaVolume() {
+    return this.data.settings.volume
+  }
+
   async userChanged(user: User) {
     this.user = user
   }
@@ -105,7 +106,7 @@ class GeneralModule implements Module {
           const rawCmd = null
           const target = null
           const context = null
-          await fn.applyVariableChanges(cmdDef, this, rawCmd, context)
+          await fn.applyEffects(cmdDef, this, rawCmd, context)
           await cmdDef.fn({ rawCmd, target, context })
           t.lines = 0
           t.next = now + t.minInterval
@@ -121,64 +122,73 @@ class GeneralModule implements Module {
         delete cmd.command
       }
       cmd.variables = cmd.variables || []
-      cmd.variableChanges = cmd.variableChanges || []
-      if (cmd.action === CommandAction.TEXT) {
-        if (!Array.isArray(cmd.data.text)) {
-          cmd.data.text = [cmd.data.text]
+      cmd.effects = cmd.effects || []
+
+      if (cmd.variableChanges) {
+        for (const variableChange of cmd.variableChanges) {
+          cmd.effects.push(legacy.variableChangeToCommandEffect(variableChange))
         }
       }
-      if (cmd.action === CommandAction.MEDIA) {
-        if (cmd.data.excludeFromGlobalWidget) {
-          cmd.data.widgetIds = [cmd.id]
-        } else if (typeof cmd.data.widgetIds === 'undefined') {
-          cmd.data.widgetIds = []
-        }
-        if (typeof cmd.data.excludeFromGlobalWidget !== 'undefined') {
-          delete cmd.data.excludeFromGlobalWidget
-        }
-        cmd.data.minDurationMs = cmd.data.minDurationMs || 0
-        cmd.data.sound.volume = cmd.data.sound.volume || 100
 
-        if (!cmd.data.sound.urlpath && cmd.data.sound.file) {
-          cmd.data.sound.urlpath = `/uploads/${encodeURIComponent(cmd.data.sound.file)}`
-        }
-
-        if (!cmd.data.image.urlpath && cmd.data.image.file) {
-          cmd.data.image.urlpath = `/uploads/${encodeURIComponent(cmd.data.image.file)}`
-        }
-
-        if (!cmd.data.image_url || cmd.data.image_url === 'undefined') {
-          cmd.data.image_url = ''
-        }
-        if (!cmd.data.video) {
-          cmd.data.video = {
-            url: cmd.data.video || cmd.data.twitch_clip?.url || '',
-            volume: cmd.data.twitch_clip?.volume || 100,
-          }
-        }
-        if (typeof cmd.data.twitch_clip !== 'undefined') {
-          delete cmd.data.twitch_clip
-        }
+      if (cmd.action === 'text' && !cmd.effects.find((effect: CommandEffect) => effect.type !== CommandEffectType.VARIABLE_CHANGE)) {
+        cmd.effects.push(legacy.textToCommandEffect(cmd))
       }
-      if (cmd.action === CommandAction.COUNTDOWN) {
-        cmd.data.actions = (cmd.data.actions || []).map((action: CountdownAction) => {
-          if (typeof action.value === 'string') {
-            return action
-          }
-          if (action.value.sound && !action.value.sound.urlpath && action.value.sound.file) {
-            action.value.sound.urlpath = `/uploads/${encodeURIComponent(action.value.sound.file)}`
-          }
 
-          if (action.value.image && !action.value.image.urlpath && action.value.image.file) {
-            action.value.image.urlpath = `/uploads/${encodeURIComponent(action.value.image.file)}`
-          }
-          return action
-        })
+      if (cmd.action === 'dict_lookup') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.dictLookupToCommandEffect(cmd))
       }
-      if (cmd.action === 'jisho_org_lookup') {
-        cmd.action = CommandAction.DICT_LOOKUP
-        cmd.data = { lang: 'ja', phrase: '' }
+
+      if (cmd.action === 'emotes') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.emotesToCommandEffect(cmd))
       }
+
+      if (cmd.action === 'media') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.mediaToCommandEffect(cmd))
+      }
+
+      if (cmd.action === 'madochan_createword') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.madochanToCommandEffect(cmd))
+      }
+
+      if (cmd.action === 'set_channel_title') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.setChannelTitleToCommandEffect(cmd))
+      }
+
+      if (cmd.action === 'set_channel_game_id') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.setChannelGameIdToCommandEffect(cmd))
+      }
+
+      if (cmd.action === 'add_stream_tags') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.addStreamTagsToCommandEffect(cmd))
+      }
+
+      if (cmd.action === 'remove_stream_tags') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.removeStreamTagsToCommandEffect(cmd))
+      }
+
+      if (cmd.action === 'chatters') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.chattersToCommandEffect(cmd))
+      }
+
+      if (cmd.action === 'countdown') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.countdownToCommandEffect(cmd))
+      }
+
+      if (cmd.action === 'media_volume') {
+        cmd.action = 'text'
+        cmd.effects.push(legacy.mediaVolumeToCommandEffect(cmd))
+      }
+
       cmd.triggers = (cmd.triggers || []).map((trigger: any) => {
         trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0
         if (trigger.data.minSeconds) {
@@ -198,6 +208,10 @@ class GeneralModule implements Module {
       }
       if (!command.createdAt) {
         command.createdAt = newJsonDate()
+        shouldSave = true
+      }
+      if (command.variableChanges) {
+        delete command.variableChanges
         shouldSave = true
       }
     }
@@ -231,10 +245,15 @@ class GeneralModule implements Module {
       data.adminSettings.autocommands = []
     }
     if (!data.adminSettings.autocommands.includes('!bot')) {
-      const txtCommand = commonCommands.text.NewCommand() as RandomTextCommand
-      txtCommand.triggers = [newCommandTrigger('!bot')]
-      txtCommand.data.text = ['Version $bot.version $bot.website < - $bot.features - Source code at $bot.github']
-      data.commands.push(txtCommand)
+      const command = commonCommands.text.NewCommand() as RandomTextCommand
+      command.triggers = [newCommandTrigger('!bot')]
+      command.effects.push({
+        type: CommandEffectType.CHAT,
+        data: {
+          text: ['Version $bot.version $bot.website < - $bot.features - Source code at $bot.github']
+        }
+      })
+      data.commands.push(command)
       data.adminSettings.autocommands.push('!bot')
       fixed.shouldSave = true
     }
@@ -242,52 +261,14 @@ class GeneralModule implements Module {
     const commands: FunctionCommand[] = []
     const timers: GeneralModuleTimer[] = []
 
-    data.commands.forEach((cmd: MediaCommand | MediaVolumeCommand | MadochanCommand
-      | DictLookupCommand | RandomTextCommand | CountdownCommand | ChattersCommand
-      | SetChannelTitleCommand | SetChannelGameIdCommand
-      | AddStreamTagCommand | RemoveStreamTagCommand
-      | EmotesCommand
-      ) => {
+    data.commands.forEach((cmd: RandomTextCommand) => {
       if (cmd.triggers.length === 0) {
         return
       }
       let cmdObj = null
       switch (cmd.action) {
-        case CommandAction.MEDIA_VOLUME:
-          cmdObj = Object.assign({}, cmd, { fn: this.mediaVolumeCmd.bind(this) })
-          break;
-        case CommandAction.MADOCHAN_CREATEWORD:
-          cmdObj = Object.assign({}, cmd, { fn: madochanCreateWord(cmd, this.bot, this.user) })
-          break;
-        case CommandAction.DICT_LOOKUP:
-          cmdObj = Object.assign({}, cmd, { fn: dictLookup(cmd, this.bot, this.user) })
-          break;
         case CommandAction.TEXT:
-          cmdObj = Object.assign({}, cmd, { fn: randomText(cmd, this.bot, this.user) })
-          break;
-        case CommandAction.MEDIA:
-          cmdObj = Object.assign({}, cmd, { fn: playMedia(cmd, this.bot, this.user) })
-          break;
-        case CommandAction.EMOTES:
-          cmdObj = Object.assign({}, cmd, { fn: emotes(cmd, this.bot, this.user) })
-          break;
-        case CommandAction.COUNTDOWN:
-          cmdObj = Object.assign({}, cmd, { fn: countdown(cmd, this.bot, this.user) })
-          break;
-        case CommandAction.CHATTERS:
-          cmdObj = Object.assign({}, cmd, { fn: chatters(this.bot, this.user) })
-          break;
-        case CommandAction.SET_CHANNEL_TITLE:
-          cmdObj = Object.assign({}, cmd, { fn: setChannelTitle(cmd, this.bot, this.user) })
-          break;
-        case CommandAction.SET_CHANNEL_GAME_ID:
-          cmdObj = Object.assign({}, cmd, { fn: setChannelGameId(cmd, this.bot, this.user) })
-          break;
-        case CommandAction.ADD_STREAM_TAGS:
-          cmdObj = Object.assign({}, cmd, { fn: addStreamTags(cmd, this.bot, this.user) })
-          break;
-        case CommandAction.REMOVE_STREAM_TAGS:
-          cmdObj = Object.assign({}, cmd, { fn: removeStreamTags(cmd, this.bot, this.user) })
+          cmdObj = Object.assign({}, cmd, { fn: noop })
           break;
       }
       if (!cmdObj) {
@@ -408,24 +389,6 @@ class GeneralModule implements Module {
     }
     this.data.settings.volume = vol
     await this.save()
-  }
-
-  async mediaVolumeCmd(ctx: CommandExecutionContext) {
-    if (!ctx.rawCmd) {
-      return
-    }
-
-    const say = this.bot.sayFn(this.user, ctx.target)
-    if (ctx.rawCmd.args.length === 0) {
-      say(`Current volume: ${this.data.settings.volume}`)
-    } else {
-      const newVolume = determineNewVolume(
-        ctx.rawCmd.args[0],
-        this.data.settings.volume,
-      )
-      await this.volume(newVolume)
-      say(`New volume: ${this.data.settings.volume}`)
-    }
   }
 
   getCommands() {

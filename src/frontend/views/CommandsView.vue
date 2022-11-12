@@ -35,9 +35,10 @@
         :global-variables="globalVariables"
         :channel-points-custom-rewards="channelPointsCustomRewards"
         :possible-actions="possibleActions"
+        :possible-effects="possibleEffects"
         :base-volume="baseVolume"
         :show-toggle-images="true"
-        :show-filter-actions="true"
+        :show-filters="true"
         :widget-url="widgetUrl"
         :show-images="adminSettings.showImages"
         @update:modelValue="sendSave"
@@ -78,7 +79,7 @@ import {
   GeneralModuleWsEventData,
   GeneralSaveEventData,
 } from "../../mod/modules/GeneralModuleCommon";
-import { Command, CommandAction, GlobalVariable } from "../../types";
+import { Command, CommandAction, CommandEffectType, GlobalVariable } from "../../types";
 import util from "../util";
 import CommandsEditor from "../components/Commands/CommandsEditor.vue";
 
@@ -96,17 +97,21 @@ const channelPointsCustomRewards = ref<Record<string, string[]>>({})
 let ws: WsClient | null = null
 const possibleActions: CommandAction[] = [
   CommandAction.TEXT,
-  CommandAction.MEDIA,
-  CommandAction.EMOTES,
-  CommandAction.MEDIA_VOLUME,
-  CommandAction.COUNTDOWN,
-  CommandAction.DICT_LOOKUP,
-  CommandAction.MADOCHAN_CREATEWORD,
-  CommandAction.CHATTERS,
-  CommandAction.SET_CHANNEL_TITLE,
-  CommandAction.SET_CHANNEL_GAME_ID,
-  CommandAction.ADD_STREAM_TAGS,
-  CommandAction.REMOVE_STREAM_TAGS,
+]
+const possibleEffects: CommandEffectType[] = [
+  CommandEffectType.VARIABLE_CHANGE,
+  CommandEffectType.CHAT,
+  CommandEffectType.DICT_LOOKUP,
+  CommandEffectType.EMOTES,
+  CommandEffectType.MEDIA,
+  CommandEffectType.MADOCHAN,
+  CommandEffectType.SET_CHANNEL_TITLE,
+  CommandEffectType.SET_CHANNEL_GAME_ID,
+  CommandEffectType.ADD_STREAM_TAGS,
+  CommandEffectType.REMOVE_STREAM_TAGS,
+  CommandEffectType.CHATTERS,
+  CommandEffectType.COUNTDOWN,
+  CommandEffectType.MEDIA_VOLUME,
 ]
 const tabDefinitions: TabDefinition[] = [
   { tab: "commands", title: "Commands" },
