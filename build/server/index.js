@@ -5356,6 +5356,10 @@ class SongrequestModule {
                 command.createdAt = newJsonDate();
                 shouldSave = true;
             }
+            if (!command.effects) {
+                command.effects = [];
+                shouldSave = true;
+            }
         }
         return {
             data: {
@@ -7256,9 +7260,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-11-12T22:43:21.105Z",
+    buildDate: "2022-11-12T23:21:34.095Z",
     // @ts-ignore
-    buildVersion: "1.31.0",
+    buildVersion: "1.31.1",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
