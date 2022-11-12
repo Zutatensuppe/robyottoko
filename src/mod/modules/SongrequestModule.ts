@@ -191,6 +191,10 @@ class SongrequestModule implements Module {
         command.createdAt = newJsonDate()
         shouldSave = true
       }
+      if (!command.effects) {
+        command.effects = []
+        shouldSave = true
+      }
     }
 
     return {
