@@ -171,6 +171,7 @@
         :global-variables="globalVariables"
         :channel-points-custom-rewards="channelPointsCustomRewards"
         :possible-actions="possibleActions"
+        :possible-effects="[]"
         :base-volume="100"
         @update:modelValue="sendSave"
       />

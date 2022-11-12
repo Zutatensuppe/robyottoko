@@ -24,7 +24,7 @@
         </div>
       </div>
       <div
-        v-if="showFilterActions"
+        v-if="showFilters && possibleActionsMapped.length > 1"
         class="field"
       >
         <label
@@ -37,6 +37,21 @@
           type="checkbox"
           :value="a.action"
         >{{ a.action }} ({{ a.count }})</label>
+      </div>
+      <div
+        v-if="showFilters && possibleEffectsMapped.length > 1"
+        class="field"
+      >
+        <label
+          v-for="(e, idx) in possibleEffectsWithCount"
+          :key="idx"
+          class="mr-1"
+        ><input
+          v-model="filter.effects"
+          class="mr-1"
+          type="checkbox"
+          :value="e.effect"
+        >{{ e.effect }} ({{ e.count }})</label>
       </div>
     </div>
 
@@ -53,7 +68,10 @@
             <th />
             <th />
             <th>Triggers</th>
-            <th>
+            <th v-if="possibleActions.length > 1">
+              Action
+            </th>
+            <th v-if="possibleEffects.length > 0">
               Effects
               <label v-if="showToggleImages">
                 <CheckboxInput
@@ -100,12 +118,21 @@
                   <trigger-info :trigger="trigger" />
                 </div>
               </td>
-              <td>
+              <td v-if="possibleActions.length > 1">
+                <div
+                  v-if="actionDescription(element.action)"
+                  v-html="actionDescription(element.action)"
+                />
+              </td>
+              <td v-if="possibleEffects.length > 0">
                 <table>
                   <tr
                     v-for="(effect, idx2) in element.effects"
                     :key="idx2"
                   >
+                    <td>
+                      <code>{{ effect.type }}</code>
+                    </td>
                     <td>
                       <EffectInfo
                         :effect="effect"
@@ -156,14 +183,15 @@
       :mode="editIdx >= commands.length ? 'create' : 'edit'"
       :base-volume="baseVolume"
       :widget-url="widgetUrl"
-      @update:modelValue="editedCommand"
+      @save="commandSave"
+      @save-and-close="commandSaveAndClose"
       @cancel="editCommand = null"
     />
   </div>
 </template>
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import { Command, CommandAction, CommandTriggerType, GlobalVariable, RandomTextCommand } from "../../../types";
+import { ChatEffect, Command, CommandAction, CommandEffectType, CommandTriggerType, GlobalVariable } from "../../../types";
 import { permissionsStr } from "../../../common/permissions";
 import { commands } from "../../../common/commands";
 import fn from "../../../common/fn";
@@ -171,14 +199,64 @@ import CommandEditor from "./CommandEditor.vue";
 import EffectInfo from "./EffectInfo.vue";
 
 interface ComponentData {
-  commands: Command[];
-  editIdx: number | null;
-  editCommand: Command | null;
+  commands: Command[]
+  editIdx: number | null
+  editCommand: Command | null
   filter: {
-    search: string;
-    actions: string[];
-  };
-  imagesVisible: boolean;
+    search: string
+    actions: string[]
+    effects: string[]
+  }
+  imagesVisible: boolean
+}
+
+const anyActionsMatch = (filterActions: string[], item: Command): boolean => {
+  if (filterActions.length === 0) {
+    return true
+  }
+  return filterActions.includes(item.action)
+}
+
+const anyEffectsMatch = (filterEffects: string[], item: Command): boolean => {
+  if (filterEffects.length === 0) {
+    return true
+  }
+  for (const effect of item.effects) {
+    if (filterEffects.includes(effect.type)) {
+      return true
+    }
+  }
+  return false
+}
+
+const findInTriggers = (search: string, command: Command): boolean => {
+  // search in triggers:
+  return command.triggers.some(trigger => {
+    if (trigger.type === CommandTriggerType.COMMAND) {
+      return trigger.data.command.toLowerCase().indexOf(search) >= 0
+    }
+    if (trigger.type === CommandTriggerType.REWARD_REDEMPTION) {
+      return trigger.data.command.toLowerCase().indexOf(search) >= 0
+    }
+    return false
+  })
+}
+
+const findInEffects = (search: string, command: Command): boolean => {
+  if (!command.effects) {
+    return false
+  }
+  for (const effect of command.effects) {
+    if (effect.type === CommandEffectType.CHAT) {
+      const foundInText = (effect as ChatEffect).data.text.some((text) => {
+        return text.toLowerCase().indexOf(search) >= 0
+      })
+      if (foundInText) {
+        return true
+      }
+    }
+  }
+  return false
 }
 
 export default defineComponent({
@@ -196,6 +274,10 @@ export default defineComponent({
       type: Array as PropType<CommandAction[]>,
       required: true,
     },
+    possibleEffects: {
+      type: Array as PropType<CommandEffectType[]>,
+      required: true,
+    },
     baseVolume: {
       type: Number,
       required: true,
@@ -209,7 +291,7 @@ export default defineComponent({
       required: false,
       default: false,
     },
-    showFilterActions: {
+    showFilters: {
       type: Boolean,
       required: false,
       default: false,
@@ -234,11 +316,27 @@ export default defineComponent({
       filter: {
         search: "",
         actions: [],
+        effects: [],
       },
       imagesVisible: false,
     };
   },
   computed: {
+    possibleEffectsMapped() {
+      return this.possibleEffects.map((effect) => ({
+        type: effect,
+      }))
+    },
+    possibleEffectsWithCount() {
+      return this.possibleEffects
+        .map((effect) => {
+          return {
+            effect,
+            count: this.commandCountByEffect(effect),
+          };
+        })
+        .filter((e) => e.count > 0);
+    },
     possibleActionsMapped() {
       return this.possibleActions.map((action) => ({
         type: action,
@@ -251,7 +349,7 @@ export default defineComponent({
         .map((action) => {
           return {
             action,
-            count: this.commandCount(action),
+            count: this.commandCountByAction(action),
           };
         })
         .filter((a) => a.count > 0);
@@ -269,7 +367,16 @@ export default defineComponent({
     emitChange() {
       this.$emit("update:modelValue", this.commands);
     },
-    commandCount(action: string): number {
+    commandCountByEffect(effect: string): number {
+      let count = 0;
+      for (const cmd of this.commands) {
+        if (cmd.effects && cmd.effects.some(e => e.type === effect)) {
+          count++;
+        }
+      }
+      return count;
+    },
+    commandCountByAction(action: string): number {
       let count = 0;
       for (const cmd of this.commands) {
         if (cmd.action === action) {
@@ -279,36 +386,24 @@ export default defineComponent({
       return count;
     },
     filteredOut(item: Command) {
-      if (this.filter.actions.length > 0 &&
-        !this.filter.actions.includes(item.action)) {
-        return true;
+      if (!anyActionsMatch(this.filter.actions, item)) {
+        return true
       }
+      if (!anyEffectsMatch(this.filter.effects, item)) {
+        return true
+      }
+
       if (!this.filter.search) {
-        return false;
+        return false
       }
-      const search = this.filter.search.toLowerCase();
-      // search in triggers:
-      const foundInTriggers = item.triggers.find(trigger => {
-        if (trigger.type === CommandTriggerType.COMMAND) {
-          return trigger.data.command.toLowerCase().indexOf(search) >= 0;
-        }
-        if (trigger.type === CommandTriggerType.REWARD_REDEMPTION) {
-          return trigger.data.command.toLowerCase().indexOf(search) >= 0;
-        }
-        return false;
-      });
-      if (foundInTriggers) {
-        return false;
+      const search = this.filter.search.toLowerCase()
+      if (
+        findInTriggers(search, item) ||
+        findInEffects(search, item)
+      ) {
+        return false
       }
-      if (item.action === CommandAction.TEXT) {
-        const foundInText = ((item as RandomTextCommand).data.text).find((text) => {
-          return text.toLowerCase().indexOf(search) >= 0;
-        });
-        if (foundInText) {
-          return false;
-        }
-      }
-      return true;
+      return true
     },
     permissionsStr(item: Command) {
       return permissionsStr(item.restrict_to);
@@ -330,7 +425,7 @@ export default defineComponent({
       this.editIdx = -1;
       this.editCommand = JSON.parse(JSON.stringify(this.commands[idx]));
     },
-    editedCommand(command: Command): void {
+    commandSave(command: Command): void {
       if (this.editIdx === null) {
         return;
       }
@@ -343,6 +438,9 @@ export default defineComponent({
         this.commands[this.editIdx] = command;
       }
       this.emitChange();
+    },
+    commandSaveAndClose(command: Command): void {
+      this.commandSave(command)
       this.editIdx = null;
       this.editCommand = null;
     },

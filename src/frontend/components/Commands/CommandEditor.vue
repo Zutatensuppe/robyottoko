@@ -155,7 +155,14 @@
           :disabled="!valid"
           @click="onSaveClick"
         >
-          Save changes
+          Save
+        </button>
+        <button
+          class="button is-small is-primary"
+          :disabled="!valid"
+          @click="onSaveAndCloseClick"
+        >
+          Save and close
         </button>
         <button
           class="button is-small"
@@ -203,7 +210,7 @@ const props = defineProps<{
   widgetUrl: string,
 }>()
 
-const emit = defineEmits(["update:modelValue", "cancel"])
+const emit = defineEmits(["save-and-close", "save", "cancel"])
 
 const item = ref<Command>(JSON.parse(JSON.stringify(props.modelValue)))
 const el = ref<HTMLDivElement | null>(null) as Ref<HTMLDivElement>
@@ -245,7 +252,11 @@ const rmVariable = (idx: number): void => {
 }
 
 const onSaveClick = (): void => {
-  emit("update:modelValue", item.value);
+  emit("save", item.value);
+}
+
+const onSaveAndCloseClick = (): void => {
+  emit("save-and-close", item.value);
 }
 
 const onCancelClick = (): void => {
