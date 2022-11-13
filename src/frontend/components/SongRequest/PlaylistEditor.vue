@@ -92,7 +92,7 @@
               />
               <i
                 class="fa fa-chevron-down is-clickable"
-                title="Sort by date, most to fewest"
+                title="Sort by plays, most to fewest"
                 @click="sort(SortBy.PLAYS, -1)"
               />
             </th>
