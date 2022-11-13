@@ -431,7 +431,8 @@ export default defineComponent({
       }
       if (this.editIdx === -1) {
         // put new commands on top of the list
-        this.commands.unshift(command);
+        this.commands.unshift(command)
+        this.editIdx = 0
       }
       else {
         // otherwise edit the edited command

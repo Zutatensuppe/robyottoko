@@ -134,13 +134,6 @@
           :key="idx"
         >
           <td>
-            <i
-              v-if="idx === settings.customCssPresetIdx"
-              class="fa fa-check has-text-success"
-              title="This is the current preset"
-            />
-          </td>
-          <td>
             {{ preset.name }}
           </td>
           <td>
@@ -148,7 +141,10 @@
               class="button is-small"
               :disabled="idx === settings.customCssPresetIdx ? true : undefined"
               @click="loadPreset(idx)"
-            >Use this preset</span>
+            ><i
+              v-if="idx === settings.customCssPresetIdx"
+              class="fa fa-check has-text-success mr-1"
+            />{{ idx === settings.customCssPresetIdx ? 'This is the current preset' : 'Use this preset' }}</span>
           </td>
           <td>
             <span
@@ -220,6 +216,7 @@ export default defineComponent({
         // put new commands on top of the list
         this.settings.customCssPresets.unshift(preset);
         this.settings.customCssPresetIdx += 1;
+        this.editPresetIdx = this.settings.customCssPresetIdx
       }
       else {
         // otherwise edit the edited command
