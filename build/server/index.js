@@ -5154,6 +5154,13 @@ var Youtube = {
     getUrlById,
 };
 
+var SortBy;
+(function (SortBy) {
+    SortBy["TITLE"] = "title";
+    SortBy["TIMESTAMP"] = "timestamp";
+    SortBy["PLAYS"] = "plays";
+    SortBy["USER"] = "user";
+})(SortBy || (SortBy = {}));
 const default_custom_css_preset = (obj = null) => ({
     name: getProp(obj, ['name'], ''),
     css: getProp(obj, ['css'], ''),
@@ -5619,6 +5626,9 @@ class SongrequestModule {
                     case 'setAllToPlayed':
                         this.setAllToPlayed();
                         break;
+                    case 'sort':
+                        this.sort(...args);
+                        break;
                 }
             },
         };
@@ -5856,6 +5866,25 @@ class SongrequestModule {
         this.data.filter = filter;
         await this.save();
         await this.updateClients('filter');
+    }
+    async sort(by, direction) {
+        this.data.playlist = this.data.playlist.sort((a, b) => {
+            if (by === SortBy.TIMESTAMP && a.timestamp !== b.timestamp) {
+                return direction * (a.timestamp > b.timestamp ? 1 : -1);
+            }
+            if (by === SortBy.TITLE && a.title !== b.title) {
+                return direction * a.title.localeCompare(b.title);
+            }
+            if (by === SortBy.PLAYS && a.plays !== b.plays) {
+                return direction * (a.plays > b.plays ? 1 : -1);
+            }
+            if (by === SortBy.USER && a.user !== b.user) {
+                return direction * a.user.localeCompare(b.user);
+            }
+            return 0;
+        });
+        await this.save();
+        await this.updateClients('init');
     }
     async addTag(tag, idx = -1) {
         if (idx === -1) {
@@ -7281,9 +7310,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-11-13T12:49:03.207Z",
+    buildDate: "2022-11-13T14:13:21.860Z",
     // @ts-ignore
-    buildVersion: "1.32.0",
+    buildVersion: "1.33.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
