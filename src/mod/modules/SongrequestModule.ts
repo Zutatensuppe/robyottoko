@@ -11,9 +11,14 @@ import {
 } from '../../types'
 import {
   default_commands,
-  default_settings, SongerquestModuleInitData, SongrequestModuleData,
+  default_settings,
+  SongerquestModuleInitData,
+  SongrequestModuleData,
   SongrequestModuleLimits,
-  SongrequestModuleSettings, SongrequestModuleWsEventData
+  SongrequestModuleSettings,
+  SongrequestModuleWsEventData,
+  SortBy,
+  SortDirection,
 } from './SongrequestModuleCommon'
 import { NextFunction, Response } from 'express'
 import { isBroadcaster, isMod, isSubscriber } from '../../common/permissions'
@@ -416,6 +421,7 @@ class SongrequestModule implements Module {
           case 'filter': this.filter(...args as [{ tag: string }]); break;
           case 'videoVisibility': await this.videoVisibility(...args as [boolean, number]); break;
           case 'setAllToPlayed': this.setAllToPlayed(); break;
+          case 'sort': this.sort(...args as [SortBy, SortDirection]); break;
         }
       },
     }
@@ -677,6 +683,26 @@ class SongrequestModule implements Module {
     this.data.filter = filter
     await this.save()
     await this.updateClients('filter')
+  }
+
+  async sort(by: SortBy, direction: SortDirection) {
+    this.data.playlist = this.data.playlist.sort((a, b) => {
+      if (by === SortBy.TIMESTAMP && a.timestamp !== b.timestamp) {
+        return direction * (a.timestamp > b.timestamp ? 1 : -1)
+      }
+      if (by === SortBy.TITLE && a.title !== b.title) {
+        return direction * a.title.localeCompare(b.title)
+      }
+      if (by === SortBy.PLAYS && a.plays !== b.plays) {
+        return direction * (a.plays > b.plays ? 1 : -1)
+      }
+      if (by === SortBy.USER && a.user !== b.user) {
+        return direction * a.user.localeCompare(b.user)
+      }
+      return 0
+    })
+    await this.save()
+    await this.updateClients('init')
   }
 
   async addTag(tag: string, idx = -1) {
