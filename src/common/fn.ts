@@ -65,7 +65,6 @@ export const dateformat = (
   format: string,
   date: Date,
 ): string => {
-  // how to handle languages :(
   return format.replace(/(YYYY|MM|DD|hh|mm|ss|Month(?:\.(?:de|en))?)/g, (m0: string, m1: string) => {
     switch (m1) {
       case 'YYYY': return pad(date.getFullYear(), '0000')
