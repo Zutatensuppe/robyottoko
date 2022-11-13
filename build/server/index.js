@@ -246,8 +246,10 @@ const logger = (prefix, ...pre) => {
 const unicodeLength = (str) => {
     return [...str].length;
 };
+const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const MONTHS_DE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 const dateformat = (format, date) => {
-    return format.replace(/(YYYY|MM|DD|hh|mm|ss)/g, (m0, m1) => {
+    return format.replace(/(YYYY|MM|DD|hh|mm|ss|Month(?:\.(?:de|en))?)/g, (m0, m1) => {
         switch (m1) {
             case 'YYYY': return pad(date.getFullYear(), '0000');
             case 'MM': return pad(date.getMonth() + 1, '00');
@@ -255,6 +257,9 @@ const dateformat = (format, date) => {
             case 'hh': return pad(date.getHours(), '00');
             case 'mm': return pad(date.getMinutes(), '00');
             case 'ss': return pad(date.getSeconds(), '00');
+            case 'Month.de': return MONTHS_DE[date.getMonth()];
+            case 'Month.en':
+            case 'Month': return MONTHS_EN[date.getMonth()];
             default: return m0;
         }
     });
@@ -7310,9 +7315,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-11-13T14:18:19.082Z",
+    buildDate: "2022-11-13T15:03:53.622Z",
     // @ts-ignore
-    buildVersion: "1.33.1",
+    buildVersion: "1.34.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
