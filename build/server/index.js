@@ -6326,7 +6326,7 @@ class SongrequestModule {
             }
             else {
                 const index = this.data.settings.customCssPresets.findIndex(preset => preset.name === presetName);
-                if (index) {
+                if (index !== -1) {
                     this.data.settings.customCssPresetIdx = index;
                     say(`Switched to preset: ${presetName}`);
                 }
@@ -7281,7 +7281,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-11-13T11:11:48.730Z",
+    buildDate: "2022-11-13T11:19:10.720Z",
     // @ts-ignore
     buildVersion: "1.32.0",
 };

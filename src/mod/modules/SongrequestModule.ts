@@ -1202,7 +1202,7 @@ class SongrequestModule implements Module {
         }
       } else {
         const index = this.data.settings.customCssPresets.findIndex(preset => preset.name === presetName)
-        if (index) {
+        if (index !== -1) {
           this.data.settings.customCssPresetIdx = index
           say(`Switched to preset: ${presetName}`)
         } else {

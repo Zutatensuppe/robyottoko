@@ -149,7 +149,7 @@
           <td>
             <span
               class="button is-small"
-              @click="editPresetIdx = idx;editPreset = preset"
+              @click="startEditPreset(idx)"
             ><i class="fa fa-pencil" /></span>
             <span
               class="button is-small ml-1"
@@ -208,6 +208,10 @@ export default defineComponent({
     this.settings = this.modelValue;
   },
   methods: {
+    startEditPreset(idx: number) {
+      this.editPresetIdx = idx;
+      this.editPreset = this.settings.customCssPresets[idx];
+    },
     presetSave(preset: SongrequestModuleCustomCssPreset) {
       if (this.editPresetIdx === null) {
         return;
