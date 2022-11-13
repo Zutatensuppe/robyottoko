@@ -151,10 +151,14 @@
               class="button is-small"
               @click="startEditPreset(idx)"
             ><i class="fa fa-pencil" /></span>
-            <span
+            <DoubleclickButton
+              message="Are you sure?"
+              :timeout="1000"
               class="button is-small ml-1"
-              @click="removePreset(idx)"
-            ><i class="fa fa-remove" /></span>
+              @doubleclick="removePreset(idx)"
+            >
+              <i class="fa fa-remove" />
+            </DoubleclickButton>
           </td>
         </tr>
       </tbody>
@@ -177,6 +181,7 @@ import {
   SongrequestModuleSettings,
 } from "../../../mod/modules/SongrequestModuleCommon"
 import CheckboxInput from "../CheckboxInput.vue"
+import DoubleclickButton from "../DoubleclickButton.vue"
 import DurationInput from "../DurationInput.vue"
 import ImageUpload from "../ImageUpload.vue"
 import PresetEditor from "./PresetEditor.vue"
@@ -205,9 +210,9 @@ const presetSave = (preset: SongrequestModuleCustomCssPreset): void => {
   }
   if (editPresetIdx.value === -1) {
     // put new commands on top of the list
-    settings.value.customCssPresets.unshift(preset);
-    settings.value.customCssPresetIdx += 1;
-    editPresetIdx.value = settings.value.customCssPresetIdx
+    settings.value.customCssPresets.unshift(preset)
+    editPresetIdx.value = 0
+    settings.value.customCssPresetIdx += 1
   }
   else {
     // otherwise edit the edited command
