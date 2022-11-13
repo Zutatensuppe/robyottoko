@@ -249,7 +249,6 @@ const unicodeLength = (str) => {
 const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const MONTHS_DE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 const dateformat = (format, date) => {
-    // how to handle languages :(
     return format.replace(/(YYYY|MM|DD|hh|mm|ss|Month(?:\.(?:de|en))?)/g, (m0, m1) => {
         switch (m1) {
             case 'YYYY': return pad(date.getFullYear(), '0000');
@@ -7316,7 +7315,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-11-13T15:02:12.860Z",
+    buildDate: "2022-11-13T15:03:53.622Z",
     // @ts-ignore
     buildVersion: "1.34.0",
 };
