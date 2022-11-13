@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div ref="el">
     <div class="filters">
       <div class="currentfilter">
         <div class="mr-1">
@@ -44,10 +44,58 @@
             <th />
             <th />
             <th />
-            <th>Title</th>
-            <th>User</th>
-            <th>Date</th>
-            <th>Plays</th>
+            <th>
+              Title
+              <i
+                class="fa fa-chevron-up is-clickable"
+                title="Sort by title, A - Z"
+                @click="sort(SortBy.TITLE, 1)"
+              />
+              <i
+                class="fa fa-chevron-down is-clickable"
+                title="Sort by title, Z - A"
+                @click="sort(SortBy.TITLE, -1)"
+              />
+            </th>
+            <th>
+              User
+              <i
+                class="fa fa-chevron-up is-clickable"
+                title="Sort by user, A - Z"
+                @click="sort(SortBy.USER, 1)"
+              />
+              <i
+                class="fa fa-chevron-down is-clickable"
+                title="Sort by user, Z - A"
+                @click="sort(SortBy.USER, -1)"
+              />
+            </th>
+            <th>
+              Date
+              <i
+                class="fa fa-chevron-up is-clickable"
+                title="Sort by date, oldest to newest"
+                @click="sort(SortBy.TIMESTAMP, 1)"
+              />
+              <i
+                class="fa fa-chevron-down is-clickable"
+                title="Sort by date, newest to oldest"
+                @click="sort(SortBy.TIMESTAMP, -1)"
+              />
+            </th>
+            <th>
+              Plays
+              <i
+                class="fa fa-chevron-up is-clickable"
+                title="Sort by plays, fewest to most"
+                @click="sort(SortBy.PLAYS, 1)"
+              />
+              <i
+                class="fa fa-chevron-down is-clickable"
+                title="Sort by date, most to fewest"
+                @click="sort(SortBy.PLAYS, -1)"
+              />
+            </th>
             <th />
             <th />
             <th />
@@ -223,101 +271,107 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from "vue";
-import { dateformat } from "../../../common/fn";
-import { DragEndEvent, PlaylistItem } from "../../../types";
+<script setup lang="ts">
+import { dateformat } from "../../../common/fn"
+import { computed, nextTick, Ref, ref, watch } from "vue"
+import { DragEndEvent, PlaylistItem } from "../../../types"
+import { SortBy, SortDirection } from "../../../mod/modules/SongrequestModuleCommon"
 
 interface EnhancedPlaylistItem extends PlaylistItem {
   filteredOut: boolean
 }
 
-export default defineComponent({
-  props: {
-    playlist: {
-      type: Array as PropType<PlaylistItem[]>,
-      required: true,
-    },
-    filter: {
-      type: Object as PropType<{ tag: string }>,
-      required: true,
-    },
-  },
-  data: () => ({
-    hideFilteredOut: true,
-    filterTagInput: "",
-    tagInput: "",
-    tagInputIdx: -1,
-    itemsDisplayed: 20,
-  }),
-  computed: {
-    enhancedPlaylist(): EnhancedPlaylistItem[] {
-      return this.playlist
-        .map((item: PlaylistItem) => ({
-          id: item.id,
-          tags: item.tags,
-          yt: item.yt,
-          title: item.title,
-          timestamp: item.timestamp,
-          hidevideo: !!item.hidevideo,
-          last_play: item.last_play,
-          plays: item.plays,
-          goods: item.goods,
-          bads: item.bads,
-          user: item.user,
-          filteredOut: this.isFilteredOut(item),
-        }))
-        .slice(0, this.itemsDisplayed);
-    },
-    firstIndex(): number {
-      if (this.filter.tag === "") {
-        return 0;
-      }
-      return this.playlist.findIndex((item) =>
-        item.tags.includes(this.filter.tag)
-      );
-    },
-  },
-  watch: {
-    playlist: function (newVal: PlaylistItem[], _oldVal: PlaylistItem[]) {
-      if (!newVal.find((item: PlaylistItem) => !this.isFilteredOut(item))) {
-        this.$emit("stopPlayer");
-      }
-    },
-    filter: function (_newVal: PlaylistItem[], _oldVal: PlaylistItem[]) {
-      if (!this.playlist.find((item: PlaylistItem) => !this.isFilteredOut(item))) {
-        this.$emit("stopPlayer");
-      }
-    },
-  },
-  methods: {
-    formatTimestamp(ms: number) {
-      return dateformat('YYYY-MM-DD hh:mm:ss', new Date(ms));
-    },
-    toggleVisibility(item: PlaylistItem, idx: number) {
-      const visible = !!item.hidevideo;
-      this.sendCtrl("videoVisibility", [visible, idx]);
-    },
-    dragEnd(evt: DragEndEvent) {
-      this.sendCtrl("move", [evt.oldIndex, evt.newIndex]);
-    },
-    applyFilter(tag: string) {
-      this.$emit("filterChange", tag);
-    },
-    sendCtrl(ctrl: string, args: any[]) {
-      this.$emit("ctrl", [ctrl, args]);
-    },
-    isFilteredOut(item: PlaylistItem) {
-      return this.filter.tag !== "" && !item.tags.includes(this.filter.tag);
-    },
-    startAddTag(idx: number) {
-      this.tagInputIdx = idx;
-      this.$nextTick(() => {
-        this.$el.querySelector("table .filter-tag-input").focus();
-      });
-    },
-  },
-});
+const props = defineProps<{
+  playlist: PlaylistItem[]
+  filter: { tag: string }
+}>()
+
+const emit = defineEmits<{
+  (e: 'stopPlayer'): void
+  (e: 'filterChange', val: string): void
+  (e: 'ctrl', val: [string, any[]]): void
+}>()
+
+
+const hideFilteredOut = ref<boolean>(true)
+const filterTagInput = ref<string>("")
+const tagInput = ref<string>("")
+const tagInputIdx = ref<number>(-1)
+const itemsDisplayed = ref<number>(20)
+
+const el = ref<HTMLDivElement>() as Ref<HTMLDivElement>
+
+const enhancedPlaylist = computed((): EnhancedPlaylistItem[] => {
+  return props.playlist
+    .map((item: PlaylistItem) => ({
+      id: item.id,
+      tags: item.tags,
+      yt: item.yt,
+      title: item.title,
+      timestamp: item.timestamp,
+      hidevideo: !!item.hidevideo,
+      last_play: item.last_play,
+      plays: item.plays,
+      goods: item.goods,
+      bads: item.bads,
+      user: item.user,
+      filteredOut: isFilteredOut(item),
+    }))
+    .slice(0, itemsDisplayed.value);
+})
+
+const firstIndex = computed((): number => {
+  if (props.filter.tag === "") {
+    return 0;
+  }
+  return props.playlist.findIndex((item) =>
+    item.tags.includes(props.filter.tag)
+  );
+})
+
+const sort = (by: SortBy, direction: SortDirection) => {
+  sendCtrl('sort', [by, direction])
+}
+const formatTimestamp = (ms: number) => {
+  return dateformat('YYYY-MM-DD hh:mm:ss', new Date(ms));
+}
+const toggleVisibility = (item: PlaylistItem, idx: number) => {
+  const visible = !!item.hidevideo;
+  sendCtrl("videoVisibility", [visible, idx]);
+}
+const dragEnd = (evt: DragEndEvent) => {
+  sendCtrl("move", [evt.oldIndex, evt.newIndex]);
+}
+const applyFilter = (tag: string) => {
+  emit("filterChange", tag);
+}
+const sendCtrl = (ctrl: string, args: any[]) => {
+  emit("ctrl", [ctrl, args]);
+}
+const isFilteredOut = (item: PlaylistItem) => {
+  return props.filter.tag !== "" && !item.tags.includes(props.filter.tag);
+}
+const startAddTag = (idx: number) => {
+  tagInputIdx.value = idx;
+  nextTick(() => {
+    const inputElement = el.value.querySelector("table .filter-tag-input")
+    if (inputElement) {
+      (inputElement as HTMLInputElement).focus();
+    }
+  })
+}
+
+watch(() => props.playlist, (newVal: PlaylistItem[], _oldVal: PlaylistItem[]) => {
+  if (!newVal.find((item: PlaylistItem) => !isFilteredOut(item))) {
+    emit("stopPlayer");
+  }
+})
+
+watch(() => props.filter, () => {
+  if (!props.playlist.find((item: PlaylistItem) => !isFilteredOut(item))) {
+    emit("stopPlayer");
+  }
+})
 </script>
 <style scoped>
 .filters .tag {
@@ -331,5 +385,9 @@ export default defineComponent({
 
 .filters .filter-tag-input {
   max-width: 200px;
+}
+
+table th {
+  white-space: nowrap;
 }
 </style>

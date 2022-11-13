@@ -9,6 +9,14 @@ export interface TagInfo {
   count: number
 }
 
+export type SortDirection = -1 | 1
+export enum SortBy {
+  TITLE = 'title',
+  TIMESTAMP = 'timestamp',
+  PLAYS = 'plays',
+  USER = 'user',
+}
+
 export interface SongrequestModuleCustomCssPreset {
   name: string
   css: string
