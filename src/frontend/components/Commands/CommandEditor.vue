@@ -213,7 +213,7 @@ const props = defineProps<{
 const emit = defineEmits(["save-and-close", "save", "cancel"])
 
 const item = ref<Command>(JSON.parse(JSON.stringify(props.modelValue)))
-const el = ref<HTMLDivElement | null>(null) as Ref<HTMLDivElement>
+const el = ref<HTMLDivElement>() as Ref<HTMLDivElement>
 const possiblePermissions = ref<ComponentDataPermission[]>(permissions)
 
 const valid = computed((): boolean => {

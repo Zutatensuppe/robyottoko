@@ -174,6 +174,31 @@ class SongrequestModule implements Module {
       stacks: {},
     })
 
+    if (typeof data.settings.customCssPresetIdx === 'undefined') {
+      // find the index of a preset that matches the current settings
+      // if nothing is found, create a new preset and use that index
+      const matchingIndex = data.settings.customCssPresets.findIndex((preset: any) => {
+        preset.css === data.settings.customCss &&
+        preset.showProgressBar === data.settings.showProgressBar &&
+        preset.showThumbnails === data.settings.showThumbnails &&
+        preset.timestampFormat === data.settings.timestampFormat &&
+        preset.maxItemsShown === data.settings.maxItemsShown
+      })
+      if (matchingIndex !== -1) {
+        data.settings.customCssPresetIdx = matchingIndex
+      } else {
+        data.settings.customCssPresets.push({
+          name: 'current',
+          css: data.settings.customCss,
+          showProgressBar: data.settings.showProgressBar,
+          showThumbnails: data.settings.showThumbnails,
+          timestampFormat: data.settings.timestampFormat,
+          maxItemsShown: data.settings.maxItemsShown,
+        })
+        data.settings.customCssPresetIdx = data.settings.customCssPresets.length - 1
+      }
+    }
+
     // make sure items have correct structure
     // needed by rest of the code
     // TODO: maybe use same code as in save function
@@ -1176,9 +1201,9 @@ class SongrequestModule implements Module {
           say(`No presets configured`)
         }
       } else {
-        const preset = this.data.settings.customCssPresets.find(preset => preset.name === presetName)
-        if (preset) {
-          this.data.settings.customCss = preset.css
+        const index = this.data.settings.customCssPresets.findIndex(preset => preset.name === presetName)
+        if (index) {
+          this.data.settings.customCssPresetIdx = index
           say(`Switched to preset: ${presetName}`)
         } else {
           say(`Preset does not exist: ${presetName}`)

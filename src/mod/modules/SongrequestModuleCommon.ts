@@ -9,7 +9,7 @@ export interface TagInfo {
   count: number
 }
 
-interface SongrequestModuleCustomCssPreset {
+export interface SongrequestModuleCustomCssPreset {
   name: string
   css: string
   showProgressBar: boolean
@@ -46,12 +46,8 @@ export interface SongrequestModuleSettings {
     mod: number
     sub: number
   }
-  customCss: string
   customCssPresets: SongrequestModuleCustomCssPreset[]
-  showProgressBar: boolean
-  showThumbnails: string | false
-  timestampFormat: string
-  maxItemsShown: number
+  customCssPresetIdx: number
 }
 
 export interface SongrequestModuleLimits {
@@ -75,7 +71,7 @@ export interface SongrequestModuleWsEventData {
   widgetUrl: string,
 }
 
-const default_custom_css_preset = (obj: any = null): SongrequestModuleCustomCssPreset => ({
+export const default_custom_css_preset = (obj: any = null): SongrequestModuleCustomCssPreset => ({
   name: getProp(obj, ['name'], ''),
   css: getProp(obj, ['css'], ''),
   showProgressBar: getProp(obj, ['showProgressBar'], false),
@@ -140,10 +136,6 @@ export const default_settings = (obj: any = null): SongrequestModuleSettings => 
     mod: parseInt(String(getProp(obj, ['maxSongsQueued', 'mod'], 0)), 10),
     sub: parseInt(String(getProp(obj, ['maxSongsQueued', 'sub'], 0)), 10),
   },
-  customCss: getProp(obj, ['customCss'], ''),
   customCssPresets: getProp(obj, ['customCssPresets'], []).map(default_custom_css_preset),
-  showProgressBar: getProp(obj, ['showProgressBar'], false),
-  showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
-  timestampFormat: typeof obj?.timestampFormat === 'undefined' ? '' : obj.timestampFormat,
-  maxItemsShown: getProp(obj, ['maxItemsShown'], -1),
+  customCssPresetIdx: getProp(obj, ['customCssPresetIdx'], 0),
 })

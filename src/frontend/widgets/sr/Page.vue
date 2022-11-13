@@ -14,7 +14,7 @@
         class="hide-video"
       />
       <div
-        v-if="settings.showProgressBar"
+        v-if="preset.showProgressBar"
         class="progress"
       >
         <div
@@ -33,8 +33,8 @@
         :key="idx"
         :class="idx === 0 ? 'playing' : 'not-playing'"
         :item="tmpItem"
-        :show-thumbnails="settings.showThumbnails"
-        :timestamp-format="settings.timestampFormat"
+        :show-thumbnails="preset.showThumbnails"
+        :timestamp-format="preset.timestampFormat"
       />
     </ol>
   </div>
@@ -49,6 +49,8 @@ import {
   SongRequestModuleFilter,
   SongrequestModuleSettings,
   default_settings,
+  SongrequestModuleCustomCssPreset,
+  default_custom_css_preset,
 } from "../../../mod/modules/SongrequestModuleCommon";
 import { PlaylistItem } from "../../../types";
 import util, { WidgetApiData } from "../util";
@@ -92,6 +94,9 @@ export default defineComponent({
     };
   },
   computed: {
+    preset(): SongrequestModuleCustomCssPreset {
+      return this.settings.customCssPresets[this.settings.customCssPresetIdx] || default_custom_css_preset()
+    },
     thumbnailClass(): string {
       if (this.settings.showThumbnails === "left") {
         return "with-thumbnails-left";
@@ -239,8 +244,8 @@ export default defineComponent({
   methods: {
     isFilteredOut(item: PlaylistItem, idx: number): boolean {
       if (
-        this.settings.maxItemsShown >= 0 &&
-        this.settings.maxItemsShown - 1 < idx
+        this.preset.maxItemsShown >= 0 &&
+        this.preset.maxItemsShown - 1 < idx
       ) {
         return true;
       }
@@ -282,21 +287,22 @@ export default defineComponent({
       }
     },
     applySettings(settings: SongrequestModuleSettings): void {
-      if (this.settings.customCss !== settings.customCss) {
+      const newPreset = settings.customCssPresets[settings.customCssPresetIdx] || default_custom_css_preset()
+      if (this.preset.css !== newPreset.css) {
         let el = document.getElementById("customCss");
         if (el && el.parentElement) {
           el.parentElement.removeChild(el);
         }
         el = document.createElement("style");
         el.id = "customCss";
-        el.textContent = settings.customCss;
+        el.textContent = newPreset.css;
         document.head.appendChild(el);
       }
-      if (this.settings.showProgressBar !== settings.showProgressBar) {
+      if (this.preset.showProgressBar !== newPreset.showProgressBar) {
         if (this.progressInterval) {
           window.clearInterval(this.progressInterval);
         }
-        if (settings.showProgressBar) {
+        if (newPreset.showProgressBar) {
           this.progressInterval = window.setInterval(() => {
             if (this.player) {
               this.progress = this.player.getProgress();
