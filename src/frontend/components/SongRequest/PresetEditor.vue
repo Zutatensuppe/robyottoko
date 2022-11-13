@@ -81,6 +81,9 @@
               <code>hh</code> Hour <br>
               <code>mm</code> Minute <br>
               <code>ss</code> Second <br>
+              <code>Month</code> Full month name in english (eg. January, March...) <br>
+              <code>Month.en</code> Full month name in english (eg. January, March...) <br>
+              <code>Month.de</code> Full month name in german (eg. Januar, März...) <br>
             </td>
           </tr>
           <tr>

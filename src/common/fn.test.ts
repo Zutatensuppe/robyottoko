@@ -17,6 +17,7 @@ import {
   getProp,
   withoutLeading,
   pad,
+  dateformat,
 } from './fn'
 
 test.each`
@@ -345,6 +346,35 @@ describe('daysUntil', () => {
       'Today is XXX',
       '???',
     )
+    expect(actual).toBe(expected)
+  })
+})
+
+describe('dateformat', () => {
+  const date = new Date('2020-01-01 10:00:00')
+  test.each([
+    {
+      date: date,
+      format: 'YYYY MM DD hh mm ss',
+      expected: '2020 01 01 10 00 00',
+    },
+    {
+      date: date,
+      format: 'Month',
+      expected: 'January',
+    },
+    {
+      date: date,
+      format: 'Month.en',
+      expected: 'January',
+    },
+    {
+      date: date,
+      format: 'Month.de',
+      expected: 'Januar',
+    },
+  ])('$format', ({ format, date, expected }) => {
+    const actual = dateformat(format, date)
     expect(actual).toBe(expected)
   })
 })
