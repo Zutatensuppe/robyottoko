@@ -289,12 +289,13 @@ onUnmounted(() => {
   }
 })
 
-watch(() => playlist.value, (newVal) => {
+watch(playlist, (newVal) => {
   if (!newVal.find((item: PlaylistItem, idx: number) => !isFilteredOut(item, idx))) {
     player.value.stop()
   }
 })
-watch(() => filter.value, () => {
+
+watch(filter, () => {
   if (!playlist.value.find((item: PlaylistItem, idx: number) => !isFilteredOut(item, idx))) {
     player.value.stop()
   }
