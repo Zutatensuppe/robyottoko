@@ -4,7 +4,7 @@
     :class="classes"
   >
     <div class="player video-16-9">
-      <responsive-image
+      <ResponsiveImage
         v-if="hidevideo && settings.hideVideoImage.file"
         class="hide-video"
         :src="settings.hideVideoImage.urlpath"
@@ -14,7 +14,7 @@
         class="hide-video"
       />
       <div
-        v-if="settings.showProgressBar"
+        v-if="preset.showProgressBar"
         class="progress"
       >
         <div
@@ -22,291 +22,277 @@
           :style="progressValueStyle"
         />
       </div>
-      <youtube-player
-        ref="youtube"
+      <Youtube
+        ref="player"
         @ended="ended"
       />
     </div>
     <ol class="list">
-      <list-item
+      <ListItem
         v-for="(tmpItem, idx) in playlistItems"
         :key="idx"
         :class="idx === 0 ? 'playing' : 'not-playing'"
         :item="tmpItem"
-        :show-thumbnails="settings.showThumbnails"
-        :timestamp-format="settings.timestampFormat"
+        :show-thumbnails="preset.showThumbnails"
+        :timestamp-format="preset.timestampFormat"
       />
     </ol>
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from "vue";
-import { logger } from "../../../common/fn";
-import YoutubePlayer, { YoutubeInstance } from "../../components/YoutubePlayer.vue";
-import WsClient from "../../WsClient";
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, Ref, ref, watch } from "vue"
+import { logger } from "../../../common/fn"
+import { PlaylistItem } from "../../../types"
+import ListItem from "./components/ListItem.vue"
+import ResponsiveImage from './../../components/ResponsiveImage.vue'
+import util, { WidgetApiData } from "../util"
+import WsClient from "../../WsClient"
+import Youtube, { YoutubeInstance } from "../../components/YoutubePlayer.vue"
 import {
+  default_custom_css_preset,
+  default_settings,
+  SongrequestModuleCustomCssPreset,
   SongRequestModuleFilter,
   SongrequestModuleSettings,
-  default_settings,
-} from "../../../mod/modules/SongrequestModuleCommon";
-import { PlaylistItem } from "../../../types";
-import util, { WidgetApiData } from "../util";
+} from "../../../mod/modules/SongrequestModuleCommon"
 
-import ResponsiveImage from './../../components/ResponsiveImage.vue'
-import ListItem from './components/ListItem.vue'
+import("./main.scss")
 
 const log = logger('Page.vue')
 
-interface ComponentData {
-  ws: WsClient | null;
-  filter: SongRequestModuleFilter;
-  hasPlayed: boolean;
-  playlist: PlaylistItem[];
-  settings: SongrequestModuleSettings;
-  progress: number;
-  progressInterval: any;
-  inited: boolean;
+const props = defineProps<{
+  wdata: WidgetApiData,
+}>()
+
+let ws: WsClient | null = null
+
+const player = ref<YoutubeInstance>() as Ref<YoutubeInstance>
+const filter = ref<SongRequestModuleFilter>({ tag: "" })
+const hasPlayed = ref<boolean>(false)
+const playlist = ref<PlaylistItem[]>([])
+const settings = ref<SongrequestModuleSettings>(default_settings())
+const progress = ref<number>(0)
+const inited = ref<boolean>(false)
+
+const preset = computed((): SongrequestModuleCustomCssPreset => {
+  return settings.value.customCssPresets[settings.value.customCssPresetIdx] || default_custom_css_preset()
+})
+
+const thumbnailClass = computed((): string => {
+  if (preset.value.showThumbnails === "left") {
+    return "with-thumbnails-left"
+  }
+  if (preset.value.showThumbnails === "right") {
+    return "with-thumbnails-right"
+  }
+  return "without-thumbnails"
+})
+
+const progressBarClass = computed((): string => {
+  return preset.value.showProgressBar
+    ? "with-progress-bar"
+    : "without-progress-bar"
+})
+
+const classes = computed((): string[] => {
+  return [thumbnailClass.value, progressBarClass.value]
+})
+
+const progressValueStyle = computed((): { width: string } => {
+  return {
+    width: `${progress.value * 100}%`,
+  }
+})
+
+const playlistItems = computed((): PlaylistItem[] => {
+  return playlist.value.filter((item, idx) => !isFilteredOut(item, idx))
+})
+
+const filteredPlaylist = computed((): PlaylistItem[] => {
+  if (filter.value.tag === "") {
+    return playlist.value
+  }
+  return playlist.value.filter((item: PlaylistItem) =>
+    item.tags.includes(filter.value.tag)
+  )
+})
+
+const hidevideo = computed((): boolean => {
+  return item.value ? !!item.value.hidevideo : false
+})
+
+const item = computed((): PlaylistItem | null => {
+  if (filteredPlaylist.value.length === 0) {
+    return null
+  }
+  return filteredPlaylist.value[0]
+})
+
+const isFilteredOut = (item: PlaylistItem, idx: number): boolean => {
+  if (
+    preset.value.maxItemsShown >= 0 &&
+    preset.value.maxItemsShown - 1 < idx
+  ) {
+    return true
+  }
+  return filter.value.tag !== "" && !item.tags.includes(filter.value.tag)
+}
+const ended = (): void => {
+  sendMsg({ event: "ended" })
 }
 
-export default defineComponent({
-  components: {
-    ResponsiveImage,
-    Youtube: YoutubePlayer,
-    ListItem,
-  },
-  props: {
-    wdata: { type: Object as PropType<WidgetApiData>, required: true }
-  },
-  data(): ComponentData {
-    return {
-      ws: null,
-      filter: { tag: "" },
-      hasPlayed: false,
-      playlist: [],
-      settings: default_settings(),
-      progress: 0,
-      progressInterval: null,
+const sendMsg = (data: { event: string, id?: number }): void => {
+  if (!ws) {
+    log.error('sendMsg, ws not defined')
+    return
+  }
+  ws.send(JSON.stringify(data))
+}
 
-      inited: false,
-    };
-  },
-  computed: {
-    thumbnailClass(): string {
-      if (this.settings.showThumbnails === "left") {
-        return "with-thumbnails-left";
-      }
-      if (this.settings.showThumbnails === "right") {
-        return "with-thumbnails-right";
-      }
-      return "without-thumbnails";
-    },
-    progressBarClass(): string {
-      return this.settings.showProgressBar
-        ? "with-progress-bar"
-        : "without-progress-bar";
-    },
-    classes(): string[] {
-      return [this.thumbnailClass, this.progressBarClass];
-    },
-    player(): YoutubeInstance {
-      return this.$refs.youtube as YoutubeInstance;
-    },
-    progressValueStyle(): { width: string } {
-      return {
-        width: `${this.progress * 100}%`,
-      };
-    },
-    playlistItems(): PlaylistItem[] {
-      const playlistItems: PlaylistItem[] = [];
-      for (let idx = 0; idx < this.playlist.length; idx++) {
-        const item = this.playlist[idx];
-        if (!this.isFilteredOut(item, idx)) {
-          playlistItems[idx] = item;
-        }
-      }
-      return playlistItems;
-    },
-    filteredPlaylist(): PlaylistItem[] {
-      if (this.filter.tag === "") {
-        return this.playlist;
-      }
-      return this.playlist.filter((item: PlaylistItem) =>
-        item.tags.includes(this.filter.tag)
-      );
-    },
-    hidevideo(): boolean {
-      return this.item ? !!this.item.hidevideo : false;
-    },
-    item(): PlaylistItem | null {
-      if (this.filteredPlaylist.length === 0) {
-        return null
-      }
-      return this.filteredPlaylist[0];
-    },
-  },
-  watch: {
-    playlist: function (newVal: PlaylistItem[], _oldVal: PlaylistItem[]): void {
-      if (!newVal.find((item: PlaylistItem, idx: number) => !this.isFilteredOut(item, idx))) {
-        this.player.stop();
-      }
-    },
-    filter: function (_newVal: PlaylistItem[], _oldVal: PlaylistItem[]): void {
-      if (!this.playlist.find((item: PlaylistItem, idx: number) => !this.isFilteredOut(item, idx))) {
-        this.player.stop();
-      }
-    },
-  },
-  created() {
-    // @ts-ignore
-    import("./main.scss");
-  },
-  mounted() {
-    this.ws = util.wsClient(this.wdata);
+const play = (): void => {
+  hasPlayed.value = true
+  adjustVolume()
+  if (item.value) {
+    player.value.play(item.value.yt)
+    sendMsg({ event: "play", id: item.value.id })
+  }
+}
 
-    this.ws.onMessage(["save", "settings"], (data) => {
-      this.applySettings(data.settings);
-    });
-    this.ws.onMessage(
-      ["onEnded", "prev", "skip", "remove", "move", "tags"],
-      (data) => {
-        this.applySettings(data.settings);
-        const oldId =
-          this.filteredPlaylist.length > 0 ? this.filteredPlaylist[0].id : null;
-        this.filter = data.filter;
-        this.playlist = data.playlist;
-        const newId =
-          this.filteredPlaylist.length > 0 ? this.filteredPlaylist[0].id : null;
-        if (oldId !== newId) {
-          this.play();
-        }
-      }
-    );
-    this.ws.onMessage(["filter"], (data) => {
-      this.applySettings(data.settings);
-      const oldId =
-        this.filteredPlaylist.length > 0 ? this.filteredPlaylist[0].id : null;
-      this.filter = data.filter;
-      this.playlist = data.playlist;
-      // play only if old id is not in new playlist
-      if (!this.filteredPlaylist.find((item) => item.id === oldId)) {
-        this.play();
-      }
-    });
-    this.ws.onMessage(["pause"], (_data) => {
-      if (this.player.playing()) {
-        this.pause();
-      }
-    });
-    this.ws.onMessage(["unpause"], (_data) => {
-      if (!this.player.playing()) {
-        if (this.hasPlayed) {
-          this.unpause();
-        } else {
-          this.play();
-        }
-      }
-    });
-    this.ws.onMessage(["loop"], (_data) => {
-      this.player.setLoop(true);
-    });
-    this.ws.onMessage(["noloop"], (_data) => {
-      this.player.setLoop(false);
-    });
-    this.ws.onMessage(["stats", "video", "playIdx", "shuffle"], (data) => {
-      this.applySettings(data.settings);
-      this.filter = data.filter;
-      this.playlist = data.playlist;
-    });
-    this.ws.onMessage(["add", "init"], (data) => {
-      this.applySettings(data.settings);
-      this.filter = data.filter;
-      this.playlist = data.playlist;
-      if (!this.inited && !this.player.playing()) {
-        if (this.settings.initAutoplay) {
-          this.play();
-        }
-      }
-      this.inited = true;
-    });
-    this.ws.connect();
-  },
-  unmounted() {
-    if (this.ws) {
-      this.ws.disconnect()
+const unpause = (): void => {
+  if (item.value) {
+    player.value.unpause()
+    sendMsg({ event: "unpause", id: item.value.id })
+  }
+}
+
+const pause = (): void => {
+  if (item.value) {
+    player.value.pause()
+    sendMsg({ event: "pause" })
+  }
+}
+
+const adjustVolume = (): void => {
+  player.value.setVolume(settings.value.volume)
+}
+
+const updateProgress = () => {
+  progress.value = player.value.getProgress()
+  if (preset.value.showProgressBar) {
+    requestAnimationFrame(updateProgress)
+  }
+}
+
+const currentId = (playlist: PlaylistItem[]): number | null => {
+  return playlist.length > 0 ? playlist[0].id : null
+}
+
+const applySettings = (newSettings: SongrequestModuleSettings): void => {
+  const newPreset = newSettings.customCssPresets[newSettings.customCssPresetIdx] || default_custom_css_preset()
+  if (preset.value.css !== newPreset.css) {
+    let el = document.getElementById("customCss")
+    if (el && el.parentElement) {
+      el.parentElement.removeChild(el)
     }
-  },
-  methods: {
-    isFilteredOut(item: PlaylistItem, idx: number): boolean {
-      if (
-        this.settings.maxItemsShown >= 0 &&
-        this.settings.maxItemsShown - 1 < idx
-      ) {
-        return true;
+    el = document.createElement("style")
+    el.id = "customCss"
+    el.textContent = newPreset.css
+    document.head.appendChild(el)
+  }
+  if (preset.value.showProgressBar !== newPreset.showProgressBar) {
+    if (newPreset.showProgressBar) {
+      requestAnimationFrame(updateProgress)
+    }
+  }
+  settings.value = newSettings
+  adjustVolume()
+}
+
+onMounted(() => {
+  ws = util.wsClient(props.wdata)
+  ws.onMessage(["save", "settings"], (data) => {
+    applySettings(data.settings)
+  })
+  ws.onMessage(
+    ["onEnded", "prev", "skip", "remove", "move", "tags"],
+    (data) => {
+      applySettings(data.settings)
+      const oldId = currentId(filteredPlaylist.value)
+      filter.value = data.filter
+      playlist.value = data.playlist
+      const newId = currentId(filteredPlaylist.value)
+      if (oldId !== newId) {
+        play()
       }
-      return this.filter.tag !== "" && !item.tags.includes(this.filter.tag);
-    },
-    ended(): void {
-      this.sendMsg({ event: "ended" });
-    },
-    sendMsg(data: { event: string, id?: number }): void {
-      if (!this.ws) {
-        log.error('sendMsg, ws not defined')
-        return
+    }
+  )
+  ws.onMessage(["filter"], (data) => {
+    applySettings(data.settings)
+    const oldId = currentId(filteredPlaylist.value)
+    filter.value = data.filter
+    playlist.value = data.playlist
+    // play only if old id is not in new playlist
+    if (!filteredPlaylist.value.find((item) => item.id === oldId)) {
+      play()
+    }
+  })
+  ws.onMessage(["pause"], (_data) => {
+    if (player.value.playing()) {
+      pause()
+    }
+  })
+  ws.onMessage(["unpause"], (_data) => {
+    if (!player.value.playing()) {
+      if (hasPlayed.value) {
+        unpause()
+      } else {
+        play()
       }
-      this.ws.send(JSON.stringify(data));
-    },
-    play(): void {
-      this.hasPlayed = true;
-      this.adjustVolume();
-      if (this.item) {
-        this.player.play(this.item.yt);
-        this.sendMsg({ event: "play", id: this.item.id });
+    }
+  })
+  ws.onMessage(["loop"], (_data) => {
+    player.value.setLoop(true)
+  })
+  ws.onMessage(["noloop"], (_data) => {
+    player.value.setLoop(false)
+  })
+  ws.onMessage(["stats", "video", "playIdx", "shuffle"], (data) => {
+    applySettings(data.settings)
+    filter.value = data.filter
+    playlist.value = data.playlist
+  })
+  ws.onMessage(["add", "init"], (data) => {
+    applySettings(data.settings)
+    filter.value = data.filter
+    playlist.value = data.playlist
+    if (!inited.value && !player.value.playing()) {
+      if (settings.value.initAutoplay) {
+        play()
       }
-    },
-    unpause(): void {
-      if (this.item) {
-        this.player.unpause();
-        this.sendMsg({ event: "unpause", id: this.item.id });
-      }
-    },
-    pause(): void {
-      if (this.item) {
-        this.player.pause();
-        this.sendMsg({ event: "pause" });
-      }
-    },
-    adjustVolume(): void {
-      if (this.player) {
-        this.player.setVolume(this.settings.volume);
-      }
-    },
-    applySettings(settings: SongrequestModuleSettings): void {
-      if (this.settings.customCss !== settings.customCss) {
-        let el = document.getElementById("customCss");
-        if (el && el.parentElement) {
-          el.parentElement.removeChild(el);
-        }
-        el = document.createElement("style");
-        el.id = "customCss";
-        el.textContent = settings.customCss;
-        document.head.appendChild(el);
-      }
-      if (this.settings.showProgressBar !== settings.showProgressBar) {
-        if (this.progressInterval) {
-          window.clearInterval(this.progressInterval);
-        }
-        if (settings.showProgressBar) {
-          this.progressInterval = window.setInterval(() => {
-            if (this.player) {
-              this.progress = this.player.getProgress();
-            }
-          }, 500);
-        }
-      }
-      this.settings = settings;
-      this.adjustVolume();
-    },
-  },
-});
+    }
+    inited.value = true
+  })
+  ws.connect()
+})
+
+onUnmounted(() => {
+  if (ws) {
+    ws.disconnect()
+  }
+})
+
+watch(playlist, (newVal) => {
+  if (!newVal.some((item: PlaylistItem, idx: number) => !isFilteredOut(item, idx))) {
+    console.log('stopping player')
+    player.value.stop()
+  }
+})
+
+watch(filter, () => {
+  if (!playlist.value.some((item: PlaylistItem, idx: number) => !isFilteredOut(item, idx))) {
+    console.log('stopping player')
+    player.value.stop()
+  }
+})
 </script>

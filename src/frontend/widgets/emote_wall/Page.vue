@@ -10,8 +10,6 @@
   </div>
 </template>
 <script setup lang="ts">
-// @ts-nocheck
-// nocheck because import scss file doesnt work otherwise :(
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import {
   default_settings,

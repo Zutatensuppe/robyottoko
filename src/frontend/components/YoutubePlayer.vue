@@ -72,6 +72,7 @@ interface ComponentData {
   toplay: string | null
   tovolume: number | null
   tryPlayInterval: any | null // number / timeout
+  stopped: boolean
 }
 
 const Youtube = defineComponent({
@@ -88,6 +89,7 @@ const Youtube = defineComponent({
     toplay: null,
     tovolume: null,
     tryPlayInterval: null,
+    stopped: false,
   }),
   created() {
     this.id = `yt-${Math.floor(
@@ -139,8 +141,10 @@ const Youtube = defineComponent({
       return d ? c / d : 0;
     },
     stop(): void {
+      this.stopped = true
+      this.stopTryPlayInterval()
       if (this.yt) {
-        this.yt.stopVideo();
+        this.yt.stopVideo()
       }
     },
     stopTryPlayInterval(): void {
@@ -150,6 +154,9 @@ const Youtube = defineComponent({
       }
     },
     tryPlay(): void {
+      if (this.stopped) {
+        return;
+      }
       this.stopTryPlayInterval();
       if (!this.visible) {
         return;
@@ -173,6 +180,7 @@ const Youtube = defineComponent({
       }, 250);
     },
     play(yt: string): void {
+      this.stopped = false;
       if (!this.yt) {
         this.toplay = yt;
       } else {
@@ -186,6 +194,7 @@ const Youtube = defineComponent({
       }
     },
     unpause(): void {
+      this.stopped = false;
       if (this.yt) {
         this.tryPlay();
       }
