@@ -168,8 +168,8 @@ const val = ref<SongrequestModuleCustomCssPreset>(props.modelValue)
 
 const emit = defineEmits<{
   (e: 'cancel'): void
-  (e: 'save', val: SongrequestModuleCustomCssPreset): void,
-  (e: 'save-and-close', val: SongrequestModuleCustomCssPreset): void,
+  (e: 'save', val: SongrequestModuleCustomCssPreset): void
+  (e: 'save-and-close', val: SongrequestModuleCustomCssPreset): void
 }>()
 
 const el = ref<HTMLDivElement>() as Ref<HTMLDivElement>

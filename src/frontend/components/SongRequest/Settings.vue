@@ -13,7 +13,7 @@
         <tr>
           <td><code>settings.volume</code></td>
           <td>
-            <volume-slider
+            <VolumeSlider
               v-model="settings.volume"
               @update:modelValue="sendSettings"
             />
@@ -33,7 +33,7 @@
         <tr>
           <td><code>settings.hideVideoImage</code></td>
           <td>
-            <image-upload
+            <ImageUpload
               v-model="settings.hideVideoImage"
               width="100px"
               height="50px"
@@ -46,7 +46,7 @@
         <tr>
           <td><code>settings.maxSongLength.viewer</code></td>
           <td>
-            <duration-input
+            <DurationInput
               v-model="settings.maxSongLength.viewer"
               @update:modelValue="sendSettings"
             />
@@ -59,7 +59,7 @@
         <tr>
           <td><code>settings.maxSongLength.mod</code></td>
           <td>
-            <duration-input
+            <DurationInput
               v-model="settings.maxSongLength.mod"
               @update:modelValue="sendSettings"
             />
@@ -72,7 +72,7 @@
         <tr>
           <td><code>settings.maxSongLength.sub</code></td>
           <td>
-            <duration-input
+            <DurationInput
               v-model="settings.maxSongLength.sub"
               @update:modelValue="sendSettings"
             />
@@ -168,101 +168,92 @@
     />
   </div>
 </template>
-<script lang="ts">
-import { defineComponent, PropType } from "vue";
+<script setup lang="ts">
+import { ref } from "vue"
+import { MediaFile } from "../../../types"
 import {
-  default_settings,
   default_custom_css_preset,
   SongrequestModuleCustomCssPreset,
   SongrequestModuleSettings,
-} from "../../../mod/modules/SongrequestModuleCommon";
-import { MediaFile } from "../../../types";
-import CheckboxInput from "../CheckboxInput.vue";
-import PresetEditor from "./PresetEditor.vue";
+} from "../../../mod/modules/SongrequestModuleCommon"
+import CheckboxInput from "../CheckboxInput.vue"
+import DurationInput from "../DurationInput.vue"
+import ImageUpload from "../ImageUpload.vue"
+import PresetEditor from "./PresetEditor.vue"
+import VolumeSlider from "../VolumeSlider.vue"
 
-interface ComponentData {
-  settings: SongrequestModuleSettings
-  cssPresetName: string
-  editPresetIdx: null | number
-  editPreset: null | SongrequestModuleCustomCssPreset
+const props = defineProps<{
+  modelValue: SongrequestModuleSettings
+}>()
+
+const settings = ref<SongrequestModuleSettings>(props.modelValue)
+const editPresetIdx = ref<null | number>(null)
+const editPreset = ref<null | SongrequestModuleCustomCssPreset>(null)
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: SongrequestModuleSettings): void
+}>()
+
+const startEditPreset = (idx: number): void => {
+  editPresetIdx.value = idx;
+  editPreset.value = settings.value.customCssPresets[idx];
 }
 
-export default defineComponent({
-  components: { CheckboxInput, PresetEditor },
-  props: {
-    modelValue: {
-      type: Object as PropType<SongrequestModuleSettings>,
-      required: true,
-    },
-  },
-  emits: {
-    "update:modelValue": null,
-  },
-  data: (): ComponentData => ({
-    cssPresetName: "",
-    settings: default_settings(),
-    editPresetIdx: null,
-    editPreset: null,
-  }),
-  created() {
-    this.settings = this.modelValue;
-  },
-  methods: {
-    startEditPreset(idx: number) {
-      this.editPresetIdx = idx;
-      this.editPreset = this.settings.customCssPresets[idx];
-    },
-    presetSave(preset: SongrequestModuleCustomCssPreset) {
-      if (this.editPresetIdx === null) {
-        return;
-      }
-      if (this.editPresetIdx === -1) {
-        // put new commands on top of the list
-        this.settings.customCssPresets.unshift(preset);
-        this.settings.customCssPresetIdx += 1;
-        this.editPresetIdx = this.settings.customCssPresetIdx
-      }
-      else {
-        // otherwise edit the edited command
-        this.settings.customCssPresets[this.editPresetIdx] = preset;
-      }
-      this.sendSettings();
-    },
-    presetSaveAndClose(preset: SongrequestModuleCustomCssPreset) {
-      this.presetSave(preset)
-      this.editPresetIdx = null
-      this.editPreset = null
-    },
-    loadPreset(idx: number) {
-      this.settings.customCssPresetIdx = idx
-      this.sendSettings()
-    },
-    removePreset(idx: number) {
-      this.settings.customCssPresets = this.settings.customCssPresets.filter((_preset, _idx) => _idx !== idx);
-      if (this.settings.customCssPresets.length === 0) {
-        const preset = default_custom_css_preset({ name: 'default' })
-        this.settings.customCssPresets.push(preset)
-        this.settings.customCssPresetIdx = 0
-      } else {
-        if (idx === this.settings.customCssPresetIdx) {
-          this.settings.customCssPresetIdx = 0
-        } else if (idx < this.settings.customCssPresetIdx) {
-          this.settings.customCssPresetIdx -= 1
-        }
-      }
-      this.sendSettings();
-    },
-    addPreset() {
-      this.editPresetIdx = -1
-      this.editPreset = default_custom_css_preset()
-    },
-    hideVideoImageChanged(file: MediaFile) {
-      this.settings.hideVideoImage = file;
-      this.sendSettings();
-    },
-    sendSettings() {
-      this.$emit("update:modelValue", this.settings);
-    },
+const presetSave = (preset: SongrequestModuleCustomCssPreset): void => {
+  if (editPresetIdx.value === null) {
+    return
   }
-});
+  if (editPresetIdx.value === -1) {
+    // put new commands on top of the list
+    settings.value.customCssPresets.unshift(preset);
+    settings.value.customCssPresetIdx += 1;
+    editPresetIdx.value = settings.value.customCssPresetIdx
+  }
+  else {
+    // otherwise edit the edited command
+    settings.value.customCssPresets[editPresetIdx.value] = preset;
+  }
+  sendSettings();
+}
+
+const presetSaveAndClose = (preset: SongrequestModuleCustomCssPreset): void => {
+  presetSave(preset)
+  editPresetIdx.value = null
+  editPreset.value = null
+}
+
+const loadPreset = (idx: number): void => {
+  settings.value.customCssPresetIdx = idx
+  sendSettings()
+}
+
+const removePreset = (idx: number): void => {
+  settings.value.customCssPresets = settings.value.customCssPresets.filter((_preset, _idx) => _idx !== idx);
+  if (settings.value.customCssPresets.length === 0) {
+    const preset = default_custom_css_preset({ name: 'default' })
+    settings.value.customCssPresets.push(preset)
+    settings.value.customCssPresetIdx = 0
+  } else {
+    if (idx === settings.value.customCssPresetIdx) {
+      settings.value.customCssPresetIdx = 0
+    } else if (idx < settings.value.customCssPresetIdx) {
+      settings.value.customCssPresetIdx -= 1
+    }
+  }
+  sendSettings();
+}
+
+const addPreset = (): void => {
+  editPresetIdx.value = -1
+  editPreset.value = default_custom_css_preset()
+}
+
+const hideVideoImageChanged = (file: MediaFile): void => {
+  settings.value.hideVideoImage = file;
+  sendSettings();
+}
+
+const sendSettings = (): void => {
+  emit('update:modelValue', settings.value)
+}
 </script>
