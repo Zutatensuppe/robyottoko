@@ -156,6 +156,7 @@ const sendMsg = (data: { event: string, id?: number }): void => {
   }
   ws.send(JSON.stringify(data))
 }
+
 const play = (): void => {
   hasPlayed.value = true
   adjustVolume()
@@ -164,18 +165,21 @@ const play = (): void => {
     sendMsg({ event: "play", id: item.value.id })
   }
 }
+
 const unpause = (): void => {
   if (item.value) {
     player.value.unpause()
     sendMsg({ event: "unpause", id: item.value.id })
   }
 }
+
 const pause = (): void => {
   if (item.value) {
     player.value.pause()
     sendMsg({ event: "pause" })
   }
 }
+
 const adjustVolume = (): void => {
   player.value.setVolume(settings.value.volume)
 }
