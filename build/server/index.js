@@ -5215,12 +5215,8 @@ const default_settings$4 = (obj = null) => ({
         mod: parseInt(String(getProp(obj, ['maxSongsQueued', 'mod'], 0)), 10),
         sub: parseInt(String(getProp(obj, ['maxSongsQueued', 'sub'], 0)), 10),
     },
-    customCss: getProp(obj, ['customCss'], ''),
     customCssPresets: getProp(obj, ['customCssPresets'], []).map(default_custom_css_preset),
-    showProgressBar: getProp(obj, ['showProgressBar'], false),
-    showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
-    timestampFormat: typeof obj?.timestampFormat === 'undefined' ? '' : obj.timestampFormat,
-    maxItemsShown: getProp(obj, ['maxItemsShown'], -1),
+    customCssPresetIdx: getProp(obj, ['customCssPresetIdx'], 0),
 });
 
 const log$6 = logger('SongrequestModule.ts');
@@ -5340,6 +5336,31 @@ class SongrequestModule {
             commands: default_commands(),
             stacks: {},
         });
+        if (typeof data.settings.customCssPresetIdx === 'undefined') {
+            // find the index of a preset that matches the current settings
+            // if nothing is found, create a new preset and use that index
+            const matchingIndex = data.settings.customCssPresets.findIndex((preset) => {
+                preset.css === data.settings.customCss &&
+                    preset.showProgressBar === data.settings.showProgressBar &&
+                    preset.showThumbnails === data.settings.showThumbnails &&
+                    preset.timestampFormat === data.settings.timestampFormat &&
+                    preset.maxItemsShown === data.settings.maxItemsShown;
+            });
+            if (matchingIndex !== -1) {
+                data.settings.customCssPresetIdx = matchingIndex;
+            }
+            else {
+                data.settings.customCssPresets.push({
+                    name: 'current',
+                    css: data.settings.customCss,
+                    showProgressBar: data.settings.showProgressBar,
+                    showThumbnails: data.settings.showThumbnails,
+                    timestampFormat: data.settings.timestampFormat,
+                    maxItemsShown: data.settings.maxItemsShown,
+                });
+                data.settings.customCssPresetIdx = data.settings.customCssPresets.length - 1;
+            }
+        }
         // make sure items have correct structure
         // needed by rest of the code
         // TODO: maybe use same code as in save function
@@ -6304,9 +6325,9 @@ class SongrequestModule {
                 }
             }
             else {
-                const preset = this.data.settings.customCssPresets.find(preset => preset.name === presetName);
-                if (preset) {
-                    this.data.settings.customCss = preset.css;
+                const index = this.data.settings.customCssPresets.findIndex(preset => preset.name === presetName);
+                if (index) {
+                    this.data.settings.customCssPresetIdx = index;
                     say(`Switched to preset: ${presetName}`);
                 }
                 else {
@@ -7260,7 +7281,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-11-12T23:21:34.095Z",
+    buildDate: "2022-11-13T10:44:57.424Z",
     // @ts-ignore
     buildVersion: "1.31.1",
 };
