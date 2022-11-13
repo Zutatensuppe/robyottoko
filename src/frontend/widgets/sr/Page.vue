@@ -106,14 +106,7 @@ const progressValueStyle = computed((): { width: string } => {
 })
 
 const playlistItems = computed((): PlaylistItem[] => {
-  const items: PlaylistItem[] = []
-  for (let idx = 0; idx < playlist.value.length; idx++) {
-    const item = playlist.value[idx]
-    if (!isFilteredOut(item, idx)) {
-      items[idx] = item
-    }
-  }
-  return items
+  return playlist.value.filter((item, idx) => !isFilteredOut(item, idx))
 })
 
 const filteredPlaylist = computed((): PlaylistItem[] => {
@@ -290,13 +283,15 @@ onUnmounted(() => {
 })
 
 watch(playlist, (newVal) => {
-  if (!newVal.find((item: PlaylistItem, idx: number) => !isFilteredOut(item, idx))) {
+  if (!newVal.some((item: PlaylistItem, idx: number) => !isFilteredOut(item, idx))) {
+    console.log('stopping player')
     player.value.stop()
   }
 })
 
 watch(filter, () => {
-  if (!playlist.value.find((item: PlaylistItem, idx: number) => !isFilteredOut(item, idx))) {
+  if (!playlist.value.some((item: PlaylistItem, idx: number) => !isFilteredOut(item, idx))) {
+    console.log('stopping player')
     player.value.stop()
   }
 })
