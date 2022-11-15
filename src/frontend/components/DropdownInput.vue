@@ -53,7 +53,9 @@ const props = defineProps({
   values: { type: Array as PropType<OneValue[]>, required: true },
   icon: { type: String, default: '' },
 })
-const emit = defineEmits(['update:modelValue', 'focus'])
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: string): void
+}>()
 
 const value = ref<string>(props.modelValue)
 

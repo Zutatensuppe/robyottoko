@@ -55,7 +55,9 @@ const props = defineProps<{
 
 const val = ref<VariableChangeEffect>(props.modelValue)
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: VariableChangeEffect): void
+}>()
 
 const autocompletableVariables = (): AutocompletableVariable[] => {
   const variables: AutocompletableVariable[] = props.itemVariables.slice().map((localVar: CommandVariable) => {

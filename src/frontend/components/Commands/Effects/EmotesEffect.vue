@@ -105,7 +105,9 @@ const props = defineProps<{
 const val = ref<EmotesEffect>(props.modelValue)
 const possibleEmoteSets = ref<EmoteSet[]>([])
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: EmotesEffect): void
+}>()
 
 const rmFn = (idx: number): void => {
   val.value.data.displayFn = val.value.data.displayFn.filter((_value, index) => index !== idx)

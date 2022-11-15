@@ -23,7 +23,10 @@ import { computed, ref } from "vue";
 const time = ref<number | null>(null)
 const timer = ref<any>(null)
 
-const emit = defineEmits(['click', 'doubleclick'])
+const emit = defineEmits<{
+  (e: 'click'): void
+  (e: 'doubleclick'): void
+}>()
 
 const props = defineProps<{
   message: string,

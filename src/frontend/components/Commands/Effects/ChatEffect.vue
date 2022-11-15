@@ -54,7 +54,9 @@ const props = defineProps<{
 
 const val = ref<ChatEffect>(props.modelValue)
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: ChatEffect): void
+}>()
 
 const addtxt = (): void => {
   val.value.data.text.push(newText());

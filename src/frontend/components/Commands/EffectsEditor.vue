@@ -106,7 +106,9 @@ const props = defineProps<{
 
 const val = ref<CommandEffect[]>(props.modelValue)
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: CommandEffect[]): void
+}>()
 
 const onRmEffectClick = (idx: number) => {
   val.value = val.value.filter((_v, tmpIdx) => tmpIdx !== idx)

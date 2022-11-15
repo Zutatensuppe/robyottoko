@@ -40,14 +40,17 @@
   </div>
 </template>
 <script setup lang="ts">
-import { onMounted, onUnmounted, PropType, Ref, ref } from "vue";
+import { onMounted, onUnmounted, Ref, ref } from "vue";
 
-defineProps({
-  label: { type: String, required: true },
-  actions: { type: Array as PropType<{ title: string, label: string }[]>, required: true },
-})
+interface Action { title: string, label: string }
+defineProps<{
+  label: string
+  actions: Action[]
+}>()
 
-const emit = defineEmits(["click"])
+const emit = defineEmits<{
+  (e: 'click', val: Action): void
+}>()
 
 const active = ref<boolean>(false)
 const dropdown = ref<HTMLDivElement>() as Ref<HTMLDivElement>
@@ -60,7 +63,7 @@ const closeDropdown = () => {
   active.value = false
 }
 
-const onActionClick = (action: any) => {
+const onActionClick = (action: Action) => {
   closeDropdown();
   emit('click', action)
 }

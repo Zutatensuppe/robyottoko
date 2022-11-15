@@ -29,7 +29,9 @@ const props = defineProps<{
 
 const val = ref<SetChannelGameIdEffect>(props.modelValue)
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: SetChannelGameIdEffect): void
+}>()
 
 watch(val, (newValue: SetChannelGameIdEffect) => {
   emit('update:modelValue', newValue)

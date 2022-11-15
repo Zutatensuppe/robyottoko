@@ -182,7 +182,9 @@ const props = defineProps<{
 
 const val = ref<MediaEffect>(props.modelValue)
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: MediaEffect): void
+}>()
 
 const type = ref<string>('')
 

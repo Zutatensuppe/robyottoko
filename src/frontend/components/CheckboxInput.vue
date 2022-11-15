@@ -16,7 +16,9 @@ const props = withDefaults(defineProps<{
   onValue: true,
   offValue: false,
 })
-const emit = defineEmits(["update:modelValue"])
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: any): void
+}>()
 
 const value = ref<boolean>(props.modelValue === props.onValue)
 

@@ -29,7 +29,9 @@ const props = defineProps<{
 
 const val = ref<AddStreamTagEffect>(props.modelValue)
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: AddStreamTagEffect): void
+}>()
 
 watch(val, (newValue: AddStreamTagEffect) => {
   emit('update:modelValue', newValue)

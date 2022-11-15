@@ -46,7 +46,9 @@ const props = defineProps<{
 
 const val = ref<MadochanEffect>(props.modelValue)
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: MadochanEffect): void
+}>()
 
 watch(val, (newValue: MadochanEffect) => {
   emit('update:modelValue', newValue)
