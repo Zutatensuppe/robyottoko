@@ -230,7 +230,10 @@ const props = defineProps<{
   channelPointsCustomRewards: Record<string, string[]>,
 }>()
 
-const emit = defineEmits(['update:modelValue', 'remove'])
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: CommandTrigger): void
+  (e: 'remove'): void
+}>()
 
 const value = ref<CommandTrigger>({
   type: "" as CommandTriggerType,

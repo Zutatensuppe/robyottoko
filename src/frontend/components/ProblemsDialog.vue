@@ -41,14 +41,12 @@
   </div>
 </template>
 <script setup lang="ts">
-import { PropType } from 'vue'
-defineProps({
-  problems: {
-    type: Array as PropType<any[]>,
-    required: true,
-  },
-})
-const emit = defineEmits(['close'])
+defineProps<{
+  problems: any[]
+}>()
+const emit = defineEmits<{
+  (e: 'close'): void
+}>()
 const onClose = () => {
   emit('close')
 }

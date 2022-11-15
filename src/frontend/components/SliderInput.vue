@@ -44,7 +44,9 @@ const props = defineProps({
   min: { type: Number, default: 0 },
   max: { type: Number, default: 100 },
 })
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: number): void
+}>()
 const curVal = ref<number>(props.modelValue)
 const valChange = () => {
   emit("update:modelValue", parseInt(`${curVal.value}`, 10));

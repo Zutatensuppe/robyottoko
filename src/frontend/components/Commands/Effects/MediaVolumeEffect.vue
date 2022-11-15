@@ -13,7 +13,9 @@ const props = defineProps<{
 
 const val = ref<MediaVolumeEffect>(props.modelValue)
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: MediaVolumeEffect): void
+}>()
 
 watch(val, (newValue: MediaVolumeEffect) => {
   emit('update:modelValue', newValue)

@@ -13,7 +13,9 @@ const props = defineProps<{
 
 const val = ref<ChattersEffect>(props.modelValue)
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: ChattersEffect): void
+}>()
 
 watch(val, (newValue: ChattersEffect) => {
   emit('update:modelValue', newValue)

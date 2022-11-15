@@ -84,7 +84,9 @@ const dictLangs = [
 ]
 const val = ref<DictLookupEffect>(props.modelValue)
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: DictLookupEffect): void
+}>()
 
 watch(val, (newValue: DictLookupEffect) => {
   emit('update:modelValue', newValue)

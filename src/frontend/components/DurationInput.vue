@@ -13,7 +13,9 @@ const props = defineProps({
   modelValue: { required: true },
   allowNegative: { type: Boolean, default: false },
 })
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: string): void,
+}>()
 const v = ref<string>("")
 const valid = ref<boolean>(true)
 

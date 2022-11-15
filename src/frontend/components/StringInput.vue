@@ -16,11 +16,9 @@ const props = defineProps<{
 
 const val = ref<string>(props.modelValue)
 
-interface Emits {
-  (event: 'update:modelValue', modelValue: string): void
-}
-
-const emit = defineEmits<Emits>()
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: string): void
+}>()
 
 watch(() => props.modelValue, (value: string) => {
   val.value = value

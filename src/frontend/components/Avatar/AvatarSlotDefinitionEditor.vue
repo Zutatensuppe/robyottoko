@@ -23,19 +23,19 @@
         <div class="level-item">
           <i
             class="fa fa-chevron-up is-clickable ml-1"
-            @click="$emit('moveUp')"
+            @click="emit('moveUp')"
           />
         </div>
         <div class="level-item">
           <i
             class="fa fa-chevron-down is-clickable ml-1"
-            @click="$emit('moveDown')"
+            @click="emit('moveDown')"
           />
         </div>
         <div class="level-item">
           <span
             class="button is-small"
-            @click="$emit('remove')"
+            @click="emit('remove')"
           >
             <i class="fa fa-trash" />
           </span>
@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, PropType, ref } from "vue";
+import { computed, ref } from "vue";
 import { arraySwap } from "../../../common/fn";
 import {
   AvatarModuleAvatarDefinition,
@@ -74,17 +74,16 @@ import {
   AvatarModuleAvatarSlotItem,
 } from "../../../mod/modules/AvatarModuleCommon";
 
-const props = defineProps({
-  modelValue: {
-    type: Object as PropType<AvatarModuleAvatarSlotDefinition>,
-    required: true,
-  },
-  avatarDef: {
-    type: Object as PropType<AvatarModuleAvatarDefinition>,
-    required: true,
-  },
-})
-const emit = defineEmits(["update:modelValue", "remove", "moveUp", "moveDown"])
+const props = defineProps<{
+  modelValue: AvatarModuleAvatarSlotDefinition,
+  avatarDef: AvatarModuleAvatarDefinition,
+}>()
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: AvatarModuleAvatarSlotDefinition): void
+  (e: 'remove'): void
+  (e: 'moveUp'): void
+  (e: 'moveDown'): void
+}>()
 const titleFocused = ref<boolean>(false)
 
 const defaultItem = computed(() => {

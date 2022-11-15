@@ -17,7 +17,9 @@ const props = defineProps<{
 
 const val = ref<CountdownEffect>(props.modelValue)
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: CountdownEffect): void
+}>()
 
 watch(val, (newValue: CountdownEffect) => {
   emit('update:modelValue', newValue)

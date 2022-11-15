@@ -28,19 +28,19 @@
         <div class="level-item">
           <i
             class="fa fa-chevron-up is-clickable ml-1"
-            @click="$emit('moveUp')"
+            @click="emit('moveUp')"
           />
         </div>
         <div class="level-item">
           <i
             class="fa fa-chevron-down is-clickable ml-1"
-            @click="$emit('moveDown')"
+            @click="emit('moveDown')"
           />
         </div>
         <div class="level-item">
           <span
             class="button is-small"
-            @click="$emit('remove')"
+            @click="emit('remove')"
           >
             <i class="fa fa-trash" />
           </span>
@@ -57,21 +57,20 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, PropType, ref } from "vue";
+import { computed, ref } from "vue";
 import { AvatarModuleAvatarSlotItem } from "../../../mod/modules/AvatarModuleCommon";
 
-const props = defineProps({
-  modelValue: {
-    type: Object as PropType<AvatarModuleAvatarSlotItem>,
-    required: true,
-  },
-  isDefault: {
-    type: Boolean,
-    required: true,
-  },
-})
+const props = defineProps<{
+  modelValue: AvatarModuleAvatarSlotItem
+  isDefault: boolean
+}>()
 
-const emit = defineEmits(["update:modelValue", "makeDefault", "moveUp", "moveDown", "remove"])
+const emit = defineEmits<{
+  (e: 'makeDefault', val: AvatarModuleAvatarSlotItem): void
+  (e: 'moveUp'): void
+  (e: 'moveDown'): void
+  (e: 'remove'): void
+}>()
 const titleFocused = ref<boolean>(false)
 const defaultState = computed(() => props.modelValue.states.find(({ state }) => state === "default"))
 const makeDefault = (): void => {

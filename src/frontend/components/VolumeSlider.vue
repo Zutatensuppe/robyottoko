@@ -12,10 +12,12 @@
 <script setup lang="ts">
 import { ref } from "vue";
 
-const props = defineProps({
-  modelValue: { required: true },
-})
-const emit = defineEmits(["update:modelValue"])
+const props = defineProps<{
+  modelValue: string | number
+}>()
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: number): void
+}>()
 
 const volume = ref<number>(parseInt(`${props.modelValue}`, 10))
 

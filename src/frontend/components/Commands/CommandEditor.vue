@@ -148,7 +148,7 @@
             </tr>
             <tr>
               <td>
-                Timeout
+                Timeout:
               </td>
               <td>
                 <table>
@@ -157,7 +157,7 @@
                     <td><DurationInput v-model="item.timeout.global" /></td>
                   </tr>
                   <tr>
-                    <td>Per user</td>
+                    <td>Per User</td>
                     <td><DurationInput v-model="item.timeout.perUser" /></td>
                   </tr>
                 </table>
