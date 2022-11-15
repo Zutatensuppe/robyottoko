@@ -164,7 +164,7 @@
                         <code>24h</code> = 24 hours<br>
                         <code>30m</code> = 30 minutes<br>
                         <code>50s</code> = 50 seconds<br>
-                        <code>0</code> = no timeout<br>
+                        <code>0</code> = no cooldown<br>
                       </div>
                     </td>
                   </tr>
