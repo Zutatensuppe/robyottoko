@@ -225,6 +225,11 @@ class SongrequestModule implements Module {
         command.effects = []
         shouldSave = true
       }
+
+      if (typeof command.timeout !== 'object') {
+        command.timeout = { global: '0', perUser: '0' }
+        shouldSave = true
+      }
     }
 
     return {

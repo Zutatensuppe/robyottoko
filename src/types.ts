@@ -236,6 +236,7 @@ export interface CommandExecutionContext {
   rawCmd: RawCommand | null
   target: string | null
   context: TwitchChatContext | null
+  date: Date
 }
 
 export interface RawCommand {
@@ -424,6 +425,12 @@ export enum CommandAction {
   SR_QUEUE = 'sr_queue',
 }
 
+interface CommandTimeout {
+  // human duration strings, '0' for no timeout
+  global: string
+  perUser: string
+}
+
 export interface Command {
   id: string
   createdAt: string // json date string
@@ -431,6 +438,7 @@ export interface Command {
   triggers: CommandTrigger[]
   effects: CommandEffect[]
   variables: CommandVariable[]
+  timeout: CommandTimeout
 
   // DEPRECATED:
   // -----------------------------------------------------------------
@@ -494,6 +502,7 @@ export interface FunctionCommand {
   effects?: CommandEffect[]
   data?: CommandData
   fn: CommandFunction
+  timeout: CommandTimeout
 }
 
 export interface ChatMessageContext {

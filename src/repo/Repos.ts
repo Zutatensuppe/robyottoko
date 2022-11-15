@@ -1,5 +1,6 @@
 import Db from "../DbPostgres"
 import { ChatLogRepo } from "./ChatLogRepo"
+import { CommandExecutionRepo } from "./CommandExecutionRepo"
 import { EventSubRepo } from "./EventSubRepo"
 import { ModuleRepo } from "./ModuleRepo"
 import { OauthTokenRepo } from "./OauthTokenRepo"
@@ -19,6 +20,7 @@ export class Repos {
   public module: ModuleRepo
   public chatLog: ChatLogRepo
   public eventSub: EventSubRepo
+  public commandExecutionRepo: CommandExecutionRepo
 
   constructor (db: Db) {
     this.user = new Users(db)
@@ -30,5 +32,6 @@ export class Repos {
     this.module = new ModuleRepo(db)
     this.chatLog = new ChatLogRepo(db)
     this.eventSub = new EventSubRepo(db)
+    this.commandExecutionRepo = new CommandExecutionRepo(db)
   }
 }

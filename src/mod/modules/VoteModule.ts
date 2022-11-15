@@ -151,9 +151,25 @@ class VoteModule implements Module {
 
   getCommands() {
     return [
-      { id: 'vote', triggers: [newCommandTrigger('!vote')], fn: this.voteCmd.bind(this) },
-      // make configurable
-      { id: 'play', triggers: [newCommandTrigger('!play')], fn: this.playCmd.bind(this) },
+      // TODO: make configurable
+      {
+        id: 'vote',
+        triggers: [newCommandTrigger('!vote')],
+        fn: this.voteCmd.bind(this),
+        timeout: {
+          global: '0',
+          perUser: '0',
+        },
+      },
+      {
+        id: 'play',
+        triggers: [newCommandTrigger('!play')],
+        fn: this.playCmd.bind(this),
+        timeout: {
+          global: '0',
+          perUser: '0',
+        },
+      },
     ]
   }
 

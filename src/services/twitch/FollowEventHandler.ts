@@ -43,6 +43,6 @@ export class FollowEventHandler extends EventSubEventHandler<FollowEvent> {
     }
     const trigger = newFollowTrigger()
     const exec = new CommandExecutor()
-    await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger])
+    await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger], new Date())
   }
 }

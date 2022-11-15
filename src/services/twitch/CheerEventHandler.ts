@@ -45,6 +45,6 @@ export class CheerEventHandler extends EventSubEventHandler<CheerEvent> {
     }
     const trigger = newBitsTrigger()
     const exec = new CommandExecutor()
-    await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger])
+    await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger], new Date())
   }
 }
