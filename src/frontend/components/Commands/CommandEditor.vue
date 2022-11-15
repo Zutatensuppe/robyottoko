@@ -148,16 +148,16 @@
             </tr>
             <tr>
               <td>
-                Timeout:
+                Cooldown:
               </td>
               <td>
                 <table>
                   <tr>
                     <td>Global</td>
-                    <td><DurationInput v-model="item.timeout.global" /></td>
+                    <td><DurationInput v-model="item.cooldown.global" /></td>
                     <td rowspan="2">
                       <div class="help">
-                        If a timeout is set, the command will not be executed unless
+                        If a cooldown is set, the command will not be executed unless
                         the set amount of time has passed since the command was
                         executed the last time.<br>
                         Examples:<br>
@@ -170,7 +170,7 @@
                   </tr>
                   <tr>
                     <td>Per User</td>
-                    <td><DurationInput v-model="item.timeout.perUser" /></td>
+                    <td><DurationInput v-model="item.cooldown.perUser" /></td>
                   </tr>
                 </table>
               </td>

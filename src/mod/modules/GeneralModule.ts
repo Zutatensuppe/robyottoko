@@ -135,8 +135,11 @@ class GeneralModule implements Module {
       cmd.variables = cmd.variables || []
       cmd.effects = cmd.effects || []
 
-      if (typeof cmd.timeout !== 'object') {
-        cmd.timeout = { global: '0', perUser: '0' }
+      if (typeof cmd.cooldown !== 'object') {
+        cmd.cooldown = cmd.timeout || { global: '0', perUser: '0' }
+      }
+      if (cmd.timeout) {
+        delete cmd.timeout
       }
 
       if (cmd.variableChanges) {

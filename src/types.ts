@@ -425,8 +425,8 @@ export enum CommandAction {
   SR_QUEUE = 'sr_queue',
 }
 
-interface CommandTimeout {
-  // human duration strings, '0' for no timeout
+interface CommandCooldown {
+  // human duration strings, '0' for no cooldown
   global: string
   perUser: string
 }
@@ -438,7 +438,7 @@ export interface Command {
   triggers: CommandTrigger[]
   effects: CommandEffect[]
   variables: CommandVariable[]
-  timeout: CommandTimeout
+  cooldown: CommandCooldown
 
   // DEPRECATED:
   // -----------------------------------------------------------------
@@ -502,7 +502,7 @@ export interface FunctionCommand {
   effects?: CommandEffect[]
   data?: CommandData
   fn: CommandFunction
-  timeout: CommandTimeout
+  cooldown: CommandCooldown
 }
 
 export interface ChatMessageContext {

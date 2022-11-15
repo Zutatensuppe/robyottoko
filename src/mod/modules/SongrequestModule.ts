@@ -226,8 +226,12 @@ class SongrequestModule implements Module {
         shouldSave = true
       }
 
-      if (typeof command.timeout !== 'object') {
-        command.timeout = { global: '0', perUser: '0' }
+      if (typeof command.cooldown !== 'object') {
+        command.cooldown = command.timeout || { global: '0', perUser: '0' }
+        shouldSave = true
+      }
+      if (command.timeout) {
+        delete command.timeout
         shouldSave = true
       }
     }

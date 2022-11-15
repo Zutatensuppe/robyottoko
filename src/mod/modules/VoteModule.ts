@@ -156,7 +156,7 @@ class VoteModule implements Module {
         id: 'vote',
         triggers: [newCommandTrigger('!vote')],
         fn: this.voteCmd.bind(this),
-        timeout: {
+        cooldown: {
           global: '0',
           perUser: '0',
         },
@@ -165,7 +165,7 @@ class VoteModule implements Module {
         id: 'play',
         triggers: [newCommandTrigger('!play')],
         fn: this.playCmd.bind(this),
-        timeout: {
+        cooldown: {
           global: '0',
           perUser: '0',
         },
