@@ -135,12 +135,12 @@ export class ChatEventHandler {
 
     const client = bot.getUserTwitchClientManager(user).getChatClient()
     const chatMessageContext = { client, target, context, msg }
-
+    const date = new Date()
     for (const m of bot.getModuleManager().all(user.id)) {
       const { triggers, rawCmd } = await createTriggers(m)
       if (triggers.length > 0) {
         const exec = new CommandExecutor()
-        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, triggers)
+        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, triggers, date)
       }
       await m.onChatMsg(chatMessageContext);
     }

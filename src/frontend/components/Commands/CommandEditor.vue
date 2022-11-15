@@ -146,6 +146,23 @@
                 </div>
               </td>
             </tr>
+            <tr>
+              <td>
+                Timeout
+              </td>
+              <td>
+                <table>
+                  <tr>
+                    <td>Global</td>
+                    <td><DurationInput v-model="item.timeout.global" /></td>
+                  </tr>
+                  <tr>
+                    <td>Per user</td>
+                    <td><DurationInput v-model="item.timeout.perUser" /></td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
           </tbody>
         </table>
       </section>
@@ -195,6 +212,7 @@ import {
 import { possibleTriggerActions } from "../../../common/triggers";
 import StringInput from "../StringInput.vue";
 import EffectsEditor from "./EffectsEditor.vue";
+import DurationInput from "../DurationInput.vue";
 
 interface ComponentDataPermission {
   value: string;

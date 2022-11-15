@@ -32,6 +32,6 @@ export class ChannelPointRedeemEventHandler extends EventSubEventHandler<any> {
     }
     const trigger = newRewardRedemptionTrigger(data.event.reward.title)
     const exec = new CommandExecutor()
-    await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger])
+    await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger], new Date())
   }
 }

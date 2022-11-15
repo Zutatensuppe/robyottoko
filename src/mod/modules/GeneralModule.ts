@@ -17,7 +17,14 @@ import {
   CommandEffectType,
   CommandEffect,
 } from '../../types'
-import { EMOTE_DISPLAY_FN, GeneralModuleAdminSettings, GeneralModuleEmotesEventData, GeneralModuleSettings, GeneralModuleWsEventData, GeneralSaveEventData } from './GeneralModuleCommon'
+import {
+  EMOTE_DISPLAY_FN,
+  GeneralModuleAdminSettings,
+  GeneralModuleEmotesEventData,
+  GeneralModuleSettings,
+  GeneralModuleWsEventData,
+  GeneralSaveEventData,
+} from './GeneralModuleCommon'
 import { NextFunction, Response } from 'express'
 import legacy from '../../common/legacy'
 
@@ -98,8 +105,12 @@ class GeneralModule implements Module {
       this.interval = null
     }
 
+    // TODO: handle timeouts. commands executed via timer
+    // are not added to command_execution database and also the
+    // timeouts are not checked
     this.interval = setInterval(() => {
-      const now = new Date().getTime()
+      const date = new Date()
+      const now = date.getTime()
       this.timers.forEach(async (t) => {
         if (t.lines >= t.minLines && now > t.next) {
           const cmdDef = t.command
@@ -107,7 +118,7 @@ class GeneralModule implements Module {
           const target = null
           const context = null
           await fn.applyEffects(cmdDef, this, rawCmd, context)
-          await cmdDef.fn({ rawCmd, target, context })
+          await cmdDef.fn({ rawCmd, target, context, date })
           t.lines = 0
           t.next = now + t.minInterval
         }
@@ -123,6 +134,10 @@ class GeneralModule implements Module {
       }
       cmd.variables = cmd.variables || []
       cmd.effects = cmd.effects || []
+
+      if (typeof cmd.timeout !== 'object') {
+        cmd.timeout = { global: '0', perUser: '0' }
+      }
 
       if (cmd.variableChanges) {
         for (const variableChange of cmd.variableChanges) {
@@ -192,7 +207,7 @@ class GeneralModule implements Module {
       cmd.triggers = (cmd.triggers || []).map((trigger: any) => {
         trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0
         if (trigger.data.minSeconds) {
-          trigger.data.minInterval = trigger.data.minSeconds * 1000
+          trigger.data.minInterval = trigger.data.minSeconds * SECOND
         }
         return trigger
       })

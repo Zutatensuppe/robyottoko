@@ -2,7 +2,7 @@ import { getProp, mustParseHumanDuration, nonce } from "../common/fn"
 import {
   Command, CommandAction, CommandEffect, CommandEffectType, CommandTrigger, CommandTriggerType,
   CountdownAction, CountdownActionType, FunctionCommand,
-  MediaCommandData, MediaFile, MediaVideo, RandomTextCommand, SoundMediaFile,
+  MediaCommandData, MediaFile, MediaVideo, SoundMediaFile,
 } from "../types"
 import { MOD_OR_ABOVE } from './permissions'
 
@@ -174,161 +174,115 @@ interface CommandDef {
   NewCommand: () => Command
 }
 
+const createCommand = (cmd: Partial<Command>): Command => {
+  if (typeof cmd.action === 'undefined') {
+    throw new Error('action required')
+  }
+  return {
+    id: typeof cmd.id !== 'undefined' ? cmd.id : newCommandId(),
+    createdAt: typeof cmd.createdAt !== 'undefined' ? cmd.createdAt : newJsonDate(),
+    action: cmd.action,
+    triggers: typeof cmd.triggers !== 'undefined' ? cmd.triggers : [],
+    effects: typeof cmd.effects !== 'undefined' ? cmd.effects : [],
+    restrict_to: typeof cmd.restrict_to !== 'undefined' ? cmd.restrict_to : [],
+    variables: typeof cmd.variables !== 'undefined' ? cmd.variables : [],
+    data: typeof cmd.data !== 'undefined' ? cmd.data : {},
+    timeout: typeof cmd.timeout !== 'undefined' ? cmd.timeout : { global: '0', perUser: '0' },
+  }
+}
+
 export const commands: Record<CommandAction, CommandDef> = {
   text: {
     Name: () => "command",
     Description: () => "",
-    NewCommand: (): RandomTextCommand => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       triggers: [newCommandTrigger()],
-      effects: [],
       action: CommandAction.TEXT,
-      restrict_to: [],
-      variables: [],
-      data: {
-        text: [newText()],
-      },
     }),
   },
   sr_current: {
     Name: () => "sr_current",
     Description: () => "Show what song is currently playing",
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_CURRENT,
       triggers: [newCommandTrigger('!sr current', true)],
-      effects: [],
-      restrict_to: [],
-      variables: [],
-      data: {},
     }),
   },
   sr_undo: {
     Name: () => "sr_undo",
     Description: () => "Remove the song that was last added by oneself.",
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_UNDO,
       triggers: [newCommandTrigger('!sr undo', true)],
-      effects: [],
-      restrict_to: [],
-      variables: [],
-      data: {},
     }),
   },
   sr_good: {
     Name: () => "sr_good",
     Description: () => "Vote the current song up",
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_GOOD,
       triggers: [newCommandTrigger('!sr good', true)],
-      effects: [],
-      restrict_to: [],
-      variables: [],
-      data: {},
     }),
   },
   sr_bad: {
     Name: () => "sr_bad",
     Description: () => "Vote the current song down",
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_BAD,
       triggers: [newCommandTrigger('!sr bad', true)],
-      effects: [],
-      restrict_to: [],
-      variables: [],
-      data: {},
     }),
   },
   sr_stats: {
     Name: () => "sr_stats",
     Description: () => "Show stats about the playlist",
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_STATS,
       triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)],
-      effects: [],
-      restrict_to: [],
-      variables: [],
-      data: {},
     }),
   },
   sr_prev: {
     Name: () => "sr_prev",
     Description: () => "Skip to the previous song",
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_PREV,
       triggers: [newCommandTrigger('!sr prev', true)],
-      effects: [],
       restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {},
     }),
   },
   sr_next: {
     Name: () => "sr_next",
     Description: () => "Skip to the next song",
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_NEXT,
       triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)],
-      effects: [],
       restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {},
     }),
   },
   sr_jumptonew: {
     Name: () => "sr_jumptonew",
     Description: () => "Jump to the next unplayed song",
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_JUMPTONEW,
       triggers: [newCommandTrigger('!sr jumptonew', true)],
-      effects: [],
       restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {},
     }),
   },
   sr_clear: {
     Name: () => "sr_clear",
     Description: () => "Clear the playlist",
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_CLEAR,
       triggers: [newCommandTrigger('!sr clear', true)],
-      effects: [],
       restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {},
     }),
   },
   sr_rm: {
     Name: () => "sr_rm",
     Description: () => "Remove the current song from the playlist",
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_RM,
       triggers: [newCommandTrigger('!sr rm', true)],
-      effects: [],
       restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {},
     }),
   },
   sr_shuffle: {
@@ -337,113 +291,73 @@ export const commands: Record<CommandAction, CommandDef> = {
     <br />
     Non-played and played songs will be shuffled separately and non-played
     songs will be put after currently playing song.`,
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_SHUFFLE,
       triggers: [newCommandTrigger('!sr shuffle', true)],
-      effects: [],
       restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {},
     }),
   },
   sr_reset_stats: {
     Name: () => "sr_reset_stats",
     Description: () => "Reset all statistics of all songs",
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_RESET_STATS,
       triggers: [newCommandTrigger('!sr resetStats', true)],
-      effects: [],
       restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {},
     }),
   },
   sr_loop: {
     Name: () => "sr_loop",
     Description: () => "Loop the current song",
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_LOOP,
       triggers: [newCommandTrigger('!sr loop', true)],
-      effects: [],
       restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {},
     }),
   },
   sr_noloop: {
     Name: () => "sr_noloop",
     Description: () => "Stop looping the current song",
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_NOLOOP,
       triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)],
-      effects: [],
       restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {},
     }),
   },
   sr_pause: {
     Name: () => "sr_pause",
     Description: () => "Pause currently playing song",
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_PAUSE,
       triggers: [newCommandTrigger('!sr pause', true)],
-      effects: [],
       restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {},
     }),
   },
   sr_unpause: {
     Name: () => "sr_unpause",
     Description: () => "Unpause currently paused song",
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_UNPAUSE,
       triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)],
-      effects: [],
       restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {},
     }),
   },
   sr_hidevideo: {
     Name: () => "sr_hidevideo",
     Description: () => "Hide video for current song",
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_HIDEVIDEO,
       triggers: [newCommandTrigger('!sr hidevideo', true)],
-      effects: [],
       restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {},
     }),
   },
   sr_showvideo: {
     Name: () => "sr_showvideo",
     Description: () => "Show video for current song",
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_SHOWVIDEO,
       triggers: [newCommandTrigger('!sr showvideo', true)],
-      effects: [],
       restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {},
     }),
   },
   sr_request: {
@@ -453,15 +367,9 @@ export const commands: Record<CommandAction, CommandDef> = {
     at youtube (by id or by title)
     and queue the first result in the playlist (after the first found
     batch of unplayed songs).`,
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_REQUEST,
       triggers: [newCommandTrigger('!sr')],
-      effects: [],
-      restrict_to: [],
-      variables: [],
-      data: {},
     }),
   },
   sr_re_request: {
@@ -470,45 +378,28 @@ export const commands: Record<CommandAction, CommandDef> = {
     Search for <code>&lt;SEARCH&gt;</code> (argument to this command)
     in the current playlist and queue the first result in the playlist
     (after the first found batch of unplayed songs).`,
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_RE_REQUEST,
       triggers: [newCommandTrigger('!resr')],
-      effects: [],
-      restrict_to: [],
-      variables: [],
-      data: {},
     }),
   },
   sr_addtag: {
     Name: () => "sr_addtag",
     Description: () => "Add tag <code>&lt;TAG&gt;</code> (argument to this command) to the current song",
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_ADDTAG,
       triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')],
-      effects: [],
       restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {
-        tag: "",
-      },
+      data: { tag: "" },
     }),
   },
   sr_rmtag: {
     Name: () => "sr_rmtag",
     Description: () => "Remove tag <code>&lt;TAG&gt;</code> (argument to this command) from the current song",
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_RMTAG,
       triggers: [newCommandTrigger('!sr rmtag')],
-      effects: [],
       restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {},
     }),
   },
   sr_volume: {
@@ -516,59 +407,38 @@ export const commands: Record<CommandAction, CommandDef> = {
     Description: () => `Sets the song request volume to <code>&lt;VOLUME&gt;</code> (argument to this command, min 0, max 100).
     <br />
     If no argument is given, just outputs the current volume`,
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_VOLUME,
       triggers: [newCommandTrigger('!sr volume')],
-      effects: [],
       restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {},
     }),
   },
   sr_filter: {
     Name: () => "sr_filter",
     Description: () => `Play only songs with the given tag <code>&lt;TAG&gt;</code> (argument to this command). If no tag
   is given, play all songs.`,
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_FILTER,
       triggers: [newCommandTrigger('!sr filter')],
-      effects: [],
       restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {},
     }),
   },
   sr_preset: {
     Name: () => "sr_preset",
     Description: () => `Switches to the preset <code>&lt;PRESET&gt;</code> (argument to this command) if it exists.
   If no arguments are given, outputs all available presets.`,
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_PRESET,
       triggers: [newCommandTrigger('!sr preset')],
-      effects: [],
       restrict_to: MOD_OR_ABOVE,
-      variables: [],
-      data: {},
     }),
   },
   sr_queue: {
     Name: () => "sr_queue",
     Description: () => `Shows the next 3 songs that will play.`,
-    NewCommand: (): Command => ({
-      id: newCommandId(),
-      createdAt: newJsonDate(),
+    NewCommand: (): Command => createCommand({
       action: CommandAction.SR_QUEUE,
       triggers: [newCommandTrigger('!sr queue')],
-      effects: [],
-      restrict_to: [],
-      variables: [],
-      data: {},
     }),
   },
 }

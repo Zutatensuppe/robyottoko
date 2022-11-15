@@ -32,7 +32,7 @@ class Repo {
     }
 }
 
-const TABLE$9 = 'robyottoko.token';
+const TABLE$a = 'robyottoko.token';
 var TokenType;
 (function (TokenType) {
     TokenType["API_KEY"] = "api_key";
@@ -51,10 +51,10 @@ function generateToken(length) {
 }
 class Tokens extends Repo {
     async getByUserIdAndType(user_id, type) {
-        return await this.db.get(TABLE$9, { user_id, type });
+        return await this.db.get(TABLE$a, { user_id, type });
     }
     async insert(tokenInfo) {
-        return await this.db.insert(TABLE$9, tokenInfo);
+        return await this.db.insert(TABLE$a, tokenInfo);
     }
     async createToken(user_id, type) {
         const token = generateToken(32);
@@ -67,10 +67,10 @@ class Tokens extends Repo {
             || (await this.createToken(user_id, type));
     }
     async getByTokenAndType(token, type) {
-        return (await this.db.get(TABLE$9, { token, type })) || null;
+        return (await this.db.get(TABLE$a, { token, type })) || null;
     }
     async delete(token) {
-        return await this.db.delete(TABLE$9, { token });
+        return await this.db.delete(TABLE$a, { token });
     }
     async generateAuthTokenForUserId(user_id) {
         return await this.createToken(user_id, TokenType.AUTH);
@@ -2652,7 +2652,6 @@ const mayExecute = (context, cmd) => {
     return false;
 };
 
-const newText = () => '';
 const newTrigger = (type) => ({
     type,
     data: {
@@ -2735,161 +2734,114 @@ const getUniqueCommandsByTriggers = (commands, triggers) => {
     const tmp = commands.filter((command) => commandHasAnyTrigger(command, triggers));
     return tmp.filter((item, i, ar) => ar.indexOf(item) === i);
 };
+const createCommand = (cmd) => {
+    if (typeof cmd.action === 'undefined') {
+        throw new Error('action required');
+    }
+    return {
+        id: typeof cmd.id !== 'undefined' ? cmd.id : newCommandId(),
+        createdAt: typeof cmd.createdAt !== 'undefined' ? cmd.createdAt : newJsonDate(),
+        action: cmd.action,
+        triggers: typeof cmd.triggers !== 'undefined' ? cmd.triggers : [],
+        effects: typeof cmd.effects !== 'undefined' ? cmd.effects : [],
+        restrict_to: typeof cmd.restrict_to !== 'undefined' ? cmd.restrict_to : [],
+        variables: typeof cmd.variables !== 'undefined' ? cmd.variables : [],
+        data: typeof cmd.data !== 'undefined' ? cmd.data : {},
+        timeout: typeof cmd.timeout !== 'undefined' ? cmd.timeout : { global: '0', perUser: '0' },
+    };
+};
 const commands = {
     text: {
         Name: () => "command",
         Description: () => "",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             triggers: [newCommandTrigger()],
-            effects: [],
             action: CommandAction.TEXT,
-            restrict_to: [],
-            variables: [],
-            data: {
-                text: [newText()],
-            },
         }),
     },
     sr_current: {
         Name: () => "sr_current",
         Description: () => "Show what song is currently playing",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_CURRENT,
             triggers: [newCommandTrigger('!sr current', true)],
-            effects: [],
-            restrict_to: [],
-            variables: [],
-            data: {},
         }),
     },
     sr_undo: {
         Name: () => "sr_undo",
         Description: () => "Remove the song that was last added by oneself.",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_UNDO,
             triggers: [newCommandTrigger('!sr undo', true)],
-            effects: [],
-            restrict_to: [],
-            variables: [],
-            data: {},
         }),
     },
     sr_good: {
         Name: () => "sr_good",
         Description: () => "Vote the current song up",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_GOOD,
             triggers: [newCommandTrigger('!sr good', true)],
-            effects: [],
-            restrict_to: [],
-            variables: [],
-            data: {},
         }),
     },
     sr_bad: {
         Name: () => "sr_bad",
         Description: () => "Vote the current song down",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_BAD,
             triggers: [newCommandTrigger('!sr bad', true)],
-            effects: [],
-            restrict_to: [],
-            variables: [],
-            data: {},
         }),
     },
     sr_stats: {
         Name: () => "sr_stats",
         Description: () => "Show stats about the playlist",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_STATS,
             triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)],
-            effects: [],
-            restrict_to: [],
-            variables: [],
-            data: {},
         }),
     },
     sr_prev: {
         Name: () => "sr_prev",
         Description: () => "Skip to the previous song",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_PREV,
             triggers: [newCommandTrigger('!sr prev', true)],
-            effects: [],
             restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            data: {},
         }),
     },
     sr_next: {
         Name: () => "sr_next",
         Description: () => "Skip to the next song",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_NEXT,
             triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)],
-            effects: [],
             restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            data: {},
         }),
     },
     sr_jumptonew: {
         Name: () => "sr_jumptonew",
         Description: () => "Jump to the next unplayed song",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_JUMPTONEW,
             triggers: [newCommandTrigger('!sr jumptonew', true)],
-            effects: [],
             restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            data: {},
         }),
     },
     sr_clear: {
         Name: () => "sr_clear",
         Description: () => "Clear the playlist",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_CLEAR,
             triggers: [newCommandTrigger('!sr clear', true)],
-            effects: [],
             restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            data: {},
         }),
     },
     sr_rm: {
         Name: () => "sr_rm",
         Description: () => "Remove the current song from the playlist",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_RM,
             triggers: [newCommandTrigger('!sr rm', true)],
-            effects: [],
             restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            data: {},
         }),
     },
     sr_shuffle: {
@@ -2898,113 +2850,73 @@ const commands = {
     <br />
     Non-played and played songs will be shuffled separately and non-played
     songs will be put after currently playing song.`,
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_SHUFFLE,
             triggers: [newCommandTrigger('!sr shuffle', true)],
-            effects: [],
             restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            data: {},
         }),
     },
     sr_reset_stats: {
         Name: () => "sr_reset_stats",
         Description: () => "Reset all statistics of all songs",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_RESET_STATS,
             triggers: [newCommandTrigger('!sr resetStats', true)],
-            effects: [],
             restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            data: {},
         }),
     },
     sr_loop: {
         Name: () => "sr_loop",
         Description: () => "Loop the current song",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_LOOP,
             triggers: [newCommandTrigger('!sr loop', true)],
-            effects: [],
             restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            data: {},
         }),
     },
     sr_noloop: {
         Name: () => "sr_noloop",
         Description: () => "Stop looping the current song",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_NOLOOP,
             triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)],
-            effects: [],
             restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            data: {},
         }),
     },
     sr_pause: {
         Name: () => "sr_pause",
         Description: () => "Pause currently playing song",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_PAUSE,
             triggers: [newCommandTrigger('!sr pause', true)],
-            effects: [],
             restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            data: {},
         }),
     },
     sr_unpause: {
         Name: () => "sr_unpause",
         Description: () => "Unpause currently paused song",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_UNPAUSE,
             triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)],
-            effects: [],
             restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            data: {},
         }),
     },
     sr_hidevideo: {
         Name: () => "sr_hidevideo",
         Description: () => "Hide video for current song",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_HIDEVIDEO,
             triggers: [newCommandTrigger('!sr hidevideo', true)],
-            effects: [],
             restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            data: {},
         }),
     },
     sr_showvideo: {
         Name: () => "sr_showvideo",
         Description: () => "Show video for current song",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_SHOWVIDEO,
             triggers: [newCommandTrigger('!sr showvideo', true)],
-            effects: [],
             restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            data: {},
         }),
     },
     sr_request: {
@@ -3014,15 +2926,9 @@ const commands = {
     at youtube (by id or by title)
     and queue the first result in the playlist (after the first found
     batch of unplayed songs).`,
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_REQUEST,
             triggers: [newCommandTrigger('!sr')],
-            effects: [],
-            restrict_to: [],
-            variables: [],
-            data: {},
         }),
     },
     sr_re_request: {
@@ -3031,45 +2937,28 @@ const commands = {
     Search for <code>&lt;SEARCH&gt;</code> (argument to this command)
     in the current playlist and queue the first result in the playlist
     (after the first found batch of unplayed songs).`,
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_RE_REQUEST,
             triggers: [newCommandTrigger('!resr')],
-            effects: [],
-            restrict_to: [],
-            variables: [],
-            data: {},
         }),
     },
     sr_addtag: {
         Name: () => "sr_addtag",
         Description: () => "Add tag <code>&lt;TAG&gt;</code> (argument to this command) to the current song",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_ADDTAG,
             triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')],
-            effects: [],
             restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            data: {
-                tag: "",
-            },
+            data: { tag: "" },
         }),
     },
     sr_rmtag: {
         Name: () => "sr_rmtag",
         Description: () => "Remove tag <code>&lt;TAG&gt;</code> (argument to this command) from the current song",
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_RMTAG,
             triggers: [newCommandTrigger('!sr rmtag')],
-            effects: [],
             restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            data: {},
         }),
     },
     sr_volume: {
@@ -3077,78 +2966,104 @@ const commands = {
         Description: () => `Sets the song request volume to <code>&lt;VOLUME&gt;</code> (argument to this command, min 0, max 100).
     <br />
     If no argument is given, just outputs the current volume`,
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_VOLUME,
             triggers: [newCommandTrigger('!sr volume')],
-            effects: [],
             restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            data: {},
         }),
     },
     sr_filter: {
         Name: () => "sr_filter",
         Description: () => `Play only songs with the given tag <code>&lt;TAG&gt;</code> (argument to this command). If no tag
   is given, play all songs.`,
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_FILTER,
             triggers: [newCommandTrigger('!sr filter')],
-            effects: [],
             restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            data: {},
         }),
     },
     sr_preset: {
         Name: () => "sr_preset",
         Description: () => `Switches to the preset <code>&lt;PRESET&gt;</code> (argument to this command) if it exists.
   If no arguments are given, outputs all available presets.`,
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_PRESET,
             triggers: [newCommandTrigger('!sr preset')],
-            effects: [],
             restrict_to: MOD_OR_ABOVE,
-            variables: [],
-            data: {},
         }),
     },
     sr_queue: {
         Name: () => "sr_queue",
         Description: () => `Shows the next 3 songs that will play.`,
-        NewCommand: () => ({
-            id: newCommandId(),
-            createdAt: newJsonDate(),
+        NewCommand: () => createCommand({
             action: CommandAction.SR_QUEUE,
             triggers: [newCommandTrigger('!sr queue')],
-            effects: [],
-            restrict_to: [],
-            variables: [],
-            data: {},
         }),
     },
 };
 
 const log$l = logger('CommandExecutor.ts');
 class CommandExecutor {
-    async executeMatchingCommands(bot, user, rawCmd, target, context, triggers) {
+    async executeMatchingCommands(bot, user, rawCmd, target, context, triggers, date) {
         const promises = [];
-        const ctx = { rawCmd, target, context };
+        const ctx = { rawCmd, target, context, date };
         for (const m of bot.getModuleManager().all(user.id)) {
             const cmdDefs = getUniqueCommandsByTriggers(m.getCommands(), triggers);
-            promises.push(this.tryExecuteCommands(m, cmdDefs, ctx));
+            promises.push(this.tryExecuteCommands(m, cmdDefs, ctx, bot.getRepos().commandExecutionRepo));
         }
         await Promise.all(promises);
     }
-    async tryExecuteCommands(contextModule, cmdDefs, ctx) {
+    isInTimeout(timeoutMs, last, ctx) {
+        if (!last) {
+            return false;
+        }
+        const lastExecution = new Date(last?.executed_at);
+        const diffMs = ctx.date.getTime() - lastExecution.getTime();
+        const timeoutMsLeft = timeoutMs - diffMs;
+        if (timeoutMsLeft <= 0) {
+            return false;
+        }
+        // timeout still active
+        log$l.info({
+            target: ctx.target,
+            command: ctx.rawCmd?.name || '<unknown>',
+        }, `Skipping command due to timeout. ${humanDuration(timeoutMsLeft)} left`);
+        return true;
+    }
+    async isInGlobalTimeout(cmdDef, repo, ctx) {
+        const durationMs = cmdDef.timeout.global ? parseHumanDuration(cmdDef.timeout.global) : 0;
+        if (!durationMs) {
+            return false;
+        }
+        const last = await repo.getLastExecuted({
+            command_id: cmdDef.id,
+        });
+        return this.isInTimeout(durationMs, last, ctx);
+    }
+    async isInPerUserTimeout(cmdDef, repo, ctx) {
+        if (!ctx.context || !ctx.context.username) {
+            return false;
+        }
+        const durationMs = cmdDef.timeout.perUser ? parseHumanDuration(cmdDef.timeout.perUser) : 0;
+        if (!durationMs) {
+            return false;
+        }
+        const last = await repo.getLastExecuted({
+            command_id: cmdDef.id,
+            trigger_user_name: ctx.context.username,
+        });
+        return this.isInTimeout(durationMs, last, ctx);
+    }
+    async tryExecuteCommands(contextModule, cmdDefs, ctx, repo) {
         const promises = [];
         for (const cmdDef of cmdDefs) {
             if (!ctx.context || !mayExecute(ctx.context, cmdDef)) {
+                continue;
+            }
+            if (await this.isInGlobalTimeout(cmdDef, repo, ctx)) {
+                continue;
+            }
+            if (await this.isInPerUserTimeout(cmdDef, repo, ctx)) {
                 continue;
             }
             log$l.info({
@@ -3172,6 +3087,11 @@ class CommandExecutor {
                 resolve(true);
             });
             promises.push(p);
+            await repo.insert({
+                command_id: cmdDef.id,
+                executed_at: ctx.date,
+                trigger_user_name: ctx.context.username || null,
+            });
         }
         await Promise.all(promises);
     }
@@ -3201,7 +3121,7 @@ class SubscribeEventHandler extends EventSubEventHandler {
         };
         const trigger = newSubscribeTrigger();
         const exec = new CommandExecutor();
-        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger]);
+        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger], new Date());
     }
 }
 
@@ -3226,7 +3146,7 @@ class FollowEventHandler extends EventSubEventHandler {
         };
         const trigger = newFollowTrigger();
         const exec = new CommandExecutor();
-        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger]);
+        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger], new Date());
     }
 }
 
@@ -3251,7 +3171,7 @@ class CheerEventHandler extends EventSubEventHandler {
         };
         const trigger = newBitsTrigger();
         const exec = new CommandExecutor();
-        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger]);
+        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger], new Date());
     }
 }
 
@@ -3275,7 +3195,7 @@ class ChannelPointRedeemEventHandler extends EventSubEventHandler {
         };
         const trigger = newRewardRedemptionTrigger(data.event.reward.title);
         const exec = new CommandExecutor();
-        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger]);
+        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger], new Date());
     }
 }
 
@@ -3339,7 +3259,7 @@ class RaidEventHandler extends EventSubEventHandler {
         };
         const trigger = newRaidTrigger();
         const exec = new CommandExecutor();
-        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger]);
+        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger], new Date());
     }
 }
 
@@ -3881,11 +3801,12 @@ class ChatEventHandler {
         };
         const client = bot.getUserTwitchClientManager(user).getChatClient();
         const chatMessageContext = { client, target, context, msg };
+        const date = new Date();
         for (const m of bot.getModuleManager().all(user.id)) {
             const { triggers, rawCmd } = await createTriggers(m);
             if (triggers.length > 0) {
                 const exec = new CommandExecutor();
-                await exec.executeMatchingCommands(bot, user, rawCmd, target, context, triggers);
+                await exec.executeMatchingCommands(bot, user, rawCmd, target, context, triggers, date);
             }
             await m.onChatMsg(chatMessageContext);
         }
@@ -4168,7 +4089,7 @@ class TwitchClientManager {
     }
 }
 
-const TABLE$8 = 'robyottoko.cache';
+const TABLE$9 = 'robyottoko.cache';
 const log$9 = logger('Cache.ts');
 class Cache {
     constructor(db) {
@@ -4181,11 +4102,11 @@ class Cache {
         }
         const expiresAt = lifetime === Infinity ? null : (new Date(new Date().getTime() + lifetime));
         const valueStr = JSON.stringify(value);
-        await this.db.upsert(TABLE$8, { key, value: valueStr, expires_at: expiresAt }, { key });
+        await this.db.upsert(TABLE$9, { key, value: valueStr, expires_at: expiresAt }, { key });
     }
     async get(key) {
         // get *non-expired* cache entry from db
-        const row = await this.db._get('SELECT * from ' + TABLE$8 + ' WHERE key = $1 AND (expires_at IS NULL OR expires_at > $2)', [key, new Date()]);
+        const row = await this.db._get('SELECT * from ' + TABLE$9 + ' WHERE key = $1 AND (expires_at IS NULL OR expires_at > $2)', [key, new Date()]);
         return row ? JSON.parse(row.value) : undefined;
     }
 }
@@ -4742,8 +4663,12 @@ class GeneralModule {
             clearInterval(this.interval);
             this.interval = null;
         }
+        // TODO: handle timeouts. commands executed via timer
+        // are not added to command_execution database and also the
+        // timeouts are not checked
         this.interval = setInterval(() => {
-            const now = new Date().getTime();
+            const date = new Date();
+            const now = date.getTime();
             this.timers.forEach(async (t) => {
                 if (t.lines >= t.minLines && now > t.next) {
                     const cmdDef = t.command;
@@ -4751,7 +4676,7 @@ class GeneralModule {
                     const target = null;
                     const context = null;
                     await fn.applyEffects(cmdDef, this, rawCmd, context);
-                    await cmdDef.fn({ rawCmd, target, context });
+                    await cmdDef.fn({ rawCmd, target, context, date });
                     t.lines = 0;
                     t.next = now + t.minInterval;
                 }
@@ -4766,6 +4691,9 @@ class GeneralModule {
             }
             cmd.variables = cmd.variables || [];
             cmd.effects = cmd.effects || [];
+            if (typeof cmd.timeout !== 'object') {
+                cmd.timeout = { global: '0', perUser: '0' };
+            }
             if (cmd.variableChanges) {
                 for (const variableChange of cmd.variableChanges) {
                     cmd.effects.push(legacy.variableChangeToCommandEffect(variableChange));
@@ -4821,7 +4749,7 @@ class GeneralModule {
             cmd.triggers = (cmd.triggers || []).map((trigger) => {
                 trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0;
                 if (trigger.data.minSeconds) {
-                    trigger.data.minInterval = trigger.data.minSeconds * 1000;
+                    trigger.data.minInterval = trigger.data.minSeconds * SECOND;
                 }
                 return trigger;
             });
@@ -5391,6 +5319,10 @@ class SongrequestModule {
             }
             if (!command.effects) {
                 command.effects = [];
+                shouldSave = true;
+            }
+            if (typeof command.timeout !== 'object') {
+                command.timeout = { global: '0', perUser: '0' };
                 shouldSave = true;
             }
         }
@@ -6595,9 +6527,25 @@ class VoteModule {
     }
     getCommands() {
         return [
-            { id: 'vote', triggers: [newCommandTrigger('!vote')], fn: this.voteCmd.bind(this) },
-            // make configurable
-            { id: 'play', triggers: [newCommandTrigger('!play')], fn: this.playCmd.bind(this) },
+            // TODO: make configurable
+            {
+                id: 'vote',
+                triggers: [newCommandTrigger('!vote')],
+                fn: this.voteCmd.bind(this),
+                timeout: {
+                    global: '0',
+                    perUser: '0',
+                },
+            },
+            {
+                id: 'play',
+                triggers: [newCommandTrigger('!play')],
+                fn: this.playCmd.bind(this),
+                timeout: {
+                    global: '0',
+                    perUser: '0',
+                },
+            },
         ];
     }
     async onChatMsg(_chatMessageContext) {
@@ -7167,12 +7115,14 @@ class PomoModule {
                     triggers: [newCommandTrigger('!pomo')],
                     restrict_to: MOD_OR_ABOVE,
                     fn: this.cmdPomoStart.bind(this),
+                    timeout: { global: '0', perUser: '0' },
                 },
                 {
                     id: 'pomo_exit',
                     triggers: [newCommandTrigger('!pomo exit', true)],
                     restrict_to: MOD_OR_ABOVE,
                     fn: this.cmdPomoExit.bind(this),
+                    timeout: { global: '0', perUser: '0' },
                 },
             ];
             return this;
@@ -7315,9 +7265,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-11-13T15:03:53.622Z",
+    buildDate: "2022-11-15T21:20:43.981Z",
     // @ts-ignore
-    buildVersion: "1.34.0",
+    buildVersion: "1.35.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
@@ -7456,10 +7406,10 @@ class TwitchTmiClientManager {
     }
 }
 
-const TABLE$7 = 'robyottoko.chat_log';
+const TABLE$8 = 'robyottoko.chat_log';
 class ChatLogRepo extends Repo {
     async insert(context, msg) {
-        await this.db.insert(TABLE$7, {
+        await this.db.insert(TABLE$8, {
             created_at: new Date(),
             broadcaster_user_id: context['room-id'],
             user_name: context.username,
@@ -7469,7 +7419,7 @@ class ChatLogRepo extends Repo {
     }
     async count(where) {
         const whereObject = this.db._buildWhere(where);
-        const row = await this.db._get(`select COUNT(*) as c from ${TABLE$7} ${whereObject.sql}`, whereObject.values);
+        const row = await this.db._get(`select COUNT(*) as c from ${TABLE$8} ${whereObject.sql}`, whereObject.values);
         return parseInt(`${row.c}`, 10);
     }
     async isFirstChatAllTime(context) {
@@ -7488,7 +7438,7 @@ class ChatLogRepo extends Repo {
     // HACK: we have no other way of getting a user name by user display name atm
     // TODO: replace this functionality
     async getUsernameByUserDisplayName(displayName) {
-        const row = await this.db.get(TABLE$7, {
+        const row = await this.db.get(TABLE$8, {
             display_name: displayName,
         });
         return row ? row.user_name : null;
@@ -7499,6 +7449,19 @@ class ChatLogRepo extends Repo {
             created_at: { '$gte': since },
         });
         return (await this.db._getMany(`select display_name from robyottoko.chat_log ${whereObject.sql} group by display_name`, whereObject.values)).map(r => r.display_name);
+    }
+}
+
+const TABLE$7 = 'robyottoko.command_execution';
+logger('CommandExecutionRepo.ts');
+class CommandExecutionRepo extends Repo {
+    async insert(data) {
+        return await this.db.insert(TABLE$7, data);
+    }
+    async getLastExecuted(data) {
+        return await this.db.get(TABLE$7, data, [
+            { executed_at: -1 }
+        ]);
     }
 }
 
@@ -7674,6 +7637,7 @@ class Repos {
         this.module = new ModuleRepo(db);
         this.chatLog = new ChatLogRepo(db);
         this.eventSub = new EventSubRepo(db);
+        this.commandExecutionRepo = new CommandExecutionRepo(db);
     }
 }
 

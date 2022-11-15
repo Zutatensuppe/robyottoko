@@ -44,6 +44,6 @@ export class SubscribeEventHandler extends EventSubEventHandler<SubscribeEvent> 
     }
     const trigger = newSubscribeTrigger()
     const exec = new CommandExecutor()
-    await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger])
+    await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger], new Date())
   }
 }
