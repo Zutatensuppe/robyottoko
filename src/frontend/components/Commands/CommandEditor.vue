@@ -155,6 +155,18 @@
                   <tr>
                     <td>Global</td>
                     <td><DurationInput v-model="item.timeout.global" /></td>
+                    <td rowspan="2">
+                      <div class="help">
+                        If a timeout is set, the command will not be executed unless
+                        the set amount of time has passed since the command was
+                        executed the last time.<br>
+                        Examples:<br>
+                        <code>24h</code> = 24 hours<br>
+                        <code>30m</code> = 30 minutes<br>
+                        <code>50s</code> = 50 seconds<br>
+                        <code>0</code> = no timeout<br>
+                      </div>
+                    </td>
                   </tr>
                   <tr>
                     <td>Per User</td>
