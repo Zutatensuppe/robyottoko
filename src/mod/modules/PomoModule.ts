@@ -34,14 +34,14 @@ class PomoModule implements Module {
           triggers: [newCommandTrigger('!pomo')],
           restrict_to: MOD_OR_ABOVE,
           fn: this.cmdPomoStart.bind(this),
-          timeout: { global: '0', perUser: '0' },
+          cooldown: { global: '0', perUser: '0' },
         },
         {
           id: 'pomo_exit',
           triggers: [newCommandTrigger('!pomo exit', true)],
           restrict_to: MOD_OR_ABOVE,
           fn: this.cmdPomoExit.bind(this),
-          timeout: { global: '0', perUser: '0' },
+          cooldown: { global: '0', perUser: '0' },
         },
       ];
       return this;

@@ -187,7 +187,7 @@ const createCommand = (cmd: Partial<Command>): Command => {
     restrict_to: typeof cmd.restrict_to !== 'undefined' ? cmd.restrict_to : [],
     variables: typeof cmd.variables !== 'undefined' ? cmd.variables : [],
     data: typeof cmd.data !== 'undefined' ? cmd.data : {},
-    timeout: typeof cmd.timeout !== 'undefined' ? cmd.timeout : { global: '0', perUser: '0' },
+    cooldown: typeof cmd.cooldown !== 'undefined' ? cmd.cooldown : { global: '0', perUser: '0' },
   }
 }
 

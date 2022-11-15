@@ -2747,7 +2747,7 @@ const createCommand = (cmd) => {
         restrict_to: typeof cmd.restrict_to !== 'undefined' ? cmd.restrict_to : [],
         variables: typeof cmd.variables !== 'undefined' ? cmd.variables : [],
         data: typeof cmd.data !== 'undefined' ? cmd.data : {},
-        timeout: typeof cmd.timeout !== 'undefined' ? cmd.timeout : { global: '0', perUser: '0' },
+        cooldown: typeof cmd.cooldown !== 'undefined' ? cmd.cooldown : { global: '0', perUser: '0' },
     };
 };
 const commands = {
@@ -3031,7 +3031,7 @@ class CommandExecutor {
         return true;
     }
     async isInGlobalTimeout(cmdDef, repo, ctx) {
-        const durationMs = cmdDef.timeout.global ? parseHumanDuration(cmdDef.timeout.global) : 0;
+        const durationMs = cmdDef.cooldown.global ? parseHumanDuration(cmdDef.cooldown.global) : 0;
         if (!durationMs) {
             return false;
         }
@@ -3044,7 +3044,7 @@ class CommandExecutor {
         if (!ctx.context || !ctx.context.username) {
             return false;
         }
-        const durationMs = cmdDef.timeout.perUser ? parseHumanDuration(cmdDef.timeout.perUser) : 0;
+        const durationMs = cmdDef.cooldown.perUser ? parseHumanDuration(cmdDef.cooldown.perUser) : 0;
         if (!durationMs) {
             return false;
         }
@@ -4691,8 +4691,11 @@ class GeneralModule {
             }
             cmd.variables = cmd.variables || [];
             cmd.effects = cmd.effects || [];
-            if (typeof cmd.timeout !== 'object') {
-                cmd.timeout = { global: '0', perUser: '0' };
+            if (typeof cmd.cooldown !== 'object') {
+                cmd.cooldown = cmd.timeout || { global: '0', perUser: '0' };
+            }
+            if (cmd.timeout) {
+                delete cmd.timeout;
             }
             if (cmd.variableChanges) {
                 for (const variableChange of cmd.variableChanges) {
@@ -5321,8 +5324,12 @@ class SongrequestModule {
                 command.effects = [];
                 shouldSave = true;
             }
-            if (typeof command.timeout !== 'object') {
-                command.timeout = { global: '0', perUser: '0' };
+            if (typeof command.cooldown !== 'object') {
+                command.cooldown = command.timeout || { global: '0', perUser: '0' };
+                shouldSave = true;
+            }
+            if (command.timeout) {
+                delete command.timeout;
                 shouldSave = true;
             }
         }
@@ -6532,7 +6539,7 @@ class VoteModule {
                 id: 'vote',
                 triggers: [newCommandTrigger('!vote')],
                 fn: this.voteCmd.bind(this),
-                timeout: {
+                cooldown: {
                     global: '0',
                     perUser: '0',
                 },
@@ -6541,7 +6548,7 @@ class VoteModule {
                 id: 'play',
                 triggers: [newCommandTrigger('!play')],
                 fn: this.playCmd.bind(this),
-                timeout: {
+                cooldown: {
                     global: '0',
                     perUser: '0',
                 },
@@ -7115,14 +7122,14 @@ class PomoModule {
                     triggers: [newCommandTrigger('!pomo')],
                     restrict_to: MOD_OR_ABOVE,
                     fn: this.cmdPomoStart.bind(this),
-                    timeout: { global: '0', perUser: '0' },
+                    cooldown: { global: '0', perUser: '0' },
                 },
                 {
                     id: 'pomo_exit',
                     triggers: [newCommandTrigger('!pomo exit', true)],
                     restrict_to: MOD_OR_ABOVE,
                     fn: this.cmdPomoExit.bind(this),
-                    timeout: { global: '0', perUser: '0' },
+                    cooldown: { global: '0', perUser: '0' },
                 },
             ];
             return this;
@@ -7265,9 +7272,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-11-15T22:59:58.534Z",
+    buildDate: "2022-11-15T23:11:12.833Z",
     // @ts-ignore
-    buildVersion: "1.35.2",
+    buildVersion: "1.35.3",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');

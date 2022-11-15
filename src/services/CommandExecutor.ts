@@ -52,7 +52,7 @@ export class CommandExecutor {
     repo: CommandExecutionRepo,
     ctx: CommandExecutionContext,
   ): Promise<boolean> {
-    const durationMs = cmdDef.timeout.global ? parseHumanDuration(cmdDef.timeout.global) : 0
+    const durationMs = cmdDef.cooldown.global ? parseHumanDuration(cmdDef.cooldown.global) : 0
     if (!durationMs) {
       return false
     }
@@ -70,7 +70,7 @@ export class CommandExecutor {
     if (!ctx.context || !ctx.context.username) {
       return false
     }
-    const durationMs = cmdDef.timeout.perUser ? parseHumanDuration(cmdDef.timeout.perUser) : 0
+    const durationMs = cmdDef.cooldown.perUser ? parseHumanDuration(cmdDef.cooldown.perUser) : 0
     if (!durationMs) {
       return false
     }
