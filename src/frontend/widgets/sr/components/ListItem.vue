@@ -32,33 +32,20 @@
     </div>
   </li>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { computed } from "vue";
 import { dateformat } from "../../../../common/fn";
+import { PlaylistItem } from "../../../../types";
 
-export default defineComponent({
-  props: {
-    item: {
-      type: Object,
-      required: true,
-    },
-    showThumbnails: {
-      required: true,
-    },
-    timestampFormat: {
-      type: String,
-      default: 'YYYY-MM-DD hh:mm:ss'
-    },
-  },
-  computed: {
-    thumbnail() {
-      return `https://i.ytimg.com/vi/${this.item.yt}/mqdefault.jpg`;
-    },
-  },
-  methods: {
-    formatTimestamp(ms: number) {
-      return dateformat(this.timestampFormat, new Date(ms));
-    },
-  },
-});
+const props = withDefaults(defineProps<{
+  item: PlaylistItem
+  showThumbnails: boolean
+  timestampFormat?: string
+}>(), {
+  timestampFormat: 'YYYY-MM-DD hh:mm:ss',
+})
+
+const thumbnail = computed(() => `https://i.ytimg.com/vi/${props.item.yt}/mqdefault.jpg`)
+
+const formatTimestamp = (ms: number) => dateformat(props.timestampFormat, new Date(ms))
 </script>
