@@ -56,7 +56,7 @@
     </div>
 
     <div
-      v-if="commands.length > 0"
+      v-if="cmds.length > 0"
       class="table-container"
     >
       <table
@@ -90,7 +90,7 @@
           </tr>
         </thead>
         <vue-draggable
-          :model-value="commands"
+          :model-value="cmds"
           tag="tbody"
           handle=".handle"
           item-key="id"
@@ -148,7 +148,7 @@
                 {{ element.action }}
               </td>
               <td>
-                {{ permissionsStr(element) }}
+                {{ permissionsStr(element.restrict_to) }}
               </td>
               <td class="pl-0 pr-0">
                 <DoubleclickButton
@@ -180,7 +180,7 @@
       :global-variables="globalVariables"
       :channel-points-custom-rewards="channelPointsCustomRewards"
       :model-value="editCommand"
-      :mode="editIdx >= commands.length ? 'create' : 'edit'"
+      :mode="editIdx >= cmds.length ? 'create' : 'edit'"
       :base-volume="baseVolume"
       :widget-url="widgetUrl"
       @save="commandSave"
@@ -189,29 +189,17 @@
     />
   </div>
 </template>
-<script lang="ts">
-import { defineComponent, PropType } from "vue";
+<script setup lang="ts">
 import { ChatEffect, Command, CommandAction, CommandEffectType, CommandTriggerType, GlobalVariable } from "../../../types";
-import { permissionsStr } from "../../../common/permissions";
 import { commands } from "../../../common/commands";
-import fn from "../../../common/fn";
+import { computed, ref } from "vue";
+import { permissionsStr } from "../../../common/permissions";
 import CommandEditor from "./CommandEditor.vue";
-import EffectInfo from "./EffectInfo.vue";
-import TriggerInfo from "./TriggerInfo.vue";
-import DropdownButton from "../DropdownButton.vue";
 import DoubleclickButton from "../DoubleclickButton.vue";
-
-interface ComponentData {
-  commands: Command[]
-  editIdx: number | null
-  editCommand: Command | null
-  filter: {
-    search: string
-    actions: string[]
-    effects: string[]
-  }
-  imagesVisible: boolean
-}
+import DropdownButton from "../DropdownButton.vue";
+import EffectInfo from "./EffectInfo.vue";
+import fn from "../../../common/fn";
+import TriggerInfo from "./TriggerInfo.vue";
 
 const anyActionsMatch = (filterActions: string[], item: Command): boolean => {
   if (filterActions.length === 0) {
@@ -262,213 +250,187 @@ const findInEffects = (search: string, command: Command): boolean => {
   return false
 }
 
-export default defineComponent({
-  components: {
-    CommandEditor,
-    DoubleclickButton,
-    DropdownButton,
-    EffectInfo,
-    TriggerInfo,
-  },
-  props: {
-    globalVariables: {
-      type: Array as PropType<GlobalVariable[]>,
-      required: true,
-    },
-    channelPointsCustomRewards: {
-      type: Object as PropType<Record<string, string[]>>,
-      required: true,
-    },
-    possibleActions: {
-      type: Array as PropType<CommandAction[]>,
-      required: true,
-    },
-    possibleEffects: {
-      type: Array as PropType<CommandEffectType[]>,
-      required: true,
-    },
-    baseVolume: {
-      type: Number,
-      required: true,
-    },
-    modelValue: {
-      type: Array as PropType<Command[]>,
-      required: true,
-    },
-    showToggleImages: {
-      type: Boolean,
-      required: false,
-      default: false,
-    },
-    showFilters: {
-      type: Boolean,
-      required: false,
-      default: false,
-    },
-    showImages: {
-      type: Boolean,
-      required: false,
-      default: false,
-    },
-    widgetUrl: {
-      type: String,
-      required: false,
-      default: "",
-    },
-  },
-  emits: ["update:modelValue", "showImagesChange"],
-  data(): ComponentData {
-    return {
-      commands: [],
-      editIdx: null,
-      editCommand: null,
-      filter: {
-        search: "",
-        actions: [],
-        effects: [],
-      },
-      imagesVisible: false,
-    };
-  },
-  computed: {
-    possibleEffectsMapped() {
-      return this.possibleEffects.map((effect) => ({
-        type: effect,
-      }))
-    },
-    possibleEffectsWithCount() {
-      return this.possibleEffects
-        .map((effect) => {
-          return {
-            effect,
-            count: this.commandCountByEffect(effect),
-          };
-        })
-        .filter((e) => e.count > 0);
-    },
-    possibleActionsMapped() {
-      return this.possibleActions.map((action) => ({
-        type: action,
-        title: this.actionDescription(action),
-        label: `Add ${this.actionName(action)}`,
-      }));
-    },
-    possibleActionsWithCount() {
-      return this.possibleActions
-        .map((action) => {
-          return {
-            action,
-            count: this.commandCountByAction(action),
-          };
-        })
-        .filter((a) => a.count > 0);
-    },
-  },
-  created() {
-    this.commands = JSON.parse(JSON.stringify(this.modelValue));
-    this.imagesVisible = this.showImages;
-  },
-  methods: {
-    onImageVisibleChange() {
-      // TODO: use value from event?
-      this.$emit("showImagesChange", this.imagesVisible);
-    },
-    emitChange() {
-      this.$emit("update:modelValue", this.commands);
-    },
-    commandCountByEffect(effect: string): number {
-      let count = 0;
-      for (const cmd of this.commands) {
-        if (cmd.effects && cmd.effects.some(e => e.type === effect)) {
-          count++;
-        }
-      }
-      return count;
-    },
-    commandCountByAction(action: string): number {
-      let count = 0;
-      for (const cmd of this.commands) {
-        if (cmd.action === action) {
-          count++;
-        }
-      }
-      return count;
-    },
-    filteredOut(item: Command) {
-      if (!anyActionsMatch(this.filter.actions, item)) {
-        return true
-      }
-      if (!anyEffectsMatch(this.filter.effects, item)) {
-        return true
-      }
+const props = withDefaults(defineProps<{
+  globalVariables: GlobalVariable[]
+  channelPointsCustomRewards: Record<string, string[]>
+  possibleActions: CommandAction[]
+  possibleEffects: CommandEffectType[]
+  baseVolume: number
+  modelValue: Command[]
+  showToggleImages?: boolean
+  showFilters?: boolean
+  showImages?: boolean
+  widgetUrl?: string
+}>(), {
+  showToggleImages: false,
+  showFilters: false,
+  showImages: false,
+  widgetUrl: '',
+})
 
-      if (!this.filter.search) {
-        return false
-      }
-      const search = this.filter.search.toLowerCase()
-      if (
-        findInTriggers(search, item) ||
-        findInEffects(search, item)
-      ) {
-        return false
-      }
-      return true
-    },
-    permissionsStr(item: Command) {
-      return permissionsStr(item.restrict_to);
-    },
-    remove(idx: number) {
-      this.commands = this.commands.filter((_val, index: number) => index !== idx);
-      this.emitChange();
-    },
-    add(mappedAction: any) {
-      const type: CommandAction = mappedAction.type;
-      this.editIdx = -1;
-      this.editCommand = commands[type].NewCommand();
-    },
-    edit(idx: number) {
-      this.editIdx = idx;
-      this.editCommand = this.commands[idx];
-    },
-    duplicate(idx: number) {
-      this.editIdx = -1;
-      this.editCommand = JSON.parse(JSON.stringify(this.commands[idx]));
-    },
-    commandSave(command: Command): void {
-      if (this.editIdx === null) {
-        return;
-      }
-      if (this.editIdx === -1) {
-        // put new commands on top of the list
-        this.commands.unshift(command)
-        this.editIdx = 0
-      }
-      else {
-        // otherwise edit the edited command
-        this.commands[this.editIdx] = command;
-      }
-      this.emitChange();
-    },
-    commandSaveAndClose(command: Command): void {
-      this.commandSave(command)
-      this.editIdx = null;
-      this.editCommand = null;
-    },
-    dragEnd(evt: {
-      oldIndex: number;
-      newIndex: number;
-    }) {
-      this.commands = fn.arrayMove(this.commands, evt.oldIndex, evt.newIndex);
-      this.emitChange();
-    },
-    actionDescription(action: CommandAction) {
-      return commands[action].Description();
-    },
-    actionName(action: CommandAction) {
-      return commands[action].Name();
-    },
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: Command[]): void
+  (e: 'showImagesChange', val: boolean): void
+}>()
+
+const cmds = ref<Command[]>(JSON.parse(JSON.stringify(props.modelValue)))
+const editIdx = ref<number | null>(null)
+const editCommand = ref<Command | null>(null)
+const filter = ref<{
+  search: string
+  actions: string[]
+  effects: string[]
+}>({
+  search: "",
+  actions: [],
+  effects: [],
+})
+const imagesVisible = ref<boolean>(props.showImages)
+
+const possibleEffectsMapped = computed(() => {
+  return props.possibleEffects.map((effect) => ({
+    type: effect,
+  }))
+})
+
+const possibleEffectsWithCount = computed(() => {
+  return props.possibleEffects
+    .map((effect) => {
+      return {
+        effect,
+        count: commandCountByEffect(effect),
+      };
+    })
+    .filter((e) => e.count > 0);
+})
+
+const possibleActionsMapped = computed(() => {
+  return props.possibleActions.map((action) => ({
+    type: action,
+    title: actionDescription(action),
+    label: `Add ${actionName(action)}`,
+  }));
+})
+
+const possibleActionsWithCount = computed(() => {
+  return props.possibleActions
+    .map((action) => {
+      return {
+        action,
+        count: commandCountByAction(action),
+      };
+    })
+    .filter((a) => a.count > 0);
+})
+
+const onImageVisibleChange = () => {
+  // TODO: use value from event?
+  emit("showImagesChange", imagesVisible.value);
+}
+
+const emitChange = () => {
+  emit("update:modelValue", cmds.value);
+}
+
+const commandCountByEffect = (effect: string): number => {
+  let count = 0;
+  for (const cmd of cmds.value) {
+    if (cmd.effects && cmd.effects.some(e => e.type === effect)) {
+      count++;
+    }
   }
-});
+  return count;
+}
+
+const commandCountByAction = (action: string): number => {
+  let count = 0;
+  for (const cmd of cmds.value) {
+    if (cmd.action === action) {
+      count++;
+    }
+  }
+  return count;
+}
+
+const filteredOut = (item: Command) => {
+  if (!anyActionsMatch(filter.value.actions, item)) {
+    return true
+  }
+  if (!anyEffectsMatch(filter.value.effects, item)) {
+    return true
+  }
+
+  if (!filter.value.search) {
+    return false
+  }
+  const search = filter.value.search.toLowerCase()
+  if (
+    findInTriggers(search, item) ||
+    findInEffects(search, item)
+  ) {
+    return false
+  }
+  return true
+}
+
+const remove = (idx: number) => {
+  cmds.value = cmds.value.filter((_val, index: number) => index !== idx);
+  emitChange();
+}
+
+const add = (mappedAction: any) => {
+  const type: CommandAction = mappedAction.type;
+  editIdx.value = -1;
+  editCommand.value = commands[type].NewCommand();
+}
+
+const edit = (idx: number) => {
+  editIdx.value = idx;
+  editCommand.value = cmds.value[idx];
+}
+
+const duplicate = (idx: number) => {
+  editIdx.value = -1;
+  editCommand.value = JSON.parse(JSON.stringify(cmds.value[idx]));
+}
+
+const commandSave = (command: Command): void => {
+  if (editIdx.value === null) {
+    return;
+  }
+  if (editIdx.value === -1) {
+    // put new commands on top of the list
+    cmds.value.unshift(command)
+    editIdx.value = 0
+  }
+  else {
+    // otherwise edit the edited command
+    cmds.value[editIdx.value] = command;
+  }
+  emitChange();
+}
+
+const commandSaveAndClose = (command: Command): void => {
+  commandSave(command)
+  editIdx.value = null;
+  editCommand.value = null;
+}
+
+const dragEnd = (evt: {
+  oldIndex: number;
+  newIndex: number;
+}) => {
+  cmds.value = fn.arrayMove(cmds.value, evt.oldIndex, evt.newIndex);
+  emitChange();
+}
+
+const actionDescription = (action: CommandAction) => {
+  return commands[action].Description();
+}
+
+const actionName = (action: CommandAction) => {
+  return commands[action].Name();
+}
 </script>
 
 <style scoped>
