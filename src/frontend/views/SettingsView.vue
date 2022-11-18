@@ -4,7 +4,7 @@
       id="top"
       ref="top"
     >
-      <navbar-element />
+      <NavbarElement />
       <div
         id="actionbar"
         class="p-1"
@@ -124,6 +124,7 @@ import api from "../api";
 import conf from "../conf";
 import twitch from "../twitch";
 import StringInput from "../components/StringInput.vue";
+import NavbarElement from "../components/NavbarElement.vue";
 
 interface ComponentData {
   unchangedJson: string
@@ -145,7 +146,7 @@ interface ComponentData {
 }
 
 export default defineComponent({
-  components: { StringInput },
+  components: { StringInput, NavbarElement },
   data: (): ComponentData => ({
     unchangedJson: "[]",
     changedJson: "[]",

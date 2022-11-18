@@ -4,7 +4,7 @@
       id="top"
       ref="top"
     >
-      <navbar-element />
+      <NavbarElement />
       <div
         id="actionbar"
         class="p-1"
@@ -121,14 +121,14 @@
                   {{ element.name }}
                 </td>
                 <td class="pl-0 pr-0">
-                  <doubleclick-button
+                  <DoubleclickButton
                     class="button is-small mr-1"
                     message="Are you sure?"
                     :timeout="1000"
                     @doubleclick="remove(index)"
                   >
                     <i class="fa fa-trash" />
-                  </doubleclick-button>
+                  </DoubleclickButton>
                   <button
                     class="button is-small mr-1"
                     @click="duplicate(index)"
@@ -187,6 +187,8 @@ import AvatarEditor from "../components/Avatar/AvatarEditor.vue";
 import AvatarPreview from "../components/Avatar/AvatarPreview.vue";
 import util from "../util";
 import WsClient from "../WsClient";
+import DoubleclickButton from '../components/DoubleclickButton.vue'
+import NavbarElement from '../components/NavbarElement.vue'
 
 import hyottokoChan from "./avatar_hyottoko_chan";
 
@@ -215,7 +217,7 @@ interface ComponentData {
 }
 
 export default defineComponent({
-    components: { AvatarPreview, AvatarEditor },
+    components: { AvatarPreview, AvatarEditor, DoubleclickButton, NavbarElement },
     data: (): ComponentData => ({
         editIdx: -1,
         editEntity: null,

@@ -4,7 +4,7 @@
       id="top"
       ref="top"
     >
-      <navbar-element />
+      <NavbarElement />
       <div
         id="actionbar"
         class="p-1"
@@ -55,14 +55,14 @@
                 <StringInput v-model="v.value" />
               </td>
               <td>
-                <doubleclick-button
+                <DoubleclickButton
                   class="button is-small mr-1"
                   message="Are you sure?"
                   :timeout="1000"
                   @doubleclick="remove(idx)"
                 >
                   <i class="fa fa-trash" />
-                </doubleclick-button>
+                </DoubleclickButton>
               </td>
             </tr>
           </tbody>
@@ -78,6 +78,8 @@ import { useRouter } from "vue-router";
 import { GlobalVariable } from "../../types";
 import api from "../api";
 import StringInput from "../components/StringInput.vue";
+import DoubleclickButton from "../components/DoubleclickButton.vue";
+import NavbarElement from "../components/NavbarElement.vue";
 
 const unchangedJson = ref<string>('[]')
 const changedJson = ref<string>('[]')

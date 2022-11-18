@@ -10,7 +10,7 @@
           >
         </td>
         <td>
-          <macro-select
+          <MacroSelect
             class="help"
             @selected="val.data.title += $event.value;"
           />
@@ -22,6 +22,7 @@
 <script setup lang="ts">
 import { SetChannelTitleEffect } from '../../../../types';
 import { ref, watch } from 'vue';
+import MacroSelect from '../../MacroSelect.vue'
 
 const props = defineProps<{
   modelValue: SetChannelTitleEffect,

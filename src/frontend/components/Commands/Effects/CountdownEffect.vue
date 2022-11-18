@@ -1,6 +1,6 @@
 <template>
   <div>
-    <countdown-editor
+    <CountdownEditor
       v-model="val.data"
       :base-volume="baseVolume"
     />
@@ -9,6 +9,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { CountdownEffect } from '../../../../types';
+import CountdownEditor from '../CountdownEditor.vue'
 
 const props = defineProps<{
   modelValue: CountdownEffect,

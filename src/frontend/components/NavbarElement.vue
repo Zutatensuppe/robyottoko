@@ -59,7 +59,7 @@
           problems.length > 1 ? "s" : ""
         }}</a>
         <span class="navbar-item">
-          <checkbox-input
+          <CheckboxInput
             id="darkmode-switch"
             v-model="darkmode"
             class="mr-1"
@@ -74,7 +74,7 @@
       </div>
     </div>
   </nav>
-  <problems-dialog
+  <ProblemsDialog
     v-if="showProblems"
     :problems="problems"
     @close="showProblems = false"
@@ -86,6 +86,7 @@ import user from "../user";
 import { eventBus } from "../wsstatus";
 import { ApiUserData } from '../../types';
 import CheckboxInput from "./CheckboxInput.vue";
+import ProblemsDialog from './ProblemsDialog.vue'
 
 interface ComponentData {
   me: ApiUserData | null
@@ -97,7 +98,7 @@ interface ComponentData {
 }
 
 export default defineComponent({
-    components: { CheckboxInput },
+    components: { CheckboxInput, ProblemsDialog },
     data: (): ComponentData => ({
         me: null,
         showProblems: false,

@@ -4,7 +4,7 @@
       id="top"
       ref="top"
     >
-      <navbar-element />
+      <NavbarElement />
     </div>
     <div
       id="main"
@@ -54,7 +54,7 @@
             <tr>
               <td><code>settings.volume</code></td>
               <td>
-                <volume-slider
+                <VolumeSlider
                   v-model="settings.volume"
                   @update:modelValue="sendSave"
                 />
@@ -68,9 +68,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
-
-import WsClient from "../WsClient";
+import { computed, onMounted, onUnmounted, ref } from "vue"
+import WsClient from "../WsClient"
 import {
   default_admin_settings,
   default_settings,
@@ -78,10 +77,12 @@ import {
   GeneralModuleSettings,
   GeneralModuleWsEventData,
   GeneralSaveEventData,
-} from "../../mod/modules/GeneralModuleCommon";
-import { Command, CommandAction, CommandEffectType, GlobalVariable } from "../../types";
-import util from "../util";
-import CommandsEditor from "../components/Commands/CommandsEditor.vue";
+} from "../../mod/modules/GeneralModuleCommon"
+import { Command, CommandAction, CommandEffectType, GlobalVariable } from "../../types"
+import util from "../util"
+import CommandsEditor from "../components/Commands/CommandsEditor.vue"
+import VolumeSlider from '../components/VolumeSlider.vue'
+import NavbarElement from '../components/NavbarElement.vue'
 
 type TabType = "commands" | "settings"
 interface TabDefinition {

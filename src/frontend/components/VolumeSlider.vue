@@ -1,5 +1,5 @@
 <template>
-  <slider-input
+  <SliderInput
     v-model="volume"
     class="volume-slider"
     icon-left="fa-volume-down"
@@ -11,6 +11,7 @@
 </template>
 <script setup lang="ts">
 import { ref } from "vue";
+import SliderInput  from './SliderInput.vue'
 
 const props = defineProps<{
   modelValue: string | number

@@ -36,7 +36,7 @@
         v-else-if="effect.data.image_url || effect.data.image.file || effect.data.sound.file"
         class="spacerow media-holder media-holder-inline"
       >
-        <responsive-image
+        <ResponsiveImage
           v-if="(effect.data.image_url || effect.data.image.file) && imagesVisible"
           :src="effect.data.image_url || effect.data.image.urlpath"
           :title="effect.data.image.filename"
@@ -52,7 +52,7 @@
           v-if="(effect.data.image_url || effect.data.image.file) && effect.data.sound.file"
           class="fa fa-plus is-justify-content-center mr-2 ml-2"
         />
-        <audio-player
+        <AudioPlayer
           :src="effect.data.sound.urlpath"
           :name="effect.data.sound.filename"
           :volume="effect.data.sound.volume"
@@ -63,13 +63,13 @@
           v-if="(effect.data.image_url || effect.data.image.file) && effect.data.sound.file"
           class="ml-2"
         >for at least
-          <duration-display :value="effect.data.minDurationMs" />
+          <DurationDisplay :value="effect.data.minDurationMs" />
         </span>
         <span
           v-else-if="(effect.data.image_url || effect.data.image.file)"
           class="ml-2"
         >for
-          <duration-display :value="effect.data.minDurationMs" />
+          <DurationDisplay :value="effect.data.minDurationMs" />
         </span>
         <span class="ml-1 mr-1">in the</span>
         <a
@@ -94,7 +94,7 @@
         <code>{{ effect.data.intro }}</code>
         <span>→</span>
         <code>{{ effect.data.steps }}</code> ✕
-        <duration-display :value="effect.data.interval" />
+        <DurationDisplay :value="effect.data.interval" />
         <span>→</span>
         <code>{{ effect.data.outro }}</code>
       </div>
@@ -103,7 +103,7 @@
           v-for="(a, idxActions) in effect.data.actions"
           :key="idxActions"
         >
-          <duration-display
+          <DurationDisplay
             v-if="a.type === 'delay'"
             :value="a.value"
           />
@@ -165,6 +165,9 @@
 </template>
 <script setup lang="ts">
 import { CommandEffect, CommandEffectType } from '../../../types';
+import ResponsiveImage from '../ResponsiveImage.vue';
+import AudioPlayer from '../AudioPlayer.vue';
+import DurationDisplay from '../DurationDisplay.vue';
 
 defineProps<{
   effect: CommandEffect,

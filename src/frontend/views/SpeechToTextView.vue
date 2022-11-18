@@ -4,7 +4,7 @@
       id="top"
       ref="top"
     >
-      <navbar-element />
+      <NavbarElement />
       <div
         id="actionbar"
         class="p-1"
@@ -602,6 +602,7 @@ import {
 import util from "../util";
 import StringInput from "../components/StringInput.vue";
 import CheckboxInput from "../components/CheckboxInput.vue";
+import NavbarElement from "../components/NavbarElement.vue";
 
 interface ComponentData {
   unchangedJson: string;
@@ -615,7 +616,7 @@ interface ComponentData {
 }
 
 export default defineComponent({
-    components: { StringInput, CheckboxInput },
+    components: { StringInput, CheckboxInput, NavbarElement },
     data: (): ComponentData => ({
         unchangedJson: "{}",
         changedJson: "{}",

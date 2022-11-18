@@ -41,7 +41,7 @@
       </div>
     </div>
 
-    <upload-input
+    <UploadInput
       v-show="false"
       ref="uploadComponent"
       accept="image/*"
@@ -59,7 +59,7 @@ import {
 } from "../../../mod/modules/AvatarModuleCommon";
 import { MediaFile } from "../../../types";
 import { getFileFromDropEvent } from "../../util";
-import { UploadInstance } from "../UploadInput.vue";
+import UploadInput, { UploadInstance } from "../UploadInput.vue";
 import AvatarAnimation from "./AvatarAnimation.vue";
 import AvatarFrameUpload from "./AvatarFrameUpload.vue";
 
@@ -67,6 +67,7 @@ export default defineComponent({
     components: {
       AvatarAnimation,
       AvatarFrameUpload,
+      UploadInput,
     },
     props: {
         modelValue: {

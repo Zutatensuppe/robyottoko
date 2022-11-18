@@ -4,7 +4,7 @@
       id="top"
       ref="top"
     >
-      <navbar-element />
+      <NavbarElement />
       <div
         id="actionbar"
         class="p-1"
@@ -104,7 +104,7 @@
           <tr>
             <td><code>settings.startEffect.sound</code></td>
             <td>
-              <sound-upload
+              <SoundUpload
                 v-model="settings.startEffect.sound"
                 :base-volume="100"
               />
@@ -121,7 +121,7 @@
           <tr>
             <td><code>settings.endEffect.sound</code></td>
             <td>
-              <sound-upload
+              <SoundUpload
                 v-model="settings.endEffect.sound"
                 :base-volume="100"
               />
@@ -140,7 +140,7 @@
           <tr>
             <td><code>settings.stopEffect.sound</code></td>
             <td>
-              <sound-upload
+              <SoundUpload
                 v-model="settings.stopEffect.sound"
                 :base-volume="100"
               />
@@ -170,7 +170,7 @@
                   <tr>
                     <td><code>offsetMs</code></td>
                     <td>
-                      <duration-input
+                      <DurationInput
                         v-model="n.offsetMs"
                         :allow-negative="true"
                       />
@@ -190,7 +190,7 @@
                   <tr>
                     <td><code>sound</code></td>
                     <td>
-                      <sound-upload
+                      <SoundUpload
                         v-model="n.effect.sound"
                         :base-volume="100"
                       />
@@ -217,9 +217,12 @@ import {
 } from "../../mod/modules/PomoModuleCommon";
 import WsClient from "../WsClient";
 import StringInput from "../components/StringInput.vue";
+import SoundUpload from "../components/SoundUpload.vue";
+import DurationInput from "../components/DurationInput.vue";
+import NavbarElement from "../components/NavbarElement.vue";
 
 export default defineComponent({
-  components: { StringInput },
+  components: { StringInput, SoundUpload, DurationInput, NavbarElement },
   data: () => ({
     unchangedJson: "{}",
     changedJson: "{}",

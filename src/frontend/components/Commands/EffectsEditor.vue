@@ -62,14 +62,14 @@
           />
         </td>
         <td>
-          <doubleclick-button
+          <DoubleclickButton
             class="button is-small mr-1"
             message="Are you sure?"
             :timeout="1000"
             @doubleclick="onRmEffectClick(idx)"
           >
             <i class="fa fa-trash" />
-          </doubleclick-button>
+          </DoubleclickButton>
         </td>
       </tr>
     </table>
@@ -90,6 +90,7 @@ import AddStreamTagsEffect from './Effects/AddStreamTagsEffect.vue';
 import RemoveStreamTagsEffect from './Effects/RemoveStreamTagsEffect.vue';
 import ChattersEffect from './Effects/ChattersEffect.vue';
 import CountdownEffect from './Effects/CountdownEffect.vue';
+import DoubleclickButton from '../DoubleclickButton.vue'
 
 export interface AutocompletableVariable {
   var: CommandVariable | GlobalVariable;

@@ -30,7 +30,7 @@
             <tr>
               <td>
                 <div>Triggers:</div>
-                <dropdown-button
+                <DropdownButton
                   :actions="possibleTriggerActions()"
                   label="Add trigger"
                   @click="addTrigger"
@@ -65,7 +65,7 @@
             <tr>
               <td>
                 <div>Effects:</div>
-                <dropdown-button
+                <DropdownButton
                   :actions="possibleEffectActions()"
                   label="Add effect"
                   @click="addEffect"
@@ -225,6 +225,7 @@ import { possibleTriggerActions } from "../../../common/triggers";
 import StringInput from "../StringInput.vue";
 import EffectsEditor from "./EffectsEditor.vue";
 import DurationInput from "../DurationInput.vue";
+import DropdownButton from "../DropdownButton.vue";
 
 interface ComponentDataPermission {
   value: string;

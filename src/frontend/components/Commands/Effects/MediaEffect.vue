@@ -75,7 +75,7 @@
     <div v-if="type === 'image' || type === 'image,sound'">
       Display-Duration:
       <div class="control has-icons-left">
-        <duration-input
+        <DurationInput
           :model-value="val.data.minDurationMs"
           @update:modelValue="val.data.minDurationMs = $event"
         />
@@ -92,7 +92,7 @@
     <div v-if="type === 'image' || type === 'image,sound'">
       Image:
       <div>
-        <image-upload
+        <ImageUpload
           v-model="val.data.image"
           @update:modelValue="mediaImgChanged"
         />
@@ -121,7 +121,7 @@
     <div v-if="type === 'sound' || type === 'image,sound'">
       Sound:
       <div>
-        <sound-upload
+        <SoundUpload
           v-model="val.data.sound"
           :base-volume="baseVolume"
           @update:modelValue="mediaSndChanged"
@@ -141,7 +141,7 @@
         <tr>
           <td>Volume:</td>
           <td>
-            <volume-slider v-model="val.data.video.volume" />
+            <VolumeSlider v-model="val.data.video.volume" />
           </td>
         </tr>
       </table>
@@ -173,6 +173,10 @@
 import { MediaEffect, MediaFile, SoundMediaFile } from '../../../../types';
 import { nextTick, onBeforeMount, Ref, ref, watch } from 'vue';
 import StringInput from '../../StringInput.vue';
+import VolumeSlider from '../../VolumeSlider.vue';
+import ImageUpload from '../../ImageUpload.vue';
+import SoundUpload from '../../SoundUpload.vue';
+import DurationInput from '../../DurationInput.vue';
 
 const props = defineProps<{
   modelValue: MediaEffect,
