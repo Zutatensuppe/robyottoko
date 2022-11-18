@@ -6,7 +6,7 @@ const absPath = (path: string): URL => new URL(path, import.meta.url)
 const readJson = (path: PathOrFileDescriptor): any => JSON.parse(String(readFileSync(path)))
 
 const init = (): Config => {
-  const configFile = process.env.APP_CONFIG || ''
+  const configFile = process.env.APP_CONFIG || 'config.json'
   if (configFile === '') {
     process.exit(2)
   }

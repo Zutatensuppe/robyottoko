@@ -3,7 +3,7 @@
     class="avatar-preview"
     :style="{ width: `${width}px`, height: `${height}px` }"
   >
-    <avatar-animation
+    <AvatarAnimation
       v-for="(anim, idx) in animations"
       :key="idx"
       :frames="anim.frames"
@@ -16,6 +16,7 @@
 <script setup lang="ts">
 import { computed, PropType } from "vue";
 import { AvatarModuleAvatarDefinition, AvatarModuleSlotItemStateDefinition } from "../../../mod/modules/AvatarModuleCommon";
+import AvatarAnimation from './AvatarAnimation.vue'
 
 const props = defineProps({
   avatar: {

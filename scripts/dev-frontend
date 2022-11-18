@@ -1,7 +1,0 @@
-#!/bin/sh -eu
-
-cd "$RUN_DIR"
-
-export PORT=3000
-
-npx vite

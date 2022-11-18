@@ -37,7 +37,7 @@ which lets you use the features without setting the bot up yourself.
 1. Launch the database. By default the database will be exposed on localhost port 5434.
 
     ```console
-    ./run dev-services
+    npm run dev-services
     ```
 
 2. Create a `config.json`. The example can be copied, for some
@@ -50,26 +50,19 @@ features you have to provide an api key directly in the config atm.
 3. Install the dependencies
 
     ```shell
-    npm install
+    npm ci
     ```
 
-4. Create a user. You will be asked for a user name and password.
-The rest of the settings can be changed via the bot admin ui.
+4. Build (optional, only required if you made code changes)
 
     ```shell
-    ./run ts scripts/create-user.ts
+    npm run build
     ```
 
-5. Build (optional, only required if you made code changes)
+5. Run the bot
 
     ```shell
-    ./run build
-    ```
-
-6. Run the bot
-
-    ```shell
-    ./run bot
+    npm run bot
     ```
 
     This should output the url of the server, like this:

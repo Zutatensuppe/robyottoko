@@ -3,7 +3,7 @@
     <div class="level avatar-slot-definition-editor-title p-1">
       <div class="level-left">
         <div class="level-item">
-          <avatar-animation
+          <AvatarAnimation
             :frames="defaultAnimation"
             :width="32"
             :height="32"
@@ -43,7 +43,7 @@
       </div>
     </div>
     <div class="p-1">
-      <avatar-slot-item-editor
+      <AvatarSlotItemEditor
         v-for="(item, idx) in modelValue.items"
         :key="idx"
         class="card mb-1"
@@ -73,6 +73,8 @@ import {
   AvatarModuleAvatarSlotDefinition,
   AvatarModuleAvatarSlotItem,
 } from "../../../mod/modules/AvatarModuleCommon";
+import AvatarAnimation from './AvatarAnimation.vue'
+import AvatarSlotItemEditor from "./AvatarSlotItemEditor.vue";
 
 const props = defineProps<{
   modelValue: AvatarModuleAvatarSlotDefinition,

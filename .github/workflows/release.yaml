@@ -15,8 +15,8 @@ jobs:
       with:
         node-version: 18.x
 
-    - run: ./run install
-    - run: ./run build
+    - run: npm ci
+    - run: npm run build
     - run: |
         ARCHIVES=$(scripts/create-release)
         gh release upload ${{ github.event.release.tag_name }} $ARCHIVES

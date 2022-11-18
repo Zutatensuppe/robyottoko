@@ -1,6 +1,0 @@
-#!/bin/sh -e
-
-cd "$RUN_DIR"
-
-npx vue-tsc --noEmit
-npx eslint src
