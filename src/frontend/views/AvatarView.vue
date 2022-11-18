@@ -190,6 +190,7 @@ import WsClient from "../WsClient";
 import DoubleclickButton from '../components/DoubleclickButton.vue'
 import NavbarElement from '../components/NavbarElement.vue'
 import hyottokoChan from "./avatar_hyottoko_chan";
+import CheckboxInput from "../components/CheckboxInput.vue";
 
 const log = logger('AvatarView.vue')
 
