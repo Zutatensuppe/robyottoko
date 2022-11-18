@@ -4,8 +4,8 @@
     :base-volume="settings.volume"
   />
 </template>
-<script lang="ts">
-import { defineComponent, PropType } from "vue";
+<script setup lang="ts">
+import { onMounted, onUnmounted, Ref, ref } from "vue";
 import MediaQueueElement, { MediaQueueElementInstance } from "../MediaQueueElement.vue";
 import util, { WidgetApiData } from "../util";
 import WsClient from "../../WsClient";
@@ -16,56 +16,38 @@ import {
 } from "../../../mod/modules/GeneralModuleCommon";
 import { newMedia } from "../../../common/commands";
 
-interface ComponentData {
-  ws: WsClient | null;
-  settings: GeneralModuleSettings;
-  widgetId: string;
-}
+const props = defineProps<{
+  wdata: WidgetApiData,
+}>()
 
-export default defineComponent({
-  components: {
-    MediaQueueElement,
-  },
-  props: {
-    wdata: { type: Object as PropType<WidgetApiData>, required: true }
-  },
-  data(): ComponentData {
-    return {
-      ws: null,
-      settings: default_settings(),
-      widgetId: '',
-    };
-  },
-  computed: {
-    q(): MediaQueueElementInstance {
-      return this.$refs.q as MediaQueueElementInstance
-    },
-  },
-  created() {
-    // @ts-ignore
-    import("./main.scss");
-    this.widgetId = util.getParam('id')
-  },
-  mounted() {
-    this.ws = util.wsClient(this.wdata);
-    this.ws.onMessage("init", (data: GeneralModuleWsEventData) => {
-      this.settings = data.settings;
-    });
-    this.ws.onMessage("playmedia", (data) => {
-      if (!this.widgetId && data.widgetIds.length > 0 && !data.widgetIds.includes('')) {
-        // skipping this because it should not be displayed in global widget
-      } else if (this.widgetId && !data.widgetIds.includes(this.widgetId)) {
-        // skipping this, as it isn't coming from right command
-      } else {
-        this.q.playmedia(newMedia(data));
-      }
-    });
-    this.ws.connect();
-  },
-  unmounted() {
-    if (this.ws) {
-      this.ws.disconnect()
+let ws: WsClient | null = null
+const settings = ref<GeneralModuleSettings>(default_settings())
+const widgetId = ref<string>(util.getParam('id'))
+const q = ref<MediaQueueElementInstance>() as Ref<MediaQueueElementInstance>
+
+// @ts-ignore
+import("./main.scss");
+
+onMounted(() => {
+  ws = util.wsClient(props.wdata);
+  ws.onMessage("init", (data: GeneralModuleWsEventData) => {
+    settings.value = data.settings;
+  });
+  ws.onMessage("playmedia", (data) => {
+    if (!widgetId.value && data.widgetIds.length > 0 && !data.widgetIds.includes('')) {
+      // skipping this because it should not be displayed in global widget
+    } else if (widgetId.value && !data.widgetIds.includes(widgetId.value)) {
+      // skipping this, as it isn't coming from right command
+    } else {
+      q.value.playmedia(newMedia(data));
     }
-  },
-});
+  });
+  ws.connect();
+})
+
+onUnmounted(() => {
+  if (ws) {
+    ws.disconnect()
+  }
+})
 </script>

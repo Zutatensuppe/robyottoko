@@ -36,117 +36,96 @@
     </div>
   </div>
 </template>
-<script lang="ts">
-import { DrawcastData } from "../../../types";
-import api from "../../api";
+<script setup lang="ts">
+import { DrawcastData } from "../../../types"
+import { DrawcastImage } from "../../../mod/modules/DrawcastModuleCommon"
+import { onMounted, onUnmounted, ref } from "vue"
+import api from "../../api"
+import util, { WidgetApiData } from "../util"
+import WsClient from "../../WsClient"
 
-import { defineComponent, PropType } from "vue";
-import WsClient from "../../WsClient";
-import { DrawcastImage } from "../../../mod/modules/DrawcastModuleCommon";
-import util, { WidgetApiData } from "../util";
-import MediaQueueElement from "../MediaQueueElement.vue";
+const props = defineProps<{
+  wdata: WidgetApiData,
+}>()
 
-interface ComponentData {
-  inited: boolean;
-  ws: WsClient | null;
-  notificationSoundAudio: any;
-  manualApproval: {
-    items: string[];
-  };
+let ws: WsClient | null = null
+const notificationSoundAudio = ref<any>(null)
+const manualApproval = ref<{ items: string[] }>({ items: [] })
+
+// @ts-ignore
+import('./main.scss');
+
+const approveImage = (path: string) => {
+  sendMsg({ event: "approve_image", path });
 }
 
-export default defineComponent({
-  components: {
-    MediaQueueElement,
-  },
-  props: {
-    wdata: { type: Object as PropType<WidgetApiData>, required: true }
-  },
-  data(): ComponentData {
-    return {
-      inited: false,
-      ws: null,
-      notificationSoundAudio: null,
-      manualApproval: {
-        items: [],
-      },
-    };
-  },
-  created() {
-    // @ts-ignore
-    import('./main.scss');
-  },
-  mounted() {
-    this.ws = util.wsClient(this.wdata);
-    this.ws.onMessage("init", async (data: DrawcastData) => {
-      const res = await api.getDrawcastAllImages();
-      const images = await res.json();
+const denyImage = (path: string) => {
+  sendMsg({ event: "deny_image", path });
+}
 
-      if (data.settings.notificationSound) {
-        this.notificationSoundAudio = new Audio(
-          data.settings.notificationSound.urlpath
-        );
-        this.notificationSoundAudio.volume =
-          data.settings.notificationSound.volume / 100.0;
-      }
+const sendMsg = (data: any) => {
+  if (!ws) {
+    console.warn("sendMsg: ws not initialized");
+    return;
+  }
+  ws.send(JSON.stringify(data));
+}
 
-      this.manualApproval.items = images
-        .filter((item: DrawcastImage) => !item.approved)
-        .map((item: DrawcastImage) => item.path);
-      this.inited = true;
-    });
-    this.ws.onMessage(
-      "approved_image_received",
-      (data: { nonce: string; img: string; mayNotify: boolean }) => {
-        this.manualApproval.items = this.manualApproval.items.filter(
-          (img) => img !== data.img
-        );
-      }
-    );
-    this.ws.onMessage(
-      "denied_image_received",
-      (data: { nonce: string; img: string; mayNotify: boolean }) => {
-        this.manualApproval.items = this.manualApproval.items.filter(
-          (img) => img !== data.img
-        );
-      }
-    );
-    this.ws.onMessage(
-      "image_received",
-      (data: { nonce: string; img: string; mayNotify: boolean }) => {
-        this.manualApproval.items = this.manualApproval.items.filter(
-          (img) => img !== data.img
-        );
+onMounted(() => {
+  ws = util.wsClient(props.wdata);
+  ws.onMessage("init", async (data: DrawcastData) => {
+    const res = await api.getDrawcastAllImages();
+    const images = await res.json();
 
-        this.manualApproval.items.push(data.img);
-        this.manualApproval.items = this.manualApproval.items.slice();
-
-        if (data.mayNotify && this.notificationSoundAudio) {
-          this.notificationSoundAudio.play();
-        }
-      }
-    );
-    this.ws.connect();
-  },
-  unmounted() {
-    if (this.ws) {
-      this.ws.disconnect()
+    if (data.settings.notificationSound) {
+      notificationSoundAudio.value = new Audio(
+        data.settings.notificationSound.urlpath
+      );
+      notificationSoundAudio.value.volume =
+        data.settings.notificationSound.volume / 100.0;
     }
-  },
-  methods: {
-    approveImage(path: string) {
-      this.sendMsg({ event: "approve_image", path });
-    },
-    denyImage(path: string) {
-      this.sendMsg({ event: "deny_image", path });
-    },
-    sendMsg(data: any) {
-      if (!this.ws) {
-        console.warn("sendMsg: this.ws not initialized");
-        return;
+
+    manualApproval.value.items = images
+      .filter((item: DrawcastImage) => !item.approved)
+      .map((item: DrawcastImage) => item.path);
+  });
+  ws.onMessage(
+    "approved_image_received",
+    (data: { nonce: string; img: string; mayNotify: boolean }) => {
+      manualApproval.value.items = manualApproval.value.items.filter(
+        (img) => img !== data.img
+      );
+    }
+  );
+  ws.onMessage(
+    "denied_image_received",
+    (data: { nonce: string; img: string; mayNotify: boolean }) => {
+      manualApproval.value.items = manualApproval.value.items.filter(
+        (img) => img !== data.img
+      );
+    }
+  );
+  ws.onMessage(
+    "image_received",
+    (data: { nonce: string; img: string; mayNotify: boolean }) => {
+      manualApproval.value.items = manualApproval.value.items.filter(
+        (img) => img !== data.img
+      );
+
+      manualApproval.value.items.push(data.img);
+      manualApproval.value.items = manualApproval.value.items.slice();
+
+      if (data.mayNotify && notificationSoundAudio.value) {
+        notificationSoundAudio.value.play();
       }
-      this.ws.send(JSON.stringify(data));
-    },
-  },
-});
+    }
+  );
+  ws.connect();
+})
+
+onUnmounted(() => {
+  if (ws) {
+    ws.disconnect()
+  }
+})
 </script>
