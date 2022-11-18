@@ -6,7 +6,7 @@
     @dragover="onDragover"
     @dragleave="onDragleave"
   >
-    <audio-player
+    <AudioPlayer
       v-if="value.file"
       :src="value.urlpath"
       :name="value.filename"
@@ -14,7 +14,7 @@
       :base-volume="baseVolume"
       class="button is-small"
     />
-    <volume-slider
+    <VolumeSlider
       v-if="value.file"
       :model-value="value.volume"
       @update:modelValue="value.volume = $event; emitUpdate(); "
@@ -27,7 +27,7 @@
       <i class="fa fa-remove mr-1" /> Remove
     </button>
     <br v-if="value.file">
-    <upload-input
+    <UploadInput
       ref="uploadComponent"
       accept="audio/*"
       label="Upload Sound"
@@ -41,7 +41,9 @@ import { defineComponent } from "vue";
 import { soundMediaFileFromUploadedFile } from "../../common/fn";
 import { SoundMediaFile, UploadedFile } from "../../types";
 import { getFileFromDropEvent } from "../util";
-import { UploadInstance } from "./UploadInput.vue";
+import UploadInput, { UploadInstance } from "./UploadInput.vue";
+import AudioPlayer from "./AudioPlayer.vue";
+import VolumeSlider from "./VolumeSlider.vue";
 
 interface ComponentData {
   value: SoundMediaFile;
@@ -49,6 +51,7 @@ interface ComponentData {
 }
 
 export default defineComponent({
+  components: { AudioPlayer, UploadInput, VolumeSlider },
   props: {
     modelValue: {
       /* type: Object as PropType<SoundMediaFile | null>, */ required: true,

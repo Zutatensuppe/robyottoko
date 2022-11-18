@@ -6,7 +6,7 @@
         class="button is-small mr-1"
         @click="add(possibleActionsMapped[0])"
       >Add command</span>
-      <dropdown-button
+      <DropdownButton
         v-else
         :actions="possibleActionsMapped"
         label="Add command"
@@ -115,7 +115,7 @@
                   :key="idx2"
                   class="spacerow"
                 >
-                  <trigger-info :trigger="trigger" />
+                  <TriggerInfo :trigger="trigger" />
                 </div>
               </td>
               <td v-if="possibleActions.length > 1">
@@ -151,14 +151,14 @@
                 {{ permissionsStr(element) }}
               </td>
               <td class="pl-0 pr-0">
-                <doubleclick-button
+                <DoubleclickButton
                   class="button is-small mr-1"
                   message="Are you sure?"
                   :timeout="1000"
                   @doubleclick="remove(index)"
                 >
                   <i class="fa fa-trash" />
-                </doubleclick-button>
+                </DoubleclickButton>
                 <button
                   class="button is-small"
                   @click="duplicate(index)"
@@ -197,6 +197,9 @@ import { commands } from "../../../common/commands";
 import fn from "../../../common/fn";
 import CommandEditor from "./CommandEditor.vue";
 import EffectInfo from "./EffectInfo.vue";
+import TriggerInfo from "./TriggerInfo.vue";
+import DropdownButton from "../DropdownButton.vue";
+import DoubleclickButton from "../DoubleclickButton.vue";
 
 interface ComponentData {
   commands: Command[]
@@ -260,7 +263,7 @@ const findInEffects = (search: string, command: Command): boolean => {
 }
 
 export default defineComponent({
-  components: { CommandEditor, EffectInfo },
+  components: { CommandEditor, EffectInfo, TriggerInfo, DropdownButton },
   props: {
     globalVariables: {
       type: Array as PropType<GlobalVariable[]>,

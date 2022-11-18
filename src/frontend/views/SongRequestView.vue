@@ -4,7 +4,7 @@
       id="top"
       ref="top"
     >
-      <navbar-element />
+      <NavbarElement />
       <div
         id="actionbar"
         class="p-1"
@@ -98,7 +98,7 @@
           class="video-16-9"
           :style="playerstyle"
         >
-          <youtube-player
+          <YoutubePlayer
             ref="youtube"
             :visible="playerVisible"
             @ended="ended"
@@ -201,6 +201,8 @@ import CommandsEditor from "../components/Commands/CommandsEditor.vue";
 import TagsEditor from '../components/SongRequest/TagsEditor.vue'
 import Settings from '../components/SongRequest/Settings.vue'
 import PlaylistEditor from "../components/SongRequest/PlaylistEditor.vue";
+import YoutubePlayer from "../components/YoutubePlayer.vue";
+import NavbarElement from "../components/NavbarElement.vue";
 
 interface ControlDefinition {
   title: string;

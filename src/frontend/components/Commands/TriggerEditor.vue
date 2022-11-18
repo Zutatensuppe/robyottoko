@@ -84,7 +84,7 @@
       class="field has-addons"
     >
       <div class="control has-icons-left">
-        <dropdown-input
+        <DropdownInput
           v-model="value.data.command"
           :values="rewardRedemptionActions.map(a => ({ value: a.type, label: a.label }))"
           :class="{
@@ -131,7 +131,7 @@
         </div>
         <label class="mr-1">Interval ≥</label>
         <div class="control has-icons-left has-icons-right mr-1">
-          <duration-input
+          <DurationInput
             :model-value="value.data.minInterval"
             @update:modelValue="value.data.minInterval = $event; emitUpdate(); "
           />
@@ -223,6 +223,8 @@
 import { computed, ref, watch } from "vue";
 import { CommandTrigger, CommandTriggerType } from "../../../types";
 import IntegerInput from "../IntegerInput.vue";
+import DropdownInput from "../DropdownInput.vue";
+import DurationInput from "../DurationInput.vue";
 
 const props = defineProps<{
   modelValue: CommandTrigger,

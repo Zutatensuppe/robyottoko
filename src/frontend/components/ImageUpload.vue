@@ -6,7 +6,7 @@
     @dragover="onDragover"
     @dragleave="onDragleave"
   >
-    <responsive-image
+    <ResponsiveImage
       v-if="value.file"
       :src="value.urlpath"
       :title="value.filename"
@@ -22,7 +22,7 @@
       <i class="fa fa-remove mr-1" /> Remove
     </button>
     <br v-if="value.file">
-    <upload-input
+    <UploadInput
       ref="uploadComponent"
       accept="image/*"
       label="Upload Image"
@@ -36,7 +36,8 @@ import { defineComponent } from "vue";
 import { mediaFileFromUploadedFile } from "../../common/fn";
 import { MediaFile, UploadedFile } from "../../types";
 import { getFileFromDropEvent } from "../util";
-import { UploadInstance } from "./UploadInput.vue";
+import UploadInput, { UploadInstance } from "./UploadInput.vue";
+import ResponsiveImage from './ResponsiveImage.vue'
 
 interface ComponentData {
   value: MediaFile;
@@ -44,6 +45,7 @@ interface ComponentData {
 }
 
 export default defineComponent({
+  components: { ResponsiveImage, UploadInput },
   props: {
     modelValue: {
       /* type: Object as PropType<MediaFile | null>, */ required: true,

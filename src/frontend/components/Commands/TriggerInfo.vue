@@ -18,7 +18,7 @@
   <div v-else-if="trigger.type === 'timer'">
     <span class="is-small">Timer: </span>
     <code>{{ trigger.data.minLines }} lines,
-      <duration-display
+      <DurationDisplay
         :value="trigger.data.minInterval"
       /></code>
   </div>
@@ -37,6 +37,7 @@
 </template>
 <script setup lang="ts">
 import { CommandTrigger } from '../../../types';
+import DurationDisplay from '../DurationDisplay.vue'
 
 defineProps<{
   trigger: CommandTrigger,

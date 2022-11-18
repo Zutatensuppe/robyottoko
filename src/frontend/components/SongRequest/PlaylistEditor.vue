@@ -237,7 +237,7 @@
                 </button>
               </td>
               <td>
-                <doubleclick-button
+                <DoubleclickButton
                   class="button is-small mr-1"
                   message="Are you sure?"
                   :timeout="1000"
@@ -245,7 +245,7 @@
                   @doubleclick="sendCtrl('rmIdx', [index])"
                 >
                   <i class="fa fa-trash" />
-                </doubleclick-button>
+                </DoubleclickButton>
               </td>
             </tr>
           </template>
@@ -276,6 +276,7 @@ import { dateformat } from "../../../common/fn"
 import { computed, nextTick, Ref, ref, watch } from "vue"
 import { DragEndEvent, PlaylistItem } from "../../../types"
 import { SortBy, SortDirection } from "../../../mod/modules/SongrequestModuleCommon"
+import DoubleclickButton from '../DoubleclickButton.vue'
 
 interface EnhancedPlaylistItem extends PlaylistItem {
   filteredOut: boolean

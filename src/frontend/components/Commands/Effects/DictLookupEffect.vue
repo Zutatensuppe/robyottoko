@@ -12,7 +12,7 @@
           >
         </td>
         <td>
-          <macro-select
+          <MacroSelect
             class="help"
             @selected="val.data.lang += $event.value"
           />
@@ -40,7 +40,7 @@
           >
         </td>
         <td>
-          <macro-select
+          <MacroSelect
             class="help"
             @selected="val.data.phrase += $event.value"
           />
@@ -68,6 +68,7 @@
 <script setup lang="ts">
 import { DictLookupEffect } from '../../../../types';
 import { ref, watch } from 'vue';
+import MacroSelect from '../../MacroSelect.vue'
 
 const props = defineProps<{
   modelValue: DictLookupEffect,

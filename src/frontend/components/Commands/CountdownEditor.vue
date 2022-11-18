@@ -29,7 +29,7 @@
       </div>
       <div class="spacerow">
         <label class="spacelabel">Interval </label>
-        <duration-input
+        <DurationInput
           :model-value="countdown.interval"
           @update:modelValue="countdown.interval = $event"
         />
@@ -64,7 +64,7 @@
               v-if="element.type === 'delay'"
               class="control has-icons-left"
             >
-              <duration-input
+              <DurationInput
                 :model-value="element.value"
                 @update:modelValue="element.value = $event"
               />
@@ -89,7 +89,7 @@
                 <tr>
                   <td>Image:</td>
                   <td>
-                    <image-upload
+                    <ImageUpload
                       v-model="element.value.image"
                       @update:modelValue="mediaImgChanged(index, $event)"
                     />
@@ -98,7 +98,7 @@
                 <tr>
                   <td>Sound:</td>
                   <td>
-                    <sound-upload
+                    <SoundUpload
                       v-model="element.value.sound"
                       :base-volume="baseVolume"
                       @update:modelValue="mediaSndChanged(index, $event)"
@@ -109,7 +109,7 @@
                   <td>Duration:</td>
                   <td>
                     <div class="control has-icons-left">
-                      <duration-input
+                      <DurationInput
                         :model-value="element.value.minDurationMs"
                         @update:modelValue="
                           element.value.minDurationMs = $event
@@ -166,6 +166,9 @@ import {
   newCountdownMedia,
 } from "../../../common/commands";
 import StringInput from "../StringInput.vue";
+import SoundUpload from "../SoundUpload.vue";
+import ImageUpload from "../ImageUpload.vue";
+import DurationInput from "../DurationInput.vue";
 
 interface ComponentData {
   countdown: {
@@ -183,6 +186,7 @@ interface ComponentData {
 }
 
 export default defineComponent({
+    components: { StringInput, SoundUpload, ImageUpload, DurationInput },
     props: {
         baseVolume: {
             default: 100,
@@ -247,7 +251,6 @@ export default defineComponent({
             // @ts-ignore
             this.countdown.actions[idx].value.image = file;
         },
-    },
-    components: { StringInput }
+    }
 });
 </script>

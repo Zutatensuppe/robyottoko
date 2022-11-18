@@ -14,7 +14,7 @@
       </tr>
       <tr>
         <td>
-          <dropdown-input
+          <DropdownInput
             v-model="val.data.name"
             :values="autocompletableVariables().map(a => ({ value: a.var.name, label: `${a.var.name} (${a.type}), <code>${a.var.value}</code>` }))"
           />
@@ -45,6 +45,7 @@
 import { VariableChangeEffect, CommandVariable, GlobalVariable } from '../../../../types';
 import { AutocompletableVariable } from '../EffectsEditor.vue';
 import StringInput from '../../StringInput.vue';
+import DropdownInput from '../../DropdownInput.vue';
 import { ref, watch } from 'vue';
 
 const props = defineProps<{

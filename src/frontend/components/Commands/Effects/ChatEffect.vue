@@ -14,7 +14,7 @@
         }"
       />
       <div>
-        <macro-select
+        <MacroSelect
           class="help"
           @selected="val.data.text[idx] += $event.value"
         />
@@ -47,6 +47,7 @@
 import { ChatEffect } from '../../../../types';
 import { ref, watch } from 'vue';
 import { newText } from '../../../../common/commands';
+import MacroSelect from '../../MacroSelect.vue'
 
 const props = defineProps<{
   modelValue: ChatEffect,

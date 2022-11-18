@@ -7,7 +7,7 @@
       id="top"
       ref="top"
     >
-      <navbar-element />
+      <NavbarElement />
     </div>
     <div
       id="main"
@@ -49,6 +49,7 @@
 import { defineComponent } from "vue";
 import api from "../api";
 import { useToast } from "vue-toastification";
+import NavbarElement from '../components/NavbarElement.vue'
 
 interface WidgetDefinition {
   type: string
@@ -59,6 +60,9 @@ interface WidgetDefinition {
 }
 
 export default defineComponent({
+  components: {
+    NavbarElement,
+  },
   data: () => ({
     widgets: [] as WidgetDefinition[],
     toast: useToast(),

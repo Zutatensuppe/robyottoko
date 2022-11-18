@@ -4,7 +4,7 @@
       id="top"
       ref="top"
     >
-      <navbar-element />
+      <NavbarElement />
       <div
         id="actionbar"
         class="p-1"
@@ -203,7 +203,7 @@
           <tr>
             <td><code>settings.customProfileImage</code></td>
             <td>
-              <image-upload
+              <ImageUpload
                 v-model="settings.customProfileImage"
                 width="100px"
                 height="50px"
@@ -251,7 +251,7 @@
           <tr>
             <td><code>settings.notificationSound</code></td>
             <td>
-              <sound-upload
+              <SoundUpload
                 v-model="settings.notificationSound"
                 class="spacerow media-holder"
                 @update:modelValue="notificationSoundChanged"
@@ -432,6 +432,9 @@ import StringInput from "../components/StringInput.vue";
 import IntegerInput from "../components/IntegerInput.vue";
 import CheckboxInput from "../components/CheckboxInput.vue";
 import DoubleclickButton from "../components/DoubleclickButton.vue";
+import SoundUpload from "../components/SoundUpload.vue";
+import ImageUpload from "../components/SoundUpload.vue";
+import NavbarElement from "../components/NavbarElement.vue";
 
 interface ComponentData {
   unchangedJson: string;
@@ -459,7 +462,15 @@ interface ComponentData {
 }
 
 export default defineComponent({
-  components: { StringInput, IntegerInput, CheckboxInput, DoubleclickButton },
+  components: {
+    CheckboxInput,
+    DoubleclickButton,
+    ImageUpload,
+    IntegerInput,
+    NavbarElement,
+    SoundUpload,
+    StringInput,
+  },
   data: (): ComponentData => ({
     unchangedJson: "{}",
     changedJson: "{}",

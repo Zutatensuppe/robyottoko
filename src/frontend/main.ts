@@ -16,29 +16,7 @@ import SongRequestView from './views/SongRequestView.vue'
 import SpeechToTextView from './views/SpeechToTextView.vue'
 import VariablesView from './views/VariablesView.vue'
 
-import CheckboxInput from "./components/CheckboxInput.vue";
-import DoubleclickButton from "./components/DoubleclickButton.vue";
 import draggable from "vuedraggable";
-import DropdownButton from "./components/DropdownButton.vue";
-import DropdownInput from "./components/DropdownInput.vue";
-import DurationDisplay from "./components/DurationDisplay.vue";
-import DurationInput from "./components/DurationInput.vue";
-import GlobalUserInfo from "./components/GlobalUserInfo.vue";
-import ImageUpload from './components/ImageUpload.vue'
-import MacroSelect from "./components/MacroSelect.vue";
-import NavbarElement from "./components/NavbarElement.vue";
-import AudioPlayer from "./components/AudioPlayer.vue";
-import ProblemsDialog from "./components/ProblemsDialog.vue";
-import ResponsiveImage from "./components/ResponsiveImage.vue";
-import SliderInput from "./components/SliderInput.vue";
-import SoundUpload from './components/SoundUpload.vue'
-import UploadInput from "./components/UploadInput.vue";
-import VolumeSlider from "./components/VolumeSlider.vue";
-import YoutubePlayer from "./components/YoutubePlayer.vue";
-
-import CommandsCountdownEditor from "./components/Commands/CountdownEditor.vue";
-import CommandsTriggerEditor from "./components/Commands/TriggerEditor.vue";
-import CommandsTriggerInfo from "./components/Commands/TriggerInfo.vue";
 
 import Widget from './widgets/Widget.vue';
 
@@ -182,28 +160,7 @@ const run = async () => {
   const app = Vue.createApp(App)
   app.use(router)
   app.use(Toast, {})
-  app.component('GlobalUserInfo', GlobalUserInfo)
-  app.component('DoubleclickButton', DoubleclickButton)
-  app.component('DropdownButton', DropdownButton)
-  app.component('DropdownInput', DropdownInput)
-  app.component('CheckboxInput', CheckboxInput)
   app.component('VueDraggable', draggable)
-  app.component('DurationInput', DurationInput)
-  app.component('DurationDisplay', DurationDisplay)
-  app.component('MacroSelect', MacroSelect)
-  app.component('NavbarElement', NavbarElement)
-  app.component('AudioPlayer', AudioPlayer)
-  app.component('ProblemsDialog', ProblemsDialog)
-  app.component('ResponsiveImage', ResponsiveImage)
-  app.component('SliderInput', SliderInput)
-  app.component('UploadInput', UploadInput)
-  app.component('ImageUpload', ImageUpload)
-  app.component('SoundUpload', SoundUpload)
-  app.component('VolumeSlider', VolumeSlider)
-  app.component('YoutubePlayer', YoutubePlayer)
-  app.component('CountdownEditor', CommandsCountdownEditor)
-  app.component('TriggerEditor', CommandsTriggerEditor)
-  app.component('TriggerInfo', CommandsTriggerInfo)
   app.mount('#app')
 }
 
