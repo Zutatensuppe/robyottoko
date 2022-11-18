@@ -115,7 +115,7 @@
                   </button>
                 </td>
                 <td>
-                  <avatar-preview :avatar="element" />
+                  <AvatarPreview :avatar="element" />
                 </td>
                 <td>
                   {{ element.name }}
@@ -153,7 +153,7 @@
           </vue-draggable>
         </table>
 
-        <avatar-editor
+        <AvatarEditor
           v-if="editEntity"
           :model-value="editEntity"
           @update:modelValue="updatedAvatar"
@@ -183,6 +183,8 @@ import {
   AvatarModuleWsSaveData,
   default_settings,
 } from "../../mod/modules/AvatarModuleCommon";
+import AvatarEditor from "../components/Avatar/AvatarEditor.vue";
+import AvatarPreview from "../components/Avatar/AvatarPreview.vue";
 import util from "../util";
 import WsClient from "../WsClient";
 
@@ -213,148 +215,139 @@ interface ComponentData {
 }
 
 export default defineComponent({
-  data: (): ComponentData => ({
-    editIdx: -1,
-    editEntity: null,
-
-    unchangedJson: "{}",
-    changedJson: "{}",
-    settings: default_settings(),
-    defaultSettings: default_settings(),
-    ws: null,
-    inited: false,
-    tabDefinitions: [
-      { tab: "avatars", title: "Avatars" },
-      { tab: "settings", title: "Settings" },
-    ],
-    tab: "avatars",
-    controlWidgetUrl: "",
-    displayWidgetUrl: "",
-  }),
-  computed: {
-    changed(): boolean {
-      return this.unchangedJson !== this.changedJson;
-    },
-  },
-  watch: {
-    settings: {
-      deep: true,
-      handler(ch) {
-        this.changedJson = JSON.stringify(ch);
-      },
-    },
-  },
-  async mounted() {
-    this.ws = util.wsClient("avatar");
-    this.ws.onMessage("init", (data: AvatarModuleWsInitData) => {
-      this.settings = data.settings;
-      this.unchangedJson = JSON.stringify(data.settings);
-      this.controlWidgetUrl = data.controlWidgetUrl;
-      this.displayWidgetUrl = data.displayWidgetUrl;
-      this.inited = true;
-    });
-    this.ws.connect();
-  },
-  unmounted() {
-    if (this.ws) {
-      this.ws.disconnect();
-    }
-  },
-  methods: {
-    edit(idx: number) {
-      if (!this.settings) {
-        console.warn("edit: this.settings not initialized");
-        return;
-      }
-      this.editIdx = idx;
-      this.editEntity = this.settings.avatarDefinitions[idx];
-    },
-    remove(idx: number) {
-      if (!this.settings) {
-        console.warn("remove: this.settings not initialized");
-        return;
-      }
-      this.settings.avatarDefinitions = this.settings.avatarDefinitions.filter(
-        (val, index) => index !== idx
-      );
-      this.sendSave();
-    },
-    duplicate(idx: number) {
-      if (!this.settings) {
-        console.warn("duplicate: this.settings not initialized");
-        return;
-      }
-      this.editIdx = this.settings.avatarDefinitions.length;
-      this.editEntity = JSON.parse(
-        JSON.stringify(this.settings.avatarDefinitions[idx])
-      );
-    },
-    updatedAvatar(avatar: AvatarModuleAvatarDefinition) {
-      if (!this.settings) {
-        console.warn("updateAvatar: this.settings not initialized");
-        return;
-      }
-      this.settings.avatarDefinitions[this.editIdx] = avatar;
-      this.sendSave();
-    },
-    addAvatar() {
-      if (!this.settings) {
-        console.warn("addAvatar: this.settings not initialized");
-        return;
-      }
-      const avatar: AvatarModuleAvatarDefinition = {
-        name: "Unnamed Avatar",
-        width: 64,
-        height: 64,
-        stateDefinitions: [
-          { value: "default", deletable: false },
-          { value: "speaking", deletable: false },
+    components: { AvatarPreview, AvatarEditor },
+    data: (): ComponentData => ({
+        editIdx: -1,
+        editEntity: null,
+        unchangedJson: "{}",
+        changedJson: "{}",
+        settings: default_settings(),
+        defaultSettings: default_settings(),
+        ws: null,
+        inited: false,
+        tabDefinitions: [
+            { tab: "avatars", title: "Avatars" },
+            { tab: "settings", title: "Settings" },
         ],
-        slotDefinitions: [],
-        state: {
-          slots: {},
-          lockedState: "default",
+        tab: "avatars",
+        controlWidgetUrl: "",
+        displayWidgetUrl: "",
+    }),
+    computed: {
+        changed(): boolean {
+            return this.unchangedJson !== this.changedJson;
         },
-      };
-      this.editIdx = this.settings.avatarDefinitions.length;
-      this.editEntity = avatar;
     },
-
-    addExampleAvatar() {
-      const avatar = JSON.parse(
-        JSON.stringify(hyottokoChan)
-      ) as AvatarModuleAvatarDefinition;
-      this.editIdx = this.settings.avatarDefinitions.length;
-      this.editEntity = avatar;
+    watch: {
+        settings: {
+            deep: true,
+            handler(ch) {
+                this.changedJson = JSON.stringify(ch);
+            },
+        },
     },
-
-    sendSave() {
-      if (!this.settings) {
-        console.warn("sendSave: this.settings not initialized");
-        return;
-      }
-      this.sendMsg({ event: "save", settings: this.settings });
+    async mounted() {
+        this.ws = util.wsClient("avatar");
+        this.ws.onMessage("init", (data: AvatarModuleWsInitData) => {
+            this.settings = data.settings;
+            this.unchangedJson = JSON.stringify(data.settings);
+            this.controlWidgetUrl = data.controlWidgetUrl;
+            this.displayWidgetUrl = data.displayWidgetUrl;
+            this.inited = true;
+        });
+        this.ws.connect();
     },
-    sendMsg(data: AvatarModuleWsSaveData) {
-      if (!this.ws) {
-        console.warn("sendMsg: this.ws not initialized");
-        return;
-      }
-      this.ws.send(JSON.stringify(data));
+    unmounted() {
+        if (this.ws) {
+            this.ws.disconnect();
+        }
     },
-    dragEnd(evt: { oldIndex: number; newIndex: number }) {
-      if (!this.settings) {
-        console.warn("dragEnd: this.settings not initialized");
-        return;
-      }
-      this.settings.avatarDefinitions = fn.arrayMove(
-        this.settings.avatarDefinitions,
-        evt.oldIndex,
-        evt.newIndex
-      );
-      this.sendSave();
-    },
-  },
+    methods: {
+        edit(idx: number) {
+            if (!this.settings) {
+                console.warn("edit: this.settings not initialized");
+                return;
+            }
+            this.editIdx = idx;
+            this.editEntity = this.settings.avatarDefinitions[idx];
+        },
+        remove(idx: number) {
+            if (!this.settings) {
+                console.warn("remove: this.settings not initialized");
+                return;
+            }
+            this.settings.avatarDefinitions = this.settings.avatarDefinitions.filter((val, index) => index !== idx);
+            this.sendSave();
+        },
+        duplicate(idx: number) {
+            if (!this.settings) {
+                console.warn("duplicate: this.settings not initialized");
+                return;
+            }
+            this.editIdx = this.settings.avatarDefinitions.length;
+            this.editEntity = JSON.parse(JSON.stringify(this.settings.avatarDefinitions[idx]));
+        },
+        updatedAvatar(avatar: AvatarModuleAvatarDefinition) {
+            if (!this.settings) {
+                console.warn("updateAvatar: this.settings not initialized");
+                return;
+            }
+            this.settings.avatarDefinitions[this.editIdx] = avatar;
+            this.sendSave();
+        },
+        addAvatar() {
+            if (!this.settings) {
+                console.warn("addAvatar: this.settings not initialized");
+                return;
+            }
+            const avatar: AvatarModuleAvatarDefinition = {
+                name: "Unnamed Avatar",
+                width: 64,
+                height: 64,
+                stateDefinitions: [
+                    { value: "default", deletable: false },
+                    { value: "speaking", deletable: false },
+                ],
+                slotDefinitions: [],
+                state: {
+                    slots: {},
+                    lockedState: "default",
+                },
+            };
+            this.editIdx = this.settings.avatarDefinitions.length;
+            this.editEntity = avatar;
+        },
+        addExampleAvatar() {
+            const avatar = JSON.parse(JSON.stringify(hyottokoChan)) as AvatarModuleAvatarDefinition;
+            this.editIdx = this.settings.avatarDefinitions.length;
+            this.editEntity = avatar;
+        },
+        sendSave() {
+            if (!this.settings) {
+                console.warn("sendSave: this.settings not initialized");
+                return;
+            }
+            this.sendMsg({ event: "save", settings: this.settings });
+        },
+        sendMsg(data: AvatarModuleWsSaveData) {
+            if (!this.ws) {
+                console.warn("sendMsg: this.ws not initialized");
+                return;
+            }
+            this.ws.send(JSON.stringify(data));
+        },
+        dragEnd(evt: {
+            oldIndex: number;
+            newIndex: number;
+        }) {
+            if (!this.settings) {
+                console.warn("dragEnd: this.settings not initialized");
+                return;
+            }
+            this.settings.avatarDefinitions = fn.arrayMove(this.settings.avatarDefinitions, evt.oldIndex, evt.newIndex);
+            this.sendSave();
+        },
+    }
 });
 </script>
 <style>

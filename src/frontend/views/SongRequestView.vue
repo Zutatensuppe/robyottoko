@@ -141,12 +141,12 @@
         v-if="inited && tab === 'tags'"
         id="tags"
       >
-        <tags-editor
+        <TagsEditor
           :tags="tags"
           @updateTag="onTagUpdated"
         />
       </div>
-      <song-request-settings
+      <Settings
         v-if="inited && tab === 'settings'"
         id="settings"
         v-model="settings"
@@ -157,7 +157,7 @@
         id="playlist"
         class="table-container"
       >
-        <playlist-editor
+        <PlaylistEditor
           :playlist="playlist"
           :filter="filter"
           @stopPlayer="player.stop()"
@@ -198,6 +198,9 @@ import { useToast } from "vue-toastification";
 import util from "../util";
 import api from "../api";
 import CommandsEditor from "../components/Commands/CommandsEditor.vue";
+import TagsEditor from '../components/SongRequest/TagsEditor.vue'
+import Settings from '../components/SongRequest/Settings.vue'
+import PlaylistEditor from "../components/SongRequest/PlaylistEditor.vue";
 
 interface ControlDefinition {
   title: string;

@@ -10,7 +10,7 @@
         height: `${tuberDef.height}px`,
       }"
     >
-      <avatar-animation
+      <AvatarAnimation
         v-for="(anim, idx) in animations"
         :key="idx"
         :frames="anim.frames"

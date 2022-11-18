@@ -40,18 +40,6 @@ import CommandsCountdownEditor from "./components/Commands/CountdownEditor.vue";
 import CommandsTriggerEditor from "./components/Commands/TriggerEditor.vue";
 import CommandsTriggerInfo from "./components/Commands/TriggerInfo.vue";
 
-import SongRequestPlaylistEditor from "./components/SongRequest/PlaylistEditor.vue";
-import SongRequestSettings from "./components/SongRequest/Settings.vue";
-import SongRequestTagsEditor from "./components/SongRequest/TagsEditor.vue";
-
-import AvatarEditor from "./components/Avatar/AvatarEditor.vue";
-import AvatarSlotDefinitionEditor from "./components/Avatar/AvatarSlotDefinitionEditor.vue";
-import AvatarSlotItemEditor from "./components/Avatar/AvatarSlotItemEditor.vue";
-import AvatarPreview from "./components/Avatar/AvatarPreview.vue";
-import AvatarSlotItemStateEditor from "./components/Avatar/AvatarSlotItemStateEditor.vue";
-import AvatarFrameUpload from "./components/Avatar/AvatarFrameUpload.vue";
-import AvatarAnimation from "./components/Avatar/AvatarAnimation.vue";
-
 import Widget from './widgets/Widget.vue';
 
 import global from './global'
@@ -216,18 +204,6 @@ const run = async () => {
   app.component('CountdownEditor', CommandsCountdownEditor)
   app.component('TriggerEditor', CommandsTriggerEditor)
   app.component('TriggerInfo', CommandsTriggerInfo)
-  // songrequest - maybe dont register these globally?
-  app.component('PlaylistEditor', SongRequestPlaylistEditor)
-  app.component('TagsEditor', SongRequestTagsEditor)
-  app.component('SongRequestSettings', SongRequestSettings)
-  // avatar - maybe dont register these globally?
-  app.component('AvatarEditor', AvatarEditor)
-  app.component('AvatarSlotDefinitionEditor', AvatarSlotDefinitionEditor)
-  app.component('AvatarSlotItemEditor', AvatarSlotItemEditor)
-  app.component('AvatarPreview', AvatarPreview)
-  app.component('AvatarSlotItemStateEditor', AvatarSlotItemStateEditor)
-  app.component('AvatarFrameUpload', AvatarFrameUpload)
-  app.component('AvatarAnimation', AvatarAnimation)
   app.mount('#app')
 }
 

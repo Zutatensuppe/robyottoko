@@ -47,7 +47,7 @@
         </div>
       </div>
     </div>
-    <avatar-slot-item-state-editor
+    <AvatarSlotItemStateEditor
       v-for="(animation, idx) in modelValue.states"
       :key="idx"
       class="mr-1"
@@ -59,6 +59,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { AvatarModuleAvatarSlotItem } from "../../../mod/modules/AvatarModuleCommon";
+import AvatarSlotItemStateEditor from "./AvatarSlotItemStateEditor.vue";
 
 const props = defineProps<{
   modelValue: AvatarModuleAvatarSlotItem

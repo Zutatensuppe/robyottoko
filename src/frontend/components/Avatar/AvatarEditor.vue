@@ -85,7 +85,7 @@
                 <tr>
                   <td>Slots</td>
                   <td>
-                    <avatar-slot-definition-editor
+                    <AvatarSlotDefinitionEditor
                       v-for="(slotDefinition, idx) in item.slotDefinitions"
                       :key="idx"
                       class="card mb-2"
@@ -164,6 +164,7 @@ import {
   default_avatar_definition,
 } from "../../../mod/modules/AvatarModuleCommon";
 import StringInput from "../StringInput.vue";
+import AvatarSlotDefinitionEditor from "./AvatarSlotDefinitionEditor.vue";
 
 interface ComponentData {
   item: AvatarModuleAvatarDefinition | null;
@@ -172,6 +173,7 @@ interface ComponentData {
   newSlotDefinitionName: string;
 }
 export default defineComponent({
+    components: { StringInput, AvatarSlotDefinitionEditor },
     props: {
         modelValue: {
             type: Object as PropType<AvatarModuleAvatarDefinition>,
@@ -410,7 +412,6 @@ export default defineComponent({
             }
             arraySwap(this.item.slotDefinitions, idx1, idx2);
         },
-    },
-    components: { StringInput }
+    }
 });
 </script>

@@ -1,9 +1,0 @@
-#!/bin/sh -eu
-
-cd "$RUN_DIR"
-
-[ -z "${DEBUG:-}" ] || set -x
-
-# We need to stop honcho from loading the `.env` file, otherwise it will
-# override vars set in the shell environment; `--env ''` does the trick.
-honcho --env '' start

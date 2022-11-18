@@ -15,7 +15,7 @@ import tmi from 'tmi.js';
 const absPath = (path) => new URL(path, import.meta.url);
 const readJson = (path) => JSON.parse(String(readFileSync(path)));
 const init = () => {
-    const configFile = process.env.APP_CONFIG || '';
+    const configFile = process.env.APP_CONFIG || 'config.json';
     if (configFile === '') {
         process.exit(2);
     }
@@ -7272,7 +7272,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-11-15T23:15:24.823Z",
+    buildDate: "2022-11-18T01:21:24.852Z",
     // @ts-ignore
     buildVersion: "1.35.3",
 };
