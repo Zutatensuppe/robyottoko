@@ -263,7 +263,13 @@ const findInEffects = (search: string, command: Command): boolean => {
 }
 
 export default defineComponent({
-  components: { CommandEditor, EffectInfo, TriggerInfo, DropdownButton },
+  components: {
+    CommandEditor,
+    DoubleclickButton,
+    DropdownButton,
+    EffectInfo,
+    TriggerInfo,
+  },
   props: {
     globalVariables: {
       type: Array as PropType<GlobalVariable[]>,
