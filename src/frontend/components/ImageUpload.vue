@@ -31,87 +31,76 @@
     />
   </div>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { Ref, ref } from "vue";
 import { mediaFileFromUploadedFile } from "../../common/fn";
 import { MediaFile, UploadedFile } from "../../types";
 import { getFileFromDropEvent } from "../util";
 import UploadInput, { UploadInstance } from "./UploadInput.vue";
 import ResponsiveImage from './ResponsiveImage.vue'
 
-interface ComponentData {
-  value: MediaFile;
-  draggingOver: boolean;
+const props = withDefaults(defineProps<{
+  modelValue: MediaFile | null
+  width?: string
+  height?: string
+}>(), {
+  width: "100%",
+  height: "90px",
+})
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: MediaFile): void
+}>()
+
+const value = ref<MediaFile>(
+  props.modelValue
+    ? JSON.parse(JSON.stringify(props.modelValue))
+    : { file: "", filename: "", urlpath: "" }
+)
+const draggingOver = ref<boolean>(false)
+
+const uploadComponent = ref<UploadInstance>() as Ref<UploadInstance>
+
+const emitUpdate = () => {
+  emit("update:modelValue", JSON.parse(JSON.stringify(value.value)))
 }
 
-export default defineComponent({
-  components: { ResponsiveImage, UploadInput },
-  props: {
-    modelValue: {
-      /* type: Object as PropType<MediaFile | null>, */ required: true,
-    },
-    width: { type: String, required: false, default: "100%" },
-    height: { type: String, required: false, default: "90px" },
-  },
-  emits: ["update:modelValue"],
-  data(): ComponentData {
-    return {
-      value: {
-        file: "",
-        filename: "",
-        urlpath: "",
-      },
-      draggingOver: false,
-    };
-  },
-  computed: {
-    uploadComponent(): UploadInstance {
-      return this.$refs.uploadComponent as UploadInstance
-    },
-  },
-  created() {
-    if (this.modelValue !== null) {
-      this.value = JSON.parse(JSON.stringify(this.modelValue));
-    }
-  },
-  methods: {
-    emitUpdate() {
-      this.$emit("update:modelValue", JSON.parse(JSON.stringify(this.value)));
-    },
-    onRemove() {
-      this.value = { file: "", filename: "", urlpath: "" };
-      this.emitUpdate();
-    },
-    onUploaded(file: UploadedFile) {
-      this.value = mediaFileFromUploadedFile(file);
-      this.emitUpdate();
-    },
-    onDrop(e: any) {
-      this.draggingOver = false;
-      e.preventDefault();
-      e.stopPropagation();
+const onRemove = () => {
+  value.value = { file: "", filename: "", urlpath: "" }
+  emitUpdate()
+}
 
-      const file = getFileFromDropEvent(e)
-      if (file) {
-        this.value.file = "";
-        this.uploadComponent.uploadFile(file);
-      }
-      return false;
-    },
-    onDragover(e: any) {
-      this.draggingOver = true;
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    },
-    onDragleave(e: any) {
-      this.draggingOver = false;
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    },
-  },
-});
+const onUploaded = (file: UploadedFile) => {
+  value.value = mediaFileFromUploadedFile(file)
+  emitUpdate()
+}
+
+const onDrop = (e: any) => {
+  draggingOver.value = false
+  e.preventDefault()
+  e.stopPropagation()
+
+  const file = getFileFromDropEvent(e)
+  if (file) {
+    value.value.file = ""
+    uploadComponent.value.uploadFile(file)
+  }
+  return false
+}
+
+const onDragover = (e: any) => {
+  draggingOver.value = true
+  e.preventDefault()
+  e.stopPropagation()
+  return false
+}
+
+const onDragleave = (e: any) => {
+  draggingOver.value = false
+  e.preventDefault()
+  e.stopPropagation()
+  return false
+}
 </script>
 <style scoped>
 .image-upload {
