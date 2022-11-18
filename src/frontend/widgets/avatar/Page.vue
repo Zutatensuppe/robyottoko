@@ -93,7 +93,6 @@
 </template>
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-
 import AvatarAnimation from "../../components/Avatar/AvatarAnimation.vue";
 import SoundMeter from "./soundmeter";
 import util, { WidgetApiData } from "../util";

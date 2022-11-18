@@ -444,7 +444,6 @@ onMounted(() => {
   ws.connect()
 })
 
-
 onUnmounted(() => {
   if (ws) {
     ws.disconnect()
