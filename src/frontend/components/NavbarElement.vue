@@ -16,7 +16,7 @@
           alt="hyottoko.club"
           class="flip-horizontal mr-1"
         >
-        <span class="greeting">Welcome back, {{ user }}</span>
+        <span class="greeting">Welcome back, {{ userName }}</span>
       </router-link>
 
       <a
@@ -80,102 +80,88 @@
     @close="showProblems = false"
   />
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import user from "../user";
 import { eventBus } from "../wsstatus";
 import { ApiUserData } from '../../types';
 import CheckboxInput from "./CheckboxInput.vue";
 import ProblemsDialog from './ProblemsDialog.vue'
+import { RouteLocationRaw, useRouter } from 'vue-router'
 
-interface ComponentData {
-  me: ApiUserData | null
-  showProblems: boolean
-  linksStart: { to: { name: string }, text: string }[]
-  problems: { message: string, details: any }[]
-  burgerActive: boolean
-  darkmode: boolean
+const linksStart: { to: RouteLocationRaw, text: string }[] = [
+  {
+    to: { name: "index" },
+    text: "Widgets",
+  },
+  {
+    to: { name: "commands" },
+    text: "Commands",
+  },
+  {
+    to: { name: "variables" },
+    text: "Variables",
+  },
+  {
+    to: { name: "sr" },
+    text: "Song Request",
+  },
+  {
+    to: { name: "speech-to-text" },
+    text: "Speech-To-Text",
+  },
+  {
+    to: { name: "avatar" },
+    text: "Avatar",
+  },
+  {
+    to: { name: "drawcast" },
+    text: "Drawcast",
+  },
+  {
+    to: { name: "pomo" },
+    text: "Pomo",
+  },
+  {
+    to: { name: "settings" },
+    text: "Settings",
+  },
+]
+
+const me = ref<ApiUserData | null>(user.getMe())
+const showProblems = ref<boolean>(false)
+const problems = ref<{ message: string, details: any }[]>([])
+const burgerActive = ref<boolean>(false)
+const darkmode = ref<boolean>(user.isDarkmode())
+
+const userName = computed(() => me.value?.user?.name || "")
+
+const onDarkmodeSwitch = (): void => {
+  user.setDarkmode(darkmode.value);
 }
 
-export default defineComponent({
-    components: { CheckboxInput, ProblemsDialog },
-    data: (): ComponentData => ({
-        me: null,
-        showProblems: false,
-        linksStart: [
-            {
-                to: { name: "index" },
-                text: "Widgets",
-            },
-            {
-                to: { name: "commands" },
-                text: "Commands",
-            },
-            {
-                to: { name: "variables" },
-                text: "Variables",
-            },
-            {
-                to: { name: "sr" },
-                text: "Song Request",
-            },
-            {
-                to: { name: "speech-to-text" },
-                text: "Speech-To-Text",
-            },
-            {
-                to: { name: "avatar" },
-                text: "Avatar",
-            },
-            {
-                to: { name: "drawcast" },
-                text: "Drawcast",
-            },
-            {
-                to: { name: "pomo" },
-                text: "Pomo",
-            },
-            {
-                to: { name: "settings" },
-                text: "Settings",
-            },
-        ],
-        problems: [],
-        burgerActive: false,
-        darkmode: false,
-    }),
-    computed: {
-        user() {
-            return this.me?.user?.name || "";
-        },
-    },
-    created() {
-        this.me = user.getMe();
-        this.darkmode = user.isDarkmode();
-        eventBus.on("status", this.statusChanged);
-    },
-    beforeUnmount() {
-        eventBus.off("status", this.statusChanged);
-    },
-    methods: {
-        onDarkmodeSwitch() {
-            user.setDarkmode(this.darkmode);
-        },
-        statusChanged(status: any) {
-            this.problems = status.problems;
-        },
-        toggleBurgerMenu() {
-            this.burgerActive = !this.burgerActive;
-        },
-        async onLogoutClick() {
-            const res = await user.logout();
-            if (res.error) {
-                throw new Error(res.error);
-            }
-            else {
-                this.$router.push({ name: "login" });
-            }
-        },
-    }
-});
+const statusChanged = (status: any): void => {
+  problems.value = status.problems;
+}
+
+const toggleBurgerMenu = (): void => {
+  burgerActive.value = !burgerActive.value;
+}
+
+const router = useRouter()
+const onLogoutClick = async () => {
+  const res = await user.logout();
+  if (res.error) {
+    throw new Error(res.error);
+  }
+  router.push({ name: "login" });
+}
+
+onMounted(() => {
+  eventBus.on("status", statusChanged)
+})
+
+onUnmounted(() => {
+  eventBus.off("status", statusChanged)
+})
 </script>
