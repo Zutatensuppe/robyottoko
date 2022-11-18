@@ -39,13 +39,13 @@
 <script setup lang="ts">
 import { onMounted, Ref, ref, watch } from "vue";
 import { AvatarModuleAnimationFrameDefinition } from "../../../mod/modules/AvatarModuleCommon";
-import { MediaFile, UploadedFile } from "../../../types";
+import { UploadedFile } from "../../../types";
 import { getFileFromDropEvent } from "../../util";
 import UploadInput, { UploadInstance } from "../UploadInput.vue";
 import IntegerInput from "../IntegerInput.vue";
 
 const props = defineProps<{
-  modelValue: MediaFile | null
+  modelValue: AvatarModuleAnimationFrameDefinition | null
 }>()
 const emit = defineEmits<{
   (e: 'update:modelValue', val: AvatarModuleAnimationFrameDefinition): void

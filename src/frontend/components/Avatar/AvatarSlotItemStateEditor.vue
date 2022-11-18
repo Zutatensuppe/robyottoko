@@ -51,8 +51,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from "vue";
+<script setup lang="ts">
+import { Ref, ref } from "vue";
 import {
   AvatarModuleSlotItemStateDefinition,
   AvatarModuleAnimationFrameDefinition,
@@ -63,100 +63,76 @@ import UploadInput, { UploadInstance } from "../UploadInput.vue";
 import AvatarAnimation from "./AvatarAnimation.vue";
 import AvatarFrameUpload from "./AvatarFrameUpload.vue";
 
-export default defineComponent({
-    components: {
-      AvatarAnimation,
-      AvatarFrameUpload,
-      UploadInput,
-    },
-    props: {
-        modelValue: {
-            type: Object as PropType<AvatarModuleSlotItemStateDefinition>,
-            required: true,
-        },
-        defaultState: {
-            type: Object as PropType<AvatarModuleSlotItemStateDefinition>,
-            required: true,
-        },
-    },
-    data() {
-        return {
-            draggingOver: false,
-            editing: false,
-        };
-    },
-    computed: {
-        uploadComponent(): UploadInstance {
-            return this.$refs.uploadComponent as UploadInstance;
-        },
-    },
-    methods: {
-        onDragOver(e: DragEvent) {
-            this.draggingOver = true;
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-        },
-        onDragLeave(e: DragEvent): void {
-            this.draggingOver = false;
-            e.preventDefault();
-            e.stopPropagation();
-        },
-        onDragEnter(e: DragEvent): void {
-            if (!e.dataTransfer) {
-                return;
-            }
-            if (e.dataTransfer.getData("avatar-image-url")) {
-                e.preventDefault();
-            }
-        },
-        onDrop(e: DragEvent): void {
-            if (!e.dataTransfer) {
-                return;
-            }
-            this.draggingOver = false;
-            e.preventDefault();
-            e.stopPropagation();
-            if (e.dataTransfer.getData("avatar-image-url")) {
-                const frame: AvatarModuleAnimationFrameDefinition = {
-                    url: e.dataTransfer.getData("avatar-image-url"),
-                    duration: 100,
-                };
-                this.modelValue.frames.push(frame);
-            }
-            else {
-                const file = getFileFromDropEvent(e);
-                if (file) {
-                    this.uploadComponent.uploadFile(file);
-                }
-            }
-        },
-        onUploaded(file: MediaFile) {
-            this.modelValue.frames.push({
-                url: file.urlpath,
-                duration: 100,
-            });
-        },
-        onOverlayClick() {
-            this.editing = false;
-        },
-        frameChanged(idx: number, frame: AvatarModuleAnimationFrameDefinition) {
-            if (frame.url === "") {
-                this.modelValue.frames = this.modelValue.frames.filter((_val, index: number) => index !== idx);
-            }
-            else {
-                this.modelValue.frames[idx] = frame;
-            }
-        },
-        addFrame() {
-            const frame: AvatarModuleAnimationFrameDefinition = {
-                url: "",
-                duration: 100,
-            };
-            this.modelValue.frames.push(frame);
-        },
+const props = defineProps<{
+  modelValue: AvatarModuleSlotItemStateDefinition
+  defaultState: AvatarModuleSlotItemStateDefinition
+}>()
+
+const draggingOver = ref<boolean>(false)
+
+const uploadComponent = ref<UploadInstance>() as Ref<UploadInstance>
+
+const onDragOver = (e: DragEvent) => {
+  draggingOver.value = true
+  e.preventDefault()
+  e.stopPropagation()
+  return false
+}
+const onDragLeave = (e: DragEvent): void => {
+  draggingOver.value = false
+  e.preventDefault()
+  e.stopPropagation()
+}
+const onDragEnter = (e: DragEvent): void => {
+  if (!e.dataTransfer) {
+    return;
+  }
+  if (e.dataTransfer.getData("avatar-image-url")) {
+    e.preventDefault();
+  }
+}
+const onDrop = (e: DragEvent): void => {
+  if (!e.dataTransfer) {
+    return;
+  }
+  draggingOver.value = false;
+  e.preventDefault();
+  e.stopPropagation();
+  if (e.dataTransfer.getData("avatar-image-url")) {
+    const frame: AvatarModuleAnimationFrameDefinition = {
+      url: e.dataTransfer.getData("avatar-image-url"),
+      duration: 100,
+    };
+    props.modelValue.frames.push(frame);
+  }
+  else {
+    const file = getFileFromDropEvent(e);
+    if (file) {
+      uploadComponent.value.uploadFile(file);
     }
-});
+  }
+}
+const onUploaded = (file: MediaFile) => {
+  props.modelValue.frames.push({
+    url: file.urlpath,
+    duration: 100,
+  });
+}
+const frameChanged = (idx: number, frame: AvatarModuleAnimationFrameDefinition) => {
+  if (frame.url === "") {
+    props.modelValue.frames = props.modelValue.frames.filter((_val, index: number) => index !== idx);
+  }
+  else {
+    props.modelValue.frames[idx] = frame;
+  }
+}
+const addFrame = () => {
+  const frame: AvatarModuleAnimationFrameDefinition = {
+    url: "",
+    duration: 100,
+  };
+  props.modelValue.frames.push(frame);
+}
 </script>
 <style>
 .avatar-slot-item-state-editor {
