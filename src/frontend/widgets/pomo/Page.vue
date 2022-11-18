@@ -16,144 +16,100 @@
     :time-between-media-ms="100"
   />
 </template>
-<script lang="ts">
-import { defineComponent, PropType } from "vue";
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, Ref, ref } from "vue";
 import util, { WidgetApiData } from "../util";
 import fn from "../../../common/fn";
 import { newMedia } from "../../../common/commands";
 import { PomoEffect, PomoModuleWsDataData } from "../../../mod/modules/PomoModuleCommon";
 import WsClient from "../../WsClient";
-import MediaQueueElement, { MediaQueueElementInstance } from "../MediaQueueElement.vue";
+import MediaQueueElement from "../MediaQueueElement.vue";
 
-interface ComponentData {
-  ws: WsClient | null
-  data: PomoModuleWsDataData | null
-  timeout: any // number | null
-  now: Date | null
+const props = defineProps<{
+  wdata: WidgetApiData,
+}>()
+
+let ws: WsClient | null = null
+
+const data = ref<PomoModuleWsDataData | null>(null)
+const timeout = ref<any>(null)
+const now = ref<Date | null>(null)
+const q = ref<InstanceType<typeof MediaQueueElement>>() as Ref<InstanceType<typeof MediaQueueElement>>
+
+const showTimerWhenFinished = computed((): boolean => data.value ? !!data.value.settings.showTimerWhenFinished : false)
+const finishedText = computed((): string => data.value ? data.value.settings.finishedText : '')
+const finishined = computed((): boolean => timeLeft.value <= 0)
+const running = computed((): boolean => data.value ? !!data.value.state.running : false)
+const timeLeft = computed((): number => (!dateEnd.value || !now.value) ? 0 : dateEnd.value.getTime() - now.value.getTime())
+const dateEnd = computed((): Date | null => (!dateStarted.value || !data.value) ? null : new Date(dateStarted.value.getTime() + data.value.state.durationMs))
+const dateStarted = computed((): Date | null => !data.value ? null : new Date(JSON.parse(data.value.state.startTs)))
+
+const timeLeftHumanReadable = computed((): string => {
+  if (!data.value) {
+    return ''
+  }
+  const left = Math.max(timeLeft.value, 0)
+  const MS = 1
+  const SEC = 1000 * MS
+  const MIN = 60 * SEC
+  const HOUR = 60 * MIN
+  const hours = fn.pad(Math.floor(left / HOUR), "00")
+  const min = fn.pad(Math.floor((left % HOUR) / MIN), "00")
+  const sec = fn.pad(Math.floor(((left % HOUR) % MIN) / SEC), "00")
+  let str = data.value.settings.timerFormat
+  str = str.replace("{hh}", hours)
+  str = str.replace("{mm}", min)
+  str = str.replace("{ss}", sec)
+  return str
+})
+
+const widgetStyles = computed((): { fontFamily: string, fontSize: string, color: string } | undefined => {
+  if (!data.value) {
+    return undefined
+  }
+  return {
+    fontFamily: data.value.settings.fontFamily,
+    fontSize: data.value.settings.fontSize,
+    color: data.value.settings.color,
+  };
+})
+
+const tick = (): void => {
+  if (timeout.value) {
+    clearTimeout(timeout.value);
+  }
+  timeout.value = setTimeout(() => {
+    now.value = new Date();
+    if (data.value && data.value.state.running) {
+      tick();
+    }
+  }, 1000);
 }
-export default defineComponent({
-  components: {
-    MediaQueueElement,
-  },
-  props: {
-    wdata: { type: Object as PropType<WidgetApiData>, required: true }
-  },
-  data: (): ComponentData => ({
-    ws: null,
-    data: null,
-    timeout: null,
-    now: null,
-  }),
-  computed: {
-    showTimerWhenFinished(): boolean {
-      if (!this.data) {
-        return false;
-      }
-      return !!this.data.settings.showTimerWhenFinished;
-    },
-    finishedText(): string {
-      if (!this.data) {
-        return '';
-      }
-      return this.data.settings.finishedText;
-    },
-    finishined(): boolean {
-      return this.timeLeft <= 0;
-    },
-    running(): boolean {
-      if (!this.data) {
-        return false;
-      }
-      return !!this.data.state.running;
-    },
-    timeLeftHumanReadable(): string {
-      if (!this.data) {
-        return ''
-      }
-      const left = Math.max(this.timeLeft, 0);
-      const MS = 1;
-      const SEC = 1000 * MS;
-      const MIN = 60 * SEC;
-      const HOUR = 60 * MIN;
-      const hours = fn.pad(Math.floor(left / HOUR), "00");
-      const min = fn.pad(Math.floor((left % HOUR) / MIN), "00");
-      const sec = fn.pad(Math.floor(((left % HOUR) % MIN) / SEC), "00");
-      let str = this.data.settings.timerFormat;
-      str = str.replace("{hh}", hours);
-      str = str.replace("{mm}", min);
-      str = str.replace("{ss}", sec);
-      return str;
-    },
-    timeLeft(): number {
-      if (!this.dateEnd || !this.now) {
-        return 0;
-      }
-      return this.dateEnd.getTime() - this.now.getTime();
-    },
-    dateEnd(): Date | null {
-      if (!this.dateStarted || !this.data) {
-        return null;
-      }
-      return new Date(this.dateStarted.getTime() + this.data.state.durationMs);
-    },
-    dateStarted(): Date | null {
-      if (!this.data) {
-        return null;
-      }
-      return new Date(JSON.parse(this.data.state.startTs));
-    },
-    widgetStyles(): { fontFamily: string, fontSize: string, color: string } | null {
-      if (!this.data) {
-        return null;
-      }
-      return {
-        fontFamily: this.data.settings.fontFamily,
-        fontSize: this.data.settings.fontSize,
-        color: this.data.settings.color,
-      };
-    },
-    q(): MediaQueueElementInstance {
-      return this.$refs.q as MediaQueueElementInstance
-    },
-  },
-  created() {
-    // @ts-ignore
-    import("./main.scss");
-  },
-  mounted() {
-    this.ws = util.wsClient(this.wdata);
-    this.ws.onMessage("init", (data: PomoModuleWsDataData) => {
-      this.data = data;
-      this.tick();
-    });
-    this.ws.onMessage("effect", (data: PomoEffect) => {
-      this.q.playmedia(newMedia({
-        sound: data.sound,
-        minDurationMs: 0,
-      }));
-    });
-    this.ws.connect();
-  },
-  unmounted() {
-    if (this.timeout) {
-      clearTimeout(this.timeout);
-    }
-    if (this.ws) {
-      this.ws.disconnect()
-    }
-  },
-  methods: {
-    tick(): void {
-      if (this.timeout) {
-        clearTimeout(this.timeout);
-      }
-      this.timeout = setTimeout(() => {
-        this.now = new Date();
-        if (this.data && this.data.state.running) {
-          this.tick();
-        }
-      }, 1000);
-    },
-  },
-});
+
+// @ts-ignore
+import("./main.scss");
+
+onMounted(() => {
+  ws = util.wsClient(props.wdata)
+  ws.onMessage("init", (d: PomoModuleWsDataData) => {
+    data.value = d;
+    tick();
+  })
+  ws.onMessage("effect", (data: PomoEffect) => {
+    q.value.playmedia(newMedia({
+      sound: data.sound,
+      minDurationMs: 0,
+    }));
+  });
+  ws.connect();
+})
+
+onUnmounted(() => {
+  if (timeout.value) {
+    clearTimeout(timeout.value);
+  }
+  if (ws) {
+    ws.disconnect()
+  }
+})
 </script>

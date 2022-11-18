@@ -1,50 +1,50 @@
 <template>
   <avatar-page
-    v-if="widget === 'avatar'"
+    v-if="data && data.widget === 'avatar'"
     :wdata="data"
     :controls="true"
   />
   <avatar-page
-    v-else-if="widget === 'avatar_receive'"
+    v-else-if="data && data.widget === 'avatar_receive'"
     :wdata="data"
     :controls="false"
   />
   <drawcast-draw-page
-    v-else-if="widget === 'drawcast_draw'"
+    v-else-if="data && data.widget === 'drawcast_draw'"
     :wdata="data"
   />
   <drawcast-control-page
-    v-else-if="widget === 'drawcast_control'"
+    v-else-if="data && data.widget === 'drawcast_control'"
     :wdata="data"
   />
   <drawcast-receive-page
-    v-else-if="widget === 'drawcast_receive'"
+    v-else-if="data && data.widget === 'drawcast_receive'"
     :wdata="data"
   />
   <media-page
-    v-else-if="widget === 'media'"
+    v-else-if="data && data.widget === 'media'"
     :wdata="data"
   />
   <emote-wall-page
-    v-else-if="widget === 'emote_wall'"
+    v-else-if="data && data.widget === 'emote_wall'"
     :wdata="data"
   />
   <pomo-page
-    v-else-if="widget === 'pomo'"
+    v-else-if="data && data.widget === 'pomo'"
     :wdata="data"
   />
   <speech-to-text-page
-    v-else-if="widget === 'speech-to-text'"
+    v-else-if="data && data.widget === 'speech-to-text'"
     :wdata="data"
     :controls="true"
   />
   <speech-to-text-page
-    v-else-if="widget === 'speech-to-text_receive'"
+    v-else-if="data && data.widget === 'speech-to-text_receive'"
     :wdata="data"
     :controls="false"
   />
   <sr-page
-    v-else-if="widget === 'sr'"
+    v-else-if="data && data.widget === 'sr'"
     :wdata="data"
   />
   <div v-else-if="!error">
@@ -54,60 +54,37 @@
     {{ error }}
   </div>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
-
+<script setup lang="ts">
+import { onMounted, ref } from "vue";
+import { useRoute } from 'vue-router'
+import { WidgetApiData } from "./util";
+import api from "../api";
 import AvatarPage from './avatar/Page.vue'
-import DrawcastDrawPage from './drawcast_draw/Page.vue'
 import DrawcastControlPage from './drawcast_control/Page.vue'
+import DrawcastDrawPage from './drawcast_draw/Page.vue'
 import DrawcastReceivePage from './drawcast_receive/Page.vue'
-import MediaPage from './media/Page.vue'
 import EmoteWallPage from './emote_wall/Page.vue'
+import MediaPage from './media/Page.vue'
 import PomoPage from './pomo/Page.vue'
 import SpeechToTextPage from './speech-to-text/Page.vue';
 import SrPage from './sr/Page.vue'
-import api from "../api";
-import { WidgetApiData } from "./util";
 
-export default defineComponent({
-  components: {
-    AvatarPage,
-    DrawcastDrawPage,
-    DrawcastControlPage,
-    DrawcastReceivePage,
-    MediaPage,
-    EmoteWallPage,
-    PomoPage,
-    SpeechToTextPage,
-    SrPage,
-  },
-  data: (): { data: null | WidgetApiData, error: string } => ({
-    data: null,
-    error: '',
-  }),
-  computed: {
-    widget () {
-      return this.data ? this.data.widget : null
-    },
-  },
-  async created() {
-    this.error = ''
-    const res = this.$route.name === 'pub'
-      ? await api.getPubData(
-        `${this.$route.params.pub_id}`,
-      )
-      : await api.getWidgetData(
-        `${this.$route.params.widget_type}`,
-        `${this.$route.params.widget_token}`,
-      )
-    if (res.status !== 200) {
-      this.error = 'Widget not found...'
-      return;
-    }
+const data = ref<WidgetApiData | null>(null)
+const error = ref<string>('')
+const route = useRoute()
 
-    const data: WidgetApiData = await res.json();
-    document.title = data.title
-    this.data = data
-  },
+onMounted(async () => {
+  const rp = route.params
+  const res = route.name === 'pub'
+    ? await api.getPubData(`${rp.pub_id}`)
+    : await api.getWidgetData(`${rp.widget_type}`, `${rp.widget_token}`)
+  if (res.status !== 200) {
+    error.value = 'Widget not found...'
+    return
+  }
+
+  const widgetData: WidgetApiData = await res.json();
+  document.title = widgetData.title
+  data.value = widgetData
 })
 </script>
