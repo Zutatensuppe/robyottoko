@@ -175,7 +175,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue";
-import fn from "../../common/fn";
+import fn, { logger } from "../../common/fn";
 import {
   AvatarModuleAvatarDefinition,
   AvatarModuleSettings,
@@ -189,8 +189,9 @@ import util from "../util";
 import WsClient from "../WsClient";
 import DoubleclickButton from '../components/DoubleclickButton.vue'
 import NavbarElement from '../components/NavbarElement.vue'
-
 import hyottokoChan from "./avatar_hyottoko_chan";
+
+const log = logger('AvatarView.vue')
 
 interface TabDefinition {
   tab: "settings" | "avatars";
@@ -213,46 +214,26 @@ const controlWidgetUrl = ref<string>('')
 const displayWidgetUrl = ref<string>('')
 
 const edit = (idx: number) => {
-  if (!settings.value) {
-    console.warn("edit: settings.value not initialized");
-    return;
-  }
   editIdx.value = idx;
   editEntity.value = settings.value.avatarDefinitions[idx];
 }
 
 const remove = (idx: number) => {
-  if (!settings.value) {
-    console.warn("remove: settings.value not initialized");
-    return;
-  }
   settings.value.avatarDefinitions = settings.value.avatarDefinitions.filter((val, index) => index !== idx);
   sendSave();
 }
 
 const duplicate = (idx: number) => {
-  if (!settings.value) {
-    console.warn("duplicate: settings.value not initialized");
-    return;
-  }
   editIdx.value = settings.value.avatarDefinitions.length;
   editEntity.value = JSON.parse(JSON.stringify(settings.value.avatarDefinitions[idx]));
 }
 
 const updatedAvatar = (avatar: AvatarModuleAvatarDefinition) => {
-  if (!settings.value) {
-    console.warn("updateAvatar: settings.value not initialized");
-    return;
-  }
   settings.value.avatarDefinitions[editIdx.value] = avatar;
   sendSave();
 }
 
 const addAvatar = () => {
-  if (!settings.value) {
-    console.warn("addAvatar: settings.value not initialized");
-    return;
-  }
   const avatar: AvatarModuleAvatarDefinition = {
     name: "Unnamed Avatar",
     width: 64,
@@ -278,16 +259,12 @@ const addExampleAvatar = () => {
 }
 
 const sendSave = () => {
-  if (!settings.value) {
-    console.warn("sendSave: settings.value not initialized");
-    return;
-  }
   sendMsg({ event: "save", settings: settings.value });
 }
 
 const sendMsg = (data: AvatarModuleWsSaveData) => {
   if (!ws) {
-    console.warn("sendMsg: ws not initialized");
+    log.warn("sendMsg: ws not initialized");
     return;
   }
   ws.send(JSON.stringify(data));
@@ -297,10 +274,6 @@ const dragEnd = (evt: {
   oldIndex: number;
   newIndex: number;
 }) => {
-  if (!settings.value) {
-    console.warn("dragEnd: settings not initialized");
-    return;
-  }
   settings.value.avatarDefinitions = fn.arrayMove(settings.value.avatarDefinitions, evt.oldIndex, evt.newIndex);
   sendSave();
 }
