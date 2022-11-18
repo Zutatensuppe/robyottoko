@@ -6,13 +6,13 @@
   />
 </template>
 <script setup lang="ts">
-import { onMounted, onUnmounted, Ref, ref } from "vue";
-import WsClient from "../../WsClient";
 import { DrawcastImage } from "../../../mod/modules/DrawcastModuleCommon";
-import { SoundMediaFile } from "../../../types";
-import util, { WidgetApiData } from "../util";
-import MediaQueueElement, { MediaQueueElementInstance } from "../MediaQueueElement.vue";
 import { newMedia } from "../../../common/commands";
+import { onMounted, onUnmounted, Ref, ref } from "vue";
+import { SoundMediaFile } from "../../../types";
+import MediaQueueElement from "../MediaQueueElement.vue";
+import util, { WidgetApiData } from "../util";
+import WsClient from "../../WsClient";
 
 const props = defineProps<{
   wdata: WidgetApiData,
@@ -23,9 +23,9 @@ const displayDuration = ref<number>(5000)
 const displayLatestForever = ref<boolean>(false)
 const notificationSound = ref<SoundMediaFile | null>(null)
 const images = ref<any[]>([])
-const q = ref<MediaQueueElementInstance>() as Ref<MediaQueueElementInstance>
+const q = ref<InstanceType<typeof MediaQueueElement>>() as Ref<InstanceType<typeof MediaQueueElement>>
 
-// @ts-ignore
+  // @ts-ignore
 import("./main.scss");
 
 onMounted(() => {

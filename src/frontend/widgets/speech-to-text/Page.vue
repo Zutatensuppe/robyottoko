@@ -1,7 +1,6 @@
 <template>
   <div
     v-if="settings"
-    ref="result_text"
     class="big"
   >
     <div v-if="settings.status.enabled">
@@ -25,7 +24,7 @@
       Enable Speech Synthesis
     </button>
     <table
-      ref="text_table"
+      ref="textTable"
       class="btm_table"
     >
       <tr>
@@ -35,21 +34,21 @@
         >
           <div
             v-if="settings.recognition.display"
-            ref="speech_text-bg"
+            ref="speechTextBg"
             class="stroke-single-bg"
           >
             {{ recognizedText }}
           </div>
           <div
             v-if="settings.recognition.display"
-            ref="speech_text-fg"
+            ref="speechTextFg"
             class="stroke-single-fg"
           >
             {{ recognizedText }}
           </div>
           <div
             v-if="settings.recognition.display"
-            ref="speech_text-imb"
+            ref="speechTextImb"
             class="stroke-single-imb"
           >
             {{ recognizedText }}
@@ -57,21 +56,21 @@
 
           <div
             v-if="settings.translation.enabled"
-            ref="trans_text-bg"
+            ref="transTextBg"
             class="stroke-single-bg"
           >
             {{ translatedText }}
           </div>
           <div
             v-if="settings.translation.enabled"
-            ref="trans_text-fg"
+            ref="transTextFg"
             class="stroke-single-fg"
           >
             {{ translatedText }}
           </div>
           <div
             v-if="settings.translation.enabled"
-            ref="trans_text-imb"
+            ref="transTextImb"
             class="stroke-single-imb"
           >
             {{ translatedText }}
@@ -81,8 +80,8 @@
     </table>
   </div>
 </template>
-<script lang="ts">
-import { defineComponent, PropType } from "vue";
+<script setup lang="ts">
+import { computed, nextTick, onMounted, onUnmounted, Ref, ref } from "vue";
 import util, { WidgetApiData } from "../util";
 import {
   calculateOptimalSubtitleDisplayTimeMs,
@@ -99,336 +98,320 @@ const log = logger("speech-to-text/Page.vue");
 // in brave treat insecure as secure to allow mic locally:
 //   brave://flags/#unsafely-treat-insecure-origin-as-secure
 
-interface ComponentData {
-  ws: WsClient | null
-  status: string
-  errors: string[]
-  initedSpeech: boolean
-  lastUtterance: string
-  recognition: {
-    interimResults: boolean
-    continuous: boolean
+let ws: WsClient | null = null
+const status = ref<string>('')
+const errors = ref<string[]>([])
+const initedSpeech = ref<boolean>(false)
+// prevent doing things twice
+const lastUtterance = ref<string>('')
+const recognition = ref<{ interimResults: boolean, continuous: boolean }>({
+  interimResults: false,
+  continuous: true,
+})
+// texts
+const texts = ref<{ recognized: string; translated: string; ready: boolean }[]>([])
+const timeout = ref<any>(null)
+// settings (overwritten from data ws)
+const settings = ref<SpeechToTextModuleSettings | null>(null)
+// speech recognition object
+const srObj = ref<any>(null)
+
+const props = defineProps<{
+  controls: boolean,
+  wdata: WidgetApiData,
+}>()
+
+const recognizedText = computed((): string => {
+  if (texts.value.length === 0 || !texts.value[0].ready) {
+    return "";
   }
-  texts: { recognized: string; translated: string; ready: boolean }[]
-  timeout: any // null | number
-  settings: SpeechToTextModuleSettings | null
-  srObj: any // speech recognition object
+  return texts.value[0].recognized;
+})
+const translatedText = computed((): string => {
+  if (texts.value.length === 0 || !texts.value[0].ready) {
+    return "";
+  }
+  return texts.value[0].translated;
+})
+const lastRecognizedText = computed((): string => {
+  if (texts.value.length === 0) {
+    return "";
+  }
+  return texts.value[texts.value.length - 1].recognized;
+})
+const wantsSpeech = computed((): boolean => {
+  if (!settings.value) {
+    return false
+  }
+  return (
+    settings.value.recognition.synthesize ||
+    settings.value.translation.synthesize
+  );
+})
+
+const textTable = ref<HTMLTableElement>() as Ref<HTMLTableElement>
+const speechTextImb = ref<HTMLDivElement>() as Ref<HTMLDivElement>
+const speechTextFg = ref<HTMLDivElement>() as Ref<HTMLDivElement>
+const speechTextBg = ref<HTMLDivElement>() as Ref<HTMLDivElement>
+const transTextImb = ref<HTMLDivElement>() as Ref<HTMLDivElement>
+const transTextFg = ref<HTMLDivElement>() as Ref<HTMLDivElement>
+const transTextBg = ref<HTMLDivElement>() as Ref<HTMLDivElement>
+
+// @ts-ignore
+import("./main.css");
+
+const initSpeech = (): void => {
+  log.info(speechSynthesis);
+  speechSynthesis.cancel();
+  speechSynthesis.resume();
+  initedSpeech.value = true;
 }
 
-export default defineComponent({
-  props: {
-    controls: { type: Boolean, required: true },
-    wdata: { type: Object as PropType<WidgetApiData>, required: true }
-  },
-  data: (): ComponentData => ({
-    ws: null as WsClient | null,
-    status: "",
-    errors: [] as string[],
+const _next = (): void => {
+  if (timeout.value) {
+    log.info("_next(): timeout still active");
+    return;
+  }
+  if (!recognizedText.value && !translatedText.value) {
+    log.info("_next(): recognizedText and translatedText empty");
+    return;
+  }
+  if (!settings.value) {
+    log.info("_next(): settings empty");
+    return;
+  }
 
-    initedSpeech: false,
+  // TODO: queue synthesizations
+  if (recognizedText.value && settings.value.recognition.synthesize) {
+    log.info("synthesizing recognized text");
+    synthesize(
+      recognizedText.value,
+      settings.value.recognition.synthesizeLang
+    );
+  }
+  if (translatedText.value && settings.value.translation.synthesize) {
+    log.info("synthesizing translated text");
+    synthesize(
+      translatedText.value,
+      settings.value.translation.synthesizeLang
+    );
+  }
 
-    // prevent doing things twice
-    lastUtterance: "",
+  timeout.value = setTimeout(() => {
+    texts.value.shift();
+    timeout.value = null;
+    _next();
+  }, calculateSubtitleDisplayTime(`${recognizedText.value} ${translatedText.value}`));
+}
 
-    recognition: {
-      interimResults: false,
-      continuous: true,
-    },
+const calculateSubtitleDisplayTime = (text: string): number => {
+  const durationMs = calculateOptimalSubtitleDisplayTimeMs(text);
+  return clamp(2 * SECOND, durationMs, 10 * SECOND)
+}
 
-    // texts
-    texts: [] as { recognized: string; translated: string; ready: boolean }[],
-    timeout: null, // null | number
-
-    // settings (overwritten from data ws)
-    settings: null,
-
-    srObj: null as any,
-  }),
-  computed: {
-    recognizedText(): string {
-      if (this.texts.length === 0 || !this.texts[0].ready) {
-        return "";
-      }
-      return this.texts[0].recognized;
-    },
-    translatedText(): string {
-      if (this.texts.length === 0 || !this.texts[0].ready) {
-        return "";
-      }
-      return this.texts[0].translated;
-    },
-    lastRecognizedText(): string {
-      if (this.texts.length === 0) {
-        return "";
-      }
-      return this.texts[this.texts.length - 1].recognized;
-    },
-    wantsSpeech(): boolean {
-      if (!this.settings) {
-        return false
-      }
-      return (
-        this.settings.recognition.synthesize ||
-        this.settings.translation.synthesize
-      );
-    },
-    textTable(): HTMLTableElement {
-      return this.$refs["text_table"] as HTMLTableElement
-    },
-  },
-  created() {
-    // @ts-ignore
-    import("./main.css");
-  },
-  mounted() {
-    this.ws = util.wsClient(this.wdata);
-    this.ws.onMessage("text", (data: { recognized: string, translated: string }) => {
-      this.texts.push({
-        recognized: data.recognized,
-        translated: data.translated,
-        ready: true,
-      });
-      this._next();
-    });
-    this.ws.onMessage("init", (data: SpeechToTextWsInitData) => {
-      this.settings = data.settings;
-      this.$nextTick(() => {
-        this.applyStyles();
-        this.initVoiceRecognition();
-      });
-    });
-    this.ws.connect();
-  },
-  unmounted() {
-    if (this.ws) {
-      this.ws.disconnect()
+const synthesize = (text: string, lang: string): void => {
+  log.info({ lastUtterance: lastUtterance.value, text, lang }, "synthesize");
+  if (lastUtterance.value !== text) {
+    log.info({ speechSynthesis }, "speechSynthesis");
+    lastUtterance.value = text;
+    let utterance = new SpeechSynthesisUtterance(`${lastUtterance.value}`);
+    if (lang) {
+      utterance.lang = lang;
     }
-  },
-  methods: {
-    initSpeech(): void {
-      log.info(speechSynthesis);
-      speechSynthesis.cancel();
-      speechSynthesis.resume();
-      this.initedSpeech = true;
-    },
-    _next(): void {
-      if (this.timeout) {
-        log.info("_next(): timeout still active");
-        return;
-      }
-      if (!this.recognizedText && !this.translatedText) {
-        log.info("_next(): recognizedText and translatedText empty");
-        return;
-      }
-      if (!this.settings) {
-        log.info("_next(): settings empty");
-        return;
-      }
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
+  }
+}
 
-      // TODO: queue synthesizations
-      if (this.recognizedText && this.settings.recognition.synthesize) {
-        log.info("synthesizing recognized text");
-        this.synthesize(
-          this.recognizedText,
-          this.settings.recognition.synthesizeLang
-        );
-      }
-      if (this.translatedText && this.settings.translation.synthesize) {
-        log.info("synthesizing translated text");
-        this.synthesize(
-          this.translatedText,
-          this.settings.translation.synthesizeLang
-        );
-      }
+const applyStyles = (): void => {
+  if (!settings.value) {
+    log.info("applyStyles(): settings empty");
+    return;
+  }
+  const styles = settings.value.styles;
 
-      this.timeout = setTimeout(() => {
-        this.texts.shift();
-        this.timeout = null;
-        this._next();
-      }, this.calculateSubtitleDisplayTime(`${this.recognizedText} ${this.translatedText}`));
-    },
-    calculateSubtitleDisplayTime(text: string): number {
-      const durationMs = calculateOptimalSubtitleDisplayTimeMs(text);
-      return clamp(2 * SECOND, durationMs, 10 * SECOND)
-    },
-    synthesize(text: string, lang: string): void {
-      log.info({ lastUtterance: this.lastUtterance, text, lang }, "synthesize");
-      if (this.lastUtterance !== text) {
-        log.info({ speechSynthesis }, "speechSynthesis");
-        this.lastUtterance = text;
-        let utterance = new SpeechSynthesisUtterance(`${this.lastUtterance}`);
-        if (lang) {
-          utterance.lang = lang;
-        }
-        speechSynthesis.cancel();
-        speechSynthesis.speak(utterance);
-      }
-    },
-    applyStyles(): void {
-      if (!this.settings) {
-        log.info("applyStyles(): settings empty");
-        return;
-      }
-      const styles = this.settings.styles;
+  const bgColor = (styles.bgColorEnabled && styles.bgColor != null) ? styles.bgColor : ''
+  document.body.style.backgroundColor = bgColor;
 
-      const bgColor = (styles.bgColorEnabled && styles.bgColor != null) ? styles.bgColor : ''
-      document.body.style.backgroundColor = bgColor;
+  if (styles.vAlign === "top") {
+    // need to be set to null in order for style to become empty
+    // aka bottom style be removed completely
+    // @ts-ignore
+    textTable.value.style.bottom = null;
+  } else if (styles.vAlign === "bottom") {
+    textTable.value.style.bottom = '0px';
+  }
 
-      if (styles.vAlign === "top") {
-        // need to be set to null in order for style to become empty
-        // aka bottom style be removed completely
-        // @ts-ignore
-        this.textTable.style.bottom = null;
-      } else if (styles.vAlign === "bottom") {
-        this.textTable.style.bottom = '0px';
-      }
+  const applyTextStyles = (
+    imb: HTMLDivElement,
+    fg: HTMLDivElement,
+    bg: HTMLDivElement,
+    styles: SpeechToTextModuleStylesPack,
+    bgColor: string,
+  ) => {
+    if (styles.color != null) {
+      fg.style.color = styles.color;
+    }
 
-      const applyTextStyles = (
-        imb: HTMLDivElement,
-        fg: HTMLDivElement,
-        bg: HTMLDivElement,
-        styles: SpeechToTextModuleStylesPack,
-        bgColor: string,
-      ) => {
-        if (styles.color != null) {
-          fg.style.color = styles.color;
-        }
+    imb.style.webkitTextStrokeColor = bgColor;
+    if (styles.strokeWidth != null) {
+      const strokeWidth = toNumberUnitString(styles.strokeWidth);
+      imb.style.webkitTextStrokeWidth = strokeWidth;
+      bg.style.webkitTextStrokeWidth = strokeWidth;
+    }
 
-        imb.style.webkitTextStrokeColor = bgColor;
-        if (styles.strokeWidth != null) {
-          const strokeWidth = toNumberUnitString(styles.strokeWidth);
-          imb.style.webkitTextStrokeWidth = strokeWidth;
-          bg.style.webkitTextStrokeWidth = strokeWidth;
-        }
+    if (styles.strokeColor != null) {
+      bg.style.webkitTextStrokeColor = styles.strokeColor;
+    }
 
-        if (styles.strokeColor != null) {
-          bg.style.webkitTextStrokeColor = styles.strokeColor;
-        }
+    if (styles.fontFamily != null) {
+      imb.style.fontFamily = styles.fontFamily;
+      fg.style.fontFamily = styles.fontFamily;
+      bg.style.fontFamily = styles.fontFamily;
+    }
+    if (styles.fontSize != null) {
+      const fontSize = toNumberUnitString(styles.fontSize);
+      imb.style.fontSize = fontSize;
+      fg.style.fontSize = fontSize;
+      bg.style.fontSize = fontSize;
+    }
+    if (styles.fontWeight != null) {
+      imb.style.fontWeight = styles.fontWeight;
+      fg.style.fontWeight = styles.fontWeight;
+      bg.style.fontWeight = styles.fontWeight;
+    }
+  };
 
-        if (styles.fontFamily != null) {
-          imb.style.fontFamily = styles.fontFamily;
-          fg.style.fontFamily = styles.fontFamily;
-          bg.style.fontFamily = styles.fontFamily;
-        }
-        if (styles.fontSize != null) {
-          const fontSize = toNumberUnitString(styles.fontSize);
-          imb.style.fontSize = fontSize;
-          fg.style.fontSize = fontSize;
-          bg.style.fontSize = fontSize;
-        }
-        if (styles.fontWeight != null) {
-          imb.style.fontWeight = styles.fontWeight;
-          fg.style.fontWeight = styles.fontWeight;
-          bg.style.fontWeight = styles.fontWeight;
-        }
-      };
+  // RECOGNIZED TEXT
+  if (settings.value.recognition.display) {
+    applyTextStyles(
+      speechTextImb.value,
+      speechTextFg.value,
+      speechTextBg.value,
+      styles.recognition,
+      bgColor
+    );
+  }
 
-      // RECOGNIZED TEXT
-      if (this.settings.recognition.display) {
-        applyTextStyles(
-          // these are *guaranteed* to be divs here
-          this.$refs["speech_text-imb"] as HTMLDivElement,
-          this.$refs["speech_text-fg"] as HTMLDivElement,
-          this.$refs["speech_text-bg"] as HTMLDivElement,
-          styles.recognition,
-          bgColor
-        );
-      }
+  // TRANSLATED TEXT
+  if (settings.value.translation.enabled) {
+    applyTextStyles(
+      transTextImb.value,
+      transTextFg.value,
+      transTextBg.value,
+      styles.translation,
+      bgColor
+    );
+  }
+}
 
-      // TRANSLATED TEXT
-      if (this.settings.translation.enabled) {
-        applyTextStyles(
-          // these are *guaranteed* to be divs here
-          this.$refs["trans_text-imb"] as HTMLDivElement,
-          this.$refs["trans_text-fg"] as HTMLDivElement,
-          this.$refs["trans_text-bg"] as HTMLDivElement,
-          styles.translation,
-          bgColor
-        );
-      }
-    },
-    initVoiceRecognition(): void {
-      if (!this.controls) {
-        return;
-      }
-      if (!this.settings) {
-        log.info("initVoiceRecognition(): settings empty");
-        return;
-      }
-      // ignore because neither SpeechRecognition nor webkitSpeechRecognition
-      // are known to typescript :(
-      // @ts-ignore
-      const r = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!r) {
-        alert(
-          "This widget does not work in this browser. Try a chrome based browser."
-        );
-        return;
-      }
-      if (this.srObj) {
-        this.srObj.abort();
-        this.srObj.stop();
-      }
+const initVoiceRecognition = (): void => {
+  if (!props.controls) {
+    return;
+  }
+  if (!settings.value) {
+    log.info("initVoiceRecognition(): settings empty");
+    return;
+  }
+  // ignore because neither SpeechRecognition nor webkitSpeechRecognition
+  // are known to typescript :(
+  // @ts-ignore
+  const r = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!r) {
+    alert(
+      "This widget does not work in this browser. Try a chrome based browser."
+    );
+    return;
+  }
+  if (srObj.value) {
+    srObj.value.abort();
+    srObj.value.stop();
+  }
 
-      this.srObj = new r();
-      this.srObj.lang = this.settings.recognition.lang;
-      this.srObj.interimResults = this.recognition.interimResults;
-      this.srObj.continuous = this.recognition.continuous;
+  srObj.value = new r();
+  srObj.value.lang = settings.value.recognition.lang;
+  srObj.value.interimResults = recognition.value.interimResults;
+  srObj.value.continuous = recognition.value.continuous;
 
-      this.srObj.onsoundstart = () => {
-        this.status = "Sound started";
-      };
-      this.srObj.onnomatch = () => {
-        this.status = "No match";
-      };
-      this.srObj.onerror = (evt: any) => {
-        this.status = "Error";
-        this.errors.unshift(evt.error);
-        this.errors = this.errors.slice(0, 10);
-        this.initVoiceRecognition();
-      };
-      this.srObj.onsoundend = () => {
-        this.status = "Sound ended";
-        this.initVoiceRecognition();
-      };
-      this.srObj.onspeechend = () => {
-        this.status = "Speech ended";
-        this.initVoiceRecognition();
-      };
-      this.srObj.onresult = async (evt: any) => {
-        this.onVoiceResult(evt);
-        this.initVoiceRecognition();
-      };
-      this.srObj.start();
-    },
-    onVoiceResult(evt: any): void {
-      if (!this.ws) {
-        log.error("onVoiceResult: this.ws not set");
-        return;
-      }
-      let results = evt.results;
-      log.info({ evt }, "onVoiceResult()");
-      for (var i = evt.resultIndex; i < results.length; i++) {
-        if (!results[i].isFinal) {
-          // recognizedText = "<<" + _recognizedText + ">>";
-          // translatedText = "<<...>>";
-          continue;
-        }
+  srObj.value.onsoundstart = () => {
+    status.value = "Sound started";
+  };
+  srObj.value.onnomatch = () => {
+    status.value = "No match";
+  };
+  srObj.value.onerror = (evt: any) => {
+    status.value = "Error";
+    errors.value.unshift(evt.error);
+    errors.value = errors.value.slice(0, 10);
+    initVoiceRecognition();
+  };
+  srObj.value.onsoundend = () => {
+    status.value = "Sound ended";
+    initVoiceRecognition();
+  };
+  srObj.value.onspeechend = () => {
+    status.value = "Speech ended";
+    initVoiceRecognition();
+  };
+  srObj.value.onresult = async (evt: any) => {
+    onVoiceResult(evt);
+    initVoiceRecognition();
+  };
+  srObj.value.start();
+}
 
-        const _recognizedText = results[i][0].transcript;
-        if (this.lastRecognizedText === _recognizedText) {
-          continue;
-        }
+const onVoiceResult = (evt: any): void => {
+  if (!ws) {
+    log.error("onVoiceResult: ws not set");
+    return;
+  }
+  let results = evt.results;
+  log.info({ evt }, "onVoiceResult()");
+  for (var i = evt.resultIndex; i < results.length; i++) {
+    if (!results[i].isFinal) {
+      // recognizedText = "<<" + _recognizedText + ">>";
+      // translatedText = "<<...>>";
+      continue;
+    }
 
-        this.ws.send(
-          JSON.stringify({
-            event: "onVoiceResult",
-            text: _recognizedText,
-          })
-        );
-        break;
-      }
-    },
-  },
-});
+    const _recognizedText = results[i][0].transcript;
+    if (lastRecognizedText.value === _recognizedText) {
+      continue;
+    }
+
+    ws.send(
+      JSON.stringify({
+        event: "onVoiceResult",
+        text: _recognizedText,
+      })
+    );
+    break;
+  }
+}
+
+onMounted(() => {
+  ws = util.wsClient(props.wdata);
+  ws.onMessage("text", (data: { recognized: string, translated: string }) => {
+    texts.value.push({
+      recognized: data.recognized,
+      translated: data.translated,
+      ready: true,
+    });
+    _next();
+  });
+  ws.onMessage("init", (data: SpeechToTextWsInitData) => {
+    settings.value = data.settings;
+    nextTick(() => {
+      applyStyles();
+      initVoiceRecognition();
+    });
+  });
+  ws.connect();
+})
+
+onUnmounted(() => {
+  if (ws) {
+    ws.disconnect()
+  }
+})
 </script>

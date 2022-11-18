@@ -6,7 +6,7 @@
 </template>
 <script setup lang="ts">
 import { onMounted, onUnmounted, Ref, ref } from "vue";
-import MediaQueueElement, { MediaQueueElementInstance } from "../MediaQueueElement.vue";
+import MediaQueueElement from "../MediaQueueElement.vue";
 import util, { WidgetApiData } from "../util";
 import WsClient from "../../WsClient";
 import {
@@ -23,7 +23,7 @@ const props = defineProps<{
 let ws: WsClient | null = null
 const settings = ref<GeneralModuleSettings>(default_settings())
 const widgetId = ref<string>(util.getParam('id'))
-const q = ref<MediaQueueElementInstance>() as Ref<MediaQueueElementInstance>
+const q = ref<InstanceType<typeof MediaQueueElement>>() as Ref<InstanceType<typeof MediaQueueElement>>
 
 // @ts-ignore
 import("./main.scss");

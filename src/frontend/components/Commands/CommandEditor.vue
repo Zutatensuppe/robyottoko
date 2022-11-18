@@ -37,7 +37,7 @@
                 />
               </td>
               <td>
-                <trigger-editor
+                <TriggerEditor
                   v-for="(trigger, idx) in item.triggers"
                   :key="idx"
                   class="spacerow"
@@ -222,10 +222,11 @@ import {
   GlobalVariable,
 } from "../../../types";
 import { possibleTriggerActions } from "../../../common/triggers";
-import StringInput from "../StringInput.vue";
-import EffectsEditor from "./EffectsEditor.vue";
-import DurationInput from "../DurationInput.vue";
 import DropdownButton from "../DropdownButton.vue";
+import DurationInput from "../DurationInput.vue";
+import EffectsEditor from "./EffectsEditor.vue";
+import StringInput from "../StringInput.vue";
+import TriggerEditor from "./TriggerEditor.vue";
 
 interface ComponentDataPermission {
   value: string;

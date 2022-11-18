@@ -13,29 +13,20 @@
   >
     <div class="video-16-9">
       <video
-        ref="video"
+        ref="videoEl"
         :src="videosrc"
         autoplay
       />
     </div>
   </div>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { nextTick, ref } from "vue";
 
 import fn, { logger } from "../../common/fn";
 import { MediaCommandData } from "../../types";
 
 const log = logger('MediaQueueElement.vue')
-
-interface ComponentData {
-  queue: MediaCommandData[];
-  worker: any; // null | number (setInterval)
-  showimage: boolean;
-  imgstyle: undefined | Record<string, string>;
-  videosrc: string;
-  latestResolved: boolean;
-}
 
 const playSound = (path: string, volume: number): Promise<void> => {
   return new Promise((res) => {
@@ -54,139 +45,146 @@ const wait = (ms: number): Promise<void> => {
   })
 }
 
-const MediaQueueElement = defineComponent({
-  props: {
-    timeBetweenMediaMs: { type: Number, default: 400 },
-    baseVolume: { type: Number, default: 100 },
-    displayLatestForever: { type: Boolean, default: false },
-  },
-  data(): ComponentData {
-    return {
-      queue: [],
-      worker: null,
-      showimage: false,
-      imgstyle: undefined,
-      videosrc: "",
-      latestResolved: true,
-    };
-  },
-  methods: {
-    async _playone(media: MediaCommandData): Promise<void> {
-      return new Promise(async (resolve) => {
-        this.latestResolved = false;
-        const promises: Promise<void>[] = [];
-        if (media.video.url) {
-          this.videosrc = media.video.url;
-          promises.push(
-            new Promise((res) => {
-              this.$nextTick(() => {
-                // it should be always a HTMLVideoElement
-                // because we set the videosrc. there could be some
-                // conditions where this is not true but for now this
-                // will be fine
-                const videoEl = this.$refs.video as HTMLVideoElement
-                const volume = media.video.volume / 100
-                videoEl.addEventListener("error", (e) => {
-                  log.error({ e }, 'error when playing video')
-                  res();
-                });
-                videoEl.volume = fn.clamp(0, volume, 1)
-                videoEl.addEventListener("ended", () => {
-                  res();
-                });
-              });
-            })
-          );
-        }
+const props = withDefaults(defineProps<{
+  timeBetweenMediaMs?: number,
+  baseVolume?: number,
+  displayLatestForever?: boolean,
+}>(), {
+  timeBetweenMediaMs: 400,
+  baseVolume: 100,
+  displayLatestForever: false,
+})
 
-        let imageUrl = ''
-        if (media.image_url) {
-          imageUrl = media.image_url
-        } else if (media.image && media.image.file) {
-          imageUrl = media.image.urlpath
-        }
-        if (imageUrl) {
-          await this._prepareImage(imageUrl);
-          this.showimage = true
-          this.imgstyle = { backgroundImage: `url(${imageUrl})` }
-        }
 
-        if (media.minDurationMs) {
-          promises.push(wait(fn.parseHumanDuration(media.minDurationMs)))
-        }
+const queue = ref<MediaCommandData[]>([])
+const worker = ref<any>(null)
+const showimage = ref<boolean>(false)
+const imgstyle = ref<undefined | Record<string, string>>(undefined)
+const videosrc = ref<string>("")
+const latestResolved = ref<boolean>(true)
 
-        if (media.sound && media.sound.file) {
-          const path = media.sound.urlpath
-          const maxVolume = this.baseVolume / 100.0
-          const soundVolume = media.sound.volume / 100.0
-          const volume = maxVolume * soundVolume
-          promises.push(playSound(path, volume))
-        }
+const videoEl = ref<HTMLVideoElement | null>()
 
-        if (promises.length === 0) {
-          // show images at least 1 sek by default (only if there
-          // are no other conditions)
-          promises.push(wait(1000));
-        }
-
-        Promise.all(promises).then((_) => {
-          if (!this.displayLatestForever) {
-            this.showimage = false;
-          }
-          this.latestResolved = true;
-          this.videosrc = "";
-          resolve();
-        });
-      });
-    },
-    _addQueue(media: MediaCommandData): void {
-      this.queue.push(media);
-      if (this.worker) {
-        return;
-      }
-
-      const next = async (): Promise<void> => {
-        if (this.queue.length === 0) {
-          clearInterval(this.worker);
-          this.worker = null;
-          return;
-        }
-        const media = this.queue.shift();
-        if (!media) {
-          clearInterval(this.worker);
-          this.worker = null;
-          return;
-        }
-        await this._playone(media);
-        this.worker = setTimeout(next, this.timeBetweenMediaMs); // this much time in between media
-      };
-      this.worker = setTimeout(next, this.timeBetweenMediaMs);
-    },
-    async _prepareImage(urlpath: string): Promise<void> {
-      return new Promise((resolve) => {
-        const imgLoad = new Image();
-        imgLoad.src = urlpath;
-        this.$nextTick(() => {
-          if (imgLoad.complete) {
-            resolve();
-          } else {
-            imgLoad.onload = () => {
-              resolve();
+const _playone = async (media: MediaCommandData): Promise<void> => {
+  return new Promise(async (resolve) => {
+    latestResolved.value = false;
+    const promises: Promise<void>[] = [];
+    if (media.video.url) {
+      videosrc.value = media.video.url;
+      promises.push(
+        new Promise((res) => {
+          nextTick(() => {
+            if (!videoEl.value) {
+              // should never happen
+              return
             }
-          }
-        });
-      });
-    },
-    playmedia(media: MediaCommandData): void {
-      if (!this.displayLatestForever && this.latestResolved) {
-        this.showimage = false;
+            // it should be always a HTMLVideoElement
+            // because we set the videosrc. there could be some
+            // conditions where this is not true but for now this
+            // will be fine
+            const volume = media.video.volume / 100
+            videoEl.value.addEventListener("error", (e) => {
+              log.error({ e }, 'error when playing video')
+              res();
+            });
+            videoEl.value.volume = fn.clamp(0, volume, 1)
+            videoEl.value.addEventListener("ended", () => {
+              res();
+            });
+          });
+        })
+      );
+    }
+
+    let imageUrl = ''
+    if (media.image_url) {
+      imageUrl = media.image_url
+    } else if (media.image && media.image.file) {
+      imageUrl = media.image.urlpath
+    }
+    if (imageUrl) {
+      await _prepareImage(imageUrl);
+      showimage.value = true
+      imgstyle.value = { backgroundImage: `url(${imageUrl})` }
+    }
+
+    if (media.minDurationMs) {
+      promises.push(wait(fn.parseHumanDuration(media.minDurationMs)))
+    }
+
+    if (media.sound && media.sound.file) {
+      const path = media.sound.urlpath
+      const maxVolume = props.baseVolume / 100.0
+      const soundVolume = media.sound.volume / 100.0
+      const volume = maxVolume * soundVolume
+      promises.push(playSound(path, volume))
+    }
+
+    if (promises.length === 0) {
+      // show images at least 1 sek by default (only if there
+      // are no other conditions)
+      promises.push(wait(1000));
+    }
+
+    Promise.all(promises).then((_) => {
+      if (!props.displayLatestForever) {
+        showimage.value = false;
       }
-      this._addQueue(media);
-    },
-  },
-});
-export type MediaQueueElementInstance = InstanceType<typeof MediaQueueElement>
-export default MediaQueueElement
+      latestResolved.value = true;
+      videosrc.value = "";
+      resolve();
+    });
+  });
+}
+const _addQueue = (media: MediaCommandData): void => {
+  queue.value.push(media);
+  if (worker.value) {
+    return;
+  }
+
+  const next = async (): Promise<void> => {
+    if (queue.value.length === 0) {
+      clearInterval(worker.value);
+      worker.value = null;
+      return;
+    }
+    const media = queue.value.shift();
+    if (!media) {
+      clearInterval(worker.value);
+      worker.value = null;
+      return;
+    }
+    await _playone(media);
+    worker.value = setTimeout(next, props.timeBetweenMediaMs); // this much time in between media
+  };
+  worker.value = setTimeout(next, props.timeBetweenMediaMs);
+}
+
+const _prepareImage = async (urlpath: string): Promise<void> => {
+  return new Promise((resolve) => {
+    const imgLoad = new Image();
+    imgLoad.src = urlpath;
+    nextTick(() => {
+      if (imgLoad.complete) {
+        resolve();
+      } else {
+        imgLoad.onload = () => {
+          resolve();
+        }
+      }
+    });
+  });
+}
+const playmedia = (media: MediaCommandData): void => {
+  if (!props.displayLatestForever && latestResolved.value) {
+    showimage.value = false;
+  }
+  _addQueue(media);
+}
+
+defineExpose({
+  playmedia
+})
 </script>
 <style scoped lang="scss">
 .m-fadeOut {
