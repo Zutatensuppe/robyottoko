@@ -194,6 +194,7 @@ import { ChatEffect, Command, CommandAction, CommandEffectType, CommandTriggerTy
 import { commands } from "../../../common/commands";
 import { computed, ref } from "vue";
 import { permissionsStr } from "../../../common/permissions";
+import CheckboxInput from "../CheckboxInput.vue";
 import CommandEditor from "./CommandEditor.vue";
 import DoubleclickButton from "../DoubleclickButton.vue";
 import DropdownButton from "../DropdownButton.vue";
