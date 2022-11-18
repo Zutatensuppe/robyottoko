@@ -143,14 +143,14 @@
       >
         <TagsEditor
           :tags="tags"
-          @updateTag="onTagUpdated"
+          @update-tag="onTagUpdated"
         />
       </div>
       <Settings
         v-if="inited && tab === 'settings'"
         id="settings"
         v-model="settings"
-        @update:modelValue="sendSave"
+        @update:model-value="sendSave"
       />
       <div
         v-if="inited && tab === 'playlist'"
@@ -160,8 +160,8 @@
         <PlaylistEditor
           :playlist="playlist"
           :filter="filter"
-          @stopPlayer="player.stop()"
-          @filterChange="applyFilter"
+          @stop-player="player.stop()"
+          @filter-change="applyFilter"
           @ctrl="onPlaylistCtrl"
         />
       </div>
@@ -173,7 +173,7 @@
         :possible-actions="possibleActions"
         :possible-effects="[]"
         :base-volume="100"
-        @update:modelValue="sendSave"
+        @update:model-value="sendSave"
       />
     </div>
   </div>
@@ -195,14 +195,14 @@ import {
   TagInfo,
 } from "../../mod/modules/SongrequestModuleCommon";
 import { useToast } from "vue-toastification";
-import util from "../util";
 import api from "../api";
 import CommandsEditor from "../components/Commands/CommandsEditor.vue";
-import TagsEditor from '../components/SongRequest/TagsEditor.vue'
-import Settings from '../components/SongRequest/Settings.vue'
-import PlaylistEditor from "../components/SongRequest/PlaylistEditor.vue";
-import YoutubePlayer from "../components/YoutubePlayer.vue";
 import NavbarElement from "../components/NavbarElement.vue";
+import PlaylistEditor from "../components/SongRequest/PlaylistEditor.vue";
+import Settings from '../components/SongRequest/Settings.vue'
+import TagsEditor from '../components/SongRequest/TagsEditor.vue'
+import util from "../util";
+import YoutubePlayer from "../components/YoutubePlayer.vue";
 
 interface ControlDefinition {
   title: string;
@@ -214,16 +214,6 @@ type Tab = "playlist" | "commands" | "settings" | "import" | "tags"
 interface TabDefinition {
   title: string
   tab: Tab
-}
-
-interface Player {
-  stop: () => void;
-  play: (yt: string) => void;
-  pause: () => void;
-  unpause: () => void;
-  setVolume: (volume: number) => void;
-  setLoop: (loop: boolean) => void;
-  playing: () => boolean;
 }
 
 const noop = () => {
@@ -338,9 +328,9 @@ const tags = computed(() => {
   return tags;
 })
 
-const youtube = ref<any>(null)
+const youtube = ref<InstanceType<typeof YoutubePlayer> | null>(null)
 
-const player = computed((): Player => {
+const player = computed((): InstanceType<typeof YoutubePlayer> => {
   return (youtube.value || {
     stop: noop,
     play: noop,
@@ -349,7 +339,8 @@ const player = computed((): Player => {
     setVolume: noop,
     setLoop: noop,
     playing: noop,
-  }) as Player;
+    getProgress: noop,
+  }) as InstanceType<typeof YoutubePlayer>;
 })
 
 const filteredPlaylist = computed((): PlaylistItem[] => {

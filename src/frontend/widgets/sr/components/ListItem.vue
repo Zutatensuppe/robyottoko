@@ -39,7 +39,7 @@ import { PlaylistItem } from "../../../../types";
 
 const props = withDefaults(defineProps<{
   item: PlaylistItem
-  showThumbnails: boolean
+  showThumbnails: string | boolean
   timestampFormat?: string
 }>(), {
   timestampFormat: 'YYYY-MM-DD hh:mm:ss',
