@@ -2,10 +2,11 @@
   <div :id="id" />
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { onMounted, ref } from "vue";
+import { logger } from "../../common/fn";
 
-const log = (...args: any[]) => console.log("[youtube.js]", ...args);
+const log = logger('YoutubePlayer.vue')
 
 interface YoutubePlayer {
   cueVideoById: (youtubeId: string) => void
@@ -22,7 +23,7 @@ interface YoutubePlayer {
 let apiRdy = false;
 function createApi(): Promise<void> {
   if (apiRdy) {
-    log("ytapi ALREADY ready");
+    log.info("ytapi ALREADY ready");
     return Promise.resolve();
   }
   return new Promise<void>((resolve) => {
@@ -34,7 +35,7 @@ function createApi(): Promise<void> {
     // @ts-ignore
     window.onYouTubeIframeAPIReady = () => {
       apiRdy = true;
-      log("ytapi ready");
+      log.info("ytapi ready");
       resolve();
     };
   });
@@ -42,7 +43,7 @@ function createApi(): Promise<void> {
 
 function createPlayer(id: string): Promise<YoutubePlayer> {
   return new Promise((resolve) => {
-    log("create player on " + id);
+    log.info("create player on " + id);
     // no knowledge about YT.Player :(
     // @ts-ignore
     const player: YoutubePlayer = new YT.Player(id, {
@@ -52,7 +53,7 @@ function createPlayer(id: string): Promise<YoutubePlayer> {
       },
       events: {
         onReady: () => {
-          log("player ready");
+          log.info("player ready");
           resolve(player);
         },
       },
@@ -65,158 +66,155 @@ async function prepareYt(id: string): Promise<YoutubePlayer> {
   return await createPlayer(id);
 }
 
-interface ComponentData {
-  id: string
-  yt: YoutubePlayer | null
-  loop: boolean
-  toplay: string | null
-  tovolume: number | null
-  tryPlayInterval: any | null // number / timeout
-  stopped: boolean
+const props = withDefaults(defineProps<{
+  visible?: boolean
+}>(), {
+  visible: true,
+})
+
+const emit = defineEmits<{
+  (e: 'ended'): void
+}>()
+
+const id = `yt-${Math.floor(
+  Math.random() * 99 + 1
+)}-${new Date().getTime()}`;
+
+const yt = ref<YoutubePlayer | null>(null)
+const loop = ref<boolean>(false)
+const toplay = ref<string | null>(null)
+const tovolume = ref<number | null>(null)
+const tryPlayInterval = ref<any | null>(null)
+const stopped = ref<boolean>(false)
+
+const getDuration = (): number => {
+  if (yt.value) {
+    return yt.value.getDuration();
+  }
+  return 0;
+}
+const getCurrentTime = (): number => {
+  if (yt.value) {
+    return yt.value.getCurrentTime();
+  }
+  return 0;
+}
+const getProgress = (): number => {
+  const d = getDuration();
+  const c = getCurrentTime();
+  return d ? c / d : 0;
+}
+const stop = (): void => {
+  stopped.value = true
+  stopTryPlayInterval()
+  if (yt.value) {
+    yt.value.stopVideo()
+  }
+}
+const stopTryPlayInterval = (): void => {
+  if (tryPlayInterval.value) {
+    clearInterval(tryPlayInterval.value);
+    tryPlayInterval.value = null;
+  }
+}
+const tryPlay = (): void => {
+  if (stopped.value) {
+    return;
+  }
+  stopTryPlayInterval();
+  if (!props.visible) {
+    return;
+  }
+  if (yt.value) {
+    yt.value.playVideo();
+  }
+
+  let triesRemaining = 20;
+  tryPlayInterval.value = setInterval(() => {
+    log.info({ playing: playing(), triesRemaining })
+    --triesRemaining;
+    if (playing() || triesRemaining < 0) {
+      log.info("stopping interval");
+      stopTryPlayInterval();
+      return;
+    }
+    if (yt.value) {
+      yt.value.playVideo();
+    }
+  }, 250);
+}
+const play = (newYt: string): void => {
+  stopped.value = false;
+  if (!yt.value) {
+    toplay.value = newYt;
+  } else {
+    yt.value.cueVideoById(newYt);
+    tryPlay();
+  }
+}
+const pause = (): void => {
+  if (yt.value) {
+    yt.value.pauseVideo();
+  }
+}
+const unpause = (): void => {
+  stopped.value = false;
+  if (yt.value) {
+    tryPlay();
+  }
+}
+const setVolume = (volume: number): void => {
+  if (!yt.value) {
+    tovolume.value = volume;
+  } else {
+    yt.value.setVolume(volume);
+  }
+}
+const setLoop = (newLoop: boolean): void => {
+  loop.value = newLoop;
+}
+const playing = (): boolean => {
+  if (!yt.value) {
+    return false;
+  }
+  return yt.value.getPlayerState() === 1;
 }
 
-const Youtube = defineComponent({
-  props: {
-    visible: {
-      type: Boolean,
-      default: true,
-    },
-  },
-  data: (): ComponentData => ({
-    id: "",
-    yt: null,
-    loop: false,
-    toplay: null,
-    tovolume: null,
-    tryPlayInterval: null,
-    stopped: false,
-  }),
-  created() {
-    this.id = `yt-${Math.floor(
-      Math.random() * 99 + 1
-    )}-${new Date().getTime()}`;
-  },
-  async mounted() {
-    this.yt = await prepareYt(this.id);
+onMounted(async () => {
+  yt.value = await prepareYt(id);
 
-    if (this.tovolume !== null) {
-      this.yt.setVolume(this.tovolume);
-    }
-    if (this.toplay !== null) {
-      log("trying to play..");
-      this.play(this.toplay);
-    }
-    this.yt.addEventListener("onStateChange", (event) => {
+  if (tovolume.value !== null) {
+    yt.value.setVolume(tovolume.value);
+  }
+  if (toplay.value !== null) {
+    log.info("trying to play..");
+    play(toplay.value);
+  }
+  yt.value.addEventListener("onStateChange", (event) => {
+    // no knowledge about YT.PlayerState :(
+    // @ts-ignore
+    if (event.data === YT.PlayerState.CUED) {
+      tryPlay();
       // no knowledge about YT.PlayerState :(
       // @ts-ignore
-      if (event.data === YT.PlayerState.CUED) {
-        this.tryPlay();
-        // no knowledge about YT.PlayerState :(
-        // @ts-ignore
-      } else if (event.data === YT.PlayerState.ENDED) {
-        if (this.loop) {
-          this.tryPlay();
-        } else {
-          this.$emit("ended");
-        }
+    } else if (event.data === YT.PlayerState.ENDED) {
+      if (loop.value) {
+        tryPlay();
+      } else {
+        emit("ended");
       }
-    });
-  },
-  methods: {
-    getDuration(): number {
-      if (this.yt) {
-        return this.yt.getDuration();
-      }
-      return 0;
-    },
-    getCurrentTime(): number {
-      if (this.yt) {
-        return this.yt.getCurrentTime();
-      }
-      return 0;
-    },
-    getProgress(): number {
-      const d = this.getDuration();
-      const c = this.getCurrentTime();
-      return d ? c / d : 0;
-    },
-    stop(): void {
-      this.stopped = true
-      this.stopTryPlayInterval()
-      if (this.yt) {
-        this.yt.stopVideo()
-      }
-    },
-    stopTryPlayInterval(): void {
-      if (this.tryPlayInterval) {
-        clearInterval(this.tryPlayInterval);
-        this.tryPlayInterval = null;
-      }
-    },
-    tryPlay(): void {
-      if (this.stopped) {
-        return;
-      }
-      this.stopTryPlayInterval();
-      if (!this.visible) {
-        return;
-      }
-      if (this.yt) {
-        this.yt.playVideo();
-      }
+    }
+  });
+})
 
-      let triesRemaining = 20;
-      this.tryPlayInterval = setInterval(() => {
-        log("playing", this.playing(), "triesRemaining", triesRemaining);
-        --triesRemaining;
-        if (this.playing() || triesRemaining < 0) {
-          log("stopping interval");
-          this.stopTryPlayInterval();
-          return;
-        }
-        if (this.yt) {
-          this.yt.playVideo();
-        }
-      }, 250);
-    },
-    play(yt: string): void {
-      this.stopped = false;
-      if (!this.yt) {
-        this.toplay = yt;
-      } else {
-        this.yt.cueVideoById(yt);
-        this.tryPlay();
-      }
-    },
-    pause(): void {
-      if (this.yt) {
-        this.yt.pauseVideo();
-      }
-    },
-    unpause(): void {
-      this.stopped = false;
-      if (this.yt) {
-        this.tryPlay();
-      }
-    },
-    setVolume(volume: number): void {
-      if (!this.yt) {
-        this.tovolume = volume;
-      } else {
-        this.yt.setVolume(volume);
-      }
-    },
-    setLoop(loop: boolean): void {
-      this.loop = loop;
-    },
-    playing(): boolean {
-      if (!this.yt) {
-        return false;
-      }
-      return this.yt.getPlayerState() === 1;
-    },
-  },
-});
-export type YoutubeInstance = InstanceType<typeof Youtube>
-export default Youtube
+defineExpose({
+  stop,
+  play,
+  pause,
+  unpause,
+  setVolume,
+  setLoop,
+  playing,
+  getProgress,
+})
 </script>

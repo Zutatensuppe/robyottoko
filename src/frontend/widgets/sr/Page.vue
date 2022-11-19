@@ -22,7 +22,7 @@
           :style="progressValueStyle"
         />
       </div>
-      <Youtube
+      <YoutubePlayer
         ref="player"
         @ended="ended"
       />
@@ -48,7 +48,6 @@ import ListItem from "./components/ListItem.vue"
 import ResponsiveImage from './../../components/ResponsiveImage.vue'
 import util, { WidgetApiData } from "../util"
 import WsClient from "../../WsClient"
-import Youtube, { YoutubeInstance } from "../../components/YoutubePlayer.vue"
 import {
   default_custom_css_preset,
   default_settings,
@@ -56,6 +55,7 @@ import {
   SongRequestModuleFilter,
   SongrequestModuleSettings,
 } from "../../../mod/modules/SongrequestModuleCommon"
+import YoutubePlayer from "../../components/YoutubePlayer.vue"
 
 import("./main.scss")
 
@@ -67,7 +67,7 @@ const props = defineProps<{
 
 let ws: WsClient | null = null
 
-const player = ref<YoutubeInstance>() as Ref<YoutubeInstance>
+const player = ref<InstanceType<typeof YoutubePlayer>>() as Ref<InstanceType<typeof YoutubePlayer>>
 const filter = ref<SongRequestModuleFilter>({ tag: "" })
 const hasPlayed = ref<boolean>(false)
 const playlist = ref<PlaylistItem[]>([])

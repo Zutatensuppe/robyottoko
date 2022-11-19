@@ -156,101 +156,73 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from "vue";
-import fn from "../../../common/fn";
+<script setup lang="ts">
 import { CountdownAction, CountdownCommandData, DragEndEvent, MediaFile, SoundMediaFile } from "../../../types";
-import {
-  newCountdownDelay,
-  newCountdownText,
-  newCountdownMedia,
-} from "../../../common/commands";
-import StringInput from "../StringInput.vue";
-import SoundUpload from "../SoundUpload.vue";
-import ImageUpload from "../ImageUpload.vue";
+import { newCountdownDelay, newCountdownText, newCountdownMedia } from "../../../common/commands";
+import { ref, watch } from "vue";
 import DurationInput from "../DurationInput.vue";
+import fn from "../../../common/fn";
+import ImageUpload from "../ImageUpload.vue";
+import SoundUpload from "../SoundUpload.vue";
+import StringInput from "../StringInput.vue";
 
-interface ComponentData {
-  countdown: {
-    type: string
+const props = withDefaults(defineProps<{
+  modelValue: CountdownCommandData,
+  baseVolume?: number,
+}>(), {
+  baseVolume: 100,
+})
 
-    // settings for manual
-    actions: CountdownAction[]
+const countdown = ref<CountdownCommandData>({
+  // old countdowns are automatic
+  type: props.modelValue.type || "auto",
+  // settings for manual
+  actions: props.modelValue.actions || [],
+  step: props.modelValue.step,
+  // settings for auto (old style)
+  steps: props.modelValue.steps,
+  interval: props.modelValue.interval,
+  intro: props.modelValue.intro,
+  outro: props.modelValue.outro,
+})
 
-    // settings for auto (old style)
-    steps: string | number,
-    interval: string | number, // can be human readable string
-    intro: string,
-    outro: string,
-  },
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: CountdownCommandData): void
+}>()
+
+watch(countdown, () => {
+  emit("update:modelValue", {
+    type: countdown.value.type,
+    actions: countdown.value.actions,
+    step: countdown.value.step,
+    steps: countdown.value.steps,
+    interval: countdown.value.interval,
+    intro: countdown.value.intro,
+    outro: countdown.value.outro,
+  });
+}, { deep: true });
+
+const dragEnd = (evt: DragEndEvent): void => {
+  countdown.value.actions = fn.arrayMove(countdown.value.actions, evt.oldIndex, evt.newIndex);
 }
-
-export default defineComponent({
-    components: { StringInput, SoundUpload, ImageUpload, DurationInput },
-    props: {
-        baseVolume: {
-            default: 100,
-        },
-        modelValue: {
-            type: Object as PropType<CountdownCommandData>,
-            required: true,
-        },
-    },
-    data: (): ComponentData => ({
-        countdown: {
-            type: "manual",
-            // settings for manual
-            actions: [] as CountdownAction[],
-            // settings for auto (old style)
-            steps: 3,
-            interval: 1000,
-            intro: "",
-            outro: "",
-        },
-    }),
-    created() {
-        // old countdowns are automatic
-        this.countdown.type = this.modelValue.type || "auto";
-        this.countdown.actions = this.modelValue.actions || [];
-        this.countdown.steps = this.modelValue.steps;
-        this.countdown.interval = this.modelValue.interval;
-        this.countdown.intro = this.modelValue.intro;
-        this.countdown.outro = this.modelValue.outro;
-        this.$watch("countdown", () => {
-            this.$emit("update:modelValue", {
-                type: this.countdown.type,
-                actions: this.countdown.actions,
-                steps: this.countdown.steps,
-                interval: this.countdown.interval,
-                intro: this.countdown.intro,
-                outro: this.countdown.outro,
-            });
-        }, { deep: true });
-    },
-    methods: {
-        dragEnd(evt: DragEndEvent): void {
-            this.countdown.actions = fn.arrayMove(this.countdown.actions, evt.oldIndex, evt.newIndex);
-        },
-        onAddDelay(): void {
-            this.countdown.actions.push(newCountdownDelay());
-        },
-        onAddText(): void {
-            this.countdown.actions.push(newCountdownText());
-        },
-        onAddMedia(): void {
-            this.countdown.actions.push(newCountdownMedia());
-        },
-        rmaction(idx: number): void {
-            this.countdown.actions = this.countdown.actions.filter((_val: CountdownAction, index: number) => index !== idx);
-        },
-        mediaSndChanged(idx: number, file: SoundMediaFile): void {
-            // @ts-ignore
-            this.countdown.actions[idx].value.sound = file;
-        },
-        mediaImgChanged(idx: number, file: MediaFile): void {
-            // @ts-ignore
-            this.countdown.actions[idx].value.image = file;
-        },
-    }
-});
+const onAddDelay = (): void => {
+  countdown.value.actions.push(newCountdownDelay());
+}
+const onAddText = (): void => {
+  countdown.value.actions.push(newCountdownText());
+}
+const onAddMedia = (): void => {
+  countdown.value.actions.push(newCountdownMedia());
+}
+const rmaction = (idx: number): void => {
+  countdown.value.actions = countdown.value.actions.filter((_val: CountdownAction, index: number) => index !== idx);
+}
+const mediaSndChanged = (idx: number, file: SoundMediaFile): void => {
+  // @ts-ignore
+  countdown.value.actions[idx].value.sound = file;
+}
+const mediaImgChanged = (idx: number, file: MediaFile): void => {
+  // @ts-ignore
+  countdown.value.actions[idx].value.image = file;
+}
 </script>

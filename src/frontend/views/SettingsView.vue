@@ -118,106 +118,83 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from "vue";
 import api from "../api";
-import conf from "../conf";
-import twitch from "../twitch";
 import StringInput from "../components/StringInput.vue";
 import NavbarElement from "../components/NavbarElement.vue";
+import { useRouter } from 'vue-router'
 
-interface ComponentData {
-  unchangedJson: string
-  changedJson: string
-  user: {
-    id: number
-    twitch_id: string
-    twitch_login: string
-    name: string
-    email: string
-    groups: string[]
-    tmi_identity_client_id: string
-    tmi_identity_client_secret: string
-    tmi_identity_password: string
-    tmi_identity_username: string
-    bot_enabled: boolean
-    bot_status_messages: boolean
-  };
+const router = useRouter()
+
+const unchangedJson = ref<string>("[]")
+const changedJson = ref<string>("[]")
+const user = ref<{
+  id: number
+  twitch_id: string
+  twitch_login: string
+  name: string
+  email: string
+  groups: string[]
+  tmi_identity_client_id: string
+  tmi_identity_client_secret: string
+  tmi_identity_password: string
+  tmi_identity_username: string
+  bot_enabled: boolean
+  bot_status_messages: boolean
+}>({
+  id: 0,
+  twitch_id: '',
+  twitch_login: '',
+  name: "",
+  email: "",
+  groups: [],
+  tmi_identity_client_id: "",
+  tmi_identity_client_secret: "",
+  tmi_identity_password: "",
+  tmi_identity_username: "",
+  bot_enabled: false,
+  bot_status_messages: false,
+})
+
+const isAdmin = computed(() => {
+  return user.value.groups.includes("admin");
+})
+
+const changed = computed(() => {
+  return unchangedJson.value !== changedJson.value;
+})
+
+const setChanged = () => {
+  changedJson.value = JSON.stringify({
+    user: user.value,
+  });
+}
+const setUnchanged = () => {
+  unchangedJson.value = JSON.stringify({
+    user: user.value,
+  });
+  changedJson.value = unchangedJson.value;
+}
+const sendSave = async () => {
+  await api.saveUserSettings({
+    user: user.value,
+  });
+  setUnchanged();
 }
 
-export default defineComponent({
-  components: { StringInput, NavbarElement },
-  data: (): ComponentData => ({
-    unchangedJson: "[]",
-    changedJson: "[]",
-    user: {
-      id: 0,
-      twitch_id: '',
-      twitch_login: '',
-      name: "",
-      email: "",
-      groups: [],
-      tmi_identity_client_id: "",
-      tmi_identity_client_secret: "",
-      tmi_identity_password: "",
-      tmi_identity_username: "",
-      bot_enabled: false,
-      bot_status_messages: false,
-    },
-  }),
-  computed: {
-    isAdmin() {
-      return this.user.groups.includes("admin");
-    },
-    changed() {
-      return this.unchangedJson !== this.changedJson;
-    },
-    accessTokenLink() {
-      const twitchClientId = this.isAdmin
-         ? this.user.tmi_identity_client_id || conf.getConf().twitchClientId
-         : conf.getConf().twitchClientId
-      return twitch.accessTokenLink(twitchClientId)
-    },
-  },
-  watch: {
-    user: {
-      deep: true,
-      handler() {
-        this.setChanged();
-      },
-    },
-  },
-  async mounted() {
-    const res = await api.getPageSettingsData();
-    if (res.status !== 200) {
-      this.$router.push({ name: "login" });
-      return;
-    }
-    const data = await res.json();
-    this.user = data.user;
-    this.setUnchanged();
-  },
-  methods: {
-    openAuth() {
-      window.open(this.accessTokenLink);
-    },
-    setChanged() {
-      this.changedJson = JSON.stringify({
-        user: this.user,
-      });
-    },
-    setUnchanged() {
-      this.unchangedJson = JSON.stringify({
-        user: this.user,
-      });
-      this.changedJson = this.unchangedJson;
-    },
-    async sendSave() {
-      await api.saveUserSettings({
-        user: this.user,
-      });
-      this.setUnchanged();
-    },
+watch(user, () => {
+  setChanged()
+}, { deep: true })
+
+onMounted(async () => {
+  const res = await api.getPageSettingsData();
+  if (res.status !== 200) {
+    router.push({ name: "login" });
+    return;
   }
-});
+  const data = await res.json();
+  user.value = data.user;
+  setUnchanged();
+})
 </script>

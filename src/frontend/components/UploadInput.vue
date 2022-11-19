@@ -20,66 +20,66 @@
   </label>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { computed, ref } from "vue";
 import { UploadedFile } from "../../types";
 import api from "../api";
 
-const Upload = defineComponent({
-  props: {
-    accept: String,
-    label: {
-      type: String,
-      default: "Upload File",
-    },
-  },
-  data: () => ({
-    uploading: false,
-    progress: 0,
-  }),
-  computed: {
-    uploadPercent() {
-      return Math.round(this.progress * 100);
-    },
-    buttonText() {
-      if (!this.uploading) {
-        return this.label ? ` ${this.label}` : "";
-      }
-      return ` Uploading (${this.uploadPercent}%)`;
-    },
-    progressStyle() {
-      if (!this.uploading) {
-        return {};
-      }
-      const p = this.uploadPercent;
-      const c = "rgba(0,255,0, .5)";
-      return {
-        background: `linear-gradient(90deg, ${c} 0%, ${c} ${p}%, transparent ${p}%)`,
-      };
-    },
-  },
-  methods: {
-    async uploadFile(file: File) {
-      this.uploading = true;
-      const res = await api.upload(file, (progressEvt) => {
-        this.progress = progressEvt.loaded / progressEvt.total;
-      });
-      this.uploading = false;
-      const uploadedFile: UploadedFile = await res.json();
-      this.$emit("uploaded", uploadedFile);
-    },
-    async upload(evt: Event) {
-      const input = evt.target as HTMLInputElement
-      if (!input.files || input.files.length === 0) {
-        return;
-      }
-      this.uploadFile(input.files[0]);
-    },
-  },
-});
+const props = withDefaults(defineProps<{
+  accept: string
+  label?: string
+}>(), {
+  label: 'Upload File',
+})
 
-export type UploadInstance = InstanceType<typeof Upload>
-export default Upload
+const emit = defineEmits<{
+  (e: 'uploaded', val: UploadedFile): void
+}>()
+
+const uploading = ref<boolean>(false)
+const progress = ref<number>(0)
+
+const uploadPercent = computed(() => {
+  return Math.round(progress.value * 100);
+})
+const buttonText = computed(() => {
+  if (!uploading.value) {
+    return props.label ? ` ${props.label}` : "";
+  }
+  return ` Uploading (${uploadPercent.value}%)`;
+})
+const progressStyle = computed(() => {
+  if (!uploading.value) {
+    return {};
+  }
+  const p = uploadPercent.value;
+  const c = "rgba(0,255,0, .5)";
+  return {
+    background: `linear-gradient(90deg, ${c} 0%, ${c} ${p}%, transparent ${p}%)`,
+  };
+})
+
+
+const uploadFile = async (file: File) => {
+  uploading.value = true;
+  const res = await api.upload(file, (progressEvt) => {
+    progress.value = progressEvt.loaded / progressEvt.total;
+  });
+  uploading.value = false;
+  const uploadedFile: UploadedFile = await res.json();
+  emit("uploaded", uploadedFile);
+}
+const upload = async (evt: Event) => {
+  const input = evt.target as HTMLInputElement
+  if (!input.files || input.files.length === 0) {
+    return;
+  }
+  uploadFile(input.files[0]);
+}
+
+defineExpose({
+  uploadFile,
+})
 </script>
 
 <style lang="scss" scoped>

@@ -37,31 +37,27 @@
     </tr>
   </table>
 </template>
-<script lang="ts">
-import { defineComponent, PropType } from "vue";
+<script setup lang="ts">
+import { ref } from "vue";
 import { TagInfo } from "../../../mod/modules/SongrequestModuleCommon";
 
-interface ComponentData {
-  editTag: string
-  tagEditIdx: number
+const editTag = ref<string>('')
+const tagEditIdx = ref<number>(-1)
+
+defineProps<{
+  tags: TagInfo[]
+}>()
+
+const emit = defineEmits<{
+  (e: 'updateTag', val: [string, string]): void
+}>()
+
+const onInputFocus = (tag: TagInfo, idx: number) => {
+  editTag.value = tag.value;
+  tagEditIdx.value = idx;
 }
 
-export default defineComponent({
-  props: {
-    tags: Array as PropType<TagInfo[]>,
-  },
-  data: (): ComponentData => ({
-    editTag: "",
-    tagEditIdx: -1,
-  }),
-  methods: {
-    onInputFocus(tag: TagInfo, idx: number) {
-      this.editTag = tag.value;
-      this.tagEditIdx = idx;
-    },
-    updateTag(oldTag: string, newTag: string) {
-      this.$emit("updateTag", [oldTag, newTag]);
-    },
-  },
-});
+const updateTag = (oldTag: string, newTag: string) => {
+  emit("updateTag", [oldTag, newTag]);
+}
 </script>

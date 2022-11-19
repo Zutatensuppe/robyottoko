@@ -36,88 +36,75 @@
     />
   </div>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
-import { soundMediaFileFromUploadedFile } from "../../common/fn";
-import { SoundMediaFile, UploadedFile } from "../../types";
-import { getFileFromDropEvent } from "../util";
-import UploadInput, { UploadInstance } from "./UploadInput.vue";
-import AudioPlayer from "./AudioPlayer.vue";
-import VolumeSlider from "./VolumeSlider.vue";
+<script setup lang="ts">
+import { getFileFromDropEvent } from "../util"
+import { Ref, ref } from "vue"
+import { SoundMediaFile, UploadedFile } from "../../types"
+import { soundMediaFileFromUploadedFile } from "../../common/fn"
+import AudioPlayer from "./AudioPlayer.vue"
+import UploadInput from "./UploadInput.vue"
+import VolumeSlider from "./VolumeSlider.vue"
 
-interface ComponentData {
-  value: SoundMediaFile;
-  draggingOver: boolean;
+const props = withDefaults(defineProps<{
+  modelValue: SoundMediaFile | null
+  baseVolume?: number
+}>(), {
+  baseVolume: 100,
+})
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: SoundMediaFile): void
+}>()
+
+const value = ref<SoundMediaFile>(
+  props.modelValue
+    ? JSON.parse(JSON.stringify(props.modelValue))
+    : { file: "", filename: "", urlpath: "", volume: 100 }
+)
+const draggingOver = ref<boolean>(false)
+
+const uploadComponent = ref<InstanceType<typeof UploadInput>>() as Ref<InstanceType<typeof UploadInput>>
+
+const emitUpdate = () => {
+  emit("update:modelValue", JSON.parse(JSON.stringify(value.value)))
 }
 
-export default defineComponent({
-  components: { AudioPlayer, UploadInput, VolumeSlider },
-  props: {
-    modelValue: {
-      /* type: Object as PropType<SoundMediaFile | null>, */ required: true,
-    },
-    baseVolume: { default: 100 },
-  },
-  emits: ["update:modelValue"],
-  data(): ComponentData {
-    return {
-      value: {
-        file: "",
-        filename: "",
-        urlpath: "",
-        volume: 100,
-      },
-      draggingOver: false,
-    };
-  },
-  computed: {
-    uploadComponent(): UploadInstance {
-      return this.$refs.uploadComponent as UploadInstance
-    },
-  },
-  created() {
-    if (this.modelValue !== null) {
-      this.value = JSON.parse(JSON.stringify(this.modelValue));
-    }
-  },
-  methods: {
-    emitUpdate() {
-      this.$emit("update:modelValue", JSON.parse(JSON.stringify(this.value)));
-    },
-    onRemove() {
-      this.value = { file: "", filename: "", urlpath: "", volume: 100 };
-      this.emitUpdate();
-    },
-    onUploaded(file: UploadedFile) {
-      this.value = soundMediaFileFromUploadedFile(file);
-      this.emitUpdate();
-    },
-    onDrop(e: any) {
-      this.draggingOver = false;
-      e.preventDefault();
-      e.stopPropagation();
+const onRemove = () => {
+  value.value = { file: "", filename: "", urlpath: "", volume: 100 }
+  emitUpdate()
+}
 
-      const file = getFileFromDropEvent(e)
-      if (file) {
-        this.value.file = "";
-        this.uploadComponent.uploadFile(file);
-      }
-      return false;
-    },
-    onDragover(e: any) {
-      this.draggingOver = true;
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    },
-    onDragleave(e: any) {
-      this.draggingOver = false;
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    },
-  },
-});
+const onUploaded = (file: UploadedFile) => {
+  value.value = soundMediaFileFromUploadedFile(file)
+  emitUpdate()
+}
+
+const onDrop = (e: any) => {
+  draggingOver.value = false
+  e.preventDefault()
+  e.stopPropagation()
+
+  const file = getFileFromDropEvent(e)
+  if (file) {
+    value.value.file = ""
+    uploadComponent.value.uploadFile(file)
+  }
+  return false
+}
+
+const onDragover = (e: any) => {
+  draggingOver.value = true
+  e.preventDefault()
+  e.stopPropagation()
+  return false
+}
+
+const onDragleave = (e: any) => {
+  draggingOver.value = false
+  e.preventDefault()
+  e.stopPropagation()
+  return false
+}
 </script>
 <style scoped>
 .sound-upload {
