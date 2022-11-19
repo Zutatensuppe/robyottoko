@@ -206,87 +206,73 @@
     </div>
   </div>
 </template>
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import util from "../util";
 import {
+  default_notification,
+  default_settings,
+  PomoModuleSettings,
   PomoModuleWsDataData,
   PomoModuleWsSaveData,
-  default_settings,
-  default_notification,
 } from "../../mod/modules/PomoModuleCommon";
 import WsClient from "../WsClient";
 import StringInput from "../components/StringInput.vue";
 import SoundUpload from "../components/SoundUpload.vue";
 import DurationInput from "../components/DurationInput.vue";
 import NavbarElement from "../components/NavbarElement.vue";
+import CheckboxInput from "../components/CheckboxInput.vue";
 
-export default defineComponent({
-  components: { StringInput, SoundUpload, DurationInput, NavbarElement },
-  data: () => ({
-    unchangedJson: "{}",
-    changedJson: "{}",
-    settings: default_settings(),
-    inited: false,
-    ws: null as WsClient | null,
-    widgetUrl: "",
-  }),
-  computed: {
-    changed(): boolean {
-      return this.unchangedJson !== this.changedJson;
-    },
-  },
-  watch: {
-    settings: {
-      deep: true,
-      handler(ch) {
-        this.changedJson = JSON.stringify(ch);
-      },
-    },
-  },
-  async mounted() {
-    this.ws = util.wsClient("pomo");
-    this.ws.onMessage("init", (data: PomoModuleWsDataData) => {
-      this.settings = data.settings;
-      this.unchangedJson = JSON.stringify(data.settings);
-      this.widgetUrl = data.widgetUrl;
-      this.inited = true;
-    });
-    this.ws.connect();
-  },
-  unmounted() {
-    if (this.ws) {
-      this.ws.disconnect();
-    }
-  },
-  methods: {
-    sendMsg(data: PomoModuleWsSaveData) {
-      if (!this.ws) {
-        console.warn("sendMsg: this.ws not initialized");
-        return;
-      }
-      this.ws.send(JSON.stringify(data));
-    },
-    sendSave() {
-      if (!this.settings) {
-        console.warn("sendSave: this.settings not initialized");
-        return;
-      }
-      this.sendMsg({
-        event: "save",
-        settings: this.settings,
-      });
-    },
-    addNotification() {
-      this.settings.notifications.push(default_notification());
-    },
-    removeNotification(idx: number) {
-      if (!this.settings) {
-        console.warn("remove: this.settings not initialized");
-        return;
-      }
-      this.settings.notifications = this.settings.notifications.filter((val, index) => index !== idx);
-    },
+let ws: WsClient | null = null
+const unchangedJson = ref<string>("{}")
+const changedJson = ref<string>("{}")
+const settings = ref<PomoModuleSettings>(default_settings())
+const inited = ref<boolean>(false)
+const widgetUrl = ref<string>("")
+
+const changed = computed((): boolean => unchangedJson.value !== changedJson.value)
+
+const sendMsg = (data: PomoModuleWsSaveData) => {
+  if (!ws) {
+    console.warn("sendMsg: ws not initialized");
+    return;
   }
-});
+  ws.send(JSON.stringify(data));
+}
+
+const sendSave = () => {
+  sendMsg({
+    event: "save",
+    settings: settings.value,
+  });
+}
+
+const addNotification = () => {
+  settings.value.notifications.push(default_notification());
+}
+
+const removeNotification = (idx: number) => {
+  settings.value.notifications = settings.value.notifications.filter((val, index) => index !== idx);
+}
+
+watch(settings, (val) => {
+  changedJson.value = JSON.stringify(val);
+}, { deep: true })
+
+onMounted(() => {
+  ws = util.wsClient("pomo");
+  ws.onMessage("init", (data: PomoModuleWsDataData) => {
+    settings.value = data.settings;
+    unchangedJson.value = JSON.stringify(data.settings);
+    widgetUrl.value = data.widgetUrl;
+    inited.value = true;
+  });
+  ws.connect();
+})
+
+onUnmounted(() => {
+  if (ws) {
+    ws.disconnect();
+  }
+})
 </script>
