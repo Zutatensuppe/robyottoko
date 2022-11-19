@@ -41,7 +41,7 @@ import { onMounted, Ref, ref, watch } from "vue";
 import { AvatarModuleAnimationFrameDefinition } from "../../../mod/modules/AvatarModuleCommon";
 import { UploadedFile } from "../../../types";
 import { getFileFromDropEvent } from "../../util";
-import UploadInput, { UploadInstance } from "../UploadInput.vue";
+import UploadInput from "../UploadInput.vue";
 import IntegerInput from "../IntegerInput.vue";
 
 const props = defineProps<{
@@ -56,7 +56,7 @@ const value = ref<AvatarModuleAnimationFrameDefinition>({
   duration: 100,
 })
 const draggingOver = ref<boolean>(false)
-const uploadComponent = ref<UploadInstance>() as Ref<UploadInstance>
+const uploadComponent = ref<InstanceType<typeof UploadInput>>() as Ref<InstanceType<typeof UploadInput>>
 
 const applyValue = () => {
   value.value = props.modelValue !== null

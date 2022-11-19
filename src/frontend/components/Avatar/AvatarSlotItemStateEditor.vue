@@ -57,11 +57,11 @@ import {
   AvatarModuleSlotItemStateDefinition,
   AvatarModuleAnimationFrameDefinition,
 } from "../../../mod/modules/AvatarModuleCommon";
-import { MediaFile } from "../../../types";
 import { getFileFromDropEvent } from "../../util";
-import UploadInput, { UploadInstance } from "../UploadInput.vue";
+import { UploadedFile } from "../../../types";
 import AvatarAnimation from "./AvatarAnimation.vue";
 import AvatarFrameUpload from "./AvatarFrameUpload.vue";
+import UploadInput from "../UploadInput.vue";
 
 const props = defineProps<{
   modelValue: AvatarModuleSlotItemStateDefinition
@@ -70,7 +70,7 @@ const props = defineProps<{
 
 const draggingOver = ref<boolean>(false)
 
-const uploadComponent = ref<UploadInstance>() as Ref<UploadInstance>
+const uploadComponent = ref<InstanceType<typeof UploadInput>>() as Ref<InstanceType<typeof UploadInput>>
 
 const onDragOver = (e: DragEvent) => {
   draggingOver.value = true
@@ -112,12 +112,13 @@ const onDrop = (e: DragEvent): void => {
     }
   }
 }
-const onUploaded = (file: MediaFile) => {
+const onUploaded = (file: UploadedFile): void => {
   props.modelValue.frames.push({
     url: file.urlpath,
     duration: 100,
   });
 }
+
 const frameChanged = (idx: number, frame: AvatarModuleAnimationFrameDefinition) => {
   if (frame.url === "") {
     props.modelValue.frames = props.modelValue.frames.filter((_val, index: number) => index !== idx);

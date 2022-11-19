@@ -42,7 +42,7 @@ import { Ref, ref } from "vue"
 import { SoundMediaFile, UploadedFile } from "../../types"
 import { soundMediaFileFromUploadedFile } from "../../common/fn"
 import AudioPlayer from "./AudioPlayer.vue"
-import UploadInput, { UploadInstance } from "./UploadInput.vue"
+import UploadInput from "./UploadInput.vue"
 import VolumeSlider from "./VolumeSlider.vue"
 
 const props = withDefaults(defineProps<{
@@ -63,7 +63,7 @@ const value = ref<SoundMediaFile>(
 )
 const draggingOver = ref<boolean>(false)
 
-const uploadComponent = ref<UploadInstance>() as Ref<UploadInstance>
+const uploadComponent = ref<InstanceType<typeof UploadInput>>() as Ref<InstanceType<typeof UploadInput>>
 
 const emitUpdate = () => {
   emit("update:modelValue", JSON.parse(JSON.stringify(value.value)))
