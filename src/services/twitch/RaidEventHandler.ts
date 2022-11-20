@@ -34,7 +34,7 @@ export class RaidEventHandler extends EventSubEventHandler<RaidEvent> {
       args: [],
     }
 
-    const { mod, subscriber } = await getUserTypeInfo(bot, user, data.event.from_broadcaster_user_id)
+    const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.from_broadcaster_user_id)
     const target = data.event.to_broadcaster_user_name
     const context: TwitchChatContext = {
       "room-id": data.event.to_broadcaster_user_id,
@@ -43,7 +43,7 @@ export class RaidEventHandler extends EventSubEventHandler<RaidEvent> {
       username: data.event.from_broadcaster_user_login,
       mod,
       subscriber,
-      badges: {},
+      badges: { vip: vip ? '1' : undefined }, // not sure what to put in there
     }
     const trigger = newRaidTrigger()
     const exec = new CommandExecutor()

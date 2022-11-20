@@ -25,9 +25,9 @@ export class ChatLogRepo extends Repo {
   async insert(context: TwitchChatContext, msg: string) {
     await this.db.insert<RowIn>(TABLE, {
       created_at: new Date(),
-      broadcaster_user_id: context['room-id'],
-      user_name: context.username,
-      display_name: context['display-name'],
+      broadcaster_user_id: context['room-id'] || '',
+      user_name: context.username || '',
+      display_name: context['display-name'] || '',
       message: msg,
     })
   }

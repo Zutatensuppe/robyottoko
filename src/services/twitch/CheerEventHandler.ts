@@ -35,7 +35,7 @@ export class CheerEventHandler extends EventSubEventHandler<CheerEvent> {
       args: [],
     }
 
-    const { mod, subscriber } = await getUserTypeInfo(bot, user, data.event.user_id)
+    const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.user_id)
     const target = data.event.broadcaster_user_name
     const context: TwitchChatContext = {
       "room-id": data.event.broadcaster_user_id,
@@ -44,7 +44,7 @@ export class CheerEventHandler extends EventSubEventHandler<CheerEvent> {
       username: data.event.user_login,
       mod,
       subscriber,
-      badges: {},
+      badges: { vip: vip ? '1' : undefined }, // not sure what to put in there
     }
     const trigger = newBitsTrigger()
     const exec = new CommandExecutor()

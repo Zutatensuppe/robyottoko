@@ -57,7 +57,7 @@ const sayFn = (
     // in case no target is given we use the configured channels
     // we should be able to use client.channels or client.getChannels()
     // but they are always empty :/
-    const targets = target ? [target] : client.opts.channels
+    const targets = target ? [target] : (client.getOptions().channels || [])
     targets.forEach(t => {
       // TODO: fix this somewhere else?
       // client can only say things in lowercase channels
@@ -830,7 +830,7 @@ export const doReplacements = async (
           return ''
         }
 
-        const username = m1 || m2 || context.username
+        const username = m1 || m2 || context.username || ''
         if (username === context.username && m3 === 'name') {
           return String(context['display-name'])
         }
@@ -1227,8 +1227,8 @@ export const getUserTypeInfo = async (
   bot: Bot,
   user: User,
   userId: string,
-): Promise<{ mod: boolean, subscriber: boolean }> => {
-  const info = { mod: false, subscriber: false }
+): Promise<{ mod: boolean, subscriber: boolean, vip: boolean }> => {
+  const info = { mod: false, subscriber: false, vip: false }
   const helixClient = bot.getUserTwitchClientManager(user).getHelixClient()
   if (!helixClient) {
     return info
@@ -1241,6 +1241,7 @@ export const getUserTypeInfo = async (
 
   info.mod = await helixClient.isUserModerator(accessToken, user.twitch_id, userId)
   info.subscriber = await helixClient.isUserSubscriber(accessToken, user.twitch_id, userId)
+  info.vip = await helixClient.isUserVip(accessToken, user.twitch_id, userId)
   return info
 }
 

@@ -711,7 +711,7 @@ class Widgets {
     }
 }
 
-const log$p = logger("WebSocketServer.ts");
+const log$q = logger("WebSocketServer.ts");
 const determineUserIdAndModuleName = async (basePath, requestUrl, socket, bot) => {
     const relativePath = requestUrl.substring(basePath.length) || '';
     const relpath = withoutLeading(relativePath, '/');
@@ -742,24 +742,24 @@ class WebSocketServer {
             const { userId, moduleName } = await determineUserIdAndModuleName(basePath, requestUrl, socket, bot);
             socket.user_id = userId;
             socket.module = moduleName;
-            log$p.info({
+            log$q.info({
                 moduleName,
                 socket: { protocol: socket.protocol },
             }, 'added socket');
-            log$p.info({
+            log$q.info({
                 count: this.sockets().filter(s => s.module === socket.module).length,
             }, 'socket_count');
             socket.on('close', () => {
-                log$p.info({
+                log$q.info({
                     moduleName,
                     socket: { protocol: socket.protocol },
                 }, 'removed socket');
-                log$p.info({
+                log$q.info({
                     count: this.sockets().filter(s => s.module === socket.module).length,
                 }, 'socket count');
             });
             if (!socket.user_id) {
-                log$p.info({
+                log$q.info({
                     requestUrl,
                     socket: { protocol: socket.protocol },
                 }, 'not found token');
@@ -767,7 +767,7 @@ class WebSocketServer {
                 return;
             }
             if (!socket.module) {
-                log$p.info({ requestUrl }, 'bad request url');
+                log$q.info({ requestUrl }, 'bad request url');
                 socket.close();
                 return;
             }
@@ -798,7 +798,7 @@ class WebSocketServer {
                     }
                 }
                 catch (e) {
-                    log$p.error({ e }, 'socket on message');
+                    log$q.error({ e }, 'socket on message');
                 }
             });
         });
@@ -807,7 +807,7 @@ class WebSocketServer {
         return !!this.sockets().find(s => s.user_id === user_id);
     }
     _notify(socket, data) {
-        log$p.info({ user_id: socket.user_id, module: socket.module, event: data.event }, 'notifying');
+        log$q.info({ user_id: socket.user_id, module: socket.module, event: data.event }, 'notifying');
         socket.send(JSON.stringify(data));
     }
     notifyOne(user_ids, moduleName, data, socket) {
@@ -819,7 +819,7 @@ class WebSocketServer {
             this._notify(socket, data);
         }
         else {
-            log$p.error({
+            log$q.error({
                 socket: {
                     user_id: socket.user_id,
                     module: socket.module,
@@ -1068,7 +1068,7 @@ var Madochan = {
     defaultWeirdness: 1,
 };
 
-const log$o = logger('fn.ts');
+const log$p = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
         return mime.replace('image/', '');
@@ -1098,14 +1098,14 @@ const sayFn = (client, target) => (msg) => {
     // in case no target is given we use the configured channels
     // we should be able to use client.channels or client.getChannels()
     // but they are always empty :/
-    const targets = target ? [target] : client.opts.channels;
+    const targets = target ? [target] : (client.getOptions().channels || []);
     targets.forEach(t => {
         // TODO: fix this somewhere else?
         // client can only say things in lowercase channels
         t = t.toLowerCase();
-        log$o.info(`saying in ${t}: ${msg}`);
+        log$p.info(`saying in ${t}: ${msg}`);
         client.say(t, msg).catch((e) => {
-            log$o.info(e);
+            log$p.info(e);
         });
     });
 };
@@ -1166,14 +1166,14 @@ const downloadVideo = async (originalUrl) => {
     const filename = `${hash(originalUrl)}-clip.mp4`;
     const outfile = `./data/uploads/${filename}`;
     if (!fs.existsSync(outfile)) {
-        log$o.debug({ outfile }, 'downloading the video');
+        log$p.debug({ outfile }, 'downloading the video');
         const child = childProcess.execFile(config.youtubeDlBinary, [originalUrl, '-o', outfile]);
         await new Promise((resolve) => {
             child.on('close', resolve);
         });
     }
     else {
-        log$o.debug({ outfile }, 'video exists');
+        log$p.debug({ outfile }, 'video exists');
     }
     return `/uploads/${filename}`;
 };
@@ -1260,20 +1260,20 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
             const data = effect.data;
             data.image_url = await doReplaces(data.image_url);
             if (data.video.url) {
-                log$o.debug({ url: data.video.url }, 'video url is defined');
+                log$p.debug({ url: data.video.url }, 'video url is defined');
                 data.video.url = await doReplaces(data.video.url);
                 if (!data.video.url) {
-                    log$o.debug('no video url found');
+                    log$p.debug('no video url found');
                 }
                 else if (isTwitchClipUrl(data.video.url)) {
                     // video url looks like a twitch clip url, dl it first
-                    log$o.debug({ url: data.video.url }, 'twitch clip found');
+                    log$p.debug({ url: data.video.url }, 'twitch clip found');
                     data.video.url = await downloadVideo(data.video.url);
                 }
                 else {
                     // otherwise assume it is already a playable video url
                     // TODO: youtube videos maybe should also be downloaded
-                    log$o.debug('video is assumed to be directly playable via html5 video element');
+                    log$p.debug('video is assumed to be directly playable via html5 video element');
                 }
             }
             contextModule.bot.getWebSocketServer().notifyAll([contextModule.user.id], 'general', {
@@ -1300,7 +1300,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
                         }
                     }
                     catch (e) {
-                        log$o.error({ e });
+                        log$p.error({ e });
                         say(`Error occured, unable to generate a word :("`);
                     }
                 }
@@ -1310,7 +1310,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
             const setChannelTitle = async () => {
                 const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient();
                 if (!rawCmd || !context || !helixClient) {
-                    log$o.info({
+                    log$p.info({
                         rawCmd: rawCmd,
                         context: context,
                         helixClient,
@@ -1357,7 +1357,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
             const setChannelGameId = async () => {
                 const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient();
                 if (!rawCmd || !context || !helixClient) {
-                    log$o.info({
+                    log$p.info({
                         rawCmd: rawCmd,
                         context: context,
                         helixClient,
@@ -1401,7 +1401,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
             const addStreamTags = async () => {
                 const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient();
                 if (!rawCmd || !context || !helixClient) {
-                    log$o.info({
+                    log$p.info({
                         rawCmd: rawCmd,
                         context: context,
                         helixClient,
@@ -1447,7 +1447,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
                 }
                 const resp = await helixClient.replaceStreamTags(accessToken, newSettableTagIds, contextModule.bot, contextModule.user);
                 if (!resp || resp.status < 200 || resp.status >= 300) {
-                    log$o.error(resp);
+                    log$p.error(resp);
                     say(`❌ Unable to add tag: ${tagEntry.name}`);
                     return;
                 }
@@ -1459,7 +1459,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
             const removeStreamTags = async () => {
                 const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient();
                 if (!rawCmd || !context || !helixClient) {
-                    log$o.info({
+                    log$p.info({
                         rawCmd: rawCmd,
                         context: context,
                         helixClient,
@@ -1512,7 +1512,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
             const chatters = async () => {
                 const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient();
                 if (!context || !helixClient) {
-                    log$o.info({
+                    log$p.info({
                         context: context,
                         helixClient,
                     }, 'unable to execute chatters command, client, context, or helixClient missing');
@@ -1593,7 +1593,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
                             duration = (await parseDuration(`${a.value}`)) || 0;
                         }
                         catch (e) {
-                            log$o.error({ message: e.message, value: a.value });
+                            log$p.error({ message: e.message, value: a.value });
                             return;
                         }
                         actions.push(async () => await sleep(duration));
@@ -1750,7 +1750,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                 if (!context) {
                     return '';
                 }
-                const username = m1 || m2 || context.username;
+                const username = m1 || m2 || context.username || '';
                 if (username === context.username && m3 === 'name') {
                     return String(context['display-name']);
                 }
@@ -1761,7 +1761,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return String(`twitch.tv/${context.username}`);
                 }
                 if (!bot || !user) {
-                    log$o.info('no bot, no user, no watch');
+                    log$p.info('no bot, no user, no watch');
                     return '';
                 }
                 const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
@@ -1770,7 +1770,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                 }
                 const twitchUser = await getTwitchUser(username, helixClient, bot);
                 if (!twitchUser) {
-                    log$o.info('no twitch user found', username);
+                    log$p.info('no twitch user found', username);
                     return '';
                 }
                 if (m3 === 'name') {
@@ -1810,7 +1810,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return String(JSON.parse(txt)[m2]);
                 }
                 catch (e) {
-                    log$o.error(e);
+                    log$p.error(e);
                     return '';
                 }
             },
@@ -1824,7 +1824,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return await resp.text();
                 }
                 catch (e) {
-                    log$o.error(e);
+                    log$p.error(e);
                     return '';
                 }
             },
@@ -2061,13 +2061,13 @@ const extractEmotes = (context) => {
 const getChannelPointsCustomRewards = async (bot, user) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!helixClient) {
-        log$o.info('getChannelPointsCustomRewards: no helix client');
+        log$p.info('getChannelPointsCustomRewards: no helix client');
         return {};
     }
     return await helixClient.getAllChannelPointsCustomRewards(bot, user);
 };
 const getUserTypeInfo = async (bot, user, userId) => {
-    const info = { mod: false, subscriber: false };
+    const info = { mod: false, subscriber: false, vip: false };
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!helixClient) {
         return info;
@@ -2078,6 +2078,7 @@ const getUserTypeInfo = async (bot, user, userId) => {
     }
     info.mod = await helixClient.isUserModerator(accessToken, user.twitch_id, userId);
     info.subscriber = await helixClient.isUserSubscriber(accessToken, user.twitch_id, userId);
+    info.vip = await helixClient.isUserVip(accessToken, user.twitch_id, userId);
     return info;
 };
 var fn = {
@@ -2104,7 +2105,7 @@ var fn = {
     getChannelPointsCustomRewards,
 };
 
-const log$n = logger('TwitchHelixClient.ts');
+const log$o = logger('TwitchHelixClient.ts');
 const API_BASE = 'https://api.twitch.tv/helix';
 const TOKEN_ENDPOINT = 'https://id.twitch.tv/oauth2/token';
 const apiUrl = (path) => `${API_BASE}${path}`;
@@ -2122,7 +2123,7 @@ async function executeRequestWithRetry(accessToken, req, bot, user) {
     if (!newAccessToken) {
         return resp;
     }
-    log$n.warn('retrying with refreshed token');
+    log$o.warn('retrying with refreshed token');
     return await req(newAccessToken);
 }
 class TwitchHelixClient {
@@ -2152,13 +2153,13 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$n.warn({ txt }, 'unable to get access_token by code');
+                log$o.warn({ txt }, 'unable to get access_token by code');
                 return null;
             }
             return (await resp.json());
         }
         catch (e) {
-            log$n.error({ url, e });
+            log$o.error({ url, e });
             return null;
         }
     }
@@ -2174,18 +2175,18 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (resp.status === 401) {
                 const txt = await resp.text();
-                log$n.warn({ txt }, 'tried to refresh access_token with an invalid refresh token');
+                log$o.warn({ txt }, 'tried to refresh access_token with an invalid refresh token');
                 return null;
             }
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$n.warn({ txt }, 'unable to refresh access_token');
+                log$o.warn({ txt }, 'unable to refresh access_token');
                 return null;
             }
             return (await resp.json());
         }
         catch (e) {
-            log$n.error({ url, e });
+            log$o.error({ url, e });
             return null;
         }
     }
@@ -2201,14 +2202,14 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$n.warn({ txt }, 'unable to get access_token');
+                log$o.warn({ txt }, 'unable to get access_token');
                 return '';
             }
             json = (await resp.json());
             return json.access_token;
         }
         catch (e) {
-            log$n.error({ url, json, e });
+            log$o.error({ url, json, e });
             return '';
         }
     }
@@ -2223,7 +2224,7 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$n.error({ url, json, e });
+            log$o.error({ url, json, e });
             return null;
         }
     }
@@ -2237,7 +2238,7 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$n.error({ url, json, e });
+            log$o.error({ url, json, e });
             return null;
         }
     }
@@ -2250,7 +2251,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$n.error({ url, json, e });
+            log$o.error({ url, json, e });
             return null;
         }
     }
@@ -2264,7 +2265,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$n.error({ url, json, e });
+            log$o.error({ url, json, e });
             return null;
         }
     }
@@ -2299,7 +2300,7 @@ class TwitchHelixClient {
             return getRandom(filtered);
         }
         catch (e) {
-            log$n.error({ url, json, e });
+            log$o.error({ url, json, e });
             return null;
         }
     }
@@ -2322,7 +2323,7 @@ class TwitchHelixClient {
             return json.data[0] || null;
         }
         catch (e) {
-            log$n.error({ url, json, e });
+            log$o.error({ url, json, e });
             return null;
         }
     }
@@ -2333,7 +2334,7 @@ class TwitchHelixClient {
             return await resp.json();
         }
         catch (e) {
-            log$n.error({ url, e });
+            log$o.error({ url, e });
             return null;
         }
     }
@@ -2344,7 +2345,7 @@ class TwitchHelixClient {
             return await resp.text();
         }
         catch (e) {
-            log$n.error({ url, e });
+            log$o.error({ url, e });
             return null;
         }
     }
@@ -2357,7 +2358,7 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$n.error({ url, e });
+            log$o.error({ url, e });
             return null;
         }
     }
@@ -2371,7 +2372,7 @@ class TwitchHelixClient {
             return getBestEntryFromCategorySearchItems(searchString, json);
         }
         catch (e) {
-            log$n.error({ url, json });
+            log$o.error({ url, json });
             return null;
         }
     }
@@ -2385,7 +2386,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$n.error({ url, json });
+            log$o.error({ url, json });
             return null;
         }
     }
@@ -2399,7 +2400,7 @@ class TwitchHelixClient {
             return await executeRequestWithRetry(accessToken, req, bot, user);
         }
         catch (e) {
-            log$n.error({ url, e });
+            log$o.error({ url, e });
             return null;
         }
     }
@@ -2425,7 +2426,7 @@ class TwitchHelixClient {
             return (await resp.json());
         }
         catch (e) {
-            log$n.error({ url, e });
+            log$o.error({ url, e });
             return null;
         }
     }
@@ -2444,19 +2445,19 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$n.error({ url, e });
+            log$o.error({ url, e });
             return null;
         }
     }
     async getAllChannelPointsCustomRewards(bot, user) {
         const rewards = {};
         if (!user.twitch_id || !user.twitch_login) {
-            log$n.info('getAllChannelPointsCustomRewards: no twitch id and login');
+            log$o.info('getAllChannelPointsCustomRewards: no twitch id and login');
             return rewards;
         }
         const accessToken = await bot.getRepos().oauthToken.getMatchingAccessToken(user);
         if (!accessToken) {
-            log$n.info('getAllChannelPointsCustomRewards: no access token');
+            log$o.info('getAllChannelPointsCustomRewards: no access token');
             return rewards;
         }
         const res = await this.getChannelPointsCustomRewards(accessToken, user.twitch_id, bot, user);
@@ -2475,7 +2476,7 @@ class TwitchHelixClient {
             return await executeRequestWithRetry(accessToken, req, bot, user);
         }
         catch (e) {
-            log$n.error({ url, e });
+            log$o.error({ url, e });
             return null;
         }
     }
@@ -2500,7 +2501,7 @@ class TwitchHelixClient {
             return json.data.length > 0;
         }
         catch (e) {
-            log$n.error({ url, e });
+            log$o.error({ url, e });
             return false;
         }
     }
@@ -2513,7 +2514,7 @@ class TwitchHelixClient {
             return json.data.length > 0;
         }
         catch (e) {
-            log$n.error({ url, e });
+            log$o.error({ url, e });
             return false;
         }
     }
@@ -2526,13 +2527,13 @@ class TwitchHelixClient {
             return json.data.length > 0;
         }
         catch (e) {
-            log$n.error({ url, e });
+            log$o.error({ url, e });
             return false;
         }
     }
 }
 
-const log$m = logger('oauth.ts');
+const log$n = logger('oauth.ts');
 /**
  * Tries to refresh the access token and returns the new token
  * if successful, otherwise null.
@@ -2566,7 +2567,7 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
         token_type: refreshResp.token_type,
         expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
     });
-    log$m.info('tryRefreshAccessToken - refreshed an access token');
+    log$n.info('tryRefreshAccessToken - refreshed an access token');
     return refreshResp.access_token;
 };
 // TODO: check if anything has to be put in a try catch block
@@ -2613,7 +2614,7 @@ const refreshExpiredTwitchChannelAccessToken = async (bot, user) => {
         token_type: refreshResp.token_type,
         expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
     });
-    log$m.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
+    log$n.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
     return { error: false, refreshed: true };
 };
 // TODO: check if anything has to be put in a try catch block
@@ -2687,6 +2688,7 @@ const handleOAuthCodeCallback = async (code, redirectUri, bot, loggedInUser) => 
 var CommandRestrict;
 (function (CommandRestrict) {
     CommandRestrict["MOD"] = "mod";
+    CommandRestrict["VIP"] = "vip";
     CommandRestrict["SUB"] = "sub";
     CommandRestrict["BROADCASTER"] = "broadcaster";
     CommandRestrict["REGULAR"] = "regular";
@@ -2698,6 +2700,7 @@ const MOD_OR_ABOVE = [
 [
     { value: CommandRestrict.BROADCASTER, label: "Broadcaster" },
     { value: CommandRestrict.MOD, label: "Moderators" },
+    { value: CommandRestrict.VIP, label: "Vips" },
     { value: CommandRestrict.SUB, label: "Subscribers" },
     { value: CommandRestrict.REGULAR, label: "Regular Users" },
 ];
@@ -2705,6 +2708,7 @@ const isBroadcaster = (ctx) => ctx['room-id'] === ctx['user-id'];
 const isMod = (ctx) => !!ctx.mod;
 const isSubscriber = (ctx) => !!ctx.subscriber && !isBroadcaster(ctx);
 const isRegular = (ctx) => !isBroadcaster(ctx) && !isMod(ctx) && !isSubscriber(ctx);
+const isVip = (ctx) => !!ctx.badges?.vip;
 const userTypeOk = (ctx, cmd) => {
     if (!cmd.restrict_to || cmd.restrict_to.length === 0) {
         return true;
@@ -2713,6 +2717,9 @@ const userTypeOk = (ctx, cmd) => {
         return true;
     }
     if (cmd.restrict_to.includes(CommandRestrict.SUB) && isSubscriber(ctx)) {
+        return true;
+    }
+    if (cmd.restrict_to.includes(CommandRestrict.VIP) && isVip(ctx)) {
         return true;
     }
     if (cmd.restrict_to.includes(CommandRestrict.BROADCASTER) && isBroadcaster(ctx)) {
@@ -2725,11 +2732,11 @@ const userTypeOk = (ctx, cmd) => {
 };
 const userInAllowList = (ctx, cmd) => {
     // compare lowercase, otherwise may be confusing why nC_para_ doesnt disallow nc_para_
-    return arrayIncludesIgnoreCase(cmd.allow_users || [], ctx.username);
+    return arrayIncludesIgnoreCase(cmd.allow_users || [], ctx.username || '');
 };
 const userInDisallowList = (ctx, cmd) => {
     // compare lowercase, otherwise may be confusing why nC_para_ doesnt disallow nc_para_
-    return arrayIncludesIgnoreCase(cmd.disallow_users || [], ctx.username);
+    return arrayIncludesIgnoreCase(cmd.disallow_users || [], ctx.username || '');
 };
 const mayExecute = (ctx, cmd) => {
     if (typeof cmd.enabled !== 'undefined' && cmd.enabled === false) {
@@ -3094,7 +3101,7 @@ const commands = {
     },
 };
 
-const log$l = logger('CommandExecutor.ts');
+const log$m = logger('CommandExecutor.ts');
 class CommandExecutor {
     async executeMatchingCommands(bot, user, rawCmd, target, context, triggers, date) {
         const promises = [];
@@ -3116,7 +3123,7 @@ class CommandExecutor {
             return false;
         }
         // timeout still active
-        log$l.info({
+        log$m.info({
             target: ctx.target,
             command: ctx.rawCmd?.name || '<unknown>',
         }, `Skipping command due to timeout. ${humanDuration(timeoutMsLeft)} left`);
@@ -3158,7 +3165,7 @@ class CommandExecutor {
             if (await this.isInPerUserTimeout(cmdDef, repo, ctx)) {
                 continue;
             }
-            log$l.info({
+            log$m.info({
                 target: ctx.target,
                 command: ctx.rawCmd?.name || '<unknown>',
             }, 'Executing command');
@@ -3167,12 +3174,12 @@ class CommandExecutor {
                 await fn.applyEffects(cmdDef, contextModule, ctx.rawCmd, ctx.context);
                 const r = await cmdDef.fn(ctx);
                 if (r) {
-                    log$l.info({
+                    log$m.info({
                         target: ctx.target,
                         return: r,
                     }, 'Returned from command');
                 }
-                log$l.info({
+                log$m.info({
                     target: ctx.target,
                     command: ctx.rawCmd?.name || '<unknown>',
                 }, 'Executed command');
@@ -3192,16 +3199,16 @@ class CommandExecutor {
 class EventSubEventHandler {
 }
 
-const log$k = logger('SubscribeEventHandler.ts');
+const log$l = logger('SubscribeEventHandler.ts');
 class SubscribeEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$k.info('handle');
+        log$l.info('handle');
         const rawCmd = {
             name: 'channel.subscribe',
             args: [],
         };
-        const { mod, subscriber } = await getUserTypeInfo(bot, user, data.event.user_id);
+        const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.user_id);
         const target = data.event.broadcaster_user_name;
         const context = {
             "room-id": data.event.broadcaster_user_id,
@@ -3210,7 +3217,7 @@ class SubscribeEventHandler extends EventSubEventHandler {
             username: data.event.user_login,
             mod,
             subscriber,
-            badges: {},
+            badges: { vip: vip ? '1' : undefined }, // not sure what to put in there
         };
         const trigger = newSubscribeTrigger();
         const exec = new CommandExecutor();
@@ -3218,16 +3225,16 @@ class SubscribeEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$j = logger('FollowEventHandler.ts');
+const log$k = logger('FollowEventHandler.ts');
 class FollowEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$j.info('handle');
+        log$k.info('handle');
         const rawCmd = {
             name: 'channel.follow',
             args: [],
         };
-        const { mod, subscriber } = await getUserTypeInfo(bot, user, data.event.user_id);
+        const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.user_id);
         const target = data.event.broadcaster_user_name;
         const context = {
             "room-id": data.event.broadcaster_user_id,
@@ -3236,7 +3243,7 @@ class FollowEventHandler extends EventSubEventHandler {
             username: data.event.user_login,
             mod,
             subscriber,
-            badges: {},
+            badges: { vip: vip ? '1' : undefined }, // not sure what to put in there
         };
         const trigger = newFollowTrigger();
         const exec = new CommandExecutor();
@@ -3244,16 +3251,16 @@ class FollowEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$i = logger('CheerEventHandler.ts');
+const log$j = logger('CheerEventHandler.ts');
 class CheerEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$i.info('handle');
+        log$j.info('handle');
         const rawCmd = {
             name: 'channel.cheer',
             args: [],
         };
-        const { mod, subscriber } = await getUserTypeInfo(bot, user, data.event.user_id);
+        const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.user_id);
         const target = data.event.broadcaster_user_name;
         const context = {
             "room-id": data.event.broadcaster_user_id,
@@ -3262,7 +3269,7 @@ class CheerEventHandler extends EventSubEventHandler {
             username: data.event.user_login,
             mod,
             subscriber,
-            badges: {},
+            badges: { vip: vip ? '1' : undefined }, // not sure what to put in there
         };
         const trigger = newBitsTrigger();
         const exec = new CommandExecutor();
@@ -3270,15 +3277,15 @@ class CheerEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$h = logger('ChannelPointRedeemEventHandler.ts');
+const log$i = logger('ChannelPointRedeemEventHandler.ts');
 class ChannelPointRedeemEventHandler extends EventSubEventHandler {
     async handle(bot, user, data) {
-        log$h.info('handle');
+        log$i.info('handle');
         const rawCmd = {
             name: data.event.reward.title,
             args: data.event.user_input ? [data.event.user_input] : [],
         };
-        const { mod, subscriber } = await getUserTypeInfo(bot, user, data.event.user_id);
+        const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.user_id);
         const target = data.event.broadcaster_user_name;
         const context = {
             "room-id": data.event.broadcaster_user_id,
@@ -3287,7 +3294,7 @@ class ChannelPointRedeemEventHandler extends EventSubEventHandler {
             username: data.event.user_login,
             mod,
             subscriber,
-            badges: {},
+            badges: { vip: vip ? '1' : undefined }, // not sure what to put in there
         };
         const trigger = newRewardRedemptionTrigger(data.event.reward.title);
         const exec = new CommandExecutor();
@@ -3308,10 +3315,10 @@ var SubscriptionType;
 })(SubscriptionType || (SubscriptionType = {}));
 const ALL_SUBSCRIPTIONS_TYPES = Object.values(SubscriptionType);
 
-const log$g = logger('StreamOnlineEventHandler.ts');
+const log$h = logger('StreamOnlineEventHandler.ts');
 class StreamOnlineEventHandler extends EventSubEventHandler {
     async handle(bot, _user, data) {
-        log$g.info('handle');
+        log$h.info('handle');
         await bot.getRepos().streams.insert({
             broadcaster_user_id: data.event.broadcaster_user_id,
             started_at: new Date(data.event.started_at),
@@ -3319,10 +3326,10 @@ class StreamOnlineEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$f = logger('StreamOfflineEventHandler.ts');
+const log$g = logger('StreamOfflineEventHandler.ts');
 class StreamOfflineEventHandler extends EventSubEventHandler {
     async handle(bot, _user, data) {
-        log$f.info('handle');
+        log$g.info('handle');
         // get last started stream for broadcaster
         // if it exists and it didnt end yet set ended_at date
         const stream = await bot.getRepos().streams.getLatestByChannelId(data.event.broadcaster_user_id);
@@ -3334,16 +3341,16 @@ class StreamOfflineEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$e = logger('RaidEventHandler.ts');
+const log$f = logger('RaidEventHandler.ts');
 class RaidEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$e.info('handle');
+        log$f.info('handle');
         const rawCmd = {
             name: 'channel.raid',
             args: [],
         };
-        const { mod, subscriber } = await getUserTypeInfo(bot, user, data.event.from_broadcaster_user_id);
+        const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.from_broadcaster_user_id);
         const target = data.event.to_broadcaster_user_name;
         const context = {
             "room-id": data.event.to_broadcaster_user_id,
@@ -3352,7 +3359,7 @@ class RaidEventHandler extends EventSubEventHandler {
             username: data.event.from_broadcaster_user_login,
             mod,
             subscriber,
-            badges: {},
+            badges: { vip: vip ? '1' : undefined }, // not sure what to put in there
         };
         const trigger = newRaidTrigger();
         const exec = new CommandExecutor();
@@ -3360,7 +3367,7 @@ class RaidEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$d = logger('twitch/index.ts');
+const log$e = logger('twitch/index.ts');
 const createRouter$3 = (bot) => {
     const handlers = {
         [SubscriptionType.ChannelSubscribe]: new SubscribeEventHandler(),
@@ -3380,8 +3387,8 @@ const createRouter$3 = (bot) => {
         if (req.headers['twitch-eventsub-message-signature'] === expected) {
             return next();
         }
-        log$d.debug({ req });
-        log$d.error({
+        log$e.debug({ req });
+        log$e.error({
             got: req.headers['twitch-eventsub-message-signature'],
             expected,
         }, 'bad message signature');
@@ -3436,28 +3443,28 @@ const createRouter$3 = (bot) => {
     });
     router.post('/event-sub/', express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
         if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-            log$d.info({ challenge: req.body.challenge }, 'got verification request');
+            log$e.info({ challenge: req.body.challenge }, 'got verification request');
             res.write(req.body.challenge);
             res.send();
             return;
         }
         if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-            log$d.info({ type: req.body.subscription.type }, 'got notification request');
+            log$e.info({ type: req.body.subscription.type }, 'got notification request');
             const row = await bot.getRepos().eventSub.getBySubscriptionId(req.body.subscription.id);
             if (!row) {
-                log$d.info('unknown subscription_id');
+                log$e.info('unknown subscription_id');
                 res.status(400).send({ reason: 'unknown subscription_id' });
                 return;
             }
             const user = await bot.getRepos().user.getById(row.user_id);
             if (!user) {
-                log$d.info('unknown user');
+                log$e.info('unknown user');
                 res.status(400).send({ reason: 'unknown user' });
                 return;
             }
             const handler = handlers[req.body.subscription.type];
             if (!handler) {
-                log$d.info('unknown subscription type');
+                log$e.info('unknown subscription type');
                 res.status(400).send({ reason: 'unknown subscription type' });
                 return;
             }
@@ -3567,7 +3574,7 @@ const createRouter$1 = () => {
     return router;
 };
 
-const log$c = logger('api/index.ts');
+const log$d = logger('api/index.ts');
 const createRouter = (bot) => {
     const uploadDir = './data/uploads';
     const storage = multer.diskStorage({
@@ -3581,12 +3588,12 @@ const createRouter = (bot) => {
     router.post('/upload', RequireLoginApiMiddleware, (req, res) => {
         upload(req, res, (err) => {
             if (err) {
-                log$c.error({ err });
+                log$d.error({ err });
                 res.status(400).send("Something went wrong!");
                 return;
             }
             if (!req.file) {
-                log$c.error({ err });
+                log$d.error({ err });
                 res.status(400).send("Something went wrong!");
                 return;
             }
@@ -3680,7 +3687,7 @@ const createRouter = (bot) => {
             res.status(404).send();
             return;
         }
-        log$c.debug({ route: `/widget/:widget_type/:widget_token/`, type, token });
+        log$d.debug({ route: `/widget/:widget_type/:widget_token/`, type, token });
         const w = bot.getWidgets().getWidgetDefinitionByType(type);
         if (w) {
             res.send({
@@ -3723,7 +3730,7 @@ const createRouter = (bot) => {
             bot.getEventHub().emit('user_changed', changedUser);
         }
         else {
-            log$c.error({
+            log$d.error({
                 user_id: user.id,
             }, 'save-settings: user doesn\'t exist after saving it');
         }
@@ -3748,7 +3755,7 @@ const RequireLoginMiddleware = (req, res, next) => {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const log$b = logger('WebServer.ts');
+const log$c = logger('WebServer.ts');
 class WebServer {
     constructor() {
         this.handle = null;
@@ -3788,7 +3795,7 @@ class WebServer {
             res.sendFile(indexFile);
         });
         const httpConf = bot.getConfig().http;
-        this.handle = app.listen(httpConf.port, httpConf.hostname, () => log$b.info(`server running on http://${httpConf.hostname}:${httpConf.port}`));
+        this.handle = app.listen(httpConf.port, httpConf.hostname, () => log$c.info(`server running on http://${httpConf.hostname}:${httpConf.port}`));
     }
     close() {
         if (this.handle) {
@@ -3797,7 +3804,7 @@ class WebServer {
     }
 }
 
-const log$a = logger('ChatEventHandler.ts');
+const log$b = logger('ChatEventHandler.ts');
 const rolesLettersFromTwitchChatContext = (context) => {
     const roles = [];
     if (isMod(context)) {
@@ -3812,12 +3819,15 @@ const rolesLettersFromTwitchChatContext = (context) => {
     return roles;
 };
 const determineStreamStartDate = async (context, helixClient) => {
-    const stream = await helixClient.getStreamByUserId(context['room-id']);
-    if (stream) {
-        return new Date(stream.started_at);
+    const broadcasterId = context['room-id'] || '';
+    if (broadcasterId) {
+        const stream = await helixClient.getStreamByUserId(broadcasterId);
+        if (stream) {
+            return new Date(stream.started_at);
+        }
     }
     const date = new Date(new Date().getTime() - (5 * MINUTE));
-    log$a.info({
+    log$b.info({
         roomId: context['room-id'],
         date: date,
     }, `No stream is running atm, using fake start date.`);
@@ -3834,7 +3844,7 @@ const determineIsFirstChatStream = async (bot, user, context) => {
 class ChatEventHandler {
     async handle(bot, user, target, context, msg) {
         const roles = rolesLettersFromTwitchChatContext(context);
-        log$a.debug({
+        log$b.debug({
             username: context.username,
             roles,
             target,
@@ -4187,14 +4197,14 @@ class TwitchClientManager {
 }
 
 const TABLE$9 = 'robyottoko.cache';
-const log$9 = logger('Cache.ts');
+const log$a = logger('Cache.ts');
 class Cache {
     constructor(db) {
         this.db = db;
     }
     async set(key, value, lifetime) {
         if (value === undefined) {
-            log$9.error({ key }, 'unable to store undefined value for cache key');
+            log$a.error({ key }, 'unable to store undefined value for cache key');
             return;
         }
         const expiresAt = lifetime === Infinity ? null : (new Date(new Date().getTime() + lifetime));
@@ -4335,7 +4345,7 @@ class Mutex {
 
 // @ts-ignore
 const { Client } = pg.default;
-const log$8 = logger('Db.ts');
+const log$9 = logger('Db.ts');
 const mutex = new Mutex();
 class Db {
     constructor(connectStr, patchesDir) {
@@ -4355,7 +4365,7 @@ class Db {
         for (const f of files) {
             if (patches.includes(f)) {
                 if (verbose) {
-                    log$8.info(`➡ skipping already applied db patch: ${f}`);
+                    log$9.info(`➡ skipping already applied db patch: ${f}`);
                 }
                 continue;
             }
@@ -4374,10 +4384,10 @@ class Db {
                     throw e;
                 }
                 await this.insert('public.db_patches', { id: f });
-                log$8.info(`✓ applied db patch: ${f}`);
+                log$9.info(`✓ applied db patch: ${f}`);
             }
             catch (e) {
-                log$8.error(`✖ unable to apply patch: ${f} ${e}`);
+                log$9.error(`✖ unable to apply patch: ${f} ${e}`);
                 return;
             }
         }
@@ -4468,7 +4478,7 @@ class Db {
             return (await this.dbh.query(query, params)).rows[0] || null;
         }
         catch (e) {
-            log$8.info({ fn: '_get', query, params });
+            log$9.info({ fn: '_get', query, params });
             console.error(e);
             throw e;
         }
@@ -4478,7 +4488,7 @@ class Db {
             return await this.dbh.query(query, params);
         }
         catch (e) {
-            log$8.info({ fn: 'run', query, params });
+            log$9.info({ fn: 'run', query, params });
             console.error(e);
             throw e;
         }
@@ -4488,7 +4498,7 @@ class Db {
             return (await this.dbh.query(query, params)).rows || [];
         }
         catch (e) {
-            log$8.info({ fn: '_getMany', query, params });
+            log$9.info({ fn: '_getMany', query, params });
             console.error(e);
             throw e;
         }
@@ -5084,7 +5094,7 @@ class GeneralModule {
     }
 }
 
-const log$7 = logger('Youtube.ts');
+const log$8 = logger('Youtube.ts');
 const get = async (url, args) => {
     args.key = config.modules.sr.google.api_key;
     const resp = await xhr.get(url + asQueryArgs(args));
@@ -5101,7 +5111,7 @@ const fetchDataByYoutubeId = async (youtubeId) => {
         return json.items[0];
     }
     catch (e) {
-        log$7.error({ e, json, youtubeId });
+        log$8.error({ e, json, youtubeId });
         return null;
     }
 };
@@ -5185,7 +5195,7 @@ const getYoutubeIdsBySearch = async (searchterm, videoDuration = YoutubeVideoDur
             }
         }
         catch (e) {
-            log$7.info({ e });
+            log$8.info({ e });
         }
     }
     return ids;
@@ -5272,7 +5282,7 @@ const default_settings$4 = (obj = null) => ({
     customCssPresetIdx: getProp(obj, ['customCssPresetIdx'], 0),
 });
 
-const log$6 = logger('SongrequestModule.ts');
+const log$7 = logger('SongrequestModule.ts');
 const ADD_TYPE = {
     NOT_ADDED: 0,
     ADDED: 1,
@@ -6194,7 +6204,7 @@ class SongrequestModule {
     }
     cmdSrUndo(_originalCommand) {
         return async (ctx) => {
-            if (!ctx.rawCmd || !ctx.context) {
+            if (!ctx.rawCmd || !ctx.context || !ctx.context['display-name']) {
                 return;
             }
             const say = this.bot.sayFn(this.user, ctx.target);
@@ -6210,7 +6220,7 @@ class SongrequestModule {
     cmdResr(_originalCommand) {
         return async (ctx) => {
             if (!ctx.rawCmd || !ctx.context) {
-                log$6.error('cmdResr: client, command or context empty');
+                log$7.error('cmdResr: client, command or context empty');
                 return;
             }
             const say = this.bot.sayFn(this.user, ctx.target);
@@ -6235,7 +6245,7 @@ class SongrequestModule {
     }
     cmdSrStats(_originalCommand) {
         return async (ctx) => {
-            if (!ctx.rawCmd || !ctx.context) {
+            if (!ctx.rawCmd || !ctx.context || !ctx.context['display-name']) {
                 return;
             }
             const say = this.bot.sayFn(this.user, ctx.target);
@@ -6441,7 +6451,7 @@ class SongrequestModule {
     }
     cmdSr(_originalCommand) {
         return async (ctx) => {
-            if (!ctx.rawCmd || !ctx.context) {
+            if (!ctx.rawCmd || !ctx.context || !ctx.context['display-name']) {
                 return;
             }
             const say = this.bot.sayFn(this.user, ctx.target);
@@ -6550,6 +6560,7 @@ class SongrequestModule {
     }
 }
 
+const log$6 = logger('VoteModule.ts');
 class VoteModule {
     constructor(bot, user) {
         this.bot = bot;
@@ -6585,6 +6596,10 @@ class VoteModule {
         return {};
     }
     async vote(type, thing, target, context) {
+        if (!context['display-name']) {
+            log$6.error('context has no display name set');
+            return;
+        }
         const say = this.bot.sayFn(this.user, target);
         this.data.votes[type] = this.data.votes[type] || {};
         this.data.votes[type][context['display-name']] = thing;
@@ -7401,9 +7416,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-11-20T15:16:15.980Z",
+    buildDate: "2022-11-20T16:02:21.521Z",
     // @ts-ignore
-    buildVersion: "1.42.0",
+    buildVersion: "1.43.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
@@ -7528,10 +7543,12 @@ class TwitchTmiClientManager {
     }
     get(identity, channels) {
         const client = new tmi.client({
+            options: {
+                clientId: identity.client_id,
+            },
             identity: {
                 username: identity.username,
                 password: identity.password,
-                client_id: identity.client_id,
             },
             channels,
             connection: {
@@ -7547,9 +7564,9 @@ class ChatLogRepo extends Repo {
     async insert(context, msg) {
         await this.db.insert(TABLE$8, {
             created_at: new Date(),
-            broadcaster_user_id: context['room-id'],
-            user_name: context.username,
-            display_name: context['display-name'],
+            broadcaster_user_id: context['room-id'] || '',
+            user_name: context.username || '',
+            display_name: context['display-name'] || '',
             message: msg,
         });
     }

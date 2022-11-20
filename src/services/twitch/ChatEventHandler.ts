@@ -28,9 +28,12 @@ const determineStreamStartDate = async (
   context: TwitchChatContext,
   helixClient: TwitchHelixClient,
 ): Promise<Date> => {
-  const stream = await helixClient.getStreamByUserId(context['room-id'])
-  if (stream) {
-    return new Date(stream.started_at)
+  const broadcasterId = context['room-id'] || ''
+  if (broadcasterId) {
+    const stream = await helixClient.getStreamByUserId(broadcasterId)
+    if (stream) {
+      return new Date(stream.started_at)
+    }
   }
 
   const date = new Date(new Date().getTime() - (5 * MINUTE))
