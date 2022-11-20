@@ -2732,6 +2732,9 @@ const userInDisallowList = (ctx, cmd) => {
     return arrayIncludesIgnoreCase(cmd.disallow_users || [], ctx.username);
 };
 const mayExecute = (ctx, cmd) => {
+    if (typeof cmd.enabled !== 'undefined' && cmd.enabled === false) {
+        return false;
+    }
     if (userInAllowList(ctx, cmd)) {
         return true;
     }
@@ -2836,6 +2839,7 @@ const createCommand = (cmd) => {
         restrict_to: typeof cmd.restrict_to !== 'undefined' ? cmd.restrict_to : [],
         disallow_users: typeof cmd.disallow_users !== 'undefined' ? cmd.disallow_users : [],
         allow_users: typeof cmd.allow_users !== 'undefined' ? cmd.allow_users : [],
+        enabled: typeof cmd.enabled !== 'undefined' ? cmd.enabled : true,
     };
 };
 const commands = {
@@ -4799,6 +4803,10 @@ class GeneralModule {
                 cmd.allow_users = [];
                 shouldSave = true;
             }
+            if (typeof cmd.enabled === 'undefined') {
+                cmd.enabled = true;
+                shouldSave = true;
+            }
             if (cmd.variableChanges) {
                 for (const variableChange of cmd.variableChanges) {
                     cmd.effects.push(legacy.variableChangeToCommandEffect(variableChange));
@@ -5453,6 +5461,10 @@ class SongrequestModule {
             }
             if (typeof cmd.allow_users === 'undefined') {
                 cmd.allow_users = [];
+                shouldSave = true;
+            }
+            if (typeof cmd.enabled === 'undefined') {
+                cmd.enabled = true;
                 shouldSave = true;
             }
         }
@@ -7389,9 +7401,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-11-20T14:54:59.815Z",
+    buildDate: "2022-11-20T15:16:15.980Z",
     // @ts-ignore
-    buildVersion: "1.41.0",
+    buildVersion: "1.42.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
