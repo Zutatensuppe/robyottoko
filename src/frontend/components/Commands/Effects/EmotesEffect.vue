@@ -84,19 +84,9 @@
 <script setup lang="ts">
 import { EmotesEffect, EmoteSet } from '../../../../types';
 import { onBeforeMount, ref, watch } from 'vue';
-import { EMOTE_DISPLAY_FN } from '../../../../mod/modules/GeneralModuleCommon';
+import { EMOTE_DISPLAY_FN, possibleEmoteDisplayFunctions } from '../../../../mod/modules/GeneralModuleCommon';
 import api from '../../../api';
 import StringInput from '../../StringInput.vue';
-
-const possibleEmoteDisplayFunctions = [
-  EMOTE_DISPLAY_FN.BALLOON,
-  EMOTE_DISPLAY_FN.BOUNCY,
-  EMOTE_DISPLAY_FN.EXPLODE,
-  EMOTE_DISPLAY_FN.FLOATING_SPACE,
-  EMOTE_DISPLAY_FN.FOUNTAIN,
-  EMOTE_DISPLAY_FN.RAIN,
-  EMOTE_DISPLAY_FN.RANDOM_BEZIER,
-]
 
 const props = defineProps<{
   modelValue: EmotesEffect,
