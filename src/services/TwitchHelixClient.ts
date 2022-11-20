@@ -709,6 +709,58 @@ class TwitchHelixClient {
       return { valid: false, data: json }
     }
   }
+
+
+  // https://dev.twitch.tv/docs/api/reference#get-broadcaster-subscriptions
+  async isUserSubscriber(
+    accessToken: string,
+    broadcasterId: string,
+    userId: string
+  ): Promise<boolean> {
+    const url = apiUrl('/subscriptions') + asQueryArgs({ broadcaster_id: broadcasterId, user_id: userId })
+    try {
+      const resp = await xhr.get(url, withHeaders(this._authHeaders(accessToken), {}))
+      const json = await resp.json() as any
+      return json.data.length > 0
+    } catch (e) {
+      log.error({ url, e })
+      return false
+    }
+  }
+
+  // https://dev.twitch.tv/docs/api/reference#get-vips
+  async isUserVip(
+    accessToken: string,
+    broadcasterId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const url = apiUrl('/channels/vips') + asQueryArgs({ broadcaster_id: broadcasterId, user_id: userId })
+    try {
+      const resp = await xhr.get(url, withHeaders(this._authHeaders(accessToken), {}))
+      const json = await resp.json() as any
+      return json.data.length > 0
+    } catch (e) {
+      log.error({ url, e })
+      return false
+    }
+  }
+
+  // https://dev.twitch.tv/docs/api/reference#get-moderators
+  async isUserModerator(
+    accessToken: string,
+    broadcasterId: string,
+    userId: string
+  ): Promise<boolean> {
+    const url = apiUrl('/moderation/moderators') + asQueryArgs({ broadcaster_id: broadcasterId, user_id: userId })
+    try {
+      const resp = await xhr.get(url, withHeaders(this._authHeaders(accessToken), {}))
+      const json = await resp.json() as any
+      return json.data.length > 0
+    } catch (e) {
+      log.error({ url, e })
+      return false
+    }
+  }
 }
 
 export default TwitchHelixClient

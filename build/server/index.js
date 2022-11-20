@@ -2066,7 +2066,22 @@ const getChannelPointsCustomRewards = async (bot, user) => {
     }
     return await helixClient.getAllChannelPointsCustomRewards(bot, user);
 };
+const getUserTypeInfo = async (bot, user, userId) => {
+    const info = { mod: false, subscriber: false };
+    const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
+    if (!helixClient) {
+        return info;
+    }
+    const accessToken = await bot.getRepos().oauthToken.getMatchingAccessToken(user);
+    if (!accessToken) {
+        return info;
+    }
+    info.mod = await helixClient.isUserModerator(accessToken, user.twitch_id, userId);
+    info.subscriber = await helixClient.isUserSubscriber(accessToken, user.twitch_id, userId);
+    return info;
+};
 var fn = {
+    getUserTypeInfo,
     applyEffects,
     extractEmotes,
     logger,
@@ -2474,6 +2489,45 @@ class TwitchHelixClient {
         }
         catch (e) {
             return { valid: false, data: json };
+        }
+    }
+    // https://dev.twitch.tv/docs/api/reference#get-broadcaster-subscriptions
+    async isUserSubscriber(accessToken, broadcasterId, userId) {
+        const url = apiUrl('/subscriptions') + asQueryArgs({ broadcaster_id: broadcasterId, user_id: userId });
+        try {
+            const resp = await xhr.get(url, withHeaders(this._authHeaders(accessToken), {}));
+            const json = await resp.json();
+            return json.data.length > 0;
+        }
+        catch (e) {
+            log$n.error({ url, e });
+            return false;
+        }
+    }
+    // https://dev.twitch.tv/docs/api/reference#get-vips
+    async isUserVip(accessToken, broadcasterId, userId) {
+        const url = apiUrl('/channels/vips') + asQueryArgs({ broadcaster_id: broadcasterId, user_id: userId });
+        try {
+            const resp = await xhr.get(url, withHeaders(this._authHeaders(accessToken), {}));
+            const json = await resp.json();
+            return json.data.length > 0;
+        }
+        catch (e) {
+            log$n.error({ url, e });
+            return false;
+        }
+    }
+    // https://dev.twitch.tv/docs/api/reference#get-moderators
+    async isUserModerator(accessToken, broadcasterId, userId) {
+        const url = apiUrl('/moderation/moderators') + asQueryArgs({ broadcaster_id: broadcasterId, user_id: userId });
+        try {
+            const resp = await xhr.get(url, withHeaders(this._authHeaders(accessToken), {}));
+            const json = await resp.json();
+            return json.data.length > 0;
+        }
+        catch (e) {
+            log$n.error({ url, e });
+            return false;
         }
     }
 }
@@ -3137,14 +3191,15 @@ class SubscribeEventHandler extends EventSubEventHandler {
             name: 'channel.subscribe',
             args: [],
         };
+        const { mod, subscriber } = await getUserTypeInfo(bot, user, data.event.user_id);
         const target = data.event.broadcaster_user_name;
         const context = {
             "room-id": data.event.broadcaster_user_id,
             "user-id": data.event.user_id,
             "display-name": data.event.user_name,
             username: data.event.user_login,
-            mod: false,
-            subscriber: true,
+            mod,
+            subscriber,
             badges: {},
         };
         const trigger = newSubscribeTrigger();
@@ -3162,14 +3217,15 @@ class FollowEventHandler extends EventSubEventHandler {
             name: 'channel.follow',
             args: [],
         };
+        const { mod, subscriber } = await getUserTypeInfo(bot, user, data.event.user_id);
         const target = data.event.broadcaster_user_name;
         const context = {
             "room-id": data.event.broadcaster_user_id,
             "user-id": data.event.user_id,
             "display-name": data.event.user_name,
             username: data.event.user_login,
-            mod: false,
-            subscriber: false,
+            mod,
+            subscriber,
             badges: {},
         };
         const trigger = newFollowTrigger();
@@ -3187,14 +3243,15 @@ class CheerEventHandler extends EventSubEventHandler {
             name: 'channel.cheer',
             args: [],
         };
+        const { mod, subscriber } = await getUserTypeInfo(bot, user, data.event.user_id);
         const target = data.event.broadcaster_user_name;
         const context = {
             "room-id": data.event.broadcaster_user_id,
             "user-id": data.event.user_id,
             "display-name": data.event.user_name,
             username: data.event.user_login,
-            mod: false,
-            subscriber: false,
+            mod,
+            subscriber,
             badges: {},
         };
         const trigger = newBitsTrigger();
@@ -3211,14 +3268,15 @@ class ChannelPointRedeemEventHandler extends EventSubEventHandler {
             name: data.event.reward.title,
             args: data.event.user_input ? [data.event.user_input] : [],
         };
+        const { mod, subscriber } = await getUserTypeInfo(bot, user, data.event.user_id);
         const target = data.event.broadcaster_user_name;
         const context = {
             "room-id": data.event.broadcaster_user_id,
             "user-id": data.event.user_id,
             "display-name": data.event.user_name,
             username: data.event.user_login,
-            mod: false,
-            subscriber: false,
+            mod,
+            subscriber,
             badges: {},
         };
         const trigger = newRewardRedemptionTrigger(data.event.reward.title);
@@ -3275,14 +3333,15 @@ class RaidEventHandler extends EventSubEventHandler {
             name: 'channel.raid',
             args: [],
         };
+        const { mod, subscriber } = await getUserTypeInfo(bot, user, data.event.from_broadcaster_user_id);
         const target = data.event.to_broadcaster_user_name;
         const context = {
             "room-id": data.event.to_broadcaster_user_id,
             "user-id": data.event.from_broadcaster_user_id,
             "display-name": data.event.from_broadcaster_user_name,
             username: data.event.from_broadcaster_user_login,
-            mod: false,
-            subscriber: false,
+            mod,
+            subscriber,
             badges: {},
         };
         const trigger = newRaidTrigger();
@@ -7324,9 +7383,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-11-20T13:40:06.241Z",
+    buildDate: "2022-11-20T14:25:56.364Z",
     // @ts-ignore
-    buildVersion: "1.39.0",
+    buildVersion: "1.40.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');

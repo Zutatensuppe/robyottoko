@@ -6,6 +6,7 @@ import { Bot, RawCommand, TwitchChatContext } from "../../types"
 import { CommandExecutor } from "../CommandExecutor"
 import { User } from "../../repo/Users"
 import { EventSubEventHandler } from "./EventSubEventHandler"
+import { getUserTypeInfo } from "../../fn"
 
 const log = logger('ChannelPointRedeemEventHandler.ts')
 
@@ -20,14 +21,16 @@ export class ChannelPointRedeemEventHandler extends EventSubEventHandler<any> {
       name: data.event.reward.title,
       args: data.event.user_input ? [data.event.user_input] : [],
     }
+
+    const { mod, subscriber } = await getUserTypeInfo(bot, user, data.event.user_id)
     const target = data.event.broadcaster_user_name
     const context: TwitchChatContext = {
       "room-id": data.event.broadcaster_user_id,
       "user-id": data.event.user_id,
       "display-name": data.event.user_name,
       username: data.event.user_login,
-      mod: false, // no way to tell without further looking up user somehow
-      subscriber: false, // unknown
+      mod,
+      subscriber,
       badges: {},
     }
     const trigger = newRewardRedemptionTrigger(data.event.reward.title)

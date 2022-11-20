@@ -1223,7 +1223,29 @@ export const getChannelPointsCustomRewards = async (
   return await helixClient.getAllChannelPointsCustomRewards(bot, user)
 }
 
+export const getUserTypeInfo = async (
+  bot: Bot,
+  user: User,
+  userId: string,
+): Promise<{ mod: boolean, subscriber: boolean }> => {
+  const info = { mod: false, subscriber: false }
+  const helixClient = bot.getUserTwitchClientManager(user).getHelixClient()
+  if (!helixClient) {
+    return info
+  }
+
+  const accessToken = await bot.getRepos().oauthToken.getMatchingAccessToken(user)
+  if (!accessToken) {
+    return info
+  }
+
+  info.mod = await helixClient.isUserModerator(accessToken, user.twitch_id, userId)
+  info.subscriber = await helixClient.isUserSubscriber(accessToken, user.twitch_id, userId)
+  return info
+}
+
 export default {
+  getUserTypeInfo,
   applyEffects,
   extractEmotes,
   logger,
