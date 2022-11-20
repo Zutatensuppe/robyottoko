@@ -2668,7 +2668,7 @@ const userAllowed = (ctx, cmd) => {
         return true;
     }
     // compare lowercase, otherwise may be confusing why nC_para_ doesnt disallow nc_para_
-    return arrayIncludesIgnoreCase(cmd.disallow_users, ctx.username);
+    return !arrayIncludesIgnoreCase(cmd.disallow_users, ctx.username);
 };
 const mayExecute = (context, cmd) => {
     return userTypeOk(context, cmd) && userAllowed(context, cmd);
@@ -7311,9 +7311,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-11-20T13:09:37.526Z",
+    buildDate: "2022-11-20T13:20:34.938Z",
     // @ts-ignore
-    buildVersion: "1.38.0",
+    buildVersion: "1.38.1",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
