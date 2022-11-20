@@ -81,6 +81,10 @@ const preset = computed((): SongrequestModuleCustomCssPreset => {
   return settings.value.customCssPresets[settings.value.customCssPresetIdx] || default_custom_css_preset()
 })
 
+const playerClass = computed((): string => {
+  return preset.value.hidePlayer ? 'player-hidden' : 'player-shown'
+})
+
 const thumbnailClass = computed((): string => {
   if (preset.value.showThumbnails === "left") {
     return "with-thumbnails-left"
@@ -98,7 +102,7 @@ const progressBarClass = computed((): string => {
 })
 
 const classes = computed((): string[] => {
-  return [thumbnailClass.value, progressBarClass.value]
+  return [thumbnailClass.value, progressBarClass.value, playerClass.value]
 })
 
 const progressValueStyle = computed((): { width: string } => {

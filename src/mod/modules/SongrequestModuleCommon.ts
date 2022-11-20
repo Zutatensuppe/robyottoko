@@ -24,6 +24,7 @@ export interface SongrequestModuleCustomCssPreset {
   css: string
   showProgressBar: boolean
   showThumbnails: string | false
+  hidePlayer: boolean
   timestampFormat: string
   maxItemsShown: number
 }
@@ -88,6 +89,7 @@ export const default_custom_css_preset = (obj: any = null): SongrequestModuleCus
   showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
   maxItemsShown: getProp(obj, ['maxItemsShown'], -1),
   timestampFormat: typeof obj?.timestampFormat === 'undefined' ? '' : obj.timestampFormat,
+  hidePlayer: getProp(obj, ['hidePlayer'], false),
 })
 
 export const default_commands = (list: any = null) => {
