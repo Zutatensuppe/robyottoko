@@ -5231,6 +5231,7 @@ const presets = [
         maxItemsShown: 5,
         showThumbnails: 'left',
         timestampFormat: '',
+        hidePlayer: false,
         css: '',
     },
     {
@@ -5238,6 +5239,7 @@ const presets = [
         showProgressBar: false,
         maxItemsShown: 5,
         showThumbnails: 'left',
+        hidePlayer: true,
         timestampFormat: '',
         css: `@import url('https://fonts.googleapis.com/css2?family=Sunflower:wght@300&display=swap');
 body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
@@ -5252,8 +5254,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
 .meta-left .meta-plays { display: none; }
 .meta-right .meta-plays { display: inline-block; }
 .meta-user-text-before,
-.meta-user-text-after {display: none}
-.player { position: absolute; }`
+.meta-user-text-after {display: none}`
     },
     {
         name: 'Preset 2: No video, round thumbnails',
@@ -5261,6 +5262,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
         maxItemsShown: 10,
         showThumbnails: 'left',
         timestampFormat: '',
+        hidePlayer: true,
         css: `@import url('https://fonts.googleapis.com/css2?family=Sunflower:wght@300&display=swap');
 body { font-family: 'Sunflower', sans-serif; font-size: 16px; }
 .playing { background: #1E1B1A; color: #AC7870; }
@@ -5284,8 +5286,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 16px; }
 .fa { margin-right: 0px; }
 .meta-left .meta-user:after,
 .meta-user-text-before,
-.meta-user-text-after {display: none}
-.player { position: absolute; }`
+.meta-user-text-after {display: none}`
     },
     {
         name: 'Preset 3: Video on the left',
@@ -5293,6 +5294,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 16px; }
         maxItemsShown: 10,
         showThumbnails: 'left',
         timestampFormat: '',
+        hidePlayer: false,
         css: `@import url('https://fonts.googleapis.com/css2?family=Sunflower:wght@300&display=swap');
 body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
 .playing { background: #1E1B1A; color: #AC7870; }
@@ -5318,6 +5320,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
         maxItemsShown: 10,
         showThumbnails: 'left',
         timestampFormat: '',
+        hidePlayer: false,
         css: `@import url('https://fonts.googleapis.com/css2?family=Sunflower:wght@300&display=swap');
 body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
 .playing { background: #1E1B1A; color: #AC7870; }
@@ -5341,6 +5344,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
         maxItemsShown: 10,
         showThumbnails: 'left',
         timestampFormat: '',
+        hidePlayer: true,
         css: `@import url('https://fonts.googleapis.com/css2?family=Sunflower:wght@300&display=swap');
 body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
 .playing .title { text-overflow: hidden; overflow: hidden; }
@@ -5352,8 +5356,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
 .meta-left .meta-plays { display: none; }
 .meta-right .meta-plays { display: inline-block; padding: 5px}
 .meta-user-text-before,
-.meta-user-text-after {display: none}
-.player { position: absolute; }`
+.meta-user-text-after {display: none}`
     },
     {
         name: 'Preset 6: Video, Progress bar under text',
@@ -5361,6 +5364,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
         maxItemsShown: 1,
         showThumbnails: 'left',
         timestampFormat: '',
+        hidePlayer: false,
         css: `.thumbnail { display: none }
 .item { grid-template-areas: "title"; grid-template-columns: auto; }
 .video-16-9  {overflow: visible; }
@@ -5376,6 +5380,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
     },
     {
         name: 'Preset 7: Title only, Progress bar, Pulsating text',
+        hidePlayer: true,
         showProgressBar: true,
         maxItemsShown: 1,
         showThumbnails: 'left',
@@ -5399,7 +5404,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
 .progress { height: 5px; }
 .wrapper { display: grid; grid-template-areas: "list" "player"; }
 .player { grid-area: player }
-.video-16-9 { height: 5px; padding-bottom: 0; }
+.video-16-9 { height: 5px; }
 .list { grid-area: list }
 .progress { background: #222; }
 .progress-value { background: #639bff; }`
@@ -5421,6 +5426,7 @@ const default_custom_css_preset = (obj = null) => ({
     showThumbnails: typeof obj?.showThumbnails === 'undefined' || obj.showThumbnails === true ? 'left' : obj.showThumbnails,
     maxItemsShown: getProp(obj, ['maxItemsShown'], -1),
     timestampFormat: typeof obj?.timestampFormat === 'undefined' ? '' : obj.timestampFormat,
+    hidePlayer: getProp(obj, ['hidePlayer'], false),
 });
 const default_commands = (list = null) => {
     if (Array.isArray(list)) {
@@ -7613,9 +7619,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-11-20T19:53:50.524Z",
+    buildDate: "2022-11-20T20:36:37.847Z",
     // @ts-ignore
-    buildVersion: "1.45.0",
+    buildVersion: "1.46.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
