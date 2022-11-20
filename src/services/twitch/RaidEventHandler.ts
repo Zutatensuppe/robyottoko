@@ -6,6 +6,7 @@ import { Bot, RawCommand, TwitchChatContext } from "../../types"
 import { CommandExecutor } from "../CommandExecutor"
 import { User } from "../../repo/Users"
 import { EventSubEventHandler } from "./EventSubEventHandler"
+import { getUserTypeInfo } from "../../fn"
 
 const log = logger('RaidEventHandler.ts')
 
@@ -33,14 +34,15 @@ export class RaidEventHandler extends EventSubEventHandler<RaidEvent> {
       args: [],
     }
 
+    const { mod, subscriber } = await getUserTypeInfo(bot, user, data.event.from_broadcaster_user_id)
     const target = data.event.to_broadcaster_user_name
     const context: TwitchChatContext = {
       "room-id": data.event.to_broadcaster_user_id,
       "user-id": data.event.from_broadcaster_user_id,
       "display-name": data.event.from_broadcaster_user_name,
       username: data.event.from_broadcaster_user_login,
-      mod: false, // unknown
-      subscriber: false, // unknown
+      mod,
+      subscriber,
       badges: {},
     }
     const trigger = newRaidTrigger()
