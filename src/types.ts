@@ -435,11 +435,12 @@ interface CommandCooldown {
 export interface Command {
   id: string
   createdAt: string // json date string
-  restrict_to: CommandRestrict[]
   triggers: CommandTrigger[]
   effects: CommandEffect[]
   variables: CommandVariable[]
   cooldown: CommandCooldown
+  restrict_to: CommandRestrict[]
+  disallow_users: string[] // usernames
 
   // DEPRECATED:
   // -----------------------------------------------------------------
@@ -498,12 +499,13 @@ export interface FunctionCommand {
   id: string
   triggers: CommandTrigger[]
   action?: CommandAction
-  restrict_to?: CommandRestrict[]
   variables?: CommandVariable[]
   effects?: CommandEffect[]
   data?: CommandData
   fn: CommandFunction
   cooldown: CommandCooldown
+  restrict_to?: CommandRestrict[]
+  disallow_users?: string[]
 }
 
 export interface ChatMessageContext {

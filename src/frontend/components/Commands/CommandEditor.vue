@@ -82,24 +82,13 @@
               </td>
             </tr>
             <tr>
-              <td>Permissions:</td>
               <td>
-                <label
-                  v-for="(perm, idx) in possiblePermissions"
-                  :key="idx"
-                  class="mr-1"
-                >
-                  <input
-                    v-model="item.restrict_to"
-                    type="checkbox"
-                    :value="perm.value"
-                  >
-                  {{ perm.label }}
-                </label>
+                <div>Variables:</div>
+                <span
+                  class="button is-small"
+                  @click="onAddVariable"
+                >Add Variable</span>
               </td>
-            </tr>
-            <tr>
-              <td>Variables:</td>
               <td>
                 <table v-if="item.variables.length > 0">
                   <thead>
@@ -130,10 +119,6 @@
                     </tr>
                   </tbody>
                 </table>
-                <span
-                  class="button is-small"
-                  @click="onAddVariable"
-                >Add Variable</span>
                 <div class="help">
                   Variables can be used from the command with
                   <code>$var(variable_name)</code>. If the referenced variable
@@ -143,6 +128,52 @@
                     target="_blank"
                   >global variables</a> are
                   used.
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>Permissions:</td>
+              <td>
+                <label
+                  v-for="(perm, idx) in possiblePermissions"
+                  :key="idx"
+                  class="mr-1"
+                >
+                  <input
+                    v-model="item.restrict_to"
+                    type="checkbox"
+                    :value="perm.value"
+                  >
+                  {{ perm.label }}
+                </label>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div>Disallow Users:</div>
+                <span
+                  class="button is-small"
+                  @click="item.disallow_users.push('')"
+                >Add User</span>
+              </td>
+              <td>
+                <div
+                  v-for="(user, idx) in item.disallow_users"
+                  :key="idx"
+                  class="field has-addons"
+                >
+                  <div class="control">
+                    <StringInput v-model="item.disallow_users[idx]" />
+                  </div>
+                  <button
+                    class="button is-small"
+                    @click="item.disallow_users = item.disallow_users.filter((x, idx2) => idx2 !== idx)"
+                  >
+                    <i class="fa fa-remove" />
+                  </button>
+                </div>
+                <div class="help">
+                  Users added here will not be able to execute the command.
                 </div>
               </td>
             </tr>

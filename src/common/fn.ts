@@ -376,6 +376,19 @@ export const getProp = (obj: any, keys: string[], defaultVal: any) => {
   return x
 }
 
+export const arrayIncludesIgnoreCase = (arr: string[], val: string): boolean => {
+  if (arr.length === 0) {
+    return false
+  }
+  const valLowercase = val.toLowerCase()
+  for (const item of arr) {
+    if (item.toLowerCase() === valLowercase) {
+      return true
+    }
+  }
+  return false
+}
+
 export const clamp = (min: number, val: number, max: number): number => {
   return Math.max(min, Math.min(max, val))
 }

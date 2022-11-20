@@ -127,6 +127,7 @@ class GeneralModule implements Module {
   }
 
   fix(commands: any[]): { commands: Command[], shouldSave: boolean } {
+    let shouldSave = false
     const fixedCommands = (commands || []).map((cmd: any) => {
       if (cmd.command) {
         cmd.triggers = [newCommandTrigger(cmd.command, cmd.commandExact || false)]
@@ -140,6 +141,11 @@ class GeneralModule implements Module {
       }
       if (cmd.timeout) {
         delete cmd.timeout
+      }
+
+      if (typeof cmd.disallow_users === 'undefined') {
+        cmd.disallow_users = []
+        shouldSave = true
       }
 
       if (cmd.variableChanges) {
@@ -217,7 +223,6 @@ class GeneralModule implements Module {
       return cmd
     })
 
-    let shouldSave = false
     // add ids to commands that dont have one yet
     for (const command of fixedCommands) {
       if (!command.id) {

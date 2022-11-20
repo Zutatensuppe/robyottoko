@@ -226,26 +226,30 @@ class SongrequestModule implements Module {
     }
 
     // add ids to commands that dont have one yet
-    for (const command of data.commands) {
-      if (!command.id) {
-        command.id = nonce(10)
+    for (const cmd of data.commands) {
+      if (!cmd.id) {
+        cmd.id = nonce(10)
         shouldSave = true
       }
-      if (!command.createdAt) {
-        command.createdAt = newJsonDate()
+      if (!cmd.createdAt) {
+        cmd.createdAt = newJsonDate()
         shouldSave = true
       }
-      if (!command.effects) {
-        command.effects = []
+      if (!cmd.effects) {
+        cmd.effects = []
         shouldSave = true
       }
 
-      if (typeof command.cooldown !== 'object') {
-        command.cooldown = command.timeout || { global: '0', perUser: '0' }
+      if (typeof cmd.cooldown !== 'object') {
+        cmd.cooldown = cmd.timeout || { global: '0', perUser: '0' }
         shouldSave = true
       }
-      if (command.timeout) {
-        delete command.timeout
+      if (cmd.timeout) {
+        delete cmd.timeout
+        shouldSave = true
+      }
+      if (typeof cmd.disallow_users === 'undefined') {
+        cmd.disallow_users = []
         shouldSave = true
       }
     }
