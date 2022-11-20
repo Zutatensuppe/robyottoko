@@ -84,6 +84,19 @@
               />
             </th>
             <th>
+              Duration
+              <i
+                class="fa fa-chevron-up is-clickable"
+                title="Sort by duration, longest to shortest"
+                @click="sort(SortBy.DURATION, 1)"
+              />
+              <i
+                class="fa fa-chevron-down is-clickable"
+                title="Sort by duration, shortest to longest"
+                @click="sort(SortBy.DURATION, -1)"
+              />
+            </th>
+            <th>
               Plays
               <i
                 class="fa fa-chevron-up is-clickable"
@@ -182,6 +195,9 @@
                 {{ formatTimestamp(element.timestamp) }}
               </td>
               <td>
+                {{ humanDuration(element.durationMs) }}
+              </td>
+              <td>
                 {{ element.plays }}x
                 <button
                   class="button is-small ml-1"
@@ -272,7 +288,7 @@
 </template>
 
 <script setup lang="ts">
-import { dateformat } from "../../../common/fn"
+import { dateformat, humanDuration } from "../../../common/fn"
 import { computed, nextTick, Ref, ref, watch } from "vue"
 import { DragEndEvent, PlaylistItem } from "../../../types"
 import { SortBy, SortDirection } from "../../../mod/modules/SongrequestModuleCommon"
@@ -311,6 +327,7 @@ const enhancedPlaylist = computed((): EnhancedPlaylistItem[] => {
       yt: item.yt,
       title: item.title,
       timestamp: item.timestamp,
+      durationMs: item.durationMs,
       hidevideo: !!item.hidevideo,
       last_play: item.last_play,
       plays: item.plays,

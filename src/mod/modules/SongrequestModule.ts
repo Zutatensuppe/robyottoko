@@ -58,6 +58,7 @@ const default_playlist_item = (item: any = null): PlaylistItem => {
     yt: item?.yt || '',
     title: item?.title || '',
     timestamp: item?.timestamp || 0,
+    durationMs: item?.durationMs || 0,
     hidevideo: !!(item?.hidevideo),
     last_play: item?.last_play || 0,
     plays: item?.plays || 0,
@@ -210,6 +211,19 @@ class SongrequestModule implements Module {
     data.playlist = default_playlist(data.playlist)
     data.settings = default_settings(data.settings)
     data.commands = default_commands(data.commands)
+
+    // add duration to the playlist items
+    for (const item of data.playlist) {
+      if (!item.durationMs) {
+        const d = await this.loadYoutubeData(item.yt)
+        // sometimes songs in the playlist may not be available on yt anymore
+        // then we just dont add that to the duration calculation
+        if (d) {
+          item.durationMs = fn.parseISO8601Duration(d.contentDetails.duration)
+          shouldSave = true
+        }
+      }
+    }
 
     // add ids to commands that dont have one yet
     for (const command of data.commands) {
@@ -574,12 +588,7 @@ class SongrequestModule implements Module {
 
     let durationTotalMs = 0
     for (const item of this.data.playlist.slice(0, idx)) {
-      const d = await this.loadYoutubeData(item.yt)
-      // sometimes songs in the playlist may not be available on yt anymore
-      // then we just dont add that to the duration calculation
-      if (d) {
-        durationTotalMs += fn.parseISO8601Duration(d.contentDetails.duration)
-      }
+      durationTotalMs += item.durationMs
     }
     return durationTotalMs
   }
@@ -589,12 +598,7 @@ class SongrequestModule implements Module {
     let durationTotal = 0
     if (countTotal > 0) {
       for (const item of this.data.playlist) {
-        const d = await this.loadYoutubeData(item.yt)
-        // sometimes songs in the playlist may not be available on yt anymore
-        // then we just dont add that to the duration calculation
-        if (d) {
-          durationTotal += fn.parseISO8601Duration(d.contentDetails.duration)
-        }
+        durationTotal += item.durationMs
       }
     }
     return {
@@ -707,6 +711,9 @@ class SongrequestModule implements Module {
       }
       if (by === SortBy.USER && a.user !== b.user) {
         return direction * a.user.localeCompare(b.user)
+      }
+      if (by === SortBy.DURATION && a.durationMs !== b.durationMs) {
+        return direction * (a.durationMs > b.durationMs ? 1 : -1)
       }
       return 0
     })
@@ -1292,6 +1299,7 @@ class SongrequestModule implements Module {
       yt: youtubeId,
       title: youtubeData.snippet.title,
       timestamp: new Date().getTime(),
+      durationMs: fn.parseISO8601Duration(youtubeData.contentDetails.duration),
       user: userName,
       plays: 0,
       goods: 0,

@@ -143,6 +143,7 @@ export interface PlaylistItem {
   yt: string
   title: string
   timestamp: number
+  durationMs: number
   hidevideo?: boolean
   last_play: number
   plays: number

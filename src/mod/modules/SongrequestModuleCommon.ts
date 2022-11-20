@@ -15,6 +15,7 @@ export enum SortBy {
   TIMESTAMP = 'timestamp',
   PLAYS = 'plays',
   USER = 'user',
+  DURATION = 'duration',
 }
 
 export interface SongrequestModuleCustomCssPreset {
