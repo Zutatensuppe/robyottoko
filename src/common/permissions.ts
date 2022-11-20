@@ -56,7 +56,7 @@ const userAllowed = (ctx: TwitchChatContext, cmd: Command | FunctionCommand): bo
     return true
   }
   // compare lowercase, otherwise may be confusing why nC_para_ doesnt disallow nc_para_
-  return arrayIncludesIgnoreCase(cmd.disallow_users, ctx.username)
+  return !arrayIncludesIgnoreCase(cmd.disallow_users, ctx.username)
 }
 
 export const mayExecute = (context: TwitchChatContext, cmd: Command | FunctionCommand) => {
