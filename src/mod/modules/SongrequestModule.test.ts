@@ -8,6 +8,7 @@ describe('SongrequestModule', () => {
     yt: 'bla',
     title: 'bla',
     timestamp: 0,
+    durationMs: 10,
     hidevideo: false,
     last_play: -1,
     plays,
