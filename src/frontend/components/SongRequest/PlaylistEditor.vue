@@ -277,6 +277,7 @@ import { computed, nextTick, Ref, ref, watch } from "vue"
 import { DragEndEvent, PlaylistItem } from "../../../types"
 import { SortBy, SortDirection } from "../../../mod/modules/SongrequestModuleCommon"
 import DoubleclickButton from '../DoubleclickButton.vue'
+import CheckboxInput from "../CheckboxInput.vue"
 
 interface EnhancedPlaylistItem extends PlaylistItem {
   filteredOut: boolean
