@@ -3,6 +3,7 @@
 import { Command, FunctionCommand, GlobalVariable, MediaFile, PlaylistItem } from "../../types"
 import { commands } from '../../common/commands'
 import { getProp } from "../../common/fn"
+import { presets } from "./SongrequestPresets";
 
 export interface TagInfo {
   value: string
@@ -145,6 +146,6 @@ export const default_settings = (obj: any = null): SongrequestModuleSettings => 
     mod: parseInt(String(getProp(obj, ['maxSongsQueued', 'mod'], 0)), 10),
     sub: parseInt(String(getProp(obj, ['maxSongsQueued', 'sub'], 0)), 10),
   },
-  customCssPresets: getProp(obj, ['customCssPresets'], []).map(default_custom_css_preset),
+  customCssPresets: getProp(obj, ['customCssPresets'], presets).map(default_custom_css_preset),
   customCssPresetIdx: getProp(obj, ['customCssPresetIdx'], 0),
 })

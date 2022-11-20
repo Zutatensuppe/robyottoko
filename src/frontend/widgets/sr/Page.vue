@@ -3,29 +3,31 @@
     class="wrapper"
     :class="classes"
   >
-    <div class="player video-16-9">
-      <ResponsiveImage
-        v-if="hidevideo && settings.hideVideoImage.file"
-        class="hide-video"
-        :src="settings.hideVideoImage.urlpath"
-      />
-      <div
-        v-else-if="hidevideo"
-        class="hide-video"
-      />
-      <div
-        v-if="preset.showProgressBar"
-        class="progress"
-      >
+    <div class="player">
+      <div class="video-16-9">
+        <ResponsiveImage
+          v-if="hidevideo && settings.hideVideoImage.file"
+          class="hide-video"
+          :src="settings.hideVideoImage.urlpath"
+        />
         <div
-          class="progress-value"
-          :style="progressValueStyle"
+          v-else-if="hidevideo"
+          class="hide-video"
+        />
+        <div
+          v-if="preset.showProgressBar"
+          class="progress"
+        >
+          <div
+            class="progress-value"
+            :style="progressValueStyle"
+          />
+        </div>
+        <YoutubePlayer
+          ref="player"
+          @ended="ended"
         />
       </div>
-      <YoutubePlayer
-        ref="player"
-        @ended="ended"
-      />
     </div>
     <ol class="list">
       <ListItem
