@@ -184,10 +184,11 @@ const createCommand = (cmd: Partial<Command>): Command => {
     action: cmd.action,
     triggers: typeof cmd.triggers !== 'undefined' ? cmd.triggers : [],
     effects: typeof cmd.effects !== 'undefined' ? cmd.effects : [],
-    restrict_to: typeof cmd.restrict_to !== 'undefined' ? cmd.restrict_to : [],
     variables: typeof cmd.variables !== 'undefined' ? cmd.variables : [],
     data: typeof cmd.data !== 'undefined' ? cmd.data : {},
     cooldown: typeof cmd.cooldown !== 'undefined' ? cmd.cooldown : { global: '0', perUser: '0' },
+    restrict_to: typeof cmd.restrict_to !== 'undefined' ? cmd.restrict_to : [],
+    disallow_users: typeof cmd.disallow_users !== 'undefined' ? cmd.disallow_users : [],
   }
 }
 
