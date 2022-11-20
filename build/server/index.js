@@ -416,6 +416,18 @@ const getProp = (obj, keys, defaultVal) => {
     }
     return x;
 };
+const arrayIncludesIgnoreCase = (arr, val) => {
+    if (arr.length === 0) {
+        return false;
+    }
+    const valLowercase = val.toLowerCase();
+    for (const item of arr) {
+        if (item.toLowerCase() === valLowercase) {
+            return true;
+        }
+    }
+    return false;
+};
 const withoutLeading = (string, prefix) => {
     if (prefix === '') {
         return string;
@@ -2636,20 +2648,30 @@ const MOD_OR_ABOVE = [
 const isBroadcaster = (ctx) => ctx['room-id'] === ctx['user-id'];
 const isMod = (ctx) => !!ctx.mod;
 const isSubscriber = (ctx) => !!ctx.subscriber;
-const mayExecute = (context, cmd) => {
+const userTypeOk = (ctx, cmd) => {
     if (!cmd.restrict_to || cmd.restrict_to.length === 0) {
         return true;
     }
-    if (cmd.restrict_to.includes(CommandRestrict.MOD) && isMod(context)) {
+    if (cmd.restrict_to.includes(CommandRestrict.MOD) && isMod(ctx)) {
         return true;
     }
-    if (cmd.restrict_to.includes(CommandRestrict.SUB) && isSubscriber(context)) {
+    if (cmd.restrict_to.includes(CommandRestrict.SUB) && isSubscriber(ctx)) {
         return true;
     }
-    if (cmd.restrict_to.includes(CommandRestrict.BROADCASTER) && isBroadcaster(context)) {
+    if (cmd.restrict_to.includes(CommandRestrict.BROADCASTER) && isBroadcaster(ctx)) {
         return true;
     }
     return false;
+};
+const userAllowed = (ctx, cmd) => {
+    if (!cmd.disallow_users || cmd.disallow_users.length === 0) {
+        return true;
+    }
+    // compare lowercase, otherwise may be confusing why nC_para_ doesnt disallow nc_para_
+    return arrayIncludesIgnoreCase(cmd.disallow_users, ctx.username);
+};
+const mayExecute = (context, cmd) => {
+    return userTypeOk(context, cmd) && userAllowed(context, cmd);
 };
 
 const newTrigger = (type) => ({
@@ -2744,10 +2766,11 @@ const createCommand = (cmd) => {
         action: cmd.action,
         triggers: typeof cmd.triggers !== 'undefined' ? cmd.triggers : [],
         effects: typeof cmd.effects !== 'undefined' ? cmd.effects : [],
-        restrict_to: typeof cmd.restrict_to !== 'undefined' ? cmd.restrict_to : [],
         variables: typeof cmd.variables !== 'undefined' ? cmd.variables : [],
         data: typeof cmd.data !== 'undefined' ? cmd.data : {},
         cooldown: typeof cmd.cooldown !== 'undefined' ? cmd.cooldown : { global: '0', perUser: '0' },
+        restrict_to: typeof cmd.restrict_to !== 'undefined' ? cmd.restrict_to : [],
+        disallow_users: typeof cmd.disallow_users !== 'undefined' ? cmd.disallow_users : [],
     };
 };
 const commands = {
@@ -4684,6 +4707,7 @@ class GeneralModule {
         }, 1 * SECOND);
     }
     fix(commands) {
+        let shouldSave = false;
         const fixedCommands = (commands || []).map((cmd) => {
             if (cmd.command) {
                 cmd.triggers = [newCommandTrigger(cmd.command, cmd.commandExact || false)];
@@ -4696,6 +4720,10 @@ class GeneralModule {
             }
             if (cmd.timeout) {
                 delete cmd.timeout;
+            }
+            if (typeof cmd.disallow_users === 'undefined') {
+                cmd.disallow_users = [];
+                shouldSave = true;
             }
             if (cmd.variableChanges) {
                 for (const variableChange of cmd.variableChanges) {
@@ -4758,7 +4786,6 @@ class GeneralModule {
             });
             return cmd;
         });
-        let shouldSave = false;
         // add ids to commands that dont have one yet
         for (const command of fixedCommands) {
             if (!command.id) {
@@ -5325,25 +5352,29 @@ class SongrequestModule {
             }
         }
         // add ids to commands that dont have one yet
-        for (const command of data.commands) {
-            if (!command.id) {
-                command.id = nonce(10);
+        for (const cmd of data.commands) {
+            if (!cmd.id) {
+                cmd.id = nonce(10);
                 shouldSave = true;
             }
-            if (!command.createdAt) {
-                command.createdAt = newJsonDate();
+            if (!cmd.createdAt) {
+                cmd.createdAt = newJsonDate();
                 shouldSave = true;
             }
-            if (!command.effects) {
-                command.effects = [];
+            if (!cmd.effects) {
+                cmd.effects = [];
                 shouldSave = true;
             }
-            if (typeof command.cooldown !== 'object') {
-                command.cooldown = command.timeout || { global: '0', perUser: '0' };
+            if (typeof cmd.cooldown !== 'object') {
+                cmd.cooldown = cmd.timeout || { global: '0', perUser: '0' };
                 shouldSave = true;
             }
-            if (command.timeout) {
-                delete command.timeout;
+            if (cmd.timeout) {
+                delete cmd.timeout;
+                shouldSave = true;
+            }
+            if (typeof cmd.disallow_users === 'undefined') {
+                cmd.disallow_users = [];
                 shouldSave = true;
             }
         }
@@ -7280,9 +7311,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-11-20T11:37:57.776Z",
+    buildDate: "2022-11-20T13:09:37.526Z",
     // @ts-ignore
-    buildVersion: "1.37.0",
+    buildVersion: "1.38.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
