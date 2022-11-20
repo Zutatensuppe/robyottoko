@@ -84,6 +84,7 @@
             <th v-if="possibleActionsMapped.length > 1">
               Type
             </th>
+            <th>Enabled</th>
             <th>Permissions</th>
             <th />
             <th />
@@ -146,6 +147,21 @@
               </td>
               <td v-if="possibleActionsMapped.length > 1">
                 {{ element.action }}
+              </td>
+              <td>
+                <span
+                  class="is-clickable"
+                  @click="element.enabled = !element.enabled; emitChange()"
+                >
+                  <i
+                    v-if="element.enabled"
+                    class="fa fa-check has-text-success"
+                  />
+                  <i
+                    v-else
+                    class="fa fa-times has-text-danger"
+                  />
+                </span>
               </td>
               <td>
                 {{ permissionsStr(element.restrict_to) }}

@@ -256,6 +256,10 @@ class SongrequestModule implements Module {
         cmd.allow_users = []
         shouldSave = true
       }
+      if (typeof cmd.enabled === 'undefined') {
+        cmd.enabled = true
+        shouldSave = true
+      }
     }
 
     return {
