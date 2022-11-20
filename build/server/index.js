@@ -4565,6 +4565,24 @@ class Db {
 
 function mitt(n){return {all:n=n||new Map,on:function(t,e){var i=n.get(t);i?i.push(e):n.set(t,[e]);},off:function(t,e){var i=n.get(t);i&&(e?i.splice(i.indexOf(e)>>>0,1):n.set(t,[]));},emit:function(t,e){var i=n.get(t);i&&i.slice().map(function(n){n(e);}),(i=n.get("*"))&&i.slice().map(function(n){n(t,e);});}}}
 
+const default_settings$5 = (obj = null) => ({
+    volume: getProp(obj, ['volume'], 100),
+    emotes: {
+        displayFn: getProp(obj, ['emotes', 'displayFn'], [
+            { fn: EMOTE_DISPLAY_FN.BALLOON, args: [], },
+            { fn: EMOTE_DISPLAY_FN.BOUNCY, args: [], },
+            { fn: EMOTE_DISPLAY_FN.EXPLODE, args: [], },
+            { fn: EMOTE_DISPLAY_FN.FLOATING_SPACE, args: [], },
+            { fn: EMOTE_DISPLAY_FN.FOUNTAIN, args: [], },
+            { fn: EMOTE_DISPLAY_FN.RAIN, args: [], },
+            { fn: EMOTE_DISPLAY_FN.RANDOM_BEZIER, args: [], },
+        ]),
+    },
+});
+const default_admin_settings = () => ({
+    showImages: true,
+    autocommands: [],
+});
 var EMOTE_DISPLAY_FN;
 (function (EMOTE_DISPLAY_FN) {
     EMOTE_DISPLAY_FN["BALLOON"] = "balloon";
@@ -4575,6 +4593,15 @@ var EMOTE_DISPLAY_FN;
     EMOTE_DISPLAY_FN["RAIN"] = "rain";
     EMOTE_DISPLAY_FN["RANDOM_BEZIER"] = "randomBezier";
 })(EMOTE_DISPLAY_FN || (EMOTE_DISPLAY_FN = {}));
+[
+    EMOTE_DISPLAY_FN.BALLOON,
+    EMOTE_DISPLAY_FN.BOUNCY,
+    EMOTE_DISPLAY_FN.EXPLODE,
+    EMOTE_DISPLAY_FN.FLOATING_SPACE,
+    EMOTE_DISPLAY_FN.FOUNTAIN,
+    EMOTE_DISPLAY_FN.RAIN,
+    EMOTE_DISPLAY_FN.RANDOM_BEZIER,
+];
 
 const variableChangeToCommandEffect = (variableChange) => {
     return {
@@ -4901,14 +4928,10 @@ class GeneralModule {
     async reinit() {
         const data = await this.bot.getRepos().module.load(this.user.id, this.name, {
             commands: [],
-            settings: {
-                volume: 100,
-            },
-            adminSettings: {
-                showImages: true,
-                autocommands: []
-            },
+            settings: default_settings$5(),
+            adminSettings: default_admin_settings(),
         });
+        data.settings = default_settings$5(data.settings);
         const fixed = this.fix(data.commands);
         data.commands = fixed.commands;
         if (!data.adminSettings) {
@@ -5019,6 +5042,7 @@ class GeneralModule {
                 globalVariables: await this.bot.getRepos().variables.all(this.user.id),
                 channelPointsCustomRewards: this.channelPointsCustomRewards,
                 mediaWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.MEDIA, this.user.id),
+                emoteWallWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.EMOTE_WALL, this.user.id),
             },
         };
     }
@@ -5073,16 +5097,7 @@ class GeneralModule {
         const emotes = extractEmotes(chatMessageContext);
         if (emotes) {
             const data = {
-                // todo: use settings that user has set up
-                displayFn: [
-                    { fn: EMOTE_DISPLAY_FN.BALLOON, args: [], },
-                    { fn: EMOTE_DISPLAY_FN.BOUNCY, args: [], },
-                    { fn: EMOTE_DISPLAY_FN.EXPLODE, args: [], },
-                    { fn: EMOTE_DISPLAY_FN.FLOATING_SPACE, args: [], },
-                    { fn: EMOTE_DISPLAY_FN.FOUNTAIN, args: [], },
-                    { fn: EMOTE_DISPLAY_FN.RAIN, args: [], },
-                    { fn: EMOTE_DISPLAY_FN.RANDOM_BEZIER, args: [], },
-                ],
+                displayFn: this.data.settings.emotes.displayFn,
                 emotes,
             };
             // extract emotes and send them to the clients
@@ -7598,9 +7613,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-11-20T17:35:26.307Z",
+    buildDate: "2022-11-20T19:53:50.524Z",
     // @ts-ignore
-    buildVersion: "1.44.0",
+    buildVersion: "1.45.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
