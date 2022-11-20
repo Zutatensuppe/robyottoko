@@ -51,14 +51,19 @@ const userTypeOk = (ctx: TwitchChatContext, cmd: Command | FunctionCommand): boo
   return false
 }
 
-const userAllowed = (ctx: TwitchChatContext, cmd: Command | FunctionCommand): boolean => {
-  if (!cmd.disallow_users || cmd.disallow_users.length === 0) {
-    return true
-  }
+const userInAllowList = (ctx: TwitchChatContext, cmd: Command | FunctionCommand): boolean => {
   // compare lowercase, otherwise may be confusing why nC_para_ doesnt disallow nc_para_
-  return !arrayIncludesIgnoreCase(cmd.disallow_users, ctx.username)
+  return arrayIncludesIgnoreCase(cmd.allow_users || [], ctx.username)
 }
 
-export const mayExecute = (context: TwitchChatContext, cmd: Command | FunctionCommand) => {
-  return userTypeOk(context, cmd) && userAllowed(context, cmd)
+const userInDisallowList = (ctx: TwitchChatContext, cmd: Command | FunctionCommand): boolean => {
+  // compare lowercase, otherwise may be confusing why nC_para_ doesnt disallow nc_para_
+  return arrayIncludesIgnoreCase(cmd.disallow_users || [], ctx.username)
+}
+
+export const mayExecute = (ctx: TwitchChatContext, cmd: Command | FunctionCommand): boolean => {
+  if (userInAllowList(ctx, cmd)) {
+    return true
+  }
+  return userTypeOk(ctx, cmd) && !userInDisallowList(ctx, cmd)
 }

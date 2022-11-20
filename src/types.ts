@@ -441,6 +441,7 @@ export interface Command {
   cooldown: CommandCooldown
   restrict_to: CommandRestrict[]
   disallow_users: string[] // usernames
+  allow_users: string[] // usernames
 
   // DEPRECATED:
   // -----------------------------------------------------------------
@@ -506,6 +507,7 @@ export interface FunctionCommand {
   cooldown: CommandCooldown
   restrict_to?: CommandRestrict[]
   disallow_users?: string[]
+  allow_users?: string[]
 }
 
 export interface ChatMessageContext {

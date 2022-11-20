@@ -179,6 +179,37 @@
             </tr>
             <tr>
               <td>
+                <div>Allow Users:</div>
+                <span
+                  class="button is-small"
+                  @click="item.allow_users.push('')"
+                >Add User</span>
+              </td>
+              <td>
+                <div
+                  v-for="(user, idx) in item.allow_users"
+                  :key="idx"
+                  class="field has-addons"
+                >
+                  <div class="control">
+                    <StringInput v-model="item.allow_users[idx]" />
+                  </div>
+                  <button
+                    class="button is-small"
+                    @click="item.allow_users = item.allow_users.filter((x, idx2) => idx2 !== idx)"
+                  >
+                    <i class="fa fa-remove" />
+                  </button>
+                </div>
+                <div class="help">
+                  Users added here will be able to execute the command,
+                  regardless of if they are disallowed as well and regardless
+                  of their status (eg. mod, sub).
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
                 Cooldown:
               </td>
               <td>

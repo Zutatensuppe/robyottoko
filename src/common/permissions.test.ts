@@ -12,6 +12,7 @@ describe(('mayExecute'), () => {
   const nonRestrictedCommand = {} as unknown as Command
   const modSubBroadcasterRestrictedCommand = { restrict_to: [CommandRestrict.MOD, CommandRestrict.SUB, CommandRestrict.BROADCASTER] } as unknown as Command
   const disallowedUserCommand = { disallow_users: ['bla'] } as unknown as Command
+  const allowedUserCommand = { allow_users: ['bla'], disallow_users: ['bla'], restrict_to: [CommandRestrict.MOD, CommandRestrict.SUB, CommandRestrict.BROADCASTER] } as unknown as Command
 
   test.each([
     {
@@ -72,6 +73,14 @@ describe(('mayExecute'), () => {
       cmd: disallowedUserCommand,
       expected: false
     },
+
+    // with allows
+    {
+      name: 'regular user, allowed',
+      ctx: regularUserCtx,
+      cmd: allowedUserCommand,
+      expected: true,
+    }
   ])('mayExecute: $name', ({ name, ctx, cmd, expected }) => {
     const actual = mayExecute(ctx, cmd)
     expect(actual).toStrictEqual(expected)
