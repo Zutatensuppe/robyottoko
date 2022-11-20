@@ -11,7 +11,7 @@ describe(('mayExecute'), () => {
 
   const nonRestrictedCommand = {} as unknown as Command
   const modSubBroadcasterRestrictedCommand = { restrict_to: [CommandRestrict.MOD, CommandRestrict.SUB, CommandRestrict.BROADCASTER] } as unknown as Command
-  const disallowedUserCommand = { disallow_users: 'bla' } as unknown as Command
+  const disallowedUserCommand = { disallow_users: ['bla'] } as unknown as Command
 
   test.each([
     {
