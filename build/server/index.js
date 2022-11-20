@@ -7416,9 +7416,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-11-20T16:02:21.521Z",
+    buildDate: "2022-11-20T16:39:07.661Z",
     // @ts-ignore
-    buildVersion: "1.43.0",
+    buildVersion: "1.43.1",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
