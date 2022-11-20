@@ -186,6 +186,7 @@ import DurationInput from "../DurationInput.vue"
 import ImageUpload from "../ImageUpload.vue"
 import PresetEditor from "./PresetEditor.vue"
 import VolumeSlider from "../VolumeSlider.vue"
+import { presets } from "../../../mod/modules/SongrequestPresets"
 
 const props = defineProps<{
   modelValue: SongrequestModuleSettings
@@ -235,8 +236,7 @@ const loadPreset = (idx: number): void => {
 const removePreset = (idx: number): void => {
   settings.value.customCssPresets = settings.value.customCssPresets.filter((_preset, _idx) => _idx !== idx);
   if (settings.value.customCssPresets.length === 0) {
-    const preset = default_custom_css_preset({ name: 'default' })
-    settings.value.customCssPresets.push(preset)
+    settings.value.customCssPresets.push(...presets)
     settings.value.customCssPresetIdx = 0
   } else {
     if (idx === settings.value.customCssPresetIdx) {
