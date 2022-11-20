@@ -12,10 +12,8 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import {
-  default_settings,
   EMOTE_DISPLAY_FN,
   GeneralModuleEmotesEventData,
-  GeneralModuleSettings,
   GeneralModuleWsEventData,
 } from "../../../mod/modules/GeneralModuleCommon";
 import util, { WidgetApiData } from "../util";
@@ -30,8 +28,6 @@ let ws: WsClient | null = null
 const props = defineProps<{
   wdata: WidgetApiData,
 }>();
-
-const settings = ref<GeneralModuleSettings>(default_settings())
 
 interface Emote {
   url: string,
@@ -418,11 +414,10 @@ const loadImage = async (url: string): Promise<HTMLImageElement> => {
 
 onMounted(() => {
   ws = util.wsClient(props.wdata);
-  ws.onMessage("init", (data: GeneralModuleWsEventData) => {
-    settings.value = data.settings;
+  ws.onMessage("init", (_data: GeneralModuleWsEventData) => {
+    // pass
   })
   ws.onMessage("emotes", async (data: GeneralModuleEmotesEventData) => {
-
     const displayFn = getRandom(data.displayFn)
     let emoteFn: EmoteFn
     switch (displayFn.fn) {

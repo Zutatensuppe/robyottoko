@@ -1,9 +1,18 @@
 "use strict";
 
+import { getProp } from "../../common/fn";
 import { Command, GlobalVariable } from "../../types"
+
+interface EmoteDisplayFn {
+  fn: EMOTE_DISPLAY_FN,
+  args: string[]
+}
 
 export interface GeneralModuleSettings {
   volume: number
+  emotes: {
+    displayFn: EmoteDisplayFn[]
+  }
 }
 
 export interface GeneralModuleAdminSettings {
@@ -11,8 +20,19 @@ export interface GeneralModuleAdminSettings {
   autocommands: string[]
 }
 
-export const default_settings = (): GeneralModuleSettings => ({
-  volume: 100,
+export const default_settings = (obj: any = null): GeneralModuleSettings => ({
+  volume: getProp(obj, ['volume'], 100),
+  emotes: {
+    displayFn: getProp(obj, ['emotes', 'displayFn'], [
+      { fn: EMOTE_DISPLAY_FN.BALLOON, args: [], },
+      { fn: EMOTE_DISPLAY_FN.BOUNCY, args: [], },
+      { fn: EMOTE_DISPLAY_FN.EXPLODE, args: [], },
+      { fn: EMOTE_DISPLAY_FN.FLOATING_SPACE, args: [], },
+      { fn: EMOTE_DISPLAY_FN.FOUNTAIN, args: [], },
+      { fn: EMOTE_DISPLAY_FN.RAIN, args: [], },
+      { fn: EMOTE_DISPLAY_FN.RANDOM_BEZIER, args: [], },
+    ]),
+  },
 })
 
 export const default_admin_settings = (): GeneralModuleAdminSettings => ({
@@ -30,11 +50,18 @@ export enum EMOTE_DISPLAY_FN {
   RANDOM_BEZIER = 'randomBezier',
 }
 
+export const possibleEmoteDisplayFunctions = [
+  EMOTE_DISPLAY_FN.BALLOON,
+  EMOTE_DISPLAY_FN.BOUNCY,
+  EMOTE_DISPLAY_FN.EXPLODE,
+  EMOTE_DISPLAY_FN.FLOATING_SPACE,
+  EMOTE_DISPLAY_FN.FOUNTAIN,
+  EMOTE_DISPLAY_FN.RAIN,
+  EMOTE_DISPLAY_FN.RANDOM_BEZIER,
+]
+
 export interface GeneralModuleEmotesEventData {
-  displayFn: {
-    fn: EMOTE_DISPLAY_FN,
-    args: string[]
-  }[]
+  displayFn: EmoteDisplayFn[]
   emotes: {
     url: string
   }[]
@@ -47,6 +74,7 @@ export interface GeneralModuleWsEventData {
   globalVariables: GlobalVariable[]
   channelPointsCustomRewards: Record<string, string[]>
   mediaWidgetUrl: string
+  emoteWallWidgetUrl: string
 }
 
 export interface GeneralSaveEventData {

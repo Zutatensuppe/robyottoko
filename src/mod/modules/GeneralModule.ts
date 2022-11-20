@@ -18,7 +18,8 @@ import {
   CommandEffect,
 } from '../../types'
 import {
-  EMOTE_DISPLAY_FN,
+  default_admin_settings,
+  default_settings,
   GeneralModuleAdminSettings,
   GeneralModuleEmotesEventData,
   GeneralModuleSettings,
@@ -255,14 +256,10 @@ class GeneralModule implements Module {
   async reinit(): Promise<GeneralModuleInitData> {
     const data = await this.bot.getRepos().module.load(this.user.id, this.name, {
       commands: [],
-      settings: {
-        volume: 100,
-      },
-      adminSettings: {
-        showImages: true,
-        autocommands: []
-      },
+      settings: default_settings(),
+      adminSettings: default_admin_settings(),
     })
+    data.settings = default_settings(data.settings)
     const fixed = this.fix(data.commands)
     data.commands = fixed.commands
 
@@ -371,6 +368,7 @@ class GeneralModule implements Module {
         globalVariables: await this.bot.getRepos().variables.all(this.user.id),
         channelPointsCustomRewards: this.channelPointsCustomRewards,
         mediaWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.MEDIA, this.user.id),
+        emoteWallWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.EMOTE_WALL, this.user.id),
       },
     }
   }
@@ -434,16 +432,7 @@ class GeneralModule implements Module {
     const emotes = extractEmotes(chatMessageContext)
     if (emotes) {
       const data: GeneralModuleEmotesEventData = {
-        // todo: use settings that user has set up
-        displayFn: [
-          { fn: EMOTE_DISPLAY_FN.BALLOON, args: [], },
-          { fn: EMOTE_DISPLAY_FN.BOUNCY, args: [], },
-          { fn: EMOTE_DISPLAY_FN.EXPLODE, args: [], },
-          { fn: EMOTE_DISPLAY_FN.FLOATING_SPACE, args: [], },
-          { fn: EMOTE_DISPLAY_FN.FOUNTAIN, args: [], },
-          { fn: EMOTE_DISPLAY_FN.RAIN, args: [], },
-          { fn: EMOTE_DISPLAY_FN.RANDOM_BEZIER, args: [], },
-        ],
+        displayFn: this.data.settings.emotes.displayFn,
         emotes,
       }
       // extract emotes and send them to the clients

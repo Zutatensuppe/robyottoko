@@ -23,9 +23,16 @@
           <li>
             <a
               class="button is-small mr-1"
-              :href="widgetUrl"
+              :href="mediaWidgetUrl"
               target="_blank"
             >Open Media widget</a>
+          </li>
+          <li>
+            <a
+              class="button is-small mr-1"
+              :href="emoteWallWidgetUrl"
+              target="_blank"
+            >Open Emote Wall widget</a>
           </li>
         </ul>
       </div>
@@ -39,31 +46,16 @@
         :base-volume="baseVolume"
         :show-toggle-images="true"
         :show-filters="true"
-        :widget-url="widgetUrl"
+        :widget-url="mediaWidgetUrl"
         :show-images="adminSettings.showImages"
-        @update:modelValue="sendSave"
-        @showImagesChange="updateShowImages"
+        @update:model-value="sendSave"
+        @show-images-change="updateShowImages"
       />
-      <div v-if="inited && tab === 'settings'">
-        <table
-          v-if="settings"
-          ref="table"
-          class="table is-striped"
-        >
-          <tbody>
-            <tr>
-              <td><code>settings.volume</code></td>
-              <td>
-                <VolumeSlider
-                  v-model="settings.volume"
-                  @update:modelValue="sendSave"
-                />
-              </td>
-              <td>Base volume for all media playing from commands</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <Settings
+        v-if="inited && tab === 'settings'"
+        v-model="settings"
+        @update:model-value="sendSave"
+      />
     </div>
   </div>
 </template>
@@ -81,8 +73,8 @@ import {
 import { Command, CommandAction, CommandEffectType, GlobalVariable } from "../../types"
 import util from "../util"
 import CommandsEditor from "../components/Commands/CommandsEditor.vue"
-import VolumeSlider from '../components/VolumeSlider.vue'
 import NavbarElement from '../components/NavbarElement.vue'
+import Settings from "../components/Commands/Settings.vue"
 
 type TabType = "commands" | "settings"
 interface TabDefinition {
@@ -120,7 +112,8 @@ const tabDefinitions: TabDefinition[] = [
 ]
 const inited = ref<boolean>(false)
 const tab = ref<TabType>("commands")
-const widgetUrl = ref<string>("")
+const mediaWidgetUrl = ref<string>("")
+const emoteWallWidgetUrl = ref<string>("")
 
 const baseVolume = computed(() => {
   return settings.value.volume
@@ -151,7 +144,8 @@ onMounted(() => {
   ws.onMessage("init", (data: GeneralModuleWsEventData) => {
     commands.value = data.commands;
     settings.value = data.settings;
-    widgetUrl.value = data.mediaWidgetUrl;
+    mediaWidgetUrl.value = data.mediaWidgetUrl;
+    emoteWallWidgetUrl.value = data.emoteWallWidgetUrl;
     adminSettings.value = data.adminSettings;
     globalVariables.value = data.globalVariables;
     channelPointsCustomRewards.value = data.channelPointsCustomRewards;
