@@ -27,6 +27,16 @@
                 v-model="val.name"
               />
             </td>
+            <td />
+          </tr>
+          <tr>
+            <td>Hide player</td>
+            <td>
+              <CheckboxInput
+                v-model="val.hidePlayer"
+              />
+            </td>
+            <td />
           </tr>
           <tr>
             <td>Show progress bar</td>
@@ -204,10 +214,6 @@ const css = {
     { class: ".meta-plays", desc: "How many times the song was played" },
   ],
   codeExamples: [
-    {
-      desc: "Hide Player:",
-      code: `.player { position: absolute; }`,
-    },
     {
       desc: "Change font to external font:",
       code: `@import url('https://fonts.googleapis.com/css2?family=Shadows+Into+Light');

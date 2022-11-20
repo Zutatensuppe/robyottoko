@@ -66,6 +66,18 @@ body {
   column-gap: 10px;
 }
 
+.player-hidden .player .video-16-9 {
+  padding: 0;
+  margin: 0;
+
+  iframe {
+    width: 1px;
+    height: 1px;
+    position: absolute;
+    left: 9999px;
+  }
+}
+
 .without-thumbnails .item {
   grid-template-areas: "title title"
     "meta-left meta-right";
