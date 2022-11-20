@@ -2689,6 +2689,7 @@ var CommandRestrict;
     CommandRestrict["MOD"] = "mod";
     CommandRestrict["SUB"] = "sub";
     CommandRestrict["BROADCASTER"] = "broadcaster";
+    CommandRestrict["REGULAR"] = "regular";
 })(CommandRestrict || (CommandRestrict = {}));
 const MOD_OR_ABOVE = [
     CommandRestrict.MOD,
@@ -2698,10 +2699,12 @@ const MOD_OR_ABOVE = [
     { value: CommandRestrict.BROADCASTER, label: "Broadcaster" },
     { value: CommandRestrict.MOD, label: "Moderators" },
     { value: CommandRestrict.SUB, label: "Subscribers" },
+    { value: CommandRestrict.REGULAR, label: "Regular Users" },
 ];
 const isBroadcaster = (ctx) => ctx['room-id'] === ctx['user-id'];
 const isMod = (ctx) => !!ctx.mod;
-const isSubscriber = (ctx) => !!ctx.subscriber;
+const isSubscriber = (ctx) => !!ctx.subscriber && !isBroadcaster(ctx);
+const isRegular = (ctx) => !isBroadcaster(ctx) && !isMod(ctx) && !isSubscriber(ctx);
 const userTypeOk = (ctx, cmd) => {
     if (!cmd.restrict_to || cmd.restrict_to.length === 0) {
         return true;
@@ -2713,6 +2716,9 @@ const userTypeOk = (ctx, cmd) => {
         return true;
     }
     if (cmd.restrict_to.includes(CommandRestrict.BROADCASTER) && isBroadcaster(ctx)) {
+        return true;
+    }
+    if (cmd.restrict_to.includes(CommandRestrict.REGULAR) && isRegular(ctx)) {
         return true;
     }
     return false;
@@ -7383,9 +7389,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-11-20T14:25:56.364Z",
+    buildDate: "2022-11-20T14:54:59.815Z",
     // @ts-ignore
-    buildVersion: "1.40.0",
+    buildVersion: "1.41.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');

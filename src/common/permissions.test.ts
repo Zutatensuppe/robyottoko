@@ -1,13 +1,12 @@
 import { Command, TwitchChatContext } from "../types"
-import { CommandRestrict, mayExecute } from "./permissions"
-
+import { CommandRestrict, mayExecute, userTypeOk } from "./permissions"
 
 describe(('mayExecute'), () => {
 
   const regularUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'bla' } as TwitchChatContext
   const modUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'bla', mod: true } as TwitchChatContext
   const subUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'bla', subscriber: true } as TwitchChatContext
-  const broadcasterUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'user1' } as TwitchChatContext
+  const broadcasterUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'user1', subscriber: true } as TwitchChatContext
 
   const nonRestrictedCommand = {} as unknown as Command
   const modSubBroadcasterRestrictedCommand = { restrict_to: [CommandRestrict.MOD, CommandRestrict.SUB, CommandRestrict.BROADCASTER] } as unknown as Command
@@ -83,6 +82,61 @@ describe(('mayExecute'), () => {
     }
   ])('mayExecute: $name', ({ name, ctx, cmd, expected }) => {
     const actual = mayExecute(ctx, cmd)
+    expect(actual).toStrictEqual(expected)
+  })
+
+})
+
+
+
+describe(('userTypeOk'), () => {
+  const regularUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'bla' } as TwitchChatContext
+  const modUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'bla', mod: true } as TwitchChatContext
+  const subUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'bla', subscriber: true } as TwitchChatContext
+  // broadcasters are always subscribers
+  const broadcasterUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'user1', subscriber: true } as TwitchChatContext
+
+  const noRestrict = { restrict_to: [] } as unknown as Command
+  const modRestrict = { restrict_to: [CommandRestrict.MOD] } as unknown as Command
+  const subRestrict = { restrict_to: [CommandRestrict.SUB] } as unknown as Command
+  const regularRestrict = { restrict_to: [CommandRestrict.REGULAR] } as unknown as Command
+  const broadcasterRestrict = { restrict_to: [CommandRestrict.BROADCASTER] } as unknown as Command
+
+  test.each([
+    // regular user
+    { ctx: regularUserCtx, cmd: noRestrict, expected: true },
+    { ctx: regularUserCtx, cmd: modRestrict, expected: false },
+    { ctx: regularUserCtx, cmd: subRestrict, expected: false },
+    { ctx: regularUserCtx, cmd: broadcasterRestrict, expected: false },
+    { ctx: regularUserCtx, cmd: regularRestrict, expected: true },
+
+    // mod user
+    { ctx: modUserCtx, cmd: noRestrict, expected: true },
+    { ctx: modUserCtx, cmd: modRestrict, expected: true },
+    { ctx: modUserCtx, cmd: subRestrict, expected: false },
+    { ctx: modUserCtx, cmd: broadcasterRestrict, expected: false },
+    { ctx: modUserCtx, cmd: regularRestrict, expected: false },
+
+    // sub user
+    { ctx: subUserCtx, cmd: noRestrict, expected: true },
+    { ctx: subUserCtx, cmd: modRestrict, expected: false },
+    { ctx: subUserCtx, cmd: subRestrict, expected: true },
+    { ctx: subUserCtx, cmd: broadcasterRestrict, expected: false },
+    { ctx: subUserCtx, cmd: regularRestrict, expected: false },
+
+    // broadcaster user
+    { ctx: broadcasterUserCtx, cmd: noRestrict, expected: true },
+    { ctx: broadcasterUserCtx, cmd: modRestrict, expected: false },
+    { ctx: broadcasterUserCtx, cmd: subRestrict, expected: false },
+    { ctx: broadcasterUserCtx, cmd: broadcasterRestrict, expected: true },
+    { ctx: broadcasterUserCtx, cmd: regularRestrict, expected: false },
+
+    // other stuff
+    { ctx: subUserCtx, cmd: { restrict_to: [CommandRestrict.BROADCASTER, CommandRestrict.SUB] } as unknown as Command, expected: true},
+    { ctx: broadcasterUserCtx, cmd: { restrict_to: [CommandRestrict.REGULAR, CommandRestrict.SUB, CommandRestrict.MOD] } as unknown as Command, expected: false},
+
+  ])('userTypeOk', ({ ctx, cmd, expected }) => {
+    const actual = userTypeOk(ctx, cmd)
     expect(actual).toStrictEqual(expected)
   })
 
