@@ -2663,15 +2663,19 @@ const userTypeOk = (ctx, cmd) => {
     }
     return false;
 };
-const userAllowed = (ctx, cmd) => {
-    if (!cmd.disallow_users || cmd.disallow_users.length === 0) {
+const userInAllowList = (ctx, cmd) => {
+    // compare lowercase, otherwise may be confusing why nC_para_ doesnt disallow nc_para_
+    return arrayIncludesIgnoreCase(cmd.allow_users || [], ctx.username);
+};
+const userInDisallowList = (ctx, cmd) => {
+    // compare lowercase, otherwise may be confusing why nC_para_ doesnt disallow nc_para_
+    return arrayIncludesIgnoreCase(cmd.disallow_users || [], ctx.username);
+};
+const mayExecute = (ctx, cmd) => {
+    if (userInAllowList(ctx, cmd)) {
         return true;
     }
-    // compare lowercase, otherwise may be confusing why nC_para_ doesnt disallow nc_para_
-    return !arrayIncludesIgnoreCase(cmd.disallow_users, ctx.username);
-};
-const mayExecute = (context, cmd) => {
-    return userTypeOk(context, cmd) && userAllowed(context, cmd);
+    return userTypeOk(ctx, cmd) && !userInDisallowList(ctx, cmd);
 };
 
 const newTrigger = (type) => ({
@@ -2771,6 +2775,7 @@ const createCommand = (cmd) => {
         cooldown: typeof cmd.cooldown !== 'undefined' ? cmd.cooldown : { global: '0', perUser: '0' },
         restrict_to: typeof cmd.restrict_to !== 'undefined' ? cmd.restrict_to : [],
         disallow_users: typeof cmd.disallow_users !== 'undefined' ? cmd.disallow_users : [],
+        allow_users: typeof cmd.allow_users !== 'undefined' ? cmd.allow_users : [],
     };
 };
 const commands = {
@@ -4725,6 +4730,10 @@ class GeneralModule {
                 cmd.disallow_users = [];
                 shouldSave = true;
             }
+            if (typeof cmd.allow_users === 'undefined') {
+                cmd.allow_users = [];
+                shouldSave = true;
+            }
             if (cmd.variableChanges) {
                 for (const variableChange of cmd.variableChanges) {
                     cmd.effects.push(legacy.variableChangeToCommandEffect(variableChange));
@@ -5375,6 +5384,10 @@ class SongrequestModule {
             }
             if (typeof cmd.disallow_users === 'undefined') {
                 cmd.disallow_users = [];
+                shouldSave = true;
+            }
+            if (typeof cmd.allow_users === 'undefined') {
+                cmd.allow_users = [];
                 shouldSave = true;
             }
         }
@@ -7311,9 +7324,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-11-20T13:20:34.938Z",
+    buildDate: "2022-11-20T13:40:06.241Z",
     // @ts-ignore
-    buildVersion: "1.38.1",
+    buildVersion: "1.39.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
