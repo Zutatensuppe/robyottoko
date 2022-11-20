@@ -190,6 +190,7 @@ const createCommand = (cmd: Partial<Command>): Command => {
     restrict_to: typeof cmd.restrict_to !== 'undefined' ? cmd.restrict_to : [],
     disallow_users: typeof cmd.disallow_users !== 'undefined' ? cmd.disallow_users : [],
     allow_users: typeof cmd.allow_users !== 'undefined' ? cmd.allow_users : [],
+    enabled: typeof cmd.enabled !== 'undefined' ? cmd.enabled : true,
   }
 }
 

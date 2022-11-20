@@ -68,6 +68,9 @@ const userInDisallowList = (ctx: TwitchChatContext, cmd: Command | FunctionComma
 }
 
 export const mayExecute = (ctx: TwitchChatContext, cmd: Command | FunctionCommand): boolean => {
+  if (typeof cmd.enabled !== 'undefined' && cmd.enabled === false) {
+    return false
+  }
   if (userInAllowList(ctx, cmd)) {
     return true
   }

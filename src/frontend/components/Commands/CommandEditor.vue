@@ -237,6 +237,14 @@
                 </table>
               </td>
             </tr>
+            <tr>
+              <td>
+                Enabled:
+              </td>
+              <td>
+                <CheckboxInput v-model="item.enabled" />
+              </td>
+            </tr>
           </tbody>
         </table>
       </section>
@@ -289,6 +297,7 @@ import DurationInput from "../DurationInput.vue";
 import EffectsEditor from "./EffectsEditor.vue";
 import StringInput from "../StringInput.vue";
 import TriggerEditor from "./TriggerEditor.vue";
+import CheckboxInput from "../CheckboxInput.vue";
 
 interface ComponentDataPermission {
   value: string;

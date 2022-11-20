@@ -442,6 +442,7 @@ export interface Command {
   restrict_to: CommandRestrict[]
   disallow_users: string[] // usernames
   allow_users: string[] // usernames
+  enabled: boolean
 
   // DEPRECATED:
   // -----------------------------------------------------------------
@@ -508,6 +509,7 @@ export interface FunctionCommand {
   restrict_to?: CommandRestrict[]
   disallow_users?: string[]
   allow_users?: string[]
+  enabled?: boolean
 }
 
 export interface ChatMessageContext {
