@@ -996,7 +996,7 @@ class SongrequestModule implements Module {
 
   cmdSrUndo(_originalCommand: Command) {
     return async (ctx: CommandExecutionContext) => {
-      if (!ctx.rawCmd || !ctx.context) {
+      if (!ctx.rawCmd || !ctx.context || !ctx.context['display-name']) {
         return
       }
       const say = this.bot.sayFn(this.user, ctx.target)
@@ -1043,7 +1043,7 @@ class SongrequestModule implements Module {
 
   cmdSrStats(_originalCommand: Command) {
     return async (ctx: CommandExecutionContext) => {
-      if (!ctx.rawCmd || !ctx.context) {
+      if (!ctx.rawCmd || !ctx.context || !ctx.context['display-name']) {
         return
       }
 
@@ -1270,7 +1270,7 @@ class SongrequestModule implements Module {
 
   cmdSr(_originalCommand: Command) {
     return async (ctx: CommandExecutionContext) => {
-      if (!ctx.rawCmd || !ctx.context) {
+      if (!ctx.rawCmd || !ctx.context || !ctx.context['display-name']) {
         return
       }
 

@@ -1,7 +1,6 @@
 import { NextFunction, Response } from 'express'
 import { Emitter, EventType } from 'mitt'
-// @ts-ignore
-import { Client } from 'tmi.js'
+import { ChatUserstate, Client } from 'tmi.js'
 import { LogLevel } from './common/fn'
 import { CommandRestrict } from './common/permissions'
 import ModuleManager from './mod/ModuleManager'
@@ -197,41 +196,8 @@ export interface GlobalVariable {
   value: VariableValue
 }
 
-type TwitchChatEvent = 'connected' | 'message'
-
-type TwitchChatEventCallbackFn<T> = (
-  T extends 'connected' ? ((addr: string, port: number) => Promise<void>) : (
-    T extends 'message' ? ((target: string, context: TwitchChatContext, msg: string, self: boolean) => Promise<void>) : never
-  )
-)
-
-// TODO: use type definitions for tmi.js
-export interface TwitchChatClient extends Client {
-  opts: {
-    channels: string[],
-  },
-  say: (target: string, msg: string) => Promise<any>
-  connect: () => Promise<any>
-  disconnect: () => Promise<any>
-  on: <T extends TwitchChatEvent>(event: T, callback: TwitchChatEventCallbackFn<T>) => void
-  off: <T extends TwitchChatEvent>(event: T, callback: TwitchChatEventCallbackFn<T>) => void
-  removeAllListeners: (type?: string) => TwitchChatClient
-}
-
-export interface TwitchChatContext {
-  "room-id": any
-  "user-id": any
-  "display-name": string
-  username: string
-  mod: any
-  subscriber: any
-  badges: {
-    broadcaster?: string
-  }
-  // map of 'id' => position(s) in message, or null (or undefined for simplicity)
-  emotes?: Record<string, string[]> | null
-  // incomplete
-}
+export type TwitchChatClient = Client
+export type TwitchChatContext = ChatUserstate
 
 export interface CommandExecutionContext {
   rawCmd: RawCommand | null

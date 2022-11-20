@@ -2,6 +2,9 @@ import { User } from '../../repo/Users'
 import { Bot, ChatMessageContext, CommandExecutionContext, Module, MODULE_NAME, TwitchChatContext } from '../../types'
 import { newCommandTrigger } from '../../common/commands'
 import { isBroadcaster, isMod } from '../../common/permissions'
+import { logger } from '../../common/fn'
+
+const log = logger('VoteModule.ts')
 
 interface VoteModuleData {
   votes: Record<string, Record<string, string>>
@@ -59,6 +62,10 @@ class VoteModule implements Module {
     target: string,
     context: TwitchChatContext,
   ): Promise<void> {
+    if (!context['display-name']) {
+      log.error('context has no display name set')
+      return
+    }
     const say = this.bot.sayFn(this.user, target)
     this.data.votes[type] = this.data.votes[type] || {}
     this.data.votes[type][context['display-name']] = thing

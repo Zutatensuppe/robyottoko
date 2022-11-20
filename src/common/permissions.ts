@@ -3,6 +3,7 @@ import { arrayIncludesIgnoreCase } from "./fn";
 
 export enum CommandRestrict {
   MOD = 'mod',
+  VIP = 'vip',
   SUB = 'sub',
   BROADCASTER = 'broadcaster',
   REGULAR = 'regular',
@@ -16,6 +17,7 @@ export const MOD_OR_ABOVE: CommandRestrict[] = [
 export const permissions = [
   { value: CommandRestrict.BROADCASTER, label: "Broadcaster" },
   { value: CommandRestrict.MOD, label: "Moderators" },
+  { value: CommandRestrict.VIP, label: "Vips" },
   { value: CommandRestrict.SUB, label: "Subscribers" },
   { value: CommandRestrict.REGULAR, label: "Regular Users" },
 ]
@@ -37,6 +39,7 @@ export const isBroadcaster = (ctx: TwitchChatContext) => ctx['room-id'] === ctx[
 export const isMod = (ctx: TwitchChatContext) => !!ctx.mod
 export const isSubscriber = (ctx: TwitchChatContext) => !!ctx.subscriber && !isBroadcaster(ctx)
 export const isRegular = (ctx: TwitchChatContext) => !isBroadcaster(ctx) && !isMod(ctx) && !isSubscriber(ctx)
+export const isVip = (ctx: TwitchChatContext) => !!ctx.badges?.vip
 
 export const userTypeOk = (ctx: TwitchChatContext, cmd: Command | FunctionCommand): boolean => {
   if (!cmd.restrict_to || cmd.restrict_to.length === 0) {
@@ -46,6 +49,9 @@ export const userTypeOk = (ctx: TwitchChatContext, cmd: Command | FunctionComman
     return true
   }
   if (cmd.restrict_to.includes(CommandRestrict.SUB) && isSubscriber(ctx)) {
+    return true
+  }
+  if (cmd.restrict_to.includes(CommandRestrict.VIP) && isVip(ctx)) {
     return true
   }
   if (cmd.restrict_to.includes(CommandRestrict.BROADCASTER) && isBroadcaster(ctx)) {
@@ -59,12 +65,12 @@ export const userTypeOk = (ctx: TwitchChatContext, cmd: Command | FunctionComman
 
 const userInAllowList = (ctx: TwitchChatContext, cmd: Command | FunctionCommand): boolean => {
   // compare lowercase, otherwise may be confusing why nC_para_ doesnt disallow nc_para_
-  return arrayIncludesIgnoreCase(cmd.allow_users || [], ctx.username)
+  return arrayIncludesIgnoreCase(cmd.allow_users || [], ctx.username || '')
 }
 
 const userInDisallowList = (ctx: TwitchChatContext, cmd: Command | FunctionCommand): boolean => {
   // compare lowercase, otherwise may be confusing why nC_para_ doesnt disallow nc_para_
-  return arrayIncludesIgnoreCase(cmd.disallow_users || [], ctx.username)
+  return arrayIncludesIgnoreCase(cmd.disallow_users || [], ctx.username || '')
 }
 
 export const mayExecute = (ctx: TwitchChatContext, cmd: Command | FunctionCommand): boolean => {

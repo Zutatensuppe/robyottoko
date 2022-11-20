@@ -22,7 +22,7 @@ export class ChannelPointRedeemEventHandler extends EventSubEventHandler<any> {
       args: data.event.user_input ? [data.event.user_input] : [],
     }
 
-    const { mod, subscriber } = await getUserTypeInfo(bot, user, data.event.user_id)
+    const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.user_id)
     const target = data.event.broadcaster_user_name
     const context: TwitchChatContext = {
       "room-id": data.event.broadcaster_user_id,
@@ -31,7 +31,7 @@ export class ChannelPointRedeemEventHandler extends EventSubEventHandler<any> {
       username: data.event.user_login,
       mod,
       subscriber,
-      badges: {},
+      badges: { vip: vip ? '1' : undefined }, // not sure what to put in there
     }
     const trigger = newRewardRedemptionTrigger(data.event.reward.title)
     const exec = new CommandExecutor()
