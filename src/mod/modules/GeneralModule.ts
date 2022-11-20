@@ -147,6 +147,10 @@ class GeneralModule implements Module {
         cmd.disallow_users = []
         shouldSave = true
       }
+      if (typeof cmd.allow_users === 'undefined') {
+        cmd.allow_users = []
+        shouldSave = true
+      }
 
       if (cmd.variableChanges) {
         for (const variableChange of cmd.variableChanges) {
