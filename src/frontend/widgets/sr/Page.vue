@@ -31,7 +31,7 @@
     </div>
     <ol class="list">
       <ListItem
-        v-for="(tmpItem, idx) in playlistItems"
+        v-for="(tmpItem, idx) in playlistItemsSlice"
         :key="idx"
         :class="idx === 0 ? 'playing' : 'not-playing'"
         :item="tmpItem"
@@ -43,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, Ref, ref, watch } from "vue"
+import { computed, onMounted, onUnmounted, Ref, ref } from "vue"
 import { logger } from "../../../common/fn"
 import { PlaylistItem } from "../../../types"
 import ListItem from "./components/ListItem.vue"
@@ -112,7 +112,13 @@ const progressValueStyle = computed((): { width: string } => {
 })
 
 const playlistItems = computed((): PlaylistItem[] => {
-  return playlist.value.filter((item, idx) => !isFilteredOut(item, idx))
+  return playlist.value.filter((item) => !isFilteredOutTags(item))
+})
+
+const playlistItemsSlice = computed((): PlaylistItem[] => {
+  return preset.value.maxItemsShown >= 0
+    ? playlistItems.value.slice(0, preset.value.maxItemsShown)
+    : playlistItems.value
 })
 
 const filteredPlaylist = computed((): PlaylistItem[] => {
@@ -135,13 +141,7 @@ const item = computed((): PlaylistItem | null => {
   return filteredPlaylist.value[0]
 })
 
-const isFilteredOut = (item: PlaylistItem, idx: number): boolean => {
-  if (
-    preset.value.maxItemsShown >= 0 &&
-    preset.value.maxItemsShown - 1 < idx
-  ) {
-    return true
-  }
+const isFilteredOutTags = (item: PlaylistItem): boolean => {
   return filter.value.tag !== "" && !item.tags.includes(filter.value.tag)
 }
 const ended = (): void => {
@@ -221,7 +221,17 @@ onMounted(() => {
     applySettings(data.settings)
   })
   ws.onMessage(
-    ["onEnded", "prev", "skip", "remove", "move", "tags"],
+    ["onEnded"],
+    (data) => {
+      applySettings(data.settings)
+      filter.value = data.filter
+      playlist.value = data.playlist
+      play()
+      checkPlaylist()
+    }
+  )
+  ws.onMessage(
+    ["prev", "skip", "remove", "move", "tags"],
     (data) => {
       applySettings(data.settings)
       const oldId = currentId(filteredPlaylist.value)
@@ -231,6 +241,7 @@ onMounted(() => {
       if (oldId !== newId) {
         play()
       }
+      checkPlaylist()
     }
   )
   ws.onMessage(["filter"], (data) => {
@@ -242,6 +253,7 @@ onMounted(() => {
     if (!filteredPlaylist.value.find((item) => item.id === oldId)) {
       play()
     }
+    checkPlaylist()
   })
   ws.onMessage(["pause"], (_data) => {
     if (player.value.playing()) {
@@ -267,6 +279,7 @@ onMounted(() => {
     applySettings(data.settings)
     filter.value = data.filter
     playlist.value = data.playlist
+    checkPlaylist()
   })
   ws.onMessage(["add", "init"], (data) => {
     applySettings(data.settings)
@@ -277,6 +290,7 @@ onMounted(() => {
         play()
       }
     }
+    checkPlaylist()
     inited.value = true
   })
   ws.connect()
@@ -288,17 +302,10 @@ onUnmounted(() => {
   }
 })
 
-watch(playlist, (newVal) => {
-  if (!newVal.some((item: PlaylistItem, idx: number) => !isFilteredOut(item, idx))) {
+const checkPlaylist = () => {
+  if (playlistItemsSlice.value.length === 0) {
     console.log('stopping player')
     player.value.stop()
   }
-})
-
-watch(filter, () => {
-  if (!playlist.value.some((item: PlaylistItem, idx: number) => !isFilteredOut(item, idx))) {
-    console.log('stopping player')
-    player.value.stop()
-  }
-})
+}
 </script>
