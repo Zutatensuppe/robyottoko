@@ -439,6 +439,7 @@ import IconSend from './components/IconSend.vue'
 import IconUndo from './components/IconUndo.vue'
 import IconEraser from './components/IconEraser.vue'
 import IconClear from './components/IconClear.vue'
+// @ts-ignore
 import { Photoshop, Slider } from '@ckpack/vue-color'
 
 const log = logger("Page.vue");
@@ -816,7 +817,8 @@ export default defineComponent({
   },
   methods: {
     onOkPicker() {
-      this.color = this.tempColor.hex
+      // tempColor when coming from color picker is an object
+      this.color = (this.tempColor as any).hex
       this.pickerVisible = false
     },
     onOpenPicker() {
@@ -826,7 +828,7 @@ export default defineComponent({
     onCancelPicker() {
       this.pickerVisible = false
     },
-    onColorChange(c) {
+    onColorChange(c: any) {
       this.color = c.hex
       this.tool = 'pen'
     },
