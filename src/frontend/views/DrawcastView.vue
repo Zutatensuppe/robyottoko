@@ -217,38 +217,6 @@
             </td>
           </tr>
           <tr>
-            <td><code>settings.palette</code></td>
-            <td>
-              <label
-                v-for="(c, idx) in settings.palette"
-                :key="idx"
-                class="square"
-              >
-                <input
-                  v-model="settings.palette[idx]"
-                  type="color"
-                >
-                <span
-                  class="square-inner"
-                  :style="{ backgroundColor: c }"
-                />
-              </label>
-              <br>
-              <br>
-              <button
-                class="button is-small"
-                @click="settings.palette = defaultSettings.palette"
-              >
-                Reset to default palette
-              </button>
-            </td>
-            <td>
-              Default colors appearing on the draw page.<br>
-              Caution: Changing this will change selected color for currenty
-              connected users.
-            </td>
-          </tr>
-          <tr>
             <td><code>settings.notificationSound</code></td>
             <td>
               <SoundUpload
@@ -677,7 +645,6 @@ export default defineComponent({
           recentImagesTitle: this.settings.recentImagesTitle,
           customDescription: this.settings.customDescription,
           customProfileImage: this.settings.customProfileImage,
-          palette: this.settings.palette,
           displayDuration: parseInt(`${this.settings.displayDuration}`, 10) || 5000,
           displayLatestForever: this.settings.displayLatestForever,
           displayLatestAutomatically: this.settings.displayLatestAutomatically,
