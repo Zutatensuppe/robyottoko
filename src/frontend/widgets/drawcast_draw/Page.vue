@@ -1,5 +1,12 @@
 <template>
   <div id="drawcast">
+    <Photoshop
+      v-if="pickerVisible"
+      v-model="tempColor"
+      class="colorpicker"
+      @ok="onOkPicker"
+      @cancel="onCancelPicker"
+    />
     <div
       class="drawcast_body"
       :class="{ blurred: dialog }"
@@ -159,11 +166,10 @@
           <div class="draw_panel_bottom">
             <div class="draw_colors">
               <div class="draw_colors_current">
-                <label class="draw_colors_current_label clickable">
-                  <input
-                    v-model="color"
-                    type="color"
-                  >
+                <label
+                  class="draw_colors_current_label clickable"
+                  @click="onOpenPicker"
+                >
                   <span
                     class="draw_colors_current_inner"
                     :class="{ active: tool === 'pen' }"
@@ -175,15 +181,25 @@
                 </label>
               </div>
               <div class="draw_colors_palette">
-                <div
-                  v-for="(c, idx) in palette"
-                  :key="idx"
-                  class="palette_color clickable"
-                  :style="{ backgroundColor: c }"
-                  @click="
-                    color = c;
-                    tool = 'pen';
-                  "
+                <Slider
+                  v-model="color"
+                  :swatches="[
+                    { s: 0.5, l: 0.9 },
+                    { s: 0.6, l: 0.8 },
+                    { s: 0.75, l: 0.65 },
+                    { s: 0.85, l: 0.5 },
+                    { s: 0.75, l: 0.35 },
+                    { s: 0.6, l: 0.2 },
+                    { s: 0.5, l: 0.1 },
+                    { s: 0, l: 1 },
+                    { s: 0, l: 0.8 },
+                    { s: 0, l: 0.65 },
+                    { s: 0, l: 0.5 },
+                    { s: 0, l: 0.35 },
+                    { s: 0, l: 0.2 },
+                    { s: 0, l: 0 },
+                  ]"
+                  @update:modelValue="onColorChange"
                 />
               </div>
             </div>
@@ -423,6 +439,8 @@ import IconSend from './components/IconSend.vue'
 import IconUndo from './components/IconUndo.vue'
 import IconEraser from './components/IconEraser.vue'
 import IconClear from './components/IconClear.vue'
+// @ts-ignore
+import { Photoshop, Slider } from '@ckpack/vue-color'
 
 const log = logger("Page.vue");
 
@@ -527,6 +545,8 @@ const fillpath = (
 
 export default defineComponent({
   components: {
+    Slider,
+    Photoshop,
     IconPen,
     IconEyedropper,
     IconSend,
@@ -541,12 +561,15 @@ export default defineComponent({
     return {
       ws: null as WsClient | null,
       opts: {} as Record<string, string>,
-      palette: ["#000000"],
+
+      pickerVisible: false,
 
       images: [] as string[],
       favoriteLists: [] as DrawcastFavoriteList[],
 
+      defaultColor: '#000000',
       color: "#000000",
+      tempColor: "#000000",
       sampleColor: "",
 
       hotkeys: ['E Eraser', 'B Pencil', 'S Color sampler', '1-7 Adjust size', 'Ctrl+Z Undo'],
@@ -679,9 +702,8 @@ export default defineComponent({
           : "";
       this.recentImagesTitle =
         data.settings.recentImagesTitle || "Newest submitted:";
-      this.palette = data.settings.palette || this.palette;
       this.favoriteLists = data.settings.favoriteLists;
-      this.color = this.palette[0];
+      this.color = this.defaultColor;
       this.images = data.images.map((image) => image.path);
 
       if (
@@ -794,6 +816,22 @@ export default defineComponent({
     window.removeEventListener("keyup", this.keyup);
   },
   methods: {
+    onOkPicker() {
+      // tempColor when coming from color picker is an object
+      this.color = (this.tempColor as any).hex
+      this.pickerVisible = false
+    },
+    onOpenPicker() {
+      this.tempColor = this.color
+      this.pickerVisible = true
+    },
+    onCancelPicker() {
+      this.pickerVisible = false
+    },
+    onColorChange(c: any) {
+      this.color = c.hex
+      this.tool = 'pen'
+    },
     opt(option: string, value: string) {
       this.opts[option] = value;
       window.localStorage.setItem("drawcastOpts", JSON.stringify(this.opts));
@@ -1014,8 +1052,8 @@ export default defineComponent({
     getColor(pt: Point) {
       const [r, g, b, a] = this.finalctx.getImageData(pt.x, pt.y, 1, 1).data;
       const hex = (v: number) => pad(v.toString(16), "00");
-      // when selecting transparent color, instead use first color in palette
-      return a ? `#${hex(r)}${hex(g)}${hex(b)}` : this.palette[0];
+      // when selecting transparent color, instead use the defaultColor
+      return a ? `#${hex(r)}${hex(g)}${hex(b)}` : this.defaultColor;
     },
     keyup(e: KeyboardEvent) {
       if (e.code === "Digit1") {

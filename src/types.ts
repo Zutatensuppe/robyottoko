@@ -164,7 +164,6 @@ export interface DrawcastSettings {
   recentImagesTitle: string
   customDescription: string
   customProfileImage: MediaFile | null
-  palette: string[]
   displayDuration: int
   displayLatestForever: boolean
   displayLatestAutomatically: boolean

@@ -7066,14 +7066,6 @@ const default_settings$2 = (obj = null) => ({
     canvasHeight: getProp(obj, ['canvasHeight'], 405),
     customDescription: getProp(obj, ['customDescription'], ''),
     customProfileImage: (!obj || typeof obj.customProfileImage === 'undefined') ? null : default_profile_image(obj.customProfileImage),
-    palette: getProp(obj, ['palette'], [
-        // row 1
-        '#000000', '#808080', '#ff0000', '#ff8000', '#ffff00', '#00ff00',
-        '#00ffff', '#0000ff', '#ff00ff', '#ff8080', '#80ff80',
-        // row 2
-        '#ffffff', '#c0c0c0', '#800000', '#804000', '#808000', '#008000',
-        '#008080', '#000080', '#800080', '#8080ff', '#ffff80',
-    ]),
     displayDuration: getProp(obj, ['displayDuration'], 5000),
     displayLatestForever: getProp(obj, ['displayLatestForever'], false),
     displayLatestAutomatically: getProp(obj, ['displayLatestAutomatically'], false),
@@ -7619,9 +7611,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-11-26T10:51:52.383Z",
+    buildDate: "2022-12-25T00:06:37.854Z",
     // @ts-ignore
-    buildVersion: "1.47.0",
+    buildVersion: "1.48.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');

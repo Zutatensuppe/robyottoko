@@ -131,8 +131,8 @@ a {
   display: grid;
   width: fit-content;
   grid-template-areas: "current palette";
-  grid-template-columns: min-content 270px;
-  grid-gap: 4px;
+  grid-template-columns: min-content min-content;
+  grid-gap: 8px;
   background: $cardBackground;
   padding: 8px 9px 8px 8px;
   /* :P probably 8 everywhere is good ^^ */
@@ -142,16 +142,16 @@ a {
 
 .draw_colors_current {
   grid-area: current;
-  width: 45px;
-  height: 45px;
+  width: 55px;
+  height: 55px;
   background: white;
   position: relative;
   box-shadow: $colorButtonShadow;
 }
 
 .draw_colors_current_inner {
-  width: 45px;
-  height: 45px;
+  width: 100%;
+  height: 100%;
   display: inline-block;
   position: relative;
   border: 1px solid rgb(83, 83, 83);
@@ -214,8 +214,8 @@ a {
 }
 
 .draw_colors_current_label {
-  width: 45px;
-  height: 45px;
+  width: 100%;
+  height: 100%;
   display: inline-block;
 
   input[type="color"] {
@@ -229,8 +229,8 @@ a {
   background: rgba(223, 215, 218, 1);
   padding: 3px 3px;
   position: absolute;
-  top: 28px;
-  left: 28px;
+  bottom: 1px;
+  right: 1px;
   border-radius: 2px;
 
   svg {
@@ -543,3 +543,42 @@ a {
 @import "./style/button.scss";
 @import "./style/slider.scss";
 @import "./style/dialog.scss";
+
+.vc-compact {
+  box-shadow: none;
+  width: auto;
+  padding-left: 0;
+  padding-top: 0;
+}
+.vc-compact-color-item:nth-child(11n) {
+  margin: 0 0 6px 0;
+}
+.vc-compact-color-item {
+  display: inline-block;
+  border: 1px solid rgb(88,72,84);
+  border-radius: 4px;
+  width: 20px;
+  height: 19px;
+  margin: 0 5px 6px 0;
+  box-shadow: 1px 1px 1px #0003;
+}
+
+.colorpicker {
+  position: fixed;
+  top: 50px;
+  left: 50px;
+  z-index: 1000;
+}
+
+.vc-slider {
+  width: 320px;
+  .vc-slider-swatches {
+    display: grid;
+    grid-template-columns: auto auto auto auto auto auto auto;
+    grid-gap: 10px 2px;
+    margin-top: 10px;
+    .vc-slider-swatch {
+      width: 100%;
+    }
+  }
+}
