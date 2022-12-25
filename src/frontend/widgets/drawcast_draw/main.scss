@@ -570,12 +570,15 @@ a {
   z-index: 1000;
 }
 
-.vc-slider-swatches {
-  display: grid;
-  grid-template-columns: auto auto auto auto auto auto auto;
-  grid-gap: 10px 2px;
-  margin-top: 10px;
-  .vc-slider-swatch {
-    width: 100%;
+.vc-slider {
+  width: 320px;
+  .vc-slider-swatches {
+    display: grid;
+    grid-template-columns: auto auto auto auto auto auto auto;
+    grid-gap: 10px 2px;
+    margin-top: 10px;
+    .vc-slider-swatch {
+      width: 100%;
+    }
   }
 }
