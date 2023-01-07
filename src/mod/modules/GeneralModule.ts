@@ -222,6 +222,15 @@ class GeneralModule implements Module {
         cmd.effects.push(legacy.mediaVolumeToCommandEffect(cmd))
       }
 
+      if (typeof cmd.restrict === 'undefined') {
+        if (cmd.restrict_to.length === 0) {
+          cmd.restrict = { active: false, to: [] }
+        } else {
+          cmd.restrict = { active: true, to: cmd.restrict_to }
+        }
+        shouldSave = true
+      }
+
       cmd.triggers = (cmd.triggers || []).map((trigger: any) => {
         trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0
         if (trigger.data.minSeconds) {

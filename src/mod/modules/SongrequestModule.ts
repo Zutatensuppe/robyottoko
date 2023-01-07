@@ -260,6 +260,15 @@ class SongrequestModule implements Module {
         cmd.enabled = true
         shouldSave = true
       }
+
+      if (typeof cmd.restrict === 'undefined') {
+        if (cmd.restrict_to.length === 0) {
+          cmd.restrict = { active: false, to: [] }
+        } else {
+          cmd.restrict = { active: true, to: cmd.restrict_to }
+        }
+        shouldSave = true
+      }
     }
 
     return {

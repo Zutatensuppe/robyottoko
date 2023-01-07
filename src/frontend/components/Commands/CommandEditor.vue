@@ -134,18 +134,7 @@
             <tr>
               <td>Permissions:</td>
               <td>
-                <label
-                  v-for="(perm, idx) in possiblePermissions"
-                  :key="idx"
-                  class="mr-1"
-                >
-                  <input
-                    v-model="item.restrict_to"
-                    type="checkbox"
-                    :value="perm.value"
-                  >
-                  {{ perm.label }}
-                </label>
+                <PermissionsEdit v-model="item.restrict" />
               </td>
             </tr>
             <tr>
@@ -277,7 +266,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, Ref, ref, watch } from "vue";
 
-import { permissions } from "../../../common/permissions";
 import {
   commands,
   isValidTrigger,
@@ -298,11 +286,7 @@ import EffectsEditor from "./EffectsEditor.vue";
 import StringInput from "../StringInput.vue";
 import TriggerEditor from "./TriggerEditor.vue";
 import CheckboxInput from "../CheckboxInput.vue";
-
-interface ComponentDataPermission {
-  value: string;
-  label: string;
-}
+import PermissionsEdit from "../PermissionsEdit.vue";
 
 const props = defineProps<{
   modelValue: any,
@@ -321,7 +305,6 @@ const emit = defineEmits<{
 
 const item = ref<Command>(JSON.parse(JSON.stringify(props.modelValue)))
 const el = ref<HTMLDivElement>() as Ref<HTMLDivElement>
-const possiblePermissions = ref<ComponentDataPermission[]>(permissions)
 
 const valid = computed((): boolean => {
   // check if all triggers are correct

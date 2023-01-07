@@ -187,7 +187,10 @@ const createCommand = (cmd: Partial<Command>): Command => {
     variables: typeof cmd.variables !== 'undefined' ? cmd.variables : [],
     data: typeof cmd.data !== 'undefined' ? cmd.data : {},
     cooldown: typeof cmd.cooldown !== 'undefined' ? cmd.cooldown : { global: '0', perUser: '0' },
-    restrict_to: typeof cmd.restrict_to !== 'undefined' ? cmd.restrict_to : [],
+    restrict: {
+      active: typeof cmd.restrict !== 'undefined' ? cmd.restrict.active : false,
+      to: typeof cmd.restrict !== 'undefined' ? cmd.restrict.to : [],
+    },
     disallow_users: typeof cmd.disallow_users !== 'undefined' ? cmd.disallow_users : [],
     allow_users: typeof cmd.allow_users !== 'undefined' ? cmd.allow_users : [],
     enabled: typeof cmd.enabled !== 'undefined' ? cmd.enabled : true,
@@ -249,7 +252,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     NewCommand: (): Command => createCommand({
       action: CommandAction.SR_PREV,
       triggers: [newCommandTrigger('!sr prev', true)],
-      restrict_to: MOD_OR_ABOVE,
+      restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
   sr_next: {
@@ -258,7 +261,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     NewCommand: (): Command => createCommand({
       action: CommandAction.SR_NEXT,
       triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)],
-      restrict_to: MOD_OR_ABOVE,
+      restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
   sr_jumptonew: {
@@ -267,7 +270,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     NewCommand: (): Command => createCommand({
       action: CommandAction.SR_JUMPTONEW,
       triggers: [newCommandTrigger('!sr jumptonew', true)],
-      restrict_to: MOD_OR_ABOVE,
+      restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
   sr_clear: {
@@ -276,7 +279,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     NewCommand: (): Command => createCommand({
       action: CommandAction.SR_CLEAR,
       triggers: [newCommandTrigger('!sr clear', true)],
-      restrict_to: MOD_OR_ABOVE,
+      restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
   sr_rm: {
@@ -285,7 +288,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     NewCommand: (): Command => createCommand({
       action: CommandAction.SR_RM,
       triggers: [newCommandTrigger('!sr rm', true)],
-      restrict_to: MOD_OR_ABOVE,
+      restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
   sr_shuffle: {
@@ -297,7 +300,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     NewCommand: (): Command => createCommand({
       action: CommandAction.SR_SHUFFLE,
       triggers: [newCommandTrigger('!sr shuffle', true)],
-      restrict_to: MOD_OR_ABOVE,
+      restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
   sr_reset_stats: {
@@ -306,7 +309,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     NewCommand: (): Command => createCommand({
       action: CommandAction.SR_RESET_STATS,
       triggers: [newCommandTrigger('!sr resetStats', true)],
-      restrict_to: MOD_OR_ABOVE,
+      restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
   sr_loop: {
@@ -315,7 +318,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     NewCommand: (): Command => createCommand({
       action: CommandAction.SR_LOOP,
       triggers: [newCommandTrigger('!sr loop', true)],
-      restrict_to: MOD_OR_ABOVE,
+      restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
   sr_noloop: {
@@ -324,7 +327,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     NewCommand: (): Command => createCommand({
       action: CommandAction.SR_NOLOOP,
       triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)],
-      restrict_to: MOD_OR_ABOVE,
+      restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
   sr_pause: {
@@ -333,7 +336,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     NewCommand: (): Command => createCommand({
       action: CommandAction.SR_PAUSE,
       triggers: [newCommandTrigger('!sr pause', true)],
-      restrict_to: MOD_OR_ABOVE,
+      restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
   sr_unpause: {
@@ -342,7 +345,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     NewCommand: (): Command => createCommand({
       action: CommandAction.SR_UNPAUSE,
       triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)],
-      restrict_to: MOD_OR_ABOVE,
+      restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
   sr_hidevideo: {
@@ -351,7 +354,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     NewCommand: (): Command => createCommand({
       action: CommandAction.SR_HIDEVIDEO,
       triggers: [newCommandTrigger('!sr hidevideo', true)],
-      restrict_to: MOD_OR_ABOVE,
+      restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
   sr_showvideo: {
@@ -360,7 +363,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     NewCommand: (): Command => createCommand({
       action: CommandAction.SR_SHOWVIDEO,
       triggers: [newCommandTrigger('!sr showvideo', true)],
-      restrict_to: MOD_OR_ABOVE,
+      restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
   sr_request: {
@@ -392,7 +395,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     NewCommand: (): Command => createCommand({
       action: CommandAction.SR_ADDTAG,
       triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')],
-      restrict_to: MOD_OR_ABOVE,
+      restrict: { active: true, to: MOD_OR_ABOVE },
       data: { tag: "" },
     }),
   },
@@ -402,7 +405,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     NewCommand: (): Command => createCommand({
       action: CommandAction.SR_RMTAG,
       triggers: [newCommandTrigger('!sr rmtag')],
-      restrict_to: MOD_OR_ABOVE,
+      restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
   sr_volume: {
@@ -413,7 +416,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     NewCommand: (): Command => createCommand({
       action: CommandAction.SR_VOLUME,
       triggers: [newCommandTrigger('!sr volume')],
-      restrict_to: MOD_OR_ABOVE,
+      restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
   sr_filter: {
@@ -423,7 +426,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     NewCommand: (): Command => createCommand({
       action: CommandAction.SR_FILTER,
       triggers: [newCommandTrigger('!sr filter')],
-      restrict_to: MOD_OR_ABOVE,
+      restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
   sr_preset: {
@@ -433,7 +436,7 @@ export const commands: Record<CommandAction, CommandDef> = {
     NewCommand: (): Command => createCommand({
       action: CommandAction.SR_PRESET,
       triggers: [newCommandTrigger('!sr preset')],
-      restrict_to: MOD_OR_ABOVE,
+      restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
   sr_queue: {

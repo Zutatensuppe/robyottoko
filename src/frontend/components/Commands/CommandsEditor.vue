@@ -164,7 +164,7 @@
                 </span>
               </td>
               <td>
-                {{ permissionsStr(element.restrict_to) }}
+                {{ permissionsStr(element.restrict) }}
               </td>
               <td class="pl-0 pr-0">
                 <DoubleclickButton

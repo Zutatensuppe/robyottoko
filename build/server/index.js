@@ -2685,24 +2685,24 @@ const handleOAuthCodeCallback = async (code, redirectUri, bot, loggedInUser) => 
     return { updated, created, user };
 };
 
-var CommandRestrict;
-(function (CommandRestrict) {
-    CommandRestrict["MOD"] = "mod";
-    CommandRestrict["VIP"] = "vip";
-    CommandRestrict["SUB"] = "sub";
-    CommandRestrict["BROADCASTER"] = "broadcaster";
-    CommandRestrict["REGULAR"] = "regular";
-})(CommandRestrict || (CommandRestrict = {}));
+var CommandRestrictEnum;
+(function (CommandRestrictEnum) {
+    CommandRestrictEnum["MOD"] = "mod";
+    CommandRestrictEnum["VIP"] = "vip";
+    CommandRestrictEnum["SUB"] = "sub";
+    CommandRestrictEnum["BROADCASTER"] = "broadcaster";
+    CommandRestrictEnum["REGULAR"] = "regular";
+})(CommandRestrictEnum || (CommandRestrictEnum = {}));
 const MOD_OR_ABOVE = [
-    CommandRestrict.MOD,
-    CommandRestrict.BROADCASTER,
+    CommandRestrictEnum.MOD,
+    CommandRestrictEnum.BROADCASTER,
 ];
 [
-    { value: CommandRestrict.BROADCASTER, label: "Broadcaster" },
-    { value: CommandRestrict.MOD, label: "Moderators" },
-    { value: CommandRestrict.VIP, label: "Vips" },
-    { value: CommandRestrict.SUB, label: "Subscribers" },
-    { value: CommandRestrict.REGULAR, label: "Regular Users" },
+    { value: CommandRestrictEnum.BROADCASTER, label: "Broadcaster" },
+    { value: CommandRestrictEnum.MOD, label: "Moderators" },
+    { value: CommandRestrictEnum.VIP, label: "Vips" },
+    { value: CommandRestrictEnum.SUB, label: "Subscribers" },
+    { value: CommandRestrictEnum.REGULAR, label: "Regular Users" },
 ];
 const isBroadcaster = (ctx) => ctx['room-id'] === ctx['user-id'];
 const isMod = (ctx) => !!ctx.mod;
@@ -2710,22 +2710,22 @@ const isSubscriber = (ctx) => !!ctx.subscriber && !isBroadcaster(ctx);
 const isRegular = (ctx) => !isBroadcaster(ctx) && !isMod(ctx) && !isSubscriber(ctx);
 const isVip = (ctx) => !!ctx.badges?.vip;
 const userTypeOk = (ctx, cmd) => {
-    if (!cmd.restrict_to || cmd.restrict_to.length === 0) {
+    if (!cmd.restrict.active) {
         return true;
     }
-    if (cmd.restrict_to.includes(CommandRestrict.MOD) && isMod(ctx)) {
+    if (cmd.restrict.to.includes(CommandRestrictEnum.MOD) && isMod(ctx)) {
         return true;
     }
-    if (cmd.restrict_to.includes(CommandRestrict.SUB) && isSubscriber(ctx)) {
+    if (cmd.restrict.to.includes(CommandRestrictEnum.SUB) && isSubscriber(ctx)) {
         return true;
     }
-    if (cmd.restrict_to.includes(CommandRestrict.VIP) && isVip(ctx)) {
+    if (cmd.restrict.to.includes(CommandRestrictEnum.VIP) && isVip(ctx)) {
         return true;
     }
-    if (cmd.restrict_to.includes(CommandRestrict.BROADCASTER) && isBroadcaster(ctx)) {
+    if (cmd.restrict.to.includes(CommandRestrictEnum.BROADCASTER) && isBroadcaster(ctx)) {
         return true;
     }
-    if (cmd.restrict_to.includes(CommandRestrict.REGULAR) && isRegular(ctx)) {
+    if (cmd.restrict.to.includes(CommandRestrictEnum.REGULAR) && isRegular(ctx)) {
         return true;
     }
     return false;
@@ -2843,7 +2843,10 @@ const createCommand = (cmd) => {
         variables: typeof cmd.variables !== 'undefined' ? cmd.variables : [],
         data: typeof cmd.data !== 'undefined' ? cmd.data : {},
         cooldown: typeof cmd.cooldown !== 'undefined' ? cmd.cooldown : { global: '0', perUser: '0' },
-        restrict_to: typeof cmd.restrict_to !== 'undefined' ? cmd.restrict_to : [],
+        restrict: {
+            active: typeof cmd.restrict !== 'undefined' ? cmd.restrict.active : false,
+            to: typeof cmd.restrict !== 'undefined' ? cmd.restrict.to : [],
+        },
         disallow_users: typeof cmd.disallow_users !== 'undefined' ? cmd.disallow_users : [],
         allow_users: typeof cmd.allow_users !== 'undefined' ? cmd.allow_users : [],
         enabled: typeof cmd.enabled !== 'undefined' ? cmd.enabled : true,
@@ -2904,7 +2907,7 @@ const commands = {
         NewCommand: () => createCommand({
             action: CommandAction.SR_PREV,
             triggers: [newCommandTrigger('!sr prev', true)],
-            restrict_to: MOD_OR_ABOVE,
+            restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
     sr_next: {
@@ -2913,7 +2916,7 @@ const commands = {
         NewCommand: () => createCommand({
             action: CommandAction.SR_NEXT,
             triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)],
-            restrict_to: MOD_OR_ABOVE,
+            restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
     sr_jumptonew: {
@@ -2922,7 +2925,7 @@ const commands = {
         NewCommand: () => createCommand({
             action: CommandAction.SR_JUMPTONEW,
             triggers: [newCommandTrigger('!sr jumptonew', true)],
-            restrict_to: MOD_OR_ABOVE,
+            restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
     sr_clear: {
@@ -2931,7 +2934,7 @@ const commands = {
         NewCommand: () => createCommand({
             action: CommandAction.SR_CLEAR,
             triggers: [newCommandTrigger('!sr clear', true)],
-            restrict_to: MOD_OR_ABOVE,
+            restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
     sr_rm: {
@@ -2940,7 +2943,7 @@ const commands = {
         NewCommand: () => createCommand({
             action: CommandAction.SR_RM,
             triggers: [newCommandTrigger('!sr rm', true)],
-            restrict_to: MOD_OR_ABOVE,
+            restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
     sr_shuffle: {
@@ -2952,7 +2955,7 @@ const commands = {
         NewCommand: () => createCommand({
             action: CommandAction.SR_SHUFFLE,
             triggers: [newCommandTrigger('!sr shuffle', true)],
-            restrict_to: MOD_OR_ABOVE,
+            restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
     sr_reset_stats: {
@@ -2961,7 +2964,7 @@ const commands = {
         NewCommand: () => createCommand({
             action: CommandAction.SR_RESET_STATS,
             triggers: [newCommandTrigger('!sr resetStats', true)],
-            restrict_to: MOD_OR_ABOVE,
+            restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
     sr_loop: {
@@ -2970,7 +2973,7 @@ const commands = {
         NewCommand: () => createCommand({
             action: CommandAction.SR_LOOP,
             triggers: [newCommandTrigger('!sr loop', true)],
-            restrict_to: MOD_OR_ABOVE,
+            restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
     sr_noloop: {
@@ -2979,7 +2982,7 @@ const commands = {
         NewCommand: () => createCommand({
             action: CommandAction.SR_NOLOOP,
             triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)],
-            restrict_to: MOD_OR_ABOVE,
+            restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
     sr_pause: {
@@ -2988,7 +2991,7 @@ const commands = {
         NewCommand: () => createCommand({
             action: CommandAction.SR_PAUSE,
             triggers: [newCommandTrigger('!sr pause', true)],
-            restrict_to: MOD_OR_ABOVE,
+            restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
     sr_unpause: {
@@ -2997,7 +3000,7 @@ const commands = {
         NewCommand: () => createCommand({
             action: CommandAction.SR_UNPAUSE,
             triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)],
-            restrict_to: MOD_OR_ABOVE,
+            restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
     sr_hidevideo: {
@@ -3006,7 +3009,7 @@ const commands = {
         NewCommand: () => createCommand({
             action: CommandAction.SR_HIDEVIDEO,
             triggers: [newCommandTrigger('!sr hidevideo', true)],
-            restrict_to: MOD_OR_ABOVE,
+            restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
     sr_showvideo: {
@@ -3015,7 +3018,7 @@ const commands = {
         NewCommand: () => createCommand({
             action: CommandAction.SR_SHOWVIDEO,
             triggers: [newCommandTrigger('!sr showvideo', true)],
-            restrict_to: MOD_OR_ABOVE,
+            restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
     sr_request: {
@@ -3047,7 +3050,7 @@ const commands = {
         NewCommand: () => createCommand({
             action: CommandAction.SR_ADDTAG,
             triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')],
-            restrict_to: MOD_OR_ABOVE,
+            restrict: { active: true, to: MOD_OR_ABOVE },
             data: { tag: "" },
         }),
     },
@@ -3057,7 +3060,7 @@ const commands = {
         NewCommand: () => createCommand({
             action: CommandAction.SR_RMTAG,
             triggers: [newCommandTrigger('!sr rmtag')],
-            restrict_to: MOD_OR_ABOVE,
+            restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
     sr_volume: {
@@ -3068,7 +3071,7 @@ const commands = {
         NewCommand: () => createCommand({
             action: CommandAction.SR_VOLUME,
             triggers: [newCommandTrigger('!sr volume')],
-            restrict_to: MOD_OR_ABOVE,
+            restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
     sr_filter: {
@@ -3078,7 +3081,7 @@ const commands = {
         NewCommand: () => createCommand({
             action: CommandAction.SR_FILTER,
             triggers: [newCommandTrigger('!sr filter')],
-            restrict_to: MOD_OR_ABOVE,
+            restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
     sr_preset: {
@@ -3088,7 +3091,7 @@ const commands = {
         NewCommand: () => createCommand({
             action: CommandAction.SR_PRESET,
             triggers: [newCommandTrigger('!sr preset')],
-            restrict_to: MOD_OR_ABOVE,
+            restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
     sr_queue: {
@@ -4896,6 +4899,15 @@ class GeneralModule {
                 cmd.action = 'text';
                 cmd.effects.push(legacy.mediaVolumeToCommandEffect(cmd));
             }
+            if (typeof cmd.restrict === 'undefined') {
+                if (cmd.restrict_to.length === 0) {
+                    cmd.restrict = { active: false, to: [] };
+                }
+                else {
+                    cmd.restrict = { active: true, to: cmd.restrict_to };
+                }
+                shouldSave = true;
+            }
             cmd.triggers = (cmd.triggers || []).map((trigger) => {
                 trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0;
                 if (trigger.data.minSeconds) {
@@ -5678,6 +5690,15 @@ class SongrequestModule {
             }
             if (typeof cmd.enabled === 'undefined') {
                 cmd.enabled = true;
+                shouldSave = true;
+            }
+            if (typeof cmd.restrict === 'undefined') {
+                if (cmd.restrict_to.length === 0) {
+                    cmd.restrict = { active: false, to: [] };
+                }
+                else {
+                    cmd.restrict = { active: true, to: cmd.restrict_to };
+                }
                 shouldSave = true;
             }
         }
@@ -6890,6 +6911,10 @@ class VoteModule {
                     global: '0',
                     perUser: '0',
                 },
+                restrict: {
+                    active: false,
+                    to: [],
+                },
             },
             {
                 id: 'play',
@@ -6898,6 +6923,10 @@ class VoteModule {
                 cooldown: {
                     global: '0',
                     perUser: '0',
+                },
+                restrict: {
+                    active: false,
+                    to: [],
                 },
             },
         ];
@@ -7459,14 +7488,20 @@ class PomoModule {
                 {
                     id: 'pomo',
                     triggers: [newCommandTrigger('!pomo')],
-                    restrict_to: MOD_OR_ABOVE,
+                    restrict: {
+                        active: true,
+                        to: MOD_OR_ABOVE,
+                    },
                     fn: this.cmdPomoStart.bind(this),
                     cooldown: { global: '0', perUser: '0' },
                 },
                 {
                     id: 'pomo_exit',
                     triggers: [newCommandTrigger('!pomo exit', true)],
-                    restrict_to: MOD_OR_ABOVE,
+                    restrict: {
+                        active: true,
+                        to: MOD_OR_ABOVE,
+                    },
                     fn: this.cmdPomoExit.bind(this),
                     cooldown: { global: '0', perUser: '0' },
                 },
@@ -7611,9 +7646,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2022-12-25T17:21:27.956Z",
+    buildDate: "2023-01-07T19:57:15.588Z",
     // @ts-ignore
-    buildVersion: "1.48.1",
+    buildVersion: "1.49.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');

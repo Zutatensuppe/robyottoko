@@ -32,14 +32,20 @@ class PomoModule implements Module {
         {
           id: 'pomo',
           triggers: [newCommandTrigger('!pomo')],
-          restrict_to: MOD_OR_ABOVE,
+          restrict: {
+            active: true,
+            to: MOD_OR_ABOVE,
+          },
           fn: this.cmdPomoStart.bind(this),
           cooldown: { global: '0', perUser: '0' },
         },
         {
           id: 'pomo_exit',
           triggers: [newCommandTrigger('!pomo exit', true)],
-          restrict_to: MOD_OR_ABOVE,
+          restrict: {
+            active: true,
+            to: MOD_OR_ABOVE,
+          },
           fn: this.cmdPomoExit.bind(this),
           cooldown: { global: '0', perUser: '0' },
         },

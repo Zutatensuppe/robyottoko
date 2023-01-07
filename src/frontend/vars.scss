@@ -1,6 +1,7 @@
 $body-size: 14px !default; // makes the base font 14px (default is 16px)
 
 @import "bulma/bulma.sass";
+@import "bulma-switch/src/sass/index.sass";
 
 $main_color: #363636;
 $link_color: #808db0;

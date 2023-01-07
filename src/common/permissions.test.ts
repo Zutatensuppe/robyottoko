@@ -1,5 +1,5 @@
 import { Command, TwitchChatContext } from "../types"
-import { CommandRestrict, mayExecute, userTypeOk } from "./permissions"
+import { CommandRestrictEnum, mayExecute, userTypeOk } from "./permissions"
 
 describe(('mayExecute'), () => {
 
@@ -8,10 +8,10 @@ describe(('mayExecute'), () => {
   const subUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'bla', subscriber: true } as TwitchChatContext
   const broadcasterUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'user1', subscriber: true } as TwitchChatContext
 
-  const nonRestrictedCommand = {} as unknown as Command
-  const modSubBroadcasterRestrictedCommand = { restrict_to: [CommandRestrict.MOD, CommandRestrict.SUB, CommandRestrict.BROADCASTER] } as unknown as Command
-  const disallowedUserCommand = { disallow_users: ['bla'] } as unknown as Command
-  const allowedUserCommand = { allow_users: ['bla'], disallow_users: ['bla'], restrict_to: [CommandRestrict.MOD, CommandRestrict.SUB, CommandRestrict.BROADCASTER] } as unknown as Command
+  const nonRestrictedCommand = { restrict: { active: false } } as unknown as Command
+  const modSubBroadcasterRestrictedCommand = { restrict: { active: true, to: [CommandRestrictEnum.MOD, CommandRestrictEnum.SUB, CommandRestrictEnum.BROADCASTER] } } as unknown as Command
+  const disallowedUserCommand = { disallow_users: ['bla'], restrict: { active: false } } as unknown as Command
+  const allowedUserCommand = { allow_users: ['bla'], disallow_users: ['bla'], restrict: { active: true, to: [CommandRestrictEnum.MOD, CommandRestrictEnum.SUB, CommandRestrictEnum.BROADCASTER] } } as unknown as Command
 
   test.each([
     {
@@ -96,15 +96,17 @@ describe(('userTypeOk'), () => {
   // broadcasters are always subscribers
   const broadcasterUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'user1', subscriber: true } as TwitchChatContext
 
-  const noRestrict = { restrict_to: [] } as unknown as Command
-  const modRestrict = { restrict_to: [CommandRestrict.MOD] } as unknown as Command
-  const subRestrict = { restrict_to: [CommandRestrict.SUB] } as unknown as Command
-  const regularRestrict = { restrict_to: [CommandRestrict.REGULAR] } as unknown as Command
-  const broadcasterRestrict = { restrict_to: [CommandRestrict.BROADCASTER] } as unknown as Command
+  const noRestrict = { restrict: { active: false, to: [] } } as unknown as Command
+  const nobodyRestrict = { restrict: { active: true, to: [] } } as unknown as Command
+  const modRestrict = { restrict: { active: true, to: [CommandRestrictEnum.MOD] } } as unknown as Command
+  const subRestrict = { restrict: { active: true, to: [CommandRestrictEnum.SUB] } } as unknown as Command
+  const regularRestrict = { restrict: { active: true, to: [CommandRestrictEnum.REGULAR] } } as unknown as Command
+  const broadcasterRestrict = { restrict: { active: true, to: [CommandRestrictEnum.BROADCASTER] } } as unknown as Command
 
   test.each([
     // regular user
     { ctx: regularUserCtx, cmd: noRestrict, expected: true },
+    { ctx: regularUserCtx, cmd: nobodyRestrict, expected: false },
     { ctx: regularUserCtx, cmd: modRestrict, expected: false },
     { ctx: regularUserCtx, cmd: subRestrict, expected: false },
     { ctx: regularUserCtx, cmd: broadcasterRestrict, expected: false },
@@ -112,6 +114,7 @@ describe(('userTypeOk'), () => {
 
     // mod user
     { ctx: modUserCtx, cmd: noRestrict, expected: true },
+    { ctx: modUserCtx, cmd: nobodyRestrict, expected: false },
     { ctx: modUserCtx, cmd: modRestrict, expected: true },
     { ctx: modUserCtx, cmd: subRestrict, expected: false },
     { ctx: modUserCtx, cmd: broadcasterRestrict, expected: false },
@@ -119,6 +122,7 @@ describe(('userTypeOk'), () => {
 
     // sub user
     { ctx: subUserCtx, cmd: noRestrict, expected: true },
+    { ctx: subUserCtx, cmd: nobodyRestrict, expected: false },
     { ctx: subUserCtx, cmd: modRestrict, expected: false },
     { ctx: subUserCtx, cmd: subRestrict, expected: true },
     { ctx: subUserCtx, cmd: broadcasterRestrict, expected: false },
@@ -126,14 +130,15 @@ describe(('userTypeOk'), () => {
 
     // broadcaster user
     { ctx: broadcasterUserCtx, cmd: noRestrict, expected: true },
+    { ctx: broadcasterUserCtx, cmd: nobodyRestrict, expected: false },
     { ctx: broadcasterUserCtx, cmd: modRestrict, expected: false },
     { ctx: broadcasterUserCtx, cmd: subRestrict, expected: false },
     { ctx: broadcasterUserCtx, cmd: broadcasterRestrict, expected: true },
     { ctx: broadcasterUserCtx, cmd: regularRestrict, expected: false },
 
     // other stuff
-    { ctx: subUserCtx, cmd: { restrict_to: [CommandRestrict.BROADCASTER, CommandRestrict.SUB] } as unknown as Command, expected: true},
-    { ctx: broadcasterUserCtx, cmd: { restrict_to: [CommandRestrict.REGULAR, CommandRestrict.SUB, CommandRestrict.MOD] } as unknown as Command, expected: false},
+    { ctx: subUserCtx, cmd: { restrict: { active: true, to: [CommandRestrictEnum.BROADCASTER, CommandRestrictEnum.SUB] } } as unknown as Command, expected: true},
+    { ctx: broadcasterUserCtx, cmd: { restrict: { active: true, to: [CommandRestrictEnum.REGULAR, CommandRestrictEnum.SUB, CommandRestrictEnum.MOD] } } as unknown as Command, expected: false},
 
   ])('userTypeOk', ({ ctx, cmd, expected }) => {
     const actual = userTypeOk(ctx, cmd)
