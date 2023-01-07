@@ -5222,7 +5222,7 @@ const getYoutubeIdsBySearch = async (searchterm, videoDuration = YoutubeVideoDur
             }
         }
         catch (e) {
-            log$8.info({ e });
+            log$8.info({ e, json });
         }
     }
     return ids;
@@ -7646,9 +7646,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-07T20:09:40.764Z",
+    buildDate: "2023-01-07T21:42:01.019Z",
     // @ts-ignore
-    buildVersion: "1.49.1",
+    buildVersion: "1.49.2",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');

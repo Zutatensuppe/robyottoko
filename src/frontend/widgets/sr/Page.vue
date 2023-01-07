@@ -285,7 +285,12 @@ onMounted(() => {
     applySettings(data.settings)
     filter.value = data.filter
     playlist.value = data.playlist
-    if (!inited.value && !player.value.playing()) {
+    // inited check is added so that only when opening the widget it will
+    // autoplay the first song, but later when having paused the widget
+    // it will not automatically play when adding another song
+    // the playlist length check is added for the case when a playlist
+    // was empty or was just emptied and a new song is requested
+    if ((!inited.value || playlist.value.length === 1) && !player.value.playing()) {
       if (settings.value.initAutoplay) {
         play()
       }
