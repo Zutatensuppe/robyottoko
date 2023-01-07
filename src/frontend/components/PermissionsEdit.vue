@@ -43,12 +43,12 @@ interface ComponentDataPermission {
   label: string;
 }
 
-const val = ref<CommandRestrict>(JSON.parse(JSON.stringify(props.modelValue)))
+const val = ref<CommandRestrict>(props.modelValue)
 
 const possiblePermissions = ref<ComponentDataPermission[]>(permissions)
 
 watch(() => props.modelValue, (value: CommandRestrict) => {
-  val.value = JSON.parse(JSON.stringify(value))
+  val.value = value
 })
 
 watch(val, (value: CommandRestrict) => {
