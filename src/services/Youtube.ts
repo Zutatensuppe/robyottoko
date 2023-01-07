@@ -137,7 +137,7 @@ const getYoutubeIdsBySearch = async (
         ids.push(item.id.videoId)
       }
     } catch (e) {
-      log.info({ e })
+      log.info({ e, json })
     }
   }
   return ids
