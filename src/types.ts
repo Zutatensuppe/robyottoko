@@ -404,7 +404,7 @@ export interface Command {
   effects: CommandEffect[]
   variables: CommandVariable[]
   cooldown: CommandCooldown
-  restrict_to: CommandRestrict[]
+  restrict: CommandRestrict
   disallow_users: string[] // usernames
   allow_users: string[] // usernames
   enabled: boolean
@@ -471,7 +471,7 @@ export interface FunctionCommand {
   data?: CommandData
   fn: CommandFunction
   cooldown: CommandCooldown
-  restrict_to?: CommandRestrict[]
+  restrict: CommandRestrict
   disallow_users?: string[]
   allow_users?: string[]
   enabled?: boolean

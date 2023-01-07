@@ -1,7 +1,7 @@
 import { Command, FunctionCommand, TwitchChatContext } from "../types";
 import { arrayIncludesIgnoreCase } from "./fn";
 
-export enum CommandRestrict {
+export enum CommandRestrictEnum {
   MOD = 'mod',
   VIP = 'vip',
   SUB = 'sub',
@@ -9,26 +9,31 @@ export enum CommandRestrict {
   REGULAR = 'regular',
 }
 
-export const MOD_OR_ABOVE: CommandRestrict[] = [
-  CommandRestrict.MOD,
-  CommandRestrict.BROADCASTER,
+export interface CommandRestrict {
+  active: boolean
+  to: CommandRestrictEnum[]
+}
+
+export const MOD_OR_ABOVE: CommandRestrictEnum[] = [
+  CommandRestrictEnum.MOD,
+  CommandRestrictEnum.BROADCASTER,
 ]
 
 export const permissions = [
-  { value: CommandRestrict.BROADCASTER, label: "Broadcaster" },
-  { value: CommandRestrict.MOD, label: "Moderators" },
-  { value: CommandRestrict.VIP, label: "Vips" },
-  { value: CommandRestrict.SUB, label: "Subscribers" },
-  { value: CommandRestrict.REGULAR, label: "Regular Users" },
+  { value: CommandRestrictEnum.BROADCASTER, label: "Broadcaster" },
+  { value: CommandRestrictEnum.MOD, label: "Moderators" },
+  { value: CommandRestrictEnum.VIP, label: "Vips" },
+  { value: CommandRestrictEnum.SUB, label: "Subscribers" },
+  { value: CommandRestrictEnum.REGULAR, label: "Regular Users" },
 ]
 
-export const permissionsStr = (restrict: CommandRestrict[]): string => {
-  if (restrict.length === 0) {
+export const permissionsStr = (restrict: CommandRestrict): string => {
+  if (restrict.active === false) {
     return "Everyone";
   }
   const parts: string[] = [];
   permissions.forEach(p => {
-    if (restrict.includes(p.value)) {
+    if (restrict.to.includes(p.value)) {
       parts.push(p.label);
     }
   })
@@ -42,22 +47,22 @@ export const isRegular = (ctx: TwitchChatContext) => !isBroadcaster(ctx) && !isM
 export const isVip = (ctx: TwitchChatContext) => !!ctx.badges?.vip
 
 export const userTypeOk = (ctx: TwitchChatContext, cmd: Command | FunctionCommand): boolean => {
-  if (!cmd.restrict_to || cmd.restrict_to.length === 0) {
+  if (!cmd.restrict.active) {
     return true
   }
-  if (cmd.restrict_to.includes(CommandRestrict.MOD) && isMod(ctx)) {
+  if (cmd.restrict.to.includes(CommandRestrictEnum.MOD) && isMod(ctx)) {
     return true
   }
-  if (cmd.restrict_to.includes(CommandRestrict.SUB) && isSubscriber(ctx)) {
+  if (cmd.restrict.to.includes(CommandRestrictEnum.SUB) && isSubscriber(ctx)) {
     return true
   }
-  if (cmd.restrict_to.includes(CommandRestrict.VIP) && isVip(ctx)) {
+  if (cmd.restrict.to.includes(CommandRestrictEnum.VIP) && isVip(ctx)) {
     return true
   }
-  if (cmd.restrict_to.includes(CommandRestrict.BROADCASTER) && isBroadcaster(ctx)) {
+  if (cmd.restrict.to.includes(CommandRestrictEnum.BROADCASTER) && isBroadcaster(ctx)) {
     return true
   }
-  if (cmd.restrict_to.includes(CommandRestrict.REGULAR) && isRegular(ctx)) {
+  if (cmd.restrict.to.includes(CommandRestrictEnum.REGULAR) && isRegular(ctx)) {
     return true
   }
   return false

@@ -167,6 +167,10 @@ class VoteModule implements Module {
           global: '0',
           perUser: '0',
         },
+        restrict: {
+          active: false,
+          to: [],
+        },
       },
       {
         id: 'play',
@@ -175,6 +179,10 @@ class VoteModule implements Module {
         cooldown: {
           global: '0',
           perUser: '0',
+        },
+        restrict: {
+          active: false,
+          to: [],
         },
       },
     ]
