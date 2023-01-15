@@ -2047,7 +2047,7 @@ const extractEmotes = (context) => {
     matches?.forEach((m) => {
         // @ts-ignore
         const code = [...m].map(e => e.codePointAt(0).toString(16)).join(`-`);
-        emotes.push({ url: `https://twemoji.maxcdn.com/v/14.0.2/72x72/${code}.png` });
+        emotes.push({ url: `https://cdn.betterttv.net/assets/emoji/${code}.svg` });
     });
     if (context.context.emotes) {
         for (const emoteId in context.context.emotes) {
@@ -7646,9 +7646,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-07T21:42:01.019Z",
+    buildDate: "2023-01-15T00:00:40.750Z",
     // @ts-ignore
-    buildVersion: "1.49.2",
+    buildVersion: "1.49.3",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
