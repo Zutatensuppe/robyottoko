@@ -93,7 +93,7 @@ class TwitchPubSubClient {
       }
       // should have a queue worker
       while (this.sendBuffer.length > 0) {
-        this.handle.send(this.sendBuffer.shift())
+        this.handle.send(this.sendBuffer.shift() as string)
       }
       log.info('Socket Opened')
       this._heartbeat()

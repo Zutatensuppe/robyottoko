@@ -2043,12 +2043,10 @@ const determineNewVolume = (input, currentVal) => {
 };
 const extractEmotes = (context) => {
     const emotes = [];
-    const matches = context.msg.match(/(\p{EPres}|\p{ExtPict})(\u200d?(\p{EPres}|\p{ExtPict})\ufe0f?)*/gu);
+    const matches = context.msg.match(/(\p{EPres}|\p{ExtPict})(\u200d(\p{EPres}|\p{ExtPict})\ufe0f?)*/gu);
     matches?.forEach((m) => {
         // @ts-ignore
-        let code = [...m].map(e => e.codePointAt(0).toString(16).trim('200d').trim('-')).join(`-200d-`);
-        code = code.replace(/-200d(-200d)+/g, '-200d');
-        code = code.replace(/-200d-fe0f/g, '-fe0f');
+        const code = [...m].map(e => e.codePointAt(0).toString(16)).join('-');
         emotes.push({ url: `https://cdn.betterttv.net/assets/emoji/${code}.svg` });
     });
     if (context.context.emotes) {
@@ -7648,9 +7646,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-15T01:07:21.432Z",
+    buildDate: "2023-01-15T01:42:22.053Z",
     // @ts-ignore
-    buildVersion: "1.49.4",
+    buildVersion: "1.49.5",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
