@@ -175,6 +175,7 @@ const _prepareImage = async (urlpath: string): Promise<void> => {
     });
   });
 }
+
 const playmedia = (media: MediaCommandData): void => {
   if (!props.displayLatestForever && latestResolved.value) {
     showimage.value = false;
@@ -182,8 +183,43 @@ const playmedia = (media: MediaCommandData): void => {
   _addQueue(media);
 }
 
+const removeMedia = (media: MediaCommandData): void => {
+  queue.value = queue.value.filter(m => {
+    if (m.image.urlpath && m.image.urlpath === media.image.urlpath) {
+      return false
+    }
+    if (m.image_url && m.image_url === media.image_url) {
+      return false
+    }
+    if (m.video.url && m.video.url === media.video.url) {
+      return false
+    }
+    if (m.sound.urlpath && m.sound.urlpath === media.sound.urlpath) {
+      return false
+    }
+    return true
+  })
+
+  const imageUrl = media.image.urlpath || media.image_url
+  if (imageUrl) {
+    if (showimage.value && imgstyle.value && imgstyle.value.backgroundImage === `url(${imageUrl})`) {
+      showimage.value = false
+      imgstyle.value = undefined
+    }
+  }
+  if (videosrc.value && media.video.url === videosrc.value) {
+    videosrc.value = ''
+  }
+}
+
+const hasQueuedMedia = (): boolean => {
+  return queue.value.length > 0
+}
+
 defineExpose({
-  playmedia
+  playmedia,
+  removeMedia,
+  hasQueuedMedia,
 })
 </script>
 <style scoped lang="scss">

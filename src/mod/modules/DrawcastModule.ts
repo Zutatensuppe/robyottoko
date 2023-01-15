@@ -1,5 +1,5 @@
 import fn from '../../fn'
-import { nonce, logger } from '../../common/fn'
+import { arrayIncludesIgnoreCase, nonce, logger } from '../../common/fn'
 import fs from 'fs'
 import { Socket } from '../../net/WebSocketServer'
 import { Bot, ChatMessageContext, DrawcastSettings, Module, MODULE_NAME, WIDGET_TYPE } from '../../types'
@@ -135,7 +135,10 @@ class DrawcastModule implements Module {
     if (onlyOwner) {
       return false
     }
-    return this.data.settings.moderationAdmins.includes(user.user.name)
+    return arrayIncludesIgnoreCase(
+      this.data.settings.moderationAdmins,
+      user.user.name
+    )
   }
 
   getWsEvents() {
@@ -231,6 +234,7 @@ class DrawcastModule implements Module {
         })
         this.data.images = this.data.images.filter(item => item.path !== image.path)
         await this.save()
+
         this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
           event: 'image_deleted',
           data: { nonce: '', img: image.path, mayNotify: false },
@@ -259,19 +263,23 @@ class DrawcastModule implements Module {
           data: { nonce: data.data.nonce, img: urlPath, mayNotify: true },
         })
       },
-      'save': async (_ws: Socket, { settings, token }: { settings: DrawcastSettings, token: string }) => {
-        if (!this.checkAuthorized(token, true)) {
-          log.error({ token }, 'save: unauthed user')
+      'save': async (_ws: Socket, data: { settings: DrawcastSettings, token: string }) => {
+        if (!this.checkAuthorized(data.token, true)) {
+          log.error({ token: data.token }, 'save: unauthed user')
           return
         }
 
-        this.data.settings = settings
+        this.data.settings = data.settings
+        const settings = JSON.parse(JSON.stringify(this.data.settings))
+        if (!settings.moderationAdmins.includes(this.user.name)) {
+          settings.moderationAdmins.push(this.user.name)
+        }
         await this.save()
         this.data = await this.reinit()
         this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
           event: 'init',
           data: {
-            settings: this.data.settings,
+            settings,
             images: this.data.images.filter(image => image.approved).slice(0, 20),
             drawUrl: await this.drawUrl(),
             controlWidgetUrl: await this.controlUrl(),

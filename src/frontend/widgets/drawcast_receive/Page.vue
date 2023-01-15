@@ -6,7 +6,6 @@
   />
 </template>
 <script setup lang="ts">
-import { DrawcastImage } from "../../../mod/modules/DrawcastModuleCommon";
 import { newMedia } from "../../../common/commands";
 import { onMounted, onUnmounted, Ref, ref } from "vue";
 import { SoundMediaFile } from "../../../types";
@@ -22,11 +21,13 @@ let ws: WsClient | null = null
 const displayDuration = ref<number>(5000)
 const displayLatestForever = ref<boolean>(false)
 const notificationSound = ref<SoundMediaFile | null>(null)
-const images = ref<any[]>([])
 const q = ref<InstanceType<typeof MediaQueueElement>>() as Ref<InstanceType<typeof MediaQueueElement>>
 
   // @ts-ignore
 import("./main.scss");
+
+// images that were approved since opening this widget
+let imagesStack: string[] = []
 
 onMounted(() => {
   ws = util.wsClient(props.wdata);
@@ -35,11 +36,11 @@ onMounted(() => {
     // submit button may not be empty
     displayLatestForever.value = data.settings.displayLatestForever;
     notificationSound.value = data.settings.notificationSound;
-    images.value = data.images.map((image: DrawcastImage) => image.path);
 
-    if (data.settings.displayLatestAutomatically && images.value.length > 0) {
+    if (data.settings.displayLatestAutomatically && data.images.length > 0) {
+      imagesStack.push(data.images[0].path)
       q.value.playmedia(newMedia({
-        image_url: images.value[0],
+        image_url: data.images[0].path,
         minDurationMs: displayDuration.value,
       }));
     }
@@ -47,8 +48,7 @@ onMounted(() => {
   ws.onMessage(
     "approved_image_received",
     (data: { nonce: string; img: string; mayNotify: boolean }) => {
-      images.value.unshift(data.img);
-      images.value = images.value.slice(0, 20);
+      imagesStack.push(data.img)
       q.value.playmedia(newMedia({
         sound: data.mayNotify ? notificationSound.value : null,
         image_url: data.img,
@@ -56,6 +56,20 @@ onMounted(() => {
       }));
     }
   );
+  ws.onMessage(
+    "image_deleted",
+    (data: { nonce: string; img: string; previousImg: string, mayNotify: boolean }) => {
+      imagesStack = imagesStack.filter(item => item !== data.img)
+      q.value.removeMedia(newMedia({ image_url: data.img }))
+      if (!q.value.hasQueuedMedia() && displayLatestForever.value && imagesStack.length > 0) {
+        q.value.playmedia(newMedia({
+          sound: null,
+          image_url: imagesStack[imagesStack.length - 1],
+          minDurationMs: displayDuration.value,
+        }))
+      }
+    }
+  )
   ws.connect();
 })
 
