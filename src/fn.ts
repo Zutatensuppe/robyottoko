@@ -1199,7 +1199,7 @@ export const extractEmotes = (context: ChatMessageContext) => {
   matches?.forEach((m: string) => {
     // @ts-ignore
     const code = [...m].map(e => e.codePointAt(0).toString(16)).join(`-`)
-    emotes.push({ url: `https://twemoji.maxcdn.com/v/14.0.2/72x72/${code}.png` })
+    emotes.push({ url: `https://cdn.betterttv.net/assets/emoji/${code}.svg` })
   })
   if (context.context.emotes) {
     for (const emoteId in context.context.emotes) {

@@ -358,7 +358,7 @@ describe('fn.extractEmotes', () => {
       },
       expected: [
         {
-          url: 'https://twemoji.maxcdn.com/v/14.0.2/72x72/1f469-200d-2695-fe0f.png',
+          url: 'https://cdn.betterttv.net/assets/emoji/1f469-200d-2695-fe0f.svg',
         },
       ],
     },
@@ -370,7 +370,7 @@ describe('fn.extractEmotes', () => {
       },
       expected: [
         {
-          url: 'https://twemoji.maxcdn.com/v/14.0.2/72x72/1f468-200d-1f469-200d-1f467-200d-1f466.png',
+          url: 'https://cdn.betterttv.net/assets/emoji/1f468-200d-1f469-200d-1f467-200d-1f466.svg',
         },
       ],
     },
