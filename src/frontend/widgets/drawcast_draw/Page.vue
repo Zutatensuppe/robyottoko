@@ -845,7 +845,11 @@ export default defineComponent({
   methods: {
     deleteImage(url: string) {
       if (!this.ws) {
-        log.error("modRemoveImage: this.ws not set");
+        log.error("deleteImage: this.ws not set");
+        return;
+      }
+      if (!this.me) {
+        log.error("deleteImage: this.me not set");
         return;
       }
 

@@ -687,6 +687,10 @@ export default defineComponent({
         console.warn("sendMsg: this.ws not initialized");
         return;
       }
+      if (!this.me) {
+        console.warn("sendMsg: this.me not initialized");
+        return;
+      }
       this.ws.send(JSON.stringify(Object.assign({}, data, {
         token: this.me.token,
       })));
