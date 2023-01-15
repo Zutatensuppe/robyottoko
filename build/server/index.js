@@ -2041,22 +2041,57 @@ const determineNewVolume = (input, currentVal) => {
     }
     return val;
 };
-const extractEmotes = (context) => {
+const flagEmotes = [
+    '🏳️‍🌈', '🏳️‍⚧️',
+    '🇦🇨', '🇦🇩', '🇦🇪', '🇦🇫', '🇦🇬', '🇦🇮', '🇦🇱', '🇦🇲', '🇦🇴', '🇦🇶', '🇦🇷', '🇦🇸', '🇦🇹',
+    '🇦🇺', '🇦🇼', '🇦🇽', '🇦🇿', '🇧🇦', '🇧🇧', '🇧🇩', '🇧🇪', '🇧🇫', '🇧🇬', '🇧🇭', '🇧🇮', '🇧🇯',
+    '🇧🇱', '🇧🇲', '🇧🇳', '🇧🇴', '🇧🇶', '🇧🇷', '🇧🇸', '🇧🇹', '🇧🇻', '🇧🇼', '🇧🇾', '🇧🇿', '🇨🇦',
+    '🇨🇨', '🇨🇩', '🇨🇫', '🇨🇬', '🇨🇭', '🇨🇮', '🇨🇰', '🇨🇱', '🇨🇲', '🇨🇳', '🇨🇴', '🇨🇵', '🇨🇷',
+    '🇨🇺', '🇨🇻', '🇨🇼', '🇨🇽', '🇨🇾', '🇨🇿', '🇩🇪', '🇩🇬', '🇩🇯', '🇩🇰', '🇩🇲', '🇩🇴', '🇩🇿',
+    '🇪🇦', '🇪🇨', '🇪🇪', '🇪🇬', '🇪🇭', '🇪🇷', '🇪🇸', '🇪🇹', '🇪🇺', '🇫🇮', '🇫🇯', '🇫🇰', '🇫🇲',
+    '🇫🇴', '🇫🇷', '🇬🇦', '🇬🇧', '🇬🇩', '🇬🇪', '🇬🇫', '🇬🇬', '🇬🇭', '🇬🇮', '🇬🇱', '🇬🇲', '🇬🇳',
+    '🇬🇵', '🇬🇶', '🇬🇷', '🇬🇸', '🇬🇹', '🇬🇺', '🇬🇼', '🇬🇾', '🇭🇰', '🇭🇲', '🇭🇳', '🇭🇷', '🇭🇹',
+    '🇭🇺', '🇮🇨', '🇮🇩', '🇮🇪', '🇮🇱', '🇮🇲', '🇮🇳', '🇮🇴', '🇮🇶', '🇮🇷', '🇮🇸', '🇮🇹', '🇯🇪', '🇯🇲',
+    '🇯🇴', '🇯🇵', '🇰🇪', '🇰🇬', '🇰🇭', '🇰🇮', '🇰🇲', '🇰🇳', '🇰🇵', '🇰🇷', '🇰🇼', '🇰🇾', '🇰🇿',
+    '🇱🇦', '🇱🇧', '🇱🇨', '🇱🇮', '🇱🇰', '🇱🇷', '🇱🇸', '🇱🇹', '🇱🇺', '🇱🇻', '🇱🇾', '🇲🇦', '🇲🇨',
+    '🇲🇩', '🇲🇪', '🇲🇫', '🇲🇬', '🇲🇭', '🇲🇰', '🇲🇱', '🇲🇲', '🇲🇳', '🇲🇴', '🇲🇵', '🇲🇶',
+    '🇲🇷', '🇲🇸', '🇲🇹', '🇲🇺', '🇲🇻', '🇲🇼', '🇲🇽', '🇲🇾', '🇲🇿', '🇳🇦', '🇳🇨', '🇳🇪',
+    '🇳🇫', '🇳🇬', '🇳🇮', '🇳🇱', '🇳🇴', '🇳🇵', '🇳🇷', '🇳🇺', '🇳🇿', '🇴🇲', '🇵🇦', '🇵🇪', '🇵🇫',
+    '🇵🇬', '🇵🇭', '🇵🇰', '🇵🇱', '🇵🇲', '🇵🇳', '🇵🇷', '🇵🇸', '🇵🇹', '🇵🇼', '🇵🇾', '🇶🇦', '🇷🇪',
+    '🇷🇴', '🇷🇸', '🇷🇺', '🇷🇼', '🇸🇦', '🇸🇧', '🇸🇨', '🇸🇩', '🇸🇪', '🇸🇬', '🇸🇭', '🇸🇮', '🇸🇯',
+    '🇸🇰', '🇸🇱', '🇸🇲', '🇸🇳', '🇸🇴', '🇸🇷', '🇸🇸', '🇸🇹', '🇸🇻', '🇸🇽', '🇸🇾', '🇸🇿', '🇹🇦',
+    '🇹🇨', '🇹🇩', '🇹🇫', '🇹🇬', '🇹🇭', '🇹🇯', '🇹🇰', '🇹🇱', '🇹🇲', '🇹🇳', '🇹🇴', '🇹🇷', '🇹🇹',
+    '🇹🇻', '🇹🇼', '🇹🇿', '🇺🇦', '🇺🇬', '🇺🇲', '🇺🇳', '🇺🇸', '🇺🇾', '🇺🇿', '🇻🇦', '🇻🇨', '🇻🇪',
+    '🇻🇬', '🇻🇮', '🇻🇳', '🇻🇺', '🇼🇫', '🇼🇸', '🇽🇰', '🇾🇪', '🇾🇹', '🇿🇦', '🇿🇲', '🇿🇼',
+];
+const emojiRegex = new RegExp(`${flagEmotes.join('|')}|(\\p{EPres}|\\p{ExtPict})(\\u200d(\\p{EPres}|\\p{ExtPict})\\ufe0f?)*`, 'gu');
+const extractEmojiEmotes = (context) => {
     const emotes = [];
-    const matches = context.msg.match(/(\p{EPres}|\p{ExtPict})(\u200d(\p{EPres}|\p{ExtPict})\ufe0f?)*/gu);
+    const matches = context.msgOriginal.match(emojiRegex);
     matches?.forEach((m) => {
         // @ts-ignore
         const code = [...m].map(e => e.codePointAt(0).toString(16)).join('-');
         emotes.push({ url: `https://cdn.betterttv.net/assets/emoji/${code}.svg` });
     });
-    if (context.context.emotes) {
-        for (const emoteId in context.context.emotes) {
-            for (let i = 0; i < context.context.emotes[emoteId].length; i++) {
-                emotes.push({ url: `https://static-cdn.jtvnw.net/emoticons/v2/${emoteId}/default/dark/2.0` });
-            }
+    return emotes;
+};
+const extractTwitchEmotes = (context) => {
+    if (!context.context.emotes) {
+        return [];
+    }
+    const emotes = [];
+    for (const emoteId in context.context.emotes) {
+        for (let i = 0; i < context.context.emotes[emoteId].length; i++) {
+            emotes.push({ url: `https://static-cdn.jtvnw.net/emoticons/v2/${emoteId}/default/dark/2.0` });
         }
     }
     return emotes;
+};
+const extractEmotes = (context) => {
+    return [
+        ...extractEmojiEmotes(context),
+        ...extractTwitchEmotes(context),
+    ];
 };
 const getChannelPointsCustomRewards = async (bot, user) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
@@ -3845,15 +3880,16 @@ const determineIsFirstChatStream = async (bot, user, context) => {
     return await bot.getRepos().chatLog.isFirstChatSince(context, minDate);
 };
 class ChatEventHandler {
-    async handle(bot, user, target, context, msg) {
+    async handle(bot, user, target, context, msgOriginal, msgNormalized) {
         const roles = rolesLettersFromTwitchChatContext(context);
         log$b.debug({
             username: context.username,
             roles,
             target,
-            msg,
+            msgOriginal,
+            msgNormalized,
         });
-        bot.getRepos().chatLog.insert(context, msg);
+        bot.getRepos().chatLog.insert(context, msgOriginal);
         let _isFirstChatAlltime = null;
         const isFirstChatAlltime = async () => {
             if (_isFirstChatAlltime === null) {
@@ -3900,7 +3936,7 @@ class ChatEventHandler {
             commandTriggers = commandTriggers.sort((a, b) => b.data.command.length - a.data.command.length);
             let rawCmd = null;
             for (const trigger of commandTriggers) {
-                rawCmd = fn.parseCommandFromTriggerAndMessage(msg, trigger);
+                rawCmd = fn.parseCommandFromTriggerAndMessage(msgNormalized, trigger);
                 if (!rawCmd) {
                     continue;
                 }
@@ -3910,7 +3946,7 @@ class ChatEventHandler {
             return { triggers, rawCmd };
         };
         const client = bot.getUserTwitchClientManager(user).getChatClient();
-        const chatMessageContext = { client, target, context, msg };
+        const chatMessageContext = { client, target, context, msgOriginal, msgNormalized };
         const date = new Date();
         for (const m of bot.getModuleManager().all(user.id)) {
             const { triggers, rawCmd } = await createTriggers(m);
@@ -4033,8 +4069,9 @@ class TwitchClientManager {
                     } // Ignore messages from the bot
                     // sometimes chat contains imprintable characters
                     // they are removed here
-                    msg = normalizeChatMessage(msg);
-                    await (chatEventHandler).handle(this.bot, this.user, target, context, msg);
+                    const msgOriginal = msg;
+                    const msgNormalized = normalizeChatMessage(msg);
+                    await (chatEventHandler).handle(this.bot, this.user, target, context, msgOriginal, msgNormalized);
                 });
                 // Called every time the bot connects to Twitch chat
                 this.chatClient.on('connected', async (addr, port) => {
@@ -7646,9 +7683,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-15T01:42:22.053Z",
+    buildDate: "2023-01-15T12:05:30.003Z",
     // @ts-ignore
-    buildVersion: "1.49.5",
+    buildVersion: "1.49.6",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
