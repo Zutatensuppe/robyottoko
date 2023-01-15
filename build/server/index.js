@@ -5416,9 +5416,26 @@ class GeneralModule {
 }
 
 const log$8 = logger('Youtube.ts');
+let googleApiKeyIndex = 0;
 const get = async (url, args) => {
-    args.key = config.modules.sr.google.api_key;
-    const resp = await xhr.get(url + asQueryArgs(args));
+    if (config.modules.sr.google.api_keys.length === 0) {
+        log$8.error('no google api keys configured');
+        return {};
+    }
+    args.key = config.modules.sr.google.api_keys[googleApiKeyIndex];
+    let resp = await xhr.get(url + asQueryArgs(args));
+    if (resp.status === 403) {
+        log$8.warn('google returned 403 forbidden status');
+        if (config.modules.sr.google.api_keys.length > 1) {
+            log$8.warn('switching api key');
+            googleApiKeyIndex++;
+            if (googleApiKeyIndex > config.modules.sr.google.api_keys.length - 1) {
+                googleApiKeyIndex = 0;
+            }
+            args.key = config.modules.sr.google.api_keys[googleApiKeyIndex];
+            resp = await xhr.get(url + asQueryArgs(args));
+        }
+    }
     return await resp.json();
 };
 const fetchDataByYoutubeId = async (youtubeId) => {
@@ -7978,9 +7995,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-15T20:20:27.882Z",
+    buildDate: "2023-01-15T20:32:46.681Z",
     // @ts-ignore
-    buildVersion: "1.50.0",
+    buildVersion: "1.50.1",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
