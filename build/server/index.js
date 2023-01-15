@@ -739,6 +739,8 @@ class WebSocketServer {
             // but it has no user_id or module set yet!
             const basePath = new URL(bot.getConfig().ws.connectstring).pathname;
             const requestUrl = request.url || '';
+            // userId is the id of the OWNER of the widget
+            // it is NOT the id of the user actually visiting that page right now
             const { userId, moduleName } = await determineUserIdAndModuleName(basePath, requestUrl, socket, bot);
             socket.user_id = userId;
             socket.module = moduleName;
@@ -7397,6 +7399,7 @@ const default_settings$2 = (obj = null) => ({
             list: getProp(obj, ['favorites'], []),
             title: getProp(obj, ['favoriteImagesTitle'], ''),
         }]),
+    moderationAdmins: getProp(obj, ['moderationAdmins'], []),
 });
 const default_images = (list = null) => {
     if (Array.isArray(list)) {
@@ -7471,13 +7474,7 @@ class DrawcastModule {
         await this.bot.getRepos().module.save(this.user.id, this.name, this.data);
     }
     getRoutes() {
-        return {
-            get: {
-                '/api/drawcast/all-images': async (_req, res, _next) => {
-                    res.send(this.getImages());
-                },
-            },
-        };
+        return {};
     }
     getImages() {
         return this.data.images;
@@ -7503,13 +7500,30 @@ class DrawcastModule {
             },
         };
     }
+    async checkAuthorized(token, onlyOwner = false) {
+        const user = await this.bot.getAuth()._determineApiUserData(token);
+        if (!user) {
+            return false;
+        }
+        if (user.user.id === this.user.id) {
+            return true;
+        }
+        if (onlyOwner) {
+            return false;
+        }
+        return this.data.settings.moderationAdmins.includes(user.user.name);
+    }
     getWsEvents() {
         return {
             'conn': async (ws) => {
+                const settings = JSON.parse(JSON.stringify(this.data.settings));
+                if (!settings.moderationAdmins.includes(this.user.name)) {
+                    settings.moderationAdmins.push(this.user.name);
+                }
                 this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, {
                     event: 'init',
                     data: {
-                        settings: this.data.settings,
+                        settings,
                         images: this.data.images.filter(image => image.approved).slice(0, 20),
                         drawUrl: await this.drawUrl(),
                         controlWidgetUrl: await this.controlUrl(),
@@ -7517,7 +7531,21 @@ class DrawcastModule {
                     }
                 }, ws);
             },
-            'approve_image': async (_ws, { path }) => {
+            'get_all_images': async (ws, { token }) => {
+                if (!this.checkAuthorized(token)) {
+                    log$5.error({ token }, 'get_all_images: unauthed user');
+                    return;
+                }
+                this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, {
+                    event: 'all_images',
+                    data: { images: this.getImages() },
+                }, ws);
+            },
+            'approve_image': async (_ws, { path, token }) => {
+                if (!this.checkAuthorized(token)) {
+                    log$5.error({ path, token }, 'approve_image: unauthed user');
+                    return;
+                }
                 const image = this.data.images.find(item => item.path === path);
                 if (!image) {
                     // should not happen
@@ -7533,7 +7561,11 @@ class DrawcastModule {
                     data: { nonce: '', img: image.path, mayNotify: false },
                 });
             },
-            'deny_image': async (_ws, { path }) => {
+            'deny_image': async (_ws, { path, token }) => {
+                if (!this.checkAuthorized(token)) {
+                    log$5.error({ path, token }, 'deny_image: unauthed user');
+                    return;
+                }
                 const image = this.data.images.find(item => item.path === path);
                 if (!image) {
                     // should not happen
@@ -7547,7 +7579,11 @@ class DrawcastModule {
                     data: { nonce: '', img: image.path, mayNotify: false },
                 });
             },
-            'delete_image': async (_ws, { path }) => {
+            'delete_image': async (_ws, { path, token }) => {
+                if (!this.checkAuthorized(token)) {
+                    log$5.error({ path, token }, 'delete_image: unauthed user');
+                    return;
+                }
                 const image = this.data.images.find(item => item.path === path);
                 if (!image) {
                     // should not happen
@@ -7589,7 +7625,11 @@ class DrawcastModule {
                     data: { nonce: data.data.nonce, img: urlPath, mayNotify: true },
                 });
             },
-            'save': async (_ws, { settings }) => {
+            'save': async (_ws, { settings, token }) => {
+                if (!this.checkAuthorized(token, true)) {
+                    log$5.error({ token }, 'save: unauthed user');
+                    return;
+                }
                 this.data.settings = settings;
                 await this.save();
                 this.data = await this.reinit();
@@ -7938,9 +7978,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-15T16:20:12.959Z",
+    buildDate: "2023-01-15T20:03:39.261Z",
     // @ts-ignore
-    buildVersion: "1.49.7",
+    buildVersion: "1.50.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
