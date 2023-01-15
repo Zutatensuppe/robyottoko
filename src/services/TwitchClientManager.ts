@@ -123,8 +123,16 @@ class TwitchClientManager {
 
           // sometimes chat contains imprintable characters
           // they are removed here
-          msg = normalizeChatMessage(msg)
-          await (chatEventHandler).handle(this.bot, this.user, target, context, msg)
+          const msgOriginal = msg
+          const msgNormalized = normalizeChatMessage(msg)
+          await (chatEventHandler).handle(
+            this.bot,
+            this.user,
+            target,
+            context,
+            msgOriginal,
+            msgNormalized,
+          )
         })
 
         // Called every time the bot connects to Twitch chat
