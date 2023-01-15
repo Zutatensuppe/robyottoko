@@ -5,7 +5,6 @@ import { Socket } from '../../net/WebSocketServer'
 import { Bot, ChatMessageContext, DrawcastSettings, Module, MODULE_NAME, WIDGET_TYPE } from '../../types'
 import { User } from '../../repo/Users'
 import { default_settings, default_images, DrawcastModuleData, DrawcastImage, DrawcastModuleWsData } from './DrawcastModuleCommon'
-import { NextFunction, Response } from 'express'
 
 const log = logger('DrawcastModule.ts')
 
@@ -93,13 +92,7 @@ class DrawcastModule implements Module {
   }
 
   getRoutes() {
-    return {
-      get: {
-        '/api/drawcast/all-images': async (_req: any, res: Response, _next: NextFunction) => {
-          res.send(this.getImages())
-        },
-      },
-    }
+    return {}
   }
 
   getImages() {
@@ -131,13 +124,31 @@ class DrawcastModule implements Module {
     };
   }
 
+  async checkAuthorized(token: string, onlyOwner: boolean = false): Promise<boolean> {
+    const user = await this.bot.getAuth()._determineApiUserData(token)
+    if (!user) {
+      return false
+    }
+    if (user.user.id === this.user.id) {
+      return true
+    }
+    if (onlyOwner) {
+      return false
+    }
+    return this.data.settings.moderationAdmins.includes(user.user.name)
+  }
+
   getWsEvents() {
     return {
       'conn': async (ws: Socket) => {
+        const settings = JSON.parse(JSON.stringify(this.data.settings))
+        if (!settings.moderationAdmins.includes(this.user.name)) {
+          settings.moderationAdmins.push(this.user.name)
+        }
         this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, {
           event: 'init',
           data: {
-            settings: this.data.settings,
+            settings,
             images: this.data.images.filter(image => image.approved).slice(0, 20),
             drawUrl: await this.drawUrl(),
             controlWidgetUrl: await this.controlUrl(),
@@ -145,7 +156,23 @@ class DrawcastModule implements Module {
           }
         }, ws)
       },
-      'approve_image': async (_ws: Socket, { path }: { path: string }) => {
+      'get_all_images': async (ws: Socket, { token }: { token: string }) => {
+        if (!this.checkAuthorized(token)) {
+          log.error({ token }, 'get_all_images: unauthed user')
+          return
+        }
+
+        this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, {
+          event: 'all_images',
+          data: { images: this.getImages() },
+        }, ws)
+      },
+      'approve_image': async (_ws: Socket, { path, token }: { path: string, token: string }) => {
+        if (!this.checkAuthorized(token)) {
+          log.error({ path, token }, 'approve_image: unauthed user')
+          return
+        }
+
         const image = this.data.images.find(item => item.path === path)
         if (!image) {
           // should not happen
@@ -161,7 +188,12 @@ class DrawcastModule implements Module {
           data: { nonce: '', img: image.path, mayNotify: false },
         })
       },
-      'deny_image': async (_ws: Socket, { path }: { path: string }) => {
+      'deny_image': async (_ws: Socket, { path, token }: { path: string, token: string }) => {
+        if (!this.checkAuthorized(token)) {
+          log.error({ path, token }, 'deny_image: unauthed user')
+          return
+        }
+
         const image = this.data.images.find(item => item.path === path)
         if (!image) {
           // should not happen
@@ -175,7 +207,12 @@ class DrawcastModule implements Module {
           data: { nonce: '', img: image.path, mayNotify: false },
         })
       },
-      'delete_image': async (_ws: Socket, { path }: { path: string }) => {
+      'delete_image': async (_ws: Socket, { path, token }: { path: string, token: string }) => {
+        if (!this.checkAuthorized(token)) {
+          log.error({ path, token }, 'delete_image: unauthed user')
+          return
+        }
+
         const image = this.data.images.find(item => item.path === path)
         if (!image) {
           // should not happen
@@ -222,7 +259,12 @@ class DrawcastModule implements Module {
           data: { nonce: data.data.nonce, img: urlPath, mayNotify: true },
         })
       },
-      'save': async (_ws: Socket, { settings }: { settings: DrawcastSettings }) => {
+      'save': async (_ws: Socket, { settings, token }: { settings: DrawcastSettings, token: string }) => {
+        if (!this.checkAuthorized(token, true)) {
+          log.error({ token }, 'save: unauthed user')
+          return
+        }
+
         this.data.settings = settings
         await this.save()
         this.data = await this.reinit()

@@ -37,18 +37,19 @@
   </div>
 </template>
 <script setup lang="ts">
-import { DrawcastData } from "../../../types"
+import { ApiUserData, DrawcastData } from "../../../types"
 import { DrawcastImage } from "../../../mod/modules/DrawcastModuleCommon"
 import { onMounted, onUnmounted, ref } from "vue"
-import api from "../../api"
 import util, { WidgetApiData } from "../util"
 import WsClient from "../../WsClient"
+import user from "../../user"
 
 const props = defineProps<{
   wdata: WidgetApiData,
 }>()
 
 let ws: WsClient | null = null
+let me: ApiUserData | null = null
 const notificationSoundAudio = ref<any>(null)
 const manualApproval = ref<{ items: string[] }>({ items: [] })
 
@@ -68,14 +69,23 @@ const sendMsg = (data: any) => {
     console.warn("sendMsg: ws not initialized");
     return;
   }
-  ws.send(JSON.stringify(data));
+  if (!me) {
+    console.warn("sendMsg: me not initialized");
+    return;
+  }
+  ws.send(JSON.stringify(Object.assign({}, data, {
+    token: me.token
+  })));
 }
 
 onMounted(() => {
+  me = user.getMe()
+  if (!me) {
+    return
+  }
   ws = util.wsClient(props.wdata);
   ws.onMessage("init", async (data: DrawcastData) => {
-    const res = await api.getDrawcastAllImages();
-    const images = await res.json();
+    sendMsg({ event: "get_all_images" });
 
     if (data.settings.notificationSound) {
       notificationSoundAudio.value = new Audio(
@@ -84,11 +94,15 @@ onMounted(() => {
       notificationSoundAudio.value.volume =
         data.settings.notificationSound.volume / 100.0;
     }
-
-    manualApproval.value.items = images
+  });
+  ws.onMessage(
+    "all_images",
+    (data: { images: DrawcastImage[] }) => {
+    manualApproval.value.items = data.images
       .filter((item: DrawcastImage) => !item.approved)
       .map((item: DrawcastImage) => item.path);
-  });
+    }
+  ),
   ws.onMessage(
     "approved_image_received",
     (data: { nonce: string; img: string; mayNotify: boolean }) => {

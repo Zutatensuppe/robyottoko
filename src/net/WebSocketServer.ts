@@ -50,6 +50,9 @@ class WebSocketServer {
 
       const basePath = new URL(bot.getConfig().ws.connectstring).pathname
       const requestUrl = request.url || ''
+
+      // userId is the id of the OWNER of the widget
+      // it is NOT the id of the user actually visiting that page right now
       const { userId, moduleName } = await determineUserIdAndModuleName(basePath, requestUrl, socket, bot)
 
       socket.user_id = userId
