@@ -63,17 +63,19 @@ export class ChatEventHandler {
     user: User,
     target: string,
     context: TwitchChatContext,
-    msg: string,
+    msgOriginal: string,
+    msgNormalized: string,
   ): Promise<void> {
     const roles = rolesLettersFromTwitchChatContext(context)
     log.debug({
       username: context.username,
       roles,
       target,
-      msg,
+      msgOriginal,
+      msgNormalized,
     })
 
-    bot.getRepos().chatLog.insert(context, msg)
+    bot.getRepos().chatLog.insert(context, msgOriginal)
 
     let _isFirstChatAlltime: null | boolean = null
     const isFirstChatAlltime = async (): Promise<boolean> => {
@@ -126,7 +128,7 @@ export class ChatEventHandler {
       commandTriggers = commandTriggers.sort((a, b) => b.data.command.length - a.data.command.length)
       let rawCmd = null
       for (const trigger of commandTriggers) {
-        rawCmd = fn.parseCommandFromTriggerAndMessage(msg, trigger)
+        rawCmd = fn.parseCommandFromTriggerAndMessage(msgNormalized, trigger)
         if (!rawCmd) {
           continue
         }
@@ -137,7 +139,7 @@ export class ChatEventHandler {
     }
 
     const client = bot.getUserTwitchClientManager(user).getChatClient()
-    const chatMessageContext = { client, target, context, msg }
+    const chatMessageContext = { client, target, context, msgOriginal, msgNormalized }
     const date = new Date()
     for (const m of bot.getModuleManager().all(user.id)) {
       const { triggers, rawCmd } = await createTriggers(m)

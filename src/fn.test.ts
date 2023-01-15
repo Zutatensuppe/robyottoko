@@ -345,7 +345,8 @@ describe('fn.extractEmotes', () => {
     {
       _name: 'no emotes',
       ctx: {
-        msg: 'lalahdlfadofho  sadf ',
+        msgOriginal: 'lalahdlfadofho  sadf ',
+        msgNormalized: 'lalahdlfadofho  sadf ',
         context: {},
       },
       expected: []
@@ -353,7 +354,8 @@ describe('fn.extractEmotes', () => {
     {
       _name: 'unicode emotes 1',
       ctx: {
-        msg: '👩‍⚕️',
+        msgOriginal: '👩‍⚕️',
+        msgNormalized: '👩‍⚕️',
         context: {},
       },
       expected: [
@@ -363,7 +365,8 @@ describe('fn.extractEmotes', () => {
     {
       _name: 'unicode emotes 2',
       ctx: {
-        msg: ' 👨‍👩‍👧‍👦 ',
+        msgOriginal: ' 👨‍👩‍👧‍👦 ',
+        msgNormalized: ' 👨👩👧👦 ',
         context: {},
       },
       expected: [
@@ -373,7 +376,8 @@ describe('fn.extractEmotes', () => {
     {
       _name: 'unicode emotes 2 alternative',
       ctx: {
-        msg: ' 👨👩👧👦 ',
+        msgOriginal: ' 👨👩👧👦 ',
+        msgNormalized: ' 👨👩👧👦 ',
         context: {},
       },
       expected: [
@@ -386,7 +390,8 @@ describe('fn.extractEmotes', () => {
     {
       _name: 'unicode emotes 3',
       ctx: {
-        msg: '👨‍🦲',
+        msgOriginal: '👨‍🦲',
+        msgNormalized: '👨🦲',
         context: {},
       },
       expected: [
@@ -396,7 +401,8 @@ describe('fn.extractEmotes', () => {
     {
       _name: 'unicode emotes 3 alternative',
       ctx: {
-        msg: '👨🦲',
+        msgOriginal: '👨🦲',
+        msgNormalized: '👨🦲',
         context: {},
       },
       expected: [
@@ -407,7 +413,8 @@ describe('fn.extractEmotes', () => {
     {
       _name: 'unicode emotes 4',
       ctx: {
-        msg: ' 🙇‍♀️ ',
+        msgOriginal: ' 🙇‍♀️ ',
+        msgNormalized: ' 🙇♀️ ',
         context: {},
       },
       expected: [
@@ -417,7 +424,8 @@ describe('fn.extractEmotes', () => {
     {
       _name: 'unicode emotes 4 alternative',
       ctx: {
-        msg: ' 🙇♀️ ',
+        msgOriginal: ' 🙇♀️ ',
+        msgNormalized: ' 🙇♀️ ',
         context: {},
       },
       expected: [
@@ -428,7 +436,8 @@ describe('fn.extractEmotes', () => {
     {
       _name: 'unicode emotes 5',
       ctx: {
-        msg: '🍀🍀🐸',
+        msgOriginal: '🍀🍀🐸',
+        msgNormalized: '🍀🍀🐸',
         context: {},
       },
       expected: [
@@ -438,9 +447,43 @@ describe('fn.extractEmotes', () => {
       ],
     },
     {
+      _name: 'pride flag',
+      ctx: {
+        msgOriginal: '🏳️‍🌈',
+        msgNormalized: '🏳️‍🌈',
+        context: {},
+      },
+      expected: [
+        { url: 'https://cdn.betterttv.net/assets/emoji/1f3f3-fe0f-200d-1f308.svg' },
+      ],
+    },
+    {
+      _name: 'trans flag',
+      ctx: {
+        msgOriginal: '🏳️‍⚧️',
+        msgNormalized: '🏳️‍⚧️',
+        context: {},
+      },
+      expected: [
+        { url: 'https://cdn.betterttv.net/assets/emoji/1f3f3-fe0f-200d-26a7-fe0f.svg' },
+      ],
+    },
+    {
+      _name: 'ukraine flag',
+      ctx: {
+        msgOriginal: '🇺🇦',
+        msgNormalized: '🇺🇦',
+        context: {},
+      },
+      expected: [
+        { url: 'https://cdn.betterttv.net/assets/emoji/1f1fa-1f1e6.svg' },
+      ],
+    },
+    {
       _name: 'twitch emotes',
       ctx: {
-        msg: 'blub bla bla',
+        msgOriginal: 'blub bla bla',
+        msgNormalized: 'blub bla bla',
         context: {
           emotes: {
             emotesv2_6087b156a30f4741a1d96acdc39e1905: [ '0-9', '10-19' ],

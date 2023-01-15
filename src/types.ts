@@ -481,7 +481,8 @@ export interface ChatMessageContext {
   client: TwitchChatClient | null
   target: string
   context: TwitchChatContext
-  msg: string
+  msgOriginal: string
+  msgNormalized: string
 }
 
 export interface Module {
