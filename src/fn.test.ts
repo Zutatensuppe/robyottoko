@@ -375,6 +375,54 @@ describe('fn.extractEmotes', () => {
       ],
     },
     {
+      _name: 'unicode emotes 3',
+      ctx: {
+        msg: '👨‍🦲',
+        context: {},
+      },
+      expected: [
+        {
+          url: 'https://cdn.betterttv.net/assets/emoji/1f468-200d-1f9b2.svg',
+        },
+      ],
+    },
+    {
+      _name: 'unicode emotes 3 alternative',
+      ctx: {
+        msg: '👨🦲',
+        context: {},
+      },
+      expected: [
+        {
+          url: 'https://cdn.betterttv.net/assets/emoji/1f468-200d-1f9b2.svg',
+        },
+      ],
+    },
+    {
+      _name: 'unicode emotes 4',
+      ctx: {
+        msg: ' 🙇‍♀️ ',
+        context: {},
+      },
+      expected: [
+        {
+          url: 'https://cdn.betterttv.net/assets/emoji/1f647-200d-2640-fe0f.svg',
+        },
+      ],
+    },
+    {
+      _name: 'unicode emotes 4 alternative',
+      ctx: {
+        msg: ' 🙇♀️ ',
+        context: {},
+      },
+      expected: [
+        {
+          url: 'https://cdn.betterttv.net/assets/emoji/1f647-200d-2640-fe0f.svg',
+        },
+      ],
+    },
+    {
       _name: 'twitch emotes',
       ctx: {
         msg: 'blub bla bla',
