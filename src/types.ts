@@ -87,7 +87,7 @@ export interface Config {
   modules: {
     sr: {
       google: {
-        api_key: string
+        api_keys: string[]
       }
     },
     speechToText: {

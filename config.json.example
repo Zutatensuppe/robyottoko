@@ -48,7 +48,8 @@
     // Song request module
     "sr": {
       "google": {
-        "api_key": "" // google api key :)
+        // google api keys (multiple possible if one runs into limit)
+        "api_keys": []
       }
     },
     // Speech to text module

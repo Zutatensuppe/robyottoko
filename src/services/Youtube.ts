@@ -27,9 +27,27 @@ interface YoutubeVideosResponseData {
   items: YoutubeVideosResponseDataEntry[]
 }
 
+let googleApiKeyIndex = 0
 const get = async (url: string, args: QueryArgsData) => {
-  args.key = config.modules.sr.google.api_key
-  const resp = await xhr.get(url + asQueryArgs(args))
+  if (config.modules.sr.google.api_keys.length === 0) {
+    log.error('no google api keys configured')
+    return {}
+  }
+
+  args.key = config.modules.sr.google.api_keys[googleApiKeyIndex]
+  let resp = await xhr.get(url + asQueryArgs(args))
+  if (resp.status === 403) {
+    log.warn('google returned 403 forbidden status')
+    if (config.modules.sr.google.api_keys.length > 1) {
+      log.warn('switching api key')
+      googleApiKeyIndex++
+      if (googleApiKeyIndex > config.modules.sr.google.api_keys.length - 1) {
+        googleApiKeyIndex = 0
+      }
+      args.key = config.modules.sr.google.api_keys[googleApiKeyIndex]
+      resp = await xhr.get(url + asQueryArgs(args))
+    }
+  }
   return await resp.json()
 }
 
