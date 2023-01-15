@@ -7528,7 +7528,7 @@ class DrawcastModule {
         if (onlyOwner) {
             return false;
         }
-        return this.data.settings.moderationAdmins.includes(user.user.name);
+        return arrayIncludesIgnoreCase(this.data.settings.moderationAdmins, user.user.name);
     }
     getWsEvents() {
         return {
@@ -7642,18 +7642,22 @@ class DrawcastModule {
                     data: { nonce: data.data.nonce, img: urlPath, mayNotify: true },
                 });
             },
-            'save': async (_ws, { settings, token }) => {
-                if (!this.checkAuthorized(token, true)) {
-                    log$5.error({ token }, 'save: unauthed user');
+            'save': async (_ws, data) => {
+                if (!this.checkAuthorized(data.token, true)) {
+                    log$5.error({ token: data.token }, 'save: unauthed user');
                     return;
                 }
-                this.data.settings = settings;
+                this.data.settings = data.settings;
+                const settings = JSON.parse(JSON.stringify(this.data.settings));
+                if (!settings.moderationAdmins.includes(this.user.name)) {
+                    settings.moderationAdmins.push(this.user.name);
+                }
                 await this.save();
                 this.data = await this.reinit();
                 this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, {
                     event: 'init',
                     data: {
-                        settings: this.data.settings,
+                        settings,
                         images: this.data.images.filter(image => image.approved).slice(0, 20),
                         drawUrl: await this.drawUrl(),
                         controlWidgetUrl: await this.controlUrl(),
@@ -7995,9 +7999,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-15T20:32:46.681Z",
+    buildDate: "2023-01-15T21:55:39.479Z",
     // @ts-ignore
-    buildVersion: "1.50.1",
+    buildVersion: "1.50.2",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
