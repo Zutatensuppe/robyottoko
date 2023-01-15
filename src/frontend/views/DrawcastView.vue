@@ -76,6 +76,23 @@
           </tr>
           <tr>
             <td>
+              <code>settings.moderationAdmins</code>
+            </td>
+            <td>
+              <StringsInput v-model="settings.moderationAdmins" />
+            </td>
+            <td>
+              Add names of users who may moderate the drawcast.
+              The users need to be logged in to hyottoko.club. <br>
+              <strong>Moderation includes:</strong>
+              <ul class="list">
+                <li>deleting images on the drawcast page</li>
+                <li>accepting/denying drawings if requireManualApproval is set (see below)</li>
+              </ul>
+            </td>
+          </tr>
+          <tr>
+            <td>
               <code>settings.requireManualApproval</code>
             </td>
             <td>
@@ -387,13 +404,13 @@ import {
   DrawcastImage,
 } from "../../mod/modules/DrawcastModuleCommon";
 import {
+ApiUserData,
   DrawcastData,
   DrawcastFavoriteList,
   DrawcastSettings,
   MediaFile,
   SoundMediaFile,
 } from "../../types";
-import api from "../api";
 import util from "../util";
 import WsClient from "../WsClient";
 import StringInput from "../components/StringInput.vue";
@@ -403,6 +420,8 @@ import DoubleclickButton from "../components/DoubleclickButton.vue";
 import SoundUpload from "../components/SoundUpload.vue";
 import ImageUpload from "../components/SoundUpload.vue";
 import NavbarElement from "../components/NavbarElement.vue";
+import StringsInput from "../components/StringsInput.vue";
+import user from "../user";
 
 interface ComponentData {
   unchangedJson: string;
@@ -411,6 +430,7 @@ interface ComponentData {
   settings: DrawcastSettings;
   defaultSettings: DrawcastSettings;
   ws: WsClient | null;
+  me: ApiUserData | null;
   drawUrl: string;
   notificationSoundAudio: any;
   manualApproval: {
@@ -438,7 +458,8 @@ export default defineComponent({
     NavbarElement,
     SoundUpload,
     StringInput,
-  },
+    StringsInput
+},
   data: (): ComponentData => ({
     unchangedJson: "{}",
     changedJson: "{}",
@@ -446,6 +467,7 @@ export default defineComponent({
     settings: default_settings(),
     defaultSettings: default_settings(),
     ws: null,
+    me: null,
     drawUrl: "",
     notificationSoundAudio: null,
     manualApproval: {
@@ -491,6 +513,8 @@ export default defineComponent({
     },
   },
   async created() {
+    this.me = user.getMe()
+
     this.ws = util.wsClient("drawcast");
     this.ws.onMessage("init", async (data: DrawcastData) => {
       this.settings = data.settings;
@@ -498,15 +522,17 @@ export default defineComponent({
       this.drawUrl = data.drawUrl;
       this.controlWidgetUrl = data.controlWidgetUrl;
       this.receiveWidgetUrl = data.receiveWidgetUrl;
-      const res = await api.getDrawcastAllImages();
-      const images = await res.json();
-      this.favoriteSelection.items = images.map((item: DrawcastImage) => item.path);
+
+      this.sendMsg({ event: "get_all_images" });
+    });
+    this.ws.onMessage('all_images', (data: { images: DrawcastImage[] }) => {
+      this.favoriteSelection.items = data.images.map((item: DrawcastImage) => item.path);
       if (this.settings.notificationSound) {
         this.notificationSoundAudio = new Audio(this.settings.notificationSound.urlpath);
         this.notificationSoundAudio.volume =
           this.settings.notificationSound.volume / 100;
       }
-      this.manualApproval.items = images
+      this.manualApproval.items = data.images
         .filter((item: DrawcastImage) => !item.approved)
         .map((item: DrawcastImage) => item.path);
       this.inited = true;
@@ -652,6 +678,7 @@ export default defineComponent({
           requireManualApproval: this.settings.requireManualApproval,
           notificationSound: this.settings.notificationSound,
           favoriteLists: this.settings.favoriteLists,
+          moderationAdmins: this.settings.moderationAdmins,
         },
       });
     },
@@ -660,7 +687,9 @@ export default defineComponent({
         console.warn("sendMsg: this.ws not initialized");
         return;
       }
-      this.ws.send(JSON.stringify(data));
+      this.ws.send(JSON.stringify(Object.assign({}, data, {
+        token: this.me.token,
+      })));
     },
   }
 });

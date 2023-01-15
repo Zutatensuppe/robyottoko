@@ -71,6 +71,7 @@ export const default_settings = (obj: any = null): DrawcastSettings => ({
     list: getProp(obj, ['favorites'], []),
     title: getProp(obj, ['favoriteImagesTitle'], ''),
   }]),
+  moderationAdmins: getProp(obj, ['moderationAdmins'], []),
 })
 
 export interface DrawcastImage {

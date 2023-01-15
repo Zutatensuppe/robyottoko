@@ -4,11 +4,19 @@
   display: inline-block;
   text-align: center;
   user-select: none;
+  box-shadow: $lightShadow;
+  border: none;
+
+  &:hover {
+    background: #dddddd;
+  }
+  &:active {
+    background: #aaaaaa;
+  }
 
   &-primary {
     background: rgba(197,164,208,1);
     color: $buttonTextColor;
-    box-shadow: $lightShadow;
     &:hover {
       background: #D7B6D6;
     }

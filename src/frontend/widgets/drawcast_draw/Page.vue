@@ -254,14 +254,26 @@
           }}</span>
         </div>
         <div class="drawing_panel_drawings">
-          <img
+          <div
             v-for="(tmpImg, idx) in nonfavorites"
             :key="idx"
             class="image clickable"
-            :src="tmpImg"
-            height="190"
-            @click="prepareModify(tmpImg)"
           >
+            <img
+              :src="tmpImg"
+              height="190"
+              @click="prepareModify(tmpImg)"
+            >
+            <DoubleclickButton
+              v-if="isAdmin"
+              class="button clickable remove-button"
+              message="Are you sure?"
+              :timeout="2000"
+              @doubleclick="deleteImage(tmpImg)"
+            >
+              Remove
+            </DoubleclickButton>
+          </div>
           <div class="dotdotdot" />
         </div>
       </div>
@@ -430,7 +442,7 @@
 import { defineComponent, PropType } from "vue";
 import { nonce, logger, pad } from "../../../common/fn";
 import WsClient from "../../WsClient";
-import { DrawcastFavoriteList } from "../../../types";
+import { ApiUserData, DrawcastFavoriteList } from "../../../types";
 import util, { WidgetApiData } from "../util";
 import { DrawcastModuleWsDataData } from "../../../mod/modules/DrawcastModuleCommon";
 import IconPen from './components/IconPen.vue'
@@ -441,6 +453,8 @@ import IconEraser from './components/IconEraser.vue'
 import IconClear from './components/IconClear.vue'
 // @ts-ignore
 import { Photoshop, Slider } from '@ckpack/vue-color'
+import user from "../../user";
+import DoubleclickButton from "../../components/DoubleclickButton.vue";
 
 const log = logger("Page.vue");
 
@@ -553,13 +567,17 @@ export default defineComponent({
     IconUndo,
     IconEraser,
     IconClear,
-  },
+    DoubleclickButton
+},
   props: {
     wdata: { type: Object as PropType<WidgetApiData>, required: true }
   },
   data() {
     return {
       ws: null as WsClient | null,
+      me: null as ApiUserData | null,
+      moderationAdmins: [] as string[],
+
       opts: {} as Record<string, string>,
 
       pickerVisible: false,
@@ -608,6 +626,12 @@ export default defineComponent({
     };
   },
   computed: {
+    isAdmin(): boolean {
+      if (!this.me) {
+        return false
+      }
+      return this.moderationAdmins.includes(this.me.user.name)
+    },
     finalcanvas(): HTMLCanvasElement {
       return this.$refs.finalcanvas as HTMLCanvasElement;
     },
@@ -678,6 +702,8 @@ export default defineComponent({
     import("./main.scss");
   },
   mounted() {
+    this.me = user.getMe()
+
     this.ctx = this.draftcanvas.getContext("2d") as CanvasRenderingContext2D;
     this.finalctx = this.finalcanvas.getContext(
       "2d"
@@ -690,6 +716,7 @@ export default defineComponent({
 
     this.ws.onMessage("init", (data: DrawcastModuleWsDataData) => {
       // submit button may not be empty
+      this.moderationAdmins = data.settings.moderationAdmins
       this.submitButtonText = data.settings.submitButtonText || "Send";
       this.submitConfirm = data.settings.submitConfirm;
       this.canvasWidth = data.settings.canvasWidth;
@@ -816,6 +843,20 @@ export default defineComponent({
     window.removeEventListener("keyup", this.keyup);
   },
   methods: {
+    deleteImage(url: string) {
+      if (!this.ws) {
+        log.error("modRemoveImage: this.ws not set");
+        return;
+      }
+
+      this.ws.send(
+        JSON.stringify({
+          event: "delete_image",
+          path: url,
+          token: this.me.token,
+        })
+      );
+    },
     onOkPicker() {
       // tempColor when coming from color picker is an object
       this.color = (this.tempColor as any).hex

@@ -171,6 +171,7 @@ export interface DrawcastSettings {
   notificationSound: SoundMediaFile | null
   requireManualApproval: boolean
   favoriteLists: DrawcastFavoriteList[]
+  moderationAdmins: string[]
 }
 
 // DRAW              SERVER                              -> RECEIVE/DRAW

@@ -109,6 +109,9 @@ const run = async () => {
   router.beforeEach(async (to, from, next) => {
     // is widget or pub, no extra init needed
     if (to.name === 'widget' || to.name === 'pub') {
+      await conf.init()
+      await user.init()
+
       next()
       return
     }

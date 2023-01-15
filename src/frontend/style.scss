@@ -232,3 +232,10 @@ html.darkmode {
     background: darken($twitch_color_primary, 5);
   }
 }
+
+ul.list {
+  padding-left: 2em;
+  li {
+    list-style: disc;
+  }
+}
