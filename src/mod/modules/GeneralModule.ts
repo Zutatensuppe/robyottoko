@@ -238,6 +238,19 @@ class GeneralModule implements Module {
         }
         return trigger
       })
+
+      // TODO: remove after deploy
+      cmd.effects = cmd.effects.map((effect: CommandEffect) => {
+        if (
+          effect.type === CommandEffectType.CHAT
+          && effect.data.text.length === 1
+          && effect.data.text[0] === 'Version $bot.version $bot.website < - $bot.features - Source code at $bot.github'
+        ) {
+          effect.data.text[0] = '$bot.message'
+          shouldSave = true
+        }
+        return effect
+      })
       return cmd
     })
 
@@ -287,7 +300,7 @@ class GeneralModule implements Module {
       command.effects.push({
         type: CommandEffectType.CHAT,
         data: {
-          text: ['Version $bot.version $bot.website < - $bot.features - Source code at $bot.github']
+          text: ['$bot.message']
         }
       })
       data.commands.push(command)

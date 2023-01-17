@@ -801,10 +801,17 @@ export const doReplacements = async (
       },
     },
     {
-      regex: /\$bot\.(version|date|website|github|features)/g,
+      regex: /\$bot\.(message|version|date|website|github|features)/g,
       replacer: async (_m0: string, m1: string): Promise<string> => {
         if (!bot) {
           return ''
+        }
+        if (m1 === 'message') {
+          return `Robyottoko is a versatile twitch `
+            + `bot, containing features like media commands, timers, translation, `
+            + `widget for user-submitted drawings, captions (speech-to-text), `
+            + `png-tuber and song requests. Get it connected to your twitch `
+            + `channel for free at https://hyottoko.club`
         }
         if (m1 === 'version') {
           return bot.getBuildVersion()
@@ -819,7 +826,7 @@ export const doReplacements = async (
           return 'https://github.com/zutatensuppe/robyottoko'
         }
         if (m1 === 'features') {
-          return 'this twitch bot has commands, media commands, timers, translation commands, user-submitted drawings widget, png-tuber, song requests, captions (speech-to-text)!'
+          return 'this versatile twitch bot has features like media commands, timers, translation, widget for user-submitted drawings, captions (speech-to-text), png-tuber and song requests'
         }
         return '';
       },
