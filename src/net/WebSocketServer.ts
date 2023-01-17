@@ -3,6 +3,7 @@ import { IncomingMessage } from 'http'
 import { logger, withoutLeading } from '../common/fn'
 import { Bot, MODULE_NAME } from '../types'
 import { moduleByWidgetType } from '../services/Widgets'
+import { uniqId } from '../fn'
 
 const log = logger("WebSocketServer.ts")
 
@@ -11,6 +12,7 @@ type WebSocketNotifyData = any
 export interface Socket extends WebSocket.WebSocket {
   user_id?: number | null
   module?: string | null
+  id?: string | null
 }
 
 const determineUserIdAndModuleName = async (
@@ -57,6 +59,7 @@ class WebSocketServer {
 
       socket.user_id = userId
       socket.module = moduleName
+      socket.id = uniqId()
 
       log.info({
         moduleName,

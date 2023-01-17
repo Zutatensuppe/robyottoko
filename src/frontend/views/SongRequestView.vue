@@ -434,7 +434,7 @@ const sendCtrl = (ctrl: string, args: any[]) => {
   sendMsg({ event: "ctrl", ctrl, args });
 }
 const ended = () => {
-  sendMsg({ event: "ended" });
+  sendMsg({ event: "ended", id: item.value.id });
 }
 const sendMsg = (data: Record<string, any>) => {
   if (ws) {

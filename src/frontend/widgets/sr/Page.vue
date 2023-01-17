@@ -145,7 +145,9 @@ const isFilteredOutTags = (item: PlaylistItem): boolean => {
   return filter.value.tag !== "" && !item.tags.includes(filter.value.tag)
 }
 const ended = (): void => {
-  sendMsg({ event: "ended" })
+  if (item.value) {
+    sendMsg({ event: "ended", id: item.value.id })
+  }
 }
 
 const sendMsg = (data: { event: string, id?: number }): void => {

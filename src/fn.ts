@@ -1252,7 +1252,12 @@ export const getUserTypeInfo = async (
   return info
 }
 
+export const uniqId = (): string => {
+  return Date.now().toString(36) + Math.random().toString(36).substring(2)
+}
+
 export default {
+  uniqId,
   getUserTypeInfo,
   applyEffects,
   extractEmotes,
