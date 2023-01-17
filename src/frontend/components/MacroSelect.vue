@@ -49,6 +49,7 @@ const macros: ComponentDataMacro[] = [
     title: "All arguments up to and including the fifth, joined with spaces",
   },
   { value: "$var(VARNAME)", title: "Value of variable VARNAME" },
+  { value: "$bot.message", title: "Message with info about the bot" },
   { value: "$bot.version", title: "Bot version" },
   { value: "$bot.date", title: "Bot build date" },
   { value: "$bot.website", title: "Bot website" },

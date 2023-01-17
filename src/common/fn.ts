@@ -264,7 +264,7 @@ const doDummyReplacements = (text: string, str: string) => {
     /\$daysuntil\("([^"]+)"\)/g,
     /\$daysuntil\("([^"]+)",\s*?"([^"]*)"\s*,\s*?"([^"]*)"\s*,\s*?"([^"]*)"\s*\)/g,
     /\$var\(([^)]+)\)/g,
-    /\$bot\.(version|date|website|github|features)/g,
+    /\$bot\.(message|version|date|website|github|features)/g,
     /\$user(?:\(([^)]+)\)|())\.(name|profile_image_url|recent_clip_url|last_stream_category)/g,
     /\$customapi\(([^$)]*)\)\['([A-Za-z0-9_ -]+)'\]/g,
     /\$customapi\(([^$)]*)\)/g,
