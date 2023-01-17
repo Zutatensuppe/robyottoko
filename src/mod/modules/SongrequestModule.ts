@@ -1,5 +1,5 @@
 import fn, { determineNewVolume, findIdxFuzzy, getChannelPointsCustomRewards } from '../../fn'
-import { shuffle, arrayMove, logger, humanDuration, parseHumanDuration, nonce } from '../../common/fn'
+import { shuffle, arrayMove, logger, humanDuration, parseHumanDuration, nonce, SECOND } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
 import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
 import { User } from '../../repo/Users'
@@ -131,6 +131,7 @@ export const findInsertIndex = (playlist: PlaylistItem[]): number => {
   return (found === -1 ? 0 : found) + 1
 }
 
+interface LastEventInfo { id: number, timestamp: number, wsId: string }
 
 class SongrequestModule implements Module {
   public name = MODULE_NAME.SR
@@ -141,6 +142,11 @@ class SongrequestModule implements Module {
   private commands: FunctionCommand[]
 
   private channelPointsCustomRewards: Record<string, string[]> = {}
+
+  private lastEvents: { ended: LastEventInfo | null, play: LastEventInfo | null } = {
+    ended: null,
+    play: null,
+  }
 
   constructor(
     public readonly bot: Bot,
@@ -398,13 +404,34 @@ class SongrequestModule implements Module {
     this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, await this.wsdata(eventName))
   }
 
+  checkLastEvents(evt: 'play' | 'ended', evtInfo: LastEventInfo) {
+    const lastEvtInfo = this.lastEvents[evt]
+    // when the event comes in for 2 times in a row in a 5 second timeframe
+    // either with the same id or from a different websocket then ignore that
+    // event
+    if (
+      lastEvtInfo
+      && (evtInfo.timestamp - lastEvtInfo.timestamp) < 5 * SECOND
+      && (lastEvtInfo.id === evtInfo.id || lastEvtInfo.wsId !== evtInfo.wsId)
+    ) {
+      return false
+    }
+    this.lastEvents[evt] = evtInfo
+    return true
+  }
+
   getWsEvents() {
     return {
       'conn': async (ws: Socket) => {
         this.channelPointsCustomRewards = await getChannelPointsCustomRewards(this.bot, this.user)
         await this.updateClient('init', ws)
       },
-      'play': async (_ws: Socket, { id }: { id: number }) => {
+      'play': async (ws: Socket, { id }: { id: number }) => {
+        const eventInfo = { id, timestamp: new Date().getTime(), wsId: ws.id || '' }
+        if (!this.checkLastEvents('play', eventInfo)) {
+          return
+        }
+
         const idx = this.data.playlist.findIndex(item => item.id === id)
         if (idx < 0) {
           return
@@ -419,7 +446,12 @@ class SongrequestModule implements Module {
         await this.save()
         await this.updateClients('playIdx')
       },
-      'ended': async (_ws: Socket) => {
+      'ended': async (ws: Socket, { id }: { id: number }) => {
+        const eventInfo = { id, timestamp: new Date().getTime(), wsId: ws.id || '' }
+        if (!this.checkLastEvents('ended', eventInfo)) {
+          return
+        }
+
         const item = this.data.playlist.shift()
         if (item) {
           this.data.playlist.push(item)

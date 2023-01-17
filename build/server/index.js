@@ -1,12 +1,12 @@
 import fs, { readFileSync } from 'fs';
 import WebSocket from 'ws';
+import childProcess from 'child_process';
+import fetch from 'node-fetch';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import crypto from 'crypto';
-import childProcess from 'child_process';
-import fetch from 'node-fetch';
 import multer from 'multer';
 import cors from 'cors';
 import * as pg from 'pg';
@@ -711,151 +711,6 @@ class Widgets {
     }
 }
 
-const log$q = logger("WebSocketServer.ts");
-const determineUserIdAndModuleName = async (basePath, requestUrl, socket, bot) => {
-    const relativePath = requestUrl.substring(basePath.length) || '';
-    const relpath = withoutLeading(relativePath, '/');
-    if (requestUrl.indexOf(basePath) !== 0) {
-        return { userId: null, moduleName: null };
-    }
-    const widgetPrefix = 'widget_';
-    const widgetModule = moduleByWidgetType(relpath.startsWith(widgetPrefix) ? relpath.substring(widgetPrefix.length) : '');
-    const tokenType = widgetModule ? relpath : null;
-    const tmpModuleName = widgetModule || relpath;
-    const moduleName = Object.values(MODULE_NAME).includes(tmpModuleName) ? tmpModuleName : null;
-    const token = socket.protocol;
-    const tokenInfo = await bot.getAuth().wsTokenFromProtocol(token, tokenType);
-    const userId = tokenInfo ? tokenInfo.user_id : null;
-    return { userId, moduleName };
-};
-class WebSocketServer {
-    constructor() {
-        this._websocketserver = null;
-    }
-    listen(bot) {
-        this._websocketserver = new WebSocket.Server(bot.getConfig().ws);
-        this._websocketserver.on('connection', async (socket, request) => {
-            // note: here the socket is already set in _websocketserver.clients !
-            // but it has no user_id or module set yet!
-            const basePath = new URL(bot.getConfig().ws.connectstring).pathname;
-            const requestUrl = request.url || '';
-            // userId is the id of the OWNER of the widget
-            // it is NOT the id of the user actually visiting that page right now
-            const { userId, moduleName } = await determineUserIdAndModuleName(basePath, requestUrl, socket, bot);
-            socket.user_id = userId;
-            socket.module = moduleName;
-            log$q.info({
-                moduleName,
-                socket: { protocol: socket.protocol },
-            }, 'added socket');
-            log$q.info({
-                count: this.sockets().filter(s => s.module === socket.module).length,
-            }, 'socket_count');
-            socket.on('close', () => {
-                log$q.info({
-                    moduleName,
-                    socket: { protocol: socket.protocol },
-                }, 'removed socket');
-                log$q.info({
-                    count: this.sockets().filter(s => s.module === socket.module).length,
-                }, 'socket count');
-            });
-            if (!socket.user_id) {
-                log$q.info({
-                    requestUrl,
-                    socket: { protocol: socket.protocol },
-                }, 'not found token');
-                socket.close();
-                return;
-            }
-            if (!socket.module) {
-                log$q.info({ requestUrl }, 'bad request url');
-                socket.close();
-                return;
-            }
-            // user connected
-            bot.getEventHub().emit('wss_user_connected', socket);
-            const m = bot.getModuleManager().get(socket.user_id, socket.module);
-            // log.info('found a module?', moduleName, !!m)
-            if (m) {
-                const evts = m.getWsEvents();
-                if (evts && evts['conn']) {
-                    // log.info('connected!', moduleName, !!m)
-                    evts['conn'](socket);
-                }
-            }
-            socket.on('message', (data) => {
-                try {
-                    const unknownData = data;
-                    const d = JSON.parse(unknownData);
-                    if (d.type && d.type === 'ping') {
-                        socket.send(JSON.stringify({ type: 'pong' }));
-                        return;
-                    }
-                    if (m && d.event) {
-                        const evts = m.getWsEvents();
-                        if (evts && evts[d.event]) {
-                            evts[d.event](socket, d);
-                        }
-                    }
-                }
-                catch (e) {
-                    log$q.error({ e }, 'socket on message');
-                }
-            });
-        });
-    }
-    isUserConnected(user_id) {
-        return !!this.sockets().find(s => s.user_id === user_id);
-    }
-    _notify(socket, data) {
-        log$q.info({ user_id: socket.user_id, module: socket.module, event: data.event }, 'notifying');
-        socket.send(JSON.stringify(data));
-    }
-    notifyOne(user_ids, moduleName, data, socket) {
-        const isConnectedSocket = this.sockets().includes(socket);
-        if (isConnectedSocket
-            && socket.user_id
-            && user_ids.includes(socket.user_id)
-            && socket.module === moduleName) {
-            this._notify(socket, data);
-        }
-        else {
-            log$q.error({
-                socket: {
-                    user_id: socket.user_id,
-                    module: socket.module,
-                },
-                user_ids,
-                moduleName,
-                isConnectedSocket,
-            }, 'tried to notify invalid socket');
-        }
-    }
-    notifyAll(user_ids, moduleName, data) {
-        this.sockets().forEach((s) => {
-            if (s.user_id && user_ids.includes(s.user_id) && s.module === moduleName) {
-                this._notify(s, data);
-            }
-        });
-    }
-    sockets() {
-        if (!this._websocketserver) {
-            return [];
-        }
-        const sockets = [];
-        this._websocketserver.clients.forEach((s) => {
-            sockets.push(s);
-        });
-        return sockets;
-    }
-    close() {
-        if (this._websocketserver) {
-            this._websocketserver.close();
-        }
-    }
-}
-
 const i = [
   "🏳️‍🌈",
   "🏳️‍⚧️",
@@ -1354,7 +1209,7 @@ var Madochan = {
     defaultWeirdness: 1,
 };
 
-const log$p = logger('fn.ts');
+const log$q = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
         return mime.replace('image/', '');
@@ -1389,9 +1244,9 @@ const sayFn = (client, target) => (msg) => {
         // TODO: fix this somewhere else?
         // client can only say things in lowercase channels
         t = t.toLowerCase();
-        log$p.info(`saying in ${t}: ${msg}`);
+        log$q.info(`saying in ${t}: ${msg}`);
         client.say(t, msg).catch((e) => {
-            log$p.info(e);
+            log$q.info(e);
         });
     });
 };
@@ -1452,14 +1307,14 @@ const downloadVideo = async (originalUrl) => {
     const filename = `${hash(originalUrl)}-clip.mp4`;
     const outfile = `./data/uploads/${filename}`;
     if (!fs.existsSync(outfile)) {
-        log$p.debug({ outfile }, 'downloading the video');
+        log$q.debug({ outfile }, 'downloading the video');
         const child = childProcess.execFile(config.youtubeDlBinary, [originalUrl, '-o', outfile]);
         await new Promise((resolve) => {
             child.on('close', resolve);
         });
     }
     else {
-        log$p.debug({ outfile }, 'video exists');
+        log$q.debug({ outfile }, 'video exists');
     }
     return `/uploads/${filename}`;
 };
@@ -1546,20 +1401,20 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
             const data = effect.data;
             data.image_url = await doReplaces(data.image_url);
             if (data.video.url) {
-                log$p.debug({ url: data.video.url }, 'video url is defined');
+                log$q.debug({ url: data.video.url }, 'video url is defined');
                 data.video.url = await doReplaces(data.video.url);
                 if (!data.video.url) {
-                    log$p.debug('no video url found');
+                    log$q.debug('no video url found');
                 }
                 else if (isTwitchClipUrl(data.video.url)) {
                     // video url looks like a twitch clip url, dl it first
-                    log$p.debug({ url: data.video.url }, 'twitch clip found');
+                    log$q.debug({ url: data.video.url }, 'twitch clip found');
                     data.video.url = await downloadVideo(data.video.url);
                 }
                 else {
                     // otherwise assume it is already a playable video url
                     // TODO: youtube videos maybe should also be downloaded
-                    log$p.debug('video is assumed to be directly playable via html5 video element');
+                    log$q.debug('video is assumed to be directly playable via html5 video element');
                 }
             }
             contextModule.bot.getWebSocketServer().notifyAll([contextModule.user.id], 'general', {
@@ -1586,7 +1441,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
                         }
                     }
                     catch (e) {
-                        log$p.error({ e });
+                        log$q.error({ e });
                         say(`Error occured, unable to generate a word :("`);
                     }
                 }
@@ -1596,7 +1451,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
             const setChannelTitle = async () => {
                 const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient();
                 if (!rawCmd || !context || !helixClient) {
-                    log$p.info({
+                    log$q.info({
                         rawCmd: rawCmd,
                         context: context,
                         helixClient,
@@ -1643,7 +1498,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
             const setChannelGameId = async () => {
                 const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient();
                 if (!rawCmd || !context || !helixClient) {
-                    log$p.info({
+                    log$q.info({
                         rawCmd: rawCmd,
                         context: context,
                         helixClient,
@@ -1687,7 +1542,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
             const addStreamTags = async () => {
                 const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient();
                 if (!rawCmd || !context || !helixClient) {
-                    log$p.info({
+                    log$q.info({
                         rawCmd: rawCmd,
                         context: context,
                         helixClient,
@@ -1733,7 +1588,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
                 }
                 const resp = await helixClient.replaceStreamTags(accessToken, newSettableTagIds, contextModule.bot, contextModule.user);
                 if (!resp || resp.status < 200 || resp.status >= 300) {
-                    log$p.error(resp);
+                    log$q.error(resp);
                     say(`❌ Unable to add tag: ${tagEntry.name}`);
                     return;
                 }
@@ -1745,7 +1600,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
             const removeStreamTags = async () => {
                 const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient();
                 if (!rawCmd || !context || !helixClient) {
-                    log$p.info({
+                    log$q.info({
                         rawCmd: rawCmd,
                         context: context,
                         helixClient,
@@ -1798,7 +1653,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
             const chatters = async () => {
                 const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient();
                 if (!context || !helixClient) {
-                    log$p.info({
+                    log$q.info({
                         context: context,
                         helixClient,
                     }, 'unable to execute chatters command, client, context, or helixClient missing');
@@ -1879,7 +1734,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
                             duration = (await parseDuration(`${a.value}`)) || 0;
                         }
                         catch (e) {
-                            log$p.error({ message: e.message, value: a.value });
+                            log$q.error({ message: e.message, value: a.value });
                             return;
                         }
                         actions.push(async () => await sleep(duration));
@@ -2047,7 +1902,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return String(`twitch.tv/${context.username}`);
                 }
                 if (!bot || !user) {
-                    log$p.info('no bot, no user, no watch');
+                    log$q.info('no bot, no user, no watch');
                     return '';
                 }
                 const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
@@ -2056,7 +1911,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                 }
                 const twitchUser = await getTwitchUser(username, helixClient, bot);
                 if (!twitchUser) {
-                    log$p.info('no twitch user found', username);
+                    log$q.info('no twitch user found', username);
                     return '';
                 }
                 if (m3 === 'name') {
@@ -2096,7 +1951,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return String(JSON.parse(txt)[m2]);
                 }
                 catch (e) {
-                    log$p.error(e);
+                    log$q.error(e);
                     return '';
                 }
             },
@@ -2110,7 +1965,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return await resp.text();
                 }
                 catch (e) {
-                    log$p.error(e);
+                    log$q.error(e);
                     return '';
                 }
             },
@@ -2353,7 +2208,7 @@ const extractEmotes = (context) => {
 const getChannelPointsCustomRewards = async (bot, user) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!helixClient) {
-        log$p.info('getChannelPointsCustomRewards: no helix client');
+        log$q.info('getChannelPointsCustomRewards: no helix client');
         return {};
     }
     return await helixClient.getAllChannelPointsCustomRewards(bot, user);
@@ -2373,7 +2228,11 @@ const getUserTypeInfo = async (bot, user, userId) => {
     info.vip = await helixClient.isUserVip(accessToken, user.twitch_id, userId);
     return info;
 };
+const uniqId = () => {
+    return Date.now().toString(36) + Math.random().toString(36).substring(2);
+};
 var fn = {
+    uniqId,
     getUserTypeInfo,
     applyEffects,
     extractEmotes,
@@ -2396,6 +2255,152 @@ var fn = {
     findIdxBySearch,
     getChannelPointsCustomRewards,
 };
+
+const log$p = logger("WebSocketServer.ts");
+const determineUserIdAndModuleName = async (basePath, requestUrl, socket, bot) => {
+    const relativePath = requestUrl.substring(basePath.length) || '';
+    const relpath = withoutLeading(relativePath, '/');
+    if (requestUrl.indexOf(basePath) !== 0) {
+        return { userId: null, moduleName: null };
+    }
+    const widgetPrefix = 'widget_';
+    const widgetModule = moduleByWidgetType(relpath.startsWith(widgetPrefix) ? relpath.substring(widgetPrefix.length) : '');
+    const tokenType = widgetModule ? relpath : null;
+    const tmpModuleName = widgetModule || relpath;
+    const moduleName = Object.values(MODULE_NAME).includes(tmpModuleName) ? tmpModuleName : null;
+    const token = socket.protocol;
+    const tokenInfo = await bot.getAuth().wsTokenFromProtocol(token, tokenType);
+    const userId = tokenInfo ? tokenInfo.user_id : null;
+    return { userId, moduleName };
+};
+class WebSocketServer {
+    constructor() {
+        this._websocketserver = null;
+    }
+    listen(bot) {
+        this._websocketserver = new WebSocket.Server(bot.getConfig().ws);
+        this._websocketserver.on('connection', async (socket, request) => {
+            // note: here the socket is already set in _websocketserver.clients !
+            // but it has no user_id or module set yet!
+            const basePath = new URL(bot.getConfig().ws.connectstring).pathname;
+            const requestUrl = request.url || '';
+            // userId is the id of the OWNER of the widget
+            // it is NOT the id of the user actually visiting that page right now
+            const { userId, moduleName } = await determineUserIdAndModuleName(basePath, requestUrl, socket, bot);
+            socket.user_id = userId;
+            socket.module = moduleName;
+            socket.id = uniqId();
+            log$p.info({
+                moduleName,
+                socket: { protocol: socket.protocol },
+            }, 'added socket');
+            log$p.info({
+                count: this.sockets().filter(s => s.module === socket.module).length,
+            }, 'socket_count');
+            socket.on('close', () => {
+                log$p.info({
+                    moduleName,
+                    socket: { protocol: socket.protocol },
+                }, 'removed socket');
+                log$p.info({
+                    count: this.sockets().filter(s => s.module === socket.module).length,
+                }, 'socket count');
+            });
+            if (!socket.user_id) {
+                log$p.info({
+                    requestUrl,
+                    socket: { protocol: socket.protocol },
+                }, 'not found token');
+                socket.close();
+                return;
+            }
+            if (!socket.module) {
+                log$p.info({ requestUrl }, 'bad request url');
+                socket.close();
+                return;
+            }
+            // user connected
+            bot.getEventHub().emit('wss_user_connected', socket);
+            const m = bot.getModuleManager().get(socket.user_id, socket.module);
+            // log.info('found a module?', moduleName, !!m)
+            if (m) {
+                const evts = m.getWsEvents();
+                if (evts && evts['conn']) {
+                    // log.info('connected!', moduleName, !!m)
+                    evts['conn'](socket);
+                }
+            }
+            socket.on('message', (data) => {
+                try {
+                    const unknownData = data;
+                    const d = JSON.parse(unknownData);
+                    if (d.type && d.type === 'ping') {
+                        socket.send(JSON.stringify({ type: 'pong' }));
+                        return;
+                    }
+                    if (m && d.event) {
+                        const evts = m.getWsEvents();
+                        if (evts && evts[d.event]) {
+                            evts[d.event](socket, d);
+                        }
+                    }
+                }
+                catch (e) {
+                    log$p.error({ e }, 'socket on message');
+                }
+            });
+        });
+    }
+    isUserConnected(user_id) {
+        return !!this.sockets().find(s => s.user_id === user_id);
+    }
+    _notify(socket, data) {
+        log$p.info({ user_id: socket.user_id, module: socket.module, event: data.event }, 'notifying');
+        socket.send(JSON.stringify(data));
+    }
+    notifyOne(user_ids, moduleName, data, socket) {
+        const isConnectedSocket = this.sockets().includes(socket);
+        if (isConnectedSocket
+            && socket.user_id
+            && user_ids.includes(socket.user_id)
+            && socket.module === moduleName) {
+            this._notify(socket, data);
+        }
+        else {
+            log$p.error({
+                socket: {
+                    user_id: socket.user_id,
+                    module: socket.module,
+                },
+                user_ids,
+                moduleName,
+                isConnectedSocket,
+            }, 'tried to notify invalid socket');
+        }
+    }
+    notifyAll(user_ids, moduleName, data) {
+        this.sockets().forEach((s) => {
+            if (s.user_id && user_ids.includes(s.user_id) && s.module === moduleName) {
+                this._notify(s, data);
+            }
+        });
+    }
+    sockets() {
+        if (!this._websocketserver) {
+            return [];
+        }
+        const sockets = [];
+        this._websocketserver.clients.forEach((s) => {
+            sockets.push(s);
+        });
+        return sockets;
+    }
+    close() {
+        if (this._websocketserver) {
+            this._websocketserver.close();
+        }
+    }
+}
 
 const log$o = logger('TwitchHelixClient.ts');
 const API_BASE = 'https://api.twitch.tv/helix';
@@ -5895,6 +5900,10 @@ class SongrequestModule {
         this.user = user;
         this.name = MODULE_NAME.SR;
         this.channelPointsCustomRewards = {};
+        this.lastEvents = {
+            ended: null,
+            play: null,
+        };
         // @ts-ignore
         return (async () => {
             const initData = await this.reinit();
@@ -6133,13 +6142,30 @@ class SongrequestModule {
     async updateClients(eventName) {
         this.bot.getWebSocketServer().notifyAll([this.user.id], this.name, await this.wsdata(eventName));
     }
+    checkLastEvents(evt, evtInfo) {
+        const lastEvtInfo = this.lastEvents[evt];
+        // when the event comes in for 2 times in a row in a 5 second timeframe
+        // either with the same id or from a different websocket then ignore that
+        // event
+        if (lastEvtInfo
+            && (evtInfo.timestamp - lastEvtInfo.timestamp) < 5 * SECOND
+            && (lastEvtInfo.id === evtInfo.id || lastEvtInfo.wsId !== evtInfo.wsId)) {
+            return false;
+        }
+        this.lastEvents[evt] = evtInfo;
+        return true;
+    }
     getWsEvents() {
         return {
             'conn': async (ws) => {
                 this.channelPointsCustomRewards = await getChannelPointsCustomRewards(this.bot, this.user);
                 await this.updateClient('init', ws);
             },
-            'play': async (_ws, { id }) => {
+            'play': async (ws, { id }) => {
+                const eventInfo = { id, timestamp: new Date().getTime(), wsId: ws.id || '' };
+                if (!this.checkLastEvents('play', eventInfo)) {
+                    return;
+                }
                 const idx = this.data.playlist.findIndex(item => item.id === id);
                 if (idx < 0) {
                     return;
@@ -6150,7 +6176,11 @@ class SongrequestModule {
                 await this.save();
                 await this.updateClients('playIdx');
             },
-            'ended': async (_ws) => {
+            'ended': async (ws, { id }) => {
+                const eventInfo = { id, timestamp: new Date().getTime(), wsId: ws.id || '' };
+                if (!this.checkLastEvents('ended', eventInfo)) {
+                    return;
+                }
                 const item = this.data.playlist.shift();
                 if (item) {
                     this.data.playlist.push(item);
@@ -7999,9 +8029,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-15T21:55:39.479Z",
+    buildDate: "2023-01-17T16:51:26.160Z",
     // @ts-ignore
-    buildVersion: "1.50.2",
+    buildVersion: "1.50.3",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
