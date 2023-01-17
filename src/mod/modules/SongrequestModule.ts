@@ -1,7 +1,6 @@
 import fn, { determineNewVolume, findIdxFuzzy, getChannelPointsCustomRewards } from '../../fn'
 import { shuffle, arrayMove, logger, humanDuration, parseHumanDuration, nonce, SECOND } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
-import Youtube, { YoutubeVideosResponseDataEntry } from '../../services/Youtube'
 import { User } from '../../repo/Users'
 import {
   ChatMessageContext, PlaylistItem,
@@ -23,6 +22,11 @@ import {
 import { NextFunction, Response } from 'express'
 import { isBroadcaster, isMod, isSubscriber } from '../../common/permissions'
 import { newJsonDate } from '../../common/commands'
+import { TooLongError } from '../../services/youtube/TooLongError'
+import { NotFoundError } from '../../services/youtube/NotFoundError'
+import { Youtube, YoutubeVideoEntry } from '../../services/Youtube'
+import { QuotaReachedError } from '../../services/youtube/QuotaReachedError'
+import { NoApiKeysError } from '../../services/youtube/NoApiKeysError'
 
 const log = logger('SongrequestModule.ts')
 
@@ -38,6 +42,9 @@ const NOT_ADDED_REASON = {
   TOO_LONG: 1,
   NOT_FOUND_IN_PLAYLIST: 2,
   NOT_FOUND: 3,
+  QUOTA_REACHED: 4,
+  NO_API_KEYS: 5,
+  UNKNOWN: 6,
 }
 
 interface AddResponseData {
@@ -217,19 +224,6 @@ class SongrequestModule implements Module {
     data.playlist = default_playlist(data.playlist)
     data.settings = default_settings(data.settings)
     data.commands = default_commands(data.commands)
-
-    // add duration to the playlist items
-    for (const item of data.playlist) {
-      if (!item.durationMs) {
-        const d = await this.loadYoutubeData(item.yt)
-        // sometimes songs in the playlist may not be available on yt anymore
-        // then we just dont add that to the duration calculation
-        if (d) {
-          item.durationMs = fn.parseISO8601Duration(d.contentDetails.duration)
-          shouldSave = true
-        }
-      }
-    }
 
     // add ids to commands that dont have one yet
     for (const cmd of data.commands) {
@@ -505,77 +499,34 @@ class SongrequestModule implements Module {
 
   async add(str: string, userName: string, limits: SongrequestModuleLimits): Promise<AddResponseData> {
     const countQueuedSongsByUser = () => this.data.playlist.filter(item => item.user === userName && item.plays === 0).length
-    const isTooLong = (ytData: YoutubeVideosResponseDataEntry) => {
-      if (limits.maxLenMs > 0) {
-        const songLenMs = fn.parseISO8601Duration(ytData.contentDetails.duration)
-        if (limits.maxLenMs < songLenMs) {
-          return true
-        }
-      }
-      return false
-    }
-
     if (limits.maxQueued > 0 && countQueuedSongsByUser() >= limits.maxQueued) {
       return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_MANY_QUEUED }
     }
 
-    const youtubeUrl = str.trim()
-
-    let youtubeId = null
-    let youtubeData = null
-
-    const tmpYoutubeId = Youtube.extractYoutubeId(youtubeUrl)
-    if (tmpYoutubeId) {
-      const tmpYoutubeData = await this.loadYoutubeData(tmpYoutubeId)
-      if (tmpYoutubeData) {
-        if (isTooLong(tmpYoutubeData)) {
-          return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_LONG }
-        }
-        youtubeId = tmpYoutubeId
-        youtubeData = tmpYoutubeData
+    let youtubeData: YoutubeVideoEntry
+    try {
+      youtubeData = await this.bot.getYoutube().find(str, limits.maxLenMs)
+    } catch (e) {
+      if (e instanceof TooLongError) {
+        return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_LONG }
       }
+      if (e instanceof NotFoundError) {
+        return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.NOT_FOUND }
+      }
+      if (e instanceof QuotaReachedError) {
+        return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.QUOTA_REACHED }
+      }
+      if (e instanceof NoApiKeysError) {
+        return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.NO_API_KEYS }
+      }
+      return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.UNKNOWN }
     }
 
-    if (!youtubeData) {
-      const reasons = []
-      for (const duration of Youtube.msToVideoDurations(limits.maxLenMs)) {
-        const youtubeIds = await Youtube.getYoutubeIdsBySearch(youtubeUrl, duration)
-        if (!youtubeIds) {
-          continue
-        }
-        for (const tmpYoutubeId of youtubeIds) {
-          const tmpYoutubeData = await this.loadYoutubeData(tmpYoutubeId)
-          if (!tmpYoutubeData) {
-            continue
-          }
-          if (isTooLong(tmpYoutubeData)) {
-            reasons.push(NOT_ADDED_REASON.TOO_LONG)
-            continue
-          }
-          youtubeId = tmpYoutubeId
-          youtubeData = tmpYoutubeData
-          break
-        }
-        if (youtubeId && youtubeData) {
-          break
-        }
-      }
-      if (!youtubeId || !youtubeData) {
-        if (reasons.includes(NOT_ADDED_REASON.TOO_LONG)) {
-          return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_LONG }
-        }
-      }
-    }
-
-    if (!youtubeId || !youtubeData) {
-      return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.NOT_FOUND }
-    }
-
-    const tmpItem = this.createItem(youtubeId, youtubeData, userName)
+    const tmpItem = this.createItem(youtubeData, userName)
     const { addType, idx, reason } = await this.addToPlaylist(tmpItem)
     if (addType === ADD_TYPE.ADDED) {
       this.data.stacks[userName] = this.data.stacks[userName] || []
-      this.data.stacks[userName].push(youtubeId)
+      this.data.stacks[userName].push(youtubeData.id)
     }
     return { addType, idx, reason }
   }
@@ -985,14 +936,20 @@ class SongrequestModule implements Module {
         return `Song too long (max. ${humanDuration(limits.maxLenMs)})`
       } else if (reason === NOT_ADDED_REASON.TOO_MANY_QUEUED) {
         return `Too many songs queued (max. ${limits.maxQueued})`
+      } else if (reason === NOT_ADDED_REASON.QUOTA_REACHED) {
+        return 'Could not process that song request (Quota reached)'
+      } else if (reason === NOT_ADDED_REASON.NO_API_KEYS) {
+        return 'Could not process that song request (No api keys set up)'
+      } else if (reason === NOT_ADDED_REASON.UNKNOWN) {
+        return 'Could not process that song request'
       } else {
-        return `Could not process that song request`
+        return 'Could not process that song request'
       }
     }
 
     const item = idx >= 0 ? this.data.playlist[idx] : null
     if (!item) {
-      return `Could not process that song request`
+      return 'Could not process that song request'
     }
     let info
     if (idx < 0) {
@@ -1010,13 +967,14 @@ class SongrequestModule implements Module {
 
     if (addType === ADD_TYPE.ADDED) {
       return `🎵 Added "${item.title}" (${Youtube.getUrlById(item.yt)}) to the playlist! ${info}`
-    } else if (addType === ADD_TYPE.REQUEUED) {
-      return `🎵 "${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist and only moved up. ${info}`
-    } else if (addType === ADD_TYPE.EXISTED) {
-      return `🎵 "${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist. ${info}`
-    } else {
-      return `Could not process that song request`
     }
+    if (addType === ADD_TYPE.REQUEUED) {
+      return `🎵 "${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist and only moved up. ${info}`
+    }
+    if (addType === ADD_TYPE.EXISTED) {
+      return `🎵 "${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist. ${info}`
+    }
+    return `Could not process that song request`
   }
 
   cmdSrCurrent(_originalCommand: Command) {
@@ -1330,29 +1288,16 @@ class SongrequestModule implements Module {
     }
   }
 
-  async loadYoutubeData(youtubeId: string): Promise<YoutubeVideosResponseDataEntry | null> {
-    const key = `youtubeData_${youtubeId}_20210717_2`
-    let d = await this.bot.getCache().get(key)
-    if (d === undefined) {
-      d = await Youtube.fetchDataByYoutubeId(youtubeId)
-      if (d) {
-        await this.bot.getCache().set(key, d, Infinity)
-      }
-    }
-    return d
-  }
-
   createItem(
-    youtubeId: string,
-    youtubeData: YoutubeVideosResponseDataEntry,
+    youtubeData: YoutubeVideoEntry,
     userName: string,
   ): PlaylistItem {
     return {
       id: Math.random(),
-      yt: youtubeId,
-      title: youtubeData.snippet.title,
+      yt: youtubeData.id,
+      title: youtubeData.title,
       timestamp: new Date().getTime(),
-      durationMs: fn.parseISO8601Duration(youtubeData.contentDetails.duration),
+      durationMs: youtubeData.durationMs,
       user: userName,
       plays: 0,
       goods: 0,

@@ -16,6 +16,7 @@ import Widgets from './services/Widgets'
 import WebServer from './net/WebServer'
 import { TwitchTmiClientManager } from './services/TwitchTmiClientManager'
 import { Repos } from './repo/Repos'
+import { Youtube } from './services/Youtube'
 
 type int = number
 
@@ -34,6 +35,10 @@ export interface ApiUserData {
 export interface DbConfig {
   connectStr: string
   patchesDir: string
+}
+
+export interface YoutubeConfig {
+  googleApiKeys: string[]
 }
 
 export interface WsConfig {
@@ -84,19 +89,15 @@ export interface Config {
   http: HttpConfig
   ws: WsConfig
   db: DbConfig
+  youtube: YoutubeConfig
   modules: {
-    sr: {
-      google: {
-        api_keys: string[]
-      }
-    },
     speechToText: {
       google: {
         scriptId: string
       }
     }
-  },
-  youtubeDlBinary: string,
+  }
+  youtubeDlBinary: string
 }
 
 // @see https://github.com/SortableJS/vue.draggable.next
@@ -539,6 +540,7 @@ export interface Bot {
   getAuth: () => Auth
   getWebServer: () => WebServer
   getWebSocketServer: () => WebSocketServer
+  getYoutube: () => Youtube
   getWidgets: () => Widgets
   getEventHub: () => Emitter<Record<EventType, unknown>>
   getRepos: () => Repos

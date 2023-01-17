@@ -44,14 +44,11 @@
     "connectStr": "postgresql://robyottoko:robyottoko@localhost:5434/robyottoko",
     "patchesDir": "PATH_TO_DATABASE_PATCHES_DIR"
   },
+  "youtube": {
+    // google api keys (multiple possible if one runs into limit)
+    googleApiKeys: []
+  },
   "modules": {
-    // Song request module
-    "sr": {
-      "google": {
-        // google api keys (multiple possible if one runs into limit)
-        "api_keys": []
-      }
-    },
     // Speech to text module
     "speechToText": {
       "google": {
