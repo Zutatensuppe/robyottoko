@@ -1209,7 +1209,7 @@ var Madochan = {
     defaultWeirdness: 1,
 };
 
-const log$q = logger('fn.ts');
+const log$r = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
         return mime.replace('image/', '');
@@ -1244,9 +1244,9 @@ const sayFn = (client, target) => (msg) => {
         // TODO: fix this somewhere else?
         // client can only say things in lowercase channels
         t = t.toLowerCase();
-        log$q.info(`saying in ${t}: ${msg}`);
+        log$r.info(`saying in ${t}: ${msg}`);
         client.say(t, msg).catch((e) => {
-            log$q.info(e);
+            log$r.info(e);
         });
     });
 };
@@ -1307,14 +1307,14 @@ const downloadVideo = async (originalUrl) => {
     const filename = `${hash(originalUrl)}-clip.mp4`;
     const outfile = `./data/uploads/${filename}`;
     if (!fs.existsSync(outfile)) {
-        log$q.debug({ outfile }, 'downloading the video');
+        log$r.debug({ outfile }, 'downloading the video');
         const child = childProcess.execFile(config.youtubeDlBinary, [originalUrl, '-o', outfile]);
         await new Promise((resolve) => {
             child.on('close', resolve);
         });
     }
     else {
-        log$q.debug({ outfile }, 'video exists');
+        log$r.debug({ outfile }, 'video exists');
     }
     return `/uploads/${filename}`;
 };
@@ -1401,20 +1401,20 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
             const data = effect.data;
             data.image_url = await doReplaces(data.image_url);
             if (data.video.url) {
-                log$q.debug({ url: data.video.url }, 'video url is defined');
+                log$r.debug({ url: data.video.url }, 'video url is defined');
                 data.video.url = await doReplaces(data.video.url);
                 if (!data.video.url) {
-                    log$q.debug('no video url found');
+                    log$r.debug('no video url found');
                 }
                 else if (isTwitchClipUrl(data.video.url)) {
                     // video url looks like a twitch clip url, dl it first
-                    log$q.debug({ url: data.video.url }, 'twitch clip found');
+                    log$r.debug({ url: data.video.url }, 'twitch clip found');
                     data.video.url = await downloadVideo(data.video.url);
                 }
                 else {
                     // otherwise assume it is already a playable video url
                     // TODO: youtube videos maybe should also be downloaded
-                    log$q.debug('video is assumed to be directly playable via html5 video element');
+                    log$r.debug('video is assumed to be directly playable via html5 video element');
                 }
             }
             contextModule.bot.getWebSocketServer().notifyAll([contextModule.user.id], 'general', {
@@ -1441,7 +1441,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
                         }
                     }
                     catch (e) {
-                        log$q.error({ e });
+                        log$r.error({ e });
                         say(`Error occured, unable to generate a word :("`);
                     }
                 }
@@ -1451,7 +1451,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
             const setChannelTitle = async () => {
                 const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient();
                 if (!rawCmd || !context || !helixClient) {
-                    log$q.info({
+                    log$r.info({
                         rawCmd: rawCmd,
                         context: context,
                         helixClient,
@@ -1498,7 +1498,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
             const setChannelGameId = async () => {
                 const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient();
                 if (!rawCmd || !context || !helixClient) {
-                    log$q.info({
+                    log$r.info({
                         rawCmd: rawCmd,
                         context: context,
                         helixClient,
@@ -1542,7 +1542,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
             const addStreamTags = async () => {
                 const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient();
                 if (!rawCmd || !context || !helixClient) {
-                    log$q.info({
+                    log$r.info({
                         rawCmd: rawCmd,
                         context: context,
                         helixClient,
@@ -1588,7 +1588,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
                 }
                 const resp = await helixClient.replaceStreamTags(accessToken, newSettableTagIds, contextModule.bot, contextModule.user);
                 if (!resp || resp.status < 200 || resp.status >= 300) {
-                    log$q.error(resp);
+                    log$r.error(resp);
                     say(`❌ Unable to add tag: ${tagEntry.name}`);
                     return;
                 }
@@ -1600,7 +1600,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
             const removeStreamTags = async () => {
                 const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient();
                 if (!rawCmd || !context || !helixClient) {
-                    log$q.info({
+                    log$r.info({
                         rawCmd: rawCmd,
                         context: context,
                         helixClient,
@@ -1653,7 +1653,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
             const chatters = async () => {
                 const helixClient = contextModule.bot.getUserTwitchClientManager(contextModule.user).getHelixClient();
                 if (!context || !helixClient) {
-                    log$q.info({
+                    log$r.info({
                         context: context,
                         helixClient,
                     }, 'unable to execute chatters command, client, context, or helixClient missing');
@@ -1734,7 +1734,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
                             duration = (await parseDuration(`${a.value}`)) || 0;
                         }
                         catch (e) {
-                            log$q.error({ message: e.message, value: a.value });
+                            log$r.error({ message: e.message, value: a.value });
                             return;
                         }
                         actions.push(async () => await sleep(duration));
@@ -1902,7 +1902,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return String(`twitch.tv/${context.username}`);
                 }
                 if (!bot || !user) {
-                    log$q.info('no bot, no user, no watch');
+                    log$r.info('no bot, no user, no watch');
                     return '';
                 }
                 const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
@@ -1911,7 +1911,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                 }
                 const twitchUser = await getTwitchUser(username, helixClient, bot);
                 if (!twitchUser) {
-                    log$q.info('no twitch user found', username);
+                    log$r.info('no twitch user found', username);
                     return '';
                 }
                 if (m3 === 'name') {
@@ -1951,7 +1951,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return String(JSON.parse(txt)[m2]);
                 }
                 catch (e) {
-                    log$q.error(e);
+                    log$r.error(e);
                     return '';
                 }
             },
@@ -1965,7 +1965,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return await resp.text();
                 }
                 catch (e) {
-                    log$q.error(e);
+                    log$r.error(e);
                     return '';
                 }
             },
@@ -2208,7 +2208,7 @@ const extractEmotes = (context) => {
 const getChannelPointsCustomRewards = async (bot, user) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!helixClient) {
-        log$q.info('getChannelPointsCustomRewards: no helix client');
+        log$r.info('getChannelPointsCustomRewards: no helix client');
         return {};
     }
     return await helixClient.getAllChannelPointsCustomRewards(bot, user);
@@ -2256,7 +2256,7 @@ var fn = {
     getChannelPointsCustomRewards,
 };
 
-const log$p = logger("WebSocketServer.ts");
+const log$q = logger("WebSocketServer.ts");
 const determineUserIdAndModuleName = async (basePath, requestUrl, socket, bot) => {
     const relativePath = requestUrl.substring(basePath.length) || '';
     const relpath = withoutLeading(relativePath, '/');
@@ -2290,24 +2290,24 @@ class WebSocketServer {
             socket.user_id = userId;
             socket.module = moduleName;
             socket.id = uniqId();
-            log$p.info({
+            log$q.info({
                 moduleName,
                 socket: { protocol: socket.protocol },
             }, 'added socket');
-            log$p.info({
+            log$q.info({
                 count: this.sockets().filter(s => s.module === socket.module).length,
             }, 'socket_count');
             socket.on('close', () => {
-                log$p.info({
+                log$q.info({
                     moduleName,
                     socket: { protocol: socket.protocol },
                 }, 'removed socket');
-                log$p.info({
+                log$q.info({
                     count: this.sockets().filter(s => s.module === socket.module).length,
                 }, 'socket count');
             });
             if (!socket.user_id) {
-                log$p.info({
+                log$q.info({
                     requestUrl,
                     socket: { protocol: socket.protocol },
                 }, 'not found token');
@@ -2315,7 +2315,7 @@ class WebSocketServer {
                 return;
             }
             if (!socket.module) {
-                log$p.info({ requestUrl }, 'bad request url');
+                log$q.info({ requestUrl }, 'bad request url');
                 socket.close();
                 return;
             }
@@ -2346,7 +2346,7 @@ class WebSocketServer {
                     }
                 }
                 catch (e) {
-                    log$p.error({ e }, 'socket on message');
+                    log$q.error({ e }, 'socket on message');
                 }
             });
         });
@@ -2355,7 +2355,7 @@ class WebSocketServer {
         return !!this.sockets().find(s => s.user_id === user_id);
     }
     _notify(socket, data) {
-        log$p.info({ user_id: socket.user_id, module: socket.module, event: data.event }, 'notifying');
+        log$q.info({ user_id: socket.user_id, module: socket.module, event: data.event }, 'notifying');
         socket.send(JSON.stringify(data));
     }
     notifyOne(user_ids, moduleName, data, socket) {
@@ -2367,7 +2367,7 @@ class WebSocketServer {
             this._notify(socket, data);
         }
         else {
-            log$p.error({
+            log$q.error({
                 socket: {
                     user_id: socket.user_id,
                     module: socket.module,
@@ -2402,7 +2402,7 @@ class WebSocketServer {
     }
 }
 
-const log$o = logger('TwitchHelixClient.ts');
+const log$p = logger('TwitchHelixClient.ts');
 const API_BASE = 'https://api.twitch.tv/helix';
 const TOKEN_ENDPOINT = 'https://id.twitch.tv/oauth2/token';
 const apiUrl = (path) => `${API_BASE}${path}`;
@@ -2420,7 +2420,7 @@ async function executeRequestWithRetry(accessToken, req, bot, user) {
     if (!newAccessToken) {
         return resp;
     }
-    log$o.warn('retrying with refreshed token');
+    log$p.warn('retrying with refreshed token');
     return await req(newAccessToken);
 }
 class TwitchHelixClient {
@@ -2450,13 +2450,13 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$o.warn({ txt }, 'unable to get access_token by code');
+                log$p.warn({ txt }, 'unable to get access_token by code');
                 return null;
             }
             return (await resp.json());
         }
         catch (e) {
-            log$o.error({ url, e });
+            log$p.error({ url, e });
             return null;
         }
     }
@@ -2472,18 +2472,18 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (resp.status === 401) {
                 const txt = await resp.text();
-                log$o.warn({ txt }, 'tried to refresh access_token with an invalid refresh token');
+                log$p.warn({ txt }, 'tried to refresh access_token with an invalid refresh token');
                 return null;
             }
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$o.warn({ txt }, 'unable to refresh access_token');
+                log$p.warn({ txt }, 'unable to refresh access_token');
                 return null;
             }
             return (await resp.json());
         }
         catch (e) {
-            log$o.error({ url, e });
+            log$p.error({ url, e });
             return null;
         }
     }
@@ -2499,14 +2499,14 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$o.warn({ txt }, 'unable to get access_token');
+                log$p.warn({ txt }, 'unable to get access_token');
                 return '';
             }
             json = (await resp.json());
             return json.access_token;
         }
         catch (e) {
-            log$o.error({ url, json, e });
+            log$p.error({ url, json, e });
             return '';
         }
     }
@@ -2521,7 +2521,7 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$o.error({ url, json, e });
+            log$p.error({ url, json, e });
             return null;
         }
     }
@@ -2535,7 +2535,7 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$o.error({ url, json, e });
+            log$p.error({ url, json, e });
             return null;
         }
     }
@@ -2548,7 +2548,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$o.error({ url, json, e });
+            log$p.error({ url, json, e });
             return null;
         }
     }
@@ -2562,7 +2562,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$o.error({ url, json, e });
+            log$p.error({ url, json, e });
             return null;
         }
     }
@@ -2597,7 +2597,7 @@ class TwitchHelixClient {
             return getRandom(filtered);
         }
         catch (e) {
-            log$o.error({ url, json, e });
+            log$p.error({ url, json, e });
             return null;
         }
     }
@@ -2620,7 +2620,7 @@ class TwitchHelixClient {
             return json.data[0] || null;
         }
         catch (e) {
-            log$o.error({ url, json, e });
+            log$p.error({ url, json, e });
             return null;
         }
     }
@@ -2631,7 +2631,7 @@ class TwitchHelixClient {
             return await resp.json();
         }
         catch (e) {
-            log$o.error({ url, e });
+            log$p.error({ url, e });
             return null;
         }
     }
@@ -2642,7 +2642,7 @@ class TwitchHelixClient {
             return await resp.text();
         }
         catch (e) {
-            log$o.error({ url, e });
+            log$p.error({ url, e });
             return null;
         }
     }
@@ -2655,7 +2655,7 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$o.error({ url, e });
+            log$p.error({ url, e });
             return null;
         }
     }
@@ -2669,7 +2669,7 @@ class TwitchHelixClient {
             return getBestEntryFromCategorySearchItems(searchString, json);
         }
         catch (e) {
-            log$o.error({ url, json });
+            log$p.error({ url, json });
             return null;
         }
     }
@@ -2683,7 +2683,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$o.error({ url, json });
+            log$p.error({ url, json });
             return null;
         }
     }
@@ -2697,7 +2697,7 @@ class TwitchHelixClient {
             return await executeRequestWithRetry(accessToken, req, bot, user);
         }
         catch (e) {
-            log$o.error({ url, e });
+            log$p.error({ url, e });
             return null;
         }
     }
@@ -2723,7 +2723,7 @@ class TwitchHelixClient {
             return (await resp.json());
         }
         catch (e) {
-            log$o.error({ url, e });
+            log$p.error({ url, e });
             return null;
         }
     }
@@ -2742,19 +2742,19 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$o.error({ url, e });
+            log$p.error({ url, e });
             return null;
         }
     }
     async getAllChannelPointsCustomRewards(bot, user) {
         const rewards = {};
         if (!user.twitch_id || !user.twitch_login) {
-            log$o.info('getAllChannelPointsCustomRewards: no twitch id and login');
+            log$p.info('getAllChannelPointsCustomRewards: no twitch id and login');
             return rewards;
         }
         const accessToken = await bot.getRepos().oauthToken.getMatchingAccessToken(user);
         if (!accessToken) {
-            log$o.info('getAllChannelPointsCustomRewards: no access token');
+            log$p.info('getAllChannelPointsCustomRewards: no access token');
             return rewards;
         }
         const res = await this.getChannelPointsCustomRewards(accessToken, user.twitch_id, bot, user);
@@ -2773,7 +2773,7 @@ class TwitchHelixClient {
             return await executeRequestWithRetry(accessToken, req, bot, user);
         }
         catch (e) {
-            log$o.error({ url, e });
+            log$p.error({ url, e });
             return null;
         }
     }
@@ -2798,7 +2798,7 @@ class TwitchHelixClient {
             return json.data.length > 0;
         }
         catch (e) {
-            log$o.error({ url, e });
+            log$p.error({ url, e });
             return false;
         }
     }
@@ -2811,7 +2811,7 @@ class TwitchHelixClient {
             return json.data.length > 0;
         }
         catch (e) {
-            log$o.error({ url, e });
+            log$p.error({ url, e });
             return false;
         }
     }
@@ -2824,13 +2824,13 @@ class TwitchHelixClient {
             return json.data.length > 0;
         }
         catch (e) {
-            log$o.error({ url, e });
+            log$p.error({ url, e });
             return false;
         }
     }
 }
 
-const log$n = logger('oauth.ts');
+const log$o = logger('oauth.ts');
 /**
  * Tries to refresh the access token and returns the new token
  * if successful, otherwise null.
@@ -2864,7 +2864,7 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
         token_type: refreshResp.token_type,
         expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
     });
-    log$n.info('tryRefreshAccessToken - refreshed an access token');
+    log$o.info('tryRefreshAccessToken - refreshed an access token');
     return refreshResp.access_token;
 };
 // TODO: check if anything has to be put in a try catch block
@@ -2911,7 +2911,7 @@ const refreshExpiredTwitchChannelAccessToken = async (bot, user) => {
         token_type: refreshResp.token_type,
         expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
     });
-    log$n.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
+    log$o.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
     return { error: false, refreshed: true };
 };
 // TODO: check if anything has to be put in a try catch block
@@ -3401,7 +3401,7 @@ const commands = {
     },
 };
 
-const log$m = logger('CommandExecutor.ts');
+const log$n = logger('CommandExecutor.ts');
 class CommandExecutor {
     async executeMatchingCommands(bot, user, rawCmd, target, context, triggers, date) {
         const promises = [];
@@ -3423,7 +3423,7 @@ class CommandExecutor {
             return false;
         }
         // timeout still active
-        log$m.info({
+        log$n.info({
             target: ctx.target,
             command: ctx.rawCmd?.name || '<unknown>',
         }, `Skipping command due to timeout. ${humanDuration(timeoutMsLeft)} left`);
@@ -3465,7 +3465,7 @@ class CommandExecutor {
             if (await this.isInPerUserTimeout(cmdDef, repo, ctx)) {
                 continue;
             }
-            log$m.info({
+            log$n.info({
                 target: ctx.target,
                 command: ctx.rawCmd?.name || '<unknown>',
             }, 'Executing command');
@@ -3474,12 +3474,12 @@ class CommandExecutor {
                 await fn.applyEffects(cmdDef, contextModule, ctx.rawCmd, ctx.context);
                 const r = await cmdDef.fn(ctx);
                 if (r) {
-                    log$m.info({
+                    log$n.info({
                         target: ctx.target,
                         return: r,
                     }, 'Returned from command');
                 }
-                log$m.info({
+                log$n.info({
                     target: ctx.target,
                     command: ctx.rawCmd?.name || '<unknown>',
                 }, 'Executed command');
@@ -3499,11 +3499,11 @@ class CommandExecutor {
 class EventSubEventHandler {
 }
 
-const log$l = logger('SubscribeEventHandler.ts');
+const log$m = logger('SubscribeEventHandler.ts');
 class SubscribeEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$l.info('handle');
+        log$m.info('handle');
         const rawCmd = {
             name: 'channel.subscribe',
             args: [],
@@ -3525,11 +3525,11 @@ class SubscribeEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$k = logger('FollowEventHandler.ts');
+const log$l = logger('FollowEventHandler.ts');
 class FollowEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$k.info('handle');
+        log$l.info('handle');
         const rawCmd = {
             name: 'channel.follow',
             args: [],
@@ -3551,11 +3551,11 @@ class FollowEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$j = logger('CheerEventHandler.ts');
+const log$k = logger('CheerEventHandler.ts');
 class CheerEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$j.info('handle');
+        log$k.info('handle');
         const rawCmd = {
             name: 'channel.cheer',
             args: [],
@@ -3577,10 +3577,10 @@ class CheerEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$i = logger('ChannelPointRedeemEventHandler.ts');
+const log$j = logger('ChannelPointRedeemEventHandler.ts');
 class ChannelPointRedeemEventHandler extends EventSubEventHandler {
     async handle(bot, user, data) {
-        log$i.info('handle');
+        log$j.info('handle');
         const rawCmd = {
             name: data.event.reward.title,
             args: data.event.user_input ? [data.event.user_input] : [],
@@ -3615,10 +3615,10 @@ var SubscriptionType;
 })(SubscriptionType || (SubscriptionType = {}));
 const ALL_SUBSCRIPTIONS_TYPES = Object.values(SubscriptionType);
 
-const log$h = logger('StreamOnlineEventHandler.ts');
+const log$i = logger('StreamOnlineEventHandler.ts');
 class StreamOnlineEventHandler extends EventSubEventHandler {
     async handle(bot, _user, data) {
-        log$h.info('handle');
+        log$i.info('handle');
         await bot.getRepos().streams.insert({
             broadcaster_user_id: data.event.broadcaster_user_id,
             started_at: new Date(data.event.started_at),
@@ -3626,10 +3626,10 @@ class StreamOnlineEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$g = logger('StreamOfflineEventHandler.ts');
+const log$h = logger('StreamOfflineEventHandler.ts');
 class StreamOfflineEventHandler extends EventSubEventHandler {
     async handle(bot, _user, data) {
-        log$g.info('handle');
+        log$h.info('handle');
         // get last started stream for broadcaster
         // if it exists and it didnt end yet set ended_at date
         const stream = await bot.getRepos().streams.getLatestByChannelId(data.event.broadcaster_user_id);
@@ -3641,11 +3641,11 @@ class StreamOfflineEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$f = logger('RaidEventHandler.ts');
+const log$g = logger('RaidEventHandler.ts');
 class RaidEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$f.info('handle');
+        log$g.info('handle');
         const rawCmd = {
             name: 'channel.raid',
             args: [],
@@ -3667,7 +3667,7 @@ class RaidEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$e = logger('twitch/index.ts');
+const log$f = logger('twitch/index.ts');
 const createRouter$3 = (bot) => {
     const handlers = {
         [SubscriptionType.ChannelSubscribe]: new SubscribeEventHandler(),
@@ -3687,8 +3687,8 @@ const createRouter$3 = (bot) => {
         if (req.headers['twitch-eventsub-message-signature'] === expected) {
             return next();
         }
-        log$e.debug({ req });
-        log$e.error({
+        log$f.debug({ req });
+        log$f.error({
             got: req.headers['twitch-eventsub-message-signature'],
             expected,
         }, 'bad message signature');
@@ -3743,28 +3743,28 @@ const createRouter$3 = (bot) => {
     });
     router.post('/event-sub/', express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
         if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-            log$e.info({ challenge: req.body.challenge }, 'got verification request');
+            log$f.info({ challenge: req.body.challenge }, 'got verification request');
             res.write(req.body.challenge);
             res.send();
             return;
         }
         if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-            log$e.info({ type: req.body.subscription.type }, 'got notification request');
+            log$f.info({ type: req.body.subscription.type }, 'got notification request');
             const row = await bot.getRepos().eventSub.getBySubscriptionId(req.body.subscription.id);
             if (!row) {
-                log$e.info('unknown subscription_id');
+                log$f.info('unknown subscription_id');
                 res.status(400).send({ reason: 'unknown subscription_id' });
                 return;
             }
             const user = await bot.getRepos().user.getById(row.user_id);
             if (!user) {
-                log$e.info('unknown user');
+                log$f.info('unknown user');
                 res.status(400).send({ reason: 'unknown user' });
                 return;
             }
             const handler = handlers[req.body.subscription.type];
             if (!handler) {
-                log$e.info('unknown subscription type');
+                log$f.info('unknown subscription type');
                 res.status(400).send({ reason: 'unknown subscription type' });
                 return;
             }
@@ -3874,7 +3874,7 @@ const createRouter$1 = () => {
     return router;
 };
 
-const log$d = logger('api/index.ts');
+const log$e = logger('api/index.ts');
 const createRouter = (bot) => {
     const uploadDir = './data/uploads';
     const storage = multer.diskStorage({
@@ -3888,12 +3888,12 @@ const createRouter = (bot) => {
     router.post('/upload', RequireLoginApiMiddleware, (req, res) => {
         upload(req, res, (err) => {
             if (err) {
-                log$d.error({ err });
+                log$e.error({ err });
                 res.status(400).send("Something went wrong!");
                 return;
             }
             if (!req.file) {
-                log$d.error({ err });
+                log$e.error({ err });
                 res.status(400).send("Something went wrong!");
                 return;
             }
@@ -3987,7 +3987,7 @@ const createRouter = (bot) => {
             res.status(404).send();
             return;
         }
-        log$d.debug({ route: `/widget/:widget_type/:widget_token/`, type, token });
+        log$e.debug({ route: `/widget/:widget_type/:widget_token/`, type, token });
         const w = bot.getWidgets().getWidgetDefinitionByType(type);
         if (w) {
             res.send({
@@ -4030,7 +4030,7 @@ const createRouter = (bot) => {
             bot.getEventHub().emit('user_changed', changedUser);
         }
         else {
-            log$d.error({
+            log$e.error({
                 user_id: user.id,
             }, 'save-settings: user doesn\'t exist after saving it');
         }
@@ -4055,7 +4055,7 @@ const RequireLoginMiddleware = (req, res, next) => {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const log$c = logger('WebServer.ts');
+const log$d = logger('WebServer.ts');
 class WebServer {
     constructor() {
         this.handle = null;
@@ -4095,7 +4095,7 @@ class WebServer {
             res.sendFile(indexFile);
         });
         const httpConf = bot.getConfig().http;
-        this.handle = app.listen(httpConf.port, httpConf.hostname, () => log$c.info(`server running on http://${httpConf.hostname}:${httpConf.port}`));
+        this.handle = app.listen(httpConf.port, httpConf.hostname, () => log$d.info(`server running on http://${httpConf.hostname}:${httpConf.port}`));
     }
     close() {
         if (this.handle) {
@@ -4104,7 +4104,7 @@ class WebServer {
     }
 }
 
-const log$b = logger('ChatEventHandler.ts');
+const log$c = logger('ChatEventHandler.ts');
 const rolesLettersFromTwitchChatContext = (context) => {
     const roles = [];
     if (isMod(context)) {
@@ -4127,7 +4127,7 @@ const determineStreamStartDate = async (context, helixClient) => {
         }
     }
     const date = new Date(new Date().getTime() - (5 * MINUTE));
-    log$b.info({
+    log$c.info({
         roomId: context['room-id'],
         date: date,
     }, `No stream is running atm, using fake start date.`);
@@ -4144,7 +4144,7 @@ const determineIsFirstChatStream = async (bot, user, context) => {
 class ChatEventHandler {
     async handle(bot, user, target, context, msgOriginal, msgNormalized) {
         const roles = rolesLettersFromTwitchChatContext(context);
-        log$b.debug({
+        log$c.debug({
             username: context.username,
             roles,
             target,
@@ -4499,14 +4499,14 @@ class TwitchClientManager {
 }
 
 const TABLE$9 = 'robyottoko.cache';
-const log$a = logger('Cache.ts');
+const log$b = logger('Cache.ts');
 class Cache {
     constructor(db) {
         this.db = db;
     }
     async set(key, value, lifetime) {
         if (value === undefined) {
-            log$a.error({ key }, 'unable to store undefined value for cache key');
+            log$b.error({ key }, 'unable to store undefined value for cache key');
             return;
         }
         const expiresAt = lifetime === Infinity ? null : (new Date(new Date().getTime() + lifetime));
@@ -4647,7 +4647,7 @@ class Mutex {
 
 // @ts-ignore
 const { Client } = pg.default;
-const log$9 = logger('Db.ts');
+const log$a = logger('Db.ts');
 const mutex = new Mutex();
 class Db {
     constructor(connectStr, patchesDir) {
@@ -4667,7 +4667,7 @@ class Db {
         for (const f of files) {
             if (patches.includes(f)) {
                 if (verbose) {
-                    log$9.info(`➡ skipping already applied db patch: ${f}`);
+                    log$a.info(`➡ skipping already applied db patch: ${f}`);
                 }
                 continue;
             }
@@ -4686,10 +4686,10 @@ class Db {
                     throw e;
                 }
                 await this.insert('public.db_patches', { id: f });
-                log$9.info(`✓ applied db patch: ${f}`);
+                log$a.info(`✓ applied db patch: ${f}`);
             }
             catch (e) {
-                log$9.error(`✖ unable to apply patch: ${f} ${e}`);
+                log$a.error(`✖ unable to apply patch: ${f} ${e}`);
                 return;
             }
         }
@@ -4780,7 +4780,7 @@ class Db {
             return (await this.dbh.query(query, params)).rows[0] || null;
         }
         catch (e) {
-            log$9.info({ fn: '_get', query, params });
+            log$a.info({ fn: '_get', query, params });
             console.error(e);
             throw e;
         }
@@ -4790,7 +4790,7 @@ class Db {
             return await this.dbh.query(query, params);
         }
         catch (e) {
-            log$9.info({ fn: 'run', query, params });
+            log$a.info({ fn: 'run', query, params });
             console.error(e);
             throw e;
         }
@@ -4800,7 +4800,7 @@ class Db {
             return (await this.dbh.query(query, params)).rows || [];
         }
         catch (e) {
-            log$9.info({ fn: '_getMany', query, params });
+            log$a.info({ fn: '_getMany', query, params });
             console.error(e);
             throw e;
         }
@@ -5420,138 +5420,6 @@ class GeneralModule {
     }
 }
 
-const log$8 = logger('Youtube.ts');
-let googleApiKeyIndex = 0;
-const get = async (url, args) => {
-    if (config.modules.sr.google.api_keys.length === 0) {
-        log$8.error('no google api keys configured');
-        return {};
-    }
-    args.key = config.modules.sr.google.api_keys[googleApiKeyIndex];
-    let resp = await xhr.get(url + asQueryArgs(args));
-    if (resp.status === 403) {
-        log$8.warn('google returned 403 forbidden status');
-        if (config.modules.sr.google.api_keys.length > 1) {
-            log$8.warn('switching api key');
-            googleApiKeyIndex++;
-            if (googleApiKeyIndex > config.modules.sr.google.api_keys.length - 1) {
-                googleApiKeyIndex = 0;
-            }
-            args.key = config.modules.sr.google.api_keys[googleApiKeyIndex];
-            resp = await xhr.get(url + asQueryArgs(args));
-        }
-    }
-    return await resp.json();
-};
-const fetchDataByYoutubeId = async (youtubeId) => {
-    let json;
-    try {
-        json = await get('https://www.googleapis.com/youtube/v3/videos', {
-            part: 'snippet,status,contentDetails',
-            id: youtubeId,
-            fields: 'items(id,snippet,status,contentDetails)',
-        });
-        return json.items[0];
-    }
-    catch (e) {
-        log$8.error({ e, json, youtubeId });
-        return null;
-    }
-};
-const extractYoutubeId = (str) => {
-    const patterns = [
-        /youtu\.be\/(.*?)(?:\?|"|$)/i,
-        /\.youtube\.com\/(?:watch\?v=|v\/|embed\/)([^&"'#]*)/i,
-    ];
-    for (const pattern of patterns) {
-        const m = str.match(pattern);
-        if (m) {
-            return m[1];
-        }
-    }
-    // https://stackoverflow.com/questions/6180138/whats-the-maximum-length-of-a-youtube-video-id
-    if (str.match(/^[a-z0-9_-]{11}$/i)) {
-        // the string may still not be a youtube id
-        return str;
-    }
-    return null;
-};
-var YoutubeVideoDuration;
-(function (YoutubeVideoDuration) {
-    YoutubeVideoDuration["ANY"] = "any";
-    YoutubeVideoDuration["LONG"] = "long";
-    YoutubeVideoDuration["MEDIUM"] = "medium";
-    YoutubeVideoDuration["SHORT"] = "short";
-})(YoutubeVideoDuration || (YoutubeVideoDuration = {}));
-const msToVideoDurations = (durationMs) => {
-    if (durationMs <= 0) {
-        return [
-            YoutubeVideoDuration.ANY,
-            YoutubeVideoDuration.SHORT,
-            YoutubeVideoDuration.MEDIUM,
-            YoutubeVideoDuration.LONG,
-        ];
-    }
-    if (durationMs < 4 * MINUTE) {
-        return [
-            YoutubeVideoDuration.ANY,
-            YoutubeVideoDuration.SHORT,
-        ];
-    }
-    if (durationMs <= 20 * MINUTE) {
-        return [
-            YoutubeVideoDuration.ANY,
-            YoutubeVideoDuration.SHORT,
-            YoutubeVideoDuration.MEDIUM,
-        ];
-    }
-    return [
-        YoutubeVideoDuration.ANY,
-        YoutubeVideoDuration.SHORT,
-        YoutubeVideoDuration.MEDIUM,
-        YoutubeVideoDuration.LONG,
-    ];
-};
-// @see https://developers.google.com/youtube/v3/docs/search/list
-// videoDuration
-//   any – Do not filter video search results based on their duration. This is the default value.
-//   long – Only include videos longer than 20 minutes.
-//   medium – Only include videos that are between four and 20 minutes long (inclusive).
-//   short – Only include videos that are less than four minutes long.
-const getYoutubeIdsBySearch = async (searchterm, videoDuration = YoutubeVideoDuration.ANY) => {
-    const searches = [
-        `"${searchterm}"`,
-        searchterm,
-    ];
-    const ids = [];
-    for (const q of searches) {
-        const json = await get('https://www.googleapis.com/youtube/v3/search', {
-            part: 'snippet',
-            q: q,
-            type: 'video',
-            videoEmbeddable: 'true',
-            videoDuration,
-        });
-        try {
-            for (const item of json.items) {
-                ids.push(item.id.videoId);
-            }
-        }
-        catch (e) {
-            log$8.info({ e, json });
-        }
-    }
-    return ids;
-};
-const getUrlById = (id) => `https://youtu.be/${id}`;
-var Youtube = {
-    fetchDataByYoutubeId,
-    extractYoutubeId,
-    msToVideoDurations,
-    getYoutubeIdsBySearch,
-    getUrlById,
-};
-
 const presets = [
     {
         name: 'default',
@@ -5813,6 +5681,318 @@ const default_settings$4 = (obj = null) => ({
     customCssPresetIdx: getProp(obj, ['customCssPresetIdx'], 0),
 });
 
+class TooLongError extends Error {
+}
+
+class NotFoundError extends Error {
+}
+
+/******************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+
+function __classPrivateFieldGet(receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+}
+
+function __classPrivateFieldSet(receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+}
+
+class NoApiKeysError extends Error {
+}
+
+class QuotaReachedError extends Error {
+}
+
+var _YoutubeApi_googleApiKeyIndex;
+const log$9 = logger('YoutubeApi.ts');
+var YoutubeVideoDuration;
+(function (YoutubeVideoDuration) {
+    YoutubeVideoDuration["ANY"] = "any";
+    YoutubeVideoDuration["LONG"] = "long";
+    YoutubeVideoDuration["MEDIUM"] = "medium";
+    YoutubeVideoDuration["SHORT"] = "short";
+})(YoutubeVideoDuration || (YoutubeVideoDuration = {}));
+class YoutubeApi {
+    constructor(config) {
+        this.config = config;
+        _YoutubeApi_googleApiKeyIndex.set(this, 0);
+        // pass
+    }
+    async get(url, args) {
+        var _a;
+        if (this.config.googleApiKeys.length === 0) {
+            log$9.error('no google api keys configured');
+            throw new NoApiKeysError();
+        }
+        // cycle through all google api keys until response is ok
+        // or reaching the previous api key index
+        const indexBefore = __classPrivateFieldGet(this, _YoutubeApi_googleApiKeyIndex, "f");
+        do {
+            args.key = this.config.googleApiKeys[__classPrivateFieldGet(this, _YoutubeApi_googleApiKeyIndex, "f")];
+            const resp = await xhr.get(url + asQueryArgs(args));
+            if (resp.status !== 403) {
+                // got a ok response, return it
+                return await resp.json();
+            }
+            log$9.warn('google returned 403 forbidden status, switching api key');
+            __classPrivateFieldSet(this, _YoutubeApi_googleApiKeyIndex, (_a = __classPrivateFieldGet(this, _YoutubeApi_googleApiKeyIndex, "f"), _a++, _a), "f");
+            if (__classPrivateFieldGet(this, _YoutubeApi_googleApiKeyIndex, "f") > this.config.googleApiKeys.length - 1) {
+                __classPrivateFieldSet(this, _YoutubeApi_googleApiKeyIndex, 0, "f");
+            }
+        } while (__classPrivateFieldGet(this, _YoutubeApi_googleApiKeyIndex, "f") !== indexBefore);
+        throw new QuotaReachedError();
+    }
+    async fetchDataByYoutubeId(youtubeId) {
+        let json;
+        try {
+            json = await this.get('https://www.googleapis.com/youtube/v3/videos', {
+                part: 'snippet,status,contentDetails',
+                id: youtubeId,
+                fields: 'items(id,snippet,status,contentDetails)',
+            });
+            return json.items[0];
+        }
+        catch (e) {
+            log$9.error({ e, json, youtubeId });
+            return null;
+        }
+    }
+    static getUrlById(youtubeId) {
+        return `https://youtu.be/${youtubeId}`;
+    }
+    msToVideoDurations(durationMs) {
+        if (durationMs <= 0) {
+            return [
+                YoutubeVideoDuration.ANY,
+                YoutubeVideoDuration.SHORT,
+                YoutubeVideoDuration.MEDIUM,
+                YoutubeVideoDuration.LONG,
+            ];
+        }
+        if (durationMs < 4 * MINUTE) {
+            return [
+                YoutubeVideoDuration.ANY,
+                YoutubeVideoDuration.SHORT,
+            ];
+        }
+        if (durationMs <= 20 * MINUTE) {
+            return [
+                YoutubeVideoDuration.ANY,
+                YoutubeVideoDuration.SHORT,
+                YoutubeVideoDuration.MEDIUM,
+            ];
+        }
+        return [
+            YoutubeVideoDuration.ANY,
+            YoutubeVideoDuration.SHORT,
+            YoutubeVideoDuration.MEDIUM,
+            YoutubeVideoDuration.LONG,
+        ];
+    }
+    // @see https://developers.google.com/youtube/v3/docs/search/list
+    // videoDuration
+    //   any – Do not filter video search results based on their duration. This is the default value.
+    //   long – Only include videos longer than 20 minutes.
+    //   medium – Only include videos that are between four and 20 minutes long (inclusive).
+    //   short – Only include videos that are less than four minutes long.
+    async getYoutubeIdsBySearch(searchterm, videoDuration = YoutubeVideoDuration.ANY) {
+        const searches = [
+            `"${searchterm}"`,
+            searchterm,
+        ];
+        const ids = [];
+        for (const q of searches) {
+            const json = await this.get('https://www.googleapis.com/youtube/v3/search', {
+                part: 'snippet',
+                q: q,
+                type: 'video',
+                videoEmbeddable: 'true',
+                videoDuration,
+            });
+            try {
+                for (const item of json.items) {
+                    ids.push(item.id.videoId);
+                }
+            }
+            catch (e) {
+                log$9.info({ e, json });
+            }
+        }
+        return ids;
+    }
+}
+_YoutubeApi_googleApiKeyIndex = new WeakMap();
+
+var _Youtube_instances, _Youtube_getDataByIdViaYoutubeApi, _Youtube_findViaYoutubeApi, _Youtube_getDataByIdViaIndivious, _Youtube_findByIndivious;
+const log$8 = logger('Youtube.ts');
+class Youtube {
+    constructor(youtubeApi, indivious, cache) {
+        this.youtubeApi = youtubeApi;
+        this.indivious = indivious;
+        this.cache = cache;
+        _Youtube_instances.add(this);
+        // pass
+    }
+    static extractYoutubeId(str) {
+        const patterns = [
+            /youtu\.be\/(.*?)(?:\?|"|$)/i,
+            /\.youtube\.com\/(?:watch\?v=|v\/|embed\/)([^&"'#]*)/i,
+        ];
+        for (const pattern of patterns) {
+            const m = str.match(pattern);
+            if (m) {
+                return m[1];
+            }
+        }
+        // https://stackoverflow.com/questions/6180138/whats-the-maximum-length-of-a-youtube-video-id
+        if (str.match(/^[a-z0-9_-]{11}$/i)) {
+            // the string may still not be a youtube id
+            return str;
+        }
+        return null;
+    }
+    static getUrlById(youtubeId) {
+        return YoutubeApi.getUrlById(youtubeId);
+    }
+    static isTooLong(maxLenMs, songLenMs) {
+        if (maxLenMs <= 0) {
+            return false;
+        }
+        return songLenMs > maxLenMs;
+    }
+    async find(str, maxLenMs) {
+        try {
+            return await __classPrivateFieldGet(this, _Youtube_instances, "m", _Youtube_findViaYoutubeApi).call(this, str, maxLenMs);
+        }
+        catch (e) {
+            log$8.info(e instanceof NoApiKeysError);
+            // in case of quota reached or no api key set, ask indivious
+            if (e instanceof QuotaReachedError
+                || e instanceof NoApiKeysError) {
+                return await __classPrivateFieldGet(this, _Youtube_instances, "m", _Youtube_findByIndivious).call(this, str, maxLenMs);
+            }
+            throw e;
+        }
+    }
+}
+_Youtube_instances = new WeakSet(), _Youtube_getDataByIdViaYoutubeApi = async function _Youtube_getDataByIdViaYoutubeApi(youtubeId) {
+    const key = `youtubeData_${youtubeId}_20210717_2`;
+    let d = await this.cache.get(key);
+    if (d === undefined) {
+        d = await this.youtubeApi.fetchDataByYoutubeId(youtubeId);
+        if (d) {
+            await this.cache.set(key, d, Infinity);
+        }
+    }
+    return d;
+}, _Youtube_findViaYoutubeApi = async function _Youtube_findViaYoutubeApi(str, maxLenMs) {
+    const youtubeUrl = str.trim();
+    const youtubeId = Youtube.extractYoutubeId(youtubeUrl);
+    if (youtubeId) {
+        const youtubeData = await __classPrivateFieldGet(this, _Youtube_instances, "m", _Youtube_getDataByIdViaYoutubeApi).call(this, youtubeId);
+        if (youtubeData) {
+            if (Youtube.isTooLong(maxLenMs, fn.parseISO8601Duration(youtubeData.contentDetails.duration))) {
+                throw new TooLongError();
+            }
+            return {
+                id: youtubeData.id,
+                title: youtubeData.snippet.title,
+                durationMs: fn.parseISO8601Duration(youtubeData.contentDetails.duration),
+            };
+        }
+    }
+    let tooLong = false;
+    for (const duration of this.youtubeApi.msToVideoDurations(maxLenMs)) {
+        const youtubeIds = await this.youtubeApi.getYoutubeIdsBySearch(youtubeUrl, duration);
+        for (const youtubeId of youtubeIds) {
+            const youtubeData = await __classPrivateFieldGet(this, _Youtube_instances, "m", _Youtube_getDataByIdViaYoutubeApi).call(this, youtubeId);
+            if (!youtubeData) {
+                continue;
+            }
+            if (Youtube.isTooLong(maxLenMs, fn.parseISO8601Duration(youtubeData.contentDetails.duration))) {
+                tooLong = true;
+                continue;
+            }
+            return {
+                id: youtubeData.id,
+                title: youtubeData.snippet.title,
+                durationMs: fn.parseISO8601Duration(youtubeData.contentDetails.duration),
+            };
+        }
+    }
+    if (tooLong) {
+        throw new TooLongError();
+    }
+    throw new NotFoundError();
+}, _Youtube_getDataByIdViaIndivious = async function _Youtube_getDataByIdViaIndivious(youtubeId) {
+    const key = `indiviousData_${youtubeId}_20230117_1`;
+    let d = await this.cache.get(key);
+    if (d === undefined) {
+        d = await this.indivious.video(youtubeId);
+        if (d) {
+            await this.cache.set(key, d, Infinity);
+        }
+    }
+    return d;
+}, _Youtube_findByIndivious = async function _Youtube_findByIndivious(str, maxLenMs) {
+    const youtubeUrl = str.trim();
+    const youtubeId = Youtube.extractYoutubeId(youtubeUrl);
+    if (youtubeId) {
+        const data = await __classPrivateFieldGet(this, _Youtube_instances, "m", _Youtube_getDataByIdViaIndivious).call(this, youtubeId);
+        if (data) {
+            const durationMs = data.lengthSeconds * 1000;
+            if (Youtube.isTooLong(maxLenMs, durationMs)) {
+                throw new TooLongError();
+            }
+            return { id: data.videoId, title: data.title, durationMs };
+        }
+    }
+    let tooLong = false;
+    const durations = ['short', 'long'];
+    for (const duration of durations) {
+        const results = await this.indivious.search({
+            q: youtubeUrl,
+            type: 'video',
+            region: 'DE',
+            sort_by: 'relevance',
+            duration,
+        });
+        for (const result of results) {
+            if (result.type !== 'video') {
+                continue;
+            }
+            const durationMs = result.lengthSeconds * 1000;
+            if (Youtube.isTooLong(maxLenMs, durationMs)) {
+                tooLong = true;
+                continue;
+            }
+            return { id: result.videoId, title: result.title, durationMs };
+        }
+    }
+    if (tooLong) {
+        throw new TooLongError();
+    }
+    throw new NotFoundError();
+};
+
 const log$7 = logger('SongrequestModule.ts');
 const ADD_TYPE = {
     NOT_ADDED: 0,
@@ -5825,6 +6005,9 @@ const NOT_ADDED_REASON = {
     TOO_LONG: 1,
     NOT_FOUND_IN_PLAYLIST: 2,
     NOT_FOUND: 3,
+    QUOTA_REACHED: 4,
+    NO_API_KEYS: 5,
+    UNKNOWN: 6,
 };
 const default_playlist_item = (item = null) => {
     return {
@@ -5966,18 +6149,6 @@ class SongrequestModule {
         data.playlist = default_playlist(data.playlist);
         data.settings = default_settings$4(data.settings);
         data.commands = default_commands(data.commands);
-        // add duration to the playlist items
-        for (const item of data.playlist) {
-            if (!item.durationMs) {
-                const d = await this.loadYoutubeData(item.yt);
-                // sometimes songs in the playlist may not be available on yt anymore
-                // then we just dont add that to the duration calculation
-                if (d) {
-                    item.durationMs = fn.parseISO8601Duration(d.contentDetails.duration);
-                    shouldSave = true;
-                }
-            }
-        }
         // add ids to commands that dont have one yet
         for (const cmd of data.commands) {
             if (!cmd.id) {
@@ -6289,70 +6460,33 @@ class SongrequestModule {
     }
     async add(str, userName, limits) {
         const countQueuedSongsByUser = () => this.data.playlist.filter(item => item.user === userName && item.plays === 0).length;
-        const isTooLong = (ytData) => {
-            if (limits.maxLenMs > 0) {
-                const songLenMs = fn.parseISO8601Duration(ytData.contentDetails.duration);
-                if (limits.maxLenMs < songLenMs) {
-                    return true;
-                }
-            }
-            return false;
-        };
         if (limits.maxQueued > 0 && countQueuedSongsByUser() >= limits.maxQueued) {
             return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_MANY_QUEUED };
         }
-        const youtubeUrl = str.trim();
-        let youtubeId = null;
-        let youtubeData = null;
-        const tmpYoutubeId = Youtube.extractYoutubeId(youtubeUrl);
-        if (tmpYoutubeId) {
-            const tmpYoutubeData = await this.loadYoutubeData(tmpYoutubeId);
-            if (tmpYoutubeData) {
-                if (isTooLong(tmpYoutubeData)) {
-                    return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_LONG };
-                }
-                youtubeId = tmpYoutubeId;
-                youtubeData = tmpYoutubeData;
-            }
+        let youtubeData;
+        try {
+            youtubeData = await this.bot.getYoutube().find(str, limits.maxLenMs);
         }
-        if (!youtubeData) {
-            const reasons = [];
-            for (const duration of Youtube.msToVideoDurations(limits.maxLenMs)) {
-                const youtubeIds = await Youtube.getYoutubeIdsBySearch(youtubeUrl, duration);
-                if (!youtubeIds) {
-                    continue;
-                }
-                for (const tmpYoutubeId of youtubeIds) {
-                    const tmpYoutubeData = await this.loadYoutubeData(tmpYoutubeId);
-                    if (!tmpYoutubeData) {
-                        continue;
-                    }
-                    if (isTooLong(tmpYoutubeData)) {
-                        reasons.push(NOT_ADDED_REASON.TOO_LONG);
-                        continue;
-                    }
-                    youtubeId = tmpYoutubeId;
-                    youtubeData = tmpYoutubeData;
-                    break;
-                }
-                if (youtubeId && youtubeData) {
-                    break;
-                }
+        catch (e) {
+            if (e instanceof TooLongError) {
+                return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_LONG };
             }
-            if (!youtubeId || !youtubeData) {
-                if (reasons.includes(NOT_ADDED_REASON.TOO_LONG)) {
-                    return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.TOO_LONG };
-                }
+            if (e instanceof NotFoundError) {
+                return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.NOT_FOUND };
             }
+            if (e instanceof QuotaReachedError) {
+                return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.QUOTA_REACHED };
+            }
+            if (e instanceof NoApiKeysError) {
+                return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.NO_API_KEYS };
+            }
+            return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.UNKNOWN };
         }
-        if (!youtubeId || !youtubeData) {
-            return { addType: ADD_TYPE.NOT_ADDED, idx: -1, reason: NOT_ADDED_REASON.NOT_FOUND };
-        }
-        const tmpItem = this.createItem(youtubeId, youtubeData, userName);
+        const tmpItem = this.createItem(youtubeData, userName);
         const { addType, idx, reason } = await this.addToPlaylist(tmpItem);
         if (addType === ADD_TYPE.ADDED) {
             this.data.stacks[userName] = this.data.stacks[userName] || [];
-            this.data.stacks[userName].push(youtubeId);
+            this.data.stacks[userName].push(youtubeData.id);
         }
         return { addType, idx, reason };
     }
@@ -6716,13 +6850,22 @@ class SongrequestModule {
             else if (reason === NOT_ADDED_REASON.TOO_MANY_QUEUED) {
                 return `Too many songs queued (max. ${limits.maxQueued})`;
             }
+            else if (reason === NOT_ADDED_REASON.QUOTA_REACHED) {
+                return 'Could not process that song request (Quota reached)';
+            }
+            else if (reason === NOT_ADDED_REASON.NO_API_KEYS) {
+                return 'Could not process that song request (No api keys set up)';
+            }
+            else if (reason === NOT_ADDED_REASON.UNKNOWN) {
+                return 'Could not process that song request';
+            }
             else {
-                return `Could not process that song request`;
+                return 'Could not process that song request';
             }
         }
         const item = idx >= 0 ? this.data.playlist[idx] : null;
         if (!item) {
-            return `Could not process that song request`;
+            return 'Could not process that song request';
         }
         let info;
         if (idx < 0) {
@@ -6742,15 +6885,13 @@ class SongrequestModule {
         if (addType === ADD_TYPE.ADDED) {
             return `🎵 Added "${item.title}" (${Youtube.getUrlById(item.yt)}) to the playlist! ${info}`;
         }
-        else if (addType === ADD_TYPE.REQUEUED) {
+        if (addType === ADD_TYPE.REQUEUED) {
             return `🎵 "${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist and only moved up. ${info}`;
         }
-        else if (addType === ADD_TYPE.EXISTED) {
+        if (addType === ADD_TYPE.EXISTED) {
             return `🎵 "${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist. ${info}`;
         }
-        else {
-            return `Could not process that song request`;
-        }
+        return `Could not process that song request`;
     }
     cmdSrCurrent(_originalCommand) {
         return async (ctx) => {
@@ -7030,24 +7171,13 @@ class SongrequestModule {
             say(await this.answerAddRequest(addResponseData, limits));
         };
     }
-    async loadYoutubeData(youtubeId) {
-        const key = `youtubeData_${youtubeId}_20210717_2`;
-        let d = await this.bot.getCache().get(key);
-        if (d === undefined) {
-            d = await Youtube.fetchDataByYoutubeId(youtubeId);
-            if (d) {
-                await this.bot.getCache().set(key, d, Infinity);
-            }
-        }
-        return d;
-    }
-    createItem(youtubeId, youtubeData, userName) {
+    createItem(youtubeData, userName) {
         return {
             id: Math.random(),
-            yt: youtubeId,
-            title: youtubeData.snippet.title,
+            yt: youtubeData.id,
+            title: youtubeData.title,
             timestamp: new Date().getTime(),
-            durationMs: fn.parseISO8601Duration(youtubeData.contentDetails.duration),
+            durationMs: youtubeData.durationMs,
             user: userName,
             plays: 0,
             goods: 0,
@@ -8029,9 +8159,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-17T16:51:26.160Z",
+    buildDate: "2023-01-17T23:23:49.085Z",
     // @ts-ignore
-    buildVersion: "1.50.3",
+    buildVersion: "1.51.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
@@ -8407,6 +8537,31 @@ class Repos {
     }
 }
 
+// instances:
+// https://api.invidious.io/instances.json?pretty=1&sort_by=version
+// const instances = [
+//   'https://invidious.nerdvpn.de',
+//   'https://invidious.silur.me',
+//   'https://invidious.dhusch.de/',
+// ]
+const BASE_URL = 'https://invidious.nerdvpn.de';
+class Indivious {
+    async video(youtubeId) {
+        const resp = await xhr.get(`${BASE_URL}/api/v1/videos/${youtubeId}`);
+        if (resp.status !== 200) {
+            throw new NotFoundError();
+        }
+        return await resp.json();
+    }
+    async search(args) {
+        const resp = await xhr.get(`${BASE_URL}/api/v1/search${asQueryArgs(args)}`);
+        if (resp.status !== 200) {
+            throw new NotFoundError();
+        }
+        return await resp.json();
+    }
+}
+
 setLogLevel(config.log.level);
 const log = logger('bot.ts');
 const modules = [
@@ -8431,6 +8586,7 @@ const createBot = async () => {
     const webSocketServer = new WebSocketServer();
     const webServer = new WebServer();
     const twitchTmiClientManager = new TwitchTmiClientManager();
+    const youtube = new Youtube(new YoutubeApi(config.youtube), new Indivious(), cache);
     class BotImpl {
         constructor() {
             this.userTwitchClientManagerInstances = {};
@@ -8446,6 +8602,7 @@ const createBot = async () => {
         getAuth() { return auth; }
         getWebServer() { return webServer; }
         getWebSocketServer() { return webSocketServer; }
+        getYoutube() { return youtube; }
         getWidgets() { return widgets; }
         getEventHub() { return eventHub; }
         getStreamStatusUpdater() {

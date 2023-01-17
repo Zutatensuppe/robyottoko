@@ -26,6 +26,9 @@ import { StreamStatusUpdater } from './services/StreamStatusUpdater'
 import { FrontendStatusUpdater } from './services/FrontendStatusUpdater'
 import { TwitchTmiClientManager } from './services/TwitchTmiClientManager'
 import { Repos } from './repo/Repos'
+import { Youtube } from './services/Youtube'
+import { YoutubeApi } from './services/youtube/YoutubeApi'
+import { Indivious } from './services/youtube/Indivious'
 
 setLogLevel(config.log.level)
 const log = logger('bot.ts')
@@ -54,6 +57,11 @@ const createBot = async (): Promise<Bot> => {
   const webSocketServer = new WebSocketServer()
   const webServer = new WebServer()
   const twitchTmiClientManager = new TwitchTmiClientManager()
+  const youtube = new Youtube(
+    new YoutubeApi(config.youtube),
+    new Indivious(),
+    cache
+  )
 
   class BotImpl implements Bot {
     private userTwitchClientManagerInstances: Record<number, TwitchClientManager> = {}
@@ -69,6 +77,7 @@ const createBot = async (): Promise<Bot> => {
     getAuth() { return auth }
     getWebServer() { return webServer }
     getWebSocketServer() { return webSocketServer }
+    getYoutube() { return youtube }
     getWidgets() { return widgets }
     getEventHub() { return eventHub }
     getStreamStatusUpdater(): StreamStatusUpdater {
