@@ -1862,10 +1862,17 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
             },
         },
         {
-            regex: /\$bot\.(version|date|website|github|features)/g,
+            regex: /\$bot\.(message|version|date|website|github|features)/g,
             replacer: async (_m0, m1) => {
                 if (!bot) {
                     return '';
+                }
+                if (m1 === 'message') {
+                    return `Robyottoko is a versatile twitch `
+                        + `bot, containing features like media commands, timers, translation, `
+                        + `widget for user-submitted drawings, captions (speech-to-text), `
+                        + `png-tuber and song requests. Get it connected to your twitch `
+                        + `channel for free at https://hyottoko.club`;
                 }
                 if (m1 === 'version') {
                     return bot.getBuildVersion();
@@ -1880,7 +1887,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return 'https://github.com/zutatensuppe/robyottoko';
                 }
                 if (m1 === 'features') {
-                    return 'this twitch bot has commands, media commands, timers, translation commands, user-submitted drawings widget, png-tuber, song requests, captions (speech-to-text)!';
+                    return 'this versatile twitch bot has features like media commands, timers, translation, widget for user-submitted drawings, captions (speech-to-text), png-tuber and song requests';
                 }
                 return '';
             },
@@ -5214,6 +5221,16 @@ class GeneralModule {
                 }
                 return trigger;
             });
+            // TODO: remove after deploy
+            cmd.effects = cmd.effects.map((effect) => {
+                if (effect.type === CommandEffectType.CHAT
+                    && effect.data.text.length === 1
+                    && effect.data.text[0] === 'Version $bot.version $bot.website < - $bot.features - Source code at $bot.github') {
+                    effect.data.text[0] = '$bot.message';
+                    shouldSave = true;
+                }
+                return effect;
+            });
             return cmd;
         });
         // add ids to commands that dont have one yet
@@ -5260,7 +5277,7 @@ class GeneralModule {
             command.effects.push({
                 type: CommandEffectType.CHAT,
                 data: {
-                    text: ['Version $bot.version $bot.website < - $bot.features - Source code at $bot.github']
+                    text: ['$bot.message']
                 }
             });
             data.commands.push(command);
@@ -8159,9 +8176,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-17T23:23:49.085Z",
+    buildDate: "2023-01-17T23:54:23.177Z",
     // @ts-ignore
-    buildVersion: "1.51.0",
+    buildVersion: "1.51.1",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
