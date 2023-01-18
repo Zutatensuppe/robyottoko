@@ -1872,7 +1872,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                         + `bot, containing features like media commands, timers, translation, `
                         + `widget for user-submitted drawings, captions (speech-to-text), `
                         + `png-tuber and song requests. Get it connected to your twitch `
-                        + `channel for free at https://hyottoko.club`;
+                        + `channel for free at https://hyottoko.club 🤖`;
                 }
                 if (m1 === 'version') {
                     return bot.getBuildVersion();
@@ -5221,16 +5221,6 @@ class GeneralModule {
                 }
                 return trigger;
             });
-            // TODO: remove after deploy
-            cmd.effects = cmd.effects.map((effect) => {
-                if (effect.type === CommandEffectType.CHAT
-                    && effect.data.text.length === 1
-                    && effect.data.text[0] === 'Version $bot.version $bot.website < - $bot.features - Source code at $bot.github') {
-                    effect.data.text[0] = '$bot.message';
-                    shouldSave = true;
-                }
-                return effect;
-            });
             return cmd;
         });
         // add ids to commands that dont have one yet
@@ -8176,9 +8166,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-17T23:54:23.177Z",
+    buildDate: "2023-01-18T00:03:08.653Z",
     // @ts-ignore
-    buildVersion: "1.51.1",
+    buildVersion: "1.51.2",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
