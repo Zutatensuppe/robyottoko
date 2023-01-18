@@ -19,10 +19,14 @@ export class CommandExecutor {
     context: TwitchChatContext,
     triggers: CommandTrigger[],
     date: Date,
+    contextModule?: Module
   ): Promise<void> {
     const promises: Promise<void>[] = []
     const ctx: CommandExecutionContext = { rawCmd, target, context, date }
     for (const m of bot.getModuleManager().all(user.id)) {
+      if (contextModule && contextModule.name !== m.name) {
+        continue
+      }
       const cmdDefs = getUniqueCommandsByTriggers(m.getCommands(), triggers)
       promises.push(this.tryExecuteCommands(m, cmdDefs, ctx, bot.getRepos().commandExecutionRepo))
     }
@@ -102,6 +106,7 @@ export class CommandExecutor {
       log.info({
         target: ctx.target,
         command: ctx.rawCmd?.name || '<unknown>',
+        module: contextModule.name,
       }, 'Executing command')
       // eslint-disable-next-line no-async-promise-executor
       const p = new Promise(async (resolve) => {

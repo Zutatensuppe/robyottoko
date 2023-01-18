@@ -3410,10 +3410,13 @@ const commands = {
 
 const log$n = logger('CommandExecutor.ts');
 class CommandExecutor {
-    async executeMatchingCommands(bot, user, rawCmd, target, context, triggers, date) {
+    async executeMatchingCommands(bot, user, rawCmd, target, context, triggers, date, contextModule) {
         const promises = [];
         const ctx = { rawCmd, target, context, date };
         for (const m of bot.getModuleManager().all(user.id)) {
+            if (contextModule && contextModule.name !== m.name) {
+                continue;
+            }
             const cmdDefs = getUniqueCommandsByTriggers(m.getCommands(), triggers);
             promises.push(this.tryExecuteCommands(m, cmdDefs, ctx, bot.getRepos().commandExecutionRepo));
         }
@@ -3475,6 +3478,7 @@ class CommandExecutor {
             log$n.info({
                 target: ctx.target,
                 command: ctx.rawCmd?.name || '<unknown>',
+                module: contextModule.name,
             }, 'Executing command');
             // eslint-disable-next-line no-async-promise-executor
             const p = new Promise(async (resolve) => {
@@ -4221,7 +4225,7 @@ class ChatEventHandler {
             const { triggers, rawCmd } = await createTriggers(m);
             if (triggers.length > 0) {
                 const exec = new CommandExecutor();
-                await exec.executeMatchingCommands(bot, user, rawCmd, target, context, triggers, date);
+                await exec.executeMatchingCommands(bot, user, rawCmd, target, context, triggers, date, m);
             }
             await m.onChatMsg(chatMessageContext);
         }
@@ -8166,9 +8170,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-18T00:03:08.653Z",
+    buildDate: "2023-01-18T00:30:23.788Z",
     // @ts-ignore
-    buildVersion: "1.51.2",
+    buildVersion: "1.51.3",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');

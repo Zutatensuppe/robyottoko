@@ -145,7 +145,7 @@ export class ChatEventHandler {
       const { triggers, rawCmd } = await createTriggers(m)
       if (triggers.length > 0) {
         const exec = new CommandExecutor()
-        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, triggers, date)
+        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, triggers, date, m)
       }
       await m.onChatMsg(chatMessageContext);
     }
