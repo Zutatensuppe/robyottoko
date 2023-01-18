@@ -811,7 +811,7 @@ export const doReplacements = async (
             + `bot, containing features like media commands, timers, translation, `
             + `widget for user-submitted drawings, captions (speech-to-text), `
             + `png-tuber and song requests. Get it connected to your twitch `
-            + `channel for free at https://hyottoko.club`
+            + `channel for free at https://hyottoko.club 🤖`
         }
         if (m1 === 'version') {
           return bot.getBuildVersion()
