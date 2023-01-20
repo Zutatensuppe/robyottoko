@@ -972,25 +972,31 @@ const i = [
   "🇿🇦",
   "🇿🇲",
   "🇿🇼"
+], r = [
+  // two different rainbow flags (first is the broken one, when using windows)
+  { from: "🏳‍🌈", to: "🏳️‍🌈" }
 ], s = new RegExp(`${i.join("|")}|(\\p{EPres}|\\p{ExtPict})(\\u200d(\\p{EPres}|\\p{ExtPict})\\ufe0f?)*`, "gu");
-function* c(o) {
-  const t = o.match(s);
+function* c(n) {
+  const t = n.match(s);
   if (t)
-    for (const e of t)
-      yield [...e].map((n) => n.codePointAt(0));
+    for (let o of t) {
+      for (const e of r)
+        o = o.replace(e.from, e.to);
+      yield [...o].map((e) => e.codePointAt(0));
+    }
 }
-const r = (o) => {
+const f = (n) => {
   const t = [];
-  for (const e of c(o))
-    t.push(e);
+  for (const o of c(n))
+    t.push(o);
   return t;
-}, d = (o) => {
+}, d = (n) => {
   const t = [];
-  for (const e of c(o))
-    t.push(e.map((n) => n.toString(16)).join("-"));
+  for (const o of c(n))
+    t.push(o.map((e) => e.toString(16)).join("-"));
   return t;
-}, f = {
-  detectCodePoints: r,
+}, p = {
+  detectCodePoints: f,
   detectStrings: d,
   EMOJI_REGEX: s
 };
@@ -2190,7 +2196,7 @@ const determineNewVolume = (input, currentVal) => {
     return val;
 };
 const extractEmojiEmotes = (context) => {
-    return f.detectStrings(context.msgOriginal).map(str => ({
+    return p.detectStrings(context.msgOriginal).map(str => ({
         url: `https://cdn.betterttv.net/assets/emoji/${str}.svg`,
     }));
 };
@@ -8170,9 +8176,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-20T00:28:54.279Z",
+    buildDate: "2023-01-20T01:45:05.526Z",
     // @ts-ignore
-    buildVersion: "1.51.4",
+    buildVersion: "1.51.5",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
