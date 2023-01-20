@@ -1,7 +1,7 @@
 {
   "name": "robyottoko",
   "type": "module",
-  "version": "1.51.3",
+  "version": "1.51.4",
   "description": "",
   "main": "index.js",
   "author": "",
@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@ckpack/vue-color": "^1.3.0",
-    "@zutatensuppe/emoji-detect": "^1.0.2",
+    "@zutatensuppe/emoji-detect": "^1.0.5",
     "async-mutex": "^0.3.2",
     "bulma": "^0.9.4",
     "bulma-switch": "^2.0.4",
