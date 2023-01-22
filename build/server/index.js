@@ -1281,6 +1281,9 @@ const parseCommandFromCmdAndMessage = (msg, command) => {
         const args = msg.substring(command.value.length).trim().split(' ').filter(s => !!s);
         return { name, args };
     }
+    if (command.match === 'anywhere' && msg.split(' ').includes(command.value)) {
+        return { name: command.value, args: [] };
+    }
     return null;
 };
 const _toInt = (value) => parseInt(`${value}`, 10);
@@ -5233,17 +5236,6 @@ class GeneralModule {
                 shouldSave = true;
             }
             cmd.triggers = (cmd.triggers || []).map((trigger) => {
-                // TODO: remove after release
-                if (typeof trigger.data.command === 'string') {
-                    trigger.data.command = {
-                        value: trigger.data.command,
-                        match: trigger.data.commandExact ? 'exact' : 'startsWith',
-                    };
-                    if (typeof trigger.data.commandExact !== 'undefined') {
-                        delete trigger.data.commandExact;
-                    }
-                    shouldSave = true;
-                }
                 trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0;
                 if (trigger.data.minSeconds) {
                     trigger.data.minInterval = trigger.data.minSeconds * SECOND;
@@ -6228,20 +6220,6 @@ class SongrequestModule {
                 }
                 shouldSave = true;
             }
-            cmd.triggers = (cmd.triggers || []).map((trigger) => {
-                // TODO: remove after release
-                if (typeof trigger.data.command === 'string') {
-                    trigger.data.command = {
-                        value: trigger.data.command,
-                        match: trigger.data.commandExact ? 'exact' : 'startsWith',
-                    };
-                    if (typeof trigger.data.commandExact !== 'undefined') {
-                        delete trigger.data.commandExact;
-                    }
-                    shouldSave = true;
-                }
-                return trigger;
-            });
         }
         return {
             data: {
@@ -8209,9 +8187,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-22T21:13:49.229Z",
+    buildDate: "2023-01-22T21:24:20.388Z",
     // @ts-ignore
-    buildVersion: "1.52.1",
+    buildVersion: "1.53.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
