@@ -163,54 +163,70 @@ describe('fn.parseKnownCommandFromTriggerAndMessage', () => {
   test.each([
     {
       msg: '!sr good good',
-      command: '!sr good',
-      commandExact: false,
+      command: {
+        value: '!sr good',
+        match: 'startsWith',
+      },
       expected: { name: '!sr good', args: ['good'] },
     },
     {
       msg: '!sr good',
-      command: '!sr good',
-      commandExact: false,
+      command: {
+        value: '!sr good',
+        match: 'startsWith',
+      },
       expected: { name: '!sr good', args: [] },
     },
     {
       msg: '!sr hello',
-      command: '!sr',
-      commandExact: false,
+      command: {
+        value: '!sr',
+        match: 'startsWith',
+      },
       expected: { name: '!sr', args: ['hello'] },
     },
     {
       msg: '!sr',
-      command: '!sr',
-      commandExact: false,
+      command: {
+        value: '!sr',
+        match: 'startsWith',
+      },
       expected: { name: '!sr', args: [] },
     },
     {
       msg: '!sr good good',
-      command: '!sr good',
-      commandExact: true,
+      command: {
+        value: '!sr good',
+        match: 'exact',
+      },
       expected: null,
     },
     {
       msg: '!sr good',
-      command: '!sr good',
-      commandExact: true,
+      command: {
+        value: '!sr good',
+        match: 'exact',
+      },
       expected: { name: '!sr good', args: [] },
     },
     {
       msg: '!sr hello',
-      command: '!sr',
-      commandExact: true,
+      command: {
+        value: '!sr',
+        match: 'exact',
+      },
       expected: null,
     },
     {
       msg: '!sr',
-      command: '!sr',
-      commandExact: true,
+      command: {
+        value: '!sr',
+        match: 'exact',
+      },
       expected: { name: '!sr', args: [] },
     },
-  ])('parseKnownCommandFromTriggerAndMessage $msg', ({ msg, command, commandExact, expected }) => {
-    const trigger = { type: 'command', data: { command, commandExact } } as CommandTrigger
+  ])('parseKnownCommandFromTriggerAndMessage $msg', ({ msg, command, expected }) => {
+    const trigger = { type: 'command', data: { command } } as CommandTrigger
     const actual = parseCommandFromTriggerAndMessage(msg, trigger)
     expect(actual).toStrictEqual(expected)
   })

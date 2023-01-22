@@ -77,11 +77,7 @@ export const parseCommandFromTriggerAndMessage = (
   if (trigger.type !== 'command') {
     return null
   }
-  return parseCommandFromCmdAndMessage(
-    msg,
-    trigger.data.command,
-    trigger.data.commandExact,
-  )
+  return parseCommandFromCmdAndMessage(msg, trigger.data.command)
 }
 
 export const normalizeChatMessage = (text: string): string => {
@@ -103,15 +99,14 @@ export const normalizeChatMessage = (text: string): string => {
 
 export const parseCommandFromCmdAndMessage = (
   msg: string,
-  command: string,
-  commandExact: boolean,
+  command: { value: string, match: 'exact' | 'startsWith' },
 ): RawCommand | null => {
   if (
-    msg === command
-    || (!commandExact && msg.startsWith(command + ' '))
+    msg === command.value
+    || (command.match === 'startsWith' && msg.startsWith(command + ' '))
   ) {
-    const name = msg.substring(0, command.length).trim()
-    const args = msg.substring(command.length).trim().split(' ').filter(s => !!s)
+    const name = msg.substring(0, command.value.length).trim()
+    const args = msg.substring(command.value.length).trim().split(' ').filter(s => !!s)
     return { name, args }
   }
   return null

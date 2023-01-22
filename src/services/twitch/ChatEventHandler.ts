@@ -125,7 +125,7 @@ export class ChatEventHandler {
       // so that in case commands `!draw` and `!draw bad` are set up
       // and `!draw bad` is written in chat, that command only will be
       // executed and not also `!draw`
-      commandTriggers = commandTriggers.sort((a, b) => b.data.command.length - a.data.command.length)
+      commandTriggers = commandTriggers.sort((a, b) => b.data.command.value.length - a.data.command.value.length)
       let rawCmd = null
       for (const trigger of commandTriggers) {
         rawCmd = fn.parseCommandFromTriggerAndMessage(msgNormalized, trigger)
