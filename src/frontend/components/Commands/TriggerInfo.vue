@@ -5,7 +5,8 @@
     <code v-if="trigger.data.since === 'stream'">current stream</code>
   </div>
   <div v-else-if="trigger.type === 'command'">
-    <code>{{ trigger.data.command }}</code>
+    <code>{{ trigger.data.command.value }}</code>
+    ({{ trigger.data.command.match }})
   </div>
   <div v-else-if="trigger.type === 'reward_redemption'">
     <span

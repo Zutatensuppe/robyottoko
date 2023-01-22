@@ -44,8 +44,10 @@ export const newTrigger = (type: CommandTriggerType): CommandTrigger => ({
   type,
   data: {
     // for trigger type "command" (todo: should only exist if type is command, not always)
-    command: '',
-    commandExact: false, // true if the command must match exactly with the input
+    command: {
+      value: '',
+      match: 'startsWith',
+    },
 
     // for trigger type "timer" (todo: should only exist if type is timer, not always)
     minInterval: 0, // duration in ms or something parsable (eg 1s, 10m, ....)
@@ -63,7 +65,7 @@ export const newRaidTrigger = (): CommandTrigger => newTrigger(CommandTriggerTyp
 
 export const newRewardRedemptionTrigger = (command: string = ''): CommandTrigger => {
   const trigger = newTrigger(CommandTriggerType.REWARD_REDEMPTION)
-  trigger.data.command = command
+  trigger.data.command = { value: command, match: 'exact' }
   return trigger
 }
 
@@ -72,8 +74,10 @@ const newCommandId = () => nonce(10)
 
 export const newCommandTrigger = (command: string = '', commandExact: boolean = false): CommandTrigger => {
   const trigger = newTrigger(CommandTriggerType.COMMAND)
-  trigger.data.command = command
-  trigger.data.commandExact = commandExact
+  trigger.data.command = {
+    value: command,
+    match: commandExact ? 'exact' : 'startsWith',
+  }
   return trigger
 }
 

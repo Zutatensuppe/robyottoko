@@ -269,6 +269,21 @@ class SongrequestModule implements Module {
         }
         shouldSave = true
       }
+
+      cmd.triggers = (cmd.triggers || []).map((trigger: any) => {
+        // TODO: remove after release
+        if (typeof trigger.data.command === 'string') {
+          trigger.data.command = {
+            value: trigger.data.command,
+            match: trigger.data.commandExact ? 'exact' : 'startsWith',
+          }
+          if (typeof trigger.data.commandExact !== 'undefined') {
+            delete trigger.data.commandExact
+          }
+          shouldSave = true
+        }
+        return trigger
+      })
     }
 
     return {

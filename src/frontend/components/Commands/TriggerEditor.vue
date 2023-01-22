@@ -43,11 +43,11 @@
     >
       <div class="control has-icons-left mr-1">
         <input
-          v-model="value.data.command"
+          v-model="value.data.command.value"
           class="input is-small"
           :class="{
-            'has-background-danger-light': !value.data.command,
-            'has-text-danger-dark': !value.data.command,
+            'has-background-danger-light': !value.data.command.value,
+            'has-text-danger-dark': !value.data.command.value,
           }"
           type="text"
           @input="emitUpdate"
@@ -60,14 +60,18 @@
         class="control mr-1"
         title="Check if command should only be executed if it matches exactly (= no arguments come after it)."
       >
-        <label>
-          <CheckboxInput
-            v-model="value.data.commandExact"
-            class="mr-1"
-            @update:modelValue="emitUpdate"
-          />
-          <span class="is-small is-left">exact</span>
-        </label>
+        <label class="mr-1"><input
+          v-model="value.data.command.match"
+          type="radio"
+          value="startsWith"
+          @update:modelValue="emitUpdate"
+        > StartsWith</label>
+        <label><input
+          v-model="value.data.command.match"
+          type="radio"
+          value="exact"
+          @update:modelValue="emitUpdate"
+        > Exact</label>
       </div>
       <div class="control">
         <button
@@ -85,11 +89,11 @@
     >
       <div class="control has-icons-left">
         <DropdownInput
-          v-model="value.data.command"
+          v-model="value.data.command.value"
           :values="rewardRedemptionActions.map(a => ({ value: a.type, label: a.label }))"
           :class="{
-            'has-background-danger-light': !value.data.command,
-            'has-text-danger-dark': !value.data.command,
+            'has-background-danger-light': !value.data.command.value,
+            'has-text-danger-dark': !value.data.command.value,
           }"
           icon="bullseye"
           @update:modelValue="emitUpdate"
@@ -242,8 +246,10 @@ const value = ref<CommandTrigger>({
   type: "" as CommandTriggerType,
   data: {
     since: "",
-    command: "",
-    commandExact: false,
+    command: {
+      value: '',
+      match: 'startsWith',
+    },
     minInterval: 0,
     minLines: 0,
   },

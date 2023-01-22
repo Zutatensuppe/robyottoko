@@ -130,10 +130,6 @@ class GeneralModule implements Module {
   fix(commands: any[]): { commands: Command[], shouldSave: boolean } {
     let shouldSave = false
     const fixedCommands = (commands || []).map((cmd: any) => {
-      if (cmd.command) {
-        cmd.triggers = [newCommandTrigger(cmd.command, cmd.commandExact || false)]
-        delete cmd.command
-      }
       cmd.variables = cmd.variables || []
       cmd.effects = cmd.effects || []
 
@@ -232,6 +228,17 @@ class GeneralModule implements Module {
       }
 
       cmd.triggers = (cmd.triggers || []).map((trigger: any) => {
+        // TODO: remove after release
+        if (typeof trigger.data.command === 'string') {
+          trigger.data.command = {
+            value: trigger.data.command,
+            match: trigger.data.commandExact ? 'exact' : 'startsWith',
+          }
+          if (typeof trigger.data.commandExact !== 'undefined') {
+            delete trigger.data.commandExact
+          }
+          shouldSave = true
+        }
         trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0
         if (trigger.data.minSeconds) {
           trigger.data.minInterval = trigger.data.minSeconds * SECOND
