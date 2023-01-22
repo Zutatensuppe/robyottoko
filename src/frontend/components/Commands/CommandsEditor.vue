@@ -241,10 +241,10 @@ const findInTriggers = (search: string, command: Command): boolean => {
   // search in triggers:
   return command.triggers.some(trigger => {
     if (trigger.type === CommandTriggerType.COMMAND) {
-      return trigger.data.command.toLowerCase().indexOf(search) >= 0
+      return trigger.data.command.value.toLowerCase().indexOf(search) >= 0
     }
     if (trigger.type === CommandTriggerType.REWARD_REDEMPTION) {
-      return trigger.data.command.toLowerCase().indexOf(search) >= 0
+      return trigger.data.command.value.toLowerCase().indexOf(search) >= 0
     }
     return false
   })
