@@ -223,16 +223,18 @@ export enum CommandTriggerType {
   FIRST_CHAT = 'first_chat',
 }
 
+export interface CommandMatch {
+  value: string
+  match: 'startsWith' | 'exact' | 'anywhere'
+}
+
 export interface CommandTrigger {
   type: CommandTriggerType
   data: {
     // for trigger type "command" (todo: should only exist if type is command, not always)
-    command: {
-      value: string
-      match: 'startsWith' | 'exact' | 'anywhere'
-    }
+    command: CommandMatch
     // for trigger type "timer" (todo: should only exist if type is timer, not always)
-    minInterval: number // duration in ms or something parsable (eg 1s, 10m, ....)
+    minInterval: number | string // duration in ms or something parsable (eg 1s, 10m, ....)
     minLines: number
 
     // for trigger type "first_chat"

@@ -135,95 +135,88 @@ class GeneralModule implements Module {
 
       if (typeof cmd.cooldown !== 'object') {
         cmd.cooldown = cmd.timeout || { global: '0', perUser: '0' }
+        shouldSave = true
       }
       if (cmd.timeout) {
         delete cmd.timeout
-      }
-
-      if (typeof cmd.disallow_users === 'undefined') {
-        cmd.disallow_users = []
-        shouldSave = true
-      }
-      if (typeof cmd.allow_users === 'undefined') {
-        cmd.allow_users = []
-        shouldSave = true
-      }
-      if (typeof cmd.enabled === 'undefined') {
-        cmd.enabled = true
         shouldSave = true
       }
 
       if (cmd.variableChanges) {
         for (const variableChange of cmd.variableChanges) {
           cmd.effects.push(legacy.variableChangeToCommandEffect(variableChange))
+          shouldSave = true
         }
       }
 
       if (cmd.action === 'text' && !cmd.effects.find((effect: CommandEffect) => effect.type !== CommandEffectType.VARIABLE_CHANGE)) {
         cmd.effects.push(legacy.textToCommandEffect(cmd))
+        shouldSave = true
       }
 
       if (cmd.action === 'dict_lookup') {
         cmd.action = 'text'
         cmd.effects.push(legacy.dictLookupToCommandEffect(cmd))
+        shouldSave = true
       }
 
       if (cmd.action === 'emotes') {
         cmd.action = 'text'
         cmd.effects.push(legacy.emotesToCommandEffect(cmd))
+        shouldSave = true
       }
 
       if (cmd.action === 'media') {
         cmd.action = 'text'
         cmd.effects.push(legacy.mediaToCommandEffect(cmd))
+        shouldSave = true
       }
 
       if (cmd.action === 'madochan_createword') {
         cmd.action = 'text'
         cmd.effects.push(legacy.madochanToCommandEffect(cmd))
+        shouldSave = true
       }
 
       if (cmd.action === 'set_channel_title') {
         cmd.action = 'text'
         cmd.effects.push(legacy.setChannelTitleToCommandEffect(cmd))
+        shouldSave = true
       }
 
       if (cmd.action === 'set_channel_game_id') {
         cmd.action = 'text'
         cmd.effects.push(legacy.setChannelGameIdToCommandEffect(cmd))
+        shouldSave = true
       }
 
       if (cmd.action === 'add_stream_tags') {
         cmd.action = 'text'
         cmd.effects.push(legacy.addStreamTagsToCommandEffect(cmd))
+        shouldSave = true
       }
 
       if (cmd.action === 'remove_stream_tags') {
         cmd.action = 'text'
         cmd.effects.push(legacy.removeStreamTagsToCommandEffect(cmd))
+        shouldSave = true
       }
 
       if (cmd.action === 'chatters') {
         cmd.action = 'text'
         cmd.effects.push(legacy.chattersToCommandEffect(cmd))
+        shouldSave = true
       }
 
       if (cmd.action === 'countdown') {
         cmd.action = 'text'
         cmd.effects.push(legacy.countdownToCommandEffect(cmd))
+        shouldSave = true
       }
 
       if (cmd.action === 'media_volume') {
         cmd.action = 'text'
         cmd.effects.push(legacy.mediaVolumeToCommandEffect(cmd))
-      }
-
-      if (typeof cmd.restrict === 'undefined') {
-        if (cmd.restrict_to.length === 0) {
-          cmd.restrict = { active: false, to: [] }
-        } else {
-          cmd.restrict = { active: true, to: cmd.restrict_to }
-        }
         shouldSave = true
       }
 
@@ -232,26 +225,12 @@ class GeneralModule implements Module {
         if (trigger.data.minSeconds) {
           trigger.data.minInterval = trigger.data.minSeconds * SECOND
         }
+        shouldSave = true
         return trigger
       })
       return cmd
     })
 
-    // add ids to commands that dont have one yet
-    for (const command of fixedCommands) {
-      if (!command.id) {
-        command.id = nonce(10)
-        shouldSave = true
-      }
-      if (!command.createdAt) {
-        command.createdAt = newJsonDate()
-        shouldSave = true
-      }
-      if (command.variableChanges) {
-        delete command.variableChanges
-        shouldSave = true
-      }
-    }
     return {
       commands: fixedCommands,
       shouldSave,
@@ -268,15 +247,21 @@ class GeneralModule implements Module {
     const fixed = this.fix(data.commands)
     data.commands = fixed.commands
 
+    // todo: remove after release
     if (!data.adminSettings) {
       data.adminSettings = {}
+      fixed.shouldSave = true
     }
     if (typeof data.adminSettings.showImages === 'undefined') {
       data.adminSettings.showImages = true
+      fixed.shouldSave = true
     }
     if (typeof data.adminSettings.autocommands === 'undefined') {
       data.adminSettings.autocommands = []
+      fixed.shouldSave = true
     }
+
+    // do not remove for now, new users gain the !bot command by this
     if (!data.adminSettings.autocommands.includes('!bot')) {
       const command = commonCommands.text.NewCommand() as RandomTextCommand
       command.triggers = [newCommandTrigger('!bot')]
