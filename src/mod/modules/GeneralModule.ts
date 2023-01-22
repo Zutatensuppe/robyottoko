@@ -323,12 +323,12 @@ class GeneralModule implements Module {
           commands.push(cmdObj)
         } else if (trigger.type === CommandTriggerType.COMMAND) {
           // TODO: check why this if is required, maybe for protection against '' command?
-          if (trigger.data.command) {
+          if (trigger.data.command.value) {
             commands.push(cmdObj)
           }
         } else if (trigger.type === CommandTriggerType.REWARD_REDEMPTION) {
           // TODO: check why this if is required, maybe for protection against '' command?
-          if (trigger.data.command) {
+          if (trigger.data.command.value) {
             commands.push(cmdObj)
           }
         } else if (trigger.type === CommandTriggerType.FOLLOW) {

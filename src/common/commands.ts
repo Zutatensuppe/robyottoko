@@ -92,12 +92,18 @@ const triggersEqual = (a: CommandTrigger, b: CommandTrigger): boolean => {
     return false
   }
   if (a.type === CommandTriggerType.COMMAND) {
-    if (a.data.command === b.data.command) {
+    if (
+      a.data.command.value === b.data.command.value
+      && a.data.command.match === a.data.command.match
+    ) {
       // no need to check for commandExact here (i think^^)
       return true
     }
   } else if (a.type === CommandTriggerType.REWARD_REDEMPTION) {
-    if (a.data.command === b.data.command) {
+    if (
+      a.data.command.value === b.data.command.value
+      && a.data.command.match === a.data.command.match
+    ) {
       return true
     }
   } else if (a.type === CommandTriggerType.TIMER) {
@@ -150,7 +156,7 @@ export const isValidEffect = (_effect: CommandEffect): boolean => {
 
 export const isValidTrigger = (trigger: CommandTrigger): boolean => {
   if (trigger.type === CommandTriggerType.COMMAND) {
-    if (!trigger.data.command) {
+    if (!trigger.data.command.value) {
       return false;
     }
     return true;
