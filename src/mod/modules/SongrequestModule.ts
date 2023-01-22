@@ -182,7 +182,7 @@ class SongrequestModule implements Module {
   }
 
   async reinit(): Promise<SongerquestModuleInitData> {
-    let shouldSave = false
+    const shouldSave = false
     const data = await this.bot.getRepos().module.load(this.user.id, this.name, {
       filter: {
         tag: '',
@@ -224,52 +224,6 @@ class SongrequestModule implements Module {
     data.playlist = default_playlist(data.playlist)
     data.settings = default_settings(data.settings)
     data.commands = default_commands(data.commands)
-
-    // add ids to commands that dont have one yet
-    for (const cmd of data.commands) {
-      if (!cmd.id) {
-        cmd.id = nonce(10)
-        shouldSave = true
-      }
-      if (!cmd.createdAt) {
-        cmd.createdAt = newJsonDate()
-        shouldSave = true
-      }
-      if (!cmd.effects) {
-        cmd.effects = []
-        shouldSave = true
-      }
-
-      if (typeof cmd.cooldown !== 'object') {
-        cmd.cooldown = cmd.timeout || { global: '0', perUser: '0' }
-        shouldSave = true
-      }
-      if (cmd.timeout) {
-        delete cmd.timeout
-        shouldSave = true
-      }
-      if (typeof cmd.disallow_users === 'undefined') {
-        cmd.disallow_users = []
-        shouldSave = true
-      }
-      if (typeof cmd.allow_users === 'undefined') {
-        cmd.allow_users = []
-        shouldSave = true
-      }
-      if (typeof cmd.enabled === 'undefined') {
-        cmd.enabled = true
-        shouldSave = true
-      }
-
-      if (typeof cmd.restrict === 'undefined') {
-        if (cmd.restrict_to.length === 0) {
-          cmd.restrict = { active: false, to: [] }
-        } else {
-          cmd.restrict = { active: true, to: cmd.restrict_to }
-        }
-        shouldSave = true
-      }
-    }
 
     return {
       data: {

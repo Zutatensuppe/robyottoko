@@ -7,7 +7,7 @@ import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, getRandom, getRandomInt
 import {
   Command, GlobalVariable, RawCommand, TwitchChatContext,
   TwitchChatClient, FunctionCommand, Module, CommandTrigger,
-  Bot, ChatMessageContext, CommandEffectType, CommandVariableChange, DictSearchResponseDataEntry, CountdownActionType, CountdownAction, CountdownCommandData,
+  Bot, ChatMessageContext, CommandEffectType, CommandVariableChange, DictSearchResponseDataEntry, CountdownActionType, CountdownAction, CountdownCommandData, CommandMatch,
 } from './types'
 import { User } from './repo/Users'
 import TwitchHelixClient, { TwitchHelixUserSearchResponseDataEntry } from './services/TwitchHelixClient'
@@ -99,17 +99,24 @@ export const normalizeChatMessage = (text: string): string => {
 
 export const parseCommandFromCmdAndMessage = (
   msg: string,
-  command: { value: string, match: 'exact' | 'startsWith' | 'anywhere' },
+  command: CommandMatch,
 ): RawCommand | null => {
-  if (
-    msg === command.value
-    || (command.match === 'startsWith' && msg.startsWith(command.value + ' '))
-  ) {
+  if (msg === command.value) {
+    return { name: command.value, args: [] }
+  }
+  if (command.match === 'startsWith' && msg.startsWith(command.value + ' ')) {
     const name = msg.substring(0, command.value.length).trim()
     const args = msg.substring(command.value.length).trim().split(' ').filter(s => !!s)
     return { name, args }
   }
-  if (command.match === 'anywhere' && msg.split(' ').includes(command.value)) {
+  if (
+    command.match === 'anywhere'
+    && (
+      msg.startsWith(command.value + ' ')
+      || msg.endsWith(' ' + command.value)
+      || msg.includes(' ' + command.value + ' ')
+    )
+  ) {
     return { name: command.value, args: [] }
   }
   return null
