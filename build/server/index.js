@@ -1276,7 +1276,7 @@ const normalizeChatMessage = (text) => {
 };
 const parseCommandFromCmdAndMessage = (msg, command) => {
     if (msg === command.value
-        || (command.match === 'startsWith' && msg.startsWith(command + ' '))) {
+        || (command.match === 'startsWith' && msg.startsWith(command.value + ' '))) {
         const name = msg.substring(0, command.value.length).trim();
         const args = msg.substring(command.value.length).trim().split(' ').filter(s => !!s);
         return { name, args };
@@ -8207,7 +8207,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-22T20:08:12.549Z",
+    buildDate: "2023-01-22T20:21:41.939Z",
     // @ts-ignore
     buildVersion: "1.52.0",
 };
