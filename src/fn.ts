@@ -103,7 +103,7 @@ export const parseCommandFromCmdAndMessage = (
 ): RawCommand | null => {
   if (
     msg === command.value
-    || (command.match === 'startsWith' && msg.startsWith(command + ' '))
+    || (command.match === 'startsWith' && msg.startsWith(command.value + ' '))
   ) {
     const name = msg.substring(0, command.value.length).trim()
     const args = msg.substring(command.value.length).trim().split(' ').filter(s => !!s)
