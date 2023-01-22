@@ -1260,7 +1260,7 @@ const parseCommandFromTriggerAndMessage = (msg, trigger) => {
     if (trigger.type !== 'command') {
         return null;
     }
-    return parseCommandFromCmdAndMessage(msg, trigger.data.command, trigger.data.commandExact);
+    return parseCommandFromCmdAndMessage(msg, trigger.data.command);
 };
 const normalizeChatMessage = (text) => {
     // strip control chars
@@ -1274,11 +1274,11 @@ const normalizeChatMessage = (text) => {
     text = text.replace(/\p{Zs}/gu, ' ');
     return text.trim();
 };
-const parseCommandFromCmdAndMessage = (msg, command, commandExact) => {
-    if (msg === command
-        || (!commandExact && msg.startsWith(command + ' '))) {
-        const name = msg.substring(0, command.length).trim();
-        const args = msg.substring(command.length).trim().split(' ').filter(s => !!s);
+const parseCommandFromCmdAndMessage = (msg, command) => {
+    if (msg === command.value
+        || (command.match === 'startsWith' && msg.startsWith(command + ' '))) {
+        const name = msg.substring(0, command.value.length).trim();
+        const args = msg.substring(command.value.length).trim().split(' ').filter(s => !!s);
         return { name, args };
     }
     return null;
@@ -3062,8 +3062,10 @@ const newTrigger = (type) => ({
     type,
     data: {
         // for trigger type "command" (todo: should only exist if type is command, not always)
-        command: '',
-        commandExact: false,
+        command: {
+            value: '',
+            match: 'startsWith',
+        },
         // for trigger type "timer" (todo: should only exist if type is timer, not always)
         minInterval: 0,
         minLines: 0,
@@ -3077,15 +3079,17 @@ const newBitsTrigger = () => newTrigger(CommandTriggerType.BITS);
 const newRaidTrigger = () => newTrigger(CommandTriggerType.RAID);
 const newRewardRedemptionTrigger = (command = '') => {
     const trigger = newTrigger(CommandTriggerType.REWARD_REDEMPTION);
-    trigger.data.command = command;
+    trigger.data.command = { value: command, match: 'exact' };
     return trigger;
 };
 const newJsonDate = () => new Date().toJSON();
 const newCommandId = () => nonce(10);
 const newCommandTrigger = (command = '', commandExact = false) => {
     const trigger = newTrigger(CommandTriggerType.COMMAND);
-    trigger.data.command = command;
-    trigger.data.commandExact = commandExact;
+    trigger.data.command = {
+        value: command,
+        match: commandExact ? 'exact' : 'startsWith',
+    };
     return trigger;
 };
 const triggersEqual = (a, b) => {
@@ -4212,7 +4216,7 @@ class ChatEventHandler {
             // so that in case commands `!draw` and `!draw bad` are set up
             // and `!draw bad` is written in chat, that command only will be
             // executed and not also `!draw`
-            commandTriggers = commandTriggers.sort((a, b) => b.data.command.length - a.data.command.length);
+            commandTriggers = commandTriggers.sort((a, b) => b.data.command.value.length - a.data.command.value.length);
             let rawCmd = null;
             for (const trigger of commandTriggers) {
                 rawCmd = fn.parseCommandFromTriggerAndMessage(msgNormalized, trigger);
@@ -5145,10 +5149,6 @@ class GeneralModule {
     fix(commands) {
         let shouldSave = false;
         const fixedCommands = (commands || []).map((cmd) => {
-            if (cmd.command) {
-                cmd.triggers = [newCommandTrigger(cmd.command, cmd.commandExact || false)];
-                delete cmd.command;
-            }
             cmd.variables = cmd.variables || [];
             cmd.effects = cmd.effects || [];
             if (typeof cmd.cooldown !== 'object') {
@@ -5231,6 +5231,17 @@ class GeneralModule {
                 shouldSave = true;
             }
             cmd.triggers = (cmd.triggers || []).map((trigger) => {
+                // TODO: remove after release
+                if (typeof trigger.data.command === 'string') {
+                    trigger.data.command = {
+                        value: trigger.data.command,
+                        match: trigger.data.commandExact ? 'exact' : 'startsWith',
+                    };
+                    if (typeof trigger.data.commandExact !== 'undefined') {
+                        delete trigger.data.commandExact;
+                    }
+                    shouldSave = true;
+                }
                 trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0;
                 if (trigger.data.minSeconds) {
                     trigger.data.minInterval = trigger.data.minSeconds * SECOND;
@@ -6215,6 +6226,20 @@ class SongrequestModule {
                 }
                 shouldSave = true;
             }
+            cmd.triggers = (cmd.triggers || []).map((trigger) => {
+                // TODO: remove after release
+                if (typeof trigger.data.command === 'string') {
+                    trigger.data.command = {
+                        value: trigger.data.command,
+                        match: trigger.data.commandExact ? 'exact' : 'startsWith',
+                    };
+                    if (typeof trigger.data.commandExact !== 'undefined') {
+                        delete trigger.data.commandExact;
+                    }
+                    shouldSave = true;
+                }
+                return trigger;
+            });
         }
         return {
             data: {
@@ -8182,9 +8207,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-22T19:06:25.253Z",
+    buildDate: "2023-01-22T19:50:59.677Z",
     // @ts-ignore
-    buildVersion: "1.51.6",
+    buildVersion: "1.52.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
