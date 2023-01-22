@@ -99,7 +99,7 @@ export const normalizeChatMessage = (text: string): string => {
 
 export const parseCommandFromCmdAndMessage = (
   msg: string,
-  command: { value: string, match: 'exact' | 'startsWith' },
+  command: { value: string, match: 'exact' | 'startsWith' | 'anywhere' },
 ): RawCommand | null => {
   if (
     msg === command.value
@@ -108,6 +108,9 @@ export const parseCommandFromCmdAndMessage = (
     const name = msg.substring(0, command.value.length).trim()
     const args = msg.substring(command.value.length).trim().split(' ').filter(s => !!s)
     return { name, args }
+  }
+  if (command.match === 'anywhere' && msg.split(' ').includes(command.value)) {
+    return { name: command.value, args: [] }
   }
   return null
 }

@@ -72,6 +72,12 @@
           value="exact"
           @update:modelValue="emitUpdate"
         > Exact</label>
+        <label><input
+          v-model="value.data.command.match"
+          type="radio"
+          value="anywhere"
+          @update:modelValue="emitUpdate"
+        > Anywhere</label>
       </div>
       <div class="control">
         <button

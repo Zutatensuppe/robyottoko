@@ -229,7 +229,7 @@ export interface CommandTrigger {
     // for trigger type "command" (todo: should only exist if type is command, not always)
     command: {
       value: string
-      match: 'startsWith' | 'exact'
+      match: 'startsWith' | 'exact' | 'anywhere'
     }
     // for trigger type "timer" (todo: should only exist if type is timer, not always)
     minInterval: number // duration in ms or something parsable (eg 1s, 10m, ....)

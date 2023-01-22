@@ -14,7 +14,8 @@
       title="Channel Point Reward"
     ><i class="fa fa-bullseye" />:
     </span>
-    <code>{{ trigger.data.command }}</code>
+    <code>{{ trigger.data.command.value }}</code>
+    ({{ trigger.data.command.match }})
   </div>
   <div v-else-if="trigger.type === 'timer'">
     <span class="is-small">Timer: </span>

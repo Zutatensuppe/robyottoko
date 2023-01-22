@@ -225,6 +225,38 @@ describe('fn.parseKnownCommandFromTriggerAndMessage', () => {
       },
       expected: { name: '!sr', args: [] },
     },
+    {
+      msg: '!sr LULgood good',
+      command: {
+        value: 'LUL',
+        match: 'anywhere',
+      },
+      expected: null,
+    },
+    {
+      msg: '!sr LUL good good',
+      command: {
+        value: 'LUL',
+        match: 'anywhere',
+      },
+      expected: { name: 'LUL', args: [] },
+    },
+    {
+      msg: 'LUL good good',
+      command: {
+        value: 'LUL',
+        match: 'anywhere',
+      },
+      expected: { name: 'LUL', args: [] },
+    },
+    {
+      msg: 'good good LUL',
+      command: {
+        value: 'LUL',
+        match: 'anywhere',
+      },
+      expected: { name: 'LUL', args: [] },
+    },
   ])('parseKnownCommandFromTriggerAndMessage $msg', ({ msg, command, expected }) => {
     const trigger = { type: 'command', data: { command } } as CommandTrigger
     const actual = parseCommandFromTriggerAndMessage(msg, trigger)
