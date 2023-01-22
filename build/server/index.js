@@ -3097,13 +3097,15 @@ const triggersEqual = (a, b) => {
         return false;
     }
     if (a.type === CommandTriggerType.COMMAND) {
-        if (a.data.command === b.data.command) {
+        if (a.data.command.value === b.data.command.value
+            && a.data.command.match === a.data.command.match) {
             // no need to check for commandExact here (i think^^)
             return true;
         }
     }
     else if (a.type === CommandTriggerType.REWARD_REDEMPTION) {
-        if (a.data.command === b.data.command) {
+        if (a.data.command.value === b.data.command.value
+            && a.data.command.match === a.data.command.match) {
             return true;
         }
     }
@@ -5322,13 +5324,13 @@ class GeneralModule {
                 }
                 else if (trigger.type === CommandTriggerType.COMMAND) {
                     // TODO: check why this if is required, maybe for protection against '' command?
-                    if (trigger.data.command) {
+                    if (trigger.data.command.value) {
                         commands$1.push(cmdObj);
                     }
                 }
                 else if (trigger.type === CommandTriggerType.REWARD_REDEMPTION) {
                     // TODO: check why this if is required, maybe for protection against '' command?
-                    if (trigger.data.command) {
+                    if (trigger.data.command.value) {
                         commands$1.push(cmdObj);
                     }
                 }
@@ -8207,9 +8209,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-22T20:21:41.939Z",
+    buildDate: "2023-01-22T21:13:49.229Z",
     // @ts-ignore
-    buildVersion: "1.52.0",
+    buildVersion: "1.52.1",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
