@@ -4726,6 +4726,9 @@ class Db {
                         wheres.push(k + ' NOT IN (' + where[k][prop].map(() => `$${$i++}`) + ')');
                         values.push(...where[k][prop]);
                     }
+                    else {
+                        wheres.push('TRUE');
+                    }
                     continue;
                 }
                 prop = '$in';
@@ -4733,6 +4736,9 @@ class Db {
                     if (where[k][prop].length > 0) {
                         wheres.push(k + ' IN (' + where[k][prop].map(() => `$${$i++}`) + ')');
                         values.push(...where[k][prop]);
+                    }
+                    else {
+                        wheres.push('FALSE');
                     }
                     continue;
                 }
@@ -8176,9 +8182,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-20T01:45:05.526Z",
+    buildDate: "2023-01-22T19:06:25.253Z",
     // @ts-ignore
-    buildVersion: "1.51.5",
+    buildVersion: "1.51.6",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
