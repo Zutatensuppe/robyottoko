@@ -1275,13 +1275,18 @@ const normalizeChatMessage = (text) => {
     return text.trim();
 };
 const parseCommandFromCmdAndMessage = (msg, command) => {
-    if (msg === command.value
-        || (command.match === 'startsWith' && msg.startsWith(command.value + ' '))) {
+    if (msg === command.value) {
+        return { name: command.value, args: [] };
+    }
+    if (command.match === 'startsWith' && msg.startsWith(command.value + ' ')) {
         const name = msg.substring(0, command.value.length).trim();
         const args = msg.substring(command.value.length).trim().split(' ').filter(s => !!s);
         return { name, args };
     }
-    if (command.match === 'anywhere' && msg.split(' ').includes(command.value)) {
+    if (command.match === 'anywhere'
+        && (msg.startsWith(command.value + ' ')
+            || msg.endsWith(' ' + command.value)
+            || msg.includes(' ' + command.value + ' '))) {
         return { name: command.value, args: [] };
     }
     return null;
@@ -5158,81 +5163,75 @@ class GeneralModule {
             cmd.effects = cmd.effects || [];
             if (typeof cmd.cooldown !== 'object') {
                 cmd.cooldown = cmd.timeout || { global: '0', perUser: '0' };
+                shouldSave = true;
             }
             if (cmd.timeout) {
                 delete cmd.timeout;
-            }
-            if (typeof cmd.disallow_users === 'undefined') {
-                cmd.disallow_users = [];
-                shouldSave = true;
-            }
-            if (typeof cmd.allow_users === 'undefined') {
-                cmd.allow_users = [];
-                shouldSave = true;
-            }
-            if (typeof cmd.enabled === 'undefined') {
-                cmd.enabled = true;
                 shouldSave = true;
             }
             if (cmd.variableChanges) {
                 for (const variableChange of cmd.variableChanges) {
                     cmd.effects.push(legacy.variableChangeToCommandEffect(variableChange));
+                    shouldSave = true;
                 }
             }
             if (cmd.action === 'text' && !cmd.effects.find((effect) => effect.type !== CommandEffectType.VARIABLE_CHANGE)) {
                 cmd.effects.push(legacy.textToCommandEffect(cmd));
+                shouldSave = true;
             }
             if (cmd.action === 'dict_lookup') {
                 cmd.action = 'text';
                 cmd.effects.push(legacy.dictLookupToCommandEffect(cmd));
+                shouldSave = true;
             }
             if (cmd.action === 'emotes') {
                 cmd.action = 'text';
                 cmd.effects.push(legacy.emotesToCommandEffect(cmd));
+                shouldSave = true;
             }
             if (cmd.action === 'media') {
                 cmd.action = 'text';
                 cmd.effects.push(legacy.mediaToCommandEffect(cmd));
+                shouldSave = true;
             }
             if (cmd.action === 'madochan_createword') {
                 cmd.action = 'text';
                 cmd.effects.push(legacy.madochanToCommandEffect(cmd));
+                shouldSave = true;
             }
             if (cmd.action === 'set_channel_title') {
                 cmd.action = 'text';
                 cmd.effects.push(legacy.setChannelTitleToCommandEffect(cmd));
+                shouldSave = true;
             }
             if (cmd.action === 'set_channel_game_id') {
                 cmd.action = 'text';
                 cmd.effects.push(legacy.setChannelGameIdToCommandEffect(cmd));
+                shouldSave = true;
             }
             if (cmd.action === 'add_stream_tags') {
                 cmd.action = 'text';
                 cmd.effects.push(legacy.addStreamTagsToCommandEffect(cmd));
+                shouldSave = true;
             }
             if (cmd.action === 'remove_stream_tags') {
                 cmd.action = 'text';
                 cmd.effects.push(legacy.removeStreamTagsToCommandEffect(cmd));
+                shouldSave = true;
             }
             if (cmd.action === 'chatters') {
                 cmd.action = 'text';
                 cmd.effects.push(legacy.chattersToCommandEffect(cmd));
+                shouldSave = true;
             }
             if (cmd.action === 'countdown') {
                 cmd.action = 'text';
                 cmd.effects.push(legacy.countdownToCommandEffect(cmd));
+                shouldSave = true;
             }
             if (cmd.action === 'media_volume') {
                 cmd.action = 'text';
                 cmd.effects.push(legacy.mediaVolumeToCommandEffect(cmd));
-            }
-            if (typeof cmd.restrict === 'undefined') {
-                if (cmd.restrict_to.length === 0) {
-                    cmd.restrict = { active: false, to: [] };
-                }
-                else {
-                    cmd.restrict = { active: true, to: cmd.restrict_to };
-                }
                 shouldSave = true;
             }
             cmd.triggers = (cmd.triggers || []).map((trigger) => {
@@ -5240,25 +5239,11 @@ class GeneralModule {
                 if (trigger.data.minSeconds) {
                     trigger.data.minInterval = trigger.data.minSeconds * SECOND;
                 }
+                shouldSave = true;
                 return trigger;
             });
             return cmd;
         });
-        // add ids to commands that dont have one yet
-        for (const command of fixedCommands) {
-            if (!command.id) {
-                command.id = nonce(10);
-                shouldSave = true;
-            }
-            if (!command.createdAt) {
-                command.createdAt = newJsonDate();
-                shouldSave = true;
-            }
-            if (command.variableChanges) {
-                delete command.variableChanges;
-                shouldSave = true;
-            }
-        }
         return {
             commands: fixedCommands,
             shouldSave,
@@ -5273,15 +5258,20 @@ class GeneralModule {
         data.settings = default_settings$5(data.settings);
         const fixed = this.fix(data.commands);
         data.commands = fixed.commands;
+        // todo: remove after release
         if (!data.adminSettings) {
             data.adminSettings = {};
+            fixed.shouldSave = true;
         }
         if (typeof data.adminSettings.showImages === 'undefined') {
             data.adminSettings.showImages = true;
+            fixed.shouldSave = true;
         }
         if (typeof data.adminSettings.autocommands === 'undefined') {
             data.adminSettings.autocommands = [];
+            fixed.shouldSave = true;
         }
+        // do not remove for now, new users gain the !bot command by this
         if (!data.adminSettings.autocommands.includes('!bot')) {
             const command = commands.text.NewCommand();
             command.triggers = [newCommandTrigger('!bot')];
@@ -6136,7 +6126,7 @@ class SongrequestModule {
         this.user = user;
     }
     async reinit() {
-        let shouldSave = false;
+        const shouldSave = false;
         const data = await this.bot.getRepos().module.load(this.user.id, this.name, {
             filter: {
                 tag: '',
@@ -6177,50 +6167,6 @@ class SongrequestModule {
         data.playlist = default_playlist(data.playlist);
         data.settings = default_settings$4(data.settings);
         data.commands = default_commands(data.commands);
-        // add ids to commands that dont have one yet
-        for (const cmd of data.commands) {
-            if (!cmd.id) {
-                cmd.id = nonce(10);
-                shouldSave = true;
-            }
-            if (!cmd.createdAt) {
-                cmd.createdAt = newJsonDate();
-                shouldSave = true;
-            }
-            if (!cmd.effects) {
-                cmd.effects = [];
-                shouldSave = true;
-            }
-            if (typeof cmd.cooldown !== 'object') {
-                cmd.cooldown = cmd.timeout || { global: '0', perUser: '0' };
-                shouldSave = true;
-            }
-            if (cmd.timeout) {
-                delete cmd.timeout;
-                shouldSave = true;
-            }
-            if (typeof cmd.disallow_users === 'undefined') {
-                cmd.disallow_users = [];
-                shouldSave = true;
-            }
-            if (typeof cmd.allow_users === 'undefined') {
-                cmd.allow_users = [];
-                shouldSave = true;
-            }
-            if (typeof cmd.enabled === 'undefined') {
-                cmd.enabled = true;
-                shouldSave = true;
-            }
-            if (typeof cmd.restrict === 'undefined') {
-                if (cmd.restrict_to.length === 0) {
-                    cmd.restrict = { active: false, to: [] };
-                }
-                else {
-                    cmd.restrict = { active: true, to: cmd.restrict_to };
-                }
-                shouldSave = true;
-            }
-        }
         return {
             data: {
                 playlist: data.playlist,
@@ -8187,9 +8133,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-22T21:24:20.388Z",
+    buildDate: "2023-01-22T21:54:09.820Z",
     // @ts-ignore
-    buildVersion: "1.53.0",
+    buildVersion: "1.53.1",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
