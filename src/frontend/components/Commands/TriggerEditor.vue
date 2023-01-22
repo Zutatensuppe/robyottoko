@@ -66,13 +66,13 @@
           value="startsWith"
           @update:modelValue="emitUpdate"
         > StartsWith</label>
-        <label><input
+        <label class="mr-1"><input
           v-model="value.data.command.match"
           type="radio"
           value="exact"
           @update:modelValue="emitUpdate"
         > Exact</label>
-        <label><input
+        <label class="mr-1"><input
           v-model="value.data.command.match"
           type="radio"
           value="anywhere"
