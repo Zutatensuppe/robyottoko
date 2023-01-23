@@ -1339,9 +1339,10 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
     const variables = contextModule.bot.getRepos().variables;
     const doReplace = async (value) => await doReplacements(value, rawCmd, context, originalCmd, contextModule.bot, contextModule.user);
     for (const effect of originalCmd.effects) {
+        const effectData = JSON.parse(JSON.stringify(effect.data));
         // TODO: extract each if to some class
         if (effect.type === CommandEffectType.VARIABLE_CHANGE) {
-            const variableChange = effect.data;
+            const variableChange = effectData;
             const op = variableChange.change;
             const name = await doReplace(variableChange.name);
             const value = await doReplace(variableChange.value);
@@ -1378,20 +1379,20 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
             }
         }
         else if (effect.type === CommandEffectType.CHAT) {
-            const texts = effect.data.text;
+            const texts = effectData.text;
             const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login);
             say(await doReplacements(getRandom(texts), rawCmd, context, originalCmd, contextModule.bot, contextModule.user));
         }
         else if (effect.type === CommandEffectType.DICT_LOOKUP) {
             const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login);
-            const tmpLang = await doReplacements(effect.data.lang, rawCmd, context, originalCmd, contextModule.bot, contextModule.user);
+            const tmpLang = await doReplacements(effectData.lang, rawCmd, context, originalCmd, contextModule.bot, contextModule.user);
             const dictFn = LANG_TO_FN[tmpLang] || null;
             if (!dictFn) {
                 say(`Sorry, language not supported: "${tmpLang}"`);
                 continue;
             }
             // if no phrase is setup, use all args given to command
-            const phrase = effect.data.phrase === '' ? '$args()' : effect.data.phrase;
+            const phrase = effectData.phrase === '' ? '$args()' : effectData.phrase;
             const tmpPhrase = await doReplacements(phrase, rawCmd, context, originalCmd, contextModule.bot, contextModule.user);
             const items = await dictFn(tmpPhrase);
             if (items.length === 0) {
@@ -1405,25 +1406,24 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
         else if (effect.type === CommandEffectType.EMOTES) {
             contextModule.bot.getWebSocketServer().notifyAll([contextModule.user.id], 'general', {
                 event: 'emotes',
-                data: effect.data,
+                data: effectData,
             });
         }
         else if (effect.type === CommandEffectType.MEDIA) {
             const doReplaces = async (str) => {
                 return await doReplacements(str, rawCmd, context, originalCmd, contextModule.bot, contextModule.user);
             };
-            const data = effect.data;
-            data.image_url = await doReplaces(data.image_url);
-            if (data.video.url) {
-                log$r.debug({ url: data.video.url }, 'video url is defined');
-                data.video.url = await doReplaces(data.video.url);
-                if (!data.video.url) {
+            effectData.image_url = await doReplaces(effectData.image_url);
+            if (effectData.video.url) {
+                log$r.debug({ url: effectData.video.url }, 'video url is defined');
+                effectData.video.url = await doReplaces(effectData.video.url);
+                if (!effectData.video.url) {
                     log$r.debug('no video url found');
                 }
-                else if (isTwitchClipUrl(data.video.url)) {
+                else if (isTwitchClipUrl(effectData.video.url)) {
                     // video url looks like a twitch clip url, dl it first
-                    log$r.debug({ url: data.video.url }, 'twitch clip found');
-                    data.video.url = await downloadVideo(data.video.url);
+                    log$r.debug({ url: effectData.video.url }, 'twitch clip found');
+                    effectData.video.url = await downloadVideo(effectData.video.url);
                 }
                 else {
                     // otherwise assume it is already a playable video url
@@ -1433,13 +1433,13 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
             }
             contextModule.bot.getWebSocketServer().notifyAll([contextModule.user.id], 'general', {
                 event: 'playmedia',
-                data: data,
+                data: effectData,
                 id: originalCmd.id
             });
         }
         else if (effect.type === CommandEffectType.MADOCHAN) {
-            const model = `${effect.data.model}` || Madochan.defaultModel;
-            const weirdness = parseInt(effect.data.weirdness, 10) || Madochan.defaultWeirdness;
+            const model = `${effectData.model}` || Madochan.defaultModel;
+            const weirdness = parseInt(effectData.weirdness, 10) || Madochan.defaultWeirdness;
             const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login);
             if (rawCmd) {
                 const definition = rawCmd.args.join(' ');
@@ -1473,7 +1473,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
                     return;
                 }
                 const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login);
-                const title = effect.data.title === '' ? '$args()' : effect.data.title;
+                const title = effectData.title === '' ? '$args()' : effectData.title;
                 const tmpTitle = await doReplacements(title, rawCmd, context, originalCmd, contextModule.bot, contextModule.user);
                 if (tmpTitle === '') {
                     const info = await helixClient.getChannelInformation(contextModule.user.twitch_id);
@@ -1520,7 +1520,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
                     return;
                 }
                 const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login);
-                const gameId = effect.data.game_id === '' ? '$args()' : effect.data.game_id;
+                const gameId = effectData.game_id === '' ? '$args()' : effectData.game_id;
                 const tmpGameId = await doReplacements(gameId, rawCmd, context, originalCmd, contextModule.bot, contextModule.user);
                 if (tmpGameId === '') {
                     const info = await helixClient.getChannelInformation(contextModule.user.twitch_id);
@@ -1564,7 +1564,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
                     return;
                 }
                 const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login);
-                const tag = effect.data.tag === '' ? '$args()' : effect.data.tag;
+                const tag = effectData.tag === '' ? '$args()' : effectData.tag;
                 const tmpTag = await doReplacements(tag, rawCmd, context, originalCmd, contextModule.bot, contextModule.user);
                 const tagsResponse = await helixClient.getStreamTags(contextModule.user.twitch_id);
                 if (!tagsResponse) {
@@ -1622,7 +1622,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
                     return;
                 }
                 const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login);
-                const tag = effect.data.tag === '' ? '$args()' : effect.data.tag;
+                const tag = effectData.tag === '' ? '$args()' : effectData.tag;
                 const tmpTag = await doReplacements(tag, rawCmd, context, originalCmd, contextModule.bot, contextModule.user);
                 const tagsResponse = await helixClient.getStreamTags(contextModule.user.twitch_id);
                 if (!tagsResponse) {
@@ -1703,7 +1703,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
                 const parseDuration = async (str) => {
                     return mustParseHumanDuration(await doReplacements2(str));
                 };
-                const settings = effect.data;
+                const settings = effectData;
                 const t = (settings.type || 'auto');
                 let actionDefs = [];
                 if (t === 'auto') {
@@ -8133,9 +8133,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-22T21:54:09.820Z",
+    buildDate: "2023-01-23T23:14:49.414Z",
     // @ts-ignore
-    buildVersion: "1.53.1",
+    buildVersion: "1.53.2",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
