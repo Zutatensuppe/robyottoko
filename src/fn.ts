@@ -191,10 +191,12 @@ const applyEffects = async (
   const doReplace = async (value: string) => await doReplacements(value, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
 
   for (const effect of originalCmd.effects) {
+    const effectData = JSON.parse(JSON.stringify(effect.data))
+
     // TODO: extract each if to some class
     if (effect.type === CommandEffectType.VARIABLE_CHANGE) {
 
-      const variableChange = effect.data as CommandVariableChange
+      const variableChange = effectData as CommandVariableChange
 
       const op = variableChange.change
       const name = await doReplace(variableChange.name)
@@ -231,14 +233,14 @@ const applyEffects = async (
 
     } else if (effect.type === CommandEffectType.CHAT) {
 
-      const texts = effect.data.text
+      const texts = effectData.text
       const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
       say(await doReplacements(getRandom(texts), rawCmd, context, originalCmd, contextModule.bot, contextModule.user))
 
     } else if (effect.type === CommandEffectType.DICT_LOOKUP) {
 
       const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
-      const tmpLang = await doReplacements(effect.data.lang, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
+      const tmpLang = await doReplacements(effectData.lang, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
       const dictFn = LANG_TO_FN[tmpLang] || null
       if (!dictFn) {
         say(`Sorry, language not supported: "${tmpLang}"`)
@@ -246,7 +248,7 @@ const applyEffects = async (
       }
 
       // if no phrase is setup, use all args given to command
-      const phrase = effect.data.phrase === '' ? '$args()' : effect.data.phrase
+      const phrase = effectData.phrase === '' ? '$args()' : effectData.phrase
       const tmpPhrase = await doReplacements(phrase, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
 
       const items = await dictFn(tmpPhrase)
@@ -262,7 +264,7 @@ const applyEffects = async (
 
       contextModule.bot.getWebSocketServer().notifyAll([contextModule.user.id], 'general', {
         event: 'emotes',
-        data: effect.data,
+        data: effectData,
       })
 
     } else if (effect.type === CommandEffectType.MEDIA) {
@@ -270,17 +272,16 @@ const applyEffects = async (
       const doReplaces = async (str: string) => {
         return await doReplacements(str, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
       }
-      const data = effect.data
-      data.image_url = await doReplaces(data.image_url)
-      if (data.video.url) {
-        log.debug({ url: data.video.url }, 'video url is defined')
-        data.video.url = await doReplaces(data.video.url)
-        if (!data.video.url) {
+      effectData.image_url = await doReplaces(effectData.image_url)
+      if (effectData.video.url) {
+        log.debug({ url: effectData.video.url }, 'video url is defined')
+        effectData.video.url = await doReplaces(effectData.video.url)
+        if (!effectData.video.url) {
           log.debug('no video url found')
-        } else if (isTwitchClipUrl(data.video.url)) {
+        } else if (isTwitchClipUrl(effectData.video.url)) {
           // video url looks like a twitch clip url, dl it first
-          log.debug({ url: data.video.url }, 'twitch clip found')
-          data.video.url = await downloadVideo(data.video.url)
+          log.debug({ url: effectData.video.url }, 'twitch clip found')
+          effectData.video.url = await downloadVideo(effectData.video.url)
         } else {
           // otherwise assume it is already a playable video url
           // TODO: youtube videos maybe should also be downloaded
@@ -290,14 +291,14 @@ const applyEffects = async (
 
       contextModule.bot.getWebSocketServer().notifyAll([contextModule.user.id], 'general', {
         event: 'playmedia',
-        data: data,
+        data: effectData,
         id: originalCmd.id
       })
 
     } else if (effect.type === CommandEffectType.MADOCHAN) {
 
-      const model = `${effect.data.model}` || Madochan.defaultModel
-      const weirdness = parseInt(effect.data.weirdness, 10) || Madochan.defaultWeirdness
+      const model = `${effectData.model}` || Madochan.defaultModel
+      const weirdness = parseInt(effectData.weirdness, 10) || Madochan.defaultWeirdness
 
       const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
       if (rawCmd) {
@@ -331,7 +332,7 @@ const applyEffects = async (
           return
         }
         const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
-        const title = effect.data.title === '' ? '$args()' : effect.data.title
+        const title = effectData.title === '' ? '$args()' : effectData.title
         const tmpTitle = await doReplacements(title, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
         if (tmpTitle === '') {
           const info = await helixClient.getChannelInformation(contextModule.user.twitch_id)
@@ -386,7 +387,7 @@ const applyEffects = async (
           return
         }
         const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
-        const gameId = effect.data.game_id === '' ? '$args()' : effect.data.game_id
+        const gameId = effectData.game_id === '' ? '$args()' : effectData.game_id
         const tmpGameId = await doReplacements(gameId, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
         if (tmpGameId === '') {
           const info = await helixClient.getChannelInformation(contextModule.user.twitch_id)
@@ -438,7 +439,7 @@ const applyEffects = async (
           return
         }
         const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
-        const tag = effect.data.tag === '' ? '$args()' : effect.data.tag
+        const tag = effectData.tag === '' ? '$args()' : effectData.tag
         const tmpTag = await doReplacements(tag, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
         const tagsResponse = await helixClient.getStreamTags(contextModule.user.twitch_id)
         if (!tagsResponse) {
@@ -506,7 +507,7 @@ const applyEffects = async (
           return
         }
         const say = contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login)
-        const tag = effect.data.tag === '' ? '$args()' : effect.data.tag
+        const tag = effectData.tag === '' ? '$args()' : effectData.tag
         const tmpTag = await doReplacements(tag, rawCmd, context, originalCmd, contextModule.bot, contextModule.user)
         const tagsResponse = await helixClient.getStreamTags(contextModule.user.twitch_id)
         if (!tagsResponse) {
@@ -602,7 +603,7 @@ const applyEffects = async (
           return mustParseHumanDuration(await doReplacements2(str))
         }
 
-        const settings: CountdownCommandData = effect.data
+        const settings: CountdownCommandData = effectData
 
         const t = (settings.type || 'auto')
 
