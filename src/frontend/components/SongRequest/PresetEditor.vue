@@ -110,9 +110,9 @@
           <tr>
             <td>Custom CSS</td>
             <td>
-              <textarea
+              <MonacoEditor
                 v-model="val.css"
-                class="textarea"
+                language="css"
               />
             </td>
             <td>
@@ -171,6 +171,7 @@
 import { nextTick, onMounted, Ref, ref } from 'vue';
 import { SongrequestModuleCustomCssPreset } from '../../../mod/modules/SongrequestModuleCommon'
 import CheckboxInput from '../CheckboxInput.vue';
+import MonacoEditor from '../MonacoEditor.vue';
 import StringInput from '../StringInput.vue';
 
 const props = defineProps<{
@@ -368,10 +369,6 @@ onMounted(() => {
 <style scoped>
 .modal-card {
   width: calc(100% - 2em);
-}
-.textarea:not([rows]) {
-  min-width: 500px;
-  min-height: 800px;
 }
 pre {
   padding: 0.5em 1em;
