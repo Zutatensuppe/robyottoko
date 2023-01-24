@@ -64,19 +64,19 @@
           v-model="value.data.command.match"
           type="radio"
           value="startsWith"
-          @update:modelValue="emitUpdate"
+          @change="emitUpdate"
         > StartsWith</label>
         <label class="mr-1"><input
           v-model="value.data.command.match"
           type="radio"
           value="exact"
-          @update:modelValue="emitUpdate"
+          @change="emitUpdate"
         > Exact</label>
         <label class="mr-1"><input
           v-model="value.data.command.match"
           type="radio"
           value="anywhere"
-          @update:modelValue="emitUpdate"
+          @change="emitUpdate"
         > Anywhere</label>
       </div>
       <div class="control">
