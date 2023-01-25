@@ -44,19 +44,19 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChatEffect } from '../../../../types';
+import { ChatEffectData } from '../../../../types';
 import { ref, watch } from 'vue';
 import { newText } from '../../../../common/commands';
 import MacroSelect from '../../MacroSelect.vue'
 
 const props = defineProps<{
-  modelValue: ChatEffect,
+  modelValue: ChatEffectData,
 }>()
 
-const val = ref<ChatEffect>(props.modelValue)
+const val = ref<ChatEffectData>(props.modelValue)
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', val: ChatEffect): void
+  (e: 'update:modelValue', val: ChatEffectData): void
 }>()
 
 const addtxt = (): void => {
@@ -66,7 +66,7 @@ const rmtxt = (idx: number): void => {
   val.value.data.text = val.value.data.text.filter((_val: string, index: number) => index !== idx);
 }
 
-watch(val, (newValue: ChatEffect) => {
+watch(val, (newValue: ChatEffectData) => {
   emit('update:modelValue', newValue)
 }, { deep: true })
 </script>

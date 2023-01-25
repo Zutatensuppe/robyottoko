@@ -42,22 +42,22 @@
   </div>
 </template>
 <script setup lang="ts">
-import { VariableChangeEffect, CommandVariable, GlobalVariable } from '../../../../types';
+import { VariableChangeEffectData, CommandVariable, GlobalVariable } from '../../../../types';
 import { AutocompletableVariable } from '../EffectsEditor.vue';
 import StringInput from '../../StringInput.vue';
 import DropdownInput from '../../DropdownInput.vue';
 import { ref, watch } from 'vue';
 
 const props = defineProps<{
-  modelValue: VariableChangeEffect,
+  modelValue: VariableChangeEffectData,
   itemVariables: CommandVariable[],
   globalVariables: GlobalVariable[],
 }>()
 
-const val = ref<VariableChangeEffect>(props.modelValue)
+const val = ref<VariableChangeEffectData>(props.modelValue)
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', val: VariableChangeEffect): void
+  (e: 'update:modelValue', val: VariableChangeEffectData): void
 }>()
 
 const autocompletableVariables = (): AutocompletableVariable[] => {
@@ -78,7 +78,7 @@ const autocompletableVariables = (): AutocompletableVariable[] => {
   return variables
 }
 
-watch(val, (newValue: VariableChangeEffect) => {
+watch(val, (newValue: VariableChangeEffectData) => {
   emit('update:modelValue', newValue)
 }, { deep: true })
 </script>

@@ -1,6 +1,6 @@
 import { getProp, mustParseHumanDuration, nonce } from "../common/fn"
 import {
-  Command, CommandAction, CommandEffect, CommandEffectType, CommandTrigger, CommandTriggerType,
+  Command, CommandAction, CommandEffectData, CommandEffectType, CommandTrigger, CommandTriggerType,
   CountdownAction, CountdownActionType, FunctionCommand,
   MediaCommandData, MediaFile, MediaVideo, SoundMediaFile,
 } from "../types"
@@ -149,7 +149,7 @@ export const getUniqueCommandsByTriggers = (
   return tmp.filter((item, i, ar) => ar.indexOf(item) === i)
 }
 
-export const isValidEffect = (_effect: CommandEffect): boolean => {
+export const isValidEffect = (_effect: CommandEffectData): boolean => {
   // TODO: check if effects are actually valid
   return true
 }
@@ -516,7 +516,7 @@ const newEffectData = (type: CommandEffectType): any => {
   }
 }
 
-export const newEffect = (type: CommandEffectType): CommandEffect => {
+export const newEffect = (type: CommandEffectType): CommandEffectData => {
   return { type, data: newEffectData(type) }
 }
 

@@ -169,8 +169,7 @@
   </div>
 </template>
 <script setup lang="ts">
-
-import { MediaEffect, MediaFile, SoundMediaFile } from '../../../../types';
+import { MediaEffectData, MediaFile, SoundMediaFile } from '../../../../types';
 import { nextTick, onBeforeMount, Ref, ref, watch } from 'vue';
 import StringInput from '../../StringInput.vue';
 import VolumeSlider from '../../VolumeSlider.vue';
@@ -179,15 +178,15 @@ import SoundUpload from '../../SoundUpload.vue';
 import DurationInput from '../../DurationInput.vue';
 
 const props = defineProps<{
-  modelValue: MediaEffect,
+  modelValue: MediaEffectData,
   widgetUrl: string,
   baseVolume: number,
 }>()
 
-const val = ref<MediaEffect>(props.modelValue)
+const val = ref<MediaEffectData>(props.modelValue)
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', val: MediaEffect): void
+  (e: 'update:modelValue', val: MediaEffectData): void
 }>()
 
 const type = ref<string>('')
@@ -232,7 +231,7 @@ onBeforeMount(() => {
     }
   });
 })
-watch(val, (newValue: MediaEffect) => {
+watch(val, (newValue: MediaEffectData) => {
   emit('update:modelValue', newValue)
 }, { deep: true })
 </script>

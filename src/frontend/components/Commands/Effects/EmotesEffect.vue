@@ -82,21 +82,21 @@
   </div>
 </template>
 <script setup lang="ts">
-import { EmotesEffect, EmoteSet } from '../../../../types';
+import { EmotesEffectData, EmoteSet } from '../../../../types';
 import { onBeforeMount, ref, watch } from 'vue';
 import { EMOTE_DISPLAY_FN, possibleEmoteDisplayFunctions } from '../../../../mod/modules/GeneralModuleCommon';
 import api from '../../../api';
 import StringInput from '../../StringInput.vue';
 
 const props = defineProps<{
-  modelValue: EmotesEffect,
+  modelValue: EmotesEffectData,
 }>()
 
-const val = ref<EmotesEffect>(props.modelValue)
+const val = ref<EmotesEffectData>(props.modelValue)
 const possibleEmoteSets = ref<EmoteSet[]>([])
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', val: EmotesEffect): void
+  (e: 'update:modelValue', val: EmotesEffectData): void
 }>()
 
 const rmFn = (idx: number): void => {
@@ -144,7 +144,7 @@ onBeforeMount(async () => {
   })
 })
 
-watch(val, (newValue: EmotesEffect) => {
+watch(val, (newValue: EmotesEffectData) => {
   emit('update:modelValue', newValue)
 }, { deep: true })
 </script>

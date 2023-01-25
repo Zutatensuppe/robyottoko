@@ -164,13 +164,13 @@
   </div>
 </template>
 <script setup lang="ts">
-import { CommandEffect, CommandEffectType } from '../../../types';
+import { CommandEffectData, CommandEffectType } from '../../../types';
 import ResponsiveImage from '../ResponsiveImage.vue';
 import AudioPlayer from '../AudioPlayer.vue';
 import DurationDisplay from '../DurationDisplay.vue';
 
 defineProps<{
-  effect: CommandEffect,
+  effect: CommandEffectData,
   imagesVisible: boolean,
   baseVolume: number,
   widgetUrl: string,

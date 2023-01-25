@@ -20,21 +20,21 @@
   </div>
 </template>
 <script setup lang="ts">
-import { SetChannelGameIdEffect } from '../../../../types';
+import { SetChannelGameIdEffectData } from '../../../../types';
 import { ref, watch } from 'vue';
 import MacroSelect from '../../MacroSelect.vue'
 
 const props = defineProps<{
-  modelValue: SetChannelGameIdEffect,
+  modelValue: SetChannelGameIdEffectData,
 }>()
 
-const val = ref<SetChannelGameIdEffect>(props.modelValue)
+const val = ref<SetChannelGameIdEffectData>(props.modelValue)
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', val: SetChannelGameIdEffect): void
+  (e: 'update:modelValue', val: SetChannelGameIdEffectData): void
 }>()
 
-watch(val, (newValue: SetChannelGameIdEffect) => {
+watch(val, (newValue: SetChannelGameIdEffectData) => {
   emit('update:modelValue', newValue)
 }, { deep: true })
 </script>

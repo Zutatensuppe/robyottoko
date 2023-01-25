@@ -4,20 +4,20 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChattersEffect } from '../../../../types';
+import { ChattersEffectData } from '../../../../types';
 import { ref, watch } from 'vue';
 
 const props = defineProps<{
-  modelValue: ChattersEffect,
+  modelValue: ChattersEffectData,
 }>()
 
-const val = ref<ChattersEffect>(props.modelValue)
+const val = ref<ChattersEffectData>(props.modelValue)
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', val: ChattersEffect): void
+  (e: 'update:modelValue', val: ChattersEffectData): void
 }>()
 
-watch(val, (newValue: ChattersEffect) => {
+watch(val, (newValue: ChattersEffectData) => {
   emit('update:modelValue', newValue)
 }, { deep: true })
 </script>

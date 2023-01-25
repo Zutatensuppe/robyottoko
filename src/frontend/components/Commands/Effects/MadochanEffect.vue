@@ -37,20 +37,20 @@
   </div>
 </template>
 <script setup lang="ts">
-import { MadochanEffect } from '../../../../types';
+import { MadochanEffectData } from '../../../../types';
 import { ref, watch } from 'vue';
 
 const props = defineProps<{
-  modelValue: MadochanEffect,
+  modelValue: MadochanEffectData,
 }>()
 
-const val = ref<MadochanEffect>(props.modelValue)
+const val = ref<MadochanEffectData>(props.modelValue)
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', val: MadochanEffect): void
+  (e: 'update:modelValue', val: MadochanEffectData): void
 }>()
 
-watch(val, (newValue: MadochanEffect) => {
+watch(val, (newValue: MadochanEffectData) => {
   emit('update:modelValue', newValue)
 }, { deep: true })
 </script>

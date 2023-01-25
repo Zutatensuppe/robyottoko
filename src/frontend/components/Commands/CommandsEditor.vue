@@ -206,7 +206,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChatEffect, Command, CommandAction, CommandEffectType, CommandTriggerType, GlobalVariable } from "../../../types";
+import { ChatEffectData, Command, CommandAction, CommandEffectType, CommandTriggerType, GlobalVariable } from "../../../types";
 import { commands } from "../../../common/commands";
 import { computed, ref } from "vue";
 import { permissionsStr } from "../../../common/permissions";
@@ -256,7 +256,7 @@ const findInEffects = (search: string, command: Command): boolean => {
   }
   for (const effect of command.effects) {
     if (effect.type === CommandEffectType.CHAT) {
-      const foundInText = (effect as ChatEffect).data.text.some((text) => {
+      const foundInText = (effect as ChatEffectData).data.text.some((text) => {
         return text.toLowerCase().indexOf(search) >= 0
       })
       if (foundInText) {
