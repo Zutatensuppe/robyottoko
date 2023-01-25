@@ -17,6 +17,7 @@ import WebServer from './net/WebServer'
 import { TwitchTmiClientManager } from './services/TwitchTmiClientManager'
 import { Repos } from './repo/Repos'
 import { Youtube } from './services/Youtube'
+import { Canny } from './services/Canny'
 
 type int = number
 
@@ -30,6 +31,7 @@ export interface ApiUser {
 export interface ApiUserData {
   user: ApiUser
   token: string
+  cannyToken: string
 }
 
 export interface DbConfig {
@@ -51,6 +53,10 @@ export interface HttpConfig {
   hostname: string
   port: int
   url: string
+}
+
+export interface CannyConfig {
+  sso_private_key: string
 }
 
 export interface EventSubTransport {
@@ -98,6 +104,7 @@ export interface Config {
     }
   }
   youtubeDlBinary: string
+  canny: CannyConfig
 }
 
 // @see https://github.com/SortableJS/vue.draggable.next
@@ -551,6 +558,7 @@ export interface Bot {
   getStreamStatusUpdater: () => StreamStatusUpdater
   getFrontendStatusUpdater: () => FrontendStatusUpdater
   getTwitchTmiClientManager: () => TwitchTmiClientManager
+  getCanny: () => Canny
 
   sayFn: (user: User, target: string | null) => (msg: string) => void
   getUserTwitchClientManager: (user: User) => TwitchClientManager

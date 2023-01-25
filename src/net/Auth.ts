@@ -2,10 +2,11 @@ import { NextFunction, Response } from "express"
 import { Repos } from "../repo/Repos"
 import { Token, TokenType } from "../repo/Tokens"
 import { User } from "../repo/Users"
+import { Canny } from "../services/Canny"
 import { ApiUserData } from "../types"
 
 class Auth {
-  constructor(private readonly repos: Repos) {
+  constructor(private readonly repos: Repos, private readonly canny: Canny) {
     // pass
   }
 
@@ -47,6 +48,7 @@ class Auth {
         email: user.email,
         groups: await this.repos.user.getGroups(user.id)
       },
+      cannyToken: this.canny.createToken(user)
     }
   }
 

@@ -57,5 +57,8 @@
       }
     }
   },
-  "youtubeDlBinary": "yt-dlp"
+  "youtubeDlBinary": "yt-dlp",
+  "canny": {
+    "sso_private_key": "SSO_PRIVATE_KEY"
+  }
 }

@@ -11,6 +11,7 @@ import multer from 'multer';
 import cors from 'cors';
 import * as pg from 'pg';
 import tmi from 'tmi.js';
+import jwt from 'jsonwebtoken';
 
 const absPath = (path) => new URL(path, import.meta.url);
 const readJson = (path) => JSON.parse(String(readFileSync(path)));
@@ -78,8 +79,9 @@ class Tokens extends Repo {
 }
 
 class Auth {
-    constructor(repos) {
+    constructor(repos, canny) {
         this.repos = repos;
+        this.canny = canny;
         // pass
     }
     async getTokenInfoByTokenAndType(token, type) {
@@ -114,6 +116,7 @@ class Auth {
                 email: user.email,
                 groups: await this.repos.user.getGroups(user.id)
             },
+            cannyToken: this.canny.createToken(user)
         };
     }
     addAuthInfoMiddleware() {
@@ -3893,12 +3896,13 @@ const RequireLoginApiMiddleware = (req, res, next) => {
     return next();
 };
 
-const createRouter$1 = () => {
+const createRouter$1 = (bot) => {
     const router = express.Router();
     router.get('/me', RequireLoginApiMiddleware, async (req, res) => {
         const apiUser = {
             user: req.user,
             token: req.cookies['x-token'],
+            cannyToken: bot.getCanny().createToken(req.user),
         };
         res.send(apiUser);
     });
@@ -4067,7 +4071,7 @@ const createRouter = (bot) => {
         }
         res.send();
     });
-    router.use('/user', createRouter$1());
+    router.use('/user', createRouter$1(bot));
     router.use('/pub/v1', createRouter$2(bot));
     return router;
 };
@@ -8133,9 +8137,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-24T22:33:22.417Z",
+    buildDate: "2023-01-25T17:27:42.992Z",
     // @ts-ignore
-    buildVersion: "1.54.0",
+    buildVersion: "1.55.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
@@ -8536,6 +8540,21 @@ class Indivious {
     }
 }
 
+class Canny {
+    constructor(config) {
+        this.config = config;
+        // pass
+    }
+    createToken(user) {
+        const userData = {
+            email: user.email,
+            id: user.id,
+            name: user.name,
+        };
+        return jwt.sign(userData, this.config.sso_private_key, { algorithm: 'HS256' });
+    }
+}
+
 setLogLevel(config.log.level);
 const log = logger('bot.ts');
 const modules = [
@@ -8553,7 +8572,8 @@ const createBot = async () => {
     await db.patch();
     const repos = new Repos(db);
     const cache = new Cache(db);
-    const auth = new Auth(repos);
+    const canny = new Canny(config.canny);
+    const auth = new Auth(repos, canny);
     const widgets = new Widgets(repos);
     const eventHub = mitt();
     const moduleManager = new ModuleManager();
@@ -8592,6 +8612,7 @@ const createBot = async () => {
             return this.frontendStatusUpdater;
         }
         getTwitchTmiClientManager() { return twitchTmiClientManager; }
+        getCanny() { return canny; }
         // user specific
         // -----------------------------------------------------------------
         sayFn(user, target) {
