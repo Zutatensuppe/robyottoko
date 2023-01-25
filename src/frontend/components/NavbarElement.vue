@@ -43,8 +43,14 @@
           v-for="(l, idx) in linksStart"
           :key="idx"
           class="navbar-item"
+          :class="{'is-active': l.to.name === route.name}"
           :to="l.to"
         >
+          <i
+            v-if="l.icon"
+            class="fa mr-2"
+            :class="l.icon"
+          />
           {{ l.text }}
         </router-link>
       </div>
@@ -70,7 +76,8 @@
         <a
           class="navbar-item"
           @click="onLogoutClick"
-        >Logout</a>
+        >
+          <i class="fa mr-2 fa-sign-out" /> Logout</a>
       </div>
     </div>
   </nav>
@@ -87,44 +94,63 @@ import { eventBus } from "../wsstatus";
 import { ApiUserData } from '../../types';
 import CheckboxInput from "./CheckboxInput.vue";
 import ProblemsDialog from './ProblemsDialog.vue'
-import { RouteLocationRaw, useRouter } from 'vue-router'
+import { RouteLocationNamedRaw, useRoute, useRouter } from 'vue-router'
 
-const linksStart: { to: RouteLocationRaw, text: string }[] = [
+const linksStart: { to: RouteLocationNamedRaw, text: string, icon: string | null }[] = [
   {
     to: { name: "index" },
     text: "Widgets",
+    icon: 'fa-home',
   },
   {
     to: { name: "commands" },
     text: "Commands",
+    icon: 'fa-terminal',
   },
   {
     to: { name: "variables" },
     text: "Variables",
+    icon: 'fa-code',
   },
   {
     to: { name: "sr" },
     text: "Song Request",
+    icon: 'fa-music',
   },
   {
     to: { name: "speech-to-text" },
     text: "Speech-To-Text",
+    icon: 'fa-commenting-o',
   },
   {
     to: { name: "avatar" },
     text: "Avatar",
+    icon: 'fa-user-o',
   },
   {
     to: { name: "drawcast" },
     text: "Drawcast",
+    icon: 'fa-paint-brush',
   },
   {
     to: { name: "pomo" },
     text: "Pomo",
+    icon: 'fa-hourglass-1',
   },
   {
     to: { name: "settings" },
     text: "Settings",
+    icon: 'fa-cogs',
+  },
+  {
+    to: { name: "bug-reports" },
+    text: "Bug Reports",
+    icon: 'fa-bug',
+  },
+  {
+    to: { name: "feature-requests" },
+    text: "Feature Requests",
+    icon: 'fa-university',
   },
 ]
 
@@ -133,6 +159,7 @@ const showProblems = ref<boolean>(false)
 const problems = ref<{ message: string, details: any }[]>([])
 const burgerActive = ref<boolean>(false)
 const darkmode = ref<boolean>(user.isDarkmode())
+const route = useRoute()
 
 const userName = computed(() => me.value?.user?.name || "")
 
@@ -158,6 +185,7 @@ const onLogoutClick = async () => {
 }
 
 onMounted(() => {
+  console.log(route.name)
   eventBus.on("status", statusChanged)
 })
 

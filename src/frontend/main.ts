@@ -15,6 +15,8 @@ import SettingsView from './views/SettingsView.vue'
 import SongRequestView from './views/SongRequestView.vue'
 import SpeechToTextView from './views/SpeechToTextView.vue'
 import VariablesView from './views/VariablesView.vue'
+import CannyBugReportsView from './views/CannyBugReportsView.vue'
+import CannyFeatureRequestsView from './views/CannyFeatureRequestsView.vue'
 
 import draggable from "vuedraggable";
 
@@ -100,7 +102,38 @@ const run = async () => {
           title: 'Pub',
           protected: false,
         }
-      }
+      },
+
+      // Canny.io feedback
+      {
+        path: '/feedback', redirect: { name: 'bug-reports' }, meta: {
+          protected: true,
+        }
+      },
+      {
+        name: 'bug-reports', path: '/feedback/bug-reports', component: CannyBugReportsView, meta: {
+          title: 'Bug Reports',
+          protected: true,
+        }
+      },
+      {
+        path: '/feedback/bug-reports/:catchAll(.*)', component: CannyBugReportsView, meta: {
+          title: 'Bug Reports',
+          protected: true,
+        }
+      },
+      {
+        name: 'feature-requests', path: '/feedback/feature-requests', component: CannyFeatureRequestsView, meta: {
+          title: 'Feature Requests',
+          protected: true,
+        }
+      },
+      {
+        path: '/feedback/feature-requests/:catchAll(.*)', component: CannyFeatureRequestsView, meta: {
+          title: 'Feature Requests',
+          protected: true,
+        }
+      },
     ],
   })
 

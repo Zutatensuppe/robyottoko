@@ -29,6 +29,7 @@ import { Repos } from './repo/Repos'
 import { Youtube } from './services/Youtube'
 import { YoutubeApi } from './services/youtube/YoutubeApi'
 import { Indivious } from './services/youtube/Indivious'
+import { Canny } from './services/Canny'
 
 setLogLevel(config.log.level)
 const log = logger('bot.ts')
@@ -50,7 +51,8 @@ const createBot = async (): Promise<Bot> => {
 
   const repos = new Repos(db)
   const cache = new Cache(db)
-  const auth = new Auth(repos)
+  const canny = new Canny(config.canny)
+  const auth = new Auth(repos, canny)
   const widgets = new Widgets(repos)
   const eventHub = mitt()
   const moduleManager = new ModuleManager()
@@ -93,6 +95,7 @@ const createBot = async (): Promise<Bot> => {
       return this.frontendStatusUpdater
     }
     getTwitchTmiClientManager(): TwitchTmiClientManager { return twitchTmiClientManager }
+    getCanny(): Canny { return canny }
 
     // user specific
     // -----------------------------------------------------------------

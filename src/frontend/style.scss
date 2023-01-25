@@ -239,3 +239,7 @@ ul.list {
     list-style: disc;
   }
 }
+
+.navbar-item.is-active {
+  font-weight: bold;
+}

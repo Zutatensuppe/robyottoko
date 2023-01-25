@@ -192,7 +192,7 @@ export const createRouter = (
     res.send()
   })
 
-  router.use('/user', createUserRouter())
+  router.use('/user', createUserRouter(bot))
   router.use('/pub/v1', createApiPubV1Router(bot))
   return router
 }
