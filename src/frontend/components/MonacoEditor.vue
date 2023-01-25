@@ -43,7 +43,7 @@ onMounted(async () => {
         enabled: false,
       },
     });
-    editor.onDidChangeModelContent((_evt) => {
+    editor.onDidChangeModelContent((_evt: any) => {
       val.value = editor.getValue()
     })
   })
