@@ -20,21 +20,21 @@
   </div>
 </template>
 <script setup lang="ts">
-import { AddStreamTagEffect } from '../../../../types';
+import { AddStreamTagEffectData } from '../../../../types';
 import { ref, watch } from 'vue';
 import MacroSelect from '../../MacroSelect.vue'
 
 const props = defineProps<{
-  modelValue: AddStreamTagEffect,
+  modelValue: AddStreamTagEffectData,
 }>()
 
-const val = ref<AddStreamTagEffect>(props.modelValue)
+const val = ref<AddStreamTagEffectData>(props.modelValue)
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', val: AddStreamTagEffect): void
+  (e: 'update:modelValue', val: AddStreamTagEffectData): void
 }>()
 
-watch(val, (newValue: AddStreamTagEffect) => {
+watch(val, (newValue: AddStreamTagEffectData) => {
   emit('update:modelValue', newValue)
 }, { deep: true })
 </script>

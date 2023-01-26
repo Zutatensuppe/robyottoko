@@ -66,12 +66,12 @@
   </div>
 </template>
 <script setup lang="ts">
-import { DictLookupEffect } from '../../../../types';
+import { DictLookupEffectData } from '../../../../types';
 import { ref, watch } from 'vue';
 import MacroSelect from '../../MacroSelect.vue'
 
 const props = defineProps<{
-  modelValue: DictLookupEffect,
+  modelValue: DictLookupEffectData,
 }>()
 
 const dictLangs = [
@@ -83,13 +83,13 @@ const dictLangs = [
   { value: "it", flag: "🇮🇹", title: "Italian" },
   { value: "pt", flag: "🇵🇹/🇧🇷", title: "Portuguese" },
 ]
-const val = ref<DictLookupEffect>(props.modelValue)
+const val = ref<DictLookupEffectData>(props.modelValue)
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', val: DictLookupEffect): void
+  (e: 'update:modelValue', val: DictLookupEffectData): void
 }>()
 
-watch(val, (newValue: DictLookupEffect) => {
+watch(val, (newValue: DictLookupEffectData) => {
   emit('update:modelValue', newValue)
 }, { deep: true })
 </script>

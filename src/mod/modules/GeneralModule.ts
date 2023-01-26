@@ -1,6 +1,6 @@
 import fn, { extractEmotes, getChannelPointsCustomRewards } from '../../fn'
-import { logger, nonce, parseHumanDuration, SECOND } from '../../common/fn'
-import { commands as commonCommands, newCommandTrigger, newJsonDate } from '../../common/commands'
+import { logger, parseHumanDuration, SECOND } from '../../common/fn'
+import { commands as commonCommands, newCommandTrigger } from '../../common/commands'
 import { Socket } from '../../net/WebSocketServer'
 import { User } from '../../repo/Users'
 import {
@@ -15,7 +15,7 @@ import {
   MODULE_NAME,
   WIDGET_TYPE,
   CommandEffectType,
-  CommandEffect,
+  CommandEffectData,
 } from '../../types'
 import {
   default_admin_settings,
@@ -149,7 +149,7 @@ class GeneralModule implements Module {
         }
       }
 
-      if (cmd.action === 'text' && !cmd.effects.find((effect: CommandEffect) => effect.type !== CommandEffectType.VARIABLE_CHANGE)) {
+      if (cmd.action === 'text' && !cmd.effects.find((effect: CommandEffectData) => effect.type !== CommandEffectType.VARIABLE_CHANGE)) {
         cmd.effects.push(legacy.textToCommandEffect(cmd))
         shouldSave = true
       }

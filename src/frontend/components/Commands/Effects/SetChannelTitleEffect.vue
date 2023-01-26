@@ -20,21 +20,21 @@
   </div>
 </template>
 <script setup lang="ts">
-import { SetChannelTitleEffect } from '../../../../types';
+import { SetChannelTitleEffectData } from '../../../../types';
 import { ref, watch } from 'vue';
 import MacroSelect from '../../MacroSelect.vue'
 
 const props = defineProps<{
-  modelValue: SetChannelTitleEffect,
+  modelValue: SetChannelTitleEffectData,
 }>()
 
-const val = ref<SetChannelTitleEffect>(props.modelValue)
+const val = ref<SetChannelTitleEffectData>(props.modelValue)
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', val: SetChannelTitleEffect): void
+  (e: 'update:modelValue', val: SetChannelTitleEffectData): void
 }>()
 
-watch(val, (newValue: SetChannelTitleEffect) => {
+watch(val, (newValue: SetChannelTitleEffectData) => {
   emit('update:modelValue', newValue)
 }, { deep: true })
 </script>

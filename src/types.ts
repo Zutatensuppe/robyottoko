@@ -265,24 +265,24 @@ export enum CommandEffectType {
   MEDIA_VOLUME = 'media_volume',
 }
 
-export interface CommandEffect {
+export interface CommandEffectData {
   type: CommandEffectType
   data: any
 }
 
-export interface VariableChangeEffect extends CommandEffect {
+export interface VariableChangeEffectData extends CommandEffectData {
   type: CommandEffectType.VARIABLE_CHANGE
   data: CommandVariableChange
 }
 
-export interface ChatEffect extends CommandEffect {
+export interface ChatEffectData extends CommandEffectData {
   type: CommandEffectType.CHAT
   data: {
     text: string[]
   }
 }
 
-export interface DictLookupEffect extends CommandEffect {
+export interface DictLookupEffectData extends CommandEffectData {
   type: CommandEffectType.DICT_LOOKUP
   data: {
     lang: string
@@ -290,17 +290,17 @@ export interface DictLookupEffect extends CommandEffect {
   }
 }
 
-export interface EmotesEffect extends CommandEffect {
+export interface EmotesEffectData extends CommandEffectData {
   type: CommandEffectType.EMOTES
   data: GeneralModuleEmotesEventData
 }
 
-export interface MediaEffect extends CommandEffect {
+export interface MediaEffectData extends CommandEffectData {
   type: CommandEffectType.MEDIA
   data: MediaCommandData
 }
 
-export interface MadochanEffect extends CommandEffect {
+export interface MadochanEffectData extends CommandEffectData {
   type: CommandEffectType.MADOCHAN
   data: {
     model: string
@@ -308,45 +308,45 @@ export interface MadochanEffect extends CommandEffect {
   }
 }
 
-export interface SetChannelTitleEffect extends CommandEffect {
+export interface SetChannelTitleEffectData extends CommandEffectData {
   type: CommandEffectType.SET_CHANNEL_TITLE
   data: {
     title: string
   }
 }
 
-export interface SetChannelGameIdEffect extends CommandEffect {
+export interface SetChannelGameIdEffectData extends CommandEffectData {
   type: CommandEffectType.SET_CHANNEL_GAME_ID
   data: {
     game_id: string
   }
 }
 
-export interface AddStreamTagEffect extends CommandEffect {
+export interface AddStreamTagEffectData extends CommandEffectData {
   type: CommandEffectType.ADD_STREAM_TAGS
   data: {
     tag: string
   }
 }
 
-export interface RemoveStreamTagEffect extends CommandEffect {
+export interface RemoveStreamTagEffectData extends CommandEffectData {
   type: CommandEffectType.REMOVE_STREAM_TAGS
   data: {
     tag: string
   }
 }
 
-export interface ChattersEffect extends CommandEffect {
+export interface ChattersEffectData extends CommandEffectData {
   type: CommandEffectType.CHATTERS
   data: object // empty object for now
 }
 
-export interface MediaVolumeEffect extends CommandEffect {
+export interface MediaVolumeEffectData extends CommandEffectData {
   type: CommandEffectType.MEDIA_VOLUME
   data: object // empty object for now
 }
 
-export interface CountdownEffect extends CommandEffect {
+export interface CountdownEffectData extends CommandEffectData {
   type: CommandEffectType.COUNTDOWN
   data: CountdownCommandData
 }
@@ -414,7 +414,7 @@ export interface Command {
   id: string
   createdAt: string // json date string
   triggers: CommandTrigger[]
-  effects: CommandEffect[]
+  effects: CommandEffectData[]
   variables: CommandVariable[]
   cooldown: CommandCooldown
   restrict: CommandRestrict
@@ -480,7 +480,7 @@ export interface FunctionCommand {
   triggers: CommandTrigger[]
   action?: CommandAction
   variables?: CommandVariable[]
-  effects?: CommandEffect[]
+  effects?: CommandEffectData[]
   data?: CommandData
   fn: CommandFunction
   cooldown: CommandCooldown

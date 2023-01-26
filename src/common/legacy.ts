@@ -1,13 +1,13 @@
-import { AddStreamTagEffect, ChatEffect, ChattersEffect, CommandEffectType, CommandVariableChange, CountdownAction, CountdownEffect, DictLookupEffect, EmotesEffect, MadochanEffect, MediaEffect, MediaVolumeEffect, RemoveStreamTagEffect, SetChannelGameIdEffect, SetChannelTitleEffect, VariableChangeEffect } from "../types"
+import { AddStreamTagEffectData, ChatEffectData, ChattersEffectData, CommandEffectType, CommandVariableChange, CountdownAction, CountdownEffectData, DictLookupEffectData, EmotesEffectData, MadochanEffectData, MediaEffectData, MediaVolumeEffectData, RemoveStreamTagEffectData, SetChannelGameIdEffectData, SetChannelTitleEffectData, VariableChangeEffectData } from "../types"
 
-const variableChangeToCommandEffect = (variableChange: CommandVariableChange): VariableChangeEffect => {
+const variableChangeToCommandEffect = (variableChange: CommandVariableChange): VariableChangeEffectData => {
   return {
     type: CommandEffectType.VARIABLE_CHANGE,
     data: variableChange,
   }
 }
 
-const textToCommandEffect = (cmd: any): ChatEffect => {
+const textToCommandEffect = (cmd: any): ChatEffectData => {
   return {
     type: CommandEffectType.CHAT,
     data: {
@@ -16,7 +16,7 @@ const textToCommandEffect = (cmd: any): ChatEffect => {
   }
 }
 
-const dictLookupToCommandEffect = (cmd: any): DictLookupEffect => {
+const dictLookupToCommandEffect = (cmd: any): DictLookupEffectData => {
   return {
     type: CommandEffectType.DICT_LOOKUP,
     data: {
@@ -26,7 +26,7 @@ const dictLookupToCommandEffect = (cmd: any): DictLookupEffect => {
   }
 }
 
-const emotesToCommandEffect = (cmd: any): EmotesEffect => {
+const emotesToCommandEffect = (cmd: any): EmotesEffectData => {
   return {
     type: CommandEffectType.EMOTES,
     data: {
@@ -36,7 +36,7 @@ const emotesToCommandEffect = (cmd: any): EmotesEffect => {
   }
 }
 
-const mediaToCommandEffect = (cmd: any): MediaEffect => {
+const mediaToCommandEffect = (cmd: any): MediaEffectData => {
   if (cmd.data.excludeFromGlobalWidget) {
     cmd.data.widgetIds = [cmd.id]
   } else if (typeof cmd.data.widgetIds === 'undefined') {
@@ -82,7 +82,7 @@ const mediaToCommandEffect = (cmd: any): MediaEffect => {
   }
 }
 
-const madochanToCommandEffect = (cmd: any): MadochanEffect => {
+const madochanToCommandEffect = (cmd: any): MadochanEffectData => {
   return {
     type: CommandEffectType.MADOCHAN,
     data: {
@@ -92,7 +92,7 @@ const madochanToCommandEffect = (cmd: any): MadochanEffect => {
   }
 }
 
-const setChannelTitleToCommandEffect = (cmd: any): SetChannelTitleEffect => {
+const setChannelTitleToCommandEffect = (cmd: any): SetChannelTitleEffectData => {
   return {
     type: CommandEffectType.SET_CHANNEL_TITLE,
     data: {
@@ -101,7 +101,7 @@ const setChannelTitleToCommandEffect = (cmd: any): SetChannelTitleEffect => {
   }
 }
 
-const setChannelGameIdToCommandEffect = (cmd: any): SetChannelGameIdEffect => {
+const setChannelGameIdToCommandEffect = (cmd: any): SetChannelGameIdEffectData => {
   return {
     type: CommandEffectType.SET_CHANNEL_GAME_ID,
     data: {
@@ -110,7 +110,7 @@ const setChannelGameIdToCommandEffect = (cmd: any): SetChannelGameIdEffect => {
   }
 }
 
-const addStreamTagsToCommandEffect = (cmd: any): AddStreamTagEffect => {
+const addStreamTagsToCommandEffect = (cmd: any): AddStreamTagEffectData => {
   return {
     type: CommandEffectType.ADD_STREAM_TAGS,
     data: {
@@ -119,7 +119,7 @@ const addStreamTagsToCommandEffect = (cmd: any): AddStreamTagEffect => {
   }
 }
 
-const removeStreamTagsToCommandEffect = (cmd: any): RemoveStreamTagEffect => {
+const removeStreamTagsToCommandEffect = (cmd: any): RemoveStreamTagEffectData => {
   return {
     type: CommandEffectType.REMOVE_STREAM_TAGS,
     data: {
@@ -128,21 +128,21 @@ const removeStreamTagsToCommandEffect = (cmd: any): RemoveStreamTagEffect => {
   }
 }
 
-const chattersToCommandEffect = (_cmd: any): ChattersEffect => {
+const chattersToCommandEffect = (_cmd: any): ChattersEffectData => {
   return {
     type: CommandEffectType.CHATTERS,
     data: {},
   }
 }
 
-const mediaVolumeToCommandEffect = (_cmd: any): MediaVolumeEffect => {
+const mediaVolumeToCommandEffect = (_cmd: any): MediaVolumeEffectData => {
   return {
     type: CommandEffectType.MEDIA_VOLUME,
     data: {},
   }
 }
 
-const countdownToCommandEffect = (cmd: any): CountdownEffect => {
+const countdownToCommandEffect = (cmd: any): CountdownEffectData => {
   cmd.data.actions = (cmd.data.actions || []).map((action: CountdownAction) => {
     if (typeof action.value === 'string') {
       return action

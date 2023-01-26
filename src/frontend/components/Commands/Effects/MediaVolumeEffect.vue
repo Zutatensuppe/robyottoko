@@ -4,20 +4,20 @@
   </div>
 </template>
 <script setup lang="ts">
-import { MediaVolumeEffect } from '../../../../types';
+import { MediaVolumeEffectData } from '../../../../types';
 import { ref, watch } from 'vue';
 
 const props = defineProps<{
-  modelValue: MediaVolumeEffect,
+  modelValue: MediaVolumeEffectData,
 }>()
 
-const val = ref<MediaVolumeEffect>(props.modelValue)
+const val = ref<MediaVolumeEffectData>(props.modelValue)
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', val: MediaVolumeEffect): void
+  (e: 'update:modelValue', val: MediaVolumeEffectData): void
 }>()
 
-watch(val, (newValue: MediaVolumeEffect) => {
+watch(val, (newValue: MediaVolumeEffectData) => {
   emit('update:modelValue', newValue)
 }, { deep: true })
 </script>

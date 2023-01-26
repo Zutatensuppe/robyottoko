@@ -77,7 +77,7 @@
 </template>
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { CommandEffect, CommandEffectType, CommandVariable, GlobalVariable } from '../../../types';
+import { CommandEffectData, CommandEffectType, CommandVariable, GlobalVariable } from '../../../types';
 import VariableChangeEffect from './Effects/VariableChangeEffect.vue';
 import ChatEffect from './Effects/ChatEffect.vue';
 import DictLookupEffect from './Effects/DictLookupEffect.vue';
@@ -98,24 +98,24 @@ export interface AutocompletableVariable {
 }
 
 const props = defineProps<{
-  modelValue: CommandEffect[],
+  modelValue: CommandEffectData[],
   itemVariables: CommandVariable[],
   globalVariables: GlobalVariable[],
   baseVolume: number,
   widgetUrl: string,
 }>()
 
-const val = ref<CommandEffect[]>(props.modelValue)
+const val = ref<CommandEffectData[]>(props.modelValue)
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', val: CommandEffect[]): void
+  (e: 'update:modelValue', val: CommandEffectData[]): void
 }>()
 
 const onRmEffectClick = (idx: number) => {
   val.value = val.value.filter((_v, tmpIdx) => tmpIdx !== idx)
 }
 
-watch(val, (newValue: CommandEffect[]) => {
+watch(val, (newValue: CommandEffectData[]) => {
   emit('update:modelValue', newValue)
 })
 </script>

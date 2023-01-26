@@ -1,5 +1,5 @@
 import fn, { determineNewVolume, findIdxFuzzy, getChannelPointsCustomRewards } from '../../fn'
-import { shuffle, arrayMove, logger, humanDuration, parseHumanDuration, nonce, SECOND } from '../../common/fn'
+import { shuffle, arrayMove, logger, humanDuration, parseHumanDuration, SECOND } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
 import { User } from '../../repo/Users'
 import {
@@ -21,7 +21,6 @@ import {
 } from './SongrequestModuleCommon'
 import { NextFunction, Response } from 'express'
 import { isBroadcaster, isMod, isSubscriber } from '../../common/permissions'
-import { newJsonDate } from '../../common/commands'
 import { TooLongError } from '../../services/youtube/TooLongError'
 import { NotFoundError } from '../../services/youtube/NotFoundError'
 import { Youtube, YoutubeVideoEntry } from '../../services/Youtube'
