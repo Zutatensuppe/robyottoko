@@ -82,12 +82,19 @@ interface WidgetDefinition {
   url: string
 }
 
+interface ModuleDefinition {
+  key: string
+  title: string
+  enabled: boolean
+  widgets: WidgetDefinition[]
+}
+
 export default defineComponent({
   components: {
     NavbarElement,
   },
   data: () => ({
-    modules: [] as { key: string, title: string, enabled: boolean, widgets: WidgetDefinition[] }[],
+    modules: [] as ModuleDefinition[],
     toast: useToast(),
   }),
   async created() {
@@ -98,7 +105,7 @@ export default defineComponent({
     }
 
     const data: {
-      modules: { key: string, title: string, enabled: boolean, widgets: WidgetDefinition[] }[],
+      modules: ModuleDefinition[],
     } = await res.json();
     this.modules = data.modules;
   },
@@ -116,12 +123,15 @@ export default defineComponent({
         try {
           const json = await res.json();
           if (json.url) {
-            this.widgets = this.widgets.map((w) => {
-              if (w.type === widget.type) {
-                w.url = json.url;
-              }
-              return w;
-            });
+            this.modules = this.modules.map((m: ModuleDefinition) => {
+              m.widgets = m.widgets.map((w) => {
+                if (w.type === widget.type) {
+                  w.url = json.url
+                }
+                return w
+              })
+              return m
+            })
           }
           this.toast.success("New URL created");
         } catch (e: any) {
