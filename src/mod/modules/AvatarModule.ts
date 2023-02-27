@@ -9,9 +9,11 @@ const log = logger('AvatarModule.ts')
 export interface AvatarModuleData {
   settings: AvatarModuleSettings
   state: AvatarModuleState
+  enabled: boolean
 }
 
 export interface AvatarModuleWsData {
+  enabled: boolean
   settings: AvatarModuleSettings
   state: AvatarModuleState
   controlWidgetUrl: string
@@ -66,11 +68,20 @@ class AvatarModule implements Module {
   }
 
   async reinit(): Promise<AvatarModuleData> {
-    const data = await this.bot.getRepos().module.load(this.user.id, this.name, {})
+    const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {})
     return {
       settings: default_settings(data.settings),
       state: default_state(data.state),
+      enabled,
     }
+  }
+
+  isEnabled(): boolean {
+    return this.data.enabled
+  }
+
+  async setEnabled(enabled: boolean): Promise<void> {
+    this.data.enabled = enabled
   }
 
   getRoutes() {
@@ -81,6 +92,7 @@ class AvatarModule implements Module {
     return {
       event,
       data: {
+        enabled: this.data.enabled,
         settings: this.data.settings,
         state: this.data.state,
         controlWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.AVATAR_CONTROL, this.user.id),

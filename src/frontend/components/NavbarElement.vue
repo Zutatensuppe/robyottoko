@@ -99,7 +99,7 @@ import { RouteLocationNamedRaw, useRoute, useRouter } from 'vue-router'
 const linksStart: { to: RouteLocationNamedRaw, text: string, icon: string | null }[] = [
   {
     to: { name: "index" },
-    text: "Widgets",
+    text: "Modules",
     icon: 'fa-home',
   },
   {

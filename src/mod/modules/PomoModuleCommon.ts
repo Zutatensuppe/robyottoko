@@ -44,11 +44,13 @@ export interface PomoModuleState {
 export interface PomoModuleData {
   settings: PomoModuleSettings
   state: PomoModuleState
+  enabled: boolean
 }
 
 export interface PomoModuleWsDataData {
   settings: PomoModuleSettings
   state: PomoModuleState
+  enabled: boolean
   widgetUrl: string
 }
 

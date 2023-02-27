@@ -47,9 +47,11 @@ export interface SpeechToTextModuleSettings {
 
 export interface SpeechToTextModuleData {
   settings: SpeechToTextModuleSettings
+  enabled: boolean
 }
 
 export interface SpeechToTextWsInitData {
+  enabled: boolean
   settings: SpeechToTextModuleSettings
   controlWidgetUrl: string
   displayWidgetUrl: string

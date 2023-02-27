@@ -508,6 +508,8 @@ export interface Module {
   getRoutes: () => Record<string, Record<string, (req: any, res: Response, next: NextFunction) => Promise<any>>>
   getCommands: () => FunctionCommand[]
   onChatMsg: (chatMessageContext: ChatMessageContext) => Promise<void>
+  isEnabled: () => boolean
+  setEnabled: (enabled: boolean) => Promise<void>
 }
 
 export enum MODULE_NAME {
@@ -533,6 +535,23 @@ export enum WIDGET_TYPE {
   DRAWCAST_DRAW = 'drawcast_draw',
   DRAWCAST_CONTROL = 'drawcast_control',
   POMO = 'pomo',
+}
+
+export interface ModuleDefinition {
+  module: MODULE_NAME
+  title: string
+}
+
+export interface WidgetDefinition {
+  type: WIDGET_TYPE
+  module: MODULE_NAME
+  title: string
+  hint: string
+  pub: boolean
+}
+
+export interface WidgetInfo extends WidgetDefinition {
+  url: string
 }
 
 export interface TwitchBotIdentity {

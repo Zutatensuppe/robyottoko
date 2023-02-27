@@ -51,6 +51,7 @@ interface GeneralModuleInitData {
   redemptions: FunctionCommand[]
   timers: GeneralModuleTimer[]
   shouldSave: boolean
+  enabled: boolean
 }
 
 interface WsData {
@@ -63,6 +64,8 @@ const noop = () => { return }
 class GeneralModule implements Module {
   public name = MODULE_NAME.GENERAL
 
+  // @ts-ignore
+  private enabled: boolean
   // @ts-ignore
   private data: GeneralModuleData
   // @ts-ignore
@@ -81,6 +84,7 @@ class GeneralModule implements Module {
     // @ts-ignore
     return (async () => {
       const initData = await this.reinit()
+      this.enabled = initData.enabled
       this.data = initData.data
       this.commands = initData.commands
       this.timers = initData.timers
@@ -238,7 +242,7 @@ class GeneralModule implements Module {
   }
 
   async reinit(): Promise<GeneralModuleInitData> {
-    const data = await this.bot.getRepos().module.load(this.user.id, this.name, {
+    const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {
       commands: [],
       settings: default_settings(),
       adminSettings: default_admin_settings(),
@@ -327,7 +331,7 @@ class GeneralModule implements Module {
         }
       }
     })
-    return { data, commands, timers, shouldSave: fixed.shouldSave } as GeneralModuleInitData
+    return { data, commands, timers, shouldSave: fixed.shouldSave, enabled } as GeneralModuleInitData
   }
 
   getRoutes() {
@@ -352,6 +356,7 @@ class GeneralModule implements Module {
     return {
       event: eventName,
       data: {
+        enabled: this.enabled,
         commands: this.data.commands,
         settings: this.data.settings,
         adminSettings: this.data.adminSettings,
@@ -360,6 +365,20 @@ class GeneralModule implements Module {
         mediaWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.MEDIA, this.user.id),
         emoteWallWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.EMOTE_WALL, this.user.id),
       },
+    }
+  }
+
+  isEnabled(): boolean {
+    return this.enabled
+  }
+
+  async setEnabled(enabled: boolean): Promise<void> {
+    this.enabled = enabled
+    if (!this.enabled) {
+      if (this.interval) {
+        clearInterval(this.interval)
+        this.interval = null
+      }
     }
   }
 
@@ -374,6 +393,7 @@ class GeneralModule implements Module {
   async save(): Promise<void> {
     await this.bot.getRepos().module.save(this.user.id, this.name, this.data)
     const initData = await this.reinit()
+    this.enabled = initData.enabled
     this.data = initData.data
     this.commands = initData.commands
     this.timers = initData.timers

@@ -171,11 +171,12 @@ class PomoModule implements Module {
   }
 
   async reinit(): Promise<PomoModuleData> {
-    const data = await this.bot.getRepos().module.load(this.user.id, this.name, {})
+    const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {})
 
     return {
       settings: default_settings(data.settings),
       state: default_state(data.state),
+      enabled,
     }
   }
 
@@ -187,11 +188,25 @@ class PomoModule implements Module {
     return {
       event,
       data: {
+        enabled: this.data.enabled,
         settings: this.data.settings,
         state: this.data.state,
         widgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.POMO, this.user.id),
       }
     }
+  }
+
+  isEnabled(): boolean {
+    return this.data.enabled
+  }
+
+  async setEnabled(enabled: boolean): Promise<void> {
+    this.data.enabled = enabled
+    if (!this.data.enabled) {
+      this.data.state.running = false
+    }
+    await this.save()
+    this.updateClients(await this.wsdata('init'))
   }
 
   updateClient(data: PomoModuleWsData, ws: Socket) {

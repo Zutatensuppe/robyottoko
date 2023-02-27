@@ -143,6 +143,9 @@ class SongrequestModule implements Module {
   public name = MODULE_NAME.SR
 
   // @ts-ignore
+  private enabled: boolean
+
+  // @ts-ignore
   private data: SongrequestModuleData
   // @ts-ignore
   private commands: FunctionCommand[]
@@ -161,6 +164,7 @@ class SongrequestModule implements Module {
     // @ts-ignore
     return (async () => {
       const initData = await this.reinit()
+      this.enabled = initData.enabled
       this.data = {
         filter: initData.data.filter,
         playlist: initData.data.playlist,
@@ -176,13 +180,21 @@ class SongrequestModule implements Module {
     })();
   }
 
+  isEnabled(): boolean {
+    return this.enabled
+  }
+
+  async setEnabled(enabled: boolean): Promise<void> {
+    this.enabled = enabled
+  }
+
   async userChanged(user: User) {
     this.user = user
   }
 
   async reinit(): Promise<SongerquestModuleInitData> {
     const shouldSave = false
-    const data = await this.bot.getRepos().module.load(this.user.id, this.name, {
+    const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {
       filter: {
         tag: '',
       },
@@ -234,6 +246,7 @@ class SongrequestModule implements Module {
       },
       commands: this.initCommands(data.commands),
       shouldSave,
+      enabled,
     }
   }
 
@@ -331,6 +344,7 @@ class SongrequestModule implements Module {
     return {
       event: eventName,
       data: {
+        enabled: this.enabled,
         // ommitting youtube cache data and stacks
         filter: this.data.filter,
         playlist: this.data.playlist,
@@ -411,6 +425,7 @@ class SongrequestModule implements Module {
         this.data.settings = data.settings
         await this.save()
         const initData = await this.reinit()
+        this.enabled = initData.enabled
         this.data = initData.data
         this.commands = initData.commands
         await this.updateClients('save')
