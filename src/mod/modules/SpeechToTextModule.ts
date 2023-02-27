@@ -27,10 +27,19 @@ class SpeechToTextModule implements Module {
   }
 
   async reinit() {
-    const data = await this.bot.getRepos().module.load(this.user.id, this.name, {})
+    const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {})
     return {
       settings: default_settings(data.settings),
+      enabled,
     }
+  }
+
+  isEnabled(): boolean {
+    return this.data.enabled
+  }
+
+  async setEnabled(enabled: boolean): Promise<void> {
+    this.data.enabled = enabled
   }
 
   saveCommands() {
@@ -45,6 +54,7 @@ class SpeechToTextModule implements Module {
     return {
       event: eventName,
       data: {
+        enabled: this.data.enabled,
         settings: this.data.settings,
         controlWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.SPEECH_TO_TEXT_CONTROL, this.user.id),
         displayWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.SPEECH_TO_TEXT_RECEIVE, this.user.id),
@@ -88,7 +98,7 @@ class SpeechToTextModule implements Module {
       'save': async (_ws: Socket, { settings }: { settings: SpeechToTextModuleSettings }) => {
         this.data.settings = settings
         this.bot.getRepos().module.save(this.user.id, this.name, this.data)
-        await this.reinit()
+        this.data = await this.reinit()
         await this.updateClients('init')
       },
     }

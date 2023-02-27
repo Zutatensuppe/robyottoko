@@ -83,6 +83,7 @@ export default {
   getGeneralGlobalEmotes: async () => get("/api/general/global-emotes"),
   getGeneralChannelEmotes: async (channelName: string) => get("/api/general/channel-emotes" + asQueryArgs({ channel_name: channelName })),
   createWidgetUrl: async (data: { type: string, pub: boolean }) => postJson("/api/widget/create_url", data),
+  setModuleEnabled: async (data: { key: string, enabled: boolean }) => postJson("/api/modules/_set_enabled", data),
   getWidgetData: async (widgetType: string, widgetToken: string) => get(`/api/widget/${widgetType}/${widgetToken}/`),
   getPubData: async (pubId: string) => get(`/api/pub/${pubId}`),
 }

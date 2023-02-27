@@ -41,6 +41,7 @@ export interface SongerquestModuleInitData {
   data: SongrequestModuleData
   commands: FunctionCommand[]
   shouldSave: boolean
+  enabled: boolean
 }
 
 export interface SongrequestModuleSettings {
@@ -71,6 +72,7 @@ export interface SongRequestModuleFilter {
 }
 
 export interface SongrequestModuleWsEventData {
+  enabled: boolean
   filter: {
     tag: string
   },

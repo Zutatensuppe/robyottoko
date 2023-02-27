@@ -77,13 +77,14 @@ class DrawcastModule implements Module {
   }
 
   async reinit(): Promise<DrawcastModuleData> {
-    const data = await this.bot.getRepos().module.load(this.user.id, this.name, {})
+    const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {})
     if (!data.images) {
       data.images = this._loadAllImages()
     }
     return {
       settings: default_settings(data.settings),
       images: default_images(data.images),
+      enabled,
     }
   }
 
@@ -115,6 +116,7 @@ class DrawcastModule implements Module {
     return {
       event: eventName,
       data: {
+        enabled: this.data.enabled,
         settings: this.data.settings,
         images: this.data.images, // lots of images! maybe limit to 20 images
         drawUrl: await this.drawUrl(),
@@ -122,6 +124,14 @@ class DrawcastModule implements Module {
         receiveWidgetUrl: await this.receiveUrl(),
       },
     };
+  }
+
+  isEnabled(): boolean {
+    return this.data.enabled
+  }
+
+  async setEnabled(enabled: boolean): Promise<void> {
+    this.data.enabled = enabled
   }
 
   async checkAuthorized(token: string, onlyOwner: boolean = false): Promise<boolean> {

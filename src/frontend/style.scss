@@ -243,3 +243,16 @@ ul.list {
 .navbar-item.is-active {
   font-weight: bold;
 }
+
+.module-box {
+  table {
+    background: transparent;
+
+    td:nth-child(1) {
+      width: 150px;
+    }
+    td:nth-child(2) {
+      width: 150px;
+    }
+  }
+}

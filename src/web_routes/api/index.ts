@@ -8,6 +8,7 @@ import { Bot, UploadedFile } from '../../types'
 import { createRouter as createApiPubV1Router } from './pub/v1'
 import { createRouter as createUserRouter } from './user'
 import { RequireLoginApiMiddleware } from '../../net/middleware/RequireLoginApiMiddleware'
+import { moduleDefinitions } from '../../mod/Modules'
 
 const log = logger('api/index.ts')
 
@@ -79,7 +80,32 @@ export const createRouter = (
   })
 
   router.get('/page/index', RequireLoginApiMiddleware, async (req: any, res: Response) => {
-    res.send({ widgets: await bot.getWidgets().getWidgetInfos(req.user.id) })
+    const modules = await bot.getRepos().module.getInfosByUser(req.user.id)
+    const widgets = await bot.getWidgets().getWidgetInfos(req.user.id)
+    res.send({
+      modules: modules.map(m => {
+        return {
+          key: m.key,
+          title: moduleDefinitions.find(md => md.module === m.key)?.title || m.key,
+          enabled: m.enabled,
+          widgets: widgets.filter(w => w.module === m.key),
+        }
+      }),
+    })
+  })
+
+  router.post('/modules/_set_enabled', RequireLoginApiMiddleware, express.json(), async (req: any, res: Response) => {
+    const key = req.body.key
+    const enabled = req.body.enabled
+    await bot.getRepos().module.setEnabled(req.user.id, key, enabled)
+    const mm = bot.getModuleManager()
+    const m = mm.get(req.user.id, key)
+    if (m) {
+      m.setEnabled(enabled)
+    }
+    res.send({
+      success: true,
+    })
   })
 
   router.get('/page/variables', RequireLoginApiMiddleware, async (req: any, res: Response) => {

@@ -4033,6 +4033,37 @@ const createRouter$1 = (bot) => {
     return router;
 };
 
+const moduleDefinitions = [
+    {
+        module: MODULE_NAME.SR,
+        title: 'Song Request',
+    },
+    {
+        module: MODULE_NAME.GENERAL,
+        title: 'General',
+    },
+    {
+        module: MODULE_NAME.AVATAR,
+        title: 'Avatar',
+    },
+    {
+        module: MODULE_NAME.SPEECH_TO_TEXT,
+        title: 'Speech-to-Text',
+    },
+    {
+        module: MODULE_NAME.POMO,
+        title: 'Pomo',
+    },
+    {
+        module: MODULE_NAME.VOTE,
+        title: 'Vote',
+    },
+    {
+        module: MODULE_NAME.DRAWCAST,
+        title: 'Drawcast',
+    },
+];
+
 const log$e = logger('api/index.ts');
 const createRouter = (bot) => {
     const uploadDir = './data/uploads';
@@ -4093,7 +4124,31 @@ const createRouter = (bot) => {
         });
     });
     router.get('/page/index', RequireLoginApiMiddleware, async (req, res) => {
-        res.send({ widgets: await bot.getWidgets().getWidgetInfos(req.user.id) });
+        const modules = await bot.getRepos().module.getInfosByUser(req.user.id);
+        const widgets = await bot.getWidgets().getWidgetInfos(req.user.id);
+        res.send({
+            modules: modules.map(m => {
+                return {
+                    key: m.key,
+                    title: moduleDefinitions.find(md => md.module === m.key)?.title || m.key,
+                    enabled: m.enabled,
+                    widgets: widgets.filter(w => w.module === m.key),
+                };
+            }),
+        });
+    });
+    router.post('/modules/_set_enabled', RequireLoginApiMiddleware, express.json(), async (req, res) => {
+        const key = req.body.key;
+        const enabled = req.body.enabled;
+        await bot.getRepos().module.setEnabled(req.user.id, key, enabled);
+        const mm = bot.getModuleManager();
+        const m = mm.get(req.user.id, key);
+        if (m) {
+            m.setEnabled(enabled);
+        }
+        res.send({
+            success: true,
+        });
     });
     router.get('/page/variables', RequireLoginApiMiddleware, async (req, res) => {
         res.send({ variables: await bot.getRepos().variables.all(req.user.id) });
@@ -4370,6 +4425,9 @@ class ChatEventHandler {
         const chatMessageContext = { client, target, context, msgOriginal, msgNormalized };
         const date = new Date();
         for (const m of bot.getModuleManager().all(user.id)) {
+            if (!m.isEnabled()) {
+                continue;
+            }
             const { triggers, rawCmd } = await createTriggers(m);
             if (triggers.length > 0) {
                 const exec = new CommandExecutor();
@@ -5243,6 +5301,7 @@ class GeneralModule {
         // @ts-ignore
         return (async () => {
             const initData = await this.reinit();
+            this.enabled = initData.enabled;
             this.data = initData.data;
             this.commands = initData.commands;
             this.timers = initData.timers;
@@ -5378,7 +5437,7 @@ class GeneralModule {
         };
     }
     async reinit() {
-        const data = await this.bot.getRepos().module.load(this.user.id, this.name, {
+        const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {
             commands: [],
             settings: default_settings$5(),
             adminSettings: default_admin_settings(),
@@ -5470,7 +5529,7 @@ class GeneralModule {
                 }
             }
         });
-        return { data, commands: commands$1, timers, shouldSave: fixed.shouldSave };
+        return { data, commands: commands$1, timers, shouldSave: fixed.shouldSave, enabled };
     }
     getRoutes() {
         return {
@@ -5493,6 +5552,7 @@ class GeneralModule {
         return {
             event: eventName,
             data: {
+                enabled: this.enabled,
                 commands: this.data.commands,
                 settings: this.data.settings,
                 adminSettings: this.data.adminSettings,
@@ -5503,6 +5563,18 @@ class GeneralModule {
             },
         };
     }
+    isEnabled() {
+        return this.enabled;
+    }
+    async setEnabled(enabled) {
+        this.enabled = enabled;
+        if (!this.enabled) {
+            if (this.interval) {
+                clearInterval(this.interval);
+                this.interval = null;
+            }
+        }
+    }
     async updateClient(eventName, ws) {
         this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, await this.wsdata(eventName), ws);
     }
@@ -5512,6 +5584,7 @@ class GeneralModule {
     async save() {
         await this.bot.getRepos().module.save(this.user.id, this.name, this.data);
         const initData = await this.reinit();
+        this.enabled = initData.enabled;
         this.data = initData.data;
         this.commands = initData.commands;
         this.timers = initData.timers;
@@ -6208,6 +6281,7 @@ class SongrequestModule {
         // @ts-ignore
         return (async () => {
             const initData = await this.reinit();
+            this.enabled = initData.enabled;
             this.data = {
                 filter: initData.data.filter,
                 playlist: initData.data.playlist,
@@ -6222,12 +6296,18 @@ class SongrequestModule {
             return this;
         })();
     }
+    isEnabled() {
+        return this.enabled;
+    }
+    async setEnabled(enabled) {
+        this.enabled = enabled;
+    }
     async userChanged(user) {
         this.user = user;
     }
     async reinit() {
         const shouldSave = false;
-        const data = await this.bot.getRepos().module.load(this.user.id, this.name, {
+        const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {
             filter: {
                 tag: '',
             },
@@ -6277,6 +6357,7 @@ class SongrequestModule {
             },
             commands: this.initCommands(data.commands),
             shouldSave,
+            enabled,
         };
     }
     initCommands(rawCommands) {
@@ -6370,6 +6451,7 @@ class SongrequestModule {
         return {
             event: eventName,
             data: {
+                enabled: this.enabled,
                 // ommitting youtube cache data and stacks
                 filter: this.data.filter,
                 playlist: this.data.playlist,
@@ -6438,6 +6520,7 @@ class SongrequestModule {
                 this.data.settings = data.settings;
                 await this.save();
                 const initData = await this.reinit();
+                this.enabled = initData.enabled;
                 this.data = initData.data;
                 this.commands = initData.commands;
                 await this.updateClients('save');
@@ -7345,14 +7428,17 @@ class VoteModule {
         this.user = user;
     }
     async reinit() {
-        const data = await this.bot.getRepos().module.load(this.user.id, this.name, {
+        const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {
             votes: {},
         });
-        return data;
+        return {
+            data: data,
+            enabled,
+        };
     }
     async save() {
         await this.bot.getRepos().module.save(this.user.id, this.name, {
-            votes: this.data.votes,
+            votes: this.data.data.votes,
         });
     }
     getRoutes() {
@@ -7364,14 +7450,20 @@ class VoteModule {
     getWsEvents() {
         return {};
     }
+    isEnabled() {
+        return this.data.enabled;
+    }
+    async setEnabled(enabled) {
+        this.data.enabled = enabled;
+    }
     async vote(type, thing, target, context) {
         if (!context['display-name']) {
             log$6.error('context has no display name set');
             return;
         }
         const say = this.bot.sayFn(this.user, target);
-        this.data.votes[type] = this.data.votes[type] || {};
-        this.data.votes[type][context['display-name']] = thing;
+        this.data.data.votes[type] = this.data.data.votes[type] || {};
+        this.data.data.votes[type][context['display-name']] = thing;
         say(`Thanks ${context['display-name']}, registered your "${type}" vote: ${thing}`);
         await this.save();
     }
@@ -7404,13 +7496,13 @@ class VoteModule {
         }
         if (ctx.rawCmd.args[0] === 'show') {
             const type = ctx.rawCmd.args[1];
-            if (!this.data.votes[type]) {
+            if (!this.data.data.votes[type]) {
                 say(`No votes for "${type}".`);
                 return;
             }
             const usersByValues = {};
-            for (const user of Object.keys(this.data.votes[type])) {
-                const val = this.data.votes[type][user];
+            for (const user of Object.keys(this.data.data.votes[type])) {
+                const val = this.data.data.votes[type][user];
                 usersByValues[val] = usersByValues[val] || [];
                 usersByValues[val].push(user);
             }
@@ -7434,8 +7526,8 @@ class VoteModule {
                 say('Not allowed to execute !vote clear');
             }
             const type = ctx.rawCmd.args[1];
-            if (this.data.votes[type]) {
-                delete this.data.votes[type];
+            if (this.data.data.votes[type]) {
+                delete this.data.data.votes[type];
             }
             await this.save();
             say(`Cleared votes for "${type}". ✨`);
@@ -7540,10 +7632,17 @@ class SpeechToTextModule {
         this.user = user;
     }
     async reinit() {
-        const data = await this.bot.getRepos().module.load(this.user.id, this.name, {});
+        const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {});
         return {
             settings: default_settings$3(data.settings),
+            enabled,
         };
+    }
+    isEnabled() {
+        return this.data.enabled;
+    }
+    async setEnabled(enabled) {
+        this.data.enabled = enabled;
     }
     saveCommands() {
         // pass
@@ -7555,6 +7654,7 @@ class SpeechToTextModule {
         return {
             event: eventName,
             data: {
+                enabled: this.data.enabled,
                 settings: this.data.settings,
                 controlWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.SPEECH_TO_TEXT_CONTROL, this.user.id),
                 displayWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.SPEECH_TO_TEXT_RECEIVE, this.user.id),
@@ -7595,7 +7695,7 @@ class SpeechToTextModule {
             'save': async (_ws, { settings }) => {
                 this.data.settings = settings;
                 this.bot.getRepos().module.save(this.user.id, this.name, this.data);
-                await this.reinit();
+                this.data = await this.reinit();
                 await this.updateClients('init');
             },
         };
@@ -7712,13 +7812,14 @@ class DrawcastModule {
         // pass
     }
     async reinit() {
-        const data = await this.bot.getRepos().module.load(this.user.id, this.name, {});
+        const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {});
         if (!data.images) {
             data.images = this._loadAllImages();
         }
         return {
             settings: default_settings$2(data.settings),
             images: default_images(data.images),
+            enabled,
         };
     }
     async save() {
@@ -7743,6 +7844,7 @@ class DrawcastModule {
         return {
             event: eventName,
             data: {
+                enabled: this.data.enabled,
                 settings: this.data.settings,
                 images: this.data.images,
                 drawUrl: await this.drawUrl(),
@@ -7750,6 +7852,12 @@ class DrawcastModule {
                 receiveWidgetUrl: await this.receiveUrl(),
             },
         };
+    }
+    isEnabled() {
+        return this.data.enabled;
+    }
+    async setEnabled(enabled) {
+        this.data.enabled = enabled;
     }
     async checkAuthorized(token, onlyOwner = false) {
         const user = await this.bot.getAuth()._determineApiUserData(token);
@@ -7953,11 +8061,18 @@ class AvatarModule {
         // pass
     }
     async reinit() {
-        const data = await this.bot.getRepos().module.load(this.user.id, this.name, {});
+        const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {});
         return {
             settings: default_settings$1(data.settings),
             state: default_state$1(data.state),
+            enabled,
         };
+    }
+    isEnabled() {
+        return this.data.enabled;
+    }
+    async setEnabled(enabled) {
+        this.data.enabled = enabled;
     }
     getRoutes() {
         return {};
@@ -7966,6 +8081,7 @@ class AvatarModule {
         return {
             event,
             data: {
+                enabled: this.data.enabled,
                 settings: this.data.settings,
                 state: this.data.state,
                 controlWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.AVATAR_CONTROL, this.user.id),
@@ -8185,10 +8301,11 @@ class PomoModule {
         // pass
     }
     async reinit() {
-        const data = await this.bot.getRepos().module.load(this.user.id, this.name, {});
+        const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {});
         return {
             settings: default_settings(data.settings),
             state: default_state(data.state),
+            enabled,
         };
     }
     getRoutes() {
@@ -8198,11 +8315,23 @@ class PomoModule {
         return {
             event,
             data: {
+                enabled: this.data.enabled,
                 settings: this.data.settings,
                 state: this.data.state,
                 widgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.POMO, this.user.id),
             }
         };
+    }
+    isEnabled() {
+        return this.data.enabled;
+    }
+    async setEnabled(enabled) {
+        this.data.enabled = enabled;
+        if (!this.data.enabled) {
+            this.data.state.running = false;
+        }
+        await this.save();
+        this.updateClients(await this.wsdata('init'));
     }
     updateClient(data, ws) {
         this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, data, ws);
@@ -8233,9 +8362,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-01-25T23:57:32.072Z",
+    buildDate: "2023-02-27T20:27:51.700Z",
     // @ts-ignore
-    buildVersion: "1.56.0",
+    buildVersion: "1.57.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
@@ -8456,20 +8585,38 @@ class ModuleRepo extends Repo {
     async load(userId, key, def) {
         try {
             const where = { user_id: userId, key };
-            const row = await this.db.get(TABLE$5, where);
-            const data = row ? JSON.parse('' + row.data) : null;
-            return data ? Object.assign({}, def, data) : def;
+            let row = await this.db.get(TABLE$5, where);
+            if (!row) {
+                await this.save(userId, key, def);
+            }
+            row = await this.db.get(TABLE$5, where);
+            const data = JSON.parse('' + row.data);
+            return {
+                data: data ? Object.assign({}, def, data) : def,
+                enabled: row ? !!row.enabled : true,
+            };
         }
         catch (e) {
             log$1.error({ e });
-            return def;
+            return {
+                data: def,
+                enabled: true,
+            };
         }
+    }
+    async getInfosByUser(userId) {
+        const sql = 'SELECT key, enabled FROM ' + TABLE$5 + ' WHERE user_id = $1';
+        return await this.db._getMany(sql, [userId]);
     }
     async save(userId, key, rawData) {
         const where = { user_id: userId, key };
         const data = JSON.stringify(rawData);
         const dbData = Object.assign({}, where, { data });
         await this.db.upsert(TABLE$5, dbData, where);
+    }
+    async setEnabled(userId, key, enabled) {
+        const where = { user_id: userId, key };
+        await this.db.update(TABLE$5, { enabled }, where);
     }
 }
 

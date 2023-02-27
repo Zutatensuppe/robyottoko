@@ -11,6 +11,7 @@ export interface DrawcastModuleWsData {
 export interface DrawcastModuleWsDataData {
   settings: DrawcastSettings
   images: DrawcastImage[]
+  enabled: boolean
   drawUrl: string
   controlWidgetUrl: string
   receiveWidgetUrl: string
@@ -19,6 +20,7 @@ export interface DrawcastModuleWsDataData {
 export interface DrawcastModuleData {
   settings: DrawcastSettings
   images: DrawcastImage[]
+  enabled: boolean
 }
 
 export interface DrawcastSaveEventData {

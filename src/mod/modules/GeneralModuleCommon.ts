@@ -68,6 +68,7 @@ export interface GeneralModuleEmotesEventData {
 }
 
 export interface GeneralModuleWsEventData {
+  enabled: boolean
   commands: Command[]
   settings: GeneralModuleSettings
   adminSettings: GeneralModuleAdminSettings

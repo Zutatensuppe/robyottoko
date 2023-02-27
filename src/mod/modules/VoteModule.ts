@@ -7,7 +7,10 @@ import { logger } from '../../common/fn'
 const log = logger('VoteModule.ts')
 
 interface VoteModuleData {
-  votes: Record<string, Record<string, string>>
+  data: {
+    votes: Record<string, Record<string, string>>
+  },
+  enabled: boolean
 }
 
 class VoteModule implements Module {
@@ -32,15 +35,18 @@ class VoteModule implements Module {
   }
 
   async reinit(): Promise<VoteModuleData> {
-    const data = await this.bot.getRepos().module.load(this.user.id, this.name, {
+    const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {
       votes: {},
     })
-    return data as VoteModuleData
+    return {
+      data: data as { votes: Record<string, Record<string, string>> },
+      enabled,
+    }
   }
 
   async save(): Promise<void> {
     await this.bot.getRepos().module.save(this.user.id, this.name, {
-      votes: this.data.votes,
+      votes: this.data.data.votes,
     })
   }
 
@@ -56,6 +62,14 @@ class VoteModule implements Module {
     return {}
   }
 
+  isEnabled(): boolean {
+    return this.data.enabled
+  }
+
+  async setEnabled(enabled: boolean): Promise<void> {
+    this.data.enabled = enabled
+  }
+
   async vote(
     type: string,
     thing: string,
@@ -67,8 +81,8 @@ class VoteModule implements Module {
       return
     }
     const say = this.bot.sayFn(this.user, target)
-    this.data.votes[type] = this.data.votes[type] || {}
-    this.data.votes[type][context['display-name']] = thing
+    this.data.data.votes[type] = this.data.data.votes[type] || {}
+    this.data.data.votes[type][context['display-name']] = thing
     say(`Thanks ${context['display-name']}, registered your "${type}" vote: ${thing}`)
     await this.save()
   }
@@ -110,14 +124,14 @@ class VoteModule implements Module {
 
     if (ctx.rawCmd.args[0] === 'show') {
       const type = ctx.rawCmd.args[1]
-      if (!this.data.votes[type]) {
+      if (!this.data.data.votes[type]) {
         say(`No votes for "${type}".`)
         return
       }
 
       const usersByValues: Record<string, string[]> = {}
-      for (const user of Object.keys(this.data.votes[type])) {
-        const val = this.data.votes[type][user]
+      for (const user of Object.keys(this.data.data.votes[type])) {
+        const val = this.data.data.votes[type][user]
         usersByValues[val] = usersByValues[val] || []
         usersByValues[val].push(user)
       }
@@ -143,8 +157,8 @@ class VoteModule implements Module {
         say('Not allowed to execute !vote clear')
       }
       const type = ctx.rawCmd.args[1]
-      if (this.data.votes[type]) {
-        delete this.data.votes[type]
+      if (this.data.data.votes[type]) {
+        delete this.data.data.votes[type]
       }
       await this.save()
       say(`Cleared votes for "${type}". ✨`)

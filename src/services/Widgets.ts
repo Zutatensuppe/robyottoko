@@ -1,18 +1,6 @@
 import { nonce } from "../common/fn"
-import { MODULE_NAME, WIDGET_TYPE } from "../types"
+import { MODULE_NAME, WidgetDefinition, WidgetInfo, WIDGET_TYPE } from "../types"
 import { Repos } from "../repo/Repos"
-
-interface WidgetDefinition {
-  type: WIDGET_TYPE
-  module: MODULE_NAME
-  title: string
-  hint: string
-  pub: boolean
-}
-
-interface WidgetInfo extends WidgetDefinition {
-  url: string
-}
 
 const widgets: WidgetDefinition[] = [
   {

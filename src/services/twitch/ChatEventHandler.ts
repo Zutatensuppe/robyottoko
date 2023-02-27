@@ -142,6 +142,9 @@ export class ChatEventHandler {
     const chatMessageContext = { client, target, context, msgOriginal, msgNormalized }
     const date = new Date()
     for (const m of bot.getModuleManager().all(user.id)) {
+      if (!m.isEnabled()) {
+        continue
+      }
       const { triggers, rawCmd } = await createTriggers(m)
       if (triggers.length > 0) {
         const exec = new CommandExecutor()
