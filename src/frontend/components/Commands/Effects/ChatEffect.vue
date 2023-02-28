@@ -44,9 +44,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChatEffectData } from '../../../../types';
-import { ref, watch } from 'vue';
-import { newText } from '../../../../common/commands';
+import { ChatEffectData } from '../../../../types'
+import { ref, watch } from 'vue'
+import { newText } from '../../../../common/commands'
 import MacroSelect from '../../MacroSelect.vue'
 
 const props = defineProps<{
@@ -60,10 +60,10 @@ const emit = defineEmits<{
 }>()
 
 const addtxt = (): void => {
-  val.value.data.text.push(newText());
+  val.value.data.text.push(newText())
 }
 const rmtxt = (idx: number): void => {
-  val.value.data.text = val.value.data.text.filter((_val: string, index: number) => index !== idx);
+  val.value.data.text = val.value.data.text.filter((_val: string, index: number) => index !== idx)
 }
 
 watch(val, (newValue: ChatEffectData) => {

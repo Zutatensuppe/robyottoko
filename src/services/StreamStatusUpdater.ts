@@ -1,6 +1,6 @@
-import { logger, MINUTE } from "../common/fn"
-import { Bot } from "../types"
-import { User } from "../repo/Users"
+import { logger, MINUTE } from '../common/fn'
+import { Bot } from '../types'
+import { User } from '../repo/Users'
 
 const log = logger('StreamStatusUpdater.ts')
 

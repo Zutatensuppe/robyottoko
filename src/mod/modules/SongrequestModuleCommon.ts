@@ -1,9 +1,9 @@
-"use strict";
+'use strict'
 
-import { Command, FunctionCommand, GlobalVariable, MediaFile, PlaylistItem } from "../../types"
+import { Command, FunctionCommand, GlobalVariable, MediaFile, PlaylistItem } from '../../types'
 import { commands } from '../../common/commands'
-import { getProp } from "../../common/fn"
-import { presets } from "./SongrequestPresets";
+import { getProp } from '../../common/fn'
+import { presets } from './SongrequestPresets'
 
 export interface TagInfo {
   value: string

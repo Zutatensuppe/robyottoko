@@ -26,8 +26,8 @@ class VoteModule implements Module {
     // @ts-ignore
     return (async () => {
       this.data = await this.reinit()
-      return this;
-    })();
+      return this
+    })()
   }
 
   async userChanged(user: User) {
@@ -94,7 +94,7 @@ class VoteModule implements Module {
 
     const say = this.bot.sayFn(this.user, ctx.target)
     if (ctx.rawCmd.args.length === 0) {
-      say(`Usage: !play THING`)
+      say('Usage: !play THING')
       return
     }
 
@@ -118,7 +118,7 @@ class VoteModule implements Module {
     }
 
     if (ctx.rawCmd.args.length < 2) {
-      say(`Usage: !vote TYPE THING`)
+      say('Usage: !vote TYPE THING')
       return
     }
 
@@ -143,11 +143,11 @@ class VoteModule implements Module {
         return b.users.length - a.users.length
       })
 
-      const medals = ['🥇', '🥈', '🥉'];
-      let i = 0;
+      const medals = ['🥇', '🥈', '🥉']
+      let i = 0
       for (const item of list.slice(0, 3)) {
         say(`${medals[i]} ${item.value}: ${item.users.length} vote${item.users.length > 1 ? 's' : ''} (${item.users.join(', ')})`)
-        i++;
+        i++
       }
       return
     }

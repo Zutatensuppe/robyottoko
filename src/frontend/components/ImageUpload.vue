@@ -32,11 +32,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { Ref, ref } from "vue";
-import { mediaFileFromUploadedFile } from "../../common/fn";
-import { MediaFile, UploadedFile } from "../../types";
-import { getFileFromDropEvent } from "../util";
-import UploadInput from "./UploadInput.vue";
+import { Ref, ref } from 'vue'
+import { mediaFileFromUploadedFile } from '../../common/fn'
+import { MediaFile, UploadedFile } from '../../types'
+import { getFileFromDropEvent } from '../util'
+import UploadInput from './UploadInput.vue'
 import ResponsiveImage from './ResponsiveImage.vue'
 
 const props = withDefaults(defineProps<{
@@ -44,8 +44,8 @@ const props = withDefaults(defineProps<{
   width?: string
   height?: string
 }>(), {
-  width: "100%",
-  height: "90px",
+  width: '100%',
+  height: '90px',
 })
 
 const emit = defineEmits<{
@@ -55,18 +55,18 @@ const emit = defineEmits<{
 const value = ref<MediaFile>(
   props.modelValue
     ? JSON.parse(JSON.stringify(props.modelValue))
-    : { file: "", filename: "", urlpath: "" }
+    : { file: '', filename: '', urlpath: '' }
 )
 const draggingOver = ref<boolean>(false)
 
 const uploadComponent = ref<InstanceType<typeof UploadInput>>() as Ref<InstanceType<typeof UploadInput>>
 
 const emitUpdate = () => {
-  emit("update:modelValue", JSON.parse(JSON.stringify(value.value)))
+  emit('update:modelValue', JSON.parse(JSON.stringify(value.value)))
 }
 
 const onRemove = () => {
-  value.value = { file: "", filename: "", urlpath: "" }
+  value.value = { file: '', filename: '', urlpath: '' }
   emitUpdate()
 }
 
@@ -82,7 +82,7 @@ const onDrop = (e: any) => {
 
   const file = getFileFromDropEvent(e)
   if (file) {
-    value.value.file = ""
+    value.value.file = ''
     uploadComponent.value.uploadFile(file)
   }
   return false

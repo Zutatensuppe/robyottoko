@@ -1,12 +1,12 @@
 'use strict'
 
-import { newRewardRedemptionTrigger } from "../../common/commands"
-import { logger } from "../../common/fn"
-import { Bot, RawCommand, TwitchChatContext } from "../../types"
-import { CommandExecutor } from "../CommandExecutor"
-import { User } from "../../repo/Users"
-import { EventSubEventHandler } from "./EventSubEventHandler"
-import { getUserTypeInfo } from "../../fn"
+import { newRewardRedemptionTrigger } from '../../common/commands'
+import { logger } from '../../common/fn'
+import { Bot, RawCommand, TwitchChatContext } from '../../types'
+import { CommandExecutor } from '../CommandExecutor'
+import { User } from '../../repo/Users'
+import { EventSubEventHandler } from './EventSubEventHandler'
+import { getUserTypeInfo } from '../../fn'
 
 const log = logger('ChannelPointRedeemEventHandler.ts')
 
@@ -25,9 +25,9 @@ export class ChannelPointRedeemEventHandler extends EventSubEventHandler<any> {
     const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.user_id)
     const target = data.event.broadcaster_user_name
     const context: TwitchChatContext = {
-      "room-id": data.event.broadcaster_user_id,
-      "user-id": data.event.user_id,
-      "display-name": data.event.user_name,
+      'room-id': data.event.broadcaster_user_id,
+      'user-id': data.event.user_id,
+      'display-name': data.event.user_name,
       username: data.event.user_login,
       mod,
       subscriber,

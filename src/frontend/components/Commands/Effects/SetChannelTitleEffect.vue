@@ -20,8 +20,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import { SetChannelTitleEffectData } from '../../../../types';
-import { ref, watch } from 'vue';
+import { SetChannelTitleEffectData } from '../../../../types'
+import { ref, watch } from 'vue'
 import MacroSelect from '../../MacroSelect.vue'
 
 const props = defineProps<{

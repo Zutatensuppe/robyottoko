@@ -18,8 +18,8 @@ class SpeechToTextModule implements Module {
     // @ts-ignore
     return (async () => {
       this.data = await this.reinit()
-      return this;
-    })();
+      return this
+    })()
   }
 
   async userChanged(user: User) {
@@ -59,7 +59,7 @@ class SpeechToTextModule implements Module {
         controlWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.SPEECH_TO_TEXT_CONTROL, this.user.id),
         displayWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.SPEECH_TO_TEXT_RECEIVE, this.user.id),
       }
-    };
+    }
   }
 
   async updateClient(eventName: string, ws: Socket): Promise<void> {

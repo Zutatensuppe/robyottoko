@@ -4,8 +4,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChattersEffectData } from '../../../../types';
-import { ref, watch } from 'vue';
+import { ChattersEffectData } from '../../../../types'
+import { ref, watch } from 'vue'
 
 const props = defineProps<{
   modelValue: ChattersEffectData,

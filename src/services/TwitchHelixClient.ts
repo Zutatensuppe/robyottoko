@@ -66,9 +66,9 @@ interface TwitchHelixChannelEmotesResponseData {
     id: string
     name: string
     images: {
-      "url_1x": string
-      "url_2x": string
-      "url_4x": string
+      'url_1x': string
+      'url_2x': string
+      'url_4x': string
     },
     tier: string
     emote_type: string
@@ -85,9 +85,9 @@ interface TwitchHelixGlobalEmotesResponseData {
     id: string
     name: string
     images: {
-      "url_1x": string
-      "url_2x": string
-      "url_4x": string
+      'url_1x': string
+      'url_2x': string
+      'url_4x': string
     },
     format: string[]
     scale: string[]
@@ -408,7 +408,7 @@ class TwitchHelixClient {
   }
 
   async getUser(accessToken: string): Promise<TwitchHelixUserSearchResponseDataEntry | null> {
-    const url = apiUrl(`/users`)
+    const url = apiUrl('/users')
     let json
     try {
       const resp = await xhr.get(url, withHeaders(this._authHeaders(accessToken), {}))
@@ -671,7 +671,7 @@ class TwitchHelixClient {
       user
     )
     if (res) {
-      rewards[user.twitch_login] = res.data.map(entry => entry.title);
+      rewards[user.twitch_login] = res.data.map(entry => entry.title)
     }
     return rewards
   }

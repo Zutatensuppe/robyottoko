@@ -60,7 +60,7 @@ const emit = defineEmits<{
 const value = ref<string>(props.modelValue)
 
 const autocompletableVariables = (search: string): OneValue[] => {
-  return props.values.filter((v) => v.value.includes(search));
+  return props.values.filter((v) => v.value.includes(search))
 }
 
 const active = ref<boolean>(false)
@@ -87,7 +87,7 @@ const hideDropdown = (e: Event) => {
 }
 
 onMounted(() => {
-  window.addEventListener("click", hideDropdown)
+  window.addEventListener('click', hideDropdown)
   watch(value, (newVal) => {
     emit('update:modelValue', newVal)
   })
@@ -96,6 +96,6 @@ onMounted(() => {
   })
 })
 onUnmounted(() => {
-  window.removeEventListener("click", hideDropdown)
+  window.removeEventListener('click', hideDropdown)
 })
 </script>

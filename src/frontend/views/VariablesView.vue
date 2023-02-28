@@ -73,13 +73,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
-import { useRouter } from "vue-router";
-import { GlobalVariable } from "../../types";
-import api from "../api";
-import StringInput from "../components/StringInput.vue";
-import DoubleclickButton from "../components/DoubleclickButton.vue";
-import NavbarElement from "../components/NavbarElement.vue";
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { GlobalVariable } from '../../types'
+import api from '../api'
+import StringInput from '../components/StringInput.vue'
+import DoubleclickButton from '../components/DoubleclickButton.vue'
+import NavbarElement from '../components/NavbarElement.vue'
 
 const unchangedJson = ref<string>('[]')
 const changedJson = ref<string>('[]')
@@ -88,47 +88,47 @@ const variables = ref<GlobalVariable[]>([])
 const changed = computed(() => unchangedJson.value !== changedJson.value)
 
 const remove = (idx: number): void => {
-  variables.value = variables.value.filter((_val: GlobalVariable, index: number) => index !== idx);
+  variables.value = variables.value.filter((_val: GlobalVariable, index: number) => index !== idx)
 }
 
 const onAdd = (): void => {
-  variables.value.push({ name: "", value: "" });
+  variables.value.push({ name: '', value: '' })
 }
 
 const setChanged = (): void => {
   changedJson.value = JSON.stringify({
     variables: variables.value,
-  });
+  })
 }
 
 const setUnchanged = (): void => {
   unchangedJson.value = JSON.stringify({
     variables: variables.value,
-  });
-  changedJson.value = unchangedJson.value;
+  })
+  changedJson.value = unchangedJson.value
 }
 
 const sendSave = async (): Promise<void> => {
   await api.saveVariables({
     variables: variables.value,
-  });
-  setUnchanged();
+  })
+  setUnchanged()
 }
 
-const router = useRouter();
+const router = useRouter()
 onMounted(async () => {
-  const res = await api.getPageVariablesData();
+  const res = await api.getPageVariablesData()
   if (res.status !== 200) {
-    router.push({ name: "login" });
-    return;
+    router.push({ name: 'login' })
+    return
   }
 
-  const data: { variables: GlobalVariable[] } = await res.json();
-  variables.value = data.variables;
-  setUnchanged();
+  const data: { variables: GlobalVariable[] } = await res.json()
+  variables.value = data.variables
+  setUnchanged()
 
   watch(variables, () => {
-    setChanged();
+    setChanged()
   }, { deep: true })
 })
 </script>

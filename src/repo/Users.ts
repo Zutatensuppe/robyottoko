@@ -1,5 +1,5 @@
-import { WhereRaw } from "../DbPostgres"
-import { Repo } from "./Repo"
+import { WhereRaw } from '../DbPostgres'
+import { Repo } from './Repo'
 
 const TABLE = 'robyottoko.user'
 

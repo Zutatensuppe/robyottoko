@@ -1,7 +1,7 @@
-import { determineNewVolume } from "../fn";
-import GeneralModule from "../mod/modules/GeneralModule";
-import { MediaVolumeEffectData } from "../types";
-import { Effect } from "./Effect";
+import { determineNewVolume } from '../fn'
+import GeneralModule from '../mod/modules/GeneralModule'
+import { MediaVolumeEffectData } from '../types'
+import { Effect } from './Effect'
 
 export class MediaVolumeEffect extends Effect<MediaVolumeEffectData> {
   async apply(): Promise<void> {

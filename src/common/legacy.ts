@@ -1,4 +1,4 @@
-import { AddStreamTagEffectData, ChatEffectData, ChattersEffectData, CommandEffectType, CommandVariableChange, CountdownAction, CountdownEffectData, DictLookupEffectData, EmotesEffectData, MadochanEffectData, MediaEffectData, MediaVolumeEffectData, RemoveStreamTagEffectData, SetChannelGameIdEffectData, SetChannelTitleEffectData, VariableChangeEffectData } from "../types"
+import { AddStreamTagEffectData, ChatEffectData, ChattersEffectData, CommandEffectType, CommandVariableChange, CountdownAction, CountdownEffectData, DictLookupEffectData, EmotesEffectData, MadochanEffectData, MediaEffectData, MediaVolumeEffectData, RemoveStreamTagEffectData, SetChannelGameIdEffectData, SetChannelTitleEffectData, VariableChangeEffectData } from '../types'
 
 const variableChangeToCommandEffect = (variableChange: CommandVariableChange): VariableChangeEffectData => {
   return {

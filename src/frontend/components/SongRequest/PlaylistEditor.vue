@@ -320,12 +320,12 @@
 </template>
 
 <script setup lang="ts">
-import { dateformat, humanDuration } from "../../../common/fn"
-import { computed, nextTick, Ref, ref, watch } from "vue"
-import { DragEndEvent, PlaylistItem } from "../../../types"
-import { isItemShown, SongRequestModuleFilter, SortBy, SortDirection } from "../../../mod/modules/SongrequestModuleCommon"
+import { dateformat, humanDuration } from '../../../common/fn'
+import { computed, nextTick, Ref, ref, watch } from 'vue'
+import { DragEndEvent, PlaylistItem } from '../../../types'
+import { isItemShown, SongRequestModuleFilter, SortBy, SortDirection } from '../../../mod/modules/SongrequestModuleCommon'
 import DoubleclickButton from '../DoubleclickButton.vue'
-import CheckboxInput from "../CheckboxInput.vue"
+import CheckboxInput from '../CheckboxInput.vue'
 
 interface EnhancedPlaylistItem extends PlaylistItem {
   filteredOut: boolean
@@ -343,9 +343,9 @@ const emit = defineEmits<{
 
 
 const hideFilteredOut = ref<boolean>(true)
-const showTagInput = ref<string>("")
-const hideTagInput = ref<string>("")
-const tagInput = ref<string>("")
+const showTagInput = ref<string>('')
+const hideTagInput = ref<string>('')
+const tagInput = ref<string>('')
 const tagInputIdx = ref<number>(-1)
 const itemsDisplayed = ref<number>(20)
 
@@ -368,60 +368,60 @@ const enhancedPlaylist = computed((): EnhancedPlaylistItem[] => {
       user: item.user,
       filteredOut: !isItemShown(item, props.filter),
     }))
-    .slice(0, itemsDisplayed.value);
+    .slice(0, itemsDisplayed.value)
 })
 
 const firstIndex = computed((): number => {
-  return props.playlist.findIndex((item) => isItemShown(item, props.filter));
+  return props.playlist.findIndex((item) => isItemShown(item, props.filter))
 })
 
 const sort = (by: SortBy, direction: SortDirection) => {
   sendCtrl('sort', [by, direction])
 }
 const formatTimestamp = (ms: number) => {
-  return dateformat('YYYY-MM-DD hh:mm:ss', new Date(ms));
+  return dateformat('YYYY-MM-DD hh:mm:ss', new Date(ms))
 }
 const toggleVisibility = (item: PlaylistItem, idx: number) => {
-  const visible = !!item.hidevideo;
-  sendCtrl("videoVisibility", [visible, idx]);
+  const visible = !!item.hidevideo
+  sendCtrl('videoVisibility', [visible, idx])
 }
 const dragEnd = (evt: DragEndEvent) => {
-  sendCtrl("move", [evt.oldIndex, evt.newIndex]);
+  sendCtrl('move', [evt.oldIndex, evt.newIndex])
 }
 const removeFilterShowTag = (tag: string): void => {
-  sendCtrl("removeFilterShowTag", [tag])
+  sendCtrl('removeFilterShowTag', [tag])
 }
 const removeFilterHideTag = (tag: string): void => {
-  sendCtrl("removeFilterHideTag", [tag])
+  sendCtrl('removeFilterHideTag', [tag])
 }
 const addFilterShowTag = (tag: string): void => {
-  sendCtrl("addFilterShowTag", [tag])
+  sendCtrl('addFilterShowTag', [tag])
 }
 const addFilterHideTag = (tag: string): void => {
-  sendCtrl("addFilterHideTag", [tag])
+  sendCtrl('addFilterHideTag', [tag])
 }
 const sendCtrl = (ctrl: string, args: any[]) => {
-  emit("ctrl", [ctrl, args]);
+  emit('ctrl', [ctrl, args])
 }
 const startAddTag = (idx: number) => {
-  tagInputIdx.value = idx;
+  tagInputIdx.value = idx
   nextTick(() => {
-    const inputElement = el.value.querySelector("table .filter-tag-input")
+    const inputElement = el.value.querySelector('table .filter-tag-input')
     if (inputElement) {
-      (inputElement as HTMLInputElement).focus();
+      (inputElement as HTMLInputElement).focus()
     }
   })
 }
 
 watch(() => props.playlist, (newVal: PlaylistItem[], _oldVal: PlaylistItem[]) => {
   if (!newVal.find((item: PlaylistItem) => isItemShown(item, props.filter))) {
-    emit("stopPlayer");
+    emit('stopPlayer')
   }
 })
 
 watch(() => props.filter, () => {
   if (!props.playlist.find((item: PlaylistItem) => isItemShown(item, props.filter))) {
-    emit("stopPlayer");
+    emit('stopPlayer')
   }
 })
 </script>

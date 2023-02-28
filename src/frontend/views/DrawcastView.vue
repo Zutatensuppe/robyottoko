@@ -397,12 +397,12 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent } from "vue";
-import { arraySwap } from "../../common/fn";
+import { defineComponent } from 'vue'
+import { arraySwap } from '../../common/fn'
 import {
   default_settings,
   DrawcastImage,
-} from "../../mod/modules/DrawcastModuleCommon";
+} from '../../mod/modules/DrawcastModuleCommon'
 import {
 ApiUserData,
   DrawcastData,
@@ -410,18 +410,18 @@ ApiUserData,
   DrawcastSettings,
   MediaFile,
   SoundMediaFile,
-} from "../../types";
-import util from "../util";
-import WsClient from "../WsClient";
-import StringInput from "../components/StringInput.vue";
-import IntegerInput from "../components/IntegerInput.vue";
-import CheckboxInput from "../components/CheckboxInput.vue";
-import DoubleclickButton from "../components/DoubleclickButton.vue";
-import SoundUpload from "../components/SoundUpload.vue";
-import ImageUpload from "../components/SoundUpload.vue";
-import NavbarElement from "../components/NavbarElement.vue";
-import StringsInput from "../components/StringsInput.vue";
-import user from "../user";
+} from '../../types'
+import util from '../util'
+import WsClient from '../WsClient'
+import StringInput from '../components/StringInput.vue'
+import IntegerInput from '../components/IntegerInput.vue'
+import CheckboxInput from '../components/CheckboxInput.vue'
+import DoubleclickButton from '../components/DoubleclickButton.vue'
+import SoundUpload from '../components/SoundUpload.vue'
+import ImageUpload from '../components/SoundUpload.vue'
+import NavbarElement from '../components/NavbarElement.vue'
+import StringsInput from '../components/StringsInput.vue'
+import user from '../user'
 
 interface ComponentData {
   unchangedJson: string;
@@ -461,33 +461,33 @@ export default defineComponent({
     StringsInput
 },
   data: (): ComponentData => ({
-    unchangedJson: "{}",
-    changedJson: "{}",
+    unchangedJson: '{}',
+    changedJson: '{}',
     inited: false,
     settings: default_settings(),
     defaultSettings: default_settings(),
     ws: null,
     me: null,
-    drawUrl: "",
+    drawUrl: '',
     notificationSoundAudio: null,
     manualApproval: {
-      hovered: "",
+      hovered: '',
       items: [],
     },
     favoriteSelection: {
-      hovered: "",
+      hovered: '',
       items: [],
       pagination: {
         page: 1,
         perPage: 20,
       },
     },
-    controlWidgetUrl: "",
-    receiveWidgetUrl: "",
+    controlWidgetUrl: '',
+    receiveWidgetUrl: '',
   }),
   computed: {
     changed() {
-      return this.unchangedJson !== this.changedJson;
+      return this.unchangedJson !== this.changedJson
     },
     favoriteSelectionTotalPages() {
       return (Math.floor(this.favoriteSelection.items.length /
@@ -496,173 +496,173 @@ export default defineComponent({
           this.favoriteSelection.pagination.perPage ===
           0
           ? 0
-          : 1));
+          : 1))
     },
     currentFavoriteSelectionItems() {
       const start = (this.favoriteSelection.pagination.page - 1) *
-        this.favoriteSelection.pagination.perPage;
-      return this.favoriteSelection.items.slice(start, start + this.favoriteSelection.pagination.perPage);
+        this.favoriteSelection.pagination.perPage
+      return this.favoriteSelection.items.slice(start, start + this.favoriteSelection.pagination.perPage)
     },
   },
   watch: {
     settings: {
       deep: true,
       handler(ch) {
-        this.changedJson = JSON.stringify(ch);
+        this.changedJson = JSON.stringify(ch)
       },
     },
   },
   async created() {
     this.me = user.getMe()
 
-    this.ws = util.wsClient("drawcast");
-    this.ws.onMessage("init", async (data: DrawcastData) => {
-      this.settings = data.settings;
-      this.unchangedJson = JSON.stringify(data.settings);
-      this.drawUrl = data.drawUrl;
-      this.controlWidgetUrl = data.controlWidgetUrl;
-      this.receiveWidgetUrl = data.receiveWidgetUrl;
+    this.ws = util.wsClient('drawcast')
+    this.ws.onMessage('init', async (data: DrawcastData) => {
+      this.settings = data.settings
+      this.unchangedJson = JSON.stringify(data.settings)
+      this.drawUrl = data.drawUrl
+      this.controlWidgetUrl = data.controlWidgetUrl
+      this.receiveWidgetUrl = data.receiveWidgetUrl
 
-      this.sendMsg({ event: "get_all_images" });
-    });
+      this.sendMsg({ event: 'get_all_images' })
+    })
     this.ws.onMessage('all_images', (data: { images: DrawcastImage[] }) => {
-      this.favoriteSelection.items = data.images.map((item: DrawcastImage) => item.path);
+      this.favoriteSelection.items = data.images.map((item: DrawcastImage) => item.path)
       if (this.settings.notificationSound) {
-        this.notificationSoundAudio = new Audio(this.settings.notificationSound.urlpath);
+        this.notificationSoundAudio = new Audio(this.settings.notificationSound.urlpath)
         this.notificationSoundAudio.volume =
-          this.settings.notificationSound.volume / 100;
+          this.settings.notificationSound.volume / 100
       }
       this.manualApproval.items = data.images
         .filter((item: DrawcastImage) => !item.approved)
-        .map((item: DrawcastImage) => item.path);
-      this.inited = true;
-    });
-    this.ws.onMessage("approved_image_received", (data: {
+        .map((item: DrawcastImage) => item.path)
+      this.inited = true
+    })
+    this.ws.onMessage('approved_image_received', (data: {
       nonce: string;
       img: string;
       mayNotify: boolean;
     }) => {
-      this.favoriteSelection.items = this.favoriteSelection.items.filter((img) => img !== data.img);
-      this.manualApproval.items = this.manualApproval.items.filter((img) => img !== data.img);
-      this.favoriteSelection.items.unshift(data.img);
-      this.favoriteSelection.items = this.favoriteSelection.items.slice();
-    });
-    this.ws.onMessage("image_deleted", (data: {
+      this.favoriteSelection.items = this.favoriteSelection.items.filter((img) => img !== data.img)
+      this.manualApproval.items = this.manualApproval.items.filter((img) => img !== data.img)
+      this.favoriteSelection.items.unshift(data.img)
+      this.favoriteSelection.items = this.favoriteSelection.items.slice()
+    })
+    this.ws.onMessage('image_deleted', (data: {
       img: string;
     }) => {
       this.settings.favoriteLists = this.settings.favoriteLists.map(favoriteList => {
         favoriteList.list = favoriteList.list.filter(img => img !== data.img)
         return favoriteList
       })
-      this.favoriteSelection.items = this.favoriteSelection.items.filter((img) => img !== data.img);
-      this.manualApproval.items = this.manualApproval.items.filter((img) => img !== data.img);
-    });
-    this.ws.onMessage("denied_image_received", (data: {
+      this.favoriteSelection.items = this.favoriteSelection.items.filter((img) => img !== data.img)
+      this.manualApproval.items = this.manualApproval.items.filter((img) => img !== data.img)
+    })
+    this.ws.onMessage('denied_image_received', (data: {
       nonce: string;
       img: string;
       mayNotify: boolean;
     }) => {
-      this.favoriteSelection.items = this.favoriteSelection.items.filter((img) => img !== data.img);
-      this.manualApproval.items = this.manualApproval.items.filter((img) => img !== data.img);
-    });
-    this.ws.onMessage("image_received", (data: {
+      this.favoriteSelection.items = this.favoriteSelection.items.filter((img) => img !== data.img)
+      this.manualApproval.items = this.manualApproval.items.filter((img) => img !== data.img)
+    })
+    this.ws.onMessage('image_received', (data: {
       nonce: string;
       img: string;
       mayNotify: boolean;
     }) => {
-      this.favoriteSelection.items = this.favoriteSelection.items.filter((img) => img !== data.img);
-      this.manualApproval.items = this.manualApproval.items.filter((img) => img !== data.img);
-      this.favoriteSelection.items.unshift(data.img);
-      this.favoriteSelection.items = this.favoriteSelection.items.slice();
-      this.manualApproval.items.push(data.img);
-      this.manualApproval.items = this.manualApproval.items.slice();
+      this.favoriteSelection.items = this.favoriteSelection.items.filter((img) => img !== data.img)
+      this.manualApproval.items = this.manualApproval.items.filter((img) => img !== data.img)
+      this.favoriteSelection.items.unshift(data.img)
+      this.favoriteSelection.items = this.favoriteSelection.items.slice()
+      this.manualApproval.items.push(data.img)
+      this.manualApproval.items = this.manualApproval.items.slice()
       if (data.mayNotify && this.notificationSoundAudio) {
-        this.notificationSoundAudio.play();
+        this.notificationSoundAudio.play()
       }
-    });
-    this.ws.connect();
+    })
+    this.ws.connect()
   },
   unmounted() {
     if (this.ws) {
-      this.ws.disconnect();
+      this.ws.disconnect()
     }
   },
   methods: {
     deleteImage(path: string) {
-      this.sendMsg({ event: "delete_image", path });
+      this.sendMsg({ event: 'delete_image', path })
     },
     approveImage(path: string) {
-      this.sendMsg({ event: "approve_image", path });
+      this.sendMsg({ event: 'approve_image', path })
     },
     denyImage(path: string) {
-      this.sendMsg({ event: "deny_image", path });
+      this.sendMsg({ event: 'deny_image', path })
     },
     addFavoriteList() {
       if (!this.settings) {
-        console.warn("addFavoriteList: this.settings not initialized");
-        return;
+        console.warn('addFavoriteList: this.settings not initialized')
+        return
       }
       this.settings.favoriteLists.push({
         list: [],
-        title: "",
-      });
+        title: '',
+      })
     },
     moveFavoriteListUp(idx: number) {
-      this.swapItems(idx - 1, idx);
+      this.swapItems(idx - 1, idx)
     },
     moveFavoriteListDown(idx: number) {
-      this.swapItems(idx + 1, idx);
+      this.swapItems(idx + 1, idx)
     },
     swapItems(idx1: number, idx2: number) {
-      arraySwap(this.settings.favoriteLists, idx1, idx2);
+      arraySwap(this.settings.favoriteLists, idx1, idx2)
     },
     removeFavoriteList(index: number) {
       if (!this.settings) {
-        console.warn("removeFavoriteList: this.settings not initialized");
-        return;
+        console.warn('removeFavoriteList: this.settings not initialized')
+        return
       }
-      const favLists: DrawcastFavoriteList[] = [];
+      const favLists: DrawcastFavoriteList[] = []
       for (let idx in this.settings.favoriteLists) {
         if (parseInt(idx, 10) === parseInt(`${index}`, 10)) {
-          continue;
+          continue
         }
-        favLists.push(this.settings.favoriteLists[idx]);
+        favLists.push(this.settings.favoriteLists[idx])
       }
-      this.settings.favoriteLists = favLists;
+      this.settings.favoriteLists = favLists
     },
     toggleFavorite(index: number, url: string) {
       if (!this.settings) {
-        console.warn("toggleFavorite: this.settings not initialized");
-        return;
+        console.warn('toggleFavorite: this.settings not initialized')
+        return
       }
       if (this.settings.favoriteLists[index].list.includes(url)) {
-        this.settings.favoriteLists[index].list = this.settings.favoriteLists[index].list.filter((u: string) => u !== url);
+        this.settings.favoriteLists[index].list = this.settings.favoriteLists[index].list.filter((u: string) => u !== url)
       }
       else {
-        this.settings.favoriteLists[index].list.push(url);
+        this.settings.favoriteLists[index].list.push(url)
       }
     },
     customProfileImageChanged(file: MediaFile) {
       if (!this.settings) {
-        console.warn("customProfileImageChanged: this.settings not initialized");
-        return;
+        console.warn('customProfileImageChanged: this.settings not initialized')
+        return
       }
-      this.settings.customProfileImage = file.file ? file : null;
+      this.settings.customProfileImage = file.file ? file : null
     },
     notificationSoundChanged(file: SoundMediaFile) {
       if (!this.settings) {
-        console.warn("notificationSoundChanged: this.settings not initialized");
-        return;
+        console.warn('notificationSoundChanged: this.settings not initialized')
+        return
       }
-      this.settings.notificationSound = file.file ? file : null;
+      this.settings.notificationSound = file.file ? file : null
     },
     sendSave() {
       if (!this.settings) {
-        console.warn("sendSave: this.settings not initialized");
-        return;
+        console.warn('sendSave: this.settings not initialized')
+        return
       }
       this.sendMsg({
-        event: "save",
+        event: 'save',
         settings: {
           canvasWidth: parseInt(`${this.settings.canvasWidth}`, 10) || 720,
           canvasHeight: parseInt(`${this.settings.canvasHeight}`, 10) || 405,
@@ -680,23 +680,23 @@ export default defineComponent({
           favoriteLists: this.settings.favoriteLists,
           moderationAdmins: this.settings.moderationAdmins,
         },
-      });
+      })
     },
     sendMsg(data: any) {
       if (!this.ws) {
-        console.warn("sendMsg: this.ws not initialized");
-        return;
+        console.warn('sendMsg: this.ws not initialized')
+        return
       }
       if (!this.me) {
-        console.warn("sendMsg: this.me not initialized");
-        return;
+        console.warn('sendMsg: this.me not initialized')
+        return
       }
       this.ws.send(JSON.stringify(Object.assign({}, data, {
         token: this.me.token,
-      })));
+      })))
     },
   }
-});
+})
 </script>
 
 <style lang="scss">

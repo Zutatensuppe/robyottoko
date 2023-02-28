@@ -92,8 +92,8 @@ class GeneralModule implements Module {
         await this.bot.getRepos().module.save(this.user.id, this.name, this.data)
       }
       this.inittimers()
-      return this;
-    })();
+      return this
+    })()
   }
 
   getCurrentMediaVolume() {
@@ -291,7 +291,7 @@ class GeneralModule implements Module {
       switch (cmd.action) {
         case CommandAction.TEXT:
           cmdObj = Object.assign({}, cmd, { fn: noop })
-          break;
+          break
       }
       if (!cmdObj) {
         return

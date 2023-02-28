@@ -6,7 +6,7 @@
   >
 </template>
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref } from 'vue'
 
 const props = withDefaults(defineProps<{
   modelValue: any,
@@ -24,8 +24,8 @@ const value = ref<boolean>(props.modelValue === props.onValue)
 
 const emitUpdate = () => {
   emit(
-    "update:modelValue",
+    'update:modelValue',
     value.value ? props.onValue : props.offValue
-  );
+  )
 }
 </script>

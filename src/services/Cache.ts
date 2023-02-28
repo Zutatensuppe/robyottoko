@@ -1,6 +1,6 @@
-import Db from "../DbPostgres"
-import { CacheValue } from "../types"
-import { logger } from "../common/fn"
+import Db from '../DbPostgres'
+import { CacheValue } from '../types'
+import { logger } from '../common/fn'
 
 const TABLE = 'robyottoko.cache'
 

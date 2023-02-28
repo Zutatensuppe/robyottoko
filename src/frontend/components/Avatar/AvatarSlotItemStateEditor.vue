@@ -52,16 +52,16 @@
 </template>
 
 <script setup lang="ts">
-import { Ref, ref } from "vue";
+import { Ref, ref } from 'vue'
 import {
   AvatarModuleSlotItemStateDefinition,
   AvatarModuleAnimationFrameDefinition,
-} from "../../../mod/modules/AvatarModuleCommon";
-import { getFileFromDropEvent } from "../../util";
-import { UploadedFile } from "../../../types";
-import AvatarAnimation from "./AvatarAnimation.vue";
-import AvatarFrameUpload from "./AvatarFrameUpload.vue";
-import UploadInput from "../UploadInput.vue";
+} from '../../../mod/modules/AvatarModuleCommon'
+import { getFileFromDropEvent } from '../../util'
+import { UploadedFile } from '../../../types'
+import AvatarAnimation from './AvatarAnimation.vue'
+import AvatarFrameUpload from './AvatarFrameUpload.vue'
+import UploadInput from '../UploadInput.vue'
 
 const props = defineProps<{
   modelValue: AvatarModuleSlotItemStateDefinition
@@ -85,30 +85,30 @@ const onDragLeave = (e: DragEvent): void => {
 }
 const onDragEnter = (e: DragEvent): void => {
   if (!e.dataTransfer) {
-    return;
+    return
   }
-  if (e.dataTransfer.getData("avatar-image-url")) {
-    e.preventDefault();
+  if (e.dataTransfer.getData('avatar-image-url')) {
+    e.preventDefault()
   }
 }
 const onDrop = (e: DragEvent): void => {
   if (!e.dataTransfer) {
-    return;
+    return
   }
-  draggingOver.value = false;
-  e.preventDefault();
-  e.stopPropagation();
-  if (e.dataTransfer.getData("avatar-image-url")) {
+  draggingOver.value = false
+  e.preventDefault()
+  e.stopPropagation()
+  if (e.dataTransfer.getData('avatar-image-url')) {
     const frame: AvatarModuleAnimationFrameDefinition = {
-      url: e.dataTransfer.getData("avatar-image-url"),
+      url: e.dataTransfer.getData('avatar-image-url'),
       duration: 100,
-    };
-    props.modelValue.frames.push(frame);
+    }
+    props.modelValue.frames.push(frame)
   }
   else {
-    const file = getFileFromDropEvent(e);
+    const file = getFileFromDropEvent(e)
     if (file) {
-      uploadComponent.value.uploadFile(file);
+      uploadComponent.value.uploadFile(file)
     }
   }
 }
@@ -116,23 +116,23 @@ const onUploaded = (file: UploadedFile): void => {
   props.modelValue.frames.push({
     url: file.urlpath,
     duration: 100,
-  });
+  })
 }
 
 const frameChanged = (idx: number, frame: AvatarModuleAnimationFrameDefinition) => {
-  if (frame.url === "") {
-    props.modelValue.frames = props.modelValue.frames.filter((_val, index: number) => index !== idx);
+  if (frame.url === '') {
+    props.modelValue.frames = props.modelValue.frames.filter((_val, index: number) => index !== idx)
   }
   else {
-    props.modelValue.frames[idx] = frame;
+    props.modelValue.frames[idx] = frame
   }
 }
 const addFrame = () => {
   const frame: AvatarModuleAnimationFrameDefinition = {
-    url: "",
+    url: '',
     duration: 100,
-  };
-  props.modelValue.frames.push(frame);
+  }
+  props.modelValue.frames.push(frame)
 }
 </script>
 <style>

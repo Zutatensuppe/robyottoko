@@ -1,7 +1,7 @@
 // rollup.config.js
-import replace from '@rollup/plugin-replace';
-import typescript from 'rollup-plugin-typescript2';
-import { nodeResolve } from '@rollup/plugin-node-resolve';
+import replace from '@rollup/plugin-replace'
+import typescript from 'rollup-plugin-typescript2'
+import { nodeResolve } from '@rollup/plugin-node-resolve'
 import fs from 'fs'
 
 const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf-8'))
@@ -14,17 +14,17 @@ export default {
     format: 'es',
   },
   external: [
-    "cookie-parser",
-    "cors",
-    "express",
-    "jsonwebtoken",
-    "multer",
-    "node-fetch",
-    "pg",
-    "sib-api-v3-sdk",
-    "tmi.js",
-    "twing",
-    "ws",
+    'cookie-parser',
+    'cors',
+    'express',
+    'jsonwebtoken',
+    'multer',
+    'node-fetch',
+    'pg',
+    'sib-api-v3-sdk',
+    'tmi.js',
+    'twing',
+    'ws',
   ],
   plugins: [typescript(), nodeResolve(), replace({
     preventAssignment: true,
@@ -34,4 +34,4 @@ export default {
       __buildVersion__: JSON.stringify(`${packageJson.version}`),
     },
   })],
-};
+}

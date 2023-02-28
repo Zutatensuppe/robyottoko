@@ -157,14 +157,14 @@
 </template>
 
 <script setup lang="ts">
-import { CountdownAction, CountdownCommandData, DragEndEvent, MediaFile, SoundMediaFile } from "../../../types";
-import { newCountdownDelay, newCountdownText, newCountdownMedia } from "../../../common/commands";
-import { ref, watch } from "vue";
-import DurationInput from "../DurationInput.vue";
-import fn from "../../../common/fn";
-import ImageUpload from "../ImageUpload.vue";
-import SoundUpload from "../SoundUpload.vue";
-import StringInput from "../StringInput.vue";
+import { CountdownAction, CountdownCommandData, DragEndEvent, MediaFile, SoundMediaFile } from '../../../types'
+import { newCountdownDelay, newCountdownText, newCountdownMedia } from '../../../common/commands'
+import { ref, watch } from 'vue'
+import DurationInput from '../DurationInput.vue'
+import fn from '../../../common/fn'
+import ImageUpload from '../ImageUpload.vue'
+import SoundUpload from '../SoundUpload.vue'
+import StringInput from '../StringInput.vue'
 
 const props = withDefaults(defineProps<{
   modelValue: CountdownCommandData,
@@ -175,7 +175,7 @@ const props = withDefaults(defineProps<{
 
 const countdown = ref<CountdownCommandData>({
   // old countdowns are automatic
-  type: props.modelValue.type || "auto",
+  type: props.modelValue.type || 'auto',
   // settings for manual
   actions: props.modelValue.actions || [],
   step: props.modelValue.step,
@@ -191,7 +191,7 @@ const emit = defineEmits<{
 }>()
 
 watch(countdown, () => {
-  emit("update:modelValue", {
+  emit('update:modelValue', {
     type: countdown.value.type,
     actions: countdown.value.actions,
     step: countdown.value.step,
@@ -199,30 +199,30 @@ watch(countdown, () => {
     interval: countdown.value.interval,
     intro: countdown.value.intro,
     outro: countdown.value.outro,
-  });
-}, { deep: true });
+  })
+}, { deep: true })
 
 const dragEnd = (evt: DragEndEvent): void => {
-  countdown.value.actions = fn.arrayMove(countdown.value.actions, evt.oldIndex, evt.newIndex);
+  countdown.value.actions = fn.arrayMove(countdown.value.actions, evt.oldIndex, evt.newIndex)
 }
 const onAddDelay = (): void => {
-  countdown.value.actions.push(newCountdownDelay());
+  countdown.value.actions.push(newCountdownDelay())
 }
 const onAddText = (): void => {
-  countdown.value.actions.push(newCountdownText());
+  countdown.value.actions.push(newCountdownText())
 }
 const onAddMedia = (): void => {
-  countdown.value.actions.push(newCountdownMedia());
+  countdown.value.actions.push(newCountdownMedia())
 }
 const rmaction = (idx: number): void => {
-  countdown.value.actions = countdown.value.actions.filter((_val: CountdownAction, index: number) => index !== idx);
+  countdown.value.actions = countdown.value.actions.filter((_val: CountdownAction, index: number) => index !== idx)
 }
 const mediaSndChanged = (idx: number, file: SoundMediaFile): void => {
   // @ts-ignore
-  countdown.value.actions[idx].value.sound = file;
+  countdown.value.actions[idx].value.sound = file
 }
 const mediaImgChanged = (idx: number, file: MediaFile): void => {
   // @ts-ignore
-  countdown.value.actions[idx].value.image = file;
+  countdown.value.actions[idx].value.image = file
 }
 </script>

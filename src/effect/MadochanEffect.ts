@@ -1,7 +1,7 @@
-import { logger } from "../common/fn";
-import Madochan from "../services/Madochan";
-import { MadochanEffectData } from "../types";
-import { Effect } from "./Effect";
+import { logger } from '../common/fn'
+import Madochan from '../services/Madochan'
+import { MadochanEffectData } from '../types'
+import { Effect } from './Effect'
 
 const log = logger('MadochanEffect.ts')
 
@@ -23,13 +23,13 @@ export class MadochanEffect extends Effect<MadochanEffectData> {
     try {
       const data = await Madochan.createWord({ model, weirdness, definition })
       if (data.word === '') {
-        this.say(`Sorry, I could not generate a word :("`)
+        this.say('Sorry, I could not generate a word :("')
       } else {
         this.say(`"${definition}": ${data.word}`)
       }
     } catch (e: any) {
       log.error({ e })
-      this.say(`Error occured, unable to generate a word :("`)
+      this.say('Error occured, unable to generate a word :("')
     }
   }
 }

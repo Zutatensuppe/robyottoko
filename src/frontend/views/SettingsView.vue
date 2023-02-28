@@ -119,16 +119,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
-import api from "../api";
-import StringInput from "../components/StringInput.vue";
-import NavbarElement from "../components/NavbarElement.vue";
+import { computed, onMounted, ref, watch } from 'vue'
+import api from '../api'
+import StringInput from '../components/StringInput.vue'
+import NavbarElement from '../components/NavbarElement.vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-const unchangedJson = ref<string>("[]")
-const changedJson = ref<string>("[]")
+const unchangedJson = ref<string>('[]')
+const changedJson = ref<string>('[]')
 const user = ref<{
   id: number
   twitch_id: string
@@ -146,41 +146,41 @@ const user = ref<{
   id: 0,
   twitch_id: '',
   twitch_login: '',
-  name: "",
-  email: "",
+  name: '',
+  email: '',
   groups: [],
-  tmi_identity_client_id: "",
-  tmi_identity_client_secret: "",
-  tmi_identity_password: "",
-  tmi_identity_username: "",
+  tmi_identity_client_id: '',
+  tmi_identity_client_secret: '',
+  tmi_identity_password: '',
+  tmi_identity_username: '',
   bot_enabled: false,
   bot_status_messages: false,
 })
 
 const isAdmin = computed(() => {
-  return user.value.groups.includes("admin");
+  return user.value.groups.includes('admin')
 })
 
 const changed = computed(() => {
-  return unchangedJson.value !== changedJson.value;
+  return unchangedJson.value !== changedJson.value
 })
 
 const setChanged = () => {
   changedJson.value = JSON.stringify({
     user: user.value,
-  });
+  })
 }
 const setUnchanged = () => {
   unchangedJson.value = JSON.stringify({
     user: user.value,
-  });
-  changedJson.value = unchangedJson.value;
+  })
+  changedJson.value = unchangedJson.value
 }
 const sendSave = async () => {
   await api.saveUserSettings({
     user: user.value,
-  });
-  setUnchanged();
+  })
+  setUnchanged()
 }
 
 watch(user, () => {
@@ -188,13 +188,13 @@ watch(user, () => {
 }, { deep: true })
 
 onMounted(async () => {
-  const res = await api.getPageSettingsData();
+  const res = await api.getPageSettingsData()
   if (res.status !== 200) {
-    router.push({ name: "login" });
-    return;
+    router.push({ name: 'login' })
+    return
   }
-  const data = await res.json();
-  user.value = data.user;
-  setUnchanged();
+  const data = await res.json()
+  user.value = data.user
+  setUnchanged()
 })
 </script>

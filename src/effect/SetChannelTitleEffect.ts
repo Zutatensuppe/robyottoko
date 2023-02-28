@@ -1,6 +1,6 @@
-import { logger, unicodeLength } from "../common/fn";
-import { SetChannelTitleEffectData } from "../types";
-import { Effect } from "./Effect";
+import { logger, unicodeLength } from '../common/fn'
+import { SetChannelTitleEffectData } from '../types'
+import { Effect } from './Effect'
 
 const log = logger('SetChannelTitleEffect.ts')
 
@@ -22,7 +22,7 @@ export class SetChannelTitleEffect extends Effect<SetChannelTitleEffectData> {
       if (info) {
         this.say(`Current title is "${info.title}".`)
       } else {
-        this.say(`❌ Unable to determine current title.`)
+        this.say('❌ Unable to determine current title.')
       }
       return
     }
@@ -38,7 +38,7 @@ export class SetChannelTitleEffect extends Effect<SetChannelTitleEffectData> {
 
     const accessToken = await this.getAccessToken()
     if (!accessToken) {
-      this.say(`❌ Not authorized to change title.`)
+      this.say('❌ Not authorized to change title.')
       return
     }
 

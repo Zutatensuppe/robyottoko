@@ -1,14 +1,14 @@
-import Db from "../DbPostgres"
-import { ChatLogRepo } from "./ChatLogRepo"
-import { CommandExecutionRepo } from "./CommandExecutionRepo"
-import { EventSubRepo } from "./EventSubRepo"
-import { ModuleRepo } from "./ModuleRepo"
-import { OauthTokenRepo } from "./OauthTokenRepo"
-import { PubRepo } from "./PubRepo"
-import { StreamsRepo } from "./StreamsRepo"
-import Tokens from "./Tokens"
-import Users from "./Users"
-import { VariablesRepo } from "./VariablesRepo"
+import Db from '../DbPostgres'
+import { ChatLogRepo } from './ChatLogRepo'
+import { CommandExecutionRepo } from './CommandExecutionRepo'
+import { EventSubRepo } from './EventSubRepo'
+import { ModuleRepo } from './ModuleRepo'
+import { OauthTokenRepo } from './OauthTokenRepo'
+import { PubRepo } from './PubRepo'
+import { StreamsRepo } from './StreamsRepo'
+import Tokens from './Tokens'
+import Users from './Users'
+import { VariablesRepo } from './VariablesRepo'
 
 export class Repos {
   public user: Users

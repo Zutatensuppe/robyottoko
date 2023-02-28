@@ -1,9 +1,9 @@
 'use strict'
 
-import { logger } from "../../common/fn";
-import { User } from "../../repo/Users";
-import { Bot } from "../../types";
-import { EventSubEventHandler } from "./EventSubEventHandler";
+import { logger } from '../../common/fn'
+import { User } from '../../repo/Users'
+import { Bot } from '../../types'
+import { EventSubEventHandler } from './EventSubEventHandler'
 
 const log = logger('StreamOnlineEventHandler.ts')
 

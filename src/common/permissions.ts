@@ -1,5 +1,5 @@
-import { Command, FunctionCommand, TwitchChatContext } from "../types";
-import { arrayIncludesIgnoreCase } from "./fn";
+import { Command, FunctionCommand, TwitchChatContext } from '../types'
+import { arrayIncludesIgnoreCase } from './fn'
 
 export enum CommandRestrictEnum {
   MOD = 'mod',
@@ -20,24 +20,24 @@ export const MOD_OR_ABOVE: CommandRestrictEnum[] = [
 ]
 
 export const permissions = [
-  { value: CommandRestrictEnum.BROADCASTER, label: "Broadcaster" },
-  { value: CommandRestrictEnum.MOD, label: "Moderators" },
-  { value: CommandRestrictEnum.VIP, label: "Vips" },
-  { value: CommandRestrictEnum.SUB, label: "Subscribers" },
-  { value: CommandRestrictEnum.REGULAR, label: "Regular Users" },
+  { value: CommandRestrictEnum.BROADCASTER, label: 'Broadcaster' },
+  { value: CommandRestrictEnum.MOD, label: 'Moderators' },
+  { value: CommandRestrictEnum.VIP, label: 'Vips' },
+  { value: CommandRestrictEnum.SUB, label: 'Subscribers' },
+  { value: CommandRestrictEnum.REGULAR, label: 'Regular Users' },
 ]
 
 export const permissionsStr = (restrict: CommandRestrict): string => {
   if (restrict.active === false) {
-    return "Everyone";
+    return 'Everyone'
   }
-  const parts: string[] = [];
+  const parts: string[] = []
   permissions.forEach(p => {
     if (restrict.to.includes(p.value)) {
-      parts.push(p.label);
+      parts.push(p.label)
     }
   })
-  return parts.join(", ");
+  return parts.join(', ')
 }
 
 export const isBroadcaster = (ctx: TwitchChatContext) => ctx['room-id'] === ctx['user-id']

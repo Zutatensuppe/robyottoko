@@ -1,12 +1,12 @@
 'use strict'
 
-import { logger, MINUTE } from "../../common/fn";
-import { isBroadcaster, isMod, isSubscriber } from "../../common/permissions";
-import fn from "../../fn";
-import { Bot, CommandTrigger, CommandTriggerType, Module, RawCommand, TwitchChatContext } from "../../types";
-import { CommandExecutor } from "../CommandExecutor";
-import TwitchHelixClient from "../TwitchHelixClient";
-import { User } from "../../repo/Users";
+import { logger, MINUTE } from '../../common/fn'
+import { isBroadcaster, isMod, isSubscriber } from '../../common/permissions'
+import fn from '../../fn'
+import { Bot, CommandTrigger, CommandTriggerType, Module, RawCommand, TwitchChatContext } from '../../types'
+import { CommandExecutor } from '../CommandExecutor'
+import TwitchHelixClient from '../TwitchHelixClient'
+import { User } from '../../repo/Users'
 
 const log = logger('ChatEventHandler.ts')
 
@@ -40,7 +40,7 @@ const determineStreamStartDate = async (
   log.info({
     roomId: context['room-id'],
     date: date,
-  }, `No stream is running atm, using fake start date.`)
+  }, 'No stream is running atm, using fake start date.')
   return date
 }
 
@@ -150,7 +150,7 @@ export class ChatEventHandler {
         const exec = new CommandExecutor()
         await exec.executeMatchingCommands(bot, user, rawCmd, target, context, triggers, date, m)
       }
-      await m.onChatMsg(chatMessageContext);
+      await m.onChatMsg(chatMessageContext)
     }
   }
 }

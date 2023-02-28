@@ -1,4 +1,4 @@
-import api from "./api";
+import api from './api'
 
 const global = {
   data: {
@@ -9,12 +9,12 @@ const global = {
 
 const init = async () => {
   try {
-    const res = await api.getDataGlobal();
-    const data = await res.json();
-    global.data.registeredUserCount = data.registeredUserCount;
-    global.data.streamingUserCount = data.streamingUserCount;
+    const res = await api.getDataGlobal()
+    const data = await res.json()
+    global.data.registeredUserCount = data.registeredUserCount
+    global.data.streamingUserCount = data.streamingUserCount
   } catch (e: any) {
-    console.error(e);
+    console.error(e)
   }
 }
 

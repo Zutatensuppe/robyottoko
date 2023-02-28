@@ -21,27 +21,27 @@
   </div>
 </template>
 <script setup lang="ts">
-import { nextTick, ref } from "vue";
+import { nextTick, ref } from 'vue'
 
-import fn, { logger } from "../../common/fn";
-import { MediaCommandData } from "../../types";
+import fn, { logger } from '../../common/fn'
+import { MediaCommandData } from '../../types'
 
 const log = logger('MediaQueueElement.vue')
 
 const playSound = (path: string, volume: number): Promise<void> => {
   return new Promise((res) => {
-    const audio = new Audio(path);
-    audio.addEventListener("ended", () => {
-      res();
-    });
-    audio.volume = fn.clamp(0, volume, 1);
-    audio.play();
+    const audio = new Audio(path)
+    audio.addEventListener('ended', () => {
+      res()
+    })
+    audio.volume = fn.clamp(0, volume, 1)
+    audio.play()
   })
 }
 
 const wait = (ms: number): Promise<void> => {
   return new Promise((resolve1) => {
-    setTimeout(resolve1, ms);
+    setTimeout(resolve1, ms)
   })
 }
 
@@ -60,17 +60,17 @@ const queue = ref<MediaCommandData[]>([])
 const worker = ref<any>(null)
 const showimage = ref<boolean>(false)
 const imgstyle = ref<undefined | Record<string, string>>(undefined)
-const videosrc = ref<string>("")
+const videosrc = ref<string>('')
 const latestResolved = ref<boolean>(true)
 
 const videoEl = ref<HTMLVideoElement | null>()
 
 const _playone = async (media: MediaCommandData): Promise<void> => {
   return new Promise(async (resolve) => {
-    latestResolved.value = false;
-    const promises: Promise<void>[] = [];
+    latestResolved.value = false
+    const promises: Promise<void>[] = []
     if (media.video.url) {
-      videosrc.value = media.video.url;
+      videosrc.value = media.video.url
       promises.push(
         new Promise((res) => {
           nextTick(() => {
@@ -83,17 +83,17 @@ const _playone = async (media: MediaCommandData): Promise<void> => {
             // conditions where this is not true but for now this
             // will be fine
             const volume = media.video.volume / 100
-            videoEl.value.addEventListener("error", (e) => {
+            videoEl.value.addEventListener('error', (e) => {
               log.error({ e }, 'error when playing video')
-              res();
-            });
+              res()
+            })
             videoEl.value.volume = fn.clamp(0, volume, 1)
-            videoEl.value.addEventListener("ended", () => {
-              res();
-            });
-          });
+            videoEl.value.addEventListener('ended', () => {
+              res()
+            })
+          })
         })
-      );
+      )
     }
 
     let imageUrl = ''
@@ -103,7 +103,7 @@ const _playone = async (media: MediaCommandData): Promise<void> => {
       imageUrl = media.image.urlpath
     }
     if (imageUrl) {
-      await _prepareImage(imageUrl);
+      await _prepareImage(imageUrl)
       showimage.value = true
       imgstyle.value = { backgroundImage: `url(${imageUrl})` }
     }
@@ -123,64 +123,64 @@ const _playone = async (media: MediaCommandData): Promise<void> => {
     if (promises.length === 0) {
       // show images at least 1 sek by default (only if there
       // are no other conditions)
-      promises.push(wait(1000));
+      promises.push(wait(1000))
     }
 
     Promise.all(promises).then((_) => {
       if (!props.displayLatestForever) {
-        showimage.value = false;
+        showimage.value = false
       }
-      latestResolved.value = true;
-      videosrc.value = "";
-      resolve();
-    });
-  });
+      latestResolved.value = true
+      videosrc.value = ''
+      resolve()
+    })
+  })
 }
 const _addQueue = (media: MediaCommandData): void => {
-  queue.value.push(media);
+  queue.value.push(media)
   if (worker.value) {
-    return;
+    return
   }
 
   const next = async (): Promise<void> => {
     if (queue.value.length === 0) {
-      clearInterval(worker.value);
-      worker.value = null;
-      return;
+      clearInterval(worker.value)
+      worker.value = null
+      return
     }
-    const media = queue.value.shift();
+    const media = queue.value.shift()
     if (!media) {
-      clearInterval(worker.value);
-      worker.value = null;
-      return;
+      clearInterval(worker.value)
+      worker.value = null
+      return
     }
-    await _playone(media);
-    worker.value = setTimeout(next, props.timeBetweenMediaMs); // this much time in between media
-  };
-  worker.value = setTimeout(next, props.timeBetweenMediaMs);
+    await _playone(media)
+    worker.value = setTimeout(next, props.timeBetweenMediaMs) // this much time in between media
+  }
+  worker.value = setTimeout(next, props.timeBetweenMediaMs)
 }
 
 const _prepareImage = async (urlpath: string): Promise<void> => {
   return new Promise((resolve) => {
-    const imgLoad = new Image();
-    imgLoad.src = urlpath;
+    const imgLoad = new Image()
+    imgLoad.src = urlpath
     nextTick(() => {
       if (imgLoad.complete) {
-        resolve();
+        resolve()
       } else {
         imgLoad.onload = () => {
-          resolve();
+          resolve()
         }
       }
-    });
-  });
+    })
+  })
 }
 
 const playmedia = (media: MediaCommandData): void => {
   if (!props.displayLatestForever && latestResolved.value) {
-    showimage.value = false;
+    showimage.value = false
   }
-  _addQueue(media);
+  _addQueue(media)
 }
 
 const removeMedia = (media: MediaCommandData): void => {

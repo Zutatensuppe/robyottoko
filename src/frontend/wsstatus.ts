@@ -1,5 +1,5 @@
-import util from "./util";
-import WsClient from "./WsClient";
+import util from './util'
+import WsClient from './WsClient'
 import mitt from 'mitt'
 
 export const eventBus = mitt()
@@ -12,12 +12,12 @@ let status: any = {
 
 function init() {
   client = util.wsClient('core')
-  client.onMessage(["status"], (newStatus) => {
+  client.onMessage(['status'], (newStatus) => {
     if (JSON.stringify(status) !== JSON.stringify(newStatus)) {
       status = newStatus
       eventBus.emit('status', status)
     }
-  });
+  })
   client.connect()
 }
 

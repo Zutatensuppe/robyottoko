@@ -1,4 +1,4 @@
-import { logger, nonce } from "../common/fn"
+import { logger, nonce } from '../common/fn'
 
 const CODE_GOING_AWAY = 1001
 const CODE_CUSTOM_DISCONNECT = 4000
@@ -22,9 +22,9 @@ export default class WsWrapper {
   // buffer for 'send'
   sendBuffer: string[] = []
 
-  timerId: any = 0;
-  gotPong: boolean = false;
-  pongWaitTimerId: any = 0;
+  timerId: any = 0
+  gotPong: boolean = false
+  pongWaitTimerId: any = 0
 
   constructor(private readonly addr: string, private readonly protocols: string) {
   }
@@ -42,7 +42,7 @@ export default class WsWrapper {
   keepAlive(timeout = 20000) {
     if (this.handle && this.handle.readyState == this.handle.OPEN) {
       this.gotPong = false
-      this.handle.send(JSON.stringify({ type: 'ping' }));
+      this.handle.send(JSON.stringify({ type: 'ping' }))
       if (this.pongWaitTimerId) {
         clearTimeout(this.pongWaitTimerId)
       }
@@ -55,12 +55,12 @@ export default class WsWrapper {
     }
     this.timerId = setTimeout(() => {
       this.keepAlive(timeout)
-    }, timeout);
+    }, timeout)
   }
 
   cancelKeepAlive() {
     if (this.timerId) {
-      clearTimeout(this.timerId);
+      clearTimeout(this.timerId)
     }
   }
 

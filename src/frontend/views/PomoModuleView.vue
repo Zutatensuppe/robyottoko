@@ -207,72 +207,72 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from "vue";
-import util from "../util";
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import util from '../util'
 import {
   default_notification,
   default_settings,
   PomoModuleSettings,
   PomoModuleWsDataData,
   PomoModuleWsSaveData,
-} from "../../mod/modules/PomoModuleCommon";
-import WsClient from "../WsClient";
-import StringInput from "../components/StringInput.vue";
-import SoundUpload from "../components/SoundUpload.vue";
-import DurationInput from "../components/DurationInput.vue";
-import NavbarElement from "../components/NavbarElement.vue";
-import CheckboxInput from "../components/CheckboxInput.vue";
+} from '../../mod/modules/PomoModuleCommon'
+import WsClient from '../WsClient'
+import StringInput from '../components/StringInput.vue'
+import SoundUpload from '../components/SoundUpload.vue'
+import DurationInput from '../components/DurationInput.vue'
+import NavbarElement from '../components/NavbarElement.vue'
+import CheckboxInput from '../components/CheckboxInput.vue'
 
 let ws: WsClient | null = null
-const unchangedJson = ref<string>("{}")
-const changedJson = ref<string>("{}")
+const unchangedJson = ref<string>('{}')
+const changedJson = ref<string>('{}')
 const settings = ref<PomoModuleSettings>(default_settings())
 const inited = ref<boolean>(false)
-const widgetUrl = ref<string>("")
+const widgetUrl = ref<string>('')
 
 const changed = computed((): boolean => unchangedJson.value !== changedJson.value)
 
 const sendMsg = (data: PomoModuleWsSaveData) => {
   if (!ws) {
-    console.warn("sendMsg: ws not initialized");
-    return;
+    console.warn('sendMsg: ws not initialized')
+    return
   }
-  ws.send(JSON.stringify(data));
+  ws.send(JSON.stringify(data))
 }
 
 const sendSave = () => {
   sendMsg({
-    event: "save",
+    event: 'save',
     settings: settings.value,
-  });
+  })
 }
 
 const addNotification = () => {
-  settings.value.notifications.push(default_notification());
+  settings.value.notifications.push(default_notification())
 }
 
 const removeNotification = (idx: number) => {
-  settings.value.notifications = settings.value.notifications.filter((val, index) => index !== idx);
+  settings.value.notifications = settings.value.notifications.filter((val, index) => index !== idx)
 }
 
 watch(settings, (val) => {
-  changedJson.value = JSON.stringify(val);
+  changedJson.value = JSON.stringify(val)
 }, { deep: true })
 
 onMounted(() => {
-  ws = util.wsClient("pomo");
-  ws.onMessage("init", (data: PomoModuleWsDataData) => {
-    settings.value = data.settings;
-    unchangedJson.value = JSON.stringify(data.settings);
-    widgetUrl.value = data.widgetUrl;
-    inited.value = true;
-  });
-  ws.connect();
+  ws = util.wsClient('pomo')
+  ws.onMessage('init', (data: PomoModuleWsDataData) => {
+    settings.value = data.settings
+    unchangedJson.value = JSON.stringify(data.settings)
+    widgetUrl.value = data.widgetUrl
+    inited.value = true
+  })
+  ws.connect()
 })
 
 onUnmounted(() => {
   if (ws) {
-    ws.disconnect();
+    ws.disconnect()
   }
 })
 </script>

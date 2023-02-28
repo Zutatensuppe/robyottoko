@@ -37,12 +37,12 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, Ref, ref, watch } from "vue";
-import { AvatarModuleAnimationFrameDefinition } from "../../../mod/modules/AvatarModuleCommon";
-import { UploadedFile } from "../../../types";
-import { getFileFromDropEvent } from "../../util";
-import UploadInput from "../UploadInput.vue";
-import IntegerInput from "../IntegerInput.vue";
+import { onMounted, Ref, ref, watch } from 'vue'
+import { AvatarModuleAnimationFrameDefinition } from '../../../mod/modules/AvatarModuleCommon'
+import { UploadedFile } from '../../../types'
+import { getFileFromDropEvent } from '../../util'
+import UploadInput from '../UploadInput.vue'
+import IntegerInput from '../IntegerInput.vue'
 
 const props = defineProps<{
   modelValue: AvatarModuleAnimationFrameDefinition | null
@@ -52,7 +52,7 @@ const emit = defineEmits<{
 }>()
 
 const value = ref<AvatarModuleAnimationFrameDefinition>({
-  url: "",
+  url: '',
   duration: 100,
 })
 const draggingOver = ref<boolean>(false)
@@ -61,16 +61,16 @@ const uploadComponent = ref<InstanceType<typeof UploadInput>>() as Ref<InstanceT
 const applyValue = () => {
   value.value = props.modelValue !== null
     ? JSON.parse(JSON.stringify(props.modelValue))
-    : { url: "", duration: 100 }
+    : { url: '', duration: 100 }
 }
 const emitUpdate = () => {
-  emit("update:modelValue", JSON.parse(JSON.stringify(value.value)))
+  emit('update:modelValue', JSON.parse(JSON.stringify(value.value)))
 }
 const onDurationChange = () => {
-  emit("update:modelValue", JSON.parse(JSON.stringify(value.value)))
+  emit('update:modelValue', JSON.parse(JSON.stringify(value.value)))
 }
 const onRemove = () => {
-  value.value = { url: "", duration: 100 }
+  value.value = { url: '', duration: 100 }
   emitUpdate()
 }
 const onUploaded = (file: UploadedFile) => {
@@ -78,16 +78,16 @@ const onUploaded = (file: UploadedFile) => {
   emitUpdate()
 }
 const onDrop = (e: any) => {
-  draggingOver.value = false;
-  e.preventDefault();
-  e.stopPropagation();
+  draggingOver.value = false
+  e.preventDefault()
+  e.stopPropagation()
 
   const file = getFileFromDropEvent(e)
   if (file) {
-    value.value.url = "";
-    uploadComponent.value.uploadFile(file);
+    value.value.url = ''
+    uploadComponent.value.uploadFile(file)
   }
-  return false;
+  return false
 }
 const onDragover = (e: any) => {
   draggingOver.value = true
@@ -104,9 +104,9 @@ const onDragleave = (e: any) => {
 
 onMounted(() => {
   watch(() => props.modelValue, () => {
-    applyValue();
+    applyValue()
   })
-  applyValue();
+  applyValue()
 })
 </script>
 <style scoped>

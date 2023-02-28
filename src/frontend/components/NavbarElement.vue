@@ -88,68 +88,68 @@
   />
 </template>
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
-import user from "../user";
-import { eventBus } from "../wsstatus";
-import { ApiUserData } from '../../types';
-import CheckboxInput from "./CheckboxInput.vue";
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import user from '../user'
+import { eventBus } from '../wsstatus'
+import { ApiUserData } from '../../types'
+import CheckboxInput from './CheckboxInput.vue'
 import ProblemsDialog from './ProblemsDialog.vue'
 import { RouteLocationNamedRaw, useRoute, useRouter } from 'vue-router'
 
 const linksStart: { to: RouteLocationNamedRaw, text: string, icon: string | null }[] = [
   {
-    to: { name: "index" },
-    text: "Modules",
+    to: { name: 'index' },
+    text: 'Modules',
     icon: 'fa-home',
   },
   {
-    to: { name: "commands" },
-    text: "Commands",
+    to: { name: 'commands' },
+    text: 'Commands',
     icon: 'fa-terminal',
   },
   {
-    to: { name: "variables" },
-    text: "Variables",
+    to: { name: 'variables' },
+    text: 'Variables',
     icon: 'fa-code',
   },
   {
-    to: { name: "sr" },
-    text: "Song Request",
+    to: { name: 'sr' },
+    text: 'Song Request',
     icon: 'fa-music',
   },
   {
-    to: { name: "speech-to-text" },
-    text: "Speech-To-Text",
+    to: { name: 'speech-to-text' },
+    text: 'Speech-To-Text',
     icon: 'fa-commenting-o',
   },
   {
-    to: { name: "avatar" },
-    text: "Avatar",
+    to: { name: 'avatar' },
+    text: 'Avatar',
     icon: 'fa-user-o',
   },
   {
-    to: { name: "drawcast" },
-    text: "Drawcast",
+    to: { name: 'drawcast' },
+    text: 'Drawcast',
     icon: 'fa-paint-brush',
   },
   {
-    to: { name: "pomo" },
-    text: "Pomo",
+    to: { name: 'pomo' },
+    text: 'Pomo',
     icon: 'fa-hourglass-1',
   },
   {
-    to: { name: "settings" },
-    text: "Settings",
+    to: { name: 'settings' },
+    text: 'Settings',
     icon: 'fa-cogs',
   },
   {
-    to: { name: "bug-reports" },
-    text: "Bug Reports",
+    to: { name: 'bug-reports' },
+    text: 'Bug Reports',
     icon: 'fa-bug',
   },
   {
-    to: { name: "feature-requests" },
-    text: "Feature Requests",
+    to: { name: 'feature-requests' },
+    text: 'Feature Requests',
     icon: 'fa-university',
   },
 ]
@@ -161,35 +161,35 @@ const burgerActive = ref<boolean>(false)
 const darkmode = ref<boolean>(user.isDarkmode())
 const route = useRoute()
 
-const userName = computed(() => me.value?.user?.name || "")
+const userName = computed(() => me.value?.user?.name || '')
 
 const onDarkmodeSwitch = (): void => {
-  user.setDarkmode(darkmode.value);
+  user.setDarkmode(darkmode.value)
 }
 
 const statusChanged = (status: any): void => {
-  problems.value = status.problems;
+  problems.value = status.problems
 }
 
 const toggleBurgerMenu = (): void => {
-  burgerActive.value = !burgerActive.value;
+  burgerActive.value = !burgerActive.value
 }
 
 const router = useRouter()
 const onLogoutClick = async () => {
-  const res = await user.logout();
+  const res = await user.logout()
   if (res.error) {
-    throw new Error(res.error);
+    throw new Error(res.error)
   }
-  router.push({ name: "login" });
+  router.push({ name: 'login' })
 }
 
 onMounted(() => {
   console.log(route.name)
-  eventBus.on("status", statusChanged)
+  eventBus.on('status', statusChanged)
 })
 
 onUnmounted(() => {
-  eventBus.off("status", statusChanged)
+  eventBus.off('status', statusChanged)
 })
 </script>

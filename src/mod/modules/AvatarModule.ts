@@ -51,8 +51,8 @@ class AvatarModule implements Module {
     // @ts-ignore
     return (async () => {
       this.data = await this.reinit()
-      return this;
-    })();
+      return this
+    })()
   }
 
   async userChanged(user: User): Promise<void> {
@@ -121,27 +121,27 @@ class AvatarModule implements Module {
         this.updateClients(await this.wsdata('init'))
       },
       'ctrl': async (_ws: Socket, data: AvatarModuleWsControlData) => {
-        if (data.data.ctrl === "setSlot") {
-          const tuberIdx = data.data.args[0];
-          const slotName = data.data.args[1];
-          const itemIdx = data.data.args[2];
+        if (data.data.ctrl === 'setSlot') {
+          const tuberIdx = data.data.args[0]
+          const slotName = data.data.args[1]
+          const itemIdx = data.data.args[2]
           try {
             this.data.settings.avatarDefinitions[tuberIdx].state.slots[slotName] = itemIdx
             await this.save()
           } catch (e) {
             log.error({ tuberIdx, slotName, itemIdx }, 'ws ctrl: unable to setSlot')
           }
-        } else if (data.data.ctrl === "lockState") {
-          const tuberIdx = data.data.args[0];
-          const lockedState = data.data.args[1];
+        } else if (data.data.ctrl === 'lockState') {
+          const tuberIdx = data.data.args[0]
+          const lockedState = data.data.args[1]
           try {
             this.data.settings.avatarDefinitions[tuberIdx].state.lockedState = lockedState
             await this.save()
           } catch (e) {
             log.error({ tuberIdx, lockedState }, 'ws ctrl: unable to lockState')
           }
-        } else if (data.data.ctrl === "setTuber") {
-          const tuberIdx = data.data.args[0];
+        } else if (data.data.ctrl === 'setTuber') {
+          const tuberIdx = data.data.args[0]
           this.data.state.tuberIdx = tuberIdx
           await this.save()
         }

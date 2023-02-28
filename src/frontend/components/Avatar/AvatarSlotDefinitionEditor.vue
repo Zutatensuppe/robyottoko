@@ -66,15 +66,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { arraySwap } from "../../../common/fn";
+import { computed, ref } from 'vue'
+import { arraySwap } from '../../../common/fn'
 import {
   AvatarModuleAvatarDefinition,
   AvatarModuleAvatarSlotDefinition,
   AvatarModuleAvatarSlotItem,
-} from "../../../mod/modules/AvatarModuleCommon";
+} from '../../../mod/modules/AvatarModuleCommon'
 import AvatarAnimation from './AvatarAnimation.vue'
-import AvatarSlotItemEditor from "./AvatarSlotItemEditor.vue";
+import AvatarSlotItemEditor from './AvatarSlotItemEditor.vue'
 
 const props = defineProps<{
   modelValue: AvatarModuleAvatarSlotDefinition,
@@ -93,47 +93,47 @@ const defaultItem = computed(() => {
     props.modelValue.defaultItemIndex >= 0 &&
     props.modelValue.items.length > props.modelValue.defaultItemIndex
   ) {
-    return props.modelValue.items[props.modelValue.defaultItemIndex];
+    return props.modelValue.items[props.modelValue.defaultItemIndex]
   }
-  return null;
+  return null
 })
 const defaultAnimation = computed(() => {
   if (!defaultItem.value) {
-    return [];
+    return []
   }
   const state = defaultItem.value.states.find(
-    ({ state }) => state === "default"
-  );
+    ({ state }) => state === 'default'
+  )
   if (!state) {
-    return [];
+    return []
   }
-  return state.frames;
+  return state.frames
 })
 const emitChange = () => {
-  emit("update:modelValue", props.modelValue);
+  emit('update:modelValue', props.modelValue)
 }
 const updateItem = (idx: number, item: AvatarModuleAvatarSlotItem) => {
-  props.modelValue.items[idx] = item;
-  emitChange();
+  props.modelValue.items[idx] = item
+  emitChange()
 }
 const removeItem = (idx: number, item: AvatarModuleAvatarSlotItem) => {
   props.modelValue.items = props.modelValue.items.filter(
     (val, index) => index !== idx
-  );
+  )
   if (idx <= props.modelValue.defaultItemIndex) {
-    props.modelValue.defaultItemIndex = props.modelValue.defaultItemIndex - 1;
+    props.modelValue.defaultItemIndex = props.modelValue.defaultItemIndex - 1
   }
   if (
     props.modelValue.items.length > 0 &&
     props.modelValue.defaultItemIndex < 0
   ) {
-    props.modelValue.defaultItemIndex = 0;
+    props.modelValue.defaultItemIndex = 0
   }
-  emitChange();
+  emitChange()
 }
 const makeItemDefault = (idx: number, item: AvatarModuleAvatarSlotItem) => {
-  props.modelValue.defaultItemIndex = idx;
-  emitChange();
+  props.modelValue.defaultItemIndex = idx
+  emitChange()
 }
 const addItem = () => {
   const item: AvatarModuleAvatarSlotItem = {
@@ -143,25 +143,25 @@ const addItem = () => {
       state: stateDef.value,
       frames: [],
     })),
-  };
-  props.modelValue.items.push(item);
-  if (props.modelValue.defaultItemIndex === -1) {
-    props.modelValue.defaultItemIndex = 0;
   }
-  emitChange();
+  props.modelValue.items.push(item)
+  if (props.modelValue.defaultItemIndex === -1) {
+    props.modelValue.defaultItemIndex = 0
+  }
+  emitChange()
 }
 const moveItemUp = (idx: number) => {
-  swapItems(idx - 1, idx);
+  swapItems(idx - 1, idx)
 }
 const moveItemDown = (idx: number) => {
-  swapItems(idx + 1, idx);
+  swapItems(idx + 1, idx)
 }
 const swapItems = (idx1: number, idx2: number) => {
   if (arraySwap(props.modelValue.items, idx1, idx2)) {
     if (props.modelValue.defaultItemIndex === idx1) {
-      props.modelValue.defaultItemIndex = idx2;
+      props.modelValue.defaultItemIndex = idx2
     } else if (props.modelValue.defaultItemIndex === idx2) {
-      props.modelValue.defaultItemIndex = idx1;
+      props.modelValue.defaultItemIndex = idx1
     }
   }
 }

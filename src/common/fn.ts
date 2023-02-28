@@ -1,4 +1,4 @@
-import { MediaFile, SoundMediaFile, UploadedFile } from "../types"
+import { MediaFile, SoundMediaFile, UploadedFile } from '../types'
 
 export const MS = 1
 export const SECOND = 1000 * MS
@@ -93,8 +93,8 @@ export const pad = (
 }
 
 export function nonce(length: number) {
-  let text = "";
-  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+  let text = ''
+  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
   for (let i = 0; i < length; i++) {
     text += possible.charAt(Math.floor(Math.random() * possible.length))
   }
@@ -106,15 +106,15 @@ export const mustParseHumanDuration = (
   allowNegative: boolean = false,
 ) => {
   if (duration === '') {
-    throw new Error("unable to parse duration")
+    throw new Error('unable to parse duration')
   }
   const d = `${duration}`.trim()
   if (!d) {
-    throw new Error("unable to parse duration")
+    throw new Error('unable to parse duration')
   }
   const checkNegative = (val: number) => {
     if (val < 0 && !allowNegative) {
-      throw new Error("negative value not allowed")
+      throw new Error('negative value not allowed')
     }
     return val
   }
@@ -126,7 +126,7 @@ export const mustParseHumanDuration = (
   if (m1) {
     const value = parseFloat(m1[1])
     if (isNaN(value)) {
-      throw new Error("unable to parse duration")
+      throw new Error('unable to parse duration')
     }
     const unit = m1[2]
     let ms = 0
@@ -144,10 +144,10 @@ export const mustParseHumanDuration = (
 
   const m = d.match(/^(-?)(?:(\d+)d)?\s?(?:(\d+)h)?\s?(?:(\d+)m)?\s?(?:(\d+)s)?\s?(?:(\d+)ms)?$/)
   if (!m) {
-    throw new Error("unable to parse duration")
+    throw new Error('unable to parse duration')
   }
 
-  const neg = m[1] ? -1 : 1;
+  const neg = m[1] ? -1 : 1
   const D = m[2] ? parseInt(m[2], 10) : 0
   const H = m[3] ? parseInt(m[3], 10) : 0
   const M = m[4] ? parseInt(m[4], 10) : 0
@@ -217,11 +217,11 @@ export const hash = (str: string): number => {
   let hash = 0
 
   for (let i = 0; i < str.length; i++) {
-    const chr = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + chr;
-    hash |= 0; // Convert to 32bit integer
+    const chr = str.charCodeAt(i)
+    hash = ((hash << 5) - hash) + chr
+    hash |= 0 // Convert to 32bit integer
   }
-  return hash;
+  return hash
 }
 
 export function arrayMove(arr: any[], oldIndex: number, newIndex: number) {
@@ -303,23 +303,23 @@ export const split = (
 }
 
 export const shuffle = <T>(array: T[]): T[] => {
-  let counter = array.length;
+  let counter = array.length
 
   // While there are elements in the array
   while (counter > 0) {
     // Pick a random index
-    const index = Math.floor(Math.random() * counter);
+    const index = Math.floor(Math.random() * counter)
 
     // Decrease counter by 1
-    counter--;
+    counter--
 
     // And swap the last element with it
-    const temp = array[counter];
-    array[counter] = array[index];
-    array[index] = temp;
+    const temp = array[counter]
+    array[counter] = array[index]
+    array[index] = temp
   }
 
-  return array;
+  return array
 }
 
 export function mediaFileFromUploadedFile(file: UploadedFile): MediaFile {
@@ -336,7 +336,7 @@ export function soundMediaFileFromUploadedFile(file: UploadedFile): SoundMediaFi
     file: file.filename,
     urlpath: file.urlpath,
     volume: 100,
-  };
+  }
 }
 
 export const calculateOptimalSubtitleDisplayTimeMs = (text: string): number => {
@@ -355,12 +355,12 @@ export const calculateOptimalSubtitleDisplayTimeMs = (text: string): number => {
 }
 
 export const toNumberUnitString = (value: string | number, unit: string = 'pt') => {
-  const valueStr = `${value}`;
+  const valueStr = `${value}`
   if (valueStr.match(/^\d+$/)) {
-    return `${valueStr}${unit}`;
+    return `${valueStr}${unit}`
   }
-  return valueStr;
-};
+  return valueStr
+}
 
 export const getProp = (obj: any, keys: string[], defaultVal: any) => {
   let x = obj
@@ -406,13 +406,13 @@ export const withoutLeading = (string: string, prefix: string): string => {
 }
 
 export const getRandomFloat = (min: number, max: number): number => {
-  return Math.random() * (max - min) + min;
+  return Math.random() * (max - min) + min
 }
 
 export const getRandomInt = (min: number, max: number): number => {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  min = Math.ceil(min)
+  max = Math.floor(max)
+  return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
 export const getRandom = <T>(array: T[]): T => {

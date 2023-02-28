@@ -37,8 +37,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import { MadochanEffectData } from '../../../../types';
-import { ref, watch } from 'vue';
+import { MadochanEffectData } from '../../../../types'
+import { ref, watch } from 'vue'
 
 const props = defineProps<{
   modelValue: MadochanEffectData,

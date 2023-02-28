@@ -264,7 +264,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, Ref, ref, watch } from "vue";
+import { computed, nextTick, onMounted, Ref, ref, watch } from 'vue'
 
 import {
   commands,
@@ -272,21 +272,21 @@ import {
   newTrigger,
   newEffect,
   possibleEffectActions
-} from "../../../common/commands";
+} from '../../../common/commands'
 import {
   Command,
   CommandTrigger,
   CommandVariable,
   GlobalVariable,
-} from "../../../types";
-import { possibleTriggerActions } from "../../../common/triggers";
-import DropdownButton from "../DropdownButton.vue";
-import DurationInput from "../DurationInput.vue";
-import EffectsEditor from "./EffectsEditor.vue";
-import StringInput from "../StringInput.vue";
-import TriggerEditor from "./TriggerEditor.vue";
-import CheckboxInput from "../CheckboxInput.vue";
-import PermissionsEdit from "../PermissionsEdit.vue";
+} from '../../../types'
+import { possibleTriggerActions } from '../../../common/triggers'
+import DropdownButton from '../DropdownButton.vue'
+import DurationInput from '../DurationInput.vue'
+import EffectsEditor from './EffectsEditor.vue'
+import StringInput from '../StringInput.vue'
+import TriggerEditor from './TriggerEditor.vue'
+import CheckboxInput from '../CheckboxInput.vue'
+import PermissionsEdit from '../PermissionsEdit.vue'
 
 const props = defineProps<{
   modelValue: any,
@@ -310,70 +310,70 @@ const valid = computed((): boolean => {
   // check if all triggers are correct
   for (const trigger of item.value.triggers) {
     if (!isValidTrigger(trigger)) {
-      return false;
+      return false
     }
   }
-  return true;
+  return true
 })
 
 const actionDescription = commands[item.value.action].Description()
 
 const verb = {
-  create: "Create new ",
-  edit: "Edit ",
-};
-const title = `${verb[props.mode]}${commands[item.value.action].Name()}`;
+  create: 'Create new ',
+  edit: 'Edit ',
+}
+const title = `${verb[props.mode]}${commands[item.value.action].Name()}`
 
 
 const addEffect = (effect: any): void => {
-  item.value.effects.push(newEffect(effect.type));
+  item.value.effects.push(newEffect(effect.type))
 }
 
 const addTrigger = (trigger: any): void => {
-  item.value.triggers.push(newTrigger(trigger.type));
+  item.value.triggers.push(newTrigger(trigger.type))
 }
 
 const onAddVariable = (): void => {
-  item.value.variables.push({ name: "", value: "" });
+  item.value.variables.push({ name: '', value: '' })
 }
 
 const rmVariable = (idx: number): void => {
-  item.value.variables = item.value.variables.filter((_val: CommandVariable, index: number) => index !== idx);
+  item.value.variables = item.value.variables.filter((_val: CommandVariable, index: number) => index !== idx)
 }
 
 const onSaveClick = (): void => {
-  emit("save", item.value);
+  emit('save', item.value)
 }
 
 const onSaveAndCloseClick = (): void => {
-  emit("save-and-close", item.value);
+  emit('save-and-close', item.value)
 }
 
 const onCancelClick = (): void => {
-  emit("cancel");
+  emit('cancel')
 }
 
 const onCloseClick = (): void => {
-  emit("cancel");
+  emit('cancel')
 }
 
 const onOverlayClick = (): void => {
-  emit("cancel");
+  emit('cancel')
 }
 
 const rmtrigger = (idx: number): void => {
-  item.value.triggers = item.value.triggers.filter((_val: CommandTrigger, index: number) => index !== idx);
+  item.value.triggers = item.value.triggers.filter((_val: CommandTrigger, index: number) => index !== idx)
 }
 
 watch(() => props.modelValue, (newValue: Command) => {
-  item.value = JSON.parse(JSON.stringify(newValue));
+  item.value = JSON.parse(JSON.stringify(newValue))
 }, { deep: true })
 
 onMounted(() => {
   nextTick(() => {
-    const inputEl = el.value.querySelector("input[type=\"text\"]");
+    const inputEl = el.value.querySelector('input[type="text"]')
     if (inputEl) {
-      (inputEl as HTMLInputElement).focus();
+      (inputEl as HTMLInputElement).focus()
     }
   })
 })

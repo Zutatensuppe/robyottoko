@@ -84,7 +84,7 @@ const parseResult = (
       }
       if (fromArr[i] === toArr[i]) {
         // from and to is exactly the same, so skip it
-        continue;
+        continue
       }
       const idx = _results.findIndex(item => item.from === fromArr[i])
       if (idx < 0) {

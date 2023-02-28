@@ -66,8 +66,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import { DictLookupEffectData } from '../../../../types';
-import { ref, watch } from 'vue';
+import { DictLookupEffectData } from '../../../../types'
+import { ref, watch } from 'vue'
 import MacroSelect from '../../MacroSelect.vue'
 
 const props = defineProps<{
@@ -75,13 +75,13 @@ const props = defineProps<{
 }>()
 
 const dictLangs = [
-  { value: "ja", flag: "🇯🇵", title: "Japanese" },
-  { value: "ru", flag: "🇷🇺", title: "Russian" },
-  { value: "de", flag: "🇩🇪", title: "German" },
-  { value: "es", flag: "🇪🇸", title: "Spanish" },
-  { value: "fr", flag: "🇫🇷", title: "French" },
-  { value: "it", flag: "🇮🇹", title: "Italian" },
-  { value: "pt", flag: "🇵🇹/🇧🇷", title: "Portuguese" },
+  { value: 'ja', flag: '🇯🇵', title: 'Japanese' },
+  { value: 'ru', flag: '🇷🇺', title: 'Russian' },
+  { value: 'de', flag: '🇩🇪', title: 'German' },
+  { value: 'es', flag: '🇪🇸', title: 'Spanish' },
+  { value: 'fr', flag: '🇫🇷', title: 'French' },
+  { value: 'it', flag: '🇮🇹', title: 'Italian' },
+  { value: 'pt', flag: '🇵🇹/🇧🇷', title: 'Portuguese' },
 ]
 const val = ref<DictLookupEffectData>(props.modelValue)
 

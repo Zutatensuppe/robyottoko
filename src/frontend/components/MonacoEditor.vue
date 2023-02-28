@@ -7,7 +7,7 @@
 <script setup lang="ts">
 
 import loader from '@monaco-editor/loader'
-import { onMounted, onBeforeUnmount, ref, Ref, nextTick, watch } from 'vue';
+import { onMounted, onBeforeUnmount, ref, Ref, nextTick, watch } from 'vue'
 loader.config({ paths: { vs: 'https://unpkg.com/monaco-editor@0.34.1/min/vs' } }) // or local
 
 const customCssEditor = ref<HTMLDivElement>() as Ref<HTMLDivElement>
@@ -42,7 +42,7 @@ onMounted(async () => {
       minimap: {
         enabled: false,
       },
-    });
+    })
     editor.onDidChangeModelContent((_evt: any) => {
       val.value = editor.getValue()
     })

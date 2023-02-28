@@ -17,13 +17,13 @@
   />
 </template>
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, Ref, ref } from "vue";
-import util, { WidgetApiData } from "../util";
-import fn from "../../../common/fn";
-import { newMedia } from "../../../common/commands";
-import { PomoEffect, PomoModuleWsDataData } from "../../../mod/modules/PomoModuleCommon";
-import WsClient from "../../WsClient";
-import MediaQueueElement from "../MediaQueueElement.vue";
+import { computed, onMounted, onUnmounted, Ref, ref } from 'vue'
+import util, { WidgetApiData } from '../util'
+import fn from '../../../common/fn'
+import { newMedia } from '../../../common/commands'
+import { PomoEffect, PomoModuleWsDataData } from '../../../mod/modules/PomoModuleCommon'
+import WsClient from '../../WsClient'
+import MediaQueueElement from '../MediaQueueElement.vue'
 
 const props = defineProps<{
   wdata: WidgetApiData,
@@ -53,13 +53,13 @@ const timeLeftHumanReadable = computed((): string => {
   const SEC = 1000 * MS
   const MIN = 60 * SEC
   const HOUR = 60 * MIN
-  const hours = fn.pad(Math.floor(left / HOUR), "00")
-  const min = fn.pad(Math.floor((left % HOUR) / MIN), "00")
-  const sec = fn.pad(Math.floor(((left % HOUR) % MIN) / SEC), "00")
+  const hours = fn.pad(Math.floor(left / HOUR), '00')
+  const min = fn.pad(Math.floor((left % HOUR) / MIN), '00')
+  const sec = fn.pad(Math.floor(((left % HOUR) % MIN) / SEC), '00')
   let str = data.value.settings.timerFormat
-  str = str.replace("{hh}", hours)
-  str = str.replace("{mm}", min)
-  str = str.replace("{ss}", sec)
+  str = str.replace('{hh}', hours)
+  str = str.replace('{mm}', min)
+  str = str.replace('{ss}', sec)
   return str
 })
 
@@ -71,42 +71,42 @@ const widgetStyles = computed((): { fontFamily: string, fontSize: string, color:
     fontFamily: data.value.settings.fontFamily,
     fontSize: data.value.settings.fontSize,
     color: data.value.settings.color,
-  };
+  }
 })
 
 const tick = (): void => {
   if (timeout.value) {
-    clearTimeout(timeout.value);
+    clearTimeout(timeout.value)
   }
   timeout.value = setTimeout(() => {
-    now.value = new Date();
+    now.value = new Date()
     if (data.value && data.value.state.running) {
-      tick();
+      tick()
     }
-  }, 1000);
+  }, 1000)
 }
 
 // @ts-ignore
-import("./main.scss");
+import('./main.scss')
 
 onMounted(() => {
   ws = util.wsClient(props.wdata)
-  ws.onMessage("init", (d: PomoModuleWsDataData) => {
-    data.value = d;
-    tick();
+  ws.onMessage('init', (d: PomoModuleWsDataData) => {
+    data.value = d
+    tick()
   })
-  ws.onMessage("effect", (data: PomoEffect) => {
+  ws.onMessage('effect', (data: PomoEffect) => {
     q.value.playmedia(newMedia({
       sound: data.sound,
       minDurationMs: 0,
-    }));
-  });
-  ws.connect();
+    }))
+  })
+  ws.connect()
 })
 
 onUnmounted(() => {
   if (timeout.value) {
-    clearTimeout(timeout.value);
+    clearTimeout(timeout.value)
   }
   if (ws) {
     ws.disconnect()

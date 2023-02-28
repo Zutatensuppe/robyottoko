@@ -169,13 +169,13 @@
   </div>
 </template>
 <script setup lang="ts">
-import { MediaEffectData, MediaFile, SoundMediaFile } from '../../../../types';
-import { nextTick, onBeforeMount, Ref, ref, watch } from 'vue';
-import StringInput from '../../StringInput.vue';
-import VolumeSlider from '../../VolumeSlider.vue';
-import ImageUpload from '../../ImageUpload.vue';
-import SoundUpload from '../../SoundUpload.vue';
-import DurationInput from '../../DurationInput.vue';
+import { MediaEffectData, MediaFile, SoundMediaFile } from '../../../../types'
+import { nextTick, onBeforeMount, Ref, ref, watch } from 'vue'
+import StringInput from '../../StringInput.vue'
+import VolumeSlider from '../../VolumeSlider.vue'
+import ImageUpload from '../../ImageUpload.vue'
+import SoundUpload from '../../SoundUpload.vue'
+import DurationInput from '../../DurationInput.vue'
 
 const props = defineProps<{
   modelValue: MediaEffectData,
@@ -192,15 +192,15 @@ const emit = defineEmits<{
 const type = ref<string>('')
 
 const mediaSndChanged = (file: SoundMediaFile): void => {
-  val.value.data.sound = file;
+  val.value.data.sound = file
 }
 
 const mediaImgChanged = (file: MediaFile): void => {
-  val.value.data.image = file;
+  val.value.data.image = file
 }
 
 const addWidgetId = (): void => {
-  val.value.data.widgetIds.push("")
+  val.value.data.widgetIds.push('')
 }
 
 const rmWidgetId = (idx: number): void => {
@@ -211,25 +211,25 @@ const el = ref<HTMLElement>() as Ref<HTMLElement>
 
 onBeforeMount(() => {
   if (val.value.data.video.url) {
-    type.value = "video";
+    type.value = 'video'
   }
   else if (val.value.data.sound.file) {
     if (val.value.data.image.file || val.value.data.image_url) {
-      type.value = "image,sound";
+      type.value = 'image,sound'
     }
     else {
-      type.value = "sound";
+      type.value = 'sound'
     }
   }
   else {
-    type.value = "image";
+    type.value = 'image'
   }
   nextTick(() => {
-    const inputEl = el.value.querySelector("input[type=\"text\"]")
+    const inputEl = el.value.querySelector('input[type="text"]')
     if (inputEl) {
-      (inputEl as HTMLInputElement).focus();
+      (inputEl as HTMLInputElement).focus()
     }
-  });
+  })
 })
 watch(val, (newValue: MediaEffectData) => {
   emit('update:modelValue', newValue)

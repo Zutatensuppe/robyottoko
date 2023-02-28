@@ -1,4 +1,4 @@
-import WsClient from "../WsClient";
+import WsClient from '../WsClient'
 
 export interface WidgetApiData {
   widget: string

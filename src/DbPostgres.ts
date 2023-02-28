@@ -7,7 +7,7 @@ import { logger } from './common/fn'
 
 const log = logger('Db.ts')
 
-const mutex = new Mutex();
+const mutex = new Mutex()
 
 /**
  * TODO: create a more specific type for OrderBy.
@@ -111,21 +111,21 @@ class Db {
           continue
         }
 
-        prop = "$gte"
+        prop = '$gte'
         if (where[k][prop]) {
           wheres.push(k + ` >= $${$i++}`)
           values.push(where[k][prop])
           continue
         }
 
-        prop = "$lte"
+        prop = '$lte'
         if (where[k][prop]) {
           wheres.push(k + ` <= $${$i++}`)
           values.push(where[k][prop])
           continue
         }
 
-        prop = "$lte"
+        prop = '$lte'
         if (where[k][prop]) {
           wheres.push(k + ` <= $${$i++}`)
           values.push(where[k][prop])

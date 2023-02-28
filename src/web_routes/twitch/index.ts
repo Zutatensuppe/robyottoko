@@ -80,7 +80,7 @@ export const createRouter = (
     if (req.query.code) {
       const result = await getCodeCallbackResult(req)
       if (!result) {
-        res.status(500).send('Something went wrong!');
+        res.status(500).send('Something went wrong!')
         return
       }
 

@@ -1,11 +1,11 @@
-import conf from "./conf";
-import user from "./user";
-import WsClient from "./WsClient";
+import conf from './conf'
+import user from './user'
+import WsClient from './WsClient'
 
 const wsClient = (path: string) => {
   const cfg = conf.getConf()
   const me = user.getMe()
-  return new WsClient(`${cfg.wsBase}/${path}`, me ? me.token : '');
+  return new WsClient(`${cfg.wsBase}/${path}`, me ? me.token : '')
 }
 
 /**
@@ -17,8 +17,8 @@ export const getFileFromDropEvent = (e: any): File | null => {
     // Use DataTransferItemList interface to access the file(s)
     for (let i = 0; i < e.dataTransfer.items.length; i++) {
       // If dropped items aren't files, reject them
-      if (e.dataTransfer.items[i].kind === "file") {
-        return e.dataTransfer.items[i].getAsFile();
+      if (e.dataTransfer.items[i].kind === 'file') {
+        return e.dataTransfer.items[i].getAsFile()
       }
     }
     return null
@@ -26,7 +26,7 @@ export const getFileFromDropEvent = (e: any): File | null => {
 
   // Use DataTransfer interface to access the file(s)
   for (let i = 0; i < e.dataTransfer.files.length; i++) {
-    return e.dataTransfer.files[i];
+    return e.dataTransfer.files[i]
   }
   return null
 }

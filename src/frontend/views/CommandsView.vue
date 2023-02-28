@@ -60,8 +60,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue"
-import WsClient from "../WsClient"
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import WsClient from '../WsClient'
 import {
   default_admin_settings,
   default_settings,
@@ -69,14 +69,14 @@ import {
   GeneralModuleSettings,
   GeneralModuleWsEventData,
   GeneralSaveEventData,
-} from "../../mod/modules/GeneralModuleCommon"
-import { Command, CommandAction, CommandEffectType, GlobalVariable } from "../../types"
-import util from "../util"
-import CommandsEditor from "../components/Commands/CommandsEditor.vue"
+} from '../../mod/modules/GeneralModuleCommon'
+import { Command, CommandAction, CommandEffectType, GlobalVariable } from '../../types'
+import util from '../util'
+import CommandsEditor from '../components/Commands/CommandsEditor.vue'
 import NavbarElement from '../components/NavbarElement.vue'
-import Settings from "../components/Commands/Settings.vue"
+import Settings from '../components/Commands/Settings.vue'
 
-type TabType = "commands" | "settings"
+type TabType = 'commands' | 'settings'
 interface TabDefinition {
   tab: TabType;
   title: string;
@@ -107,56 +107,56 @@ const possibleEffects: CommandEffectType[] = [
   CommandEffectType.MEDIA_VOLUME,
 ]
 const tabDefinitions: TabDefinition[] = [
-  { tab: "commands", title: "Commands" },
-  { tab: "settings", title: "Settings" },
+  { tab: 'commands', title: 'Commands' },
+  { tab: 'settings', title: 'Settings' },
 ]
 const inited = ref<boolean>(false)
-const tab = ref<TabType>("commands")
-const mediaWidgetUrl = ref<string>("")
-const emoteWallWidgetUrl = ref<string>("")
+const tab = ref<TabType>('commands')
+const mediaWidgetUrl = ref<string>('')
+const emoteWallWidgetUrl = ref<string>('')
 
 const baseVolume = computed(() => {
   return settings.value.volume
 })
 
 const updateShowImages = (showImages: boolean) => {
-  adminSettings.value.showImages = showImages;
-  sendSave();
+  adminSettings.value.showImages = showImages
+  sendSave()
 }
 const sendSave = () => {
   sendMsg({
-    event: "save",
+    event: 'save',
     commands: commands.value,
     settings: settings.value,
     adminSettings: adminSettings.value,
-  });
+  })
 }
 const sendMsg = (data: GeneralSaveEventData) => {
   if (!ws) {
-    console.warn("sendMsg: this.ws not initialized");
-    return;
+    console.warn('sendMsg: this.ws not initialized')
+    return
   }
-  ws.send(JSON.stringify(data));
+  ws.send(JSON.stringify(data))
 }
 
 onMounted(() => {
-  ws = util.wsClient("general");
-  ws.onMessage("init", (data: GeneralModuleWsEventData) => {
-    commands.value = data.commands;
-    settings.value = data.settings;
-    mediaWidgetUrl.value = data.mediaWidgetUrl;
-    emoteWallWidgetUrl.value = data.emoteWallWidgetUrl;
-    adminSettings.value = data.adminSettings;
-    globalVariables.value = data.globalVariables;
-    channelPointsCustomRewards.value = data.channelPointsCustomRewards;
-    inited.value = true;
-  });
-  ws.connect();
+  ws = util.wsClient('general')
+  ws.onMessage('init', (data: GeneralModuleWsEventData) => {
+    commands.value = data.commands
+    settings.value = data.settings
+    mediaWidgetUrl.value = data.mediaWidgetUrl
+    emoteWallWidgetUrl.value = data.emoteWallWidgetUrl
+    adminSettings.value = data.adminSettings
+    globalVariables.value = data.globalVariables
+    channelPointsCustomRewards.value = data.channelPointsCustomRewards
+    inited.value = true
+  })
+  ws.connect()
 })
 
 onUnmounted(() => {
   if (ws) {
-    ws.disconnect();
+    ws.disconnect()
   }
 })
 </script>

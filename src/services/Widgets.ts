@@ -1,6 +1,6 @@
-import { nonce } from "../common/fn"
-import { MODULE_NAME, WidgetDefinition, WidgetInfo, WIDGET_TYPE } from "../types"
-import { Repos } from "../repo/Repos"
+import { nonce } from '../common/fn'
+import { MODULE_NAME, WidgetDefinition, WidgetInfo, WIDGET_TYPE } from '../types'
+import { Repos } from '../repo/Repos'
 
 const widgets: WidgetDefinition[] = [
   {

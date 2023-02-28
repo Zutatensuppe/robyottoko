@@ -1,5 +1,5 @@
-import { PlaylistItem } from "../../types"
-import { isItemShown, SongRequestModuleFilter } from "./SongrequestModuleCommon"
+import { PlaylistItem } from '../../types'
+import { isItemShown, SongRequestModuleFilter } from './SongrequestModuleCommon'
 
 describe('SongrequestModuleCommon', () => {
   describe('isItemShown', () => {

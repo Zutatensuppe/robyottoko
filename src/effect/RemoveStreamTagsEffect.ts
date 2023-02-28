@@ -1,8 +1,8 @@
-import { logger } from "../common/fn";
-import config from "../config";
-import { findIdxFuzzy } from "../fn";
-import { RemoveStreamTagEffectData } from "../types";
-import { Effect } from "./Effect";
+import { logger } from '../common/fn'
+import config from '../config'
+import { findIdxFuzzy } from '../fn'
+import { RemoveStreamTagEffectData } from '../types'
+import { Effect } from './Effect'
 
 const log = logger('RemoveStreamTagEffect.ts')
 
@@ -21,7 +21,7 @@ export class RemoveStreamTagEffect extends Effect<RemoveStreamTagEffectData> {
     const tmpTag = await this.doReplacements(tag)
     const tagsResponse = await helixClient.getStreamTags(this.contextModule.user.twitch_id)
     if (!tagsResponse) {
-      this.say(`❌ Unable to fetch current tags.`)
+      this.say('❌ Unable to fetch current tags.')
       return
     }
     if (tmpTag === '') {

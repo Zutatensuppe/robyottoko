@@ -21,9 +21,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { UploadedFile } from "../../types";
-import api from "../api";
+import { computed, ref } from 'vue'
+import { UploadedFile } from '../../types'
+import api from '../api'
 
 const props = withDefaults(defineProps<{
   accept: string
@@ -40,41 +40,41 @@ const uploading = ref<boolean>(false)
 const progress = ref<number>(0)
 
 const uploadPercent = computed(() => {
-  return Math.round(progress.value * 100);
+  return Math.round(progress.value * 100)
 })
 const buttonText = computed(() => {
   if (!uploading.value) {
-    return props.label ? ` ${props.label}` : "";
+    return props.label ? ` ${props.label}` : ''
   }
-  return ` Uploading (${uploadPercent.value}%)`;
+  return ` Uploading (${uploadPercent.value}%)`
 })
 const progressStyle = computed(() => {
   if (!uploading.value) {
-    return {};
+    return {}
   }
-  const p = uploadPercent.value;
-  const c = "rgba(0,255,0, .5)";
+  const p = uploadPercent.value
+  const c = 'rgba(0,255,0, .5)'
   return {
     background: `linear-gradient(90deg, ${c} 0%, ${c} ${p}%, transparent ${p}%)`,
-  };
+  }
 })
 
 
 const uploadFile = async (file: File) => {
-  uploading.value = true;
+  uploading.value = true
   const res = await api.upload(file, (progressEvt) => {
-    progress.value = progressEvt.loaded / progressEvt.total;
-  });
-  uploading.value = false;
-  const uploadedFile: UploadedFile = await res.json();
-  emit("uploaded", uploadedFile);
+    progress.value = progressEvt.loaded / progressEvt.total
+  })
+  uploading.value = false
+  const uploadedFile: UploadedFile = await res.json()
+  emit('uploaded', uploadedFile)
 }
 const upload = async (evt: Event) => {
   const input = evt.target as HTMLInputElement
   if (!input.files || input.files.length === 0) {
-    return;
+    return
   }
-  uploadFile(input.files[0]);
+  uploadFile(input.files[0])
 }
 
 defineExpose({

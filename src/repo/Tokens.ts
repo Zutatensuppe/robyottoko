@@ -1,4 +1,4 @@
-import { Repo } from "./Repo"
+import { Repo } from './Repo'
 
 const TABLE = 'robyottoko.token'
 

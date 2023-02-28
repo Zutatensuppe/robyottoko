@@ -73,9 +73,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { EMOTE_DISPLAY_FN, GeneralModuleSettings, possibleEmoteDisplayFunctions } from '../../../mod/modules/GeneralModuleCommon';
-import VolumeSlider from '../VolumeSlider.vue';
+import { ref, watch } from 'vue'
+import { EMOTE_DISPLAY_FN, GeneralModuleSettings, possibleEmoteDisplayFunctions } from '../../../mod/modules/GeneralModuleCommon'
+import VolumeSlider from '../VolumeSlider.vue'
 
 const props = defineProps<{
   modelValue: GeneralModuleSettings
