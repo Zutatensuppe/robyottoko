@@ -1,7 +1,7 @@
-import api from "./api";
+import api from './api'
 
 // TODO: don't use any :)
-let conf: any = null;
+let conf: any = null
 
 const init = async () => {
   const res = await api.getConf()

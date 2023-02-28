@@ -1,33 +1,33 @@
 <template>
   <div class="emote-wall">
     <img
-      v-for="(emote,idx) in activeEmotes"
+      v-for="(emote, idx) in activeEmotes"
       :key="idx"
       :src="emote.url"
       class="emote"
-      :style="{top: `${emote.y}px`, left: `${emote.x}px`, width: emote.w + 'px', height: emote.h + 'px', transform: `rotate(${emote.rot}deg)`}"
+      :style="{ top: `${emote.y}px`, left: `${emote.x}px`, width: emote.w + 'px', height: emote.h + 'px', transform: `rotate(${emote.rot}deg)` }"
     >
   </div>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import {
   EMOTE_DISPLAY_FN,
   GeneralModuleEmotesEventData,
   GeneralModuleWsEventData,
-} from "../../../mod/modules/GeneralModuleCommon";
-import util, { WidgetApiData } from "../util";
-import WsClient from "../../WsClient";
-import { getRandom, getRandomFloat, getRandomInt, logger } from "../../../common/fn";
+} from '../../../mod/modules/GeneralModuleCommon'
+import util, { WidgetApiData } from '../util'
+import WsClient from '../../WsClient'
+import { getRandom, getRandomFloat, getRandomInt, logger } from '../../../common/fn'
 const log = logger('emote_wall/Page.vue')
 
-import("./main.scss");
+import('./main.scss')
 
 let ws: WsClient | null = null
 
 const props = defineProps<{
   wdata: WidgetApiData,
-}>();
+}>()
 
 interface Emote {
   url: string,
@@ -74,20 +74,20 @@ interface Point {
 const bezier = (t: number, p0: Point, p1: Point, p2: Point, p3: Point) => {
   const cX = 3 * (p1.x - p0.x),
     bX = 3 * (p2.x - p1.x) - cX,
-    aX = p3.x - p0.x - cX - bX;
+    aX = p3.x - p0.x - cX - bX
 
   const cY = 3 * (p1.y - p0.y),
     bY = 3 * (p2.y - p1.y) - cY,
-    aY = p3.y - p0.y - cY - bY;
+    aY = p3.y - p0.y - cY - bY
 
-  const x = (aX * Math.pow(t, 3)) + (bX * Math.pow(t, 2)) + (cX * t) + p0.x;
-  const y = (aY * Math.pow(t, 3)) + (bY * Math.pow(t, 2)) + (cY * t) + p0.y;
+  const x = (aX * Math.pow(t, 3)) + (bX * Math.pow(t, 2)) + (cX * t) + p0.x
+  const y = (aY * Math.pow(t, 3)) + (bY * Math.pow(t, 2)) + (cY * t) + p0.y
 
-  return { x: x, y: y };
+  return { x: x, y: y }
 }
 
 const easeInOutSine = (x: number): number => {
-  return -(Math.cos(Math.PI * x) - 1) / 2;
+  return -(Math.cos(Math.PI * x) - 1) / 2
 }
 
 const TO_LEFT = -1
@@ -413,11 +413,11 @@ const loadImage = async (url: string): Promise<HTMLImageElement> => {
 }
 
 onMounted(() => {
-  ws = util.wsClient(props.wdata);
-  ws.onMessage("init", (_data: GeneralModuleWsEventData) => {
+  ws = util.wsClient(props.wdata)
+  ws.onMessage('init', (_data: GeneralModuleWsEventData) => {
     // pass
   })
-  ws.onMessage("emotes", async (data: GeneralModuleEmotesEventData) => {
+  ws.onMessage('emotes', async (data: GeneralModuleEmotesEventData) => {
     const displayFn = getRandom(data.displayFn)
     let emoteFn: EmoteFn
     switch (displayFn.fn) {

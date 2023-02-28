@@ -9,7 +9,7 @@
   /></span>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   src: String,
@@ -21,7 +21,7 @@ const props = defineProps({
 const audio = ref<HTMLAudioElement | null>(null)
 const playing = ref<boolean>(false)
 
-const cls = computed(() => playing.value ? "fa-stop" : "fa-play")
+const cls = computed(() => playing.value ? 'fa-stop' : 'fa-play')
 
 const toggle = (): void => {
   if (!audio.value) {
@@ -45,7 +45,7 @@ const load = (): void => {
     audio.value = null
   }
   audio.value = new Audio(props.src)
-  audio.value.addEventListener("ended", () => {
+  audio.value.addEventListener('ended', () => {
     playing.value = false
   })
   playing.value = false

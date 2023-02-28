@@ -73,7 +73,7 @@ test.each([
         {
           box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/67815_IGDB-52x72.jpg',
           id: '67815',
-          name: "Ronnie O'Sullivan's Snooker",
+          name: 'Ronnie O\'Sullivan\'s Snooker',
         },
         {
           box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/505020-52x72.jpg',
@@ -105,7 +105,7 @@ test.each([
         {
           box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/696400368_IGDB-52x72.jpg',
           id: '696400368',
-          name: "Food Girls - Bubbles' Drink Stand VR",
+          name: 'Food Girls - Bubbles\' Drink Stand VR',
         },
       ],
     },

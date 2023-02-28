@@ -82,11 +82,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { EmotesEffectData, EmoteSet } from '../../../../types';
-import { onBeforeMount, ref, watch } from 'vue';
-import { EMOTE_DISPLAY_FN, possibleEmoteDisplayFunctions } from '../../../../mod/modules/GeneralModuleCommon';
-import api from '../../../api';
-import StringInput from '../../StringInput.vue';
+import { EmotesEffectData, EmoteSet } from '../../../../types'
+import { onBeforeMount, ref, watch } from 'vue'
+import { EMOTE_DISPLAY_FN, possibleEmoteDisplayFunctions } from '../../../../mod/modules/GeneralModuleCommon'
+import api from '../../../api'
+import StringInput from '../../StringInput.vue'
 
 const props = defineProps<{
   modelValue: EmotesEffectData,

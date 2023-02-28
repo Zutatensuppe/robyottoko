@@ -1,7 +1,7 @@
-import { logger } from "./common/fn";
-import TwitchHelixClient from "./services/TwitchHelixClient";
-import { User } from "./repo/Users";
-import { Bot } from "./types";
+import { logger } from './common/fn'
+import TwitchHelixClient from './services/TwitchHelixClient'
+import { User } from './repo/Users'
+import { Bot } from './types'
 
 const log = logger('oauth.ts')
 

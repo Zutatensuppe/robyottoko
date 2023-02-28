@@ -289,11 +289,11 @@ export const doReplacements = async (
           return ''
         }
         if (m1 === 'message') {
-          return `Robyottoko is a versatile twitch `
-            + `bot, containing features like media commands, timers, translation, `
-            + `widget for user-submitted drawings, captions (speech-to-text), `
-            + `png-tuber and song requests. Get it connected to your twitch `
-            + `channel for free at https://hyottoko.club 🤖`
+          return 'Robyottoko is a versatile twitch '
+            + 'bot, containing features like media commands, timers, translation, '
+            + 'widget for user-submitted drawings, captions (speech-to-text), '
+            + 'png-tuber and song requests. Get it connected to your twitch '
+            + 'channel for free at https://hyottoko.club 🤖'
         }
         if (m1 === 'version') {
           return bot.getBuildVersion()
@@ -310,7 +310,7 @@ export const doReplacements = async (
         if (m1 === 'features') {
           return 'this versatile twitch bot has features like media commands, timers, translation, widget for user-submitted drawings, captions (speech-to-text), png-tuber and song requests'
         }
-        return '';
+        return ''
       },
     },
     {
@@ -374,7 +374,7 @@ export const doReplacements = async (
         }
         if (m3 === 'last_stream_category') {
           const channelInfo = await helixClient.getChannelInformation(twitchUser.id)
-          return String(channelInfo?.game_name || '');
+          return String(channelInfo?.game_name || '')
         }
         return ''
       },
@@ -522,7 +522,7 @@ export const findIdxFuzzy = <T>(
 
 export const accentFolded = (str: string): string => {
   // @see https://stackoverflow.com/a/37511463/392905 + comments about ł
-  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\u0142/g, "l")
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\u0142/g, 'l')
 }
 
 export const findShortestIdx = <T>(
@@ -530,8 +530,8 @@ export const findShortestIdx = <T>(
   indexes: number[],
   keyFn: (item: T) => string
 ) => {
-  let shortestIdx = -1;
-  let shortest = 0;
+  let shortestIdx = -1
+  let shortest = 0
   array.forEach((item, idx) => {
     const len = keyFn(item).length
     if (indexes.includes(idx) && (shortestIdx === -1 || len < shortest)) {

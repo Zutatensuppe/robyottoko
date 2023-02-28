@@ -1,6 +1,6 @@
-import { doReplacements } from "../fn";
-import TwitchHelixClient from "../services/TwitchHelixClient";
-import { FunctionCommand, Module, RawCommand, TwitchChatContext } from "../types";
+import { doReplacements } from '../fn'
+import TwitchHelixClient from '../services/TwitchHelixClient'
+import { FunctionCommand, Module, RawCommand, TwitchChatContext } from '../types'
 
 export abstract class Effect<EffectData> {
   #sayFn: (str: string) => void

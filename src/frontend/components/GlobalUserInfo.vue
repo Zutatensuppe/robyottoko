@@ -15,6 +15,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import g from "../global";
+import g from '../global'
 const global = g.getData()
 </script>

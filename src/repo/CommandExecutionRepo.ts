@@ -1,7 +1,7 @@
 'use strict'
 
-import { logger } from "../common/fn"
-import { Repo } from "./Repo"
+import { logger } from '../common/fn'
+import { Repo } from './Repo'
 
 const TABLE = 'robyottoko.command_execution'
 

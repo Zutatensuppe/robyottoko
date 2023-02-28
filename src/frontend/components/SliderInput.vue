@@ -35,7 +35,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref } from 'vue'
 
 const props = defineProps({
   modelValue: { type: Number, required: true },
@@ -49,7 +49,7 @@ const emit = defineEmits<{
 }>()
 const curVal = ref<number>(props.modelValue)
 const valChange = () => {
-  emit("update:modelValue", parseInt(`${curVal.value}`, 10));
+  emit('update:modelValue', parseInt(`${curVal.value}`, 10))
 }
 </script>
 <style lang="scss" scoped>

@@ -57,9 +57,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { AvatarModuleAvatarSlotItem, AvatarModuleSlotItemStateDefinition } from "../../../mod/modules/AvatarModuleCommon";
-import AvatarSlotItemStateEditor from "./AvatarSlotItemStateEditor.vue";
+import { computed, ref } from 'vue'
+import { AvatarModuleAvatarSlotItem, AvatarModuleSlotItemStateDefinition } from '../../../mod/modules/AvatarModuleCommon'
+import AvatarSlotItemStateEditor from './AvatarSlotItemStateEditor.vue'
 
 const props = defineProps<{
   modelValue: AvatarModuleAvatarSlotItem
@@ -74,9 +74,9 @@ const emit = defineEmits<{
 }>()
 const titleFocused = ref<boolean>(false)
 // TODO: check if default state always exist.
-const defaultState = computed(() => props.modelValue.states.find(({ state }) => state === "default") as AvatarModuleSlotItemStateDefinition)
+const defaultState = computed(() => props.modelValue.states.find(({ state }) => state === 'default') as AvatarModuleSlotItemStateDefinition)
 const makeDefault = (): void => {
-  emit("makeDefault", props.modelValue)
+  emit('makeDefault', props.modelValue)
 }
 </script>
 <style>

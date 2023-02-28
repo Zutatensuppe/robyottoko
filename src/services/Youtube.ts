@@ -1,12 +1,12 @@
-import { logger } from "../common/fn";
-import fn from "../fn";
-import Cache from "./Cache";
-import { Indivious, IndiviousVideo } from "./youtube/Indivious";
-import { NoApiKeysError } from "./youtube/NoApiKeysError";
-import { NotFoundError } from "./youtube/NotFoundError";
-import { QuotaReachedError } from "./youtube/QuotaReachedError";
-import { TooLongError } from "./youtube/TooLongError";
-import { YoutubeApi, YoutubeVideosResponseDataEntry } from "./youtube/YoutubeApi";
+import { logger } from '../common/fn'
+import fn from '../fn'
+import Cache from './Cache'
+import { Indivious, IndiviousVideo } from './youtube/Indivious'
+import { NoApiKeysError } from './youtube/NoApiKeysError'
+import { NotFoundError } from './youtube/NotFoundError'
+import { QuotaReachedError } from './youtube/QuotaReachedError'
+import { TooLongError } from './youtube/TooLongError'
+import { YoutubeApi, YoutubeVideosResponseDataEntry } from './youtube/YoutubeApi'
 
 const log = logger('Youtube.ts')
 

@@ -179,30 +179,30 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref } from "vue";
-import WsClient from "../WsClient";
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import WsClient from '../WsClient'
 import {
   Command,
   CommandAction,
   GlobalVariable,
   PlaylistItem,
-} from "../../types";
+} from '../../types'
 import {
   default_settings,
   isItemShown,
   SongrequestModuleSettings,
   SongrequestModuleWsEventData,
   TagInfo,
-} from "../../mod/modules/SongrequestModuleCommon";
-import { useToast } from "vue-toastification";
-import api from "../api";
-import CommandsEditor from "../components/Commands/CommandsEditor.vue";
-import NavbarElement from "../components/NavbarElement.vue";
-import PlaylistEditor from "../components/SongRequest/PlaylistEditor.vue";
+} from '../../mod/modules/SongrequestModuleCommon'
+import { useToast } from 'vue-toastification'
+import api from '../api'
+import CommandsEditor from '../components/Commands/CommandsEditor.vue'
+import NavbarElement from '../components/NavbarElement.vue'
+import PlaylistEditor from '../components/SongRequest/PlaylistEditor.vue'
 import Settings from '../components/SongRequest/Settings.vue'
 import TagsEditor from '../components/SongRequest/TagsEditor.vue'
-import util from "../util";
-import YoutubePlayer from "../components/YoutubePlayer.vue";
+import util from '../util'
+import YoutubePlayer from '../components/YoutubePlayer.vue'
 
 interface ControlDefinition {
   title: string;
@@ -210,7 +210,7 @@ interface ControlDefinition {
   icon: string;
 }
 
-type Tab = "playlist" | "commands" | "settings" | "import" | "tags"
+type Tab = 'playlist' | 'commands' | 'settings' | 'import' | 'tags'
 interface TabDefinition {
   title: string
   tab: Tab
@@ -239,48 +239,48 @@ const toast = useToast()
 
 const controlDefinitions: ControlDefinition[] = [
   {
-    title: "Reset stats",
-    ctrl: "resetStats",
-    icon: "fa-eraser",
+    title: 'Reset stats',
+    ctrl: 'resetStats',
+    icon: 'fa-eraser',
   },
   {
-    title: "Clear playlist",
-    ctrl: "clear",
-    icon: "fa-eject",
+    title: 'Clear playlist',
+    ctrl: 'clear',
+    icon: 'fa-eject',
   },
   {
-    title: "Shuffle",
-    ctrl: "shuffle",
-    icon: "fa-random",
+    title: 'Shuffle',
+    ctrl: 'shuffle',
+    icon: 'fa-random',
   },
   {
-    title: "Play",
-    ctrl: "unpause",
-    icon: "fa-play",
+    title: 'Play',
+    ctrl: 'unpause',
+    icon: 'fa-play',
   },
   {
-    title: "Pause",
-    ctrl: "pause",
-    icon: "fa-pause",
+    title: 'Pause',
+    ctrl: 'pause',
+    icon: 'fa-pause',
   },
   {
-    title: "Prev",
-    ctrl: "prev",
-    icon: "fa-step-backward",
+    title: 'Prev',
+    ctrl: 'prev',
+    icon: 'fa-step-backward',
   },
   {
-    title: "Next",
-    ctrl: "skip",
-    icon: "fa-step-forward",
+    title: 'Next',
+    ctrl: 'skip',
+    icon: 'fa-step-forward',
   },
 ]
 
 const tabDefinitions: TabDefinition[] = [
-  { tab: "playlist", title: "Playlist" },
-  { tab: "commands", title: "Commands" },
-  { tab: "settings", title: "Settings" },
-  { tab: "tags", title: "Tags" },
-  { tab: "import", title: "Import/Export" },
+  { tab: 'playlist', title: 'Playlist' },
+  { tab: 'commands', title: 'Commands' },
+  { tab: 'settings', title: 'Settings' },
+  { tab: 'tags', title: 'Tags' },
+  { tab: 'import', title: 'Import/Export' },
 ]
 
 const possibleActions: CommandAction[] = [
@@ -313,19 +313,19 @@ const possibleActions: CommandAction[] = [
 ]
 
 const tags = computed(() => {
-  const tags: TagInfo[] = [];
+  const tags: TagInfo[] = []
   playlist.value.forEach((item: PlaylistItem) => {
     item.tags.forEach((tag) => {
-      const index = tags.findIndex((t) => t.value === tag);
+      const index = tags.findIndex((t) => t.value === tag)
       if (index === -1) {
-        tags.push({ value: tag, count: 1 });
+        tags.push({ value: tag, count: 1 })
       }
       else {
-        tags[index].count++;
+        tags[index].count++
       }
-    });
-  });
-  return tags;
+    })
+  })
+  return tags
 })
 
 const youtube = ref<InstanceType<typeof YoutubePlayer> | null>(null)
@@ -340,217 +340,217 @@ const player = computed((): InstanceType<typeof YoutubePlayer> => {
     setLoop: noop,
     playing: noop,
     getProgress: noop,
-  }) as InstanceType<typeof YoutubePlayer>;
+  }) as InstanceType<typeof YoutubePlayer>
 })
 
 const filteredPlaylist = computed((): PlaylistItem[] => {
-  return playlist.value.filter((item: PlaylistItem) => isItemShown(item, filter.value));
+  return playlist.value.filter((item: PlaylistItem) => isItemShown(item, filter.value))
 })
 
 const item = computed(() => {
-  return filteredPlaylist.value[0];
+  return filteredPlaylist.value[0]
 })
 
 const hasItems = computed((): boolean => {
-  return filteredPlaylist.value.length !== 0;
+  return filteredPlaylist.value.length !== 0
 })
 
 const playerstyle = computed((): string => {
   return playerVisible.value
-    ? ""
-    : "width:0;height:0;padding:0;margin-bottom:0;";
+    ? ''
+    : 'width:0;height:0;padding:0;margin-bottom:0;'
 })
 
 const togglePlayerButtonText = computed((): string => {
-  return playerVisible.value ? "Hide Player" : "Show Player";
+  return playerVisible.value ? 'Hide Player' : 'Show Player'
 })
 const exportPlaylistUrl = computed((): string => {
-  return `${location.protocol}//${location.host}/api/sr/export`;
+  return `${location.protocol}//${location.host}/api/sr/export`
 })
 
 const sendSave = () => {
   sendMsg({
-    event: "save",
+    event: 'save',
     commands: commands.value,
     settings: settings.value,
-  });
+  })
 }
 
 const onTagUpdated = (evt: [
   string,
   string
 ]) => {
-  updateTag(evt[0], evt[1]);
+  updateTag(evt[0], evt[1])
 }
 
 const onPlaylistCtrl = (evt: [
   string,
   any[]
 ]) => {
-  sendCtrl(evt[0], evt[1]);
+  sendCtrl(evt[0], evt[1])
 }
 
 const doImportPlaylist = async () => {
-  const res = await api.importPlaylist(importPlaylist.value);
+  const res = await api.importPlaylist(importPlaylist.value)
   if (res.status === 200) {
-    tab.value = "playlist";
-    toast.success("Import successful");
+    tab.value = 'playlist'
+    toast.success('Import successful')
   }
   else {
-    toast.error("Import failed");
+    toast.error('Import failed')
   }
 }
 const togglePlayer = () => {
-  playerVisible.value = !playerVisible.value;
+  playerVisible.value = !playerVisible.value
   if (playerVisible.value) {
     if (!player.value.playing()) {
-      play();
+      play()
     }
   }
   else {
-    player.value.stop();
+    player.value.stop()
   }
 }
 const resr = () => {
-  if (resrinput.value !== "") {
-    sendCtrl("resr", [resrinput.value]);
-    resrinput.value = "";
+  if (resrinput.value !== '') {
+    sendCtrl('resr', [resrinput.value])
+    resrinput.value = ''
   }
 }
 const sr = () => {
-  if (srinput.value !== "") {
-    sendCtrl("sr", [srinput.value]);
-    srinput.value = "";
+  if (srinput.value !== '') {
+    sendCtrl('sr', [srinput.value])
+    srinput.value = ''
   }
 }
 const sendCtrl = (ctrl: string, args: any[]) => {
-  sendMsg({ event: "ctrl", ctrl, args });
+  sendMsg({ event: 'ctrl', ctrl, args })
 }
 const ended = () => {
-  sendMsg({ event: "ended", id: item.value.id });
+  sendMsg({ event: 'ended', id: item.value.id })
 }
 const sendMsg = (data: Record<string, any>) => {
   if (ws) {
-    ws.send(JSON.stringify(data));
+    ws.send(JSON.stringify(data))
   }
   else {
-    console.warn("sendMsg: this.ws not initialized");
+    console.warn('sendMsg: this.ws not initialized')
   }
 }
 const play = () => {
-  adjustVolume(settings.value.volume);
+  adjustVolume(settings.value.volume)
   if (playerVisible.value && hasItems.value) {
-    player.value.play(item.value.yt);
-    sendMsg({ event: "play", id: item.value.id });
+    player.value.play(item.value.yt)
+    sendMsg({ event: 'play', id: item.value.id })
   }
 }
 const unpause = () => {
   if (hasItems.value) {
-    player.value.unpause();
-    sendMsg({ event: "unpause", id: item.value.id });
+    player.value.unpause()
+    sendMsg({ event: 'unpause', id: item.value.id })
   }
 }
 const pause = () => {
   if (playerVisible.value && hasItems.value) {
-    player.value.pause();
-    sendMsg({ event: "pause" });
+    player.value.pause()
+    sendMsg({ event: 'pause' })
   }
 }
 const adjustVolume = (volume: number) => {
-  player.value.setVolume(volume);
+  player.value.setVolume(volume)
 }
 const updateTag = (oldTag: string, newTag: string) => {
   if (oldTag === newTag) {
-    return;
+    return
   }
-  sendCtrl("updatetag", [oldTag, newTag]);
+  sendCtrl('updatetag', [oldTag, newTag])
 }
 
 onMounted(async () => {
   nextTick(() => {
-    ws = util.wsClient("sr");
-    ws.onMessage("save", (data: SongrequestModuleWsEventData) => {
-      settings.value = data.settings;
-      widgetUrl.value = data.widgetUrl;
-      commands.value = data.commands;
-      globalVariables.value = data.globalVariables;
-      channelPointsCustomRewards.value = data.channelPointsCustomRewards;
-    });
-    ws.onMessage(["pause"], (_data: SongrequestModuleWsEventData) => {
+    ws = util.wsClient('sr')
+    ws.onMessage('save', (data: SongrequestModuleWsEventData) => {
+      settings.value = data.settings
+      widgetUrl.value = data.widgetUrl
+      commands.value = data.commands
+      globalVariables.value = data.globalVariables
+      channelPointsCustomRewards.value = data.channelPointsCustomRewards
+    })
+    ws.onMessage(['pause'], (_data: SongrequestModuleWsEventData) => {
       if (player.value.playing()) {
-        pause();
+        pause()
       }
-    });
-    ws.onMessage(["unpause"], (_data: SongrequestModuleWsEventData) => {
+    })
+    ws.onMessage(['unpause'], (_data: SongrequestModuleWsEventData) => {
       if (!player.value.playing()) {
-        unpause();
+        unpause()
       }
-    });
-    ws.onMessage(["loop"], (_data: SongrequestModuleWsEventData) => {
-      player.value.setLoop(true);
-    });
-    ws.onMessage(["noloop"], (_data: SongrequestModuleWsEventData) => {
-      player.value.setLoop(false);
-    });
-    ws.onMessage(["onEnded", "prev", "skip", "remove", "move", "tags"], (data: SongrequestModuleWsEventData) => {
-      settings.value = data.settings;
-      commands.value = data.commands;
-      globalVariables.value = data.globalVariables;
-      channelPointsCustomRewards.value = data.channelPointsCustomRewards;
+    })
+    ws.onMessage(['loop'], (_data: SongrequestModuleWsEventData) => {
+      player.value.setLoop(true)
+    })
+    ws.onMessage(['noloop'], (_data: SongrequestModuleWsEventData) => {
+      player.value.setLoop(false)
+    })
+    ws.onMessage(['onEnded', 'prev', 'skip', 'remove', 'move', 'tags'], (data: SongrequestModuleWsEventData) => {
+      settings.value = data.settings
+      commands.value = data.commands
+      globalVariables.value = data.globalVariables
+      channelPointsCustomRewards.value = data.channelPointsCustomRewards
       const oldId = filteredPlaylist.value.length > 0
         ? filteredPlaylist.value[0].id
-        : null;
-      filter.value = data.filter;
-      playlist.value = data.playlist;
+        : null
+      filter.value = data.filter
+      playlist.value = data.playlist
       const newId = filteredPlaylist.value.length > 0
         ? filteredPlaylist.value[0].id
-        : null;
+        : null
       if (oldId !== newId) {
-        play();
+        play()
       }
-    });
-    ws.onMessage(["filter"], (data: SongrequestModuleWsEventData) => {
-      settings.value = data.settings;
-      commands.value = data.commands;
-      globalVariables.value = data.globalVariables;
-      channelPointsCustomRewards.value = data.channelPointsCustomRewards;
-      const oldId = filteredPlaylist.value.length > 0 ? filteredPlaylist.value[0].id : null;
-      filter.value = data.filter;
-      playlist.value = data.playlist;
+    })
+    ws.onMessage(['filter'], (data: SongrequestModuleWsEventData) => {
+      settings.value = data.settings
+      commands.value = data.commands
+      globalVariables.value = data.globalVariables
+      channelPointsCustomRewards.value = data.channelPointsCustomRewards
+      const oldId = filteredPlaylist.value.length > 0 ? filteredPlaylist.value[0].id : null
+      filter.value = data.filter
+      playlist.value = data.playlist
       // play only if old id is not in new playlist
       if (!filteredPlaylist.value.find((item) => item.id === oldId)) {
-        play();
+        play()
       }
-    });
-    ws.onMessage(["stats", "video", "playIdx", "resetStats", "shuffle"], (data: SongrequestModuleWsEventData) => {
-      settings.value = data.settings;
-      commands.value = data.commands;
-      globalVariables.value = data.globalVariables;
-      channelPointsCustomRewards.value = data.channelPointsCustomRewards;
-      filter.value = data.filter;
-      playlist.value = data.playlist;
-    });
-    ws.onMessage(["add", "init"], (data: SongrequestModuleWsEventData) => {
-      settings.value = data.settings;
-      widgetUrl.value = data.widgetUrl;
-      commands.value = data.commands;
-      globalVariables.value = data.globalVariables;
-      channelPointsCustomRewards.value = data.channelPointsCustomRewards;
-      filter.value = data.filter;
-      playlist.value = data.playlist;
+    })
+    ws.onMessage(['stats', 'video', 'playIdx', 'resetStats', 'shuffle'], (data: SongrequestModuleWsEventData) => {
+      settings.value = data.settings
+      commands.value = data.commands
+      globalVariables.value = data.globalVariables
+      channelPointsCustomRewards.value = data.channelPointsCustomRewards
+      filter.value = data.filter
+      playlist.value = data.playlist
+    })
+    ws.onMessage(['add', 'init'], (data: SongrequestModuleWsEventData) => {
+      settings.value = data.settings
+      widgetUrl.value = data.widgetUrl
+      commands.value = data.commands
+      globalVariables.value = data.globalVariables
+      channelPointsCustomRewards.value = data.channelPointsCustomRewards
+      filter.value = data.filter
+      playlist.value = data.playlist
       if (!inited.value && !player.value.playing()) {
-        play();
+        play()
       }
-      inited.value = true;
-    });
-    ws.connect();
-    play();
-  });
+      inited.value = true
+    })
+    ws.connect()
+    play()
+  })
 })
 
 onUnmounted(() => {
   if (ws) {
-    ws.disconnect();
+    ws.disconnect()
   }
 })
 </script>

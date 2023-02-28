@@ -1,5 +1,5 @@
-import { Command, TwitchChatContext } from "../types"
-import { CommandRestrictEnum, mayExecute, userTypeOk } from "./permissions"
+import { Command, TwitchChatContext } from '../types'
+import { CommandRestrictEnum, mayExecute, userTypeOk } from './permissions'
 
 describe(('mayExecute'), () => {
 

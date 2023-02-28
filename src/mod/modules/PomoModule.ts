@@ -17,7 +17,7 @@ class PomoModule implements Module {
   // @ts-ignore
   private commands: FunctionCommand[]
 
-  private timeout: NodeJS.Timeout | null = null;
+  private timeout: NodeJS.Timeout | null = null
 
   constructor(
     public readonly bot: Bot,
@@ -49,9 +49,9 @@ class PomoModule implements Module {
           fn: this.cmdPomoExit.bind(this),
           cooldown: { global: '0', perUser: '0' },
         },
-      ];
-      return this;
-    })();
+      ]
+      return this
+    })()
   }
 
   async replaceText(
@@ -87,8 +87,8 @@ class PomoModule implements Module {
     }
 
     if (this.timeout) {
-      clearTimeout(this.timeout);
-      this.timeout = null;
+      clearTimeout(this.timeout)
+      this.timeout = null
     }
 
     this.timeout = setTimeout(async () => {
@@ -96,10 +96,10 @@ class PomoModule implements Module {
         return
       }
 
-      const dateStarted = new Date(JSON.parse(this.data.state.startTs));
-      const dateEnd = new Date(dateStarted.getTime() + this.data.state.durationMs);
+      const dateStarted = new Date(JSON.parse(this.data.state.startTs))
+      const dateEnd = new Date(dateStarted.getTime() + this.data.state.durationMs)
       const doneDate = this.data.state.doneTs ? new Date(JSON.parse(this.data.state.doneTs)) : dateStarted
-      const now = new Date();
+      const now = new Date()
 
       let anyNotificationsLeft = false
       for (const n of this.data.settings.notifications) {
@@ -127,9 +127,9 @@ class PomoModule implements Module {
       await this.save()
 
       if (anyNotificationsLeft && this.data.state.running) {
-        this.tick(command, context);
+        this.tick(command, context)
       }
-    }, 1 * SECOND);
+    }, 1 * SECOND)
   }
 
   async cmdPomoStart(ctx: CommandExecutionContext) {

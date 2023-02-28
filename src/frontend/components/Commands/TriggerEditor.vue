@@ -230,12 +230,12 @@
   </div>
 </template>
 <script setup lang="ts">
-import { CommandTrigger, CommandTriggerType } from "../../../types";
-import { computed, ref, watch } from "vue";
-import CheckboxInput from "../CheckboxInput.vue";
-import DropdownInput from "../DropdownInput.vue";
-import DurationInput from "../DurationInput.vue";
-import IntegerInput from "../IntegerInput.vue";
+import { CommandTrigger, CommandTriggerType } from '../../../types'
+import { computed, ref, watch } from 'vue'
+import CheckboxInput from '../CheckboxInput.vue'
+import DropdownInput from '../DropdownInput.vue'
+import DurationInput from '../DurationInput.vue'
+import IntegerInput from '../IntegerInput.vue'
 
 const props = defineProps<{
   modelValue: CommandTrigger,
@@ -249,9 +249,9 @@ const emit = defineEmits<{
 }>()
 
 const value = ref<CommandTrigger>({
-  type: "" as CommandTriggerType,
+  type: '' as CommandTriggerType,
   data: {
-    since: "",
+    since: '',
     command: {
       value: '',
       match: 'startsWith',
@@ -262,7 +262,7 @@ const value = ref<CommandTrigger>({
 })
 
 const rewardRedemptionActions = computed(() => {
-  const actions: { type: string, title: string, label: string }[] = [];
+  const actions: { type: string, title: string, label: string }[] = []
   for (let key in props.channelPointsCustomRewards) {
     actions.push(
       ...props.channelPointsCustomRewards[key].map((r) => ({
@@ -270,22 +270,22 @@ const rewardRedemptionActions = computed(() => {
         title: r,
         label: r,
       }))
-    );
+    )
   }
   actions.sort((a, b) =>
     a.title === b.title ? 0 : a.title < b.title ? -1 : 1
-  );
-  return actions;
+  )
+  return actions
 })
 
 const emitRemove = () => {
-  emit("remove");
+  emit('remove')
 }
 const emitUpdate = () => {
-  emit("update:modelValue", value.value);
+  emit('update:modelValue', value.value)
 }
 const apply = (v: CommandTrigger) => {
-  value.value = JSON.parse(JSON.stringify(v)) as CommandTrigger;
+  value.value = JSON.parse(JSON.stringify(v)) as CommandTrigger
 }
 
 apply(props.modelValue)

@@ -23,8 +23,8 @@
   </span>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, PropType, ref, watch } from "vue";
-import { AvatarModuleAnimationFrameDefinition } from "../../../mod/modules/AvatarModuleCommon";
+import { computed, onMounted, onUnmounted, PropType, ref, watch } from 'vue'
+import { AvatarModuleAnimationFrameDefinition } from '../../../mod/modules/AvatarModuleCommon'
 
 const props = defineProps({
   frames: {
@@ -49,7 +49,7 @@ const src = computed(() => {
   if (idx.value >= 0 && idx.value < props.frames.length) {
     return props.frames[idx.value].url
   }
-  return ""
+  return ''
 })
 
 const nextFrame = () => {

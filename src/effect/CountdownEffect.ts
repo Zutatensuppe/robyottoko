@@ -1,7 +1,7 @@
-import { logger, mustParseHumanDuration } from "../common/fn";
-import { sleep } from "../fn";
-import { CountdownAction, CountdownActionType, CountdownEffectData } from "../types";
-import { Effect } from "./Effect";
+import { logger, mustParseHumanDuration } from '../common/fn'
+import { sleep } from '../fn'
+import { CountdownAction, CountdownActionType, CountdownEffectData } from '../types'
+import { Effect } from './Effect'
 
 const log = logger('CountdownEffect.ts')
 
@@ -67,7 +67,7 @@ export class CountdownEffect extends Effect<CountdownEffectData> {
 
     const actionDefs: CountdownAction[] = []
     const steps = parseInt(await this.doReplacements(`${this.effect.data.steps}`), 10)
-    const msgStep = this.effect.data.step || "{step}"
+    const msgStep = this.effect.data.step || '{step}'
     const msgIntro = this.effect.data.intro || null
     const msgOutro = this.effect.data.outro || null
 

@@ -5,7 +5,7 @@ import { Bot, MODULE_NAME } from '../types'
 import { moduleByWidgetType } from '../services/Widgets'
 import { uniqId } from '../fn'
 
-const log = logger("WebSocketServer.ts")
+const log = logger('WebSocketServer.ts')
 
 type WebSocketNotifyData = any
 

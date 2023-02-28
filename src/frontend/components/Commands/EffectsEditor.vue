@@ -76,20 +76,20 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { CommandEffectData, CommandEffectType, CommandVariable, GlobalVariable } from '../../../types';
-import VariableChangeEffect from './Effects/VariableChangeEffect.vue';
-import ChatEffect from './Effects/ChatEffect.vue';
-import DictLookupEffect from './Effects/DictLookupEffect.vue';
-import EmotesEffect from './Effects/EmotesEffect.vue';
-import MediaEffect from './Effects/MediaEffect.vue';
-import MadochanEffect from './Effects/MadochanEffect.vue';
-import SetChannelTitleEffect from './Effects/SetChannelTitleEffect.vue';
-import SetChannelGameIdEffect from './Effects/SetChannelGameIdEffect.vue';
-import AddStreamTagsEffect from './Effects/AddStreamTagsEffect.vue';
-import RemoveStreamTagsEffect from './Effects/RemoveStreamTagsEffect.vue';
-import ChattersEffect from './Effects/ChattersEffect.vue';
-import CountdownEffect from './Effects/CountdownEffect.vue';
+import { ref, watch } from 'vue'
+import { CommandEffectData, CommandEffectType, CommandVariable, GlobalVariable } from '../../../types'
+import VariableChangeEffect from './Effects/VariableChangeEffect.vue'
+import ChatEffect from './Effects/ChatEffect.vue'
+import DictLookupEffect from './Effects/DictLookupEffect.vue'
+import EmotesEffect from './Effects/EmotesEffect.vue'
+import MediaEffect from './Effects/MediaEffect.vue'
+import MadochanEffect from './Effects/MadochanEffect.vue'
+import SetChannelTitleEffect from './Effects/SetChannelTitleEffect.vue'
+import SetChannelGameIdEffect from './Effects/SetChannelGameIdEffect.vue'
+import AddStreamTagsEffect from './Effects/AddStreamTagsEffect.vue'
+import RemoveStreamTagsEffect from './Effects/RemoveStreamTagsEffect.vue'
+import ChattersEffect from './Effects/ChattersEffect.vue'
+import CountdownEffect from './Effects/CountdownEffect.vue'
 import DoubleclickButton from '../DoubleclickButton.vue'
 
 export interface AutocompletableVariable {

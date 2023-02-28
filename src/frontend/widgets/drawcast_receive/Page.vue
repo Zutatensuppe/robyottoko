@@ -6,12 +6,12 @@
   />
 </template>
 <script setup lang="ts">
-import { newMedia } from "../../../common/commands";
-import { onMounted, onUnmounted, Ref, ref } from "vue";
-import { SoundMediaFile } from "../../../types";
-import MediaQueueElement from "../MediaQueueElement.vue";
-import util, { WidgetApiData } from "../util";
-import WsClient from "../../WsClient";
+import { newMedia } from '../../../common/commands'
+import { onMounted, onUnmounted, Ref, ref } from 'vue'
+import { SoundMediaFile } from '../../../types'
+import MediaQueueElement from '../MediaQueueElement.vue'
+import util, { WidgetApiData } from '../util'
+import WsClient from '../../WsClient'
 
 const props = defineProps<{
   wdata: WidgetApiData,
@@ -24,40 +24,40 @@ const notificationSound = ref<SoundMediaFile | null>(null)
 const q = ref<InstanceType<typeof MediaQueueElement>>() as Ref<InstanceType<typeof MediaQueueElement>>
 
   // @ts-ignore
-import("./main.scss");
+import('./main.scss')
 
 // images that were approved since opening this widget
 let imagesStack: string[] = []
 
 onMounted(() => {
-  ws = util.wsClient(props.wdata);
+  ws = util.wsClient(props.wdata)
 
-  ws.onMessage("init", (data) => {
+  ws.onMessage('init', (data) => {
     // submit button may not be empty
-    displayLatestForever.value = data.settings.displayLatestForever;
-    notificationSound.value = data.settings.notificationSound;
+    displayLatestForever.value = data.settings.displayLatestForever
+    notificationSound.value = data.settings.notificationSound
 
     if (data.settings.displayLatestAutomatically && data.images.length > 0) {
       imagesStack.push(data.images[0].path)
       q.value.playmedia(newMedia({
         image_url: data.images[0].path,
         minDurationMs: displayDuration.value,
-      }));
+      }))
     }
-  });
+  })
   ws.onMessage(
-    "approved_image_received",
+    'approved_image_received',
     (data: { nonce: string; img: string; mayNotify: boolean }) => {
       imagesStack.push(data.img)
       q.value.playmedia(newMedia({
         sound: data.mayNotify ? notificationSound.value : null,
         image_url: data.img,
         minDurationMs: displayDuration.value,
-      }));
+      }))
     }
-  );
+  )
   ws.onMessage(
-    "image_deleted",
+    'image_deleted',
     (data: { nonce: string; img: string; previousImg: string, mayNotify: boolean }) => {
       imagesStack = imagesStack.filter(item => item !== data.img)
       q.value.removeMedia(newMedia({ image_url: data.img }))
@@ -70,7 +70,7 @@ onMounted(() => {
       }
     }
   )
-  ws.connect();
+  ws.connect()
 })
 
 onUnmounted(() => {

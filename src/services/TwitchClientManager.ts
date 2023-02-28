@@ -91,7 +91,7 @@ class TwitchClientManager {
     const identity = determineIdentity(user, cfg)
 
     if (user.twitch_id && user.twitch_login && user.bot_enabled) {
-      this.log.info(`* twitch bot enabled`)
+      this.log.info('* twitch bot enabled')
 
       // connect to chat via tmi (to all channels configured)
       this.chatClient = this.bot.getTwitchTmiClientManager().get(identity, [user.twitch_login])
@@ -119,7 +119,7 @@ class TwitchClientManager {
           msg: string,
           self: boolean,
         ) => {
-          if (self) { return; } // Ignore messages from the bot
+          if (self) { return } // Ignore messages from the bot
 
           // sometimes chat contains imprintable characters
           // they are removed here

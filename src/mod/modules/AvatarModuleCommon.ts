@@ -1,5 +1,5 @@
 
-import { getProp } from "../../common/fn"
+import { getProp } from '../../common/fn'
 
 type int = number
 export type SlotName = string

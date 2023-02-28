@@ -1,7 +1,7 @@
-import DictCc from "../services/DictCc";
-import JishoOrg from "../services/JishoOrg";
-import { DictLookupEffectData, DictSearchResponseDataEntry } from "../types";
-import { Effect } from "./Effect";
+import DictCc from '../services/DictCc'
+import JishoOrg from '../services/JishoOrg'
+import { DictLookupEffectData, DictSearchResponseDataEntry } from '../types'
+import { Effect } from './Effect'
 
 type DictFn = (phrase: string) => Promise<DictSearchResponseDataEntry[]>
 
@@ -48,7 +48,7 @@ export class DictLookupEffect extends Effect<DictLookupEffectData> {
       return
     }
     for (const item of items) {
-      this.say(`Phrase "${item.from}": ${item.to.join(", ")}`)
+      this.say(`Phrase "${item.from}": ${item.to.join(', ')}`)
     }
   }
 }

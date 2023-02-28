@@ -1,7 +1,7 @@
-"use strict";
+'use strict'
 
-import { getProp } from "../../common/fn";
-import { DrawcastSettings, MediaFile, SoundMediaFile } from "../../types";
+import { getProp } from '../../common/fn'
+import { DrawcastSettings, MediaFile, SoundMediaFile } from '../../types'
 
 export interface DrawcastModuleWsData {
   event: string
@@ -24,7 +24,7 @@ export interface DrawcastModuleData {
 }
 
 export interface DrawcastSaveEventData {
-  event: "save"
+  event: 'save'
   settings: DrawcastSettings
 }
 

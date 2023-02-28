@@ -14,8 +14,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, PropType } from "vue";
-import { AvatarModuleAvatarDefinition, AvatarModuleSlotItemStateDefinition } from "../../../mod/modules/AvatarModuleCommon";
+import { computed, PropType } from 'vue'
+import { AvatarModuleAvatarDefinition, AvatarModuleSlotItemStateDefinition } from '../../../mod/modules/AvatarModuleCommon'
 import AvatarAnimation from './AvatarAnimation.vue'
 
 const props = defineProps({
@@ -37,16 +37,16 @@ const props = defineProps({
 
 const animations = computed((): AvatarModuleSlotItemStateDefinition[] => {
   return props.avatar.slotDefinitions.map((slotDef) => {
-    const item = slotDef.items[slotDef.defaultItemIndex];
+    const item = slotDef.items[slotDef.defaultItemIndex]
     if (!item) {
-      return { state: "", frames: [] };
+      return { state: '', frames: [] }
     }
-    const stateDef = item.states.find(({ state }) => state === "default");
+    const stateDef = item.states.find(({ state }) => state === 'default')
     if (!stateDef) {
-      return { state: "", frames: [] };
+      return { state: '', frames: [] }
     }
     return stateDef
-  });
+  })
 })
 </script>
 <style>

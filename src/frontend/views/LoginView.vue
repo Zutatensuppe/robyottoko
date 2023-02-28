@@ -16,8 +16,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import conf from "../conf";
-import twitch from "../twitch";
+import conf from '../conf'
+import twitch from '../twitch'
 import GlobalUserInfo from '../components/GlobalUserInfo.vue'
 const accessTokenLink = twitch.accessTokenLink(conf.getConf().twitchClientId)
 </script>

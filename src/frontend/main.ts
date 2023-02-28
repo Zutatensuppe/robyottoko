@@ -1,8 +1,8 @@
 import * as VueRouter from 'vue-router'
 import * as Vue from 'vue'
 
-import Toast from "vue-toastification";
-import "vue-toastification/dist/index.css";
+import Toast from 'vue-toastification'
+import 'vue-toastification/dist/index.css'
 
 import App from './App.vue'
 import AvatarView from './views/AvatarView.vue'
@@ -18,9 +18,9 @@ import VariablesView from './views/VariablesView.vue'
 import CannyBugReportsView from './views/CannyBugReportsView.vue'
 import CannyFeatureRequestsView from './views/CannyFeatureRequestsView.vue'
 
-import draggable from "vuedraggable";
+import draggable from 'vuedraggable'
 
-import Widget from './widgets/Widget.vue';
+import Widget from './widgets/Widget.vue'
 
 import global from './global'
 import conf from './conf'
@@ -153,7 +153,7 @@ const run = async () => {
       // load styles only when not opening a widget page.
       // widgets each have their own style
       // @ts-ignore
-      import("./style.scss")
+      import('./style.scss')
 
       user.eventBus.on('login', () => {
         wsstatus.init()

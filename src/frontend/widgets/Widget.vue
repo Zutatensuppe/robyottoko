@@ -55,10 +55,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { WidgetApiData } from "./util";
-import api from "../api";
+import { WidgetApiData } from './util'
+import api from '../api'
 import AvatarPage from './avatar/Page.vue'
 import DrawcastControlPage from './drawcast_control/Page.vue'
 import DrawcastDrawPage from './drawcast_draw/Page.vue'
@@ -66,7 +66,7 @@ import DrawcastReceivePage from './drawcast_receive/Page.vue'
 import EmoteWallPage from './emote_wall/Page.vue'
 import MediaPage from './media/Page.vue'
 import PomoPage from './pomo/Page.vue'
-import SpeechToTextPage from './speech-to-text/Page.vue';
+import SpeechToTextPage from './speech-to-text/Page.vue'
 import SrPage from './sr/Page.vue'
 
 const data = ref<WidgetApiData | null>(null)
@@ -83,7 +83,7 @@ onMounted(async () => {
     return
   }
 
-  const widgetData: WidgetApiData = await res.json();
+  const widgetData: WidgetApiData = await res.json()
   document.title = widgetData.title
   data.value = widgetData
 })

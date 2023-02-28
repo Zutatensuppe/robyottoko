@@ -1,5 +1,5 @@
-import { User } from "../../repo/Users"
-import { Bot } from "../../types"
+import { User } from '../../repo/Users'
+import { Bot } from '../../types'
 
 export abstract class EventSubEventHandler<EventType> {
   public abstract handle(

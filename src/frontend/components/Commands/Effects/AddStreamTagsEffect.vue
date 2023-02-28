@@ -20,8 +20,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import { AddStreamTagEffectData } from '../../../../types';
-import { ref, watch } from 'vue';
+import { AddStreamTagEffectData } from '../../../../types'
+import { ref, watch } from 'vue'
 import MacroSelect from '../../MacroSelect.vue'
 
 const props = defineProps<{

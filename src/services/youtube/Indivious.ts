@@ -108,7 +108,7 @@ export interface IndiviousVideo {
 }
 
 interface VideoSearchResultEntry {
-  type: "video"
+  type: 'video'
   title: string
   videoId: string
   author: string
@@ -134,7 +134,7 @@ interface VideoSearchResultEntry {
 }
 
 interface PlaylistSearchResultEntry {
-  type: "playlist"
+  type: 'playlist'
   title: string
   playlistId: string
   author: string
@@ -159,7 +159,7 @@ interface PlaylistSearchResultEntry {
   ]
 }
 interface ChannelSearchResultEntry {
-  type: "channel"
+  type: 'channel'
   author: string
   authorId: string
   authorUrl: string
@@ -201,10 +201,10 @@ export class Indivious {
   async search(args: {
     q: string,
     page?: number,
-    sort_by?: "relevance" | "rating" | "upload_date" | "view_count",
-    date?: "hour" | "today" | "week" | "month" | "year",
-    duration?: "short" | "long",
-    type?: "video" | "playlist" | "channel" | "all",
+    sort_by?: 'relevance' | 'rating' | 'upload_date' | 'view_count',
+    date?: 'hour' | 'today' | 'week' | 'month' | 'year',
+    duration?: 'short' | 'long',
+    type?: 'video' | 'playlist' | 'channel' | 'all',
     features?: string,
     region?: string,
   }): Promise<SearchResult> {

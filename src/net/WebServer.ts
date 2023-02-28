@@ -34,19 +34,19 @@ class WebServer {
     app.use('/twitch', createTwitchRouter(bot))
 
     app.all('/login', async (_req, res: Response, _next: NextFunction) => {
-      res.sendFile(indexFile);
+      res.sendFile(indexFile)
     })
 
     app.all('/password-reset', async (_req, res: Response, _next: NextFunction) => {
-      res.sendFile(indexFile);
+      res.sendFile(indexFile)
     })
 
     app.all('/widget/*', async (_req, res: Response, _next: NextFunction) => {
-      res.sendFile(indexFile);
+      res.sendFile(indexFile)
     })
 
     app.all('/pub/*', async (_req, res: Response, _next: NextFunction) => {
-      res.sendFile(indexFile);
+      res.sendFile(indexFile)
     })
 
     app.all('*', RequireLoginMiddleware, express.json({ limit: '50mb' }), async (req: any, res: Response, next: NextFunction) => {
@@ -60,7 +60,7 @@ class WebServer {
         }
       }
 
-      res.sendFile(indexFile);
+      res.sendFile(indexFile)
     })
 
     const httpConf = bot.getConfig().http

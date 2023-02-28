@@ -38,8 +38,8 @@
   </table>
 </template>
 <script setup lang="ts">
-import { ref } from "vue";
-import { TagInfo } from "../../../mod/modules/SongrequestModuleCommon";
+import { ref } from 'vue'
+import { TagInfo } from '../../../mod/modules/SongrequestModuleCommon'
 
 const editTag = ref<string>('')
 const tagEditIdx = ref<number>(-1)
@@ -53,11 +53,11 @@ const emit = defineEmits<{
 }>()
 
 const onInputFocus = (tag: TagInfo, idx: number) => {
-  editTag.value = tag.value;
-  tagEditIdx.value = idx;
+  editTag.value = tag.value
+  tagEditIdx.value = idx
 }
 
 const updateTag = (oldTag: string, newTag: string) => {
-  emit("updateTag", [oldTag, newTag]);
+  emit('updateTag', [oldTag, newTag])
 }
 </script>

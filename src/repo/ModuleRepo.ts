@@ -1,7 +1,7 @@
 'use strict'
 
-import { logger } from "../common/fn"
-import { Repo } from "./Repo"
+import { logger } from '../common/fn'
+import { Repo } from './Repo'
 
 const TABLE = 'robyottoko.module'
 
@@ -38,7 +38,7 @@ export class ModuleRepo extends Repo {
   }
 
   async getInfosByUser(userId: number): Promise<{key: string, enabled: boolean}[]> {
-    const sql = 'SELECT key, enabled FROM ' + TABLE + ' WHERE user_id = $1';
+    const sql = 'SELECT key, enabled FROM ' + TABLE + ' WHERE user_id = $1'
     return await this.db._getMany(sql, [userId])
   }
 

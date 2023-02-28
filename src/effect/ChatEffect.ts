@@ -1,6 +1,6 @@
-import { getRandom } from "../common/fn";
-import { ChatEffectData } from "../types";
-import { Effect } from "./Effect";
+import { getRandom } from '../common/fn'
+import { ChatEffectData } from '../types'
+import { Effect } from './Effect'
 
 export class ChatEffect extends Effect<ChatEffectData> {
   async apply(): Promise<void> {

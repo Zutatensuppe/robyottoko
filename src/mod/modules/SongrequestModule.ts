@@ -189,8 +189,8 @@ class SongrequestModule implements Module {
       if (initData.shouldSave) {
         await this.bot.getRepos().module.save(this.user.id, this.name, this.data)
       }
-      return this;
-    })();
+      return this
+    })()
   }
 
   isEnabled(): boolean {
@@ -377,7 +377,7 @@ class SongrequestModule implements Module {
         channelPointsCustomRewards: this.channelPointsCustomRewards,
         widgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.SR, this.user.id),
       }
-    };
+    }
   }
 
   async updateClient(eventName: string, ws: Socket): Promise<void> {
@@ -455,37 +455,37 @@ class SongrequestModule implements Module {
       },
       'ctrl': async (_ws: Socket, { ctrl, args }: { ctrl: string, args: any[] }) => {
         switch (ctrl) {
-          case 'volume': this.volume(...args as [number]); break;
-          case 'pause': this.pause(); break;
-          case 'unpause': this.unpause(); break;
-          case 'loop': this.loop(); break;
-          case 'noloop': this.noloop(); break;
-          case 'good': this.like(); break;
-          case 'bad': this.dislike(); break;
-          case 'prev': await this.prev(); break;
-          case 'skip': await this.next(); break;
-          case 'resetStats': await this.resetStats(); break;
-          case 'resetStatIdx': this.resetStatIdx(...args as [string, number]); break;
-          case 'clear': this.clear(); break;
-          case 'rm': this.remove(); break;
-          case 'shuffle': this.shuffle(); break;
-          case 'playIdx': this.playIdx(...args as [number]); break;
-          case 'rmIdx': this.rmIdx(...args as [number]); break;
-          case 'goodIdx': this.goodIdx(...args as [number]); break;
-          case 'badIdx': this.badIdx(...args as [number]); break;
-          case 'sr': this.request(...args as [string]); break;
-          case 'resr': this.resr(...args as [string]); break;
-          case 'move': this.move(...args as [number, number]); break;
-          case 'rmtag': this.rmTag(...args as [string, number]); break;
-          case 'addtag': this.addTag(...args as [string, number]); break;
-          case 'updatetag': this.updateTag(...args as [string, string]); break;
-          case 'addFilterShowTag': await this.addFilterShowTag(...args as [string]); break;
-          case 'addFilterHideTag': await this.addFilterHideTag(...args as [string]); break;
-          case 'removeFilterShowTag': await this.removeFilterShowTag(...args as [string]); break;
-          case 'removeFilterHideTag': await this.removeFilterHideTag(...args as [string]); break;
-          case 'videoVisibility': await this.videoVisibility(...args as [boolean, number]); break;
-          case 'setAllToPlayed': this.setAllToPlayed(); break;
-          case 'sort': this.sort(...args as [SortBy, SortDirection]); break;
+          case 'volume': this.volume(...args as [number]); break
+          case 'pause': this.pause(); break
+          case 'unpause': this.unpause(); break
+          case 'loop': this.loop(); break
+          case 'noloop': this.noloop(); break
+          case 'good': this.like(); break
+          case 'bad': this.dislike(); break
+          case 'prev': await this.prev(); break
+          case 'skip': await this.next(); break
+          case 'resetStats': await this.resetStats(); break
+          case 'resetStatIdx': this.resetStatIdx(...args as [string, number]); break
+          case 'clear': this.clear(); break
+          case 'rm': this.remove(); break
+          case 'shuffle': this.shuffle(); break
+          case 'playIdx': this.playIdx(...args as [number]); break
+          case 'rmIdx': this.rmIdx(...args as [number]); break
+          case 'goodIdx': this.goodIdx(...args as [number]); break
+          case 'badIdx': this.badIdx(...args as [number]); break
+          case 'sr': this.request(...args as [string]); break
+          case 'resr': this.resr(...args as [string]); break
+          case 'move': this.move(...args as [number, number]); break
+          case 'rmtag': this.rmTag(...args as [string, number]); break
+          case 'addtag': this.addTag(...args as [string, number]); break
+          case 'updatetag': this.updateTag(...args as [string, string]); break
+          case 'addFilterShowTag': await this.addFilterShowTag(...args as [string]); break
+          case 'addFilterHideTag': await this.addFilterHideTag(...args as [string]); break
+          case 'removeFilterShowTag': await this.removeFilterShowTag(...args as [string]); break
+          case 'removeFilterHideTag': await this.removeFilterHideTag(...args as [string]); break
+          case 'videoVisibility': await this.videoVisibility(...args as [boolean, number]); break
+          case 'setAllToPlayed': this.setAllToPlayed(); break
+          case 'sort': this.sort(...args as [SortBy, SortDirection]); break
         }
       },
     }
@@ -1010,9 +1010,9 @@ class SongrequestModule implements Module {
 
     if (addType === ADD_TYPE.NOT_ADDED) {
       if (reason === NOT_ADDED_REASON.NOT_FOUND) {
-        return `No song found`
+        return 'No song found'
       } else if (reason === NOT_ADDED_REASON.NOT_FOUND_IN_PLAYLIST) {
-        return `Song not found in playlist`
+        return 'Song not found in playlist'
       } else if (reason === NOT_ADDED_REASON.TOO_LONG) {
         return `Song too long (max. ${humanDuration(limits.maxLenMs)})`
       } else if (reason === NOT_ADDED_REASON.TOO_MANY_QUEUED) {
@@ -1034,7 +1034,7 @@ class SongrequestModule implements Module {
     }
     let info
     if (idx < 0) {
-      info = ``
+      info = ''
     } else if (idx === 0) {
       info = `[Position ${idx + 1}, playing now]`
     } else {
@@ -1055,7 +1055,7 @@ class SongrequestModule implements Module {
     if (addType === ADD_TYPE.EXISTED) {
       return `🎵 "${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist. ${info}`
     }
-    return `Could not process that song request`
+    return 'Could not process that song request'
   }
 
   cmdSrCurrent(_originalCommand: Command) {
@@ -1065,7 +1065,7 @@ class SongrequestModule implements Module {
       }
       const say = this.bot.sayFn(this.user, ctx.target)
       if (this.data.playlist.length === 0) {
-        say(`Playlist is empty`)
+        say('Playlist is empty')
         return
       }
       const cur = this.data.playlist[0]
@@ -1082,7 +1082,7 @@ class SongrequestModule implements Module {
       const say = this.bot.sayFn(this.user, ctx.target)
       const undid = await this.undo(ctx.context['display-name'])
       if (!undid) {
-        say(`Could not undo anything`)
+        say('Could not undo anything')
       } else {
         say(`Removed "${undid.title}" from the playlist!`)
       }
@@ -1099,7 +1099,7 @@ class SongrequestModule implements Module {
       const say = this.bot.sayFn(this.user, ctx.target)
 
       if (ctx.rawCmd.args.length === 0) {
-        say(`Usage: !resr SEARCH`)
+        say('Usage: !resr SEARCH')
         return
       }
 
@@ -1216,7 +1216,7 @@ class SongrequestModule implements Module {
       }
       let tag = originalCmd.data?.tag || '$args'
       tag = await fn.doReplacements(tag, ctx.rawCmd, ctx.context, originalCmd, this.bot, this.user)
-      if (tag === "") {
+      if (tag === '') {
         return
       }
 
@@ -1277,7 +1277,7 @@ class SongrequestModule implements Module {
     return async (ctx: CommandExecutionContext) => {
       const say = this.bot.sayFn(this.user, ctx.target)
       await this.videoVisibility(false)
-      say(`Video is now hidden.`)
+      say('Video is now hidden.')
     }
   }
 
@@ -1285,7 +1285,7 @@ class SongrequestModule implements Module {
     return async (ctx: CommandExecutionContext) => {
       const say = this.bot.sayFn(this.user, ctx.target)
       await this.videoVisibility(true)
-      say(`Video is now shown.`)
+      say('Video is now shown.')
     }
   }
 
@@ -1309,9 +1309,9 @@ class SongrequestModule implements Module {
       } else {
         const res = await this.removeFilterShowTags()
         if (res === REMOVE_FILTER_SHOW_TAGS_RESULT.UPDATED) {
-          say(`Playing all songs.`)
+          say('Playing all songs.')
         } else if (res === REMOVE_FILTER_SHOW_TAGS_RESULT.NOT_UPDATED) {
-          say(`Already playing all songs.`)
+          say('Already playing all songs.')
         }
       }
     }
@@ -1343,7 +1343,7 @@ class SongrequestModule implements Module {
         if (this.data.settings.customCssPresets.length) {
           say(`Presets: ${this.data.settings.customCssPresets.map(preset => preset.name).join(', ')}`)
         } else {
-          say(`No presets configured`)
+          say('No presets configured')
         }
       } else {
         const index = this.data.settings.customCssPresets.findIndex(preset => preset.name === presetName)
@@ -1368,7 +1368,7 @@ class SongrequestModule implements Module {
       const say = this.bot.sayFn(this.user, ctx.target)
 
       if (ctx.rawCmd.args.length === 0) {
-        say(`Usage: !sr YOUTUBE-URL`)
+        say('Usage: !sr YOUTUBE-URL')
         return
       }
 

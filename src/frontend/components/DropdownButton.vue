@@ -40,7 +40,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { onMounted, onUnmounted, Ref, ref } from "vue";
+import { onMounted, onUnmounted, Ref, ref } from 'vue'
 
 interface Action { title: string, label: string }
 defineProps<{
@@ -64,7 +64,7 @@ const closeDropdown = () => {
 }
 
 const onActionClick = (action: Action) => {
-  closeDropdown();
+  closeDropdown()
   emit('click', action)
 }
 
@@ -76,10 +76,10 @@ const hideDropdown = (e: Event) => {
 }
 
 onMounted(() => {
-  window.addEventListener("click", hideDropdown)
+  window.addEventListener('click', hideDropdown)
 })
 onUnmounted(() => {
-  window.removeEventListener("click", hideDropdown)
+  window.removeEventListener('click', hideDropdown)
 })
 </script>
 <style scoped>

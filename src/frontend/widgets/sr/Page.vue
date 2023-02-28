@@ -43,13 +43,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, Ref, ref } from "vue"
-import { logger } from "../../../common/fn"
-import { PlaylistItem } from "../../../types"
-import ListItem from "./components/ListItem.vue"
+import { computed, onMounted, onUnmounted, Ref, ref } from 'vue'
+import { logger } from '../../../common/fn'
+import { PlaylistItem } from '../../../types'
+import ListItem from './components/ListItem.vue'
 import ResponsiveImage from './../../components/ResponsiveImage.vue'
-import util, { WidgetApiData } from "../util"
-import WsClient from "../../WsClient"
+import util, { WidgetApiData } from '../util'
+import WsClient from '../../WsClient'
 import {
   default_custom_css_preset,
   default_settings,
@@ -57,10 +57,10 @@ import {
   SongrequestModuleCustomCssPreset,
   SongRequestModuleFilter,
   SongrequestModuleSettings,
-} from "../../../mod/modules/SongrequestModuleCommon"
-import YoutubePlayer from "../../components/YoutubePlayer.vue"
+} from '../../../mod/modules/SongrequestModuleCommon'
+import YoutubePlayer from '../../components/YoutubePlayer.vue'
 
-import("./main.scss")
+import('./main.scss')
 
 const log = logger('Page.vue')
 
@@ -87,19 +87,19 @@ const playerClass = computed((): string => {
 })
 
 const thumbnailClass = computed((): string => {
-  if (preset.value.showThumbnails === "left") {
-    return "with-thumbnails-left"
+  if (preset.value.showThumbnails === 'left') {
+    return 'with-thumbnails-left'
   }
-  if (preset.value.showThumbnails === "right") {
-    return "with-thumbnails-right"
+  if (preset.value.showThumbnails === 'right') {
+    return 'with-thumbnails-right'
   }
-  return "without-thumbnails"
+  return 'without-thumbnails'
 })
 
 const progressBarClass = computed((): string => {
   return preset.value.showProgressBar
-    ? "with-progress-bar"
-    : "without-progress-bar"
+    ? 'with-progress-bar'
+    : 'without-progress-bar'
 })
 
 const classes = computed((): string[] => {
@@ -135,7 +135,7 @@ const item = computed((): PlaylistItem | null => {
 
 const ended = (): void => {
   if (item.value) {
-    sendMsg({ event: "ended", id: item.value.id })
+    sendMsg({ event: 'ended', id: item.value.id })
   }
 }
 
@@ -152,21 +152,21 @@ const play = (): void => {
   adjustVolume()
   if (item.value) {
     player.value.play(item.value.yt)
-    sendMsg({ event: "play", id: item.value.id })
+    sendMsg({ event: 'play', id: item.value.id })
   }
 }
 
 const unpause = (): void => {
   if (item.value) {
     player.value.unpause()
-    sendMsg({ event: "unpause", id: item.value.id })
+    sendMsg({ event: 'unpause', id: item.value.id })
   }
 }
 
 const pause = (): void => {
   if (item.value) {
     player.value.pause()
-    sendMsg({ event: "pause" })
+    sendMsg({ event: 'pause' })
   }
 }
 
@@ -188,12 +188,12 @@ const currentId = (playlist: PlaylistItem[]): number | null => {
 const applySettings = (newSettings: SongrequestModuleSettings): void => {
   const newPreset = newSettings.customCssPresets[newSettings.customCssPresetIdx] || default_custom_css_preset()
   if (preset.value.css !== newPreset.css) {
-    let el = document.getElementById("customCss")
+    let el = document.getElementById('customCss')
     if (el && el.parentElement) {
       el.parentElement.removeChild(el)
     }
-    el = document.createElement("style")
-    el.id = "customCss"
+    el = document.createElement('style')
+    el.id = 'customCss'
     el.textContent = newPreset.css
     document.head.appendChild(el)
   }
@@ -208,11 +208,11 @@ const applySettings = (newSettings: SongrequestModuleSettings): void => {
 
 onMounted(() => {
   ws = util.wsClient(props.wdata)
-  ws.onMessage(["save", "settings"], (data) => {
+  ws.onMessage(['save', 'settings'], (data) => {
     applySettings(data.settings)
   })
   ws.onMessage(
-    ["onEnded"],
+    ['onEnded'],
     (data) => {
       applySettings(data.settings)
       filter.value = data.filter
@@ -222,7 +222,7 @@ onMounted(() => {
     }
   )
   ws.onMessage(
-    ["prev", "skip", "remove", "move", "tags"],
+    ['prev', 'skip', 'remove', 'move', 'tags'],
     (data) => {
       applySettings(data.settings)
       const oldId = currentId(filteredPlaylist.value)
@@ -235,7 +235,7 @@ onMounted(() => {
       checkPlaylist()
     }
   )
-  ws.onMessage(["filter"], (data) => {
+  ws.onMessage(['filter'], (data) => {
     applySettings(data.settings)
     const oldId = currentId(filteredPlaylist.value)
     filter.value = data.filter
@@ -246,12 +246,12 @@ onMounted(() => {
     }
     checkPlaylist()
   })
-  ws.onMessage(["pause"], (_data) => {
+  ws.onMessage(['pause'], (_data) => {
     if (player.value.playing()) {
       pause()
     }
   })
-  ws.onMessage(["unpause"], (_data) => {
+  ws.onMessage(['unpause'], (_data) => {
     if (!player.value.playing()) {
       if (hasPlayed.value) {
         unpause()
@@ -260,19 +260,19 @@ onMounted(() => {
       }
     }
   })
-  ws.onMessage(["loop"], (_data) => {
+  ws.onMessage(['loop'], (_data) => {
     player.value.setLoop(true)
   })
-  ws.onMessage(["noloop"], (_data) => {
+  ws.onMessage(['noloop'], (_data) => {
     player.value.setLoop(false)
   })
-  ws.onMessage(["stats", "video", "playIdx", "shuffle"], (data) => {
+  ws.onMessage(['stats', 'video', 'playIdx', 'shuffle'], (data) => {
     applySettings(data.settings)
     filter.value = data.filter
     playlist.value = data.playlist
     checkPlaylist()
   })
-  ws.onMessage(["add", "init"], (data) => {
+  ws.onMessage(['add', 'init'], (data) => {
     applySettings(data.settings)
     filter.value = data.filter
     playlist.value = data.playlist

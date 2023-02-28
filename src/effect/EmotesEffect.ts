@@ -1,5 +1,5 @@
-import { EmotesEffectData } from "../types";
-import { Effect } from "./Effect";
+import { EmotesEffectData } from '../types'
+import { Effect } from './Effect'
 
 export class EmotesEffect extends Effect<EmotesEffectData> {
   async apply(): Promise<void> {

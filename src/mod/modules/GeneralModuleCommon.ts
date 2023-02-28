@@ -1,7 +1,7 @@
-"use strict";
+'use strict'
 
-import { getProp } from "../../common/fn";
-import { Command, GlobalVariable } from "../../types"
+import { getProp } from '../../common/fn'
+import { Command, GlobalVariable } from '../../types'
 
 interface EmoteDisplayFn {
   fn: EMOTE_DISPLAY_FN,
@@ -79,7 +79,7 @@ export interface GeneralModuleWsEventData {
 }
 
 export interface GeneralSaveEventData {
-  event: "save";
+  event: 'save';
   commands: Command[];
   settings: GeneralModuleSettings;
   adminSettings: GeneralModuleAdminSettings;

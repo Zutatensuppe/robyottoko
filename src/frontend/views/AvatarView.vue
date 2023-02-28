@@ -174,34 +174,34 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from "vue";
-import fn, { logger } from "../../common/fn";
+import { onMounted, onUnmounted, ref } from 'vue'
+import fn, { logger } from '../../common/fn'
 import {
   AvatarModuleAvatarDefinition,
   AvatarModuleSettings,
   AvatarModuleWsInitData,
   AvatarModuleWsSaveData,
   default_settings,
-} from "../../mod/modules/AvatarModuleCommon";
-import AvatarEditor from "../components/Avatar/AvatarEditor.vue";
-import AvatarPreview from "../components/Avatar/AvatarPreview.vue";
-import util from "../util";
-import WsClient from "../WsClient";
+} from '../../mod/modules/AvatarModuleCommon'
+import AvatarEditor from '../components/Avatar/AvatarEditor.vue'
+import AvatarPreview from '../components/Avatar/AvatarPreview.vue'
+import util from '../util'
+import WsClient from '../WsClient'
 import DoubleclickButton from '../components/DoubleclickButton.vue'
 import NavbarElement from '../components/NavbarElement.vue'
-import hyottokoChan from "./avatar_hyottoko_chan";
-import CheckboxInput from "../components/CheckboxInput.vue";
+import hyottokoChan from './avatar_hyottoko_chan'
+import CheckboxInput from '../components/CheckboxInput.vue'
 
 const log = logger('AvatarView.vue')
 
 interface TabDefinition {
-  tab: "settings" | "avatars";
+  tab: 'settings' | 'avatars';
   title: string;
 }
 
 const tabDefinitions: TabDefinition[] = [
-  { tab: "avatars", title: "Avatars" },
-  { tab: "settings", title: "Settings" },
+  { tab: 'avatars', title: 'Avatars' },
+  { tab: 'settings', title: 'Settings' },
 ]
 
 let ws: WsClient | null = null
@@ -210,89 +210,89 @@ const editEntity = ref<AvatarModuleAvatarDefinition | null>(null)
 const settings = ref<AvatarModuleSettings>(default_settings())
 const defaultSettings = ref<AvatarModuleSettings>(default_settings())
 const inited = ref<boolean>(false)
-const tab = ref<'avatars' | 'settings'>("avatars")
+const tab = ref<'avatars' | 'settings'>('avatars')
 const controlWidgetUrl = ref<string>('')
 const displayWidgetUrl = ref<string>('')
 
 const edit = (idx: number) => {
-  editIdx.value = idx;
-  editEntity.value = settings.value.avatarDefinitions[idx];
+  editIdx.value = idx
+  editEntity.value = settings.value.avatarDefinitions[idx]
 }
 
 const remove = (idx: number) => {
-  settings.value.avatarDefinitions = settings.value.avatarDefinitions.filter((val, index) => index !== idx);
-  sendSave();
+  settings.value.avatarDefinitions = settings.value.avatarDefinitions.filter((val, index) => index !== idx)
+  sendSave()
 }
 
 const duplicate = (idx: number) => {
-  editIdx.value = settings.value.avatarDefinitions.length;
-  editEntity.value = JSON.parse(JSON.stringify(settings.value.avatarDefinitions[idx]));
+  editIdx.value = settings.value.avatarDefinitions.length
+  editEntity.value = JSON.parse(JSON.stringify(settings.value.avatarDefinitions[idx]))
 }
 
 const updatedAvatar = (avatar: AvatarModuleAvatarDefinition) => {
-  settings.value.avatarDefinitions[editIdx.value] = avatar;
-  sendSave();
+  settings.value.avatarDefinitions[editIdx.value] = avatar
+  sendSave()
 }
 
 const addAvatar = () => {
   const avatar: AvatarModuleAvatarDefinition = {
-    name: "Unnamed Avatar",
+    name: 'Unnamed Avatar',
     width: 64,
     height: 64,
     stateDefinitions: [
-      { value: "default", deletable: false },
-      { value: "speaking", deletable: false },
+      { value: 'default', deletable: false },
+      { value: 'speaking', deletable: false },
     ],
     slotDefinitions: [],
     state: {
       slots: {},
-      lockedState: "default",
+      lockedState: 'default',
     },
-  };
-  editIdx.value = settings.value.avatarDefinitions.length;
-  editEntity.value = avatar;
+  }
+  editIdx.value = settings.value.avatarDefinitions.length
+  editEntity.value = avatar
 }
 
 const addExampleAvatar = () => {
-  const avatar = JSON.parse(JSON.stringify(hyottokoChan)) as AvatarModuleAvatarDefinition;
-  editIdx.value = settings.value.avatarDefinitions.length;
-  editEntity.value = avatar;
+  const avatar = JSON.parse(JSON.stringify(hyottokoChan)) as AvatarModuleAvatarDefinition
+  editIdx.value = settings.value.avatarDefinitions.length
+  editEntity.value = avatar
 }
 
 const sendSave = () => {
-  sendMsg({ event: "save", settings: settings.value });
+  sendMsg({ event: 'save', settings: settings.value })
 }
 
 const sendMsg = (data: AvatarModuleWsSaveData) => {
   if (!ws) {
-    log.warn("sendMsg: ws not initialized");
-    return;
+    log.warn('sendMsg: ws not initialized')
+    return
   }
-  ws.send(JSON.stringify(data));
+  ws.send(JSON.stringify(data))
 }
 
 const dragEnd = (evt: {
   oldIndex: number;
   newIndex: number;
 }) => {
-  settings.value.avatarDefinitions = fn.arrayMove(settings.value.avatarDefinitions, evt.oldIndex, evt.newIndex);
-  sendSave();
+  settings.value.avatarDefinitions = fn.arrayMove(settings.value.avatarDefinitions, evt.oldIndex, evt.newIndex)
+  sendSave()
 }
 
 onMounted(() => {
-  ws = util.wsClient("avatar");
-  ws.onMessage("init", (data: AvatarModuleWsInitData) => {
-    settings.value = data.settings;
-    controlWidgetUrl.value = data.controlWidgetUrl;
-    displayWidgetUrl.value = data.displayWidgetUrl;
-    inited.value = true;
-  });
-  ws.connect();
+  ws = util.wsClient('avatar')
+  ws.onMessage('init', (data: AvatarModuleWsInitData) => {
+    settings.value = data.settings
+    controlWidgetUrl.value = data.controlWidgetUrl
+    displayWidgetUrl.value = data.displayWidgetUrl
+    inited.value = true
+  })
+  ws.connect()
 })
 
 onUnmounted(() => {
   if (ws) {
-    ws.disconnect();
+    ws.disconnect()
   }
 })
 </script>

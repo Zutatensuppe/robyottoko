@@ -179,20 +179,20 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from "vue"
-import { MediaFile } from "../../../types"
+import { ref } from 'vue'
+import { MediaFile } from '../../../types'
 import {
   default_custom_css_preset,
   SongrequestModuleCustomCssPreset,
   SongrequestModuleSettings,
-} from "../../../mod/modules/SongrequestModuleCommon"
-import CheckboxInput from "../CheckboxInput.vue"
-import DoubleclickButton from "../DoubleclickButton.vue"
-import DurationInput from "../DurationInput.vue"
-import ImageUpload from "../ImageUpload.vue"
-import PresetEditor from "./PresetEditor.vue"
-import VolumeSlider from "../VolumeSlider.vue"
-import { presets } from "../../../mod/modules/SongrequestPresets"
+} from '../../../mod/modules/SongrequestModuleCommon'
+import CheckboxInput from '../CheckboxInput.vue'
+import DoubleclickButton from '../DoubleclickButton.vue'
+import DurationInput from '../DurationInput.vue'
+import ImageUpload from '../ImageUpload.vue'
+import PresetEditor from './PresetEditor.vue'
+import VolumeSlider from '../VolumeSlider.vue'
+import { presets } from '../../../mod/modules/SongrequestPresets'
 
 const props = defineProps<{
   modelValue: SongrequestModuleSettings

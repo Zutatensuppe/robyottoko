@@ -24,6 +24,8 @@ module.exports = {
     'plugin:@typescript-eslint/recommended',
   ],
   rules: {
+    'semi': ['error', 'never'],
+    'quotes': ['error', 'single'],
     '@typescript-eslint/no-inferrable-types': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
     // for now, explicit any is fine!
@@ -38,4 +40,4 @@ module.exports = {
       },
     ],
   }
-};
+}

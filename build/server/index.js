@@ -275,8 +275,8 @@ const pad = (x, pad) => {
     return pad.substr(0, pad.length - str.length) + str;
 };
 function nonce(length) {
-    let text = "";
-    const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let text = '';
+    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     for (let i = 0; i < length; i++) {
         text += possible.charAt(Math.floor(Math.random() * possible.length));
     }
@@ -284,15 +284,15 @@ function nonce(length) {
 }
 const mustParseHumanDuration = (duration, allowNegative = false) => {
     if (duration === '') {
-        throw new Error("unable to parse duration");
+        throw new Error('unable to parse duration');
     }
     const d = `${duration}`.trim();
     if (!d) {
-        throw new Error("unable to parse duration");
+        throw new Error('unable to parse duration');
     }
     const checkNegative = (val) => {
         if (val < 0 && !allowNegative) {
-            throw new Error("negative value not allowed");
+            throw new Error('negative value not allowed');
         }
         return val;
     };
@@ -303,7 +303,7 @@ const mustParseHumanDuration = (duration, allowNegative = false) => {
     if (m1) {
         const value = parseFloat(m1[1]);
         if (isNaN(value)) {
-            throw new Error("unable to parse duration");
+            throw new Error('unable to parse duration');
         }
         const unit = m1[2];
         let ms = 0;
@@ -323,7 +323,7 @@ const mustParseHumanDuration = (duration, allowNegative = false) => {
     }
     const m = d.match(/^(-?)(?:(\d+)d)?\s?(?:(\d+)h)?\s?(?:(\d+)m)?\s?(?:(\d+)s)?\s?(?:(\d+)ms)?$/);
     if (!m) {
-        throw new Error("unable to parse duration");
+        throw new Error('unable to parse duration');
     }
     const neg = m[1] ? -1 : 1;
     const D = m[2] ? parseInt(m[2], 10) : 0;
@@ -1367,7 +1367,7 @@ class DictLookupEffect extends Effect {
             return;
         }
         for (const item of items) {
-            this.say(`Phrase "${item.from}": ${item.to.join(", ")}`);
+            this.say(`Phrase "${item.from}": ${item.to.join(', ')}`);
         }
     }
 }
@@ -1448,7 +1448,7 @@ class MadochanEffect extends Effect {
         try {
             const data = await Madochan.createWord({ model, weirdness, definition });
             if (data.word === '') {
-                this.say(`Sorry, I could not generate a word :("`);
+                this.say('Sorry, I could not generate a word :("');
             }
             else {
                 this.say(`"${definition}": ${data.word}`);
@@ -1456,7 +1456,7 @@ class MadochanEffect extends Effect {
         }
         catch (e) {
             log$y.error({ e });
-            this.say(`Error occured, unable to generate a word :("`);
+            this.say('Error occured, unable to generate a word :("');
         }
     }
 }
@@ -1481,7 +1481,7 @@ class SetChannelTitleEffect extends Effect {
                 this.say(`Current title is "${info.title}".`);
             }
             else {
-                this.say(`❌ Unable to determine current title.`);
+                this.say('❌ Unable to determine current title.');
             }
             return;
         }
@@ -1495,7 +1495,7 @@ class SetChannelTitleEffect extends Effect {
         }
         const accessToken = await this.getAccessToken();
         if (!accessToken) {
-            this.say(`❌ Not authorized to change title.`);
+            this.say('❌ Not authorized to change title.');
             return;
         }
         const resp = await helixClient.modifyChannelInformation(accessToken, { title: tmpTitle }, this.contextModule.bot, this.contextModule.user);
@@ -1528,7 +1528,7 @@ class SetChannelGameIdEffect extends Effect {
                 this.say(`Current category is "${info.game_name}".`);
             }
             else {
-                this.say(`❌ Unable to determine current category.`);
+                this.say('❌ Unable to determine current category.');
             }
             return;
         }
@@ -1539,7 +1539,7 @@ class SetChannelGameIdEffect extends Effect {
         }
         const accessToken = await this.getAccessToken();
         if (!accessToken) {
-            this.say(`❌ Not authorized to update category.`);
+            this.say('❌ Not authorized to update category.');
             return;
         }
         const resp = await helixClient.modifyChannelInformation(accessToken, { game_id: category.id }, this.contextModule.bot, this.contextModule.user);
@@ -1568,7 +1568,7 @@ class AddStreamTagEffect extends Effect {
         const tmpTag = await this.doReplacements(tag);
         const tagsResponse = await helixClient.getStreamTags(this.contextModule.user.twitch_id);
         if (!tagsResponse) {
-            this.say(`❌ Unable to fetch current tags.`);
+            this.say('❌ Unable to fetch current tags.');
             return;
         }
         if (tmpTag === '') {
@@ -1626,7 +1626,7 @@ class RemoveStreamTagEffect extends Effect {
         const tmpTag = await this.doReplacements(tag);
         const tagsResponse = await helixClient.getStreamTags(this.contextModule.user.twitch_id);
         if (!tagsResponse) {
-            this.say(`❌ Unable to fetch current tags.`);
+            this.say('❌ Unable to fetch current tags.');
             return;
         }
         if (tmpTag === '') {
@@ -1676,15 +1676,15 @@ class ChattersEffect extends Effect {
         }
         const stream = await helixClient.getStreamByUserId(this.contextModule.user.twitch_id);
         if (!stream) {
-            this.say(`It seems this channel is not live at the moment...`);
+            this.say('It seems this channel is not live at the moment...');
             return;
         }
         const userNames = await this.contextModule.bot.getRepos().chatLog.getChatters(this.contextModule.user.twitch_id, new Date(stream.started_at));
         if (userNames.length === 0) {
-            this.say(`It seems nobody chatted? :(`);
+            this.say('It seems nobody chatted? :(');
             return;
         }
-        this.say(`Thank you for chatting!`);
+        this.say('Thank you for chatting!');
         joinIntoChunks(userNames, ', ', 500).forEach(msg => {
             this.say(msg);
         });
@@ -1751,7 +1751,7 @@ class CountdownEffect extends Effect {
         }
         const actionDefs = [];
         const steps = parseInt(await this.doReplacements(`${this.effect.data.steps}`), 10);
-        const msgStep = this.effect.data.step || "{step}";
+        const msgStep = this.effect.data.step || '{step}';
         const msgIntro = this.effect.data.intro || null;
         const msgOutro = this.effect.data.outro || null;
         if (msgIntro) {
@@ -2009,11 +2009,11 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return '';
                 }
                 if (m1 === 'message') {
-                    return `Robyottoko is a versatile twitch `
-                        + `bot, containing features like media commands, timers, translation, `
-                        + `widget for user-submitted drawings, captions (speech-to-text), `
-                        + `png-tuber and song requests. Get it connected to your twitch `
-                        + `channel for free at https://hyottoko.club 🤖`;
+                    return 'Robyottoko is a versatile twitch '
+                        + 'bot, containing features like media commands, timers, translation, '
+                        + 'widget for user-submitted drawings, captions (speech-to-text), '
+                        + 'png-tuber and song requests. Get it connected to your twitch '
+                        + 'channel for free at https://hyottoko.club 🤖';
                 }
                 if (m1 === 'version') {
                     return bot.getBuildVersion();
@@ -2211,7 +2211,7 @@ const findIdxFuzzy = (array, search, keyFn = String) => {
 };
 const accentFolded = (str) => {
     // @see https://stackoverflow.com/a/37511463/392905 + comments about ł
-    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\u0142/g, "l");
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\u0142/g, 'l');
 };
 const findShortestIdx = (array, indexes, keyFn) => {
     let shortestIdx = -1;
@@ -2404,7 +2404,7 @@ var fn = {
     getChannelPointsCustomRewards,
 };
 
-const log$q = logger("WebSocketServer.ts");
+const log$q = logger('WebSocketServer.ts');
 const determineUserIdAndModuleName = async (basePath, requestUrl, socket, bot) => {
     const relativePath = requestUrl.substring(basePath.length) || '';
     const relpath = withoutLeading(relativePath, '/');
@@ -2688,7 +2688,7 @@ class TwitchHelixClient {
         }
     }
     async getUser(accessToken) {
-        const url = apiUrl(`/users`);
+        const url = apiUrl('/users');
         let json;
         try {
             const resp = await xhr.get(url, withHeaders(this._authHeaders(accessToken), {}));
@@ -3143,11 +3143,11 @@ const MOD_OR_ABOVE = [
     CommandRestrictEnum.BROADCASTER,
 ];
 [
-    { value: CommandRestrictEnum.BROADCASTER, label: "Broadcaster" },
-    { value: CommandRestrictEnum.MOD, label: "Moderators" },
-    { value: CommandRestrictEnum.VIP, label: "Vips" },
-    { value: CommandRestrictEnum.SUB, label: "Subscribers" },
-    { value: CommandRestrictEnum.REGULAR, label: "Regular Users" },
+    { value: CommandRestrictEnum.BROADCASTER, label: 'Broadcaster' },
+    { value: CommandRestrictEnum.MOD, label: 'Moderators' },
+    { value: CommandRestrictEnum.VIP, label: 'Vips' },
+    { value: CommandRestrictEnum.SUB, label: 'Subscribers' },
+    { value: CommandRestrictEnum.REGULAR, label: 'Regular Users' },
 ];
 const isBroadcaster = (ctx) => ctx['room-id'] === ctx['user-id'];
 const isMod = (ctx) => !!ctx.mod;
@@ -3305,56 +3305,56 @@ const createCommand = (cmd) => {
 };
 const commands = {
     text: {
-        Name: () => "command",
-        Description: () => "",
+        Name: () => 'command',
+        Description: () => '',
         NewCommand: () => createCommand({
             triggers: [newCommandTrigger()],
             action: CommandAction.TEXT,
         }),
     },
     sr_current: {
-        Name: () => "sr_current",
-        Description: () => "Show what song is currently playing",
+        Name: () => 'sr_current',
+        Description: () => 'Show what song is currently playing',
         NewCommand: () => createCommand({
             action: CommandAction.SR_CURRENT,
             triggers: [newCommandTrigger('!sr current', true)],
         }),
     },
     sr_undo: {
-        Name: () => "sr_undo",
-        Description: () => "Remove the song that was last added by oneself.",
+        Name: () => 'sr_undo',
+        Description: () => 'Remove the song that was last added by oneself.',
         NewCommand: () => createCommand({
             action: CommandAction.SR_UNDO,
             triggers: [newCommandTrigger('!sr undo', true)],
         }),
     },
     sr_good: {
-        Name: () => "sr_good",
-        Description: () => "Vote the current song up",
+        Name: () => 'sr_good',
+        Description: () => 'Vote the current song up',
         NewCommand: () => createCommand({
             action: CommandAction.SR_GOOD,
             triggers: [newCommandTrigger('!sr good', true)],
         }),
     },
     sr_bad: {
-        Name: () => "sr_bad",
-        Description: () => "Vote the current song down",
+        Name: () => 'sr_bad',
+        Description: () => 'Vote the current song down',
         NewCommand: () => createCommand({
             action: CommandAction.SR_BAD,
             triggers: [newCommandTrigger('!sr bad', true)],
         }),
     },
     sr_stats: {
-        Name: () => "sr_stats",
-        Description: () => "Show stats about the playlist",
+        Name: () => 'sr_stats',
+        Description: () => 'Show stats about the playlist',
         NewCommand: () => createCommand({
             action: CommandAction.SR_STATS,
             triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)],
         }),
     },
     sr_prev: {
-        Name: () => "sr_prev",
-        Description: () => "Skip to the previous song",
+        Name: () => 'sr_prev',
+        Description: () => 'Skip to the previous song',
         NewCommand: () => createCommand({
             action: CommandAction.SR_PREV,
             triggers: [newCommandTrigger('!sr prev', true)],
@@ -3362,8 +3362,8 @@ const commands = {
         }),
     },
     sr_next: {
-        Name: () => "sr_next",
-        Description: () => "Skip to the next song",
+        Name: () => 'sr_next',
+        Description: () => 'Skip to the next song',
         NewCommand: () => createCommand({
             action: CommandAction.SR_NEXT,
             triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)],
@@ -3371,8 +3371,8 @@ const commands = {
         }),
     },
     sr_jumptonew: {
-        Name: () => "sr_jumptonew",
-        Description: () => "Jump to the next unplayed song",
+        Name: () => 'sr_jumptonew',
+        Description: () => 'Jump to the next unplayed song',
         NewCommand: () => createCommand({
             action: CommandAction.SR_JUMPTONEW,
             triggers: [newCommandTrigger('!sr jumptonew', true)],
@@ -3380,8 +3380,8 @@ const commands = {
         }),
     },
     sr_clear: {
-        Name: () => "sr_clear",
-        Description: () => "Clear the playlist",
+        Name: () => 'sr_clear',
+        Description: () => 'Clear the playlist',
         NewCommand: () => createCommand({
             action: CommandAction.SR_CLEAR,
             triggers: [newCommandTrigger('!sr clear', true)],
@@ -3389,8 +3389,8 @@ const commands = {
         }),
     },
     sr_rm: {
-        Name: () => "sr_rm",
-        Description: () => "Remove the current song from the playlist",
+        Name: () => 'sr_rm',
+        Description: () => 'Remove the current song from the playlist',
         NewCommand: () => createCommand({
             action: CommandAction.SR_RM,
             triggers: [newCommandTrigger('!sr rm', true)],
@@ -3398,7 +3398,7 @@ const commands = {
         }),
     },
     sr_shuffle: {
-        Name: () => "sr_shuffle",
+        Name: () => 'sr_shuffle',
         Description: () => `Shuffle the playlist (current song unaffected).
     <br />
     Non-played and played songs will be shuffled separately and non-played
@@ -3410,8 +3410,8 @@ const commands = {
         }),
     },
     sr_reset_stats: {
-        Name: () => "sr_reset_stats",
-        Description: () => "Reset all statistics of all songs",
+        Name: () => 'sr_reset_stats',
+        Description: () => 'Reset all statistics of all songs',
         NewCommand: () => createCommand({
             action: CommandAction.SR_RESET_STATS,
             triggers: [newCommandTrigger('!sr resetStats', true)],
@@ -3419,8 +3419,8 @@ const commands = {
         }),
     },
     sr_loop: {
-        Name: () => "sr_loop",
-        Description: () => "Loop the current song",
+        Name: () => 'sr_loop',
+        Description: () => 'Loop the current song',
         NewCommand: () => createCommand({
             action: CommandAction.SR_LOOP,
             triggers: [newCommandTrigger('!sr loop', true)],
@@ -3428,8 +3428,8 @@ const commands = {
         }),
     },
     sr_noloop: {
-        Name: () => "sr_noloop",
-        Description: () => "Stop looping the current song",
+        Name: () => 'sr_noloop',
+        Description: () => 'Stop looping the current song',
         NewCommand: () => createCommand({
             action: CommandAction.SR_NOLOOP,
             triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)],
@@ -3437,8 +3437,8 @@ const commands = {
         }),
     },
     sr_pause: {
-        Name: () => "sr_pause",
-        Description: () => "Pause currently playing song",
+        Name: () => 'sr_pause',
+        Description: () => 'Pause currently playing song',
         NewCommand: () => createCommand({
             action: CommandAction.SR_PAUSE,
             triggers: [newCommandTrigger('!sr pause', true)],
@@ -3446,8 +3446,8 @@ const commands = {
         }),
     },
     sr_unpause: {
-        Name: () => "sr_unpause",
-        Description: () => "Unpause currently paused song",
+        Name: () => 'sr_unpause',
+        Description: () => 'Unpause currently paused song',
         NewCommand: () => createCommand({
             action: CommandAction.SR_UNPAUSE,
             triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)],
@@ -3455,8 +3455,8 @@ const commands = {
         }),
     },
     sr_hidevideo: {
-        Name: () => "sr_hidevideo",
-        Description: () => "Hide video for current song",
+        Name: () => 'sr_hidevideo',
+        Description: () => 'Hide video for current song',
         NewCommand: () => createCommand({
             action: CommandAction.SR_HIDEVIDEO,
             triggers: [newCommandTrigger('!sr hidevideo', true)],
@@ -3464,8 +3464,8 @@ const commands = {
         }),
     },
     sr_showvideo: {
-        Name: () => "sr_showvideo",
-        Description: () => "Show video for current song",
+        Name: () => 'sr_showvideo',
+        Description: () => 'Show video for current song',
         NewCommand: () => createCommand({
             action: CommandAction.SR_SHOWVIDEO,
             triggers: [newCommandTrigger('!sr showvideo', true)],
@@ -3473,7 +3473,7 @@ const commands = {
         }),
     },
     sr_request: {
-        Name: () => "sr_request",
+        Name: () => 'sr_request',
         Description: () => `
     Search for <code>&lt;SEARCH&gt;</code> (argument to this command)
     at youtube (by id or by title)
@@ -3485,7 +3485,7 @@ const commands = {
         }),
     },
     sr_re_request: {
-        Name: () => "sr_re_request",
+        Name: () => 'sr_re_request',
         Description: () => `
     Search for <code>&lt;SEARCH&gt;</code> (argument to this command)
     in the current playlist and queue the first result in the playlist
@@ -3496,18 +3496,18 @@ const commands = {
         }),
     },
     sr_addtag: {
-        Name: () => "sr_addtag",
-        Description: () => "Add tag <code>&lt;TAG&gt;</code> (argument to this command) to the current song",
+        Name: () => 'sr_addtag',
+        Description: () => 'Add tag <code>&lt;TAG&gt;</code> (argument to this command) to the current song',
         NewCommand: () => createCommand({
             action: CommandAction.SR_ADDTAG,
             triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')],
             restrict: { active: true, to: MOD_OR_ABOVE },
-            data: { tag: "" },
+            data: { tag: '' },
         }),
     },
     sr_rmtag: {
-        Name: () => "sr_rmtag",
-        Description: () => "Remove tag <code>&lt;TAG&gt;</code> (argument to this command) from the current song",
+        Name: () => 'sr_rmtag',
+        Description: () => 'Remove tag <code>&lt;TAG&gt;</code> (argument to this command) from the current song',
         NewCommand: () => createCommand({
             action: CommandAction.SR_RMTAG,
             triggers: [newCommandTrigger('!sr rmtag')],
@@ -3515,7 +3515,7 @@ const commands = {
         }),
     },
     sr_volume: {
-        Name: () => "sr_volume",
+        Name: () => 'sr_volume',
         Description: () => `Sets the song request volume to <code>&lt;VOLUME&gt;</code> (argument to this command, min 0, max 100).
     <br />
     If no argument is given, just outputs the current volume`,
@@ -3526,7 +3526,7 @@ const commands = {
         }),
     },
     sr_filter: {
-        Name: () => "sr_filter",
+        Name: () => 'sr_filter',
         Description: () => `Play only songs with the given tag <code>&lt;TAG&gt;</code> (argument to this command). If no tag
   is given, play all songs.`,
         NewCommand: () => createCommand({
@@ -3536,7 +3536,7 @@ const commands = {
         }),
     },
     sr_preset: {
-        Name: () => "sr_preset",
+        Name: () => 'sr_preset',
         Description: () => `Switches to the preset <code>&lt;PRESET&gt;</code> (argument to this command) if it exists.
   If no arguments are given, outputs all available presets.`,
         NewCommand: () => createCommand({
@@ -3546,8 +3546,8 @@ const commands = {
         }),
     },
     sr_queue: {
-        Name: () => "sr_queue",
-        Description: () => `Shows the next 3 songs that will play.`,
+        Name: () => 'sr_queue',
+        Description: () => 'Shows the next 3 songs that will play.',
         NewCommand: () => createCommand({
             action: CommandAction.SR_QUEUE,
             triggers: [newCommandTrigger('!sr queue')],
@@ -3669,9 +3669,9 @@ class SubscribeEventHandler extends EventSubEventHandler {
         const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.user_id);
         const target = data.event.broadcaster_user_name;
         const context = {
-            "room-id": data.event.broadcaster_user_id,
-            "user-id": data.event.user_id,
-            "display-name": data.event.user_name,
+            'room-id': data.event.broadcaster_user_id,
+            'user-id': data.event.user_id,
+            'display-name': data.event.user_name,
             username: data.event.user_login,
             mod,
             subscriber,
@@ -3695,9 +3695,9 @@ class FollowEventHandler extends EventSubEventHandler {
         const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.user_id);
         const target = data.event.broadcaster_user_name;
         const context = {
-            "room-id": data.event.broadcaster_user_id,
-            "user-id": data.event.user_id,
-            "display-name": data.event.user_name,
+            'room-id': data.event.broadcaster_user_id,
+            'user-id': data.event.user_id,
+            'display-name': data.event.user_name,
             username: data.event.user_login,
             mod,
             subscriber,
@@ -3721,9 +3721,9 @@ class CheerEventHandler extends EventSubEventHandler {
         const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.user_id);
         const target = data.event.broadcaster_user_name;
         const context = {
-            "room-id": data.event.broadcaster_user_id,
-            "user-id": data.event.user_id,
-            "display-name": data.event.user_name,
+            'room-id': data.event.broadcaster_user_id,
+            'user-id': data.event.user_id,
+            'display-name': data.event.user_name,
             username: data.event.user_login,
             mod,
             subscriber,
@@ -3746,9 +3746,9 @@ class ChannelPointRedeemEventHandler extends EventSubEventHandler {
         const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.user_id);
         const target = data.event.broadcaster_user_name;
         const context = {
-            "room-id": data.event.broadcaster_user_id,
-            "user-id": data.event.user_id,
-            "display-name": data.event.user_name,
+            'room-id': data.event.broadcaster_user_id,
+            'user-id': data.event.user_id,
+            'display-name': data.event.user_name,
             username: data.event.user_login,
             mod,
             subscriber,
@@ -3811,9 +3811,9 @@ class RaidEventHandler extends EventSubEventHandler {
         const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.from_broadcaster_user_id);
         const target = data.event.to_broadcaster_user_name;
         const context = {
-            "room-id": data.event.to_broadcaster_user_id,
-            "user-id": data.event.from_broadcaster_user_id,
-            "display-name": data.event.from_broadcaster_user_name,
+            'room-id': data.event.to_broadcaster_user_id,
+            'user-id': data.event.from_broadcaster_user_id,
+            'display-name': data.event.from_broadcaster_user_name,
             username: data.event.from_broadcaster_user_login,
             mod,
             subscriber,
@@ -4079,12 +4079,12 @@ const createRouter = (bot) => {
         upload(req, res, (err) => {
             if (err) {
                 log$e.error({ err });
-                res.status(400).send("Something went wrong!");
+                res.status(400).send('Something went wrong!');
                 return;
             }
             if (!req.file) {
                 log$e.error({ err });
-                res.status(400).send("Something went wrong!");
+                res.status(400).send('Something went wrong!');
                 return;
             }
             const uploadedFile = {
@@ -4111,7 +4111,7 @@ const createRouter = (bot) => {
     router.post('/logout', RequireLoginApiMiddleware, async (req, res) => {
         if (req.token) {
             await bot.getAuth().destroyToken(req.token);
-            res.clearCookie("x-token");
+            res.clearCookie('x-token');
         }
         res.send({ success: true });
     });
@@ -4201,7 +4201,7 @@ const createRouter = (bot) => {
             res.status(404).send();
             return;
         }
-        log$e.debug({ route: `/widget/:widget_type/:widget_token/`, type, token });
+        log$e.debug({ route: '/widget/:widget_type/:widget_token/', type, token });
         const w = bot.getWidgets().getWidgetDefinitionByType(type);
         if (w) {
             res.send({
@@ -4344,7 +4344,7 @@ const determineStreamStartDate = async (context, helixClient) => {
     log$c.info({
         roomId: context['room-id'],
         date: date,
-    }, `No stream is running atm, using fake start date.`);
+    }, 'No stream is running atm, using fake start date.');
     return date;
 };
 const determineIsFirstChatStream = async (bot, user, context) => {
@@ -4522,7 +4522,7 @@ class TwitchClientManager {
         this.log.debug(`disconnecting chat client took ${timer.lastSplitMs()}ms`);
         const identity = determineIdentity(user, cfg);
         if (user.twitch_id && user.twitch_login && user.bot_enabled) {
-            this.log.info(`* twitch bot enabled`);
+            this.log.info('* twitch bot enabled');
             // connect to chat via tmi (to all channels configured)
             this.chatClient = this.bot.getTwitchTmiClientManager().get(identity, [user.twitch_login]);
             const reportStatusToChannel = (user, reason) => {
@@ -4942,19 +4942,19 @@ class Db {
                     }
                     continue;
                 }
-                prop = "$gte";
+                prop = '$gte';
                 if (where[k][prop]) {
                     wheres.push(k + ` >= $${$i++}`);
                     values.push(where[k][prop]);
                     continue;
                 }
-                prop = "$lte";
+                prop = '$lte';
                 if (where[k][prop]) {
                     wheres.push(k + ` <= $${$i++}`);
                     values.push(where[k][prop]);
                     continue;
                 }
-                prop = "$lte";
+                prop = '$lte';
                 if (where[k][prop]) {
                     wheres.push(k + ` <= $${$i++}`);
                     values.push(where[k][prop]);
@@ -7123,10 +7123,10 @@ class SongrequestModule {
         const addType = addResponseData.addType;
         if (addType === ADD_TYPE.NOT_ADDED) {
             if (reason === NOT_ADDED_REASON.NOT_FOUND) {
-                return `No song found`;
+                return 'No song found';
             }
             else if (reason === NOT_ADDED_REASON.NOT_FOUND_IN_PLAYLIST) {
-                return `Song not found in playlist`;
+                return 'Song not found in playlist';
             }
             else if (reason === NOT_ADDED_REASON.TOO_LONG) {
                 return `Song too long (max. ${humanDuration(limits.maxLenMs)})`;
@@ -7153,7 +7153,7 @@ class SongrequestModule {
         }
         let info;
         if (idx < 0) {
-            info = ``;
+            info = '';
         }
         else if (idx === 0) {
             info = `[Position ${idx + 1}, playing now]`;
@@ -7175,7 +7175,7 @@ class SongrequestModule {
         if (addType === ADD_TYPE.EXISTED) {
             return `🎵 "${item.title}" (${Youtube.getUrlById(item.yt)}) was already in the playlist. ${info}`;
         }
-        return `Could not process that song request`;
+        return 'Could not process that song request';
     }
     cmdSrCurrent(_originalCommand) {
         return async (ctx) => {
@@ -7184,7 +7184,7 @@ class SongrequestModule {
             }
             const say = this.bot.sayFn(this.user, ctx.target);
             if (this.data.playlist.length === 0) {
-                say(`Playlist is empty`);
+                say('Playlist is empty');
                 return;
             }
             const cur = this.data.playlist[0];
@@ -7200,7 +7200,7 @@ class SongrequestModule {
             const say = this.bot.sayFn(this.user, ctx.target);
             const undid = await this.undo(ctx.context['display-name']);
             if (!undid) {
-                say(`Could not undo anything`);
+                say('Could not undo anything');
             }
             else {
                 say(`Removed "${undid.title}" from the playlist!`);
@@ -7215,7 +7215,7 @@ class SongrequestModule {
             }
             const say = this.bot.sayFn(this.user, ctx.target);
             if (ctx.rawCmd.args.length === 0) {
-                say(`Usage: !resr SEARCH`);
+                say('Usage: !resr SEARCH');
                 return;
             }
             const searchterm = ctx.rawCmd.args.join(' ');
@@ -7317,7 +7317,7 @@ class SongrequestModule {
             }
             let tag = originalCmd.data?.tag || '$args';
             tag = await fn.doReplacements(tag, ctx.rawCmd, ctx.context, originalCmd, this.bot, this.user);
-            if (tag === "") {
+            if (tag === '') {
                 return;
             }
             const say = this.bot.sayFn(this.user, ctx.target);
@@ -7369,14 +7369,14 @@ class SongrequestModule {
         return async (ctx) => {
             const say = this.bot.sayFn(this.user, ctx.target);
             await this.videoVisibility(false);
-            say(`Video is now hidden.`);
+            say('Video is now hidden.');
         };
     }
     cmdSrShowvideo(_originalCommand) {
         return async (ctx) => {
             const say = this.bot.sayFn(this.user, ctx.target);
             await this.videoVisibility(true);
-            say(`Video is now shown.`);
+            say('Video is now shown.');
         };
     }
     cmdSrFilter(_originalCommand) {
@@ -7401,10 +7401,10 @@ class SongrequestModule {
             else {
                 const res = await this.removeFilterShowTags();
                 if (res === REMOVE_FILTER_SHOW_TAGS_RESULT.UPDATED) {
-                    say(`Playing all songs.`);
+                    say('Playing all songs.');
                 }
                 else if (res === REMOVE_FILTER_SHOW_TAGS_RESULT.NOT_UPDATED) {
-                    say(`Already playing all songs.`);
+                    say('Already playing all songs.');
                 }
             }
         };
@@ -7436,7 +7436,7 @@ class SongrequestModule {
                     say(`Presets: ${this.data.settings.customCssPresets.map(preset => preset.name).join(', ')}`);
                 }
                 else {
-                    say(`No presets configured`);
+                    say('No presets configured');
                 }
             }
             else {
@@ -7460,7 +7460,7 @@ class SongrequestModule {
             }
             const say = this.bot.sayFn(this.user, ctx.target);
             if (ctx.rawCmd.args.length === 0) {
-                say(`Usage: !sr YOUTUBE-URL`);
+                say('Usage: !sr YOUTUBE-URL');
                 return;
             }
             const str = ctx.rawCmd.args.join(' ');
@@ -7614,7 +7614,7 @@ class VoteModule {
         }
         const say = this.bot.sayFn(this.user, ctx.target);
         if (ctx.rawCmd.args.length === 0) {
-            say(`Usage: !play THING`);
+            say('Usage: !play THING');
             return;
         }
         const thing = ctx.rawCmd.args.join(' ');
@@ -7632,7 +7632,7 @@ class VoteModule {
             say('Not allowed to execute !vote command');
         }
         if (ctx.rawCmd.args.length < 2) {
-            say(`Usage: !vote TYPE THING`);
+            say('Usage: !vote TYPE THING');
             return;
         }
         if (ctx.rawCmd.args[0] === 'show') {
@@ -8248,7 +8248,7 @@ class AvatarModule {
                 this.updateClients(await this.wsdata('init'));
             },
             'ctrl': async (_ws, data) => {
-                if (data.data.ctrl === "setSlot") {
+                if (data.data.ctrl === 'setSlot') {
                     const tuberIdx = data.data.args[0];
                     const slotName = data.data.args[1];
                     const itemIdx = data.data.args[2];
@@ -8260,7 +8260,7 @@ class AvatarModule {
                         log$4.error({ tuberIdx, slotName, itemIdx }, 'ws ctrl: unable to setSlot');
                     }
                 }
-                else if (data.data.ctrl === "lockState") {
+                else if (data.data.ctrl === 'lockState') {
                     const tuberIdx = data.data.args[0];
                     const lockedState = data.data.args[1];
                     try {
@@ -8271,7 +8271,7 @@ class AvatarModule {
                         log$4.error({ tuberIdx, lockedState }, 'ws ctrl: unable to lockState');
                     }
                 }
-                else if (data.data.ctrl === "setTuber") {
+                else if (data.data.ctrl === 'setTuber') {
                     const tuberIdx = data.data.args[0];
                     this.data.state.tuberIdx = tuberIdx;
                     await this.save();
@@ -8503,9 +8503,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-02-28T22:01:51.646Z",
+    buildDate: "2023-02-28T23:11:01.433Z",
     // @ts-ignore
-    buildVersion: "1.59.0",
+    buildVersion: "1.59.1",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');

@@ -5,7 +5,7 @@ type RequestMethod = 'get' | 'post' | 'delete' | 'patch' | 'put'
 export type QueryArgsData = Record<string, string | number>
 
 // https://stackoverflow.com/a/59854446/392905
-const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(() => resolve(), ms));
+const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(() => resolve(), ms))
 const retryFetch = async (
   url: string,
   opts: RequestInit,

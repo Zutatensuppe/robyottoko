@@ -1,5 +1,4 @@
-import { QueryArgsData } from "./xhr"
-import { asQueryArgs } from './xhr'
+import { asQueryArgs, QueryArgsData } from './xhr'
 
 test.each([
   {

@@ -1,6 +1,6 @@
-import { logger } from "../common/fn";
-import { SetChannelGameIdEffectData } from "../types";
-import { Effect } from "./Effect";
+import { logger } from '../common/fn'
+import { SetChannelGameIdEffectData } from '../types'
+import { Effect } from './Effect'
 
 const log = logger('SetChannelGameIdEffect.ts')
 
@@ -22,7 +22,7 @@ export class SetChannelGameIdEffect extends Effect<SetChannelGameIdEffectData> {
       if (info) {
         this.say(`Current category is "${info.game_name}".`)
       } else {
-        this.say(`❌ Unable to determine current category.`)
+        this.say('❌ Unable to determine current category.')
       }
       return
     }
@@ -35,7 +35,7 @@ export class SetChannelGameIdEffect extends Effect<SetChannelGameIdEffectData> {
 
     const accessToken = await this.getAccessToken()
     if (!accessToken) {
-      this.say(`❌ Not authorized to update category.`)
+      this.say('❌ Not authorized to update category.')
       return
     }
 

@@ -1,5 +1,5 @@
-import { PlaylistItem } from "../../types"
-import { findInsertIndex } from "./SongrequestModule"
+import { PlaylistItem } from '../../types'
+import { findInsertIndex } from './SongrequestModule'
 
 describe('SongrequestModule', () => {
   const playlistItem = (plays: number) => ({

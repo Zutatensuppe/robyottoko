@@ -57,8 +57,8 @@ test.each([
       { from: 'Dame', to: ['Freifrau'] },
       {
         from: 'Dame', to: [
-          "lady", "madam", "draughts", "dame", "checkers", "queen",
-          "chequers", "checker game", "signora", "king", "gentlewoman",
+          'lady', 'madam', 'draughts', 'dame', 'checkers', 'queen',
+          'chequers', 'checker game', 'signora', 'king', 'gentlewoman',
         ]
       },
     ]
@@ -68,12 +68,12 @@ test.each([
     expected: [
       {
         from: 'Zug', to: [
-          "train", "tug", "drag", "gulp", "platoon", "streak", "draw", "draught",
-          "feature", "swig", "trait", "puff", "move", "pull", "draft", "strain",
-          "artic", "hit", "procession", "stroke", "migration", "traction", "slide",
-          "extension", "characteristic", "line", "lineament", "cortege", "inclination",
-          "linear progression", "flue", "team", "plunger", "stop knob", "journey",
-          "discipline",
+          'train', 'tug', 'drag', 'gulp', 'platoon', 'streak', 'draw', 'draught',
+          'feature', 'swig', 'trait', 'puff', 'move', 'pull', 'draft', 'strain',
+          'artic', 'hit', 'procession', 'stroke', 'migration', 'traction', 'slide',
+          'extension', 'characteristic', 'line', 'lineament', 'cortege', 'inclination',
+          'linear progression', 'flue', 'team', 'plunger', 'stop knob', 'journey',
+          'discipline',
         ]
       },
     ]

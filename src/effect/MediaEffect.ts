@@ -1,9 +1,9 @@
-import { hash, logger } from "../common/fn";
-import { MediaEffectData } from "../types";
-import { Effect } from "./Effect";
+import { hash, logger } from '../common/fn'
+import { MediaEffectData } from '../types'
+import { Effect } from './Effect'
 import childProcess from 'child_process'
 import fs from 'fs'
-import config from "../config";
+import config from '../config'
 
 const log = logger('MediaEffect.ts')
 

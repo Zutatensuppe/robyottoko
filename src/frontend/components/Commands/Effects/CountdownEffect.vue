@@ -7,8 +7,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { CountdownEffectData } from '../../../../types';
+import { ref, watch } from 'vue'
+import { CountdownEffectData } from '../../../../types'
 import CountdownEditor from '../CountdownEditor.vue'
 
 const props = defineProps<{

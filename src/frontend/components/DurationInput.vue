@@ -6,8 +6,8 @@
   >
 </template>
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
-import fn from "../../common/fn";
+import { computed, onMounted, ref, watch } from 'vue'
+import fn from '../../common/fn'
 
 const props = defineProps({
   modelValue: { required: true },
@@ -16,31 +16,31 @@ const props = defineProps({
 const emit = defineEmits<{
   (e: 'update:modelValue', val: string): void,
 }>()
-const v = ref<string>("")
+const v = ref<string>('')
 const valid = ref<boolean>(true)
 
 const classes = computed(() => {
   if (valid.value) {
-    return [];
+    return []
   }
-  return ["has-background-danger-light", "has-text-danger-dark"];
+  return ['has-background-danger-light', 'has-text-danger-dark']
 })
 
 onMounted(() => {
-  v.value = `${props.modelValue}`;
+  v.value = `${props.modelValue}`
 
   watch(v, (newValue) => {
     try {
-      const r = fn.doDummyReplacements(newValue, "0");
-      fn.mustParseHumanDuration(r, props.allowNegative);
-      valid.value = true;
+      const r = fn.doDummyReplacements(newValue, '0')
+      fn.mustParseHumanDuration(r, props.allowNegative)
+      valid.value = true
     } catch (e) {
-      valid.value = false;
+      valid.value = false
     }
-    emit("update:modelValue", newValue);
+    emit('update:modelValue', newValue)
   })
   watch(() => props.modelValue, (newValue) => {
-    v.value = `${newValue}`;
+    v.value = `${newValue}`
   })
 })
 </script>

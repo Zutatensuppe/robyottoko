@@ -27,8 +27,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { CommandRestrict, permissions } from "../../common/permissions";
+import { ref, watch } from 'vue'
+import { CommandRestrict, permissions } from '../../common/permissions'
 
 const props = defineProps<{
   modelValue: CommandRestrict,

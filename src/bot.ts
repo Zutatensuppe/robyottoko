@@ -229,13 +229,13 @@ export const run = async () => {
   // used by nodemon
   process.once('SIGUSR2', function () {
     gracefulShutdown('SIGUSR2')
-  });
+  })
 
   process.once('SIGINT', function (_code) {
     gracefulShutdown('SIGINT')
-  });
+  })
 
   process.once('SIGTERM', function (_code) {
     gracefulShutdown('SIGTERM')
-  });
+  })
 }

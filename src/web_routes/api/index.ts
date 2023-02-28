@@ -20,22 +20,22 @@ export const createRouter = (
   const storage = multer.diskStorage({
     destination: uploadDir,
     filename: function (req, file, cb) {
-      cb(null, `${nonce(6)}-${file.originalname}`);
+      cb(null, `${nonce(6)}-${file.originalname}`)
     }
   })
-  const upload = multer({ storage }).single('file');
+  const upload = multer({ storage }).single('file')
 
   const router = express.Router()
   router.post('/upload', RequireLoginApiMiddleware, (req, res: Response) => {
     upload(req, res, (err) => {
       if (err) {
         log.error({ err })
-        res.status(400).send("Something went wrong!");
+        res.status(400).send('Something went wrong!')
         return
       }
       if (!req.file) {
         log.error({ err })
-        res.status(400).send("Something went wrong!");
+        res.status(400).send('Something went wrong!')
         return
       }
 
@@ -65,7 +65,7 @@ export const createRouter = (
   router.post('/logout', RequireLoginApiMiddleware, async (req: any, res: Response) => {
     if (req.token) {
       await bot.getAuth().destroyToken(req.token)
-      res.clearCookie("x-token")
+      res.clearCookie('x-token')
     }
     res.send({ success: true })
   })
@@ -164,7 +164,7 @@ export const createRouter = (
       res.status(404).send()
       return
     }
-    log.debug({ route: `/widget/:widget_type/:widget_token/`, type, token })
+    log.debug({ route: '/widget/:widget_type/:widget_token/', type, token })
     const w = bot.getWidgets().getWidgetDefinitionByType(type)
     if (w) {
       res.send({

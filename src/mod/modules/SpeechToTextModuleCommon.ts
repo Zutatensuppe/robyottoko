@@ -1,6 +1,6 @@
-"use strict";
+'use strict'
 
-import { getProp } from "../../common/fn"
+import { getProp } from '../../common/fn'
 
 export interface SpeechToTextModuleStylesPack {
   fontFamily: string
@@ -63,7 +63,7 @@ export interface SpeechToTextWsData {
 }
 
 export interface SpeechToTextSaveEventData {
-  event: "save"
+  event: 'save'
   settings: SpeechToTextModuleSettings
 }
 

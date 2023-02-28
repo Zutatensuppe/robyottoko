@@ -5,7 +5,7 @@ import config, { setPublicUrl } from './config'
 (async () => {
   const url = await ngrok.connect({
     addr: `${config.http.hostname}:${config.http.port}`,
-  });
-  setPublicUrl(url);
+  })
+  setPublicUrl(url)
   run()
-})();
+})()

@@ -1,12 +1,12 @@
 'use strict'
 
-import { getUniqueCommandsByTriggers } from "../common/commands"
-import { humanDuration, logger, parseHumanDuration } from "../common/fn"
-import { mayExecute } from "../common/permissions"
-import fn from "../fn"
-import { Bot, CommandExecutionContext, CommandTrigger, FunctionCommand, Module, RawCommand, TwitchChatContext } from "../types"
-import { User } from "../repo/Users"
-import { CommandExecutionRepo, Row } from "../repo/CommandExecutionRepo"
+import { getUniqueCommandsByTriggers } from '../common/commands'
+import { humanDuration, logger, parseHumanDuration } from '../common/fn'
+import { mayExecute } from '../common/permissions'
+import fn from '../fn'
+import { Bot, CommandExecutionContext, CommandTrigger, FunctionCommand, Module, RawCommand, TwitchChatContext } from '../types'
+import { User } from '../repo/Users'
+import { CommandExecutionRepo, Row } from '../repo/CommandExecutionRepo'
 
 const log = logger('CommandExecutor.ts')
 

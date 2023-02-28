@@ -29,8 +29,8 @@ class DrawcastModule implements Module {
     // @ts-ignore
     return (async () => {
       this.data = await this.reinit()
-      return this;
-    })();
+      return this
+    })()
   }
 
   async userChanged(user: User) {
@@ -123,7 +123,7 @@ class DrawcastModule implements Module {
         controlWidgetUrl: await this.controlUrl(),
         receiveWidgetUrl: await this.receiveUrl(),
       },
-    };
+    }
   }
 
   isEnabled(): boolean {

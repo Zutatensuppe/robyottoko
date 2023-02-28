@@ -1,7 +1,7 @@
-import { logger } from "../common/fn";
-import { joinIntoChunks } from "../fn";
-import { ChattersEffectData } from "../types";
-import { Effect } from "./Effect";
+import { logger } from '../common/fn'
+import { joinIntoChunks } from '../fn'
+import { ChattersEffectData } from '../types'
+import { Effect } from './Effect'
 
 const log = logger('ChattersEffect.ts')
 
@@ -18,7 +18,7 @@ export class ChattersEffect extends Effect<ChattersEffectData> {
 
     const stream = await helixClient.getStreamByUserId(this.contextModule.user.twitch_id)
     if (!stream) {
-      this.say(`It seems this channel is not live at the moment...`)
+      this.say('It seems this channel is not live at the moment...')
       return
     }
 
@@ -27,11 +27,11 @@ export class ChattersEffect extends Effect<ChattersEffectData> {
       new Date(stream.started_at)
     )
     if (userNames.length === 0) {
-      this.say(`It seems nobody chatted? :(`)
+      this.say('It seems nobody chatted? :(')
       return
     }
 
-    this.say(`Thank you for chatting!`)
+    this.say('Thank you for chatting!')
     joinIntoChunks(userNames, ', ', 500).forEach(msg => {
       this.say(msg)
     })

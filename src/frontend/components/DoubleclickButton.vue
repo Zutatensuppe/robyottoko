@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref } from 'vue'
 
 const time = ref<number | null>(null)
 const timer = ref<any>(null)
@@ -35,33 +35,33 @@ const props = defineProps<{
 
 const indicatorStyle = computed(() => {
   if (timer.value === null || time.value === null) {
-    return {};
+    return {}
   }
   return {
     width: `${(time.value / props.timeout) * 100}%`,
-  };
+  }
 })
 
 const onClick = () => {
   if (timer.value === null) {
-    emit("click");
-    time.value = props.timeout;
+    emit('click')
+    time.value = props.timeout
     timer.value = setInterval(() => {
       if (time.value) {
-        time.value -= 10;
+        time.value -= 10
       }
       if (!time.value || time.value <= 0) {
-        clearInterval(timer.value);
-        timer.value = null;
-        time.value = null;
+        clearInterval(timer.value)
+        timer.value = null
+        time.value = null
       }
-    }, 10);
+    }, 10)
   } else {
-    emit("doubleclick");
+    emit('doubleclick')
     if (timer.value) {
-      clearInterval(timer.value);
-      timer.value = null;
-      time.value = null;
+      clearInterval(timer.value)
+      timer.value = null
+      time.value = null
     }
   }
 }

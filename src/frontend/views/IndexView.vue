@@ -69,9 +69,9 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent } from "vue";
-import api from "../api";
-import { useToast } from "vue-toastification";
+import { defineComponent } from 'vue'
+import api from '../api'
+import { useToast } from 'vue-toastification'
 import NavbarElement from '../components/NavbarElement.vue'
 
 interface WidgetDefinition {
@@ -98,16 +98,16 @@ export default defineComponent({
     toast: useToast(),
   }),
   async created() {
-    const res = await api.getPageIndexData();
+    const res = await api.getPageIndexData()
     if (res.status !== 200) {
-      this.$router.push({ name: "login" });
-      return;
+      this.$router.push({ name: 'login' })
+      return
     }
 
     const data: {
       modules: ModuleDefinition[],
-    } = await res.json();
-    this.modules = data.modules;
+    } = await res.json()
+    this.modules = data.modules
   },
   methods: {
     async updateEnabled(m: { key: string, enabled: boolean }): Promise<void> {
@@ -118,10 +118,10 @@ export default defineComponent({
       const res = await api.createWidgetUrl({
         type: widget.type,
         pub: widget.pub,
-      });
+      })
       if (res.status === 200) {
         try {
-          const json = await res.json();
+          const json = await res.json()
           if (json.url) {
             this.modules = this.modules.map((m: ModuleDefinition) => {
               m.widgets = m.widgets.map((w) => {
@@ -133,14 +133,14 @@ export default defineComponent({
               return m
             })
           }
-          this.toast.success("New URL created");
+          this.toast.success('New URL created')
         } catch (e: any) {
-          this.toast.error("New URL couldn't be created");
+          this.toast.error('New URL couldn\'t be created')
         }
       } else {
-        this.toast.error("New URL couldn't be created");
+        this.toast.error('New URL couldn\'t be created')
       }
     },
   },
-});
+})
 </script>

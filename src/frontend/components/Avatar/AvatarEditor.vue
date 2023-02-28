@@ -155,16 +155,16 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
-import { arraySwap } from "../../../common/fn";
+import { defineComponent, PropType } from 'vue'
+import { arraySwap } from '../../../common/fn'
 import {
   AvatarModuleAvatarDefinition,
   AvatarModuleAvatarSlotDefinition,
   AvatarModuleAvatarStateDefinition,
   default_avatar_definition,
-} from "../../../mod/modules/AvatarModuleCommon";
-import StringInput from "../StringInput.vue";
-import AvatarSlotDefinitionEditor from "./AvatarSlotDefinitionEditor.vue";
+} from '../../../mod/modules/AvatarModuleCommon'
+import StringInput from '../StringInput.vue'
+import AvatarSlotDefinitionEditor from './AvatarSlotDefinitionEditor.vue'
 
 interface ComponentData {
   item: AvatarModuleAvatarDefinition | null;
@@ -180,238 +180,238 @@ export default defineComponent({
             required: true,
         },
     },
-    emits: ["update:modelValue", "cancel"],
+    emits: ['update:modelValue', 'cancel'],
     data: (): ComponentData => ({
         item: null,
-        itemStr: "null",
-        newState: "",
-        newSlotDefinitionName: "",
+        itemStr: 'null',
+        newState: '',
+        newSlotDefinitionName: '',
     }),
     computed: {
         cardBody(): HTMLElement | null {
             if (!this.$refs.cardBody) {
-                return null;
+                return null
             }
-            return this.$refs.cardBody as HTMLElement;
+            return this.$refs.cardBody as HTMLElement
         },
         allImagesDiv(): HTMLDivElement | null {
             if (!this.$refs.allImagesDiv) {
-                return null;
+                return null
             }
-            return this.$refs.allImagesDiv as HTMLDivElement;
+            return this.$refs.allImagesDiv as HTMLDivElement
         },
         allImages() {
-            const images: string[] = [];
+            const images: string[] = []
             this.item?.slotDefinitions.forEach((slotDef) => {
                 slotDef.items.forEach((item) => {
                     item.states.forEach((state) => {
                         state.frames.forEach((frame) => {
                             if (frame.url && !images.includes(frame.url)) {
-                                images.push(frame.url);
+                                images.push(frame.url)
                             }
-                        });
-                    });
-                });
-            });
-            return images;
+                        })
+                    })
+                })
+            })
+            return images
         },
         isStateAddable() {
             if (!this.item) {
-                return false;
+                return false
             }
-            if (this.newState === "" ||
+            if (this.newState === '' ||
                 this.item.stateDefinitions.find(({ value }) => value === this.newState)) {
-                return false;
+                return false
             }
-            return true;
+            return true
         },
     },
     watch: {
         modelValue: {
             handler(v) {
-                this.item = JSON.parse(this.itemStr);
+                this.item = JSON.parse(this.itemStr)
             },
         },
         item: {
             handler(v) {
-                this.itemStr = JSON.stringify(v);
+                this.itemStr = JSON.stringify(v)
             },
             deep: true,
         },
         itemStr: {
             handler(v) {
-                const current = JSON.stringify(this.item);
+                const current = JSON.stringify(this.item)
                 try {
-                    const updated = JSON.parse(v);
+                    const updated = JSON.parse(v)
                     if (current !== updated) {
-                        this.item = updated;
+                        this.item = updated
                     }
                 }
                 catch (e) {
-                    console.warn(e);
+                    console.warn(e)
                 }
             },
         },
     },
     mounted() {
-        this.itemStr = JSON.stringify(this.modelValue);
-        this.item = JSON.parse(this.itemStr);
-        this.adjustAllImagesDivSize();
-        window.addEventListener("resize", this.adjustAllImagesDivSize);
+        this.itemStr = JSON.stringify(this.modelValue)
+        this.item = JSON.parse(this.itemStr)
+        this.adjustAllImagesDivSize()
+        window.addEventListener('resize', this.adjustAllImagesDivSize)
     },
     unmounted() {
-        window.removeEventListener("resize", this.adjustAllImagesDivSize);
+        window.removeEventListener('resize', this.adjustAllImagesDivSize)
     },
     methods: {
         autoDetectDimensions(): void {
             if (this.allImages.length === 0) {
-                return;
+                return
             }
-            const img = new Image();
+            const img = new Image()
             img.onload = () => {
                 if (!this.item) {
-                    return;
+                    return
                 }
-                this.item.width = img.width;
-                this.item.height = img.height;
-            };
-            img.src = this.allImages[0];
+                this.item.width = img.width
+                this.item.height = img.height
+            }
+            img.src = this.allImages[0]
         },
         adjustAllImagesDivSize(): void {
             this.$nextTick(() => {
                 if (!this.cardBody || !this.allImagesDiv) {
-                    return;
+                    return
                 }
-                const maxHeight = this.cardBody.clientHeight;
-                this.allImagesDiv.style.maxHeight = `${maxHeight}px`;
-            });
+                const maxHeight = this.cardBody.clientHeight
+                this.allImagesDiv.style.maxHeight = `${maxHeight}px`
+            })
         },
         imageDragStart($evt: DragEvent): void {
             if (!$evt.dataTransfer) {
-                return;
+                return
             }
-            const element = $evt.target as HTMLImageElement;
-            const url = element.getAttribute("data-src");
+            const element = $evt.target as HTMLImageElement
+            const url = element.getAttribute('data-src')
             if (!url) {
-                return;
+                return
             }
-            $evt.dataTransfer.setData("avatar-image-url", url);
+            $evt.dataTransfer.setData('avatar-image-url', url)
         },
         emitUpdate(): void {
             if (!this.item) {
-                console.warn("emitUpdate: this.item not initialized");
-                return;
+                console.warn('emitUpdate: this.item not initialized')
+                return
             }
-            this.$emit("update:modelValue", default_avatar_definition({
+            this.$emit('update:modelValue', default_avatar_definition({
                 name: this.item.name,
                 width: parseInt(`${this.item.width}`, 10),
                 height: parseInt(`${this.item.height}`, 10),
                 stateDefinitions: this.item.stateDefinitions,
                 slotDefinitions: this.item.slotDefinitions,
                 state: this.item.state,
-            }));
+            }))
         },
         onSaveClick(): void {
-            this.emitUpdate();
+            this.emitUpdate()
         },
         onSaveAndCloseClick(): void {
-            this.emitUpdate();
-            this.$emit("cancel");
+            this.emitUpdate()
+            this.$emit('cancel')
         },
         onCancelClick(): void {
-            this.$emit("cancel");
+            this.$emit('cancel')
         },
         onOverlayClick(): void {
-            this.$emit("cancel");
+            this.$emit('cancel')
         },
         onCloseClick(): void {
-            this.$emit("cancel");
+            this.$emit('cancel')
         },
         addStateDefinition(): void {
             if (!this.item) {
-                console.warn("addStateDefinition: this.item not initialized");
-                return;
+                console.warn('addStateDefinition: this.item not initialized')
+                return
             }
             const stateDefinition: AvatarModuleAvatarStateDefinition = {
                 value: this.newState,
                 deletable: true,
-            };
-            this.item.stateDefinitions.push(stateDefinition);
+            }
+            this.item.stateDefinitions.push(stateDefinition)
             for (let slotDef of this.item.slotDefinitions) {
                 for (let item of slotDef.items) {
                     item.states.push({
                         state: stateDefinition.value,
                         frames: [],
-                    });
+                    })
                 }
             }
         },
         removeStateDefinition(index: string | number): void {
             if (!this.item) {
-                console.warn("removeStateDefinition: this.item not initialized");
-                return;
+                console.warn('removeStateDefinition: this.item not initialized')
+                return
             }
-            const stateDefinitions: AvatarModuleAvatarStateDefinition[] = [];
+            const stateDefinitions: AvatarModuleAvatarStateDefinition[] = []
             for (let idx in this.item.stateDefinitions) {
                 if (parseInt(idx, 10) === parseInt(`${index}`, 10)) {
-                    continue;
+                    continue
                 }
-                stateDefinitions.push(this.item.stateDefinitions[idx]);
+                stateDefinitions.push(this.item.stateDefinitions[idx])
             }
-            this.item.stateDefinitions = stateDefinitions;
-            const stateStrings = stateDefinitions.map((stateDefinition) => stateDefinition.value);
+            this.item.stateDefinitions = stateDefinitions
+            const stateStrings = stateDefinitions.map((stateDefinition) => stateDefinition.value)
             for (let slotDef of this.item.slotDefinitions) {
                 for (let item of slotDef.items) {
-                    item.states = item.states.filter((anim) => stateStrings.includes(anim.state));
+                    item.states = item.states.filter((anim) => stateStrings.includes(anim.state))
                 }
             }
         },
         removeSlotDefinition(index: string | number): void {
             if (!this.item) {
-                console.warn("removeSlotDefinition: this.item not initialized");
-                return;
+                console.warn('removeSlotDefinition: this.item not initialized')
+                return
             }
-            const slotDefinitions: AvatarModuleAvatarSlotDefinition[] = [];
+            const slotDefinitions: AvatarModuleAvatarSlotDefinition[] = []
             for (let idx in this.item.slotDefinitions) {
                 if (parseInt(idx, 10) === parseInt(`${index}`, 10)) {
-                    continue;
+                    continue
                 }
-                slotDefinitions.push(this.item.slotDefinitions[idx]);
+                slotDefinitions.push(this.item.slotDefinitions[idx])
             }
-            this.item.slotDefinitions = slotDefinitions;
+            this.item.slotDefinitions = slotDefinitions
         },
         updateSlotDefinition(index: string | number, slotDefinition: AvatarModuleAvatarSlotDefinition): void {
             if (!this.item) {
-                console.warn("updateSlotDefinition: this.item not initialized");
-                return;
+                console.warn('updateSlotDefinition: this.item not initialized')
+                return
             }
-            this.item.slotDefinitions[parseInt(`${index}`, 10)] = slotDefinition;
+            this.item.slotDefinitions[parseInt(`${index}`, 10)] = slotDefinition
         },
         addSlotDefinition(): void {
             if (!this.item) {
-                console.warn("addSlotDefinition: this.item not initialized");
-                return;
+                console.warn('addSlotDefinition: this.item not initialized')
+                return
             }
             const slotDefinition: AvatarModuleAvatarSlotDefinition = {
-                slot: "Unnamed slot",
+                slot: 'Unnamed slot',
                 defaultItemIndex: -1,
                 items: [],
-            };
-            this.item.slotDefinitions.push(slotDefinition);
+            }
+            this.item.slotDefinitions.push(slotDefinition)
         },
         moveSlotUp(idx: number): void {
-            this.swapItems(idx - 1, idx);
+            this.swapItems(idx - 1, idx)
         },
         moveSlotDown(idx: number): void {
-            this.swapItems(idx + 1, idx);
+            this.swapItems(idx + 1, idx)
         },
         swapItems(idx1: number, idx2: number): void {
             if (!this.item) {
-                console.warn("swapItems: this.item not initialized");
-                return;
+                console.warn('swapItems: this.item not initialized')
+                return
             }
-            arraySwap(this.item.slotDefinitions, idx1, idx2);
+            arraySwap(this.item.slotDefinitions, idx1, idx2)
         },
     }
-});
+})
 </script>

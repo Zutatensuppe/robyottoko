@@ -3,8 +3,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import fn from "../../common/fn";
+import { computed } from 'vue'
+import fn from '../../common/fn'
 
 const props = defineProps({
   value: { required: true },
@@ -12,18 +12,18 @@ const props = defineProps({
 
 const tag = computed(() => {
   try {
-    fn.mustParseHumanDuration(`${props.value}`);
-    return "span";
+    fn.mustParseHumanDuration(`${props.value}`)
+    return 'span'
   } catch (e) {
-    return "code";
+    return 'code'
   }
 })
 
 const humanReadable = computed(() => {
   try {
-    return fn.humanDuration(fn.mustParseHumanDuration(`${props.value}`));
+    return fn.humanDuration(fn.mustParseHumanDuration(`${props.value}`))
   } catch (e) {
-    return props.value;
+    return props.value
   }
 })
 </script>

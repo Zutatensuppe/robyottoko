@@ -37,12 +37,12 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ApiUserData, DrawcastData } from "../../../types"
-import { DrawcastImage } from "../../../mod/modules/DrawcastModuleCommon"
-import { onMounted, onUnmounted, ref } from "vue"
-import util, { WidgetApiData } from "../util"
-import WsClient from "../../WsClient"
-import user from "../../user"
+import { ApiUserData, DrawcastData } from '../../../types'
+import { DrawcastImage } from '../../../mod/modules/DrawcastModuleCommon'
+import { onMounted, onUnmounted, ref } from 'vue'
+import util, { WidgetApiData } from '../util'
+import WsClient from '../../WsClient'
+import user from '../../user'
 
 const props = defineProps<{
   wdata: WidgetApiData,
@@ -54,28 +54,28 @@ const notificationSoundAudio = ref<any>(null)
 const manualApproval = ref<{ items: string[] }>({ items: [] })
 
 // @ts-ignore
-import('./main.scss');
+import('./main.scss')
 
 const approveImage = (path: string) => {
-  sendMsg({ event: "approve_image", path });
+  sendMsg({ event: 'approve_image', path })
 }
 
 const denyImage = (path: string) => {
-  sendMsg({ event: "deny_image", path });
+  sendMsg({ event: 'deny_image', path })
 }
 
 const sendMsg = (data: any) => {
   if (!ws) {
-    console.warn("sendMsg: ws not initialized");
-    return;
+    console.warn('sendMsg: ws not initialized')
+    return
   }
   if (!me) {
-    console.warn("sendMsg: me not initialized");
-    return;
+    console.warn('sendMsg: me not initialized')
+    return
   }
   ws.send(JSON.stringify(Object.assign({}, data, {
     token: me.token
-  })));
+  })))
 }
 
 onMounted(() => {
@@ -83,58 +83,58 @@ onMounted(() => {
   if (!me) {
     return
   }
-  ws = util.wsClient(props.wdata);
-  ws.onMessage("init", async (data: DrawcastData) => {
-    sendMsg({ event: "get_all_images" });
+  ws = util.wsClient(props.wdata)
+  ws.onMessage('init', async (data: DrawcastData) => {
+    sendMsg({ event: 'get_all_images' })
 
     if (data.settings.notificationSound) {
       notificationSoundAudio.value = new Audio(
         data.settings.notificationSound.urlpath
-      );
+      )
       notificationSoundAudio.value.volume =
-        data.settings.notificationSound.volume / 100.0;
+        data.settings.notificationSound.volume / 100.0
     }
-  });
+  })
   ws.onMessage(
-    "all_images",
+    'all_images',
     (data: { images: DrawcastImage[] }) => {
     manualApproval.value.items = data.images
       .filter((item: DrawcastImage) => !item.approved)
-      .map((item: DrawcastImage) => item.path);
+      .map((item: DrawcastImage) => item.path)
     }
   ),
   ws.onMessage(
-    "approved_image_received",
+    'approved_image_received',
     (data: { nonce: string; img: string; mayNotify: boolean }) => {
       manualApproval.value.items = manualApproval.value.items.filter(
         (img) => img !== data.img
-      );
+      )
     }
-  );
+  )
   ws.onMessage(
-    "denied_image_received",
+    'denied_image_received',
     (data: { nonce: string; img: string; mayNotify: boolean }) => {
       manualApproval.value.items = manualApproval.value.items.filter(
         (img) => img !== data.img
-      );
+      )
     }
-  );
+  )
   ws.onMessage(
-    "image_received",
+    'image_received',
     (data: { nonce: string; img: string; mayNotify: boolean }) => {
       manualApproval.value.items = manualApproval.value.items.filter(
         (img) => img !== data.img
-      );
+      )
 
-      manualApproval.value.items.push(data.img);
-      manualApproval.value.items = manualApproval.value.items.slice();
+      manualApproval.value.items.push(data.img)
+      manualApproval.value.items = manualApproval.value.items.slice()
 
       if (data.mayNotify && notificationSoundAudio.value) {
-        notificationSoundAudio.value.play();
+        notificationSoundAudio.value.play()
       }
     }
-  );
-  ws.connect();
+  )
+  ws.connect()
 })
 
 onUnmounted(() => {

@@ -206,17 +206,17 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChatEffectData, Command, CommandAction, CommandEffectType, CommandTriggerType, GlobalVariable } from "../../../types";
-import { commands } from "../../../common/commands";
-import { computed, ref } from "vue";
-import { permissionsStr } from "../../../common/permissions";
-import CheckboxInput from "../CheckboxInput.vue";
-import CommandEditor from "./CommandEditor.vue";
-import DoubleclickButton from "../DoubleclickButton.vue";
-import DropdownButton from "../DropdownButton.vue";
-import EffectInfo from "./EffectInfo.vue";
-import fn from "../../../common/fn";
-import TriggerInfo from "./TriggerInfo.vue";
+import { ChatEffectData, Command, CommandAction, CommandEffectType, CommandTriggerType, GlobalVariable } from '../../../types'
+import { commands } from '../../../common/commands'
+import { computed, ref } from 'vue'
+import { permissionsStr } from '../../../common/permissions'
+import CheckboxInput from '../CheckboxInput.vue'
+import CommandEditor from './CommandEditor.vue'
+import DoubleclickButton from '../DoubleclickButton.vue'
+import DropdownButton from '../DropdownButton.vue'
+import EffectInfo from './EffectInfo.vue'
+import fn from '../../../common/fn'
+import TriggerInfo from './TriggerInfo.vue'
 
 const anyActionsMatch = (filterActions: string[], item: Command): boolean => {
   if (filterActions.length === 0) {
@@ -298,7 +298,7 @@ const filter = ref<{
   actions: string[]
   effects: string[]
 }>({
-  search: "",
+  search: '',
   actions: [],
   effects: [],
 })
@@ -316,9 +316,9 @@ const possibleEffectsWithCount = computed(() => {
       return {
         effect,
         count: commandCountByEffect(effect),
-      };
+      }
     })
-    .filter((e) => e.count > 0);
+    .filter((e) => e.count > 0)
 })
 
 const possibleActionsMapped = computed(() => {
@@ -326,7 +326,7 @@ const possibleActionsMapped = computed(() => {
     type: action,
     title: actionDescription(action),
     label: `Add ${actionName(action)}`,
-  }));
+  }))
 })
 
 const possibleActionsWithCount = computed(() => {
@@ -335,38 +335,38 @@ const possibleActionsWithCount = computed(() => {
       return {
         action,
         count: commandCountByAction(action),
-      };
+      }
     })
-    .filter((a) => a.count > 0);
+    .filter((a) => a.count > 0)
 })
 
 const onImageVisibleChange = () => {
   // TODO: use value from event?
-  emit("showImagesChange", imagesVisible.value);
+  emit('showImagesChange', imagesVisible.value)
 }
 
 const emitChange = () => {
-  emit("update:modelValue", cmds.value);
+  emit('update:modelValue', cmds.value)
 }
 
 const commandCountByEffect = (effect: string): number => {
-  let count = 0;
+  let count = 0
   for (const cmd of cmds.value) {
     if (cmd.effects && cmd.effects.some(e => e.type === effect)) {
-      count++;
+      count++
     }
   }
-  return count;
+  return count
 }
 
 const commandCountByAction = (action: string): number => {
-  let count = 0;
+  let count = 0
   for (const cmd of cmds.value) {
     if (cmd.action === action) {
-      count++;
+      count++
     }
   }
-  return count;
+  return count
 }
 
 const filteredOut = (item: Command) => {
@@ -391,29 +391,29 @@ const filteredOut = (item: Command) => {
 }
 
 const remove = (idx: number) => {
-  cmds.value = cmds.value.filter((_val, index: number) => index !== idx);
-  emitChange();
+  cmds.value = cmds.value.filter((_val, index: number) => index !== idx)
+  emitChange()
 }
 
 const add = (mappedAction: any) => {
-  const type: CommandAction = mappedAction.type;
-  editIdx.value = -1;
-  editCommand.value = commands[type].NewCommand();
+  const type: CommandAction = mappedAction.type
+  editIdx.value = -1
+  editCommand.value = commands[type].NewCommand()
 }
 
 const edit = (idx: number) => {
-  editIdx.value = idx;
-  editCommand.value = cmds.value[idx];
+  editIdx.value = idx
+  editCommand.value = cmds.value[idx]
 }
 
 const duplicate = (idx: number) => {
-  editIdx.value = -1;
-  editCommand.value = JSON.parse(JSON.stringify(cmds.value[idx]));
+  editIdx.value = -1
+  editCommand.value = JSON.parse(JSON.stringify(cmds.value[idx]))
 }
 
 const commandSave = (command: Command): void => {
   if (editIdx.value === null) {
-    return;
+    return
   }
   if (editIdx.value === -1) {
     // put new commands on top of the list
@@ -422,31 +422,31 @@ const commandSave = (command: Command): void => {
   }
   else {
     // otherwise edit the edited command
-    cmds.value[editIdx.value] = command;
+    cmds.value[editIdx.value] = command
   }
-  emitChange();
+  emitChange()
 }
 
 const commandSaveAndClose = (command: Command): void => {
   commandSave(command)
-  editIdx.value = null;
-  editCommand.value = null;
+  editIdx.value = null
+  editCommand.value = null
 }
 
 const dragEnd = (evt: {
   oldIndex: number;
   newIndex: number;
 }) => {
-  cmds.value = fn.arrayMove(cmds.value, evt.oldIndex, evt.newIndex);
-  emitChange();
+  cmds.value = fn.arrayMove(cmds.value, evt.oldIndex, evt.newIndex)
+  emitChange()
 }
 
 const actionDescription = (action: CommandAction) => {
-  return commands[action].Description();
+  return commands[action].Description()
 }
 
 const actionName = (action: CommandAction) => {
-  return commands[action].Name();
+  return commands[action].Name()
 }
 </script>
 

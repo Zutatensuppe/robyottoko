@@ -1,7 +1,7 @@
 'use strict'
 
-import { GlobalVariable, VariableValue } from "../types"
-import { Repo } from "./Repo"
+import { GlobalVariable, VariableValue } from '../types'
+import { Repo } from './Repo'
 
 const TABLE = 'robyottoko.variables'
 

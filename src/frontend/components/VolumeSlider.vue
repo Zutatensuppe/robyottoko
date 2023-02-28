@@ -10,7 +10,7 @@
   />
 </template>
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref } from 'vue'
 import SliderInput  from './SliderInput.vue'
 
 const props = defineProps<{
@@ -23,6 +23,6 @@ const emit = defineEmits<{
 const volume = ref<number>(parseInt(`${props.modelValue}`, 10))
 
 const valChange = () => {
-  emit("update:modelValue", parseInt(`${volume.value}`, 10));
+  emit('update:modelValue', parseInt(`${volume.value}`, 10))
 }
 </script>

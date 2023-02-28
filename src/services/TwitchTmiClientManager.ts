@@ -1,6 +1,6 @@
 // @ts-ignore
 import tmi from 'tmi.js'
-import { TwitchBotIdentity, TwitchChatClient } from "../types";
+import { TwitchBotIdentity, TwitchChatClient } from '../types'
 
 export class TwitchTmiClientManager {
   constructor () {
