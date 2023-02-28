@@ -159,6 +159,12 @@
             >
               <i class="fa fa-remove" />
             </DoubleclickButton>
+            <button
+              class="button is-small ml-1"
+              @click="duplicatePreset(idx)"
+            >
+              <i class="fa fa-clone" />
+            </button>
           </td>
         </tr>
       </tbody>
@@ -201,8 +207,8 @@ const emit = defineEmits<{
 }>()
 
 const startEditPreset = (idx: number): void => {
-  editPresetIdx.value = idx;
-  editPreset.value = settings.value.customCssPresets[idx];
+  editPresetIdx.value = idx
+  editPreset.value = settings.value.customCssPresets[idx]
 }
 
 const presetSave = (preset: SongrequestModuleCustomCssPreset): void => {
@@ -217,9 +223,9 @@ const presetSave = (preset: SongrequestModuleCustomCssPreset): void => {
   }
   else {
     // otherwise edit the edited command
-    settings.value.customCssPresets[editPresetIdx.value] = preset;
+    settings.value.customCssPresets[editPresetIdx.value] = preset
   }
-  sendSettings();
+  sendSettings()
 }
 
 const presetSaveAndClose = (preset: SongrequestModuleCustomCssPreset): void => {
@@ -233,8 +239,15 @@ const loadPreset = (idx: number): void => {
   sendSettings()
 }
 
+const duplicatePreset = (idx: number): void => {
+  editPresetIdx.value = -1
+  const preset = default_custom_css_preset(settings.value.customCssPresets[idx])
+  preset.name = `Copy of ${preset.name}`
+  editPreset.value = preset
+}
+
 const removePreset = (idx: number): void => {
-  settings.value.customCssPresets = settings.value.customCssPresets.filter((_preset, _idx) => _idx !== idx);
+  settings.value.customCssPresets = settings.value.customCssPresets.filter((_preset, _idx) => _idx !== idx)
   if (settings.value.customCssPresets.length === 0) {
     settings.value.customCssPresets.push(...presets)
     settings.value.customCssPresetIdx = 0
@@ -245,7 +258,7 @@ const removePreset = (idx: number): void => {
       settings.value.customCssPresetIdx -= 1
     }
   }
-  sendSettings();
+  sendSettings()
 }
 
 const addPreset = (): void => {
@@ -254,8 +267,8 @@ const addPreset = (): void => {
 }
 
 const hideVideoImageChanged = (file: MediaFile): void => {
-  settings.value.hideVideoImage = file;
-  sendSettings();
+  settings.value.hideVideoImage = file
+  sendSettings()
 }
 
 const sendSettings = (): void => {
