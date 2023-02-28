@@ -11,8 +11,10 @@ import {
 import {
   default_commands,
   default_settings,
+  isItemShown,
   SongerquestModuleInitData,
   SongrequestModuleData,
+  SongRequestModuleFilter,
   SongrequestModuleLimits,
   SongrequestModuleSettings,
   SongrequestModuleWsEventData,
@@ -44,6 +46,17 @@ const NOT_ADDED_REASON = {
   QUOTA_REACHED: 4,
   NO_API_KEYS: 5,
   UNKNOWN: 6,
+}
+
+enum SET_FILTER_SHOW_TAG_RESULT {
+  IS_HIDDEN = -1,
+  UPDATED = 1,
+  NOT_UPDATED = 0,
+}
+
+enum REMOVE_FILTER_SHOW_TAGS_RESULT {
+  UPDATED = 1,
+  NOT_UPDATED = 0,
 }
 
 interface AddResponseData {
@@ -193,10 +206,11 @@ class SongrequestModule implements Module {
   }
 
   async reinit(): Promise<SongerquestModuleInitData> {
-    const shouldSave = false
+    let shouldSave = false
     const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {
       filter: {
-        tag: '',
+        show: { tags: [] },
+        hide: { tags: [] },
       },
       settings: default_settings(),
       playlist: default_playlist(),
@@ -235,6 +249,15 @@ class SongrequestModule implements Module {
     data.playlist = default_playlist(data.playlist)
     data.settings = default_settings(data.settings)
     data.commands = default_commands(data.commands)
+
+    // todo: remove after deploy
+    if ('tag' in data.filter) {
+      data.filter = {
+        show: { tags: data.filter.tag ? [data.filter.tag] : [] },
+        hide: { tags: [] },
+      }
+      shouldSave = true
+    }
 
     return {
       data: {
@@ -456,7 +479,10 @@ class SongrequestModule implements Module {
           case 'rmtag': this.rmTag(...args as [string, number]); break;
           case 'addtag': this.addTag(...args as [string, number]); break;
           case 'updatetag': this.updateTag(...args as [string, string]); break;
-          case 'filter': this.filter(...args as [{ tag: string }]); break;
+          case 'addFilterShowTag': await this.addFilterShowTag(...args as [string]); break;
+          case 'addFilterHideTag': await this.addFilterHideTag(...args as [string]); break;
+          case 'removeFilterShowTag': await this.removeFilterShowTag(...args as [string]); break;
+          case 'removeFilterHideTag': await this.removeFilterHideTag(...args as [string]); break;
           case 'videoVisibility': await this.videoVisibility(...args as [boolean, number]); break;
           case 'setAllToPlayed': this.setAllToPlayed(); break;
           case 'sort': this.sort(...args as [SortBy, SortDirection]); break;
@@ -503,7 +529,7 @@ class SongrequestModule implements Module {
     let index = -1
     for (let i = 0; i < this.data.playlist.length; i++) {
       const item = this.data.playlist[i]
-      if (this.data.filter.tag === '' || item.tags.includes(this.data.filter.tag)) {
+      if (isItemShown(item, this.data.filter)) {
         index = i
       }
     }
@@ -516,7 +542,7 @@ class SongrequestModule implements Module {
         continue
       }
       const item = this.data.playlist[i]
-      if (this.data.filter.tag === '' || item.tags.includes(this.data.filter.tag)) {
+      if (isItemShown(item, this.data.filter)) {
         return i
       }
     }
@@ -524,7 +550,7 @@ class SongrequestModule implements Module {
   }
 
   determineFirstIndex() {
-    return this.data.playlist.findIndex(item => this.data.filter.tag === '' || item.tags.includes(this.data.filter.tag))
+    return this.data.playlist.findIndex(item => isItemShown(item, this.data.filter))
   }
 
   incStat(stat: 'goods' | 'bads' | 'plays', idx: number = -1) {
@@ -664,7 +690,94 @@ class SongrequestModule implements Module {
     await this.updateClients('stats')
   }
 
-  async filter(filter: { tag: string }) {
+  async setFilterShowTag(tag: string): Promise<SET_FILTER_SHOW_TAG_RESULT> {
+    if (this.data.filter.hide.tags.includes(tag)) {
+      return SET_FILTER_SHOW_TAG_RESULT.IS_HIDDEN
+    }
+    let saveRequired = false
+    if (this.data.filter.show.tags.length !== 1 || this.data.filter.show.tags[0] !== tag) {
+      this.data.filter.show.tags = [tag]
+      saveRequired = true
+    }
+    if (saveRequired) {
+      await this.save()
+      await this.updateClients('filter')
+      return SET_FILTER_SHOW_TAG_RESULT.UPDATED
+    }
+    return SET_FILTER_SHOW_TAG_RESULT.NOT_UPDATED
+  }
+
+  async removeFilterShowTags(): Promise<REMOVE_FILTER_SHOW_TAGS_RESULT> {
+    let saveRequired = false
+    if (this.data.filter.show.tags.length) {
+      this.data.filter.show.tags = []
+      saveRequired = true
+    }
+    if (saveRequired) {
+      await this.save()
+      await this.updateClients('filter')
+      return REMOVE_FILTER_SHOW_TAGS_RESULT.UPDATED
+    }
+    return REMOVE_FILTER_SHOW_TAGS_RESULT.NOT_UPDATED
+  }
+
+  async addFilterShowTag(tag: string): Promise<void> {
+    let saveRequired = false
+    if (this.data.filter.hide.tags.includes(tag)) {
+      this.data.filter.hide.tags = this.data.filter.hide.tags.filter(t => t !== tag)
+      saveRequired = true
+    }
+    if (!this.data.filter.show.tags.includes(tag)) {
+      this.data.filter.show.tags.push(tag)
+      saveRequired = true
+    }
+    if (saveRequired) {
+      await this.save()
+      await this.updateClients('filter')
+    }
+  }
+
+  async addFilterHideTag(tag: string): Promise<void> {
+    let saveRequired = false
+    if (this.data.filter.show.tags.includes(tag)) {
+      this.data.filter.show.tags = this.data.filter.show.tags.filter(t => t !== tag)
+      saveRequired = true
+    }
+    if (!this.data.filter.hide.tags.includes(tag)) {
+      this.data.filter.hide.tags.push(tag)
+      saveRequired = true
+    }
+    if (saveRequired) {
+      await this.save()
+      await this.updateClients('filter')
+    }
+  }
+
+  async removeFilterShowTag(tag: string): Promise<void> {
+    let saveRequired = false
+    if (this.data.filter.show.tags.includes(tag)) {
+      this.data.filter.show.tags = this.data.filter.show.tags.filter(t => t !== tag)
+      saveRequired = true
+    }
+    if (saveRequired) {
+      await this.save()
+      await this.updateClients('filter')
+    }
+  }
+
+  async removeFilterHideTag(tag: string): Promise<void> {
+    let saveRequired = false
+    if (this.data.filter.hide.tags.includes(tag)) {
+      this.data.filter.hide.tags = this.data.filter.hide.tags.filter(t => t !== tag)
+      saveRequired = true
+    }
+    if (saveRequired) {
+      await this.save()
+      await this.updateClients('filter')
+    }
+  }
+
+  async filter(filter: SongRequestModuleFilter) {
     this.data.filter = filter
     await this.save()
     await this.updateClients('filter')
@@ -1184,11 +1297,22 @@ class SongrequestModule implements Module {
 
       const say = this.bot.sayFn(this.user, ctx.target)
       const tag = ctx.rawCmd.args.join(' ')
-      await this.filter({ tag })
       if (tag !== '') {
-        say(`Playing only songs tagged with "${tag}"`)
+        const res = await this.setFilterShowTag(tag)
+        if (res === SET_FILTER_SHOW_TAG_RESULT.IS_HIDDEN) {
+          say(`The tag ${tag} is currently hidden, no changes made.`)
+        } else if (res === SET_FILTER_SHOW_TAG_RESULT.UPDATED) {
+          say(`Playing only songs tagged with "${tag}".`)
+        } else if (res === SET_FILTER_SHOW_TAG_RESULT.NOT_UPDATED) {
+          say(`Already playing only songs tagged with "${tag}".`)
+        }
       } else {
-        say(`Playing all songs`)
+        const res = await this.removeFilterShowTags()
+        if (res === REMOVE_FILTER_SHOW_TAGS_RESULT.UPDATED) {
+          say(`Playing all songs.`)
+        } else if (res === REMOVE_FILTER_SHOW_TAGS_RESULT.NOT_UPDATED) {
+          say(`Already playing all songs.`)
+        }
       }
     }
   }

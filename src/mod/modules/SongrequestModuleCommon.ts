@@ -68,20 +68,23 @@ export interface SongrequestModuleLimits {
 }
 
 export interface SongRequestModuleFilter {
-  tag: string
+  show: {
+    tags: string[]
+  }
+  hide: {
+    tags: string[]
+  }
 }
 
 export interface SongrequestModuleWsEventData {
   enabled: boolean
-  filter: {
-    tag: string
-  },
-  playlist: PlaylistItem[],
-  commands: Command[],
-  globalVariables: GlobalVariable[],
-  channelPointsCustomRewards: Record<string, string[]>,
-  settings: SongrequestModuleSettings,
-  widgetUrl: string,
+  filter: SongRequestModuleFilter
+  playlist: PlaylistItem[]
+  commands: Command[]
+  globalVariables: GlobalVariable[]
+  channelPointsCustomRewards: Record<string, string[]>
+  settings: SongrequestModuleSettings
+  widgetUrl: string
 }
 
 export const default_custom_css_preset = (obj: any = null): SongrequestModuleCustomCssPreset => ({
@@ -153,3 +156,22 @@ export const default_settings = (obj: any = null): SongrequestModuleSettings => 
   customCssPresets: getProp(obj, ['customCssPresets'], presets).map(default_custom_css_preset),
   customCssPresetIdx: getProp(obj, ['customCssPresetIdx'], 0),
 })
+
+export const isItemShown = (item: PlaylistItem, filter: SongRequestModuleFilter): boolean => {
+  if (filter.show.tags.length) {
+    for (const tag of item.tags) {
+      if (filter.show.tags.includes(tag)) {
+        return true
+      }
+    }
+  }
+  if (filter.hide.tags.length) {
+    for (const tag of item.tags) {
+      if (filter.hide.tags.includes(tag)) {
+        return false
+      }
+    }
+  }
+
+  return filter.show.tags.length > 0 ? false : true
+}

@@ -161,7 +161,6 @@
           :playlist="playlist"
           :filter="filter"
           @stop-player="player.stop()"
-          @filter-change="applyFilter"
           @ctrl="onPlaylistCtrl"
         />
       </div>
@@ -190,6 +189,7 @@ import {
 } from "../../types";
 import {
   default_settings,
+  isItemShown,
   SongrequestModuleSettings,
   SongrequestModuleWsEventData,
   TagInfo,
@@ -226,7 +226,7 @@ const commands = ref<Command[]>([])
 const globalVariables = ref<GlobalVariable[]>([])
 const channelPointsCustomRewards = ref<Record<string, string[]>>({})
 const settings = ref<SongrequestModuleSettings>(default_settings())
-const filter = ref<{ tag: string }>({ tag: '' })
+const filter = ref<{ show: { tags: string[] }, hide: { tags: string[] } }>({ show: { tags: [] }, hide: { tags: [] }})
 const resrinput = ref<string>('')
 const srinput = ref<string>('')
 const inited = ref<boolean>(false)
@@ -344,10 +344,7 @@ const player = computed((): InstanceType<typeof YoutubePlayer> => {
 })
 
 const filteredPlaylist = computed((): PlaylistItem[] => {
-  if (filter.value.tag === "") {
-    return playlist.value;
-  }
-  return playlist.value.filter((item: PlaylistItem) => item.tags.includes(filter.value.tag));
+  return playlist.value.filter((item: PlaylistItem) => isItemShown(item, filter.value));
 })
 
 const item = computed(() => {
@@ -391,10 +388,6 @@ const onPlaylistCtrl = (evt: [
   any[]
 ]) => {
   sendCtrl(evt[0], evt[1]);
-}
-
-const applyFilter = (tag: string) => {
-  sendCtrl("filter", [{ tag }]);
 }
 
 const doImportPlaylist = async () => {

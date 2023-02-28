@@ -5,30 +5,62 @@
         <div class="mr-1">
           Filter:
         </div>
-        <span
-          v-if="filter.tag"
-          class="tag mr-1"
-          @click="applyFilter('')"
-        >{{ filter.tag }} <i
-          class="fa fa-remove ml-1"
-        /></span>
-        <div
-          v-else
-          class="field has-addons mr-1 mb-0"
-        >
-          <div class="control">
-            <input
-              v-model="filterTagInput"
-              class="input is-small filter-tag-input"
-              type="text"
-              @keyup.enter="applyFilter(filterTagInput)"
-            >
+        <div>
+          Show:
+          <span
+            v-for="(tag, idx) in filter.show.tags"
+            :key="idx"
+            class="tag mr-1"
+            @click="removeFilterShowTag(tag)"
+          >{{ tag }} <i
+            class="fa fa-remove ml-1"
+          /></span>
+          <div
+            class="field has-addons mr-1 mb-0"
+          >
+            <div class="control">
+              <input
+                v-model="showTagInput"
+                class="input is-small filter-tag-input"
+                type="text"
+                @keyup.enter="addFilterShowTag(showTagInput)"
+              >
+            </div>
+            <div class="control">
+              <span
+                class="button is-small"
+                @click="addFilterShowTag(showTagInput)"
+              >Add</span>
+            </div>
           </div>
-          <div class="control">
-            <span
-              class="button is-small"
-              @click="applyFilter(filterTagInput)"
-            >Apply filter</span>
+        </div>
+        <div>
+          Hide:
+          <span
+            v-for="(tag, idx) in filter.hide.tags"
+            :key="idx"
+            class="tag mr-1"
+            @click="removeFilterHideTag(tag)"
+          >{{ tag }} <i
+            class="fa fa-remove ml-1"
+          /></span>
+          <div
+            class="field has-addons mr-1 mb-0"
+          >
+            <div class="control">
+              <input
+                v-model="hideTagInput"
+                class="input is-small filter-tag-input"
+                type="text"
+                @keyup.enter="addFilterHideTag(hideTagInput)"
+              >
+            </div>
+            <div class="control">
+              <span
+                class="button is-small"
+                @click="addFilterHideTag(hideTagInput)"
+              >Add</span>
+            </div>
           </div>
         </div>
         <label class="pt-1"><CheckboxInput
@@ -291,7 +323,7 @@
 import { dateformat, humanDuration } from "../../../common/fn"
 import { computed, nextTick, Ref, ref, watch } from "vue"
 import { DragEndEvent, PlaylistItem } from "../../../types"
-import { SortBy, SortDirection } from "../../../mod/modules/SongrequestModuleCommon"
+import { isItemShown, SongRequestModuleFilter, SortBy, SortDirection } from "../../../mod/modules/SongrequestModuleCommon"
 import DoubleclickButton from '../DoubleclickButton.vue'
 import CheckboxInput from "../CheckboxInput.vue"
 
@@ -301,18 +333,18 @@ interface EnhancedPlaylistItem extends PlaylistItem {
 
 const props = defineProps<{
   playlist: PlaylistItem[]
-  filter: { tag: string }
+  filter: SongRequestModuleFilter
 }>()
 
 const emit = defineEmits<{
   (e: 'stopPlayer'): void
-  (e: 'filterChange', val: string): void
   (e: 'ctrl', val: [string, any[]]): void
 }>()
 
 
 const hideFilteredOut = ref<boolean>(true)
-const filterTagInput = ref<string>("")
+const showTagInput = ref<string>("")
+const hideTagInput = ref<string>("")
 const tagInput = ref<string>("")
 const tagInputIdx = ref<number>(-1)
 const itemsDisplayed = ref<number>(20)
@@ -334,18 +366,13 @@ const enhancedPlaylist = computed((): EnhancedPlaylistItem[] => {
       goods: item.goods,
       bads: item.bads,
       user: item.user,
-      filteredOut: isFilteredOut(item),
+      filteredOut: !isItemShown(item, props.filter),
     }))
     .slice(0, itemsDisplayed.value);
 })
 
 const firstIndex = computed((): number => {
-  if (props.filter.tag === "") {
-    return 0;
-  }
-  return props.playlist.findIndex((item) =>
-    item.tags.includes(props.filter.tag)
-  );
+  return props.playlist.findIndex((item) => isItemShown(item, props.filter));
 })
 
 const sort = (by: SortBy, direction: SortDirection) => {
@@ -361,14 +388,20 @@ const toggleVisibility = (item: PlaylistItem, idx: number) => {
 const dragEnd = (evt: DragEndEvent) => {
   sendCtrl("move", [evt.oldIndex, evt.newIndex]);
 }
-const applyFilter = (tag: string) => {
-  emit("filterChange", tag);
+const removeFilterShowTag = (tag: string): void => {
+  sendCtrl("removeFilterShowTag", [tag])
+}
+const removeFilterHideTag = (tag: string): void => {
+  sendCtrl("removeFilterHideTag", [tag])
+}
+const addFilterShowTag = (tag: string): void => {
+  sendCtrl("addFilterShowTag", [tag])
+}
+const addFilterHideTag = (tag: string): void => {
+  sendCtrl("addFilterHideTag", [tag])
 }
 const sendCtrl = (ctrl: string, args: any[]) => {
   emit("ctrl", [ctrl, args]);
-}
-const isFilteredOut = (item: PlaylistItem) => {
-  return props.filter.tag !== "" && !item.tags.includes(props.filter.tag);
 }
 const startAddTag = (idx: number) => {
   tagInputIdx.value = idx;
@@ -381,13 +414,13 @@ const startAddTag = (idx: number) => {
 }
 
 watch(() => props.playlist, (newVal: PlaylistItem[], _oldVal: PlaylistItem[]) => {
-  if (!newVal.find((item: PlaylistItem) => !isFilteredOut(item))) {
+  if (!newVal.find((item: PlaylistItem) => isItemShown(item, props.filter))) {
     emit("stopPlayer");
   }
 })
 
 watch(() => props.filter, () => {
-  if (!props.playlist.find((item: PlaylistItem) => !isFilteredOut(item))) {
+  if (!props.playlist.find((item: PlaylistItem) => isItemShown(item, props.filter))) {
     emit("stopPlayer");
   }
 })
