@@ -5899,6 +5899,23 @@ const default_settings$4 = (obj = null) => ({
     customCssPresets: getProp(obj, ['customCssPresets'], presets).map(default_custom_css_preset),
     customCssPresetIdx: getProp(obj, ['customCssPresetIdx'], 0),
 });
+const isItemShown = (item, filter) => {
+    if (filter.show.tags.length) {
+        for (const tag of item.tags) {
+            if (filter.show.tags.includes(tag)) {
+                return true;
+            }
+        }
+    }
+    if (filter.hide.tags.length) {
+        for (const tag of item.tags) {
+            if (filter.hide.tags.includes(tag)) {
+                return false;
+            }
+        }
+    }
+    return filter.show.tags.length > 0 ? false : true;
+};
 
 class TooLongError extends Error {
 }
@@ -6200,6 +6217,17 @@ const NOT_ADDED_REASON = {
     NO_API_KEYS: 5,
     UNKNOWN: 6,
 };
+var SET_FILTER_SHOW_TAG_RESULT;
+(function (SET_FILTER_SHOW_TAG_RESULT) {
+    SET_FILTER_SHOW_TAG_RESULT[SET_FILTER_SHOW_TAG_RESULT["IS_HIDDEN"] = -1] = "IS_HIDDEN";
+    SET_FILTER_SHOW_TAG_RESULT[SET_FILTER_SHOW_TAG_RESULT["UPDATED"] = 1] = "UPDATED";
+    SET_FILTER_SHOW_TAG_RESULT[SET_FILTER_SHOW_TAG_RESULT["NOT_UPDATED"] = 0] = "NOT_UPDATED";
+})(SET_FILTER_SHOW_TAG_RESULT || (SET_FILTER_SHOW_TAG_RESULT = {}));
+var REMOVE_FILTER_SHOW_TAGS_RESULT;
+(function (REMOVE_FILTER_SHOW_TAGS_RESULT) {
+    REMOVE_FILTER_SHOW_TAGS_RESULT[REMOVE_FILTER_SHOW_TAGS_RESULT["UPDATED"] = 1] = "UPDATED";
+    REMOVE_FILTER_SHOW_TAGS_RESULT[REMOVE_FILTER_SHOW_TAGS_RESULT["NOT_UPDATED"] = 0] = "NOT_UPDATED";
+})(REMOVE_FILTER_SHOW_TAGS_RESULT || (REMOVE_FILTER_SHOW_TAGS_RESULT = {}));
 const default_playlist_item = (item = null) => {
     return {
         id: item?.id || 0,
@@ -6306,10 +6334,11 @@ class SongrequestModule {
         this.user = user;
     }
     async reinit() {
-        const shouldSave = false;
+        let shouldSave = false;
         const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {
             filter: {
-                tag: '',
+                show: { tags: [] },
+                hide: { tags: [] },
             },
             settings: default_settings$4(),
             playlist: default_playlist(),
@@ -6347,6 +6376,14 @@ class SongrequestModule {
         data.playlist = default_playlist(data.playlist);
         data.settings = default_settings$4(data.settings);
         data.commands = default_commands(data.commands);
+        // todo: remove after deploy
+        if ('tag' in data.filter) {
+            data.filter = {
+                show: { tags: data.filter.tag ? [data.filter.tag] : [] },
+                hide: { tags: [] },
+            };
+            shouldSave = true;
+        }
         return {
             data: {
                 playlist: data.playlist,
@@ -6599,8 +6636,17 @@ class SongrequestModule {
                     case 'updatetag':
                         this.updateTag(...args);
                         break;
-                    case 'filter':
-                        this.filter(...args);
+                    case 'addFilterShowTag':
+                        await this.addFilterShowTag(...args);
+                        break;
+                    case 'addFilterHideTag':
+                        await this.addFilterHideTag(...args);
+                        break;
+                    case 'removeFilterShowTag':
+                        await this.removeFilterShowTag(...args);
+                        break;
+                    case 'removeFilterHideTag':
+                        await this.removeFilterHideTag(...args);
                         break;
                     case 'videoVisibility':
                         await this.videoVisibility(...args);
@@ -6651,7 +6697,7 @@ class SongrequestModule {
         let index = -1;
         for (let i = 0; i < this.data.playlist.length; i++) {
             const item = this.data.playlist[i];
-            if (this.data.filter.tag === '' || item.tags.includes(this.data.filter.tag)) {
+            if (isItemShown(item, this.data.filter)) {
                 index = i;
             }
         }
@@ -6663,14 +6709,14 @@ class SongrequestModule {
                 continue;
             }
             const item = this.data.playlist[i];
-            if (this.data.filter.tag === '' || item.tags.includes(this.data.filter.tag)) {
+            if (isItemShown(item, this.data.filter)) {
                 return i;
             }
         }
         return -1;
     }
     determineFirstIndex() {
-        return this.data.playlist.findIndex(item => this.data.filter.tag === '' || item.tags.includes(this.data.filter.tag));
+        return this.data.playlist.findIndex(item => isItemShown(item, this.data.filter));
     }
     incStat(stat, idx = -1) {
         if (idx === -1) {
@@ -6796,6 +6842,87 @@ class SongrequestModule {
         this.incStat('goods');
         await this.save();
         await this.updateClients('stats');
+    }
+    async setFilterShowTag(tag) {
+        if (this.data.filter.hide.tags.includes(tag)) {
+            return SET_FILTER_SHOW_TAG_RESULT.IS_HIDDEN;
+        }
+        let saveRequired = false;
+        if (this.data.filter.show.tags.length !== 1 || this.data.filter.show.tags[0] !== tag) {
+            this.data.filter.show.tags = [tag];
+            saveRequired = true;
+        }
+        if (saveRequired) {
+            await this.save();
+            await this.updateClients('filter');
+            return SET_FILTER_SHOW_TAG_RESULT.UPDATED;
+        }
+        return SET_FILTER_SHOW_TAG_RESULT.NOT_UPDATED;
+    }
+    async removeFilterShowTags() {
+        let saveRequired = false;
+        if (this.data.filter.show.tags.length) {
+            this.data.filter.show.tags = [];
+            saveRequired = true;
+        }
+        if (saveRequired) {
+            await this.save();
+            await this.updateClients('filter');
+            return REMOVE_FILTER_SHOW_TAGS_RESULT.UPDATED;
+        }
+        return REMOVE_FILTER_SHOW_TAGS_RESULT.NOT_UPDATED;
+    }
+    async addFilterShowTag(tag) {
+        let saveRequired = false;
+        if (this.data.filter.hide.tags.includes(tag)) {
+            this.data.filter.hide.tags = this.data.filter.hide.tags.filter(t => t !== tag);
+            saveRequired = true;
+        }
+        if (!this.data.filter.show.tags.includes(tag)) {
+            this.data.filter.show.tags.push(tag);
+            saveRequired = true;
+        }
+        if (saveRequired) {
+            await this.save();
+            await this.updateClients('filter');
+        }
+    }
+    async addFilterHideTag(tag) {
+        let saveRequired = false;
+        if (this.data.filter.show.tags.includes(tag)) {
+            this.data.filter.show.tags = this.data.filter.show.tags.filter(t => t !== tag);
+            saveRequired = true;
+        }
+        if (!this.data.filter.hide.tags.includes(tag)) {
+            this.data.filter.hide.tags.push(tag);
+            saveRequired = true;
+        }
+        if (saveRequired) {
+            await this.save();
+            await this.updateClients('filter');
+        }
+    }
+    async removeFilterShowTag(tag) {
+        let saveRequired = false;
+        if (this.data.filter.show.tags.includes(tag)) {
+            this.data.filter.show.tags = this.data.filter.show.tags.filter(t => t !== tag);
+            saveRequired = true;
+        }
+        if (saveRequired) {
+            await this.save();
+            await this.updateClients('filter');
+        }
+    }
+    async removeFilterHideTag(tag) {
+        let saveRequired = false;
+        if (this.data.filter.hide.tags.includes(tag)) {
+            this.data.filter.hide.tags = this.data.filter.hide.tags.filter(t => t !== tag);
+            saveRequired = true;
+        }
+        if (saveRequired) {
+            await this.save();
+            await this.updateClients('filter');
+        }
     }
     async filter(filter) {
         this.data.filter = filter;
@@ -7259,12 +7386,26 @@ class SongrequestModule {
             }
             const say = this.bot.sayFn(this.user, ctx.target);
             const tag = ctx.rawCmd.args.join(' ');
-            await this.filter({ tag });
             if (tag !== '') {
-                say(`Playing only songs tagged with "${tag}"`);
+                const res = await this.setFilterShowTag(tag);
+                if (res === SET_FILTER_SHOW_TAG_RESULT.IS_HIDDEN) {
+                    say(`The tag ${tag} is currently hidden, no changes made.`);
+                }
+                else if (res === SET_FILTER_SHOW_TAG_RESULT.UPDATED) {
+                    say(`Playing only songs tagged with "${tag}".`);
+                }
+                else if (res === SET_FILTER_SHOW_TAG_RESULT.NOT_UPDATED) {
+                    say(`Already playing only songs tagged with "${tag}".`);
+                }
             }
             else {
-                say(`Playing all songs`);
+                const res = await this.removeFilterShowTags();
+                if (res === REMOVE_FILTER_SHOW_TAGS_RESULT.UPDATED) {
+                    say(`Playing all songs.`);
+                }
+                else if (res === REMOVE_FILTER_SHOW_TAGS_RESULT.NOT_UPDATED) {
+                    say(`Already playing all songs.`);
+                }
             }
         };
     }
@@ -8362,9 +8503,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-02-27T20:27:51.700Z",
+    buildDate: "2023-02-28T20:11:52.929Z",
     // @ts-ignore
-    buildVersion: "1.57.0",
+    buildVersion: "1.58.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
