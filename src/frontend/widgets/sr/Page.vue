@@ -53,6 +53,7 @@ import WsClient from "../../WsClient"
 import {
   default_custom_css_preset,
   default_settings,
+  isItemShown,
   SongrequestModuleCustomCssPreset,
   SongRequestModuleFilter,
   SongrequestModuleSettings,
@@ -70,7 +71,7 @@ const props = defineProps<{
 let ws: WsClient | null = null
 
 const player = ref<InstanceType<typeof YoutubePlayer>>() as Ref<InstanceType<typeof YoutubePlayer>>
-const filter = ref<SongRequestModuleFilter>({ tag: "" })
+const filter = ref<SongRequestModuleFilter>({ show: { tags: [] }, hide: { tags: [] } })
 const hasPlayed = ref<boolean>(false)
 const playlist = ref<PlaylistItem[]>([])
 const settings = ref<SongrequestModuleSettings>(default_settings())
@@ -111,23 +112,14 @@ const progressValueStyle = computed((): { width: string } => {
   }
 })
 
-const playlistItems = computed((): PlaylistItem[] => {
-  return playlist.value.filter((item) => !isFilteredOutTags(item))
-})
-
 const playlistItemsSlice = computed((): PlaylistItem[] => {
   return preset.value.maxItemsShown >= 0
-    ? playlistItems.value.slice(0, preset.value.maxItemsShown)
-    : playlistItems.value
+    ? filteredPlaylist.value.slice(0, preset.value.maxItemsShown)
+    : filteredPlaylist.value
 })
 
 const filteredPlaylist = computed((): PlaylistItem[] => {
-  if (filter.value.tag === "") {
-    return playlist.value
-  }
-  return playlist.value.filter((item: PlaylistItem) =>
-    item.tags.includes(filter.value.tag)
-  )
+  return playlist.value.filter((item: PlaylistItem) => isItemShown(item, filter.value))
 })
 
 const hidevideo = computed((): boolean => {
@@ -141,9 +133,6 @@ const item = computed((): PlaylistItem | null => {
   return filteredPlaylist.value[0]
 })
 
-const isFilteredOutTags = (item: PlaylistItem): boolean => {
-  return filter.value.tag !== "" && !item.tags.includes(filter.value.tag)
-}
 const ended = (): void => {
   if (item.value) {
     sendMsg({ event: "ended", id: item.value.id })
