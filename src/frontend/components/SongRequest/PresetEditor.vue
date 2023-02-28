@@ -109,15 +109,18 @@
           </tr>
           <tr>
             <td>Custom CSS</td>
-            <td>
+            <td colspan="2">
               <MonacoEditor
                 v-model="val.css"
                 language="css"
               />
             </td>
+          </tr>
+          <tr>
+            <td>Custom CSS Help</td>
             <td>
               <p>Classes that can be used for styling:</p>
-              <table class="table">
+              <table class="table is-fullwidth">
                 <thead>
                   <tr><th>Class</th><th>Description</th></tr>
                 </thead>
@@ -372,7 +375,6 @@ onMounted(() => {
 }
 pre {
   padding: 0.5em 1em;
-  max-width: 30vw;
   overflow: scroll;
 }
 pre code {
