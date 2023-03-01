@@ -6,7 +6,7 @@ import {
   ChatMessageContext, PlaylistItem,
   FunctionCommand, Command,
   Bot, CommandFunction, Module, CommandExecutionContext,
-  MODULE_NAME, WIDGET_TYPE, TwitchChatContext,
+  MODULE_NAME, WIDGET_TYPE, TwitchChatContext, CommandAction,
 } from '../../types'
 import {
   default_commands,
@@ -28,6 +28,7 @@ import { NotFoundError } from '../../services/youtube/NotFoundError'
 import { Youtube, YoutubeVideoEntry } from '../../services/Youtube'
 import { QuotaReachedError } from '../../services/youtube/QuotaReachedError'
 import { NoApiKeysError } from '../../services/youtube/NoApiKeysError'
+import { commands } from '../../common/commands'
 
 const log = logger('SongrequestModule.ts')
 
@@ -57,6 +58,11 @@ enum SET_FILTER_SHOW_TAG_RESULT {
 enum REMOVE_FILTER_SHOW_TAGS_RESULT {
   UPDATED = 1,
   NOT_UPDATED = 0,
+}
+
+enum MOVE_TAG_UP_RESULT {
+  MOVED = 1,
+  NOT_MOVED = 0,
 }
 
 interface AddResponseData {
@@ -150,6 +156,24 @@ export const findInsertIndex = (playlist: PlaylistItem[]): number => {
   return (found === -1 ? 0 : found) + 1
 }
 
+export const moveTagUp = (playlist: PlaylistItem[], tag: string): MOVE_TAG_UP_RESULT => {
+  let moved = false
+  playlist = playlist.sort((a, b) => {
+    if (a.tags.includes(tag)) {
+      if (b.tags.includes(tag)) {
+        return 0
+      }
+      moved = true
+      return -1
+    } else if (b.tags.includes(tag)) {
+      moved = true
+      return 1
+    }
+    return 0
+  })
+  return moved ? MOVE_TAG_UP_RESULT.MOVED : MOVE_TAG_UP_RESULT.NOT_MOVED
+}
+
 interface LastEventInfo { id: number, timestamp: number, wsId: string }
 
 class SongrequestModule implements Module {
@@ -206,7 +230,7 @@ class SongrequestModule implements Module {
   }
 
   async reinit(): Promise<SongerquestModuleInitData> {
-    const shouldSave = false
+    let shouldSave = false
     const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {
       filter: {
         show: { tags: [] },
@@ -249,6 +273,12 @@ class SongrequestModule implements Module {
     data.playlist = default_playlist(data.playlist)
     data.settings = default_settings(data.settings)
     data.commands = default_commands(data.commands)
+
+    // todo: remove after release
+    if (!data.commands.some((c: Command) => c.action === CommandAction.SR_MOVE_TAG_UP)) {
+      data.commands.push(commands.sr_move_tag_up.NewCommand())
+      shouldSave = true
+    }
     
     return {
       data: {
@@ -292,6 +322,7 @@ class SongrequestModule implements Module {
       sr_filter: this.cmdSrFilter.bind(this),
       sr_preset: this.cmdSrPreset.bind(this),
       sr_queue: this.cmdSrQueue.bind(this),
+      sr_move_tag_up: this.cmdSrMoveTagUp.bind(this),
     }
     const commands: FunctionCommand[] = []
     rawCommands.forEach((cmd: Command) => {
@@ -1304,6 +1335,29 @@ class SongrequestModule implements Module {
         } else if (res === REMOVE_FILTER_SHOW_TAGS_RESULT.NOT_UPDATED) {
           say('Already playing all songs.')
         }
+      }
+    }
+  }
+
+  cmdSrMoveTagUp(_originalCommand: Command) {
+    return async (ctx: CommandExecutionContext) => {
+      if (!ctx.rawCmd || !ctx.context) {
+        return
+      }
+
+      const say = this.bot.sayFn(this.user, ctx.target)
+      const tag = ctx.rawCmd.args.join(' ')
+      if (tag === '') {
+        say(`No tag given.`)
+        return
+      }
+      const res = moveTagUp(this.data.playlist, tag)
+      if (res === MOVE_TAG_UP_RESULT.MOVED) {
+        say(`Moved songs with tag "${tag}" to the beginning of the playlist.`)
+        await this.save()
+        await this.updateClients('skip')
+      } else if (res === MOVE_TAG_UP_RESULT.NOT_MOVED) {
+        say(`No songs with tag "${tag}" found.`)
       }
     }
   }

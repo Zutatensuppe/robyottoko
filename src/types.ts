@@ -402,6 +402,7 @@ export enum CommandAction {
   SR_FILTER = 'sr_filter',
   SR_PRESET = 'sr_preset',
   SR_QUEUE = 'sr_queue',
+  SR_MOVE_TAG_UP = 'sr_move_tag_up',
 }
 
 interface CommandCooldown {

@@ -208,7 +208,7 @@ const createCommand = (cmd: Partial<Command>): Command => {
 }
 
 export const commands: Record<CommandAction, CommandDef> = {
-  text: {
+  [CommandAction.TEXT]: {
     Name: () => 'command',
     Description: () => '',
     NewCommand: (): Command => createCommand({
@@ -216,7 +216,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       action: CommandAction.TEXT,
     }),
   },
-  sr_current: {
+  [CommandAction.SR_CURRENT]: {
     Name: () => 'sr_current',
     Description: () => 'Show what song is currently playing',
     NewCommand: (): Command => createCommand({
@@ -224,7 +224,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       triggers: [newCommandTrigger('!sr current', true)],
     }),
   },
-  sr_undo: {
+  [CommandAction.SR_UNDO]: {
     Name: () => 'sr_undo',
     Description: () => 'Remove the song that was last added by oneself.',
     NewCommand: (): Command => createCommand({
@@ -232,7 +232,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       triggers: [newCommandTrigger('!sr undo', true)],
     }),
   },
-  sr_good: {
+  [CommandAction.SR_GOOD]: {
     Name: () => 'sr_good',
     Description: () => 'Vote the current song up',
     NewCommand: (): Command => createCommand({
@@ -240,7 +240,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       triggers: [newCommandTrigger('!sr good', true)],
     }),
   },
-  sr_bad: {
+  [CommandAction.SR_BAD]: {
     Name: () => 'sr_bad',
     Description: () => 'Vote the current song down',
     NewCommand: (): Command => createCommand({
@@ -248,7 +248,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       triggers: [newCommandTrigger('!sr bad', true)],
     }),
   },
-  sr_stats: {
+  [CommandAction.SR_STATS]: {
     Name: () => 'sr_stats',
     Description: () => 'Show stats about the playlist',
     NewCommand: (): Command => createCommand({
@@ -256,7 +256,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)],
     }),
   },
-  sr_prev: {
+  [CommandAction.SR_PREV]: {
     Name: () => 'sr_prev',
     Description: () => 'Skip to the previous song',
     NewCommand: (): Command => createCommand({
@@ -265,7 +265,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
-  sr_next: {
+  [CommandAction.SR_NEXT]: {
     Name: () => 'sr_next',
     Description: () => 'Skip to the next song',
     NewCommand: (): Command => createCommand({
@@ -274,7 +274,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
-  sr_jumptonew: {
+  [CommandAction.SR_JUMPTONEW]: {
     Name: () => 'sr_jumptonew',
     Description: () => 'Jump to the next unplayed song',
     NewCommand: (): Command => createCommand({
@@ -283,7 +283,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
-  sr_clear: {
+  [CommandAction.SR_CLEAR]: {
     Name: () => 'sr_clear',
     Description: () => 'Clear the playlist',
     NewCommand: (): Command => createCommand({
@@ -292,7 +292,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
-  sr_rm: {
+  [CommandAction.SR_RM]: {
     Name: () => 'sr_rm',
     Description: () => 'Remove the current song from the playlist',
     NewCommand: (): Command => createCommand({
@@ -301,7 +301,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
-  sr_shuffle: {
+  [CommandAction.SR_SHUFFLE]: {
     Name: () => 'sr_shuffle',
     Description: () => `Shuffle the playlist (current song unaffected).
     <br />
@@ -313,7 +313,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
-  sr_reset_stats: {
+  [CommandAction.SR_RESET_STATS]: {
     Name: () => 'sr_reset_stats',
     Description: () => 'Reset all statistics of all songs',
     NewCommand: (): Command => createCommand({
@@ -322,7 +322,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
-  sr_loop: {
+  [CommandAction.SR_LOOP]: {
     Name: () => 'sr_loop',
     Description: () => 'Loop the current song',
     NewCommand: (): Command => createCommand({
@@ -331,7 +331,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
-  sr_noloop: {
+  [CommandAction.SR_NOLOOP]: {
     Name: () => 'sr_noloop',
     Description: () => 'Stop looping the current song',
     NewCommand: (): Command => createCommand({
@@ -340,7 +340,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
-  sr_pause: {
+  [CommandAction.SR_PAUSE]: {
     Name: () => 'sr_pause',
     Description: () => 'Pause currently playing song',
     NewCommand: (): Command => createCommand({
@@ -349,7 +349,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
-  sr_unpause: {
+  [CommandAction.SR_UNPAUSE]: {
     Name: () => 'sr_unpause',
     Description: () => 'Unpause currently paused song',
     NewCommand: (): Command => createCommand({
@@ -358,7 +358,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
-  sr_hidevideo: {
+  [CommandAction.SR_HIDEVIDEO]: {
     Name: () => 'sr_hidevideo',
     Description: () => 'Hide video for current song',
     NewCommand: (): Command => createCommand({
@@ -367,7 +367,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
-  sr_showvideo: {
+  [CommandAction.SR_SHOWVIDEO]: {
     Name: () => 'sr_showvideo',
     Description: () => 'Show video for current song',
     NewCommand: (): Command => createCommand({
@@ -376,7 +376,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
-  sr_request: {
+  [CommandAction.SR_REQUEST]: {
     Name: () => 'sr_request',
     Description: () => `
     Search for <code>&lt;SEARCH&gt;</code> (argument to this command)
@@ -388,7 +388,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       triggers: [newCommandTrigger('!sr')],
     }),
   },
-  sr_re_request: {
+  [CommandAction.SR_RE_REQUEST]: {
     Name: () => 'sr_re_request',
     Description: () => `
     Search for <code>&lt;SEARCH&gt;</code> (argument to this command)
@@ -399,7 +399,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       triggers: [newCommandTrigger('!resr')],
     }),
   },
-  sr_addtag: {
+  [CommandAction.SR_ADDTAG]: {
     Name: () => 'sr_addtag',
     Description: () => 'Add tag <code>&lt;TAG&gt;</code> (argument to this command) to the current song',
     NewCommand: (): Command => createCommand({
@@ -409,7 +409,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       data: { tag: '' },
     }),
   },
-  sr_rmtag: {
+  [CommandAction.SR_RMTAG]: {
     Name: () => 'sr_rmtag',
     Description: () => 'Remove tag <code>&lt;TAG&gt;</code> (argument to this command) from the current song',
     NewCommand: (): Command => createCommand({
@@ -418,7 +418,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
-  sr_volume: {
+  [CommandAction.SR_VOLUME]: {
     Name: () => 'sr_volume',
     Description: () => `Sets the song request volume to <code>&lt;VOLUME&gt;</code> (argument to this command, min 0, max 100).
     <br />
@@ -429,7 +429,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
-  sr_filter: {
+  [CommandAction.SR_FILTER]: {
     Name: () => 'sr_filter',
     Description: () => `Play only songs with the given tag <code>&lt;TAG&gt;</code> (argument to this command). If no tag
   is given, play all songs.`,
@@ -439,7 +439,7 @@ export const commands: Record<CommandAction, CommandDef> = {
       restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
-  sr_preset: {
+  [CommandAction.SR_PRESET]: {
     Name: () => 'sr_preset',
     Description: () => `Switches to the preset <code>&lt;PRESET&gt;</code> (argument to this command) if it exists.
   If no arguments are given, outputs all available presets.`,
@@ -449,12 +449,21 @@ export const commands: Record<CommandAction, CommandDef> = {
       restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
-  sr_queue: {
+  [CommandAction.SR_QUEUE]: {
     Name: () => 'sr_queue',
     Description: () => 'Shows the next 3 songs that will play.',
     NewCommand: (): Command => createCommand({
       action: CommandAction.SR_QUEUE,
       triggers: [newCommandTrigger('!sr queue')],
+    }),
+  },
+  [CommandAction.SR_MOVE_TAG_UP]: {
+    Name: () => 'sr_move_tag_up',
+    Description: () => 'Moves songs with the tag to the beginning of the playlist.',
+    NewCommand: (): Command => createCommand({
+      action: CommandAction.SR_MOVE_TAG_UP,
+      triggers: [newCommandTrigger('!sr movetagup')],
+      restrict: { active: true, to: MOD_OR_ABOVE },
     }),
   },
 }

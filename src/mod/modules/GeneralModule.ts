@@ -251,20 +251,6 @@ class GeneralModule implements Module {
     const fixed = this.fix(data.commands)
     data.commands = fixed.commands
 
-    // todo: remove after release
-    if (!data.adminSettings) {
-      data.adminSettings = {}
-      fixed.shouldSave = true
-    }
-    if (typeof data.adminSettings.showImages === 'undefined') {
-      data.adminSettings.showImages = true
-      fixed.shouldSave = true
-    }
-    if (typeof data.adminSettings.autocommands === 'undefined') {
-      data.adminSettings.autocommands = []
-      fixed.shouldSave = true
-    }
-
     // do not remove for now, new users gain the !bot command by this
     if (!data.adminSettings.autocommands.includes('!bot')) {
       const command = commonCommands.text.NewCommand() as RandomTextCommand
