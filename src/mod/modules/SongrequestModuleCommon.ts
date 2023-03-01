@@ -141,7 +141,7 @@ export const default_settings = (obj: any = null): SongrequestModuleSettings => 
     filename: getProp(obj, ['hideVideoImage', 'filename'], ''),
     urlpath: obj?.hideVideoImage?.urlpath ? obj.hideVideoImage.urlpath : (
       obj?.hideVideoImage?.file ? `/uploads/${encodeURIComponent(obj.hideVideoImage.file)}` : ''
-    )
+    ),
   },
   maxSongLength: {
     viewer: getProp(obj, ['maxSongLength', 'viewer'], 0),

@@ -186,14 +186,14 @@ const _next = (): void => {
     log.info('synthesizing recognized text')
     synthesize(
       recognizedText.value,
-      settings.value.recognition.synthesizeLang
+      settings.value.recognition.synthesizeLang,
     )
   }
   if (translatedText.value && settings.value.translation.synthesize) {
     log.info('synthesizing translated text')
     synthesize(
       translatedText.value,
-      settings.value.translation.synthesizeLang
+      settings.value.translation.synthesizeLang,
     )
   }
 
@@ -289,7 +289,7 @@ const applyStyles = (): void => {
       speechTextFg.value,
       speechTextBg.value,
       styles.recognition,
-      bgColor
+      bgColor,
     )
   }
 
@@ -300,7 +300,7 @@ const applyStyles = (): void => {
       transTextFg.value,
       transTextBg.value,
       styles.translation,
-      bgColor
+      bgColor,
     )
   }
 }
@@ -319,7 +319,7 @@ const initVoiceRecognition = (): void => {
   const r = window.SpeechRecognition || window.webkitSpeechRecognition
   if (!r) {
     alert(
-      'This widget does not work in this browser. Try a chrome based browser.'
+      'This widget does not work in this browser. Try a chrome based browser.',
     )
     return
   }
@@ -383,7 +383,7 @@ const onVoiceResult = (evt: any): void => {
       JSON.stringify({
         event: 'onVoiceResult',
         text: _recognizedText,
-      })
+      }),
     )
     break
   }

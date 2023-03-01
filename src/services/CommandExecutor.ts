@@ -19,7 +19,7 @@ export class CommandExecutor {
     context: TwitchChatContext,
     triggers: CommandTrigger[],
     date: Date,
-    contextModule?: Module
+    contextModule?: Module,
   ): Promise<void> {
     const promises: Promise<void>[] = []
     const ctx: CommandExecutionContext = { rawCmd, target, context, date }

@@ -77,7 +77,7 @@ const emit = defineEmits<{
 }>()
 
 const id = `yt-${Math.floor(
-  Math.random() * 99 + 1
+  Math.random() * 99 + 1,
 )}-${new Date().getTime()}`
 
 const yt = ref<YoutubePlayer | null>(null)

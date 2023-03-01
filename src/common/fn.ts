@@ -83,7 +83,7 @@ export const dateformat = (
 
 export const pad = (
   x: string | number,
-  pad: string
+  pad: string,
 ): string => {
   const str = `${x}`
   if (str.length >= pad.length) {

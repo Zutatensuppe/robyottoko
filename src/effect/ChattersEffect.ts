@@ -24,7 +24,7 @@ export class ChattersEffect extends Effect<ChattersEffectData> {
 
     const userNames = await this.contextModule.bot.getRepos().chatLog.getChatters(
       this.contextModule.user.twitch_id,
-      new Date(stream.started_at)
+      new Date(stream.started_at),
     )
     if (userNames.length === 0) {
       this.say('It seems nobody chatted? :(')

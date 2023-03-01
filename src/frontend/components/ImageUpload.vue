@@ -55,7 +55,7 @@ const emit = defineEmits<{
 const value = ref<MediaFile>(
   props.modelValue
     ? JSON.parse(JSON.stringify(props.modelValue))
-    : { file: '', filename: '', urlpath: '' }
+    : { file: '', filename: '', urlpath: '' },
 )
 const draggingOver = ref<boolean>(false)
 

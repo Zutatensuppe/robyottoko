@@ -21,7 +21,7 @@ export const createRouter = (
     destination: uploadDir,
     filename: function (req, file, cb) {
       cb(null, `${nonce(6)}-${file.originalname}`)
-    }
+    },
   })
   const upload = multer({ storage }).single('file')
 
@@ -75,7 +75,7 @@ export const createRouter = (
     const pub = req.body.pub
     const url = await bot.getWidgets().createWidgetUrl(type, req.user.id)
     res.send({
-      url: pub ? (await bot.getWidgets().pubUrl(url)) : url
+      url: pub ? (await bot.getWidgets().pubUrl(url)) : url,
     })
   })
 
@@ -139,7 +139,7 @@ export const createRouter = (
         tmi_identity_client_secret: user.tmi_identity_client_secret,
         bot_enabled: user.bot_enabled,
         bot_status_messages: user.bot_status_messages,
-        groups: await bot.getRepos().user.getGroups(user.id)
+        groups: await bot.getRepos().user.getGroups(user.id),
       },
     })
   })

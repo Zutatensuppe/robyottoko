@@ -8,16 +8,16 @@ const HyottokoChan: AvatarModuleAvatarDefinition = {
   'stateDefinitions': [
     {
       'value': 'default',
-      'deletable': false
+      'deletable': false,
     },
     {
       'value': 'speaking',
-      'deletable': false
+      'deletable': false,
     },
     {
       'value': 'brb',
-      'deletable': true
-    }
+      'deletable': true,
+    },
   ],
   'slotDefinitions': [
     {
@@ -32,24 +32,24 @@ const HyottokoChan: AvatarModuleAvatarDefinition = {
               'frames': [
                 {
                   'url': 'https://hyottoko.club/uploads/bVyo1l-BASE.png',
-                  'duration': 100
-                }
-              ]
+                  'duration': 100,
+                },
+              ],
             },
             {
               'state': 'speaking',
-              'frames': []
+              'frames': [],
             },
             {
               'state': 'brb',
               'frames': [
                 {
                   'url': 'https://hyottoko.club/uploads/JFvasz-2022-01-30T01_30_40.133Z-xUI5QQ.png',
-                  'duration': 100
-                }
-              ]
-            }
-          ]
+                  'duration': 100,
+                },
+              ],
+            },
+          ],
         },
         {
           'title': 'Neko Maid',
@@ -59,26 +59,26 @@ const HyottokoChan: AvatarModuleAvatarDefinition = {
               'frames': [
                 {
                   'url': 'https://hyottoko.club/uploads/CnWpBL-BASE 2.png',
-                  'duration': 100
-                }
-              ]
+                  'duration': 100,
+                },
+              ],
             },
             {
               'state': 'speaking',
-              'frames': []
+              'frames': [],
             },
             {
               'state': 'brb',
               'frames': [
                 {
                   'url': 'https://hyottoko.club/uploads/xV8vXJ-brb2.png',
-                  'duration': 100
-                }
-              ]
-            }
-          ]
-        }
-      ]
+                  'duration': 100,
+                },
+              ],
+            },
+          ],
+        },
+      ],
     },
     {
       'slot': 'Mouth',
@@ -92,29 +92,29 @@ const HyottokoChan: AvatarModuleAvatarDefinition = {
               'frames': [
                 {
                   'url': 'https://hyottoko.club/uploads/GkDE45-mouth-confused-open.png',
-                  'duration': 100
-                }
-              ]
+                  'duration': 100,
+                },
+              ],
             },
             {
               'state': 'speaking',
               'frames': [
                 {
                   'url': 'https://hyottoko.club/uploads/snKSAf-mouth-open.png',
-                  'duration': 100
-                }
-              ]
+                  'duration': 100,
+                },
+              ],
             },
             {
               'state': 'brb',
               'frames': [
                 {
                   'url': '',
-                  'duration': 100
-                }
-              ]
-            }
-          ]
+                  'duration': 100,
+                },
+              ],
+            },
+          ],
         },
         {
           'title': 'Mild Smile',
@@ -124,29 +124,29 @@ const HyottokoChan: AvatarModuleAvatarDefinition = {
               'frames': [
                 {
                   'url': 'https://hyottoko.club/uploads/TTeOCx-mouth-mild-smile.png',
-                  'duration': 100
-                }
-              ]
+                  'duration': 100,
+                },
+              ],
             },
             {
               'state': 'speaking',
               'frames': [
                 {
                   'url': 'https://hyottoko.club/uploads/gjs4vW-mouth-open.png',
-                  'duration': 100
-                }
-              ]
+                  'duration': 100,
+                },
+              ],
             },
             {
               'state': 'brb',
               'frames': [
                 {
                   'url': '',
-                  'duration': 100
-                }
-              ]
-            }
-          ]
+                  'duration': 100,
+                },
+              ],
+            },
+          ],
         },
         {
           'title': 'Focused',
@@ -156,26 +156,26 @@ const HyottokoChan: AvatarModuleAvatarDefinition = {
               'frames': [
                 {
                   'url': 'https://hyottoko.club/uploads/bbpNaD-mouth-focused.png',
-                  'duration': 100
-                }
-              ]
+                  'duration': 100,
+                },
+              ],
             },
             {
               'state': 'speaking',
-              'frames': []
+              'frames': [],
             },
             {
               'state': 'brb',
               'frames': [
                 {
                   'url': '',
-                  'duration': 100
-                }
-              ]
-            }
-          ]
-        }
-      ]
+                  'duration': 100,
+                },
+              ],
+            },
+          ],
+        },
+      ],
     },
     {
       'slot': 'Eyes',
@@ -189,37 +189,37 @@ const HyottokoChan: AvatarModuleAvatarDefinition = {
               'frames': [
                 {
                   'url': 'https://hyottoko.club/uploads/NO7zrl-eyes-calm.png',
-                  'duration': 4500
+                  'duration': 4500,
                 },
                 {
                   'url': 'https://hyottoko.club/uploads/nmUEqi-eyes-closed.png',
-                  'duration': 150
-                }
-              ]
+                  'duration': 150,
+                },
+              ],
             },
             {
               'state': 'speaking',
               'frames': [
                 {
                   'url': 'https://hyottoko.club/uploads/9eidC9-l2idid-eyes-calm.png',
-                  'duration': 4500
+                  'duration': 4500,
                 },
                 {
                   'url': 'https://hyottoko.club/uploads/pw1HJw-nmUEqi-eyes-closed.png',
-                  'duration': 150
-                }
-              ]
+                  'duration': 150,
+                },
+              ],
             },
             {
               'state': 'brb',
               'frames': [
                 {
                   'url': '',
-                  'duration': 100
-                }
-              ]
-            }
-          ]
+                  'duration': 100,
+                },
+              ],
+            },
+          ],
         },
         {
           'title': 'Interested',
@@ -229,37 +229,37 @@ const HyottokoChan: AvatarModuleAvatarDefinition = {
               'frames': [
                 {
                   'url': 'https://hyottoko.club/uploads/2wlpCr-eyes-interested.png',
-                  'duration': 4500
+                  'duration': 4500,
                 },
                 {
                   'url': 'https://hyottoko.club/uploads/DwiBor-eyes-closed.png',
-                  'duration': 150
-                }
-              ]
+                  'duration': 150,
+                },
+              ],
             },
             {
               'state': 'speaking',
               'frames': [
                 {
                   'url': 'https://hyottoko.club/uploads/5fP25n-eyes-interested.png',
-                  'duration': 4500
+                  'duration': 4500,
                 },
                 {
                   'url': 'https://hyottoko.club/uploads/PYiAtV-eyes-closed.png',
-                  'duration': 150
-                }
-              ]
+                  'duration': 150,
+                },
+              ],
             },
             {
               'state': 'brb',
               'frames': [
                 {
                   'url': '',
-                  'duration': 100
-                }
-              ]
-            }
-          ]
+                  'duration': 100,
+                },
+              ],
+            },
+          ],
         },
         {
           'title': 'Focused',
@@ -269,26 +269,26 @@ const HyottokoChan: AvatarModuleAvatarDefinition = {
               'frames': [
                 {
                   'url': 'https://hyottoko.club/uploads/LQkiXq-eyes-down-focused.png',
-                  'duration': 100
-                }
-              ]
+                  'duration': 100,
+                },
+              ],
             },
             {
               'state': 'speaking',
-              'frames': []
+              'frames': [],
             },
             {
               'state': 'brb',
               'frames': [
                 {
                   'url': '',
-                  'duration': 100
-                }
-              ]
-            }
-          ]
-        }
-      ]
+                  'duration': 100,
+                },
+              ],
+            },
+          ],
+        },
+      ],
     },
     {
       'slot': 'Hands + Table',
@@ -302,19 +302,19 @@ const HyottokoChan: AvatarModuleAvatarDefinition = {
               'frames': [
                 {
                   'url': '',
-                  'duration': 100
-                }
-              ]
+                  'duration': 100,
+                },
+              ],
             },
             {
               'state': 'speaking',
-              'frames': []
+              'frames': [],
             },
             {
               'state': 'brb',
-              'frames': []
-            }
-          ]
+              'frames': [],
+            },
+          ],
         },
         {
           'title': 'Mouse Study',
@@ -324,24 +324,24 @@ const HyottokoChan: AvatarModuleAvatarDefinition = {
               'frames': [
                 {
                   'url': 'https://hyottoko.club/uploads/YJnPbG-mouse-study.png',
-                  'duration': 100
-                }
-              ]
+                  'duration': 100,
+                },
+              ],
             },
             {
               'state': 'speaking',
-              'frames': []
+              'frames': [],
             },
             {
               'state': 'brb',
               'frames': [
                 {
                   'url': '',
-                  'duration': 100
-                }
-              ]
-            }
-          ]
+                  'duration': 100,
+                },
+              ],
+            },
+          ],
         },
         {
           'title': 'Tablet',
@@ -351,24 +351,24 @@ const HyottokoChan: AvatarModuleAvatarDefinition = {
               'frames': [
                 {
                   'url': 'https://hyottoko.club/uploads/MNHy2s-tablet-osu.png',
-                  'duration': 100
-                }
-              ]
+                  'duration': 100,
+                },
+              ],
             },
             {
               'state': 'speaking',
-              'frames': []
+              'frames': [],
             },
             {
               'state': 'brb',
               'frames': [
                 {
                   'url': '',
-                  'duration': 100
-                }
-              ]
-            }
-          ]
+                  'duration': 100,
+                },
+              ],
+            },
+          ],
         },
         {
           'title': 'Hands Knitting',
@@ -378,24 +378,24 @@ const HyottokoChan: AvatarModuleAvatarDefinition = {
               'frames': [
                 {
                   'url': 'https://hyottoko.club/uploads/pn9ZlM-knitting-hands2.png',
-                  'duration': 100
-                }
-              ]
+                  'duration': 100,
+                },
+              ],
             },
             {
               'state': 'speaking',
-              'frames': []
+              'frames': [],
             },
             {
               'state': 'brb',
               'frames': [
                 {
                   'url': '',
-                  'duration': 100
-                }
-              ]
-            }
-          ]
+                  'duration': 100,
+                },
+              ],
+            },
+          ],
         },
         {
           'title': 'Hands Cross Stitch',
@@ -405,36 +405,36 @@ const HyottokoChan: AvatarModuleAvatarDefinition = {
               'frames': [
                 {
                   'url': 'https://hyottoko.club/uploads/XZRYyh-crossstitch-hands.png',
-                  'duration': 100
-                }
-              ]
+                  'duration': 100,
+                },
+              ],
             },
             {
               'state': 'speaking',
-              'frames': []
+              'frames': [],
             },
             {
               'state': 'brb',
               'frames': [
                 {
                   'url': '',
-                  'duration': 100
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    }
+                  'duration': 100,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
   ],
   'state': {
     'slots': {
       'Mouth': 1,
       'Eyes': 1,
       'Base': 1,
-      'Hands + Table': 1
+      'Hands + Table': 1,
     },
-    'lockedState': 'default'
-  }
+    'lockedState': 'default',
+  },
 }
 export default HyottokoChan

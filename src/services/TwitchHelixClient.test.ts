@@ -13,7 +13,7 @@ test.each([
         { name: 'other stuff', id: '1', box_art_url: '' },
         { name: 'some other stuff', id: '1', box_art_url: '' },
         { name: 'other', id: '1', box_art_url: '' },
-      ]
+      ],
     },
     expected: { name: 'other', id: '1', box_art_url: '' },
   },
@@ -25,7 +25,7 @@ test.each([
         { name: 'other stuff', id: '1', box_art_url: '' },
         { name: 'some other stuff', id: '1', box_art_url: '' },
         { name: 'other', id: '1', box_art_url: '' },
-      ]
+      ],
     },
     expected: { name: 'others', id: '1', box_art_url: '' },
   },
@@ -37,7 +37,7 @@ test.each([
         { name: 'some others stuff', id: '1', box_art_url: '' },
         { name: 'retho', id: '1', box_art_url: '' },
         { name: 'other', id: '1', box_art_url: '' },
-      ]
+      ],
     },
     expected: { name: 'some others stuff', id: '1', box_art_url: '' },
   },
@@ -79,8 +79,8 @@ test.each([
           box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/505020-52x72.jpg',
           id: '505020',
           name: 'Henshin Inma Shoujo Karin: Midara na Akuma wa H ga Osuki',
-        }
-      ]
+        },
+      ],
     },
     expected: {
       box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/21465_IGDB-52x72.jpg',
@@ -132,27 +132,27 @@ test.each([
         {
           box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/5316-52x72.jpg',
           id: '5316',
-          name: 'Other Worlds'
+          name: 'Other Worlds',
         },
         {
           box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/21713-52x72.jpg',
           id: '21713',
-          name: 'Otherland'
+          name: 'Otherland',
         },
         {
           box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/509354-52x72.jpg',
           id: '509354',
-          name: 'Otherworld: Shades of Fall'
+          name: 'Otherworld: Shades of Fall',
         },
         {
           box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/511910_IGDB-52x72.jpg',
           id: '511910',
-          name: 'Othercide'
+          name: 'Othercide',
         },
         {
           box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/512354-52x72.jpg',
           id: '512354',
-          name: 'Others'
+          name: 'Others',
         },
       ],
     },

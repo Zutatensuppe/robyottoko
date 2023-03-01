@@ -19,7 +19,7 @@ export class TwitchTmiClientManager {
       channels,
       connection: {
         reconnect: true,
-      }
+      },
     })
     return client
   }

@@ -671,6 +671,6 @@ export default defineComponent({
             }
             this.ws.send(JSON.stringify(data))
         },
-    }
+    },
 })
 </script>

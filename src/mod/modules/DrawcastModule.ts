@@ -60,7 +60,7 @@ class DrawcastModule implements Module {
       return fs.readdirSync(path)
         .map((name) => ({
           name: name,
-          time: fs.statSync(path + '/' + name).mtime.getTime()
+          time: fs.statSync(path + '/' + name).mtime.getTime(),
         }))
         .sort((a, b) => b.time - a.time)
         .map((v) => ({
@@ -147,7 +147,7 @@ class DrawcastModule implements Module {
     }
     return arrayIncludesIgnoreCase(
       this.data.settings.moderationAdmins,
-      user.user.name
+      user.user.name,
     )
   }
 
@@ -166,7 +166,7 @@ class DrawcastModule implements Module {
             drawUrl: await this.drawUrl(),
             controlWidgetUrl: await this.controlUrl(),
             receiveWidgetUrl: await this.receiveUrl(),
-          }
+          },
         }, ws)
       },
       'get_all_images': async (ws: Socket, { token }: { token: string }) => {
@@ -294,7 +294,7 @@ class DrawcastModule implements Module {
             drawUrl: await this.drawUrl(),
             controlWidgetUrl: await this.controlUrl(),
             receiveWidgetUrl: await this.receiveUrl(),
-          }
+          },
         })
       },
     }

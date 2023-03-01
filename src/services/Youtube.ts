@@ -60,7 +60,7 @@ export class Youtube {
   }
 
   async #getDataByIdViaYoutubeApi(
-    youtubeId: string
+    youtubeId: string,
   ): Promise<YoutubeVideosResponseDataEntry | null> {
     const key = `youtubeData_${youtubeId}_20210717_2`
     let d = await this.cache.get(key)
@@ -119,7 +119,7 @@ export class Youtube {
   }
 
   async #getDataByIdViaIndivious(
-    youtubeId: string
+    youtubeId: string,
   ): Promise<IndiviousVideo | null> {
     const key = `indiviousData_${youtubeId}_20230117_1`
     let d = await this.cache.get(key)

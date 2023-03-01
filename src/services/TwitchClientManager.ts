@@ -14,7 +14,7 @@ const isDevTunnel = (url: string) => url.match(/^https:\/\/[a-z0-9-]+\.(?:loca\.
 const isRelevantSubscription = (
   configuredTransport: EventSubTransport,
   subscription: any,
-  twitchChannelIds: string[]
+  twitchChannelIds: string[],
 ) => {
   return configuredTransport.method === subscription.transport.method
     && (

@@ -219,7 +219,7 @@ onMounted(() => {
       playlist.value = data.playlist
       play()
       checkPlaylist()
-    }
+    },
   )
   ws.onMessage(
     ['prev', 'skip', 'remove', 'move', 'tags'],
@@ -233,7 +233,7 @@ onMounted(() => {
         play()
       }
       checkPlaylist()
-    }
+    },
   )
   ws.onMessage(['filter'], (data) => {
     applySettings(data.settings)

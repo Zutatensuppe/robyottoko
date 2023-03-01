@@ -102,7 +102,7 @@ const defaultAnimation = computed(() => {
     return []
   }
   const state = defaultItem.value.states.find(
-    ({ state }) => state === 'default'
+    ({ state }) => state === 'default',
   )
   if (!state) {
     return []
@@ -118,7 +118,7 @@ const updateItem = (idx: number, item: AvatarModuleAvatarSlotItem) => {
 }
 const removeItem = (idx: number, item: AvatarModuleAvatarSlotItem) => {
   props.modelValue.items = props.modelValue.items.filter(
-    (val, index) => index !== idx
+    (val, index) => index !== idx,
   )
   if (idx <= props.modelValue.defaultItemIndex) {
     props.modelValue.defaultItemIndex = props.modelValue.defaultItemIndex - 1

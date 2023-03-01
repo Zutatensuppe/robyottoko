@@ -567,10 +567,10 @@ export default defineComponent({
     IconUndo,
     IconEraser,
     IconClear,
-    DoubleclickButton
+    DoubleclickButton,
 },
   props: {
-    wdata: { type: Object as PropType<WidgetApiData>, required: true }
+    wdata: { type: Object as PropType<WidgetApiData>, required: true },
   },
   data() {
     return {
@@ -640,7 +640,7 @@ export default defineComponent({
     },
     favoriteListsFiltered(): DrawcastFavoriteList[] {
       return this.favoriteLists.filter(
-        (fav: DrawcastFavoriteList) => fav.list.length > 0
+        (fav: DrawcastFavoriteList) => fav.list.length > 0,
       )
     },
     favorites(): string[] {
@@ -706,7 +706,7 @@ export default defineComponent({
 
     this.ctx = this.draftcanvas.getContext('2d') as CanvasRenderingContext2D
     this.finalctx = this.finalcanvas.getContext(
-      '2d'
+      '2d',
     ) as CanvasRenderingContext2D
 
     this.ws = util.wsClient(this.wdata)
@@ -785,7 +785,7 @@ export default defineComponent({
             this.sending.date = null
           }, Math.max(0, timeoutMs))
         }
-      }
+      },
     )
     this.ws.onMessage(
       'approved_image_received',
@@ -817,7 +817,7 @@ export default defineComponent({
           this.images.unshift(data.img)
           this.images = this.images.slice(0, 20)
         }
-      }
+      },
     )
 
     this.ws.connect()
@@ -858,7 +858,7 @@ export default defineComponent({
           event: 'delete_image',
           path: url,
           token: this.me.token,
-        })
+        }),
       )
     },
     onOkPicker() {
@@ -907,7 +907,7 @@ export default defineComponent({
         0,
         0,
         this.finalcanvas.width,
-        this.finalcanvas.height
+        this.finalcanvas.height,
       )
     },
     putImageData(imageData: ImageData) {
@@ -1013,7 +1013,7 @@ export default defineComponent({
         0,
         0,
         this.finalcanvas.width,
-        this.finalcanvas.height
+        this.finalcanvas.height,
       )
     },
     clearClick() {
@@ -1050,7 +1050,7 @@ export default defineComponent({
             nonce: this.sending.nonce,
             img: this.finalcanvas.toDataURL(),
           },
-        })
+        }),
       )
       // success will be handled in onMessage('post') below
     },

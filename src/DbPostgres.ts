@@ -210,7 +210,7 @@ class Db {
   async get<T>(
     table: string,
     whereRaw: WhereRaw = {},
-    orderBy: OrderBy = []
+    orderBy: OrderBy = [],
   ): Promise<T> {
     const where = this._buildWhere(whereRaw)
     const orderBySql = this._buildOrderBy(orderBy)
@@ -221,7 +221,7 @@ class Db {
   async getMany(
     table: string,
     whereRaw: WhereRaw = {},
-    orderBy: OrderBy = []
+    orderBy: OrderBy = [],
   ): Promise<any[]> {
     const where = this._buildWhere(whereRaw)
     const orderBySql = this._buildOrderBy(orderBy)

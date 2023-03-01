@@ -6,7 +6,7 @@ import {
   ChatMessageContext, PlaylistItem,
   FunctionCommand, Command,
   Bot, CommandFunction, Module, CommandExecutionContext,
-  MODULE_NAME, WIDGET_TYPE, TwitchChatContext
+  MODULE_NAME, WIDGET_TYPE, TwitchChatContext,
 } from '../../types'
 import {
   default_commands,
@@ -376,7 +376,7 @@ class SongrequestModule implements Module {
         globalVariables: await this.bot.getRepos().variables.all(this.user.id),
         channelPointsCustomRewards: this.channelPointsCustomRewards,
         widgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.SR, this.user.id),
-      }
+      },
     }
   }
 
@@ -422,7 +422,7 @@ class SongrequestModule implements Module {
         }
         this.data.playlist = ([] as PlaylistItem[]).concat(
           this.data.playlist.slice(idx),
-          this.data.playlist.slice(0, idx)
+          this.data.playlist.slice(0, idx),
         )
         this.incStat('plays')
         this.data.playlist[idx].last_play = new Date().getTime()
@@ -965,7 +965,7 @@ class SongrequestModule implements Module {
     this.data.playlist = arrayMove(
       this.data.playlist,
       oldIndex,
-      newIndex
+      newIndex,
     )
 
     await this.save()

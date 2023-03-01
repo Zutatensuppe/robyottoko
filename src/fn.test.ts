@@ -405,7 +405,7 @@ describe('fn.extractEmotes', () => {
         msgNormalized: 'lalahdlfadofho  sadf ',
         context: {},
       },
-      expected: []
+      expected: [],
     },
     {
       _name: 'unicode emotes 1',

@@ -30,7 +30,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
 .meta-left .meta-plays { display: none; }
 .meta-right .meta-plays { display: inline-block; }
 .meta-user-text-before,
-.meta-user-text-after {display: none}`
+.meta-user-text-after {display: none}`,
   },
   {
     name: 'Preset 2: No video, round thumbnails',
@@ -62,7 +62,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 16px; }
 .fa { margin-right: 0px; }
 .meta-left .meta-user:after,
 .meta-user-text-before,
-.meta-user-text-after {display: none}`
+.meta-user-text-after {display: none}`,
   },
   {
     name: 'Preset 3: Video on the left',
@@ -88,7 +88,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
 .meta-user-text-after {display: none}
 .thumbnail {display: none}
 .video-16-9 {overflow: visible; }
-.progress { position: absolute; top: 100%; }`
+.progress { position: absolute; top: 100%; }`,
   },
   {
     name: 'Preset 4: Video',
@@ -112,7 +112,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
 .meta-right .meta-plays { display: inline-block; }
 .meta-user-text-before,
 .meta-user-text-after {display: none}
-.thumbnail {display: none}`
+.thumbnail {display: none}`,
   },
   {
     name: 'Preset 5: No video, transparent',
@@ -132,7 +132,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
 .meta-left .meta-plays { display: none; }
 .meta-right .meta-plays { display: inline-block; padding: 5px}
 .meta-user-text-before,
-.meta-user-text-after {display: none}`
+.meta-user-text-after {display: none}`,
   },
   {
     name: 'Preset 6: Video, Progress bar under text',
@@ -152,7 +152,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
 .player { position: relative;}
 .list { position:relative; z-index: 5;}
 .item {background: transparent !important ; border: none; padding: 0 .5em; }
-.title { color: white; font-size: 5vw; line-height: 12vw; white-space: nowrap; text-shadow: 0 2px 2px rgba(0,0,0, 1); overflow:hidden; text-overflow: ellipsis; }`
+.title { color: white; font-size: 5vw; line-height: 12vw; white-space: nowrap; text-shadow: 0 2px 2px rgba(0,0,0, 1); overflow:hidden; text-overflow: ellipsis; }`,
   },
   {
     name: 'Preset 7: Title only, Progress bar, Pulsating text',
@@ -183,10 +183,10 @@ body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
 .video-16-9 { height: 5px; }
 .list { grid-area: list }
 .progress { background: #222; }
-.progress-value { background: #639bff; }`
-  }
+.progress-value { background: #639bff; }`,
+  },
 ]
 
 export default {
-  presets
+  presets,
 }

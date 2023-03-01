@@ -25,7 +25,7 @@ const value = ref<boolean>(props.modelValue === props.onValue)
 const emitUpdate = () => {
   emit(
     'update:modelValue',
-    value.value ? props.onValue : props.offValue
+    value.value ? props.onValue : props.offValue,
   )
 }
 </script>

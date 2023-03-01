@@ -96,7 +96,7 @@ export const default_settings = (obj: any = null): SpeechToTextModuleSettings =>
       strokeWidth: getProp(obj, ['styles', 'translation', 'strokeWidth'], '8pt'),
       strokeColor: getProp(obj, ['styles', 'translation', 'strokeColor'], '#292929'),
       color: getProp(obj, ['styles', 'translation', 'color'], '#cbcbcb'),
-    }
+    },
   },
   recognition: {
     display: getProp(obj, ['recognition', 'display'], true),

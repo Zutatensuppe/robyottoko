@@ -62,7 +62,7 @@ const createBot = async (): Promise<Bot> => {
   const youtube = new Youtube(
     new YoutubeApi(config.youtube),
     new Indivious(),
-    cache
+    cache,
   )
 
   class BotImpl implements Bot {

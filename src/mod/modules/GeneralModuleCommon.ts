@@ -24,13 +24,13 @@ export const default_settings = (obj: any = null): GeneralModuleSettings => ({
   volume: getProp(obj, ['volume'], 100),
   emotes: {
     displayFn: getProp(obj, ['emotes', 'displayFn'], [
-      { fn: EMOTE_DISPLAY_FN.BALLOON, args: [], },
-      { fn: EMOTE_DISPLAY_FN.BOUNCY, args: [], },
-      { fn: EMOTE_DISPLAY_FN.EXPLODE, args: [], },
-      { fn: EMOTE_DISPLAY_FN.FLOATING_SPACE, args: [], },
-      { fn: EMOTE_DISPLAY_FN.FOUNTAIN, args: [], },
-      { fn: EMOTE_DISPLAY_FN.RAIN, args: [], },
-      { fn: EMOTE_DISPLAY_FN.RANDOM_BEZIER, args: [], },
+      { fn: EMOTE_DISPLAY_FN.BALLOON, args: [] },
+      { fn: EMOTE_DISPLAY_FN.BOUNCY, args: [] },
+      { fn: EMOTE_DISPLAY_FN.EXPLODE, args: [] },
+      { fn: EMOTE_DISPLAY_FN.FLOATING_SPACE, args: [] },
+      { fn: EMOTE_DISPLAY_FN.FOUNTAIN, args: [] },
+      { fn: EMOTE_DISPLAY_FN.RAIN, args: [] },
+      { fn: EMOTE_DISPLAY_FN.RANDOM_BEZIER, args: [] },
     ]),
   },
 })

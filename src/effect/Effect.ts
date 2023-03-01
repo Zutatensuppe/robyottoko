@@ -14,7 +14,7 @@ export abstract class Effect<EffectData> {
   ) {
     this.#sayFn = contextModule.bot.sayFn(
       contextModule.user,
-      contextModule.user.twitch_login
+      contextModule.user.twitch_login,
     )
   }
 
@@ -53,7 +53,7 @@ export abstract class Effect<EffectData> {
       .notifyAll(
         [this.contextModule.user.id],
         moduleName,
-        data
+        data,
       )
   }
 }

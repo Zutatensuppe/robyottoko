@@ -90,7 +90,7 @@ export default class WsWrapper {
         // this is not the last connection.. ignore it
         log.info({
           id,
-          this_id: this.id
+          this_id: this.id,
         }, 'connected but it is not the last attempt')
         ws.close(CODE_CUSTOM_DISCONNECT)
         return

@@ -192,7 +192,7 @@ class PomoModule implements Module {
         settings: this.data.settings,
         state: this.data.state,
         widgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.POMO, this.user.id),
-      }
+      },
     }
   }
 

@@ -21,7 +21,7 @@ export const LANG_TO_URL_MAP: Record<string, string> = {
  * TODO: change from regex to parsing the html ^^
  */
 const extractInfo = (
-  text: string
+  text: string,
 ): { words: string[], arr1: string[], arr2: string[] } => {
   const stringToArray = (str: string): string[] => {
     const arr: string[] = []
@@ -50,7 +50,7 @@ const extractInfo = (
 }
 
 const parseResult = (
-  text: string
+  text: string,
 ): DictCCParseResultEntry[] => {
   const normalize = (str: string): string => {
     return str.toLowerCase().replace(/[.!?]/, '')

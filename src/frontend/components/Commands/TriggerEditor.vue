@@ -269,11 +269,11 @@ const rewardRedemptionActions = computed(() => {
         type: r,
         title: r,
         label: r,
-      }))
+      })),
     )
   }
   actions.sort((a, b) =>
-    a.title === b.title ? 0 : a.title < b.title ? -1 : 1
+    a.title === b.title ? 0 : a.title < b.title ? -1 : 1,
   )
   return actions
 })

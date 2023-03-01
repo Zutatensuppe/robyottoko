@@ -326,7 +326,7 @@ class TwitchHelixClient {
 
   // https://dev.twitch.tv/docs/authentication/refresh-tokens
   async refreshAccessToken(
-    refreshToken: string
+    refreshToken: string,
   ): Promise<TwitchHelixOauthTokenResponseData | null> {
     const url = TOKEN_ENDPOINT + asQueryArgs({
       client_id: this.clientId,
@@ -600,7 +600,7 @@ class TwitchHelixClient {
     const first = 100
     do {
       const url = apiUrl('/tags/streams') + asQueryArgs(
-        cursor ? { after: cursor, first } : { first }
+        cursor ? { after: cursor, first } : { first },
       )
       const resp = await xhr.get(url, await this.withAuthHeaders())
       const json = (await resp.json()) as TwitchHelixGetStreamTagsResponseData
@@ -668,7 +668,7 @@ class TwitchHelixClient {
       accessToken,
       user.twitch_id,
       bot,
-      user
+      user,
     )
     if (res) {
       rewards[user.twitch_login] = res.data.map(entry => entry.title)
@@ -715,7 +715,7 @@ class TwitchHelixClient {
   async isUserSubscriber(
     accessToken: string,
     broadcasterId: string,
-    userId: string
+    userId: string,
   ): Promise<boolean> {
     const url = apiUrl('/subscriptions') + asQueryArgs({ broadcaster_id: broadcasterId, user_id: userId })
     try {
@@ -749,7 +749,7 @@ class TwitchHelixClient {
   async isUserModerator(
     accessToken: string,
     broadcasterId: string,
-    userId: string
+    userId: string,
   ): Promise<boolean> {
     const url = apiUrl('/moderation/moderators') + asQueryArgs({ broadcaster_id: broadcasterId, user_id: userId })
     try {

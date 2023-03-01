@@ -11,7 +11,7 @@ const textToCommandEffect = (cmd: any): ChatEffectData => {
   return {
     type: CommandEffectType.CHAT,
     data: {
-      text: !Array.isArray(cmd.data.text) ? [cmd.data.text] : cmd.data.text
+      text: !Array.isArray(cmd.data.text) ? [cmd.data.text] : cmd.data.text,
     },
   }
 }
@@ -159,7 +159,7 @@ const countdownToCommandEffect = (cmd: any): CountdownEffectData => {
 
   return {
     type: CommandEffectType.COUNTDOWN,
-    data: cmd.data
+    data: cmd.data,
   }
 }
 

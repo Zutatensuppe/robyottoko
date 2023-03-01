@@ -54,7 +54,7 @@ onMounted(() => {
         image_url: data.img,
         minDurationMs: displayDuration.value,
       }))
-    }
+    },
   )
   ws.onMessage(
     'image_deleted',
@@ -68,7 +68,7 @@ onMounted(() => {
           minDurationMs: displayDuration.value,
         }))
       }
-    }
+    },
   )
   ws.connect()
 })

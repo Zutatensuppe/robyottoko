@@ -24,7 +24,7 @@ class Cache {
     // get *non-expired* cache entry from db
     const row = await this.db._get(
       'SELECT * from ' + TABLE + ' WHERE key = $1 AND (expires_at IS NULL OR expires_at > $2)',
-      [key, new Date()]
+      [key, new Date()],
     )
     return row ? JSON.parse(row.value) : undefined
   }

@@ -36,7 +36,7 @@ export const createRouter = (
     const channelName = String(req.query.channel)
     const helixClient = new TwitchHelixClient(
       bot.getConfig().twitch.tmi.identity.client_id,
-      bot.getConfig().twitch.tmi.identity.client_secret
+      bot.getConfig().twitch.tmi.identity.client_secret,
     )
     const channelId = await helixClient.getUserIdByNameCached(channelName, bot.getCache())
     if (!channelId) {

@@ -271,7 +271,7 @@ import {
   isValidTrigger,
   newTrigger,
   newEffect,
-  possibleEffectActions
+  possibleEffectActions,
 } from '../../../common/commands'
 import {
   Command,
