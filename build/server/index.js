@@ -6355,7 +6355,7 @@ class SongrequestModule {
         this.user = user;
     }
     async reinit() {
-        let shouldSave = false;
+        const shouldSave = false;
         const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {
             filter: {
                 show: { tags: [] },
@@ -6397,11 +6397,6 @@ class SongrequestModule {
         data.playlist = default_playlist(data.playlist);
         data.settings = default_settings$4(data.settings);
         data.commands = default_commands(data.commands);
-        // todo: remove after release
-        if (!data.commands.some((c) => c.action === CommandAction.SR_MOVE_TAG_UP)) {
-            data.commands.push(commands.sr_move_tag_up.NewCommand());
-            shouldSave = true;
-        }
         return {
             data: {
                 playlist: data.playlist,
@@ -8550,9 +8545,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-03-01T22:05:47.567Z",
+    buildDate: "2023-03-01T22:27:29.024Z",
     // @ts-ignore
-    buildVersion: "1.60.0",
+    buildVersion: "1.60.1",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
