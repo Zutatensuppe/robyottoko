@@ -23,24 +23,16 @@
   </span>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, PropType, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { AvatarModuleAnimationFrameDefinition } from '../../../mod/modules/AvatarModuleCommon'
 
-const props = defineProps({
-  frames: {
-    type: Array as PropType<AvatarModuleAnimationFrameDefinition[]>,
-    required: true,
-  },
-  width: {
-    type: Number,
-    required: false,
-    default: 64,
-  },
-  height: {
-    type: Number,
-    required: false,
-    default: 64,
-  },
+const props = withDefaults(defineProps<{
+  frames: AvatarModuleAnimationFrameDefinition[],
+  width?: number,
+  height?: number,
+}>(), {
+  width: 64,
+  height: 64,
 })
 const timeout = ref<any | null>(null) // timeout
 const idx = ref<number>(-1)

@@ -590,8 +590,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script setup lang="ts">
+import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import WsClient from '../WsClient'
 import {
   default_settings,
@@ -604,73 +604,55 @@ import StringInput from '../components/StringInput.vue'
 import CheckboxInput from '../components/CheckboxInput.vue'
 import NavbarElement from '../components/NavbarElement.vue'
 
-interface ComponentData {
-  unchangedJson: string;
-  changedJson: string;
-  settings: SpeechToTextModuleSettings;
-  defaultSettings: SpeechToTextModuleSettings;
-  ws: WsClient | null;
-  inited: boolean;
-  controlWidgetUrl: string
-  displayWidgetUrl: string
+const unchangedJson = ref<string>('{}')
+const changedJson = ref<string>('{}')
+const settings = ref<SpeechToTextModuleSettings>(default_settings())
+const defaultSettings = ref<SpeechToTextModuleSettings>(default_settings())
+const inited = ref<boolean>(false)
+const controlWidgetUrl = ref<string>('')
+const displayWidgetUrl = ref<string>('')
+
+let ws: WsClient | null = null
+
+const sendSave = () => {
+  if (!settings.value) {
+    console.warn('sendSave: settings not initialized')
+    return
+  }
+  sendMsg({ event: 'save', settings: settings.value })
 }
 
-export default defineComponent({
-    components: { StringInput, CheckboxInput, NavbarElement },
-    data: (): ComponentData => ({
-        unchangedJson: '{}',
-        changedJson: '{}',
-        settings: default_settings(),
-        defaultSettings: default_settings(),
-        ws: null,
-        inited: false,
-        controlWidgetUrl: '',
-        displayWidgetUrl: '',
-    }),
-    computed: {
-        changed(): boolean {
-            return this.unchangedJson !== this.changedJson
-        },
-    },
-    watch: {
-        settings: {
-            deep: true,
-            handler(ch) {
-                this.changedJson = JSON.stringify(ch)
-            },
-        },
-    },
-    async mounted() {
-        this.ws = util.wsClient('speech-to-text')
-        this.ws.onMessage('init', (data: SpeechToTextWsInitData) => {
-            this.settings = data.settings
-            this.unchangedJson = JSON.stringify(data.settings)
-            this.controlWidgetUrl = data.controlWidgetUrl
-            this.displayWidgetUrl = data.displayWidgetUrl
-            this.inited = true
-        })
-        this.ws.connect()
-    },
-    unmounted() {
-        if (this.ws) {
-            this.ws.disconnect()
-        }
-    },
-    methods: {
-        sendSave() {
-            if (!this.settings) {
-                console.warn('sendSave: this.settings not initialized')
-                return
-            }
-            this.sendMsg({ event: 'save', settings: this.settings })
-        },
-        sendMsg(data: SpeechToTextSaveEventData) {
-            if (!this.ws) {
-                console.warn('sendMsg: this.ws not initialized')
-                return
-            }
-            this.ws.send(JSON.stringify(data))
-        },
-    },
+const sendMsg = (data: SpeechToTextSaveEventData) => {
+  if (!ws) {
+    console.warn('sendMsg: ws not initialized')
+    return
+  }
+  ws.send(JSON.stringify(data))
+}
+
+const changed = computed((): boolean => {
+  return unchangedJson.value !== changedJson.value
+})
+
+watch(settings, (newValue) => {
+  changedJson.value = JSON.stringify(newValue)
+}, { deep: true })
+
+onMounted(async () => {
+  ws = util.wsClient('speech-to-text')
+  ws.onMessage('init', (data: SpeechToTextWsInitData) => {
+    settings.value = data.settings
+    unchangedJson.value = JSON.stringify(data.settings)
+    controlWidgetUrl.value = data.controlWidgetUrl
+    displayWidgetUrl.value = data.displayWidgetUrl
+    inited.value = true
+  })
+  ws.connect()
+})
+
+onBeforeUnmount(() => {
+  if (ws) {
+    ws.disconnect()
+  }
 })
 </script>

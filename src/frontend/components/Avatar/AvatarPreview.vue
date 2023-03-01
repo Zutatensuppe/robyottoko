@@ -14,25 +14,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, PropType } from 'vue'
+import { computed } from 'vue'
 import { AvatarModuleAvatarDefinition, AvatarModuleSlotItemStateDefinition } from '../../../mod/modules/AvatarModuleCommon'
 import AvatarAnimation from './AvatarAnimation.vue'
 
-const props = defineProps({
-  avatar: {
-    type: Object as PropType<AvatarModuleAvatarDefinition>,
-    required: true,
-  },
-  width: {
-    type: Number,
-    required: false,
-    default: 64,
-  },
-  height: {
-    type: Number,
-    required: false,
-    default: 64,
-  },
+const props = withDefaults(defineProps<{
+  avatar: AvatarModuleAvatarDefinition,
+  width?: number,
+  height?: number,
+}>(), {
+  width: 64,
+  height: 64,
 })
 
 const animations = computed((): AvatarModuleSlotItemStateDefinition[] => {

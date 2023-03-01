@@ -46,6 +46,7 @@ function createPlayer(id: string): Promise<YoutubePlayer> {
     log.info('create player on ' + id)
     // no knowledge about YT.Player :(
     // @ts-ignore
+    // eslint-disable-next-line
     const player: YoutubePlayer = new YT.Player(id, {
       playerVars: {
         iv_load_policy: 3, // do not load annotations
@@ -193,10 +194,12 @@ onMounted(async () => {
   yt.value.addEventListener('onStateChange', (event) => {
     // no knowledge about YT.PlayerState :(
     // @ts-ignore
+    // eslint-disable-next-line
     if (event.data === YT.PlayerState.CUED) {
       tryPlay()
       // no knowledge about YT.PlayerState :(
       // @ts-ignore
+      // eslint-disable-next-line
     } else if (event.data === YT.PlayerState.ENDED) {
       if (loop.value) {
         tryPlay()

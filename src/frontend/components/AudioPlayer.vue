@@ -11,11 +11,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 
-const props = defineProps({
-  src: String,
-  name: String,
-  volume: { required: true },
-  baseVolume: { default: 100 },
+const props = withDefaults(defineProps<{
+  src: string,
+  name: string,
+  volume: string | number,
+  baseVolume?: string | number,
+}>(), {
+  baseVolume: 100,
 })
 
 const audio = ref<HTMLAudioElement | null>(null)

@@ -225,7 +225,7 @@
                 width="100px"
                 height="50px"
                 class="spacerow media-holder"
-                @update:modelValue="customProfileImageChanged"
+                @update:model-value="customProfileImageChanged"
               />
             </td>
             <td>
@@ -239,7 +239,7 @@
               <SoundUpload
                 v-model="settings.notificationSound"
                 class="spacerow media-holder"
-                @update:modelValue="notificationSoundChanged"
+                @update:model-value="notificationSoundChanged"
               />
             </td>
             <td>
@@ -396,8 +396,8 @@
     </div>
   </div>
 </template>
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script setup lang="ts">
+import { onMounted, computed, ref, watch, onBeforeUnmount } from 'vue'
 import { arraySwap } from '../../common/fn'
 import {
   default_settings,
@@ -418,284 +418,255 @@ import IntegerInput from '../components/IntegerInput.vue'
 import CheckboxInput from '../components/CheckboxInput.vue'
 import DoubleclickButton from '../components/DoubleclickButton.vue'
 import SoundUpload from '../components/SoundUpload.vue'
-import ImageUpload from '../components/SoundUpload.vue'
+import ImageUpload from '../components/ImageUpload.vue'
 import NavbarElement from '../components/NavbarElement.vue'
 import StringsInput from '../components/StringsInput.vue'
 import user from '../user'
 
-interface ComponentData {
-  unchangedJson: string;
-  changedJson: string;
-  inited: boolean;
-  settings: DrawcastSettings;
-  defaultSettings: DrawcastSettings;
-  ws: WsClient | null;
-  me: ApiUserData | null;
-  drawUrl: string;
-  notificationSoundAudio: any;
-  manualApproval: {
-    hovered: string;
-    items: string[];
-  };
-  favoriteSelection: {
-    hovered: string;
-    items: string[];
-    pagination: {
-      page: number;
-      perPage: number;
-    };
-  };
-  controlWidgetUrl: string;
-  receiveWidgetUrl: string;
+interface ManualApproval {
+  hovered: string
+  items: string[]
 }
 
-export default defineComponent({
-  components: {
-    CheckboxInput,
-    DoubleclickButton,
-    ImageUpload,
-    IntegerInput,
-    NavbarElement,
-    SoundUpload,
-    StringInput,
-    StringsInput,
-},
-  data: (): ComponentData => ({
-    unchangedJson: '{}',
-    changedJson: '{}',
-    inited: false,
-    settings: default_settings(),
-    defaultSettings: default_settings(),
-    ws: null,
-    me: null,
-    drawUrl: '',
-    notificationSoundAudio: null,
-    manualApproval: {
-      hovered: '',
-      items: [],
-    },
-    favoriteSelection: {
-      hovered: '',
-      items: [],
-      pagination: {
-        page: 1,
-        perPage: 20,
-      },
-    },
-    controlWidgetUrl: '',
-    receiveWidgetUrl: '',
-  }),
-  computed: {
-    changed() {
-      return this.unchangedJson !== this.changedJson
-    },
-    favoriteSelectionTotalPages() {
-      return (Math.floor(this.favoriteSelection.items.length /
-        this.favoriteSelection.pagination.perPage) +
-        (this.favoriteSelection.items.length %
-          this.favoriteSelection.pagination.perPage ===
-          0
-          ? 0
-          : 1))
-    },
-    currentFavoriteSelectionItems() {
-      const start = (this.favoriteSelection.pagination.page - 1) *
-        this.favoriteSelection.pagination.perPage
-      return this.favoriteSelection.items.slice(start, start + this.favoriteSelection.pagination.perPage)
-    },
-  },
-  watch: {
-    settings: {
-      deep: true,
-      handler(ch) {
-        this.changedJson = JSON.stringify(ch)
-      },
-    },
-  },
-  async created() {
-    this.me = user.getMe()
+interface FavoriteSelection {
+  hovered: string
+  items: string[]
+  pagination: {
+    page: number
+    perPage: number
+  }
+}
 
-    this.ws = util.wsClient('drawcast')
-    this.ws.onMessage('init', async (data: DrawcastData) => {
-      this.settings = data.settings
-      this.unchangedJson = JSON.stringify(data.settings)
-      this.drawUrl = data.drawUrl
-      this.controlWidgetUrl = data.controlWidgetUrl
-      this.receiveWidgetUrl = data.receiveWidgetUrl
-
-      this.sendMsg({ event: 'get_all_images' })
-    })
-    this.ws.onMessage('all_images', (data: { images: DrawcastImage[] }) => {
-      this.favoriteSelection.items = data.images.map((item: DrawcastImage) => item.path)
-      if (this.settings.notificationSound) {
-        this.notificationSoundAudio = new Audio(this.settings.notificationSound.urlpath)
-        this.notificationSoundAudio.volume =
-          this.settings.notificationSound.volume / 100
-      }
-      this.manualApproval.items = data.images
-        .filter((item: DrawcastImage) => !item.approved)
-        .map((item: DrawcastImage) => item.path)
-      this.inited = true
-    })
-    this.ws.onMessage('approved_image_received', (data: {
-      nonce: string;
-      img: string;
-      mayNotify: boolean;
-    }) => {
-      this.favoriteSelection.items = this.favoriteSelection.items.filter((img) => img !== data.img)
-      this.manualApproval.items = this.manualApproval.items.filter((img) => img !== data.img)
-      this.favoriteSelection.items.unshift(data.img)
-      this.favoriteSelection.items = this.favoriteSelection.items.slice()
-    })
-    this.ws.onMessage('image_deleted', (data: {
-      img: string;
-    }) => {
-      this.settings.favoriteLists = this.settings.favoriteLists.map(favoriteList => {
-        favoriteList.list = favoriteList.list.filter(img => img !== data.img)
-        return favoriteList
-      })
-      this.favoriteSelection.items = this.favoriteSelection.items.filter((img) => img !== data.img)
-      this.manualApproval.items = this.manualApproval.items.filter((img) => img !== data.img)
-    })
-    this.ws.onMessage('denied_image_received', (data: {
-      nonce: string;
-      img: string;
-      mayNotify: boolean;
-    }) => {
-      this.favoriteSelection.items = this.favoriteSelection.items.filter((img) => img !== data.img)
-      this.manualApproval.items = this.manualApproval.items.filter((img) => img !== data.img)
-    })
-    this.ws.onMessage('image_received', (data: {
-      nonce: string;
-      img: string;
-      mayNotify: boolean;
-    }) => {
-      this.favoriteSelection.items = this.favoriteSelection.items.filter((img) => img !== data.img)
-      this.manualApproval.items = this.manualApproval.items.filter((img) => img !== data.img)
-      this.favoriteSelection.items.unshift(data.img)
-      this.favoriteSelection.items = this.favoriteSelection.items.slice()
-      this.manualApproval.items.push(data.img)
-      this.manualApproval.items = this.manualApproval.items.slice()
-      if (data.mayNotify && this.notificationSoundAudio) {
-        this.notificationSoundAudio.play()
-      }
-    })
-    this.ws.connect()
+const unchangedJson = ref<string>('{}')
+const changedJson = ref<string>('{}')
+const inited = ref<boolean>(false)
+const settings = ref<DrawcastSettings>(default_settings())
+const drawUrl = ref<string>('')
+const notificationSoundAudio = ref<any>(null)
+const manualApproval = ref<ManualApproval>({
+  hovered: '',
+  items: [],
+})
+const favoriteSelection = ref<FavoriteSelection>({
+  hovered: '',
+  items: [],
+  pagination: {
+    page: 1,
+    perPage: 20,
   },
-  unmounted() {
-    if (this.ws) {
-      this.ws.disconnect()
+})
+const controlWidgetUrl = ref<string>('')
+const receiveWidgetUrl = ref<string>('')
+
+let ws: WsClient | null = null
+let me: ApiUserData | null = null
+
+
+const changed = computed((): boolean => {
+  return unchangedJson.value !== changedJson.value
+})
+
+const favoriteSelectionTotalPages = computed((): number => {
+  const fav = favoriteSelection.value
+  return (
+    Math.floor(fav.items.length / fav.pagination.perPage) + 
+    (fav.items.length % fav.pagination.perPage === 0 ? 0 : 1)
+  )
+})
+
+const currentFavoriteSelectionItems = computed((): string[] => {
+  const fav = favoriteSelection.value
+  const start = (fav.pagination.page - 1) * fav.pagination.perPage
+  return fav.items.slice(start, start + fav.pagination.perPage)
+})
+
+const deleteImage = (path: string) => {
+  sendMsg({ event: 'delete_image', path })
+}
+const approveImage = (path: string) => {
+  sendMsg({ event: 'approve_image', path })
+}
+const denyImage = (path: string) => {
+  sendMsg({ event: 'deny_image', path })
+}
+const addFavoriteList = (): void => {
+  if (!settings.value) {
+    console.warn('addFavoriteList: settings not initialized')
+    return
+  }
+  settings.value.favoriteLists.push({
+    list: [],
+    title: '',
+  })
+}
+const moveFavoriteListUp = (idx: number): void => {
+  swapItems(idx - 1, idx)
+}
+const moveFavoriteListDown = (idx: number): void => {
+  swapItems(idx + 1, idx)
+}
+const swapItems = (idx1: number, idx2: number): void => {
+  arraySwap(settings.value.favoriteLists, idx1, idx2)
+}
+const removeFavoriteList = (index: number): void => {
+  if (!settings.value) {
+    console.warn('removeFavoriteList: settings not initialized')
+    return
+  }
+  const favLists: DrawcastFavoriteList[] = []
+  for (let idx in settings.value.favoriteLists) {
+    if (parseInt(idx, 10) === parseInt(`${index}`, 10)) {
+      continue
     }
-  },
-  methods: {
-    deleteImage(path: string) {
-      this.sendMsg({ event: 'delete_image', path })
+    favLists.push(settings.value.favoriteLists[idx])
+  }
+  settings.value.favoriteLists = favLists
+}
+const toggleFavorite = (index: number, url: string): void => {
+  if (!settings.value) {
+    console.warn('toggleFavorite: settings.value not initialized')
+    return
+  }
+  if (settings.value.favoriteLists[index].list.includes(url)) {
+    settings.value.favoriteLists[index].list = settings.value.favoriteLists[index].list.filter((u: string) => u !== url)
+  }
+  else {
+    settings.value.favoriteLists[index].list.push(url)
+  }
+}
+const customProfileImageChanged = (file: MediaFile): void => {
+  if (!settings.value) {
+    console.warn('customProfileImageChanged: settings not initialized')
+    return
+  }
+  settings.value.customProfileImage = file.file ? file : null
+}
+const notificationSoundChanged = (file: SoundMediaFile): void => {
+  if (!settings.value) {
+    console.warn('notificationSoundChanged: settings not initialized')
+    return
+  }
+  settings.value.notificationSound = file.file ? file : null
+}
+const sendSave = (): void => {
+  if (!settings.value) {
+    console.warn('sendSave: settings not initialized')
+    return
+  }
+  sendMsg({
+    event: 'save',
+    settings: {
+      canvasWidth: parseInt(`${settings.value.canvasWidth}`, 10) || 720,
+      canvasHeight: parseInt(`${settings.value.canvasHeight}`, 10) || 405,
+      submitButtonText: settings.value.submitButtonText,
+      submitConfirm: settings.value.submitConfirm,
+      recentImagesTitle: settings.value.recentImagesTitle,
+      customDescription: settings.value.customDescription,
+      customProfileImage: settings.value.customProfileImage,
+      displayDuration: parseInt(`${settings.value.displayDuration}`, 10) || 5000,
+      displayLatestForever: settings.value.displayLatestForever,
+      displayLatestAutomatically: settings.value.displayLatestAutomatically,
+      autofillLatest: settings.value.autofillLatest,
+      requireManualApproval: settings.value.requireManualApproval,
+      notificationSound: settings.value.notificationSound,
+      favoriteLists: settings.value.favoriteLists,
+      moderationAdmins: settings.value.moderationAdmins,
     },
-    approveImage(path: string) {
-      this.sendMsg({ event: 'approve_image', path })
-    },
-    denyImage(path: string) {
-      this.sendMsg({ event: 'deny_image', path })
-    },
-    addFavoriteList() {
-      if (!this.settings) {
-        console.warn('addFavoriteList: this.settings not initialized')
-        return
-      }
-      this.settings.favoriteLists.push({
-        list: [],
-        title: '',
-      })
-    },
-    moveFavoriteListUp(idx: number) {
-      this.swapItems(idx - 1, idx)
-    },
-    moveFavoriteListDown(idx: number) {
-      this.swapItems(idx + 1, idx)
-    },
-    swapItems(idx1: number, idx2: number) {
-      arraySwap(this.settings.favoriteLists, idx1, idx2)
-    },
-    removeFavoriteList(index: number) {
-      if (!this.settings) {
-        console.warn('removeFavoriteList: this.settings not initialized')
-        return
-      }
-      const favLists: DrawcastFavoriteList[] = []
-      for (let idx in this.settings.favoriteLists) {
-        if (parseInt(idx, 10) === parseInt(`${index}`, 10)) {
-          continue
-        }
-        favLists.push(this.settings.favoriteLists[idx])
-      }
-      this.settings.favoriteLists = favLists
-    },
-    toggleFavorite(index: number, url: string) {
-      if (!this.settings) {
-        console.warn('toggleFavorite: this.settings not initialized')
-        return
-      }
-      if (this.settings.favoriteLists[index].list.includes(url)) {
-        this.settings.favoriteLists[index].list = this.settings.favoriteLists[index].list.filter((u: string) => u !== url)
-      }
-      else {
-        this.settings.favoriteLists[index].list.push(url)
-      }
-    },
-    customProfileImageChanged(file: MediaFile) {
-      if (!this.settings) {
-        console.warn('customProfileImageChanged: this.settings not initialized')
-        return
-      }
-      this.settings.customProfileImage = file.file ? file : null
-    },
-    notificationSoundChanged(file: SoundMediaFile) {
-      if (!this.settings) {
-        console.warn('notificationSoundChanged: this.settings not initialized')
-        return
-      }
-      this.settings.notificationSound = file.file ? file : null
-    },
-    sendSave() {
-      if (!this.settings) {
-        console.warn('sendSave: this.settings not initialized')
-        return
-      }
-      this.sendMsg({
-        event: 'save',
-        settings: {
-          canvasWidth: parseInt(`${this.settings.canvasWidth}`, 10) || 720,
-          canvasHeight: parseInt(`${this.settings.canvasHeight}`, 10) || 405,
-          submitButtonText: this.settings.submitButtonText,
-          submitConfirm: this.settings.submitConfirm,
-          recentImagesTitle: this.settings.recentImagesTitle,
-          customDescription: this.settings.customDescription,
-          customProfileImage: this.settings.customProfileImage,
-          displayDuration: parseInt(`${this.settings.displayDuration}`, 10) || 5000,
-          displayLatestForever: this.settings.displayLatestForever,
-          displayLatestAutomatically: this.settings.displayLatestAutomatically,
-          autofillLatest: this.settings.autofillLatest,
-          requireManualApproval: this.settings.requireManualApproval,
-          notificationSound: this.settings.notificationSound,
-          favoriteLists: this.settings.favoriteLists,
-          moderationAdmins: this.settings.moderationAdmins,
-        },
-      })
-    },
-    sendMsg(data: any) {
-      if (!this.ws) {
-        console.warn('sendMsg: this.ws not initialized')
-        return
-      }
-      if (!this.me) {
-        console.warn('sendMsg: this.me not initialized')
-        return
-      }
-      this.ws.send(JSON.stringify(Object.assign({}, data, {
-        token: this.me.token,
-      })))
-    },
-  },
+  })
+}
+const sendMsg = (data: any): void => {
+  if (!ws) {
+    console.warn('sendMsg: ws not initialized')
+    return
+  }
+  if (!me) {
+    console.warn('sendMsg: me not initialized')
+    return
+  }
+  ws.send(JSON.stringify(Object.assign({}, data, {
+    token: me.token,
+  })))
+}
+
+watch(settings, (newValue) => {
+  changedJson.value = JSON.stringify(newValue)
+}, { deep: true })
+
+onMounted(async () => {
+  me = user.getMe()
+
+  ws = util.wsClient('drawcast')
+  ws.onMessage('init', async (data: DrawcastData) => {
+    settings.value = data.settings
+    unchangedJson.value = JSON.stringify(data.settings)
+    drawUrl.value = data.drawUrl
+    controlWidgetUrl.value = data.controlWidgetUrl
+    receiveWidgetUrl.value = data.receiveWidgetUrl
+
+    sendMsg({ event: 'get_all_images' })
+  })
+  ws.onMessage('all_images', (data: { images: DrawcastImage[] }) => {
+    favoriteSelection.value.items = data.images.map((item: DrawcastImage) => item.path)
+    if (settings.value.notificationSound) {
+      notificationSoundAudio.value = new Audio(settings.value.notificationSound.urlpath)
+      notificationSoundAudio.value.volume =
+        settings.value.notificationSound.volume / 100
+    }
+    manualApproval.value.items = data.images
+      .filter((item: DrawcastImage) => !item.approved)
+      .map((item: DrawcastImage) => item.path)
+    inited.value = true
+  })
+  ws.onMessage('approved_image_received', (data: {
+    nonce: string;
+    img: string;
+    mayNotify: boolean;
+  }) => {
+    favoriteSelection.value.items = favoriteSelection.value.items.filter((img) => img !== data.img)
+    manualApproval.value.items = manualApproval.value.items.filter((img) => img !== data.img)
+    favoriteSelection.value.items.unshift(data.img)
+    favoriteSelection.value.items = favoriteSelection.value.items.slice()
+  })
+  ws.onMessage('image_deleted', (data: {
+    img: string;
+  }) => {
+    settings.value.favoriteLists = settings.value.favoriteLists.map(favoriteList => {
+      favoriteList.list = favoriteList.list.filter(img => img !== data.img)
+      return favoriteList
+    })
+    favoriteSelection.value.items = favoriteSelection.value.items.filter((img) => img !== data.img)
+    manualApproval.value.items = manualApproval.value.items.filter((img) => img !== data.img)
+  })
+  ws.onMessage('denied_image_received', (data: {
+    nonce: string;
+    img: string;
+    mayNotify: boolean;
+  }) => {
+    favoriteSelection.value.items = favoriteSelection.value.items.filter((img) => img !== data.img)
+    manualApproval.value.items = manualApproval.value.items.filter((img) => img !== data.img)
+  })
+  ws.onMessage('image_received', (data: {
+    nonce: string;
+    img: string;
+    mayNotify: boolean;
+  }) => {
+    favoriteSelection.value.items = favoriteSelection.value.items.filter((img) => img !== data.img)
+    manualApproval.value.items = manualApproval.value.items.filter((img) => img !== data.img)
+    favoriteSelection.value.items.unshift(data.img)
+    favoriteSelection.value.items = favoriteSelection.value.items.slice()
+    manualApproval.value.items.push(data.img)
+    manualApproval.value.items = manualApproval.value.items.slice()
+    if (data.mayNotify && notificationSoundAudio.value) {
+      notificationSoundAudio.value.play()
+    }
+  })
+  ws.connect()
+})
+
+onBeforeUnmount(() => {
+  if (ws) {
+    ws.disconnect()
+  }
 })
 </script>
 
