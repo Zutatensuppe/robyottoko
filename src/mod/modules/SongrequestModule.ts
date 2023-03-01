@@ -206,7 +206,7 @@ class SongrequestModule implements Module {
   }
 
   async reinit(): Promise<SongerquestModuleInitData> {
-    let shouldSave = false
+    const shouldSave = false
     const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {
       filter: {
         show: { tags: [] },
@@ -249,16 +249,7 @@ class SongrequestModule implements Module {
     data.playlist = default_playlist(data.playlist)
     data.settings = default_settings(data.settings)
     data.commands = default_commands(data.commands)
-
-    // todo: remove after deploy
-    if ('tag' in data.filter) {
-      data.filter = {
-        show: { tags: data.filter.tag ? [data.filter.tag] : [] },
-        hide: { tags: [] },
-      }
-      shouldSave = true
-    }
-
+    
     return {
       data: {
         playlist: data.playlist,
