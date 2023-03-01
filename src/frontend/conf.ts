@@ -1,4 +1,4 @@
-import api from './api'
+import api from './_api'
 
 // TODO: don't use any :)
 let conf: any = null

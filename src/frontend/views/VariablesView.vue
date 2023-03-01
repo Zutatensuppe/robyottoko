@@ -76,7 +76,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { GlobalVariable } from '../../types'
-import api from '../api'
+import api from '../_api'
 import StringInput from '../components/StringInput.vue'
 import DoubleclickButton from '../components/DoubleclickButton.vue'
 import NavbarElement from '../components/NavbarElement.vue'

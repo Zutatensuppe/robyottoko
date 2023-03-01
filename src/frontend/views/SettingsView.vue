@@ -120,7 +120,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import api from '../api'
+import api from '../_api'
 import StringInput from '../components/StringInput.vue'
 import NavbarElement from '../components/NavbarElement.vue'
 import { useRouter } from 'vue-router'

@@ -58,7 +58,7 @@
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { WidgetApiData } from './util'
-import api from '../api'
+import api from '../_api'
 import AvatarPage from './avatar/Page.vue'
 import DrawcastControlPage from './drawcast_control/Page.vue'
 import DrawcastDrawPage from './drawcast_draw/Page.vue'

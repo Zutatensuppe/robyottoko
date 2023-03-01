@@ -70,7 +70,7 @@
 </template>
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import api from '../api'
+import api from '../_api'
 import { useToast } from 'vue-toastification'
 import NavbarElement from '../components/NavbarElement.vue'
 import { useRouter } from 'vue-router'

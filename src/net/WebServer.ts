@@ -8,6 +8,7 @@ import { logger } from '../common/fn'
 import { Bot } from '../types'
 import { createRouter as createTwitchRouter } from '../web_routes/twitch'
 import { createRouter as createApiRouter } from '../web_routes/api'
+import { createRouter as createAdminApiRouter } from '../web_routes/admin/api'
 import { RequireLoginMiddleware } from './middleware/RequireLoginMiddleware'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -30,6 +31,7 @@ class WebServer {
     app.use('/uploads', express.static('./data/uploads'))
 
     app.use('/api', createApiRouter(bot))
+    app.use('/admin/api', createAdminApiRouter(bot))
 
     app.use('/twitch', createTwitchRouter(bot))
 
