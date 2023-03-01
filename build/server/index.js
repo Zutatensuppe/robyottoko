@@ -8412,14 +8412,20 @@ class PomoModule {
         }, 1 * SECOND);
     }
     async cmdPomoStart(ctx) {
+        let duration = ctx.rawCmd?.args[0] || '25m';
+        duration = duration.match(/^\d+$/) ? `${duration}m` : duration;
+        const durationMs = parseHumanDuration(duration);
+        if (!durationMs) {
+            const say = this.bot.sayFn(this.user, ctx.target);
+            say('Unable to start the pomo, bad duration given. Usage: !pomo [duration [message]]');
+            return;
+        }
         this.data.state.running = true;
         this.data.state.startTs = JSON.stringify(new Date());
         this.data.state.doneTs = this.data.state.startTs;
         // todo: parse args and use that
         this.data.state.name = ctx.rawCmd?.args.slice(1).join(' ') || '';
-        let duration = ctx.rawCmd?.args[0] || '25m';
-        duration = duration.match(/^\d+$/) ? `${duration}m` : duration;
-        this.data.state.durationMs = parseHumanDuration(duration);
+        this.data.state.durationMs = durationMs;
         await this.save();
         this.tick(ctx.rawCmd, ctx.context);
         this.updateClients(await this.wsdata('init'));
@@ -8503,9 +8509,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-03-01T20:29:41.015Z",
+    buildDate: "2023-03-01T20:48:11.700Z",
     // @ts-ignore
-    buildVersion: "1.59.3",
+    buildVersion: "1.59.4",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
