@@ -534,6 +534,7 @@ var CommandAction;
     CommandAction["SR_FILTER"] = "sr_filter";
     CommandAction["SR_PRESET"] = "sr_preset";
     CommandAction["SR_QUEUE"] = "sr_queue";
+    CommandAction["SR_MOVE_TAG_UP"] = "sr_move_tag_up";
 })(CommandAction || (CommandAction = {}));
 var CountdownActionType;
 (function (CountdownActionType) {
@@ -3304,7 +3305,7 @@ const createCommand = (cmd) => {
     };
 };
 const commands = {
-    text: {
+    [CommandAction.TEXT]: {
         Name: () => 'command',
         Description: () => '',
         NewCommand: () => createCommand({
@@ -3312,7 +3313,7 @@ const commands = {
             action: CommandAction.TEXT,
         }),
     },
-    sr_current: {
+    [CommandAction.SR_CURRENT]: {
         Name: () => 'sr_current',
         Description: () => 'Show what song is currently playing',
         NewCommand: () => createCommand({
@@ -3320,7 +3321,7 @@ const commands = {
             triggers: [newCommandTrigger('!sr current', true)],
         }),
     },
-    sr_undo: {
+    [CommandAction.SR_UNDO]: {
         Name: () => 'sr_undo',
         Description: () => 'Remove the song that was last added by oneself.',
         NewCommand: () => createCommand({
@@ -3328,7 +3329,7 @@ const commands = {
             triggers: [newCommandTrigger('!sr undo', true)],
         }),
     },
-    sr_good: {
+    [CommandAction.SR_GOOD]: {
         Name: () => 'sr_good',
         Description: () => 'Vote the current song up',
         NewCommand: () => createCommand({
@@ -3336,7 +3337,7 @@ const commands = {
             triggers: [newCommandTrigger('!sr good', true)],
         }),
     },
-    sr_bad: {
+    [CommandAction.SR_BAD]: {
         Name: () => 'sr_bad',
         Description: () => 'Vote the current song down',
         NewCommand: () => createCommand({
@@ -3344,7 +3345,7 @@ const commands = {
             triggers: [newCommandTrigger('!sr bad', true)],
         }),
     },
-    sr_stats: {
+    [CommandAction.SR_STATS]: {
         Name: () => 'sr_stats',
         Description: () => 'Show stats about the playlist',
         NewCommand: () => createCommand({
@@ -3352,7 +3353,7 @@ const commands = {
             triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)],
         }),
     },
-    sr_prev: {
+    [CommandAction.SR_PREV]: {
         Name: () => 'sr_prev',
         Description: () => 'Skip to the previous song',
         NewCommand: () => createCommand({
@@ -3361,7 +3362,7 @@ const commands = {
             restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
-    sr_next: {
+    [CommandAction.SR_NEXT]: {
         Name: () => 'sr_next',
         Description: () => 'Skip to the next song',
         NewCommand: () => createCommand({
@@ -3370,7 +3371,7 @@ const commands = {
             restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
-    sr_jumptonew: {
+    [CommandAction.SR_JUMPTONEW]: {
         Name: () => 'sr_jumptonew',
         Description: () => 'Jump to the next unplayed song',
         NewCommand: () => createCommand({
@@ -3379,7 +3380,7 @@ const commands = {
             restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
-    sr_clear: {
+    [CommandAction.SR_CLEAR]: {
         Name: () => 'sr_clear',
         Description: () => 'Clear the playlist',
         NewCommand: () => createCommand({
@@ -3388,7 +3389,7 @@ const commands = {
             restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
-    sr_rm: {
+    [CommandAction.SR_RM]: {
         Name: () => 'sr_rm',
         Description: () => 'Remove the current song from the playlist',
         NewCommand: () => createCommand({
@@ -3397,7 +3398,7 @@ const commands = {
             restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
-    sr_shuffle: {
+    [CommandAction.SR_SHUFFLE]: {
         Name: () => 'sr_shuffle',
         Description: () => `Shuffle the playlist (current song unaffected).
     <br />
@@ -3409,7 +3410,7 @@ const commands = {
             restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
-    sr_reset_stats: {
+    [CommandAction.SR_RESET_STATS]: {
         Name: () => 'sr_reset_stats',
         Description: () => 'Reset all statistics of all songs',
         NewCommand: () => createCommand({
@@ -3418,7 +3419,7 @@ const commands = {
             restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
-    sr_loop: {
+    [CommandAction.SR_LOOP]: {
         Name: () => 'sr_loop',
         Description: () => 'Loop the current song',
         NewCommand: () => createCommand({
@@ -3427,7 +3428,7 @@ const commands = {
             restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
-    sr_noloop: {
+    [CommandAction.SR_NOLOOP]: {
         Name: () => 'sr_noloop',
         Description: () => 'Stop looping the current song',
         NewCommand: () => createCommand({
@@ -3436,7 +3437,7 @@ const commands = {
             restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
-    sr_pause: {
+    [CommandAction.SR_PAUSE]: {
         Name: () => 'sr_pause',
         Description: () => 'Pause currently playing song',
         NewCommand: () => createCommand({
@@ -3445,7 +3446,7 @@ const commands = {
             restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
-    sr_unpause: {
+    [CommandAction.SR_UNPAUSE]: {
         Name: () => 'sr_unpause',
         Description: () => 'Unpause currently paused song',
         NewCommand: () => createCommand({
@@ -3454,7 +3455,7 @@ const commands = {
             restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
-    sr_hidevideo: {
+    [CommandAction.SR_HIDEVIDEO]: {
         Name: () => 'sr_hidevideo',
         Description: () => 'Hide video for current song',
         NewCommand: () => createCommand({
@@ -3463,7 +3464,7 @@ const commands = {
             restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
-    sr_showvideo: {
+    [CommandAction.SR_SHOWVIDEO]: {
         Name: () => 'sr_showvideo',
         Description: () => 'Show video for current song',
         NewCommand: () => createCommand({
@@ -3472,7 +3473,7 @@ const commands = {
             restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
-    sr_request: {
+    [CommandAction.SR_REQUEST]: {
         Name: () => 'sr_request',
         Description: () => `
     Search for <code>&lt;SEARCH&gt;</code> (argument to this command)
@@ -3484,7 +3485,7 @@ const commands = {
             triggers: [newCommandTrigger('!sr')],
         }),
     },
-    sr_re_request: {
+    [CommandAction.SR_RE_REQUEST]: {
         Name: () => 'sr_re_request',
         Description: () => `
     Search for <code>&lt;SEARCH&gt;</code> (argument to this command)
@@ -3495,7 +3496,7 @@ const commands = {
             triggers: [newCommandTrigger('!resr')],
         }),
     },
-    sr_addtag: {
+    [CommandAction.SR_ADDTAG]: {
         Name: () => 'sr_addtag',
         Description: () => 'Add tag <code>&lt;TAG&gt;</code> (argument to this command) to the current song',
         NewCommand: () => createCommand({
@@ -3505,7 +3506,7 @@ const commands = {
             data: { tag: '' },
         }),
     },
-    sr_rmtag: {
+    [CommandAction.SR_RMTAG]: {
         Name: () => 'sr_rmtag',
         Description: () => 'Remove tag <code>&lt;TAG&gt;</code> (argument to this command) from the current song',
         NewCommand: () => createCommand({
@@ -3514,7 +3515,7 @@ const commands = {
             restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
-    sr_volume: {
+    [CommandAction.SR_VOLUME]: {
         Name: () => 'sr_volume',
         Description: () => `Sets the song request volume to <code>&lt;VOLUME&gt;</code> (argument to this command, min 0, max 100).
     <br />
@@ -3525,7 +3526,7 @@ const commands = {
             restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
-    sr_filter: {
+    [CommandAction.SR_FILTER]: {
         Name: () => 'sr_filter',
         Description: () => `Play only songs with the given tag <code>&lt;TAG&gt;</code> (argument to this command). If no tag
   is given, play all songs.`,
@@ -3535,7 +3536,7 @@ const commands = {
             restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
-    sr_preset: {
+    [CommandAction.SR_PRESET]: {
         Name: () => 'sr_preset',
         Description: () => `Switches to the preset <code>&lt;PRESET&gt;</code> (argument to this command) if it exists.
   If no arguments are given, outputs all available presets.`,
@@ -3545,12 +3546,21 @@ const commands = {
             restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
-    sr_queue: {
+    [CommandAction.SR_QUEUE]: {
         Name: () => 'sr_queue',
         Description: () => 'Shows the next 3 songs that will play.',
         NewCommand: () => createCommand({
             action: CommandAction.SR_QUEUE,
             triggers: [newCommandTrigger('!sr queue')],
+        }),
+    },
+    [CommandAction.SR_MOVE_TAG_UP]: {
+        Name: () => 'sr_move_tag_up',
+        Description: () => 'Moves songs with the tag to the beginning of the playlist.',
+        NewCommand: () => createCommand({
+            action: CommandAction.SR_MOVE_TAG_UP,
+            triggers: [newCommandTrigger('!sr movetagup')],
+            restrict: { active: true, to: MOD_OR_ABOVE },
         }),
     },
 };
@@ -5445,19 +5455,6 @@ class GeneralModule {
         data.settings = default_settings$5(data.settings);
         const fixed = this.fix(data.commands);
         data.commands = fixed.commands;
-        // todo: remove after release
-        if (!data.adminSettings) {
-            data.adminSettings = {};
-            fixed.shouldSave = true;
-        }
-        if (typeof data.adminSettings.showImages === 'undefined') {
-            data.adminSettings.showImages = true;
-            fixed.shouldSave = true;
-        }
-        if (typeof data.adminSettings.autocommands === 'undefined') {
-            data.adminSettings.autocommands = [];
-            fixed.shouldSave = true;
-        }
         // do not remove for now, new users gain the !bot command by this
         if (!data.adminSettings.autocommands.includes('!bot')) {
             const command = commands.text.NewCommand();
@@ -5876,6 +5873,7 @@ const default_commands = (list = null) => {
         commands.sr_filter.NewCommand(),
         commands.sr_preset.NewCommand(),
         commands.sr_queue.NewCommand(),
+        commands.sr_move_tag_up.NewCommand(),
     ];
 };
 const default_settings$4 = (obj = null) => ({
@@ -6228,6 +6226,11 @@ var REMOVE_FILTER_SHOW_TAGS_RESULT;
     REMOVE_FILTER_SHOW_TAGS_RESULT[REMOVE_FILTER_SHOW_TAGS_RESULT["UPDATED"] = 1] = "UPDATED";
     REMOVE_FILTER_SHOW_TAGS_RESULT[REMOVE_FILTER_SHOW_TAGS_RESULT["NOT_UPDATED"] = 0] = "NOT_UPDATED";
 })(REMOVE_FILTER_SHOW_TAGS_RESULT || (REMOVE_FILTER_SHOW_TAGS_RESULT = {}));
+var MOVE_TAG_UP_RESULT;
+(function (MOVE_TAG_UP_RESULT) {
+    MOVE_TAG_UP_RESULT[MOVE_TAG_UP_RESULT["MOVED"] = 1] = "MOVED";
+    MOVE_TAG_UP_RESULT[MOVE_TAG_UP_RESULT["NOT_MOVED"] = 0] = "NOT_MOVED";
+})(MOVE_TAG_UP_RESULT || (MOVE_TAG_UP_RESULT = {}));
 const default_playlist_item = (item = null) => {
     return {
         id: item?.id || 0,
@@ -6295,6 +6298,24 @@ const findInsertIndex = (playlist) => {
         }
     }
     return (found === -1 ? 0 : found) + 1;
+};
+const moveTagUp = (playlist, tag) => {
+    let moved = false;
+    playlist = playlist.sort((a, b) => {
+        if (a.tags.includes(tag)) {
+            if (b.tags.includes(tag)) {
+                return 0;
+            }
+            moved = true;
+            return -1;
+        }
+        else if (b.tags.includes(tag)) {
+            moved = true;
+            return 1;
+        }
+        return 0;
+    });
+    return moved ? MOVE_TAG_UP_RESULT.MOVED : MOVE_TAG_UP_RESULT.NOT_MOVED;
 };
 class SongrequestModule {
     constructor(bot, user) {
@@ -6376,12 +6397,9 @@ class SongrequestModule {
         data.playlist = default_playlist(data.playlist);
         data.settings = default_settings$4(data.settings);
         data.commands = default_commands(data.commands);
-        // todo: remove after deploy
-        if ('tag' in data.filter) {
-            data.filter = {
-                show: { tags: data.filter.tag ? [data.filter.tag] : [] },
-                hide: { tags: [] },
-            };
+        // todo: remove after release
+        if (!data.commands.some((c) => c.action === CommandAction.SR_MOVE_TAG_UP)) {
+            data.commands.push(commands.sr_move_tag_up.NewCommand());
             shouldSave = true;
         }
         return {
@@ -6425,6 +6443,7 @@ class SongrequestModule {
             sr_filter: this.cmdSrFilter.bind(this),
             sr_preset: this.cmdSrPreset.bind(this),
             sr_queue: this.cmdSrQueue.bind(this),
+            sr_move_tag_up: this.cmdSrMoveTagUp.bind(this),
         };
         const commands = [];
         rawCommands.forEach((cmd) => {
@@ -7406,6 +7425,28 @@ class SongrequestModule {
                 else if (res === REMOVE_FILTER_SHOW_TAGS_RESULT.NOT_UPDATED) {
                     say('Already playing all songs.');
                 }
+            }
+        };
+    }
+    cmdSrMoveTagUp(_originalCommand) {
+        return async (ctx) => {
+            if (!ctx.rawCmd || !ctx.context) {
+                return;
+            }
+            const say = this.bot.sayFn(this.user, ctx.target);
+            const tag = ctx.rawCmd.args.join(' ');
+            if (tag === '') {
+                say(`No tag given.`);
+                return;
+            }
+            const res = moveTagUp(this.data.playlist, tag);
+            if (res === MOVE_TAG_UP_RESULT.MOVED) {
+                say(`Moved songs with tag "${tag}" to the beginning of the playlist.`);
+                await this.save();
+                await this.updateClients('skip');
+            }
+            else if (res === MOVE_TAG_UP_RESULT.NOT_MOVED) {
+                say(`No songs with tag "${tag}" found.`);
             }
         };
     }
@@ -8509,9 +8550,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-03-01T20:48:11.700Z",
+    buildDate: "2023-03-01T22:05:47.567Z",
     // @ts-ignore
-    buildVersion: "1.59.4",
+    buildVersion: "1.60.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
