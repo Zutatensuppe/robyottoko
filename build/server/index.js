@@ -1,6 +1,6 @@
 import fs, { readFileSync } from 'fs';
 import WebSocket from 'ws';
-import fetch from 'node-fetch';
+import fetch$1 from 'node-fetch';
 import childProcess from 'child_process';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -1013,7 +1013,7 @@ const retryFetch = async (url, opts, retries = 3, retryDelay = 1000, timeout = 0
             setTimeout(() => reject('error: timeout'), timeout);
         }
         const wrapper = (n) => {
-            fetch(url, opts)
+            fetch$1(url, opts)
                 .then((res) => resolve(res))
                 .catch(async (err) => {
                 if (n > 0) {
@@ -3836,7 +3836,7 @@ class RaidEventHandler extends EventSubEventHandler {
 }
 
 const log$f = logger('twitch/index.ts');
-const createRouter$3 = (bot) => {
+const createRouter$4 = (bot) => {
     const handlers = {
         [SubscriptionType.ChannelSubscribe]: new SubscribeEventHandler(),
         [SubscriptionType.ChannelFollow]: new FollowEventHandler(),
@@ -3945,7 +3945,7 @@ const createRouter$3 = (bot) => {
     return router;
 };
 
-const createRouter$2 = (bot) => {
+const createRouter$3 = (bot) => {
     const router = express.Router();
     router.use(cors());
     router.get('/chatters', async (req, res) => {
@@ -4030,7 +4030,7 @@ const RequireLoginApiMiddleware = (req, res, next) => {
     return next();
 };
 
-const createRouter$1 = (bot) => {
+const createRouter$2 = (bot) => {
     const router = express.Router();
     router.get('/me', RequireLoginApiMiddleware, async (req, res) => {
         const apiUser = {
@@ -4075,7 +4075,7 @@ const moduleDefinitions = [
 ];
 
 const log$e = logger('api/index.ts');
-const createRouter = (bot) => {
+const createRouter$1 = (bot) => {
     const uploadDir = './data/uploads';
     const storage = multer.diskStorage({
         destination: uploadDir,
@@ -4260,8 +4260,55 @@ const createRouter = (bot) => {
         }
         res.send();
     });
-    router.use('/user', createRouter$1(bot));
-    router.use('/pub/v1', createRouter$2(bot));
+    router.use('/user', createRouter$2(bot));
+    router.use('/pub/v1', createRouter$3(bot));
+    return router;
+};
+
+const createRouter = (bot) => {
+    const requireLoginApi = async (req, res, next) => {
+        if (!req.token) {
+            res.status(401).send({});
+            return;
+        }
+        const user = req.user || null;
+        if (!user || !user.id) {
+            res.status(403).send({ ok: false, error: 'forbidden' });
+            return;
+        }
+        const adminGroup = await bot.getDb().get('user_group', { name: 'admin' });
+        if (!adminGroup) {
+            res.status(403).send({ ok: false, error: 'no admin' });
+            return;
+        }
+        const userXAdmin = await bot.getDb().get('user_x_user_group', {
+            user_group_id: adminGroup.id,
+            user_id: user.id,
+        });
+        if (!userXAdmin) {
+            res.status(403).send({ ok: false, error: 'not an admin' });
+            return;
+        }
+        next();
+    };
+    const router = express.Router();
+    router.use(requireLoginApi);
+    router.get('/announcements', async (req, res) => {
+        const items = await bot.getDb().getMany('announcements', undefined, [{ created: -1 }]);
+        res.send(items);
+    });
+    router.post('/announcements', express.json(), async (req, res) => {
+        const message = req.body.message;
+        const title = req.body.title;
+        const id = await bot.getDb().insert('announcements', { created: new Date(), title, message }, 'id');
+        const announcement = await bot.getDb().get('announcements', { id });
+        if (!announcement) {
+            res.status(500).send({ ok: false, reason: 'unable_to_get_announcement' });
+            return;
+        }
+        await bot.getDiscord().announce(`**${title}**\n${announcement.message}`);
+        res.send({ announcement });
+    });
     return router;
 };
 
@@ -4292,8 +4339,9 @@ class WebServer {
         app.use('/', express.static('./build/public'));
         app.use('/static', express.static('./public/static'));
         app.use('/uploads', express.static('./data/uploads'));
-        app.use('/api', createRouter(bot));
-        app.use('/twitch', createRouter$3(bot));
+        app.use('/api', createRouter$1(bot));
+        app.use('/admin/api', createRouter(bot));
+        app.use('/twitch', createRouter$4(bot));
         app.all('/login', async (_req, res, _next) => {
             res.sendFile(indexFile);
         });
@@ -8545,9 +8593,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-03-01T22:27:29.024Z",
+    buildDate: "2023-03-01T23:22:24.063Z",
     // @ts-ignore
-    buildVersion: "1.60.1",
+    buildVersion: "1.61.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
@@ -8981,6 +9029,27 @@ class Canny {
     }
 }
 
+class Discord {
+    constructor(config) {
+        this.config = config;
+        // pass
+    }
+    async announce(message) {
+        fetch(this.config.bot.url + '/announce', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                guildId: this.config.announce.guildId,
+                channelId: this.config.announce.channelId,
+                message: message,
+            }),
+        });
+    }
+}
+
 setLogLevel(config.log.level);
 const log = logger('bot.ts');
 const modules = [
@@ -8999,6 +9068,7 @@ const createBot = async () => {
     const repos = new Repos(db);
     const cache = new Cache(db);
     const canny = new Canny(config.canny);
+    const discord = new Discord(config.discord);
     const auth = new Auth(repos, canny);
     const widgets = new Widgets(repos);
     const eventHub = mitt();
@@ -9013,6 +9083,8 @@ const createBot = async () => {
             this.streamStatusUpdater = null;
             this.frontendStatusUpdater = null;
         }
+        getDb() { return db; }
+        getDiscord() { return discord; }
         getBuildVersion() { return buildEnv.buildVersion; }
         getBuildDate() { return buildEnv.buildDate; }
         getModuleManager() { return moduleManager; }
