@@ -133,15 +133,22 @@ class PomoModule implements Module {
   }
 
   async cmdPomoStart(ctx: CommandExecutionContext) {
+    let duration = ctx.rawCmd?.args[0] || '25m'
+    duration = duration.match(/^\d+$/) ? `${duration}m` : duration
+    const durationMs = parseHumanDuration(duration)
+    if (!durationMs) {
+      const say = this.bot.sayFn(this.user, ctx.target)
+      say('Unable to start the pomo, bad duration given. Usage: !pomo [duration [message]]')
+      return
+    }
+
     this.data.state.running = true
     this.data.state.startTs = JSON.stringify(new Date())
     this.data.state.doneTs = this.data.state.startTs
     // todo: parse args and use that
     this.data.state.name = ctx.rawCmd?.args.slice(1).join(' ') || ''
 
-    let duration = ctx.rawCmd?.args[0] || '25m'
-    duration = duration.match(/^\d+$/) ? `${duration}m` : duration
-    this.data.state.durationMs = parseHumanDuration(duration)
+    this.data.state.durationMs = durationMs
     await this.save()
     this.tick(ctx.rawCmd, ctx.context)
     this.updateClients(await this.wsdata('init'))
