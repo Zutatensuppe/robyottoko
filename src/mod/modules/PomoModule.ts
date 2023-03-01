@@ -138,7 +138,7 @@ class PomoModule implements Module {
     const durationMs = parseHumanDuration(duration)
     if (!durationMs) {
       const say = this.bot.sayFn(this.user, ctx.target)
-      say('Unable to start the pomo, bad duration given.')
+      say('Unable to start the pomo, bad duration given. Usage: !pomo [duration [message]]')
       return
     }
 
