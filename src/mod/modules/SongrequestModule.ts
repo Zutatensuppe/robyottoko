@@ -230,7 +230,7 @@ class SongrequestModule implements Module {
   }
 
   async reinit(): Promise<SongerquestModuleInitData> {
-    let shouldSave = false
+    const shouldSave = false
     const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {
       filter: {
         show: { tags: [] },
@@ -273,12 +273,6 @@ class SongrequestModule implements Module {
     data.playlist = default_playlist(data.playlist)
     data.settings = default_settings(data.settings)
     data.commands = default_commands(data.commands)
-
-    // todo: remove after release
-    if (!data.commands.some((c: Command) => c.action === CommandAction.SR_MOVE_TAG_UP)) {
-      data.commands.push(commands.sr_move_tag_up.NewCommand())
-      shouldSave = true
-    }
     
     return {
       data: {
