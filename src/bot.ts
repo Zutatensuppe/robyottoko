@@ -30,6 +30,7 @@ import { Youtube } from './services/Youtube'
 import { YoutubeApi } from './services/youtube/YoutubeApi'
 import { Indivious } from './services/youtube/Indivious'
 import { Canny } from './services/Canny'
+import { Discord } from './services/Discord'
 
 setLogLevel(config.log.level)
 const log = logger('bot.ts')
@@ -52,6 +53,7 @@ const createBot = async (): Promise<Bot> => {
   const repos = new Repos(db)
   const cache = new Cache(db)
   const canny = new Canny(config.canny)
+  const discord = new Discord(config.discord)
   const auth = new Auth(repos, canny)
   const widgets = new Widgets(repos)
   const eventHub = mitt()
@@ -70,6 +72,8 @@ const createBot = async (): Promise<Bot> => {
     private streamStatusUpdater: StreamStatusUpdater | null = null
     private frontendStatusUpdater: FrontendStatusUpdater | null = null
 
+    getDb() { return db }
+    getDiscord() { return discord }
     getBuildVersion() { return buildEnv.buildVersion }
     getBuildDate() { return buildEnv.buildDate }
     getModuleManager() { return moduleManager }

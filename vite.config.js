@@ -10,7 +10,7 @@ export default vite.defineConfig({
   },
   server: {
     proxy: {
-      '^/(twitch|api|uploads)/.*': {
+      '^/(twitch|api|uploads|admin/api)/.*': {
         target: 'http://localhost:1337',
         secure: false,
       },

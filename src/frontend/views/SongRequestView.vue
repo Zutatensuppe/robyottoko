@@ -195,7 +195,7 @@ import {
   TagInfo,
 } from '../../mod/modules/SongrequestModuleCommon'
 import { useToast } from 'vue-toastification'
-import api from '../api'
+import api from '../_api'
 import CommandsEditor from '../components/Commands/CommandsEditor.vue'
 import NavbarElement from '../components/NavbarElement.vue'
 import PlaylistEditor from '../components/SongRequest/PlaylistEditor.vue'

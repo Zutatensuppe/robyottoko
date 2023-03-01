@@ -1,6 +1,6 @@
 import mitt from 'mitt'
 import { ApiUserData } from '../types'
-import api from './api'
+import api from './_api'
 
 let me: ApiUserData | null = null
 

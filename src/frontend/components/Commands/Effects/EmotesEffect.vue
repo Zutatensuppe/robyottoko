@@ -85,7 +85,7 @@
 import { EmotesEffectData, EmoteSet } from '../../../../types'
 import { onBeforeMount, ref, watch } from 'vue'
 import { EMOTE_DISPLAY_FN, possibleEmoteDisplayFunctions } from '../../../../mod/modules/GeneralModuleCommon'
-import api from '../../../api'
+import api from '../../../_api'
 import StringInput from '../../StringInput.vue'
 
 const props = defineProps<{

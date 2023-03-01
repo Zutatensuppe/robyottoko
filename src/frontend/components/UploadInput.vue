@@ -23,7 +23,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { UploadedFile } from '../../types'
-import api from '../api'
+import api from '../_api'
 
 const props = withDefaults(defineProps<{
   accept: string

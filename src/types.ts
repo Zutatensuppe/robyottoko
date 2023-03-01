@@ -18,6 +18,8 @@ import { TwitchTmiClientManager } from './services/TwitchTmiClientManager'
 import { Repos } from './repo/Repos'
 import { Youtube } from './services/Youtube'
 import { Canny } from './services/Canny'
+import Db from './DbPostgres'
+import { Discord } from './services/Discord'
 
 type int = number
 
@@ -57,6 +59,17 @@ export interface HttpConfig {
 
 export interface CannyConfig {
   sso_private_key: string
+}
+
+export interface DiscordConfig {
+  bot: {
+    url: string
+    token: string
+  }
+  announce: {
+    guildId: string
+    channelId: string
+  }
 }
 
 export interface EventSubTransport {
@@ -105,6 +118,7 @@ export interface Config {
   }
   youtubeDlBinary: string
   canny: CannyConfig
+  discord: DiscordConfig
 }
 
 // @see https://github.com/SortableJS/vue.draggable.next
@@ -563,6 +577,7 @@ export interface TwitchBotIdentity {
 }
 
 export interface Bot {
+  getDb: () => Db
   getBuildVersion: () => string
   getBuildDate: () => string
   getModuleManager: () => ModuleManager
@@ -579,6 +594,7 @@ export interface Bot {
   getFrontendStatusUpdater: () => FrontendStatusUpdater
   getTwitchTmiClientManager: () => TwitchTmiClientManager
   getCanny: () => Canny
+  getDiscord: () => Discord
 
   sayFn: (user: User, target: string | null) => (msg: string) => void
   getUserTwitchClientManager: (user: User) => TwitchClientManager

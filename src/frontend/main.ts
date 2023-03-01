@@ -18,6 +18,8 @@ import VariablesView from './views/VariablesView.vue'
 import CannyBugReportsView from './views/CannyBugReportsView.vue'
 import CannyFeatureRequestsView from './views/CannyFeatureRequestsView.vue'
 
+import AdminAnnouncements from './admin/views/Announcements.vue'
+
 import draggable from 'vuedraggable'
 
 import Widget from './widgets/Widget.vue'
@@ -101,6 +103,13 @@ const run = async () => {
         name: 'pub', path: '/pub/:pub_id/', component: Widget, meta: {
           title: 'Pub',
           protected: false,
+        },
+      },
+
+      {
+        name: 'admin_announcements', path: '/admin/announcements', component: AdminAnnouncements, meta: {
+          title: 'Admin - Announcements',
+          protected: true,
         },
       },
 
