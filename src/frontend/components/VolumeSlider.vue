@@ -6,7 +6,7 @@
     icon-right="fa-volume-up"
     :min="0"
     :max="100"
-    @update:modelValue="valChange"
+    @update:model-value="valChange"
   />
 </template>
 <script setup lang="ts">

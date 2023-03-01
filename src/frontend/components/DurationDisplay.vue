@@ -6,9 +6,9 @@
 import { computed } from 'vue'
 import fn from '../../common/fn'
 
-const props = defineProps({
-  value: { required: true },
-})
+const props = defineProps<{
+  value: string | number,
+}>()
 
 const tag = computed(() => {
   try {

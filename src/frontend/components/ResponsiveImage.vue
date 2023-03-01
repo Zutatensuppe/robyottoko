@@ -8,18 +8,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-const props = defineProps({
-  src: String,
-  title: String,
-  height: {
-    type: String,
-    default: '100%',
-  },
-  width: {
-    type: String,
-    default: '100%',
-  },
+const props = withDefaults(defineProps<{
+  src: string,
+  title: string,
+  width?: string
+  height?: string
+}>(), {
+  width: '100%',
+  height: '100%',
 })
+
 const style = computed(() => ({
   display: 'inline-block',
   verticalAlign: 'text-bottom',

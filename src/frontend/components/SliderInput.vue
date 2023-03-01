@@ -37,12 +37,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-const props = defineProps({
-  modelValue: { type: Number, required: true },
-  iconLeft: String,
-  iconRight: String,
-  min: { type: Number, default: 0 },
-  max: { type: Number, default: 100 },
+const props = withDefaults(defineProps<{
+  modelValue: number
+  iconLeft: string
+  iconRight: string
+  min?: number
+  max?: number
+}>(), {
+  min: 0,
+  max: 100,
 })
 const emit = defineEmits<{
   (e: 'update:modelValue', val: number): void
@@ -63,8 +66,6 @@ input[type="range"]::-webkit-slider-thumb {
 
 .slider {
   clear: none;
-  /* display: inline-block; */
-  /* width: 140px; */
   min-width: 100px;
   vertical-align: text-bottom;
 }

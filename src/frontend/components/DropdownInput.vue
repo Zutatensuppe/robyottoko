@@ -40,18 +40,19 @@
   </div>
 </template>
 <script setup lang="ts">
-import { onMounted, onUnmounted, PropType, ref, Ref, watch } from 'vue'
+import { onMounted, onUnmounted, ref, Ref, watch } from 'vue'
 
 interface OneValue {
   value: string,
   label: string,
 }
 
-const props = defineProps({
-  modelValue: { type: String, required: true },
-  // maybe instead of values provide a autocomplete function?
-  values: { type: Array as PropType<OneValue[]>, required: true },
-  icon: { type: String, default: '' },
+const props = withDefaults(defineProps<{
+  modelValue: string,
+  values: OneValue[],
+  icon?: string,
+}>(), {
+  icon: '',
 })
 const emit = defineEmits<{
   (e: 'update:modelValue', val: string): void

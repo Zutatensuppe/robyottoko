@@ -68,11 +68,12 @@
     </div>
   </div>
 </template>
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script setup lang="ts">
+import { onMounted, ref } from 'vue'
 import api from '../api'
 import { useToast } from 'vue-toastification'
 import NavbarElement from '../components/NavbarElement.vue'
+import { useRouter } from 'vue-router'
 
 interface WidgetDefinition {
   type: string
@@ -89,58 +90,51 @@ interface ModuleDefinition {
   widgets: WidgetDefinition[]
 }
 
-export default defineComponent({
-  components: {
-    NavbarElement,
-  },
-  data: () => ({
-    modules: [] as ModuleDefinition[],
-    toast: useToast(),
-  }),
-  async created() {
-    const res = await api.getPageIndexData()
-    if (res.status !== 200) {
-      this.$router.push({ name: 'login' })
-      return
-    }
+const router = useRouter()
+const toast = useToast()
+const modules = ref<ModuleDefinition[]>([])
 
-    const data: {
-      modules: ModuleDefinition[],
-    } = await res.json()
-    this.modules = data.modules
-  },
-  methods: {
-    async updateEnabled(m: { key: string, enabled: boolean }): Promise<void> {
-      await api.setModuleEnabled(m)
-    },
-    // TODO: define widget type
-    async newUrl(widget: WidgetDefinition): Promise<void> {
-      const res = await api.createWidgetUrl({
-        type: widget.type,
-        pub: widget.pub,
-      })
-      if (res.status === 200) {
-        try {
-          const json = await res.json()
-          if (json.url) {
-            this.modules = this.modules.map((m: ModuleDefinition) => {
-              m.widgets = m.widgets.map((w) => {
-                if (w.type === widget.type) {
-                  w.url = json.url
-                }
-                return w
-              })
-              return m
-            })
+const updateEnabled = async (m: { key: string, enabled: boolean }): Promise<void> => {
+  await api.setModuleEnabled(m)
+}
+
+const newUrl = async (widget: WidgetDefinition): Promise<void> => {
+  const res = await api.createWidgetUrl({
+    type: widget.type,
+    pub: widget.pub,
+  })
+  if (res.status !== 200) {
+    toast.error('New URL couldn\'t be created')
+    return
+  }
+  
+  try {
+    const json = await res.json()
+    if (json.url) {
+      modules.value = modules.value.map((m: ModuleDefinition) => {
+        m.widgets = m.widgets.map((w) => {
+          if (w.type === widget.type) {
+            w.url = json.url
           }
-          this.toast.success('New URL created')
-        } catch (e: any) {
-          this.toast.error('New URL couldn\'t be created')
-        }
-      } else {
-        this.toast.error('New URL couldn\'t be created')
-      }
-    },
-  },
+          return w
+        })
+        return m
+      })
+    }
+    toast.success('New URL created')
+  } catch (e: any) {
+    toast.error('New URL couldn\'t be created')
+  }
+}
+
+onMounted(async () => {
+  const res = await api.getPageIndexData()
+  if (res.status !== 200) {
+    router.push({ name: 'login' })
+    return
+  }
+
+  const data: { modules: ModuleDefinition[] } = await res.json()
+  modules.value = data.modules
 })
 </script>

@@ -29,6 +29,7 @@ const onInit = () => {
   me.value = user.getMe()
   removeIframe()
   // @ts-ignore
+  // eslint-disable-next-line
   Canny('render', {
     boardToken: props.boardToken,
     basePath: props.basePath,
