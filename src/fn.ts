@@ -59,7 +59,7 @@ const sayFn = (
   client: TwitchChatClient,
   target: string | null,
 ) => (
-  msg: string
+  msg: string,
 ) => {
     // in case no target is given we use the configured channels
     // we should be able to use client.channels or client.getChannels()
@@ -441,7 +441,7 @@ export const doReplacements = async (
       replaced = await replaceAsync(
         replaced,
         replace.regex,
-        replace.replacer
+        replace.replacer,
       )
     }
   } while (orig !== replaced)
@@ -469,7 +469,7 @@ export const joinIntoChunks = (
 }
 
 export const parseISO8601Duration = (
-  duration: string
+  duration: string,
 ): number => {
   // P(n)Y(n)M(n)DT(n)H(n)M(n)S
   const m = duration.match(/^P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/)
@@ -499,7 +499,7 @@ export const parseISO8601Duration = (
 export const findIdxFuzzy = <T>(
   array: T[],
   search: string,
-  keyFn: (item: T) => string = String
+  keyFn: (item: T) => string = String,
 ) => {
   let idx = findIdxBySearchExact(array, search, keyFn)
   if (idx === -1) {
@@ -528,7 +528,7 @@ export const accentFolded = (str: string): string => {
 export const findShortestIdx = <T>(
   array: T[],
   indexes: number[],
-  keyFn: (item: T) => string
+  keyFn: (item: T) => string,
 ) => {
   let shortestIdx = -1
   let shortest = 0
@@ -545,7 +545,7 @@ export const findShortestIdx = <T>(
 export const findIdxBySearchExact = <T>(
   array: T[],
   search: string,
-  keyFn: (item: T) => string = String
+  keyFn: (item: T) => string = String,
 ) => {
   const searchLower = accentFolded(search.toLowerCase())
   const indexes: number[] = []
@@ -560,7 +560,7 @@ export const findIdxBySearchExact = <T>(
 export const findIdxBySearchExactStartsWith = <T>(
   array: T[],
   search: string,
-  keyFn: (item: T) => string = String
+  keyFn: (item: T) => string = String,
 ) => {
   const searchLower = accentFolded(search.toLowerCase())
   const indexes: number[] = []
@@ -575,7 +575,7 @@ export const findIdxBySearchExactStartsWith = <T>(
 export const findIdxBySearchExactWord = <T>(
   array: T[],
   search: string,
-  keyFn: (item: T) => string = String
+  keyFn: (item: T) => string = String,
 ) => {
   const searchLower = accentFolded(search.toLowerCase())
   const indexes: number[] = []
@@ -601,7 +601,7 @@ export const findIdxBySearchExactWord = <T>(
 export const findIdxBySearchExactPart = <T>(
   array: T[],
   search: string,
-  keyFn: (item: T) => string = String
+  keyFn: (item: T) => string = String,
 ) => {
   const searchLower = accentFolded(search.toLowerCase())
   const indexes: number[] = []
@@ -616,7 +616,7 @@ export const findIdxBySearchExactPart = <T>(
 export const findIdxBySearchInOrder = <T>(
   array: T[],
   search: string,
-  keyFn: (item: T) => string = String
+  keyFn: (item: T) => string = String,
 ) => {
   const split = accentFolded(search).split(/\s+/)
   const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
@@ -633,7 +633,7 @@ export const findIdxBySearchInOrder = <T>(
 export const findIdxBySearch = <T>(
   array: T[],
   search: string,
-  keyFn: (item: T) => string = String
+  keyFn: (item: T) => string = String,
 ) => {
   const split = accentFolded(search).split(/\s+/)
   const regexArgs = split.map(arg => arg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
@@ -709,7 +709,7 @@ export const extractEmotes = (context: ChatMessageContext) => {
 
 export const getChannelPointsCustomRewards = async (
   bot: Bot,
-  user: User
+  user: User,
 ): Promise<Record<string, string[]>> => {
   const helixClient = bot.getUserTwitchClientManager(user).getHelixClient()
   if (!helixClient) {

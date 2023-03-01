@@ -27,7 +27,7 @@ export class CommandExecutionRepo extends Repo {
     trigger_user_name?: string | null,
   }): Promise<Row | null> {
     return await this.db.get(TABLE, data, [
-      { executed_at: -1 }
+      { executed_at: -1 },
     ])
   }
 }

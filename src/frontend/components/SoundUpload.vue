@@ -59,7 +59,7 @@ const emit = defineEmits<{
 const value = ref<SoundMediaFile>(
   props.modelValue
     ? JSON.parse(JSON.stringify(props.modelValue))
-    : { file: '', filename: '', urlpath: '', volume: 100 }
+    : { file: '', filename: '', urlpath: '', volume: 100 },
 )
 const draggingOver = ref<boolean>(false)
 

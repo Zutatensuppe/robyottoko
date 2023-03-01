@@ -72,7 +72,7 @@ class TwitchPubSubClient {
       data: {
         topics: [topic],
         auth_token: authToken,
-      }
+      },
     }
     this.nonceMessages[n] = message
     this._send(message)

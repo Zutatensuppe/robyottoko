@@ -35,104 +35,104 @@ const run = async () => {
         name: 'index', path: '/', component: IndexView, meta: {
           title: 'Hyottoko.club',
           protected: true,
-        }
+        },
       },
       {
         name: 'login', path: '/login', component: LoginView, meta: {
           title: 'Login',
           protected: false,
-        }
+        },
       },
       {
         name: 'commands', path: '/commands/', component: CommandsView, meta: {
           title: 'Commands',
           protected: true,
-        }
+        },
       },
       {
         name: 'variables', path: '/variables/', component: VariablesView, meta: {
           title: 'Variables',
           protected: true,
-        }
+        },
       },
       {
         name: 'sr', path: '/sr/', component: SongRequestView, meta: {
           title: 'Song Request',
           protected: true,
-        }
+        },
       },
       {
         name: 'speech-to-text', path: '/speech-to-text/', component: SpeechToTextView, meta: {
           title: 'Speech to text',
           protected: true,
-        }
+        },
       },
       {
         name: 'avatar', path: '/avatar/', component: AvatarView, meta: {
           title: 'Avatar',
           protected: true,
-        }
+        },
       },
       {
         name: 'pomo', path: '/pomo/', component: PomoModuleView, meta: {
           title: 'Pomo',
           protected: true,
-        }
+        },
       },
       {
         name: 'drawcast', path: '/drawcast/', component: DrawcastView, meta: {
           title: 'Drawcast',
           protected: true,
-        }
+        },
       },
       {
         name: 'settings', path: '/settings/', component: SettingsView, meta: {
           title: 'Settings',
           protected: true,
-        }
+        },
       },
       {
         name: 'widget', path: '/widget/:widget_type/:widget_token/', component: Widget, meta: {
           title: 'Widget',
           protected: false,
-        }
+        },
       },
       {
         name: 'pub', path: '/pub/:pub_id/', component: Widget, meta: {
           title: 'Pub',
           protected: false,
-        }
+        },
       },
 
       // Canny.io feedback
       {
         path: '/feedback', redirect: { name: 'bug-reports' }, meta: {
           protected: true,
-        }
+        },
       },
       {
         name: 'bug-reports', path: '/feedback/bug-reports', component: CannyBugReportsView, meta: {
           title: 'Bug Reports',
           protected: true,
-        }
+        },
       },
       {
         path: '/feedback/bug-reports/:catchAll(.*)', component: CannyBugReportsView, meta: {
           title: 'Bug Reports',
           protected: true,
-        }
+        },
       },
       {
         name: 'feature-requests', path: '/feedback/feature-requests', component: CannyFeatureRequestsView, meta: {
           title: 'Feature Requests',
           protected: true,
-        }
+        },
       },
       {
         path: '/feedback/feature-requests/:catchAll(.*)', component: CannyFeatureRequestsView, meta: {
           title: 'Feature Requests',
           protected: true,
-        }
+        },
       },
     ],
   })

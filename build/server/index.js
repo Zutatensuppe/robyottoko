@@ -114,9 +114,9 @@ class Auth {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                groups: await this.repos.user.getGroups(user.id)
+                groups: await this.repos.user.getGroups(user.id),
             },
-            cannyToken: this.canny.createToken(user)
+            cannyToken: this.canny.createToken(user),
         };
     }
     addAuthInfoMiddleware() {
@@ -1415,7 +1415,7 @@ class MediaEffect extends Effect {
         this.notifyWs('general', {
             event: 'playmedia',
             data: this.effect.data,
-            id: this.originalCmd.id
+            id: this.originalCmd.id,
         });
     }
 }
@@ -4071,7 +4071,7 @@ const createRouter = (bot) => {
         destination: uploadDir,
         filename: function (req, file, cb) {
             cb(null, `${nonce(6)}-${file.originalname}`);
-        }
+        },
     });
     const upload = multer({ storage }).single('file');
     const router = express.Router();
@@ -4120,7 +4120,7 @@ const createRouter = (bot) => {
         const pub = req.body.pub;
         const url = await bot.getWidgets().createWidgetUrl(type, req.user.id);
         res.send({
-            url: pub ? (await bot.getWidgets().pubUrl(url)) : url
+            url: pub ? (await bot.getWidgets().pubUrl(url)) : url,
         });
     });
     router.get('/page/index', RequireLoginApiMiddleware, async (req, res) => {
@@ -4178,7 +4178,7 @@ const createRouter = (bot) => {
                 tmi_identity_client_secret: user.tmi_identity_client_secret,
                 bot_enabled: user.bot_enabled,
                 bot_status_messages: user.bot_status_messages,
-                groups: await bot.getRepos().user.getGroups(user.id)
+                groups: await bot.getRepos().user.getGroups(user.id),
             },
         });
     });
@@ -5094,13 +5094,13 @@ const default_settings$5 = (obj = null) => ({
     volume: getProp(obj, ['volume'], 100),
     emotes: {
         displayFn: getProp(obj, ['emotes', 'displayFn'], [
-            { fn: EMOTE_DISPLAY_FN.BALLOON, args: [], },
-            { fn: EMOTE_DISPLAY_FN.BOUNCY, args: [], },
-            { fn: EMOTE_DISPLAY_FN.EXPLODE, args: [], },
-            { fn: EMOTE_DISPLAY_FN.FLOATING_SPACE, args: [], },
-            { fn: EMOTE_DISPLAY_FN.FOUNTAIN, args: [], },
-            { fn: EMOTE_DISPLAY_FN.RAIN, args: [], },
-            { fn: EMOTE_DISPLAY_FN.RANDOM_BEZIER, args: [], },
+            { fn: EMOTE_DISPLAY_FN.BALLOON, args: [] },
+            { fn: EMOTE_DISPLAY_FN.BOUNCY, args: [] },
+            { fn: EMOTE_DISPLAY_FN.EXPLODE, args: [] },
+            { fn: EMOTE_DISPLAY_FN.FLOATING_SPACE, args: [] },
+            { fn: EMOTE_DISPLAY_FN.FOUNTAIN, args: [] },
+            { fn: EMOTE_DISPLAY_FN.RAIN, args: [] },
+            { fn: EMOTE_DISPLAY_FN.RANDOM_BEZIER, args: [] },
         ]),
     },
 });
@@ -5138,7 +5138,7 @@ const textToCommandEffect = (cmd) => {
     return {
         type: CommandEffectType.CHAT,
         data: {
-            text: !Array.isArray(cmd.data.text) ? [cmd.data.text] : cmd.data.text
+            text: !Array.isArray(cmd.data.text) ? [cmd.data.text] : cmd.data.text,
         },
     };
 };
@@ -5270,7 +5270,7 @@ const countdownToCommandEffect = (cmd) => {
     });
     return {
         type: CommandEffectType.COUNTDOWN,
-        data: cmd.data
+        data: cmd.data,
     };
 };
 var legacy = {
@@ -5465,8 +5465,8 @@ class GeneralModule {
             command.effects.push({
                 type: CommandEffectType.CHAT,
                 data: {
-                    text: ['$bot.message']
-                }
+                    text: ['$bot.message'],
+                },
             });
             data.commands.push(command);
             data.adminSettings.autocommands.push('!bot');
@@ -5669,7 +5669,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
 .meta-left .meta-plays { display: none; }
 .meta-right .meta-plays { display: inline-block; }
 .meta-user-text-before,
-.meta-user-text-after {display: none}`
+.meta-user-text-after {display: none}`,
     },
     {
         name: 'Preset 2: No video, round thumbnails',
@@ -5701,7 +5701,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 16px; }
 .fa { margin-right: 0px; }
 .meta-left .meta-user:after,
 .meta-user-text-before,
-.meta-user-text-after {display: none}`
+.meta-user-text-after {display: none}`,
     },
     {
         name: 'Preset 3: Video on the left',
@@ -5727,7 +5727,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
 .meta-user-text-after {display: none}
 .thumbnail {display: none}
 .video-16-9 {overflow: visible; }
-.progress { position: absolute; top: 100%; }`
+.progress { position: absolute; top: 100%; }`,
     },
     {
         name: 'Preset 4: Video',
@@ -5751,7 +5751,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
 .meta-right .meta-plays { display: inline-block; }
 .meta-user-text-before,
 .meta-user-text-after {display: none}
-.thumbnail {display: none}`
+.thumbnail {display: none}`,
     },
     {
         name: 'Preset 5: No video, transparent',
@@ -5771,7 +5771,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
 .meta-left .meta-plays { display: none; }
 .meta-right .meta-plays { display: inline-block; padding: 5px}
 .meta-user-text-before,
-.meta-user-text-after {display: none}`
+.meta-user-text-after {display: none}`,
     },
     {
         name: 'Preset 6: Video, Progress bar under text',
@@ -5791,7 +5791,7 @@ body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
 .player { position: relative;}
 .list { position:relative; z-index: 5;}
 .item {background: transparent !important ; border: none; padding: 0 .5em; }
-.title { color: white; font-size: 5vw; line-height: 12vw; white-space: nowrap; text-shadow: 0 2px 2px rgba(0,0,0, 1); overflow:hidden; text-overflow: ellipsis; }`
+.title { color: white; font-size: 5vw; line-height: 12vw; white-space: nowrap; text-shadow: 0 2px 2px rgba(0,0,0, 1); overflow:hidden; text-overflow: ellipsis; }`,
     },
     {
         name: 'Preset 7: Title only, Progress bar, Pulsating text',
@@ -5822,8 +5822,8 @@ body { font-family: 'Sunflower', sans-serif; font-size: 15px; }
 .video-16-9 { height: 5px; }
 .list { grid-area: list }
 .progress { background: #222; }
-.progress-value { background: #639bff; }`
-    }
+.progress-value { background: #639bff; }`,
+    },
 ];
 
 var SortBy;
@@ -5884,7 +5884,7 @@ const default_settings$4 = (obj = null) => ({
     hideVideoImage: {
         file: getProp(obj, ['hideVideoImage', 'file'], ''),
         filename: getProp(obj, ['hideVideoImage', 'filename'], ''),
-        urlpath: obj?.hideVideoImage?.urlpath ? obj.hideVideoImage.urlpath : (obj?.hideVideoImage?.file ? `/uploads/${encodeURIComponent(obj.hideVideoImage.file)}` : '')
+        urlpath: obj?.hideVideoImage?.urlpath ? obj.hideVideoImage.urlpath : (obj?.hideVideoImage?.file ? `/uploads/${encodeURIComponent(obj.hideVideoImage.file)}` : ''),
     },
     maxSongLength: {
         viewer: getProp(obj, ['maxSongLength', 'viewer'], 0),
@@ -6497,7 +6497,7 @@ class SongrequestModule {
                 globalVariables: await this.bot.getRepos().variables.all(this.user.id),
                 channelPointsCustomRewards: this.channelPointsCustomRewards,
                 widgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.SR, this.user.id),
-            }
+            },
         };
     }
     async updateClient(eventName, ws) {
@@ -7741,7 +7741,7 @@ const default_settings$3 = (obj = null) => ({
             strokeWidth: getProp(obj, ['styles', 'translation', 'strokeWidth'], '8pt'),
             strokeColor: getProp(obj, ['styles', 'translation', 'strokeColor'], '#292929'),
             color: getProp(obj, ['styles', 'translation', 'color'], '#cbcbcb'),
-        }
+        },
     },
     recognition: {
         display: getProp(obj, ['recognition', 'display'], true),
@@ -7799,7 +7799,7 @@ class SpeechToTextModule {
                 settings: this.data.settings,
                 controlWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.SPEECH_TO_TEXT_CONTROL, this.user.id),
                 displayWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.SPEECH_TO_TEXT_RECEIVE, this.user.id),
-            }
+            },
         };
     }
     async updateClient(eventName, ws) {
@@ -7937,7 +7937,7 @@ class DrawcastModule {
             return fs.readdirSync(path)
                 .map((name) => ({
                 name: name,
-                time: fs.statSync(path + '/' + name).mtime.getTime()
+                time: fs.statSync(path + '/' + name).mtime.getTime(),
             }))
                 .sort((a, b) => b.time - a.time)
                 .map((v) => ({
@@ -8028,7 +8028,7 @@ class DrawcastModule {
                         drawUrl: await this.drawUrl(),
                         controlWidgetUrl: await this.controlUrl(),
                         receiveWidgetUrl: await this.receiveUrl(),
-                    }
+                    },
                 }, ws);
             },
             'get_all_images': async (ws, { token }) => {
@@ -8145,7 +8145,7 @@ class DrawcastModule {
                         drawUrl: await this.drawUrl(),
                         controlWidgetUrl: await this.controlUrl(),
                         receiveWidgetUrl: await this.receiveUrl(),
-                    }
+                    },
                 });
             },
         };
@@ -8227,7 +8227,7 @@ class AvatarModule {
                 state: this.data.state,
                 controlWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.AVATAR_CONTROL, this.user.id),
                 displayWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.AVATAR_RECEIVE, this.user.id),
-            }
+            },
         };
     }
     updateClient(data, ws) {
@@ -8460,7 +8460,7 @@ class PomoModule {
                 settings: this.data.settings,
                 state: this.data.state,
                 widgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.POMO, this.user.id),
-            }
+            },
         };
     }
     isEnabled() {
@@ -8503,9 +8503,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-02-28T23:11:01.433Z",
+    buildDate: "2023-03-01T00:39:50.046Z",
     // @ts-ignore
-    buildVersion: "1.59.1",
+    buildVersion: "1.59.2",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
@@ -8640,7 +8640,7 @@ class TwitchTmiClientManager {
             channels,
             connection: {
                 reconnect: true,
-            }
+            },
         });
         return client;
     }
@@ -8700,7 +8700,7 @@ class CommandExecutionRepo extends Repo {
     }
     async getLastExecuted(data) {
         return await this.db.get(TABLE$7, data, [
-            { executed_at: -1 }
+            { executed_at: -1 },
         ]);
     }
 }

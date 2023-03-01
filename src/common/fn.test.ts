@@ -113,11 +113,11 @@ describe('fn.calculateOptimalSubtitleDisplayTimeMs', () => {
     },
     {
       text: 't 69   t te   x t 420   t',
-      expected: 1000
+      expected: 1000,
     },
     {
       text: 'texttexttext',
-      expected: 1000
+      expected: 1000,
     },
   ])('calculateOptimalSubtitleDisplayTimeMs $text', ({ text, expected }) => {
     const actual = calculateOptimalSubtitleDisplayTimeMs(text)

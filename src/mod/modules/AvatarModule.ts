@@ -97,7 +97,7 @@ class AvatarModule implements Module {
         state: this.data.state,
         controlWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.AVATAR_CONTROL, this.user.id),
         displayWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.AVATAR_RECEIVE, this.user.id),
-      }
+      },
     }
   }
 

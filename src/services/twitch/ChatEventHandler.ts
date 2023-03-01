@@ -107,7 +107,7 @@ export class ChatEventHandler {
     }
 
     const createTriggers = async (
-      m: Module
+      m: Module,
     ): Promise<{ triggers: CommandTrigger[], rawCmd: RawCommand | null }> => {
       let commandTriggers = []
       const triggers = []

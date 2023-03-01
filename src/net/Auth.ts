@@ -46,9 +46,9 @@ class Auth {
         id: user.id,
         name: user.name,
         email: user.email,
-        groups: await this.repos.user.getGroups(user.id)
+        groups: await this.repos.user.getGroups(user.id),
       },
-      cannyToken: this.canny.createToken(user)
+      cannyToken: this.canny.createToken(user),
     }
   }
 

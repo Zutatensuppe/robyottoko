@@ -19,7 +19,7 @@ const downloadVideo = async (originalUrl: string): Promise<string> => {
     log.debug({ outfile }, 'downloading the video')
     const child = childProcess.execFile(
       config.youtubeDlBinary,
-      [originalUrl, '-o', outfile]
+      [originalUrl, '-o', outfile],
     )
     await new Promise((resolve) => {
       child.on('close', resolve)
@@ -52,7 +52,7 @@ export class MediaEffect extends Effect<MediaEffectData> {
     this.notifyWs('general', {
       event: 'playmedia',
       data: this.effect.data,
-      id: this.originalCmd.id
+      id: this.originalCmd.id,
     })
   }
 }

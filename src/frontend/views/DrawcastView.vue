@@ -458,7 +458,7 @@ export default defineComponent({
     NavbarElement,
     SoundUpload,
     StringInput,
-    StringsInput
+    StringsInput,
 },
   data: (): ComponentData => ({
     unchangedJson: '{}',
@@ -695,7 +695,7 @@ export default defineComponent({
         token: this.me.token,
       })))
     },
-  }
+  },
 })
 </script>
 

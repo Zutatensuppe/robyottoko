@@ -25,12 +25,16 @@ module.exports = {
   ],
   rules: {
     'semi': ['error', 'never'],
-    'quotes': ['error', 'single'],
+    'quotes': ['error', 'single', {
+      avoidEscape: true,
+      allowTemplateLiterals: true,
+    }],
+    'comma-dangle': ['error', 'always-multiline'],
     '@typescript-eslint/no-inferrable-types': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
     // for now, explicit any is fine!
     '@typescript-eslint/no-explicit-any': 'off',
-    "no-unused-vars": "off",
+    'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': [
       'warn',
       {
@@ -39,5 +43,5 @@ module.exports = {
         caughtErrorsIgnorePattern: '^_',
       },
     ],
-  }
+  },
 }

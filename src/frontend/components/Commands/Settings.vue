@@ -95,7 +95,7 @@ const rmFn = (idx: number): void => {
 const addFn = (): void => {
   val.value.emotes.displayFn.push({
     fn: EMOTE_DISPLAY_FN.FLOATING_SPACE,
-    args: []
+    args: [],
   })
   sendSettings()
 }

@@ -92,7 +92,7 @@ const _playone = async (media: MediaCommandData): Promise<void> => {
               res()
             })
           })
-        })
+        }),
       )
     }
 

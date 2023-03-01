@@ -18,25 +18,25 @@ describe(('mayExecute'), () => {
       name: 'regular user, no restrictions',
       ctx: regularUserCtx,
       cmd: nonRestrictedCommand,
-      expected: true
+      expected: true,
     },
     {
       name: 'mod user, no restrictions',
       ctx: modUserCtx,
       cmd: nonRestrictedCommand,
-      expected: true
+      expected: true,
     },
     {
       name: 'sub user, no restrictions',
       ctx: subUserCtx,
       cmd: nonRestrictedCommand,
-      expected: true
+      expected: true,
     },
     {
       name: 'broadcaster user, no restrictions',
       ctx: broadcasterUserCtx,
       cmd: nonRestrictedCommand,
-      expected: true
+      expected: true,
     },
 
     // with restricts
@@ -44,25 +44,25 @@ describe(('mayExecute'), () => {
       name: 'regular user, restricted to mod sub broadcaster',
       ctx: regularUserCtx,
       cmd: modSubBroadcasterRestrictedCommand,
-      expected: false
+      expected: false,
     },
     {
       name: 'mod user, restricted to mod sub broadcaster',
       ctx: modUserCtx,
       cmd: modSubBroadcasterRestrictedCommand,
-      expected: true
+      expected: true,
     },
     {
       name: 'sub user, restricted to mod sub broadcaster',
       ctx: subUserCtx,
       cmd: modSubBroadcasterRestrictedCommand,
-      expected: true
+      expected: true,
     },
     {
       name: 'broadcaster user, restricted to mod sub broadcaster',
       ctx: broadcasterUserCtx,
       cmd: modSubBroadcasterRestrictedCommand,
-      expected: true
+      expected: true,
     },
 
     // with disallows
@@ -70,7 +70,7 @@ describe(('mayExecute'), () => {
       name: 'broadcaster user, disallowed',
       ctx: broadcasterUserCtx,
       cmd: disallowedUserCommand,
-      expected: false
+      expected: false,
     },
 
     // with allows
@@ -79,7 +79,7 @@ describe(('mayExecute'), () => {
       ctx: regularUserCtx,
       cmd: allowedUserCommand,
       expected: true,
-    }
+    },
   ])('mayExecute: $name', ({ name, ctx, cmd, expected }) => {
     const actual = mayExecute(ctx, cmd)
     expect(actual).toStrictEqual(expected)

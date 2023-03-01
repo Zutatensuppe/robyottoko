@@ -272,8 +272,8 @@ class GeneralModule implements Module {
       command.effects.push({
         type: CommandEffectType.CHAT,
         data: {
-          text: ['$bot.message']
-        }
+          text: ['$bot.message'],
+        },
       })
       data.commands.push(command)
       data.adminSettings.autocommands.push('!bot')

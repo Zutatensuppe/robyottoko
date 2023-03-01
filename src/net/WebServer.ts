@@ -67,7 +67,7 @@ class WebServer {
     this.handle = app.listen(
       httpConf.port,
       httpConf.hostname,
-      () => log.info(`server running on http://${httpConf.hostname}:${httpConf.port}`)
+      () => log.info(`server running on http://${httpConf.hostname}:${httpConf.port}`),
     )
   }
   close() {

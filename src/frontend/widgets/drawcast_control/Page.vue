@@ -74,7 +74,7 @@ const sendMsg = (data: any) => {
     return
   }
   ws.send(JSON.stringify(Object.assign({}, data, {
-    token: me.token
+    token: me.token,
   })))
 }
 
@@ -89,7 +89,7 @@ onMounted(() => {
 
     if (data.settings.notificationSound) {
       notificationSoundAudio.value = new Audio(
-        data.settings.notificationSound.urlpath
+        data.settings.notificationSound.urlpath,
       )
       notificationSoundAudio.value.volume =
         data.settings.notificationSound.volume / 100.0
@@ -101,29 +101,29 @@ onMounted(() => {
     manualApproval.value.items = data.images
       .filter((item: DrawcastImage) => !item.approved)
       .map((item: DrawcastImage) => item.path)
-    }
+    },
   ),
   ws.onMessage(
     'approved_image_received',
     (data: { nonce: string; img: string; mayNotify: boolean }) => {
       manualApproval.value.items = manualApproval.value.items.filter(
-        (img) => img !== data.img
+        (img) => img !== data.img,
       )
-    }
+    },
   )
   ws.onMessage(
     'denied_image_received',
     (data: { nonce: string; img: string; mayNotify: boolean }) => {
       manualApproval.value.items = manualApproval.value.items.filter(
-        (img) => img !== data.img
+        (img) => img !== data.img,
       )
-    }
+    },
   )
   ws.onMessage(
     'image_received',
     (data: { nonce: string; img: string; mayNotify: boolean }) => {
       manualApproval.value.items = manualApproval.value.items.filter(
-        (img) => img !== data.img
+        (img) => img !== data.img,
       )
 
       manualApproval.value.items.push(data.img)
@@ -132,7 +132,7 @@ onMounted(() => {
       if (data.mayNotify && notificationSoundAudio.value) {
         notificationSoundAudio.value.play()
       }
-    }
+    },
   )
   ws.connect()
 })

@@ -36,7 +36,7 @@ export class ChatLogRepo extends Repo {
     const whereObject = this.db._buildWhere(where)
     const row = await this.db._get(
       `select COUNT(*) as c from ${TABLE} ${whereObject.sql}`,
-      whereObject.values
+      whereObject.values,
     )
     return parseInt(`${row.c}`, 10)
   }
@@ -72,7 +72,7 @@ export class ChatLogRepo extends Repo {
     })
     return (await this.db._getMany(
       `select display_name from robyottoko.chat_log ${whereObject.sql} group by display_name`,
-      whereObject.values
+      whereObject.values,
     )).map(r => r.display_name)
   }
 }

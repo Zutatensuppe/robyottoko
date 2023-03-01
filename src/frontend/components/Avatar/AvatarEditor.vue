@@ -412,6 +412,6 @@ export default defineComponent({
             }
             arraySwap(this.item.slotDefinitions, idx1, idx2)
         },
-    }
+    },
 })
 </script>

@@ -508,7 +508,7 @@ const newEffectData = (type: CommandEffectType): any => {
           interval: '1s',
           intro: 'Starting countdown...',
           outro: 'Done!',
-          actions: []
+          actions: [],
       }
     default:
       // should not occur, all possible cases are handled

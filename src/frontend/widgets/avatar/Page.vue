@@ -168,14 +168,14 @@ import('./main.css')
 
 
 const getSlotStateDefinition = (
-  slotDef: AvatarModuleAvatarSlotDefinition
+  slotDef: AvatarModuleAvatarSlotDefinition,
 ): AvatarModuleSlotItemStateDefinition => {
   const item = getItem(slotDef)
   if (!item) {
     return DEFAULT_ITEM_STATE_DEFINITION
   }
   const stateDef = item.states.find(
-    ({ state }) => state === animationName.value
+    ({ state }) => state === animationName.value,
   )
   if (stateDef && stateDef.frames.length > 0) {
     return stateDef
@@ -187,7 +187,7 @@ const getSlotStateDefinition = (
 }
 
 const getItem = (
-  slotDef: AvatarModuleAvatarSlotDefinition
+  slotDef: AvatarModuleAvatarSlotDefinition,
 ): AvatarModuleAvatarSlotItem | null => {
   if (slotDef.items.length === 0) {
     return null
@@ -249,7 +249,7 @@ const setTuber = (newTuberIdx: number, sendCtrl: boolean = false) => {
   }
   if (avatarFixed.value) {
     newTuberIdx = settings.value.avatarDefinitions.findIndex(
-      (def) => def.name === avatarFixed.value
+      (def) => def.name === avatarFixed.value,
     )
   }
   if (newTuberIdx >= settings.value.avatarDefinitions.length) {
@@ -279,7 +279,7 @@ const startMic = () => {
   audioInitialized.value = true
   if (!navigator.mediaDevices.getUserMedia) {
     alert(
-      'navigator.mediaDevices.getUserMedia not supported in this browser.'
+      'navigator.mediaDevices.getUserMedia not supported in this browser.',
     )
     return
   }
@@ -335,7 +335,7 @@ onMounted(() => {
     let tuberIdx = data.state.tuberIdx
     if (avatarFixed.value) {
       tuberIdx = settings.value.avatarDefinitions.findIndex(
-        (def) => def.name === avatarFixed.value
+        (def) => def.name === avatarFixed.value,
       )
     }
     setTuber(tuberIdx === -1 ? 0 : tuberIdx)
