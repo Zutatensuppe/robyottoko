@@ -130,6 +130,7 @@ export const default_commands = (list: any = null) => {
     commands.sr_filter.NewCommand(),
     commands.sr_preset.NewCommand(),
     commands.sr_queue.NewCommand(),
+    commands.sr_move_tag_up.NewCommand(),
   ]
 }
 

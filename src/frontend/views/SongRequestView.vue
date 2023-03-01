@@ -310,6 +310,7 @@ const possibleActions: CommandAction[] = [
   CommandAction.SR_FILTER,
   CommandAction.SR_PRESET,
   CommandAction.SR_QUEUE,
+  CommandAction.SR_MOVE_TAG_UP,
 ]
 
 const tags = computed(() => {
