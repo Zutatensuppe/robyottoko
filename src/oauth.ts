@@ -129,7 +129,7 @@ export const handleOAuthCodeCallback = async (
 ): Promise<HandleCodeCallbackResult | null> => {
   const helixClient = new TwitchHelixClient(
     bot.getConfig().twitch.tmi.identity.client_id,
-    bot.getConfig().twitch.tmi.identity.client_secret
+    bot.getConfig().twitch.tmi.identity.client_secret,
   )
   const resp = await helixClient.getAccessTokenByCode(code, redirectUri)
   if (!resp) {
