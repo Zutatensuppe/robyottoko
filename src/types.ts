@@ -18,7 +18,6 @@ import { TwitchTmiClientManager } from './services/TwitchTmiClientManager'
 import { Repos } from './repo/Repos'
 import { Youtube } from './services/Youtube'
 import { Canny } from './services/Canny'
-import Db from './DbPostgres'
 import { Discord } from './services/Discord'
 
 type int = number
@@ -577,7 +576,6 @@ export interface TwitchBotIdentity {
 }
 
 export interface Bot {
-  getDb: () => Db
   getBuildVersion: () => string
   getBuildDate: () => string
   getModuleManager: () => ModuleManager

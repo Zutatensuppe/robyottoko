@@ -3,6 +3,11 @@ import { Repo } from './Repo'
 
 const TABLE = 'robyottoko.user'
 
+interface GroupRow {
+  id: number
+  name: string
+}
+
 export interface User {
   id: number
   twitch_id: string
@@ -99,6 +104,18 @@ where x.user_id = $1`, [id])
   async countUniqueUsersStreaming(): Promise<number> {
     const rows = await this.db.getMany(TABLE, { is_streaming: true })
     return rows.length
+  }
+
+  async getAdminGroup(): Promise<GroupRow|null> {
+    return await this.db.get('user_group', { name: 'admin' }) as GroupRow | null
+  }
+
+  async isUserInGroup(userId: number, groupId: number): Promise<boolean> {
+    const row = await this.db.get('user_x_user_group', {
+      user_id: userId,
+      user_group_id: groupId,
+    })
+    return !! row
   }
 }
 

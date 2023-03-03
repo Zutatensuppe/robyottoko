@@ -16,15 +16,12 @@ export const createRouter = (
       res.status(403).send({ ok: false, error: 'forbidden' })
       return
     }
-    const adminGroup = await bot.getDb().get('user_group', { name: 'admin' }) as { id: number, name: string } | null
+    const adminGroup = await bot.getRepos().user.getAdminGroup()
     if (!adminGroup) {
       res.status(403).send({ ok: false, error: 'no admin' })
       return
     }
-    const userXAdmin = await bot.getDb().get('user_x_user_group', {
-      user_group_id: adminGroup.id,
-      user_id: user.id,
-    })
+    const userXAdmin = await bot.getRepos().user.isUserInGroup(user.id, adminGroup.id)
     if (!userXAdmin) {
       res.status(403).send({ ok: false, error: 'not an admin' })
       return
@@ -33,19 +30,19 @@ export const createRouter = (
   }
 
   const router = express.Router()
-  
+
   router.use(requireLoginApi)
 
   router.get('/announcements', async (req, res: Response) => {
-    const items = await bot.getDb().getMany('announcements', undefined, [{ created: -1 }])
+    const items = await bot.getRepos().announcementRepo.getAll()
     res.send(items)
   })
 
   router.post('/announcements', express.json(), async (req, res: Response) => {
     const message = req.body.message
     const title = req.body.title
-    const id = await bot.getDb().insert('announcements', { created: new Date(), title, message }, 'id')
-    const announcement = await bot.getDb().get('announcements', { id }) as { message: string, title: string, id: number, created: string } | null
+    const id = await bot.getRepos().announcementRepo.insert({ created: new Date(), title, message })
+    const announcement = await bot.getRepos().announcementRepo.get({ id })
     if (!announcement) {
       res.status(500).send({ ok: false, reason: 'unable_to_get_announcement' })
       return

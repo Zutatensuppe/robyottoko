@@ -72,7 +72,6 @@ const createBot = async (): Promise<Bot> => {
     private streamStatusUpdater: StreamStatusUpdater | null = null
     private frontendStatusUpdater: FrontendStatusUpdater | null = null
 
-    getDb() { return db }
     getDiscord() { return discord }
     getBuildVersion() { return buildEnv.buildVersion }
     getBuildDate() { return buildEnv.buildDate }
