@@ -3294,7 +3294,7 @@ const createCommand = (cmd) => {
         effects: typeof cmd.effects !== 'undefined' ? cmd.effects : [],
         variables: typeof cmd.variables !== 'undefined' ? cmd.variables : [],
         data: typeof cmd.data !== 'undefined' ? cmd.data : {},
-        cooldown: typeof cmd.cooldown !== 'undefined' ? cmd.cooldown : { global: '0', perUser: '0' },
+        cooldown: typeof cmd.cooldown !== 'undefined' ? cmd.cooldown : { global: '0', globalMessage: '', perUser: '0', perUserMessage: '' },
         restrict: {
             active: typeof cmd.restrict !== 'undefined' ? cmd.restrict.active : false,
             to: typeof cmd.restrict !== 'undefined' ? cmd.restrict.to : [],
@@ -3575,7 +3575,7 @@ class CommandExecutor {
                 continue;
             }
             const cmdDefs = getUniqueCommandsByTriggers(m.getCommands(), triggers);
-            promises.push(this.tryExecuteCommands(m, cmdDefs, ctx, bot.getRepos().commandExecutionRepo));
+            promises.push(this.tryExecuteCommands(m, cmdDefs, ctx, bot, user));
         }
         await Promise.all(promises);
     }
@@ -3620,16 +3620,27 @@ class CommandExecutor {
         });
         return this.isInTimeout(durationMs, last, ctx);
     }
-    async tryExecuteCommands(contextModule, cmdDefs, ctx, repo) {
+    async tryExecuteCommands(contextModule, cmdDefs, ctx, bot, user) {
         const promises = [];
+        const repo = bot.getRepos().commandExecutionRepo;
         for (const cmdDef of cmdDefs) {
             if (!ctx.context || !mayExecute(ctx.context, cmdDef)) {
                 continue;
             }
             if (await this.isInGlobalTimeout(cmdDef, repo, ctx)) {
+                if (cmdDef.cooldown.globalMessage) {
+                    const m = await doReplacements(cmdDef.cooldown.globalMessage, ctx.rawCmd, ctx.context, cmdDef, bot, user);
+                    const say = bot.sayFn(user, ctx.target);
+                    say(m);
+                }
                 continue;
             }
             if (await this.isInPerUserTimeout(cmdDef, repo, ctx)) {
+                if (cmdDef.cooldown.perUserMessage) {
+                    const m = await doReplacements(cmdDef.cooldown.perUserMessage, ctx.rawCmd, ctx.context, cmdDef, bot, user);
+                    const say = bot.sayFn(user, ctx.target);
+                    say(m);
+                }
                 continue;
             }
             log$n.info({
@@ -5479,6 +5490,11 @@ class GeneralModule {
                 cmd.effects.push(legacy.mediaVolumeToCommandEffect(cmd));
                 shouldSave = true;
             }
+            if (typeof cmd.cooldown.perUserMessage === 'undefined') {
+                cmd.cooldown.perUserMessage = '';
+                cmd.cooldown.globalMessage = '';
+                shouldSave = true;
+            }
             cmd.triggers = (cmd.triggers || []).map((trigger) => {
                 trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0;
                 if (trigger.data.minSeconds) {
@@ -6403,7 +6419,7 @@ class SongrequestModule {
         this.user = user;
     }
     async reinit() {
-        const shouldSave = false;
+        let shouldSave = false;
         const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {
             filter: {
                 show: { tags: [] },
@@ -6445,6 +6461,13 @@ class SongrequestModule {
         data.playlist = default_playlist(data.playlist);
         data.settings = default_settings$4(data.settings);
         data.commands = default_commands(data.commands);
+        data.commands.forEach((cmd) => {
+            if (typeof cmd.cooldown.perUserMessage === 'undefined') {
+                cmd.cooldown.perUserMessage = '';
+                cmd.cooldown.globalMessage = '';
+                shouldSave = true;
+            }
+        });
         return {
             data: {
                 playlist: data.playlist,
@@ -7771,7 +7794,9 @@ class VoteModule {
                 fn: this.voteCmd.bind(this),
                 cooldown: {
                     global: '0',
+                    globalMessage: '',
                     perUser: '0',
+                    perUserMessage: '',
                 },
                 restrict: {
                     active: false,
@@ -7784,7 +7809,9 @@ class VoteModule {
                 fn: this.playCmd.bind(this),
                 cooldown: {
                     global: '0',
+                    globalMessage: '',
                     perUser: '0',
+                    perUserMessage: '',
                 },
                 restrict: {
                     active: false,
@@ -8421,7 +8448,7 @@ class PomoModule {
                         to: MOD_OR_ABOVE,
                     },
                     fn: this.cmdPomoStart.bind(this),
-                    cooldown: { global: '0', perUser: '0' },
+                    cooldown: { global: '0', globalMessage: '', perUser: '0', perUserMessage: '' },
                 },
                 {
                     id: 'pomo_exit',
@@ -8431,7 +8458,7 @@ class PomoModule {
                         to: MOD_OR_ABOVE,
                     },
                     fn: this.cmdPomoExit.bind(this),
-                    cooldown: { global: '0', perUser: '0' },
+                    cooldown: { global: '0', globalMessage: '', perUser: '0', perUserMessage: '' },
                 },
             ];
             return this;
@@ -8593,9 +8620,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-03-01T23:22:24.063Z",
+    buildDate: "2023-03-07T13:22:04.716Z",
     // @ts-ignore
-    buildVersion: "1.61.0",
+    buildVersion: "1.62.0",
 };
 
 const log$3 = logger('StreamStatusUpdater.ts');
