@@ -224,6 +224,12 @@ class GeneralModule implements Module {
         shouldSave = true
       }
 
+      if (typeof cmd.cooldown.perUserMessage === 'undefined') {
+        cmd.cooldown.perUserMessage = ''
+        cmd.cooldown.globalMessage = ''
+        shouldSave = true
+      }
+
       cmd.triggers = (cmd.triggers || []).map((trigger: any) => {
         trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0
         if (trigger.data.minSeconds) {

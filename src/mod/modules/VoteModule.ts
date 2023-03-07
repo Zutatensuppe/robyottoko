@@ -179,7 +179,9 @@ class VoteModule implements Module {
         fn: this.voteCmd.bind(this),
         cooldown: {
           global: '0',
+          globalMessage: '',
           perUser: '0',
+          perUserMessage: '',
         },
         restrict: {
           active: false,
@@ -192,7 +194,9 @@ class VoteModule implements Module {
         fn: this.playCmd.bind(this),
         cooldown: {
           global: '0',
+          globalMessage: '',
           perUser: '0',
+          perUserMessage: '',
         },
         restrict: {
           active: false,

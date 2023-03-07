@@ -37,7 +37,7 @@ class PomoModule implements Module {
             to: MOD_OR_ABOVE,
           },
           fn: this.cmdPomoStart.bind(this),
-          cooldown: { global: '0', perUser: '0' },
+          cooldown: { global: '0', globalMessage: '', perUser: '0', perUserMessage: '' },
         },
         {
           id: 'pomo_exit',
@@ -47,7 +47,7 @@ class PomoModule implements Module {
             to: MOD_OR_ABOVE,
           },
           fn: this.cmdPomoExit.bind(this),
-          cooldown: { global: '0', perUser: '0' },
+          cooldown: { global: '0', globalMessage: '', perUser: '0', perUserMessage: '' },
         },
       ]
       return this

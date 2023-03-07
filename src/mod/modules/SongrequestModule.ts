@@ -6,7 +6,7 @@ import {
   ChatMessageContext, PlaylistItem,
   FunctionCommand, Command,
   Bot, CommandFunction, Module, CommandExecutionContext,
-  MODULE_NAME, WIDGET_TYPE, TwitchChatContext, CommandAction,
+  MODULE_NAME, WIDGET_TYPE, TwitchChatContext,
 } from '../../types'
 import {
   default_commands,
@@ -28,7 +28,6 @@ import { NotFoundError } from '../../services/youtube/NotFoundError'
 import { Youtube, YoutubeVideoEntry } from '../../services/Youtube'
 import { QuotaReachedError } from '../../services/youtube/QuotaReachedError'
 import { NoApiKeysError } from '../../services/youtube/NoApiKeysError'
-import { commands } from '../../common/commands'
 
 const log = logger('SongrequestModule.ts')
 
@@ -230,7 +229,7 @@ class SongrequestModule implements Module {
   }
 
   async reinit(): Promise<SongerquestModuleInitData> {
-    const shouldSave = false
+    let shouldSave = false
     const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {
       filter: {
         show: { tags: [] },
@@ -273,7 +272,15 @@ class SongrequestModule implements Module {
     data.playlist = default_playlist(data.playlist)
     data.settings = default_settings(data.settings)
     data.commands = default_commands(data.commands)
-    
+
+    data.commands.forEach((cmd: any) => {
+      if (typeof cmd.cooldown.perUserMessage === 'undefined') {
+        cmd.cooldown.perUserMessage = ''
+        cmd.cooldown.globalMessage = ''
+        shouldSave = true
+      }
+    })
+
     return {
       data: {
         playlist: data.playlist,

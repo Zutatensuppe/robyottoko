@@ -205,7 +205,13 @@
                 <table>
                   <tr>
                     <td>Global</td>
-                    <td><DurationInput v-model="item.cooldown.global" /></td>
+                    <td>
+                      <DurationInput v-model="item.cooldown.global" />
+                      <StringInput
+                        v-model="item.cooldown.globalMessage"
+                        placeholder="Message if cooldown is hit"
+                      />
+                    </td>
                     <td rowspan="2">
                       <div class="help">
                         If a cooldown is set, the command will not be executed unless
@@ -221,7 +227,13 @@
                   </tr>
                   <tr>
                     <td>Per User</td>
-                    <td><DurationInput v-model="item.cooldown.perUser" /></td>
+                    <td>
+                      <DurationInput v-model="item.cooldown.perUser" />
+                      <StringInput
+                        v-model="item.cooldown.perUserMessage"
+                        placeholder="Message if cooldown is hit"
+                      />
+                    </td>
                   </tr>
                 </table>
               </td>

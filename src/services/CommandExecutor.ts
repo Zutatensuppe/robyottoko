@@ -3,7 +3,7 @@
 import { getUniqueCommandsByTriggers } from '../common/commands'
 import { humanDuration, logger, parseHumanDuration } from '../common/fn'
 import { mayExecute } from '../common/permissions'
-import fn from '../fn'
+import fn, { doReplacements } from '../fn'
 import { Bot, CommandExecutionContext, CommandTrigger, FunctionCommand, Module, RawCommand, TwitchChatContext } from '../types'
 import { User } from '../repo/Users'
 import { CommandExecutionRepo, Row } from '../repo/CommandExecutionRepo'
@@ -28,7 +28,7 @@ export class CommandExecutor {
         continue
       }
       const cmdDefs = getUniqueCommandsByTriggers(m.getCommands(), triggers)
-      promises.push(this.tryExecuteCommands(m, cmdDefs, ctx, bot.getRepos().commandExecutionRepo))
+      promises.push(this.tryExecuteCommands(m, cmdDefs, ctx, bot, user))
     }
     await Promise.all(promises)
   }
@@ -89,17 +89,29 @@ export class CommandExecutor {
     contextModule: Module,
     cmdDefs: FunctionCommand[],
     ctx: CommandExecutionContext,
-    repo: CommandExecutionRepo,
+    bot: Bot,
+    user: User,
   ): Promise<void> {
     const promises = []
+    const repo = bot.getRepos().commandExecutionRepo
     for (const cmdDef of cmdDefs) {
       if (!ctx.context || !mayExecute(ctx.context, cmdDef)) {
         continue
       }
       if (await this.isInGlobalTimeout(cmdDef, repo, ctx)) {
+        if (cmdDef.cooldown.globalMessage) {
+          const m = await doReplacements(cmdDef.cooldown.globalMessage, ctx.rawCmd, ctx.context, cmdDef, bot, user)
+          const say = bot.sayFn(user, ctx.target)
+          say(m)
+        }
         continue
       }
       if (await this.isInPerUserTimeout(cmdDef, repo, ctx)) {
+        if (cmdDef.cooldown.perUserMessage) {
+          const m = await doReplacements(cmdDef.cooldown.perUserMessage, ctx.rawCmd, ctx.context, cmdDef, bot, user)
+          const say = bot.sayFn(user, ctx.target)
+          say(m)
+        }
         continue
       }
 
