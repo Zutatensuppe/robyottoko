@@ -422,7 +422,9 @@ export enum CommandAction {
 interface CommandCooldown {
   // human duration strings, '0' for no cooldown
   global: string
+  globalMessage: string
   perUser: string
+  perUserMessage: string
 }
 
 export interface Command {

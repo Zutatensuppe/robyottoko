@@ -64,6 +64,20 @@
         /> {{ problems.length }} Problem{{
           problems.length > 1 ? "s" : ""
         }}</a>
+        <span
+          v-if="me?.user.groups.includes('admin')"
+          class="navbar-item"
+        >
+          <router-link
+            class="navbar-item"
+            :to="{ name: 'admin_announcements' }"
+          >
+            <i
+              class="fa fa-user-secret mr-2"
+            />
+            Admin
+          </router-link>
+        </span>
         <span class="navbar-item">
           <CheckboxInput
             id="darkmode-switch"
