@@ -715,296 +715,6 @@ class Widgets {
     }
 }
 
-const i = [
-  "🏳️‍🌈",
-  "🏳️‍⚧️",
-  "🇦🇨",
-  "🇦🇩",
-  "🇦🇪",
-  "🇦🇫",
-  "🇦🇬",
-  "🇦🇮",
-  "🇦🇱",
-  "🇦🇲",
-  "🇦🇴",
-  "🇦🇶",
-  "🇦🇷",
-  "🇦🇸",
-  "🇦🇹",
-  "🇦🇺",
-  "🇦🇼",
-  "🇦🇽",
-  "🇦🇿",
-  "🇧🇦",
-  "🇧🇧",
-  "🇧🇩",
-  "🇧🇪",
-  "🇧🇫",
-  "🇧🇬",
-  "🇧🇭",
-  "🇧🇮",
-  "🇧🇯",
-  "🇧🇱",
-  "🇧🇲",
-  "🇧🇳",
-  "🇧🇴",
-  "🇧🇶",
-  "🇧🇷",
-  "🇧🇸",
-  "🇧🇹",
-  "🇧🇻",
-  "🇧🇼",
-  "🇧🇾",
-  "🇧🇿",
-  "🇨🇦",
-  "🇨🇨",
-  "🇨🇩",
-  "🇨🇫",
-  "🇨🇬",
-  "🇨🇭",
-  "🇨🇮",
-  "🇨🇰",
-  "🇨🇱",
-  "🇨🇲",
-  "🇨🇳",
-  "🇨🇴",
-  "🇨🇵",
-  "🇨🇷",
-  "🇨🇺",
-  "🇨🇻",
-  "🇨🇼",
-  "🇨🇽",
-  "🇨🇾",
-  "🇨🇿",
-  "🇩🇪",
-  "🇩🇬",
-  "🇩🇯",
-  "🇩🇰",
-  "🇩🇲",
-  "🇩🇴",
-  "🇩🇿",
-  "🇪🇦",
-  "🇪🇨",
-  "🇪🇪",
-  "🇪🇬",
-  "🇪🇭",
-  "🇪🇷",
-  "🇪🇸",
-  "🇪🇹",
-  "🇪🇺",
-  "🇫🇮",
-  "🇫🇯",
-  "🇫🇰",
-  "🇫🇲",
-  "🇫🇴",
-  "🇫🇷",
-  "🇬🇦",
-  "🇬🇧",
-  "🇬🇩",
-  "🇬🇪",
-  "🇬🇫",
-  "🇬🇬",
-  "🇬🇭",
-  "🇬🇮",
-  "🇬🇱",
-  "🇬🇲",
-  "🇬🇳",
-  "🇬🇵",
-  "🇬🇶",
-  "🇬🇷",
-  "🇬🇸",
-  "🇬🇹",
-  "🇬🇺",
-  "🇬🇼",
-  "🇬🇾",
-  "🇭🇰",
-  "🇭🇲",
-  "🇭🇳",
-  "🇭🇷",
-  "🇭🇹",
-  "🇭🇺",
-  "🇮🇨",
-  "🇮🇩",
-  "🇮🇪",
-  "🇮🇱",
-  "🇮🇲",
-  "🇮🇳",
-  "🇮🇴",
-  "🇮🇶",
-  "🇮🇷",
-  "🇮🇸",
-  "🇮🇹",
-  "🇯🇪",
-  "🇯🇲",
-  "🇯🇴",
-  "🇯🇵",
-  "🇰🇪",
-  "🇰🇬",
-  "🇰🇭",
-  "🇰🇮",
-  "🇰🇲",
-  "🇰🇳",
-  "🇰🇵",
-  "🇰🇷",
-  "🇰🇼",
-  "🇰🇾",
-  "🇰🇿",
-  "🇱🇦",
-  "🇱🇧",
-  "🇱🇨",
-  "🇱🇮",
-  "🇱🇰",
-  "🇱🇷",
-  "🇱🇸",
-  "🇱🇹",
-  "🇱🇺",
-  "🇱🇻",
-  "🇱🇾",
-  "🇲🇦",
-  "🇲🇨",
-  "🇲🇩",
-  "🇲🇪",
-  "🇲🇫",
-  "🇲🇬",
-  "🇲🇭",
-  "🇲🇰",
-  "🇲🇱",
-  "🇲🇲",
-  "🇲🇳",
-  "🇲🇴",
-  "🇲🇵",
-  "🇲🇶",
-  "🇲🇷",
-  "🇲🇸",
-  "🇲🇹",
-  "🇲🇺",
-  "🇲🇻",
-  "🇲🇼",
-  "🇲🇽",
-  "🇲🇾",
-  "🇲🇿",
-  "🇳🇦",
-  "🇳🇨",
-  "🇳🇪",
-  "🇳🇫",
-  "🇳🇬",
-  "🇳🇮",
-  "🇳🇱",
-  "🇳🇴",
-  "🇳🇵",
-  "🇳🇷",
-  "🇳🇺",
-  "🇳🇿",
-  "🇴🇲",
-  "🇵🇦",
-  "🇵🇪",
-  "🇵🇫",
-  "🇵🇬",
-  "🇵🇭",
-  "🇵🇰",
-  "🇵🇱",
-  "🇵🇲",
-  "🇵🇳",
-  "🇵🇷",
-  "🇵🇸",
-  "🇵🇹",
-  "🇵🇼",
-  "🇵🇾",
-  "🇶🇦",
-  "🇷🇪",
-  "🇷🇴",
-  "🇷🇸",
-  "🇷🇺",
-  "🇷🇼",
-  "🇸🇦",
-  "🇸🇧",
-  "🇸🇨",
-  "🇸🇩",
-  "🇸🇪",
-  "🇸🇬",
-  "🇸🇭",
-  "🇸🇮",
-  "🇸🇯",
-  "🇸🇰",
-  "🇸🇱",
-  "🇸🇲",
-  "🇸🇳",
-  "🇸🇴",
-  "🇸🇷",
-  "🇸🇸",
-  "🇸🇹",
-  "🇸🇻",
-  "🇸🇽",
-  "🇸🇾",
-  "🇸🇿",
-  "🇹🇦",
-  "🇹🇨",
-  "🇹🇩",
-  "🇹🇫",
-  "🇹🇬",
-  "🇹🇭",
-  "🇹🇯",
-  "🇹🇰",
-  "🇹🇱",
-  "🇹🇲",
-  "🇹🇳",
-  "🇹🇴",
-  "🇹🇷",
-  "🇹🇹",
-  "🇹🇻",
-  "🇹🇼",
-  "🇹🇿",
-  "🇺🇦",
-  "🇺🇬",
-  "🇺🇲",
-  "🇺🇳",
-  "🇺🇸",
-  "🇺🇾",
-  "🇺🇿",
-  "🇻🇦",
-  "🇻🇨",
-  "🇻🇪",
-  "🇻🇬",
-  "🇻🇮",
-  "🇻🇳",
-  "🇻🇺",
-  "🇼🇫",
-  "🇼🇸",
-  "🇽🇰",
-  "🇾🇪",
-  "🇾🇹",
-  "🇿🇦",
-  "🇿🇲",
-  "🇿🇼"
-], r = [
-  // two different rainbow flags (first is the broken one, when using windows)
-  { from: "🏳‍🌈", to: "🏳️‍🌈" }
-], s = new RegExp(`${i.join("|")}|(\\p{EPres}|\\p{ExtPict})(\\u200d(\\p{EPres}|\\p{ExtPict})\\ufe0f?)*`, "gu");
-function* c(n) {
-  const t = n.match(s);
-  if (t)
-    for (let o of t) {
-      for (const e of r)
-        o = o.replace(e.from, e.to);
-      yield [...o].map((e) => e.codePointAt(0));
-    }
-}
-const f = (n) => {
-  const t = [];
-  for (const o of c(n))
-    t.push(o);
-  return t;
-}, d = (n) => {
-  const t = [];
-  for (const o of c(n))
-    t.push(o.map((e) => e.toString(16)).join("-"));
-  return t;
-}, p = {
-  detectCodePoints: f,
-  detectStrings: d,
-  EMOJI_REGEX: s
-};
-
 // https://stackoverflow.com/a/59854446/392905
 const delay = (ms) => new Promise((resolve) => setTimeout(() => resolve(), ms));
 const retryFetch = async (url, opts, retries = 3, retryDelay = 1000, timeout = 0) => {
@@ -1132,7 +842,7 @@ class Effect {
 }
 _Effect_sayFn = new WeakMap();
 
-const log$A = logger('VariableChangeEffect.ts');
+const log$B = logger('VariableChangeEffect.ts');
 const _toInt = (value) => parseInt(`${value}`, 10);
 const _increase = (value, by) => (_toInt(value) + _toInt(by));
 const _decrease = (value, by) => (_toInt(value) - _toInt(by));
@@ -1144,7 +854,7 @@ class VariableChangeEffect extends Effect {
         const changed = this.changeLocalVariable(op, name, value)
             || await this.changeGlobalVariable(op, name, value);
         if (!changed) {
-            log$A.warn({ op, name, value }, 'variable not changed');
+            log$B.warn({ op, name, value }, 'variable not changed');
         }
     }
     changeLocalVariable(op, name, value) {
@@ -1166,7 +876,7 @@ class VariableChangeEffect extends Effect {
             this.originalCmd.variables[idx].value = _decrease(this.originalCmd.variables[idx].value, value);
         }
         else {
-            log$A.warn({ op, name, value }, 'bad op');
+            log$B.warn({ op, name, value }, 'bad op');
         }
         // return true, because the variable was found, just the op is wrong :(
         return true;
@@ -1188,7 +898,7 @@ class VariableChangeEffect extends Effect {
             await variables.set(this.contextModule.user.id, name, _decrease(globalVars[idx].value, value));
         }
         else {
-            log$A.warn({ op, name, value }, 'bad op');
+            log$B.warn({ op, name, value }, 'bad op');
         }
         return true;
     }
@@ -1373,7 +1083,7 @@ class DictLookupEffect extends Effect {
     }
 }
 
-const log$z = logger('MediaEffect.ts');
+const log$A = logger('MediaEffect.ts');
 const isTwitchClipUrl = (url) => {
     return !!url.match(/^https:\/\/clips\.twitch\.tv\/.+/);
 };
@@ -1382,14 +1092,14 @@ const downloadVideo = async (originalUrl) => {
     const filename = `${hash(originalUrl)}-clip.mp4`;
     const outfile = `./data/uploads/${filename}`;
     if (!fs.existsSync(outfile)) {
-        log$z.debug({ outfile }, 'downloading the video');
+        log$A.debug({ outfile }, 'downloading the video');
         const child = childProcess.execFile(config.youtubeDlBinary, [originalUrl, '-o', outfile]);
         await new Promise((resolve) => {
             child.on('close', resolve);
         });
     }
     else {
-        log$z.debug({ outfile }, 'video exists');
+        log$A.debug({ outfile }, 'video exists');
     }
     return `/uploads/${filename}`;
 };
@@ -1397,20 +1107,20 @@ class MediaEffect extends Effect {
     async apply() {
         this.effect.data.image_url = await this.doReplacements(this.effect.data.image_url);
         if (this.effect.data.video.url) {
-            log$z.debug({ url: this.effect.data.video.url }, 'video url is defined');
+            log$A.debug({ url: this.effect.data.video.url }, 'video url is defined');
             this.effect.data.video.url = await this.doReplacements(this.effect.data.video.url);
             if (!this.effect.data.video.url) {
-                log$z.debug('no video url found');
+                log$A.debug('no video url found');
             }
             else if (isTwitchClipUrl(this.effect.data.video.url)) {
                 // video url looks like a twitch clip url, dl it first
-                log$z.debug({ url: this.effect.data.video.url }, 'twitch clip found');
+                log$A.debug({ url: this.effect.data.video.url }, 'twitch clip found');
                 this.effect.data.video.url = await downloadVideo(this.effect.data.video.url);
             }
             else {
                 // otherwise assume it is already a playable video url
                 // TODO: youtube videos maybe should also be downloaded
-                log$z.debug('video is assumed to be directly playable via html5 video element');
+                log$A.debug('video is assumed to be directly playable via html5 video element');
             }
         }
         this.notifyWs('general', {
@@ -1433,7 +1143,7 @@ var Madochan = {
     defaultWeirdness: 1,
 };
 
-const log$y = logger('MadochanEffect.ts');
+const log$z = logger('MadochanEffect.ts');
 class MadochanEffect extends Effect {
     async apply() {
         const model = `${this.effect.data.model}` || Madochan.defaultModel;
@@ -1456,18 +1166,18 @@ class MadochanEffect extends Effect {
             }
         }
         catch (e) {
-            log$y.error({ e });
+            log$z.error({ e });
             this.say('Error occured, unable to generate a word :("');
         }
     }
 }
 
-const log$x = logger('SetChannelTitleEffect.ts');
+const log$y = logger('SetChannelTitleEffect.ts');
 class SetChannelTitleEffect extends Effect {
     async apply() {
         const helixClient = this.getHelixClient();
         if (!this.rawCmd || !this.context || !helixClient) {
-            log$x.info({
+            log$y.info({
                 rawCmd: this.rawCmd,
                 context: this.context,
                 helixClient,
@@ -1509,12 +1219,12 @@ class SetChannelTitleEffect extends Effect {
     }
 }
 
-const log$w = logger('SetChannelGameIdEffect.ts');
+const log$x = logger('SetChannelGameIdEffect.ts');
 class SetChannelGameIdEffect extends Effect {
     async apply() {
         const helixClient = this.getHelixClient();
         if (!this.rawCmd || !this.context || !helixClient) {
-            log$w.info({
+            log$x.info({
                 rawCmd: this.rawCmd,
                 context: this.context,
                 helixClient,
@@ -1553,12 +1263,12 @@ class SetChannelGameIdEffect extends Effect {
     }
 }
 
-const log$v = logger('AddStreamTagEffect.ts');
+const log$w = logger('AddStreamTagEffect.ts');
 class AddStreamTagEffect extends Effect {
     async apply() {
         const helixClient = this.getHelixClient();
         if (!this.rawCmd || !this.context || !helixClient) {
-            log$v.info({
+            log$w.info({
                 rawCmd: this.rawCmd,
                 context: this.context,
                 helixClient,
@@ -1603,7 +1313,7 @@ class AddStreamTagEffect extends Effect {
         }
         const resp = await helixClient.replaceStreamTags(accessToken, newSettableTagIds, this.contextModule.bot, this.contextModule.user);
         if (!resp || resp.status < 200 || resp.status >= 300) {
-            log$v.error(resp);
+            log$w.error(resp);
             this.say(`❌ Unable to add tag: ${tagEntry.name}`);
             return;
         }
@@ -1611,12 +1321,12 @@ class AddStreamTagEffect extends Effect {
     }
 }
 
-const log$u = logger('RemoveStreamTagEffect.ts');
+const log$v = logger('RemoveStreamTagEffect.ts');
 class RemoveStreamTagEffect extends Effect {
     async apply() {
         const helixClient = this.getHelixClient();
         if (!this.rawCmd || !this.context || !helixClient) {
-            log$u.info({
+            log$v.info({
                 rawCmd: this.rawCmd,
                 context: this.context,
                 helixClient,
@@ -1664,12 +1374,12 @@ class RemoveStreamTagEffect extends Effect {
     }
 }
 
-const log$t = logger('ChattersEffect.ts');
+const log$u = logger('ChattersEffect.ts');
 class ChattersEffect extends Effect {
     async apply() {
         const helixClient = this.getHelixClient();
         if (!this.context || !helixClient) {
-            log$t.info({
+            log$u.info({
                 context: this.context,
                 helixClient,
             }, 'unable to execute chatters command, client, context, or helixClient missing');
@@ -1692,7 +1402,7 @@ class ChattersEffect extends Effect {
     }
 }
 
-const log$s = logger('CountdownEffect.ts');
+const log$t = logger('CountdownEffect.ts');
 class CountdownEffect extends Effect {
     async apply() {
         const actionDefinitions = await this.buildActionDefinitions();
@@ -1727,7 +1437,7 @@ class CountdownEffect extends Effect {
                     duration = (await parseDuration(`${a.value}`)) || 0;
                 }
                 catch (e) {
-                    log$s.error({ message: e.message, value: a.value });
+                    log$t.error({ message: e.message, value: a.value });
                     return [];
                 }
                 actions.push(async () => {
@@ -1735,7 +1445,7 @@ class CountdownEffect extends Effect {
                 });
             }
             else {
-                log$s.warn({ type: a.type }, 'unknown countdown action type');
+                log$t.warn({ type: a.type }, 'unknown countdown action type');
             }
         }
         return actions;
@@ -1747,7 +1457,7 @@ class CountdownEffect extends Effect {
         }
         if (t !== 'auto') {
             // unsupported type!
-            log$s.warn({ type: t }, 'unknown countdown type');
+            log$t.warn({ type: t }, 'unknown countdown type');
             return [];
         }
         const actionDefs = [];
@@ -1804,7 +1514,7 @@ class EmotesEffect extends Effect {
     }
 }
 
-const log$r = logger('fn.ts');
+const log$s = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
         return mime.replace('image/', '');
@@ -1839,9 +1549,9 @@ const sayFn = (client, target) => (msg) => {
         // TODO: fix this somewhere else?
         // client can only say things in lowercase channels
         t = t.toLowerCase();
-        log$r.info(`saying in ${t}: ${msg}`);
+        log$s.info(`saying in ${t}: ${msg}`);
         client.say(t, msg).catch((e) => {
-            log$r.info(e);
+            log$s.info(e);
         });
     });
 };
@@ -1902,7 +1612,7 @@ const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
     for (const effect of originalCmd.effects) {
         if (!effectsClassMap[effect.type]) {
             // unknown effect...
-            log$r.warn({ type: effect.type }, 'unknown effect type');
+            log$s.warn({ type: effect.type }, 'unknown effect type');
             continue;
         }
         const e = new (effectsClassMap[effect.type])(JSON.parse(JSON.stringify(effect)), originalCmd, contextModule, rawCmd, context);
@@ -2051,7 +1761,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return String(`twitch.tv/${context.username}`);
                 }
                 if (!bot || !user) {
-                    log$r.info('no bot, no user, no watch');
+                    log$s.info('no bot, no user, no watch');
                     return '';
                 }
                 const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
@@ -2060,7 +1770,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                 }
                 const twitchUser = await getTwitchUser(username, helixClient, bot);
                 if (!twitchUser) {
-                    log$r.info('no twitch user found', username);
+                    log$s.info('no twitch user found', username);
                     return '';
                 }
                 if (m3 === 'name') {
@@ -2100,7 +1810,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return String(JSON.parse(txt)[m2]);
                 }
                 catch (e) {
-                    log$r.error(e);
+                    log$s.error(e);
                     return '';
                 }
             },
@@ -2114,7 +1824,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return await resp.text();
                 }
                 catch (e) {
-                    log$r.error(e);
+                    log$s.error(e);
                     return '';
                 }
             },
@@ -2331,33 +2041,10 @@ const determineNewVolume = (input, currentVal) => {
     }
     return val;
 };
-const extractEmojiEmotes = (context) => {
-    return p.detectStrings(context.msgOriginal).map(str => ({
-        url: `https://cdn.betterttv.net/assets/emoji/${str}.svg`,
-    }));
-};
-const extractTwitchEmotes = (context) => {
-    if (!context.context.emotes) {
-        return [];
-    }
-    const emotes = [];
-    for (const emoteId in context.context.emotes) {
-        for (let i = 0; i < context.context.emotes[emoteId].length; i++) {
-            emotes.push({ url: `https://static-cdn.jtvnw.net/emoticons/v2/${emoteId}/default/dark/2.0` });
-        }
-    }
-    return emotes;
-};
-const extractEmotes = (context) => {
-    return [
-        ...extractEmojiEmotes(context),
-        ...extractTwitchEmotes(context),
-    ];
-};
 const getChannelPointsCustomRewards = async (bot, user) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!helixClient) {
-        log$r.info('getChannelPointsCustomRewards: no helix client');
+        log$s.info('getChannelPointsCustomRewards: no helix client');
         return {};
     }
     return await helixClient.getAllChannelPointsCustomRewards(bot, user);
@@ -2384,7 +2071,6 @@ var fn = {
     uniqId,
     getUserTypeInfo,
     applyEffects,
-    extractEmotes,
     logger,
     mimeToExt,
     decodeBase64Image,
@@ -2405,7 +2091,7 @@ var fn = {
     getChannelPointsCustomRewards,
 };
 
-const log$q = logger('WebSocketServer.ts');
+const log$r = logger('WebSocketServer.ts');
 const determineUserIdAndModuleName = async (basePath, requestUrl, socket, bot) => {
     const relativePath = requestUrl.substring(basePath.length) || '';
     const relpath = withoutLeading(relativePath, '/');
@@ -2439,24 +2125,24 @@ class WebSocketServer {
             socket.user_id = userId;
             socket.module = moduleName;
             socket.id = uniqId();
-            log$q.info({
+            log$r.info({
                 moduleName,
                 socket: { protocol: socket.protocol },
             }, 'added socket');
-            log$q.info({
+            log$r.info({
                 count: this.sockets().filter(s => s.module === socket.module).length,
             }, 'socket_count');
             socket.on('close', () => {
-                log$q.info({
+                log$r.info({
                     moduleName,
                     socket: { protocol: socket.protocol },
                 }, 'removed socket');
-                log$q.info({
+                log$r.info({
                     count: this.sockets().filter(s => s.module === socket.module).length,
                 }, 'socket count');
             });
             if (!socket.user_id) {
-                log$q.info({
+                log$r.info({
                     requestUrl,
                     socket: { protocol: socket.protocol },
                 }, 'not found token');
@@ -2464,7 +2150,7 @@ class WebSocketServer {
                 return;
             }
             if (!socket.module) {
-                log$q.info({ requestUrl }, 'bad request url');
+                log$r.info({ requestUrl }, 'bad request url');
                 socket.close();
                 return;
             }
@@ -2495,7 +2181,7 @@ class WebSocketServer {
                     }
                 }
                 catch (e) {
-                    log$q.error({ e }, 'socket on message');
+                    log$r.error({ e }, 'socket on message');
                 }
             });
         });
@@ -2504,7 +2190,7 @@ class WebSocketServer {
         return !!this.sockets().find(s => s.user_id === user_id);
     }
     _notify(socket, data) {
-        log$q.info({ user_id: socket.user_id, module: socket.module, event: data.event }, 'notifying');
+        log$r.info({ user_id: socket.user_id, module: socket.module, event: data.event }, 'notifying');
         socket.send(JSON.stringify(data));
     }
     notifyOne(user_ids, moduleName, data, socket) {
@@ -2516,7 +2202,7 @@ class WebSocketServer {
             this._notify(socket, data);
         }
         else {
-            log$q.error({
+            log$r.error({
                 socket: {
                     user_id: socket.user_id,
                     module: socket.module,
@@ -2551,7 +2237,7 @@ class WebSocketServer {
     }
 }
 
-const log$p = logger('TwitchHelixClient.ts');
+const log$q = logger('TwitchHelixClient.ts');
 const API_BASE = 'https://api.twitch.tv/helix';
 const TOKEN_ENDPOINT = 'https://id.twitch.tv/oauth2/token';
 const apiUrl = (path) => `${API_BASE}${path}`;
@@ -2569,7 +2255,7 @@ async function executeRequestWithRetry(accessToken, req, bot, user) {
     if (!newAccessToken) {
         return resp;
     }
-    log$p.warn('retrying with refreshed token');
+    log$q.warn('retrying with refreshed token');
     return await req(newAccessToken);
 }
 class TwitchHelixClient {
@@ -2599,13 +2285,13 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$p.warn({ txt }, 'unable to get access_token by code');
+                log$q.warn({ txt }, 'unable to get access_token by code');
                 return null;
             }
             return (await resp.json());
         }
         catch (e) {
-            log$p.error({ url, e });
+            log$q.error({ url, e });
             return null;
         }
     }
@@ -2621,18 +2307,18 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (resp.status === 401) {
                 const txt = await resp.text();
-                log$p.warn({ txt }, 'tried to refresh access_token with an invalid refresh token');
+                log$q.warn({ txt }, 'tried to refresh access_token with an invalid refresh token');
                 return null;
             }
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$p.warn({ txt }, 'unable to refresh access_token');
+                log$q.warn({ txt }, 'unable to refresh access_token');
                 return null;
             }
             return (await resp.json());
         }
         catch (e) {
-            log$p.error({ url, e });
+            log$q.error({ url, e });
             return null;
         }
     }
@@ -2648,14 +2334,14 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$p.warn({ txt }, 'unable to get access_token');
+                log$q.warn({ txt }, 'unable to get access_token');
                 return '';
             }
             json = (await resp.json());
             return json.access_token;
         }
         catch (e) {
-            log$p.error({ url, json, e });
+            log$q.error({ url, json, e });
             return '';
         }
     }
@@ -2670,7 +2356,7 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$p.error({ url, json, e });
+            log$q.error({ url, json, e });
             return null;
         }
     }
@@ -2684,7 +2370,7 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$p.error({ url, json, e });
+            log$q.error({ url, json, e });
             return null;
         }
     }
@@ -2697,7 +2383,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$p.error({ url, json, e });
+            log$q.error({ url, json, e });
             return null;
         }
     }
@@ -2711,7 +2397,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$p.error({ url, json, e });
+            log$q.error({ url, json, e });
             return null;
         }
     }
@@ -2746,7 +2432,7 @@ class TwitchHelixClient {
             return getRandom(filtered);
         }
         catch (e) {
-            log$p.error({ url, json, e });
+            log$q.error({ url, json, e });
             return null;
         }
     }
@@ -2769,7 +2455,7 @@ class TwitchHelixClient {
             return json.data[0] || null;
         }
         catch (e) {
-            log$p.error({ url, json, e });
+            log$q.error({ url, json, e });
             return null;
         }
     }
@@ -2780,7 +2466,7 @@ class TwitchHelixClient {
             return await resp.json();
         }
         catch (e) {
-            log$p.error({ url, e });
+            log$q.error({ url, e });
             return null;
         }
     }
@@ -2791,7 +2477,7 @@ class TwitchHelixClient {
             return await resp.text();
         }
         catch (e) {
-            log$p.error({ url, e });
+            log$q.error({ url, e });
             return null;
         }
     }
@@ -2804,7 +2490,7 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$p.error({ url, e });
+            log$q.error({ url, e });
             return null;
         }
     }
@@ -2818,7 +2504,7 @@ class TwitchHelixClient {
             return getBestEntryFromCategorySearchItems(searchString, json);
         }
         catch (e) {
-            log$p.error({ url, json });
+            log$q.error({ url, json });
             return null;
         }
     }
@@ -2832,7 +2518,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$p.error({ url, json });
+            log$q.error({ url, json });
             return null;
         }
     }
@@ -2846,7 +2532,7 @@ class TwitchHelixClient {
             return await executeRequestWithRetry(accessToken, req, bot, user);
         }
         catch (e) {
-            log$p.error({ url, e });
+            log$q.error({ url, e });
             return null;
         }
     }
@@ -2872,7 +2558,7 @@ class TwitchHelixClient {
             return (await resp.json());
         }
         catch (e) {
-            log$p.error({ url, e });
+            log$q.error({ url, e });
             return null;
         }
     }
@@ -2891,19 +2577,19 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$p.error({ url, e });
+            log$q.error({ url, e });
             return null;
         }
     }
     async getAllChannelPointsCustomRewards(bot, user) {
         const rewards = {};
         if (!user.twitch_id || !user.twitch_login) {
-            log$p.info('getAllChannelPointsCustomRewards: no twitch id and login');
+            log$q.info('getAllChannelPointsCustomRewards: no twitch id and login');
             return rewards;
         }
         const accessToken = await bot.getRepos().oauthToken.getMatchingAccessToken(user);
         if (!accessToken) {
-            log$p.info('getAllChannelPointsCustomRewards: no access token');
+            log$q.info('getAllChannelPointsCustomRewards: no access token');
             return rewards;
         }
         const res = await this.getChannelPointsCustomRewards(accessToken, user.twitch_id, bot, user);
@@ -2922,7 +2608,7 @@ class TwitchHelixClient {
             return await executeRequestWithRetry(accessToken, req, bot, user);
         }
         catch (e) {
-            log$p.error({ url, e });
+            log$q.error({ url, e });
             return null;
         }
     }
@@ -2947,7 +2633,7 @@ class TwitchHelixClient {
             return json.data.length > 0;
         }
         catch (e) {
-            log$p.error({ url, e });
+            log$q.error({ url, e });
             return false;
         }
     }
@@ -2960,7 +2646,7 @@ class TwitchHelixClient {
             return json.data.length > 0;
         }
         catch (e) {
-            log$p.error({ url, e });
+            log$q.error({ url, e });
             return false;
         }
     }
@@ -2973,13 +2659,13 @@ class TwitchHelixClient {
             return json.data.length > 0;
         }
         catch (e) {
-            log$p.error({ url, e });
+            log$q.error({ url, e });
             return false;
         }
     }
 }
 
-const log$o = logger('oauth.ts');
+const log$p = logger('oauth.ts');
 /**
  * Tries to refresh the access token and returns the new token
  * if successful, otherwise null.
@@ -3013,7 +2699,7 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
         token_type: refreshResp.token_type,
         expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
     });
-    log$o.info('tryRefreshAccessToken - refreshed an access token');
+    log$p.info('tryRefreshAccessToken - refreshed an access token');
     return refreshResp.access_token;
 };
 // TODO: check if anything has to be put in a try catch block
@@ -3060,7 +2746,7 @@ const refreshExpiredTwitchChannelAccessToken = async (bot, user) => {
         token_type: refreshResp.token_type,
         expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
     });
-    log$o.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
+    log$p.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
     return { error: false, refreshed: true };
 };
 // TODO: check if anything has to be put in a try catch block
@@ -3565,7 +3251,7 @@ const commands = {
     },
 };
 
-const log$n = logger('CommandExecutor.ts');
+const log$o = logger('CommandExecutor.ts');
 class CommandExecutor {
     async executeMatchingCommands(bot, user, rawCmd, target, context, triggers, date, contextModule) {
         const promises = [];
@@ -3590,7 +3276,7 @@ class CommandExecutor {
             return false;
         }
         // timeout still active
-        log$n.info({
+        log$o.info({
             target: ctx.target,
             command: ctx.rawCmd?.name || '<unknown>',
         }, `Skipping command due to timeout. ${humanDuration(timeoutMsLeft)} left`);
@@ -3643,7 +3329,7 @@ class CommandExecutor {
                 }
                 continue;
             }
-            log$n.info({
+            log$o.info({
                 target: ctx.target,
                 command: ctx.rawCmd?.name || '<unknown>',
                 module: contextModule.name,
@@ -3653,12 +3339,12 @@ class CommandExecutor {
                 await fn.applyEffects(cmdDef, contextModule, ctx.rawCmd, ctx.context);
                 const r = await cmdDef.fn(ctx);
                 if (r) {
-                    log$n.info({
+                    log$o.info({
                         target: ctx.target,
                         return: r,
                     }, 'Returned from command');
                 }
-                log$n.info({
+                log$o.info({
                     target: ctx.target,
                     command: ctx.rawCmd?.name || '<unknown>',
                 }, 'Executed command');
@@ -3678,11 +3364,11 @@ class CommandExecutor {
 class EventSubEventHandler {
 }
 
-const log$m = logger('SubscribeEventHandler.ts');
+const log$n = logger('SubscribeEventHandler.ts');
 class SubscribeEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$m.info('handle');
+        log$n.info('handle');
         const rawCmd = {
             name: 'channel.subscribe',
             args: [],
@@ -3704,11 +3390,11 @@ class SubscribeEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$l = logger('FollowEventHandler.ts');
+const log$m = logger('FollowEventHandler.ts');
 class FollowEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$l.info('handle');
+        log$m.info('handle');
         const rawCmd = {
             name: 'channel.follow',
             args: [],
@@ -3730,11 +3416,11 @@ class FollowEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$k = logger('CheerEventHandler.ts');
+const log$l = logger('CheerEventHandler.ts');
 class CheerEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$k.info('handle');
+        log$l.info('handle');
         const rawCmd = {
             name: 'channel.cheer',
             args: [],
@@ -3756,10 +3442,10 @@ class CheerEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$j = logger('ChannelPointRedeemEventHandler.ts');
+const log$k = logger('ChannelPointRedeemEventHandler.ts');
 class ChannelPointRedeemEventHandler extends EventSubEventHandler {
     async handle(bot, user, data) {
-        log$j.info('handle');
+        log$k.info('handle');
         const rawCmd = {
             name: data.event.reward.title,
             args: data.event.user_input ? [data.event.user_input] : [],
@@ -3794,10 +3480,10 @@ var SubscriptionType;
 })(SubscriptionType || (SubscriptionType = {}));
 const ALL_SUBSCRIPTIONS_TYPES = Object.values(SubscriptionType);
 
-const log$i = logger('StreamOnlineEventHandler.ts');
+const log$j = logger('StreamOnlineEventHandler.ts');
 class StreamOnlineEventHandler extends EventSubEventHandler {
     async handle(bot, _user, data) {
-        log$i.info('handle');
+        log$j.info('handle');
         await bot.getRepos().streams.insert({
             broadcaster_user_id: data.event.broadcaster_user_id,
             started_at: new Date(data.event.started_at),
@@ -3805,10 +3491,10 @@ class StreamOnlineEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$h = logger('StreamOfflineEventHandler.ts');
+const log$i = logger('StreamOfflineEventHandler.ts');
 class StreamOfflineEventHandler extends EventSubEventHandler {
     async handle(bot, _user, data) {
-        log$h.info('handle');
+        log$i.info('handle');
         // get last started stream for broadcaster
         // if it exists and it didnt end yet set ended_at date
         const stream = await bot.getRepos().streams.getLatestByChannelId(data.event.broadcaster_user_id);
@@ -3820,11 +3506,11 @@ class StreamOfflineEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$g = logger('RaidEventHandler.ts');
+const log$h = logger('RaidEventHandler.ts');
 class RaidEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$g.info('handle');
+        log$h.info('handle');
         const rawCmd = {
             name: 'channel.raid',
             args: [],
@@ -3846,7 +3532,7 @@ class RaidEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$f = logger('twitch/index.ts');
+const log$g = logger('twitch/index.ts');
 const createRouter$4 = (bot) => {
     const handlers = {
         [SubscriptionType.ChannelSubscribe]: new SubscribeEventHandler(),
@@ -3866,8 +3552,8 @@ const createRouter$4 = (bot) => {
         if (req.headers['twitch-eventsub-message-signature'] === expected) {
             return next();
         }
-        log$f.debug({ req });
-        log$f.error({
+        log$g.debug({ req });
+        log$g.error({
             got: req.headers['twitch-eventsub-message-signature'],
             expected,
         }, 'bad message signature');
@@ -3922,28 +3608,28 @@ const createRouter$4 = (bot) => {
     });
     router.post('/event-sub/', express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
         if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-            log$f.info({ challenge: req.body.challenge }, 'got verification request');
+            log$g.info({ challenge: req.body.challenge }, 'got verification request');
             res.write(req.body.challenge);
             res.send();
             return;
         }
         if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-            log$f.info({ type: req.body.subscription.type }, 'got notification request');
+            log$g.info({ type: req.body.subscription.type }, 'got notification request');
             const row = await bot.getRepos().eventSub.getBySubscriptionId(req.body.subscription.id);
             if (!row) {
-                log$f.info('unknown subscription_id');
+                log$g.info('unknown subscription_id');
                 res.status(400).send({ reason: 'unknown subscription_id' });
                 return;
             }
             const user = await bot.getRepos().user.getById(row.user_id);
             if (!user) {
-                log$f.info('unknown user');
+                log$g.info('unknown user');
                 res.status(400).send({ reason: 'unknown user' });
                 return;
             }
             const handler = handlers[req.body.subscription.type];
             if (!handler) {
-                log$f.info('unknown subscription type');
+                log$g.info('unknown subscription type');
                 res.status(400).send({ reason: 'unknown subscription type' });
                 return;
             }
@@ -4085,7 +3771,7 @@ const moduleDefinitions = [
     },
 ];
 
-const log$e = logger('api/index.ts');
+const log$f = logger('api/index.ts');
 const createRouter$1 = (bot) => {
     const uploadDir = './data/uploads';
     const storage = multer.diskStorage({
@@ -4099,12 +3785,12 @@ const createRouter$1 = (bot) => {
     router.post('/upload', RequireLoginApiMiddleware, (req, res) => {
         upload(req, res, (err) => {
             if (err) {
-                log$e.error({ err });
+                log$f.error({ err });
                 res.status(400).send('Something went wrong!');
                 return;
             }
             if (!req.file) {
-                log$e.error({ err });
+                log$f.error({ err });
                 res.status(400).send('Something went wrong!');
                 return;
             }
@@ -4222,7 +3908,7 @@ const createRouter$1 = (bot) => {
             res.status(404).send();
             return;
         }
-        log$e.debug({ route: '/widget/:widget_type/:widget_token/', type, token });
+        log$f.debug({ route: '/widget/:widget_type/:widget_token/', type, token });
         const w = bot.getWidgets().getWidgetDefinitionByType(type);
         if (w) {
             res.send({
@@ -4265,7 +3951,7 @@ const createRouter$1 = (bot) => {
             bot.getEventHub().emit('user_changed', changedUser);
         }
         else {
-            log$e.error({
+            log$f.error({
                 user_id: user.id,
             }, 'save-settings: user doesn\'t exist after saving it');
         }
@@ -4337,7 +4023,7 @@ const RequireLoginMiddleware = (req, res, next) => {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const log$d = logger('WebServer.ts');
+const log$e = logger('WebServer.ts');
 class WebServer {
     constructor() {
         this.handle = null;
@@ -4378,7 +4064,7 @@ class WebServer {
             res.sendFile(indexFile);
         });
         const httpConf = bot.getConfig().http;
-        this.handle = app.listen(httpConf.port, httpConf.hostname, () => log$d.info(`server running on http://${httpConf.hostname}:${httpConf.port}`));
+        this.handle = app.listen(httpConf.port, httpConf.hostname, () => log$e.info(`server running on http://${httpConf.hostname}:${httpConf.port}`));
     }
     close() {
         if (this.handle) {
@@ -4387,7 +4073,7 @@ class WebServer {
     }
 }
 
-const log$c = logger('ChatEventHandler.ts');
+const log$d = logger('ChatEventHandler.ts');
 const rolesLettersFromTwitchChatContext = (context) => {
     const roles = [];
     if (isMod(context)) {
@@ -4410,7 +4096,7 @@ const determineStreamStartDate = async (context, helixClient) => {
         }
     }
     const date = new Date(new Date().getTime() - (5 * MINUTE));
-    log$c.info({
+    log$d.info({
         roomId: context['room-id'],
         date: date,
     }, 'No stream is running atm, using fake start date.');
@@ -4427,7 +4113,7 @@ const determineIsFirstChatStream = async (bot, user, context) => {
 class ChatEventHandler {
     async handle(bot, user, target, context, msgOriginal, msgNormalized) {
         const roles = rolesLettersFromTwitchChatContext(context);
-        log$c.debug({
+        log$d.debug({
             username: context.username,
             roles,
             target,
@@ -4590,6 +4276,7 @@ class TwitchClientManager {
         timer.split();
         this.log.debug(`disconnecting chat client took ${timer.lastSplitMs()}ms`);
         const identity = determineIdentity(user, cfg);
+        this.bot.getEmoteParser().loadAssetsForChannel(user.twitch_login, user.twitch_id);
         if (user.twitch_id && user.twitch_login && user.bot_enabled) {
             this.log.info('* twitch bot enabled');
             // connect to chat via tmi (to all channels configured)
@@ -4785,14 +4472,14 @@ class TwitchClientManager {
 }
 
 const TABLE$9 = 'robyottoko.cache';
-const log$b = logger('Cache.ts');
+const log$c = logger('Cache.ts');
 class Cache {
     constructor(db) {
         this.db = db;
     }
     async set(key, value, lifetime) {
         if (value === undefined) {
-            log$b.error({ key }, 'unable to store undefined value for cache key');
+            log$c.error({ key }, 'unable to store undefined value for cache key');
             return;
         }
         const expiresAt = lifetime === Infinity ? null : (new Date(new Date().getTime() + lifetime));
@@ -4933,7 +4620,7 @@ class Mutex {
 
 // @ts-ignore
 const { Client } = pg.default;
-const log$a = logger('Db.ts');
+const log$b = logger('Db.ts');
 const mutex = new Mutex();
 class Db {
     constructor(connectStr, patchesDir) {
@@ -4953,7 +4640,7 @@ class Db {
         for (const f of files) {
             if (patches.includes(f)) {
                 if (verbose) {
-                    log$a.info(`➡ skipping already applied db patch: ${f}`);
+                    log$b.info(`➡ skipping already applied db patch: ${f}`);
                 }
                 continue;
             }
@@ -4972,10 +4659,10 @@ class Db {
                     throw e;
                 }
                 await this.insert('public.db_patches', { id: f });
-                log$a.info(`✓ applied db patch: ${f}`);
+                log$b.info(`✓ applied db patch: ${f}`);
             }
             catch (e) {
-                log$a.error(`✖ unable to apply patch: ${f} ${e}`);
+                log$b.error(`✖ unable to apply patch: ${f} ${e}`);
                 return;
             }
         }
@@ -5072,7 +4759,7 @@ class Db {
             return (await this.dbh.query(query, params)).rows[0] || null;
         }
         catch (e) {
-            log$a.info({ fn: '_get', query, params });
+            log$b.info({ fn: '_get', query, params });
             console.error(e);
             throw e;
         }
@@ -5082,7 +4769,7 @@ class Db {
             return await this.dbh.query(query, params);
         }
         catch (e) {
-            log$a.info({ fn: 'run', query, params });
+            log$b.info({ fn: 'run', query, params });
             console.error(e);
             throw e;
         }
@@ -5092,7 +4779,7 @@ class Db {
             return (await this.dbh.query(query, params)).rows || [];
         }
         catch (e) {
-            log$a.info({ fn: '_getMany', query, params });
+            log$b.info({ fn: '_getMany', query, params });
             console.error(e);
             throw e;
         }
@@ -5685,7 +5372,7 @@ class GeneralModule {
         this.timers.forEach(t => {
             t.lines++;
         });
-        const emotes = extractEmotes(chatMessageContext);
+        const emotes = this.bot.getEmoteParser().extractEmotes(chatMessageContext);
         if (emotes) {
             const data = {
                 displayFn: this.data.settings.emotes.displayFn,
@@ -5992,7 +5679,7 @@ class QuotaReachedError extends Error {
 }
 
 var _YoutubeApi_googleApiKeyIndex;
-const log$9 = logger('YoutubeApi.ts');
+const log$a = logger('YoutubeApi.ts');
 var YoutubeVideoDuration;
 (function (YoutubeVideoDuration) {
     YoutubeVideoDuration["ANY"] = "any";
@@ -6009,7 +5696,7 @@ class YoutubeApi {
     async get(url, args) {
         var _a;
         if (this.config.googleApiKeys.length === 0) {
-            log$9.error('no google api keys configured');
+            log$a.error('no google api keys configured');
             throw new NoApiKeysError();
         }
         // cycle through all google api keys until response is ok
@@ -6022,7 +5709,7 @@ class YoutubeApi {
                 // got a ok response, return it
                 return await resp.json();
             }
-            log$9.warn('google returned 403 forbidden status, switching api key');
+            log$a.warn('google returned 403 forbidden status, switching api key');
             __classPrivateFieldSet(this, _YoutubeApi_googleApiKeyIndex, (_a = __classPrivateFieldGet(this, _YoutubeApi_googleApiKeyIndex, "f"), _a++, _a), "f");
             if (__classPrivateFieldGet(this, _YoutubeApi_googleApiKeyIndex, "f") > this.config.googleApiKeys.length - 1) {
                 __classPrivateFieldSet(this, _YoutubeApi_googleApiKeyIndex, 0, "f");
@@ -6041,7 +5728,7 @@ class YoutubeApi {
             return json.items[0];
         }
         catch (e) {
-            log$9.error({ e, json, youtubeId });
+            log$a.error({ e, json, youtubeId });
             return null;
         }
     }
@@ -6103,7 +5790,7 @@ class YoutubeApi {
                 }
             }
             catch (e) {
-                log$9.info({ e, json });
+                log$a.info({ e, json });
             }
         }
         return ids;
@@ -6112,7 +5799,7 @@ class YoutubeApi {
 _YoutubeApi_googleApiKeyIndex = new WeakMap();
 
 var _Youtube_instances, _Youtube_getDataByIdViaYoutubeApi, _Youtube_findViaYoutubeApi, _Youtube_getDataByIdViaIndivious, _Youtube_findByIndivious;
-const log$8 = logger('Youtube.ts');
+const log$9 = logger('Youtube.ts');
 class Youtube {
     constructor(youtubeApi, indivious, cache) {
         this.youtubeApi = youtubeApi;
@@ -6153,7 +5840,7 @@ class Youtube {
             return await __classPrivateFieldGet(this, _Youtube_instances, "m", _Youtube_findViaYoutubeApi).call(this, str, maxLenMs);
         }
         catch (e) {
-            log$8.info(e instanceof NoApiKeysError);
+            log$9.info(e instanceof NoApiKeysError);
             // in case of quota reached or no api key set, ask indivious
             if (e instanceof QuotaReachedError
                 || e instanceof NoApiKeysError) {
@@ -6263,7 +5950,7 @@ _Youtube_instances = new WeakSet(), _Youtube_getDataByIdViaYoutubeApi = async fu
     throw new NotFoundError();
 };
 
-const log$7 = logger('SongrequestModule.ts');
+const log$8 = logger('SongrequestModule.ts');
 const ADD_TYPE = {
     NOT_ADDED: 0,
     ADDED: 1,
@@ -7295,7 +6982,7 @@ class SongrequestModule {
     cmdResr(_originalCommand) {
         return async (ctx) => {
             if (!ctx.rawCmd || !ctx.context) {
-                log$7.error('cmdResr: client, command or context empty');
+                log$8.error('cmdResr: client, command or context empty');
                 return;
             }
             const say = this.bot.sayFn(this.user, ctx.target);
@@ -7660,7 +7347,7 @@ class SongrequestModule {
     }
 }
 
-const log$6 = logger('VoteModule.ts');
+const log$7 = logger('VoteModule.ts');
 class VoteModule {
     constructor(bot, user) {
         this.bot = bot;
@@ -7706,7 +7393,7 @@ class VoteModule {
     }
     async vote(type, thing, target, context) {
         if (!context['display-name']) {
-            log$6.error('context has no display name set');
+            log$7.error('context has no display name set');
             return;
         }
         const say = this.bot.sayFn(this.user, target);
@@ -8012,7 +7699,7 @@ const default_images = (list = null) => {
     return [];
 };
 
-const log$5 = logger('DrawcastModule.ts');
+const log$6 = logger('DrawcastModule.ts');
 class DrawcastModule {
     constructor(bot, user) {
         this.bot = bot;
@@ -8144,7 +7831,7 @@ class DrawcastModule {
             },
             'get_all_images': async (ws, { token }) => {
                 if (!this.checkAuthorized(token)) {
-                    log$5.error({ token }, 'get_all_images: unauthed user');
+                    log$6.error({ token }, 'get_all_images: unauthed user');
                     return;
                 }
                 this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, {
@@ -8154,13 +7841,13 @@ class DrawcastModule {
             },
             'approve_image': async (_ws, { path, token }) => {
                 if (!this.checkAuthorized(token)) {
-                    log$5.error({ path, token }, 'approve_image: unauthed user');
+                    log$6.error({ path, token }, 'approve_image: unauthed user');
                     return;
                 }
                 const image = this.data.images.find(item => item.path === path);
                 if (!image) {
                     // should not happen
-                    log$5.error({ path }, 'approve_image: image not found');
+                    log$6.error({ path }, 'approve_image: image not found');
                     return;
                 }
                 image.approved = true;
@@ -8174,13 +7861,13 @@ class DrawcastModule {
             },
             'deny_image': async (_ws, { path, token }) => {
                 if (!this.checkAuthorized(token)) {
-                    log$5.error({ path, token }, 'deny_image: unauthed user');
+                    log$6.error({ path, token }, 'deny_image: unauthed user');
                     return;
                 }
                 const image = this.data.images.find(item => item.path === path);
                 if (!image) {
                     // should not happen
-                    log$5.error({ path }, 'deny_image: image not found');
+                    log$6.error({ path }, 'deny_image: image not found');
                     return;
                 }
                 this.data.images = this.data.images.filter(item => item.path !== image.path);
@@ -8192,19 +7879,19 @@ class DrawcastModule {
             },
             'delete_image': async (_ws, { path, token }) => {
                 if (!this.checkAuthorized(token)) {
-                    log$5.error({ path, token }, 'delete_image: unauthed user');
+                    log$6.error({ path, token }, 'delete_image: unauthed user');
                     return;
                 }
                 const image = this.data.images.find(item => item.path === path);
                 if (!image) {
                     // should not happen
-                    log$5.error({ path }, 'delete_image: image not found');
+                    log$6.error({ path }, 'delete_image: image not found');
                     return;
                 }
                 const deleted = this._deleteImage(image);
                 if (!deleted) {
                     // should not happen
-                    log$5.error({ path }, 'delete_image: image not deleted');
+                    log$6.error({ path }, 'delete_image: image not deleted');
                     return;
                 }
                 this.data.settings.favoriteLists = this.data.settings.favoriteLists.map(favoriteList => {
@@ -8238,7 +7925,7 @@ class DrawcastModule {
             },
             'save': async (_ws, data) => {
                 if (!this.checkAuthorized(data.token, true)) {
-                    log$5.error({ token: data.token }, 'save: unauthed user');
+                    log$6.error({ token: data.token }, 'save: unauthed user');
                     return;
                 }
                 this.data.settings = data.settings;
@@ -8291,7 +7978,7 @@ const default_settings$1 = (obj = null) => ({
     avatarDefinitions: getProp(obj, ['avatarDefinitions'], []).map(default_avatar_definition),
 });
 
-const log$4 = logger('AvatarModule.ts');
+const log$5 = logger('AvatarModule.ts');
 class AvatarModule {
     constructor(bot, user) {
         this.bot = bot;
@@ -8368,7 +8055,7 @@ class AvatarModule {
                         await this.save();
                     }
                     catch (e) {
-                        log$4.error({ tuberIdx, slotName, itemIdx }, 'ws ctrl: unable to setSlot');
+                        log$5.error({ tuberIdx, slotName, itemIdx }, 'ws ctrl: unable to setSlot');
                     }
                 }
                 else if (data.data.ctrl === 'lockState') {
@@ -8379,7 +8066,7 @@ class AvatarModule {
                         await this.save();
                     }
                     catch (e) {
-                        log$4.error({ tuberIdx, lockedState }, 'ws ctrl: unable to lockState');
+                        log$5.error({ tuberIdx, lockedState }, 'ws ctrl: unable to lockState');
                     }
                 }
                 else if (data.data.ctrl === 'setTuber') {
@@ -8620,12 +8307,12 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-03-07T13:22:04.716Z",
+    buildDate: "2023-03-08T00:24:20.287Z",
     // @ts-ignore
-    buildVersion: "1.62.0",
+    buildVersion: "1.63.0",
 };
 
-const log$3 = logger('StreamStatusUpdater.ts');
+const log$4 = logger('StreamStatusUpdater.ts');
 class StreamStatusUpdater {
     constructor(bot) {
         this.bot = bot;
@@ -8655,21 +8342,21 @@ class StreamStatusUpdater {
         });
     }
     async _doUpdate() {
-        log$3.info('doing update');
+        log$4.info('doing update');
         const updatePromises = [];
         for (const user of this.users) {
             updatePromises.push(this._doUpdateForUser(user));
         }
         await Promise.all(updatePromises);
         setTimeout(() => this._doUpdate(), 5 * MINUTE);
-        log$3.info('done update');
+        log$4.info('done update');
     }
     start() {
         this._doUpdate();
     }
 }
 
-const log$2 = logger('FrontendStatusUpdater.ts');
+const log$3 = logger('FrontendStatusUpdater.ts');
 class FrontendStatusUpdater {
     constructor(bot) {
         this.bot = bot;
@@ -8703,8 +8390,8 @@ class FrontendStatusUpdater {
         if (this.bot.getConfig().bot.supportTwitchAccessTokens) {
             const result = await refreshExpiredTwitchChannelAccessToken(this.bot, user);
             if (result.error) {
-                log$2.error('Unable to validate or refresh OAuth token.');
-                log$2.error(`user: ${user.name}, channel: ${user.twitch_login}, error: ${result.error}`);
+                log$3.error('Unable to validate or refresh OAuth token.');
+                log$3.error(`user: ${user.name}, channel: ${user.twitch_login}, error: ${result.error}`);
                 problems.push({
                     message: 'access_token_invalid',
                     details: {
@@ -8718,7 +8405,7 @@ class FrontendStatusUpdater {
                     this.bot.getEventHub().emit('access_token_refreshed', changedUser);
                 }
                 else {
-                    log$2.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`);
+                    log$3.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`);
                 }
             }
         }
@@ -8726,14 +8413,14 @@ class FrontendStatusUpdater {
         this.bot.getWebSocketServer().notifyAll([user.id], 'core', data);
     }
     async _doUpdate() {
-        log$2.info('doing update');
+        log$3.info('doing update');
         const updatePromises = [];
         for (const user of this.users) {
             updatePromises.push(this._doUpdateForUser(user));
         }
         await Promise.all(updatePromises);
         setTimeout(() => this._doUpdate(), 1 * MINUTE);
-        log$2.info('done update');
+        log$3.info('done update');
     }
     start() {
         this._doUpdate();
@@ -8838,7 +8525,7 @@ class EventSubRepo extends Repo {
 }
 
 const TABLE$5 = 'robyottoko.module';
-const log$1 = logger('ModuleRepo.ts');
+const log$2 = logger('ModuleRepo.ts');
 class ModuleRepo extends Repo {
     async load(userId, key, def) {
         try {
@@ -8855,7 +8542,7 @@ class ModuleRepo extends Repo {
             };
         }
         catch (e) {
-            log$1.error({ e });
+            log$2.error({ e });
             return {
                 data: def,
                 enabled: true,
@@ -9077,6 +8764,684 @@ class Discord {
     }
 }
 
+const loadedAssets = {};
+const log$1 = logger('emote-parse.ts');
+function loadAssets(channel, channelId) {
+    loadedAssets[channel] = {
+        channel: channel,
+        uid: '',
+        emotes: [],
+        badges: {},
+        badgesLoaded: [false, false, false],
+        allLoaded: false,
+        loaded: {
+            'bttv': {
+                global: false,
+                channel: false,
+            },
+            'ffz': {
+                global: false,
+                channel: false,
+            },
+            '7tv': {
+                global: false,
+                channel: false,
+            },
+        },
+    };
+    loadedAssets[channel].uid = channelId;
+    loadConcurrent(channelId, channel);
+}
+function loadConcurrent(uid, channel) {
+    // NOTE: FFZ
+    fetch(`https://api.frankerfacez.com/v1/room/${channel}`)
+        .then(response => response.json())
+        .then(body => {
+        try {
+            Object.keys(body.sets).forEach(el => {
+                const e = body.sets[el];
+                e.emoticons.forEach((ele) => {
+                    ele.code = ele.name;
+                    ele.type = 'ffz';
+                    loadedAssets[channel].emotes.push(ele);
+                });
+            });
+            checkLoadedAll(channel, 'ffz', 'channel');
+            if (loadedAssets[channel].allLoaded) {
+                loadedAssets[channel].emotes = loadedAssets[channel].emotes.sort(compareLength);
+            }
+        }
+        catch (error) {
+            log$1.error({
+                channel: channel,
+                error: 'Failed to load FFz channel emotes for ' + channel,
+            });
+        }
+    });
+    fetch(`https://api.frankerfacez.com/v1/set/global`)
+        .then(response => response.json())
+        .then(body => {
+        try {
+            Object.keys(body.sets).forEach(el => {
+                const e = body.sets[el];
+                e.emoticons.forEach((ele) => {
+                    ele.code = ele.name;
+                    ele.type = 'ffz';
+                    loadedAssets[channel].emotes.push(ele);
+                });
+            });
+            checkLoadedAll(channel, 'ffz', 'global');
+            if (loadedAssets[channel].allLoaded) {
+                loadedAssets[channel].emotes = loadedAssets[channel].emotes.sort(compareLength);
+            }
+        }
+        catch (error) {
+            log$1.error({
+                channel: channel,
+                error: 'Failed to load global FFz channel emotes',
+            });
+        }
+    });
+    // NOTE: BTTV
+    fetch(`https://api.betterttv.net/3/cached/users/twitch/${uid}`)
+        .then(response => response.json())
+        .then(body => {
+        try {
+            body.channelEmotes.forEach((ele) => {
+                ele.type = 'bttv';
+                loadedAssets[channel].emotes.push(ele);
+            });
+            body.sharedEmotes.forEach((ele) => {
+                ele.type = 'bttv';
+                loadedAssets[channel].emotes.push(ele);
+            });
+            checkLoadedAll(channel, 'bttv', 'channel');
+            if (loadedAssets[channel].allLoaded) {
+                loadedAssets[channel].emotes = loadedAssets[channel].emotes.sort(compareLength);
+            }
+        }
+        catch (error) {
+            log$1.error({
+                channel: channel,
+                error: 'Failed to load BetterTTV channel emotes for ' + channel,
+            });
+        }
+    });
+    fetch(`https://api.betterttv.net/3/cached/emotes/global`)
+        .then(response => response.json())
+        .then(body => {
+        try {
+            body.forEach((ele) => {
+                ele.type = 'bttv';
+                loadedAssets[channel].emotes.push(ele);
+            });
+            checkLoadedAll(channel, 'bttv', 'global');
+            if (loadedAssets[channel].allLoaded) {
+                loadedAssets[channel].emotes = loadedAssets[channel].emotes.sort(compareLength);
+            }
+        }
+        catch (error) {
+            log$1.error({
+                channel: channel,
+                error: 'Failed to load BetterTTV global emotes for ' + channel,
+            });
+        }
+    });
+    // NOTE: 7TV
+    fetch(`https://api.7tv.app/v2/users/${channel}`)
+        .then(response => response.json())
+        .then(body => {
+        try {
+            if (body.Status == undefined && body.Status != 404) {
+                fetch(`https://api.7tv.app/v2/users/${channel}/emotes`)
+                    .then(response => response.json())
+                    .then(body => {
+                    try {
+                        if (body.Status == undefined && body.Status != 404) {
+                            body.forEach((ele) => {
+                                ele.code = ele.name;
+                                ele.type = '7tv';
+                                loadedAssets[channel].emotes.push(ele);
+                            });
+                            checkLoadedAll(channel, '7tv', 'channel');
+                            if (loadedAssets[channel].allLoaded) {
+                                loadedAssets[channel].emotes = loadedAssets[channel].emotes.sort(compareLength);
+                            }
+                        }
+                        else {
+                            log$1.error({
+                                channel: channel,
+                                error: 'Failed to load 7TV channel emotes for ' + channel,
+                            });
+                            checkLoadedAll(channel, '7tv', 'channel');
+                        }
+                    }
+                    catch (error) {
+                        log$1.error({
+                            channel: channel,
+                            error: 'Failed to load 7TV channel emotes for ' + channel,
+                        });
+                    }
+                });
+                fetch(`https://api.7tv.app/v2/emotes/global`)
+                    .then(response => response.json())
+                    .then(body => {
+                    try {
+                        body.forEach((ele) => {
+                            ele.code = ele.name;
+                            ele.type = '7tv';
+                            loadedAssets[channel].emotes.push(ele);
+                        });
+                        checkLoadedAll(channel, '7tv', 'global');
+                        if (loadedAssets[channel].allLoaded) {
+                            loadedAssets[channel].emotes = loadedAssets[channel].emotes.sort(compareLength);
+                        }
+                    }
+                    catch (error) {
+                        log$1.error({
+                            channel: channel,
+                            error: 'Failed to load 7TV global emotes for ' + channel,
+                        });
+                    }
+                });
+            }
+            else {
+                log$1.error({
+                    channel: channel,
+                    error: 'No 7TV user available for ' + channel,
+                });
+                checkLoadedAll(channel, '7tv', 'channel');
+                checkLoadedAll(channel, '7tv', 'global');
+            }
+        }
+        catch (error) {
+            log$1.error({
+                channel: channel,
+                error: 'Failed to load 7TV global emotes for ' + channel,
+            });
+        }
+    });
+    // NOTE: Twitch Badges
+    fetch(`https://badges.twitch.tv/v1/badges/global/display`)
+        .then(response => response.json())
+        .then(body => {
+        try {
+            Object.keys(body.badge_sets).forEach((ele, _ind) => {
+                Object.keys(body.badge_sets[ele].versions).forEach((el, _i) => {
+                    if (loadedAssets[channel].badges[ele + '/' + el] == undefined) {
+                        loadedAssets[channel].badges[ele + '/' + el] = {
+                            name: ele + '/' + el,
+                            info: body.badge_sets[ele].versions[el].title,
+                            img: body.badge_sets[ele].versions[el].image_url_4x,
+                        };
+                    }
+                });
+            });
+            loadedAssets[channel].badgesLoaded[0] = true;
+            if (loadedAssets[channel].badgesLoaded.indexOf(false) == 2) {
+                loadedAssets[channel].badgesLoaded[2] = true;
+            }
+        }
+        catch (error) {
+            log$1.error({
+                channel: channel,
+                error: 'Failed to load global badges for ' + channel,
+            });
+        }
+    });
+    fetch(`https://badges.twitch.tv/v1/badges/channels/${uid}/display`)
+        .then(response => response.json())
+        .then(body => {
+        try {
+            Object.keys(body.badge_sets).forEach((ele, _ind) => {
+                Object.keys(body.badge_sets[ele].versions).forEach((el, _i) => {
+                    loadedAssets[channel].badges[ele + '/' + el] = {
+                        name: ele + '/' + el,
+                        info: body.badge_sets[ele].versions[el].title,
+                        img: body.badge_sets[ele].versions[el].image_url_4x,
+                    };
+                });
+            });
+            loadedAssets[channel].badgesLoaded[1] = true;
+            if (loadedAssets[channel].badgesLoaded.indexOf(false) == 2) {
+                loadedAssets[channel].badgesLoaded[2] = true;
+            }
+        }
+        catch (error) {
+            log$1.error({
+                channel: channel,
+                error: 'Failed to load channel badges for ' + channel,
+            });
+        }
+    });
+}
+function checkLoadedAll(channel, type, extra) {
+    if (loadedAssets[channel].loaded[type][extra] == false) {
+        loadedAssets[channel].loaded[type][extra] = true;
+    }
+    const trueVals = [];
+    Object.keys(loadedAssets[channel].loaded).forEach((e, _ind) => {
+        e = loadedAssets[channel].loaded[e];
+        let allTrue = true;
+        Object.keys(e).forEach(ele => {
+            // @ts-ignore
+            ele = e[ele];
+            // @ts-ignore
+            if (ele == false) {
+                allTrue = false;
+            }
+        });
+        trueVals.push(allTrue);
+    });
+    loadedAssets[channel].allLoaded = !trueVals.includes(false);
+    return !trueVals.includes(false);
+}
+function compareLength(a, b) {
+    if (a.code.length < b.code.length) {
+        return 1;
+    }
+    if (a.code.length > b.code.length) {
+        return -1;
+    }
+    return 0;
+}
+function compareEnd(a, b) {
+    if (a.end < b.end) {
+        return -1;
+    }
+    if (a.end > b.end) {
+        return 1;
+    }
+    return 0;
+}
+function getMessageEmotes(message, tags, channel) {
+    let emotes = [];
+    const gotEmotes = [];
+    if (tags.emotes != null && typeof tags.emotes !== undefined) {
+        const tagEmotes = tags.emotes;
+        Object.keys(tagEmotes).forEach((el, ind) => {
+            const em = tagEmotes[el];
+            em.forEach((ele) => {
+                const start = parseInt(ele.split('-')[0]);
+                const end = parseInt(ele.split('-')[1]);
+                emotes.push({
+                    start: start,
+                    end: end,
+                    rep: Object.keys(tagEmotes)[ind],
+                });
+            });
+        });
+        emotes.sort(compareEnd);
+        emotes = emotes.reverse();
+        emotes.forEach((ele, _ind) => {
+            const code = message.substring(ele.start, ele.end + 1);
+            gotEmotes.push({
+                code: code,
+                img: `https://static-cdn.jtvnw.net/emoticons/v2/${ele.rep}/default/dark/3.0`,
+                type: 'twitch',
+            });
+            message = message.substring(0, ele.start) + message.substring(ele.end + 1, message.length);
+        });
+    }
+    const fEmotes = replaceBTTVAll(message, channel);
+    fEmotes.forEach(ele => {
+        gotEmotes.push(ele);
+    });
+    return gotEmotes;
+}
+function replaceBTTVAll(msg, channel) {
+    const emotes = [];
+    const channelEmotes = loadedAssets[channel]?.emotes || [];
+    channelEmotes.forEach((ele) => {
+        const regex = new RegExp(`(^${ele.code}(?=[^?!."_*+#'´\`\\/%&$€§=])|(?=[^?!."_*+#'´\`\\/%&$€§=])${ele.code}$|\\s${ele.code}(?=[^?!."_*+#'´\`\\/%&$€§=])|(?=[^?!."_*+#'´\`\\/%&$€§=])${ele.code}\\s)`, 'm');
+        let m = null;
+        do {
+            m = msg.match(regex);
+            msg = msg.replace(regex, '');
+            if (m) {
+                if (ele.type == 'bttv') {
+                    emotes.push({
+                        code: ele.code,
+                        img: `https://cdn.betterttv.net/emote/${ele.id}/3x`,
+                        type: 'bttv',
+                    });
+                }
+                else if (ele.type == 'ffz') {
+                    const poss = ele.urls[4] != undefined ? ele.urls[4] : ele.urls[2] != undefined ? ele.urls[2] : ele.urls[1];
+                    emotes.push({
+                        code: ele.code,
+                        img: `https:${poss}`,
+                        type: 'ffz',
+                    });
+                }
+                else if (ele.type == '7tv') {
+                    const poss = ele.urls[3][1] != undefined ? ele.urls[3][1] : ele.urls[2][1] != undefined ? ele.urls[2][1] : ele.urls[1][1];
+                    emotes.push({
+                        code: ele.code,
+                        img: poss,
+                        type: '7tv',
+                    });
+                }
+            }
+        } while (m);
+    });
+    return emotes;
+}
+const loadAssetsForChannel = (channel, channelId) => {
+    loadAssets(channel.replace('#', '').trim().toLowerCase(), channelId);
+};
+const getEmotes = function (message, tags, channel) {
+    return getMessageEmotes(message, tags, channel.replace('#', '').trim().toLowerCase());
+};
+
+const i = [
+  "🏳️‍🌈",
+  "🏳️‍⚧️",
+  "🇦🇨",
+  "🇦🇩",
+  "🇦🇪",
+  "🇦🇫",
+  "🇦🇬",
+  "🇦🇮",
+  "🇦🇱",
+  "🇦🇲",
+  "🇦🇴",
+  "🇦🇶",
+  "🇦🇷",
+  "🇦🇸",
+  "🇦🇹",
+  "🇦🇺",
+  "🇦🇼",
+  "🇦🇽",
+  "🇦🇿",
+  "🇧🇦",
+  "🇧🇧",
+  "🇧🇩",
+  "🇧🇪",
+  "🇧🇫",
+  "🇧🇬",
+  "🇧🇭",
+  "🇧🇮",
+  "🇧🇯",
+  "🇧🇱",
+  "🇧🇲",
+  "🇧🇳",
+  "🇧🇴",
+  "🇧🇶",
+  "🇧🇷",
+  "🇧🇸",
+  "🇧🇹",
+  "🇧🇻",
+  "🇧🇼",
+  "🇧🇾",
+  "🇧🇿",
+  "🇨🇦",
+  "🇨🇨",
+  "🇨🇩",
+  "🇨🇫",
+  "🇨🇬",
+  "🇨🇭",
+  "🇨🇮",
+  "🇨🇰",
+  "🇨🇱",
+  "🇨🇲",
+  "🇨🇳",
+  "🇨🇴",
+  "🇨🇵",
+  "🇨🇷",
+  "🇨🇺",
+  "🇨🇻",
+  "🇨🇼",
+  "🇨🇽",
+  "🇨🇾",
+  "🇨🇿",
+  "🇩🇪",
+  "🇩🇬",
+  "🇩🇯",
+  "🇩🇰",
+  "🇩🇲",
+  "🇩🇴",
+  "🇩🇿",
+  "🇪🇦",
+  "🇪🇨",
+  "🇪🇪",
+  "🇪🇬",
+  "🇪🇭",
+  "🇪🇷",
+  "🇪🇸",
+  "🇪🇹",
+  "🇪🇺",
+  "🇫🇮",
+  "🇫🇯",
+  "🇫🇰",
+  "🇫🇲",
+  "🇫🇴",
+  "🇫🇷",
+  "🇬🇦",
+  "🇬🇧",
+  "🇬🇩",
+  "🇬🇪",
+  "🇬🇫",
+  "🇬🇬",
+  "🇬🇭",
+  "🇬🇮",
+  "🇬🇱",
+  "🇬🇲",
+  "🇬🇳",
+  "🇬🇵",
+  "🇬🇶",
+  "🇬🇷",
+  "🇬🇸",
+  "🇬🇹",
+  "🇬🇺",
+  "🇬🇼",
+  "🇬🇾",
+  "🇭🇰",
+  "🇭🇲",
+  "🇭🇳",
+  "🇭🇷",
+  "🇭🇹",
+  "🇭🇺",
+  "🇮🇨",
+  "🇮🇩",
+  "🇮🇪",
+  "🇮🇱",
+  "🇮🇲",
+  "🇮🇳",
+  "🇮🇴",
+  "🇮🇶",
+  "🇮🇷",
+  "🇮🇸",
+  "🇮🇹",
+  "🇯🇪",
+  "🇯🇲",
+  "🇯🇴",
+  "🇯🇵",
+  "🇰🇪",
+  "🇰🇬",
+  "🇰🇭",
+  "🇰🇮",
+  "🇰🇲",
+  "🇰🇳",
+  "🇰🇵",
+  "🇰🇷",
+  "🇰🇼",
+  "🇰🇾",
+  "🇰🇿",
+  "🇱🇦",
+  "🇱🇧",
+  "🇱🇨",
+  "🇱🇮",
+  "🇱🇰",
+  "🇱🇷",
+  "🇱🇸",
+  "🇱🇹",
+  "🇱🇺",
+  "🇱🇻",
+  "🇱🇾",
+  "🇲🇦",
+  "🇲🇨",
+  "🇲🇩",
+  "🇲🇪",
+  "🇲🇫",
+  "🇲🇬",
+  "🇲🇭",
+  "🇲🇰",
+  "🇲🇱",
+  "🇲🇲",
+  "🇲🇳",
+  "🇲🇴",
+  "🇲🇵",
+  "🇲🇶",
+  "🇲🇷",
+  "🇲🇸",
+  "🇲🇹",
+  "🇲🇺",
+  "🇲🇻",
+  "🇲🇼",
+  "🇲🇽",
+  "🇲🇾",
+  "🇲🇿",
+  "🇳🇦",
+  "🇳🇨",
+  "🇳🇪",
+  "🇳🇫",
+  "🇳🇬",
+  "🇳🇮",
+  "🇳🇱",
+  "🇳🇴",
+  "🇳🇵",
+  "🇳🇷",
+  "🇳🇺",
+  "🇳🇿",
+  "🇴🇲",
+  "🇵🇦",
+  "🇵🇪",
+  "🇵🇫",
+  "🇵🇬",
+  "🇵🇭",
+  "🇵🇰",
+  "🇵🇱",
+  "🇵🇲",
+  "🇵🇳",
+  "🇵🇷",
+  "🇵🇸",
+  "🇵🇹",
+  "🇵🇼",
+  "🇵🇾",
+  "🇶🇦",
+  "🇷🇪",
+  "🇷🇴",
+  "🇷🇸",
+  "🇷🇺",
+  "🇷🇼",
+  "🇸🇦",
+  "🇸🇧",
+  "🇸🇨",
+  "🇸🇩",
+  "🇸🇪",
+  "🇸🇬",
+  "🇸🇭",
+  "🇸🇮",
+  "🇸🇯",
+  "🇸🇰",
+  "🇸🇱",
+  "🇸🇲",
+  "🇸🇳",
+  "🇸🇴",
+  "🇸🇷",
+  "🇸🇸",
+  "🇸🇹",
+  "🇸🇻",
+  "🇸🇽",
+  "🇸🇾",
+  "🇸🇿",
+  "🇹🇦",
+  "🇹🇨",
+  "🇹🇩",
+  "🇹🇫",
+  "🇹🇬",
+  "🇹🇭",
+  "🇹🇯",
+  "🇹🇰",
+  "🇹🇱",
+  "🇹🇲",
+  "🇹🇳",
+  "🇹🇴",
+  "🇹🇷",
+  "🇹🇹",
+  "🇹🇻",
+  "🇹🇼",
+  "🇹🇿",
+  "🇺🇦",
+  "🇺🇬",
+  "🇺🇲",
+  "🇺🇳",
+  "🇺🇸",
+  "🇺🇾",
+  "🇺🇿",
+  "🇻🇦",
+  "🇻🇨",
+  "🇻🇪",
+  "🇻🇬",
+  "🇻🇮",
+  "🇻🇳",
+  "🇻🇺",
+  "🇼🇫",
+  "🇼🇸",
+  "🇽🇰",
+  "🇾🇪",
+  "🇾🇹",
+  "🇿🇦",
+  "🇿🇲",
+  "🇿🇼"
+], r = [
+  // two different rainbow flags (first is the broken one, when using windows)
+  { from: "🏳‍🌈", to: "🏳️‍🌈" }
+], s = new RegExp(`${i.join("|")}|(\\p{EPres}|\\p{ExtPict})(\\u200d(\\p{EPres}|\\p{ExtPict})\\ufe0f?)*`, "gu");
+function* c(n) {
+  const t = n.match(s);
+  if (t)
+    for (let o of t) {
+      for (const e of r)
+        o = o.replace(e.from, e.to);
+      yield [...o].map((e) => e.codePointAt(0));
+    }
+}
+const f = (n) => {
+  const t = [];
+  for (const o of c(n))
+    t.push(o);
+  return t;
+}, d = (n) => {
+  const t = [];
+  for (const o of c(n))
+    t.push(o.map((e) => e.toString(16)).join("-"));
+  return t;
+}, p = {
+  detectCodePoints: f,
+  detectStrings: d,
+  EMOJI_REGEX: s
+};
+
+class EmoteParser {
+    loadAssetsForChannel(channel, channelId) {
+        loadAssetsForChannel(channel, channelId);
+    }
+    extractEmojiEmotes(context) {
+        return p.detectStrings(context.msgOriginal).map(str => ({
+            url: `https://cdn.betterttv.net/assets/emoji/${str}.svg`,
+        }));
+    }
+    extractEmotes(context) {
+        const emotes = getEmotes(context.msgOriginal, context.context, context.target);
+        return [
+            ...emotes.map(e => ({ url: e.img })),
+            ...this.extractEmojiEmotes(context),
+        ];
+    }
+}
+
 setLogLevel(config.log.level);
 const log = logger('bot.ts');
 const modules = [
@@ -9104,6 +9469,7 @@ const createBot = async () => {
     const webServer = new WebServer();
     const twitchTmiClientManager = new TwitchTmiClientManager();
     const youtube = new Youtube(new YoutubeApi(config.youtube), new Indivious(), cache);
+    const emoteParser = new EmoteParser();
     class BotImpl {
         constructor() {
             this.userTwitchClientManagerInstances = {};
@@ -9151,6 +9517,9 @@ const createBot = async () => {
                 this.userTwitchClientManagerInstances[user.id] = new TwitchClientManager(this, user);
             }
             return this.userTwitchClientManagerInstances[user.id];
+        }
+        getEmoteParser() {
+            return emoteParser;
         }
     }
     return new BotImpl();
