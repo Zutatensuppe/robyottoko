@@ -8307,9 +8307,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-03-08T00:24:20.287Z",
+    buildDate: "2023-03-08T00:32:07.536Z",
     // @ts-ignore
-    buildVersion: "1.63.0",
+    buildVersion: "1.63.1",
 };
 
 const log$4 = logger('StreamStatusUpdater.ts');
@@ -8817,6 +8817,8 @@ function loadConcurrent(uid, channel) {
                 error: 'Failed to load FFz channel emotes for ' + channel,
             });
         }
+    }).catch((e) => {
+        log$1.error(e);
     });
     fetch(`https://api.frankerfacez.com/v1/set/global`)
         .then(response => response.json())
@@ -8841,6 +8843,8 @@ function loadConcurrent(uid, channel) {
                 error: 'Failed to load global FFz channel emotes',
             });
         }
+    }).catch((e) => {
+        log$1.error(e);
     });
     // NOTE: BTTV
     fetch(`https://api.betterttv.net/3/cached/users/twitch/${uid}`)
@@ -8866,6 +8870,8 @@ function loadConcurrent(uid, channel) {
                 error: 'Failed to load BetterTTV channel emotes for ' + channel,
             });
         }
+    }).catch((e) => {
+        log$1.error(e);
     });
     fetch(`https://api.betterttv.net/3/cached/emotes/global`)
         .then(response => response.json())
@@ -8886,6 +8892,8 @@ function loadConcurrent(uid, channel) {
                 error: 'Failed to load BetterTTV global emotes for ' + channel,
             });
         }
+    }).catch((e) => {
+        log$1.error(e);
     });
     // NOTE: 7TV
     fetch(`https://api.7tv.app/v2/users/${channel}`)
@@ -8922,6 +8930,8 @@ function loadConcurrent(uid, channel) {
                             error: 'Failed to load 7TV channel emotes for ' + channel,
                         });
                     }
+                }).catch((e) => {
+                    log$1.error(e);
                 });
                 fetch(`https://api.7tv.app/v2/emotes/global`)
                     .then(response => response.json())
@@ -8943,6 +8953,8 @@ function loadConcurrent(uid, channel) {
                             error: 'Failed to load 7TV global emotes for ' + channel,
                         });
                     }
+                }).catch((e) => {
+                    log$1.error(e);
                 });
             }
             else {
@@ -8960,6 +8972,8 @@ function loadConcurrent(uid, channel) {
                 error: 'Failed to load 7TV global emotes for ' + channel,
             });
         }
+    }).catch((e) => {
+        log$1.error(e);
     });
     // NOTE: Twitch Badges
     fetch(`https://badges.twitch.tv/v1/badges/global/display`)
@@ -8988,6 +9002,8 @@ function loadConcurrent(uid, channel) {
                 error: 'Failed to load global badges for ' + channel,
             });
         }
+    }).catch((e) => {
+        log$1.error(e);
     });
     fetch(`https://badges.twitch.tv/v1/badges/channels/${uid}/display`)
         .then(response => response.json())
@@ -9013,6 +9029,8 @@ function loadConcurrent(uid, channel) {
                 error: 'Failed to load channel badges for ' + channel,
             });
         }
+    }).catch((e) => {
+        log$1.error(e);
     });
 }
 function checkLoadedAll(channel, type, extra) {
