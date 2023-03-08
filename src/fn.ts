@@ -1,11 +1,10 @@
-import emojiDetect from '@zutatensuppe/emoji-detect'
 import xhr from './net/xhr'
 import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, getRandom, getRandomInt, daysUntil } from './common/fn'
 
 import {
   Command, RawCommand, TwitchChatContext,
   TwitchChatClient, FunctionCommand, Module, CommandTrigger,
-  Bot, ChatMessageContext, CommandEffectType, CommandMatch,
+  Bot, CommandEffectType, CommandMatch,
 } from './types'
 import { User } from './repo/Users'
 import TwitchHelixClient, { TwitchHelixUserSearchResponseDataEntry } from './services/TwitchHelixClient'
@@ -681,32 +680,6 @@ export const determineNewVolume = (
   return val
 }
 
-const extractEmojiEmotes = (context: ChatMessageContext) => {
-  return emojiDetect.detectStrings(context.msgOriginal).map(str => ({
-    url: `https://cdn.betterttv.net/assets/emoji/${str}.svg`,
-  }))
-}
-
-const extractTwitchEmotes = (context: ChatMessageContext) => {
-  if (!context.context.emotes) {
-    return []
-  }
-  const emotes: { url: string }[] = []
-  for (const emoteId in context.context.emotes) {
-    for (let i = 0; i < context.context.emotes[emoteId].length; i++) {
-      emotes.push({ url: `https://static-cdn.jtvnw.net/emoticons/v2/${emoteId}/default/dark/2.0` })
-    }
-  }
-  return emotes
-}
-
-export const extractEmotes = (context: ChatMessageContext) => {
-  return [
-    ...extractEmojiEmotes(context),
-    ...extractTwitchEmotes(context),
-  ]
-}
-
 export const getChannelPointsCustomRewards = async (
   bot: Bot,
   user: User,
@@ -749,7 +722,6 @@ export default {
   uniqId,
   getUserTypeInfo,
   applyEffects,
-  extractEmotes,
   logger,
   mimeToExt,
   decodeBase64Image,

@@ -1,4 +1,4 @@
-import fn, { extractEmotes, getChannelPointsCustomRewards } from '../../fn'
+import fn, { getChannelPointsCustomRewards } from '../../fn'
 import { logger, parseHumanDuration, SECOND } from '../../common/fn'
 import { commands as commonCommands, newCommandTrigger } from '../../common/commands'
 import { Socket } from '../../net/WebSocketServer'
@@ -431,7 +431,7 @@ class GeneralModule implements Module {
       t.lines++
     })
 
-    const emotes = extractEmotes(chatMessageContext)
+    const emotes = this.bot.getEmoteParser().extractEmotes(chatMessageContext)
     if (emotes) {
       const data: GeneralModuleEmotesEventData = {
         displayFn: this.data.settings.emotes.displayFn,
