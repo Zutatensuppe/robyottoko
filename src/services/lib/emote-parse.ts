@@ -65,6 +65,8 @@ function loadConcurrent(uid: string, channel: string) {
           error: 'Failed to load FFz channel emotes for ' + channel,
         })
       }
+    }).catch((e) => {
+      log.error(e)
     })
 
   fetch(`https://api.frankerfacez.com/v1/set/global`)
@@ -91,7 +93,8 @@ function loadConcurrent(uid: string, channel: string) {
           error: 'Failed to load global FFz channel emotes',
         })
       }
-
+    }).catch((e) => {
+      log.error(e)
     })
 
 
@@ -115,11 +118,13 @@ function loadConcurrent(uid: string, channel: string) {
           loadedAssets[channel].emotes = loadedAssets[channel].emotes.sort(compareLength)
         }
       } catch (error) {
-          log.error({
-            channel: channel,
-            error: 'Failed to load BetterTTV channel emotes for ' + channel,
-          })
+        log.error({
+          channel: channel,
+          error: 'Failed to load BetterTTV channel emotes for ' + channel,
+        })
       }
+    }).catch((e) => {
+      log.error(e)
     })
 
   fetch(`https://api.betterttv.net/3/cached/emotes/global`)
@@ -141,6 +146,8 @@ function loadConcurrent(uid: string, channel: string) {
           error: 'Failed to load BetterTTV global emotes for ' + channel,
         })
       }
+    }).catch((e) => {
+      log.error(e)
     })
 
   // NOTE: 7TV
@@ -166,20 +173,22 @@ function loadConcurrent(uid: string, channel: string) {
                     loadedAssets[channel].emotes = loadedAssets[channel].emotes.sort(compareLength)
                   }
                 } else {
-                    log.error({
-                      channel: channel,
-                      error: 'Failed to load 7TV channel emotes for ' + channel,
-                    })
+                  log.error({
+                    channel: channel,
+                    error: 'Failed to load 7TV channel emotes for ' + channel,
+                  })
 
 
                   checkLoadedAll(channel, '7tv', 'channel')
                 }
               } catch (error) {
-                  log.error({
-                    channel: channel,
-                    error: 'Failed to load 7TV channel emotes for ' + channel,
-                  })
+                log.error({
+                  channel: channel,
+                  error: 'Failed to load 7TV channel emotes for ' + channel,
+                })
               }
+            }).catch((e) => {
+              log.error(e)
             })
 
           fetch(`https://api.7tv.app/v2/emotes/global`)
@@ -197,11 +206,13 @@ function loadConcurrent(uid: string, channel: string) {
                   loadedAssets[channel].emotes = loadedAssets[channel].emotes.sort(compareLength)
                 }
               } catch (error) {
-                  log.error({
-                    channel: channel,
-                    error: 'Failed to load 7TV global emotes for ' + channel,
-                  })
+                log.error({
+                  channel: channel,
+                  error: 'Failed to load 7TV global emotes for ' + channel,
+                })
               }
+            }).catch((e) => {
+              log.error(e)
             })
         } else {
           log.error({
@@ -213,11 +224,13 @@ function loadConcurrent(uid: string, channel: string) {
           checkLoadedAll(channel, '7tv', 'global')
         }
       } catch (error) {
-          log.error({
-            channel: channel,
-            error: 'Failed to load 7TV global emotes for ' + channel,
-          })
+        log.error({
+          channel: channel,
+          error: 'Failed to load 7TV global emotes for ' + channel,
+        })
       }
+    }).catch((e) => {
+      log.error(e)
     })
 
   // NOTE: Twitch Badges
@@ -242,11 +255,13 @@ function loadConcurrent(uid: string, channel: string) {
           loadedAssets[channel].badgesLoaded[2] = true
         }
       } catch (error) {
-          log.error({
-            channel: channel,
-            error: 'Failed to load global badges for ' + channel,
-          })
+        log.error({
+          channel: channel,
+          error: 'Failed to load global badges for ' + channel,
+        })
       }
+    }).catch((e) => {
+      log.error(e)
     })
 
   fetch(`https://badges.twitch.tv/v1/badges/channels/${uid}/display`)
@@ -267,11 +282,13 @@ function loadConcurrent(uid: string, channel: string) {
           loadedAssets[channel].badgesLoaded[2] = true
         }
       } catch (error) {
-          log.error({
-            channel: channel,
-            error: 'Failed to load channel badges for ' + channel,
-          })
+        log.error({
+          channel: channel,
+          error: 'Failed to load channel badges for ' + channel,
+        })
       }
+    }).catch((e) => {
+      log.error(e)
     })
 }
 
@@ -311,7 +328,7 @@ function compareLength(a: { code: string }, b: { code: string }) {
   return 0
 }
 
-function compareEnd(a: { end: number } , b: { end: number }) {
+function compareEnd(a: { end: number }, b: { end: number }) {
   if (a.end < b.end) {
     return -1
   }
