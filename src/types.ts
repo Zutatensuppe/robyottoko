@@ -20,6 +20,7 @@ import { Youtube } from './services/Youtube'
 import { Canny } from './services/Canny'
 import Db from './DbPostgres'
 import { Discord } from './services/Discord'
+import { EmoteParser } from './services/EmoteParser'
 
 type int = number
 
@@ -597,6 +598,7 @@ export interface Bot {
   getTwitchTmiClientManager: () => TwitchTmiClientManager
   getCanny: () => Canny
   getDiscord: () => Discord
+  getEmoteParser: () => EmoteParser
 
   sayFn: (user: User, target: string | null) => (msg: string) => void
   getUserTwitchClientManager: (user: User) => TwitchClientManager

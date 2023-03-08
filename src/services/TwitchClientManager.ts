@@ -90,6 +90,8 @@ class TwitchClientManager {
 
     const identity = determineIdentity(user, cfg)
 
+    this.bot.getEmoteParser().loadAssetsForChannel(user.twitch_login, user.twitch_id)
+
     if (user.twitch_id && user.twitch_login && user.bot_enabled) {
       this.log.info('* twitch bot enabled')
 
