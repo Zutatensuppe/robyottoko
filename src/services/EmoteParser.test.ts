@@ -8,7 +8,6 @@ describe('services/EmoteParser', () => {
       _name: 'no emotes',
       ctx: {
         msgOriginal: 'lalahdlfadofho  sadf ',
-        msgNormalized: 'lalahdlfadofho  sadf ',
         context: {},
         target: '#robyottoko',
       },
@@ -18,7 +17,6 @@ describe('services/EmoteParser', () => {
       _name: 'unicode emotes 1',
       ctx: {
         msgOriginal: '👩‍⚕️',
-        msgNormalized: '👩‍⚕️',
         context: {},
         target: '#robyottoko',
       },
@@ -30,7 +28,6 @@ describe('services/EmoteParser', () => {
       _name: 'unicode emotes 2',
       ctx: {
         msgOriginal: ' 👨‍👩‍👧‍👦 ',
-        msgNormalized: ' 👨👩👧👦 ',
         context: {},
         target: '#robyottoko',
       },
@@ -42,7 +39,6 @@ describe('services/EmoteParser', () => {
       _name: 'unicode emotes 2 alternative',
       ctx: {
         msgOriginal: ' 👨👩👧👦 ',
-        msgNormalized: ' 👨👩👧👦 ',
         context: {},
         target: '#robyottoko',
       },
@@ -57,7 +53,6 @@ describe('services/EmoteParser', () => {
       _name: 'unicode emotes 3',
       ctx: {
         msgOriginal: '👨‍🦲',
-        msgNormalized: '👨🦲',
         context: {},
         target: '#robyottoko',
       },
@@ -69,7 +64,6 @@ describe('services/EmoteParser', () => {
       _name: 'unicode emotes 3 alternative',
       ctx: {
         msgOriginal: '👨🦲',
-        msgNormalized: '👨🦲',
         context: {},
         target: '#robyottoko',
       },
@@ -82,7 +76,6 @@ describe('services/EmoteParser', () => {
       _name: 'unicode emotes 4',
       ctx: {
         msgOriginal: ' 🙇‍♀️ ',
-        msgNormalized: ' 🙇♀️ ',
         context: {},
         target: '#robyottoko',
       },
@@ -94,7 +87,6 @@ describe('services/EmoteParser', () => {
       _name: 'unicode emotes 4 alternative',
       ctx: {
         msgOriginal: ' 🙇♀️ ',
-        msgNormalized: ' 🙇♀️ ',
         context: {},
         target: '#robyottoko',
       },
@@ -107,7 +99,6 @@ describe('services/EmoteParser', () => {
       _name: 'unicode emotes 5',
       ctx: {
         msgOriginal: '🍀🍀🐸',
-        msgNormalized: '🍀🍀🐸',
         context: {},
         target: '#robyottoko',
       },
@@ -121,7 +112,6 @@ describe('services/EmoteParser', () => {
       _name: 'pride flag',
       ctx: {
         msgOriginal: '🏳️‍🌈',
-        msgNormalized: '🏳️‍🌈',
         context: {},
         target: '#robyottoko',
       },
@@ -133,7 +123,6 @@ describe('services/EmoteParser', () => {
       _name: 'trans flag',
       ctx: {
         msgOriginal: '🏳️‍⚧️',
-        msgNormalized: '🏳️‍⚧️',
         context: {},
         target: '#robyottoko',
       },
@@ -145,7 +134,6 @@ describe('services/EmoteParser', () => {
       _name: 'ukraine flag',
       ctx: {
         msgOriginal: '🇺🇦',
-        msgNormalized: '🇺🇦',
         context: {},
         target: '#robyottoko',
       },
@@ -157,7 +145,6 @@ describe('services/EmoteParser', () => {
       _name: 'twitch emotes',
       ctx: {
         msgOriginal: 'blub bla bla',
-        msgNormalized: 'blub bla bla',
         context: {
           emotes: {
             emotesv2_6087b156a30f4741a1d96acdc39e1905: [ '0-9', '10-19' ],
@@ -172,7 +159,7 @@ describe('services/EmoteParser', () => {
     },
   ])('$_name', ({ _name, ctx, expected }) => {
     const emoteParser = new EmoteParser()
-    const actual = emoteParser.extractEmotes(ctx as ChatMessageContext)
+    const actual = emoteParser.extractEmotes(ctx.msgOriginal, ctx.context, ctx.target)
     expect(actual).toStrictEqual(expected)
   })
 })

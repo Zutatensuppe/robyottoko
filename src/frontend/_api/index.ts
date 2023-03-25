@@ -31,6 +31,7 @@ export default {
   importPlaylist: async (playlistJsonString: string) => postJsonStr('/api/sr/import', playlistJsonString),
   getGeneralGlobalEmotes: async () => get('/api/general/global-emotes'),
   getGeneralChannelEmotes: async (channelName: string) => get('/api/general/channel-emotes' + asQueryArgs({ channel_name: channelName })),
+  getExtractedEmotes: async (emotesInput: string, channel: string) => get('/api/general/extract-emotes' + asQueryArgs({ emotesInput, channel })),
   createWidgetUrl: async (data: { type: string, pub: boolean }) => postJson('/api/widget/create_url', data),
   setModuleEnabled: async (data: { key: string, enabled: boolean }) => postJson('/api/modules/_set_enabled', data),
   getWidgetData: async (widgetType: string, widgetToken: string) => get(`/api/widget/${widgetType}/${widgetToken}/`),

@@ -340,6 +340,31 @@ class GeneralModule implements Module {
           const emotes = await client?.getGlobalEmotes()
           res.send(emotes)
         },
+        '/api/general/extract-emotes': async (req: any, res: Response, _next: NextFunction) => {
+          let userId: string = ''
+          if (req.query.channel && req.query.channel !== this.user.twitch_login) {
+            userId = await this.bot.getUserTwitchClientManager(this.user).getHelixClient()?.getUserIdByNameCached(
+              req.query.channel || this.user.twitch_login,
+              this.bot.getCache(),
+            ) || ''
+          } else {
+            userId = this.user.twitch_id
+          }
+
+          if (userId) {
+            await this.bot.getEmoteParser().loadAssetsForChannel(
+              req.query.channel || this.user.twitch_login,
+              userId,
+            )
+          }
+
+          const emotes = this.bot.getEmoteParser().extractEmotes(
+            req.query.emotesInput,
+            null,
+            req.query.channel || this.user.twitch_login,
+          )
+          res.send(emotes)
+        },
       },
     }
   }
@@ -431,7 +456,11 @@ class GeneralModule implements Module {
       t.lines++
     })
 
-    const emotes = this.bot.getEmoteParser().extractEmotes(chatMessageContext)
+    const emotes = this.bot.getEmoteParser().extractEmotes(
+      chatMessageContext.msgOriginal,
+      chatMessageContext.context,
+      chatMessageContext.target,
+    )
     if (emotes) {
       const data: GeneralModuleEmotesEventData = {
         displayFn: this.data.settings.emotes.displayFn,
