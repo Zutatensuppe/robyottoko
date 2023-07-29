@@ -6,7 +6,7 @@ import {
   ChatMessageContext, PlaylistItem,
   FunctionCommand, Command,
   Bot, CommandFunction, Module, CommandExecutionContext,
-  MODULE_NAME, WIDGET_TYPE, TwitchChatContext,
+  MODULE_NAME, WIDGET_TYPE, TwitchEventContext,
 } from '../../types'
 import {
   default_commands,
@@ -101,7 +101,7 @@ const default_playlist = (list: any = null): PlaylistItem[] => {
 
 const noLimits = (): SongrequestModuleLimits => ({ maxLenMs: 0, maxQueued: 0 })
 const determineLimits = (
-  ctx: TwitchChatContext,
+  ctx: TwitchEventContext,
   settings: SongrequestModuleSettings,
 ): SongrequestModuleLimits => {
   if (isBroadcaster(ctx)) {

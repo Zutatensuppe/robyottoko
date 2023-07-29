@@ -3,14 +3,14 @@
 import { logger, MINUTE } from '../../common/fn'
 import { isBroadcaster, isMod, isSubscriber } from '../../common/permissions'
 import fn from '../../fn'
-import { Bot, CommandTrigger, CommandTriggerType, Module, RawCommand, TwitchChatContext } from '../../types'
+import { Bot, CommandTrigger, CommandTriggerType, Module, RawCommand, TwitchEventContext } from '../../types'
 import { CommandExecutor } from '../CommandExecutor'
 import TwitchHelixClient from '../TwitchHelixClient'
 import { User } from '../../repo/Users'
 
 const log = logger('ChatEventHandler.ts')
 
-const rolesLettersFromTwitchChatContext = (context: TwitchChatContext): string[] => {
+const rolesLettersFromTwitchChatContext = (context: TwitchEventContext): string[] => {
   const roles: string[] = []
   if (isMod(context)) {
     roles.push('M')
@@ -25,7 +25,7 @@ const rolesLettersFromTwitchChatContext = (context: TwitchChatContext): string[]
 }
 
 const determineStreamStartDate = async (
-  context: TwitchChatContext,
+  context: TwitchEventContext,
   helixClient: TwitchHelixClient,
 ): Promise<Date> => {
   const broadcasterId = context['room-id'] || ''
@@ -47,7 +47,7 @@ const determineStreamStartDate = async (
 const determineIsFirstChatStream = async (
   bot: Bot,
   user: User,
-  context: TwitchChatContext,
+  context: TwitchEventContext,
 ): Promise<boolean> => {
   const helixClient = bot.getUserTwitchClientManager(user).getHelixClient()
   if (!helixClient) {
@@ -62,7 +62,7 @@ export class ChatEventHandler {
     bot: Bot,
     user: User,
     target: string,
-    context: TwitchChatContext,
+    context: TwitchEventContext,
     msgOriginal: string,
     msgNormalized: string,
   ): Promise<void> {

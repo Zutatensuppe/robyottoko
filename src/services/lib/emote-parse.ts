@@ -1,5 +1,6 @@
 import { ChatUserstate } from 'tmi.js'
 import { logger, MINUTE } from './../../common/fn'
+import TwitchHelixClient from '../TwitchHelixClient'
 
 const loadedAssets: Record<string, any> = {}
 
@@ -33,8 +34,6 @@ async function loadConcurrent(uid: string, channel: string) {
     channel,
     uid,
     emotes: [] as any[],
-    badges: {} as Record<string, any>,
-    badgesLoaded: [false, false, false],
     allLoaded: false,
     loaded: {
       'bttv': {
@@ -270,62 +269,6 @@ async function loadConcurrent(uid: string, channel: string) {
       log.error(e)
     }))
 
-  // NOTE: Twitch Badges
-  promises.push(fetch(`https://badges.twitch.tv/v1/badges/global/display`)
-    .then(response => response.json())
-    .then(body => {
-      try {
-        Object.keys(body.badge_sets).forEach((ele, _ind) => {
-          Object.keys(body.badge_sets[ele].versions).forEach((el, _i) => {
-            if (loadedChannelAssets.badges[ele + '/' + el] == undefined) {
-              loadedChannelAssets.badges[ele + '/' + el] = {
-                name: ele + '/' + el,
-                info: body.badge_sets[ele].versions[el].title,
-                img: body.badge_sets[ele].versions[el].image_url_4x,
-              }
-            }
-          })
-        })
-        loadedChannelAssets.badgesLoaded[0] = true
-        if (loadedChannelAssets.badgesLoaded.indexOf(false) == 2) {
-          loadedChannelAssets.badgesLoaded[2] = true
-        }
-      } catch (error) {
-        log.error({
-          channel: channel,
-          error: 'Failed to load global badges for ' + channel,
-        })
-      }
-    }).catch((e) => {
-      log.error(e)
-    }))
-
-  promises.push(fetch(`https://badges.twitch.tv/v1/badges/channels/${uid}/display`)
-    .then(response => response.json())
-    .then(body => {
-      try {
-        Object.keys(body.badge_sets).forEach((ele, _ind) => {
-          Object.keys(body.badge_sets[ele].versions).forEach((el, _i) => {
-            loadedChannelAssets.badges[ele + '/' + el] = {
-              name: ele + '/' + el,
-              info: body.badge_sets[ele].versions[el].title,
-              img: body.badge_sets[ele].versions[el].image_url_4x,
-            }
-          })
-        })
-        loadedChannelAssets.badgesLoaded[1] = true
-        if (loadedChannelAssets.badgesLoaded.indexOf(false) == 2) {
-          loadedChannelAssets.badgesLoaded[2] = true
-        }
-      } catch (error) {
-        log.error({
-          channel: channel,
-          error: 'Failed to load channel badges for ' + channel,
-        })
-      }
-    }).catch((e) => {
-      log.error(e)
-    }))
   await Promise.allSettled(promises)
 
   return loadedChannelAssets
@@ -429,7 +372,10 @@ function replaceBTTVAll(msg: string, channel: string) {
   return emotes
 }
 
-export const loadAssetsForChannel = async (channel: string, channelId: string): Promise<void> => {
+export const loadAssetsForChannel = async (
+  channel: string,
+  channelId: string,
+): Promise<void> => {
   await loadAssets(channel.replace('#', '').trim().toLowerCase(), channelId)
 }
 

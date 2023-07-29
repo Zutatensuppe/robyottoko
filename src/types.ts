@@ -220,12 +220,24 @@ export interface GlobalVariable {
 }
 
 export type TwitchChatClient = Client
-export type TwitchChatContext = ChatUserstate
+export interface TwitchEventContext extends ChatUserstate {
+  extra?: {
+    bits?: {
+      amount: number
+    }
+    giftsubs?: {
+      amount: number
+    }
+    raiders?: {
+      amount: number
+    }
+  }
+}
 
 export interface CommandExecutionContext {
   rawCmd: RawCommand | null
   target: string | null
-  context: TwitchChatContext | null
+  context: TwitchEventContext | null
   date: Date
 }
 
@@ -239,6 +251,7 @@ export enum CommandTriggerType {
   REWARD_REDEMPTION = 'reward_redemption',
   FOLLOW = 'follow',
   SUB = 'sub',
+  GIFTSUB = 'giftsub',
   BITS = 'bits',
   RAID = 'raid',
   TIMER = 'timer',
@@ -511,7 +524,7 @@ export interface FunctionCommand {
 export interface ChatMessageContext {
   client: TwitchChatClient | null
   target: string
-  context: TwitchChatContext
+  context: TwitchEventContext
   msgOriginal: string
   msgNormalized: string
 }

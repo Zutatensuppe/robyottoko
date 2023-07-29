@@ -8,29 +8,31 @@ import { User } from '../../repo/Users'
 import { EventSubEventHandler } from './EventSubEventHandler'
 import { getUserTypeInfo } from '../../fn'
 
-const log = logger('SubscribeEventHandler.ts')
+const log = logger('SubscriptionGiftEventHandler.ts')
 
-interface SubscribeEvent {
+interface SubscriptionGiftEvent {
   user_id: string
   user_login: string
   user_name: string
   broadcaster_user_id: string
   broadcaster_user_login: string
   broadcaster_user_name: string
+  total: number
   tier: string
-  is_gift: boolean
+  cumulative_total: null|number
+  is_anonymous: boolean
 }
 
-export class SubscribeEventHandler extends EventSubEventHandler<SubscribeEvent> {
+export class SubscriptionGiftEventHandler extends EventSubEventHandler<SubscriptionGiftEvent> {
   // TODO: use better type info
   async handle(
     bot: Bot,
     user: User,
-    data: { subscription: any, event: SubscribeEvent },
+    data: { subscription: any, event: SubscriptionGiftEvent },
   ): Promise<void> {
     log.info('handle')
     const rawCmd: RawCommand = {
-      name: 'channel.subscribe',
+      name: 'channel.subscription.gift',
       args: [],
     }
 
@@ -44,6 +46,11 @@ export class SubscribeEventHandler extends EventSubEventHandler<SubscribeEvent> 
       mod,
       subscriber,
       badges: { vip: vip ? '1' : undefined }, // not sure what to put in there
+      extra: {
+        giftsubs: {
+          amount: data.event.total,
+        },
+      },
     }
     const trigger = newSubscribeTrigger()
     const exec = new CommandExecutor()

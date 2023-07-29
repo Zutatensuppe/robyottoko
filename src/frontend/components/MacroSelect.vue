@@ -55,6 +55,9 @@ const macros: ComponentDataMacro[] = [
   { value: '$bot.website', title: 'Bot website' },
   { value: '$bot.github', title: 'Bot github link' },
   { value: '$bot.features', title: 'Bot feature description' },
+  { value: '$bits.amount', title: 'Amount of bits donated' },
+  { value: '$raiders.amount', title: 'Amount of raiders' },
+  { value: '$giftsubs.amount', title: 'Amount of gifted subs' },
   {
     value: '$rand(1,100)',
     title: 'Random number between (inclusive) 1 and 100',

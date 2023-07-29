@@ -27,6 +27,9 @@
   <div v-else-if="trigger.type === 'sub'">
     <span class="is-small">Sub</span>
   </div>
+  <div v-else-if="trigger.type === 'giftsub'">
+    <span class="is-small">Giftsub</span>
+  </div>
   <div v-else-if="trigger.type === 'follow'">
     <span class="is-small">Follow</span>
   </div>

@@ -1,5 +1,5 @@
 import { User } from '../../repo/Users'
-import { Bot, ChatMessageContext, CommandExecutionContext, Module, MODULE_NAME, TwitchChatContext } from '../../types'
+import { Bot, ChatMessageContext, CommandExecutionContext, Module, MODULE_NAME, TwitchEventContext } from '../../types'
 import { newCommandTrigger } from '../../common/commands'
 import { isBroadcaster, isMod } from '../../common/permissions'
 import { logger } from '../../common/fn'
@@ -74,7 +74,7 @@ class VoteModule implements Module {
     type: string,
     thing: string,
     target: string,
-    context: TwitchChatContext,
+    context: TwitchEventContext,
   ): Promise<void> {
     if (!context['display-name']) {
       log.error('context has no display name set')

@@ -1,6 +1,6 @@
 import { logger, humanDuration, parseHumanDuration, SECOND } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
-import { Bot, ChatMessageContext, CommandExecutionContext, FunctionCommand, Module, MODULE_NAME, RawCommand, TwitchChatContext, WIDGET_TYPE } from '../../types'
+import { Bot, ChatMessageContext, CommandExecutionContext, FunctionCommand, Module, MODULE_NAME, RawCommand, TwitchEventContext, WIDGET_TYPE } from '../../types'
 import { User } from '../../repo/Users'
 import { default_settings, default_state, PomoEffect, PomoModuleData, PomoModuleWsData, PomoModuleWsEffectData, PomoModuleWsSaveData } from './PomoModuleCommon'
 import { doReplacements } from '../../fn'
@@ -57,7 +57,7 @@ class PomoModule implements Module {
   async replaceText(
     text: string,
     command: RawCommand | null,
-    context: TwitchChatContext | null,
+    context: TwitchEventContext | null,
   ): Promise<string> {
     text = await doReplacements(text, command, context, null, this.bot, this.user)
     text = text.replace(/\$pomo\.duration/g, humanDuration(this.data.state.durationMs, [' ms', ' s', ' min', ' hours', ' days']))
@@ -69,7 +69,7 @@ class PomoModule implements Module {
     effect: PomoEffect,
     command: RawCommand | null,
     target: string | null,
-    context: TwitchChatContext | null,
+    context: TwitchEventContext | null,
   ) {
     if (effect.chatMessage) {
       const say = this.bot.sayFn(this.user, target)
@@ -80,7 +80,7 @@ class PomoModule implements Module {
 
   tick(
     command: RawCommand | null,
-    context: TwitchChatContext | null,
+    context: TwitchEventContext | null,
   ) {
     if (!this.data.state.running) {
       return

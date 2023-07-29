@@ -14,6 +14,7 @@ import { StreamOnlineEventHandler } from '../../services/twitch/StreamOnlineEven
 import { StreamOfflineEventHandler } from '../../services/twitch/StreamOfflineEventHandler'
 import { RaidEventHandler } from '../../services/twitch/RaidEventHandler'
 import { EventSubEventHandler } from '../../services/twitch/EventSubEventHandler'
+import { SubscriptionGiftEventHandler } from '../../services/twitch/SubscriptionGiftEventHandler'
 
 const log = logger('twitch/index.ts')
 
@@ -22,6 +23,7 @@ export const createRouter = (
 ): Router => {
   const handlers: Record<SubscriptionType, EventSubEventHandler<any>> = {
     [SubscriptionType.ChannelSubscribe]: new SubscribeEventHandler(),
+    [SubscriptionType.ChannelSubscriptionGift]: new SubscriptionGiftEventHandler(),
     [SubscriptionType.ChannelFollow]: new FollowEventHandler(),
     [SubscriptionType.ChannelCheer]: new CheerEventHandler(),
     [SubscriptionType.ChannelRaid]: new RaidEventHandler(),
