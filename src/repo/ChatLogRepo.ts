@@ -1,7 +1,7 @@
 'use strict'
 
 import { WhereRaw } from '../DbPostgres'
-import { TwitchChatContext } from '../types'
+import { TwitchEventContext } from '../types'
 import { Repo } from './Repo'
 
 const TABLE = 'robyottoko.chat_log'
@@ -22,7 +22,7 @@ interface RowOut extends Row {
 }
 
 export class ChatLogRepo extends Repo {
-  async insert(context: TwitchChatContext, msg: string) {
+  async insert(context: TwitchEventContext, msg: string) {
     await this.db.insert<RowIn>(TABLE, {
       created_at: new Date(),
       broadcaster_user_id: context['room-id'] || '',
@@ -41,14 +41,14 @@ export class ChatLogRepo extends Repo {
     return parseInt(`${row.c}`, 10)
   }
 
-  async isFirstChatAllTime(context: TwitchChatContext): Promise<boolean> {
+  async isFirstChatAllTime(context: TwitchEventContext): Promise<boolean> {
     return await this.count({
       broadcaster_user_id: context['room-id'],
       user_name: context.username,
     }) === 1
   }
 
-  async isFirstChatSince(context: TwitchChatContext, date: Date): Promise<boolean> {
+  async isFirstChatSince(context: TwitchEventContext, date: Date): Promise<boolean> {
     return await this.count({
       broadcaster_user_id: context['room-id'],
       user_name: context.username,

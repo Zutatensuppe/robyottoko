@@ -1,6 +1,6 @@
 import { doReplacements } from '../fn'
 import TwitchHelixClient from '../services/TwitchHelixClient'
-import { FunctionCommand, Module, RawCommand, TwitchChatContext } from '../types'
+import { FunctionCommand, Module, RawCommand, TwitchEventContext } from '../types'
 
 export abstract class Effect<EffectData> {
   #sayFn: (str: string) => void
@@ -10,7 +10,7 @@ export abstract class Effect<EffectData> {
     protected readonly originalCmd: FunctionCommand,
     protected readonly contextModule: Module,
     protected readonly rawCmd: RawCommand | null,
-    protected readonly context: TwitchChatContext | null,
+    protected readonly context: TwitchEventContext | null,
   ) {
     this.#sayFn = contextModule.bot.sayFn(
       contextModule.user,

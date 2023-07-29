@@ -1,12 +1,12 @@
-import { Command, TwitchChatContext } from '../types'
+import { Command, TwitchEventContext } from '../types'
 import { CommandRestrictEnum, mayExecute, userTypeOk } from './permissions'
 
 describe(('mayExecute'), () => {
 
-  const regularUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'bla' } as TwitchChatContext
-  const modUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'bla', mod: true } as TwitchChatContext
-  const subUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'bla', subscriber: true } as TwitchChatContext
-  const broadcasterUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'user1', subscriber: true } as TwitchChatContext
+  const regularUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'bla' } as TwitchEventContext
+  const modUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'bla', mod: true } as TwitchEventContext
+  const subUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'bla', subscriber: true } as TwitchEventContext
+  const broadcasterUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'user1', subscriber: true } as TwitchEventContext
 
   const nonRestrictedCommand = { restrict: { active: false } } as unknown as Command
   const modSubBroadcasterRestrictedCommand = { restrict: { active: true, to: [CommandRestrictEnum.MOD, CommandRestrictEnum.SUB, CommandRestrictEnum.BROADCASTER] } } as unknown as Command
@@ -90,11 +90,11 @@ describe(('mayExecute'), () => {
 
 
 describe(('userTypeOk'), () => {
-  const regularUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'bla' } as TwitchChatContext
-  const modUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'bla', mod: true } as TwitchChatContext
-  const subUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'bla', subscriber: true } as TwitchChatContext
+  const regularUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'bla' } as TwitchEventContext
+  const modUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'bla', mod: true } as TwitchEventContext
+  const subUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'bla', subscriber: true } as TwitchEventContext
   // broadcasters are always subscribers
-  const broadcasterUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'user1', subscriber: true } as TwitchChatContext
+  const broadcasterUserCtx = { username: 'bla', 'room-id': 'user1', 'user-id': 'user1', subscriber: true } as TwitchEventContext
 
   const noRestrict = { restrict: { active: false, to: [] } } as unknown as Command
   const nobodyRestrict = { restrict: { active: true, to: [] } } as unknown as Command

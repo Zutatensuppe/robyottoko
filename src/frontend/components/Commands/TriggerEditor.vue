@@ -171,6 +171,21 @@
       </div>
     </div>
     <div
+      v-else-if="value.type === 'giftsub'"
+      class="field has-addons"
+    >
+      Giftsub
+      <div class="control">
+        <button
+          class="button is-small"
+          :disabled="!removable"
+          @click="emitRemove"
+        >
+          <i class="fa fa-remove" />
+        </button>
+      </div>
+    </div>
+    <div
       v-else-if="value.type === 'bits'"
       class="field has-addons"
     >

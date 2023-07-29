@@ -2,7 +2,7 @@ import xhr from './net/xhr'
 import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, getRandom, getRandomInt, daysUntil } from './common/fn'
 
 import {
-  Command, RawCommand, TwitchChatContext,
+  Command, RawCommand, TwitchEventContext,
   TwitchChatClient, FunctionCommand, Module, CommandTrigger,
   Bot, CommandEffectType, CommandMatch,
 } from './types'
@@ -147,7 +147,7 @@ const applyEffects = async (
   originalCmd: FunctionCommand,
   contextModule: Module,
   rawCmd: RawCommand | null,
-  context: TwitchChatContext | null,
+  context: TwitchEventContext | null,
 ) => {
   if (!originalCmd.effects) {
     return
@@ -211,7 +211,7 @@ const getTwitchUser = async (
 export const doReplacements = async (
   text: string,
   rawCmd: RawCommand | null,
-  context: TwitchChatContext | null,
+  context: TwitchEventContext | null,
   originalCmd: Command | FunctionCommand | null,
   bot: Bot | null,
   user: User | null,
@@ -310,6 +310,24 @@ export const doReplacements = async (
           return 'this versatile twitch bot has features like media commands, timers, translation, widget for user-submitted drawings, captions (speech-to-text), png-tuber and song requests'
         }
         return ''
+      },
+    },
+    {
+      regex: /\$bits\.amount/g,
+      replacer: async (_m0: string): Promise<string> => {
+        return `${context?.extra?.bits?.amount || '<unknown>'}`
+      },
+    },
+    {
+      regex: /\$raiders\.amount/g,
+      replacer: async (_m0: string): Promise<string> => {
+        return `${context?.extra?.raiders?.amount || '<unknown>'}`
+      },
+    },
+    {
+      regex: /\$giftsubs\.amount/g,
+      replacer: async (_m0: string): Promise<string> => {
+        return `${context?.extra?.giftsubs?.amount || '<unknown>'}`
       },
     },
     {

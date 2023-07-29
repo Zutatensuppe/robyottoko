@@ -4,7 +4,7 @@ import { getUniqueCommandsByTriggers } from '../common/commands'
 import { humanDuration, logger, parseHumanDuration } from '../common/fn'
 import { mayExecute } from '../common/permissions'
 import fn, { doReplacements } from '../fn'
-import { Bot, CommandExecutionContext, CommandTrigger, FunctionCommand, Module, RawCommand, TwitchChatContext } from '../types'
+import { Bot, CommandExecutionContext, CommandTrigger, FunctionCommand, Module, RawCommand, TwitchEventContext } from '../types'
 import { User } from '../repo/Users'
 import { CommandExecutionRepo, Row } from '../repo/CommandExecutionRepo'
 
@@ -16,7 +16,7 @@ export class CommandExecutor {
     user: User,
     rawCmd: RawCommand | null,
     target: string,
-    context: TwitchChatContext,
+    context: TwitchEventContext,
     triggers: CommandTrigger[],
     date: Date,
     contextModule?: Module,

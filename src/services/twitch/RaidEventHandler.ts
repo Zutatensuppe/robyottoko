@@ -2,7 +2,7 @@
 
 import { newRaidTrigger } from '../../common/commands'
 import { logger } from '../../common/fn'
-import { Bot, RawCommand, TwitchChatContext } from '../../types'
+import { Bot, RawCommand, TwitchEventContext } from '../../types'
 import { CommandExecutor } from '../CommandExecutor'
 import { User } from '../../repo/Users'
 import { EventSubEventHandler } from './EventSubEventHandler'
@@ -36,7 +36,7 @@ export class RaidEventHandler extends EventSubEventHandler<RaidEvent> {
 
     const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.from_broadcaster_user_id)
     const target = data.event.to_broadcaster_user_name
-    const context: TwitchChatContext = {
+    const context: TwitchEventContext = {
       'room-id': data.event.to_broadcaster_user_id,
       'user-id': data.event.from_broadcaster_user_id,
       'display-name': data.event.from_broadcaster_user_name,
@@ -44,6 +44,11 @@ export class RaidEventHandler extends EventSubEventHandler<RaidEvent> {
       mod,
       subscriber,
       badges: { vip: vip ? '1' : undefined }, // not sure what to put in there
+      extra: {
+        raiders: {
+          amount: data.event.viewers,
+        },
+      },
     }
     const trigger = newRaidTrigger()
     const exec = new CommandExecutor()

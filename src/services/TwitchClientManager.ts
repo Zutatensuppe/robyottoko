@@ -1,7 +1,7 @@
 import TwitchHelixClient from './TwitchHelixClient'
 import { logger, Logger } from '../common/fn'
 import { User } from '../repo/Users'
-import { Bot, EventSubTransport, TwitchBotIdentity, TwitchChatClient, TwitchChatContext, TwitchConfig } from '../types'
+import { Bot, EventSubTransport, TwitchBotIdentity, TwitchChatClient, TwitchEventContext, TwitchConfig } from '../types'
 import { ALL_SUBSCRIPTIONS_TYPES, SubscriptionType } from './twitch/EventSub'
 import { ChatEventHandler } from './twitch/ChatEventHandler'
 import { Timer } from '../Timer'
@@ -117,7 +117,7 @@ class TwitchClientManager {
       if (this.chatClient) {
         this.chatClient.on('message', async (
           target: string,
-          context: TwitchChatContext,
+          context: TwitchEventContext,
           msg: string,
           self: boolean,
         ) => {
