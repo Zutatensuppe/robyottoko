@@ -32,6 +32,7 @@ import { Indivious } from './services/youtube/Indivious'
 import { Canny } from './services/Canny'
 import { Discord } from './services/Discord'
 import { EmoteParser } from './services/EmoteParser'
+import { TimeApi } from './services/TimeApi'
 
 setLogLevel(config.log.level)
 const log = logger('bot.ts')
@@ -57,6 +58,7 @@ const createBot = async (): Promise<Bot> => {
   const discord = new Discord(config.discord)
   const auth = new Auth(repos, canny)
   const widgets = new Widgets(repos)
+  const timeApi = new TimeApi()
   const eventHub = mitt()
   const moduleManager = new ModuleManager()
   const webSocketServer = new WebSocketServer()
@@ -87,6 +89,7 @@ const createBot = async (): Promise<Bot> => {
     getWebSocketServer() { return webSocketServer }
     getYoutube() { return youtube }
     getWidgets() { return widgets }
+    getTimeApi() { return timeApi }
     getEventHub() { return eventHub }
     getStreamStatusUpdater(): StreamStatusUpdater {
       if (!this.streamStatusUpdater) {

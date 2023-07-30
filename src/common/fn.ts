@@ -264,6 +264,7 @@ const doDummyReplacements = (text: string, str: string) => {
     /\$daysuntil\("([^"]+)"\)/g,
     /\$daysuntil\("([^"]+)",\s*?"([^"]*)"\s*,\s*?"([^"]*)"\s*,\s*?"([^"]*)"\s*\)/g,
     /\$var\(([^)]+)\)/g,
+    /\$time\.([a-z]+(\/[a-z]+)?)/ig,
     /\$bot\.(message|version|date|website|github|features)/g,
     /\$bits\.amount/g,
     /\$raiders\.amount/g,

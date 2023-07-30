@@ -331,6 +331,12 @@ export const doReplacements = async (
       },
     },
     {
+      regex: /\$time\.([a-z]+(\/[a-z]+)?)/ig,
+      replacer: async (_m0: string, m1: string): Promise<string> => {
+        return await bot?.getTimeApi().getTimeAtTimezone(m1) || ''
+      },
+    },
+    {
       regex: /\$user(?:\(([^)]+)\)|())\.(name|username|twitch_url|profile_image_url|recent_clip_url|last_stream_category)/g,
       replacer: async (_m0: string, m1: string, m2: string, m3): Promise<string> => {
         if (!context) {

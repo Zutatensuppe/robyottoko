@@ -21,6 +21,7 @@ import { Canny } from './services/Canny'
 import Db from './DbPostgres'
 import { Discord } from './services/Discord'
 import { EmoteParser } from './services/EmoteParser'
+import { TimeApi } from './services/TimeApi'
 
 type int = number
 
@@ -604,6 +605,7 @@ export interface Bot {
   getWebSocketServer: () => WebSocketServer
   getYoutube: () => Youtube
   getWidgets: () => Widgets
+  getTimeApi: () => TimeApi
   getEventHub: () => Emitter<Record<EventType, unknown>>
   getRepos: () => Repos
   getStreamStatusUpdater: () => StreamStatusUpdater
