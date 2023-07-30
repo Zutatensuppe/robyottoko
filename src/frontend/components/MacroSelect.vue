@@ -58,6 +58,8 @@ const macros: ComponentDataMacro[] = [
   { value: '$bits.amount', title: 'Amount of bits donated' },
   { value: '$raiders.amount', title: 'Amount of raiders' },
   { value: '$giftsubs.amount', title: 'Amount of gifted subs' },
+  { value: '$time.Europe/Berlin', title: 'Current time in germany' },
+  { value: '$time.Asia/Tokyo', title: 'Current time in japan' },
   {
     value: '$rand(1,100)',
     title: 'Random number between (inclusive) 1 and 100',
