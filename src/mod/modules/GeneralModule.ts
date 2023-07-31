@@ -342,8 +342,9 @@ class GeneralModule implements Module {
         },
         '/api/general/extract-emotes': async (req: any, res: Response, _next: NextFunction) => {
           let userId: string = ''
+          const client = this.bot.getUserTwitchClientManager(this.user).getHelixClient()
           if (req.query.channel && req.query.channel !== this.user.twitch_login) {
-            userId = await this.bot.getUserTwitchClientManager(this.user).getHelixClient()?.getUserIdByNameCached(
+            userId = await client?.getUserIdByNameCached(
               req.query.channel || this.user.twitch_login,
               this.bot.getCache(),
             ) || ''
@@ -351,10 +352,11 @@ class GeneralModule implements Module {
             userId = this.user.twitch_id
           }
 
-          if (userId) {
+          if (userId && client) {
             await this.bot.getEmoteParser().loadAssetsForChannel(
               req.query.channel || this.user.twitch_login,
               userId,
+              client,
             )
           }
 
