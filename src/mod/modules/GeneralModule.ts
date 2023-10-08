@@ -1,4 +1,4 @@
-import fn, { getChannelPointsCustomRewards } from '../../fn'
+import { getChannelPointsCustomRewards } from '../../fn'
 import { logger, parseHumanDuration, SECOND } from '../../common/fn'
 import { commands as commonCommands, newCommandTrigger } from '../../common/commands'
 import { Socket } from '../../net/WebSocketServer'
@@ -122,7 +122,7 @@ class GeneralModule implements Module {
           const rawCmd = null
           const target = null
           const context = null
-          await fn.applyEffects(cmdDef, this, rawCmd, context)
+          await this.bot.getEffectsApplier().applyEffects(cmdDef, this, rawCmd, context)
           await cmdDef.fn({ rawCmd, target, context, date })
           t.lines = 0
           t.next = now + t.minInterval

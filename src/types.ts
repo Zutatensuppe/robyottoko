@@ -22,6 +22,7 @@ import Db from './DbPostgres'
 import { Discord } from './services/Discord'
 import { EmoteParser } from './services/EmoteParser'
 import { TimeApi } from './services/TimeApi'
+import { EffectApplier } from './effect/EffectApplier'
 
 type int = number
 
@@ -629,6 +630,7 @@ export interface Bot {
   getTimeApi: () => TimeApi
   getEventHub: () => Emitter<Record<EventType, unknown>>
   getRepos: () => Repos
+  getEffectsApplier: () => EffectApplier
   getStreamStatusUpdater: () => StreamStatusUpdater
   getFrontendStatusUpdater: () => FrontendStatusUpdater
   getTwitchTmiClientManager: () => TwitchTmiClientManager

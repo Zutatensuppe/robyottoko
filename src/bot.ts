@@ -33,6 +33,7 @@ import { Canny } from './services/Canny'
 import { Discord } from './services/Discord'
 import { EmoteParser } from './services/EmoteParser'
 import { TimeApi } from './services/TimeApi'
+import { EffectApplier } from './effect/EffectApplier'
 
 setLogLevel(config.log.level)
 const log = logger('bot.ts')
@@ -64,6 +65,7 @@ const createBot = async (): Promise<Bot> => {
   const webSocketServer = new WebSocketServer()
   const webServer = new WebServer()
   const twitchTmiClientManager = new TwitchTmiClientManager()
+  const effectsApplier = new EffectApplier()
   const youtube = new Youtube(
     new YoutubeApi(config.youtube),
     new Indivious(),
@@ -91,6 +93,7 @@ const createBot = async (): Promise<Bot> => {
     getWidgets() { return widgets }
     getTimeApi() { return timeApi }
     getEventHub() { return eventHub }
+    getEffectsApplier() { return effectsApplier }
     getStreamStatusUpdater(): StreamStatusUpdater {
       if (!this.streamStatusUpdater) {
         this.streamStatusUpdater = new StreamStatusUpdater(this)

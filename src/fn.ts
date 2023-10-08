@@ -3,12 +3,11 @@ import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, getRandom, getRandomInt
 
 import {
   Command, RawCommand, TwitchEventContext,
-  TwitchChatClient, FunctionCommand, Module, CommandTrigger,
+  TwitchChatClient, FunctionCommand, CommandTrigger,
   Bot, CommandMatch,
 } from './types'
 import { User } from './repo/Users'
 import TwitchHelixClient, { TwitchHelixUserSearchResponseDataEntry } from './services/TwitchHelixClient'
-import { EffectsClassMap } from './effect/EffectsClassMap'
 
 const log = logger('fn.ts')
 
@@ -113,33 +112,6 @@ export const parseCommandFromCmdAndMessage = (
     return { name: command.value, args: [] }
   }
   return null
-}
-
-const applyEffects = async (
-  originalCmd: FunctionCommand,
-  contextModule: Module,
-  rawCmd: RawCommand | null,
-  context: TwitchEventContext | null,
-) => {
-  if (!originalCmd.effects) {
-    return
-  }
-  for (const effect of originalCmd.effects) {
-    if (!EffectsClassMap[effect.type]) {
-      // unknown effect...
-      log.warn({ type: effect.type }, 'unknown effect type')
-      continue
-    }
-    const e = new (EffectsClassMap[effect.type])(
-      JSON.parse(JSON.stringify(effect)),
-      originalCmd,
-      contextModule,
-      rawCmd,
-      context,
-    )
-    await e.apply()
-  }
-  contextModule.saveCommands()
 }
 
 async function replaceAsync(
@@ -717,7 +689,6 @@ export const uniqId = (): string => {
 export default {
   uniqId,
   getUserTypeInfo,
-  applyEffects,
   logger,
   mimeToExt,
   decodeBase64Image,
