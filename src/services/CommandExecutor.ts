@@ -3,7 +3,7 @@
 import { getUniqueCommandsByTriggers } from '../common/commands'
 import { humanDuration, logger, parseHumanDuration } from '../common/fn'
 import { mayExecute } from '../common/permissions'
-import fn, { doReplacements } from '../fn'
+import { doReplacements } from '../fn'
 import { Bot, CommandExecutionContext, CommandTrigger, FunctionCommand, Module, RawCommand, TwitchEventContext } from '../types'
 import { User } from '../repo/Users'
 import { CommandExecutionRepo, Row } from '../repo/CommandExecutionRepo'
@@ -122,7 +122,7 @@ export class CommandExecutor {
       }, 'Executing command')
       // eslint-disable-next-line no-async-promise-executor
       const p = new Promise(async (resolve) => {
-        await fn.applyEffects(cmdDef, contextModule, ctx.rawCmd, ctx.context)
+        await bot.getEffectsApplier().applyEffects(cmdDef, contextModule, ctx.rawCmd, ctx.context)
         const r = await cmdDef.fn(ctx)
         if (r) {
           log.info({

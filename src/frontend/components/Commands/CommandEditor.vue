@@ -77,7 +77,8 @@
                   :item-variables="item.variables"
                   :global-variables="globalVariables"
                   :base-volume="baseVolume"
-                  :widget-url="widgetUrl"
+                  :media-widget-url="mediaWidgetUrl"
+                  :roulette-widget-url="rouletteWidgetUrl"
                 />
               </td>
             </tr>
@@ -306,7 +307,8 @@ const props = defineProps<{
   globalVariables: GlobalVariable[],
   channelPointsCustomRewards: Record<string, string[]>,
   baseVolume: any, // number | undefined ???
-  widgetUrl: string,
+  mediaWidgetUrl: string,
+  rouletteWidgetUrl: string,
 }>()
 
 const emit = defineEmits<{

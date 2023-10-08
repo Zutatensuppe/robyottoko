@@ -76,6 +76,7 @@ export interface GeneralModuleWsEventData {
   channelPointsCustomRewards: Record<string, string[]>
   mediaWidgetUrl: string
   emoteWallWidgetUrl: string
+  rouletteWidgetUrl: string
 }
 
 export interface GeneralSaveEventData {

@@ -34,6 +34,13 @@
               target="_blank"
             >Open Emote Wall widget</a>
           </li>
+          <li>
+            <a
+              class="button is-small mr-1"
+              :href="rouletteWidgetUrl"
+              target="_blank"
+            >Open Roulette widget</a>
+          </li>
         </ul>
       </div>
       <CommandsEditor
@@ -46,7 +53,8 @@
         :base-volume="baseVolume"
         :show-toggle-images="true"
         :show-filters="true"
-        :widget-url="mediaWidgetUrl"
+        :media-widget-url="mediaWidgetUrl"
+        :roulette-widget-url="rouletteWidgetUrl"
         :show-images="adminSettings.showImages"
         @update:model-value="sendSave"
         @show-images-change="updateShowImages"
@@ -96,6 +104,7 @@ const possibleEffects: CommandEffectType[] = [
   CommandEffectType.CHAT,
   CommandEffectType.DICT_LOOKUP,
   CommandEffectType.EMOTES,
+  CommandEffectType.ROULETTE,
   CommandEffectType.MEDIA,
   CommandEffectType.MADOCHAN,
   CommandEffectType.SET_CHANNEL_TITLE,
@@ -114,6 +123,7 @@ const inited = ref<boolean>(false)
 const tab = ref<TabType>('commands')
 const mediaWidgetUrl = ref<string>('')
 const emoteWallWidgetUrl = ref<string>('')
+const rouletteWidgetUrl = ref<string>('')
 
 const baseVolume = computed(() => {
   return settings.value.volume
@@ -146,6 +156,7 @@ onMounted(() => {
     settings.value = data.settings
     mediaWidgetUrl.value = data.mediaWidgetUrl
     emoteWallWidgetUrl.value = data.emoteWallWidgetUrl
+    rouletteWidgetUrl.value = data.rouletteWidgetUrl
     adminSettings.value = data.adminSettings
     globalVariables.value = data.globalVariables
     channelPointsCustomRewards.value = data.channelPointsCustomRewards

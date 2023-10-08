@@ -22,6 +22,7 @@ import Db from './DbPostgres'
 import { Discord } from './services/Discord'
 import { EmoteParser } from './services/EmoteParser'
 import { TimeApi } from './services/TimeApi'
+import { EffectApplier } from './effect/EffectApplier'
 
 type int = number
 
@@ -292,6 +293,7 @@ export enum CommandEffectType {
   CHATTERS = 'chatters',
   COUNTDOWN = 'countdown',
   MEDIA_VOLUME = 'media_volume',
+  ROULETTE = 'roulette',
 }
 
 export interface CommandEffectData {
@@ -378,6 +380,27 @@ export interface MediaVolumeEffectData extends CommandEffectData {
 export interface CountdownEffectData extends CommandEffectData {
   type: CommandEffectType.COUNTDOWN
   data: CountdownCommandData
+}
+
+export interface RouletteEntry {
+  text: string
+  weight: number
+  color: string
+}
+
+export interface RouletteCommandData {
+  widgetIds: string[]
+  theme: string
+  entries: RouletteEntry[]
+  spinDurationMs: string | number
+  winnerDisplayDurationMs: string | number
+  startMessage: string
+  endMessage: string
+}
+
+export interface RouletteEffectData extends CommandEffectData {
+  type: CommandEffectType.ROULETTE
+  data: RouletteCommandData
 }
 
 export interface CommandVariable {
@@ -567,6 +590,7 @@ export enum WIDGET_TYPE {
   DRAWCAST_DRAW = 'drawcast_draw',
   DRAWCAST_CONTROL = 'drawcast_control',
   POMO = 'pomo',
+  ROULETTE = 'roulette',
 }
 
 export interface ModuleDefinition {
@@ -608,6 +632,7 @@ export interface Bot {
   getTimeApi: () => TimeApi
   getEventHub: () => Emitter<Record<EventType, unknown>>
   getRepos: () => Repos
+  getEffectsApplier: () => EffectApplier
   getStreamStatusUpdater: () => StreamStatusUpdater
   getFrontendStatusUpdater: () => FrontendStatusUpdater
   getTwitchTmiClientManager: () => TwitchTmiClientManager

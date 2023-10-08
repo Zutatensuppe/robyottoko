@@ -29,7 +29,7 @@
             v-if="item.type === CommandEffectType.MEDIA"
             v-model="val[idx]"
             :base-volume="baseVolume"
-            :widget-url="widgetUrl"
+            :widget-url="mediaWidgetUrl"
           />
           <MadochanEffect
             v-if="item.type === CommandEffectType.MADOCHAN"
@@ -59,6 +59,11 @@
             v-if="item.type === CommandEffectType.COUNTDOWN"
             v-model="val[idx]"
             :base-volume="baseVolume"
+          />
+          <RouletteEffect
+            v-if="item.type === CommandEffectType.ROULETTE"
+            v-model="val[idx]"
+            :widget-url="rouletteWidgetUrl"
           />
         </td>
         <td>
@@ -90,6 +95,7 @@ import AddStreamTagsEffect from './Effects/AddStreamTagsEffect.vue'
 import RemoveStreamTagsEffect from './Effects/RemoveStreamTagsEffect.vue'
 import ChattersEffect from './Effects/ChattersEffect.vue'
 import CountdownEffect from './Effects/CountdownEffect.vue'
+import RouletteEffect from './Effects/RouletteEffect.vue'
 import DoubleclickButton from '../DoubleclickButton.vue'
 
 export interface AutocompletableVariable {
@@ -102,7 +108,8 @@ const props = defineProps<{
   itemVariables: CommandVariable[],
   globalVariables: GlobalVariable[],
   baseVolume: number,
-  widgetUrl: string,
+  mediaWidgetUrl: string,
+  rouletteWidgetUrl: string,
 }>()
 
 const val = ref<CommandEffectData[]>(props.modelValue)
