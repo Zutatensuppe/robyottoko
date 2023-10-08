@@ -7683,7 +7683,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-10-08T18:53:50.360Z",
+    buildDate: "2023-10-08T19:14:00.126Z",
     // @ts-ignore
     buildVersion: "1.67.0",
 };
@@ -9437,6 +9437,9 @@ class RemoveStreamTagEffect extends Effect {
 
 class RouletteEffect extends Effect {
     async apply() {
+        if (this.effect.data.entries.length === 0) {
+            return;
+        }
         this.notifyWs('general', {
             event: 'roulette',
             data: this.effect.data,
