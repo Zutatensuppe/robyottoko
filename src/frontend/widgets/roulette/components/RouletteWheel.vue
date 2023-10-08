@@ -62,7 +62,8 @@ const props = defineProps<{
 const canvas = ref<HTMLCanvasElement>() as Ref<HTMLCanvasElement>
 
 const emit = defineEmits<{
-  (e: 'ended'): void
+  (e: 'ended', winner: string): void
+  (e: 'close'): void
 }>()
 
 const theme = computed<WheelTheme>(() => {
@@ -84,12 +85,13 @@ const spin = () => {
     duration: 0,
   })
   gsap.to('.moving-parts', {
-    rotation: result.rotation + (360 * 3),
+    rotation: -result.rotation - (360 * 3),
     duration: spinDurationMs / 1000,
     ease: Power4.easeOut,
     onComplete: () => {
+      emit('ended', result.winner.title)
       setTimeout(() => {
-        emit('ended')
+        emit('close')
       }, winnerDisplayDurationMs)
     },
   })

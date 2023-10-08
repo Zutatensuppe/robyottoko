@@ -103,6 +103,15 @@
       </div>
     </div>
     <div>
+      Chat message at wheel start:
+      <StringInput v-model="val.data.startMessage" />
+    </div>
+    <div>
+      Chat message at wheel end:
+      <StringInput v-model="val.data.endMessage" />
+      <small>Use $entry.text to include the winning entry.</small>
+    </div>
+    <div>
       Spin Duration:
       <DurationInput v-model="val.data.spinDurationMs" />
     </div>

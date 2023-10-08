@@ -425,16 +425,32 @@ class GeneralModule implements Module {
 
   getWsEvents() {
     return {
-      'conn': async (ws: Socket) => {
+      conn: async (ws: Socket) => {
         this.channelPointsCustomRewards = await getChannelPointsCustomRewards(this.bot, this.user)
         await this.updateClient('init', ws)
       },
-      'save': async (_ws: Socket, data: GeneralSaveEventData) => {
+      save: async (_ws: Socket, data: GeneralSaveEventData) => {
         const fixed = this.fix(data.commands)
         this.data.commands = fixed.commands
         this.data.settings = data.settings
         this.data.adminSettings = data.adminSettings
         await this.save()
+      },
+      roulette_start: async (_ws: Socket, evt: any) => {
+        // console.log('roulette_start', evt)
+        const msg = evt.data.rouletteData.startMessage
+        if (msg) {
+          const say = this.bot.sayFn(this.user, this.user.twitch_login)
+          say(msg)
+        }
+      },
+      roulette_end: async (_ws: Socket, evt: any) => {
+        // console.log('roulette_end', evt)
+        const msg = evt.data.rouletteData.endMessage.replace(/\$entry\.text/g, evt.data.winner)
+        if (msg) {
+          const say = this.bot.sayFn(this.user, this.user.twitch_login)
+          say(msg)
+        }
       },
     }
   }

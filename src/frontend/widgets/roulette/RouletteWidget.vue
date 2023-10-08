@@ -1,8 +1,9 @@
 <template>
   <RouletteWheel
-    v-if="wheelData"
-    :data="wheelData"
+    v-if="rouletteData"
+    :data="rouletteData"
     @ended="onWheelEnded"
+    @close="onWheelClose"
   />
 </template>
 <script setup lang="ts">
@@ -20,10 +21,17 @@ const props = defineProps<{
 let ws: WsClient | null = null
 const settings = ref<GeneralModuleSettings>(default_settings())
 const widgetId = ref<string>(util.getParam('id'))
-const wheelData = ref<RouletteCommandData | null>(null)
+const rouletteData = ref<RouletteCommandData | null>(null)
 
-const onWheelEnded = () => {
-  wheelData.value = null
+const onWheelEnded = (winner: string) => {
+  ws?.send(JSON.stringify({ event: 'roulette_end', data: {
+    rouletteData: rouletteData.value,
+    winner,
+  }}))
+}
+
+const onWheelClose = () => {
+  rouletteData.value = null
 }
 
 onMounted(() => {
@@ -37,7 +45,10 @@ onMounted(() => {
     } else if (widgetId.value && !data.widgetIds.includes(widgetId.value)) {
       // skipping this, as it isn't coming from right command
     } else {
-      wheelData.value = data
+      rouletteData.value = data
+      ws?.send(JSON.stringify({ event: 'roulette_start', data: {
+        rouletteData: rouletteData.value,
+      }}))
     }
   })
   ws.connect()

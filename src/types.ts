@@ -394,6 +394,8 @@ export interface RouletteCommandData {
   entries: RouletteEntry[]
   spinDurationMs: string | number
   winnerDisplayDurationMs: string | number
+  startMessage: string
+  endMessage: string
 }
 
 export interface RouletteEffectData extends CommandEffectData {

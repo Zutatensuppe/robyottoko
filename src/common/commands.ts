@@ -42,6 +42,8 @@ export const newRoulette = (): RouletteCommandData => ({
   entries: [],
   spinDurationMs: 15000,
   winnerDisplayDurationMs: 5000,
+  startMessage: 'The wheel started spinning!',
+  endMessage: 'The result of the wheel spin is "$entry.text"!',
 })
 
 export const newRouletteEntry = (): RouletteEntry => ({
