@@ -68,7 +68,13 @@ const emit = defineEmits<{
 }>()
 
 const theme = computed<WheelTheme>(() => {
-  return themes[props.data.theme] || themes.default
+  if (
+    props.data.theme === 'default' ||
+    props.data.theme === 'trickOrTreat'
+  ) {
+    return themes[props.data.theme]
+  }
+  return themes.default
 })
 
 const spin = () => {

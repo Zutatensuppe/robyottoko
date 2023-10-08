@@ -1,4 +1,3 @@
-import { ChatMessageContext } from '../types'
 import { EmoteParser } from './EmoteParser'
 
 
