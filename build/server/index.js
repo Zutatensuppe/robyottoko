@@ -1,7 +1,6 @@
 import fs, { readFileSync } from 'fs';
 import WebSocket from 'ws';
 import fetch$1 from 'node-fetch';
-import childProcess from 'child_process';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
@@ -12,6 +11,7 @@ import cors from 'cors';
 import * as pg from 'pg';
 import tmi from 'tmi.js';
 import jwt from 'jsonwebtoken';
+import childProcess from 'child_process';
 
 const absPath = (path) => new URL(path, import.meta.url);
 const readJson = (path) => JSON.parse(String(readFileSync(path)));
@@ -503,6 +503,7 @@ var CommandEffectType;
     CommandEffectType["CHATTERS"] = "chatters";
     CommandEffectType["COUNTDOWN"] = "countdown";
     CommandEffectType["MEDIA_VOLUME"] = "media_volume";
+    CommandEffectType["ROULETTE"] = "roulette";
 })(CommandEffectType || (CommandEffectType = {}));
 var CommandAction;
 (function (CommandAction) {
@@ -567,6 +568,7 @@ var WIDGET_TYPE;
     WIDGET_TYPE["DRAWCAST_DRAW"] = "drawcast_draw";
     WIDGET_TYPE["DRAWCAST_CONTROL"] = "drawcast_control";
     WIDGET_TYPE["POMO"] = "pomo";
+    WIDGET_TYPE["ROULETTE"] = "roulette";
 })(WIDGET_TYPE || (WIDGET_TYPE = {}));
 
 const widgets = [
@@ -644,6 +646,13 @@ const widgets = [
         type: WIDGET_TYPE.POMO,
         module: MODULE_NAME.POMO,
         title: 'Pomo',
+        hint: 'Browser source, or open in browser and capture window',
+        pub: false,
+    },
+    {
+        type: WIDGET_TYPE.ROULETTE,
+        module: MODULE_NAME.GENERAL,
+        title: 'Roulette',
         hint: 'Browser source, or open in browser and capture window',
         pub: false,
     },
@@ -780,747 +789,7 @@ var xhr = {
     put: async (url, opts = {}) => request('put', url, opts),
 };
 
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-
-function __classPrivateFieldGet(receiver, state, kind, f) {
-    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-}
-
-function __classPrivateFieldSet(receiver, state, value, kind, f) {
-    if (kind === "m") throw new TypeError("Private method is not writable");
-    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
-}
-
-typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
-    var e = new Error(message);
-    return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
-};
-
-var _Effect_sayFn;
-class Effect {
-    constructor(effect, originalCmd, contextModule, rawCmd, context) {
-        this.effect = effect;
-        this.originalCmd = originalCmd;
-        this.contextModule = contextModule;
-        this.rawCmd = rawCmd;
-        this.context = context;
-        _Effect_sayFn.set(this, void 0);
-        __classPrivateFieldSet(this, _Effect_sayFn, contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login), "f");
-    }
-    async doReplacements(str) {
-        return await doReplacements(str, this.rawCmd, this.context, this.originalCmd, this.contextModule.bot, this.contextModule.user);
-    }
-    async say(str) {
-        __classPrivateFieldGet(this, _Effect_sayFn, "f").call(this, str);
-    }
-    getHelixClient() {
-        return this.contextModule.bot
-            .getUserTwitchClientManager(this.contextModule.user)
-            .getHelixClient();
-    }
-    async getAccessToken() {
-        return await this.contextModule.bot
-            .getRepos().oauthToken
-            .getMatchingAccessToken(this.contextModule.user);
-    }
-    notifyWs(moduleName, data) {
-        this.contextModule.bot
-            .getWebSocketServer()
-            .notifyAll([this.contextModule.user.id], moduleName, data);
-    }
-}
-_Effect_sayFn = new WeakMap();
-
-const log$D = logger('VariableChangeEffect.ts');
-const _toInt = (value) => parseInt(`${value}`, 10);
-const _increase = (value, by) => (_toInt(value) + _toInt(by));
-const _decrease = (value, by) => (_toInt(value) - _toInt(by));
-class VariableChangeEffect extends Effect {
-    async apply() {
-        const op = this.effect.data.change;
-        const name = await this.doReplacements(this.effect.data.name);
-        const value = await this.doReplacements(this.effect.data.value);
-        const changed = this.changeLocalVariable(op, name, value)
-            || await this.changeGlobalVariable(op, name, value);
-        if (!changed) {
-            log$D.warn({ op, name, value }, 'variable not changed');
-        }
-    }
-    changeLocalVariable(op, name, value) {
-        // check if there is a local variable for the change
-        if (!this.originalCmd.variables) {
-            return false;
-        }
-        const idx = this.originalCmd.variables.findIndex(v => (v.name === name));
-        if (idx === -1) {
-            return false;
-        }
-        if (op === 'set') {
-            this.originalCmd.variables[idx].value = value;
-        }
-        else if (op === 'increase_by') {
-            this.originalCmd.variables[idx].value = _increase(this.originalCmd.variables[idx].value, value);
-        }
-        else if (op === 'decrease_by') {
-            this.originalCmd.variables[idx].value = _decrease(this.originalCmd.variables[idx].value, value);
-        }
-        else {
-            log$D.warn({ op, name, value }, 'bad op');
-        }
-        // return true, because the variable was found, just the op is wrong :(
-        return true;
-    }
-    async changeGlobalVariable(op, name, value) {
-        const variables = this.contextModule.bot.getRepos().variables;
-        const globalVars = await variables.all(this.contextModule.user.id);
-        const idx = globalVars.findIndex(v => (v.name === name));
-        if (idx === -1) {
-            return false;
-        }
-        if (op === 'set') {
-            await variables.set(this.contextModule.user.id, name, value);
-        }
-        else if (op === 'increase_by') {
-            await variables.set(this.contextModule.user.id, name, _increase(globalVars[idx].value, value));
-        }
-        else if (op === 'decrease_by') {
-            await variables.set(this.contextModule.user.id, name, _decrease(globalVars[idx].value, value));
-        }
-        else {
-            log$D.warn({ op, name, value }, 'bad op');
-        }
-        return true;
-    }
-}
-
-const LANG_TO_URL_MAP = {
-    de: 'https://www.dict.cc/',
-    ru: 'https://enru.dict.cc/',
-    es: 'https://enes.dict.cc/',
-    it: 'https://enit.dict.cc/',
-    fr: 'https://enfr.dict.cc/',
-    pt: 'https://enpt.dict.cc/',
-};
-/**
- * Exctract searched words and word lists for both languages
- * from a dict.cc result html
- * TODO: change from regex to parsing the html ^^
- */
-const extractInfo = (text) => {
-    const stringToArray = (str) => {
-        const arr = [];
-        str.replace(/"([^"]*)"/g, (m, m1) => {
-            arr.push(m1);
-            return m;
-        });
-        return arr;
-    };
-    const arrayByRegex = (regex) => {
-        const m = text.match(regex);
-        return m ? stringToArray(m[1]) : [];
-    };
-    const m = text.match(/<link rel="canonical" href="https:\/\/[^.]+\.dict\.cc\/\?s=([^"]+)">/);
-    const words = m ? decodeURIComponent(m[1]).split('+') : [];
-    if (!words.length) {
-        return { words, arr1: [], arr2: [] };
-    }
-    return {
-        words,
-        arr1: arrayByRegex(/var c1Arr = new Array\((.*)\);/),
-        arr2: arrayByRegex(/var c2Arr = new Array\((.*)\);/),
-    };
-};
-const parseResult = (text) => {
-    const normalize = (str) => {
-        return str.toLowerCase().replace(/[.!?]/, '');
-    };
-    const info = extractInfo(text);
-    const matchedWords = info.words;
-    if (!matchedWords) {
-        return [];
-    }
-    const arr1 = info.arr1;
-    const arr2 = info.arr2;
-    const arr1NoPunct = arr1.map(item => normalize(item));
-    const arr2NoPunct = arr2.map(item => normalize(item));
-    const results = [];
-    const collectResults = (searchWords, fromArrSearch, fromArr, toArr) => {
-        const _results = [];
-        for (const i in fromArr) {
-            if (!fromArrSearch[i]) {
-                continue;
-            }
-            if (!searchWords.includes(fromArrSearch[i])) {
-                continue;
-            }
-            if (fromArr[i] === toArr[i]) {
-                // from and to is exactly the same, so skip it
-                continue;
-            }
-            const idx = _results.findIndex(item => item.from === fromArr[i]);
-            if (idx < 0) {
-                _results.push({ from: fromArr[i], to: [toArr[i]] });
-            }
-            else if (!_results[idx].to.includes(toArr[i])) {
-                _results[idx].to.push(toArr[i]);
-            }
-        }
-        results.push(..._results);
-    };
-    const matchedSentence = normalize(matchedWords.join(' '));
-    if (arr1NoPunct.includes(matchedSentence)) {
-        const fromArrSearch = arr1NoPunct;
-        const fromArr = arr1;
-        const toArr = arr2;
-        const searchWords = [matchedSentence];
-        collectResults(searchWords, fromArrSearch, fromArr, toArr);
-    }
-    if (arr2NoPunct.includes(matchedSentence)) {
-        const fromArrSearch = arr2NoPunct;
-        const fromArr = arr2;
-        const toArr = arr1;
-        const searchWords = [matchedSentence];
-        collectResults(searchWords, fromArrSearch, fromArr, toArr);
-    }
-    if (results.length === 0) {
-        let fromArrSearch = [];
-        let fromArr = [];
-        let toArr = [];
-        let searchWords = [];
-        for (const matchedWord of matchedWords) {
-            if (arr1.includes(matchedWord)) {
-                fromArr = fromArrSearch = arr1;
-                toArr = arr2;
-            }
-            else {
-                fromArr = fromArrSearch = arr2;
-                toArr = arr1;
-            }
-        }
-        searchWords = matchedWords;
-        collectResults(searchWords, fromArrSearch, fromArr, toArr);
-    }
-    return results;
-};
-const searchWord$1 = async (keyword, lang) => {
-    const baseUrl = LANG_TO_URL_MAP[lang];
-    if (!baseUrl) {
-        return [];
-    }
-    const url = baseUrl + asQueryArgs({ s: keyword });
-    const resp = await xhr.get(url);
-    const text = await resp.text();
-    return parseResult(text);
-};
-var DictCc = {
-    searchWord: searchWord$1,
-    parseResult,
-    LANG_TO_URL_MAP,
-};
-
-const searchWord = async (keyword, page = 1) => {
-    const url = 'https://jisho.org/api/v1/search/words' + asQueryArgs({
-        keyword: keyword,
-        page: page,
-    });
-    const resp = await xhr.get(url);
-    const json = (await resp.json());
-    return json.data;
-};
-var JishoOrg = {
-    searchWord,
-};
-
-const jishoOrgLookup = async (phrase) => {
-    const data = await JishoOrg.searchWord(phrase);
-    if (data.length === 0) {
-        return [];
-    }
-    const e = data[0];
-    const j = e.japanese[0];
-    const d = e.senses[0].english_definitions;
-    return [{
-            from: phrase,
-            to: [`${j.word} (${j.reading}) ${d.join(', ')}`],
-        }];
-};
-const LANG_TO_FN = {
-    ja: jishoOrgLookup,
-};
-for (const key of Object.keys(DictCc.LANG_TO_URL_MAP)) {
-    LANG_TO_FN[key] = (phrase) => DictCc.searchWord(phrase, key);
-}
-class DictLookupEffect extends Effect {
-    async apply() {
-        const tmpLang = await this.doReplacements(this.effect.data.lang);
-        const dictFn = LANG_TO_FN[tmpLang] || null;
-        if (!dictFn) {
-            this.say(`Sorry, language not supported: "${tmpLang}"`);
-            return;
-        }
-        // if no phrase is setup, use all args given to command
-        const phrase = this.effect.data.phrase === '' ? '$args()' : this.effect.data.phrase;
-        const tmpPhrase = await this.doReplacements(phrase);
-        const items = await dictFn(tmpPhrase);
-        if (items.length === 0) {
-            this.say(`Sorry, I didn't find anything for "${tmpPhrase}" in language "${tmpLang}"`);
-            return;
-        }
-        for (const item of items) {
-            this.say(`Phrase "${item.from}": ${item.to.join(', ')}`);
-        }
-    }
-}
-
-const log$C = logger('MediaEffect.ts');
-const isTwitchClipUrl = (url) => {
-    return !!url.match(/^https:\/\/clips\.twitch\.tv\/.+/);
-};
-const downloadVideo = async (originalUrl) => {
-    // if video url looks like a twitch clip url, dl it first
-    const filename = `${hash(originalUrl)}-clip.mp4`;
-    const outfile = `./data/uploads/${filename}`;
-    if (!fs.existsSync(outfile)) {
-        log$C.debug({ outfile }, 'downloading the video');
-        const child = childProcess.execFile(config.youtubeDlBinary, [originalUrl, '-o', outfile]);
-        await new Promise((resolve) => {
-            child.on('close', resolve);
-        });
-    }
-    else {
-        log$C.debug({ outfile }, 'video exists');
-    }
-    return `/uploads/${filename}`;
-};
-class MediaEffect extends Effect {
-    async apply() {
-        this.effect.data.image_url = await this.doReplacements(this.effect.data.image_url);
-        if (this.effect.data.video.url) {
-            log$C.debug({ url: this.effect.data.video.url }, 'video url is defined');
-            this.effect.data.video.url = await this.doReplacements(this.effect.data.video.url);
-            if (!this.effect.data.video.url) {
-                log$C.debug('no video url found');
-            }
-            else if (isTwitchClipUrl(this.effect.data.video.url)) {
-                // video url looks like a twitch clip url, dl it first
-                log$C.debug({ url: this.effect.data.video.url }, 'twitch clip found');
-                this.effect.data.video.url = await downloadVideo(this.effect.data.video.url);
-            }
-            else {
-                // otherwise assume it is already a playable video url
-                // TODO: youtube videos maybe should also be downloaded
-                log$C.debug('video is assumed to be directly playable via html5 video element');
-            }
-        }
-        this.notifyWs('general', {
-            event: 'playmedia',
-            data: this.effect.data,
-            id: this.originalCmd.id,
-        });
-    }
-}
-
-const createWord = async (createWordRequestData) => {
-    const url = 'https://madochan.hyottoko.club/api/v1/_create_word';
-    const resp = await xhr.post(url, asJson(createWordRequestData));
-    const json = (await resp.json());
-    return json;
-};
-var Madochan = {
-    createWord,
-    defaultModel: '100epochs800lenhashingbidirectional.h5',
-    defaultWeirdness: 1,
-};
-
-const log$B = logger('MadochanEffect.ts');
-class MadochanEffect extends Effect {
-    async apply() {
-        const model = `${this.effect.data.model}` || Madochan.defaultModel;
-        const weirdness = parseInt(this.effect.data.weirdness, 10) || Madochan.defaultWeirdness;
-        if (!this.rawCmd) {
-            return;
-        }
-        const definition = this.rawCmd.args.join(' ');
-        if (!definition) {
-            return;
-        }
-        this.say(`Generating word for "${definition}"...`);
-        try {
-            const data = await Madochan.createWord({ model, weirdness, definition });
-            if (data.word === '') {
-                this.say('Sorry, I could not generate a word :("');
-            }
-            else {
-                this.say(`"${definition}": ${data.word}`);
-            }
-        }
-        catch (e) {
-            log$B.error({ e });
-            this.say('Error occured, unable to generate a word :("');
-        }
-    }
-}
-
-const log$A = logger('SetChannelTitleEffect.ts');
-class SetChannelTitleEffect extends Effect {
-    async apply() {
-        const helixClient = this.getHelixClient();
-        if (!this.rawCmd || !this.context || !helixClient) {
-            log$A.info({
-                rawCmd: this.rawCmd,
-                context: this.context,
-                helixClient,
-            }, 'unable to execute setChannelTitle, client, command, context, or helixClient missing');
-            return;
-        }
-        const title = this.effect.data.title === '' ? '$args()' : this.effect.data.title;
-        const tmpTitle = await this.doReplacements(title);
-        if (tmpTitle === '') {
-            const info = await helixClient.getChannelInformation(this.contextModule.user.twitch_id);
-            if (info) {
-                this.say(`Current title is "${info.title}".`);
-            }
-            else {
-                this.say('❌ Unable to determine current title.');
-            }
-            return;
-        }
-        // helix api returns 204 status code even if the title is too long and
-        // cant actually be set. but there is no error returned in that case :(
-        const len = unicodeLength(tmpTitle);
-        const max = 140;
-        if (len > max) {
-            this.say(`❌ Unable to change title because it is too long (${len}/${max} characters).`);
-            return;
-        }
-        const accessToken = await this.getAccessToken();
-        if (!accessToken) {
-            this.say('❌ Not authorized to change title.');
-            return;
-        }
-        const resp = await helixClient.modifyChannelInformation(accessToken, { title: tmpTitle }, this.contextModule.bot, this.contextModule.user);
-        if (resp?.status === 204) {
-            this.say(`✨ Changed title to "${tmpTitle}".`);
-        }
-        else {
-            this.say('❌ Unable to change title.');
-        }
-    }
-}
-
-const log$z = logger('SetChannelGameIdEffect.ts');
-class SetChannelGameIdEffect extends Effect {
-    async apply() {
-        const helixClient = this.getHelixClient();
-        if (!this.rawCmd || !this.context || !helixClient) {
-            log$z.info({
-                rawCmd: this.rawCmd,
-                context: this.context,
-                helixClient,
-            }, 'unable to execute setChannelGameId, client, command, context, or helixClient missing');
-            return;
-        }
-        const gameId = this.effect.data.game_id === '' ? '$args()' : this.effect.data.game_id;
-        const tmpGameId = await this.doReplacements(gameId);
-        if (tmpGameId === '') {
-            const info = await helixClient.getChannelInformation(this.contextModule.user.twitch_id);
-            if (info) {
-                this.say(`Current category is "${info.game_name}".`);
-            }
-            else {
-                this.say('❌ Unable to determine current category.');
-            }
-            return;
-        }
-        const category = await helixClient.searchCategory(tmpGameId);
-        if (!category) {
-            this.say('🔎 Category not found.');
-            return;
-        }
-        const accessToken = await this.getAccessToken();
-        if (!accessToken) {
-            this.say('❌ Not authorized to update category.');
-            return;
-        }
-        const resp = await helixClient.modifyChannelInformation(accessToken, { game_id: category.id }, this.contextModule.bot, this.contextModule.user);
-        if (resp?.status === 204) {
-            this.say(`✨ Changed category to "${category.name}".`);
-        }
-        else {
-            this.say('❌ Unable to update category.');
-        }
-    }
-}
-
-const log$y = logger('AddStreamTagEffect.ts');
-class AddStreamTagEffect extends Effect {
-    async apply() {
-        const helixClient = this.getHelixClient();
-        if (!this.rawCmd || !this.context || !helixClient) {
-            log$y.info({
-                rawCmd: this.rawCmd,
-                context: this.context,
-                helixClient,
-            }, 'unable to execute addStreamTags, client, command, context, or helixClient missing');
-            return;
-        }
-        const tag = this.effect.data.tag === '' ? '$args()' : this.effect.data.tag;
-        const tmpTag = await this.doReplacements(tag);
-        const tagsResponse = await helixClient.getStreamTags(this.contextModule.user.twitch_id);
-        if (!tagsResponse) {
-            this.say('❌ Unable to fetch current tags.');
-            return;
-        }
-        if (tmpTag === '') {
-            const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
-            this.say(`Current tags: ${names.join(', ')}`);
-            return;
-        }
-        const idx = findIdxFuzzy(config.twitch.manual_tags, tmpTag, (item) => item.name);
-        if (idx === -1) {
-            this.say(`❌ No such tag: ${tmpTag}`);
-            return;
-        }
-        const tagEntry = config.twitch.manual_tags[idx];
-        const newTagIds = tagsResponse.data.map(entry => entry.tag_id);
-        if (newTagIds.includes(tagEntry.id)) {
-            const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
-            this.say(`✨ Tag ${tagEntry.name} already exists, current tags: ${names.join(', ')}`);
-            return;
-        }
-        newTagIds.push(tagEntry.id);
-        const newSettableTagIds = newTagIds.filter(tagId => !config.twitch.auto_tags.find(t => t.id === tagId));
-        if (newSettableTagIds.length > 5) {
-            const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
-            this.say(`❌ Too many tags already exist, current tags: ${names.join(', ')}`);
-            return;
-        }
-        const accessToken = await this.getAccessToken();
-        if (!accessToken) {
-            this.say(`❌ Not authorized to add tag: ${tagEntry.name}`);
-            return;
-        }
-        const resp = await helixClient.replaceStreamTags(accessToken, newSettableTagIds, this.contextModule.bot, this.contextModule.user);
-        if (!resp || resp.status < 200 || resp.status >= 300) {
-            log$y.error(resp);
-            this.say(`❌ Unable to add tag: ${tagEntry.name}`);
-            return;
-        }
-        this.say(`✨ Added tag: ${tagEntry.name}`);
-    }
-}
-
-const log$x = logger('RemoveStreamTagEffect.ts');
-class RemoveStreamTagEffect extends Effect {
-    async apply() {
-        const helixClient = this.getHelixClient();
-        if (!this.rawCmd || !this.context || !helixClient) {
-            log$x.info({
-                rawCmd: this.rawCmd,
-                context: this.context,
-                helixClient,
-            }, 'unable to execute removeStreamTags, client, command, context, or helixClient missing');
-            return;
-        }
-        const tag = this.effect.data.tag === '' ? '$args()' : this.effect.data.tag;
-        const tmpTag = await this.doReplacements(tag);
-        const tagsResponse = await helixClient.getStreamTags(this.contextModule.user.twitch_id);
-        if (!tagsResponse) {
-            this.say('❌ Unable to fetch current tags.');
-            return;
-        }
-        if (tmpTag === '') {
-            const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
-            this.say(`Current tags: ${names.join(', ')}`);
-            return;
-        }
-        const manualTags = tagsResponse.data.filter(entry => !entry.is_auto);
-        const idx = findIdxFuzzy(manualTags, tmpTag, (item) => item.localization_names['en-us']);
-        if (idx === -1) {
-            const autoTags = tagsResponse.data.filter(entry => entry.is_auto);
-            const idx = findIdxFuzzy(autoTags, tmpTag, (item) => item.localization_names['en-us']);
-            if (idx === -1) {
-                this.say(`❌ No such tag is currently set: ${tmpTag}`);
-            }
-            else {
-                this.say(`❌ Unable to remove automatic tag: ${autoTags[idx].localization_names['en-us']}`);
-            }
-            return;
-        }
-        const newTagIds = manualTags.filter((_value, index) => index !== idx).map(entry => entry.tag_id);
-        const newSettableTagIds = newTagIds.filter(tagId => !config.twitch.auto_tags.find(t => t.id === tagId));
-        const accessToken = await this.getAccessToken();
-        if (!accessToken) {
-            this.say(`❌ Not authorized to remove tag: ${manualTags[idx].localization_names['en-us']}`);
-            return;
-        }
-        const resp = await helixClient.replaceStreamTags(accessToken, newSettableTagIds, this.contextModule.bot, this.contextModule.user);
-        if (!resp || resp.status < 200 || resp.status >= 300) {
-            this.say(`❌ Unable to remove tag: ${manualTags[idx].localization_names['en-us']}`);
-            return;
-        }
-        this.say(`✨ Removed tag: ${manualTags[idx].localization_names['en-us']}`);
-    }
-}
-
-const log$w = logger('ChattersEffect.ts');
-class ChattersEffect extends Effect {
-    async apply() {
-        const helixClient = this.getHelixClient();
-        if (!this.context || !helixClient) {
-            log$w.info({
-                context: this.context,
-                helixClient,
-            }, 'unable to execute chatters command, client, context, or helixClient missing');
-            return;
-        }
-        const stream = await helixClient.getStreamByUserId(this.contextModule.user.twitch_id);
-        if (!stream) {
-            this.say('It seems this channel is not live at the moment...');
-            return;
-        }
-        const userNames = await this.contextModule.bot.getRepos().chatLog.getChatters(this.contextModule.user.twitch_id, new Date(stream.started_at));
-        if (userNames.length === 0) {
-            this.say('It seems nobody chatted? :(');
-            return;
-        }
-        this.say('Thank you for chatting!');
-        joinIntoChunks(userNames, ', ', 500).forEach(msg => {
-            this.say(msg);
-        });
-    }
-}
-
-const log$v = logger('CountdownEffect.ts');
-class CountdownEffect extends Effect {
-    async apply() {
-        const actionDefinitions = await this.buildActionDefinitions();
-        const actions = await this.buildActions(actionDefinitions);
-        for (let i = 0; i < actions.length; i++) {
-            await actions[i]();
-        }
-    }
-    async buildActions(actionDefinitions) {
-        const say = async (text) => {
-            return this.say(await this.doReplacements(text));
-        };
-        const parseDuration = async (str) => {
-            return mustParseHumanDuration(await this.doReplacements(str));
-        };
-        const actions = [];
-        for (const a of actionDefinitions) {
-            if (a.type === CountdownActionType.TEXT) {
-                actions.push(async () => say(`${a.value}`));
-            }
-            else if (a.type === CountdownActionType.MEDIA) {
-                actions.push(async () => {
-                    this.notifyWs('general', {
-                        event: 'playmedia',
-                        data: a.value,
-                    });
-                });
-            }
-            else if (a.type === CountdownActionType.DELAY) {
-                let duration;
-                try {
-                    duration = (await parseDuration(`${a.value}`)) || 0;
-                }
-                catch (e) {
-                    log$v.error({ message: e.message, value: a.value });
-                    return [];
-                }
-                actions.push(async () => {
-                    await sleep(duration);
-                });
-            }
-            else {
-                log$v.warn({ type: a.type }, 'unknown countdown action type');
-            }
-        }
-        return actions;
-    }
-    async buildActionDefinitions() {
-        const t = (this.effect.data.type || 'auto');
-        if (t === 'manual') {
-            return this.effect.data.actions;
-        }
-        if (t !== 'auto') {
-            // unsupported type!
-            log$v.warn({ type: t }, 'unknown countdown type');
-            return [];
-        }
-        const actionDefs = [];
-        const steps = parseInt(await this.doReplacements(`${this.effect.data.steps}`), 10);
-        const msgStep = this.effect.data.step || '{step}';
-        const msgIntro = this.effect.data.intro || null;
-        const msgOutro = this.effect.data.outro || null;
-        if (msgIntro) {
-            actionDefs.push({ type: CountdownActionType.TEXT, value: msgIntro.replace(/\{steps\}/g, `${steps}`) });
-            actionDefs.push({ type: CountdownActionType.DELAY, value: this.effect.data.interval || '1s' });
-        }
-        for (let step = steps; step > 0; step--) {
-            actionDefs.push({
-                type: CountdownActionType.TEXT,
-                value: msgStep.replace(/\{steps\}/g, `${steps}`).replace(/\{step\}/g, `${step}`),
-            });
-            actionDefs.push({ type: CountdownActionType.DELAY, value: this.effect.data.interval || '1s' });
-        }
-        if (msgOutro) {
-            actionDefs.push({ type: CountdownActionType.TEXT, value: msgOutro.replace(/\{steps\}/g, `${steps}`) });
-        }
-        return actionDefs;
-    }
-}
-
-class MediaVolumeEffect extends Effect {
-    async apply() {
-        if (!this.rawCmd) {
-            return;
-        }
-        const m = this.contextModule;
-        if (this.rawCmd.args.length === 0) {
-            this.say(`Current volume: ${m.getCurrentMediaVolume()}`);
-            return;
-        }
-        const newVolume = determineNewVolume(this.rawCmd.args[0], m.getCurrentMediaVolume());
-        await m.volume(newVolume);
-        this.say(`New volume: ${m.getCurrentMediaVolume()}`);
-    }
-}
-
-class ChatEffect extends Effect {
-    async apply() {
-        this.say(await this.doReplacements(getRandom(this.effect.data.text)));
-    }
-}
-
-class EmotesEffect extends Effect {
-    async apply() {
-        this.notifyWs('general', {
-            event: 'emotes',
-            data: this.effect.data,
-        });
-    }
-}
-
-const log$u = logger('fn.ts');
+const log$E = logger('fn.ts');
 function mimeToExt(mime) {
     if (/image\//.test(mime)) {
         return mime.replace('image/', '');
@@ -1555,9 +824,9 @@ const sayFn = (client, target) => (msg) => {
         // TODO: fix this somewhere else?
         // client can only say things in lowercase channels
         t = t.toLowerCase();
-        log$u.info(`saying in ${t}: ${msg}`);
+        log$E.info(`saying in ${t}: ${msg}`);
         client.say(t, msg).catch((e) => {
-            log$u.info(e);
+            log$E.info(e);
         });
     });
 };
@@ -1595,36 +864,6 @@ const parseCommandFromCmdAndMessage = (msg, command) => {
         return { name: command.value, args: [] };
     }
     return null;
-};
-const effectsClassMap = {
-    [CommandEffectType.VARIABLE_CHANGE]: VariableChangeEffect,
-    [CommandEffectType.CHAT]: ChatEffect,
-    [CommandEffectType.DICT_LOOKUP]: DictLookupEffect,
-    [CommandEffectType.EMOTES]: EmotesEffect,
-    [CommandEffectType.MEDIA]: MediaEffect,
-    [CommandEffectType.MADOCHAN]: MadochanEffect,
-    [CommandEffectType.SET_CHANNEL_TITLE]: SetChannelTitleEffect,
-    [CommandEffectType.SET_CHANNEL_GAME_ID]: SetChannelGameIdEffect,
-    [CommandEffectType.ADD_STREAM_TAGS]: AddStreamTagEffect,
-    [CommandEffectType.REMOVE_STREAM_TAGS]: RemoveStreamTagEffect,
-    [CommandEffectType.CHATTERS]: ChattersEffect,
-    [CommandEffectType.COUNTDOWN]: CountdownEffect,
-    [CommandEffectType.MEDIA_VOLUME]: MediaVolumeEffect,
-};
-const applyEffects = async (originalCmd, contextModule, rawCmd, context) => {
-    if (!originalCmd.effects) {
-        return;
-    }
-    for (const effect of originalCmd.effects) {
-        if (!effectsClassMap[effect.type]) {
-            // unknown effect...
-            log$u.warn({ type: effect.type }, 'unknown effect type');
-            continue;
-        }
-        const e = new (effectsClassMap[effect.type])(JSON.parse(JSON.stringify(effect)), originalCmd, contextModule, rawCmd, context);
-        await e.apply();
-    }
-    contextModule.saveCommands();
 };
 async function replaceAsync(str, regex, asyncFn) {
     const promises = [];
@@ -1791,7 +1030,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return String(`twitch.tv/${context.username}`);
                 }
                 if (!bot || !user) {
-                    log$u.info('no bot, no user, no watch');
+                    log$E.info('no bot, no user, no watch');
                     return '';
                 }
                 const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
@@ -1800,7 +1039,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                 }
                 const twitchUser = await getTwitchUser(username, helixClient, bot);
                 if (!twitchUser) {
-                    log$u.info('no twitch user found', username);
+                    log$E.info('no twitch user found', username);
                     return '';
                 }
                 if (m3 === 'name') {
@@ -1840,7 +1079,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return String(JSON.parse(txt)[m2]);
                 }
                 catch (e) {
-                    log$u.error(e);
+                    log$E.error(e);
                     return '';
                 }
             },
@@ -1854,7 +1093,7 @@ const doReplacements = async (text, rawCmd, context, originalCmd, bot, user) => 
                     return await resp.text();
                 }
                 catch (e) {
-                    log$u.error(e);
+                    log$E.error(e);
                     return '';
                 }
             },
@@ -2074,7 +1313,7 @@ const determineNewVolume = (input, currentVal) => {
 const getChannelPointsCustomRewards = async (bot, user) => {
     const helixClient = bot.getUserTwitchClientManager(user).getHelixClient();
     if (!helixClient) {
-        log$u.info('getChannelPointsCustomRewards: no helix client');
+        log$E.info('getChannelPointsCustomRewards: no helix client');
         return {};
     }
     return await helixClient.getAllChannelPointsCustomRewards(bot, user);
@@ -2100,7 +1339,6 @@ const uniqId = () => {
 var fn = {
     uniqId,
     getUserTypeInfo,
-    applyEffects,
     logger,
     mimeToExt,
     decodeBase64Image,
@@ -2121,7 +1359,7 @@ var fn = {
     getChannelPointsCustomRewards,
 };
 
-const log$t = logger('WebSocketServer.ts');
+const log$D = logger('WebSocketServer.ts');
 const determineUserIdAndModuleName = async (basePath, requestUrl, socket, bot) => {
     const relativePath = requestUrl.substring(basePath.length) || '';
     const relpath = withoutLeading(relativePath, '/');
@@ -2155,24 +1393,24 @@ class WebSocketServer {
             socket.user_id = userId;
             socket.module = moduleName;
             socket.id = uniqId();
-            log$t.info({
+            log$D.info({
                 moduleName,
                 socket: { protocol: socket.protocol },
             }, 'added socket');
-            log$t.info({
+            log$D.info({
                 count: this.sockets().filter(s => s.module === socket.module).length,
             }, 'socket_count');
             socket.on('close', () => {
-                log$t.info({
+                log$D.info({
                     moduleName,
                     socket: { protocol: socket.protocol },
                 }, 'removed socket');
-                log$t.info({
+                log$D.info({
                     count: this.sockets().filter(s => s.module === socket.module).length,
                 }, 'socket count');
             });
             if (!socket.user_id) {
-                log$t.info({
+                log$D.info({
                     requestUrl,
                     socket: { protocol: socket.protocol },
                 }, 'not found token');
@@ -2180,7 +1418,7 @@ class WebSocketServer {
                 return;
             }
             if (!socket.module) {
-                log$t.info({ requestUrl }, 'bad request url');
+                log$D.info({ requestUrl }, 'bad request url');
                 socket.close();
                 return;
             }
@@ -2211,7 +1449,7 @@ class WebSocketServer {
                     }
                 }
                 catch (e) {
-                    log$t.error({ e }, 'socket on message');
+                    log$D.error({ e }, 'socket on message');
                 }
             });
         });
@@ -2220,7 +1458,7 @@ class WebSocketServer {
         return !!this.sockets().find(s => s.user_id === user_id);
     }
     _notify(socket, data) {
-        log$t.info({ user_id: socket.user_id, module: socket.module, event: data.event }, 'notifying');
+        log$D.info({ user_id: socket.user_id, module: socket.module, event: data.event }, 'notifying');
         socket.send(JSON.stringify(data));
     }
     notifyOne(user_ids, moduleName, data, socket) {
@@ -2232,7 +1470,7 @@ class WebSocketServer {
             this._notify(socket, data);
         }
         else {
-            log$t.error({
+            log$D.error({
                 socket: {
                     user_id: socket.user_id,
                     module: socket.module,
@@ -2267,7 +1505,7 @@ class WebSocketServer {
     }
 }
 
-const log$s = logger('TwitchHelixClient.ts');
+const log$C = logger('TwitchHelixClient.ts');
 const API_BASE = 'https://api.twitch.tv/helix';
 const TOKEN_ENDPOINT = 'https://id.twitch.tv/oauth2/token';
 const apiUrl = (path) => `${API_BASE}${path}`;
@@ -2285,7 +1523,7 @@ async function executeRequestWithRetry(accessToken, req, bot, user) {
     if (!newAccessToken) {
         return resp;
     }
-    log$s.warn('retrying with refreshed token');
+    log$C.warn('retrying with refreshed token');
     return await req(newAccessToken);
 }
 class TwitchHelixClient {
@@ -2315,13 +1553,13 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$s.warn({ txt }, 'unable to get access_token by code');
+                log$C.warn({ txt }, 'unable to get access_token by code');
                 return null;
             }
             return (await resp.json());
         }
         catch (e) {
-            log$s.error({ url, e });
+            log$C.error({ url, e });
             return null;
         }
     }
@@ -2337,18 +1575,18 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (resp.status === 401) {
                 const txt = await resp.text();
-                log$s.warn({ txt }, 'tried to refresh access_token with an invalid refresh token');
+                log$C.warn({ txt }, 'tried to refresh access_token with an invalid refresh token');
                 return null;
             }
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$s.warn({ txt }, 'unable to refresh access_token');
+                log$C.warn({ txt }, 'unable to refresh access_token');
                 return null;
             }
             return (await resp.json());
         }
         catch (e) {
-            log$s.error({ url, e });
+            log$C.error({ url, e });
             return null;
         }
     }
@@ -2364,14 +1602,14 @@ class TwitchHelixClient {
             const resp = await xhr.post(url);
             if (!resp.ok) {
                 const txt = await resp.text();
-                log$s.warn({ txt }, 'unable to get access_token');
+                log$C.warn({ txt }, 'unable to get access_token');
                 return '';
             }
             json = (await resp.json());
             return json.access_token;
         }
         catch (e) {
-            log$s.error({ url, json, e });
+            log$C.error({ url, json, e });
             return '';
         }
     }
@@ -2386,7 +1624,7 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$s.error({ url, json, e });
+            log$C.error({ url, json, e });
             return null;
         }
     }
@@ -2400,7 +1638,7 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$s.error({ url, json, e });
+            log$C.error({ url, json, e });
             return null;
         }
     }
@@ -2413,7 +1651,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$s.error({ url, json, e });
+            log$C.error({ url, json, e });
             return null;
         }
     }
@@ -2427,7 +1665,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$s.error({ url, json, e });
+            log$C.error({ url, json, e });
             return null;
         }
     }
@@ -2462,7 +1700,7 @@ class TwitchHelixClient {
             return getRandom(filtered);
         }
         catch (e) {
-            log$s.error({ url, json, e });
+            log$C.error({ url, json, e });
             return null;
         }
     }
@@ -2485,7 +1723,7 @@ class TwitchHelixClient {
             return json.data[0] || null;
         }
         catch (e) {
-            log$s.error({ url, json, e });
+            log$C.error({ url, json, e });
             return null;
         }
     }
@@ -2496,7 +1734,7 @@ class TwitchHelixClient {
             return await resp.json();
         }
         catch (e) {
-            log$s.error({ url, e });
+            log$C.error({ url, e });
             return null;
         }
     }
@@ -2507,7 +1745,7 @@ class TwitchHelixClient {
             return await resp.text();
         }
         catch (e) {
-            log$s.error({ url, e });
+            log$C.error({ url, e });
             return null;
         }
     }
@@ -2520,7 +1758,7 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$s.error({ url, e });
+            log$C.error({ url, e });
             return null;
         }
     }
@@ -2534,7 +1772,7 @@ class TwitchHelixClient {
             return getBestEntryFromCategorySearchItems(searchString, json);
         }
         catch (e) {
-            log$s.error({ url, json });
+            log$C.error({ url, json });
             return null;
         }
     }
@@ -2548,7 +1786,7 @@ class TwitchHelixClient {
             return json.data[0];
         }
         catch (e) {
-            log$s.error({ url, json });
+            log$C.error({ url, json });
             return null;
         }
     }
@@ -2562,7 +1800,7 @@ class TwitchHelixClient {
             return await executeRequestWithRetry(accessToken, req, bot, user);
         }
         catch (e) {
-            log$s.error({ url, e });
+            log$C.error({ url, e });
             return null;
         }
     }
@@ -2588,7 +1826,7 @@ class TwitchHelixClient {
             return (await resp.json());
         }
         catch (e) {
-            log$s.error({ url, e });
+            log$C.error({ url, e });
             return null;
         }
     }
@@ -2607,19 +1845,19 @@ class TwitchHelixClient {
             return json;
         }
         catch (e) {
-            log$s.error({ url, e });
+            log$C.error({ url, e });
             return null;
         }
     }
     async getAllChannelPointsCustomRewards(bot, user) {
         const rewards = {};
         if (!user.twitch_id || !user.twitch_login) {
-            log$s.info('getAllChannelPointsCustomRewards: no twitch id and login');
+            log$C.info('getAllChannelPointsCustomRewards: no twitch id and login');
             return rewards;
         }
         const accessToken = await bot.getRepos().oauthToken.getMatchingAccessToken(user);
         if (!accessToken) {
-            log$s.info('getAllChannelPointsCustomRewards: no access token');
+            log$C.info('getAllChannelPointsCustomRewards: no access token');
             return rewards;
         }
         const res = await this.getChannelPointsCustomRewards(accessToken, user.twitch_id, bot, user);
@@ -2638,7 +1876,7 @@ class TwitchHelixClient {
             return await executeRequestWithRetry(accessToken, req, bot, user);
         }
         catch (e) {
-            log$s.error({ url, e });
+            log$C.error({ url, e });
             return null;
         }
     }
@@ -2663,7 +1901,7 @@ class TwitchHelixClient {
             return json.data.length > 0;
         }
         catch (e) {
-            log$s.error({ url, e });
+            log$C.error({ url, e });
             return false;
         }
     }
@@ -2676,7 +1914,7 @@ class TwitchHelixClient {
             return json.data.length > 0;
         }
         catch (e) {
-            log$s.error({ url, e });
+            log$C.error({ url, e });
             return false;
         }
     }
@@ -2689,13 +1927,13 @@ class TwitchHelixClient {
             return json.data.length > 0;
         }
         catch (e) {
-            log$s.error({ url, e });
+            log$C.error({ url, e });
             return false;
         }
     }
 }
 
-const log$r = logger('oauth.ts');
+const log$B = logger('oauth.ts');
 /**
  * Tries to refresh the access token and returns the new token
  * if successful, otherwise null.
@@ -2729,7 +1967,7 @@ const tryRefreshAccessToken = async (accessToken, bot, user) => {
         token_type: refreshResp.token_type,
         expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
     });
-    log$r.info('tryRefreshAccessToken - refreshed an access token');
+    log$B.info('tryRefreshAccessToken - refreshed an access token');
     return refreshResp.access_token;
 };
 // TODO: check if anything has to be put in a try catch block
@@ -2776,7 +2014,7 @@ const refreshExpiredTwitchChannelAccessToken = async (bot, user) => {
         token_type: refreshResp.token_type,
         expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
     });
-    log$r.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
+    log$B.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token');
     return { error: false, refreshed: true };
 };
 // TODO: check if anything has to be put in a try catch block
@@ -3281,7 +2519,7 @@ const commands = {
     },
 };
 
-const log$q = logger('CommandExecutor.ts');
+const log$A = logger('CommandExecutor.ts');
 class CommandExecutor {
     async executeMatchingCommands(bot, user, rawCmd, target, context, triggers, date, contextModule) {
         const promises = [];
@@ -3306,7 +2544,7 @@ class CommandExecutor {
             return false;
         }
         // timeout still active
-        log$q.info({
+        log$A.info({
             target: ctx.target,
             command: ctx.rawCmd?.name || '<unknown>',
         }, `Skipping command due to timeout. ${humanDuration(timeoutMsLeft)} left`);
@@ -3359,22 +2597,22 @@ class CommandExecutor {
                 }
                 continue;
             }
-            log$q.info({
+            log$A.info({
                 target: ctx.target,
                 command: ctx.rawCmd?.name || '<unknown>',
                 module: contextModule.name,
             }, 'Executing command');
             // eslint-disable-next-line no-async-promise-executor
             const p = new Promise(async (resolve) => {
-                await fn.applyEffects(cmdDef, contextModule, ctx.rawCmd, ctx.context);
+                await bot.getEffectsApplier().applyEffects(cmdDef, contextModule, ctx.rawCmd, ctx.context);
                 const r = await cmdDef.fn(ctx);
                 if (r) {
-                    log$q.info({
+                    log$A.info({
                         target: ctx.target,
                         return: r,
                     }, 'Returned from command');
                 }
-                log$q.info({
+                log$A.info({
                     target: ctx.target,
                     command: ctx.rawCmd?.name || '<unknown>',
                 }, 'Executed command');
@@ -3394,11 +2632,11 @@ class CommandExecutor {
 class EventSubEventHandler {
 }
 
-const log$p = logger('SubscribeEventHandler.ts');
+const log$z = logger('SubscribeEventHandler.ts');
 class SubscribeEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$p.info('handle');
+        log$z.info('handle');
         const rawCmd = {
             name: 'channel.subscribe',
             args: [],
@@ -3420,11 +2658,11 @@ class SubscribeEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$o = logger('FollowEventHandler.ts');
+const log$y = logger('FollowEventHandler.ts');
 class FollowEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$o.info('handle');
+        log$y.info('handle');
         const rawCmd = {
             name: 'channel.follow',
             args: [],
@@ -3446,11 +2684,11 @@ class FollowEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$n = logger('CheerEventHandler.ts');
+const log$x = logger('CheerEventHandler.ts');
 class CheerEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$n.info('handle');
+        log$x.info('handle');
         const rawCmd = {
             name: 'channel.cheer',
             args: [],
@@ -3477,10 +2715,10 @@ class CheerEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$m = logger('ChannelPointRedeemEventHandler.ts');
+const log$w = logger('ChannelPointRedeemEventHandler.ts');
 class ChannelPointRedeemEventHandler extends EventSubEventHandler {
     async handle(bot, user, data) {
-        log$m.info('handle');
+        log$w.info('handle');
         const rawCmd = {
             name: data.event.reward.title,
             args: data.event.user_input ? [data.event.user_input] : [],
@@ -3516,10 +2754,10 @@ var SubscriptionType;
 })(SubscriptionType || (SubscriptionType = {}));
 const ALL_SUBSCRIPTIONS_TYPES = Object.values(SubscriptionType);
 
-const log$l = logger('StreamOnlineEventHandler.ts');
+const log$v = logger('StreamOnlineEventHandler.ts');
 class StreamOnlineEventHandler extends EventSubEventHandler {
     async handle(bot, _user, data) {
-        log$l.info('handle');
+        log$v.info('handle');
         await bot.getRepos().streams.insert({
             broadcaster_user_id: data.event.broadcaster_user_id,
             started_at: new Date(data.event.started_at),
@@ -3527,10 +2765,10 @@ class StreamOnlineEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$k = logger('StreamOfflineEventHandler.ts');
+const log$u = logger('StreamOfflineEventHandler.ts');
 class StreamOfflineEventHandler extends EventSubEventHandler {
     async handle(bot, _user, data) {
-        log$k.info('handle');
+        log$u.info('handle');
         // get last started stream for broadcaster
         // if it exists and it didnt end yet set ended_at date
         const stream = await bot.getRepos().streams.getLatestByChannelId(data.event.broadcaster_user_id);
@@ -3542,11 +2780,11 @@ class StreamOfflineEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$j = logger('RaidEventHandler.ts');
+const log$t = logger('RaidEventHandler.ts');
 class RaidEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$j.info('handle');
+        log$t.info('handle');
         const rawCmd = {
             name: 'channel.raid',
             args: [],
@@ -3573,11 +2811,11 @@ class RaidEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$i = logger('SubscriptionGiftEventHandler.ts');
+const log$s = logger('SubscriptionGiftEventHandler.ts');
 class SubscriptionGiftEventHandler extends EventSubEventHandler {
     // TODO: use better type info
     async handle(bot, user, data) {
-        log$i.info('handle');
+        log$s.info('handle');
         const rawCmd = {
             name: 'channel.subscription.gift',
             args: [],
@@ -3604,7 +2842,7 @@ class SubscriptionGiftEventHandler extends EventSubEventHandler {
     }
 }
 
-const log$h = logger('twitch/index.ts');
+const log$r = logger('twitch/index.ts');
 const createRouter$4 = (bot) => {
     const handlers = {
         [SubscriptionType.ChannelSubscribe]: new SubscribeEventHandler(),
@@ -3625,8 +2863,8 @@ const createRouter$4 = (bot) => {
         if (req.headers['twitch-eventsub-message-signature'] === expected) {
             return next();
         }
-        log$h.debug({ req });
-        log$h.error({
+        log$r.debug({ req });
+        log$r.error({
             got: req.headers['twitch-eventsub-message-signature'],
             expected,
         }, 'bad message signature');
@@ -3681,28 +2919,28 @@ const createRouter$4 = (bot) => {
     });
     router.post('/event-sub/', express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }), verifyTwitchSignature, async (req, res) => {
         if (req.headers['twitch-eventsub-message-type'] === 'webhook_callback_verification') {
-            log$h.info({ challenge: req.body.challenge }, 'got verification request');
+            log$r.info({ challenge: req.body.challenge }, 'got verification request');
             res.write(req.body.challenge);
             res.send();
             return;
         }
         if (req.headers['twitch-eventsub-message-type'] === 'notification') {
-            log$h.info({ type: req.body.subscription.type }, 'got notification request');
+            log$r.info({ type: req.body.subscription.type }, 'got notification request');
             const row = await bot.getRepos().eventSub.getBySubscriptionId(req.body.subscription.id);
             if (!row) {
-                log$h.info('unknown subscription_id');
+                log$r.info('unknown subscription_id');
                 res.status(400).send({ reason: 'unknown subscription_id' });
                 return;
             }
             const user = await bot.getRepos().user.getById(row.user_id);
             if (!user) {
-                log$h.info('unknown user');
+                log$r.info('unknown user');
                 res.status(400).send({ reason: 'unknown user' });
                 return;
             }
             const handler = handlers[req.body.subscription.type];
             if (!handler) {
-                log$h.info('unknown subscription type');
+                log$r.info('unknown subscription type');
                 res.status(400).send({ reason: 'unknown subscription type' });
                 return;
             }
@@ -3844,7 +3082,7 @@ const moduleDefinitions = [
     },
 ];
 
-const log$g = logger('api/index.ts');
+const log$q = logger('api/index.ts');
 const createRouter$1 = (bot) => {
     const uploadDir = './data/uploads';
     const storage = multer.diskStorage({
@@ -3858,12 +3096,12 @@ const createRouter$1 = (bot) => {
     router.post('/upload', RequireLoginApiMiddleware, (req, res) => {
         upload(req, res, (err) => {
             if (err) {
-                log$g.error({ err });
+                log$q.error({ err });
                 res.status(400).send('Something went wrong!');
                 return;
             }
             if (!req.file) {
-                log$g.error({ err });
+                log$q.error({ err });
                 res.status(400).send('Something went wrong!');
                 return;
             }
@@ -3981,7 +3219,7 @@ const createRouter$1 = (bot) => {
             res.status(404).send();
             return;
         }
-        log$g.debug({ route: '/widget/:widget_type/:widget_token/', type, token });
+        log$q.debug({ route: '/widget/:widget_type/:widget_token/', type, token });
         const w = bot.getWidgets().getWidgetDefinitionByType(type);
         if (w) {
             res.send({
@@ -4024,7 +3262,7 @@ const createRouter$1 = (bot) => {
             bot.getEventHub().emit('user_changed', changedUser);
         }
         else {
-            log$g.error({
+            log$q.error({
                 user_id: user.id,
             }, 'save-settings: user doesn\'t exist after saving it');
         }
@@ -4096,7 +3334,7 @@ const RequireLoginMiddleware = (req, res, next) => {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const log$f = logger('WebServer.ts');
+const log$p = logger('WebServer.ts');
 class WebServer {
     constructor() {
         this.handle = null;
@@ -4137,7 +3375,7 @@ class WebServer {
             res.sendFile(indexFile);
         });
         const httpConf = bot.getConfig().http;
-        this.handle = app.listen(httpConf.port, httpConf.hostname, () => log$f.info(`server running on http://${httpConf.hostname}:${httpConf.port}`));
+        this.handle = app.listen(httpConf.port, httpConf.hostname, () => log$p.info(`server running on http://${httpConf.hostname}:${httpConf.port}`));
     }
     close() {
         if (this.handle) {
@@ -4146,7 +3384,7 @@ class WebServer {
     }
 }
 
-const log$e = logger('ChatEventHandler.ts');
+const log$o = logger('ChatEventHandler.ts');
 const rolesLettersFromTwitchChatContext = (context) => {
     const roles = [];
     if (isMod(context)) {
@@ -4169,7 +3407,7 @@ const determineStreamStartDate = async (context, helixClient) => {
         }
     }
     const date = new Date(new Date().getTime() - (5 * MINUTE));
-    log$e.info({
+    log$o.info({
         roomId: context['room-id'],
         date: date,
     }, 'No stream is running atm, using fake start date.');
@@ -4186,7 +3424,7 @@ const determineIsFirstChatStream = async (bot, user, context) => {
 class ChatEventHandler {
     async handle(bot, user, target, context, msgOriginal, msgNormalized) {
         const roles = rolesLettersFromTwitchChatContext(context);
-        log$e.debug({
+        log$o.debug({
             username: context.username,
             roles,
             target,
@@ -4545,14 +3783,14 @@ class TwitchClientManager {
 }
 
 const TABLE$9 = 'robyottoko.cache';
-const log$d = logger('Cache.ts');
+const log$n = logger('Cache.ts');
 class Cache {
     constructor(db) {
         this.db = db;
     }
     async set(key, value, lifetime) {
         if (value === undefined) {
-            log$d.error({ key }, 'unable to store undefined value for cache key');
+            log$n.error({ key }, 'unable to store undefined value for cache key');
             return;
         }
         const expiresAt = lifetime === Infinity ? null : (new Date(new Date().getTime() + lifetime));
@@ -4693,7 +3931,7 @@ class Mutex {
 
 // @ts-ignore
 const { Client } = pg.default;
-const log$c = logger('Db.ts');
+const log$m = logger('Db.ts');
 const mutex = new Mutex();
 class Db {
     constructor(connectStr, patchesDir) {
@@ -4713,7 +3951,7 @@ class Db {
         for (const f of files) {
             if (patches.includes(f)) {
                 if (verbose) {
-                    log$c.info(`➡ skipping already applied db patch: ${f}`);
+                    log$m.info(`➡ skipping already applied db patch: ${f}`);
                 }
                 continue;
             }
@@ -4732,10 +3970,10 @@ class Db {
                     throw e;
                 }
                 await this.insert('public.db_patches', { id: f });
-                log$c.info(`✓ applied db patch: ${f}`);
+                log$m.info(`✓ applied db patch: ${f}`);
             }
             catch (e) {
-                log$c.error(`✖ unable to apply patch: ${f} ${e}`);
+                log$m.error(`✖ unable to apply patch: ${f} ${e}`);
                 return;
             }
         }
@@ -4832,7 +4070,7 @@ class Db {
             return (await this.dbh.query(query, params)).rows[0] || null;
         }
         catch (e) {
-            log$c.info({ fn: '_get', query, params });
+            log$m.info({ fn: '_get', query, params });
             console.error(e);
             throw e;
         }
@@ -4842,7 +4080,7 @@ class Db {
             return await this.dbh.query(query, params);
         }
         catch (e) {
-            log$c.info({ fn: 'run', query, params });
+            log$m.info({ fn: 'run', query, params });
             console.error(e);
             throw e;
         }
@@ -4852,7 +4090,7 @@ class Db {
             return (await this.dbh.query(query, params)).rows || [];
         }
         catch (e) {
-            log$c.info({ fn: '_getMany', query, params });
+            log$m.info({ fn: '_getMany', query, params });
             console.error(e);
             throw e;
         }
@@ -5164,7 +4402,7 @@ class GeneralModule {
                     const rawCmd = null;
                     const target = null;
                     const context = null;
-                    await fn.applyEffects(cmdDef, this, rawCmd, context);
+                    await this.bot.getEffectsApplier().applyEffects(cmdDef, this, rawCmd, context);
                     await cmdDef.fn({ rawCmd, target, context, date });
                     t.lines = 0;
                     t.next = now + t.minInterval;
@@ -5396,6 +4634,7 @@ class GeneralModule {
                 channelPointsCustomRewards: this.channelPointsCustomRewards,
                 mediaWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.MEDIA, this.user.id),
                 emoteWallWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.EMOTE_WALL, this.user.id),
+                rouletteWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.ROULETTE, this.user.id),
             },
         };
     }
@@ -5760,6 +4999,39 @@ class TooLongError extends Error {
 class NotFoundError extends Error {
 }
 
+/******************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+
+function __classPrivateFieldGet(receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+}
+
+function __classPrivateFieldSet(receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+}
+
+typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+    var e = new Error(message);
+    return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+};
+
 class NoApiKeysError extends Error {
 }
 
@@ -5767,7 +5039,7 @@ class QuotaReachedError extends Error {
 }
 
 var _YoutubeApi_googleApiKeyIndex;
-const log$b = logger('YoutubeApi.ts');
+const log$l = logger('YoutubeApi.ts');
 var YoutubeVideoDuration;
 (function (YoutubeVideoDuration) {
     YoutubeVideoDuration["ANY"] = "any";
@@ -5784,7 +5056,7 @@ class YoutubeApi {
     async get(url, args) {
         var _a;
         if (this.config.googleApiKeys.length === 0) {
-            log$b.error('no google api keys configured');
+            log$l.error('no google api keys configured');
             throw new NoApiKeysError();
         }
         // cycle through all google api keys until response is ok
@@ -5797,7 +5069,7 @@ class YoutubeApi {
                 // got a ok response, return it
                 return await resp.json();
             }
-            log$b.warn('google returned 403 forbidden status, switching api key');
+            log$l.warn('google returned 403 forbidden status, switching api key');
             __classPrivateFieldSet(this, _YoutubeApi_googleApiKeyIndex, (_a = __classPrivateFieldGet(this, _YoutubeApi_googleApiKeyIndex, "f"), _a++, _a), "f");
             if (__classPrivateFieldGet(this, _YoutubeApi_googleApiKeyIndex, "f") > this.config.googleApiKeys.length - 1) {
                 __classPrivateFieldSet(this, _YoutubeApi_googleApiKeyIndex, 0, "f");
@@ -5816,7 +5088,7 @@ class YoutubeApi {
             return json.items[0];
         }
         catch (e) {
-            log$b.error({ e, json, youtubeId });
+            log$l.error({ e, json, youtubeId });
             return null;
         }
     }
@@ -5878,7 +5150,7 @@ class YoutubeApi {
                 }
             }
             catch (e) {
-                log$b.info({ e, json });
+                log$l.info({ e, json });
             }
         }
         return ids;
@@ -5887,7 +5159,7 @@ class YoutubeApi {
 _YoutubeApi_googleApiKeyIndex = new WeakMap();
 
 var _Youtube_instances, _Youtube_getDataByIdViaYoutubeApi, _Youtube_findViaYoutubeApi, _Youtube_getDataByIdViaIndivious, _Youtube_findByIndivious;
-const log$a = logger('Youtube.ts');
+const log$k = logger('Youtube.ts');
 class Youtube {
     constructor(youtubeApi, indivious, cache) {
         this.youtubeApi = youtubeApi;
@@ -5928,7 +5200,7 @@ class Youtube {
             return await __classPrivateFieldGet(this, _Youtube_instances, "m", _Youtube_findViaYoutubeApi).call(this, str, maxLenMs);
         }
         catch (e) {
-            log$a.info(e instanceof NoApiKeysError);
+            log$k.info(e instanceof NoApiKeysError);
             // in case of quota reached or no api key set, ask indivious
             if (e instanceof QuotaReachedError
                 || e instanceof NoApiKeysError) {
@@ -6038,7 +5310,7 @@ _Youtube_instances = new WeakSet(), _Youtube_getDataByIdViaYoutubeApi = async fu
     throw new NotFoundError();
 };
 
-const log$9 = logger('SongrequestModule.ts');
+const log$j = logger('SongrequestModule.ts');
 const ADD_TYPE = {
     NOT_ADDED: 0,
     ADDED: 1,
@@ -7070,7 +6342,7 @@ class SongrequestModule {
     cmdResr(_originalCommand) {
         return async (ctx) => {
             if (!ctx.rawCmd || !ctx.context) {
-                log$9.error('cmdResr: client, command or context empty');
+                log$j.error('cmdResr: client, command or context empty');
                 return;
             }
             const say = this.bot.sayFn(this.user, ctx.target);
@@ -7435,7 +6707,7 @@ class SongrequestModule {
     }
 }
 
-const log$8 = logger('VoteModule.ts');
+const log$i = logger('VoteModule.ts');
 class VoteModule {
     constructor(bot, user) {
         this.bot = bot;
@@ -7481,7 +6753,7 @@ class VoteModule {
     }
     async vote(type, thing, target, context) {
         if (!context['display-name']) {
-            log$8.error('context has no display name set');
+            log$i.error('context has no display name set');
             return;
         }
         const say = this.bot.sayFn(this.user, target);
@@ -7787,7 +7059,7 @@ const default_images = (list = null) => {
     return [];
 };
 
-const log$7 = logger('DrawcastModule.ts');
+const log$h = logger('DrawcastModule.ts');
 class DrawcastModule {
     constructor(bot, user) {
         this.bot = bot;
@@ -7919,7 +7191,7 @@ class DrawcastModule {
             },
             'get_all_images': async (ws, { token }) => {
                 if (!this.checkAuthorized(token)) {
-                    log$7.error({ token }, 'get_all_images: unauthed user');
+                    log$h.error({ token }, 'get_all_images: unauthed user');
                     return;
                 }
                 this.bot.getWebSocketServer().notifyOne([this.user.id], this.name, {
@@ -7929,13 +7201,13 @@ class DrawcastModule {
             },
             'approve_image': async (_ws, { path, token }) => {
                 if (!this.checkAuthorized(token)) {
-                    log$7.error({ path, token }, 'approve_image: unauthed user');
+                    log$h.error({ path, token }, 'approve_image: unauthed user');
                     return;
                 }
                 const image = this.data.images.find(item => item.path === path);
                 if (!image) {
                     // should not happen
-                    log$7.error({ path }, 'approve_image: image not found');
+                    log$h.error({ path }, 'approve_image: image not found');
                     return;
                 }
                 image.approved = true;
@@ -7949,13 +7221,13 @@ class DrawcastModule {
             },
             'deny_image': async (_ws, { path, token }) => {
                 if (!this.checkAuthorized(token)) {
-                    log$7.error({ path, token }, 'deny_image: unauthed user');
+                    log$h.error({ path, token }, 'deny_image: unauthed user');
                     return;
                 }
                 const image = this.data.images.find(item => item.path === path);
                 if (!image) {
                     // should not happen
-                    log$7.error({ path }, 'deny_image: image not found');
+                    log$h.error({ path }, 'deny_image: image not found');
                     return;
                 }
                 this.data.images = this.data.images.filter(item => item.path !== image.path);
@@ -7967,19 +7239,19 @@ class DrawcastModule {
             },
             'delete_image': async (_ws, { path, token }) => {
                 if (!this.checkAuthorized(token)) {
-                    log$7.error({ path, token }, 'delete_image: unauthed user');
+                    log$h.error({ path, token }, 'delete_image: unauthed user');
                     return;
                 }
                 const image = this.data.images.find(item => item.path === path);
                 if (!image) {
                     // should not happen
-                    log$7.error({ path }, 'delete_image: image not found');
+                    log$h.error({ path }, 'delete_image: image not found');
                     return;
                 }
                 const deleted = this._deleteImage(image);
                 if (!deleted) {
                     // should not happen
-                    log$7.error({ path }, 'delete_image: image not deleted');
+                    log$h.error({ path }, 'delete_image: image not deleted');
                     return;
                 }
                 this.data.settings.favoriteLists = this.data.settings.favoriteLists.map(favoriteList => {
@@ -8013,7 +7285,7 @@ class DrawcastModule {
             },
             'save': async (_ws, data) => {
                 if (!this.checkAuthorized(data.token, true)) {
-                    log$7.error({ token: data.token }, 'save: unauthed user');
+                    log$h.error({ token: data.token }, 'save: unauthed user');
                     return;
                 }
                 this.data.settings = data.settings;
@@ -8066,7 +7338,7 @@ const default_settings$1 = (obj = null) => ({
     avatarDefinitions: getProp(obj, ['avatarDefinitions'], []).map(default_avatar_definition),
 });
 
-const log$6 = logger('AvatarModule.ts');
+const log$g = logger('AvatarModule.ts');
 class AvatarModule {
     constructor(bot, user) {
         this.bot = bot;
@@ -8143,7 +7415,7 @@ class AvatarModule {
                         await this.save();
                     }
                     catch (e) {
-                        log$6.error({ tuberIdx, slotName, itemIdx }, 'ws ctrl: unable to setSlot');
+                        log$g.error({ tuberIdx, slotName, itemIdx }, 'ws ctrl: unable to setSlot');
                     }
                 }
                 else if (data.data.ctrl === 'lockState') {
@@ -8154,7 +7426,7 @@ class AvatarModule {
                         await this.save();
                     }
                     catch (e) {
-                        log$6.error({ tuberIdx, lockedState }, 'ws ctrl: unable to lockState');
+                        log$g.error({ tuberIdx, lockedState }, 'ws ctrl: unable to lockState');
                     }
                 }
                 else if (data.data.ctrl === 'setTuber') {
@@ -8395,12 +7667,12 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-07-31T00:01:42.333Z",
+    buildDate: "2023-10-08T17:57:43.444Z",
     // @ts-ignore
-    buildVersion: "1.66.1",
+    buildVersion: "1.67.0",
 };
 
-const log$5 = logger('StreamStatusUpdater.ts');
+const log$f = logger('StreamStatusUpdater.ts');
 class StreamStatusUpdater {
     constructor(bot) {
         this.bot = bot;
@@ -8430,21 +7702,21 @@ class StreamStatusUpdater {
         });
     }
     async _doUpdate() {
-        log$5.info('doing update');
+        log$f.info('doing update');
         const updatePromises = [];
         for (const user of this.users) {
             updatePromises.push(this._doUpdateForUser(user));
         }
         await Promise.all(updatePromises);
         setTimeout(() => this._doUpdate(), 5 * MINUTE);
-        log$5.info('done update');
+        log$f.info('done update');
     }
     start() {
         this._doUpdate();
     }
 }
 
-const log$4 = logger('FrontendStatusUpdater.ts');
+const log$e = logger('FrontendStatusUpdater.ts');
 class FrontendStatusUpdater {
     constructor(bot) {
         this.bot = bot;
@@ -8478,8 +7750,8 @@ class FrontendStatusUpdater {
         if (this.bot.getConfig().bot.supportTwitchAccessTokens) {
             const result = await refreshExpiredTwitchChannelAccessToken(this.bot, user);
             if (result.error) {
-                log$4.error('Unable to validate or refresh OAuth token.');
-                log$4.error(`user: ${user.name}, channel: ${user.twitch_login}, error: ${result.error}`);
+                log$e.error('Unable to validate or refresh OAuth token.');
+                log$e.error(`user: ${user.name}, channel: ${user.twitch_login}, error: ${result.error}`);
                 problems.push({
                     message: 'access_token_invalid',
                     details: {
@@ -8493,7 +7765,7 @@ class FrontendStatusUpdater {
                     this.bot.getEventHub().emit('access_token_refreshed', changedUser);
                 }
                 else {
-                    log$4.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`);
+                    log$e.error(`oauth token refresh: user doesn't exist after saving it: ${user.id}`);
                 }
             }
         }
@@ -8501,14 +7773,14 @@ class FrontendStatusUpdater {
         this.bot.getWebSocketServer().notifyAll([user.id], 'core', data);
     }
     async _doUpdate() {
-        log$4.info('doing update');
+        log$e.info('doing update');
         const updatePromises = [];
         for (const user of this.users) {
             updatePromises.push(this._doUpdateForUser(user));
         }
         await Promise.all(updatePromises);
         setTimeout(() => this._doUpdate(), 1 * MINUTE);
-        log$4.info('done update');
+        log$e.info('done update');
     }
     start() {
         this._doUpdate();
@@ -8613,7 +7885,7 @@ class EventSubRepo extends Repo {
 }
 
 const TABLE$5 = 'robyottoko.module';
-const log$3 = logger('ModuleRepo.ts');
+const log$d = logger('ModuleRepo.ts');
 class ModuleRepo extends Repo {
     async load(userId, key, def) {
         try {
@@ -8630,7 +7902,7 @@ class ModuleRepo extends Repo {
             };
         }
         catch (e) {
-            log$3.error({ e });
+            log$d.error({ e });
             return {
                 data: def,
                 enabled: true,
@@ -8853,7 +8125,7 @@ class Discord {
 }
 
 const loadedAssets = {};
-const log$2 = logger('emote-parse.ts');
+const log$c = logger('emote-parse.ts');
 async function loadAssets(channel, channelId, helixClient) {
     const ts = new Date().getTime();
     if (loadedAssets[channel]
@@ -8931,14 +8203,14 @@ async function loadConcurrent(uid, channel, helixClient) {
             }
         }
         catch (error) {
-            log$2.error({
+            log$c.error({
                 channel,
                 message: '(1) Failed to load FFz channel emotes for ' + channel,
                 error,
             });
         }
     }).catch((e) => {
-        log$2.error(e);
+        log$c.error(e);
     }));
     promises.push(fetch(`https://api.frankerfacez.com/v1/set/global`)
         .then(response => response.json())
@@ -8958,14 +8230,14 @@ async function loadConcurrent(uid, channel, helixClient) {
             }
         }
         catch (error) {
-            log$2.error({
+            log$c.error({
                 channel,
                 message: 'Failed to load global FFz channel emotes',
                 error,
             });
         }
     }).catch((e) => {
-        log$2.error(e);
+        log$c.error(e);
     }));
     // NOTE: BTTV
     promises.push(fetch(`https://api.betterttv.net/3/cached/users/twitch/${uid}`)
@@ -8986,14 +8258,14 @@ async function loadConcurrent(uid, channel, helixClient) {
             }
         }
         catch (error) {
-            log$2.error({
+            log$c.error({
                 channel,
                 message: 'Failed to load BetterTTV channel emotes for ' + channel,
                 error,
             });
         }
     }).catch((e) => {
-        log$2.error(e);
+        log$c.error(e);
     }));
     promises.push(fetch(`https://api.betterttv.net/3/cached/emotes/global`)
         .then(response => response.json())
@@ -9009,14 +8281,14 @@ async function loadConcurrent(uid, channel, helixClient) {
             }
         }
         catch (error) {
-            log$2.error({
+            log$c.error({
                 channel,
                 message: 'Failed to load BetterTTV global emotes for ' + channel,
                 error,
             });
         }
     }).catch((e) => {
-        log$2.error(e);
+        log$c.error(e);
     }));
     // NOTE: 7TV
     promises.push(fetch(`https://api.7tv.app/v3/users/twitch/${uid}`)
@@ -9041,21 +8313,21 @@ async function loadConcurrent(uid, channel, helixClient) {
                 }
             }
             else {
-                log$2.error({
+                log$c.error({
                     channel,
                     message: 'No 7TV user available for ' + channel,
                 });
             }
         }
         catch (error) {
-            log$2.error({
+            log$c.error({
                 channel,
                 message: 'Failed to load 7TV channel emotes for ' + channel,
                 error,
             });
         }
     }).catch((e) => {
-        log$2.error(e);
+        log$c.error(e);
     }));
     promises.push(fetch(`https://api.7tv.app/v2/emotes/global`)
         .then(response => response.json())
@@ -9087,14 +8359,14 @@ async function loadConcurrent(uid, channel, helixClient) {
             }
         }
         catch (error) {
-            log$2.error({
+            log$c.error({
                 channel,
                 message: 'Failed to load 7TV global emotes for ' + channel,
                 error,
             });
         }
     }).catch((e) => {
-        log$2.error(e);
+        log$c.error(e);
     }));
     // Note: TWITCH
     promises.push(helixClient.getChannelEmotes(uid)
@@ -9117,12 +8389,12 @@ async function loadConcurrent(uid, channel, helixClient) {
             }
         }
         else {
-            log$2.error({
+            log$c.error({
                 message: 'Failed to load TWITCH channel emotes for ' + channel,
             });
         }
     }).catch((e) => {
-        log$2.error(e);
+        log$c.error(e);
     }));
     promises.push(helixClient.getGlobalEmotes()
         .then(body => {
@@ -9144,12 +8416,12 @@ async function loadConcurrent(uid, channel, helixClient) {
             }
         }
         else {
-            log$2.error({
+            log$c.error({
                 message: 'Failed to load TWITCH global emotes for ' + channel,
             });
         }
     }).catch((e) => {
-        log$2.error(e);
+        log$c.error(e);
     }));
     await Promise.allSettled(promises);
     return loadedChannelAssets;
@@ -9578,7 +8850,7 @@ class EmoteParser {
     }
 }
 
-const log$1 = logger('TimeApi.ts');
+const log$b = logger('TimeApi.ts');
 class TimeApi {
     async getTimeAtTimezone(timezone) {
         try {
@@ -9587,9 +8859,761 @@ class TimeApi {
             return json.time;
         }
         catch (e) {
-            log$1.error(e);
+            log$b.error(e);
             return '';
         }
+    }
+}
+
+var _Effect_sayFn;
+class Effect {
+    constructor(effect, originalCmd, contextModule, rawCmd, context) {
+        this.effect = effect;
+        this.originalCmd = originalCmd;
+        this.contextModule = contextModule;
+        this.rawCmd = rawCmd;
+        this.context = context;
+        _Effect_sayFn.set(this, void 0);
+        __classPrivateFieldSet(this, _Effect_sayFn, contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login), "f");
+    }
+    async doReplacements(str) {
+        return await doReplacements(str, this.rawCmd, this.context, this.originalCmd, this.contextModule.bot, this.contextModule.user);
+    }
+    async say(str) {
+        __classPrivateFieldGet(this, _Effect_sayFn, "f").call(this, str);
+    }
+    getHelixClient() {
+        return this.contextModule.bot
+            .getUserTwitchClientManager(this.contextModule.user)
+            .getHelixClient();
+    }
+    async getAccessToken() {
+        return await this.contextModule.bot
+            .getRepos().oauthToken
+            .getMatchingAccessToken(this.contextModule.user);
+    }
+    notifyWs(moduleName, data) {
+        this.contextModule.bot
+            .getWebSocketServer()
+            .notifyAll([this.contextModule.user.id], moduleName, data);
+    }
+}
+_Effect_sayFn = new WeakMap();
+
+const log$a = logger('AddStreamTagEffect.ts');
+class AddStreamTagEffect extends Effect {
+    async apply() {
+        const helixClient = this.getHelixClient();
+        if (!this.rawCmd || !this.context || !helixClient) {
+            log$a.info({
+                rawCmd: this.rawCmd,
+                context: this.context,
+                helixClient,
+            }, 'unable to execute addStreamTags, client, command, context, or helixClient missing');
+            return;
+        }
+        const tag = this.effect.data.tag === '' ? '$args()' : this.effect.data.tag;
+        const tmpTag = await this.doReplacements(tag);
+        const tagsResponse = await helixClient.getStreamTags(this.contextModule.user.twitch_id);
+        if (!tagsResponse) {
+            this.say('❌ Unable to fetch current tags.');
+            return;
+        }
+        if (tmpTag === '') {
+            const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
+            this.say(`Current tags: ${names.join(', ')}`);
+            return;
+        }
+        const idx = findIdxFuzzy(config.twitch.manual_tags, tmpTag, (item) => item.name);
+        if (idx === -1) {
+            this.say(`❌ No such tag: ${tmpTag}`);
+            return;
+        }
+        const tagEntry = config.twitch.manual_tags[idx];
+        const newTagIds = tagsResponse.data.map(entry => entry.tag_id);
+        if (newTagIds.includes(tagEntry.id)) {
+            const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
+            this.say(`✨ Tag ${tagEntry.name} already exists, current tags: ${names.join(', ')}`);
+            return;
+        }
+        newTagIds.push(tagEntry.id);
+        const newSettableTagIds = newTagIds.filter(tagId => !config.twitch.auto_tags.find(t => t.id === tagId));
+        if (newSettableTagIds.length > 5) {
+            const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
+            this.say(`❌ Too many tags already exist, current tags: ${names.join(', ')}`);
+            return;
+        }
+        const accessToken = await this.getAccessToken();
+        if (!accessToken) {
+            this.say(`❌ Not authorized to add tag: ${tagEntry.name}`);
+            return;
+        }
+        const resp = await helixClient.replaceStreamTags(accessToken, newSettableTagIds, this.contextModule.bot, this.contextModule.user);
+        if (!resp || resp.status < 200 || resp.status >= 300) {
+            log$a.error(resp);
+            this.say(`❌ Unable to add tag: ${tagEntry.name}`);
+            return;
+        }
+        this.say(`✨ Added tag: ${tagEntry.name}`);
+    }
+}
+
+class ChatEffect extends Effect {
+    async apply() {
+        this.say(await this.doReplacements(getRandom(this.effect.data.text)));
+    }
+}
+
+const log$9 = logger('ChattersEffect.ts');
+class ChattersEffect extends Effect {
+    async apply() {
+        const helixClient = this.getHelixClient();
+        if (!this.context || !helixClient) {
+            log$9.info({
+                context: this.context,
+                helixClient,
+            }, 'unable to execute chatters command, client, context, or helixClient missing');
+            return;
+        }
+        const stream = await helixClient.getStreamByUserId(this.contextModule.user.twitch_id);
+        if (!stream) {
+            this.say('It seems this channel is not live at the moment...');
+            return;
+        }
+        const userNames = await this.contextModule.bot.getRepos().chatLog.getChatters(this.contextModule.user.twitch_id, new Date(stream.started_at));
+        if (userNames.length === 0) {
+            this.say('It seems nobody chatted? :(');
+            return;
+        }
+        this.say('Thank you for chatting!');
+        joinIntoChunks(userNames, ', ', 500).forEach(msg => {
+            this.say(msg);
+        });
+    }
+}
+
+const log$8 = logger('CountdownEffect.ts');
+class CountdownEffect extends Effect {
+    async apply() {
+        const actionDefinitions = await this.buildActionDefinitions();
+        const actions = await this.buildActions(actionDefinitions);
+        for (let i = 0; i < actions.length; i++) {
+            await actions[i]();
+        }
+    }
+    async buildActions(actionDefinitions) {
+        const say = async (text) => {
+            return this.say(await this.doReplacements(text));
+        };
+        const parseDuration = async (str) => {
+            return mustParseHumanDuration(await this.doReplacements(str));
+        };
+        const actions = [];
+        for (const a of actionDefinitions) {
+            if (a.type === CountdownActionType.TEXT) {
+                actions.push(async () => say(`${a.value}`));
+            }
+            else if (a.type === CountdownActionType.MEDIA) {
+                actions.push(async () => {
+                    this.notifyWs('general', {
+                        event: 'playmedia',
+                        data: a.value,
+                    });
+                });
+            }
+            else if (a.type === CountdownActionType.DELAY) {
+                let duration;
+                try {
+                    duration = (await parseDuration(`${a.value}`)) || 0;
+                }
+                catch (e) {
+                    log$8.error({ message: e.message, value: a.value });
+                    return [];
+                }
+                actions.push(async () => {
+                    await sleep(duration);
+                });
+            }
+            else {
+                log$8.warn({ type: a.type }, 'unknown countdown action type');
+            }
+        }
+        return actions;
+    }
+    async buildActionDefinitions() {
+        const t = (this.effect.data.type || 'auto');
+        if (t === 'manual') {
+            return this.effect.data.actions;
+        }
+        if (t !== 'auto') {
+            // unsupported type!
+            log$8.warn({ type: t }, 'unknown countdown type');
+            return [];
+        }
+        const actionDefs = [];
+        const steps = parseInt(await this.doReplacements(`${this.effect.data.steps}`), 10);
+        const msgStep = this.effect.data.step || '{step}';
+        const msgIntro = this.effect.data.intro || null;
+        const msgOutro = this.effect.data.outro || null;
+        if (msgIntro) {
+            actionDefs.push({ type: CountdownActionType.TEXT, value: msgIntro.replace(/\{steps\}/g, `${steps}`) });
+            actionDefs.push({ type: CountdownActionType.DELAY, value: this.effect.data.interval || '1s' });
+        }
+        for (let step = steps; step > 0; step--) {
+            actionDefs.push({
+                type: CountdownActionType.TEXT,
+                value: msgStep.replace(/\{steps\}/g, `${steps}`).replace(/\{step\}/g, `${step}`),
+            });
+            actionDefs.push({ type: CountdownActionType.DELAY, value: this.effect.data.interval || '1s' });
+        }
+        if (msgOutro) {
+            actionDefs.push({ type: CountdownActionType.TEXT, value: msgOutro.replace(/\{steps\}/g, `${steps}`) });
+        }
+        return actionDefs;
+    }
+}
+
+const LANG_TO_URL_MAP = {
+    de: 'https://www.dict.cc/',
+    ru: 'https://enru.dict.cc/',
+    es: 'https://enes.dict.cc/',
+    it: 'https://enit.dict.cc/',
+    fr: 'https://enfr.dict.cc/',
+    pt: 'https://enpt.dict.cc/',
+};
+/**
+ * Exctract searched words and word lists for both languages
+ * from a dict.cc result html
+ * TODO: change from regex to parsing the html ^^
+ */
+const extractInfo = (text) => {
+    const stringToArray = (str) => {
+        const arr = [];
+        str.replace(/"([^"]*)"/g, (m, m1) => {
+            arr.push(m1);
+            return m;
+        });
+        return arr;
+    };
+    const arrayByRegex = (regex) => {
+        const m = text.match(regex);
+        return m ? stringToArray(m[1]) : [];
+    };
+    const m = text.match(/<link rel="canonical" href="https:\/\/[^.]+\.dict\.cc\/\?s=([^"]+)">/);
+    const words = m ? decodeURIComponent(m[1]).split('+') : [];
+    if (!words.length) {
+        return { words, arr1: [], arr2: [] };
+    }
+    return {
+        words,
+        arr1: arrayByRegex(/var c1Arr = new Array\((.*)\);/),
+        arr2: arrayByRegex(/var c2Arr = new Array\((.*)\);/),
+    };
+};
+const parseResult = (text) => {
+    const normalize = (str) => {
+        return str.toLowerCase().replace(/[.!?]/, '');
+    };
+    const info = extractInfo(text);
+    const matchedWords = info.words;
+    if (!matchedWords) {
+        return [];
+    }
+    const arr1 = info.arr1;
+    const arr2 = info.arr2;
+    const arr1NoPunct = arr1.map(item => normalize(item));
+    const arr2NoPunct = arr2.map(item => normalize(item));
+    const results = [];
+    const collectResults = (searchWords, fromArrSearch, fromArr, toArr) => {
+        const _results = [];
+        for (const i in fromArr) {
+            if (!fromArrSearch[i]) {
+                continue;
+            }
+            if (!searchWords.includes(fromArrSearch[i])) {
+                continue;
+            }
+            if (fromArr[i] === toArr[i]) {
+                // from and to is exactly the same, so skip it
+                continue;
+            }
+            const idx = _results.findIndex(item => item.from === fromArr[i]);
+            if (idx < 0) {
+                _results.push({ from: fromArr[i], to: [toArr[i]] });
+            }
+            else if (!_results[idx].to.includes(toArr[i])) {
+                _results[idx].to.push(toArr[i]);
+            }
+        }
+        results.push(..._results);
+    };
+    const matchedSentence = normalize(matchedWords.join(' '));
+    if (arr1NoPunct.includes(matchedSentence)) {
+        const fromArrSearch = arr1NoPunct;
+        const fromArr = arr1;
+        const toArr = arr2;
+        const searchWords = [matchedSentence];
+        collectResults(searchWords, fromArrSearch, fromArr, toArr);
+    }
+    if (arr2NoPunct.includes(matchedSentence)) {
+        const fromArrSearch = arr2NoPunct;
+        const fromArr = arr2;
+        const toArr = arr1;
+        const searchWords = [matchedSentence];
+        collectResults(searchWords, fromArrSearch, fromArr, toArr);
+    }
+    if (results.length === 0) {
+        let fromArrSearch = [];
+        let fromArr = [];
+        let toArr = [];
+        let searchWords = [];
+        for (const matchedWord of matchedWords) {
+            if (arr1.includes(matchedWord)) {
+                fromArr = fromArrSearch = arr1;
+                toArr = arr2;
+            }
+            else {
+                fromArr = fromArrSearch = arr2;
+                toArr = arr1;
+            }
+        }
+        searchWords = matchedWords;
+        collectResults(searchWords, fromArrSearch, fromArr, toArr);
+    }
+    return results;
+};
+const searchWord$1 = async (keyword, lang) => {
+    const baseUrl = LANG_TO_URL_MAP[lang];
+    if (!baseUrl) {
+        return [];
+    }
+    const url = baseUrl + asQueryArgs({ s: keyword });
+    const resp = await xhr.get(url);
+    const text = await resp.text();
+    return parseResult(text);
+};
+var DictCc = {
+    searchWord: searchWord$1,
+    parseResult,
+    LANG_TO_URL_MAP,
+};
+
+const searchWord = async (keyword, page = 1) => {
+    const url = 'https://jisho.org/api/v1/search/words' + asQueryArgs({
+        keyword: keyword,
+        page: page,
+    });
+    const resp = await xhr.get(url);
+    const json = (await resp.json());
+    return json.data;
+};
+var JishoOrg = {
+    searchWord,
+};
+
+const jishoOrgLookup = async (phrase) => {
+    const data = await JishoOrg.searchWord(phrase);
+    if (data.length === 0) {
+        return [];
+    }
+    const e = data[0];
+    const j = e.japanese[0];
+    const d = e.senses[0].english_definitions;
+    return [{
+            from: phrase,
+            to: [`${j.word} (${j.reading}) ${d.join(', ')}`],
+        }];
+};
+const LANG_TO_FN = {
+    ja: jishoOrgLookup,
+};
+for (const key of Object.keys(DictCc.LANG_TO_URL_MAP)) {
+    LANG_TO_FN[key] = (phrase) => DictCc.searchWord(phrase, key);
+}
+class DictLookupEffect extends Effect {
+    async apply() {
+        const tmpLang = await this.doReplacements(this.effect.data.lang);
+        const dictFn = LANG_TO_FN[tmpLang] || null;
+        if (!dictFn) {
+            this.say(`Sorry, language not supported: "${tmpLang}"`);
+            return;
+        }
+        // if no phrase is setup, use all args given to command
+        const phrase = this.effect.data.phrase === '' ? '$args()' : this.effect.data.phrase;
+        const tmpPhrase = await this.doReplacements(phrase);
+        const items = await dictFn(tmpPhrase);
+        if (items.length === 0) {
+            this.say(`Sorry, I didn't find anything for "${tmpPhrase}" in language "${tmpLang}"`);
+            return;
+        }
+        for (const item of items) {
+            this.say(`Phrase "${item.from}": ${item.to.join(', ')}`);
+        }
+    }
+}
+
+class EmotesEffect extends Effect {
+    async apply() {
+        this.notifyWs('general', {
+            event: 'emotes',
+            data: this.effect.data,
+        });
+    }
+}
+
+const createWord = async (createWordRequestData) => {
+    const url = 'https://madochan.hyottoko.club/api/v1/_create_word';
+    const resp = await xhr.post(url, asJson(createWordRequestData));
+    const json = (await resp.json());
+    return json;
+};
+var Madochan = {
+    createWord,
+    defaultModel: '100epochs800lenhashingbidirectional.h5',
+    defaultWeirdness: 1,
+};
+
+const log$7 = logger('MadochanEffect.ts');
+class MadochanEffect extends Effect {
+    async apply() {
+        const model = `${this.effect.data.model}` || Madochan.defaultModel;
+        const weirdness = parseInt(this.effect.data.weirdness, 10) || Madochan.defaultWeirdness;
+        if (!this.rawCmd) {
+            return;
+        }
+        const definition = this.rawCmd.args.join(' ');
+        if (!definition) {
+            return;
+        }
+        this.say(`Generating word for "${definition}"...`);
+        try {
+            const data = await Madochan.createWord({ model, weirdness, definition });
+            if (data.word === '') {
+                this.say('Sorry, I could not generate a word :("');
+            }
+            else {
+                this.say(`"${definition}": ${data.word}`);
+            }
+        }
+        catch (e) {
+            log$7.error({ e });
+            this.say('Error occured, unable to generate a word :("');
+        }
+    }
+}
+
+const log$6 = logger('MediaEffect.ts');
+const isTwitchClipUrl = (url) => {
+    return !!url.match(/^https:\/\/clips\.twitch\.tv\/.+/);
+};
+const downloadVideo = async (originalUrl) => {
+    // if video url looks like a twitch clip url, dl it first
+    const filename = `${hash(originalUrl)}-clip.mp4`;
+    const outfile = `./data/uploads/${filename}`;
+    if (!fs.existsSync(outfile)) {
+        log$6.debug({ outfile }, 'downloading the video');
+        const child = childProcess.execFile(config.youtubeDlBinary, [originalUrl, '-o', outfile]);
+        await new Promise((resolve) => {
+            child.on('close', resolve);
+        });
+    }
+    else {
+        log$6.debug({ outfile }, 'video exists');
+    }
+    return `/uploads/${filename}`;
+};
+class MediaEffect extends Effect {
+    async apply() {
+        this.effect.data.image_url = await this.doReplacements(this.effect.data.image_url);
+        if (this.effect.data.video.url) {
+            log$6.debug({ url: this.effect.data.video.url }, 'video url is defined');
+            this.effect.data.video.url = await this.doReplacements(this.effect.data.video.url);
+            if (!this.effect.data.video.url) {
+                log$6.debug('no video url found');
+            }
+            else if (isTwitchClipUrl(this.effect.data.video.url)) {
+                // video url looks like a twitch clip url, dl it first
+                log$6.debug({ url: this.effect.data.video.url }, 'twitch clip found');
+                this.effect.data.video.url = await downloadVideo(this.effect.data.video.url);
+            }
+            else {
+                // otherwise assume it is already a playable video url
+                // TODO: youtube videos maybe should also be downloaded
+                log$6.debug('video is assumed to be directly playable via html5 video element');
+            }
+        }
+        this.notifyWs('general', {
+            event: 'playmedia',
+            data: this.effect.data,
+            id: this.originalCmd.id,
+        });
+    }
+}
+
+class MediaVolumeEffect extends Effect {
+    async apply() {
+        if (!this.rawCmd) {
+            return;
+        }
+        const m = this.contextModule;
+        if (this.rawCmd.args.length === 0) {
+            this.say(`Current volume: ${m.getCurrentMediaVolume()}`);
+            return;
+        }
+        const newVolume = determineNewVolume(this.rawCmd.args[0], m.getCurrentMediaVolume());
+        await m.volume(newVolume);
+        this.say(`New volume: ${m.getCurrentMediaVolume()}`);
+    }
+}
+
+const log$5 = logger('RemoveStreamTagEffect.ts');
+class RemoveStreamTagEffect extends Effect {
+    async apply() {
+        const helixClient = this.getHelixClient();
+        if (!this.rawCmd || !this.context || !helixClient) {
+            log$5.info({
+                rawCmd: this.rawCmd,
+                context: this.context,
+                helixClient,
+            }, 'unable to execute removeStreamTags, client, command, context, or helixClient missing');
+            return;
+        }
+        const tag = this.effect.data.tag === '' ? '$args()' : this.effect.data.tag;
+        const tmpTag = await this.doReplacements(tag);
+        const tagsResponse = await helixClient.getStreamTags(this.contextModule.user.twitch_id);
+        if (!tagsResponse) {
+            this.say('❌ Unable to fetch current tags.');
+            return;
+        }
+        if (tmpTag === '') {
+            const names = tagsResponse.data.map(entry => entry.localization_names['en-us']);
+            this.say(`Current tags: ${names.join(', ')}`);
+            return;
+        }
+        const manualTags = tagsResponse.data.filter(entry => !entry.is_auto);
+        const idx = findIdxFuzzy(manualTags, tmpTag, (item) => item.localization_names['en-us']);
+        if (idx === -1) {
+            const autoTags = tagsResponse.data.filter(entry => entry.is_auto);
+            const idx = findIdxFuzzy(autoTags, tmpTag, (item) => item.localization_names['en-us']);
+            if (idx === -1) {
+                this.say(`❌ No such tag is currently set: ${tmpTag}`);
+            }
+            else {
+                this.say(`❌ Unable to remove automatic tag: ${autoTags[idx].localization_names['en-us']}`);
+            }
+            return;
+        }
+        const newTagIds = manualTags.filter((_value, index) => index !== idx).map(entry => entry.tag_id);
+        const newSettableTagIds = newTagIds.filter(tagId => !config.twitch.auto_tags.find(t => t.id === tagId));
+        const accessToken = await this.getAccessToken();
+        if (!accessToken) {
+            this.say(`❌ Not authorized to remove tag: ${manualTags[idx].localization_names['en-us']}`);
+            return;
+        }
+        const resp = await helixClient.replaceStreamTags(accessToken, newSettableTagIds, this.contextModule.bot, this.contextModule.user);
+        if (!resp || resp.status < 200 || resp.status >= 300) {
+            this.say(`❌ Unable to remove tag: ${manualTags[idx].localization_names['en-us']}`);
+            return;
+        }
+        this.say(`✨ Removed tag: ${manualTags[idx].localization_names['en-us']}`);
+    }
+}
+
+class RouletteEffect extends Effect {
+    async apply() {
+        this.notifyWs('general', {
+            event: 'roulette',
+            data: this.effect.data,
+            id: this.originalCmd.id,
+        });
+    }
+}
+
+const log$4 = logger('SetChannelGameIdEffect.ts');
+class SetChannelGameIdEffect extends Effect {
+    async apply() {
+        const helixClient = this.getHelixClient();
+        if (!this.rawCmd || !this.context || !helixClient) {
+            log$4.info({
+                rawCmd: this.rawCmd,
+                context: this.context,
+                helixClient,
+            }, 'unable to execute setChannelGameId, client, command, context, or helixClient missing');
+            return;
+        }
+        const gameId = this.effect.data.game_id === '' ? '$args()' : this.effect.data.game_id;
+        const tmpGameId = await this.doReplacements(gameId);
+        if (tmpGameId === '') {
+            const info = await helixClient.getChannelInformation(this.contextModule.user.twitch_id);
+            if (info) {
+                this.say(`Current category is "${info.game_name}".`);
+            }
+            else {
+                this.say('❌ Unable to determine current category.');
+            }
+            return;
+        }
+        const category = await helixClient.searchCategory(tmpGameId);
+        if (!category) {
+            this.say('🔎 Category not found.');
+            return;
+        }
+        const accessToken = await this.getAccessToken();
+        if (!accessToken) {
+            this.say('❌ Not authorized to update category.');
+            return;
+        }
+        const resp = await helixClient.modifyChannelInformation(accessToken, { game_id: category.id }, this.contextModule.bot, this.contextModule.user);
+        if (resp?.status === 204) {
+            this.say(`✨ Changed category to "${category.name}".`);
+        }
+        else {
+            this.say('❌ Unable to update category.');
+        }
+    }
+}
+
+const log$3 = logger('SetChannelTitleEffect.ts');
+class SetChannelTitleEffect extends Effect {
+    async apply() {
+        const helixClient = this.getHelixClient();
+        if (!this.rawCmd || !this.context || !helixClient) {
+            log$3.info({
+                rawCmd: this.rawCmd,
+                context: this.context,
+                helixClient,
+            }, 'unable to execute setChannelTitle, client, command, context, or helixClient missing');
+            return;
+        }
+        const title = this.effect.data.title === '' ? '$args()' : this.effect.data.title;
+        const tmpTitle = await this.doReplacements(title);
+        if (tmpTitle === '') {
+            const info = await helixClient.getChannelInformation(this.contextModule.user.twitch_id);
+            if (info) {
+                this.say(`Current title is "${info.title}".`);
+            }
+            else {
+                this.say('❌ Unable to determine current title.');
+            }
+            return;
+        }
+        // helix api returns 204 status code even if the title is too long and
+        // cant actually be set. but there is no error returned in that case :(
+        const len = unicodeLength(tmpTitle);
+        const max = 140;
+        if (len > max) {
+            this.say(`❌ Unable to change title because it is too long (${len}/${max} characters).`);
+            return;
+        }
+        const accessToken = await this.getAccessToken();
+        if (!accessToken) {
+            this.say('❌ Not authorized to change title.');
+            return;
+        }
+        const resp = await helixClient.modifyChannelInformation(accessToken, { title: tmpTitle }, this.contextModule.bot, this.contextModule.user);
+        if (resp?.status === 204) {
+            this.say(`✨ Changed title to "${tmpTitle}".`);
+        }
+        else {
+            this.say('❌ Unable to change title.');
+        }
+    }
+}
+
+const log$2 = logger('VariableChangeEffect.ts');
+const _toInt = (value) => parseInt(`${value}`, 10);
+const _increase = (value, by) => (_toInt(value) + _toInt(by));
+const _decrease = (value, by) => (_toInt(value) - _toInt(by));
+class VariableChangeEffect extends Effect {
+    async apply() {
+        const op = this.effect.data.change;
+        const name = await this.doReplacements(this.effect.data.name);
+        const value = await this.doReplacements(this.effect.data.value);
+        const changed = this.changeLocalVariable(op, name, value)
+            || await this.changeGlobalVariable(op, name, value);
+        if (!changed) {
+            log$2.warn({ op, name, value }, 'variable not changed');
+        }
+    }
+    changeLocalVariable(op, name, value) {
+        // check if there is a local variable for the change
+        if (!this.originalCmd.variables) {
+            return false;
+        }
+        const idx = this.originalCmd.variables.findIndex(v => (v.name === name));
+        if (idx === -1) {
+            return false;
+        }
+        if (op === 'set') {
+            this.originalCmd.variables[idx].value = value;
+        }
+        else if (op === 'increase_by') {
+            this.originalCmd.variables[idx].value = _increase(this.originalCmd.variables[idx].value, value);
+        }
+        else if (op === 'decrease_by') {
+            this.originalCmd.variables[idx].value = _decrease(this.originalCmd.variables[idx].value, value);
+        }
+        else {
+            log$2.warn({ op, name, value }, 'bad op');
+        }
+        // return true, because the variable was found, just the op is wrong :(
+        return true;
+    }
+    async changeGlobalVariable(op, name, value) {
+        const variables = this.contextModule.bot.getRepos().variables;
+        const globalVars = await variables.all(this.contextModule.user.id);
+        const idx = globalVars.findIndex(v => (v.name === name));
+        if (idx === -1) {
+            return false;
+        }
+        if (op === 'set') {
+            await variables.set(this.contextModule.user.id, name, value);
+        }
+        else if (op === 'increase_by') {
+            await variables.set(this.contextModule.user.id, name, _increase(globalVars[idx].value, value));
+        }
+        else if (op === 'decrease_by') {
+            await variables.set(this.contextModule.user.id, name, _decrease(globalVars[idx].value, value));
+        }
+        else {
+            log$2.warn({ op, name, value }, 'bad op');
+        }
+        return true;
+    }
+}
+
+const EFFECTS_CLASS_MAP = {
+    [CommandEffectType.VARIABLE_CHANGE]: VariableChangeEffect,
+    [CommandEffectType.CHAT]: ChatEffect,
+    [CommandEffectType.DICT_LOOKUP]: DictLookupEffect,
+    [CommandEffectType.EMOTES]: EmotesEffect,
+    [CommandEffectType.MEDIA]: MediaEffect,
+    [CommandEffectType.MADOCHAN]: MadochanEffect,
+    [CommandEffectType.SET_CHANNEL_TITLE]: SetChannelTitleEffect,
+    [CommandEffectType.SET_CHANNEL_GAME_ID]: SetChannelGameIdEffect,
+    [CommandEffectType.ADD_STREAM_TAGS]: AddStreamTagEffect,
+    [CommandEffectType.REMOVE_STREAM_TAGS]: RemoveStreamTagEffect,
+    [CommandEffectType.CHATTERS]: ChattersEffect,
+    [CommandEffectType.COUNTDOWN]: CountdownEffect,
+    [CommandEffectType.MEDIA_VOLUME]: MediaVolumeEffect,
+    [CommandEffectType.ROULETTE]: RouletteEffect,
+};
+const log$1 = logger('EffectApplier.ts');
+class EffectApplier {
+    async applyEffects(originalCmd, contextModule, rawCmd, context) {
+        if (!originalCmd.effects) {
+            return;
+        }
+        for (const effect of originalCmd.effects) {
+            if (!EFFECTS_CLASS_MAP[effect.type]) {
+                // unknown effect...
+                log$1.warn({ type: effect.type }, 'unknown effect type');
+                continue;
+            }
+            const e = new (EFFECTS_CLASS_MAP[effect.type])(JSON.parse(JSON.stringify(effect)), originalCmd, contextModule, rawCmd, context);
+            await e.apply();
+        }
+        contextModule.saveCommands();
     }
 }
 
@@ -9620,6 +9644,7 @@ const createBot = async () => {
     const webSocketServer = new WebSocketServer();
     const webServer = new WebServer();
     const twitchTmiClientManager = new TwitchTmiClientManager();
+    const effectsApplier = new EffectApplier();
     const youtube = new Youtube(new YoutubeApi(config.youtube), new Indivious(), cache);
     const emoteParser = new EmoteParser();
     class BotImpl {
@@ -9643,6 +9668,7 @@ const createBot = async () => {
         getWidgets() { return widgets; }
         getTimeApi() { return timeApi; }
         getEventHub() { return eventHub; }
+        getEffectsApplier() { return effectsApplier; }
         getStreamStatusUpdater() {
             if (!this.streamStatusUpdater) {
                 this.streamStatusUpdater = new StreamStatusUpdater(this);
