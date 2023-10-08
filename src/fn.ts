@@ -4,23 +4,11 @@ import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, getRandom, getRandomInt
 import {
   Command, RawCommand, TwitchEventContext,
   TwitchChatClient, FunctionCommand, Module, CommandTrigger,
-  Bot, CommandEffectType, CommandMatch,
+  Bot, CommandMatch,
 } from './types'
 import { User } from './repo/Users'
 import TwitchHelixClient, { TwitchHelixUserSearchResponseDataEntry } from './services/TwitchHelixClient'
-import { VariableChangeEffect } from './effect/VariableChangeEffect'
-import { DictLookupEffect } from './effect/DictLookupEffect'
-import { MediaEffect } from './effect/MediaEffect'
-import { MadochanEffect } from './effect/MadochanEffect'
-import { SetChannelTitleEffect } from './effect/SetChannelTitleEffect'
-import { SetChannelGameIdEffect } from './effect/SetChannelGameIdEffect'
-import { AddStreamTagEffect } from './effect/AddStreamTagsEffect'
-import { RemoveStreamTagEffect } from './effect/RemoveStreamTagsEffect'
-import { ChattersEffect } from './effect/ChattersEffect'
-import { CountdownEffect } from './effect/CountdownEffect'
-import { MediaVolumeEffect } from './effect/MediaVolumeEffect'
-import { ChatEffect } from './effect/ChatEffect'
-import { EmotesEffect } from './effect/EmotesEffect'
+import { EffectsClassMap } from './effect/EffectsClassMap'
 
 const log = logger('fn.ts')
 
@@ -127,22 +115,6 @@ export const parseCommandFromCmdAndMessage = (
   return null
 }
 
-const effectsClassMap = {
-  [CommandEffectType.VARIABLE_CHANGE]: VariableChangeEffect,
-  [CommandEffectType.CHAT]: ChatEffect,
-  [CommandEffectType.DICT_LOOKUP]: DictLookupEffect,
-  [CommandEffectType.EMOTES]: EmotesEffect,
-  [CommandEffectType.MEDIA]: MediaEffect,
-  [CommandEffectType.MADOCHAN]: MadochanEffect,
-  [CommandEffectType.SET_CHANNEL_TITLE]: SetChannelTitleEffect,
-  [CommandEffectType.SET_CHANNEL_GAME_ID]: SetChannelGameIdEffect,
-  [CommandEffectType.ADD_STREAM_TAGS]: AddStreamTagEffect,
-  [CommandEffectType.REMOVE_STREAM_TAGS]: RemoveStreamTagEffect,
-  [CommandEffectType.CHATTERS]: ChattersEffect,
-  [CommandEffectType.COUNTDOWN]: CountdownEffect,
-  [CommandEffectType.MEDIA_VOLUME]: MediaVolumeEffect,
-}
-
 const applyEffects = async (
   originalCmd: FunctionCommand,
   contextModule: Module,
@@ -153,12 +125,12 @@ const applyEffects = async (
     return
   }
   for (const effect of originalCmd.effects) {
-    if (!effectsClassMap[effect.type]) {
+    if (!EffectsClassMap[effect.type]) {
       // unknown effect...
       log.warn({ type: effect.type }, 'unknown effect type')
       continue
     }
-    const e = new (effectsClassMap[effect.type])(
+    const e = new (EffectsClassMap[effect.type])(
       JSON.parse(JSON.stringify(effect)),
       originalCmd,
       contextModule,

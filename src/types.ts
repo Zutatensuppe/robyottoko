@@ -292,6 +292,7 @@ export enum CommandEffectType {
   CHATTERS = 'chatters',
   COUNTDOWN = 'countdown',
   MEDIA_VOLUME = 'media_volume',
+  ROULETTE = 'roulette',
 }
 
 export interface CommandEffectData {
@@ -378,6 +379,25 @@ export interface MediaVolumeEffectData extends CommandEffectData {
 export interface CountdownEffectData extends CommandEffectData {
   type: CommandEffectType.COUNTDOWN
   data: CountdownCommandData
+}
+
+export interface RouletteEntry {
+  text: string
+  weight: number
+  color: string
+}
+
+export interface RouletteCommandData {
+  widgetIds: string[]
+  theme: string
+  entries: RouletteEntry[]
+  spinDurationMs: string | number
+  winnerDisplayDurationMs: string | number
+}
+
+export interface RouletteEffectData extends CommandEffectData {
+  type: CommandEffectType.ROULETTE
+  data: RouletteCommandData
 }
 
 export interface CommandVariable {
@@ -567,6 +587,7 @@ export enum WIDGET_TYPE {
   DRAWCAST_DRAW = 'drawcast_draw',
   DRAWCAST_CONTROL = 'drawcast_control',
   POMO = 'pomo',
+  ROULETTE = 'roulette',
 }
 
 export interface ModuleDefinition {

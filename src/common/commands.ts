@@ -2,7 +2,7 @@ import { getProp, mustParseHumanDuration, nonce } from '../common/fn'
 import {
   Command, CommandAction, CommandEffectData, CommandEffectType, CommandTrigger, CommandTriggerType,
   CountdownAction, CountdownActionType, FunctionCommand,
-  MediaCommandData, MediaFile, MediaVideo, SoundMediaFile,
+  MediaCommandData, MediaFile, MediaVideo, RouletteCommandData, RouletteEntry, SoundMediaFile,
 } from '../types'
 import { MOD_OR_ABOVE } from './permissions'
 
@@ -34,6 +34,20 @@ export const newMedia = (obj: any = null): MediaCommandData => ({
   image_url: getProp(obj, ['image_url'], ''), // image identified by url only
   video: newMediaVideo(obj?.video),
   minDurationMs: getProp(obj, ['minDurationMs'], '1s'),
+})
+
+export const newRoulette = (): RouletteCommandData => ({
+  widgetIds: [],
+  theme: 'default',
+  entries: [],
+  spinDurationMs: 15000,
+  winnerDisplayDurationMs: 5000,
+})
+
+export const newRouletteEntry = (): RouletteEntry => ({
+  color: '#ffffff',
+  text: '',
+  weight: 1,
 })
 
 export const newCountdownDelay = (): CountdownAction => ({ type: CountdownActionType.DELAY, value: '1s' })
@@ -473,6 +487,7 @@ export const possibleEffectActions = () => ([
   { type: CommandEffectType.MEDIA, label: 'Add media', title: 'media' },
   { type: CommandEffectType.MEDIA_VOLUME, label: 'Add media volume', title: 'media_volume' },
   { type: CommandEffectType.EMOTES, label: 'Add emotes', title: 'emotes' },
+  { type: CommandEffectType.ROULETTE, label: 'Add roulette', title: 'roulette' },
   { type: CommandEffectType.SET_CHANNEL_TITLE, label: 'Add set_channel_title', title: 'set_channel_title' },
   { type: CommandEffectType.SET_CHANNEL_GAME_ID, label: 'Add set_channel_game_id', title: 'set_channel_game_id' },
   { type: CommandEffectType.CHATTERS, label: 'Add chatters', title: 'chatters' },
@@ -519,6 +534,10 @@ const newEffectData = (type: CommandEffectType): any => {
           outro: 'Done!',
           actions: [],
       }
+    case CommandEffectType.MEDIA_VOLUME:
+      return {}
+    case CommandEffectType.ROULETTE:
+      return newRoulette()
     default:
       // should not occur, all possible cases are handled
       return {}

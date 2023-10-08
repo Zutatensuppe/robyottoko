@@ -75,14 +75,14 @@
         <a
           v-if="effect.data.widgetIds.length === 0"
           class="button is-small mr-1"
-          :href="`${widgetUrl}`"
+          :href="`${mediaWidgetUrl}`"
           target="_blank"
         >default widget</a>
         <a
           v-for="(id, idx) in effect.data.widgetIds"
           :key="idx"
           class="button is-small mr-1"
-          :href="`${widgetUrl}?id=${encodeURIComponent(id)}`"
+          :href="`${mediaWidgetUrl}?id=${encodeURIComponent(id)}`"
           target="_blank"
         >
           <code>{{ id }}</code> Widget
@@ -158,6 +158,9 @@
     <div v-else-if="effect.type === CommandEffectType.VARIABLE_CHANGE">
       Change variable. <code>{{ effect.data.name }}</code><code>{{ effect.data.change }}</code><code>{{ effect.data.value }}</code>
     </div>
+    <div v-else-if="effect.type === CommandEffectType.ROULETTE">
+      Spin the roulette wheel
+    </div>
     <div v-else>
       {{ effect }}
     </div>
@@ -173,6 +176,6 @@ defineProps<{
   effect: CommandEffectData,
   imagesVisible: boolean,
   baseVolume: number,
-  widgetUrl: string,
+  mediaWidgetUrl: string,
 }>()
 </script>

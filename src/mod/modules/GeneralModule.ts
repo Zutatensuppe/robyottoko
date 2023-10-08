@@ -383,6 +383,7 @@ class GeneralModule implements Module {
         channelPointsCustomRewards: this.channelPointsCustomRewards,
         mediaWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.MEDIA, this.user.id),
         emoteWallWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.EMOTE_WALL, this.user.id),
+        rouletteWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.ROULETTE, this.user.id),
       },
     }
   }

@@ -80,6 +80,13 @@ const widgets: WidgetDefinition[] = [
     hint: 'Browser source, or open in browser and capture window',
     pub: false,
   },
+  {
+    type: WIDGET_TYPE.ROULETTE,
+    module: MODULE_NAME.GENERAL,
+    title: 'Roulette',
+    hint: 'Browser source, or open in browser and capture window',
+    pub: false,
+  },
 ]
 
 export const moduleByWidgetType = (widgetType: string): string | null => {

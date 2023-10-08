@@ -1,50 +1,54 @@
 <template>
-  <avatar-page
+  <AvatarWidget
     v-if="data && data.widget === 'avatar'"
     :wdata="data"
     :controls="true"
   />
-  <avatar-page
+  <AvatarWidget
     v-else-if="data && data.widget === 'avatar_receive'"
     :wdata="data"
     :controls="false"
   />
-  <drawcast-draw-page
+  <DrawcastDrawWidget
     v-else-if="data && data.widget === 'drawcast_draw'"
     :wdata="data"
   />
-  <drawcast-control-page
+  <DrawcastControlWidget
     v-else-if="data && data.widget === 'drawcast_control'"
     :wdata="data"
   />
-  <drawcast-receive-page
+  <DrawcastReceiveWidget
     v-else-if="data && data.widget === 'drawcast_receive'"
     :wdata="data"
   />
-  <media-page
+  <MediaWidget
     v-else-if="data && data.widget === 'media'"
     :wdata="data"
   />
-  <emote-wall-page
+  <EmoteWallWidget
     v-else-if="data && data.widget === 'emote_wall'"
     :wdata="data"
   />
-  <pomo-page
+  <PomoWidget
     v-else-if="data && data.widget === 'pomo'"
     :wdata="data"
   />
-  <speech-to-text-page
+  <SpeechToTextWidget
     v-else-if="data && data.widget === 'speech-to-text'"
     :wdata="data"
     :controls="true"
   />
-  <speech-to-text-page
+  <SpeechToTextWidget
     v-else-if="data && data.widget === 'speech-to-text_receive'"
     :wdata="data"
     :controls="false"
   />
-  <sr-page
+  <SrWidget
     v-else-if="data && data.widget === 'sr'"
+    :wdata="data"
+  />
+  <RouletteWidget
+    v-else-if="data && data.widget === 'roulette'"
     :wdata="data"
   />
   <div v-else-if="!error">
@@ -59,15 +63,16 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { WidgetApiData } from './util'
 import api from '../_api'
-import AvatarPage from './avatar/Page.vue'
-import DrawcastControlPage from './drawcast_control/Page.vue'
-import DrawcastDrawPage from './drawcast_draw/Page.vue'
-import DrawcastReceivePage from './drawcast_receive/Page.vue'
-import EmoteWallPage from './emote_wall/Page.vue'
-import MediaPage from './media/Page.vue'
-import PomoPage from './pomo/Page.vue'
-import SpeechToTextPage from './speech-to-text/Page.vue'
-import SrPage from './sr/Page.vue'
+import AvatarWidget from './avatar/AvatarWidget.vue'
+import DrawcastControlWidget from './drawcast_control/DrawcastControlWidget.vue'
+import DrawcastDrawWidget from './drawcast_draw/DrawcastDrawWidget.vue'
+import DrawcastReceiveWidget from './drawcast_receive/DrawcastReceiveWidget.vue'
+import EmoteWallWidget from './emote_wall/EmoteWallWidget.vue'
+import MediaWidget from './media/MediaWidget.vue'
+import PomoWidget from './pomo/PomoWidget.vue'
+import SpeechToTextWidget from './speech-to-text/SpeechToTextWidget.vue'
+import SrWidget from './sr/SrWidget.vue'
+import RouletteWidget from './roulette/RouletteWidget.vue'
 
 const data = ref<WidgetApiData | null>(null)
 const error = ref<string>('')

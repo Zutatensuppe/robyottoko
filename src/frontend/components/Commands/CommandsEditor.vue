@@ -139,7 +139,7 @@
                         :effect="effect"
                         :images-visible="imagesVisible"
                         :base-volume="baseVolume"
-                        :widget-url="widgetUrl"
+                        :media-widget-url="mediaWidgetUrl"
                       />
                     </td>
                   </tr>
@@ -198,7 +198,8 @@
       :model-value="editCommand"
       :mode="editIdx >= cmds.length ? 'create' : 'edit'"
       :base-volume="baseVolume"
-      :widget-url="widgetUrl"
+      :media-widget-url="mediaWidgetUrl"
+      :roulette-widget-url="rouletteWidgetUrl"
       @save="commandSave"
       @save-and-close="commandSaveAndClose"
       @cancel="editCommand = null"
@@ -277,12 +278,14 @@ const props = withDefaults(defineProps<{
   showToggleImages?: boolean
   showFilters?: boolean
   showImages?: boolean
-  widgetUrl?: string
+  mediaWidgetUrl?: string
+  rouletteWidgetUrl?: string
 }>(), {
   showToggleImages: false,
   showFilters: false,
   showImages: false,
-  widgetUrl: '',
+  mediaWidgetUrl: '',
+  rouletteWidgetUrl: '',
 })
 
 const emit = defineEmits<{
