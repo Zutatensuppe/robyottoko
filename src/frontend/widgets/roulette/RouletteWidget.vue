@@ -2,12 +2,13 @@
   <RouletteWheel
     v-if="rouletteData"
     :data="rouletteData"
+    @started="onWheelStarted"
     @ended="onWheelEnded"
     @close="onWheelClose"
   />
 </template>
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 import RouletteWheel from './components/RouletteWheel.vue'
 import util, { WidgetApiData } from '../util'
 import WsClient from '../../WsClient'
@@ -22,6 +23,13 @@ let ws: WsClient | null = null
 const settings = ref<GeneralModuleSettings>(default_settings())
 const widgetId = ref<string>(util.getParam('id'))
 const rouletteData = ref<RouletteCommandData | null>(null)
+const rouletteQueue = ref<RouletteCommandData[]>([])
+
+const onWheelStarted = () => {
+  ws?.send(JSON.stringify({ event: 'roulette_start', data: {
+    rouletteData: rouletteData.value,
+  }}))
+}
 
 const onWheelEnded = (winner: string) => {
   ws?.send(JSON.stringify({ event: 'roulette_end', data: {
@@ -32,6 +40,22 @@ const onWheelEnded = (winner: string) => {
 
 const onWheelClose = () => {
   rouletteData.value = null
+  nextTick(() => {
+    // maybe spin next queued one
+    // nextTick is needed to remove the wheel and mount it again
+    maybeSpin()
+  })
+}
+
+const maybeSpin = () => {
+  if (rouletteData.value) {
+    return
+  }
+
+  const data = rouletteQueue.value.shift()
+  if (data) {
+    rouletteData.value = data
+  }
 }
 
 onMounted(() => {
@@ -45,10 +69,8 @@ onMounted(() => {
     } else if (widgetId.value && !data.widgetIds.includes(widgetId.value)) {
       // skipping this, as it isn't coming from right command
     } else {
-      rouletteData.value = data
-      ws?.send(JSON.stringify({ event: 'roulette_start', data: {
-        rouletteData: rouletteData.value,
-      }}))
+      rouletteQueue.value.push(data)
+      maybeSpin()
     }
   })
   ws.connect()

@@ -62,6 +62,7 @@ const props = defineProps<{
 const canvas = ref<HTMLCanvasElement>() as Ref<HTMLCanvasElement>
 
 const emit = defineEmits<{
+  (e: 'started'): void
   (e: 'ended', winner: string): void
   (e: 'close'): void
 }>()
@@ -71,6 +72,7 @@ const theme = computed<WheelTheme>(() => {
 })
 
 const spin = () => {
+  emit('started')
   const spinDurationMs = parseHumanDuration(props.data.spinDurationMs) || 15000
   const winnerDisplayDurationMs = parseHumanDuration(props.data.winnerDisplayDurationMs) || 5000
   const items = props.data.entries.map(e => ({
