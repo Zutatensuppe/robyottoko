@@ -508,7 +508,7 @@ var CommandEffectType;
 var CommandAction;
 (function (CommandAction) {
     // general
-    CommandAction["TEXT"] = "text";
+    CommandAction["GENERAL"] = "general";
     // song request
     CommandAction["SR_CURRENT"] = "sr_current";
     CommandAction["SR_UNDO"] = "sr_undo";
@@ -2259,12 +2259,12 @@ const createCommand = (cmd) => {
     };
 };
 const commands = {
-    [CommandAction.TEXT]: {
+    [CommandAction.GENERAL]: {
         Name: () => 'command',
         Description: () => '',
         NewCommand: () => createCommand({
             triggers: [newCommandTrigger()],
-            action: CommandAction.TEXT,
+            action: CommandAction.GENERAL,
         }),
     },
     [CommandAction.SR_CURRENT]: {
@@ -2574,6 +2574,14 @@ class CommandExecutor {
         });
         return this.isInTimeout(durationMs, last, ctx);
     }
+    async trySay(message, ctx, cmdDef, bot, user) {
+        if (!message) {
+            return;
+        }
+        const m = await doReplacements(message, ctx.rawCmd, ctx.context, cmdDef, bot, user);
+        const say = bot.sayFn(user, ctx.target);
+        say(m);
+    }
     async tryExecuteCommands(contextModule, cmdDefs, ctx, bot, user) {
         const promises = [];
         const repo = bot.getRepos().commandExecutionRepo;
@@ -2582,19 +2590,11 @@ class CommandExecutor {
                 continue;
             }
             if (await this.isInGlobalTimeout(cmdDef, repo, ctx)) {
-                if (cmdDef.cooldown.globalMessage) {
-                    const m = await doReplacements(cmdDef.cooldown.globalMessage, ctx.rawCmd, ctx.context, cmdDef, bot, user);
-                    const say = bot.sayFn(user, ctx.target);
-                    say(m);
-                }
+                this.trySay(cmdDef.cooldown.globalMessage, ctx, cmdDef, bot, user);
                 continue;
             }
             if (await this.isInPerUserTimeout(cmdDef, repo, ctx)) {
-                if (cmdDef.cooldown.perUserMessage) {
-                    const m = await doReplacements(cmdDef.cooldown.perUserMessage, ctx.rawCmd, ctx.context, cmdDef, bot, user);
-                    const say = bot.sayFn(user, ctx.target);
-                    say(m);
-                }
+                this.trySay(cmdDef.cooldown.perUserMessage, ctx, cmdDef, bot, user);
                 continue;
             }
             log$A.info({
@@ -2616,7 +2616,7 @@ class CommandExecutor {
                     target: ctx.target,
                     command: ctx.rawCmd?.name || '<unknown>',
                 }, 'Executed command');
-                resolve(true);
+                resolve();
             });
             promises.push(p);
             await repo.insert({
@@ -4195,167 +4195,6 @@ var EMOTE_DISPLAY_FN;
     EMOTE_DISPLAY_FN.RANDOM_BEZIER,
 ];
 
-const variableChangeToCommandEffect = (variableChange) => {
-    return {
-        type: CommandEffectType.VARIABLE_CHANGE,
-        data: variableChange,
-    };
-};
-const textToCommandEffect = (cmd) => {
-    return {
-        type: CommandEffectType.CHAT,
-        data: {
-            text: !Array.isArray(cmd.data.text) ? [cmd.data.text] : cmd.data.text,
-        },
-    };
-};
-const dictLookupToCommandEffect = (cmd) => {
-    return {
-        type: CommandEffectType.DICT_LOOKUP,
-        data: {
-            lang: cmd.data.lang,
-            phrase: cmd.data.phrase,
-        },
-    };
-};
-const emotesToCommandEffect = (cmd) => {
-    return {
-        type: CommandEffectType.EMOTES,
-        data: {
-            displayFn: cmd.data.displayFn,
-            emotes: cmd.data.emotes,
-        },
-    };
-};
-const mediaToCommandEffect = (cmd) => {
-    if (cmd.data.excludeFromGlobalWidget) {
-        cmd.data.widgetIds = [cmd.id];
-    }
-    else if (typeof cmd.data.widgetIds === 'undefined') {
-        cmd.data.widgetIds = [];
-    }
-    if (typeof cmd.data.excludeFromGlobalWidget !== 'undefined') {
-        delete cmd.data.excludeFromGlobalWidget;
-    }
-    cmd.data.minDurationMs = cmd.data.minDurationMs || 0;
-    cmd.data.sound.volume = cmd.data.sound.volume || 100;
-    if (!cmd.data.sound.urlpath && cmd.data.sound.file) {
-        cmd.data.sound.urlpath = `/uploads/${encodeURIComponent(cmd.data.sound.file)}`;
-    }
-    if (!cmd.data.image.urlpath && cmd.data.image.file) {
-        cmd.data.image.urlpath = `/uploads/${encodeURIComponent(cmd.data.image.file)}`;
-    }
-    if (!cmd.data.image_url || cmd.data.image_url === 'undefined') {
-        cmd.data.image_url = '';
-    }
-    if (!cmd.data.video) {
-        cmd.data.video = {
-            url: cmd.data.video || cmd.data.twitch_clip?.url || '',
-            volume: cmd.data.twitch_clip?.volume || 100,
-        };
-    }
-    if (typeof cmd.data.twitch_clip !== 'undefined') {
-        delete cmd.data.twitch_clip;
-    }
-    return {
-        type: CommandEffectType.MEDIA,
-        data: {
-            image: cmd.data.image,
-            image_url: cmd.data.image_url,
-            minDurationMs: cmd.data.minDurationMs,
-            sound: cmd.data.sound,
-            video: cmd.data.video,
-            widgetIds: cmd.data.widgetIds,
-        },
-    };
-};
-const madochanToCommandEffect = (cmd) => {
-    return {
-        type: CommandEffectType.MADOCHAN,
-        data: {
-            model: cmd.data.model,
-            weirdness: cmd.data.weirdness,
-        },
-    };
-};
-const setChannelTitleToCommandEffect = (cmd) => {
-    return {
-        type: CommandEffectType.SET_CHANNEL_TITLE,
-        data: {
-            title: cmd.data.title,
-        },
-    };
-};
-const setChannelGameIdToCommandEffect = (cmd) => {
-    return {
-        type: CommandEffectType.SET_CHANNEL_GAME_ID,
-        data: {
-            game_id: cmd.data.game_id,
-        },
-    };
-};
-const addStreamTagsToCommandEffect = (cmd) => {
-    return {
-        type: CommandEffectType.ADD_STREAM_TAGS,
-        data: {
-            tag: cmd.data.tag,
-        },
-    };
-};
-const removeStreamTagsToCommandEffect = (cmd) => {
-    return {
-        type: CommandEffectType.REMOVE_STREAM_TAGS,
-        data: {
-            tag: cmd.data.tag,
-        },
-    };
-};
-const chattersToCommandEffect = (_cmd) => {
-    return {
-        type: CommandEffectType.CHATTERS,
-        data: {},
-    };
-};
-const mediaVolumeToCommandEffect = (_cmd) => {
-    return {
-        type: CommandEffectType.MEDIA_VOLUME,
-        data: {},
-    };
-};
-const countdownToCommandEffect = (cmd) => {
-    cmd.data.actions = (cmd.data.actions || []).map((action) => {
-        if (typeof action.value === 'string') {
-            return action;
-        }
-        if (action.value.sound && !action.value.sound.urlpath && action.value.sound.file) {
-            action.value.sound.urlpath = `/uploads/${encodeURIComponent(action.value.sound.file)}`;
-        }
-        if (action.value.image && !action.value.image.urlpath && action.value.image.file) {
-            action.value.image.urlpath = `/uploads/${encodeURIComponent(action.value.image.file)}`;
-        }
-        return action;
-    });
-    return {
-        type: CommandEffectType.COUNTDOWN,
-        data: cmd.data,
-    };
-};
-var legacy = {
-    addStreamTagsToCommandEffect,
-    chattersToCommandEffect,
-    countdownToCommandEffect,
-    dictLookupToCommandEffect,
-    emotesToCommandEffect,
-    madochanToCommandEffect,
-    mediaToCommandEffect,
-    mediaVolumeToCommandEffect,
-    removeStreamTagsToCommandEffect,
-    setChannelGameIdToCommandEffect,
-    setChannelTitleToCommandEffect,
-    textToCommandEffect,
-    variableChangeToCommandEffect,
-};
-
 logger('GeneralModule.ts');
 const noop = () => { return; };
 class GeneralModule {
@@ -4410,104 +4249,6 @@ class GeneralModule {
             });
         }, 1 * SECOND);
     }
-    fix(commands) {
-        let shouldSave = false;
-        const fixedCommands = (commands || []).map((cmd) => {
-            cmd.variables = cmd.variables || [];
-            cmd.effects = cmd.effects || [];
-            if (typeof cmd.cooldown !== 'object') {
-                cmd.cooldown = cmd.timeout || { global: '0', perUser: '0' };
-                shouldSave = true;
-            }
-            if (cmd.timeout) {
-                delete cmd.timeout;
-                shouldSave = true;
-            }
-            if (cmd.variableChanges) {
-                for (const variableChange of cmd.variableChanges) {
-                    cmd.effects.push(legacy.variableChangeToCommandEffect(variableChange));
-                    shouldSave = true;
-                }
-            }
-            if (cmd.action === 'text' && !cmd.effects.find((effect) => effect.type !== CommandEffectType.VARIABLE_CHANGE)) {
-                cmd.effects.push(legacy.textToCommandEffect(cmd));
-                shouldSave = true;
-            }
-            if (cmd.action === 'dict_lookup') {
-                cmd.action = 'text';
-                cmd.effects.push(legacy.dictLookupToCommandEffect(cmd));
-                shouldSave = true;
-            }
-            if (cmd.action === 'emotes') {
-                cmd.action = 'text';
-                cmd.effects.push(legacy.emotesToCommandEffect(cmd));
-                shouldSave = true;
-            }
-            if (cmd.action === 'media') {
-                cmd.action = 'text';
-                cmd.effects.push(legacy.mediaToCommandEffect(cmd));
-                shouldSave = true;
-            }
-            if (cmd.action === 'madochan_createword') {
-                cmd.action = 'text';
-                cmd.effects.push(legacy.madochanToCommandEffect(cmd));
-                shouldSave = true;
-            }
-            if (cmd.action === 'set_channel_title') {
-                cmd.action = 'text';
-                cmd.effects.push(legacy.setChannelTitleToCommandEffect(cmd));
-                shouldSave = true;
-            }
-            if (cmd.action === 'set_channel_game_id') {
-                cmd.action = 'text';
-                cmd.effects.push(legacy.setChannelGameIdToCommandEffect(cmd));
-                shouldSave = true;
-            }
-            if (cmd.action === 'add_stream_tags') {
-                cmd.action = 'text';
-                cmd.effects.push(legacy.addStreamTagsToCommandEffect(cmd));
-                shouldSave = true;
-            }
-            if (cmd.action === 'remove_stream_tags') {
-                cmd.action = 'text';
-                cmd.effects.push(legacy.removeStreamTagsToCommandEffect(cmd));
-                shouldSave = true;
-            }
-            if (cmd.action === 'chatters') {
-                cmd.action = 'text';
-                cmd.effects.push(legacy.chattersToCommandEffect(cmd));
-                shouldSave = true;
-            }
-            if (cmd.action === 'countdown') {
-                cmd.action = 'text';
-                cmd.effects.push(legacy.countdownToCommandEffect(cmd));
-                shouldSave = true;
-            }
-            if (cmd.action === 'media_volume') {
-                cmd.action = 'text';
-                cmd.effects.push(legacy.mediaVolumeToCommandEffect(cmd));
-                shouldSave = true;
-            }
-            if (typeof cmd.cooldown.perUserMessage === 'undefined') {
-                cmd.cooldown.perUserMessage = '';
-                cmd.cooldown.globalMessage = '';
-                shouldSave = true;
-            }
-            cmd.triggers = (cmd.triggers || []).map((trigger) => {
-                trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0;
-                if (trigger.data.minSeconds) {
-                    trigger.data.minInterval = trigger.data.minSeconds * SECOND;
-                }
-                shouldSave = true;
-                return trigger;
-            });
-            return cmd;
-        });
-        return {
-            commands: fixedCommands,
-            shouldSave,
-        };
-    }
     async reinit() {
         const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {
             commands: [],
@@ -4515,11 +4256,17 @@ class GeneralModule {
             adminSettings: default_admin_settings(),
         });
         data.settings = default_settings$5(data.settings);
-        const fixed = this.fix(data.commands);
-        data.commands = fixed.commands;
+        let shouldSave = false;
+        for (const command of data.commands) {
+            if (command.action === 'text') {
+                command.action = CommandAction.GENERAL;
+                command.data = {};
+                shouldSave = true;
+            }
+        }
         // do not remove for now, new users gain the !bot command by this
         if (!data.adminSettings.autocommands.includes('!bot')) {
-            const command = commands.text.NewCommand();
+            const command = commands.general.NewCommand();
             command.triggers = [newCommandTrigger('!bot')];
             command.effects.push({
                 type: CommandEffectType.CHAT,
@@ -4529,7 +4276,7 @@ class GeneralModule {
             });
             data.commands.push(command);
             data.adminSettings.autocommands.push('!bot');
-            fixed.shouldSave = true;
+            shouldSave = true;
         }
         const commands$1 = [];
         const timers = [];
@@ -4539,7 +4286,7 @@ class GeneralModule {
             }
             let cmdObj = null;
             switch (cmd.action) {
-                case CommandAction.TEXT:
+                case CommandAction.GENERAL:
                     cmdObj = Object.assign({}, cmd, { fn: noop });
                     break;
             }
@@ -4588,7 +4335,7 @@ class GeneralModule {
                 }
             }
         });
-        return { data, commands: commands$1, timers, shouldSave: fixed.shouldSave, enabled };
+        return { data, commands: commands$1, timers, shouldSave, enabled };
     }
     getRoutes() {
         return {
@@ -4674,8 +4421,7 @@ class GeneralModule {
                 await this.updateClient('init', ws);
             },
             save: async (_ws, data) => {
-                const fixed = this.fix(data.commands);
-                this.data.commands = fixed.commands;
+                this.data.commands = data.commands;
                 this.data.settings = data.settings;
                 this.data.adminSettings = data.adminSettings;
                 await this.save();
@@ -5466,9 +5212,6 @@ class SongrequestModule {
                 stacks: initData.data.stacks,
             };
             this.commands = initData.commands;
-            if (initData.shouldSave) {
-                await this.bot.getRepos().module.save(this.user.id, this.name, this.data);
-            }
             return this;
         })();
     }
@@ -5482,7 +5225,6 @@ class SongrequestModule {
         this.user = user;
     }
     async reinit() {
-        let shouldSave = false;
         const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {
             filter: {
                 show: { tags: [] },
@@ -5524,13 +5266,6 @@ class SongrequestModule {
         data.playlist = default_playlist(data.playlist);
         data.settings = default_settings$4(data.settings);
         data.commands = default_commands(data.commands);
-        data.commands.forEach((cmd) => {
-            if (typeof cmd.cooldown.perUserMessage === 'undefined') {
-                cmd.cooldown.perUserMessage = '';
-                cmd.cooldown.globalMessage = '';
-                shouldSave = true;
-            }
-        });
         return {
             data: {
                 playlist: data.playlist,
@@ -5540,7 +5275,6 @@ class SongrequestModule {
                 stacks: data.stacks,
             },
             commands: this.initCommands(data.commands),
-            shouldSave,
             enabled,
         };
     }
@@ -7683,9 +7417,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-10-08T19:18:17.604Z",
+    buildDate: "2023-10-09T23:03:37.247Z",
     // @ts-ignore
-    buildVersion: "1.67.0",
+    buildVersion: "1.68.0",
 };
 
 const log$f = logger('StreamStatusUpdater.ts');
@@ -8142,86 +7876,161 @@ class Discord {
 
 const loadedAssets = {};
 const log$c = logger('emote-parse.ts');
+var Scope;
+(function (Scope) {
+    Scope["GLOBAL"] = "global";
+    Scope["CHANNEL"] = "channel";
+})(Scope || (Scope = {}));
+var Provider;
+(function (Provider) {
+    Provider["BTTV"] = "bttv";
+    Provider["FFZ"] = "ffz";
+    Provider["SEVENTV"] = "7tv";
+    Provider["TWITCH"] = "twitch";
+})(Provider || (Provider = {}));
+const errorMessage = (provider, scope, channel) => {
+    return `Failed to load ${provider} ${scope} emotes for ${channel}`;
+};
+const parseTwitchEmote = (obj) => {
+    const url = obj.images['url_4x']
+        || obj.images['url_2x']
+        || obj.images['url_1x']
+        || '';
+    if (!url) {
+        return null;
+    }
+    return {
+        code: obj.name,
+        img: url,
+        type: Provider.TWITCH,
+    };
+};
+const parseBttvEmote = (obj) => {
+    return {
+        code: obj.code,
+        img: `https://cdn.betterttv.net/emote/${obj.id}/3x`,
+        type: Provider.BTTV,
+    };
+};
+const parseFfzEmote = (obj) => {
+    const img = obj.urls[4] != undefined ? obj.urls[4]
+        : obj.urls[2] != undefined ? obj.urls[2]
+            : obj.urls[1];
+    return {
+        code: obj.name,
+        img: `https:${img}`,
+        type: Provider.FFZ,
+    };
+};
+const parseSeventvV2Emote = (obj) => {
+    const urls = {};
+    if (obj.urls[3]) {
+        urls['4x.webp'] = obj.urls[3][1];
+    }
+    if (obj.urls[2]) {
+        urls['3x.webp'] = obj.urls[2][1];
+    }
+    if (obj.urls[1]) {
+        urls['2x.webp'] = obj.urls[1][1];
+    }
+    if (obj.urls[0]) {
+        urls['1x.webp'] = obj.urls[0][1];
+    }
+    const img = urls['4x.webp'] != undefined ? urls['4x.webp']
+        : urls['2x.webp'] != undefined ? urls['2x.webp']
+            : urls['1x.webp'] != undefined ? urls['1x.webp']
+                : '';
+    if (!img) {
+        return null;
+    }
+    return {
+        code: obj.name,
+        img,
+        type: Provider.SEVENTV,
+    };
+};
+const parseSeventvV3Emote = (obj) => {
+    const urls = {};
+    obj.data.host.files.forEach((f) => {
+        urls[f.name] = `${obj.data.host.url}/${f.name}`;
+    });
+    const img = urls['4x.webp'] != undefined ? urls['4x.webp']
+        : urls['2x.webp'] != undefined ? urls['2x.webp']
+            : urls['1x.webp'] != undefined ? urls['1x.webp']
+                : '';
+    if (!img) {
+        return null;
+    }
+    return {
+        code: obj.name,
+        img,
+        type: Provider.SEVENTV,
+    };
+};
 async function loadAssets(channel, channelId, helixClient) {
-    const ts = new Date().getTime();
-    if (loadedAssets[channel]
-        && loadedAssets[channel].lastLoadedTs
-        && (ts - loadedAssets[channel].lastLoadedTs) < 10 * MINUTE) {
+    const now = new Date().getTime();
+    const lastLoadedTs = loadedAssets[channel] ? loadedAssets[channel].lastLoadedTs : null;
+    if (lastLoadedTs && (now - lastLoadedTs) < 10 * MINUTE) {
         return;
     }
     loadedAssets[channel] = await loadConcurrent(channelId, channel, helixClient);
-    loadedAssets[channel].lastLoadedTs = ts;
+    loadedAssets[channel].lastLoadedTs = now;
 }
-async function loadConcurrent(uid, channel, helixClient) {
-    // NOTE: FFZ
+async function loadConcurrent(channelId, channel, helixClient) {
     const loadedChannelAssets = {
         lastLoadedTs: null,
         channel,
-        uid,
+        uid: channelId,
         emotes: [],
         allLoaded: false,
         loaded: {
-            'bttv': {
-                global: false,
-                channel: false,
-            },
-            'ffz': {
-                global: false,
-                channel: false,
-            },
-            '7tv': {
-                global: false,
-                channel: false,
-            },
-            'twitch': {
-                global: false,
-                channel: false,
-            },
+            [Provider.BTTV]: { global: false, channel: false },
+            [Provider.FFZ]: { global: false, channel: false },
+            [Provider.SEVENTV]: { global: false, channel: false },
+            [Provider.TWITCH]: { global: false, channel: false },
         },
     };
-    function checkLoadedAll(type, extra) {
-        if (loadedChannelAssets.loaded[type][extra] == false) {
-            loadedChannelAssets.loaded[type][extra] = true;
+    function checkLoadedAll(type, scope) {
+        if (loadedChannelAssets.loaded[type][scope] == false) {
+            loadedChannelAssets.loaded[type][scope] = true;
         }
         const trueVals = [];
         Object.keys(loadedChannelAssets.loaded).forEach((e, _ind) => {
             const obj = loadedChannelAssets.loaded[e];
-            let allTrue = true;
-            Object.keys(obj).forEach(ele => {
-                // @ts-ignore
-                ele = e[ele];
-                // @ts-ignore
-                if (ele == false) {
-                    allTrue = false;
-                }
-            });
+            const allTrue = !Object.values(obj).includes(false);
             trueVals.push(allTrue);
         });
         loadedChannelAssets.allLoaded = !trueVals.includes(false);
-        return !trueVals.includes(false);
+        if (loadedChannelAssets.allLoaded) {
+            loadedChannelAssets.emotes = loadedChannelAssets.emotes.sort(compareLength);
+        }
     }
     const promises = [];
+    // NOTE: FFZ
     promises.push(fetch(`https://api.frankerfacez.com/v1/room/${channel}`)
         .then(response => response.json())
         .then(body => {
+        const provider = Provider.FFZ;
+        const scope = Scope.CHANNEL;
         try {
+            if (body.status === 404) {
+                return;
+            }
             Object.keys(body.sets).forEach(el => {
                 const e = body.sets[el];
                 e.emoticons.forEach((ele) => {
-                    ele.code = ele.name;
-                    ele.type = 'ffz';
-                    loadedChannelAssets.emotes.push(ele);
+                    const emote = parseFfzEmote(ele);
+                    if (emote) {
+                        loadedChannelAssets.emotes.push(emote);
+                    }
                 });
             });
-            checkLoadedAll('ffz', 'channel');
-            if (loadedChannelAssets.allLoaded) {
-                loadedChannelAssets.emotes = loadedChannelAssets.emotes.sort(compareLength);
-            }
+            checkLoadedAll(provider, scope);
         }
         catch (error) {
             log$c.error({
                 channel,
-                message: '(1) Failed to load FFz channel emotes for ' + channel,
+                message: errorMessage(provider, scope, channel),
                 error,
             });
         }
@@ -8231,24 +8040,23 @@ async function loadConcurrent(uid, channel, helixClient) {
     promises.push(fetch(`https://api.frankerfacez.com/v1/set/global`)
         .then(response => response.json())
         .then(body => {
+        const provider = Provider.FFZ;
+        const scope = Scope.GLOBAL;
         try {
-            Object.keys(body.sets).forEach(el => {
-                const e = body.sets[el];
-                e.emoticons.forEach((ele) => {
-                    ele.code = ele.name;
-                    ele.type = 'ffz';
-                    loadedChannelAssets.emotes.push(ele);
+            Object.values(body.sets).forEach((emoteSet) => {
+                Object.values(emoteSet.emoticons).forEach((globalEmote) => {
+                    const emote = parseFfzEmote(globalEmote);
+                    if (emote) {
+                        loadedChannelAssets.emotes.push(emote);
+                    }
                 });
             });
-            checkLoadedAll('ffz', 'global');
-            if (loadedChannelAssets.allLoaded) {
-                loadedChannelAssets.emotes = loadedChannelAssets.emotes.sort(compareLength);
-            }
+            checkLoadedAll(provider, scope);
         }
         catch (error) {
             log$c.error({
                 channel,
-                message: 'Failed to load global FFz channel emotes',
+                message: errorMessage(provider, scope, channel),
                 error,
             });
         }
@@ -8256,27 +8064,33 @@ async function loadConcurrent(uid, channel, helixClient) {
         log$c.error(e);
     }));
     // NOTE: BTTV
-    promises.push(fetch(`https://api.betterttv.net/3/cached/users/twitch/${uid}`)
+    promises.push(fetch(`https://api.betterttv.net/3/cached/users/twitch/${channelId}`)
         .then(response => response.json())
         .then(body => {
+        const provider = Provider.BTTV;
+        const scope = Scope.CHANNEL;
         try {
-            body.channelEmotes.forEach((ele) => {
-                ele.type = 'bttv';
-                loadedChannelAssets.emotes.push(ele);
-            });
-            body.sharedEmotes.forEach((ele) => {
-                ele.type = 'bttv';
-                loadedChannelAssets.emotes.push(ele);
-            });
-            checkLoadedAll('bttv', 'channel');
-            if (loadedChannelAssets.allLoaded) {
-                loadedChannelAssets.emotes = loadedChannelAssets.emotes.sort(compareLength);
+            if (body.message === 'user not found') {
+                return;
             }
+            Object.values(body.channelEmotes).forEach((channelEmote) => {
+                const emote = parseBttvEmote(channelEmote);
+                if (emote) {
+                    loadedChannelAssets.emotes.push(emote);
+                }
+            });
+            Object.values(body.sharedEmotes).forEach((sharedEmote) => {
+                const emote = parseBttvEmote(sharedEmote);
+                if (emote) {
+                    loadedChannelAssets.emotes.push(emote);
+                }
+            });
+            checkLoadedAll(provider, scope);
         }
         catch (error) {
             log$c.error({
                 channel,
-                message: 'Failed to load BetterTTV channel emotes for ' + channel,
+                message: errorMessage(provider, scope, channel),
                 error,
             });
         }
@@ -8286,20 +8100,21 @@ async function loadConcurrent(uid, channel, helixClient) {
     promises.push(fetch(`https://api.betterttv.net/3/cached/emotes/global`)
         .then(response => response.json())
         .then(body => {
+        const provider = Provider.BTTV;
+        const scope = Scope.GLOBAL;
         try {
-            body.forEach((ele) => {
-                ele.type = 'bttv';
-                loadedChannelAssets.emotes.push(ele);
+            Object.values(body).forEach((globalEmote) => {
+                const emote = parseBttvEmote(globalEmote);
+                if (emote) {
+                    loadedChannelAssets.emotes.push(emote);
+                }
             });
-            checkLoadedAll('bttv', 'global');
-            if (loadedChannelAssets.allLoaded) {
-                loadedChannelAssets.emotes = loadedChannelAssets.emotes.sort(compareLength);
-            }
+            checkLoadedAll(provider, scope);
         }
         catch (error) {
             log$c.error({
                 channel,
-                message: 'Failed to load BetterTTV global emotes for ' + channel,
+                message: errorMessage(provider, scope, channel),
                 error,
             });
         }
@@ -8307,38 +8122,27 @@ async function loadConcurrent(uid, channel, helixClient) {
         log$c.error(e);
     }));
     // NOTE: 7TV
-    promises.push(fetch(`https://api.7tv.app/v3/users/twitch/${uid}`)
+    promises.push(fetch(`https://api.7tv.app/v3/users/twitch/${channelId}`)
         .then(response => response.json())
         .then(body => {
+        const provider = Provider.SEVENTV;
+        const scope = Scope.CHANNEL;
         try {
-            if (body.emote_set?.emotes) {
-                body.emote_set?.emotes.forEach((emote) => {
-                    const urls = {};
-                    emote.data.host.files.forEach((f) => {
-                        urls[f.name] = emote.data.host.url + '/' + f.name;
-                    });
-                    loadedChannelAssets.emotes.push({
-                        code: emote.name,
-                        type: '7tv',
-                        urls,
-                    });
-                });
-                checkLoadedAll('7tv', 'channel');
-                if (loadedChannelAssets.allLoaded) {
-                    loadedChannelAssets.emotes = loadedChannelAssets.emotes.sort(compareLength);
+            if (body.status_code === 404) {
+                return;
+            }
+            Object.values(body.emote_set.emotes).forEach((channelEmote) => {
+                const emote = parseSeventvV3Emote(channelEmote);
+                if (emote) {
+                    loadedChannelAssets.emotes.push(emote);
                 }
-            }
-            else {
-                log$c.error({
-                    channel,
-                    message: 'No 7TV user available for ' + channel,
-                });
-            }
+            });
+            checkLoadedAll(provider, scope);
         }
         catch (error) {
             log$c.error({
                 channel,
-                message: 'Failed to load 7TV channel emotes for ' + channel,
+                message: errorMessage(provider, scope, channel),
                 error,
             });
         }
@@ -8348,36 +8152,21 @@ async function loadConcurrent(uid, channel, helixClient) {
     promises.push(fetch(`https://api.7tv.app/v2/emotes/global`)
         .then(response => response.json())
         .then(body => {
+        const provider = Provider.SEVENTV;
+        const scope = Scope.GLOBAL;
         try {
-            body.forEach((ele) => {
-                const urls = {};
-                if (ele.urls[3]) {
-                    urls['4x.webp'] = ele.urls[3][1];
+            Object.values(body).forEach((globalEmote) => {
+                const emote = parseSeventvV2Emote(globalEmote);
+                if (emote) {
+                    loadedChannelAssets.emotes.push(emote);
                 }
-                if (ele.urls[2]) {
-                    urls['3x.webp'] = ele.urls[2][1];
-                }
-                if (ele.urls[1]) {
-                    urls['2x.webp'] = ele.urls[1][1];
-                }
-                if (ele.urls[0]) {
-                    urls['1x.webp'] = ele.urls[0][1];
-                }
-                loadedChannelAssets.emotes.push({
-                    code: ele.name,
-                    type: '7tv',
-                    urls,
-                });
             });
-            checkLoadedAll('7tv', 'global');
-            if (loadedChannelAssets.allLoaded) {
-                loadedChannelAssets.emotes = loadedChannelAssets.emotes.sort(compareLength);
-            }
+            checkLoadedAll(provider, scope);
         }
         catch (error) {
             log$c.error({
                 channel,
-                message: 'Failed to load 7TV global emotes for ' + channel,
+                message: errorMessage(provider, scope, channel),
                 error,
             });
         }
@@ -8385,28 +8174,24 @@ async function loadConcurrent(uid, channel, helixClient) {
         log$c.error(e);
     }));
     // Note: TWITCH
-    promises.push(helixClient.getChannelEmotes(uid)
+    promises.push(helixClient.getChannelEmotes(channelId)
         .then(body => {
+        const provider = Provider.TWITCH;
+        const scope = Scope.CHANNEL;
         if (body) {
-            body.data.forEach((ele) => {
-                const url = ele.images['url_4x']
-                    || ele.images['url_2x']
-                    || ele.images['url_1x']
-                    || '';
-                loadedChannelAssets.emotes.push({
-                    code: ele.name,
-                    type: 'twitch',
-                    url,
-                });
+            Object.values(body.data).forEach((channelEmote) => {
+                const emote = parseTwitchEmote(channelEmote);
+                if (emote) {
+                    loadedChannelAssets.emotes.push(emote);
+                }
             });
-            checkLoadedAll('twitch', 'channel');
-            if (loadedChannelAssets.allLoaded) {
-                loadedChannelAssets.emotes = loadedChannelAssets.emotes.sort(compareLength);
-            }
+            checkLoadedAll(provider, scope);
         }
         else {
             log$c.error({
-                message: 'Failed to load TWITCH channel emotes for ' + channel,
+                channel,
+                message: errorMessage(provider, scope, channel),
+                error: null,
             });
         }
     }).catch((e) => {
@@ -8414,26 +8199,22 @@ async function loadConcurrent(uid, channel, helixClient) {
     }));
     promises.push(helixClient.getGlobalEmotes()
         .then(body => {
+        const provider = Provider.TWITCH;
+        const scope = Scope.GLOBAL;
         if (body) {
-            body.data.forEach((ele) => {
-                const url = ele.images['url_4x']
-                    || ele.images['url_2x']
-                    || ele.images['url_1x']
-                    || '';
-                loadedChannelAssets.emotes.push({
-                    code: ele.name,
-                    type: 'twitch',
-                    url,
-                });
+            Object.values(body.data).forEach((globalEmote) => {
+                const emote = parseTwitchEmote(globalEmote);
+                if (emote) {
+                    loadedChannelAssets.emotes.push(emote);
+                }
             });
-            checkLoadedAll('twitch', 'global');
-            if (loadedChannelAssets.allLoaded) {
-                loadedChannelAssets.emotes = loadedChannelAssets.emotes.sort(compareLength);
-            }
+            checkLoadedAll(provider, scope);
         }
         else {
             log$c.error({
-                message: 'Failed to load TWITCH global emotes for ' + channel,
+                channel,
+                message: errorMessage(provider, scope, channel),
+                error: null,
             });
         }
     }).catch((e) => {
@@ -8453,52 +8234,47 @@ function compareLength(a, b) {
 }
 function compareEnd(a, b) {
     if (a.end < b.end) {
-        return -1;
+        return 1;
     }
     if (a.end > b.end) {
-        return 1;
+        return -1;
     }
     return 0;
 }
-function getMessageEmotes(message, tags, channel) {
-    let emotes = [];
-    const gotEmotes = [];
-    if (tags && tags.emotes != null && typeof tags.emotes !== undefined) {
-        const tagEmotes = tags.emotes;
-        Object.keys(tagEmotes).forEach((el, ind) => {
-            const em = tagEmotes[el];
+function getMessageEmotes(message, userstate, channel) {
+    const emotes = [];
+    if (userstate &&
+        userstate.emotes != null &&
+        typeof userstate.emotes !== undefined) {
+        const repEmotes = [];
+        const userstateEmotes = userstate.emotes;
+        Object.keys(userstateEmotes).forEach((el, ind) => {
+            const em = userstateEmotes[el];
             em.forEach((ele) => {
-                const start = parseInt(ele.split('-')[0]);
-                const end = parseInt(ele.split('-')[1]);
-                emotes.push({
-                    start: start,
-                    end: end,
-                    rep: Object.keys(tagEmotes)[ind],
+                repEmotes.push({
+                    start: parseInt(ele.split('-')[0]),
+                    end: parseInt(ele.split('-')[1]),
+                    rep: Object.keys(userstateEmotes)[ind],
                 });
             });
         });
-        emotes.sort(compareEnd);
-        emotes = emotes.reverse();
-        emotes.forEach((ele, _ind) => {
-            const code = message.substring(ele.start, ele.end + 1);
-            gotEmotes.push({
-                code: code,
+        repEmotes.sort(compareEnd);
+        repEmotes.forEach((ele) => {
+            emotes.push({
+                code: message.substring(ele.start, ele.end + 1),
                 img: `https://static-cdn.jtvnw.net/emoticons/v2/${ele.rep}/default/dark/3.0`,
-                type: 'twitch',
+                type: Provider.TWITCH,
             });
             message = message.substring(0, ele.start) + message.substring(ele.end + 1, message.length);
         });
     }
-    const fEmotes = replaceAll(message, channel);
-    fEmotes.forEach(ele => {
-        gotEmotes.push(ele);
-    });
-    return gotEmotes;
+    emotes.push(...detectEmotesInMessage(message, channel));
+    return emotes;
 }
 function escapeRegex(str) {
     return str.replace(/[-[\]{}()*+!<=:?./\\^$|#\s,]/g, '\\$&');
 }
-function replaceAll(msg, channel) {
+function detectEmotesInMessage(msg, channel) {
     const emotes = [];
     const channelEmotes = loadedAssets[channel]?.emotes || [];
     channelEmotes.forEach((ele) => {
@@ -8509,43 +8285,7 @@ function replaceAll(msg, channel) {
             m = msg.match(regex);
             msg = msg.replace(regex, '');
             if (m) {
-                if (ele.type == 'bttv') {
-                    emotes.push({
-                        code: ele.code,
-                        img: `https://cdn.betterttv.net/emote/${ele.id}/3x`,
-                        type: 'bttv',
-                    });
-                }
-                else if (ele.type == 'ffz') {
-                    const poss = ele.urls[4] != undefined ? ele.urls[4] : ele.urls[2] != undefined ? ele.urls[2] : ele.urls[1];
-                    emotes.push({
-                        code: ele.code,
-                        img: `https:${poss}`,
-                        type: 'ffz',
-                    });
-                }
-                else if (ele.type == '7tv') {
-                    const poss = ele.urls['4x.webp'] != undefined ? ele.urls['4x.webp']
-                        : ele.urls['2x.webp'] != undefined ? ele.urls['2x.webp']
-                            : ele.urls['1x.webp'] != undefined ? ele.urls['1x.webp']
-                                : '';
-                    if (poss) {
-                        emotes.push({
-                            code: ele.code,
-                            img: poss,
-                            type: '7tv',
-                        });
-                    }
-                }
-                else if (ele.type == 'twitch') {
-                    if (ele.url) {
-                        emotes.push({
-                            code: ele.code,
-                            img: ele.url,
-                            type: 'twitch',
-                        });
-                    }
-                }
+                emotes.push(ele);
             }
         } while (m);
     });
