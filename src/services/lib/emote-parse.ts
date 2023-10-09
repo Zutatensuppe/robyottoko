@@ -2,7 +2,7 @@ import { ChatUserstate } from 'tmi.js'
 import { logger, MINUTE } from './../../common/fn'
 import TwitchHelixClient from '../TwitchHelixClient'
 
-const loadedAssets: Record<string, any> = {}
+const loadedAssets: Record<string, LoadedChannelAssets> = {}
 
 const log = logger('emote-parse.ts')
 
@@ -12,98 +12,202 @@ interface RepEmote {
   rep: string
 }
 
+interface Emote {
+  code: string
+  img: string
+  type: Provider
+}
+
+enum Scope {
+  GLOBAL = 'global',
+  CHANNEL = 'channel',
+}
+
+type ScopeMap = Record<Scope, boolean>
+
+interface LoadedChannelAssets {
+  lastLoadedTs: null | number
+  channel: string
+  uid: string
+  emotes: Emote[]
+  allLoaded: boolean
+  loaded: {
+    [Provider.BTTV]: ScopeMap,
+    [Provider.FFZ]: ScopeMap,
+    [Provider.SEVENTV]: ScopeMap,
+    [Provider.TWITCH]: ScopeMap,
+  },
+}
+
+enum Provider {
+  BTTV = 'bttv',
+  FFZ = 'ffz',
+  SEVENTV = '7tv',
+  TWITCH = 'twitch',
+}
+
+const errorMessage = (provider: Provider, scope: Scope, channel: string) => {
+  return `Failed to load ${provider} ${scope} emotes for ${channel}`
+}
+
+const parseTwitchEmote = (obj: any): Emote | null => {
+  const url: string = obj.images['url_4x']
+    || obj.images['url_2x']
+    || obj.images['url_1x']
+    || ''
+  if (!url) {
+    return null
+  }
+  return {
+    code: obj.name,
+    img: url,
+    type: Provider.TWITCH,
+  }
+}
+
+const parseBttvEmote = (obj: any): Emote | null => {
+  return {
+    code: obj.code,
+    img: `https://cdn.betterttv.net/emote/${obj.id}/3x`,
+    type: Provider.BTTV,
+  }
+}
+
+const parseFfzEmote = (obj: any): Emote | null => {
+  const img = obj.urls[4] != undefined ? obj.urls[4]
+    : obj.urls[2] != undefined ? obj.urls[2]
+      : obj.urls[1]
+  return {
+    code: obj.name,
+    img: `https:${img}`,
+    type: Provider.FFZ,
+  }
+}
+
+const parseSeventvV2Emote = (obj: any): Emote | null => {
+  const urls: Record<string, string> = {}
+  if (obj.urls[3]) {
+    urls['4x.webp'] = obj.urls[3][1]
+  }
+  if (obj.urls[2]) {
+    urls['3x.webp'] = obj.urls[2][1]
+  }
+  if (obj.urls[1]) {
+    urls['2x.webp'] = obj.urls[1][1]
+  }
+  if (obj.urls[0]) {
+    urls['1x.webp'] = obj.urls[0][1]
+  }
+  const img = urls['4x.webp'] != undefined ? urls['4x.webp']
+    : urls['2x.webp'] != undefined ? urls['2x.webp']
+      : urls['1x.webp'] != undefined ? urls['1x.webp']
+        : ''
+  if (!img) {
+    return null
+  }
+  return {
+    code: obj.name,
+    img,
+    type: Provider.SEVENTV,
+  }
+}
+
+const parseSeventvV3Emote = (obj: any): Emote | null => {
+  const urls: Record<string, string> = {}
+  obj.data.host.files.forEach((f: any) => {
+    urls[f.name] = `${obj.data.host.url}/${f.name}`
+  })
+  const img = urls['4x.webp'] != undefined ? urls['4x.webp']
+    : urls['2x.webp'] != undefined ? urls['2x.webp']
+      : urls['1x.webp'] != undefined ? urls['1x.webp']
+        : ''
+  if (!img) {
+    return null
+  }
+  return {
+    code: obj.name,
+    img,
+    type: Provider.SEVENTV,
+  }
+}
+
 async function loadAssets(channel: string, channelId: string, helixClient: TwitchHelixClient) {
-  const ts = new Date().getTime()
-  if (
-    loadedAssets[channel]
-    && loadedAssets[channel].lastLoadedTs
-    && (ts - loadedAssets[channel].lastLoadedTs) < 10 * MINUTE
-  ) {
+  const now = new Date().getTime()
+  const lastLoadedTs = loadedAssets[channel] ? loadedAssets[channel].lastLoadedTs : null
+  if (lastLoadedTs && (now - lastLoadedTs) < 10 * MINUTE) {
     return
   }
 
   loadedAssets[channel] = await loadConcurrent(channelId, channel, helixClient)
-  loadedAssets[channel].lastLoadedTs = ts
+  loadedAssets[channel].lastLoadedTs = now
 }
 
-async function loadConcurrent(uid: string, channel: string, helixClient: TwitchHelixClient) {
-  // NOTE: FFZ
+async function loadConcurrent(
+  channelId: string,
+  channel: string,
+  helixClient: TwitchHelixClient,
+): Promise<LoadedChannelAssets> {
 
-  const loadedChannelAssets = {
+  const loadedChannelAssets: LoadedChannelAssets = {
     lastLoadedTs: null,
     channel,
-    uid,
+    uid: channelId,
     emotes: [] as any[],
     allLoaded: false,
     loaded: {
-      'bttv': {
-        global: false,
-        channel: false,
-      },
-      'ffz': {
-        global: false,
-        channel: false,
-      },
-      '7tv': {
-        global: false,
-        channel: false,
-      },
-      'twitch': {
-        global: false,
-        channel: false,
-      },
+      [Provider.BTTV]: { global: false, channel: false },
+      [Provider.FFZ]: { global: false, channel: false },
+      [Provider.SEVENTV]: { global: false, channel: false },
+      [Provider.TWITCH]: { global: false, channel: false },
     },
   }
 
-  function checkLoadedAll(type: 'bttv' | 'ffz' | '7tv' | 'twitch', extra: 'global' | 'channel') {
-    if (loadedChannelAssets.loaded[type][extra] == false) {
-      loadedChannelAssets.loaded[type][extra] = true
+  function checkLoadedAll(type: Provider, scope: Scope) {
+    if (loadedChannelAssets.loaded[type][scope] == false) {
+      loadedChannelAssets.loaded[type][scope] = true
     }
 
     const trueVals: boolean[] = []
     Object.keys(loadedChannelAssets.loaded).forEach((e: string, _ind) => {
-      const obj = loadedChannelAssets.loaded[e as 'bttv' | 'ffz' | '7tv' | 'twitch']
-      let allTrue = true
-      Object.keys(obj).forEach(ele => {
-        // @ts-ignore
-        ele = e[ele]
-        // @ts-ignore
-        if (ele == false) {
-          allTrue = false
-        }
-      })
-
+      const obj = loadedChannelAssets.loaded[e as Provider]
+      const allTrue = !Object.values(obj).includes(false)
       trueVals.push(allTrue)
     })
 
     loadedChannelAssets.allLoaded = !trueVals.includes(false)
-    return !trueVals.includes(false)
+    if (loadedChannelAssets.allLoaded) {
+      loadedChannelAssets.emotes = loadedChannelAssets.emotes.sort(compareLength)
+    }
   }
 
   const promises: Promise<void>[] = []
 
+  // NOTE: FFZ
   promises.push(fetch(`https://api.frankerfacez.com/v1/room/${channel}`)
     .then(response => response.json())
     .then(body => {
+      const provider = Provider.FFZ
+      const scope = Scope.CHANNEL
       try {
+        if (body.status === 404) {
+          return
+        }
+
         Object.keys(body.sets).forEach(el => {
           const e = body.sets[el]
           e.emoticons.forEach((ele: any) => {
-            ele.code = ele.name
-            ele.type = 'ffz'
-            loadedChannelAssets.emotes.push(ele)
+            const emote = parseFfzEmote(ele)
+            if (emote) {
+              loadedChannelAssets.emotes.push(emote)
+            }
           })
         })
 
-        checkLoadedAll('ffz', 'channel')
-        if (loadedChannelAssets.allLoaded) {
-          loadedChannelAssets.emotes = loadedChannelAssets.emotes.sort(compareLength)
-        }
-
+        checkLoadedAll(provider, scope)
       } catch (error) {
         log.error({
           channel,
-          message: '(1) Failed to load FFz channel emotes for ' + channel,
+          message: errorMessage(provider, scope, channel),
           error,
         })
       }
@@ -114,25 +218,23 @@ async function loadConcurrent(uid: string, channel: string, helixClient: TwitchH
   promises.push(fetch(`https://api.frankerfacez.com/v1/set/global`)
     .then(response => response.json())
     .then(body => {
+      const provider = Provider.FFZ
+      const scope = Scope.GLOBAL
       try {
-        Object.keys(body.sets).forEach(el => {
-          const e = body.sets[el]
-
-          e.emoticons.forEach((ele: any) => {
-            ele.code = ele.name
-            ele.type = 'ffz'
-            loadedChannelAssets.emotes.push(ele)
+        Object.values(body.sets).forEach((emoteSet: any) => {
+          Object.values(emoteSet.emoticons).forEach((globalEmote: any) => {
+            const emote = parseFfzEmote(globalEmote)
+            if (emote) {
+              loadedChannelAssets.emotes.push(emote)
+            }
           })
         })
 
-        checkLoadedAll('ffz', 'global')
-        if (loadedChannelAssets.allLoaded) {
-          loadedChannelAssets.emotes = loadedChannelAssets.emotes.sort(compareLength)
-        }
+        checkLoadedAll(provider, scope)
       } catch (error) {
         log.error({
           channel,
-          message: 'Failed to load global FFz channel emotes',
+          message: errorMessage(provider, scope, channel),
           error,
         })
       }
@@ -142,28 +244,35 @@ async function loadConcurrent(uid: string, channel: string, helixClient: TwitchH
 
 
   // NOTE: BTTV
-  promises.push(fetch(`https://api.betterttv.net/3/cached/users/twitch/${uid}`)
+  promises.push(fetch(`https://api.betterttv.net/3/cached/users/twitch/${channelId}`)
     .then(response => response.json())
     .then(body => {
+      const provider = Provider.BTTV
+      const scope = Scope.CHANNEL
       try {
-        body.channelEmotes.forEach((ele: any) => {
-          ele.type = 'bttv'
-          loadedChannelAssets.emotes.push(ele)
-        })
-
-        body.sharedEmotes.forEach((ele: any) => {
-          ele.type = 'bttv'
-          loadedChannelAssets.emotes.push(ele)
-        })
-
-        checkLoadedAll('bttv', 'channel')
-        if (loadedChannelAssets.allLoaded) {
-          loadedChannelAssets.emotes = loadedChannelAssets.emotes.sort(compareLength)
+        if (body.message === 'user not found') {
+          return
         }
+
+        Object.values(body.channelEmotes).forEach((channelEmote: any) => {
+          const emote = parseBttvEmote(channelEmote)
+          if (emote) {
+            loadedChannelAssets.emotes.push(emote)
+          }
+        })
+
+        Object.values(body.sharedEmotes).forEach((sharedEmote: any) => {
+          const emote = parseBttvEmote(sharedEmote)
+          if (emote) {
+            loadedChannelAssets.emotes.push(emote)
+          }
+        })
+
+        checkLoadedAll(provider, scope)
       } catch (error) {
         log.error({
           channel,
-          message: 'Failed to load BetterTTV channel emotes for ' + channel,
+          message: errorMessage(provider, scope, channel),
           error,
         })
       }
@@ -174,20 +283,21 @@ async function loadConcurrent(uid: string, channel: string, helixClient: TwitchH
   promises.push(fetch(`https://api.betterttv.net/3/cached/emotes/global`)
     .then(response => response.json())
     .then(body => {
+      const provider = Provider.BTTV
+      const scope = Scope.GLOBAL
       try {
-        body.forEach((ele: any) => {
-          ele.type = 'bttv'
-          loadedChannelAssets.emotes.push(ele)
+        Object.values(body).forEach((globalEmote: any) => {
+          const emote = parseBttvEmote(globalEmote)
+          if (emote) {
+            loadedChannelAssets.emotes.push(emote)
+          }
         })
 
-        checkLoadedAll('bttv', 'global')
-        if (loadedChannelAssets.allLoaded) {
-          loadedChannelAssets.emotes = loadedChannelAssets.emotes.sort(compareLength)
-        }
+        checkLoadedAll(provider, scope)
       } catch (error) {
         log.error({
           channel,
-          message: 'Failed to load BetterTTV global emotes for ' + channel,
+          message: errorMessage(provider, scope, channel),
           error,
         })
       }
@@ -196,36 +306,26 @@ async function loadConcurrent(uid: string, channel: string, helixClient: TwitchH
     }))
 
   // NOTE: 7TV
-  promises.push(fetch(`https://api.7tv.app/v3/users/twitch/${uid}`)
+  promises.push(fetch(`https://api.7tv.app/v3/users/twitch/${channelId}`)
     .then(response => response.json())
     .then(body => {
+      const provider = Provider.SEVENTV
+      const scope = Scope.CHANNEL
       try {
-        if (body.emote_set?.emotes) {
-          body.emote_set?.emotes.forEach((emote: any) => {
-            const urls: Record<string, string> = {}
-            emote.data.host.files.forEach((f: any) => {
-              urls[f.name] = emote.data.host.url + '/' + f.name
-            })
-            loadedChannelAssets.emotes.push({
-              code: emote.name,
-              type: '7tv',
-              urls,
-            })
-          })
-          checkLoadedAll('7tv', 'channel')
-          if (loadedChannelAssets.allLoaded) {
-            loadedChannelAssets.emotes = loadedChannelAssets.emotes.sort(compareLength)
-          }
-        } else {
-          log.error({
-            channel,
-            message: 'No 7TV user available for ' + channel,
-          })
+        if (body.status_code === 404) {
+          return
         }
+        Object.values(body.emote_set.emotes).forEach((channelEmote: any) => {
+          const emote = parseSeventvV3Emote(channelEmote)
+          if (emote) {
+            loadedChannelAssets.emotes.push(emote)
+          }
+        })
+        checkLoadedAll(provider, scope)
       } catch (error) {
         log.error({
           channel,
-          message: 'Failed to load 7TV channel emotes for ' + channel,
+          message: errorMessage(provider, scope, channel),
           error,
         })
       }
@@ -233,69 +333,50 @@ async function loadConcurrent(uid: string, channel: string, helixClient: TwitchH
       log.error(e)
     }))
 
-    promises.push(fetch(`https://api.7tv.app/v2/emotes/global`)
-      .then(response => response.json())
-      .then(body => {
-        try {
-          body.forEach((ele: any) => {
-            const urls: Record<string, string> = {}
-            if (ele.urls[3]) {
-              urls['4x.webp'] = ele.urls[3][1]
-            }
-            if (ele.urls[2]) {
-              urls['3x.webp'] = ele.urls[2][1]
-            }
-            if (ele.urls[1]) {
-              urls['2x.webp'] = ele.urls[1][1]
-            }
-            if (ele.urls[0]) {
-              urls['1x.webp'] = ele.urls[0][1]
-            }
-            loadedChannelAssets.emotes.push({
-              code: ele.name,
-              type: '7tv',
-              urls,
-            })
-          })
-
-          checkLoadedAll('7tv', 'global')
-          if (loadedChannelAssets.allLoaded) {
-            loadedChannelAssets.emotes = loadedChannelAssets.emotes.sort(compareLength)
-          }
-        } catch (error) {
-          log.error({
-            channel,
-            message: 'Failed to load 7TV global emotes for ' + channel,
-            error,
-          })
-        }
-      }).catch((e) => {
-        log.error(e)
-      }))
-
-  // Note: TWITCH
-  promises.push(helixClient.getChannelEmotes(uid)
+  promises.push(fetch(`https://api.7tv.app/v2/emotes/global`)
+    .then(response => response.json())
     .then(body => {
-      if (body) {
-        body.data.forEach((ele: any) => {
-          const url: string = ele.images['url_4x']
-            || ele.images['url_2x']
-            || ele.images['url_1x']
-            || ''
-          loadedChannelAssets.emotes.push({
-            code: ele.name,
-            type: 'twitch',
-            url,
-          })
+      const provider = Provider.SEVENTV
+      const scope = Scope.GLOBAL
+      try {
+        Object.values(body).forEach((globalEmote: any) => {
+          const emote = parseSeventvV2Emote(globalEmote)
+          if (emote) {
+            loadedChannelAssets.emotes.push(emote)
+          }
         })
 
-        checkLoadedAll('twitch', 'channel')
-        if (loadedChannelAssets.allLoaded) {
-          loadedChannelAssets.emotes = loadedChannelAssets.emotes.sort(compareLength)
-        }
+        checkLoadedAll(provider, scope)
+      } catch (error) {
+        log.error({
+          channel,
+          message: errorMessage(provider, scope, channel),
+          error,
+        })
+      }
+    }).catch((e) => {
+      log.error(e)
+    }))
+
+  // Note: TWITCH
+  promises.push(helixClient.getChannelEmotes(channelId)
+    .then(body => {
+      const provider = Provider.TWITCH
+      const scope = Scope.CHANNEL
+      if (body) {
+        Object.values(body.data).forEach((channelEmote: any) => {
+          const emote = parseTwitchEmote(channelEmote)
+          if (emote) {
+            loadedChannelAssets.emotes.push(emote)
+          }
+        })
+
+        checkLoadedAll(provider, scope)
       } else {
         log.error({
-          message: 'Failed to load TWITCH channel emotes for ' + channel,
+          channel,
+          message: errorMessage(provider, scope, channel),
+          error: null,
         })
       }
     }).catch((e) => {
@@ -304,26 +385,22 @@ async function loadConcurrent(uid: string, channel: string, helixClient: TwitchH
 
   promises.push(helixClient.getGlobalEmotes()
     .then(body => {
+      const provider = Provider.TWITCH
+      const scope = Scope.GLOBAL
       if (body) {
-        body.data.forEach((ele: any) => {
-          const url: string = ele.images['url_4x']
-            || ele.images['url_2x']
-            || ele.images['url_1x']
-            || ''
-          loadedChannelAssets.emotes.push({
-            code: ele.name,
-            type: 'twitch',
-            url,
-          })
+        Object.values(body.data).forEach((globalEmote: any) => {
+          const emote = parseTwitchEmote(globalEmote)
+          if (emote) {
+            loadedChannelAssets.emotes.push(emote)
+          }
         })
 
-        checkLoadedAll('twitch', 'global')
-        if (loadedChannelAssets.allLoaded) {
-          loadedChannelAssets.emotes = loadedChannelAssets.emotes.sort(compareLength)
-        }
+        checkLoadedAll(provider, scope)
       } else {
         log.error({
-          message: 'Failed to load TWITCH global emotes for ' + channel,
+          channel,
+          message: errorMessage(provider, scope, channel),
+          error: null,
         })
       }
     }).catch((e) => {
@@ -347,63 +424,55 @@ function compareLength(a: { code: string }, b: { code: string }) {
 
 function compareEnd(a: { end: number }, b: { end: number }) {
   if (a.end < b.end) {
-    return -1
+    return 1
   }
   if (a.end > b.end) {
-    return 1
+    return -1
   }
   return 0
 }
 
-function getMessageEmotes(message: string, tags: ChatUserstate | null, channel: string) {
-  let emotes: RepEmote[] = []
-  const gotEmotes: any[] = []
-  if (tags && tags.emotes != null && typeof tags.emotes !== undefined) {
-    const tagEmotes = tags.emotes
-    Object.keys(tagEmotes).forEach((el, ind) => {
-      const em = tagEmotes[el]
+function getMessageEmotes(message: string, userstate: ChatUserstate | null, channel: string) {
+  const emotes: Emote[] = []
+  if (
+    userstate &&
+    userstate.emotes != null &&
+    typeof userstate.emotes !== undefined
+  ) {
+    const repEmotes: RepEmote[] = []
+    const userstateEmotes = userstate.emotes
+    Object.keys(userstateEmotes).forEach((el, ind) => {
+      const em = userstateEmotes[el]
       em.forEach((ele: any) => {
-        const start = parseInt(ele.split('-')[0])
-        const end = parseInt(ele.split('-')[1])
-        emotes.push({
-          start: start,
-          end: end,
-          rep: Object.keys(tagEmotes)[ind],
+        repEmotes.push({
+          start: parseInt(ele.split('-')[0]),
+          end: parseInt(ele.split('-')[1]),
+          rep: Object.keys(userstateEmotes)[ind],
         })
       })
     })
-
-    emotes.sort(compareEnd)
-    emotes = emotes.reverse()
-
-    emotes.forEach((ele, _ind) => {
-      const code = message.substring(ele.start, ele.end + 1)
-      gotEmotes.push({
-        code: code,
+    repEmotes.sort(compareEnd)
+    repEmotes.forEach((ele) => {
+      emotes.push({
+        code: message.substring(ele.start, ele.end + 1),
         img: `https://static-cdn.jtvnw.net/emoticons/v2/${ele.rep}/default/dark/3.0`,
-        type: 'twitch',
+        type: Provider.TWITCH,
       })
       message = message.substring(0, ele.start) + message.substring(ele.end + 1, message.length)
     })
   }
-
-  const fEmotes = replaceAll(message, channel)
-
-  fEmotes.forEach(ele => {
-    gotEmotes.push(ele)
-  })
-
-  return gotEmotes
+  emotes.push(...detectEmotesInMessage(message, channel))
+  return emotes
 }
 
 function escapeRegex(str: string): string {
   return str.replace(/[-[\]{}()*+!<=:?./\\^$|#\s,]/g, '\\$&')
 }
 
-function replaceAll(msg: string, channel: string) {
-  const emotes: any[] = []
+function detectEmotesInMessage(msg: string, channel: string): Emote[] {
+  const emotes: Emote[] = []
   const channelEmotes = loadedAssets[channel]?.emotes || []
-  channelEmotes.forEach((ele: any) => {
+  channelEmotes.forEach((ele) => {
     const escCode = escapeRegex(ele.code)
     const regex = new RegExp(`(^${escCode}(?=[^?!."_*+#'´\`\\/%&$€§=])|(?=[^?!."_*+#'´\`\\/%&$€§=])${escCode}$|\\s${escCode}(?=[^?!."_*+#'´\`\\/%&$€§=])|(?=[^?!."_*+#'´\`\\/%&$€§=])${escCode}\\s)`, 'm')
     let m = null
@@ -411,40 +480,7 @@ function replaceAll(msg: string, channel: string) {
       m = msg.match(regex)
       msg = msg.replace(regex, '')
       if (m) {
-        if (ele.type == 'bttv') {
-          emotes.push({
-            code: ele.code,
-            img: `https://cdn.betterttv.net/emote/${ele.id}/3x`,
-            type: 'bttv',
-          })
-        } else if (ele.type == 'ffz') {
-          const poss = ele.urls[4] != undefined ? ele.urls[4] : ele.urls[2] != undefined ? ele.urls[2] : ele.urls[1]
-          emotes.push({
-            code: ele.code,
-            img: `https:${poss}`,
-            type: 'ffz',
-          })
-        } else if (ele.type == '7tv') {
-          const poss = ele.urls['4x.webp'] != undefined ? ele.urls['4x.webp']
-            : ele.urls['2x.webp'] != undefined ? ele.urls['2x.webp']
-            : ele.urls['1x.webp'] != undefined ? ele.urls['1x.webp']
-            : ''
-          if (poss) {
-            emotes.push({
-              code: ele.code,
-              img: poss,
-              type: '7tv',
-            })
-          }
-        } else if (ele.type == 'twitch') {
-          if (ele.url) {
-            emotes.push({
-              code: ele.code,
-              img: ele.url,
-              type: 'twitch',
-            })
-          }
-        }
+        emotes.push(ele)
       }
     } while (m)
   })
