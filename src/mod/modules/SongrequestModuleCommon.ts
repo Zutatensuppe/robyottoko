@@ -40,7 +40,6 @@ export interface SongrequestModuleData {
 export interface SongerquestModuleInitData {
   data: SongrequestModuleData
   commands: FunctionCommand[]
-  shouldSave: boolean
   enabled: boolean
 }
 

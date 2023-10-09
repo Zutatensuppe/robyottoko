@@ -209,9 +209,6 @@ class SongrequestModule implements Module {
         stacks: initData.data.stacks,
       }
       this.commands = initData.commands
-      if (initData.shouldSave) {
-        await this.bot.getRepos().module.save(this.user.id, this.name, this.data)
-      }
       return this
     })()
   }
@@ -229,7 +226,6 @@ class SongrequestModule implements Module {
   }
 
   async reinit(): Promise<SongerquestModuleInitData> {
-    let shouldSave = false
     const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {
       filter: {
         show: { tags: [] },
@@ -273,14 +269,6 @@ class SongrequestModule implements Module {
     data.settings = default_settings(data.settings)
     data.commands = default_commands(data.commands)
 
-    data.commands.forEach((cmd: any) => {
-      if (typeof cmd.cooldown.perUserMessage === 'undefined') {
-        cmd.cooldown.perUserMessage = ''
-        cmd.cooldown.globalMessage = ''
-        shouldSave = true
-      }
-    })
-
     return {
       data: {
         playlist: data.playlist,
@@ -290,7 +278,6 @@ class SongrequestModule implements Module {
         stacks: data.stacks,
       },
       commands: this.initCommands(data.commands),
-      shouldSave,
       enabled,
     }
   }

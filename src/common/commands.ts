@@ -224,12 +224,12 @@ const createCommand = (cmd: Partial<Command>): Command => {
 }
 
 export const commands: Record<CommandAction, CommandDef> = {
-  [CommandAction.TEXT]: {
+  [CommandAction.GENERAL]: {
     Name: () => 'command',
     Description: () => '',
     NewCommand: (): Command => createCommand({
       triggers: [newCommandTrigger()],
-      action: CommandAction.TEXT,
+      action: CommandAction.GENERAL,
     }),
   },
   [CommandAction.SR_CURRENT]: {
