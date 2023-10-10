@@ -58,6 +58,9 @@
               <option value="default">
                 default (hyottoko)
               </option>
+              <option value="achanJp">
+                achan_jp
+              </option>
               <option value="trickOrTreat">
                 trick or treat
               </option>
