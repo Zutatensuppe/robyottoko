@@ -22,6 +22,7 @@ export const accessTokenLink = (twitchClientId: string): string => {
     'user:manage:blocked_users',
     'user:read:broadcast',
     'user:read:email',
+    'moderator:read:followers',
   ]
   const loc = document.location
   const redirectUri = `${loc.protocol}//${loc.host}/twitch/redirect_uri`
