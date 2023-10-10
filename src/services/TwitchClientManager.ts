@@ -294,7 +294,7 @@ class TwitchClientManager {
       : { broadcaster_user_id: `${user.twitch_id}` }
     const subscription = {
       type: subscriptionType,
-      version: '1',
+      version: [SubscriptionType.ChannelFollow].includes(subscriptionType) ? '2' : '1',
       transport: this.bot.getConfig().twitch.eventSub.transport,
       condition,
     }
