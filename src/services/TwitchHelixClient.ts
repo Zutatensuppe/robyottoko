@@ -723,7 +723,7 @@ class TwitchHelixClient {
       const json = await resp.json() as any
       return json.data.length > 0
     } catch (e) {
-      log.error({ url, e })
+      log.error({ url, e, broadcasterId, userId })
       return false
     }
   }
@@ -740,7 +740,7 @@ class TwitchHelixClient {
       const json = await resp.json() as any
       return json.data.length > 0
     } catch (e) {
-      log.error({ url, e })
+      log.error({ url, e, broadcasterId, userId })
       return false
     }
   }
@@ -757,7 +757,7 @@ class TwitchHelixClient {
       const json = await resp.json() as any
       return json.data.length > 0
     } catch (e) {
-      log.error({ url, e })
+      log.error({ url, e, broadcasterId, userId })
       return false
     }
   }

@@ -1901,7 +1901,7 @@ class TwitchHelixClient {
             return json.data.length > 0;
         }
         catch (e) {
-            log$C.error({ url, e });
+            log$C.error({ url, e, broadcasterId, userId });
             return false;
         }
     }
@@ -1914,7 +1914,7 @@ class TwitchHelixClient {
             return json.data.length > 0;
         }
         catch (e) {
-            log$C.error({ url, e });
+            log$C.error({ url, e, broadcasterId, userId });
             return false;
         }
     }
@@ -1927,7 +1927,7 @@ class TwitchHelixClient {
             return json.data.length > 0;
         }
         catch (e) {
-            log$C.error({ url, e });
+            log$C.error({ url, e, broadcasterId, userId });
             return false;
         }
     }
@@ -7422,9 +7422,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-10-10T19:06:05.471Z",
+    buildDate: "2023-10-10T19:27:12.622Z",
     // @ts-ignore
-    buildVersion: "1.69.4",
+    buildVersion: "1.69.5",
 };
 
 const log$f = logger('StreamStatusUpdater.ts');
@@ -7979,6 +7979,9 @@ const parseSeventvV3Emote = (obj) => {
     };
 };
 async function loadAssets(channel, channelId, helixClient) {
+    if (!channel || !channelId) {
+        return;
+    }
     const now = new Date().getTime();
     const lastLoadedTs = loadedAssets[channel] ? loadedAssets[channel].lastLoadedTs : null;
     if (lastLoadedTs && (now - lastLoadedTs) < 10 * MINUTE) {
@@ -7991,7 +7994,7 @@ async function loadConcurrent(channelId, channel, helixClient) {
     const loadedChannelAssets = {
         lastLoadedTs: null,
         channel,
-        uid: channelId,
+        channelId,
         emotes: [],
         allLoaded: false,
         loaded: {
