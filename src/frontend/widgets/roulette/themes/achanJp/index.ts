@@ -9,7 +9,7 @@ import centerImage from './wheel-middle-achan.png'
 // @ts-ignore
 import centerRingImage from './wheel-middle-ring-achan.png'
 // @ts-ignore
-import outerImage from './wheel-outer.png'
+import outerImage from './wheel-outer-achan-1.png'
 
 import { WheelTheme } from '../../components/Wheel'
 
