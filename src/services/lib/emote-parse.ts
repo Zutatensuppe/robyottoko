@@ -55,7 +55,7 @@ const parseTwitchEmote = (obj: any): Emote | null => {
     || obj.images['url_2x']
     || obj.images['url_1x']
     || ''
-  if (!url) {
+  if (!url || !obj.name) {
     return null
   }
   return {
@@ -66,6 +66,9 @@ const parseTwitchEmote = (obj: any): Emote | null => {
 }
 
 const parseBttvEmote = (obj: any): Emote | null => {
+  if (!obj.code) {
+    return null
+  }
   return {
     code: obj.code,
     img: `https://cdn.betterttv.net/emote/${obj.id}/3x`,
@@ -77,6 +80,9 @@ const parseFfzEmote = (obj: any): Emote | null => {
   const img = obj.urls[4] != undefined ? obj.urls[4]
     : obj.urls[2] != undefined ? obj.urls[2]
       : obj.urls[1]
+  if (!obj.name) {
+    return null
+  }
   return {
     code: obj.name,
     img: `https:${img}`,
@@ -102,7 +108,7 @@ const parseSeventvV2Emote = (obj: any): Emote | null => {
     : urls['2x.webp'] != undefined ? urls['2x.webp']
       : urls['1x.webp'] != undefined ? urls['1x.webp']
         : ''
-  if (!img) {
+  if (!img || !obj.name) {
     return null
   }
   return {
@@ -121,7 +127,7 @@ const parseSeventvV3Emote = (obj: any): Emote | null => {
     : urls['2x.webp'] != undefined ? urls['2x.webp']
       : urls['1x.webp'] != undefined ? urls['1x.webp']
         : ''
-  if (!img) {
+  if (!img || !obj.name) {
     return null
   }
   return {
