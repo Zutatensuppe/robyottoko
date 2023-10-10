@@ -289,9 +289,16 @@ class TwitchClientManager {
       return
     }
 
-    const condition = subscriptionType === SubscriptionType.ChannelRaid
-      ? { to_broadcaster_user_id: `${user.twitch_id}` }
-      : { broadcaster_user_id: `${user.twitch_id}` }
+    const condition = subscriptionType === SubscriptionType.ChannelFollow
+      ? {
+        broadcaster_user_id: `${user.twitch_id}`,
+        moderator_user_id: `${user.twitch_id}`,
+      }
+      : (
+        subscriptionType === SubscriptionType.ChannelRaid
+        ? { to_broadcaster_user_id: `${user.twitch_id}` }
+        : { broadcaster_user_id: `${user.twitch_id}` }
+      )
     const subscription = {
       type: subscriptionType,
       version: [SubscriptionType.ChannelFollow].includes(subscriptionType) ? '2' : '1',
