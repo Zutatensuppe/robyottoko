@@ -7422,9 +7422,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-10-10T18:38:06.149Z",
+    buildDate: "2023-10-10T19:06:05.471Z",
     // @ts-ignore
-    buildVersion: "1.69.3",
+    buildVersion: "1.69.4",
 };
 
 const log$f = logger('StreamStatusUpdater.ts');
@@ -7901,7 +7901,7 @@ const parseTwitchEmote = (obj) => {
         || obj.images['url_2x']
         || obj.images['url_1x']
         || '';
-    if (!url) {
+    if (!url || !obj.name) {
         return null;
     }
     return {
@@ -7911,6 +7911,9 @@ const parseTwitchEmote = (obj) => {
     };
 };
 const parseBttvEmote = (obj) => {
+    if (!obj.code) {
+        return null;
+    }
     return {
         code: obj.code,
         img: `https://cdn.betterttv.net/emote/${obj.id}/3x`,
@@ -7921,6 +7924,9 @@ const parseFfzEmote = (obj) => {
     const img = obj.urls[4] != undefined ? obj.urls[4]
         : obj.urls[2] != undefined ? obj.urls[2]
             : obj.urls[1];
+    if (!obj.name) {
+        return null;
+    }
     return {
         code: obj.name,
         img: `https:${img}`,
@@ -7945,7 +7951,7 @@ const parseSeventvV2Emote = (obj) => {
         : urls['2x.webp'] != undefined ? urls['2x.webp']
             : urls['1x.webp'] != undefined ? urls['1x.webp']
                 : '';
-    if (!img) {
+    if (!img || !obj.name) {
         return null;
     }
     return {
@@ -7963,7 +7969,7 @@ const parseSeventvV3Emote = (obj) => {
         : urls['2x.webp'] != undefined ? urls['2x.webp']
             : urls['1x.webp'] != undefined ? urls['1x.webp']
                 : '';
-    if (!img) {
+    if (!img || !obj.name) {
         return null;
     }
     return {
