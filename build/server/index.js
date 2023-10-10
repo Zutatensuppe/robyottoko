@@ -3743,7 +3743,7 @@ class TwitchClientManager {
             : { broadcaster_user_id: `${user.twitch_id}` };
         const subscription = {
             type: subscriptionType,
-            version: '1',
+            version: [SubscriptionType.ChannelFollow].includes(subscriptionType) ? '2' : '1',
             transport: this.bot.getConfig().twitch.eventSub.transport,
             condition,
         };
@@ -7417,9 +7417,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-10-10T18:06:27.346Z",
+    buildDate: "2023-10-10T18:21:21.536Z",
     // @ts-ignore
-    buildVersion: "1.69.0",
+    buildVersion: "1.69.1",
 };
 
 const log$f = logger('StreamStatusUpdater.ts');
