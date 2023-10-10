@@ -70,7 +70,8 @@ const emit = defineEmits<{
 const theme = computed<WheelTheme>(() => {
   if (
     props.data.theme === 'default' ||
-    props.data.theme === 'trickOrTreat'
+    props.data.theme === 'trickOrTreat' ||
+    props.data.theme === 'achanJp'
   ) {
     return themes[props.data.theme]
   }
@@ -128,10 +129,10 @@ onMounted(() => {
     transform: translate(-50%, -50%);
 
     .marker {
-      width: 75px;
+      width: 125px;
       position: absolute;
       z-index: 20;
-      right: 0px;
+      right: -25px;
       top: 50%;
       transform: translate(20px, -50%);
 
