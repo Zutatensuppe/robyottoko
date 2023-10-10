@@ -28,7 +28,7 @@ type ScopeMap = Record<Scope, boolean>
 interface LoadedChannelAssets {
   lastLoadedTs: null | number
   channel: string
-  uid: string
+  channelId: string
   emotes: Emote[]
   allLoaded: boolean
   loaded: {
@@ -138,6 +138,10 @@ const parseSeventvV3Emote = (obj: any): Emote | null => {
 }
 
 async function loadAssets(channel: string, channelId: string, helixClient: TwitchHelixClient) {
+  if (!channel || !channelId) {
+    return
+  }
+
   const now = new Date().getTime()
   const lastLoadedTs = loadedAssets[channel] ? loadedAssets[channel].lastLoadedTs : null
   if (lastLoadedTs && (now - lastLoadedTs) < 10 * MINUTE) {
@@ -157,7 +161,7 @@ async function loadConcurrent(
   const loadedChannelAssets: LoadedChannelAssets = {
     lastLoadedTs: null,
     channel,
-    uid: channelId,
+    channelId,
     emotes: [] as any[],
     allLoaded: false,
     loaded: {
