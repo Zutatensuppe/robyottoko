@@ -3738,9 +3738,14 @@ class TwitchClientManager {
         if (!user.twitch_id) {
             return;
         }
-        const condition = subscriptionType === SubscriptionType.ChannelRaid
-            ? { to_broadcaster_user_id: `${user.twitch_id}` }
-            : { broadcaster_user_id: `${user.twitch_id}` };
+        const condition = subscriptionType === SubscriptionType.ChannelFollow
+            ? {
+                broadcaster_user_id: `${user.twitch_id}`,
+                moderator_user_id: `${user.twitch_id}`,
+            }
+            : (subscriptionType === SubscriptionType.ChannelRaid
+                ? { to_broadcaster_user_id: `${user.twitch_id}` }
+                : { broadcaster_user_id: `${user.twitch_id}` });
         const subscription = {
             type: subscriptionType,
             version: [SubscriptionType.ChannelFollow].includes(subscriptionType) ? '2' : '1',
@@ -7417,9 +7422,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-10-10T18:21:21.536Z",
+    buildDate: "2023-10-10T18:28:27.286Z",
     // @ts-ignore
-    buildVersion: "1.69.1",
+    buildVersion: "1.69.2",
 };
 
 const log$f = logger('StreamStatusUpdater.ts');
