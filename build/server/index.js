@@ -1901,7 +1901,7 @@ class TwitchHelixClient {
             return json.data.length > 0;
         }
         catch (e) {
-            log$C.error({ url, e });
+            log$C.error({ url, e, broadcasterId, userId });
             return false;
         }
     }
@@ -1914,7 +1914,7 @@ class TwitchHelixClient {
             return json.data.length > 0;
         }
         catch (e) {
-            log$C.error({ url, e });
+            log$C.error({ url, e, broadcasterId, userId });
             return false;
         }
     }
@@ -1927,7 +1927,7 @@ class TwitchHelixClient {
             return json.data.length > 0;
         }
         catch (e) {
-            log$C.error({ url, e });
+            log$C.error({ url, e, broadcasterId, userId });
             return false;
         }
     }
@@ -7422,7 +7422,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-10-10T19:22:16.679Z",
+    buildDate: "2023-10-10T19:27:12.622Z",
     // @ts-ignore
     buildVersion: "1.69.5",
 };
