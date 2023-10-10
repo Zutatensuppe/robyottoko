@@ -426,7 +426,7 @@ export type CommandFunction = (ctx: CommandExecutionContext) => any
 
 export enum CommandAction {
   // general
-  TEXT = 'text',
+  GENERAL = 'general',
   // song request
   SR_CURRENT = 'sr_current',
   SR_UNDO = 'sr_undo',
@@ -488,11 +488,9 @@ export interface DictSearchResponseDataEntry {
   to: string[]
 }
 
-export interface RandomTextCommand extends Command {
-  action: CommandAction.TEXT
-  data: {
-    text: string[]
-  }
+export interface GeneralCommand extends Command {
+  action: CommandAction.GENERAL
+  data: Record<string, never>
 }
 
 export interface MediaVideo {

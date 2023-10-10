@@ -9,13 +9,12 @@ import {
   FunctionCommand,
   Bot,
   Module,
-  RandomTextCommand,
+  GeneralCommand,
   CommandTriggerType,
-  CommandAction,
   MODULE_NAME,
   WIDGET_TYPE,
   CommandEffectType,
-  CommandEffectData,
+  CommandAction,
 } from '../../types'
 import {
   default_admin_settings,
@@ -27,7 +26,6 @@ import {
   GeneralSaveEventData,
 } from './GeneralModuleCommon'
 import { NextFunction, Response } from 'express'
-import legacy from '../../common/legacy'
 
 const log = logger('GeneralModule.ts')
 
@@ -131,122 +129,6 @@ class GeneralModule implements Module {
     }, 1 * SECOND)
   }
 
-  fix(commands: any[]): { commands: Command[], shouldSave: boolean } {
-    let shouldSave = false
-    const fixedCommands = (commands || []).map((cmd: any) => {
-      cmd.variables = cmd.variables || []
-      cmd.effects = cmd.effects || []
-
-      if (typeof cmd.cooldown !== 'object') {
-        cmd.cooldown = cmd.timeout || { global: '0', perUser: '0' }
-        shouldSave = true
-      }
-      if (cmd.timeout) {
-        delete cmd.timeout
-        shouldSave = true
-      }
-
-      if (cmd.variableChanges) {
-        for (const variableChange of cmd.variableChanges) {
-          cmd.effects.push(legacy.variableChangeToCommandEffect(variableChange))
-          shouldSave = true
-        }
-      }
-
-      if (cmd.action === 'text' && !cmd.effects.find((effect: CommandEffectData) => effect.type !== CommandEffectType.VARIABLE_CHANGE)) {
-        cmd.effects.push(legacy.textToCommandEffect(cmd))
-        shouldSave = true
-      }
-
-      if (cmd.action === 'dict_lookup') {
-        cmd.action = 'text'
-        cmd.effects.push(legacy.dictLookupToCommandEffect(cmd))
-        shouldSave = true
-      }
-
-      if (cmd.action === 'emotes') {
-        cmd.action = 'text'
-        cmd.effects.push(legacy.emotesToCommandEffect(cmd))
-        shouldSave = true
-      }
-
-      if (cmd.action === 'media') {
-        cmd.action = 'text'
-        cmd.effects.push(legacy.mediaToCommandEffect(cmd))
-        shouldSave = true
-      }
-
-      if (cmd.action === 'madochan_createword') {
-        cmd.action = 'text'
-        cmd.effects.push(legacy.madochanToCommandEffect(cmd))
-        shouldSave = true
-      }
-
-      if (cmd.action === 'set_channel_title') {
-        cmd.action = 'text'
-        cmd.effects.push(legacy.setChannelTitleToCommandEffect(cmd))
-        shouldSave = true
-      }
-
-      if (cmd.action === 'set_channel_game_id') {
-        cmd.action = 'text'
-        cmd.effects.push(legacy.setChannelGameIdToCommandEffect(cmd))
-        shouldSave = true
-      }
-
-      if (cmd.action === 'add_stream_tags') {
-        cmd.action = 'text'
-        cmd.effects.push(legacy.addStreamTagsToCommandEffect(cmd))
-        shouldSave = true
-      }
-
-      if (cmd.action === 'remove_stream_tags') {
-        cmd.action = 'text'
-        cmd.effects.push(legacy.removeStreamTagsToCommandEffect(cmd))
-        shouldSave = true
-      }
-
-      if (cmd.action === 'chatters') {
-        cmd.action = 'text'
-        cmd.effects.push(legacy.chattersToCommandEffect(cmd))
-        shouldSave = true
-      }
-
-      if (cmd.action === 'countdown') {
-        cmd.action = 'text'
-        cmd.effects.push(legacy.countdownToCommandEffect(cmd))
-        shouldSave = true
-      }
-
-      if (cmd.action === 'media_volume') {
-        cmd.action = 'text'
-        cmd.effects.push(legacy.mediaVolumeToCommandEffect(cmd))
-        shouldSave = true
-      }
-
-      if (typeof cmd.cooldown.perUserMessage === 'undefined') {
-        cmd.cooldown.perUserMessage = ''
-        cmd.cooldown.globalMessage = ''
-        shouldSave = true
-      }
-
-      cmd.triggers = (cmd.triggers || []).map((trigger: any) => {
-        trigger.data.minLines = parseInt(trigger.data.minLines, 10) || 0
-        if (trigger.data.minSeconds) {
-          trigger.data.minInterval = trigger.data.minSeconds * SECOND
-        }
-        shouldSave = true
-        return trigger
-      })
-      return cmd
-    })
-
-    return {
-      commands: fixedCommands,
-      shouldSave,
-    }
-  }
-
   async reinit(): Promise<GeneralModuleInitData> {
     const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {
       commands: [],
@@ -254,12 +136,19 @@ class GeneralModule implements Module {
       adminSettings: default_admin_settings(),
     })
     data.settings = default_settings(data.settings)
-    const fixed = this.fix(data.commands)
-    data.commands = fixed.commands
+
+    let shouldSave = false
+    for (const command of data.commands) {
+      if (command.action === 'text') {
+        command.action = CommandAction.GENERAL
+        command.data = {}
+        shouldSave = true
+      }
+    }
 
     // do not remove for now, new users gain the !bot command by this
     if (!data.adminSettings.autocommands.includes('!bot')) {
-      const command = commonCommands.text.NewCommand() as RandomTextCommand
+      const command = commonCommands.general.NewCommand() as GeneralCommand
       command.triggers = [newCommandTrigger('!bot')]
       command.effects.push({
         type: CommandEffectType.CHAT,
@@ -269,19 +158,19 @@ class GeneralModule implements Module {
       })
       data.commands.push(command)
       data.adminSettings.autocommands.push('!bot')
-      fixed.shouldSave = true
+      shouldSave = true
     }
 
     const commands: FunctionCommand[] = []
     const timers: GeneralModuleTimer[] = []
 
-    data.commands.forEach((cmd: RandomTextCommand) => {
+    data.commands.forEach((cmd: GeneralCommand) => {
       if (cmd.triggers.length === 0) {
         return
       }
       let cmdObj = null
       switch (cmd.action) {
-        case CommandAction.TEXT:
+        case CommandAction.GENERAL:
           cmdObj = Object.assign({}, cmd, { fn: noop })
           break
       }
@@ -323,7 +212,7 @@ class GeneralModule implements Module {
         }
       }
     })
-    return { data, commands, timers, shouldSave: fixed.shouldSave, enabled } as GeneralModuleInitData
+    return { data, commands, timers, shouldSave, enabled } as GeneralModuleInitData
   }
 
   getRoutes() {
@@ -430,8 +319,7 @@ class GeneralModule implements Module {
         await this.updateClient('init', ws)
       },
       save: async (_ws: Socket, data: GeneralSaveEventData) => {
-        const fixed = this.fix(data.commands)
-        this.data.commands = fixed.commands
+        this.data.commands = data.commands
         this.data.settings = data.settings
         this.data.adminSettings = data.adminSettings
         await this.save()

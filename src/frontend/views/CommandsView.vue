@@ -97,7 +97,7 @@ const globalVariables = ref<GlobalVariable[]>([])
 const channelPointsCustomRewards = ref<Record<string, string[]>>({})
 let ws: WsClient | null = null
 const possibleActions: CommandAction[] = [
-  CommandAction.TEXT,
+  CommandAction.GENERAL,
 ]
 const possibleEffects: CommandEffectType[] = [
   CommandEffectType.VARIABLE_CHANGE,

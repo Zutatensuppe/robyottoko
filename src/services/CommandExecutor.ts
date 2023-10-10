@@ -11,7 +11,7 @@ import { CommandExecutionRepo, Row } from '../repo/CommandExecutionRepo'
 const log = logger('CommandExecutor.ts')
 
 export class CommandExecutor {
-  async executeMatchingCommands(
+  public async executeMatchingCommands(
     bot: Bot,
     user: User,
     rawCmd: RawCommand | null,
@@ -33,7 +33,7 @@ export class CommandExecutor {
     await Promise.all(promises)
   }
 
-  isInTimeout(timeoutMs: number, last: Row | null, ctx: CommandExecutionContext): boolean {
+  private isInTimeout(timeoutMs: number, last: Row | null, ctx: CommandExecutionContext): boolean {
     if (!last) {
       return false
     }
@@ -51,7 +51,7 @@ export class CommandExecutor {
     return true
   }
 
-  async isInGlobalTimeout(
+  private async isInGlobalTimeout(
     cmdDef: FunctionCommand,
     repo: CommandExecutionRepo,
     ctx: CommandExecutionContext,
@@ -66,7 +66,7 @@ export class CommandExecutor {
     return this.isInTimeout(durationMs, last, ctx)
   }
 
-  async isInPerUserTimeout(
+  private async isInPerUserTimeout(
     cmdDef: FunctionCommand,
     repo: CommandExecutionRepo,
     ctx: CommandExecutionContext,
@@ -85,33 +85,41 @@ export class CommandExecutor {
     return this.isInTimeout(durationMs, last, ctx)
   }
 
-  async tryExecuteCommands(
+  private async trySay(
+    message: string,
+    ctx: CommandExecutionContext,
+    cmdDef: FunctionCommand,
+    bot: Bot,
+    user: User,
+  ): Promise<void> {
+    if (!message) {
+      return
+    }
+
+    const m = await doReplacements(message, ctx.rawCmd, ctx.context, cmdDef, bot, user)
+    const say = bot.sayFn(user, ctx.target)
+    say(m)
+  }
+
+  private async tryExecuteCommands(
     contextModule: Module,
     cmdDefs: FunctionCommand[],
     ctx: CommandExecutionContext,
     bot: Bot,
     user: User,
   ): Promise<void> {
-    const promises = []
+    const promises: Promise<void>[] = []
     const repo = bot.getRepos().commandExecutionRepo
     for (const cmdDef of cmdDefs) {
       if (!ctx.context || !mayExecute(ctx.context, cmdDef)) {
         continue
       }
       if (await this.isInGlobalTimeout(cmdDef, repo, ctx)) {
-        if (cmdDef.cooldown.globalMessage) {
-          const m = await doReplacements(cmdDef.cooldown.globalMessage, ctx.rawCmd, ctx.context, cmdDef, bot, user)
-          const say = bot.sayFn(user, ctx.target)
-          say(m)
-        }
+        this.trySay(cmdDef.cooldown.globalMessage, ctx, cmdDef, bot, user)
         continue
       }
       if (await this.isInPerUserTimeout(cmdDef, repo, ctx)) {
-        if (cmdDef.cooldown.perUserMessage) {
-          const m = await doReplacements(cmdDef.cooldown.perUserMessage, ctx.rawCmd, ctx.context, cmdDef, bot, user)
-          const say = bot.sayFn(user, ctx.target)
-          say(m)
-        }
+        this.trySay(cmdDef.cooldown.perUserMessage, ctx, cmdDef, bot, user)
         continue
       }
 
@@ -120,8 +128,9 @@ export class CommandExecutor {
         command: ctx.rawCmd?.name || '<unknown>',
         module: contextModule.name,
       }, 'Executing command')
+
       // eslint-disable-next-line no-async-promise-executor
-      const p = new Promise(async (resolve) => {
+      const p = new Promise<void>(async (resolve) => {
         await bot.getEffectsApplier().applyEffects(cmdDef, contextModule, ctx.rawCmd, ctx.context)
         const r = await cmdDef.fn(ctx)
         if (r) {
@@ -134,7 +143,7 @@ export class CommandExecutor {
           target: ctx.target,
           command: ctx.rawCmd?.name || '<unknown>',
         }, 'Executed command')
-        resolve(true)
+        resolve()
       })
       promises.push(p)
 
