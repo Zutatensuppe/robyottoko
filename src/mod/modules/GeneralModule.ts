@@ -116,12 +116,19 @@ class GeneralModule implements Module {
       const now = date.getTime()
       this.timers.forEach(async (t) => {
         if (t.lines >= t.minLines && now > t.next) {
+          // while handling this timer effects, do not trigger it again by
+          // setting its requirements to max value.
+          // after the command finishes, set the correct values
+          t.lines = Number.MAX_SAFE_INTEGER
+          t.next = Number.MAX_SAFE_INTEGER
+
           const cmdDef = t.command
           const rawCmd = null
           const target = null
           const context = null
           await this.bot.getEffectsApplier().applyEffects(cmdDef, this, rawCmd, context)
           await cmdDef.fn({ rawCmd, target, context, date })
+
           t.lines = 0
           t.next = now + t.minInterval
         }
