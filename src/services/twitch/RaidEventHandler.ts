@@ -35,7 +35,6 @@ export class RaidEventHandler extends EventSubEventHandler<RaidEvent> {
     }
 
     const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.from_broadcaster_user_id)
-    const target = data.event.to_broadcaster_user_name
     const context: TwitchEventContext = {
       'room-id': data.event.to_broadcaster_user_id,
       'user-id': data.event.from_broadcaster_user_id,
@@ -52,6 +51,6 @@ export class RaidEventHandler extends EventSubEventHandler<RaidEvent> {
     }
     const trigger = newRaidTrigger()
     const exec = new CommandExecutor()
-    await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger], new Date())
+    await exec.executeMatchingCommands(bot, user, rawCmd, context, [trigger], new Date())
   }
 }

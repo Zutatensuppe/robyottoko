@@ -34,7 +34,6 @@ export class FollowEventHandler extends EventSubEventHandler<FollowEvent> {
     }
 
     const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.user_id)
-    const target = data.event.broadcaster_user_name
     const context: TwitchEventContext = {
       'room-id': data.event.broadcaster_user_id,
       'user-id': data.event.user_id,
@@ -46,6 +45,6 @@ export class FollowEventHandler extends EventSubEventHandler<FollowEvent> {
     }
     const trigger = newFollowTrigger()
     const exec = new CommandExecutor()
-    await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger], new Date())
+    await exec.executeMatchingCommands(bot, user, rawCmd, context, [trigger], new Date())
   }
 }

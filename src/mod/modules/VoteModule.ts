@@ -73,14 +73,13 @@ class VoteModule implements Module {
   async vote(
     type: string,
     thing: string,
-    target: string,
     context: TwitchEventContext,
   ): Promise<void> {
     if (!context['display-name']) {
       log.error('context has no display name set')
       return
     }
-    const say = this.bot.sayFn(this.user, target)
+    const say = this.bot.sayFn(this.user)
     this.data.data.votes[type] = this.data.data.votes[type] || {}
     this.data.data.votes[type][context['display-name']] = thing
     say(`Thanks ${context['display-name']}, registered your "${type}" vote: ${thing}`)
@@ -88,11 +87,11 @@ class VoteModule implements Module {
   }
 
   async playCmd(ctx: CommandExecutionContext): Promise<void> {
-    if (!ctx.rawCmd || !ctx.context || !ctx.target) {
+    if (!ctx.rawCmd || !ctx.context) {
       return
     }
 
-    const say = this.bot.sayFn(this.user, ctx.target)
+    const say = this.bot.sayFn(this.user)
     if (ctx.rawCmd.args.length === 0) {
       say('Usage: !play THING')
       return
@@ -100,15 +99,15 @@ class VoteModule implements Module {
 
     const thing = ctx.rawCmd.args.join(' ')
     const type = 'play'
-    await this.vote(type, thing, ctx.target, ctx.context)
+    await this.vote(type, thing, ctx.context)
   }
 
   async voteCmd(ctx: CommandExecutionContext): Promise<void> {
-    if (!ctx.rawCmd || !ctx.context || !ctx.target) {
+    if (!ctx.rawCmd || !ctx.context) {
       return
     }
 
-    const say = this.bot.sayFn(this.user, ctx.target)
+    const say = this.bot.sayFn(this.user)
 
     // maybe open up for everyone, but for now use dedicated
     // commands like !play THING
@@ -167,7 +166,7 @@ class VoteModule implements Module {
 
     const type = ctx.rawCmd.args[0]
     const thing = ctx.rawCmd.args.slice(1).join(' ')
-    await this.vote(type, thing, ctx.target, ctx.context)
+    await this.vote(type, thing, ctx.context)
   }
 
   getCommands() {

@@ -68,11 +68,10 @@ class PomoModule implements Module {
   async effect(
     effect: PomoEffect,
     command: RawCommand | null,
-    target: string | null,
     context: TwitchEventContext | null,
   ) {
     if (effect.chatMessage) {
-      const say = this.bot.sayFn(this.user, target)
+      const say = this.bot.sayFn(this.user)
       say(await this.replaceText(effect.chatMessage, command, context))
     }
     this.updateClients({ event: 'effect', data: effect })
@@ -107,7 +106,7 @@ class PomoModule implements Module {
         if (nDateEnd < now) {
           // is over and should maybe be triggered!
           if (!doneDate || nDateEnd > doneDate) {
-            await this.effect(n.effect, command, null, context)
+            await this.effect(n.effect, command, context)
           }
         } else {
           anyNotificationsLeft = true
@@ -117,7 +116,7 @@ class PomoModule implements Module {
       if (dateEnd < now) {
         // is over and should maybe be triggered!
         if (!doneDate || dateEnd > doneDate) {
-          await this.effect(this.data.settings.endEffect, command, null, context)
+          await this.effect(this.data.settings.endEffect, command, context)
         }
       } else {
         anyNotificationsLeft = true
@@ -137,7 +136,7 @@ class PomoModule implements Module {
     duration = duration.match(/^\d+$/) ? `${duration}m` : duration
     const durationMs = parseHumanDuration(duration)
     if (!durationMs) {
-      const say = this.bot.sayFn(this.user, ctx.target)
+      const say = this.bot.sayFn(this.user)
       say('Unable to start the pomo, bad duration given. Usage: !pomo [duration [message]]')
       return
     }
@@ -153,7 +152,7 @@ class PomoModule implements Module {
     this.tick(ctx.rawCmd, ctx.context)
     this.updateClients(await this.wsdata('init'))
 
-    await this.effect(this.data.settings.startEffect, ctx.rawCmd, ctx.target, ctx.context)
+    await this.effect(this.data.settings.startEffect, ctx.rawCmd, ctx.context)
   }
 
   async cmdPomoExit(ctx: CommandExecutionContext) {
@@ -162,7 +161,7 @@ class PomoModule implements Module {
     this.tick(ctx.rawCmd, ctx.context)
     this.updateClients(await this.wsdata('init'))
 
-    await this.effect(this.data.settings.stopEffect, ctx.rawCmd, ctx.target, ctx.context)
+    await this.effect(this.data.settings.stopEffect, ctx.rawCmd, ctx.context)
   }
 
   async userChanged(user: User) {

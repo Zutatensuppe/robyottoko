@@ -41,6 +41,7 @@ interface GeneralModuleTimer {
   minInterval: number
   command: FunctionCommand
   next: number
+  executing: boolean
 }
 
 interface GeneralModuleInitData {
@@ -70,6 +71,8 @@ class GeneralModule implements Module {
   private commands: FunctionCommand[]
   // @ts-ignore
   private timers: GeneralModuleTimer[]
+
+  private newMessages = 0
 
   private interval: NodeJS.Timer | null = null
 
@@ -112,25 +115,26 @@ class GeneralModule implements Module {
     // are not added to command_execution database and also the
     // timeouts are not checked
     this.interval = setInterval(() => {
+      const newMessages = this.newMessages
+      this.newMessages = 0
+
       const date = new Date()
       const now = date.getTime()
       this.timers.forEach(async (t) => {
+        if (t.executing) {
+          return
+        }
+        t.lines += newMessages
         if (t.lines >= t.minLines && now > t.next) {
-          // while handling this timer effects, do not trigger it again by
-          // setting its requirements to max value.
-          // after the command finishes, set the correct values
-          t.lines = Number.MAX_SAFE_INTEGER
-          t.next = Number.MAX_SAFE_INTEGER
-
+          t.executing = true
           const cmdDef = t.command
           const rawCmd = null
-          const target = null
           const context = null
           await this.bot.getEffectsApplier().applyEffects(cmdDef, this, rawCmd, context)
-          await cmdDef.fn({ rawCmd, target, context, date })
-
+          await cmdDef.fn({ rawCmd, context, date })
           t.lines = 0
           t.next = now + t.minInterval
+          t.executing = false
         }
       })
     }, 1 * SECOND)
@@ -214,6 +218,7 @@ class GeneralModule implements Module {
               minInterval: interval,
               command: cmdObj,
               next: new Date().getTime() + interval,
+              executing: false,
             })
           }
         }
@@ -335,7 +340,7 @@ class GeneralModule implements Module {
         // console.log('roulette_start', evt)
         const msg = evt.data.rouletteData.startMessage
         if (msg) {
-          const say = this.bot.sayFn(this.user, this.user.twitch_login)
+          const say = this.bot.sayFn(this.user)
           say(msg)
         }
       },
@@ -343,7 +348,7 @@ class GeneralModule implements Module {
         // console.log('roulette_end', evt)
         const msg = evt.data.rouletteData.endMessage.replace(/\$entry\.text/g, evt.data.winner)
         if (msg) {
-          const say = this.bot.sayFn(this.user, this.user.twitch_login)
+          const say = this.bot.sayFn(this.user)
           say(msg)
         }
       },
@@ -366,14 +371,12 @@ class GeneralModule implements Module {
   }
 
   async onChatMsg(chatMessageContext: ChatMessageContext) {
-    this.timers.forEach(t => {
-      t.lines++
-    })
+    this.newMessages++
 
     const emotes = this.bot.getEmoteParser().extractEmotes(
       chatMessageContext.msgOriginal,
       chatMessageContext.context,
-      chatMessageContext.target,
+      this.user.twitch_login,
     )
     if (emotes) {
       const data: GeneralModuleEmotesEventData = {
