@@ -4242,6 +4242,11 @@ class GeneralModule {
             const now = date.getTime();
             this.timers.forEach(async (t) => {
                 if (t.lines >= t.minLines && now > t.next) {
+                    // while handling this timer effects, do not trigger it again by
+                    // setting its requirements to max value.
+                    // after the command finishes, set the correct values
+                    t.lines = Number.MAX_SAFE_INTEGER;
+                    t.next = Number.MAX_SAFE_INTEGER;
                     const cmdDef = t.command;
                     const rawCmd = null;
                     const target = null;
@@ -7422,9 +7427,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-10-10T19:27:12.622Z",
+    buildDate: "2023-10-13T09:38:17.191Z",
     // @ts-ignore
-    buildVersion: "1.69.5",
+    buildVersion: "1.69.6",
 };
 
 const log$f = logger('StreamStatusUpdater.ts');
