@@ -2521,9 +2521,9 @@ const commands = {
 
 const log$A = logger('CommandExecutor.ts');
 class CommandExecutor {
-    async executeMatchingCommands(bot, user, rawCmd, target, context, triggers, date, contextModule) {
+    async executeMatchingCommands(bot, user, rawCmd, context, triggers, date, contextModule) {
         const promises = [];
-        const ctx = { rawCmd, target, context, date };
+        const ctx = { rawCmd, context, date };
         for (const m of bot.getModuleManager().all(user.id)) {
             if (contextModule && contextModule.name !== m.name) {
                 continue;
@@ -2533,7 +2533,7 @@ class CommandExecutor {
         }
         await Promise.all(promises);
     }
-    isInTimeout(timeoutMs, last, ctx) {
+    isInTimeout(timeoutMs, last, ctx, user) {
         if (!last) {
             return false;
         }
@@ -2545,12 +2545,13 @@ class CommandExecutor {
         }
         // timeout still active
         log$A.info({
-            target: ctx.target,
+            user: user.name,
+            target: user.twitch_login,
             command: ctx.rawCmd?.name || '<unknown>',
         }, `Skipping command due to timeout. ${humanDuration(timeoutMsLeft)} left`);
         return true;
     }
-    async isInGlobalTimeout(cmdDef, repo, ctx) {
+    async isInGlobalTimeout(cmdDef, repo, ctx, user) {
         const durationMs = cmdDef.cooldown.global ? parseHumanDuration(cmdDef.cooldown.global) : 0;
         if (!durationMs) {
             return false;
@@ -2558,9 +2559,9 @@ class CommandExecutor {
         const last = await repo.getLastExecuted({
             command_id: cmdDef.id,
         });
-        return this.isInTimeout(durationMs, last, ctx);
+        return this.isInTimeout(durationMs, last, ctx, user);
     }
-    async isInPerUserTimeout(cmdDef, repo, ctx) {
+    async isInPerUserTimeout(cmdDef, repo, ctx, user) {
         if (!ctx.context || !ctx.context.username) {
             return false;
         }
@@ -2572,14 +2573,14 @@ class CommandExecutor {
             command_id: cmdDef.id,
             trigger_user_name: ctx.context.username,
         });
-        return this.isInTimeout(durationMs, last, ctx);
+        return this.isInTimeout(durationMs, last, ctx, user);
     }
     async trySay(message, ctx, cmdDef, bot, user) {
         if (!message) {
             return;
         }
         const m = await doReplacements(message, ctx.rawCmd, ctx.context, cmdDef, bot, user);
-        const say = bot.sayFn(user, ctx.target);
+        const say = bot.sayFn(user);
         say(m);
     }
     async tryExecuteCommands(contextModule, cmdDefs, ctx, bot, user) {
@@ -2589,16 +2590,17 @@ class CommandExecutor {
             if (!ctx.context || !mayExecute(ctx.context, cmdDef)) {
                 continue;
             }
-            if (await this.isInGlobalTimeout(cmdDef, repo, ctx)) {
+            if (await this.isInGlobalTimeout(cmdDef, repo, ctx, user)) {
                 this.trySay(cmdDef.cooldown.globalMessage, ctx, cmdDef, bot, user);
                 continue;
             }
-            if (await this.isInPerUserTimeout(cmdDef, repo, ctx)) {
+            if (await this.isInPerUserTimeout(cmdDef, repo, ctx, user)) {
                 this.trySay(cmdDef.cooldown.perUserMessage, ctx, cmdDef, bot, user);
                 continue;
             }
             log$A.info({
-                target: ctx.target,
+                user: user.name,
+                target: user.twitch_login,
                 command: ctx.rawCmd?.name || '<unknown>',
                 module: contextModule.name,
             }, 'Executing command');
@@ -2608,12 +2610,14 @@ class CommandExecutor {
                 const r = await cmdDef.fn(ctx);
                 if (r) {
                     log$A.info({
-                        target: ctx.target,
+                        user: user.name,
+                        target: user.twitch_login,
                         return: r,
                     }, 'Returned from command');
                 }
                 log$A.info({
-                    target: ctx.target,
+                    user: user.name,
+                    target: user.twitch_login,
                     command: ctx.rawCmd?.name || '<unknown>',
                 }, 'Executed command');
                 resolve();
@@ -2642,7 +2646,6 @@ class SubscribeEventHandler extends EventSubEventHandler {
             args: [],
         };
         const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.user_id);
-        const target = data.event.broadcaster_user_name;
         const context = {
             'room-id': data.event.broadcaster_user_id,
             'user-id': data.event.user_id,
@@ -2654,7 +2657,7 @@ class SubscribeEventHandler extends EventSubEventHandler {
         };
         const trigger = newSubscribeTrigger();
         const exec = new CommandExecutor();
-        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger], new Date());
+        await exec.executeMatchingCommands(bot, user, rawCmd, context, [trigger], new Date());
     }
 }
 
@@ -2668,7 +2671,6 @@ class FollowEventHandler extends EventSubEventHandler {
             args: [],
         };
         const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.user_id);
-        const target = data.event.broadcaster_user_name;
         const context = {
             'room-id': data.event.broadcaster_user_id,
             'user-id': data.event.user_id,
@@ -2680,7 +2682,7 @@ class FollowEventHandler extends EventSubEventHandler {
         };
         const trigger = newFollowTrigger();
         const exec = new CommandExecutor();
-        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger], new Date());
+        await exec.executeMatchingCommands(bot, user, rawCmd, context, [trigger], new Date());
     }
 }
 
@@ -2694,7 +2696,6 @@ class CheerEventHandler extends EventSubEventHandler {
             args: [],
         };
         const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.user_id);
-        const target = data.event.broadcaster_user_name;
         const context = {
             'room-id': data.event.broadcaster_user_id,
             'user-id': data.event.user_id,
@@ -2711,7 +2712,7 @@ class CheerEventHandler extends EventSubEventHandler {
         };
         const trigger = newBitsTrigger();
         const exec = new CommandExecutor();
-        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger], new Date());
+        await exec.executeMatchingCommands(bot, user, rawCmd, context, [trigger], new Date());
     }
 }
 
@@ -2724,7 +2725,6 @@ class ChannelPointRedeemEventHandler extends EventSubEventHandler {
             args: data.event.user_input ? [data.event.user_input] : [],
         };
         const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.user_id);
-        const target = data.event.broadcaster_user_name;
         const context = {
             'room-id': data.event.broadcaster_user_id,
             'user-id': data.event.user_id,
@@ -2736,7 +2736,7 @@ class ChannelPointRedeemEventHandler extends EventSubEventHandler {
         };
         const trigger = newRewardRedemptionTrigger(data.event.reward.title);
         const exec = new CommandExecutor();
-        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger], new Date());
+        await exec.executeMatchingCommands(bot, user, rawCmd, context, [trigger], new Date());
     }
 }
 
@@ -2790,7 +2790,6 @@ class RaidEventHandler extends EventSubEventHandler {
             args: [],
         };
         const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.from_broadcaster_user_id);
-        const target = data.event.to_broadcaster_user_name;
         const context = {
             'room-id': data.event.to_broadcaster_user_id,
             'user-id': data.event.from_broadcaster_user_id,
@@ -2807,7 +2806,7 @@ class RaidEventHandler extends EventSubEventHandler {
         };
         const trigger = newRaidTrigger();
         const exec = new CommandExecutor();
-        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger], new Date());
+        await exec.executeMatchingCommands(bot, user, rawCmd, context, [trigger], new Date());
     }
 }
 
@@ -2821,7 +2820,6 @@ class SubscriptionGiftEventHandler extends EventSubEventHandler {
             args: [],
         };
         const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.user_id);
-        const target = data.event.broadcaster_user_name;
         const context = {
             'room-id': data.event.broadcaster_user_id,
             'user-id': data.event.user_id,
@@ -2838,7 +2836,7 @@ class SubscriptionGiftEventHandler extends EventSubEventHandler {
         };
         const trigger = newSubscribeTrigger();
         const exec = new CommandExecutor();
-        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, [trigger], new Date());
+        await exec.executeMatchingCommands(bot, user, rawCmd, context, [trigger], new Date());
     }
 }
 
@@ -3422,12 +3420,11 @@ const determineIsFirstChatStream = async (bot, user, context) => {
     return await bot.getRepos().chatLog.isFirstChatSince(context, minDate);
 };
 class ChatEventHandler {
-    async handle(bot, user, target, context, msgOriginal, msgNormalized) {
+    async handle(bot, user, context, msgOriginal, msgNormalized) {
         const roles = rolesLettersFromTwitchChatContext(context);
         log$o.debug({
             username: context.username,
             roles,
-            target,
             msgOriginal,
             msgNormalized,
         });
@@ -3488,7 +3485,7 @@ class ChatEventHandler {
             return { triggers, rawCmd };
         };
         const client = bot.getUserTwitchClientManager(user).getChatClient();
-        const chatMessageContext = { client, target, context, msgOriginal, msgNormalized };
+        const chatMessageContext = { client, context, msgOriginal, msgNormalized };
         const date = new Date();
         for (const m of bot.getModuleManager().all(user.id)) {
             if (!m.isEnabled()) {
@@ -3497,7 +3494,7 @@ class ChatEventHandler {
             const { triggers, rawCmd } = await createTriggers(m);
             if (triggers.length > 0) {
                 const exec = new CommandExecutor();
-                await exec.executeMatchingCommands(bot, user, rawCmd, target, context, triggers, date, m);
+                await exec.executeMatchingCommands(bot, user, rawCmd, context, triggers, date, m);
             }
             await m.onChatMsg(chatMessageContext);
         }
@@ -3596,7 +3593,7 @@ class TwitchClientManager {
                 if (!user.bot_status_messages) {
                     return;
                 }
-                const say = this.bot.sayFn(user, user.twitch_login);
+                const say = this.bot.sayFn(user);
                 if (reason === 'init') {
                     say('⚠️ Bot rebooted - please restart timers...');
                 }
@@ -3617,7 +3614,7 @@ class TwitchClientManager {
                     // they are removed here
                     const msgOriginal = msg;
                     const msgNormalized = normalizeChatMessage(msg);
-                    await (chatEventHandler).handle(this.bot, this.user, target, context, msgOriginal, msgNormalized);
+                    await (chatEventHandler).handle(this.bot, this.user, context, msgOriginal, msgNormalized);
                 });
                 // Called every time the bot connects to Twitch chat
                 this.chatClient.on('connected', async (addr, port) => {
@@ -4207,6 +4204,7 @@ class GeneralModule {
         this.bot = bot;
         this.user = user;
         this.name = MODULE_NAME.GENERAL;
+        this.newMessages = 0;
         this.interval = null;
         this.channelPointsCustomRewards = {};
         // @ts-ignore
@@ -4238,23 +4236,25 @@ class GeneralModule {
         // are not added to command_execution database and also the
         // timeouts are not checked
         this.interval = setInterval(() => {
+            const newMessages = this.newMessages;
+            this.newMessages = 0;
             const date = new Date();
             const now = date.getTime();
             this.timers.forEach(async (t) => {
+                if (t.executing) {
+                    return;
+                }
+                t.lines += newMessages;
                 if (t.lines >= t.minLines && now > t.next) {
-                    // while handling this timer effects, do not trigger it again by
-                    // setting its requirements to max value.
-                    // after the command finishes, set the correct values
-                    t.lines = Number.MAX_SAFE_INTEGER;
-                    t.next = Number.MAX_SAFE_INTEGER;
+                    t.executing = true;
                     const cmdDef = t.command;
                     const rawCmd = null;
-                    const target = null;
                     const context = null;
                     await this.bot.getEffectsApplier().applyEffects(cmdDef, this, rawCmd, context);
-                    await cmdDef.fn({ rawCmd, target, context, date });
+                    await cmdDef.fn({ rawCmd, context, date });
                     t.lines = 0;
                     t.next = now + t.minInterval;
+                    t.executing = false;
                 }
             });
         }, 1 * SECOND);
@@ -4340,6 +4340,7 @@ class GeneralModule {
                             minInterval: interval,
                             command: cmdObj,
                             next: new Date().getTime() + interval,
+                            executing: false,
                         });
                     }
                 }
@@ -4440,7 +4441,7 @@ class GeneralModule {
                 // console.log('roulette_start', evt)
                 const msg = evt.data.rouletteData.startMessage;
                 if (msg) {
-                    const say = this.bot.sayFn(this.user, this.user.twitch_login);
+                    const say = this.bot.sayFn(this.user);
                     say(msg);
                 }
             },
@@ -4448,7 +4449,7 @@ class GeneralModule {
                 // console.log('roulette_end', evt)
                 const msg = evt.data.rouletteData.endMessage.replace(/\$entry\.text/g, evt.data.winner);
                 if (msg) {
-                    const say = this.bot.sayFn(this.user, this.user.twitch_login);
+                    const say = this.bot.sayFn(this.user);
                     say(msg);
                 }
             },
@@ -4468,10 +4469,8 @@ class GeneralModule {
         return this.commands;
     }
     async onChatMsg(chatMessageContext) {
-        this.timers.forEach(t => {
-            t.lines++;
-        });
-        const emotes = this.bot.getEmoteParser().extractEmotes(chatMessageContext.msgOriginal, chatMessageContext.context, chatMessageContext.target);
+        this.newMessages++;
+        const emotes = this.bot.getEmoteParser().extractEmotes(chatMessageContext.msgOriginal, chatMessageContext.context, this.user.twitch_login);
         if (emotes) {
             const data = {
                 displayFn: this.data.settings.emotes.displayFn,
@@ -6074,7 +6073,7 @@ class SongrequestModule {
             if (!ctx.rawCmd || !ctx.context) {
                 return;
             }
-            const say = this.bot.sayFn(this.user, ctx.target);
+            const say = this.bot.sayFn(this.user);
             if (this.data.playlist.length === 0) {
                 say('Playlist is empty');
                 return;
@@ -6089,7 +6088,7 @@ class SongrequestModule {
             if (!ctx.rawCmd || !ctx.context || !ctx.context['display-name']) {
                 return;
             }
-            const say = this.bot.sayFn(this.user, ctx.target);
+            const say = this.bot.sayFn(this.user);
             const undid = await this.undo(ctx.context['display-name']);
             if (!undid) {
                 say('Could not undo anything');
@@ -6105,7 +6104,7 @@ class SongrequestModule {
                 log$j.error('cmdResr: client, command or context empty');
                 return;
             }
-            const say = this.bot.sayFn(this.user, ctx.target);
+            const say = this.bot.sayFn(this.user);
             if (ctx.rawCmd.args.length === 0) {
                 say('Usage: !resr SEARCH');
                 return;
@@ -6130,7 +6129,7 @@ class SongrequestModule {
             if (!ctx.rawCmd || !ctx.context || !ctx.context['display-name']) {
                 return;
             }
-            const say = this.bot.sayFn(this.user, ctx.target);
+            const say = this.bot.sayFn(this.user);
             const stats = await this.stats(ctx.context['display-name']);
             let number = `${stats.count.byUser}`;
             const verb = stats.count.byUser === 1 ? 'was' : 'were';
@@ -6167,13 +6166,10 @@ class SongrequestModule {
         };
     }
     cmdSrRm(_originalCommand) {
-        return async (ctx) => {
-            if (!ctx.target) {
-                return;
-            }
+        return async (_ctx) => {
             const removedItem = await this.remove();
             if (removedItem) {
-                const say = this.bot.sayFn(this.user, ctx.target);
+                const say = this.bot.sayFn(this.user);
                 say(`Removed "${removedItem.title}" from the playlist.`);
             }
         };
@@ -6189,15 +6185,15 @@ class SongrequestModule {
         };
     }
     cmdSrLoop(_originalCommand) {
-        return async (ctx) => {
-            const say = this.bot.sayFn(this.user, ctx.target);
+        return async (_ctx) => {
+            const say = this.bot.sayFn(this.user);
             await this.loop();
             say('Now looping the current song');
         };
     }
     cmdSrNoloop(_originalCommand) {
-        return async (ctx) => {
-            const say = this.bot.sayFn(this.user, ctx.target);
+        return async (_ctx) => {
+            const say = this.bot.sayFn(this.user);
             await this.noloop();
             say('Stopped looping the current song');
         };
@@ -6212,7 +6208,7 @@ class SongrequestModule {
             if (tag === '') {
                 return;
             }
-            const say = this.bot.sayFn(this.user, ctx.target);
+            const say = this.bot.sayFn(this.user);
             await this.addTag(tag);
             say(`Added tag "${tag}"`);
         };
@@ -6225,7 +6221,7 @@ class SongrequestModule {
             if (!ctx.rawCmd.args.length) {
                 return;
             }
-            const say = this.bot.sayFn(this.user, ctx.target);
+            const say = this.bot.sayFn(this.user);
             const tag = ctx.rawCmd.args.join(' ');
             await this.rmTag(tag);
             say(`Removed tag "${tag}"`);
@@ -6246,7 +6242,7 @@ class SongrequestModule {
             if (!ctx.rawCmd) {
                 return;
             }
-            const say = this.bot.sayFn(this.user, ctx.target);
+            const say = this.bot.sayFn(this.user);
             if (ctx.rawCmd.args.length === 0) {
                 say(`Current volume: ${this.data.settings.volume}`);
             }
@@ -6258,15 +6254,15 @@ class SongrequestModule {
         };
     }
     cmdSrHidevideo(_originalCommand) {
-        return async (ctx) => {
-            const say = this.bot.sayFn(this.user, ctx.target);
+        return async (_ctx) => {
+            const say = this.bot.sayFn(this.user);
             await this.videoVisibility(false);
             say('Video is now hidden.');
         };
     }
     cmdSrShowvideo(_originalCommand) {
-        return async (ctx) => {
-            const say = this.bot.sayFn(this.user, ctx.target);
+        return async (_ctx) => {
+            const say = this.bot.sayFn(this.user);
             await this.videoVisibility(true);
             say('Video is now shown.');
         };
@@ -6276,7 +6272,7 @@ class SongrequestModule {
             if (!ctx.rawCmd || !ctx.context) {
                 return;
             }
-            const say = this.bot.sayFn(this.user, ctx.target);
+            const say = this.bot.sayFn(this.user);
             const tag = ctx.rawCmd.args.join(' ');
             if (tag !== '') {
                 const res = await this.setFilterShowTag(tag);
@@ -6306,7 +6302,7 @@ class SongrequestModule {
             if (!ctx.rawCmd || !ctx.context) {
                 return;
             }
-            const say = this.bot.sayFn(this.user, ctx.target);
+            const say = this.bot.sayFn(this.user);
             const tag = ctx.rawCmd.args.join(' ');
             if (tag === '') {
                 say(`No tag given.`);
@@ -6324,8 +6320,8 @@ class SongrequestModule {
         };
     }
     cmdSrQueue(_originalCommand) {
-        return async (ctx) => {
-            const say = this.bot.sayFn(this.user, ctx.target);
+        return async (_ctx) => {
+            const say = this.bot.sayFn(this.user);
             const titles = this.data.playlist.slice(1, 4).map(item => item.title);
             if (titles.length === 1) {
                 say(`${titles.length} song queued ("${titles.join('" → "')}").`);
@@ -6343,7 +6339,7 @@ class SongrequestModule {
             if (!ctx.rawCmd || !ctx.context) {
                 return;
             }
-            const say = this.bot.sayFn(this.user, ctx.target);
+            const say = this.bot.sayFn(this.user);
             const presetName = ctx.rawCmd.args.join(' ');
             if (presetName === '') {
                 if (this.data.settings.customCssPresets.length) {
@@ -6372,7 +6368,7 @@ class SongrequestModule {
             if (!ctx.rawCmd || !ctx.context || !ctx.context['display-name']) {
                 return;
             }
-            const say = this.bot.sayFn(this.user, ctx.target);
+            const say = this.bot.sayFn(this.user);
             if (ctx.rawCmd.args.length === 0) {
                 say('Usage: !sr YOUTUBE-URL');
                 return;
@@ -6511,35 +6507,35 @@ class VoteModule {
     async setEnabled(enabled) {
         this.data.enabled = enabled;
     }
-    async vote(type, thing, target, context) {
+    async vote(type, thing, context) {
         if (!context['display-name']) {
             log$i.error('context has no display name set');
             return;
         }
-        const say = this.bot.sayFn(this.user, target);
+        const say = this.bot.sayFn(this.user);
         this.data.data.votes[type] = this.data.data.votes[type] || {};
         this.data.data.votes[type][context['display-name']] = thing;
         say(`Thanks ${context['display-name']}, registered your "${type}" vote: ${thing}`);
         await this.save();
     }
     async playCmd(ctx) {
-        if (!ctx.rawCmd || !ctx.context || !ctx.target) {
+        if (!ctx.rawCmd || !ctx.context) {
             return;
         }
-        const say = this.bot.sayFn(this.user, ctx.target);
+        const say = this.bot.sayFn(this.user);
         if (ctx.rawCmd.args.length === 0) {
             say('Usage: !play THING');
             return;
         }
         const thing = ctx.rawCmd.args.join(' ');
         const type = 'play';
-        await this.vote(type, thing, ctx.target, ctx.context);
+        await this.vote(type, thing, ctx.context);
     }
     async voteCmd(ctx) {
-        if (!ctx.rawCmd || !ctx.context || !ctx.target) {
+        if (!ctx.rawCmd || !ctx.context) {
             return;
         }
-        const say = this.bot.sayFn(this.user, ctx.target);
+        const say = this.bot.sayFn(this.user);
         // maybe open up for everyone, but for now use dedicated
         // commands like !play THING
         if (!isMod(ctx.context) && !isBroadcaster(ctx.context)) {
@@ -6590,7 +6586,7 @@ class VoteModule {
         }
         const type = ctx.rawCmd.args[0];
         const thing = ctx.rawCmd.args.slice(1).join(' ');
-        await this.vote(type, thing, ctx.target, ctx.context);
+        await this.vote(type, thing, ctx.context);
     }
     getCommands() {
         return [
@@ -7277,9 +7273,9 @@ class PomoModule {
         text = text.replace(/\$pomo\.name/g, this.data.state.name);
         return text;
     }
-    async effect(effect, command, target, context) {
+    async effect(effect, command, context) {
         if (effect.chatMessage) {
-            const say = this.bot.sayFn(this.user, target);
+            const say = this.bot.sayFn(this.user);
             say(await this.replaceText(effect.chatMessage, command, context));
         }
         this.updateClients({ event: 'effect', data: effect });
@@ -7306,7 +7302,7 @@ class PomoModule {
                 if (nDateEnd < now) {
                     // is over and should maybe be triggered!
                     if (!doneDate || nDateEnd > doneDate) {
-                        await this.effect(n.effect, command, null, context);
+                        await this.effect(n.effect, command, context);
                     }
                 }
                 else {
@@ -7316,7 +7312,7 @@ class PomoModule {
             if (dateEnd < now) {
                 // is over and should maybe be triggered!
                 if (!doneDate || dateEnd > doneDate) {
-                    await this.effect(this.data.settings.endEffect, command, null, context);
+                    await this.effect(this.data.settings.endEffect, command, context);
                 }
             }
             else {
@@ -7334,7 +7330,7 @@ class PomoModule {
         duration = duration.match(/^\d+$/) ? `${duration}m` : duration;
         const durationMs = parseHumanDuration(duration);
         if (!durationMs) {
-            const say = this.bot.sayFn(this.user, ctx.target);
+            const say = this.bot.sayFn(this.user);
             say('Unable to start the pomo, bad duration given. Usage: !pomo [duration [message]]');
             return;
         }
@@ -7347,14 +7343,14 @@ class PomoModule {
         await this.save();
         this.tick(ctx.rawCmd, ctx.context);
         this.updateClients(await this.wsdata('init'));
-        await this.effect(this.data.settings.startEffect, ctx.rawCmd, ctx.target, ctx.context);
+        await this.effect(this.data.settings.startEffect, ctx.rawCmd, ctx.context);
     }
     async cmdPomoExit(ctx) {
         this.data.state.running = false;
         await this.save();
         this.tick(ctx.rawCmd, ctx.context);
         this.updateClients(await this.wsdata('init'));
-        await this.effect(this.data.settings.stopEffect, ctx.rawCmd, ctx.target, ctx.context);
+        await this.effect(this.data.settings.stopEffect, ctx.rawCmd, ctx.context);
     }
     async userChanged(user) {
         this.user = user;
@@ -7427,7 +7423,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-10-13T09:38:17.191Z",
+    buildDate: "2023-10-13T20:13:31.139Z",
     // @ts-ignore
     buildVersion: "1.69.6",
 };
@@ -8612,12 +8608,12 @@ class EmoteParser {
         await loadAssetsForChannel(channel, channelId, helixClient);
     }
     extractEmojiEmotes(message) {
-        return p.detectStrings(message).map(str => ({
+        return p.detectStrings(message).map((str) => ({
             url: `https://cdn.betterttv.net/assets/emoji/${str}.svg`,
         }));
     }
-    extractEmotes(message, context, target) {
-        const emotes = getEmotes(message, context, target);
+    extractEmotes(message, context, channel) {
+        const emotes = getEmotes(message, context, channel);
         return [
             ...emotes.map(e => ({ url: e.img })),
             ...this.extractEmojiEmotes(message),
@@ -8649,7 +8645,7 @@ class Effect {
         this.rawCmd = rawCmd;
         this.context = context;
         _Effect_sayFn.set(this, void 0);
-        __classPrivateFieldSet(this, _Effect_sayFn, contextModule.bot.sayFn(contextModule.user, contextModule.user.twitch_login), "f");
+        __classPrivateFieldSet(this, _Effect_sayFn, contextModule.bot.sayFn(contextModule.user), "f");
     }
     async doReplacements(str) {
         return await doReplacements(str, this.rawCmd, this.context, this.originalCmd, this.contextModule.bot, this.contextModule.user);
@@ -9463,10 +9459,10 @@ const createBot = async () => {
         getCanny() { return canny; }
         // user specific
         // -----------------------------------------------------------------
-        sayFn(user, target) {
+        sayFn(user) {
             const chatClient = this.getUserTwitchClientManager(user).getChatClient();
             return chatClient
-                ? fn.sayFn(chatClient, target)
+                ? fn.sayFn(chatClient, user.twitch_login)
                 : ((msg) => { log.info('say(), client not set, msg', msg); });
         }
         getUserTwitchClientManager(user) {
