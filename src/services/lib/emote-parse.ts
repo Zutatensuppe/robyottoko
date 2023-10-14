@@ -325,7 +325,8 @@ async function loadConcurrent(
         if (body.status_code === 404) {
           return
         }
-        Object.values(body.emote_set.emotes).forEach((channelEmote: any) => {
+        const emotes = body.emote_set?.emotes || []
+        Object.values(emotes).forEach((channelEmote: any) => {
           const emote = parseSeventvV3Emote(channelEmote)
           if (emote) {
             loadedChannelAssets.emotes.push(emote)
