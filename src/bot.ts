@@ -112,10 +112,10 @@ const createBot = async (): Promise<Bot> => {
     // user specific
     // -----------------------------------------------------------------
 
-    sayFn(user: User, target: string | null): (msg: string) => void {
+    sayFn(user: User): (msg: string) => void {
       const chatClient = this.getUserTwitchClientManager(user).getChatClient()
       return chatClient
-        ? fn.sayFn(chatClient, target)
+        ? fn.sayFn(chatClient, user.twitch_login)
         : ((msg: string) => { log.info('say(), client not set, msg', msg) })
     }
 

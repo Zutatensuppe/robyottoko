@@ -9,13 +9,13 @@ export class EmoteParser {
   }
 
   private extractEmojiEmotes (message: string) {
-    return emojiDetect.detectStrings(message).map(str => ({
+    return emojiDetect.detectStrings(message).map((str: string) => ({
       url: `https://cdn.betterttv.net/assets/emoji/${str}.svg`,
     }))
   }
 
-  extractEmotes (message: string, context: ChatUserstate | null, target: string) {
-    const emotes = getEmotes(message, context, target)
+  extractEmotes (message: string, context: ChatUserstate | null, channel: string) {
+    const emotes = getEmotes(message, context, channel)
 
     return [
       ...emotes.map(e => ({ url: e.img })),

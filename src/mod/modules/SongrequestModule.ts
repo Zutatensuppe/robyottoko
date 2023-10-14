@@ -1073,7 +1073,7 @@ class SongrequestModule implements Module {
       if (!ctx.rawCmd || !ctx.context) {
         return
       }
-      const say = this.bot.sayFn(this.user, ctx.target)
+      const say = this.bot.sayFn(this.user)
       if (this.data.playlist.length === 0) {
         say('Playlist is empty')
         return
@@ -1089,7 +1089,7 @@ class SongrequestModule implements Module {
       if (!ctx.rawCmd || !ctx.context || !ctx.context['display-name']) {
         return
       }
-      const say = this.bot.sayFn(this.user, ctx.target)
+      const say = this.bot.sayFn(this.user)
       const undid = await this.undo(ctx.context['display-name'])
       if (!undid) {
         say('Could not undo anything')
@@ -1106,7 +1106,7 @@ class SongrequestModule implements Module {
         return
       }
 
-      const say = this.bot.sayFn(this.user, ctx.target)
+      const say = this.bot.sayFn(this.user)
 
       if (ctx.rawCmd.args.length === 0) {
         say('Usage: !resr SEARCH')
@@ -1137,7 +1137,7 @@ class SongrequestModule implements Module {
         return
       }
 
-      const say = this.bot.sayFn(this.user, ctx.target)
+      const say = this.bot.sayFn(this.user)
 
       const stats = await this.stats(ctx.context['display-name'])
       let number = `${stats.count.byUser}`
@@ -1179,13 +1179,10 @@ class SongrequestModule implements Module {
   }
 
   cmdSrRm(_originalCommand: Command) {
-    return async (ctx: CommandExecutionContext) => {
-      if (!ctx.target) {
-        return
-      }
+    return async (_ctx: CommandExecutionContext) => {
       const removedItem = await this.remove()
       if (removedItem) {
-        const say = this.bot.sayFn(this.user, ctx.target)
+        const say = this.bot.sayFn(this.user)
         say(`Removed "${removedItem.title}" from the playlist.`)
       }
     }
@@ -1204,16 +1201,16 @@ class SongrequestModule implements Module {
   }
 
   cmdSrLoop(_originalCommand: Command) {
-    return async (ctx: CommandExecutionContext) => {
-      const say = this.bot.sayFn(this.user, ctx.target)
+    return async (_ctx: CommandExecutionContext) => {
+      const say = this.bot.sayFn(this.user)
       await this.loop()
       say('Now looping the current song')
     }
   }
 
   cmdSrNoloop(_originalCommand: Command) {
-    return async (ctx: CommandExecutionContext) => {
-      const say = this.bot.sayFn(this.user, ctx.target)
+    return async (_ctx: CommandExecutionContext) => {
+      const say = this.bot.sayFn(this.user)
       await this.noloop()
       say('Stopped looping the current song')
     }
@@ -1230,7 +1227,7 @@ class SongrequestModule implements Module {
         return
       }
 
-      const say = this.bot.sayFn(this.user, ctx.target)
+      const say = this.bot.sayFn(this.user)
       await this.addTag(tag)
       say(`Added tag "${tag}"`)
     }
@@ -1244,7 +1241,7 @@ class SongrequestModule implements Module {
       if (!ctx.rawCmd.args.length) {
         return
       }
-      const say = this.bot.sayFn(this.user, ctx.target)
+      const say = this.bot.sayFn(this.user)
       const tag = ctx.rawCmd.args.join(' ')
       await this.rmTag(tag)
       say(`Removed tag "${tag}"`)
@@ -1269,7 +1266,7 @@ class SongrequestModule implements Module {
         return
       }
 
-      const say = this.bot.sayFn(this.user, ctx.target)
+      const say = this.bot.sayFn(this.user)
       if (ctx.rawCmd.args.length === 0) {
         say(`Current volume: ${this.data.settings.volume}`)
       } else {
@@ -1284,16 +1281,16 @@ class SongrequestModule implements Module {
   }
 
   cmdSrHidevideo(_originalCommand: Command) {
-    return async (ctx: CommandExecutionContext) => {
-      const say = this.bot.sayFn(this.user, ctx.target)
+    return async (_ctx: CommandExecutionContext) => {
+      const say = this.bot.sayFn(this.user)
       await this.videoVisibility(false)
       say('Video is now hidden.')
     }
   }
 
   cmdSrShowvideo(_originalCommand: Command) {
-    return async (ctx: CommandExecutionContext) => {
-      const say = this.bot.sayFn(this.user, ctx.target)
+    return async (_ctx: CommandExecutionContext) => {
+      const say = this.bot.sayFn(this.user)
       await this.videoVisibility(true)
       say('Video is now shown.')
     }
@@ -1305,7 +1302,7 @@ class SongrequestModule implements Module {
         return
       }
 
-      const say = this.bot.sayFn(this.user, ctx.target)
+      const say = this.bot.sayFn(this.user)
       const tag = ctx.rawCmd.args.join(' ')
       if (tag !== '') {
         const res = await this.setFilterShowTag(tag)
@@ -1333,7 +1330,7 @@ class SongrequestModule implements Module {
         return
       }
 
-      const say = this.bot.sayFn(this.user, ctx.target)
+      const say = this.bot.sayFn(this.user)
       const tag = ctx.rawCmd.args.join(' ')
       if (tag === '') {
         say(`No tag given.`)
@@ -1351,8 +1348,8 @@ class SongrequestModule implements Module {
   }
 
   cmdSrQueue(_originalCommand: Command) {
-    return async (ctx: CommandExecutionContext) => {
-      const say = this.bot.sayFn(this.user, ctx.target)
+    return async (_ctx: CommandExecutionContext) => {
+      const say = this.bot.sayFn(this.user)
       const titles = this.data.playlist.slice(1, 4).map(item => item.title)
       if (titles.length === 1) {
         say(`${titles.length} song queued ("${titles.join('" → "')}").`)
@@ -1370,7 +1367,7 @@ class SongrequestModule implements Module {
         return
       }
 
-      const say = this.bot.sayFn(this.user, ctx.target)
+      const say = this.bot.sayFn(this.user)
       const presetName = ctx.rawCmd.args.join(' ')
       if (presetName === '') {
         if (this.data.settings.customCssPresets.length) {
@@ -1398,7 +1395,7 @@ class SongrequestModule implements Module {
         return
       }
 
-      const say = this.bot.sayFn(this.user, ctx.target)
+      const say = this.bot.sayFn(this.user)
 
       if (ctx.rawCmd.args.length === 0) {
         say('Usage: !sr YOUTUBE-URL')

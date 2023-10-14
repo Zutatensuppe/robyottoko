@@ -109,7 +109,7 @@ class TwitchClientManager {
         if (!user.bot_status_messages) {
           return
         }
-        const say = this.bot.sayFn(user, user.twitch_login)
+        const say = this.bot.sayFn(user)
         if (reason === 'init') {
           say('⚠️ Bot rebooted - please restart timers...')
         } else if (reason === 'access_token_refreshed') {
@@ -137,7 +137,6 @@ class TwitchClientManager {
           await (chatEventHandler).handle(
             this.bot,
             this.user,
-            target,
             context,
             msgOriginal,
             msgNormalized,
@@ -160,7 +159,7 @@ class TwitchClientManager {
 
         // do NOT await
         // awaiting the connect will add ~1sec per user on server startup
-        this.chatClient.connect().catch((e) => {
+        this.chatClient.connect().catch((e: unknown) => {
           // this can happen when calling close before the connection
           // could be established
           this.log.error({ e }, 'error when connecting')

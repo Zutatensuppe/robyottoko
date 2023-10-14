@@ -238,7 +238,6 @@ export interface TwitchEventContext extends ChatUserstate {
 
 export interface CommandExecutionContext {
   rawCmd: RawCommand | null
-  target: string | null
   context: TwitchEventContext | null
   date: Date
 }
@@ -545,7 +544,6 @@ export interface FunctionCommand {
 
 export interface ChatMessageContext {
   client: TwitchChatClient | null
-  target: string
   context: TwitchEventContext
   msgOriginal: string
   msgNormalized: string
@@ -638,6 +636,6 @@ export interface Bot {
   getDiscord: () => Discord
   getEmoteParser: () => EmoteParser
 
-  sayFn: (user: User, target: string | null) => (msg: string) => void
+  sayFn: (user: User) => (msg: string) => void
   getUserTwitchClientManager: (user: User) => TwitchClientManager
 }

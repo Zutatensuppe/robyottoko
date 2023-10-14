@@ -61,7 +61,6 @@ export class ChatEventHandler {
   async handle(
     bot: Bot,
     user: User,
-    target: string,
     context: TwitchEventContext,
     msgOriginal: string,
     msgNormalized: string,
@@ -70,7 +69,6 @@ export class ChatEventHandler {
     log.debug({
       username: context.username,
       roles,
-      target,
       msgOriginal,
       msgNormalized,
     })
@@ -139,7 +137,7 @@ export class ChatEventHandler {
     }
 
     const client = bot.getUserTwitchClientManager(user).getChatClient()
-    const chatMessageContext = { client, target, context, msgOriginal, msgNormalized }
+    const chatMessageContext = { client, context, msgOriginal, msgNormalized }
     const date = new Date()
     for (const m of bot.getModuleManager().all(user.id)) {
       if (!m.isEnabled()) {
@@ -148,7 +146,7 @@ export class ChatEventHandler {
       const { triggers, rawCmd } = await createTriggers(m)
       if (triggers.length > 0) {
         const exec = new CommandExecutor()
-        await exec.executeMatchingCommands(bot, user, rawCmd, target, context, triggers, date, m)
+        await exec.executeMatchingCommands(bot, user, rawCmd, context, triggers, date, m)
       }
       await m.onChatMsg(chatMessageContext)
     }

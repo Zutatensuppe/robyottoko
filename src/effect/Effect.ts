@@ -12,10 +12,7 @@ export abstract class Effect<EffectData> {
     protected readonly rawCmd: RawCommand | null,
     protected readonly context: TwitchEventContext | null,
   ) {
-    this.#sayFn = contextModule.bot.sayFn(
-      contextModule.user,
-      contextModule.user.twitch_login,
-    )
+    this.#sayFn = contextModule.bot.sayFn(contextModule.user)
   }
 
   abstract apply(): Promise<void>

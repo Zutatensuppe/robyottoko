@@ -15,14 +15,13 @@ export class CommandExecutor {
     bot: Bot,
     user: User,
     rawCmd: RawCommand | null,
-    target: string,
     context: TwitchEventContext,
     triggers: CommandTrigger[],
     date: Date,
     contextModule?: Module,
   ): Promise<void> {
     const promises: Promise<void>[] = []
-    const ctx: CommandExecutionContext = { rawCmd, target, context, date }
+    const ctx: CommandExecutionContext = { rawCmd, context, date }
     for (const m of bot.getModuleManager().all(user.id)) {
       if (contextModule && contextModule.name !== m.name) {
         continue
@@ -33,7 +32,12 @@ export class CommandExecutor {
     await Promise.all(promises)
   }
 
-  private isInTimeout(timeoutMs: number, last: Row | null, ctx: CommandExecutionContext): boolean {
+  private isInTimeout(
+    timeoutMs: number,
+    last: Row | null,
+    ctx: CommandExecutionContext,
+    user: User,
+  ): boolean {
     if (!last) {
       return false
     }
@@ -45,7 +49,8 @@ export class CommandExecutor {
     }
     // timeout still active
     log.info({
-      target: ctx.target,
+      user: user.name,
+      target: user.twitch_login,
       command: ctx.rawCmd?.name || '<unknown>',
     }, `Skipping command due to timeout. ${humanDuration(timeoutMsLeft)} left`)
     return true
@@ -55,6 +60,7 @@ export class CommandExecutor {
     cmdDef: FunctionCommand,
     repo: CommandExecutionRepo,
     ctx: CommandExecutionContext,
+    user: User,
   ): Promise<boolean> {
     const durationMs = cmdDef.cooldown.global ? parseHumanDuration(cmdDef.cooldown.global) : 0
     if (!durationMs) {
@@ -63,13 +69,14 @@ export class CommandExecutor {
     const last = await repo.getLastExecuted({
       command_id: cmdDef.id,
     })
-    return this.isInTimeout(durationMs, last, ctx)
+    return this.isInTimeout(durationMs, last, ctx, user)
   }
 
   private async isInPerUserTimeout(
     cmdDef: FunctionCommand,
     repo: CommandExecutionRepo,
     ctx: CommandExecutionContext,
+    user: User,
   ): Promise<boolean> {
     if (!ctx.context || !ctx.context.username) {
       return false
@@ -82,7 +89,7 @@ export class CommandExecutor {
       command_id: cmdDef.id,
       trigger_user_name: ctx.context.username,
     })
-    return this.isInTimeout(durationMs, last, ctx)
+    return this.isInTimeout(durationMs, last, ctx, user)
   }
 
   private async trySay(
@@ -97,7 +104,7 @@ export class CommandExecutor {
     }
 
     const m = await doReplacements(message, ctx.rawCmd, ctx.context, cmdDef, bot, user)
-    const say = bot.sayFn(user, ctx.target)
+    const say = bot.sayFn(user)
     say(m)
   }
 
@@ -114,17 +121,18 @@ export class CommandExecutor {
       if (!ctx.context || !mayExecute(ctx.context, cmdDef)) {
         continue
       }
-      if (await this.isInGlobalTimeout(cmdDef, repo, ctx)) {
+      if (await this.isInGlobalTimeout(cmdDef, repo, ctx, user)) {
         this.trySay(cmdDef.cooldown.globalMessage, ctx, cmdDef, bot, user)
         continue
       }
-      if (await this.isInPerUserTimeout(cmdDef, repo, ctx)) {
+      if (await this.isInPerUserTimeout(cmdDef, repo, ctx, user)) {
         this.trySay(cmdDef.cooldown.perUserMessage, ctx, cmdDef, bot, user)
         continue
       }
 
       log.info({
-        target: ctx.target,
+        user: user.name,
+        target: user.twitch_login,
         command: ctx.rawCmd?.name || '<unknown>',
         module: contextModule.name,
       }, 'Executing command')
@@ -135,12 +143,14 @@ export class CommandExecutor {
         const r = await cmdDef.fn(ctx)
         if (r) {
           log.info({
-            target: ctx.target,
+            user: user.name,
+            target: user.twitch_login,
             return: r,
           }, 'Returned from command')
         }
         log.info({
-          target: ctx.target,
+          user: user.name,
+          target: user.twitch_login,
           command: ctx.rawCmd?.name || '<unknown>',
         }, 'Executed command')
         resolve()
