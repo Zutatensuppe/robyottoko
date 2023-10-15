@@ -7423,9 +7423,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-10-13T20:13:31.139Z",
+    buildDate: "2023-10-15T11:56:12.173Z",
     // @ts-ignore
-    buildVersion: "1.69.6",
+    buildVersion: "1.69.7",
 };
 
 const log$f = logger('StreamStatusUpdater.ts');
@@ -8146,7 +8146,8 @@ async function loadConcurrent(channelId, channel, helixClient) {
             if (body.status_code === 404) {
                 return;
             }
-            Object.values(body.emote_set.emotes).forEach((channelEmote) => {
+            const emotes = body.emote_set?.emotes || [];
+            Object.values(emotes).forEach((channelEmote) => {
                 const emote = parseSeventvV3Emote(channelEmote);
                 if (emote) {
                     loadedChannelAssets.emotes.push(emote);
