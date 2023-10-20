@@ -28,7 +28,7 @@ export abstract class Effect<EffectData> {
     )
   }
 
-  protected async say(str: string): Promise<void> {
+  protected say(str: string): void {
     this.#sayFn(str)
   }
 

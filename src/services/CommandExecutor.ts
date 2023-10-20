@@ -122,11 +122,11 @@ export class CommandExecutor {
         continue
       }
       if (await this.isInGlobalTimeout(cmdDef, repo, ctx, user)) {
-        this.trySay(cmdDef.cooldown.globalMessage, ctx, cmdDef, bot, user)
+        await this.trySay(cmdDef.cooldown.globalMessage, ctx, cmdDef, bot, user)
         continue
       }
       if (await this.isInPerUserTimeout(cmdDef, repo, ctx, user)) {
-        this.trySay(cmdDef.cooldown.perUserMessage, ctx, cmdDef, bot, user)
+        await this.trySay(cmdDef.cooldown.perUserMessage, ctx, cmdDef, bot, user)
         continue
       }
 

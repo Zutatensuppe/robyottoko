@@ -140,7 +140,8 @@ export const createRouter = (
           return
         }
 
-        handler.handle(bot, user, req.body)
+        void handler.handle(bot, user, req.body)
+
         res.send()
         return
       }

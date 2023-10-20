@@ -166,7 +166,6 @@ const animations = computed(() => {
 // @ts-ignore
 import('./main.css')
 
-
 const getSlotStateDefinition = (
   slotDef: AvatarModuleAvatarSlotDefinition,
 ): AvatarModuleSlotItemStateDefinition => {

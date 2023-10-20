@@ -334,8 +334,8 @@ class SongrequestModule implements Module {
           try {
             this.data.settings = default_settings(req.body.settings)
             this.data.playlist = default_playlist(req.body.playlist)
-            this.save()
-            this.updateClients('init')
+            await this.save()
+            await this.updateClients('init')
             res.send({ error: false })
           } catch (e) {
             res.status(400).send({ error: true })
@@ -465,37 +465,37 @@ class SongrequestModule implements Module {
       },
       'ctrl': async (_ws: Socket, { ctrl, args }: { ctrl: string, args: any[] }) => {
         switch (ctrl) {
-          case 'volume': this.volume(...args as [number]); break
-          case 'pause': this.pause(); break
-          case 'unpause': this.unpause(); break
-          case 'loop': this.loop(); break
-          case 'noloop': this.noloop(); break
-          case 'good': this.like(); break
-          case 'bad': this.dislike(); break
+          case 'volume': await this.volume(...args as [number]); break
+          case 'pause': await this.pause(); break
+          case 'unpause': await this.unpause(); break
+          case 'loop': await this.loop(); break
+          case 'noloop': await this.noloop(); break
+          case 'good': await this.like(); break
+          case 'bad': await this.dislike(); break
           case 'prev': await this.prev(); break
           case 'skip': await this.next(); break
           case 'resetStats': await this.resetStats(); break
-          case 'resetStatIdx': this.resetStatIdx(...args as [string, number]); break
-          case 'clear': this.clear(); break
-          case 'rm': this.remove(); break
-          case 'shuffle': this.shuffle(); break
-          case 'playIdx': this.playIdx(...args as [number]); break
-          case 'rmIdx': this.rmIdx(...args as [number]); break
-          case 'goodIdx': this.goodIdx(...args as [number]); break
-          case 'badIdx': this.badIdx(...args as [number]); break
-          case 'sr': this.request(...args as [string]); break
-          case 'resr': this.resr(...args as [string]); break
-          case 'move': this.move(...args as [number, number]); break
-          case 'rmtag': this.rmTag(...args as [string, number]); break
-          case 'addtag': this.addTag(...args as [string, number]); break
-          case 'updatetag': this.updateTag(...args as [string, string]); break
+          case 'resetStatIdx': await this.resetStatIdx(...args as [string, number]); break
+          case 'clear': await this.clear(); break
+          case 'rm': await this.remove(); break
+          case 'shuffle': await this.shuffle(); break
+          case 'playIdx': await this.playIdx(...args as [number]); break
+          case 'rmIdx': await this.rmIdx(...args as [number]); break
+          case 'goodIdx': await this.goodIdx(...args as [number]); break
+          case 'badIdx': await this.badIdx(...args as [number]); break
+          case 'sr': await this.request(...args as [string]); break
+          case 'resr': await this.resr(...args as [string]); break
+          case 'move': await this.move(...args as [number, number]); break
+          case 'rmtag': await this.rmTag(...args as [string, number]); break
+          case 'addtag': await this.addTag(...args as [string, number]); break
+          case 'updatetag': await this.updateTag(...args as [string, string]); break
           case 'addFilterShowTag': await this.addFilterShowTag(...args as [string]); break
           case 'addFilterHideTag': await this.addFilterHideTag(...args as [string]); break
           case 'removeFilterShowTag': await this.removeFilterShowTag(...args as [string]); break
           case 'removeFilterHideTag': await this.removeFilterHideTag(...args as [string]); break
           case 'videoVisibility': await this.videoVisibility(...args as [boolean, number]); break
-          case 'setAllToPlayed': this.setAllToPlayed(); break
-          case 'sort': this.sort(...args as [SortBy, SortDirection]); break
+          case 'setAllToPlayed': await this.setAllToPlayed(); break
+          case 'sort': await this.sort(...args as [SortBy, SortDirection]); break
         }
       },
     }

@@ -98,10 +98,9 @@ export const createRouter = (
     const key = req.body.key
     const enabled = req.body.enabled
     await bot.getRepos().module.setEnabled(req.user.id, key, enabled)
-    const mm = bot.getModuleManager()
-    const m = mm.get(req.user.id, key)
+    const m = bot.getModuleManager().get(req.user.id, key)
     if (m) {
-      m.setEnabled(enabled)
+      await m.setEnabled(enabled)
     }
     res.send({
       success: true,
@@ -117,7 +116,7 @@ export const createRouter = (
     res.send()
   })
 
-  router.get('/data/global', async (req: any, res: Response) => {
+  router.get('/data/global', async (_req: any, res: Response) => {
     res.send({
       registeredUserCount: await bot.getRepos().user.countUsers(),
       streamingUserCount: await bot.getRepos().user.countUniqueUsersStreaming(),

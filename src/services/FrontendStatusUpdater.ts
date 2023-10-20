@@ -75,11 +75,13 @@ export class FrontendStatusUpdater {
       updatePromises.push(this._doUpdateForUser(user))
     }
     await Promise.all(updatePromises)
-    setTimeout(() => this._doUpdate(), 1 * MINUTE)
+    setTimeout(() => {
+      void this._doUpdate()
+    }, 1 * MINUTE)
     log.info('done update')
   }
 
   start () {
-    this._doUpdate()
+    void this._doUpdate()
   }
 }
