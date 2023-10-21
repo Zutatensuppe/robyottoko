@@ -431,6 +431,9 @@ const arrayIncludesIgnoreCase = (arr, val) => {
     }
     return false;
 };
+const clamp = (min, val, max) => {
+    return Math.max(min, Math.min(max, val));
+};
 const withoutLeading = (string, prefix) => {
     if (prefix === '') {
         return string;
@@ -2591,11 +2594,11 @@ class CommandExecutor {
                 continue;
             }
             if (await this.isInGlobalTimeout(cmdDef, repo, ctx, user)) {
-                this.trySay(cmdDef.cooldown.globalMessage, ctx, cmdDef, bot, user);
+                await this.trySay(cmdDef.cooldown.globalMessage, ctx, cmdDef, bot, user);
                 continue;
             }
             if (await this.isInPerUserTimeout(cmdDef, repo, ctx, user)) {
-                this.trySay(cmdDef.cooldown.perUserMessage, ctx, cmdDef, bot, user);
+                await this.trySay(cmdDef.cooldown.perUserMessage, ctx, cmdDef, bot, user);
                 continue;
             }
             log$A.info({
@@ -2638,7 +2641,6 @@ class EventSubEventHandler {
 
 const log$z = logger('SubscribeEventHandler.ts');
 class SubscribeEventHandler extends EventSubEventHandler {
-    // TODO: use better type info
     async handle(bot, user, data) {
         log$z.info('handle');
         const rawCmd = {
@@ -2663,7 +2665,6 @@ class SubscribeEventHandler extends EventSubEventHandler {
 
 const log$y = logger('FollowEventHandler.ts');
 class FollowEventHandler extends EventSubEventHandler {
-    // TODO: use better type info
     async handle(bot, user, data) {
         log$y.info('handle');
         const rawCmd = {
@@ -2688,7 +2689,6 @@ class FollowEventHandler extends EventSubEventHandler {
 
 const log$x = logger('CheerEventHandler.ts');
 class CheerEventHandler extends EventSubEventHandler {
-    // TODO: use better type info
     async handle(bot, user, data) {
         log$x.info('handle');
         const rawCmd = {
@@ -2782,7 +2782,6 @@ class StreamOfflineEventHandler extends EventSubEventHandler {
 
 const log$t = logger('RaidEventHandler.ts');
 class RaidEventHandler extends EventSubEventHandler {
-    // TODO: use better type info
     async handle(bot, user, data) {
         log$t.info('handle');
         const rawCmd = {
@@ -2812,7 +2811,6 @@ class RaidEventHandler extends EventSubEventHandler {
 
 const log$s = logger('SubscriptionGiftEventHandler.ts');
 class SubscriptionGiftEventHandler extends EventSubEventHandler {
-    // TODO: use better type info
     async handle(bot, user, data) {
         log$s.info('handle');
         const rawCmd = {
@@ -2942,7 +2940,7 @@ const createRouter$4 = (bot) => {
                 res.status(400).send({ reason: 'unknown subscription type' });
                 return;
             }
-            handler.handle(bot, user, req.body);
+            void handler.handle(bot, user, req.body);
             res.send();
             return;
         }
@@ -3157,10 +3155,9 @@ const createRouter$1 = (bot) => {
         const key = req.body.key;
         const enabled = req.body.enabled;
         await bot.getRepos().module.setEnabled(req.user.id, key, enabled);
-        const mm = bot.getModuleManager();
-        const m = mm.get(req.user.id, key);
+        const m = bot.getModuleManager().get(req.user.id, key);
         if (m) {
-            m.setEnabled(enabled);
+            await m.setEnabled(enabled);
         }
         res.send({
             success: true,
@@ -3173,7 +3170,7 @@ const createRouter$1 = (bot) => {
         await bot.getRepos().variables.replace(req.user.id, req.body.variables || []);
         res.send();
     });
-    router.get('/data/global', async (req, res) => {
+    router.get('/data/global', async (_req, res) => {
         res.send({
             registeredUserCount: await bot.getRepos().user.countUsers(),
             streamingUserCount: await bot.getRepos().user.countUniqueUsersStreaming(),
@@ -3428,7 +3425,7 @@ class ChatEventHandler {
             msgOriginal,
             msgNormalized,
         });
-        bot.getRepos().chatLog.insert(context, msgOriginal);
+        void bot.getRepos().chatLog.insert(context, msgOriginal);
         let _isFirstChatAlltime = null;
         const isFirstChatAlltime = async () => {
             if (_isFirstChatAlltime === null) {
@@ -3584,7 +3581,7 @@ class TwitchClientManager {
         timer.split();
         this.log.debug(`disconnecting chat client took ${timer.lastSplitMs()}ms`);
         const identity = determineIdentity(user, cfg);
-        this.bot.getEmoteParser().loadAssetsForChannel(user.twitch_login, user.twitch_id, new TwitchHelixClient(identity.client_id, identity.client_secret));
+        void this.bot.getEmoteParser().loadAssetsForChannel(user.twitch_login, user.twitch_id, new TwitchHelixClient(identity.client_id, identity.client_secret));
         if (user.twitch_id && user.twitch_login && user.bot_enabled) {
             this.log.info('* twitch bot enabled');
             // connect to chat via tmi (to all channels configured)
@@ -3642,9 +3639,9 @@ class TwitchClientManager {
         // @see https://dev.twitch.tv/docs/eventsub
         this.helixClient = new TwitchHelixClient(identity.client_id, identity.client_secret);
         if (this.bot.getConfig().twitch.eventSub.enabled) {
-            // do NOT await
-            // awaiting the connect will add ~2sec per user on server startup
-            this.registerSubscriptions(this.user);
+            // do NOT await, OTHERWISE
+            // connecting will add ~2sec per user on server startup
+            void this.registerSubscriptions(this.user);
         }
         timer.split();
         this.log.debug(`registering subscriptions took ${timer.lastSplitMs()}ms`);
@@ -4456,13 +4453,7 @@ class GeneralModule {
         };
     }
     async volume(vol) {
-        if (vol < 0) {
-            vol = 0;
-        }
-        if (vol > 100) {
-            vol = 100;
-        }
-        this.data.settings.volume = vol;
+        this.data.settings.volume = clamp(0, vol, 100);
         await this.save();
     }
     getCommands() {
@@ -5337,8 +5328,8 @@ class SongrequestModule {
                     try {
                         this.data.settings = default_settings$4(req.body.settings);
                         this.data.playlist = default_playlist(req.body.playlist);
-                        this.save();
-                        this.updateClients('init');
+                        await this.save();
+                        await this.updateClients('init');
                         res.send({ error: false });
                     }
                     catch (e) {
@@ -5456,25 +5447,25 @@ class SongrequestModule {
             'ctrl': async (_ws, { ctrl, args }) => {
                 switch (ctrl) {
                     case 'volume':
-                        this.volume(...args);
+                        await this.volume(...args);
                         break;
                     case 'pause':
-                        this.pause();
+                        await this.pause();
                         break;
                     case 'unpause':
-                        this.unpause();
+                        await this.unpause();
                         break;
                     case 'loop':
-                        this.loop();
+                        await this.loop();
                         break;
                     case 'noloop':
-                        this.noloop();
+                        await this.noloop();
                         break;
                     case 'good':
-                        this.like();
+                        await this.like();
                         break;
                     case 'bad':
-                        this.dislike();
+                        await this.dislike();
                         break;
                     case 'prev':
                         await this.prev();
@@ -5486,46 +5477,46 @@ class SongrequestModule {
                         await this.resetStats();
                         break;
                     case 'resetStatIdx':
-                        this.resetStatIdx(...args);
+                        await this.resetStatIdx(...args);
                         break;
                     case 'clear':
-                        this.clear();
+                        await this.clear();
                         break;
                     case 'rm':
-                        this.remove();
+                        await this.remove();
                         break;
                     case 'shuffle':
-                        this.shuffle();
+                        await this.shuffle();
                         break;
                     case 'playIdx':
-                        this.playIdx(...args);
+                        await this.playIdx(...args);
                         break;
                     case 'rmIdx':
-                        this.rmIdx(...args);
+                        await this.rmIdx(...args);
                         break;
                     case 'goodIdx':
-                        this.goodIdx(...args);
+                        await this.goodIdx(...args);
                         break;
                     case 'badIdx':
-                        this.badIdx(...args);
+                        await this.badIdx(...args);
                         break;
                     case 'sr':
-                        this.request(...args);
+                        await this.request(...args);
                         break;
                     case 'resr':
-                        this.resr(...args);
+                        await this.resr(...args);
                         break;
                     case 'move':
-                        this.move(...args);
+                        await this.move(...args);
                         break;
                     case 'rmtag':
-                        this.rmTag(...args);
+                        await this.rmTag(...args);
                         break;
                     case 'addtag':
-                        this.addTag(...args);
+                        await this.addTag(...args);
                         break;
                     case 'updatetag':
-                        this.updateTag(...args);
+                        await this.updateTag(...args);
                         break;
                     case 'addFilterShowTag':
                         await this.addFilterShowTag(...args);
@@ -5543,10 +5534,10 @@ class SongrequestModule {
                         await this.videoVisibility(...args);
                         break;
                     case 'setAllToPlayed':
-                        this.setAllToPlayed();
+                        await this.setAllToPlayed();
                         break;
                     case 'sort':
-                        this.sort(...args);
+                        await this.sort(...args);
                         break;
                 }
             },
@@ -6749,7 +6740,7 @@ class SpeechToTextModule {
             },
             'save': async (_ws, { settings }) => {
                 this.data.settings = settings;
-                this.bot.getRepos().module.save(this.user.id, this.name, this.data);
+                await this.bot.getRepos().module.save(this.user.id, this.name, this.data);
                 this.data = await this.reinit();
                 await this.updateClients('init');
             },
@@ -7423,9 +7414,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-10-15T11:56:12.173Z",
+    buildDate: "2023-10-21T09:05:20.450Z",
     // @ts-ignore
-    buildVersion: "1.69.7",
+    buildVersion: "1.69.9",
 };
 
 const log$f = logger('StreamStatusUpdater.ts');
@@ -7452,7 +7443,7 @@ class StreamStatusUpdater {
             return;
         }
         const stream = await client.getStreamByUserId(user.twitch_id);
-        this.bot.getRepos().user.save({
+        await this.bot.getRepos().user.save({
             id: user.id,
             is_streaming: !!stream,
         });
@@ -7464,11 +7455,13 @@ class StreamStatusUpdater {
             updatePromises.push(this._doUpdateForUser(user));
         }
         await Promise.all(updatePromises);
-        setTimeout(() => this._doUpdate(), 5 * MINUTE);
+        setTimeout(() => {
+            void this._doUpdate();
+        }, 5 * MINUTE);
         log$f.info('done update');
     }
     start() {
-        this._doUpdate();
+        void this._doUpdate();
     }
 }
 
@@ -7535,11 +7528,13 @@ class FrontendStatusUpdater {
             updatePromises.push(this._doUpdateForUser(user));
         }
         await Promise.all(updatePromises);
-        setTimeout(() => this._doUpdate(), 1 * MINUTE);
+        setTimeout(() => {
+            void this._doUpdate();
+        }, 1 * MINUTE);
         log$e.info('done update');
     }
     start() {
-        this._doUpdate();
+        void this._doUpdate();
     }
 }
 
@@ -7865,7 +7860,7 @@ class Discord {
         // pass
     }
     async announce(message) {
-        fetch(this.config.bot.url + '/announce', {
+        return await fetch(this.config.bot.url + '/announce', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
@@ -8261,7 +8256,7 @@ function getMessageEmotes(message, userstate, channel) {
     const emotes = [];
     if (userstate &&
         userstate.emotes != null &&
-        typeof userstate.emotes !== undefined) {
+        typeof userstate.emotes !== 'undefined') {
         const repEmotes = [];
         const userstateEmotes = userstate.emotes;
         Object.keys(userstateEmotes).forEach((el, ind) => {
@@ -8651,7 +8646,7 @@ class Effect {
     async doReplacements(str) {
         return await doReplacements(str, this.rawCmd, this.context, this.originalCmd, this.contextModule.bot, this.contextModule.user);
     }
-    async say(str) {
+    say(str) {
         __classPrivateFieldGet(this, _Effect_sayFn, "f").call(this, str);
     }
     getHelixClient() {
@@ -9573,4 +9568,4 @@ const run = async () => {
     });
 };
 
-run();
+void run();
