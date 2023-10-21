@@ -3,6 +3,7 @@
 import { logger } from '../../common/fn'
 import { User } from '../../repo/Users'
 import { Bot } from '../../types'
+import { Subscription } from './EventSub'
 import { EventSubEventHandler } from './EventSubEventHandler'
 
 const log = logger('StreamOfflineEventHandler.ts')
@@ -17,7 +18,7 @@ export class StreamOfflineEventHandler extends EventSubEventHandler<StreamOfflin
   async handle(
     bot: Bot,
     _user: User,
-    data: { subscription: any, event: StreamOfflineEvent },
+    data: { subscription: Subscription, event: StreamOfflineEvent },
   ) {
     log.info('handle')
     // get last started stream for broadcaster
