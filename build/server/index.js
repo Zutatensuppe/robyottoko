@@ -1433,14 +1433,15 @@ class WebSocketServer {
                     evts['conn'](socket);
                 }
             }
-            socket.on('message', (data) => {
+            socket.on('message', (message) => {
+                const dataStr = String(message);
+                if (dataStr === 'PING') {
+                    socket.send('PONG');
+                    return;
+                }
                 try {
-                    const unknownData = data;
+                    const unknownData = message;
                     const d = JSON.parse(unknownData);
-                    if (d.type && d.type === 'ping') {
-                        socket.send(JSON.stringify({ type: 'pong' }));
-                        return;
-                    }
                     if (m && d.event) {
                         const evts = m.getWsEvents();
                         if (evts && evts[d.event]) {
@@ -1452,6 +1453,7 @@ class WebSocketServer {
                     log$D.error({ e }, 'socket on message');
                 }
             });
+            socket.send('SERVER_INIT');
         });
     }
     isUserConnected(user_id) {
@@ -7423,9 +7425,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-10-15T11:56:12.173Z",
+    buildDate: "2023-10-25T23:16:55.310Z",
     // @ts-ignore
-    buildVersion: "1.69.7",
+    buildVersion: "1.69.8",
 };
 
 const log$f = logger('StreamStatusUpdater.ts');
