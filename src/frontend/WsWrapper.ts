@@ -42,7 +42,7 @@ export default class WsWrapper {
   keepAlive(timeout = 20000) {
     if (this.handle && this.handle.readyState == this.handle.OPEN) {
       this.gotPong = false
-      this.handle.send(JSON.stringify({ type: 'ping' }))
+      this.handle.send('PING')
       if (this.pongWaitTimerId) {
         clearTimeout(this.pongWaitTimerId)
       }
@@ -110,18 +110,18 @@ export default class WsWrapper {
         }
       }
       this.onopen(e)
-      this.keepAlive()
     }
     ws.onmessage = (e) => {
-      try {
-        const parsed = JSON.parse(e.data)
-        if (parsed.type && parsed.type === 'pong') {
-          this.gotPong = true
-          return
-        }
-      } catch (e) {
-        // ignore
+      if (e.data === 'SERVER_INIT') {
+        this.keepAlive()
+        return
       }
+
+      if (e.data === 'PONG') {
+        this.gotPong = true
+        return
+      }
+
       this.onmessage(e)
     }
     ws.onerror = (e) => {
