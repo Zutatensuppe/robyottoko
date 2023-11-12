@@ -3820,26 +3820,25 @@ var __awaiter$2 = function (thisArg, _arguments, P, generator) {
     });
 };
 class Semaphore {
-    constructor(_maxConcurrency, _cancelError = E_CANCELED) {
-        this._maxConcurrency = _maxConcurrency;
+    constructor(_value, _cancelError = E_CANCELED) {
+        this._value = _value;
         this._cancelError = _cancelError;
-        this._queue = [];
-        this._waiters = [];
-        if (_maxConcurrency <= 0) {
-            throw new Error('semaphore must be initialized to a positive value');
-        }
-        this._value = _maxConcurrency;
+        this._weightedQueues = [];
+        this._weightedWaiters = [];
     }
-    acquire() {
-        const locked = this.isLocked();
-        const ticketPromise = new Promise((resolve, reject) => this._queue.push({ resolve, reject }));
-        if (!locked)
+    acquire(weight = 1) {
+        if (weight <= 0)
+            throw new Error(`invalid weight ${weight}: must be positive`);
+        return new Promise((resolve, reject) => {
+            if (!this._weightedQueues[weight - 1])
+                this._weightedQueues[weight - 1] = [];
+            this._weightedQueues[weight - 1].push({ resolve, reject });
             this._dispatch();
-        return ticketPromise;
+        });
     }
-    runExclusive(callback) {
+    runExclusive(callback, weight = 1) {
         return __awaiter$2(this, void 0, void 0, function* () {
-            const [value, release] = yield this.acquire();
+            const [value, release] = yield this.acquire(weight);
             try {
                 return yield callback(value);
             }
@@ -3848,51 +3847,66 @@ class Semaphore {
             }
         });
     }
-    waitForUnlock() {
-        return __awaiter$2(this, void 0, void 0, function* () {
-            if (!this.isLocked()) {
-                return Promise.resolve();
-            }
-            const waitPromise = new Promise((resolve) => this._waiters.push({ resolve }));
-            return waitPromise;
+    waitForUnlock(weight = 1) {
+        if (weight <= 0)
+            throw new Error(`invalid weight ${weight}: must be positive`);
+        return new Promise((resolve) => {
+            if (!this._weightedWaiters[weight - 1])
+                this._weightedWaiters[weight - 1] = [];
+            this._weightedWaiters[weight - 1].push(resolve);
+            this._dispatch();
         });
     }
     isLocked() {
         return this._value <= 0;
     }
-    /** @deprecated Deprecated in 0.3.0, will be removed in 0.4.0. Use runExclusive instead. */
-    release() {
-        if (this._maxConcurrency > 1) {
-            throw new Error('this method is unavailable on semaphores with concurrency > 1; use the scoped release returned by acquire instead');
-        }
-        if (this._currentReleaser) {
-            const releaser = this._currentReleaser;
-            this._currentReleaser = undefined;
-            releaser();
-        }
+    getValue() {
+        return this._value;
+    }
+    setValue(value) {
+        this._value = value;
+        this._dispatch();
+    }
+    release(weight = 1) {
+        if (weight <= 0)
+            throw new Error(`invalid weight ${weight}: must be positive`);
+        this._value += weight;
+        this._dispatch();
     }
     cancel() {
-        this._queue.forEach((ticket) => ticket.reject(this._cancelError));
-        this._queue = [];
+        this._weightedQueues.forEach((queue) => queue.forEach((entry) => entry.reject(this._cancelError)));
+        this._weightedQueues = [];
     }
     _dispatch() {
-        const nextTicket = this._queue.shift();
-        if (!nextTicket)
-            return;
-        let released = false;
-        this._currentReleaser = () => {
-            if (released)
-                return;
-            released = true;
-            this._value++;
-            this._resolveWaiters();
-            this._dispatch();
-        };
-        nextTicket.resolve([this._value--, this._currentReleaser]);
+        var _a;
+        for (let weight = this._value; weight > 0; weight--) {
+            const queueEntry = (_a = this._weightedQueues[weight - 1]) === null || _a === void 0 ? void 0 : _a.shift();
+            if (!queueEntry)
+                continue;
+            const previousValue = this._value;
+            const previousWeight = weight;
+            this._value -= weight;
+            weight = this._value + 1;
+            queueEntry.resolve([previousValue, this._newReleaser(previousWeight)]);
+        }
+        this._drainUnlockWaiters();
     }
-    _resolveWaiters() {
-        this._waiters.forEach((waiter) => waiter.resolve());
-        this._waiters = [];
+    _newReleaser(weight) {
+        let called = false;
+        return () => {
+            if (called)
+                return;
+            called = true;
+            this.release(weight);
+        };
+    }
+    _drainUnlockWaiters() {
+        for (let weight = this._value; weight > 0; weight--) {
+            if (!this._weightedWaiters[weight - 1])
+                continue;
+            this._weightedWaiters[weight - 1].forEach((waiter) => waiter());
+            this._weightedWaiters[weight - 1] = [];
+        }
     }
 }
 
@@ -3924,9 +3938,9 @@ class Mutex {
     waitForUnlock() {
         return this._semaphore.waitForUnlock();
     }
-    /** @deprecated Deprecated in 0.3.0, will be removed in 0.4.0. Use runExclusive instead. */
     release() {
-        this._semaphore.release();
+        if (this._semaphore.isLocked())
+            this._semaphore.release();
     }
     cancel() {
         return this._semaphore.cancel();
@@ -4786,6 +4800,8 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
+/* global Reflect, Promise, SuppressedError, Symbol */
+
 
 function __classPrivateFieldGet(receiver, state, kind, f) {
     if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
@@ -4931,14 +4947,14 @@ class YoutubeApi {
 }
 _YoutubeApi_googleApiKeyIndex = new WeakMap();
 
-var _Youtube_instances, _Youtube_getDataByIdViaYoutubeApi, _Youtube_findViaYoutubeApi, _Youtube_getDataByIdViaIndivious, _Youtube_findByIndivious;
+var _Youtube_instances, _a, _Youtube_getDataByIdViaYoutubeApi, _Youtube_findViaYoutubeApi, _Youtube_getDataByIdViaIndivious, _Youtube_findByIndivious;
 const log$l = logger('Youtube.ts');
 class Youtube {
     constructor(youtubeApi, indivious, cache) {
+        _Youtube_instances.add(this);
         this.youtubeApi = youtubeApi;
         this.indivious = indivious;
         this.cache = cache;
-        _Youtube_instances.add(this);
         // pass
     }
     static extractYoutubeId(str) {
@@ -4983,7 +4999,7 @@ class Youtube {
         }
     }
 }
-_Youtube_instances = new WeakSet(), _Youtube_getDataByIdViaYoutubeApi = async function _Youtube_getDataByIdViaYoutubeApi(youtubeId) {
+_a = Youtube, _Youtube_instances = new WeakSet(), _Youtube_getDataByIdViaYoutubeApi = async function _Youtube_getDataByIdViaYoutubeApi(youtubeId) {
     const key = `youtubeData_${youtubeId}_20210717_2`;
     let d = await this.cache.get(key);
     if (d === undefined) {
@@ -4995,11 +5011,11 @@ _Youtube_instances = new WeakSet(), _Youtube_getDataByIdViaYoutubeApi = async fu
     return d;
 }, _Youtube_findViaYoutubeApi = async function _Youtube_findViaYoutubeApi(str, maxLenMs) {
     const youtubeUrl = str.trim();
-    const youtubeId = Youtube.extractYoutubeId(youtubeUrl);
+    const youtubeId = _a.extractYoutubeId(youtubeUrl);
     if (youtubeId) {
         const youtubeData = await __classPrivateFieldGet(this, _Youtube_instances, "m", _Youtube_getDataByIdViaYoutubeApi).call(this, youtubeId);
         if (youtubeData) {
-            if (Youtube.isTooLong(maxLenMs, fn.parseISO8601Duration(youtubeData.contentDetails.duration))) {
+            if (_a.isTooLong(maxLenMs, fn.parseISO8601Duration(youtubeData.contentDetails.duration))) {
                 throw new TooLongError();
             }
             return {
@@ -5017,7 +5033,7 @@ _Youtube_instances = new WeakSet(), _Youtube_getDataByIdViaYoutubeApi = async fu
             if (!youtubeData) {
                 continue;
             }
-            if (Youtube.isTooLong(maxLenMs, fn.parseISO8601Duration(youtubeData.contentDetails.duration))) {
+            if (_a.isTooLong(maxLenMs, fn.parseISO8601Duration(youtubeData.contentDetails.duration))) {
                 tooLong = true;
                 continue;
             }
@@ -5044,12 +5060,12 @@ _Youtube_instances = new WeakSet(), _Youtube_getDataByIdViaYoutubeApi = async fu
     return d;
 }, _Youtube_findByIndivious = async function _Youtube_findByIndivious(str, maxLenMs) {
     const youtubeUrl = str.trim();
-    const youtubeId = Youtube.extractYoutubeId(youtubeUrl);
+    const youtubeId = _a.extractYoutubeId(youtubeUrl);
     if (youtubeId) {
         const data = await __classPrivateFieldGet(this, _Youtube_instances, "m", _Youtube_getDataByIdViaIndivious).call(this, youtubeId);
         if (data) {
             const durationMs = data.lengthSeconds * 1000;
-            if (Youtube.isTooLong(maxLenMs, durationMs)) {
+            if (_a.isTooLong(maxLenMs, durationMs)) {
                 throw new TooLongError();
             }
             return { id: data.videoId, title: data.title, durationMs };
@@ -5070,7 +5086,7 @@ _Youtube_instances = new WeakSet(), _Youtube_getDataByIdViaYoutubeApi = async fu
                 continue;
             }
             const durationMs = result.lengthSeconds * 1000;
-            if (Youtube.isTooLong(maxLenMs, durationMs)) {
+            if (_a.isTooLong(maxLenMs, durationMs)) {
                 tooLong = true;
                 continue;
             }
@@ -7425,9 +7441,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-10-31T21:23:18.935Z",
+    buildDate: "2023-11-12T18:33:49.473Z",
     // @ts-ignore
-    buildVersion: "1.69.9",
+    buildVersion: "1.70.0",
 };
 
 const log$g = logger('StreamStatusUpdater.ts');
@@ -7936,33 +7952,6 @@ const parseFfzEmote = (obj) => {
         type: Provider.FFZ,
     };
 };
-const parseSeventvV2Emote = (obj) => {
-    const urls = {};
-    if (obj.urls[3]) {
-        urls['4x.webp'] = obj.urls[3][1];
-    }
-    if (obj.urls[2]) {
-        urls['3x.webp'] = obj.urls[2][1];
-    }
-    if (obj.urls[1]) {
-        urls['2x.webp'] = obj.urls[1][1];
-    }
-    if (obj.urls[0]) {
-        urls['1x.webp'] = obj.urls[0][1];
-    }
-    const img = urls['4x.webp'] != undefined ? urls['4x.webp']
-        : urls['2x.webp'] != undefined ? urls['2x.webp']
-            : urls['1x.webp'] != undefined ? urls['1x.webp']
-                : '';
-    if (!img || !obj.name) {
-        return null;
-    }
-    return {
-        code: obj.name,
-        img,
-        type: Provider.SEVENTV,
-    };
-};
 const parseSeventvV3Emote = (obj) => {
     const urls = {};
     obj.data.host.files.forEach((f) => {
@@ -8167,30 +8156,9 @@ async function loadConcurrent(channelId, channel, helixClient) {
     }).catch((e) => {
         log$d.error(e);
     }));
-    promises.push(fetch(`https://api.7tv.app/v2/emotes/global`)
-        .then(response => response.json())
-        .then(body => {
-        const provider = Provider.SEVENTV;
-        const scope = Scope.GLOBAL;
-        try {
-            Object.values(body).forEach((globalEmote) => {
-                const emote = parseSeventvV2Emote(globalEmote);
-                if (emote) {
-                    loadedChannelAssets.emotes.push(emote);
-                }
-            });
-            checkLoadedAll(provider, scope);
-        }
-        catch (error) {
-            log$d.error({
-                channel,
-                message: errorMessage(provider, scope, channel),
-                error,
-            });
-        }
-    }).catch((e) => {
-        log$d.error(e);
-    }));
+    // 7TV doesnt have global emote api endpoint anymore
+    // just set global to loaded
+    checkLoadedAll(Provider.SEVENTV, Scope.GLOBAL);
     // Note: TWITCH
     promises.push(helixClient.getChannelEmotes(channelId)
         .then(body => {
@@ -8263,7 +8231,7 @@ function getMessageEmotes(message, userstate, channel) {
     const emotes = [];
     if (userstate &&
         userstate.emotes != null &&
-        typeof userstate.emotes !== undefined) {
+        typeof userstate.emotes !== 'undefined') {
         const repEmotes = [];
         const userstateEmotes = userstate.emotes;
         Object.keys(userstateEmotes).forEach((el, ind) => {
@@ -8809,7 +8777,7 @@ class CountdownEffect extends Effect {
                 });
             }
             else {
-                log$9.warn({ type: a.type }, 'unknown countdown action type');
+                log$9.warn(a, 'unknown countdown action type');
             }
         }
         return actions;
