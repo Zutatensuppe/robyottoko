@@ -7441,7 +7441,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-11-12T16:31:27.161Z",
+    buildDate: "2023-11-12T18:33:49.473Z",
     // @ts-ignore
     buildVersion: "1.70.0",
 };
@@ -8231,7 +8231,7 @@ function getMessageEmotes(message, userstate, channel) {
     const emotes = [];
     if (userstate &&
         userstate.emotes != null &&
-        typeof userstate.emotes !== undefined) {
+        typeof userstate.emotes !== 'undefined') {
         const repEmotes = [];
         const userstateEmotes = userstate.emotes;
         Object.keys(userstateEmotes).forEach((el, ind) => {
@@ -8777,7 +8777,7 @@ class CountdownEffect extends Effect {
                 });
             }
             else {
-                log$9.warn({ type: a.type }, 'unknown countdown action type');
+                log$9.warn(a, 'unknown countdown action type');
             }
         }
         return actions;
