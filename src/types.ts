@@ -295,24 +295,35 @@ export enum CommandEffectType {
   ROULETTE = 'roulette',
 }
 
-export interface CommandEffectData {
-  type: CommandEffectType
-  data: any
-}
+export type CommandEffectData =
+  AddStreamTagEffectData |
+  ChatEffectData |
+  ChattersEffectData |
+  CountdownEffectData |
+  DictLookupEffectData |
+  EmotesEffectData |
+  MadochanEffectData |
+  MediaEffectData |
+  MediaVolumeEffectData |
+  RemoveStreamTagEffectData |
+  RouletteEffectData |
+  SetChannelGameIdEffectData |
+  SetChannelTitleEffectData |
+  VariableChangeEffectData
 
-export interface VariableChangeEffectData extends CommandEffectData {
+export interface VariableChangeEffectData {
   type: CommandEffectType.VARIABLE_CHANGE
   data: CommandVariableChange
 }
 
-export interface ChatEffectData extends CommandEffectData {
+export interface ChatEffectData {
   type: CommandEffectType.CHAT
   data: {
     text: string[]
   }
 }
 
-export interface DictLookupEffectData extends CommandEffectData {
+export interface DictLookupEffectData {
   type: CommandEffectType.DICT_LOOKUP
   data: {
     lang: string
@@ -320,17 +331,17 @@ export interface DictLookupEffectData extends CommandEffectData {
   }
 }
 
-export interface EmotesEffectData extends CommandEffectData {
+export interface EmotesEffectData {
   type: CommandEffectType.EMOTES
   data: GeneralModuleEmotesEventData
 }
 
-export interface MediaEffectData extends CommandEffectData {
+export interface MediaEffectData {
   type: CommandEffectType.MEDIA
   data: MediaCommandData
 }
 
-export interface MadochanEffectData extends CommandEffectData {
+export interface MadochanEffectData {
   type: CommandEffectType.MADOCHAN
   data: {
     model: string
@@ -338,47 +349,52 @@ export interface MadochanEffectData extends CommandEffectData {
   }
 }
 
-export interface SetChannelTitleEffectData extends CommandEffectData {
+export interface SetChannelTitleEffectData {
   type: CommandEffectType.SET_CHANNEL_TITLE
   data: {
     title: string
   }
 }
 
-export interface SetChannelGameIdEffectData extends CommandEffectData {
+export interface SetChannelGameIdEffectData {
   type: CommandEffectType.SET_CHANNEL_GAME_ID
   data: {
     game_id: string
   }
 }
 
-export interface AddStreamTagEffectData extends CommandEffectData {
+export interface AddStreamTagEffectData {
   type: CommandEffectType.ADD_STREAM_TAGS
   data: {
     tag: string
   }
 }
 
-export interface RemoveStreamTagEffectData extends CommandEffectData {
+export interface RemoveStreamTagEffectData {
   type: CommandEffectType.REMOVE_STREAM_TAGS
   data: {
     tag: string
   }
 }
 
-export interface ChattersEffectData extends CommandEffectData {
+export interface ChattersEffectData {
   type: CommandEffectType.CHATTERS
   data: object // empty object for now
 }
 
-export interface MediaVolumeEffectData extends CommandEffectData {
+export interface MediaVolumeEffectData {
   type: CommandEffectType.MEDIA_VOLUME
   data: object // empty object for now
 }
 
-export interface CountdownEffectData extends CommandEffectData {
+export interface CountdownEffectData {
   type: CommandEffectType.COUNTDOWN
   data: CountdownCommandData
+}
+
+export interface RouletteEffectData {
+  type: CommandEffectType.ROULETTE
+  data: RouletteCommandData
 }
 
 export interface RouletteEntry {
@@ -397,11 +413,6 @@ export interface RouletteCommandData {
   endMessage: string
 }
 
-export interface RouletteEffectData extends CommandEffectData {
-  type: CommandEffectType.ROULETTE
-  data: RouletteCommandData
-}
-
 export interface CommandVariable {
   name: string
   value: any
@@ -415,10 +426,6 @@ export interface CommandVariableChange {
 export interface EmoteSet {
   name: string
   emotes: string[]
-}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface CommandData {
 }
 
 export type CommandFunction = (ctx: CommandExecutionContext) => any
@@ -464,7 +471,37 @@ interface CommandCooldown {
   perUserMessage: string
 }
 
-export interface Command {
+export type Command =
+  GeneralCommand |
+  SrCurrentCommand |
+  SrUndoCommand |
+  SrGoodCommand |
+  SrBadCommand |
+  SrStatsCommand |
+  SrPrevCommand |
+  SrNextCommand |
+  SrJumptonewCommand |
+  SrClearCommand |
+  SrRmCommand |
+  SrShuffleCommand |
+  SrResetStatsCommand |
+  SrLoopCommand |
+  SrNoloopCommand |
+  SrPauseCommand |
+  SrUnpauseCommand |
+  SrHidevideoCommand |
+  SrShowvideoCommand |
+  SrRequestCommand |
+  SrReRequestCommand |
+  SrAddtagCommand |
+  SrRmtagCommand |
+  SrVolumeCommand |
+  SrFilterCommand |
+  SrPresetCommand |
+  SrQueueCommand |
+  SrMoveTagUpCommand
+
+export interface AbstractCommand {
   id: string
   createdAt: string // json date string
   triggers: CommandTrigger[]
@@ -479,7 +516,7 @@ export interface Command {
   // DEPRECATED:
   // -----------------------------------------------------------------
   action: CommandAction
-  data: CommandData
+  data: unknown
 }
 
 export interface DictSearchResponseDataEntry {
@@ -487,9 +524,94 @@ export interface DictSearchResponseDataEntry {
   to: string[]
 }
 
-export interface GeneralCommand extends Command {
+export interface GeneralCommand extends AbstractCommand {
   action: CommandAction.GENERAL
   data: Record<string, never>
+}
+
+export interface SrCurrentCommand extends AbstractCommand {
+  action: CommandAction.SR_CURRENT
+}
+export interface SrUndoCommand extends AbstractCommand {
+  action: CommandAction.SR_UNDO
+}
+export interface SrGoodCommand extends AbstractCommand {
+  action: CommandAction.SR_GOOD
+}
+export interface SrBadCommand extends AbstractCommand {
+  action: CommandAction.SR_BAD
+}
+export interface SrStatsCommand extends AbstractCommand {
+  action: CommandAction.SR_STATS
+}
+export interface SrPrevCommand extends AbstractCommand {
+  action: CommandAction.SR_PREV
+}
+export interface SrNextCommand extends AbstractCommand {
+  action: CommandAction.SR_NEXT
+}
+export interface SrJumptonewCommand extends AbstractCommand {
+  action: CommandAction.SR_JUMPTONEW
+}
+export interface SrClearCommand extends AbstractCommand {
+  action: CommandAction.SR_CLEAR
+}
+export interface SrRmCommand extends AbstractCommand {
+  action: CommandAction.SR_RM
+}
+export interface SrShuffleCommand extends AbstractCommand {
+  action: CommandAction.SR_SHUFFLE
+}
+export interface SrResetStatsCommand extends AbstractCommand {
+  action: CommandAction.SR_RESET_STATS
+}
+export interface SrLoopCommand extends AbstractCommand {
+  action: CommandAction.SR_LOOP
+}
+export interface SrNoloopCommand extends AbstractCommand {
+  action: CommandAction.SR_NOLOOP
+}
+export interface SrPauseCommand extends AbstractCommand {
+  action: CommandAction.SR_PAUSE
+}
+export interface SrUnpauseCommand extends AbstractCommand {
+  action: CommandAction.SR_UNPAUSE
+}
+export interface SrHidevideoCommand extends AbstractCommand {
+  action: CommandAction.SR_HIDEVIDEO
+}
+export interface SrShowvideoCommand extends AbstractCommand {
+  action: CommandAction.SR_SHOWVIDEO
+}
+export interface SrRequestCommand extends AbstractCommand {
+  action: CommandAction.SR_REQUEST
+}
+export interface SrReRequestCommand extends AbstractCommand {
+  action: CommandAction.SR_RE_REQUEST
+}
+export interface SrAddtagCommand extends AbstractCommand {
+  action: CommandAction.SR_ADDTAG
+  data: {
+    tag: string
+  }
+}
+export interface SrRmtagCommand extends AbstractCommand {
+  action: CommandAction.SR_RMTAG
+}
+export interface SrVolumeCommand extends AbstractCommand {
+  action: CommandAction.SR_VOLUME
+}
+export interface SrFilterCommand extends AbstractCommand {
+  action: CommandAction.SR_FILTER
+}
+export interface SrPresetCommand extends AbstractCommand {
+  action: CommandAction.SR_PRESET
+}
+export interface SrQueueCommand extends AbstractCommand {
+  action: CommandAction.SR_QUEUE
+}
+export interface SrMoveTagUpCommand extends AbstractCommand {
+  action: CommandAction.SR_MOVE_TAG_UP
 }
 
 export interface MediaVideo {
@@ -512,9 +634,24 @@ export enum CountdownActionType {
   DELAY = 'delay',
 }
 
-export interface CountdownAction {
-  type: CountdownActionType
-  value: string | MediaCommandData
+export type CountdownAction =
+  CountdownTextAction |
+  CountdownDelayAction |
+  CountdownMediaAction
+
+export interface CountdownTextAction {
+  type: CountdownActionType.TEXT
+  value: string
+}
+
+export interface CountdownDelayAction {
+  type: CountdownActionType.DELAY
+  value: string
+}
+
+export interface CountdownMediaAction {
+  type: CountdownActionType.MEDIA
+  value: MediaCommandData
 }
 
 export interface CountdownCommandData {
@@ -533,7 +670,7 @@ export interface FunctionCommand {
   action?: CommandAction
   variables?: CommandVariable[]
   effects?: CommandEffectData[]
-  data?: CommandData
+  data?: unknown
   fn: CommandFunction
   cooldown: CommandCooldown
   restrict: CommandRestrict

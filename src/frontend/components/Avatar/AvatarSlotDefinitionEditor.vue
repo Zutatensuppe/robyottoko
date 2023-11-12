@@ -50,11 +50,11 @@
         :class="{ 'is-default': idx === modelValue.defaultItemIndex }"
         :model-value="item"
         :is-default="idx === modelValue.defaultItemIndex"
-        @moveUp="moveItemUp(idx)"
-        @moveDown="moveItemDown(idx)"
-        @update:modelValue="updateItem(idx, $event)"
-        @remove="removeItem(idx, $event)"
-        @makeDefault="makeItemDefault(idx, $event)"
+        @move-up="moveItemUp(idx)"
+        @move-down="moveItemDown(idx)"
+        @update:model-value="updateItem(idx, $event)"
+        @remove="removeItem(idx)"
+        @make-default="makeItemDefault(idx, $event)"
       />
     </div>
 
@@ -116,7 +116,7 @@ const updateItem = (idx: number, item: AvatarModuleAvatarSlotItem) => {
   props.modelValue.items[idx] = item
   emitChange()
 }
-const removeItem = (idx: number, item: AvatarModuleAvatarSlotItem) => {
+const removeItem = (idx: number) => {
   props.modelValue.items = props.modelValue.items.filter(
     (val, index) => index !== idx,
   )

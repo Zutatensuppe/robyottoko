@@ -3,7 +3,7 @@
 import { getProp } from '../../common/fn'
 import { Command, GlobalVariable } from '../../types'
 
-interface EmoteDisplayFn {
+export interface EmoteDisplayFn {
   fn: EMOTE_DISPLAY_FN,
   args: string[]
 }

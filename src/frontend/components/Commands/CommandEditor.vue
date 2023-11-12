@@ -44,12 +44,12 @@
                   :model-value="trigger"
                   :channel-points-custom-rewards="channelPointsCustomRewards"
                   :removable="item.triggers.length > 1"
-                  @update:modelValue="item.triggers[idx] = $event"
+                  @update:model-value="item.triggers[idx] = $event"
                   @remove="rmtrigger(idx)"
                 />
               </td>
             </tr>
-            <tr v-if="item.action === 'sr_addtag'">
+            <tr v-if="item.action === CommandAction.SR_ADDTAG">
               <td>Tag:</td>
               <td>
                 <input
@@ -288,6 +288,7 @@ import {
 } from '../../../common/commands'
 import {
   Command,
+  CommandAction,
   CommandTrigger,
   CommandVariable,
   GlobalVariable,
@@ -302,7 +303,7 @@ import CheckboxInput from '../CheckboxInput.vue'
 import PermissionsEdit from '../PermissionsEdit.vue'
 
 const props = defineProps<{
-  modelValue: any,
+  modelValue: Command,
   mode: 'create' | 'edit',
   globalVariables: GlobalVariable[],
   channelPointsCustomRewards: Record<string, string[]>,

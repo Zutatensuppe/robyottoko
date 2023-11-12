@@ -1,8 +1,10 @@
 import { getProp, mustParseHumanDuration, nonce } from '../common/fn'
 import {
+  AbstractCommand,
   Command, CommandAction, CommandEffectData, CommandEffectType, CommandTrigger, CommandTriggerType,
   CountdownAction, CountdownActionType, FunctionCommand,
-  MediaCommandData, MediaFile, MediaVideo, RouletteCommandData, RouletteEntry, SoundMediaFile,
+  GeneralCommand,
+  MediaCommandData, MediaFile, MediaVideo, RouletteCommandData, RouletteEntry, SoundMediaFile, SrAddtagCommand, SrBadCommand, SrClearCommand, SrCurrentCommand, SrFilterCommand, SrGoodCommand, SrHidevideoCommand, SrJumptonewCommand, SrLoopCommand, SrMoveTagUpCommand, SrNextCommand, SrNoloopCommand, SrPauseCommand, SrPresetCommand, SrPrevCommand, SrQueueCommand, SrReRequestCommand, SrRequestCommand, SrResetStatsCommand, SrRmCommand, SrRmtagCommand, SrShowvideoCommand, SrShuffleCommand, SrStatsCommand, SrUndoCommand, SrUnpauseCommand, SrVolumeCommand,
 } from '../types'
 import { MOD_OR_ABOVE } from './permissions'
 
@@ -200,7 +202,7 @@ interface CommandDef {
   NewCommand: () => Command
 }
 
-const createCommand = (cmd: Partial<Command>): Command => {
+const createCommand = (cmd: Partial<AbstractCommand>): AbstractCommand => {
   if (typeof cmd.action === 'undefined') {
     throw new Error('action required')
   }
@@ -227,95 +229,95 @@ export const commands: Record<CommandAction, CommandDef> = {
   [CommandAction.GENERAL]: {
     Name: () => 'command',
     Description: () => '',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): GeneralCommand => createCommand({
       triggers: [newCommandTrigger()],
       action: CommandAction.GENERAL,
-    }),
+    }) as GeneralCommand,
   },
   [CommandAction.SR_CURRENT]: {
     Name: () => 'sr_current',
     Description: () => 'Show what song is currently playing',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrCurrentCommand => createCommand({
       action: CommandAction.SR_CURRENT,
       triggers: [newCommandTrigger('!sr current', true)],
-    }),
+    }) as SrCurrentCommand,
   },
   [CommandAction.SR_UNDO]: {
     Name: () => 'sr_undo',
     Description: () => 'Remove the song that was last added by oneself.',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrUndoCommand => createCommand({
       action: CommandAction.SR_UNDO,
       triggers: [newCommandTrigger('!sr undo', true)],
-    }),
+    }) as SrUndoCommand,
   },
   [CommandAction.SR_GOOD]: {
     Name: () => 'sr_good',
     Description: () => 'Vote the current song up',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrGoodCommand => createCommand({
       action: CommandAction.SR_GOOD,
       triggers: [newCommandTrigger('!sr good', true)],
-    }),
+    }) as SrGoodCommand,
   },
   [CommandAction.SR_BAD]: {
     Name: () => 'sr_bad',
     Description: () => 'Vote the current song down',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrBadCommand => createCommand({
       action: CommandAction.SR_BAD,
       triggers: [newCommandTrigger('!sr bad', true)],
-    }),
+    }) as SrBadCommand,
   },
   [CommandAction.SR_STATS]: {
     Name: () => 'sr_stats',
     Description: () => 'Show stats about the playlist',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrStatsCommand => createCommand({
       action: CommandAction.SR_STATS,
       triggers: [newCommandTrigger('!sr stats', true), newCommandTrigger('!sr stat', true)],
-    }),
+    }) as SrStatsCommand,
   },
   [CommandAction.SR_PREV]: {
     Name: () => 'sr_prev',
     Description: () => 'Skip to the previous song',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrPrevCommand => createCommand({
       action: CommandAction.SR_PREV,
       triggers: [newCommandTrigger('!sr prev', true)],
       restrict: { active: true, to: MOD_OR_ABOVE },
-    }),
+    }) as SrPrevCommand,
   },
   [CommandAction.SR_NEXT]: {
     Name: () => 'sr_next',
     Description: () => 'Skip to the next song',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrNextCommand => createCommand({
       action: CommandAction.SR_NEXT,
       triggers: [newCommandTrigger('!sr next', true), newCommandTrigger('!sr skip', true)],
       restrict: { active: true, to: MOD_OR_ABOVE },
-    }),
+    }) as SrNextCommand,
   },
   [CommandAction.SR_JUMPTONEW]: {
     Name: () => 'sr_jumptonew',
     Description: () => 'Jump to the next unplayed song',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrJumptonewCommand => createCommand({
       action: CommandAction.SR_JUMPTONEW,
       triggers: [newCommandTrigger('!sr jumptonew', true)],
       restrict: { active: true, to: MOD_OR_ABOVE },
-    }),
+    }) as SrJumptonewCommand,
   },
   [CommandAction.SR_CLEAR]: {
     Name: () => 'sr_clear',
     Description: () => 'Clear the playlist',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrClearCommand => createCommand({
       action: CommandAction.SR_CLEAR,
       triggers: [newCommandTrigger('!sr clear', true)],
       restrict: { active: true, to: MOD_OR_ABOVE },
-    }),
+    }) as SrClearCommand,
   },
   [CommandAction.SR_RM]: {
     Name: () => 'sr_rm',
     Description: () => 'Remove the current song from the playlist',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrRmCommand => createCommand({
       action: CommandAction.SR_RM,
       triggers: [newCommandTrigger('!sr rm', true)],
       restrict: { active: true, to: MOD_OR_ABOVE },
-    }),
+    }) as SrRmCommand,
   },
   [CommandAction.SR_SHUFFLE]: {
     Name: () => 'sr_shuffle',
@@ -323,74 +325,74 @@ export const commands: Record<CommandAction, CommandDef> = {
     <br />
     Non-played and played songs will be shuffled separately and non-played
     songs will be put after currently playing song.`,
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrShuffleCommand => createCommand({
       action: CommandAction.SR_SHUFFLE,
       triggers: [newCommandTrigger('!sr shuffle', true)],
       restrict: { active: true, to: MOD_OR_ABOVE },
-    }),
+    }) as SrShuffleCommand,
   },
   [CommandAction.SR_RESET_STATS]: {
     Name: () => 'sr_reset_stats',
     Description: () => 'Reset all statistics of all songs',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrResetStatsCommand => createCommand({
       action: CommandAction.SR_RESET_STATS,
       triggers: [newCommandTrigger('!sr resetStats', true)],
       restrict: { active: true, to: MOD_OR_ABOVE },
-    }),
+    }) as SrResetStatsCommand,
   },
   [CommandAction.SR_LOOP]: {
     Name: () => 'sr_loop',
     Description: () => 'Loop the current song',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrLoopCommand => createCommand({
       action: CommandAction.SR_LOOP,
       triggers: [newCommandTrigger('!sr loop', true)],
       restrict: { active: true, to: MOD_OR_ABOVE },
-    }),
+    }) as SrLoopCommand,
   },
   [CommandAction.SR_NOLOOP]: {
     Name: () => 'sr_noloop',
     Description: () => 'Stop looping the current song',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrNoloopCommand => createCommand({
       action: CommandAction.SR_NOLOOP,
       triggers: [newCommandTrigger('!sr noloop', true), newCommandTrigger('!sr unloop', true)],
       restrict: { active: true, to: MOD_OR_ABOVE },
-    }),
+    }) as SrNoloopCommand,
   },
   [CommandAction.SR_PAUSE]: {
     Name: () => 'sr_pause',
     Description: () => 'Pause currently playing song',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrPauseCommand => createCommand({
       action: CommandAction.SR_PAUSE,
       triggers: [newCommandTrigger('!sr pause', true)],
       restrict: { active: true, to: MOD_OR_ABOVE },
-    }),
+    }) as SrPauseCommand,
   },
   [CommandAction.SR_UNPAUSE]: {
     Name: () => 'sr_unpause',
     Description: () => 'Unpause currently paused song',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrUnpauseCommand => createCommand({
       action: CommandAction.SR_UNPAUSE,
       triggers: [newCommandTrigger('!sr nopause', true), newCommandTrigger('!sr unpause', true)],
       restrict: { active: true, to: MOD_OR_ABOVE },
-    }),
+    }) as SrUnpauseCommand,
   },
   [CommandAction.SR_HIDEVIDEO]: {
     Name: () => 'sr_hidevideo',
     Description: () => 'Hide video for current song',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrHidevideoCommand => createCommand({
       action: CommandAction.SR_HIDEVIDEO,
       triggers: [newCommandTrigger('!sr hidevideo', true)],
       restrict: { active: true, to: MOD_OR_ABOVE },
-    }),
+    }) as SrHidevideoCommand,
   },
   [CommandAction.SR_SHOWVIDEO]: {
     Name: () => 'sr_showvideo',
     Description: () => 'Show video for current song',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrShowvideoCommand => createCommand({
       action: CommandAction.SR_SHOWVIDEO,
       triggers: [newCommandTrigger('!sr showvideo', true)],
       restrict: { active: true, to: MOD_OR_ABOVE },
-    }),
+    }) as SrShowvideoCommand,
   },
   [CommandAction.SR_REQUEST]: {
     Name: () => 'sr_request',
@@ -399,10 +401,10 @@ export const commands: Record<CommandAction, CommandDef> = {
     at youtube (by id or by title)
     and queue the first result in the playlist (after the first found
     batch of unplayed songs).`,
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrRequestCommand => createCommand({
       action: CommandAction.SR_REQUEST,
       triggers: [newCommandTrigger('!sr')],
-    }),
+    }) as SrRequestCommand,
   },
   [CommandAction.SR_RE_REQUEST]: {
     Name: () => 'sr_re_request',
@@ -410,77 +412,77 @@ export const commands: Record<CommandAction, CommandDef> = {
     Search for <code>&lt;SEARCH&gt;</code> (argument to this command)
     in the current playlist and queue the first result in the playlist
     (after the first found batch of unplayed songs).`,
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrReRequestCommand => createCommand({
       action: CommandAction.SR_RE_REQUEST,
       triggers: [newCommandTrigger('!resr')],
-    }),
+    }) as SrReRequestCommand,
   },
   [CommandAction.SR_ADDTAG]: {
     Name: () => 'sr_addtag',
     Description: () => 'Add tag <code>&lt;TAG&gt;</code> (argument to this command) to the current song',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrAddtagCommand => createCommand({
       action: CommandAction.SR_ADDTAG,
       triggers: [newCommandTrigger('!sr tag'), newCommandTrigger('!sr addtag')],
       restrict: { active: true, to: MOD_OR_ABOVE },
       data: { tag: '' },
-    }),
+    }) as SrAddtagCommand,
   },
   [CommandAction.SR_RMTAG]: {
     Name: () => 'sr_rmtag',
     Description: () => 'Remove tag <code>&lt;TAG&gt;</code> (argument to this command) from the current song',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrRmtagCommand => createCommand({
       action: CommandAction.SR_RMTAG,
       triggers: [newCommandTrigger('!sr rmtag')],
       restrict: { active: true, to: MOD_OR_ABOVE },
-    }),
+    }) as SrRmtagCommand,
   },
   [CommandAction.SR_VOLUME]: {
     Name: () => 'sr_volume',
     Description: () => `Sets the song request volume to <code>&lt;VOLUME&gt;</code> (argument to this command, min 0, max 100).
     <br />
     If no argument is given, just outputs the current volume`,
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrVolumeCommand => createCommand({
       action: CommandAction.SR_VOLUME,
       triggers: [newCommandTrigger('!sr volume')],
       restrict: { active: true, to: MOD_OR_ABOVE },
-    }),
+    }) as SrVolumeCommand,
   },
   [CommandAction.SR_FILTER]: {
     Name: () => 'sr_filter',
     Description: () => `Play only songs with the given tag <code>&lt;TAG&gt;</code> (argument to this command). If no tag
   is given, play all songs.`,
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrFilterCommand => createCommand({
       action: CommandAction.SR_FILTER,
       triggers: [newCommandTrigger('!sr filter')],
       restrict: { active: true, to: MOD_OR_ABOVE },
-    }),
+    }) as SrFilterCommand,
   },
   [CommandAction.SR_PRESET]: {
     Name: () => 'sr_preset',
     Description: () => `Switches to the preset <code>&lt;PRESET&gt;</code> (argument to this command) if it exists.
   If no arguments are given, outputs all available presets.`,
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrPresetCommand => createCommand({
       action: CommandAction.SR_PRESET,
       triggers: [newCommandTrigger('!sr preset')],
       restrict: { active: true, to: MOD_OR_ABOVE },
-    }),
+    }) as SrPresetCommand,
   },
   [CommandAction.SR_QUEUE]: {
     Name: () => 'sr_queue',
     Description: () => 'Shows the next 3 songs that will play.',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrQueueCommand => createCommand({
       action: CommandAction.SR_QUEUE,
       triggers: [newCommandTrigger('!sr queue')],
-    }),
+    }) as SrQueueCommand,
   },
   [CommandAction.SR_MOVE_TAG_UP]: {
     Name: () => 'sr_move_tag_up',
     Description: () => 'Moves songs with the tag to the beginning of the playlist.',
-    NewCommand: (): Command => createCommand({
+    NewCommand: (): SrMoveTagUpCommand => createCommand({
       action: CommandAction.SR_MOVE_TAG_UP,
       triggers: [newCommandTrigger('!sr movetagup')],
       restrict: { active: true, to: MOD_OR_ABOVE },
-    }),
+    }) as SrMoveTagUpCommand,
   },
 }
 

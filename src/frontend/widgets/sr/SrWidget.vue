@@ -8,6 +8,7 @@
         <ResponsiveImage
           v-if="hidevideo && settings.hideVideoImage.file"
           class="hide-video"
+          title=""
           :src="settings.hideVideoImage.urlpath"
         />
         <div

@@ -399,7 +399,7 @@ function getMessageEmotes(message: string, userstate: ChatUserstate | null, chan
   if (
     userstate &&
     userstate.emotes != null &&
-    typeof userstate.emotes !== undefined
+    typeof userstate.emotes !== 'undefined'
   ) {
     const repEmotes: RepEmote[] = []
     const userstateEmotes = userstate.emotes
