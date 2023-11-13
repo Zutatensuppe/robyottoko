@@ -57,7 +57,7 @@ const props = withDefaults(defineProps<{
 
 
 const queue = ref<MediaCommandData[]>([])
-const worker = ref<any>(null)
+const worker = ref<ReturnType<typeof setTimeout> | null>(null)
 const showimage = ref<boolean>(false)
 const imgstyle = ref<undefined | Record<string, string>>(undefined)
 const videosrc = ref<string>('')

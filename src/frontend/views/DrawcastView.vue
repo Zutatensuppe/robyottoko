@@ -469,7 +469,7 @@ const changed = computed((): boolean => {
 const favoriteSelectionTotalPages = computed((): number => {
   const fav = favoriteSelection.value
   return (
-    Math.floor(fav.items.length / fav.pagination.perPage) + 
+    Math.floor(fav.items.length / fav.pagination.perPage) +
     (fav.items.length % fav.pagination.perPage === 0 ? 0 : 1)
   )
 })
@@ -514,7 +514,7 @@ const removeFavoriteList = (index: number): void => {
     return
   }
   const favLists: DrawcastFavoriteList[] = []
-  for (let idx in settings.value.favoriteLists) {
+  for (const idx in settings.value.favoriteLists) {
     if (parseInt(idx, 10) === parseInt(`${index}`, 10)) {
       continue
     }

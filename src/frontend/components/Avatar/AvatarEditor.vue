@@ -1,8 +1,5 @@
 <template>
-  <div
-    v-if="item"
-    class="avatar-editor modal is-active"
-  >
+  <div class="avatar-editor modal is-active">
     <div
       class="modal-background"
       @click="onOverlayClick"
@@ -30,7 +27,7 @@
                   <td>Name:</td>
                   <td>
                     <input
-                      v-model="item.name"
+                      v-model="val.name"
                       class="input is-small"
                     >
                   </td>
@@ -39,10 +36,10 @@
                   <td>Dimensions:</td>
                   <td>
                     <input
-                      v-model="item.width"
+                      v-model="val.width"
                       class="input is-small number-input"
                     >✖<input
-                      v-model="item.height"
+                      v-model="val.height"
                       class="input is-small number-input"
                     >
                     Pixels
@@ -57,7 +54,7 @@
                   <td>States:</td>
                   <td>
                     <span
-                      v-for="(stateDef, idx) in item.stateDefinitions"
+                      v-for="(stateDef, idx) in val.stateDefinitions"
                       :key="idx"
                       class="tag"
                     >
@@ -86,14 +83,14 @@
                   <td>Slots</td>
                   <td>
                     <AvatarSlotDefinitionEditor
-                      v-for="(slotDefinition, idx) in item.slotDefinitions"
+                      v-for="(slotDefinition, idx) in val.slotDefinitions"
                       :key="idx"
                       class="card mb-2"
                       :model-value="slotDefinition"
-                      :avatar-def="item"
-                      @update:modelValue="updateSlotDefinition(idx, $event)"
-                      @moveUp="moveSlotUp(idx)"
-                      @moveDown="moveSlotDown(idx)"
+                      :avatar-def="val"
+                      @update:model-value="updateSlotDefinition(idx, $event)"
+                      @move-up="moveSlotUp(idx)"
+                      @move-down="moveSlotDown(idx)"
                       @remove="removeSlotDefinition(idx)"
                     />
                   </td>
@@ -102,14 +99,14 @@
             </table>
 
             <span
-              class="button is-small"
+              class="button is-small ml-3"
               @click="addSlotDefinition"
             >Add slot</span>
           </div>
           <div class="column">
             <div>JSON:</div>
             <textarea
-              v-model="itemStr"
+              v-model="currentValJson"
               class="textarea mb-2"
             />
             <div>All images in use:</div>
@@ -154,8 +151,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from 'vue'
+<script setup lang="ts">
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, Ref, watch } from 'vue'
 import { arraySwap } from '../../../common/fn'
 import {
   AvatarModuleAvatarDefinition,
@@ -166,252 +163,189 @@ import {
 import StringInput from '../StringInput.vue'
 import AvatarSlotDefinitionEditor from './AvatarSlotDefinitionEditor.vue'
 
-interface ComponentData {
-  item: AvatarModuleAvatarDefinition | null;
-  itemStr: string;
-  newState: string;
-  newSlotDefinitionName: string;
+const props = defineProps<{
+  modelValue: AvatarModuleAvatarDefinition,
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: AvatarModuleAvatarDefinition): void,
+  (e: 'cancel'): void,
+}>()
+
+const val = ref<AvatarModuleAvatarDefinition>(JSON.parse(JSON.stringify(props.modelValue)))
+const currentValJson = computed(() => JSON.stringify(val.value))
+
+const newState = ref<string>('')
+const cardBody = ref<HTMLElement>() as Ref<HTMLElement>
+const allImagesDiv = ref<HTMLDivElement>() as Ref<HTMLDivElement>
+
+const allImages = computed(() => {
+  const images: string[] = []
+  val.value.slotDefinitions.forEach((slotDef) => {
+    slotDef.items.forEach((item) => {
+      item.states.forEach((state) => {
+        state.frames.forEach((frame) => {
+          if (frame.url && !images.includes(frame.url)) {
+            images.push(frame.url)
+          }
+        })
+      })
+    })
+  })
+  return images
+})
+
+const stateExists = (state: string): boolean => {
+  return val.value.stateDefinitions.some(({ value }) => value === state)
 }
-export default defineComponent({
-    components: { StringInput, AvatarSlotDefinitionEditor },
-    props: {
-        modelValue: {
-            type: Object as PropType<AvatarModuleAvatarDefinition>,
-            required: true,
-        },
-    },
-    emits: ['update:modelValue', 'cancel'],
-    data: (): ComponentData => ({
-        item: null,
-        itemStr: 'null',
-        newState: '',
-        newSlotDefinitionName: '',
-    }),
-    computed: {
-        cardBody(): HTMLElement | null {
-            if (!this.$refs.cardBody) {
-                return null
-            }
-            return this.$refs.cardBody as HTMLElement
-        },
-        allImagesDiv(): HTMLDivElement | null {
-            if (!this.$refs.allImagesDiv) {
-                return null
-            }
-            return this.$refs.allImagesDiv as HTMLDivElement
-        },
-        allImages() {
-            const images: string[] = []
-            this.item?.slotDefinitions.forEach((slotDef) => {
-                slotDef.items.forEach((item) => {
-                    item.states.forEach((state) => {
-                        state.frames.forEach((frame) => {
-                            if (frame.url && !images.includes(frame.url)) {
-                                images.push(frame.url)
-                            }
-                        })
-                    })
-                })
-            })
-            return images
-        },
-        isStateAddable() {
-            if (!this.item) {
-                return false
-            }
-            if (this.newState === '' ||
-                this.item.stateDefinitions.find(({ value }) => value === this.newState)) {
-                return false
-            }
-            return true
-        },
-    },
-    watch: {
-        modelValue: {
-            handler(v) {
-                this.item = JSON.parse(this.itemStr)
-            },
-        },
-        item: {
-            handler(v) {
-                this.itemStr = JSON.stringify(v)
-            },
-            deep: true,
-        },
-        itemStr: {
-            handler(v) {
-                const current = JSON.stringify(this.item)
-                try {
-                    const updated = JSON.parse(v)
-                    if (current !== updated) {
-                        this.item = updated
-                    }
-                }
-                catch (e) {
-                    console.warn(e)
-                }
-            },
-        },
-    },
-    mounted() {
-        this.itemStr = JSON.stringify(this.modelValue)
-        this.item = JSON.parse(this.itemStr)
-        this.adjustAllImagesDivSize()
-        window.addEventListener('resize', this.adjustAllImagesDivSize)
-    },
-    unmounted() {
-        window.removeEventListener('resize', this.adjustAllImagesDivSize)
-    },
-    methods: {
-        autoDetectDimensions(): void {
-            if (this.allImages.length === 0) {
-                return
-            }
-            const img = new Image()
-            img.onload = () => {
-                if (!this.item) {
-                    return
-                }
-                this.item.width = img.width
-                this.item.height = img.height
-            }
-            img.src = this.allImages[0]
-        },
-        adjustAllImagesDivSize(): void {
-            this.$nextTick(() => {
-                if (!this.cardBody || !this.allImagesDiv) {
-                    return
-                }
-                const maxHeight = this.cardBody.clientHeight
-                this.allImagesDiv.style.maxHeight = `${maxHeight}px`
-            })
-        },
-        imageDragStart($evt: DragEvent): void {
-            if (!$evt.dataTransfer) {
-                return
-            }
-            const element = $evt.target as HTMLImageElement
-            const url = element.getAttribute('data-src')
-            if (!url) {
-                return
-            }
-            $evt.dataTransfer.setData('avatar-image-url', url)
-        },
-        emitUpdate(): void {
-            if (!this.item) {
-                console.warn('emitUpdate: this.item not initialized')
-                return
-            }
-            this.$emit('update:modelValue', default_avatar_definition({
-                name: this.item.name,
-                width: parseInt(`${this.item.width}`, 10),
-                height: parseInt(`${this.item.height}`, 10),
-                stateDefinitions: this.item.stateDefinitions,
-                slotDefinitions: this.item.slotDefinitions,
-                state: this.item.state,
-            }))
-        },
-        onSaveClick(): void {
-            this.emitUpdate()
-        },
-        onSaveAndCloseClick(): void {
-            this.emitUpdate()
-            this.$emit('cancel')
-        },
-        onCancelClick(): void {
-            this.$emit('cancel')
-        },
-        onOverlayClick(): void {
-            this.$emit('cancel')
-        },
-        onCloseClick(): void {
-            this.$emit('cancel')
-        },
-        addStateDefinition(): void {
-            if (!this.item) {
-                console.warn('addStateDefinition: this.item not initialized')
-                return
-            }
-            const stateDefinition: AvatarModuleAvatarStateDefinition = {
-                value: this.newState,
-                deletable: true,
-            }
-            this.item.stateDefinitions.push(stateDefinition)
-            for (let slotDef of this.item.slotDefinitions) {
-                for (let item of slotDef.items) {
-                    item.states.push({
-                        state: stateDefinition.value,
-                        frames: [],
-                    })
-                }
-            }
-        },
-        removeStateDefinition(index: string | number): void {
-            if (!this.item) {
-                console.warn('removeStateDefinition: this.item not initialized')
-                return
-            }
-            const stateDefinitions: AvatarModuleAvatarStateDefinition[] = []
-            for (let idx in this.item.stateDefinitions) {
-                if (parseInt(idx, 10) === parseInt(`${index}`, 10)) {
-                    continue
-                }
-                stateDefinitions.push(this.item.stateDefinitions[idx])
-            }
-            this.item.stateDefinitions = stateDefinitions
-            const stateStrings = stateDefinitions.map((stateDefinition) => stateDefinition.value)
-            for (let slotDef of this.item.slotDefinitions) {
-                for (let item of slotDef.items) {
-                    item.states = item.states.filter((anim) => stateStrings.includes(anim.state))
-                }
-            }
-        },
-        removeSlotDefinition(index: string | number): void {
-            if (!this.item) {
-                console.warn('removeSlotDefinition: this.item not initialized')
-                return
-            }
-            const slotDefinitions: AvatarModuleAvatarSlotDefinition[] = []
-            for (let idx in this.item.slotDefinitions) {
-                if (parseInt(idx, 10) === parseInt(`${index}`, 10)) {
-                    continue
-                }
-                slotDefinitions.push(this.item.slotDefinitions[idx])
-            }
-            this.item.slotDefinitions = slotDefinitions
-        },
-        updateSlotDefinition(index: string | number, slotDefinition: AvatarModuleAvatarSlotDefinition): void {
-            if (!this.item) {
-                console.warn('updateSlotDefinition: this.item not initialized')
-                return
-            }
-            this.item.slotDefinitions[parseInt(`${index}`, 10)] = slotDefinition
-        },
-        addSlotDefinition(): void {
-            if (!this.item) {
-                console.warn('addSlotDefinition: this.item not initialized')
-                return
-            }
-            const slotDefinition: AvatarModuleAvatarSlotDefinition = {
-                slot: 'Unnamed slot',
-                defaultItemIndex: -1,
-                items: [],
-            }
-            this.item.slotDefinitions.push(slotDefinition)
-        },
-        moveSlotUp(idx: number): void {
-            this.swapItems(idx - 1, idx)
-        },
-        moveSlotDown(idx: number): void {
-            this.swapItems(idx + 1, idx)
-        },
-        swapItems(idx1: number, idx2: number): void {
-            if (!this.item) {
-                console.warn('swapItems: this.item not initialized')
-                return
-            }
-            arraySwap(this.item.slotDefinitions, idx1, idx2)
-        },
-    },
+
+const isStateAddable = computed((): boolean => {
+  return newState.value !== '' && !stateExists(newState.value)
+})
+
+const adjustAllImagesDivSize = () => {
+  nextTick(() => {
+    const maxHeight = cardBody.value.clientHeight
+    allImagesDiv.value.style.maxHeight = `${maxHeight}px`
+  })
+}
+
+const autoDetectDimensions = (): void => {
+  if (allImages.value.length === 0) {
+    return
+  }
+  const img = new Image()
+  img.onload = () => {
+    val.value.width = img.width
+    val.value.height = img.height
+  }
+  img.src = allImages.value[0]
+}
+
+const imageDragStart = ($evt: DragEvent): void => {
+  if (!$evt.dataTransfer) {
+    return
+  }
+  const element = $evt.target as HTMLImageElement
+  const url = element.getAttribute('data-src')
+  if (!url) {
+    return
+  }
+  $evt.dataTransfer.setData('avatar-image-url', url)
+}
+
+const emitUpdate = (): void => {
+  emit('update:modelValue', default_avatar_definition({
+    name: val.value.name,
+    width: parseInt(`${val.value.width}`, 10),
+    height: parseInt(`${val.value.height}`, 10),
+    stateDefinitions: val.value.stateDefinitions,
+    slotDefinitions: val.value.slotDefinitions,
+    state: val.value.state,
+  }))
+}
+
+const onSaveClick = (): void => {
+  emitUpdate()
+}
+const onSaveAndCloseClick = (): void => {
+  emitUpdate()
+  emit('cancel')
+}
+const onCancelClick = (): void => {
+  emit('cancel')
+}
+const onOverlayClick = (): void => {
+  emit('cancel')
+}
+const onCloseClick = (): void => {
+  emit('cancel')
+}
+
+const addStateDefinition = (): void => {
+  const stateDefinition: AvatarModuleAvatarStateDefinition = {
+    value: newState.value,
+    deletable: true,
+  }
+  val.value.stateDefinitions.push(stateDefinition)
+  for (const slotDef of val.value.slotDefinitions) {
+    for (const item of slotDef.items) {
+      item.states.push({
+        state: stateDefinition.value,
+        frames: [],
+      })
+    }
+  }
+}
+
+const removeStateDefinition = (index: string | number): void => {
+  const stateDefinitions: AvatarModuleAvatarStateDefinition[] = []
+  for (const idx in val.value.stateDefinitions) {
+    if (parseInt(idx, 10) === parseInt(`${index}`, 10)) {
+      continue
+    }
+    stateDefinitions.push(val.value.stateDefinitions[idx])
+  }
+  val.value.stateDefinitions = stateDefinitions
+  const stateStrings = stateDefinitions.map((stateDefinition) => stateDefinition.value)
+  for (const slotDef of val.value.slotDefinitions) {
+    for (const item of slotDef.items) {
+      item.states = item.states.filter((anim) => stateStrings.includes(anim.state))
+    }
+  }
+}
+
+const removeSlotDefinition = (index: string | number): void => {
+  const slotDefinitions: AvatarModuleAvatarSlotDefinition[] = []
+  for (const idx in val.value.slotDefinitions) {
+    if (parseInt(idx, 10) === parseInt(`${index}`, 10)) {
+      continue
+    }
+    slotDefinitions.push(val.value.slotDefinitions[idx])
+  }
+  val.value.slotDefinitions = slotDefinitions
+}
+
+const updateSlotDefinition = (
+  index: string | number,
+  slotDefinition: AvatarModuleAvatarSlotDefinition,
+): void => {
+  val.value.slotDefinitions[parseInt(`${index}`, 10)] = slotDefinition
+}
+
+const addSlotDefinition = (): void => {
+  const slotDefinition: AvatarModuleAvatarSlotDefinition = {
+    slot: 'Unnamed slot',
+    defaultItemIndex: -1,
+    items: [],
+  }
+  val.value.slotDefinitions.push(slotDefinition)
+}
+
+const moveSlotUp = (idx: number): void => {
+  swapItems(idx - 1, idx)
+}
+
+const moveSlotDown = (idx: number): void => {
+  swapItems(idx + 1, idx)
+}
+
+const swapItems = (idx1: number, idx2: number): void => {
+  arraySwap(val.value.slotDefinitions, idx1, idx2)
+}
+
+onMounted(() => {
+  adjustAllImagesDivSize()
+  window.addEventListener('resize', adjustAllImagesDivSize)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', adjustAllImagesDivSize)
+})
+
+watch(() => props.modelValue, (value: AvatarModuleAvatarDefinition) => {
+  if (currentValJson.value !== JSON.stringify(value)) {
+    val.value = value
+  }
 })
 </script>

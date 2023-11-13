@@ -110,7 +110,7 @@ const recognition = ref<{ interimResults: boolean, continuous: boolean }>({
 })
 // texts
 const texts = ref<{ recognized: string; translated: string; ready: boolean }[]>([])
-const timeout = ref<any>(null)
+const timeout = ref<ReturnType<typeof setTimeout> | null>(null)
 // settings (overwritten from data ws)
 const settings = ref<SpeechToTextModuleSettings | null>(null)
 // speech recognition object
