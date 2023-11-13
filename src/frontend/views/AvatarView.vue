@@ -156,7 +156,7 @@
         <AvatarEditor
           v-if="editEntity"
           :model-value="editEntity"
-          @update:modelValue="updatedAvatar"
+          @update:model-value="updatedAvatar"
           @cancel="editEntity = null"
         />
 
@@ -298,7 +298,13 @@ onUnmounted(() => {
 </script>
 <style>
 .avatar-editor .modal-card {
-  width: calc(100% - 2em);
+  width: calc(100vw - 40px);
+  height: calc(100vh - 40px);
+}
+
+.avatar-editor .modal-card-body {
+  overflow-y: scroll;
+  padding: 0;
 }
 
 .avatar-all-images {
@@ -311,5 +317,113 @@ onUnmounted(() => {
   background: #efefef;
   height: 64px;
   vertical-align: bottom;
+}
+
+.avatar-animation-frame {
+  border: dashed 2px transparent;
+}
+
+.avatar-animation-frame.dragging-over {
+  border: dashed 2px #444;
+}
+
+.avatar-preview {
+  position: relative;
+}
+
+.avatar-preview .avatar-animation {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.avatar-slot-definition-editor-title-input {
+  font-weight: bold;
+  font-size: 20px !important;
+}
+
+.avatar-slot-definition-editor {
+  border: solid 1px hsl(0, 0%, 86%);
+}
+
+.avatar-slot-definition-editor-title {
+  background: #efefef;
+  border-bottom: solid 1px hsl(0, 0%, 86%);
+}
+
+.avatar-slot-item-editor-title {
+  font-weight: bold;
+  font-size: 14px !important;
+}
+
+.avatar-slot-item-editor {
+  background: #efefef;
+  border: solid 1px hsl(0, 0%, 86%);
+}
+
+.avatar-slot-item-state-editor {
+  display: inline-block;
+  border: solid 1px hsl(0, 0%, 86%);
+}
+
+.avatar-slot-item-state-editor.dragging-over {
+  border-style: dashed;
+  border-color: #444;
+}
+
+.avatar-slot-item-state-editor-title {
+  text-align: center;
+  font-weight: bold;
+  background: #efefef;
+  border-bottom: solid 1px hsl(0, 0%, 86%);
+}
+
+.avatar-animation-card {
+  display: inline-block;
+  width: 64px;
+  vertical-align: top;
+}
+
+.avatar-animation-frame {
+  display: inline-block;
+  position: relative;
+  background: #efefef;
+}
+
+.avatar-animation-frame img {
+  vertical-align: bottom;
+}
+
+.avatar-animation-frame-upload {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  z-index: 1;
+}
+
+.avatar-animation-frame-upload .button {
+  margin: 0 auto;
+}
+
+.avatar-animation-frame-remove {
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: none;
+  z-index: 2;
+}
+
+.avatar-animation-frame:hover .avatar-animation-frame-remove {
+  display: inline-block;
+}
+
+.avatar-animation-frame input[type="text"] {
+  max-width: 100px;
+}
+
+.avatar-fallback-animation {
+  opacity: 0.7;
 }
 </style>

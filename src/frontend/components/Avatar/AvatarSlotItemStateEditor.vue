@@ -8,11 +8,11 @@
     @drop="onDrop"
   >
     <div class="avatar-slot-item-state-editor-title">
-      {{ modelValue.state }}
+      {{ val.state }}
     </div>
     <AvatarAnimation
-      v-if="modelValue.frames.length"
-      :frames="modelValue.frames"
+      v-if="val.frames.length"
+      :frames="val.frames"
     />
     <AvatarAnimation
       v-else
@@ -21,13 +21,14 @@
     />
     <div>
       <div
-        v-for="(frame, idx) in modelValue.frames"
+        v-for="(_frame, idx) in val.frames"
         :key="idx"
-        class="avatar-animation-card mr-1"
+        class="avatar-animation-card mr-2"
       >
         <AvatarFrameUpload
-          :model-value="frame"
-          @update:modelValue="frameChanged(idx, $event)"
+          :model-value="val.frames[idx]"
+          @update:model-value="frameChanged(idx, $event)"
+          @remove="frameRemoved(idx)"
         />
       </div>
 
@@ -52,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { Ref, ref } from 'vue'
+import { computed, Ref, ref, watch } from 'vue'
 import {
   AvatarModuleSlotItemStateDefinition,
   AvatarModuleAnimationFrameDefinition,
@@ -68,8 +69,14 @@ const props = defineProps<{
   defaultState: AvatarModuleSlotItemStateDefinition
 }>()
 
-const draggingOver = ref<boolean>(false)
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: AvatarModuleSlotItemStateDefinition): void
+}>()
 
+const val = ref<AvatarModuleSlotItemStateDefinition>(JSON.parse(JSON.stringify(props.modelValue)))
+const currentValJson = computed(() => JSON.stringify(val.value))
+
+const draggingOver = ref<boolean>(false)
 const uploadComponent = ref<InstanceType<typeof UploadInput>>() as Ref<InstanceType<typeof UploadInput>>
 
 const onDragOver = (e: DragEvent) => {
@@ -103,9 +110,8 @@ const onDrop = (e: DragEvent): void => {
       url: e.dataTransfer.getData('avatar-image-url'),
       duration: 100,
     }
-    props.modelValue.frames.push(frame)
-  }
-  else {
+    val.value.frames.push(frame)
+  } else {
     const file = getFileFromDropEvent(e)
     if (file) {
       uploadComponent.value.uploadFile(file)
@@ -113,92 +119,33 @@ const onDrop = (e: DragEvent): void => {
   }
 }
 const onUploaded = (file: UploadedFile): void => {
-  props.modelValue.frames.push({
+  val.value.frames.push({
     url: file.urlpath,
     duration: 100,
   })
 }
 
 const frameChanged = (idx: number, frame: AvatarModuleAnimationFrameDefinition) => {
-  if (frame.url === '') {
-    props.modelValue.frames = props.modelValue.frames.filter((_val, index: number) => index !== idx)
-  }
-  else {
-    props.modelValue.frames[idx] = frame
-  }
+  val.value.frames[idx] = frame
+}
+const frameRemoved = (idx: number) => {
+  val.value.frames = val.value.frames.filter((_val, index: number) => index !== idx)
 }
 const addFrame = () => {
   const frame: AvatarModuleAnimationFrameDefinition = {
     url: '',
     duration: 100,
   }
-  props.modelValue.frames.push(frame)
+  val.value.frames.push(frame)
 }
+
+watch(() => props.modelValue, (value: AvatarModuleSlotItemStateDefinition) => {
+  if (currentValJson.value !== JSON.stringify(value)) {
+    val.value = value
+  }
+})
+
+watch(val, (value: AvatarModuleSlotItemStateDefinition) => {
+  emit('update:modelValue', value)
+}, { deep: true })
 </script>
-<style>
-.avatar-slot-item-state-editor {
-  display: inline-block;
-  border: solid 1px hsl(0, 0%, 86%);
-}
-
-.avatar-slot-item-state-editor.dragging-over {
-  border-style: dashed;
-  border-color: #444;
-}
-
-.avatar-slot-item-state-editor-title {
-  text-align: center;
-  font-weight: bold;
-  background: #efefef;
-  border-bottom: solid 1px hsl(0, 0%, 86%);
-}
-
-.avatar-animation-card {
-  display: inline-block;
-  width: 64px;
-  vertical-align: top;
-}
-
-.avatar-animation-frame {
-  display: inline-block;
-  position: relative;
-  background: #efefef;
-}
-
-.avatar-animation-frame img {
-  vertical-align: bottom;
-}
-
-.avatar-animation-frame-upload {
-  width: 64px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  text-align: center;
-  z-index: 1;
-}
-
-.avatar-animation-frame-upload .button {
-  margin: 0 auto;
-}
-
-.avatar-animation-frame-remove {
-  position: absolute;
-  right: 0;
-  top: 0;
-  display: none;
-  z-index: 2;
-}
-
-.avatar-animation-frame:hover .avatar-animation-frame-remove {
-  display: inline-block;
-}
-
-.avatar-animation-frame input[type="text"] {
-  max-width: 100px;
-}
-
-.avatar-fallback-animation {
-  opacity: 0.7;
-}
-</style>

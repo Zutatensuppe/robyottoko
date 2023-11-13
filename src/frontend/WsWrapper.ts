@@ -17,14 +17,14 @@ export default class WsWrapper {
   handle: WebSocket | null = null
 
   // timeout for automatic reconnect
-  reconnectTimeout: NodeJS.Timeout | null = null
+  reconnectTimeout: ReturnType<typeof setTimeout> | null = null
 
   // buffer for 'send'
   sendBuffer: string[] = []
 
-  timerId: any = 0
+  timerId: ReturnType<typeof setTimeout> | null = null
   gotPong: boolean = false
-  pongWaitTimerId: any = 0
+  pongWaitTimerId: ReturnType<typeof setTimeout> | null = null
 
   constructor(private readonly addr: string, private readonly protocols: string) {
   }

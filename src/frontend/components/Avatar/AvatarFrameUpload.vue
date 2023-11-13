@@ -14,15 +14,15 @@
         <i class="fa fa-trash" />
       </span>
     </div>
-    <img
-      v-if="value.url"
-      :src="value.url"
-      width="64"
-      height="64"
-    >
+    <ResponsiveImage
+      v-if="val.url"
+      :src="val.url"
+      width="64px"
+      height="64px"
+    />
 
     <UploadInput
-      v-show="!value.url"
+      v-show="!val.url"
       ref="uploadComponent"
       accept="image/*"
       label=""
@@ -30,51 +30,47 @@
       @uploaded="onUploaded"
     />
     <IntegerInput
-      v-model="value.duration"
-      @update:modelValue="onDurationChange"
+      v-model="val.duration"
+      @update:model-value="onDurationChange"
     />
   </span>
 </template>
 
 <script setup lang="ts">
-import { onMounted, Ref, ref, watch } from 'vue'
+import { computed, Ref, ref, watch } from 'vue'
 import { AvatarModuleAnimationFrameDefinition } from '../../../mod/modules/AvatarModuleCommon'
 import { UploadedFile } from '../../../types'
 import { getFileFromDropEvent } from '../../util'
 import UploadInput from '../UploadInput.vue'
 import IntegerInput from '../IntegerInput.vue'
+import ResponsiveImage from '../ResponsiveImage.vue'
 
 const props = defineProps<{
-  modelValue: AvatarModuleAnimationFrameDefinition | null
-}>()
-const emit = defineEmits<{
-  (e: 'update:modelValue', val: AvatarModuleAnimationFrameDefinition): void
+  modelValue: AvatarModuleAnimationFrameDefinition
 }>()
 
-const value = ref<AvatarModuleAnimationFrameDefinition>({
-  url: '',
-  duration: 100,
-})
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: AvatarModuleAnimationFrameDefinition): void,
+  (e: 'remove'): void,
+}>()
+
+const val = ref<AvatarModuleAnimationFrameDefinition>(JSON.parse(JSON.stringify(props.modelValue)))
+const currentValJson = computed(() => JSON.stringify(val.value))
+
 const draggingOver = ref<boolean>(false)
 const uploadComponent = ref<InstanceType<typeof UploadInput>>() as Ref<InstanceType<typeof UploadInput>>
 
-const applyValue = () => {
-  value.value = props.modelValue !== null
-    ? JSON.parse(JSON.stringify(props.modelValue))
-    : { url: '', duration: 100 }
-}
 const emitUpdate = () => {
-  emit('update:modelValue', JSON.parse(JSON.stringify(value.value)))
+  emit('update:modelValue', val.value)
 }
 const onDurationChange = () => {
-  emit('update:modelValue', JSON.parse(JSON.stringify(value.value)))
-}
-const onRemove = () => {
-  value.value = { url: '', duration: 100 }
   emitUpdate()
 }
+const onRemove = () => {
+  emit('remove')
+}
 const onUploaded = (file: UploadedFile) => {
-  value.value = { url: file.urlpath, duration: 100 }
+  val.value = { url: file.urlpath, duration: 100 }
   emitUpdate()
 }
 const onDrop = (e: any) => {
@@ -84,7 +80,7 @@ const onDrop = (e: any) => {
 
   const file = getFileFromDropEvent(e)
   if (file) {
-    value.value.url = ''
+    val.value.url = ''
     uploadComponent.value.uploadFile(file)
   }
   return false
@@ -102,19 +98,9 @@ const onDragleave = (e: any) => {
   return false
 }
 
-onMounted(() => {
-  watch(() => props.modelValue, () => {
-    applyValue()
-  })
-  applyValue()
+watch(() => props.modelValue, (value: AvatarModuleAnimationFrameDefinition) => {
+  if (currentValJson.value !== JSON.stringify(value)) {
+    val.value = value
+  }
 })
 </script>
-<style scoped>
-.avatar-animation-frame {
-  border: dashed 2px transparent;
-}
-
-.avatar-animation-frame.dragging-over {
-  border: dashed 2px #444;
-}
-</style>

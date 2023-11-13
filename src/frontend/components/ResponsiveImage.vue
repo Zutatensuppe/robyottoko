@@ -9,11 +9,12 @@
 import { computed } from 'vue'
 
 const props = withDefaults(defineProps<{
-  src: string,
-  title: string,
+  src: string
+  title?: string
   width?: string
   height?: string
 }>(), {
+  title: '',
   width: '100%',
   height: '100%',
 })
