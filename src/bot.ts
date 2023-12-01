@@ -28,7 +28,7 @@ import { TwitchTmiClientManager } from './services/TwitchTmiClientManager'
 import { Repos } from './repo/Repos'
 import { Youtube } from './services/Youtube'
 import { YoutubeApi } from './services/youtube/YoutubeApi'
-import { Indivious } from './services/youtube/Indivious'
+import { Invidious } from './services/youtube/Indivious'
 import { Canny } from './services/Canny'
 import { Discord } from './services/Discord'
 import { EmoteParser } from './services/EmoteParser'
@@ -68,7 +68,7 @@ const createBot = async (): Promise<Bot> => {
   const effectsApplier = new EffectApplier()
   const youtube = new Youtube(
     new YoutubeApi(config.youtube),
-    new Indivious(),
+    new Invidious(),
     cache,
   )
   const emoteParser = new EmoteParser()
