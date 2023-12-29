@@ -2162,7 +2162,7 @@ const newTrigger = (type) => ({
             match: 'startsWith',
         },
         // for trigger type "timer" (todo: should only exist if type is timer, not always)
-        minInterval: 0,
+        minInterval: 0, // duration in ms or something parsable (eg 1s, 10m, ....)
         minLines: 0,
         // for trigger type "first_chat"
         since: 'stream',
@@ -2705,7 +2705,7 @@ class CheerEventHandler extends EventSubEventHandler {
             username: data.event.user_login,
             mod,
             subscriber,
-            badges: { vip: vip ? '1' : undefined },
+            badges: { vip: vip ? '1' : undefined }, // not sure what to put in there
             extra: {
                 bits: {
                     amount: data.event.bits,
@@ -2798,7 +2798,7 @@ class RaidEventHandler extends EventSubEventHandler {
             username: data.event.from_broadcaster_user_login,
             mod,
             subscriber,
-            badges: { vip: vip ? '1' : undefined },
+            badges: { vip: vip ? '1' : undefined }, // not sure what to put in there
             extra: {
                 raiders: {
                     amount: data.event.viewers,
@@ -2827,7 +2827,7 @@ class SubscriptionGiftEventHandler extends EventSubEventHandler {
             username: data.event.user_login,
             mod,
             subscriber,
-            badges: { vip: vip ? '1' : undefined },
+            badges: { vip: vip ? '1' : undefined }, // not sure what to put in there
             extra: {
                 giftsubs: {
                     amount: data.event.total,
@@ -4941,10 +4941,10 @@ _YoutubeApi_googleApiKeyIndex = new WeakMap();
 var _Youtube_instances, _a, _Youtube_getDataByIdViaYoutubeApi, _Youtube_findViaYoutubeApi, _Youtube_getDataByIdViaIndivious, _Youtube_findByIndivious;
 const log$l = logger('Youtube.ts');
 class Youtube {
-    constructor(youtubeApi, indivious, cache) {
+    constructor(youtubeApi, invidious, cache) {
         _Youtube_instances.add(this);
         this.youtubeApi = youtubeApi;
-        this.indivious = indivious;
+        this.invidious = invidious;
         this.cache = cache;
         // pass
     }
@@ -4981,7 +4981,7 @@ class Youtube {
         }
         catch (e) {
             log$l.info(e instanceof NoApiKeysError);
-            // in case of quota reached or no api key set, ask indivious
+            // in case of quota reached or no api key set, ask invidious
             if (e instanceof QuotaReachedError
                 || e instanceof NoApiKeysError) {
                 return await __classPrivateFieldGet(this, _Youtube_instances, "m", _Youtube_findByIndivious).call(this, str, maxLenMs);
@@ -5040,10 +5040,10 @@ _a = Youtube, _Youtube_instances = new WeakSet(), _Youtube_getDataByIdViaYoutube
     }
     throw new NotFoundError();
 }, _Youtube_getDataByIdViaIndivious = async function _Youtube_getDataByIdViaIndivious(youtubeId) {
-    const key = `indiviousData_${youtubeId}_20230117_1`;
+    const key = `invidiousData_${youtubeId}_20230117_1`;
     let d = await this.cache.get(key);
     if (d === undefined) {
-        d = await this.indivious.video(youtubeId);
+        d = await this.invidious.video(youtubeId);
         if (d) {
             await this.cache.set(key, d, Infinity);
         }
@@ -5065,7 +5065,7 @@ _a = Youtube, _Youtube_instances = new WeakSet(), _Youtube_getDataByIdViaYoutube
     let tooLong = false;
     const durations = ['short', 'long'];
     for (const duration of durations) {
-        const results = await this.indivious.search({
+        const results = await this.invidious.search({
             q: youtubeUrl,
             type: 'video',
             region: 'DE',
@@ -6910,7 +6910,7 @@ class DrawcastModule {
             data: {
                 enabled: this.data.enabled,
                 settings: this.data.settings,
-                images: this.data.images,
+                images: this.data.images, // lots of images! maybe limit to 20 images
                 drawUrl: await this.drawUrl(),
                 controlWidgetUrl: await this.controlUrl(),
                 receiveWidgetUrl: await this.receiveUrl(),
@@ -7432,9 +7432,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-12-29T21:16:55.178Z",
+    buildDate: "2023-12-29T21:24:38.315Z",
     // @ts-ignore
-    buildVersion: "1.70.2",
+    buildVersion: "1.70.3",
 };
 
 const log$g = logger('StreamStatusUpdater.ts');
@@ -7840,7 +7840,7 @@ class Repos {
 //   'https://invidious.dhusch.de/',
 // ]
 const BASE_URL = 'https://invidious.nerdvpn.de';
-class Indivious {
+class Invidious {
     async video(youtubeId) {
         const resp = await xhr.get(`${BASE_URL}/api/v1/videos/${youtubeId}`);
         if (resp.status !== 200) {
@@ -9392,7 +9392,7 @@ const createBot = async () => {
     const webServer = new WebServer();
     const twitchTmiClientManager = new TwitchTmiClientManager();
     const effectsApplier = new EffectApplier();
-    const youtube = new Youtube(new YoutubeApi(config.youtube), new Indivious(), cache);
+    const youtube = new Youtube(new YoutubeApi(config.youtube), new Invidious(), cache);
     const emoteParser = new EmoteParser();
     class BotImpl {
         constructor() {
