@@ -90,34 +90,6 @@ const parseFfzEmote = (obj: any): Emote | null => {
   }
 }
 
-const parseSeventvV2Emote = (obj: any): Emote | null => {
-  const urls: Record<string, string> = {}
-  if (obj.urls[3]) {
-    urls['4x.webp'] = obj.urls[3][1]
-  }
-  if (obj.urls[2]) {
-    urls['3x.webp'] = obj.urls[2][1]
-  }
-  if (obj.urls[1]) {
-    urls['2x.webp'] = obj.urls[1][1]
-  }
-  if (obj.urls[0]) {
-    urls['1x.webp'] = obj.urls[0][1]
-  }
-  const img = urls['4x.webp'] != undefined ? urls['4x.webp']
-    : urls['2x.webp'] != undefined ? urls['2x.webp']
-      : urls['1x.webp'] != undefined ? urls['1x.webp']
-        : ''
-  if (!img || !obj.name) {
-    return null
-  }
-  return {
-    code: obj.name,
-    img,
-    type: Provider.SEVENTV,
-  }
-}
-
 const parseSeventvV3Emote = (obj: any): Emote | null => {
   const urls: Record<string, string> = {}
   obj.data.host.files.forEach((f: any) => {
@@ -344,30 +316,9 @@ async function loadConcurrent(
       log.error(e)
     }))
 
-  promises.push(fetch(`https://api.7tv.app/v2/emotes/global`)
-    .then(response => response.json())
-    .then(body => {
-      const provider = Provider.SEVENTV
-      const scope = Scope.GLOBAL
-      try {
-        Object.values(body).forEach((globalEmote: any) => {
-          const emote = parseSeventvV2Emote(globalEmote)
-          if (emote) {
-            loadedChannelAssets.emotes.push(emote)
-          }
-        })
-
-        checkLoadedAll(provider, scope)
-      } catch (error) {
-        log.error({
-          channel,
-          message: errorMessage(provider, scope, channel),
-          error,
-        })
-      }
-    }).catch((e) => {
-      log.error(e)
-    }))
+  // 7TV doesnt have global emote api endpoint anymore
+  // just set global to loaded
+  checkLoadedAll(Provider.SEVENTV, Scope.GLOBAL)
 
   // Note: TWITCH
   promises.push(helixClient.getChannelEmotes(channelId)

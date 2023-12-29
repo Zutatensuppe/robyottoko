@@ -34,7 +34,7 @@ const props = withDefaults(defineProps<{
   width: 64,
   height: 64,
 })
-const timeout = ref<any | null>(null) // timeout
+const timeout = ref<ReturnType<typeof setTimeout> | null>(null)
 const idx = ref<number>(-1)
 
 const src = computed(() => {

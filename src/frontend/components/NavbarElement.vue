@@ -199,7 +199,6 @@ const onLogoutClick = async () => {
 }
 
 onMounted(() => {
-  console.log(route.name)
   eventBus.on('status', statusChanged)
 })
 

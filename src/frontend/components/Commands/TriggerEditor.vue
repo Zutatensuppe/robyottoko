@@ -278,7 +278,7 @@ const value = ref<CommandTrigger>({
 
 const rewardRedemptionActions = computed(() => {
   const actions: { type: string, title: string, label: string }[] = []
-  for (let key in props.channelPointsCustomRewards) {
+  for (const key in props.channelPointsCustomRewards) {
     actions.push(
       ...props.channelPointsCustomRewards[key].map((r) => ({
         type: r,

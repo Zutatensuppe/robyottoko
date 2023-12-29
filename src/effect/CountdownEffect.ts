@@ -48,7 +48,7 @@ export class CountdownEffect extends Effect<CountdownEffectData> {
           await sleep(duration)
         })
       } else {
-        log.warn({ type: a.type }, 'unknown countdown action type')
+        log.warn(a, 'unknown countdown action type')
       }
     }
     return actions

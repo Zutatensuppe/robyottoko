@@ -74,7 +74,7 @@ class GeneralModule implements Module {
 
   private newMessages = 0
 
-  private interval: NodeJS.Timer | null = null
+  private interval: ReturnType<typeof setTimeout> | null = null
 
   private channelPointsCustomRewards: Record<string, string[]> = {}
 

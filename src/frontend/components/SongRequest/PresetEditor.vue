@@ -371,7 +371,12 @@ onMounted(() => {
 </script>
 <style scoped>
 .modal-card {
-  width: calc(100% - 2em);
+  width: calc(100vw - 40px);
+  height: calc(100vh - 40px);
+}
+.modal-card-body {
+  overflow-y: scroll;
+  padding: 0;
 }
 pre {
   padding: 0.5em 1em;

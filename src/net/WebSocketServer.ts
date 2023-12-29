@@ -109,14 +109,16 @@ class WebSocketServer {
         }
       }
 
-      socket.on('message', (data) => {
+      socket.on('message', (message: WebSocket.Data) => {
+        const dataStr = String(message)
+        if (dataStr === 'PING') {
+          socket.send('PONG')
+          return
+        }
+
         try {
-          const unknownData = data as unknown
+          const unknownData = message as unknown
           const d = JSON.parse(unknownData as string)
-          if (d.type && d.type === 'ping') {
-            socket.send(JSON.stringify({ type: 'pong' }))
-            return
-          }
           if (m && d.event) {
             const evts = m.getWsEvents()
             if (evts && evts[d.event]) {
@@ -127,6 +129,8 @@ class WebSocketServer {
           log.error({ e }, 'socket on message')
         }
       })
+
+      socket.send('SERVER_INIT')
     })
   }
 

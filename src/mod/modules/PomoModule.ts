@@ -17,7 +17,7 @@ class PomoModule implements Module {
   // @ts-ignore
   private commands: FunctionCommand[]
 
-  private timeout: NodeJS.Timeout | null = null
+  private timeout: ReturnType<typeof setTimeout> | null = null
 
   constructor(
     public readonly bot: Bot,

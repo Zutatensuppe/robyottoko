@@ -41,14 +41,3 @@ const animations = computed((): AvatarModuleSlotItemStateDefinition[] => {
   })
 })
 </script>
-<style>
-.avatar-preview {
-  position: relative;
-}
-
-.avatar-preview .avatar-animation {
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-</style>

@@ -32,7 +32,7 @@ const props = defineProps<{
 let ws: WsClient | null = null
 
 const data = ref<PomoModuleWsDataData | null>(null)
-const timeout = ref<any>(null)
+const timeout = ref<ReturnType<typeof setTimeout> | null>(null)
 const now = ref<Date | null>(null)
 const q = ref<InstanceType<typeof MediaQueueElement>>() as Ref<InstanceType<typeof MediaQueueElement>>
 

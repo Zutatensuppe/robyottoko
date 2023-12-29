@@ -4,7 +4,7 @@
       <div class="level-left">
         <div class="level-item">
           <input
-            v-model="modelValue.title"
+            v-model="val.title"
             type="text"
             class="input is-small avatar-slot-item-editor-title"
             :class="{ 'is-static': !titleFocused }"
@@ -48,16 +48,16 @@
       </div>
     </div>
     <AvatarSlotItemStateEditor
-      v-for="(animation, idx) in modelValue.states"
+      v-for="(_animation, idx) in val.states"
       :key="idx"
+      v-model="val.states[idx]"
       class="mr-1"
-      :model-value="animation"
       :default-state="defaultState"
     />
   </div>
 </template>
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { AvatarModuleAvatarSlotItem, AvatarModuleSlotItemStateDefinition } from '../../../mod/modules/AvatarModuleCommon'
 import AvatarSlotItemStateEditor from './AvatarSlotItemStateEditor.vue'
 
@@ -67,26 +67,30 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'makeDefault', val: AvatarModuleAvatarSlotItem): void
+  (e: 'update:modelValue', val: AvatarModuleAvatarSlotItem): void
+  (e: 'makeDefault'): void
   (e: 'moveUp'): void
   (e: 'moveDown'): void
   (e: 'remove'): void
 }>()
+
+const val = ref<AvatarModuleAvatarSlotItem>(JSON.parse(JSON.stringify(props.modelValue)))
+const currentValJson = computed(() => JSON.stringify(val.value))
+
 const titleFocused = ref<boolean>(false)
 // TODO: check if default state always exist.
-const defaultState = computed(() => props.modelValue.states.find(({ state }) => state === 'default') as AvatarModuleSlotItemStateDefinition)
+const defaultState = computed(() => val.value.states.find(({ state }) => state === 'default') as AvatarModuleSlotItemStateDefinition)
 const makeDefault = (): void => {
-  emit('makeDefault', props.modelValue)
-}
-</script>
-<style>
-.avatar-slot-item-editor-title {
-  font-weight: bold;
-  font-size: 14px !important;
+  emit('makeDefault')
 }
 
-.avatar-slot-item-editor {
-  background: #efefef;
-  border: solid 1px hsl(0, 0%, 86%);
-}
-</style>
+watch(() => props.modelValue, (value: AvatarModuleAvatarSlotItem) => {
+  if (currentValJson.value !== JSON.stringify(value)) {
+    val.value = value
+  }
+})
+
+watch(val, (value: AvatarModuleAvatarSlotItem) => {
+  emit('update:modelValue', value)
+}, { deep: true })
+</script>

@@ -1,4 +1,7 @@
+import { logger } from '../common/fn'
 import xhr, { asQueryArgs } from '../net/xhr'
+
+const log = logger('JishoOrg.ts')
 
 interface JishoJapaneseEntry {
   word?: string
@@ -55,12 +58,17 @@ const searchWord = async (
   page: number = 1,
 ): Promise<JishoSearchResponseDataEntry[]> => {
   const url = 'https://jisho.org/api/v1/search/words' + asQueryArgs({
-    keyword: keyword,
-    page: page,
+    keyword,
+    page,
   })
-  const resp = await xhr.get(url)
-  const json: JishoSearchResponseData = (await resp.json()) as JishoSearchResponseData
-  return json.data
+  try {
+    const resp = await xhr.get(url, { headers: { 'user-agent': 'Robyottoko' } })
+    const json: JishoSearchResponseData = (await resp.json()) as JishoSearchResponseData
+    return json.data
+  } catch (e: unknown) {
+    log.error(e)
+    return []
+  }
 }
 
 export default {
