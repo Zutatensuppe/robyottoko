@@ -1,7 +1,7 @@
 import { logger } from '../common/fn'
 import fn from '../fn'
 import Cache from './Cache'
-import { Indivious, IndiviousVideo } from './youtube/Indivious'
+import { Invidious, InvidiousVideo } from './youtube/Indivious'
 import { NoApiKeysError } from './youtube/NoApiKeysError'
 import { NotFoundError } from './youtube/NotFoundError'
 import { QuotaReachedError } from './youtube/QuotaReachedError'
@@ -19,7 +19,7 @@ export interface YoutubeVideoEntry {
 export class Youtube {
   constructor(
     private youtubeApi: YoutubeApi,
-    private indivious: Indivious,
+    private invidious: Invidious,
     private cache: Cache,
   ) {
     // pass
@@ -120,11 +120,11 @@ export class Youtube {
 
   async #getDataByIdViaIndivious(
     youtubeId: string,
-  ): Promise<IndiviousVideo | null> {
-    const key = `indiviousData_${youtubeId}_20230117_1`
+  ): Promise<InvidiousVideo | null> {
+    const key = `invidiousData_${youtubeId}_20230117_1`
     let d = await this.cache.get(key)
     if (d === undefined) {
-      d = await this.indivious.video(youtubeId)
+      d = await this.invidious.video(youtubeId)
       if (d) {
         await this.cache.set(key, d, Infinity)
       }
@@ -150,7 +150,7 @@ export class Youtube {
     let tooLong = false
     const durations = ['short', 'long'] as any
     for (const duration of durations) {
-      const results = await this.indivious.search({
+      const results = await this.invidious.search({
         q: youtubeUrl,
         type: 'video',
         region: 'DE',
@@ -183,7 +183,7 @@ export class Youtube {
       return await this.#findViaYoutubeApi(str, maxLenMs)
     } catch (e) {
       log.info(e instanceof NoApiKeysError)
-      // in case of quota reached or no api key set, ask indivious
+      // in case of quota reached or no api key set, ask invidious
       if (
         e instanceof QuotaReachedError
         || e instanceof NoApiKeysError
