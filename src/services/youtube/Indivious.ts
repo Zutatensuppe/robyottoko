@@ -1,7 +1,7 @@
 import xhr, { asQueryArgs } from '../../net/xhr'
 import { NotFoundError } from './NotFoundError'
 
-export interface IndiviousVideo {
+export interface InvidiousVideo {
   title: string
   videoId: string
   videoThumbnails: [
@@ -189,13 +189,13 @@ type SearchResult = SearchResultEntry[]
 // ]
 const BASE_URL = 'https://invidious.nerdvpn.de'
 
-export class Indivious {
-  async video(youtubeId: string): Promise<IndiviousVideo> {
+export class Invidious {
+  async video(youtubeId: string): Promise<InvidiousVideo> {
     const resp = await xhr.get(`${BASE_URL}/api/v1/videos/${youtubeId}`)
     if (resp.status !== 200) {
       throw new NotFoundError()
     }
-    return await resp.json() as IndiviousVideo
+    return await resp.json() as InvidiousVideo
   }
 
   async search(args: {
