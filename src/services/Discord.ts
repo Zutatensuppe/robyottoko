@@ -8,7 +8,7 @@ export class Discord {
   }
 
   async announce (message: string) {
-    fetch(this.config.bot.url + '/announce', {
+    return await fetch(this.config.bot.url + '/announce', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',

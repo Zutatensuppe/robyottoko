@@ -97,7 +97,7 @@ class SpeechToTextModule implements Module {
       },
       'save': async (_ws: Socket, { settings }: { settings: SpeechToTextModuleSettings }) => {
         this.data.settings = settings
-        this.bot.getRepos().module.save(this.user.id, this.name, this.data)
+        await this.bot.getRepos().module.save(this.user.id, this.name, this.data)
         this.data = await this.reinit()
         await this.updateClients('init')
       },

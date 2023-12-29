@@ -30,7 +30,7 @@ export class StreamStatusUpdater {
       return
     }
     const stream = await client.getStreamByUserId(user.twitch_id)
-    this.bot.getRepos().user.save({
+    await this.bot.getRepos().user.save({
       id: user.id,
       is_streaming: !!stream,
     })
@@ -43,11 +43,13 @@ export class StreamStatusUpdater {
       updatePromises.push(this._doUpdateForUser(user))
     }
     await Promise.all(updatePromises)
-    setTimeout(() => this._doUpdate(), 5 * MINUTE)
+    setTimeout(() => {
+      void this._doUpdate()
+    }, 5 * MINUTE)
     log.info('done update')
   }
 
   start () {
-    this._doUpdate()
+    void this._doUpdate()
   }
 }

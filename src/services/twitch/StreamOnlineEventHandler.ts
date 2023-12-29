@@ -3,6 +3,7 @@
 import { logger } from '../../common/fn'
 import { User } from '../../repo/Users'
 import { Bot } from '../../types'
+import { Subscription } from './EventSub'
 import { EventSubEventHandler } from './EventSubEventHandler'
 
 const log = logger('StreamOnlineEventHandler.ts')
@@ -20,7 +21,7 @@ export class StreamOnlineEventHandler extends EventSubEventHandler<StreamOnlineE
   async handle(
     bot: Bot,
     _user: User,
-    data: { subscription: any, event: StreamOnlineEvent },
+    data: { subscription: Subscription, event: StreamOnlineEvent },
   ) {
     log.info('handle')
 

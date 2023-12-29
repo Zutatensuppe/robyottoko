@@ -7,6 +7,7 @@ import { CommandExecutor } from '../CommandExecutor'
 import { User } from '../../repo/Users'
 import { EventSubEventHandler } from './EventSubEventHandler'
 import { getUserTypeInfo } from '../../fn'
+import { Subscription } from './EventSub'
 
 const log = logger('CheerEventHandler.ts')
 
@@ -23,11 +24,10 @@ interface CheerEvent {
 }
 
 export class CheerEventHandler extends EventSubEventHandler<CheerEvent> {
-  // TODO: use better type info
   async handle(
     bot: Bot,
     user: User,
-    data: { subscription: any, event: CheerEvent },
+    data: { subscription: Subscription, event: CheerEvent },
   ): Promise<void> {
     log.info('handle')
     const rawCmd: RawCommand = {

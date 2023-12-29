@@ -1,5 +1,5 @@
 import { getChannelPointsCustomRewards } from '../../fn'
-import { logger, parseHumanDuration, SECOND } from '../../common/fn'
+import { logger, clamp, parseHumanDuration, SECOND } from '../../common/fn'
 import { commands as commonCommands, newCommandTrigger } from '../../common/commands'
 import { Socket } from '../../net/WebSocketServer'
 import { User } from '../../repo/Users'
@@ -356,13 +356,7 @@ class GeneralModule implements Module {
   }
 
   async volume(vol: number) {
-    if (vol < 0) {
-      vol = 0
-    }
-    if (vol > 100) {
-      vol = 100
-    }
-    this.data.settings.volume = vol
+    this.data.settings.volume = clamp(0, vol, 100)
     await this.save()
   }
 

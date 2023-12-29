@@ -90,7 +90,7 @@ class TwitchClientManager {
 
     const identity = determineIdentity(user, cfg)
 
-    this.bot.getEmoteParser().loadAssetsForChannel(
+    void this.bot.getEmoteParser().loadAssetsForChannel(
       user.twitch_login,
       user.twitch_id,
       new TwitchHelixClient(
@@ -178,9 +178,9 @@ class TwitchClientManager {
     )
 
     if (this.bot.getConfig().twitch.eventSub.enabled) {
-      // do NOT await
-      // awaiting the connect will add ~2sec per user on server startup
-      this.registerSubscriptions(this.user)
+      // do NOT await, OTHERWISE
+      // connecting will add ~2sec per user on server startup
+      void this.registerSubscriptions(this.user)
     }
 
     timer.split()

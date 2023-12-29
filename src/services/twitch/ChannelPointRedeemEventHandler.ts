@@ -7,6 +7,7 @@ import { CommandExecutor } from '../CommandExecutor'
 import { User } from '../../repo/Users'
 import { EventSubEventHandler } from './EventSubEventHandler'
 import { getUserTypeInfo } from '../../fn'
+import { Subscription } from './EventSub'
 
 const log = logger('ChannelPointRedeemEventHandler.ts')
 
@@ -14,7 +15,7 @@ export class ChannelPointRedeemEventHandler extends EventSubEventHandler<any> {
   async handle(
     bot: Bot,
     user: User,
-    data: { subscription: any, event: any },
+    data: { subscription: Subscription, event: any },
   ): Promise<void> {
     log.info('handle')
     const rawCmd: RawCommand = {

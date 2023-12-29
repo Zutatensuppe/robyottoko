@@ -1,3 +1,3 @@
 import { run } from './bot'
 
-run()
+void run()

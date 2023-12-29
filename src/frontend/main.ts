@@ -209,4 +209,4 @@ const run = async () => {
   app.mount('#app')
 }
 
-run()
+void run()

@@ -1,5 +1,8 @@
 'use strict'
 
+// TODO: better type hint
+export type Subscription = any
+
 // https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types
 export enum SubscriptionType {
   ChannelFollow = 'channel.follow',
