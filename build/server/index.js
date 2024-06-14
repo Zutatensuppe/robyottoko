@@ -7432,9 +7432,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2023-12-29T21:24:38.315Z",
+    buildDate: "2024-06-14T12:32:13.063Z",
     // @ts-ignore
-    buildVersion: "1.70.3",
+    buildVersion: "1.70.4",
 };
 
 const log$g = logger('StreamStatusUpdater.ts');
@@ -8123,7 +8123,7 @@ async function loadConcurrent(channelId, channel, helixClient) {
         log$d.error(e);
     }));
     // NOTE: 7TV
-    promises.push(fetch(`https://api.7tv.app/v3/users/twitch/${channelId}`)
+    promises.push(fetch(`https://7tv.io/v3/users/twitch/${channelId}`)
         .then(response => response.json())
         .then(body => {
         const provider = Provider.SEVENTV;
