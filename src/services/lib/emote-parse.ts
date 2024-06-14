@@ -288,7 +288,7 @@ async function loadConcurrent(
     }))
 
   // NOTE: 7TV
-  promises.push(fetch(`https://api.7tv.app/v3/users/twitch/${channelId}`)
+  promises.push(fetch(`https://7tv.io/v3/users/twitch/${channelId}`)
     .then(response => response.json())
     .then(body => {
       const provider = Provider.SEVENTV
@@ -434,6 +434,7 @@ function escapeRegex(str: string): string {
 function detectEmotesInMessage(msg: string, channel: string): Emote[] {
   const emotes: Emote[] = []
   const channelEmotes = loadedAssets[channel]?.emotes || []
+  console.log('channelEmotes', channelEmotes)
   channelEmotes.forEach((ele) => {
     const escCode = escapeRegex(ele.code)
     const regex = new RegExp(`(^${escCode}(?=[^?!."_*+#'´\`\\/%&$€§=])|(?=[^?!."_*+#'´\`\\/%&$€§=])${escCode}$|\\s${escCode}(?=[^?!."_*+#'´\`\\/%&$€§=])|(?=[^?!."_*+#'´\`\\/%&$€§=])${escCode}\\s)`, 'm')
