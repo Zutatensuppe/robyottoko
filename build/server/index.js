@@ -7432,7 +7432,7 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2024-06-14T12:30:42.473Z",
+    buildDate: "2024-06-14T12:32:13.063Z",
     // @ts-ignore
     buildVersion: "1.70.4",
 };
@@ -8258,7 +8258,6 @@ function escapeRegex(str) {
 function detectEmotesInMessage(msg, channel) {
     const emotes = [];
     const channelEmotes = loadedAssets[channel]?.emotes || [];
-    console.log('channelEmotes', channelEmotes);
     channelEmotes.forEach((ele) => {
         const escCode = escapeRegex(ele.code);
         const regex = new RegExp(`(^${escCode}(?=[^?!."_*+#'´\`\\/%&$€§=])|(?=[^?!."_*+#'´\`\\/%&$€§=])${escCode}$|\\s${escCode}(?=[^?!."_*+#'´\`\\/%&$€§=])|(?=[^?!."_*+#'´\`\\/%&$€§=])${escCode}\\s)`, 'm');

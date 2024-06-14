@@ -434,7 +434,7 @@ function escapeRegex(str: string): string {
 function detectEmotesInMessage(msg: string, channel: string): Emote[] {
   const emotes: Emote[] = []
   const channelEmotes = loadedAssets[channel]?.emotes || []
-  console.log('channelEmotes', channelEmotes)
+
   channelEmotes.forEach((ele) => {
     const escCode = escapeRegex(ele.code)
     const regex = new RegExp(`(^${escCode}(?=[^?!."_*+#'´\`\\/%&$€§=])|(?=[^?!."_*+#'´\`\\/%&$€§=])${escCode}$|\\s${escCode}(?=[^?!."_*+#'´\`\\/%&$€§=])|(?=[^?!."_*+#'´\`\\/%&$€§=])${escCode}\\s)`, 'm')
