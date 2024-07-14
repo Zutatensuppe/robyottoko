@@ -55,10 +55,16 @@
                 >{{ widget.title }}</a>
               </td>
               <td>
-                <span
-                  class="button is-small ml-1"
-                  @click="newUrl(widget)"
-                >Generate new url</span>
+                <div class="widget-actions">
+                  <span
+                    class="button is-small ml-1"
+                    @click="copyUrl(widget)"
+                  >Copy URL</span>
+                  <span
+                    class="button is-small ml-1"
+                    @click="resetUrl(widget)"
+                  >Reset URL</span>
+                </div>
               </td>
               <td>{{ widget.hint }}</td>
             </tr>
@@ -98,7 +104,15 @@ const updateEnabled = async (m: { key: string, enabled: boolean }): Promise<void
   await api.setModuleEnabled(m)
 }
 
-const newUrl = async (widget: WidgetDefinition): Promise<void> => {
+const copyUrl = async (widget: WidgetDefinition): Promise<void> => {
+  await navigator.clipboard.writeText(widget.url)
+  toast.success('URL copied to clipboard')
+}
+
+const resetUrl = async (widget: WidgetDefinition): Promise<void> => {
+  if (!confirm('Are you sure you want to reset the URL?')) {
+    return
+  }
   const res = await api.createWidgetUrl({
     type: widget.type,
     pub: widget.pub,
@@ -107,7 +121,7 @@ const newUrl = async (widget: WidgetDefinition): Promise<void> => {
     toast.error('New URL couldn\'t be created')
     return
   }
-  
+
   try {
     const json = await res.json()
     if (json.url) {
