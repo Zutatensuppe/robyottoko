@@ -1,6 +1,6 @@
 'use strict'
 
-import { newSubscribeTrigger } from '../../common/commands'
+import { newGiftSubscribeTrigger } from '../../common/commands'
 import { logger } from '../../common/fn'
 import { Bot, RawCommand, TwitchEventContext } from '../../types'
 import { CommandExecutor } from '../CommandExecutor'
@@ -51,7 +51,7 @@ export class SubscriptionGiftEventHandler extends EventSubEventHandler<Subscript
         },
       },
     }
-    const trigger = newSubscribeTrigger()
+    const trigger = newGiftSubscribeTrigger()
     const exec = new CommandExecutor()
     await exec.executeMatchingCommands(bot, user, rawCmd, context, [trigger], new Date())
   }

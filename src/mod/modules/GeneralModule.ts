@@ -203,6 +203,8 @@ class GeneralModule implements Module {
           }
         } else if (trigger.type === CommandTriggerType.FOLLOW) {
           commands.push(cmdObj)
+        } else if (trigger.type === CommandTriggerType.GIFTSUB) {
+          commands.push(cmdObj)
         } else if (trigger.type === CommandTriggerType.SUB) {
           commands.push(cmdObj)
         } else if (trigger.type === CommandTriggerType.RAID) {
