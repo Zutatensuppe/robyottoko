@@ -61,6 +61,9 @@
               <option value="achanJp">
                 achan_jp
               </option>
+              <option value="achanJpSub">
+                achan_jp (sub)
+              </option>
               <option value="trickOrTreat">
                 trick or treat
               </option>

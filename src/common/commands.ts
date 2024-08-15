@@ -77,6 +77,7 @@ export const newTrigger = (type: CommandTriggerType): CommandTrigger => ({
 })
 
 export const newSubscribeTrigger = (): CommandTrigger => newTrigger(CommandTriggerType.SUB)
+export const newGiftSubscribeTrigger = (): CommandTrigger => newTrigger(CommandTriggerType.GIFTSUB)
 export const newFollowTrigger = (): CommandTrigger => newTrigger(CommandTriggerType.FOLLOW)
 export const newBitsTrigger = (): CommandTrigger => newTrigger(CommandTriggerType.BITS)
 export const newRaidTrigger = (): CommandTrigger => newTrigger(CommandTriggerType.RAID)

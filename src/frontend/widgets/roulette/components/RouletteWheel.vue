@@ -71,7 +71,8 @@ const theme = computed<WheelTheme>(() => {
   if (
     props.data.theme === 'default' ||
     props.data.theme === 'trickOrTreat' ||
-    props.data.theme === 'achanJp'
+    props.data.theme === 'achanJp' ||
+    props.data.theme === 'achanJpSub'
   ) {
     return themes[props.data.theme]
   }
