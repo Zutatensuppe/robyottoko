@@ -2169,6 +2169,7 @@ const newTrigger = (type) => ({
     },
 });
 const newSubscribeTrigger = () => newTrigger(CommandTriggerType.SUB);
+const newGiftSubscribeTrigger = () => newTrigger(CommandTriggerType.GIFTSUB);
 const newFollowTrigger = () => newTrigger(CommandTriggerType.FOLLOW);
 const newBitsTrigger = () => newTrigger(CommandTriggerType.BITS);
 const newRaidTrigger = () => newTrigger(CommandTriggerType.RAID);
@@ -2834,7 +2835,7 @@ class SubscriptionGiftEventHandler extends EventSubEventHandler {
                 },
             },
         };
-        const trigger = newSubscribeTrigger();
+        const trigger = newGiftSubscribeTrigger();
         const exec = new CommandExecutor();
         await exec.executeMatchingCommands(bot, user, rawCmd, context, [trigger], new Date());
     }
@@ -4333,6 +4334,9 @@ class GeneralModule {
                     }
                 }
                 else if (trigger.type === CommandTriggerType.FOLLOW) {
+                    commands$1.push(cmdObj);
+                }
+                else if (trigger.type === CommandTriggerType.GIFTSUB) {
                     commands$1.push(cmdObj);
                 }
                 else if (trigger.type === CommandTriggerType.SUB) {
@@ -7432,9 +7436,9 @@ class PomoModule {
 
 var buildEnv = {
     // @ts-ignore
-    buildDate: "2024-07-14T07:56:19.589Z",
+    buildDate: "2024-08-15T18:43:23.424Z",
     // @ts-ignore
-    buildVersion: "1.70.5",
+    buildVersion: "1.70.6",
 };
 
 const log$g = logger('StreamStatusUpdater.ts');
