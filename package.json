@@ -7,14 +7,18 @@
   "author": "",
   "license": "ISC",
   "scripts": {
-    "lint": "vue-tsc --noEmit && eslint src",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "setup": "npm ci",
+
     "build:frontend": "vite build --config vite.config.js",
     "build:server": "rollup -c rollup.server.config.js && copyfiles -u 1 src/config_data/* build/server/",
     "build:versionfile": "git rev-parse --short HEAD > build/version.txt",
     "build:app": "npm run build:frontend && npm run build:server && npm run build:versionfile",
     "build:archive": "rimraf dist/build.zip && 7z a -mx0 dist/build.zip ./build/* ./db",
     "build": "npm run build:app && npm run build:archive",
+
+    "lint": "vue-tsc --noEmit && eslint src",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+
     "dev-services": "docker-compose up",
     "dev-backend": "nodemon --delay 2 -x \"node --experimental-specifier-resolution=node --loader ts-node/esm\" --max-old-space-size=256 -w src src/index-dev.ts -e ts --trace-warnings --ignore public/static/ --ignore src/frontend/ --ignore src/frontend_widgets/",
     "dev-frontend": "vite",
