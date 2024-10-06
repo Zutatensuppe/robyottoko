@@ -3,7 +3,7 @@
     class="avatar-animation"
     :style="{
       width: `${width}px`,
-      height: `${width}px`,
+      height: `${height}px`,
     }"
   >
     <img
@@ -16,7 +16,7 @@
       v-else
       :style="{
         width: `${width}px`,
-        height: `${width}px`,
+        height: `${height}px`,
         display: 'inline-block',
       }"
     />
