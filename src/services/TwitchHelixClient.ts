@@ -80,7 +80,7 @@ interface TwitchHelixChannelEmotesResponseData {
   template: string
 }
 
-interface TwitchHelixGlobalEmotesResponseData {
+export interface TwitchHelixGlobalEmotesResponseData {
   data: {
     id: string
     name: string

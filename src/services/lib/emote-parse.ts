@@ -1,6 +1,6 @@
 import { ChatUserstate } from 'tmi.js'
 import { logger, MINUTE } from './../../common/fn'
-import TwitchHelixClient from '../TwitchHelixClient'
+import TwitchHelixClient, { TwitchHelixGlobalEmotesResponseData } from '../TwitchHelixClient'
 
 const loadedAssets: Record<string, LoadedChannelAssets> = {}
 
@@ -197,8 +197,7 @@ async function loadConcurrent(
       log.error(e)
     }))
 
-  promises.push(fetch(`https://api.frankerfacez.com/v1/set/global`)
-    .then(response => response.json())
+  promises.push(loadGlobalFfzEmotes()
     .then(body => {
       const provider = Provider.FFZ
       const scope = Scope.GLOBAL
@@ -262,8 +261,7 @@ async function loadConcurrent(
       log.error(e)
     }))
 
-  promises.push(fetch(`https://api.betterttv.net/3/cached/emotes/global`)
-    .then(response => response.json())
+  promises.push(loadGlobalBttvEmotes()
     .then(body => {
       const provider = Provider.BTTV
       const scope = Scope.GLOBAL
@@ -345,7 +343,8 @@ async function loadConcurrent(
       log.error(e)
     }))
 
-  promises.push(helixClient.getGlobalEmotes()
+
+  promises.push(loadGlobalTwitchEmotes(helixClient)
     .then(body => {
       const provider = Provider.TWITCH
       const scope = Scope.GLOBAL
@@ -372,6 +371,32 @@ async function loadConcurrent(
   await Promise.allSettled(promises)
 
   return loadedChannelAssets
+}
+
+let globalTwitchEmotesBody: TwitchHelixGlobalEmotesResponseData | null
+async function loadGlobalTwitchEmotes(helixClient: TwitchHelixClient) {
+  if (!globalTwitchEmotesBody) {
+    globalTwitchEmotesBody = await helixClient.getGlobalEmotes()
+  }
+  return globalTwitchEmotesBody
+}
+
+let globalBttvEmotesBody: any | null
+async function loadGlobalBttvEmotes() {
+  if (!globalBttvEmotesBody) {
+    const res = await fetch(`https://api.betterttv.net/3/cached/emotes/global`)
+    globalBttvEmotesBody = await res.json()
+  }
+  return globalBttvEmotesBody
+}
+
+let globalFfzEmotesBody: any | null
+async function loadGlobalFfzEmotes() {
+  if (!globalFfzEmotesBody) {
+    const res = await fetch(`https://api.frankerfacez.com/v1/set/global`)
+    globalFfzEmotesBody = await res.json()
+  }
+  return globalFfzEmotesBody
 }
 
 function compareLength(a: { code: string }, b: { code: string }) {
