@@ -53,6 +53,12 @@ interface TwitchHelixSubscriptionResponseData {
   max_total_cost: number
 }
 
+interface TwitchHelixSubscriptionConflictResponseData {
+  error: string
+  status: number
+  message: string
+}
+
 interface TwitchHelixOauthTokenResponseData {
   access_token: string
   refresh_token: string
@@ -531,11 +537,11 @@ class TwitchHelixClient {
   // https://dev.twitch.tv/docs/eventsub/manage-subscriptions#subscribing-to-events
   async createSubscription(
     subscription: TwitchHelixSubscription,
-  ): Promise<TwitchHelixSubscriptionResponseData | null> {
+  ): Promise<TwitchHelixSubscriptionResponseData | TwitchHelixSubscriptionConflictResponseData | null> {
     const url = apiUrl('/eventsub/subscriptions')
     try {
       const resp = await xhr.post(url, await this.withAuthHeaders(asJson(subscription)))
-      const json = await resp.json() as TwitchHelixSubscriptionResponseData
+      const json = await resp.json() as TwitchHelixSubscriptionResponseData | TwitchHelixSubscriptionConflictResponseData
       return json
     } catch (e) {
       log.error({ url, e })

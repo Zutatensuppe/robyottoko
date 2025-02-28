@@ -305,13 +305,17 @@ class TwitchClientManager {
       condition,
     }
     const resp = await this.helixClient.createSubscription(subscription)
-    if (resp && resp.data && resp.data.length > 0) {
+    if (resp && 'data' in resp && resp.data && resp.data.length > 0) {
       await this.bot.getRepos().eventSub.insert({
         user_id: this.user.id,
         subscription_id: resp.data[0].id,
         subscription_type: subscriptionType,
       })
       this.log.info({ type: subscriptionType }, 'subscription registered')
+    } else if (resp && 'error' in resp && resp.error && resp.status === 409) {
+      this.log.info({ type: subscriptionType, msg: resp.message }, 'subscription already exists')
+    } else if (resp && 'error' in resp && resp.error && resp.status === 401) {
+      this.log.info({ type: subscriptionType, msg: resp.message }, 'subscription already exists')
     } else {
       this.log.debug({ resp, subscription })
     }
