@@ -1,4 +1,4 @@
-import WebSocket from 'ws'
+import * as WebSocket from 'ws'
 import { IncomingMessage } from 'http'
 import { logger, withoutLeading } from '../common/fn'
 import { Bot, MODULE_NAME } from '../types'
@@ -42,10 +42,10 @@ const determineUserIdAndModuleName = async (
 }
 
 class WebSocketServer {
-  private _websocketserver: WebSocket.Server | null = null
+  private _websocketserver: WebSocket.WebSocketServer | null = null
 
   listen(bot: Bot) {
-    this._websocketserver = new WebSocket.Server(bot.getConfig().ws)
+    this._websocketserver = new WebSocket.WebSocketServer(bot.getConfig().ws)
     this._websocketserver.on('connection', async (socket: Socket, request: IncomingMessage) => {
       // note: here the socket is already set in _websocketserver.clients !
       // but it has no user_id or module set yet!
