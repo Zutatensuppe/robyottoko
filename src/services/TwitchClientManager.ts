@@ -218,7 +218,7 @@ class TwitchClientManager {
 
     const deletePromises: Promise<void>[] = []
     if (isDevTunnel(transport.callback)) {
-      for (const subscription of allSubscriptions.data) {
+      for (const subscription of allSubscriptions?.data ?? []) {
         if (!isRelevantSubscription(transport, subscription, [twitchChannelId])) {
           continue
         }
@@ -230,7 +230,7 @@ class TwitchClientManager {
     } else {
       // delete all subscriptions (but keep at least one of each type)
       const deletePromises: Promise<void>[] = []
-      for (const subscription of allSubscriptions.data) {
+      for (const subscription of allSubscriptions?.data ?? []) {
         if (!isRelevantSubscription(transport, subscription, [twitchChannelId])) {
           continue
         }
