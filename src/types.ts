@@ -33,9 +33,12 @@ export interface ApiUser {
   groups: string[]
 }
 
-export interface ApiUserData {
+export interface BaseUserData {
   user: ApiUser
   token: string
+}
+
+export interface FullApiUserData extends BaseUserData {
   cannyToken: string
 }
 

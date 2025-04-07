@@ -9,7 +9,7 @@
     />
     <div
       class="drawcast_body"
-      :class="{ blurred: dialog }"
+      :class="{ blurred: dialog !== Dialog.None }"
     >
       <div
         v-if="customDescription"
@@ -57,30 +57,30 @@
                   <div
                     class="draw_tools_tool_button clickable tool-pen"
                     :class="{
-                      'is-current': tool === 'pen',
+                      'is-current': tool === Tool.Pen,
                     }"
                     title="Pen"
-                    @click="tool = 'pen'"
+                    @click="tool = Tool.Pen"
                   >
                     <icon-pen />
                   </div>
                   <div
                     class="draw_tools_tool_button clickable tool-eraser"
                     :class="{
-                      'is-current': tool === 'eraser',
+                      'is-current': tool === Tool.Eraser,
                     }"
                     title="Eraser"
-                    @click="tool = 'eraser'"
+                    @click="tool = Tool.Eraser"
                   >
                     <icon-eraser />
                   </div>
                   <div
                     class="draw_tools_tool_button clickable tool-eyedropper"
                     :class="{
-                      'is-current': tool === 'color-sampler',
+                      'is-current': tool === Tool.ColorSampler,
                     }"
                     title="Color Sampler"
-                    @click="tool = 'color-sampler'"
+                    @click="tool = Tool.ColorSampler"
                   >
                     <icon-eyedropper />
                   </div>
@@ -172,7 +172,7 @@
                 >
                   <span
                     class="draw_colors_current_inner"
-                    :class="{ active: tool === 'pen' }"
+                    :class="{ active: tool === Tool.Pen }"
                     :style="currentColorStyle"
                   />
                   <div class="draw_colors_current_icon">
@@ -206,7 +206,7 @@
             <div />
             <div class="drawing_panel_bottom_right">
               <div
-                v-if="sending.nonce"
+                v-if="sendingNonce"
                 class="button button-primary send_button"
                 @click="prepareSubmitImage"
               >
@@ -281,7 +281,7 @@
 
     <div
       class="drawcast_footer"
-      :class="{ blurred: dialog }"
+      :class="{ blurred: dialog !== Dialog.None }"
     >
       <span class="drawcast_footer_left">Hyottoko.club | Developed by
         <a
@@ -312,7 +312,7 @@
     </div>
 
     <div
-      v-if="dialog === 'success'"
+      v-if="dialog === Dialog.Success"
       class="dialog success-dialog"
     >
       <div
@@ -344,7 +344,7 @@
       </div>
     </div>
     <div
-      v-if="dialog === 'replace'"
+      v-if="dialog === Dialog.Replace"
       class="dialog confirm-dialog"
     >
       <div
@@ -373,7 +373,7 @@
       </div>
     </div>
     <div
-      v-if="dialog === 'confirm-submit'"
+      v-if="dialog === Dialog.ConfirmSubmit"
       class="dialog confirm-dialog"
     >
       <div
@@ -402,7 +402,7 @@
       </div>
     </div>
     <div
-      v-if="dialog === 'clear'"
+      v-if="dialog === Dialog.Clear"
       class="dialog clear-dialog"
     >
       <div
@@ -438,11 +438,11 @@
     </div>
   </div>
 </template>
-<script lang="ts">
-import { defineComponent, PropType } from 'vue'
+<script setup lang="ts">
+import { computed, onBeforeUnmount, onMounted, Ref, ref, watch } from 'vue'
 import { nonce, logger, pad } from '../../../common/fn'
 import WsClient from '../../WsClient'
-import { ApiUserData, DrawcastFavoriteList } from '../../../types'
+import { DrawcastFavoriteList, FullApiUserData } from '../../../types'
 import util, { WidgetApiData } from '../util'
 import { DrawcastModuleWsDataData } from '../../../mod/modules/DrawcastModuleCommon'
 import IconPen from './components/IconPen.vue'
@@ -462,6 +462,111 @@ interface Point {
   x: number
   y: number
 }
+
+enum Tool {
+  Pen = 'pen',
+  Eraser = 'eraser',
+  ColorSampler = 'color-sampler',
+}
+
+enum Dialog {
+  None = 'none',
+  Success = 'success',
+  ConfirmSubmit = 'confirm-submit',
+  Replace = 'replace',
+  Clear = 'clear',
+}
+
+const bgColors = ['transparent-light', 'transparent-dark']
+const hotkeys = ['E Eraser', 'B Pencil', 'S Color sampler', '1-7 Adjust size', 'Ctrl+Z Undo']
+const sizes = [1, 2, 5, 10, 30, 60, 100]
+const transparencies = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+
+const props = defineProps<{
+  wdata: WidgetApiData
+}>()
+
+const ws = ref<WsClient | null>(null)
+const me = ref<FullApiUserData | null>(null)
+const moderationAdmins = ref<string[]>([])
+const opts = ref<Record<string, string>>({})
+const pickerVisible = ref(false)
+const images = ref<string[]>([])
+const favoriteLists = ref<DrawcastFavoriteList[]>([])
+const defaultColor = ref('#000000')
+const color = ref('#000000')
+const tempColor = ref('#000000')
+const sampleColor = ref('')
+const tool = ref<Tool>(Tool.Pen)
+const sizeIdx = ref(2)
+const transparencyIdx = ref(9)
+const ctx = ref({} as CanvasRenderingContext2D)
+const finalctx = ref({} as CanvasRenderingContext2D)
+const last = ref<Point | null>(null)
+const canvasWidth = ref(720)
+const canvasHeight = ref(405)
+const submitButtonText = ref('Submit')
+const submitConfirm = ref('')
+const customDescription = ref('')
+const customProfileImageUrl = ref('')
+const recentImagesTitle = ref('')
+const stack = ref([] as ImageData[])
+const drawing = ref(false)
+const dialog = ref<Dialog>(Dialog.None)
+const dialogBody = ref('')
+const modifyImageUrl = ref('')
+const successImageUrlStyle = ref({})
+const clearImageUrlStyle = ref({})
+const sendingNonce = ref('')
+const sendingDate = ref<Date | null>(null)
+const finalcanvas = ref() as Ref<HTMLCanvasElement>
+const draftcanvas = ref() as Ref<HTMLCanvasElement>
+
+const isAdmin = computed((): boolean => {
+  if (!me.value) {
+    return false
+  }
+  return moderationAdmins.value.includes(me.value.user.name)
+})
+const favoriteListsFiltered = computed((): DrawcastFavoriteList[] => {
+  return favoriteLists.value.filter(
+    (fav: DrawcastFavoriteList) => fav.list.length > 0,
+  )
+})
+const favorites = computed((): string[] => {
+  const favorites: string[] = []
+  for (const fav of favoriteLists.value) {
+    favorites.push(...fav.list)
+  }
+  return favorites
+})
+const currentColorStyle = computed((): { backgroundColor: string } => {
+  return {
+    backgroundColor: tool.value === Tool.ColorSampler ? sampleColor.value : color.value,
+  }
+})
+const canvasHolderStyle = computed((): { width: string, height: string } => {
+  return {
+    width: `${canvasWidth.value + 4}px`,
+    height: `${canvasHeight.value + 4}px`,
+  }
+})
+const size = computed((): number => sizes[sizeIdx.value])
+const transparency = computed((): number => transparencies[transparencyIdx.value])
+const canvasClasses = computed((): string[] => [`bg-${canvasBg.value}`])
+const styles = computed((): { cursor: string } => ({ cursor: cursor.value }))
+const cursor = computed((): string => createCursor(tool.value, size.value, color.value))
+const nonfavorites = computed((): string[] => images.value.filter((url: string) => !favorites.value.includes(url)))
+const canvasBg = computed((): string => bgColors.includes(opts.value.canvasBg) ? opts.value.canvasBg : bgColors[0])
+const draftstyles = computed((): {
+  cursor: string,
+  opacity: string,
+} => {
+  return {
+    cursor: cursor.value,
+    opacity: `${transparency.value / 100}`,
+  }
+})
 
 const touchPoint = (canvas: HTMLCanvasElement, evt: TouchEvent) => {
   const bcr = canvas.getBoundingClientRect()
@@ -486,7 +591,7 @@ const hexIsLight = (color: string) => {
 }
 
 const createCursor = (tool: string, size: number, color: string): string => {
-  if (tool === 'color-sampler') {
+  if (tool === Tool.ColorSampler) {
     return 'crosshair'
   }
 
@@ -519,7 +624,7 @@ const createCursor = (tool: string, size: number, color: string): string => {
   ctx.arc(halfCanvasSize, halfCanvasSize, size / 2, 0, 2 * Math.PI)
   ctx.translate(-0.5, -0.5)
   ctx.closePath()
-  if (tool !== 'eraser') {
+  if (tool !== Tool.Eraser) {
     ctx.fill()
   }
   ctx.stroke()
@@ -557,577 +662,455 @@ const fillpath = (
   ctx.stroke()
 }
 
-export default defineComponent({
-  components: {
-    Slider,
-    Photoshop,
-    IconPen,
-    IconEyedropper,
-    IconSend,
-    IconUndo,
-    IconEraser,
-    IconClear,
-    DoubleclickButton,
-},
-  props: {
-    wdata: { type: Object as PropType<WidgetApiData>, required: true },
-  },
-  data() {
-    return {
-      ws: null as WsClient | null,
-      me: null as ApiUserData | null,
-      moderationAdmins: [] as string[],
+const deleteImage = (url: string) => {
+  if (!ws.value) {
+    log.error('deleteImage: ws not set')
+    return
+  }
+  if (!me.value) {
+    log.error('deleteImage: me not set')
+    return
+  }
 
-      opts: {} as Record<string, string>,
+  ws.value.send(
+    JSON.stringify({
+      event: 'delete_image',
+      path: url,
+      token: me.value.token,
+    }),
+  )
+}
 
-      pickerVisible: false,
+const onOkPicker = () => {
+  // tempColor when coming from color picker is an object
+  color.value = (tempColor.value as any).hex
+  pickerVisible.value = false
+}
 
-      images: [] as string[],
-      favoriteLists: [] as DrawcastFavoriteList[],
+const onOpenPicker = () => {
+  tempColor.value = color.value
+  pickerVisible.value = true
+}
 
-      defaultColor: '#000000',
-      color: '#000000',
-      tempColor: '#000000',
-      sampleColor: '',
+const onCancelPicker = () => {
+  pickerVisible.value = false
+}
 
-      hotkeys: ['E Eraser', 'B Pencil', 'S Color sampler', '1-7 Adjust size', 'Ctrl+Z Undo'],
+const onColorChange = (c: any) => {
+  color.value = c.hex
+  tool.value = Tool.Pen
+}
 
-      tool: 'pen', // 'pen'|'eraser'|'color-sampler'
-      sizes: [1, 2, 5, 10, 30, 60, 100],
-      sizeIdx: 2,
-      transparencies: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
-      transparencyIdx: 9,
-      ctx: {} as CanvasRenderingContext2D,
-      finalctx: {} as CanvasRenderingContext2D,
+const opt = (option: string, value: string) => {
+  opts.value[option] = value
+  window.localStorage.setItem('drawcastOpts', JSON.stringify(opts.value))
+}
 
-      last: null as Point | null,
-
-      canvasWidth: 720,
-      canvasHeight: 405,
-      submitButtonText: 'Submit',
-      submitConfirm: '',
-      customDescription: '',
-      customProfileImageUrl: '',
-      recentImagesTitle: '',
-
-      stack: [] as ImageData[],
-      drawing: false,
-
-      dialog: '',
-      dialogBody: '',
-      modifyImageUrl: '',
-      successImageUrlStyle: {},
-      clearImageUrlStyle: {},
-
-      sending: {
-        date: null as null | Date,
-        nonce: '',
-      },
+const modify = async (imageUrl: string) => {
+  const image = new Image()
+  return new Promise<void>((resolve) => {
+    image.src = imageUrl
+    image.onload = () => {
+      img(image)
+      stack.value = []
+      drawing.value = false
+      stack.value.push(getImageData())
+      resolve()
     }
-  },
-  computed: {
-    isAdmin(): boolean {
-      if (!this.me) {
-        return false
-      }
-      return this.moderationAdmins.includes(this.me.user.name)
-    },
-    finalcanvas(): HTMLCanvasElement {
-      return this.$refs.finalcanvas as HTMLCanvasElement
-    },
-    draftcanvas(): HTMLCanvasElement {
-      return this.$refs.draftcanvas as HTMLCanvasElement
-    },
-    favoriteListsFiltered(): DrawcastFavoriteList[] {
-      return this.favoriteLists.filter(
-        (fav: DrawcastFavoriteList) => fav.list.length > 0,
-      )
-    },
-    favorites(): string[] {
-      const favorites: string[] = []
-      for (const fav of this.favoriteLists) {
-        favorites.push(...fav.list)
-      }
-      return favorites
-    },
-    currentColorStyle(): { backgroundColor: string } {
-      return {
-        backgroundColor:
-          this.tool === 'color-sampler' ? this.sampleColor : this.color,
-      }
-    },
-    canvasHolderStyle(): { width: string, height: string } {
-      return {
-        width: `${this.canvasWidth + 4}px`,
-        height: `${this.canvasHeight + 4}px`,
-      }
-    },
-    size(): number {
-      return this.sizes[this.sizeIdx]
-    },
-    transparency(): number {
-      return this.transparencies[this.transparencyIdx]
-    },
-    nonfavorites(): string[] {
-      return this.images.filter((url: string) => !this.favorites.includes(url))
-    },
-    canvasBg(): string {
-      return ['transparent-light', 'transparent-dark'].includes(this.opts.canvasBg)
-        ? this.opts.canvasBg
-        : 'transparent-light'
-    },
-    canvasClasses(): string[] {
-      return [`bg-${this.canvasBg}`]
-    },
-    draftstyles(): {
-      cursor: string,
-      opacity: string,
-    } {
-      return {
-        cursor: this.cursor,
-        opacity: `${this.transparency / 100}`,
-      }
-    },
-    styles(): { cursor: string } {
-      return {
-        cursor: this.cursor,
-      }
-    },
-    cursor(): string {
-      return createCursor(this.tool, this.size, this.color)
-    },
-  },
-  created() {
-    // @ts-ignore
-    import('./main.scss')
-  },
-  mounted() {
-    this.me = user.getMe()
+  })
+}
 
-    this.ctx = this.draftcanvas.getContext('2d') as CanvasRenderingContext2D
-    this.finalctx = this.finalcanvas.getContext(
-      '2d',
-    ) as CanvasRenderingContext2D
+const undo = () => {
+  stack.value.pop()
+  clear()
+  drawing.value = false
+  if (stack.value.length > 0) {
+    putImageData(stack.value[stack.value.length - 1])
+  }
+}
 
-    this.ws = util.wsClient(this.wdata)
+const getImageData = (): ImageData => {
+  return finalctx.value.getImageData(
+    0,
+    0,
+    finalcanvas.value.width,
+    finalcanvas.value.height,
+  )
+}
 
-    const opts = window.localStorage.getItem('drawcastOpts')
-    this.opts = opts ? JSON.parse(opts) : { canvasBg: 'transparent' }
+const putImageData = (imageData: ImageData) => {
+  finalctx.value.putImageData(imageData, 0, 0)
+}
 
-    this.ws.onMessage('init', (data: DrawcastModuleWsDataData) => {
-      // submit button may not be empty
-      this.moderationAdmins = data.settings.moderationAdmins
-      this.submitButtonText = data.settings.submitButtonText || 'Send'
-      this.submitConfirm = data.settings.submitConfirm
-      this.canvasWidth = data.settings.canvasWidth
-      this.canvasHeight = data.settings.canvasHeight
-      this.customDescription = data.settings.customDescription || ''
-      this.customProfileImageUrl =
-        data.settings.customProfileImage &&
-          data.settings.customProfileImage.urlpath
-          ? data.settings.customProfileImage.urlpath
-          : ''
-      this.recentImagesTitle =
-        data.settings.recentImagesTitle || 'Newest submitted:'
-      this.favoriteLists = data.settings.favoriteLists
-      this.color = this.defaultColor
-      this.images = data.images.map((image) => image.path)
+const img = (imageObject: CanvasImageSource) => {
+  clear()
+  const tmp = finalctx.value.globalCompositeOperation
+  finalctx.value.globalCompositeOperation = 'source-over'
+  finalctx.value.drawImage(imageObject, 0, 0)
+  finalctx.value.globalCompositeOperation = tmp
+}
 
-      if (
-        this.images.length > 0
-        && data.settings.autofillLatest
-        && this.stack.length === 0
-        && !this.drawing
-      ) {
-        this.modify(this.images[0])
-      }
+const drawPathPart = (pts: Point[]) => {
+  drawing.value = true
+  if (pts.length === 0) {
+    return
+  }
 
-      // test data
-      // this.submitButtonText = "Send this image to the striiim";
-      // this.customProfileImageUrl =
-      //   "https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_783ce3fc0013443695c62933da3669c5/default/dark/3.0";
-      // this.customDescription = `💙👀 Please draw something cute. This will appear on my stream
-      //           screen!~ Click any of the drawings in the gallery to continue
-      //           drawing on them!`;
-    })
+  if (tool.value === Tool.Eraser) {
+    finalctx.value.globalCompositeOperation = 'destination-out'
+    fillpath(finalctx.value, pts, color.value, size.value)
+    return
+  }
 
-    this.ws.onMessage(
-      'image_deleted'
-    , (data: { img: string }) => {
-      this.favoriteLists = this.favoriteLists.map(favoriteList => {
-        favoriteList.list = favoriteList.list.filter(img => img !== data.img)
-        return favoriteList
-      })
-      this.images = this.images.filter((img) => img !== data.img)
-    })
+  finalctx.value.globalCompositeOperation = 'source-over'
+  fillpath(ctx.value, pts, color.value, size.value)
+}
 
-    this.ws.onMessage(
-      'image_received',
-      (data: { nonce: string; img: string }) => {
-        if (
-          this.sending.date &&
-          this.sending.nonce &&
-          data.nonce === this.sending.nonce
-        ) {
-          // we want to have the 'sending' state for at least minMs ms
-          // for images that we have just sent, for other images they may
-          // be added immediately
-          const minMs = 500
-          const now = new Date()
-          const timeoutMs = this.sending.date.getTime() + minMs - now.getTime()
-          setTimeout(() => {
-            this.successImageUrlStyle = {
-              backgroundImage: `url(${data.img})`,
-            }
-            this.dialog = 'success'
-            this.dialogBody = 'Your drawing was sent and is pending approval.'
-            this.sending.nonce = ''
-            this.sending.date = null
-          }, Math.max(0, timeoutMs))
-        }
-      },
-    )
-    this.ws.onMessage(
-      'approved_image_received',
-      (data: { nonce: string; img: string }) => {
-        if (
-          this.sending.date &&
-          this.sending.nonce &&
-          data.nonce === this.sending.nonce
-        ) {
-          // we want to have the 'sending' state for at least minMs ms
-          // for images that we have just sent, for other images they may
-          // be added immediately
-          const minMs = 500
-          const now = new Date()
-          const timeoutMs = this.sending.date.getTime() + minMs - now.getTime()
-          setTimeout(() => {
-            this.successImageUrlStyle = {
-              backgroundImage: `url(${data.img})`,
-            }
-            this.dialog = 'success'
-            this.dialogBody = 'Your drawing was sent to the stream.'
-            this.sending.nonce = ''
-            this.sending.date = null
+const cancelDraw = () => {
+  if (!drawing.value) {
+    return
+  }
 
-            this.images.unshift(data.img)
-            this.images = this.images.slice(0, 20)
-          }, Math.max(0, timeoutMs))
-        } else {
-          this.images.unshift(data.img)
-          this.images = this.images.slice(0, 20)
-        }
-      },
-    )
+  if (tool.value !== Tool.Eraser) {
+    finalctx.value.globalAlpha = transparency.value / 100
+    finalctx.value.drawImage(draftcanvas.value, 0, 0)
+    finalctx.value.globalAlpha = 1
 
-    this.ws.connect()
+    ctx.value.clearRect(0, 0, canvasWidth.value, canvasHeight.value)
+  }
 
-    window.addEventListener('mousemove', this.mousemove)
-    window.addEventListener('mouseup', this.cancelDraw)
-    window.addEventListener('touchend', this.cancelDraw)
-    window.addEventListener('touchcancel', this.cancelDraw)
-    window.addEventListener('keyup', this.keyup)
+  stack.value.push(getImageData())
+  drawing.value = false
+  last.value = null
+}
 
-    this.$watch('color', () => {
-      this.tool = 'pen'
-    })
-  },
-  unmounted() {
-    if (this.ws) {
-      this.ws.disconnect()
+const startDraw = (pt: Point) => {
+  if (tool.value === Tool.ColorSampler) {
+    if (
+      pt.x >= 0 &&
+      pt.y >= 0 &&
+      pt.x < canvasWidth.value &&
+      pt.y < canvasHeight.value
+    ) {
+      color.value = getColor(pt)
     }
-    window.removeEventListener('mousemove', this.mousemove)
-    window.removeEventListener('mouseup', this.cancelDraw)
-    window.removeEventListener('touchend', this.cancelDraw)
-    window.removeEventListener('touchcancel', this.cancelDraw)
-    window.removeEventListener('keyup', this.keyup)
-  },
-  methods: {
-    deleteImage(url: string) {
-      if (!this.ws) {
-        log.error('deleteImage: this.ws not set')
-        return
-      }
-      if (!this.me) {
-        log.error('deleteImage: this.me not set')
-        return
-      }
+    return
+  }
 
-      this.ws.send(
-        JSON.stringify({
-          event: 'delete_image',
-          path: url,
-          token: this.me.token,
-        }),
-      )
-    },
-    onOkPicker() {
-      // tempColor when coming from color picker is an object
-      this.color = (this.tempColor as any).hex
-      this.pickerVisible = false
-    },
-    onOpenPicker() {
-      this.tempColor = this.color
-      this.pickerVisible = true
-    },
-    onCancelPicker() {
-      this.pickerVisible = false
-    },
-    onColorChange(c: any) {
-      this.color = c.hex
-      this.tool = 'pen'
-    },
-    opt(option: string, value: string) {
-      this.opts[option] = value
-      window.localStorage.setItem('drawcastOpts', JSON.stringify(this.opts))
-    },
-    async modify(imageUrl: string) {
-      const image = new Image()
-      return new Promise<void>((resolve) => {
-        image.src = imageUrl
-        image.onload = () => {
-          this.img(image)
-          this.stack = []
-          this.drawing = false
-          this.stack.push(this.getImageData())
-          resolve()
-        }
-      })
-    },
-    undo() {
-      this.stack.pop()
-      this.clear()
-      this.drawing = false
-      if (this.stack.length > 0) {
-        this.putImageData(this.stack[this.stack.length - 1])
-      }
-    },
-    getImageData(): ImageData {
-      return this.finalctx.getImageData(
-        0,
-        0,
-        this.finalcanvas.width,
-        this.finalcanvas.height,
-      )
-    },
-    putImageData(imageData: ImageData) {
-      this.finalctx.putImageData(imageData, 0, 0)
-    },
-    img(imageObject: CanvasImageSource) {
-      this.clear()
-      const tmp = this.finalctx.globalCompositeOperation
-      this.finalctx.globalCompositeOperation = 'source-over'
-      this.finalctx.drawImage(imageObject, 0, 0)
-      this.finalctx.globalCompositeOperation = tmp
-    },
-    drawPathPart(pts: Point[]) {
-      this.drawing = true
-      if (pts.length === 0) {
-        return
-      }
+  if (
+    pt.x >= -size.value &&
+    pt.y >= -size.value &&
+    pt.x < canvasWidth.value + size.value &&
+    pt.y < canvasHeight.value + size.value
+  ) {
+    const cur = pt
+    drawPathPart([cur])
+    last.value = cur
+  }
+}
 
-      if (this.tool === 'eraser') {
-        this.finalctx.globalCompositeOperation = 'destination-out'
-        fillpath(this.finalctx, pts, this.color, this.size)
-        return
-      }
+const continueDraw = (pt: Point) => {
+  if (tool.value === Tool.ColorSampler) {
+    sampleColor.value = getColor(pt)
+  }
+  if (!last.value) {
+    return
+  }
+  const cur = pt
+  drawPathPart([last.value, cur])
+  last.value = cur
+}
 
-      this.finalctx.globalCompositeOperation = 'source-over'
-      fillpath(this.ctx, pts, this.color, this.size)
-    },
+const touchstart = (e: TouchEvent) => {
+  e.preventDefault()
+  startDraw(touchPoint(draftcanvas.value, e))
+}
 
-    cancelDraw() {
-      if (!this.drawing) {
-        return
-      }
+const mousedown = (e: MouseEvent) => {
+  startDraw(mousePoint(draftcanvas.value, e))
+}
 
-      if (this.tool !== 'eraser') {
-        this.finalctx.globalAlpha = this.transparency / 100
-        this.finalctx.drawImage(this.draftcanvas, 0, 0)
-        this.finalctx.globalAlpha = 1
+const touchmove = (e: TouchEvent) => {
+  e.preventDefault()
+  continueDraw(touchPoint(draftcanvas.value, e))
+}
 
-        this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
-      }
+const mousemove = (e: MouseEvent) => {
+  continueDraw(mousePoint(draftcanvas.value, e))
+}
 
-      this.stack.push(this.getImageData())
-      this.drawing = false
-      this.last = null
-    },
+const clear = () => {
+  ctx.value.clearRect(0, 0, draftcanvas.value.width, draftcanvas.value.height)
+  finalctx.value.clearRect(
+    0,
+    0,
+    finalcanvas.value.width,
+    finalcanvas.value.height,
+  )
+}
 
-    startDraw(pt: Point) {
-      if (this.tool === 'color-sampler') {
-        if (
-          pt.x >= 0 &&
-          pt.y >= 0 &&
-          pt.x < this.canvasWidth &&
-          pt.y < this.canvasHeight
-        ) {
-          this.color = this.getColor(pt)
-        }
-        return
-      }
+const clearClick = () => {
+  clear()
+  stack.value = []
+  drawing.value = false
+}
 
+const prepareSubmitImage = () => {
+  if (submitConfirm.value) {
+    dialog.value = Dialog.ConfirmSubmit
+    dialogBody.value = submitConfirm.value
+    return
+  }
+  submitImage()
+}
+
+const submitImage = () => {
+  if (!ws.value) {
+    log.error('submitImage: ws not set')
+    return
+  }
+
+  if (sendingNonce.value) {
+    // we are already sending something
+    log.error('submitImage: nonce not empty')
+    return
+  }
+
+  sendingDate.value = new Date()
+  sendingNonce.value = nonce(10)
+  ws.value.send(
+    JSON.stringify({
+      event: 'post',
+      data: {
+        nonce: sendingNonce.value,
+        img: finalcanvas.value.toDataURL(),
+      },
+    }),
+  )
+  // success will be handled in onMessage('post') below
+}
+
+const showClearDialog = () => {
+  const w = 100
+  const h = Math.round((w * canvasHeight.value) / canvasWidth.value)
+
+  clearImageUrlStyle.value = {
+    backgroundImage: `url(${finalcanvas.value.toDataURL()})`,
+    width: w + 'px',
+    height: h + 'px',
+  }
+  dialog.value = Dialog.Clear
+  dialogBody.value = `
+    If you click this, your current drawing will be erased. <br />
+    <br />
+    Do you want to proceed?`
+}
+
+const prepareModify = (imageUrl: string) => {
+  modifyImageUrl.value = imageUrl
+  dialog.value = Dialog.Replace
+  dialogBody.value = `
+    If you click this, your current drawing will be erased and replaced by
+    the drawing you just clicked on. <br />
+    <br />
+    Do you want to proceed?`
+}
+
+const dialogClose = () => {
+  dialog.value = Dialog.None
+  dialogBody.value = ''
+}
+
+const dialogConfirm = () => {
+  if (dialog.value === Dialog.ConfirmSubmit) {
+    dialog.value = Dialog.None
+    submitImage()
+  } else if (dialog.value === Dialog.Clear) {
+    dialog.value = Dialog.None
+    clearClick()
+  } else if (dialog.value === Dialog.Replace) {
+    dialog.value = Dialog.None
+    modify(modifyImageUrl.value)
+  }
+}
+
+const getColor = (pt: Point) => {
+  const [r, g, b, a] = finalctx.value.getImageData(pt.x, pt.y, 1, 1).data
+  const hex = (v: number) => pad(v.toString(16), '00')
+  // when selecting transparent color, instead use the defaultColor
+  return a ? `#${hex(r)}${hex(g)}${hex(b)}` : defaultColor.value
+}
+
+const keyup = (e: KeyboardEvent) => {
+  if (e.code === 'Digit1') {
+    sizeIdx.value = 0
+  } else if (e.code === 'Digit2') {
+    sizeIdx.value = 1
+  } else if (e.code === 'Digit3') {
+    sizeIdx.value = 2
+  } else if (e.code === 'Digit4') {
+    sizeIdx.value = 3
+  } else if (e.code === 'Digit5') {
+    sizeIdx.value = 4
+  } else if (e.code === 'Digit6') {
+    sizeIdx.value = 5
+  } else if (e.code === 'Digit7') {
+    sizeIdx.value = 6
+  } else if (e.code === 'KeyB') {
+    // pencil
+    tool.value = Tool.Pen
+  } else if (e.code === 'KeyS') {
+    // color Sampler
+    tool.value = Tool.ColorSampler
+  } else if (e.code === 'KeyE') {
+    // eraser
+    tool.value = Tool.Eraser
+  } else if (e.code === 'KeyZ' && e.ctrlKey) {
+    undo()
+  }
+}
+
+// @ts-ignore
+import('./main.scss')
+
+onMounted(() => {
+  me.value = user.getMe()
+  ctx.value = draftcanvas.value.getContext('2d') as CanvasRenderingContext2D
+  finalctx.value = finalcanvas.value.getContext(
+    '2d',
+  ) as CanvasRenderingContext2D
+  ws.value = util.wsClient(props.wdata)
+
+  const optsx = window.localStorage.getItem('drawcastOpts')
+  opts.value = optsx ? JSON.parse(optsx) : { canvasBg: 'transparent' }
+
+  ws.value.onMessage('init', (data: DrawcastModuleWsDataData) => {
+    // submit button may not be empty
+    moderationAdmins.value = data.settings.moderationAdmins
+    submitButtonText.value = data.settings.submitButtonText || 'Send'
+    submitConfirm.value = data.settings.submitConfirm
+    canvasWidth.value = data.settings.canvasWidth
+    canvasHeight.value = data.settings.canvasHeight
+    customDescription.value = data.settings.customDescription || ''
+    customProfileImageUrl.value =
+      data.settings.customProfileImage &&
+        data.settings.customProfileImage.urlpath
+        ? data.settings.customProfileImage.urlpath
+        : ''
+    recentImagesTitle.value =
+      data.settings.recentImagesTitle || 'Newest submitted:'
+    favoriteLists.value = data.settings.favoriteLists
+    color.value = defaultColor.value
+    images.value = data.images.map((image) => image.path)
+
+    if (
+      images.value.length > 0
+      && data.settings.autofillLatest
+      && stack.value.length === 0
+      && !drawing.value
+    ) {
+      modify(images.value[0])
+    }
+
+    // test data
+    // submitButtonText.value = "Send this image to the striiim";
+    // customProfileImageUrl.value =
+    //   "https://static-cdn.jtvnw.net/emoticons/v2/emotesv2_783ce3fc0013443695c62933da3669c5/default/dark/3.0";
+    // customDescription.value = `💙👀 Please draw something cute. This will appear on my stream
+    //           screen!~ Click any of the drawings in the gallery to continue
+    //           drawing on them!`;
+  })
+
+  ws.value.onMessage(
+    'image_deleted'
+  , (data: { img: string }) => {
+    favoriteLists.value = favoriteLists.value.map(favoriteList => {
+      favoriteList.list = favoriteList.list.filter(img => img !== data.img)
+      return favoriteList
+    })
+    images.value = images.value.filter((img) => img !== data.img)
+  })
+
+  ws.value.onMessage(
+    'image_received',
+    (data: { nonce: string; img: string }) => {
       if (
-        pt.x >= -this.size &&
-        pt.y >= -this.size &&
-        pt.x < this.canvasWidth + this.size &&
-        pt.y < this.canvasHeight + this.size
+        sendingDate.value &&
+        sendingNonce.value &&
+        data.nonce === sendingNonce.value
       ) {
-        const cur = pt
-        this.drawPathPart([cur])
-        this.last = cur
+        // we want to have the 'sending' state for at least minMs ms
+        // for images that we have just sent, for other images they may
+        // be added immediately
+        const minMs = 500
+        const now = new Date()
+        const timeoutMs = sendingDate.value.getTime() + minMs - now.getTime()
+        setTimeout(() => {
+          successImageUrlStyle.value = {
+            backgroundImage: `url(${data.img})`,
+          }
+          dialog.value = Dialog.Success
+          dialogBody.value = 'Your drawing was sent and is pending approval.'
+          sendingNonce.value = ''
+          sendingDate.value = null
+        }, Math.max(0, timeoutMs))
       }
     },
+  )
+  ws.value.onMessage(
+    'approved_image_received',
+    (data: { nonce: string; img: string }) => {
+      if (
+        sendingDate.value &&
+        sendingNonce.value &&
+        data.nonce === sendingNonce.value
+      ) {
+        // we want to have the 'sending' state for at least minMs ms
+        // for images that we have just sent, for other images they may
+        // be added immediately
+        const minMs = 500
+        const now = new Date()
+        const timeoutMs = sendingDate.value.getTime() + minMs - now.getTime()
+        setTimeout(() => {
+          successImageUrlStyle.value = {
+            backgroundImage: `url(${data.img})`,
+          }
+          dialog.value = Dialog.Success
+          dialogBody.value = 'Your drawing was sent to the stream.'
+          sendingNonce.value = ''
+          sendingDate.value = null
 
-    continueDraw(pt: Point) {
-      if (this.tool === 'color-sampler') {
-        this.sampleColor = this.getColor(pt)
+          images.value.unshift(data.img)
+          images.value = images.value.slice(0, 20)
+        }, Math.max(0, timeoutMs))
+      } else {
+        images.value.unshift(data.img)
+        images.value = images.value.slice(0, 20)
       }
-      if (!this.last) {
-        return
-      }
-      const cur = pt
-      this.drawPathPart([this.last, cur])
-      this.last = cur
     },
+  )
 
-    touchstart(e: TouchEvent) {
-      e.preventDefault()
-      this.startDraw(touchPoint(this.draftcanvas, e))
-    },
-    mousedown(e: MouseEvent) {
-      this.startDraw(mousePoint(this.draftcanvas, e))
-    },
+  ws.value.connect()
 
-    touchmove(e: TouchEvent) {
-      e.preventDefault()
-      this.continueDraw(touchPoint(this.draftcanvas, e))
-    },
-    mousemove(e: MouseEvent) {
-      this.continueDraw(mousePoint(this.draftcanvas, e))
-    },
+  window.addEventListener('mousemove', mousemove)
+  window.addEventListener('mouseup', cancelDraw)
+  window.addEventListener('touchend', cancelDraw)
+  window.addEventListener('touchcancel', cancelDraw)
+  window.addEventListener('keyup', keyup)
 
-    clear() {
-      this.ctx.clearRect(0, 0, this.draftcanvas.width, this.draftcanvas.height)
-      this.finalctx.clearRect(
-        0,
-        0,
-        this.finalcanvas.width,
-        this.finalcanvas.height,
-      )
-    },
-    clearClick() {
-      this.clear()
-      this.stack = []
-      this.drawing = false
-    },
-    prepareSubmitImage() {
-      if (this.submitConfirm) {
-        this.dialog = 'confirm-submit'
-        this.dialogBody = this.submitConfirm
-        return
-      }
-      this.submitImage()
-    },
-    submitImage() {
-      if (!this.ws) {
-        log.error('submitImage: this.ws not set')
-        return
-      }
+  watch(color, () => {
+    tool.value = Tool.Pen
+  })
+})
 
-      if (this.sending.nonce) {
-        // we are already sending something
-        log.error('submitImage: nonce not empty')
-        return
-      }
-
-      this.sending.date = new Date()
-      this.sending.nonce = nonce(10)
-      this.ws.send(
-        JSON.stringify({
-          event: 'post',
-          data: {
-            nonce: this.sending.nonce,
-            img: this.finalcanvas.toDataURL(),
-          },
-        }),
-      )
-      // success will be handled in onMessage('post') below
-    },
-    showClearDialog() {
-      const w = 100
-      const h = Math.round((w * this.canvasHeight) / this.canvasWidth)
-
-      this.clearImageUrlStyle = {
-        backgroundImage: `url(${this.finalcanvas.toDataURL()})`,
-        width: w + 'px',
-        height: h + 'px',
-      }
-      this.dialog = 'clear'
-      this.dialogBody = `
-        If you click this, your current drawing will be erased. <br />
-        <br />
-        Do you want to proceed?`
-    },
-    prepareModify(imageUrl: string) {
-      this.modifyImageUrl = imageUrl
-      this.dialog = 'replace'
-      this.dialogBody = `
-        If you click this, your current drawing will be erased and replaced by
-        the drawing you just clicked on. <br />
-        <br />
-        Do you want to proceed?`
-    },
-    dialogClose() {
-      this.dialog = ''
-      this.dialogBody = ''
-    },
-    dialogConfirm() {
-      if (this.dialog === 'confirm-submit') {
-        this.dialog = ''
-        this.submitImage()
-      } else if (this.dialog === 'clear') {
-        this.dialog = ''
-        this.clearClick()
-      } else if (this.dialog === 'replace') {
-        this.dialog = ''
-        this.modify(this.modifyImageUrl)
-      }
-    },
-    getColor(pt: Point) {
-      const [r, g, b, a] = this.finalctx.getImageData(pt.x, pt.y, 1, 1).data
-      const hex = (v: number) => pad(v.toString(16), '00')
-      // when selecting transparent color, instead use the defaultColor
-      return a ? `#${hex(r)}${hex(g)}${hex(b)}` : this.defaultColor
-    },
-    keyup(e: KeyboardEvent) {
-      if (e.code === 'Digit1') {
-        this.sizeIdx = 0
-      } else if (e.code === 'Digit2') {
-        this.sizeIdx = 1
-      } else if (e.code === 'Digit3') {
-        this.sizeIdx = 2
-      } else if (e.code === 'Digit4') {
-        this.sizeIdx = 3
-      } else if (e.code === 'Digit5') {
-        this.sizeIdx = 4
-      } else if (e.code === 'Digit6') {
-        this.sizeIdx = 5
-      } else if (e.code === 'Digit7') {
-        this.sizeIdx = 6
-      } else if (e.code === 'KeyB') {
-        // pencil
-        this.tool = 'pen'
-      } else if (e.code === 'KeyS') {
-        // color Sampler
-        this.tool = 'color-sampler'
-      } else if (e.code === 'KeyE') {
-        // eraser
-        this.tool = 'eraser'
-      } else if (e.code === 'KeyZ' && e.ctrlKey) {
-        this.undo()
-      }
-    },
-  },
+onBeforeUnmount(() => {
+  if (ws.value) {
+    ws.value.disconnect()
+  }
+  window.removeEventListener('mousemove', mousemove)
+  window.removeEventListener('mouseup', cancelDraw)
+  window.removeEventListener('touchend', cancelDraw)
+  window.removeEventListener('touchcancel', cancelDraw)
+  window.removeEventListener('keyup', keyup)
 })
 </script>

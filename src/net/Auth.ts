@@ -2,11 +2,10 @@ import { NextFunction, Response } from 'express'
 import { Repos } from '../repo/Repos'
 import { Token, TokenType } from '../repo/Tokens'
 import { User } from '../repo/Users'
-import { Canny } from '../services/Canny'
-import { ApiUserData } from '../types'
+import { BaseUserData } from '../types'
 
 class Auth {
-  constructor(private readonly repos: Repos, private readonly canny: Canny) {
+  constructor(private readonly repos: Repos) {
     // pass
   }
 
@@ -26,7 +25,7 @@ class Auth {
     return await this.repos.token.delete(token)
   }
 
-  async _determineApiUserData(token: string | null): Promise<ApiUserData | null> {
+  async getBaseUserData(token: string | null): Promise<BaseUserData | null> {
     if (token === null) {
       return null
     }
@@ -48,14 +47,13 @@ class Auth {
         email: user.email,
         groups: await this.repos.user.getGroups(user.id),
       },
-      cannyToken: this.canny.createToken(user),
     }
   }
 
   addAuthInfoMiddleware() {
     return async (req: any, _res: Response, next: NextFunction) => {
       const token = req.cookies['x-token'] || null
-      const userData = await this._determineApiUserData(token)
+      const userData = await this.getBaseUserData(token)
       req.token = userData?.token || null
       req.user = userData?.user || null
       next()

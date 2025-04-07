@@ -37,7 +37,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ApiUserData, DrawcastData } from '../../../types'
+import { FullApiUserData, DrawcastData } from '../../../types'
 import { DrawcastImage } from '../../../mod/modules/DrawcastModuleCommon'
 import { onMounted, onUnmounted, ref } from 'vue'
 import util, { WidgetApiData } from '../util'
@@ -49,7 +49,7 @@ const props = defineProps<{
 }>()
 
 let ws: WsClient | null = null
-let me: ApiUserData | null = null
+let me: FullApiUserData | null = null
 const notificationSoundAudio = ref<any>(null)
 const manualApproval = ref<{ items: string[] }>({ items: [] })
 
