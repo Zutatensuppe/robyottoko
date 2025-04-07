@@ -146,11 +146,6 @@
       width="32"
     >
   </div>
-  <div v-else-if="effect.type === CommandEffectType.MADOCHAN">
-    Generate a definition for a word. <br>
-    Model: <code>{{ effect.data.model }}</code> <br>
-    Weirdness: <code>{{ effect.data.weirdness }}</code>
-  </div>
   <div v-else-if="effect.type === CommandEffectType.MEDIA_VOLUME">
     Change the base volume of media playing in the media widget.
   </div>

@@ -499,7 +499,6 @@ export const possibleEffectActions = () => ([
   { type: CommandEffectType.DICT_LOOKUP, label: 'Add dict_lookup', title: 'dict_lookup' },
   { type: CommandEffectType.ADD_STREAM_TAGS, label: 'Add add_stream_tags', title: 'add_stream_tags' },
   { type: CommandEffectType.REMOVE_STREAM_TAGS, label: 'Add remove_stream_tags', title: 'remove_stream_tags' },
-  { type: CommandEffectType.MADOCHAN, label: 'Add madochan', title: 'madochan' },
   { type: CommandEffectType.COUNTDOWN, label: 'Add countdown', title: 'countdown' },
   { type: CommandEffectType.VARIABLE_CHANGE, label: 'Add variable_change', title: 'variable_change' },
 ])
@@ -516,9 +515,6 @@ const newEffectData = (type: CommandEffectType): any => {
       return { displayFn: [], emotes: [] }
     case CommandEffectType.MEDIA:
       return newMedia()
-    case CommandEffectType.MADOCHAN:
-      // TODO: use from same resource as server
-      return { model: '100epochs800lenhashingbidirectional.h5', weirdness: '1' }
     case CommandEffectType.SET_CHANNEL_TITLE:
       return { title: '' }
     case CommandEffectType.SET_CHANNEL_GAME_ID:

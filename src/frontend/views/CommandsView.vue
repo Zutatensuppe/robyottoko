@@ -106,7 +106,6 @@ const possibleEffects: CommandEffectType[] = [
   CommandEffectType.EMOTES,
   CommandEffectType.ROULETTE,
   CommandEffectType.MEDIA,
-  CommandEffectType.MADOCHAN,
   CommandEffectType.SET_CHANNEL_TITLE,
   CommandEffectType.SET_CHANNEL_GAME_ID,
   CommandEffectType.ADD_STREAM_TAGS,
