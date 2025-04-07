@@ -1,10 +1,9 @@
+import { describe, expect, it } from 'vitest'
 import { PlaylistItem } from '../../types'
 import { findInsertIndex, moveTagUp } from './SongrequestModule'
 
-describe('SongrequestModule', () => {
-
+describe('src/mod/modules/SongrequestModule.ts', () => {
   describe('findInsertIndex', () => {
-
     const playlistItem = (plays: number) => ({
       id: 0,
       tags: [],
@@ -64,11 +63,11 @@ describe('SongrequestModule', () => {
         expected: 3,
       },
     ]
-  
-    test.each(testCases)('findInsertIndex $name', ({ name, playlist, expected }: { name: string, playlist: PlaylistItem[], expected: number }) => {
+
+    testCases.forEach(({ name, playlist, expected }) => it(name, () => {
       const actual = findInsertIndex(playlist)
       expect(actual).toBe(expected)
-    })
+    }))
   })
 
   describe('moveTagUp', () => {
@@ -93,9 +92,9 @@ describe('SongrequestModule', () => {
       },
     ]
 
-    test.each(testCases)('moveTagUp $name', ({ name, playlist, tag, expected }: { name: string, playlist: PlaylistItem[], tag: string, expected: PlaylistItem[] }) => {
+    testCases.forEach(({ name, playlist, tag, expected }) => it(name, () => {
       moveTagUp(playlist, tag)
       expect(playlist).toStrictEqual(expected)
-    })
+    }))
   })
 })

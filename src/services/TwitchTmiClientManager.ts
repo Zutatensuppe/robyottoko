@@ -1,14 +1,13 @@
-// @ts-ignore
-import tmi from 'tmi.js'
-import { TwitchBotIdentity, TwitchChatClient } from '../types'
+import { TwitchBotIdentity } from '../types'
+import { createTwitchClient, TwitchClient } from './twitch'
 
 export class TwitchTmiClientManager {
   constructor () {
     // pass
   }
 
-  get (identity: TwitchBotIdentity, channels: string[]): TwitchChatClient {
-    const client: TwitchChatClient = new tmi.client({
+  get (identity: TwitchBotIdentity, channels: string[]): TwitchClient {
+    const client: TwitchClient = new createTwitchClient({
       options: {
         clientId: identity.client_id,
       },

@@ -1,5 +1,6 @@
 import { logger } from '../common/fn'
-import { FunctionCommand, Module, RawCommand, TwitchEventContext } from '../types'
+import { TwitchEventContext } from '../services/twitch'
+import { FunctionCommand, Module, RawCommand } from '../types'
 import { CommandEffectType } from '../types'
 import { AddStreamTagEffect } from './AddStreamTagsEffect'
 import { ChatEffect } from './ChatEffect'

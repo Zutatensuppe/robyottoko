@@ -1,11 +1,12 @@
 import { logger, humanDuration, parseHumanDuration, SECOND } from '../../common/fn'
 import { Socket } from '../../net/WebSocketServer'
-import { Bot, ChatMessageContext, CommandExecutionContext, FunctionCommand, Module, MODULE_NAME, RawCommand, TwitchEventContext, WIDGET_TYPE } from '../../types'
+import { Bot, ChatMessageContext, CommandExecutionContext, FunctionCommand, Module, MODULE_NAME, RawCommand, WIDGET_TYPE } from '../../types'
 import { User } from '../../repo/Users'
 import { default_settings, default_state, PomoEffect, PomoModuleData, PomoModuleWsData, PomoModuleWsEffectData, PomoModuleWsSaveData } from './PomoModuleCommon'
 import { doReplacements } from '../../fn'
 import { newCommandTrigger } from '../../common/commands'
 import { MOD_OR_ABOVE } from '../../common/permissions'
+import { TwitchEventContext } from '../../services/twitch'
 
 const log = logger('PomoModule.ts')
 

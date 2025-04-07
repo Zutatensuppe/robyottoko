@@ -2,12 +2,13 @@
 
 import { newRewardRedemptionTrigger } from '../../common/commands'
 import { logger } from '../../common/fn'
-import { Bot, RawCommand, TwitchEventContext } from '../../types'
+import { Bot, RawCommand } from '../../types'
 import { CommandExecutor } from '../CommandExecutor'
 import { User } from '../../repo/Users'
 import { EventSubEventHandler } from './EventSubEventHandler'
 import { getUserTypeInfo } from '../../fn'
 import { Subscription } from './EventSub'
+import { TwitchEventContext } from '../twitch'
 
 const log = logger('ChannelPointRedeemEventHandler.ts')
 

@@ -1,11 +1,16 @@
-import { loadAssetsForChannel, getEmotes } from './lib/emote-parse'
+import { loadAssetsForChannel, getTwitchEmotes } from './lib/emote-parse'
 import emojiDetect from '@zutatensuppe/emoji-detect'
-import { ChatUserstate } from 'tmi.js'
 import TwitchHelixClient from './TwitchHelixClient'
+import { TwitchContext } from './twitch'
 
 export class EmoteParser {
-  async loadAssetsForChannel(channel: string, channelId: string, helixClient: TwitchHelixClient) {
+  async loadAssetsForChannel(rawChannel: string, channelId: string, helixClient: TwitchHelixClient) {
+    const channel = this.sanitizeChannel(rawChannel)
     await loadAssetsForChannel(channel, channelId, helixClient)
+  }
+
+  private sanitizeChannel (channel: string) {
+    return channel.replace('#', '').trim().toLowerCase()
   }
 
   private extractEmojiEmotes (message: string) {
@@ -14,13 +19,13 @@ export class EmoteParser {
     }))
   }
 
-  extractEmotes (message: string, context: ChatUserstate | null, channel: string) {
-    const emotes = getEmotes(message, context, channel)
+  extractEmotes (message: string, context: TwitchContext | null, rawChannel: string) {
+    const channel = this.sanitizeChannel(rawChannel)
+    const emotes = getTwitchEmotes(message, context, channel)
 
     return [
       ...emotes.map(e => ({ url: e.img })),
       ...this.extractEmojiEmotes(message),
     ]
   }
-
 }
