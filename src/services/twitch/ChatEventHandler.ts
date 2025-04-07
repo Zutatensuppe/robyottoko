@@ -3,10 +3,11 @@
 import { logger, MINUTE } from '../../common/fn'
 import { isBroadcaster, isMod, isSubscriber } from '../../common/permissions'
 import fn from '../../fn'
-import { Bot, CommandTrigger, CommandTriggerType, Module, RawCommand, TwitchEventContext } from '../../types'
+import { Bot, CommandTrigger, CommandTriggerType, Module, RawCommand } from '../../types'
 import { CommandExecutor } from '../CommandExecutor'
 import TwitchHelixClient from '../TwitchHelixClient'
 import { User } from '../../repo/Users'
+import { TwitchEventContext } from '../twitch'
 
 const log = logger('ChatEventHandler.ts')
 

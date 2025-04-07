@@ -6,7 +6,7 @@ import {
   ChatMessageContext, PlaylistItem,
   FunctionCommand, Command,
   Bot, CommandFunction, Module, CommandExecutionContext,
-  MODULE_NAME, WIDGET_TYPE, TwitchEventContext,
+  MODULE_NAME, WIDGET_TYPE,
 } from '../../types'
 import {
   default_commands,
@@ -28,6 +28,7 @@ import { NotFoundError } from '../../services/youtube/NotFoundError'
 import { Youtube, YoutubeVideoEntry } from '../../services/Youtube'
 import { QuotaReachedError } from '../../services/youtube/QuotaReachedError'
 import { NoApiKeysError } from '../../services/youtube/NoApiKeysError'
+import { TwitchEventContext } from '../../services/twitch'
 
 const log = logger('SongrequestModule.ts')
 

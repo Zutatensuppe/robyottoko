@@ -1,6 +1,5 @@
 import { NextFunction, Response } from 'express'
 import { Emitter, EventType } from 'mitt'
-import { ChatUserstate, Client } from 'tmi.js'
 import { LogLevel } from './common/fn'
 import { CommandRestrict } from './common/permissions'
 import ModuleManager from './mod/ModuleManager'
@@ -23,6 +22,7 @@ import { Discord } from './services/Discord'
 import { EmoteParser } from './services/EmoteParser'
 import { TimeApi } from './services/TimeApi'
 import { EffectApplier } from './effect/EffectApplier'
+import { TwitchClient, TwitchEventContext } from './services/twitch'
 
 type int = number
 
@@ -219,21 +219,6 @@ export type VariableValue = any
 export interface GlobalVariable {
   name: string
   value: VariableValue
-}
-
-export type TwitchChatClient = Client
-export interface TwitchEventContext extends ChatUserstate {
-  extra?: {
-    bits?: {
-      amount: number
-    }
-    giftsubs?: {
-      amount: number
-    }
-    raiders?: {
-      amount: number
-    }
-  }
 }
 
 export interface CommandExecutionContext {
@@ -680,7 +665,7 @@ export interface FunctionCommand {
 }
 
 export interface ChatMessageContext {
-  client: TwitchChatClient | null
+  client: TwitchClient | null
   context: TwitchEventContext
   msgOriginal: string
   msgNormalized: string

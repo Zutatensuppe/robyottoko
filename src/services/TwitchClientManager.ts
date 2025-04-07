@@ -1,11 +1,12 @@
 import TwitchHelixClient from './TwitchHelixClient'
 import { logger, Logger } from '../common/fn'
 import { User } from '../repo/Users'
-import { Bot, EventSubTransport, TwitchBotIdentity, TwitchChatClient, TwitchEventContext, TwitchConfig } from '../types'
+import { Bot, EventSubTransport, TwitchBotIdentity, TwitchConfig } from '../types'
 import { ALL_SUBSCRIPTIONS_TYPES, SubscriptionType } from './twitch/EventSub'
 import { ChatEventHandler } from './twitch/ChatEventHandler'
 import { Timer } from '../Timer'
 import { normalizeChatMessage } from '../fn'
+import { TwitchClient, TwitchEventContext } from './twitch'
 
 const log = logger('TwitchClientManager.ts')
 
@@ -51,7 +52,7 @@ const determineIdentity = (user: User, cfg: TwitchConfig): TwitchBotIdentity => 
 const chatEventHandler = new ChatEventHandler()
 
 class TwitchClientManager {
-  private chatClient: TwitchChatClient | null = null
+  private chatClient: TwitchClient | null = null
   private helixClient: TwitchHelixClient | null = null
 
   private log: Logger

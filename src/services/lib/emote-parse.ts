@@ -1,6 +1,6 @@
-import { ChatUserstate } from 'tmi.js'
 import { logger, MINUTE } from './../../common/fn'
 import TwitchHelixClient, { TwitchHelixGlobalEmotesResponseData } from '../TwitchHelixClient'
+import { TwitchContext } from '../twitch'
 
 const loadedAssets: Record<string, LoadedChannelAssets> = {}
 
@@ -107,21 +107,6 @@ const parseSeventvV3Emote = (obj: any): Emote | null => {
     img,
     type: Provider.SEVENTV,
   }
-}
-
-async function loadAssets(channel: string, channelId: string, helixClient: TwitchHelixClient) {
-  if (!channel || !channelId) {
-    return
-  }
-
-  const now = new Date().getTime()
-  const lastLoadedTs = loadedAssets[channel] ? loadedAssets[channel].lastLoadedTs : null
-  if (lastLoadedTs && (now - lastLoadedTs) < 10 * MINUTE) {
-    return
-  }
-
-  loadedAssets[channel] = await loadConcurrent(channelId, channel, helixClient)
-  loadedAssets[channel].lastLoadedTs = now
 }
 
 async function loadConcurrent(
@@ -419,39 +404,6 @@ function compareEnd(a: { end: number }, b: { end: number }) {
   return 0
 }
 
-function getMessageEmotes(message: string, userstate: ChatUserstate | null, channel: string) {
-  const emotes: Emote[] = []
-  if (
-    userstate &&
-    userstate.emotes != null &&
-    typeof userstate.emotes !== 'undefined'
-  ) {
-    const repEmotes: RepEmote[] = []
-    const userstateEmotes = userstate.emotes
-    Object.keys(userstateEmotes).forEach((el, ind) => {
-      const em = userstateEmotes[el]
-      em.forEach((ele: any) => {
-        repEmotes.push({
-          start: parseInt(ele.split('-')[0]),
-          end: parseInt(ele.split('-')[1]),
-          rep: Object.keys(userstateEmotes)[ind],
-        })
-      })
-    })
-    repEmotes.sort(compareEnd)
-    repEmotes.forEach((ele) => {
-      emotes.push({
-        code: message.substring(ele.start, ele.end + 1),
-        img: `https://static-cdn.jtvnw.net/emoticons/v2/${ele.rep}/default/dark/3.0`,
-        type: Provider.TWITCH,
-      })
-      message = message.substring(0, ele.start) + message.substring(ele.end + 1, message.length)
-    })
-  }
-  emotes.push(...detectEmotesInMessage(message, channel))
-  return emotes
-}
-
 function escapeRegex(str: string): string {
   return str.replace(/[-[\]{}()*+!<=:?./\\^$|#\s,]/g, '\\$&')
 }
@@ -475,14 +427,64 @@ function detectEmotesInMessage(msg: string, channel: string): Emote[] {
   return emotes
 }
 
+function detectTwitchEmotes(message: string, userstate: TwitchContext | null): Emote[] {
+  if (!userstate || userstate.emotes === null || typeof userstate.emotes === 'undefined') {
+    return []
+  }
+
+  const repEmotes: RepEmote[] = []
+  const userstateEmotes = userstate.emotes
+  Object.keys(userstateEmotes).forEach((el, ind) => {
+    userstateEmotes[el].forEach((ele: any) => {
+      repEmotes.push({
+        start: parseInt(ele.split('-')[0]),
+        end: parseInt(ele.split('-')[1]),
+        rep: Object.keys(userstateEmotes)[ind],
+      })
+    })
+  })
+  repEmotes.sort(compareEnd)
+
+  const emotes: Emote[] = []
+  repEmotes.forEach((ele) => {
+    emotes.push({
+      code: message.substring(ele.start, ele.end + 1),
+      img: `https://static-cdn.jtvnw.net/emoticons/v2/${ele.rep}/default/dark/3.0`,
+      type: Provider.TWITCH,
+    })
+    message = message.substring(0, ele.start) + message.substring(ele.end + 1, message.length)
+  })
+  return emotes
+}
+
 export const loadAssetsForChannel = async (
   channel: string,
   channelId: string,
   helixClient: TwitchHelixClient,
 ): Promise<void> => {
-  await loadAssets(channel.replace('#', '').trim().toLowerCase(), channelId, helixClient)
+  if (!channel || !channelId) {
+    return
+  }
+
+  const now = new Date().getTime()
+  const lastLoadedTs = loadedAssets[channel]
+    ? loadedAssets[channel].lastLoadedTs
+    : null
+  if (lastLoadedTs && (now - lastLoadedTs) < 10 * MINUTE) {
+    return
+  }
+
+  loadedAssets[channel] = await loadConcurrent(channelId, channel, helixClient)
+  loadedAssets[channel].lastLoadedTs = now
 }
 
-export const getEmotes = function (message: string, tags: ChatUserstate | null, channel: string) {
-  return getMessageEmotes(message, tags, channel.replace('#', '').trim().toLowerCase())
+export const getTwitchEmotes = (
+  message: string,
+  userstate: TwitchContext | null,
+  channel: string,
+): Emote[] => {
+  const emotes: Emote[] = []
+  emotes.push(...detectTwitchEmotes(message, userstate))
+  emotes.push(...detectEmotesInMessage(message, channel))
+  return emotes
 }

@@ -1,8 +1,9 @@
 import { User } from '../../repo/Users'
-import { Bot, ChatMessageContext, CommandExecutionContext, Module, MODULE_NAME, TwitchEventContext } from '../../types'
+import { Bot, ChatMessageContext, CommandExecutionContext, Module, MODULE_NAME } from '../../types'
 import { newCommandTrigger } from '../../common/commands'
 import { isBroadcaster, isMod } from '../../common/permissions'
 import { logger } from '../../common/fn'
+import { TwitchEventContext } from '../../services/twitch'
 
 const log = logger('VoteModule.ts')
 

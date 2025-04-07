@@ -2,12 +2,16 @@ import xhr from './net/xhr'
 import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, getRandom, getRandomInt, daysUntil } from './common/fn'
 
 import {
-  Command, RawCommand, TwitchEventContext,
-  TwitchChatClient, FunctionCommand, CommandTrigger,
-  Bot, CommandMatch,
+  Command,
+  RawCommand,
+  FunctionCommand,
+  CommandTrigger,
+  Bot,
+  CommandMatch,
 } from './types'
 import { User } from './repo/Users'
 import TwitchHelixClient, { TwitchHelixUserSearchResponseDataEntry } from './services/TwitchHelixClient'
+import { TwitchClient, TwitchEventContext } from './services/twitch'
 
 const log = logger('fn.ts')
 
@@ -42,7 +46,7 @@ export const sleep = (ms: number) => {
 }
 
 const sayFn = (
-  client: TwitchChatClient,
+  client: TwitchClient,
   target: string | null,
 ) => (
   msg: string,
