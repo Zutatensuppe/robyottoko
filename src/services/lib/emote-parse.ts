@@ -308,7 +308,7 @@ async function loadConcurrent(
     .then(body => {
       const provider = Provider.TWITCH
       const scope = Scope.CHANNEL
-      if (body) {
+      if (body && body.data) {
         Object.values(body.data).forEach((channelEmote: any) => {
           const emote = parseTwitchEmote(channelEmote)
           if (emote) {
@@ -333,7 +333,7 @@ async function loadConcurrent(
     .then(body => {
       const provider = Provider.TWITCH
       const scope = Scope.GLOBAL
-      if (body) {
+      if (body && body.data) {
         Object.values(body.data).forEach((globalEmote: any) => {
           const emote = parseTwitchEmote(globalEmote)
           if (emote) {

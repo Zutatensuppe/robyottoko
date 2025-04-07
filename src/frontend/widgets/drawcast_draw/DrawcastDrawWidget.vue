@@ -442,7 +442,7 @@
 import { defineComponent, PropType } from 'vue'
 import { nonce, logger, pad } from '../../../common/fn'
 import WsClient from '../../WsClient'
-import { ApiUserData, DrawcastFavoriteList } from '../../../types'
+import { DrawcastFavoriteList, FullApiUserData } from '../../../types'
 import util, { WidgetApiData } from '../util'
 import { DrawcastModuleWsDataData } from '../../../mod/modules/DrawcastModuleCommon'
 import IconPen from './components/IconPen.vue'
@@ -575,7 +575,7 @@ export default defineComponent({
   data() {
     return {
       ws: null as WsClient | null,
-      me: null as ApiUserData | null,
+      me: null as FullApiUserData | null,
       moderationAdmins: [] as string[],
 
       opts: {} as Record<string, string>,

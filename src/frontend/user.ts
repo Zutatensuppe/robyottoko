@@ -1,8 +1,8 @@
 import mitt from 'mitt'
-import { ApiUserData } from '../types'
+import { FullApiUserData } from '../types'
 import api from './_api'
 
-let me: ApiUserData | null = null
+let me: FullApiUserData | null = null
 
 export const eventBus = mitt()
 

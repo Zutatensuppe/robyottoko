@@ -2,8 +2,8 @@ import { hash, logger } from '../common/fn'
 import { MediaEffectData } from '../types'
 import { Effect } from './Effect'
 import childProcess from 'child_process'
-import fs from 'fs'
 import config from '../config'
+import FileSystem from '../services/FileSystem'
 
 const log = logger('MediaEffect.ts')
 
@@ -15,19 +15,22 @@ const downloadVideo = async (originalUrl: string): Promise<string> => {
   // if video url looks like a twitch clip url, dl it first
   const filename = `${hash(originalUrl)}-clip.mp4`
   const outfile = `./data/uploads/${filename}`
-  if (!fs.existsSync(outfile)) {
-    log.debug({ outfile }, 'downloading the video')
-    const child = childProcess.execFile(
-      config.youtubeDlBinary,
-      [originalUrl, '-o', outfile],
-    )
-    await new Promise((resolve) => {
-      child.on('close', resolve)
-    })
-  } else {
+  const fileURL = `/uploads/${filename}`
+
+  if (await FileSystem.fileExists(outfile)) {
     log.debug({ outfile }, 'video exists')
+    return fileURL
   }
-  return `/uploads/${filename}`
+
+  log.debug({ outfile }, 'downloading the video')
+  const child = childProcess.execFile(
+    config.youtubeDlBinary,
+    [originalUrl, '-o', outfile],
+  )
+  await new Promise((resolve) => {
+    child.on('close', resolve)
+  })
+  return fileURL
 }
 
 export class MediaEffect extends Effect<MediaEffectData> {

@@ -1,10 +1,10 @@
 import fn from '../../fn'
 import { arrayIncludesIgnoreCase, nonce, logger } from '../../common/fn'
-import fs from 'fs'
 import { Socket } from '../../net/WebSocketServer'
 import { Bot, ChatMessageContext, DrawcastSettings, Module, MODULE_NAME, WIDGET_TYPE } from '../../types'
 import { User } from '../../repo/Users'
 import { default_settings, default_images, DrawcastModuleData, DrawcastImage, DrawcastModuleWsData } from './DrawcastModuleCommon'
+import FileSystem from '../../services/FileSystem'
 
 const log = logger('DrawcastModule.ts')
 
@@ -37,7 +37,7 @@ class DrawcastModule implements Module {
     this.user = user
   }
 
-  _deleteImage(image: DrawcastImage): boolean {
+  private async _deleteImage(image: DrawcastImage): Promise<boolean> {
     const rel = `/uploads/drawcast/${this.user.id}`
     if (!image.path.startsWith(rel)) {
       return false
@@ -45,23 +45,29 @@ class DrawcastModule implements Module {
     const name = image.path.substring(rel.length).replace('/', '').replace('\\', '')
     const path = `./data${rel}`
 
-    if (fs.existsSync(`${path}/${name}`)) {
-      fs.rmSync(`${path}/${name}`)
+    if (await FileSystem.fileExists(`${path}/${name}`)) {
+      await FileSystem.rm(`${path}/${name}`)
       return true
     }
     return false
   }
 
-  _loadAllImages(): DrawcastImage[] {
+  private async _loadAllImages(): Promise<DrawcastImage[]> {
     try {
       // todo: probably better to store latest x images in db
       const rel = `/uploads/drawcast/${this.user.id}`
       const path = `./data${rel}`
-      return fs.readdirSync(path)
-        .map((name) => ({
-          name: name,
-          time: fs.statSync(path + '/' + name).mtime.getTime(),
-        }))
+      const dir = await FileSystem.readDir(path)
+      if (!dir) {
+        return []
+      }
+      const results = []
+      for (const name of dir) {
+        const stat = await FileSystem.stat(`${path}/${name}`)
+        const time = stat.mtime.getTime()
+        results.push({ name, time })
+      }
+      return results
         .sort((a, b) => b.time - a.time)
         .map((v) => ({
           path: `${rel}/${v.name}`,
@@ -79,7 +85,7 @@ class DrawcastModule implements Module {
   async reinit(): Promise<DrawcastModuleData> {
     const { data, enabled } = await this.bot.getRepos().module.load(this.user.id, this.name, {})
     if (!data.images) {
-      data.images = this._loadAllImages()
+      data.images = await this._loadAllImages()
     }
     return {
       settings: default_settings(data.settings),
@@ -135,7 +141,7 @@ class DrawcastModule implements Module {
   }
 
   async checkAuthorized(token: string, onlyOwner: boolean = false): Promise<boolean> {
-    const user = await this.bot.getAuth()._determineApiUserData(token)
+    const user = await this.bot.getAuth().getBaseUserData(token)
     if (!user) {
       return false
     }
@@ -153,7 +159,7 @@ class DrawcastModule implements Module {
 
   getWsEvents() {
     return {
-      'conn': async (ws: Socket) => {
+      conn: async (ws: Socket) => {
         const settings = JSON.parse(JSON.stringify(this.data.settings))
         if (!settings.moderationAdmins.includes(this.user.name)) {
           settings.moderationAdmins.push(this.user.name)
@@ -169,7 +175,7 @@ class DrawcastModule implements Module {
           },
         }, ws)
       },
-      'get_all_images': async (ws: Socket, { token }: { token: string }) => {
+      get_all_images: async (ws: Socket, { token }: { token: string }) => {
         if (!this.checkAuthorized(token)) {
           log.error({ token }, 'get_all_images: unauthed user')
           return
@@ -180,7 +186,7 @@ class DrawcastModule implements Module {
           data: { images: this.getImages() },
         }, ws)
       },
-      'approve_image': async (_ws: Socket, { path, token }: { path: string, token: string }) => {
+      approve_image: async (_ws: Socket, { path, token }: { path: string, token: string }) => {
         if (!this.checkAuthorized(token)) {
           log.error({ path, token }, 'approve_image: unauthed user')
           return
@@ -201,7 +207,7 @@ class DrawcastModule implements Module {
           data: { nonce: '', img: image.path, mayNotify: false },
         })
       },
-      'deny_image': async (_ws: Socket, { path, token }: { path: string, token: string }) => {
+      deny_image: async (_ws: Socket, { path, token }: { path: string, token: string }) => {
         if (!this.checkAuthorized(token)) {
           log.error({ path, token }, 'deny_image: unauthed user')
           return
@@ -220,7 +226,7 @@ class DrawcastModule implements Module {
           data: { nonce: '', img: image.path, mayNotify: false },
         })
       },
-      'delete_image': async (_ws: Socket, { path, token }: { path: string, token: string }) => {
+      delete_image: async (_ws: Socket, { path, token }: { path: string, token: string }) => {
         if (!this.checkAuthorized(token)) {
           log.error({ path, token }, 'delete_image: unauthed user')
           return
@@ -232,7 +238,7 @@ class DrawcastModule implements Module {
           log.error({ path }, 'delete_image: image not found')
           return
         }
-        const deleted = this._deleteImage(image)
+        const deleted = await this._deleteImage(image)
         if (!deleted) {
           // should not happen
           log.error({ path }, 'delete_image: image not deleted')
@@ -250,7 +256,7 @@ class DrawcastModule implements Module {
           data: { nonce: '', img: image.path, mayNotify: false },
         })
       },
-      'post': async (_ws: Socket, data: PostEventData) => {
+      post: async (_ws: Socket, data: PostEventData) => {
         const rel = `/uploads/drawcast/${this.user.id}`
         const img = fn.decodeBase64Image(data.data.img)
         const name = fn.safeFileName(`${(new Date()).toJSON()}-${nonce(6)}.${fn.mimeToExt(img.type)}`)
@@ -259,8 +265,8 @@ class DrawcastModule implements Module {
         const filePath = `${dirPath}/${name}`
         const urlPath = `${rel}/${name}`
 
-        fs.mkdirSync(dirPath, { recursive: true })
-        fs.writeFileSync(filePath, img.data)
+        await FileSystem.mkDir(dirPath)
+        await FileSystem.writeFile(filePath, img.data)
 
         const approved = this.data.settings.requireManualApproval ? false : true
 
@@ -273,7 +279,7 @@ class DrawcastModule implements Module {
           data: { nonce: data.data.nonce, img: urlPath, mayNotify: true },
         })
       },
-      'save': async (_ws: Socket, data: { settings: DrawcastSettings, token: string }) => {
+      save: async (_ws: Socket, data: { settings: DrawcastSettings, token: string }) => {
         if (!this.checkAuthorized(data.token, true)) {
           log.error({ token: data.token }, 'save: unauthed user')
           return

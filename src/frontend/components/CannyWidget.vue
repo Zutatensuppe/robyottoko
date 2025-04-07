@@ -8,10 +8,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { ApiUserData } from '../../types'
+import { FullApiUserData } from '../../types'
 import user from '../user'
 
-const me = ref<ApiUserData|null>(null)
+const me = ref<FullApiUserData|null>(null)
 
 const props = defineProps<{
   board: string,

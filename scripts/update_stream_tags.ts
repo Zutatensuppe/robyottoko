@@ -10,7 +10,7 @@ import TwitchHelixClient from '../src/services/TwitchHelixClient'
 const c = new TwitchHelixClient(
   config.twitch.tmi.identity.client_id,
   config.twitch.tmi.identity.client_secret,
-);
+)
 const file = __dirname + '/../src/config_data/tags_complete.json'
 const readFrom = 'file';
 (async () => {
@@ -18,7 +18,7 @@ const readFrom = 'file';
   if (readFrom === 'file') {
     // read from file
     const tagsJson = readFileSync(file, 'utf-8')
-    tags = JSON.parse(tagsJson);
+    tags = JSON.parse(tagsJson)
   } else {
     // read from api
     tags = await c.getAllTags()
@@ -35,4 +35,4 @@ const readFrom = 'file';
   })
   writeFileSync(__dirname + '/../src/config_data/tags_manual.json', JSON.stringify(tagsMapManual))
   writeFileSync(__dirname + '/../src/config_data/tags_auto.json', JSON.stringify(tagsMapAuto))
-})();
+})()

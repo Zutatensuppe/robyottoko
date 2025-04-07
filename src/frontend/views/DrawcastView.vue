@@ -404,7 +404,7 @@ import {
   DrawcastImage,
 } from '../../mod/modules/DrawcastModuleCommon'
 import {
-ApiUserData,
+  FullApiUserData,
   DrawcastData,
   DrawcastFavoriteList,
   DrawcastSettings,
@@ -459,8 +459,7 @@ const controlWidgetUrl = ref<string>('')
 const receiveWidgetUrl = ref<string>('')
 
 let ws: WsClient | null = null
-let me: ApiUserData | null = null
-
+let me: FullApiUserData | null = null
 
 const changed = computed((): boolean => {
   return unchangedJson.value !== changedJson.value

@@ -1,9 +1,9 @@
 import { Mutex } from 'async-mutex'
-import fs from 'fs'
 import * as pg from 'pg'
 // @ts-ignore
 const { Client } = pg.default
 import { logger } from './common/fn'
+import FileSystem from './services/FileSystem'
 
 const log = logger('Db.ts')
 
@@ -47,7 +47,7 @@ class Db {
   async patch(verbose: boolean = true): Promise<void> {
     await this.run('CREATE TABLE IF NOT EXISTS public.db_patches ( id TEXT PRIMARY KEY);', [])
 
-    const files = fs.readdirSync(this.patchesDir)
+    const files = await FileSystem.readDir(this.patchesDir)
     const patches = (await this.getMany('public.db_patches')).map(row => row.id)
 
     for (const f of files) {
@@ -57,7 +57,7 @@ class Db {
         }
         continue
       }
-      const contents = fs.readFileSync(`${this.patchesDir}/${f}`, 'utf-8')
+      const contents = await FileSystem.readFile(`${this.patchesDir}/${f}`)
 
       const all = contents.split(';').map(s => s.trim()).filter(s => !!s)
       try {

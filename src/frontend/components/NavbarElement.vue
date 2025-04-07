@@ -105,7 +105,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import user from '../user'
 import { eventBus } from '../wsstatus'
-import { ApiUserData } from '../../types'
+import { FullApiUserData } from '../../types'
 import CheckboxInput from './CheckboxInput.vue'
 import ProblemsDialog from './ProblemsDialog.vue'
 import { RouteLocationNamedRaw, useRoute, useRouter } from 'vue-router'
@@ -168,7 +168,7 @@ const linksStart: { to: RouteLocationNamedRaw, text: string, icon: string | null
   },
 ]
 
-const me = ref<ApiUserData | null>(user.getMe())
+const me = ref<FullApiUserData | null>(user.getMe())
 const showProblems = ref<boolean>(false)
 const problems = ref<{ message: string, details: any }[]>([])
 const burgerActive = ref<boolean>(false)

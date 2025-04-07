@@ -312,11 +312,13 @@ class TwitchClientManager {
         subscription_id: resp.data[0].id,
         subscription_type: subscriptionType,
       })
-      this.log.info({ type: subscriptionType }, 'subscription registered')
+      this.log.info(`subscription registered: ${subscriptionType}`)
     } else if (resp && 'error' in resp && resp.error && resp.status === 409) {
-      this.log.info({ type: subscriptionType, msg: resp.message }, 'subscription already exists')
+      this.log.info(`subscription already exists: ${subscriptionType}`)
+    } else if (resp && 'error' in resp && resp.error && resp.status === 403) {
+      this.log.info({ type: subscriptionType, msg: resp.message, status: resp.status })
     } else if (resp && 'error' in resp && resp.error && resp.status === 401) {
-      this.log.info({ type: subscriptionType, msg: resp.message }, 'subscription already exists')
+      this.log.info({ type: subscriptionType, msg: resp.message, status: resp.status })
     } else {
       this.log.debug({ resp, subscription })
     }
