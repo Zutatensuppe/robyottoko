@@ -23,10 +23,6 @@
     :base-volume="baseVolume"
     :widget-url="mediaWidgetUrl"
   />
-  <MadochanEffect
-    v-else-if="val.type === CommandEffectType.MADOCHAN"
-    v-model="val"
-  />
   <SetChannelTitleEffect
     v-else-if="val.type === CommandEffectType.SET_CHANNEL_TITLE"
     v-model="val"
@@ -66,7 +62,6 @@ import ChatEffect from './Effects/ChatEffect.vue'
 import DictLookupEffect from './Effects/DictLookupEffect.vue'
 import EmotesEffect from './Effects/EmotesEffect.vue'
 import MediaEffect from './Effects/MediaEffect.vue'
-import MadochanEffect from './Effects/MadochanEffect.vue'
 import SetChannelTitleEffect from './Effects/SetChannelTitleEffect.vue'
 import SetChannelGameIdEffect from './Effects/SetChannelGameIdEffect.vue'
 import AddStreamTagsEffect from './Effects/AddStreamTagsEffect.vue'

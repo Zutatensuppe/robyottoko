@@ -8,7 +8,6 @@ import { ChattersEffect } from './ChattersEffect'
 import { CountdownEffect } from './CountdownEffect'
 import { DictLookupEffect } from './DictLookupEffect'
 import { EmotesEffect } from './EmotesEffect'
-import { MadochanEffect } from './MadochanEffect'
 import { MediaEffect } from './MediaEffect'
 import { MediaVolumeEffect } from './MediaVolumeEffect'
 import { RemoveStreamTagEffect } from './RemoveStreamTagsEffect'
@@ -23,7 +22,6 @@ const EFFECTS_CLASS_MAP = {
   [CommandEffectType.DICT_LOOKUP]: DictLookupEffect,
   [CommandEffectType.EMOTES]: EmotesEffect,
   [CommandEffectType.MEDIA]: MediaEffect,
-  [CommandEffectType.MADOCHAN]: MadochanEffect,
   [CommandEffectType.SET_CHANNEL_TITLE]: SetChannelTitleEffect,
   [CommandEffectType.SET_CHANNEL_GAME_ID]: SetChannelGameIdEffect,
   [CommandEffectType.ADD_STREAM_TAGS]: AddStreamTagEffect,
