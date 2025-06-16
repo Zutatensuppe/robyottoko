@@ -1,8 +1,7 @@
-import fetch, { RequestInit, Response } from 'node-fetch'
+import type { RequestInit, Response } from 'node-fetch'
+import fetch from 'node-fetch'
 
 type RequestMethod = 'get' | 'post' | 'delete' | 'patch' | 'put'
-
-export type QueryArgsData = Record<string, string | number>
 
 // https://stackoverflow.com/a/59854446/392905
 const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(() => resolve(), ms))
@@ -52,18 +51,6 @@ export function asJson(data: any): RequestInit {
   }
 }
 
-export function asQueryArgs(data: QueryArgsData) {
-  const q = []
-  for (const k in data) {
-    const pair = [k, data[k]].map(encodeURIComponent)
-    q.push(pair.join('='))
-  }
-  if (q.length === 0) {
-    return ''
-  }
-  return `?${q.join('&')}`
-}
-
 const request = async (method: RequestMethod, url: string, opts: RequestInit = {}) => {
   const options = opts || {}
   options.method = method
@@ -73,7 +60,6 @@ const request = async (method: RequestMethod, url: string, opts: RequestInit = {
 export default {
   withHeaders,
   asJson,
-  asQueryArgs,
   get: async (url: string, opts: RequestInit = {}) => request('get', url, opts),
   post: async (url: string, opts: RequestInit = {}) => request('post', url, opts),
   delete: async (url: string, opts: RequestInit = {}) => request('delete', url, opts),

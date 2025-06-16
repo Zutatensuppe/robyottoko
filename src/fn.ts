@@ -1,7 +1,7 @@
 import xhr from './net/xhr'
 import { SECOND, MINUTE, HOUR, DAY, MONTH, YEAR, logger, getRandom, getRandomInt, daysUntil } from './common/fn'
 
-import {
+import type {
   Command,
   RawCommand,
   FunctionCommand,
@@ -9,9 +9,10 @@ import {
   Bot,
   CommandMatch,
 } from './types'
-import { User } from './repo/Users'
-import TwitchHelixClient, { TwitchHelixUserSearchResponseDataEntry } from './services/TwitchHelixClient'
-import { TwitchClient, TwitchEventContext } from './services/twitch'
+import type { User } from './repo/Users'
+import type { TwitchHelixUserSearchResponseDataEntry } from './services/TwitchHelixClient'
+import type TwitchHelixClient from './services/TwitchHelixClient'
+import type { TwitchClient, TwitchEventContext } from './services/twitch'
 
 const log = logger('fn.ts')
 

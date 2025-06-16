@@ -1,7 +1,7 @@
 import { logger, MINUTE } from '../common/fn'
 import { refreshExpiredTwitchChannelAccessToken } from '../oauth'
-import { Bot } from '../types'
-import { User } from '../repo/Users'
+import type { Bot } from '../types'
+import type { User } from '../repo/Users'
 
 const log = logger('FrontendStatusUpdater.ts')
 

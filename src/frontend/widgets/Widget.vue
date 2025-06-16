@@ -1,54 +1,58 @@
 <template>
   <AvatarWidget
-    v-if="data && data.widget === 'avatar'"
+    v-if="data && data.widget === WIDGET_TYPE.AVATAR_CONTROL"
     :wdata="data"
     :controls="true"
   />
   <AvatarWidget
-    v-else-if="data && data.widget === 'avatar_receive'"
+    v-else-if="data && data.widget === WIDGET_TYPE.AVATAR_RECEIVE"
     :wdata="data"
     :controls="false"
   />
   <DrawcastDrawWidget
-    v-else-if="data && data.widget === 'drawcast_draw'"
+    v-else-if="data && data.widget === WIDGET_TYPE.DRAWCAST_DRAW"
     :wdata="data"
   />
   <DrawcastControlWidget
-    v-else-if="data && data.widget === 'drawcast_control'"
+    v-else-if="data && data.widget === WIDGET_TYPE.DRAWCAST_CONTROL"
     :wdata="data"
   />
   <DrawcastReceiveWidget
-    v-else-if="data && data.widget === 'drawcast_receive'"
+    v-else-if="data && data.widget === WIDGET_TYPE.DRAWCAST_RECEIVE"
     :wdata="data"
   />
   <MediaWidget
-    v-else-if="data && data.widget === 'media'"
+    v-else-if="data && data.widget === WIDGET_TYPE.MEDIA"
+    :wdata="data"
+  />
+  <MediaV2Widget
+    v-else-if="data && data.widget === WIDGET_TYPE.MEDIA_V2"
     :wdata="data"
   />
   <EmoteWallWidget
-    v-else-if="data && data.widget === 'emote_wall'"
+    v-else-if="data && data.widget === WIDGET_TYPE.EMOTE_WALL"
     :wdata="data"
   />
   <PomoWidget
-    v-else-if="data && data.widget === 'pomo'"
+    v-else-if="data && data.widget === WIDGET_TYPE.POMO"
     :wdata="data"
   />
   <SpeechToTextWidget
-    v-else-if="data && data.widget === 'speech-to-text'"
+    v-else-if="data && data.widget === WIDGET_TYPE.SPEECH_TO_TEXT_CONTROL"
     :wdata="data"
     :controls="true"
   />
   <SpeechToTextWidget
-    v-else-if="data && data.widget === 'speech-to-text_receive'"
+    v-else-if="data && data.widget === WIDGET_TYPE.SPEECH_TO_TEXT_RECEIVE"
     :wdata="data"
     :controls="false"
   />
   <SrWidget
-    v-else-if="data && data.widget === 'sr'"
+    v-else-if="data && data.widget === WIDGET_TYPE.SR"
     :wdata="data"
   />
   <RouletteWidget
-    v-else-if="data && data.widget === 'roulette'"
+    v-else-if="data && data.widget === WIDGET_TYPE.ROULETTE"
     :wdata="data"
   />
   <div v-else-if="!error">
@@ -69,10 +73,12 @@ import DrawcastDrawWidget from './drawcast_draw/DrawcastDrawWidget.vue'
 import DrawcastReceiveWidget from './drawcast_receive/DrawcastReceiveWidget.vue'
 import EmoteWallWidget from './emote_wall/EmoteWallWidget.vue'
 import MediaWidget from './media/MediaWidget.vue'
+import MediaV2Widget from './media_v2/MediaV2Widget.vue'
 import PomoWidget from './pomo/PomoWidget.vue'
 import SpeechToTextWidget from './speech-to-text/SpeechToTextWidget.vue'
 import SrWidget from './sr/SrWidget.vue'
 import RouletteWidget from './roulette/RouletteWidget.vue'
+import { WIDGET_TYPE } from '../../types'
 
 const data = ref<WidgetApiData | null>(null)
 const error = ref<string>('')

@@ -1,4 +1,4 @@
-import { EmotesEffectData } from '../types'
+import type { EmotesEffectData } from '../types'
 import { Effect } from './Effect'
 
 export class EmotesEffect extends Effect<EmotesEffectData> {

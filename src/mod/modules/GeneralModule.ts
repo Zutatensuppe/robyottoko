@@ -1,31 +1,33 @@
 import { getChannelPointsCustomRewards } from '../../fn'
 import { logger, clamp, parseHumanDuration, SECOND } from '../../common/fn'
 import { commands as commonCommands, newCommandTrigger } from '../../common/commands'
-import { Socket } from '../../net/WebSocketServer'
-import { User } from '../../repo/Users'
-import {
+import type { Socket } from '../../net/WebSocketServer'
+import type { User } from '../../repo/Users'
+import type {
   ChatMessageContext,
   Command,
   FunctionCommand,
   Bot,
   Module,
-  GeneralCommand,
+  GeneralCommand} from '../../types'
+import {
   CommandTriggerType,
   MODULE_NAME,
   WIDGET_TYPE,
   CommandEffectType,
   CommandAction,
 } from '../../types'
-import {
-  default_admin_settings,
-  default_settings,
+import type {
   GeneralModuleAdminSettings,
   GeneralModuleEmotesEventData,
   GeneralModuleSettings,
   GeneralModuleWsEventData,
-  GeneralSaveEventData,
+  GeneralSaveEventData} from './GeneralModuleCommon'
+import {
+  default_admin_settings,
+  default_settings,
 } from './GeneralModuleCommon'
-import { NextFunction, Response } from 'express'
+import type { NextFunction, Response } from 'express'
 
 const log = logger('GeneralModule.ts')
 
@@ -285,6 +287,7 @@ class GeneralModule implements Module {
         globalVariables: await this.bot.getRepos().variables.all(this.user.id),
         channelPointsCustomRewards: this.channelPointsCustomRewards,
         mediaWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.MEDIA, this.user.id),
+        mediaV2WidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.MEDIA_V2, this.user.id),
         emoteWallWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.EMOTE_WALL, this.user.id),
         rouletteWidgetUrl: await this.bot.getWidgets().getWidgetUrl(WIDGET_TYPE.ROULETTE, this.user.id),
       },

@@ -1,4 +1,4 @@
-import { Stats } from 'fs'
+import type { Stats } from 'fs'
 import fs from 'fs/promises'
 
 async function fileExists(file: string): Promise<boolean> {

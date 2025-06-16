@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { TwitchEventContext } from '../services/twitch'
-import { Command } from '../types'
+import type { TwitchEventContext } from '../services/twitch'
+import type { Command } from '../types'
 import { CommandRestrictEnum, mayExecute, userTypeOk } from './permissions'
 
 describe('src/common/permissions.ts', () => {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { PlaylistItem } from '../../types'
-import { isItemShown, SongRequestModuleFilter } from './SongrequestModuleCommon'
+import type { PlaylistItem } from '../../types'
+import type { SongRequestModuleFilter } from './SongrequestModuleCommon'
+import { isItemShown } from './SongrequestModuleCommon'
 
 describe('src/mod/modules/SongrequestModuleCommon.ts', () => {
   describe('isItemShown', () => {

@@ -1,7 +1,7 @@
 import { logger } from '../common/fn'
 import config from '../config'
 import { findIdxFuzzy } from '../fn'
-import { RemoveStreamTagEffectData } from '../types'
+import type { RemoveStreamTagEffectData } from '../types'
 import { Effect } from './Effect'
 
 const log = logger('RemoveStreamTagEffect.ts')

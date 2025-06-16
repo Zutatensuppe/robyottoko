@@ -1,12 +1,12 @@
-import { RequestInit, Response } from 'node-fetch'
-import { getRandom, logger, SECOND } from '../common/fn'
+import type { RequestInit, Response } from 'node-fetch'
+import { asQueryArgs, getRandom, logger, SECOND } from '../common/fn'
 import { findIdxFuzzy } from '../fn'
-import xhr, { asJson, withHeaders, asQueryArgs } from '../net/xhr'
+import xhr, { asJson, withHeaders } from '../net/xhr'
 import { tryRefreshAccessToken } from '../oauth'
-import { Bot } from '../types'
-import Cache from './Cache'
-import { SubscriptionType } from './twitch/EventSub'
-import { User } from '../repo/Users'
+import type { Bot } from '../types'
+import type Cache from './Cache'
+import type { SubscriptionType } from './twitch/EventSub'
+import type { User } from '../repo/Users'
 
 const log = logger('TwitchHelixClient.ts')
 

@@ -1,34 +1,37 @@
 import fn, { determineNewVolume, findIdxFuzzy, getChannelPointsCustomRewards } from '../../fn'
 import { shuffle, arrayMove, logger, humanDuration, parseHumanDuration, SECOND } from '../../common/fn'
-import { Socket } from '../../net/WebSocketServer'
-import { User } from '../../repo/Users'
-import {
+import type { Socket } from '../../net/WebSocketServer'
+import type { User } from '../../repo/Users'
+import type {
   ChatMessageContext, PlaylistItem,
   FunctionCommand, Command,
-  Bot, CommandFunction, Module, CommandExecutionContext,
+  Bot, CommandFunction, Module, CommandExecutionContext} from '../../types'
+import {
   MODULE_NAME, WIDGET_TYPE,
 } from '../../types'
-import {
-  default_commands,
-  default_settings,
-  isItemShown,
+import type {
   SongerquestModuleInitData,
   SongrequestModuleData,
   SongRequestModuleFilter,
   SongrequestModuleLimits,
   SongrequestModuleSettings,
   SongrequestModuleWsEventData,
+  SortDirection} from './SongrequestModuleCommon'
+import {
+  default_commands,
+  default_settings,
+  isItemShown,
   SortBy,
-  SortDirection,
 } from './SongrequestModuleCommon'
-import { NextFunction, Response } from 'express'
+import type { NextFunction, Response } from 'express'
 import { isBroadcaster, isMod, isSubscriber } from '../../common/permissions'
 import { TooLongError } from '../../services/youtube/TooLongError'
 import { NotFoundError } from '../../services/youtube/NotFoundError'
-import { Youtube, YoutubeVideoEntry } from '../../services/Youtube'
+import type { YoutubeVideoEntry } from '../../services/Youtube'
+import { Youtube } from '../../services/Youtube'
 import { QuotaReachedError } from '../../services/youtube/QuotaReachedError'
 import { NoApiKeysError } from '../../services/youtube/NoApiKeysError'
-import { TwitchEventContext } from '../../services/twitch'
+import type { TwitchEventContext } from '../../services/twitch'
 
 const log = logger('SongrequestModule.ts')
 

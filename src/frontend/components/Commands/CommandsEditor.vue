@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="commands-editor">
     <div class="actions">
       <span
         v-if="possibleActionsMapped.length === 1"
@@ -199,6 +199,7 @@
       :mode="editIdx >= cmds.length ? 'create' : 'edit'"
       :base-volume="baseVolume"
       :media-widget-url="mediaWidgetUrl"
+      :media-v2-widget-url="mediaV2WidgetUrl"
       :roulette-widget-url="rouletteWidgetUrl"
       @save="commandSave"
       @save-and-close="commandSaveAndClose"
@@ -279,12 +280,14 @@ const props = withDefaults(defineProps<{
   showFilters?: boolean
   showImages?: boolean
   mediaWidgetUrl?: string
+  mediaV2WidgetUrl?: string
   rouletteWidgetUrl?: string
 }>(), {
   showToggleImages: false,
   showFilters: false,
   showImages: false,
   mediaWidgetUrl: '',
+  mediaV2WidgetUrl: '',
   rouletteWidgetUrl: '',
 })
 
@@ -472,5 +475,16 @@ const actionName = (action: CommandAction) => {
   background: white;
   z-index: 6;
   padding: 5px 0;
+}
+</style>
+<style>
+.commands-editor .modal-card {
+  width: calc(100vw - 40px);
+  height: calc(100vh - 40px);
+}
+
+.commands-editor .modal-card-body {
+  overflow-y: scroll;
+  padding: 0;
 }
 </style>

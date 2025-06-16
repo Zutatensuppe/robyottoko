@@ -1,5 +1,6 @@
-import xhr, { asQueryArgs } from '../net/xhr'
-import { DictSearchResponseDataEntry } from '../types'
+import { asQueryArgs } from '../common/fn'
+import xhr from '../net/xhr'
+import type { DictSearchResponseDataEntry } from '../types'
 
 interface DictCCParseResultEntry {
   from: string

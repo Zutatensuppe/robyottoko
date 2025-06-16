@@ -1,7 +1,7 @@
 'use strict'
 
 import { Repo } from './Repo'
-import { User } from './Users'
+import type { User } from './Users'
 
 const TABLE = 'robyottoko.oauth_token'
 

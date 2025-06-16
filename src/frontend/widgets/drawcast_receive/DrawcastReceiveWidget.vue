@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { newMedia } from '../../../common/commands'
 import { onMounted, onUnmounted, Ref, ref } from 'vue'
-import { SoundMediaFile } from '../../../types'
+import { MediaCommandData, SoundMediaFile } from '../../../types'
 import MediaQueueElement from '../MediaQueueElement.vue'
 import util, { WidgetApiData } from '../util'
 import WsClient from '../../WsClient'
@@ -63,7 +63,6 @@ onMounted(() => {
       q.value.removeMedia(newMedia({ image_url: data.img }))
       if (!q.value.hasQueuedMedia() && displayLatestForever.value && imagesStack.length > 0) {
         q.value.playmedia(newMedia({
-          sound: null,
           image_url: imagesStack[imagesStack.length - 1],
           minDurationMs: displayDuration.value,
         }))

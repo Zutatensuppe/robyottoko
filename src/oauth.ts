@@ -1,7 +1,6 @@
 import { logger } from './common/fn'
-import TwitchHelixClient from './services/TwitchHelixClient'
-import { User } from './repo/Users'
-import { Bot } from './types'
+import type { User } from './repo/Users'
+import type { Bot } from './types'
 
 const log = logger('oauth.ts')
 
@@ -127,17 +126,13 @@ export const handleOAuthCodeCallback = async (
   bot: Bot,
   loggedInUser: User | null,
 ): Promise<HandleCodeCallbackResult | null> => {
-  const helixClient = new TwitchHelixClient(
-    bot.getConfig().twitch.tmi.identity.client_id,
-    bot.getConfig().twitch.tmi.identity.client_secret,
-  )
-  const resp = await helixClient.getAccessTokenByCode(code, redirectUri)
+  const resp = await bot.getHelixClient().getAccessTokenByCode(code, redirectUri)
   if (!resp) {
     return null
   }
 
   // get the user that corresponds to the token
-  const userResp = await helixClient.getUser(resp.access_token)
+  const userResp = await bot.getHelixClient().getUser(resp.access_token)
   if (!userResp) {
     return null
   }

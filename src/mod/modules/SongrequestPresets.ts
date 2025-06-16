@@ -1,4 +1,4 @@
-import { SongrequestModuleCustomCssPreset } from './SongrequestModuleCommon'
+import type { SongrequestModuleCustomCssPreset } from './SongrequestModuleCommon'
 
 export const presets: SongrequestModuleCustomCssPreset[] = [
   {

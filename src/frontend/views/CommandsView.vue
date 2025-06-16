@@ -54,6 +54,7 @@
         :show-toggle-images="true"
         :show-filters="true"
         :media-widget-url="mediaWidgetUrl"
+        :media-v2-widget-url="mediaV2WidgetUrl"
         :roulette-widget-url="rouletteWidgetUrl"
         :show-images="adminSettings.showImages"
         @update:model-value="sendSave"
@@ -121,6 +122,7 @@ const tabDefinitions: TabDefinition[] = [
 const inited = ref<boolean>(false)
 const tab = ref<TabType>('commands')
 const mediaWidgetUrl = ref<string>('')
+const mediaV2WidgetUrl = ref<string>('')
 const emoteWallWidgetUrl = ref<string>('')
 const rouletteWidgetUrl = ref<string>('')
 
@@ -154,6 +156,7 @@ onMounted(() => {
     commands.value = data.commands
     settings.value = data.settings
     mediaWidgetUrl.value = data.mediaWidgetUrl
+    mediaV2WidgetUrl.value = data.mediaV2WidgetUrl
     emoteWallWidgetUrl.value = data.emoteWallWidgetUrl
     rouletteWidgetUrl.value = data.rouletteWidgetUrl
     adminSettings.value = data.adminSettings

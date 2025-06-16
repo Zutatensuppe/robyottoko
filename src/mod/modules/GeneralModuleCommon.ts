@@ -1,7 +1,7 @@
 'use strict'
 
 import { getProp } from '../../common/fn'
-import { Command, GlobalVariable } from '../../types'
+import type { Command, GlobalVariable } from '../../types'
 
 export interface EmoteDisplayFn {
   fn: EMOTE_DISPLAY_FN,
@@ -75,6 +75,7 @@ export interface GeneralModuleWsEventData {
   globalVariables: GlobalVariable[]
   channelPointsCustomRewards: Record<string, string[]>
   mediaWidgetUrl: string
+  mediaV2WidgetUrl: string
   emoteWallWidgetUrl: string
   rouletteWidgetUrl: string
 }

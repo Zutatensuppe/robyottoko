@@ -5,7 +5,7 @@ import WebSocketServer from './net/WebSocketServer'
 import WebServer from './net/WebServer'
 import TwitchClientManager from './services/TwitchClientManager'
 import { logger, setLogLevel } from './common/fn'
-import { User } from './repo/Users'
+import type { User } from './repo/Users'
 import Cache from './services/Cache'
 import Db from './DbPostgres'
 import mitt from 'mitt'
@@ -19,7 +19,7 @@ import PomoModule from './mod/modules/PomoModule'
 import buildEnv from './buildEnv'
 import Widgets from './services/Widgets'
 
-import { Bot } from './types'
+import type { Bot } from './types'
 import fn from './fn'
 import { Timer } from './Timer'
 import { StreamStatusUpdater } from './services/StreamStatusUpdater'
@@ -34,6 +34,7 @@ import { Discord } from './services/Discord'
 import { EmoteParser } from './services/EmoteParser'
 import { TimeApi } from './services/TimeApi'
 import { EffectApplier } from './effect/EffectApplier'
+import TwitchHelixClient from './services/TwitchHelixClient'
 
 setLogLevel(config.log.level)
 const log = logger('bot.ts')
@@ -77,6 +78,7 @@ const createBot = async (): Promise<Bot> => {
     private userTwitchClientManagerInstances: Record<number, TwitchClientManager> = {}
     private streamStatusUpdater: StreamStatusUpdater | null = null
     private frontendStatusUpdater: FrontendStatusUpdater | null = null
+    private helixClient: TwitchHelixClient | null = null
 
     getDb() { return db }
     getDiscord() { return discord }
@@ -117,6 +119,16 @@ const createBot = async (): Promise<Bot> => {
       return chatClient
         ? fn.sayFn(chatClient, user.twitch_login)
         : ((msg: string) => { log.info('say(), client not set, msg', msg) })
+    }
+
+    getHelixClient(): TwitchHelixClient {
+      if (!this.helixClient) {
+        this.helixClient = new TwitchHelixClient(
+          this.getConfig().twitch.tmi.identity.client_id,
+          this.getConfig().twitch.tmi.identity.client_secret,
+        )
+      }
+      return this.helixClient
     }
 
     getUserTwitchClientManager(user: User) {

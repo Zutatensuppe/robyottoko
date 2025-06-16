@@ -1,8 +1,9 @@
-import { NextFunction, Response } from 'express'
-import { Repos } from '../repo/Repos'
-import { Token, TokenType } from '../repo/Tokens'
-import { User } from '../repo/Users'
-import { BaseUserData } from '../types'
+import type { NextFunction, Response } from 'express'
+import type { Repos } from '../repo/Repos'
+import type { Token} from '../repo/Tokens'
+import { TokenType } from '../repo/Tokens'
+import type { User } from '../repo/Users'
+import type { BaseUserData } from '../types'
 
 class Auth {
   constructor(private readonly repos: Repos) {

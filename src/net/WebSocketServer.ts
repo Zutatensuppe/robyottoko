@@ -1,7 +1,8 @@
 import * as WebSocket from 'ws'
-import { IncomingMessage } from 'http'
+import type { IncomingMessage } from 'http'
 import { logger, withoutLeading } from '../common/fn'
-import { Bot, MODULE_NAME } from '../types'
+import type { Bot} from '../types'
+import { MODULE_NAME } from '../types'
 import { moduleByWidgetType } from '../services/Widgets'
 import { uniqId } from '../fn'
 

@@ -13,6 +13,7 @@
             :global-variables="globalVariables"
             :base-volume="baseVolume"
             :media-widget-url="mediaWidgetUrl"
+            :media-v2-widget-url="mediaV2WidgetUrl"
             :roulette-widget-url="rouletteWidgetUrl"
           />
         </td>
@@ -42,12 +43,13 @@ export interface AutocompletableVariable {
 }
 
 const props = defineProps<{
-  modelValue: CommandEffectData[],
-  itemVariables: CommandVariable[],
-  globalVariables: GlobalVariable[],
-  baseVolume: number,
-  mediaWidgetUrl: string,
-  rouletteWidgetUrl: string,
+  modelValue: CommandEffectData[]
+  itemVariables: CommandVariable[]
+  globalVariables: GlobalVariable[]
+  baseVolume: number
+  mediaWidgetUrl: string
+  mediaV2WidgetUrl: string
+  rouletteWidgetUrl: string
 }>()
 
 const val = ref<CommandEffectData[]>(props.modelValue)

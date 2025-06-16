@@ -1,6 +1,6 @@
 import DictCc from '../services/DictCc'
 import JishoOrg from '../services/JishoOrg'
-import { DictLookupEffectData, DictSearchResponseDataEntry } from '../types'
+import type { DictLookupEffectData, DictSearchResponseDataEntry } from '../types'
 import { Effect } from './Effect'
 
 type DictFn = (phrase: string) => Promise<DictSearchResponseDataEntry[]>

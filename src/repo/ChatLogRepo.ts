@@ -1,7 +1,7 @@
 'use strict'
 
-import { WhereRaw } from '../DbPostgres'
-import { TwitchEventContext } from '../services/twitch'
+import type { WhereRaw } from '../DbPostgres'
+import type { TwitchEventContext } from '../services/twitch'
 import { Repo } from './Repo'
 
 const TABLE = 'robyottoko.chat_log'

@@ -1,6 +1,6 @@
 import { determineNewVolume } from '../fn'
-import GeneralModule from '../mod/modules/GeneralModule'
-import { MediaVolumeEffectData } from '../types'
+import type GeneralModule from '../mod/modules/GeneralModule'
+import type { MediaVolumeEffectData } from '../types'
 import { Effect } from './Effect'
 
 export class MediaVolumeEffect extends Effect<MediaVolumeEffectData> {

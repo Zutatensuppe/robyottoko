@@ -1,5 +1,6 @@
 
 import { describe, expect, it } from 'vitest'
+import type { QueryArgsData } from './fn'
 import {
   arrayMove,
   arraySwap,
@@ -19,6 +20,7 @@ import {
   withoutLeading,
   pad,
   dateformat,
+  asQueryArgs,
 } from './fn'
 
 describe('src/common/fn.ts', () => {
@@ -481,6 +483,24 @@ describe('src/common/fn.ts', () => {
 
     testCases.forEach(({ date, format, expected }) => it(`dateformat ${format}`, () => {
       const actual = dateformat(format, date)
+      expect(actual).toBe(expected)
+    }))
+  })
+
+  describe('asQueryArgs', () => {
+    const testCases = [
+      {
+        data: {} as QueryArgsData,
+        expected: '',
+      },
+      {
+        data: { hello: '^^%&&+ 10~~', world: 1123 } as QueryArgsData,
+        expected: '?hello=%5E%5E%25%26%26%2B%2010~~&world=1123',
+      },
+    ]
+
+    testCases.forEach(({ data, expected }) => it('asQueryArgs', () => {
+      const actual = asQueryArgs(data)
       expect(actual).toBe(expected)
     }))
   })

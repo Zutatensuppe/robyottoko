@@ -1,5 +1,5 @@
 <template>
-  <MediaQueueElement
+  <MediaV2QueueElement
     ref="q"
     :base-volume="settings.volume"
   />
@@ -13,9 +13,9 @@ import {
   GeneralModuleSettings,
   GeneralModuleWsEventData,
 } from '../../../mod/modules/GeneralModuleCommon'
-import { newMedia } from '../../../common/commands'
-import MediaQueueElement from '../MediaQueueElement.vue'
-import { MediaCommandData } from '../../../types'
+import MediaV2QueueElement from '../MediaV2QueueElement.vue'
+import { MediaV2CommandData } from '../../../types'
+import { newMediaV2 } from '../../../common/commands'
 
 const props = defineProps<{
   wdata: WidgetApiData,
@@ -24,7 +24,7 @@ const props = defineProps<{
 let ws: WsClient | null = null
 const settings = ref<GeneralModuleSettings>(default_settings())
 const widgetId = ref<string>(util.getParam('id'))
-const q = ref<InstanceType<typeof MediaQueueElement>>() as Ref<InstanceType<typeof MediaQueueElement>>
+const q = ref<InstanceType<typeof MediaV2QueueElement>>() as Ref<InstanceType<typeof MediaV2QueueElement>>
 
 // @ts-ignore
 import('./main.scss')
@@ -34,13 +34,13 @@ onMounted(() => {
   ws.onMessage('init', (data: GeneralModuleWsEventData) => {
     settings.value = data.settings
   })
-  ws.onMessage('playmedia', (data: MediaCommandData) => {
+  ws.onMessage('playmediaV2', (data: MediaV2CommandData) => {
     if (!widgetId.value && data.widgetIds.length > 0 && !data.widgetIds.includes('')) {
       // skipping this because it should not be displayed in global widget
     } else if (widgetId.value && !data.widgetIds.includes(widgetId.value)) {
       // skipping this, as it isn't coming from right command
     } else {
-      q.value.playmedia(newMedia(data))
+      q.value.playmedia(newMediaV2(data))
     }
   })
   ws.connect()

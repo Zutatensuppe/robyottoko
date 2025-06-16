@@ -1,5 +1,5 @@
 
-import { AvatarModuleAvatarDefinition } from '../../mod/modules/AvatarModuleCommon'
+import type { AvatarModuleAvatarDefinition } from '../../mod/modules/AvatarModuleCommon'
 
 const HyottokoChan: AvatarModuleAvatarDefinition = {
   'name': 'Hyottoko-Chan',

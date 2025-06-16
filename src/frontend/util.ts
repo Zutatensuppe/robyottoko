@@ -31,7 +31,72 @@ export const getFileFromDropEvent = (e: any): File | null => {
   return null
 }
 
+const commonFonts = [
+  'Arial', 'Arial Black', 'Arial Narrow',
+  'Calibri', 'Cambria', 'Candara', 'Charter',
+  'Comic Sans MS', 'Consolas', 'Constantia', 'Corbel',
+  'Courier', 'Courier New', 'DejaVu Sans', 'DejaVu Serif', 'DejaVu Sans Mono',
+  'FreeSans', 'FreeSerif',
+  'Geneva', 'Georgia',
+  'Helvetica', 'Helvetica Neue', 'Impact',
+  'Lucida Console', 'Lucida Sans Unicode', 'Lucida Grande',
+  'Menlo', 'Monaco', 'Nimbus Sans', 'Nimbus Roman',
+  'Optima', 'Palatino',
+  'San Francisco', 'Segoe UI',
+  'Tahoma', 'Times', 'Times New Roman', 'Trebuchet MS',
+  'Ubuntu', 'Ubuntu Mono',
+  'Verdana',
+]
+
+const detectAvailableFonts = (fontList: string[]) => {
+  const testString = 'mmmmmmmmmmlli' // string with wide and narrow characters
+  const testSize = '72px'
+
+  const baseFonts = ['monospace', 'sans-serif', 'serif']
+  const defaultWidths: Record<string, number> = {}
+
+  const body = document.body
+  const span = document.createElement('span')
+  span.style.fontSize = testSize
+  span.style.position = 'absolute'
+  span.style.left = '-9999px'
+  span.textContent = testString
+  body.appendChild(span)
+
+  // Get default widths
+  for (const baseFont of baseFonts) {
+    span.style.fontFamily = baseFont
+    defaultWidths[baseFont] = span.offsetWidth
+  }
+
+  const availableFonts = []
+
+  for (const font of fontList) {
+    for (const baseFont of baseFonts) {
+      span.style.fontFamily = `${font},${baseFont}`
+      const width = span.offsetWidth
+
+      if (width !== defaultWidths[baseFont]) {
+        availableFonts.push(font)
+        break
+      }
+    }
+  }
+
+  body.removeChild(span)
+  return availableFonts
+}
+
+let availableFonts: string[] | null = null
+export const getAvailableFonts = (): string[] => {
+  if (availableFonts === null) {
+    availableFonts = detectAvailableFonts(commonFonts)
+  }
+  return availableFonts
+}
+
 export default {
+  getAvailableFonts,
   wsClient,
   getFileFromDropEvent,
   getParam: (name: string) => (new URLSearchParams(window.location.search)).get(name) || '',

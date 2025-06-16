@@ -1,4 +1,4 @@
-import Db from '../DbPostgres'
+import type Db from '../DbPostgres'
 import { ChatLogRepo } from './ChatLogRepo'
 import { CommandExecutionRepo } from './CommandExecutionRepo'
 import { EventSubRepo } from './EventSubRepo'

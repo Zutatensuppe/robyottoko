@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { PlaylistItem } from '../../types'
+import type { PlaylistItem } from '../../types'
 import { findInsertIndex, moveTagUp } from './SongrequestModule'
 
 describe('src/mod/modules/SongrequestModule.ts', () => {
