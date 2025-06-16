@@ -1,14 +1,16 @@
 'use strict'
 
-import express, { NextFunction, Response, Router } from 'express'
+import type { NextFunction, Response, Router } from 'express'
+import express from 'express'
 import multer from 'multer'
 import { logger, nonce } from '../../common/fn'
-import { UpdateUser, User } from '../../repo/Users'
-import { Bot, UploadedFile } from '../../types'
+import type { UpdateUser, User } from '../../repo/Users'
+import type { Bot, UploadedFile } from '../../types'
 import { createRouter as createApiPubV1Router } from './pub/v1'
 import { createRouter as createUserRouter } from './user'
 import { RequireLoginApiMiddleware } from '../../net/middleware/RequireLoginApiMiddleware'
 import { moduleDefinitions } from '../../mod/Modules'
+import { VideoService } from '../../services/VideoService'
 
 const log = logger('api/index.ts')
 
@@ -215,6 +217,21 @@ export const createRouter = (
       }, 'save-settings: user doesn\'t exist after saving it')
     }
     res.send()
+  })
+
+  router.get('/video-url', async (req: any, res: Response) => {
+    const url = String(req.query.url || '')
+    if (VideoService.isTwitchClipUrl(url)) {
+      const finalUrl = await VideoService.downloadVideo(url)
+      res.redirect(finalUrl)
+      return
+    }
+    if (url.match(/^https?:\/\/.+/)) {
+      res.redirect(url)
+      return
+    }
+
+    res.status(404).send()
   })
 
   router.use('/user', createUserRouter(bot))

@@ -1,28 +1,30 @@
-import { NextFunction, Response } from 'express'
-import { Emitter, EventType } from 'mitt'
-import { LogLevel } from './common/fn'
-import { CommandRestrict } from './common/permissions'
-import ModuleManager from './mod/ModuleManager'
-import { GeneralModuleEmotesEventData } from './mod/modules/GeneralModuleCommon'
-import Auth from './net/Auth'
-import TwitchClientManager from './services/TwitchClientManager'
-import WebSocketServer, { Socket } from './net/WebSocketServer'
-import Cache from './services/Cache'
-import { FrontendStatusUpdater } from './services/FrontendStatusUpdater'
-import { StreamStatusUpdater } from './services/StreamStatusUpdater'
-import { User } from './repo/Users'
-import Widgets from './services/Widgets'
-import WebServer from './net/WebServer'
-import { TwitchTmiClientManager } from './services/TwitchTmiClientManager'
-import { Repos } from './repo/Repos'
-import { Youtube } from './services/Youtube'
-import { Canny } from './services/Canny'
-import Db from './DbPostgres'
-import { Discord } from './services/Discord'
-import { EmoteParser } from './services/EmoteParser'
-import { TimeApi } from './services/TimeApi'
-import { EffectApplier } from './effect/EffectApplier'
-import { TwitchClient, TwitchEventContext } from './services/twitch'
+import type { NextFunction, Response } from 'express'
+import type { Emitter, EventType } from 'mitt'
+import type { LogLevel } from './common/fn'
+import type { CommandRestrict } from './common/permissions'
+import type ModuleManager from './mod/ModuleManager'
+import type { GeneralModuleEmotesEventData } from './mod/modules/GeneralModuleCommon'
+import type Auth from './net/Auth'
+import type TwitchClientManager from './services/TwitchClientManager'
+import type WebSocketServer from './net/WebSocketServer'
+import type { Socket } from './net/WebSocketServer'
+import type Cache from './services/Cache'
+import type { FrontendStatusUpdater } from './services/FrontendStatusUpdater'
+import type { StreamStatusUpdater } from './services/StreamStatusUpdater'
+import type { User } from './repo/Users'
+import type Widgets from './services/Widgets'
+import type WebServer from './net/WebServer'
+import type { TwitchTmiClientManager } from './services/TwitchTmiClientManager'
+import type { Repos } from './repo/Repos'
+import type { Youtube } from './services/Youtube'
+import type { Canny } from './services/Canny'
+import type Db from './DbPostgres'
+import type { Discord } from './services/Discord'
+import type { EmoteParser } from './services/EmoteParser'
+import type { TimeApi } from './services/TimeApi'
+import type { EffectApplier } from './effect/EffectApplier'
+import type { TwitchClient, TwitchEventContext } from './services/twitch'
+import type TwitchHelixClient from './services/TwitchHelixClient'
 
 type int = number
 
@@ -123,6 +125,7 @@ export interface Config {
     }
   }
   youtubeDlBinary: string
+  ffmpegBinary: string
   canny: CannyConfig
   discord: DiscordConfig
 }
@@ -272,6 +275,7 @@ export enum CommandEffectType {
   DICT_LOOKUP = 'dict_lookup',
   EMOTES = 'emotes',
   MEDIA = 'media',
+  MEDIA_V2 = 'media_v2',
   SET_CHANNEL_TITLE = 'set_channel_title',
   SET_CHANNEL_GAME_ID = 'set_channel_game_id',
   ADD_STREAM_TAGS = 'add_stream_tags',
@@ -290,6 +294,7 @@ export type CommandEffectData =
   DictLookupEffectData |
   EmotesEffectData |
   MediaEffectData |
+  MediaV2EffectData |
   MediaVolumeEffectData |
   RemoveStreamTagEffectData |
   RouletteEffectData |
@@ -325,6 +330,11 @@ export interface EmotesEffectData {
 export interface MediaEffectData {
   type: CommandEffectType.MEDIA
   data: MediaCommandData
+}
+
+export interface MediaV2EffectData {
+  type: CommandEffectType.MEDIA_V2
+  data: MediaV2CommandData
 }
 
 export interface SetChannelTitleEffectData {
@@ -597,6 +607,57 @@ export interface MediaVideo {
   volume: number // 0 - 100
 }
 
+export interface MediaV2Visualization {
+  rectangle: {
+    x: number // 0 - 1
+    y: number // 0 - 1
+    width: number // 0 - 1
+    height: number // 0 - 1
+  }
+  rotation: number // 0 - 360
+  css: string // freestyle css that will get applied to the item only
+}
+
+export type MediaV2CommandDataImageItem = {
+  type: 'image'
+  image: MediaFile | null // one of both must be set to something
+  imageUrl: string | null // one of both must be set to something
+} & MediaV2Visualization
+
+export type MediaV2CommandDataSoundItem = {
+  type: 'sound'
+  sound: SoundMediaFile
+}
+
+export type MediaV2CommandDataTextItem = {
+  type: 'text'
+  text: string
+  font: string // css font string
+  bold: boolean
+  italic: boolean
+  color: string // css color string
+  outline: string // css color string
+  outlineWidth: number
+} & MediaV2Visualization
+
+export type MediaV2CommandDataVideoItem = {
+  type: 'video'
+  video: MediaVideo
+} & MediaV2Visualization
+
+export type MediaV2CommandDataItem =
+  MediaV2CommandDataImageItem |
+  MediaV2CommandDataSoundItem |
+  MediaV2CommandDataTextItem |
+  MediaV2CommandDataVideoItem
+
+export interface MediaV2CommandData {
+  widgetIds: string[]
+  mediaItems: MediaV2CommandDataItem[]
+  minDurationMs: string | number
+}
+
+// @deprecated (use `MediaV2CommandData` instead)
 export interface MediaCommandData {
   widgetIds: string[]
   sound: SoundMediaFile
@@ -692,6 +753,7 @@ export enum MODULE_NAME {
 export enum WIDGET_TYPE {
   SR = 'sr',
   MEDIA = 'media',
+  MEDIA_V2 = 'media_v2',
   EMOTE_WALL = 'emote_wall',
   SPEECH_TO_TEXT_CONTROL = 'speech-to-text',
   SPEECH_TO_TEXT_RECEIVE = 'speech-to-text_receive',
@@ -746,6 +808,7 @@ export interface Bot {
   getEffectsApplier: () => EffectApplier
   getStreamStatusUpdater: () => StreamStatusUpdater
   getFrontendStatusUpdater: () => FrontendStatusUpdater
+  getHelixClient: () => TwitchHelixClient
   getTwitchTmiClientManager: () => TwitchTmiClientManager
   getCanny: () => Canny
   getDiscord: () => Discord

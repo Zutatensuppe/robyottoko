@@ -1,10 +1,12 @@
 'use strict'
 
-import express, { NextFunction, Response, Router } from 'express'
+import type { NextFunction, Response, Router } from 'express'
+import express from 'express'
 import crypto from 'crypto'
 import { logger, YEAR } from '../../common/fn'
-import { Bot } from '../../types'
-import { HandleCodeCallbackResult, handleOAuthCodeCallback } from '../../oauth'
+import type { Bot } from '../../types'
+import type { HandleCodeCallbackResult} from '../../oauth'
+import { handleOAuthCodeCallback } from '../../oauth'
 import { SubscribeEventHandler } from '../../services/twitch/SubscribeEventHandler'
 import { FollowEventHandler } from '../../services/twitch/FollowEventHandler'
 import { CheerEventHandler } from '../../services/twitch/CheerEventHandler'
@@ -13,8 +15,9 @@ import { SubscriptionType } from '../../services/twitch/EventSub'
 import { StreamOnlineEventHandler } from '../../services/twitch/StreamOnlineEventHandler'
 import { StreamOfflineEventHandler } from '../../services/twitch/StreamOfflineEventHandler'
 import { RaidEventHandler } from '../../services/twitch/RaidEventHandler'
-import { EventSubEventHandler } from '../../services/twitch/EventSubEventHandler'
+import type { EventSubEventHandler } from '../../services/twitch/EventSubEventHandler'
 import { SubscriptionGiftEventHandler } from '../../services/twitch/SubscriptionGiftEventHandler'
+import TwitchHelixClient from '../../services/TwitchHelixClient'
 
 const log = logger('twitch/index.ts')
 

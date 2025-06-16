@@ -1,4 +1,5 @@
-import xhr, { asQueryArgs } from '../../net/xhr'
+import { asQueryArgs } from '../../common/fn'
+import xhr from '../../net/xhr'
 import { NotFoundError } from './NotFoundError'
 
 export interface InvidiousVideo {

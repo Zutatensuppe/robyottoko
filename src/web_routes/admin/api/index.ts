@@ -1,7 +1,8 @@
 'use strict'
 
-import express, { NextFunction, Response, Router } from 'express'
-import { Bot } from '../../../types'
+import type { NextFunction, Response, Router } from 'express'
+import express from 'express'
+import type { Bot } from '../../../types'
 
 export const createRouter = (
   bot: Bot,
@@ -33,7 +34,7 @@ export const createRouter = (
   }
 
   const router = express.Router()
-  
+
   router.use(requireLoginApi)
 
   router.get('/announcements', async (req, res: Response) => {

@@ -1,4 +1,4 @@
-import { NextFunction } from 'express'
+import type { NextFunction } from 'express'
 
 export const RequireLoginApiMiddleware = (req: any, res: any, next: NextFunction) => {
   if (!req.token) {

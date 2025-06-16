@@ -1,6 +1,7 @@
 import { logger, MINUTE } from './../../common/fn'
-import TwitchHelixClient, { TwitchHelixGlobalEmotesResponseData } from '../TwitchHelixClient'
-import { TwitchContext } from '../twitch'
+import type { TwitchHelixGlobalEmotesResponseData } from '../TwitchHelixClient'
+import type TwitchHelixClient from '../TwitchHelixClient'
+import type { TwitchContext } from '../twitch'
 
 const loadedAssets: Record<string, LoadedChannelAssets> = {}
 

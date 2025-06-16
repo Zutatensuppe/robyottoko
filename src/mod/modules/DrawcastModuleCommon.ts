@@ -1,7 +1,7 @@
 'use strict'
 
 import { getProp } from '../../common/fn'
-import { DrawcastSettings, MediaFile, SoundMediaFile } from '../../types'
+import type { DrawcastSettings, MediaFile, SoundMediaFile } from '../../types'
 
 export interface DrawcastModuleWsData {
   event: string

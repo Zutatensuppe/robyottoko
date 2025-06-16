@@ -1,5 +1,5 @@
-import { User } from '../repo/Users'
-import { Module } from '../types'
+import type { User } from '../repo/Users'
+import type { Module } from '../types'
 
 class ModuleManager {
   private instances: Record<number, Module[]> = {}

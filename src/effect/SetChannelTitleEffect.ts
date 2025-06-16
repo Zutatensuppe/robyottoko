@@ -1,5 +1,5 @@
 import { logger, unicodeLength } from '../common/fn'
-import { SetChannelTitleEffectData } from '../types'
+import type { SetChannelTitleEffectData } from '../types'
 import { Effect } from './Effect'
 
 const log = logger('SetChannelTitleEffect.ts')

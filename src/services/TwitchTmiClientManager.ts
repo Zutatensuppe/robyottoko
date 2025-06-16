@@ -1,5 +1,6 @@
-import { TwitchBotIdentity } from '../types'
-import { createTwitchClient, TwitchClient } from './twitch'
+import type { TwitchBotIdentity } from '../types'
+import type { TwitchClient } from './twitch'
+import { createTwitchClient } from './twitch'
 
 export class TwitchTmiClientManager {
   constructor () {

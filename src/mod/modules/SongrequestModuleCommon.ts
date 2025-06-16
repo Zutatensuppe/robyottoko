@@ -1,6 +1,6 @@
 'use strict'
 
-import { Command, FunctionCommand, GlobalVariable, MediaFile, PlaylistItem } from '../../types'
+import type { Command, FunctionCommand, GlobalVariable, MediaFile, PlaylistItem } from '../../types'
 import { commands } from '../../common/commands'
 import { getProp } from '../../common/fn'
 import { presets } from './SongrequestPresets'

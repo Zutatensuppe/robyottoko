@@ -1,4 +1,4 @@
-import { MediaFile, SoundMediaFile, UploadedFile } from '../types'
+import type { MediaFile, SoundMediaFile, UploadedFile } from '../types'
 
 export const MS = 1
 export const SECOND = 1000 * MS
@@ -8,10 +8,7 @@ export const DAY = 24 * HOUR
 export const MONTH = 30 * DAY
 export const YEAR = 365 * DAY
 
-interface LogFn {
-  (obj: unknown, msg?: string): void;
-  (msg: string): void;
-}
+type LogFn = (...args: any[]) => void
 
 export enum LogLevel {
   INFO = 'info',
@@ -453,9 +450,24 @@ export const daysUntil = (
   }
 }
 
+export type QueryArgsData = Record<string, string | number>
+
+export function asQueryArgs(data: QueryArgsData) {
+  const q = []
+  for (const k in data) {
+    const pair = [k, data[k]].map(encodeURIComponent)
+    q.push(pair.join('='))
+  }
+  if (q.length === 0) {
+    return ''
+  }
+  return `?${q.join('&')}`
+}
+
 export default {
   arrayMove,
   arraySwap,
+  asQueryArgs,
   clamp,
   daysUntil,
   doDummyReplacements,

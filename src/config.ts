@@ -1,5 +1,6 @@
-import { PathOrFileDescriptor, readFileSync } from 'fs'
-import { Config } from './types'
+import type { PathOrFileDescriptor} from 'fs'
+import { readFileSync } from 'fs'
+import type { Config } from './types'
 
 const absPath = (path: string): URL => new URL(path, import.meta.url)
 

@@ -1,17 +1,5 @@
+import { asQueryArgs } from '../../common/fn'
 import { get, post, postJson, postJsonStr, request } from './xhr'
-
-type QueryArgsData = Record<string, string | number>
-function asQueryArgs(data: QueryArgsData) {
-  const q = []
-  for (const k in data) {
-    const pair = [k, data[k]].map(encodeURIComponent)
-    q.push(pair.join('='))
-  }
-  if (q.length === 0) {
-    return ''
-  }
-  return `?${q.join('&')}`
-}
 
 export default {
   saveVariables: async (data: { variables: any }) => postJson('/api/save-variables', data),

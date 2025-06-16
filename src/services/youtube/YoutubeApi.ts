@@ -1,6 +1,7 @@
-import { logger, MINUTE } from '../../common/fn'
-import xhr, { asQueryArgs, QueryArgsData } from '../../net/xhr'
-import { YoutubeConfig } from '../../types'
+import type { QueryArgsData } from '../../common/fn'
+import { asQueryArgs, logger, MINUTE } from '../../common/fn'
+import xhr from '../../net/xhr'
+import type { YoutubeConfig } from '../../types'
 import { NoApiKeysError } from './NoApiKeysError'
 import { QuotaReachedError } from './QuotaReachedError'
 

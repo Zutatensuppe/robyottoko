@@ -1,4 +1,4 @@
-import { RouletteEffectData } from '../types'
+import type { RouletteEffectData } from '../types'
 import { Effect } from './Effect'
 
 export class RouletteEffect extends Effect<RouletteEffectData> {

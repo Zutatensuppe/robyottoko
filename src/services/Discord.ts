@@ -1,4 +1,4 @@
-import { DiscordConfig } from '../types'
+import type { DiscordConfig } from '../types'
 
 export class Discord {
   constructor(

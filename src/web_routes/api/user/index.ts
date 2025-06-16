@@ -1,8 +1,9 @@
 'use strict'
 
-import express, { Response, Router } from 'express'
+import type { Response, Router } from 'express'
+import express from 'express'
 import { RequireLoginApiMiddleware } from '../../../net/middleware/RequireLoginApiMiddleware'
-import { Bot, FullApiUserData } from '../../../types'
+import type { Bot, FullApiUserData } from '../../../types'
 
 export const createRouter = (
   bot: Bot,

@@ -1,5 +1,5 @@
-import { logger } from '../common/fn'
-import xhr, { asQueryArgs } from '../net/xhr'
+import { asQueryArgs, logger } from '../common/fn'
+import xhr from '../net/xhr'
 
 const log = logger('JishoOrg.ts')
 

@@ -1,10 +1,14 @@
 import { getProp, mustParseHumanDuration, nonce } from '../common/fn'
-import {
+import type {
   AbstractCommand,
-  Command, CommandAction, CommandEffectData, CommandEffectType, CommandTrigger, CommandTriggerType,
-  CountdownAction, CountdownActionType, FunctionCommand,
+  Command, CommandEffectData, CommandTrigger,
+  CountdownAction, FunctionCommand,
   GeneralCommand,
-  MediaCommandData, MediaFile, MediaVideo, RouletteCommandData, RouletteEntry, SoundMediaFile, SrAddtagCommand, SrBadCommand, SrClearCommand, SrCurrentCommand, SrFilterCommand, SrGoodCommand, SrHidevideoCommand, SrJumptonewCommand, SrLoopCommand, SrMoveTagUpCommand, SrNextCommand, SrNoloopCommand, SrPauseCommand, SrPresetCommand, SrPrevCommand, SrQueueCommand, SrReRequestCommand, SrRequestCommand, SrResetStatsCommand, SrRmCommand, SrRmtagCommand, SrShowvideoCommand, SrShuffleCommand, SrStatsCommand, SrUndoCommand, SrUnpauseCommand, SrVolumeCommand,
+  MediaCommandData, MediaV2CommandDataSoundItem, MediaFile, MediaV2CommandData, MediaVideo, RouletteCommandData, RouletteEntry, SoundMediaFile, SrAddtagCommand, SrBadCommand, SrClearCommand, SrCurrentCommand, SrFilterCommand, SrGoodCommand, SrHidevideoCommand, SrJumptonewCommand, SrLoopCommand, SrMoveTagUpCommand, SrNextCommand, SrNoloopCommand, SrPauseCommand, SrPresetCommand, SrPrevCommand, SrQueueCommand, SrReRequestCommand, SrRequestCommand, SrResetStatsCommand, SrRmCommand, SrRmtagCommand, SrShowvideoCommand, SrShuffleCommand, SrStatsCommand, SrUndoCommand, SrUnpauseCommand, SrVolumeCommand,
+  MediaV2CommandDataVideoItem,
+  MediaV2CommandDataImageItem,
+  MediaV2CommandDataTextItem} from '../types'
+import { CommandAction, CommandEffectType, CommandTriggerType, CountdownActionType,
 } from '../types'
 import { MOD_OR_ABOVE } from './permissions'
 
@@ -36,6 +40,48 @@ export const newMedia = (obj: any = null): MediaCommandData => ({
   image_url: getProp(obj, ['image_url'], ''), // image identified by url only
   video: newMediaVideo(obj?.video),
   minDurationMs: getProp(obj, ['minDurationMs'], '1s'),
+})
+
+export const newMediaV2 = (obj: any = null): MediaV2CommandData => ({
+  widgetIds: getProp(obj, ['widgetIds'], []),
+  mediaItems: getProp(obj, ['mediaItems'], []),
+  minDurationMs: getProp(obj, ['minDurationMs'], '1s'),
+})
+
+export const newMediaV2Sound = (obj: any = null): MediaV2CommandDataSoundItem => ({
+  type: 'sound',
+  sound: newSoundMediaFile(obj?.sound),
+})
+
+export const newMediaV2Video = (obj: any = null): MediaV2CommandDataVideoItem => ({
+  type: 'video',
+  video: newMediaVideo(obj?.video),
+  rectangle: getProp(obj, ['rectangle'], { x: 0, y: 0, width: 1, height: 1 }),
+  rotation: getProp(obj, ['rotation'], 0),
+  css: getProp(obj, ['css'], ''),
+})
+
+export const newMediaV2Image = (obj: any = null): MediaV2CommandDataImageItem => ({
+  type: 'image',
+  image: newMediaFile(obj?.image),
+  imageUrl: getProp(obj, ['imageUrl'], ''),
+  rectangle: getProp(obj, ['rectangle'], { x: 0, y: 0, width: 1, height: 1 }),
+  rotation: getProp(obj, ['rotation'], 0),
+  css: getProp(obj, ['css'], ''),
+})
+
+export const newMediaV2Text = (obj: any = null): MediaV2CommandDataTextItem => ({
+  type: 'text',
+  text: getProp(obj, ['text'], ''),
+  font: getProp(obj, ['font'], ''),
+  color: getProp(obj, ['color'], ''),
+  outline: getProp(obj, ['outline'], ''),
+  bold: getProp(obj, ['bold'], false),
+  italic: getProp(obj, ['italic'], false),
+  outlineWidth: getProp(obj, ['outlineWidth'], 0),
+  rectangle: getProp(obj, ['rectangle'], { x: 0, y: 0, width: 1, height: 1 }),
+  rotation: getProp(obj, ['rotation'], 0),
+  css: getProp(obj, ['css'], ''),
 })
 
 export const newRoulette = (): RouletteCommandData => ({
@@ -488,19 +534,21 @@ export const commands: Record<CommandAction, CommandDef> = {
 }
 
 export const possibleEffectActions = () => ([
-  { type: CommandEffectType.CHAT, label: 'Add chat', title: 'chat' },
-  { type: CommandEffectType.MEDIA, label: 'Add media', title: 'media' },
-  { type: CommandEffectType.MEDIA_VOLUME, label: 'Add media volume', title: 'media_volume' },
-  { type: CommandEffectType.EMOTES, label: 'Add emotes', title: 'emotes' },
-  { type: CommandEffectType.ROULETTE, label: 'Add roulette', title: 'roulette' },
-  { type: CommandEffectType.SET_CHANNEL_TITLE, label: 'Add set_channel_title', title: 'set_channel_title' },
-  { type: CommandEffectType.SET_CHANNEL_GAME_ID, label: 'Add set_channel_game_id', title: 'set_channel_game_id' },
-  { type: CommandEffectType.CHATTERS, label: 'Add chatters', title: 'chatters' },
-  { type: CommandEffectType.DICT_LOOKUP, label: 'Add dict_lookup', title: 'dict_lookup' },
-  { type: CommandEffectType.ADD_STREAM_TAGS, label: 'Add add_stream_tags', title: 'add_stream_tags' },
-  { type: CommandEffectType.REMOVE_STREAM_TAGS, label: 'Add remove_stream_tags', title: 'remove_stream_tags' },
-  { type: CommandEffectType.COUNTDOWN, label: 'Add countdown', title: 'countdown' },
-  { type: CommandEffectType.VARIABLE_CHANGE, label: 'Add variable_change', title: 'variable_change' },
+  { type: CommandEffectType.CHAT, label: 'Add chat', title: CommandEffectType.CHAT },
+  { type: CommandEffectType.MEDIA, label: 'Add media', title: CommandEffectType.MEDIA },
+  // MEDIA_V2 DISABLED FOR PRODUCTION
+  // { type: CommandEffectType.MEDIA_V2, label: 'Add media v2', title: CommandEffectType.MEDIA_V2 },
+  { type: CommandEffectType.MEDIA_VOLUME, label: 'Add media volume', title: CommandEffectType.MEDIA_VOLUME },
+  { type: CommandEffectType.EMOTES, label: 'Add emotes', title: CommandEffectType.EMOTES },
+  { type: CommandEffectType.ROULETTE, label: 'Add roulette', title: CommandEffectType.ROULETTE },
+  { type: CommandEffectType.SET_CHANNEL_TITLE, label: 'Add set_channel_title', title: CommandEffectType.SET_CHANNEL_TITLE },
+  { type: CommandEffectType.SET_CHANNEL_GAME_ID, label: 'Add set_channel_game_id', title: CommandEffectType.SET_CHANNEL_GAME_ID },
+  { type: CommandEffectType.CHATTERS, label: 'Add chatters', title: CommandEffectType.CHATTERS },
+  { type: CommandEffectType.DICT_LOOKUP, label: 'Add dict_lookup', title: CommandEffectType.DICT_LOOKUP },
+  { type: CommandEffectType.ADD_STREAM_TAGS, label: 'Add add_stream_tags', title: CommandEffectType.ADD_STREAM_TAGS },
+  { type: CommandEffectType.REMOVE_STREAM_TAGS, label: 'Add remove_stream_tags', title: CommandEffectType.REMOVE_STREAM_TAGS },
+  { type: CommandEffectType.COUNTDOWN, label: 'Add countdown', title: CommandEffectType.COUNTDOWN },
+  { type: CommandEffectType.VARIABLE_CHANGE, label: 'Add variable_change', title: CommandEffectType.VARIABLE_CHANGE },
 ])
 
 const newEffectData = (type: CommandEffectType): any => {
@@ -515,6 +563,8 @@ const newEffectData = (type: CommandEffectType): any => {
       return { displayFn: [], emotes: [] }
     case CommandEffectType.MEDIA:
       return newMedia()
+    case CommandEffectType.MEDIA_V2:
+      return newMediaV2()
     case CommandEffectType.SET_CHANNEL_TITLE:
       return { title: '' }
     case CommandEffectType.SET_CHANNEL_GAME_ID:

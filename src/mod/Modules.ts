@@ -1,4 +1,5 @@
-import { ModuleDefinition, MODULE_NAME } from '../types'
+import type { ModuleDefinition} from '../types'
+import { MODULE_NAME } from '../types'
 
 export const moduleDefinitions: ModuleDefinition[] = [
   {

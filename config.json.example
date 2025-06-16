@@ -58,6 +58,7 @@
     }
   },
   "youtubeDlBinary": "yt-dlp",
+  "ffmpegBinary": "ffmpeg",
   "canny": {
     "sso_private_key": "SSO_PRIVATE_KEY"
   }

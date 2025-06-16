@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken'
-import { User } from '../repo/Users'
-import { CannyConfig } from '../types'
+import type { User } from '../repo/Users'
+import type { CannyConfig } from '../types'
 
 export class Canny {
   constructor(private config: CannyConfig) {

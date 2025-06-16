@@ -1,6 +1,7 @@
 import { nonce } from '../common/fn'
-import { MODULE_NAME, WidgetDefinition, WidgetInfo, WIDGET_TYPE } from '../types'
-import { Repos } from '../repo/Repos'
+import type { WidgetDefinition, WidgetInfo} from '../types'
+import { MODULE_NAME, WIDGET_TYPE } from '../types'
+import type { Repos } from '../repo/Repos'
 
 const widgets: WidgetDefinition[] = [
   {
@@ -14,6 +15,13 @@ const widgets: WidgetDefinition[] = [
     type: WIDGET_TYPE.MEDIA,
     module: MODULE_NAME.GENERAL,
     title: 'Media',
+    hint: 'Browser source, or open in browser and capture window',
+    pub: false,
+  },
+  {
+    type: WIDGET_TYPE.MEDIA_V2,
+    module: MODULE_NAME.GENERAL,
+    title: 'Media V2',
     hint: 'Browser source, or open in browser and capture window',
     pub: false,
   },
@@ -150,6 +158,10 @@ class Widgets {
   async getWidgetInfos(userId: number): Promise<WidgetInfo[]> {
     const widgetInfos = []
     for (const w of widgets) {
+      if (w.type === WIDGET_TYPE.MEDIA_V2) {
+        // MEDIA_V2 DISABLED FOR PRODUCTION
+        continue
+      }
       const url = await this.widgetUrlByTypeAndUserId(w.type, userId)
       widgetInfos.push({
         type: w.type,

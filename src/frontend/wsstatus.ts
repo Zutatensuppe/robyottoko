@@ -1,5 +1,5 @@
 import util from './util'
-import WsClient from './WsClient'
+import type WsClient from './WsClient'
 import mitt from 'mitt'
 
 export const eventBus = mitt()

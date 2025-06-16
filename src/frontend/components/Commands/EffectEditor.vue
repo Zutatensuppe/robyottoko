@@ -23,6 +23,12 @@
     :base-volume="baseVolume"
     :widget-url="mediaWidgetUrl"
   />
+  <MediaV2Effect
+    v-else-if="val.type === CommandEffectType.MEDIA_V2"
+    v-model="val"
+    :base-volume="baseVolume"
+    :widget-url="mediaV2WidgetUrl"
+  />
   <SetChannelTitleEffect
     v-else-if="val.type === CommandEffectType.SET_CHANNEL_TITLE"
     v-model="val"
@@ -62,6 +68,7 @@ import ChatEffect from './Effects/ChatEffect.vue'
 import DictLookupEffect from './Effects/DictLookupEffect.vue'
 import EmotesEffect from './Effects/EmotesEffect.vue'
 import MediaEffect from './Effects/MediaEffect.vue'
+import MediaV2Effect from './Effects/MediaV2Effect.vue'
 import SetChannelTitleEffect from './Effects/SetChannelTitleEffect.vue'
 import SetChannelGameIdEffect from './Effects/SetChannelGameIdEffect.vue'
 import AddStreamTagsEffect from './Effects/AddStreamTagsEffect.vue'
@@ -76,12 +83,13 @@ export interface AutocompletableVariable {
 }
 
 const props = defineProps<{
-  modelValue: CommandEffectData,
-  itemVariables: CommandVariable[],
-  globalVariables: GlobalVariable[],
-  baseVolume: number,
-  mediaWidgetUrl: string,
-  rouletteWidgetUrl: string,
+  modelValue: CommandEffectData
+  itemVariables: CommandVariable[]
+  globalVariables: GlobalVariable[]
+  baseVolume: number
+  mediaWidgetUrl: string
+  mediaV2WidgetUrl: string
+  rouletteWidgetUrl: string
 }>()
 
 const val = ref<CommandEffectData>(props.modelValue)

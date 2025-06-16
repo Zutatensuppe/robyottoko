@@ -13,7 +13,7 @@ import {
   safeFileName,
   normalizeChatMessage,
 } from './fn'
-import { Command, CommandTrigger } from './types'
+import type { Command, CommandTrigger } from './types'
 
 describe('src/fn.ts', () => {
   describe('accentFolded', () => {

@@ -1,11 +1,12 @@
 'use strict'
 
-import express, { Response, Router } from 'express'
+import type { Response, Router } from 'express'
+import express from 'express'
 import cors from 'cors'
 import { TokenType } from '../../../../repo/Tokens'
-import { Bot } from '../../../../types'
+import type { Bot } from '../../../../types'
 import TwitchHelixClient from '../../../../services/TwitchHelixClient'
-import DrawcastModule from '../../../../mod/modules/DrawcastModule'
+import type DrawcastModule from '../../../../mod/modules/DrawcastModule'
 
 export const createRouter = (
   bot: Bot,
@@ -34,11 +35,7 @@ export const createRouter = (
     }
 
     const channelName = String(req.query.channel)
-    const helixClient = new TwitchHelixClient(
-      bot.getConfig().twitch.tmi.identity.client_id,
-      bot.getConfig().twitch.tmi.identity.client_secret,
-    )
-    const channelId = await helixClient.getUserIdByNameCached(channelName, bot.getCache())
+    const channelId = await bot.getHelixClient().getUserIdByNameCached(channelName, bot.getCache())
     if (!channelId) {
       res.status(400).send({ ok: false, error: 'unable to determine channel id' })
       return
@@ -53,7 +50,7 @@ export const createRouter = (
         return
       }
     } else {
-      const stream = await helixClient.getStreamByUserIdCached(channelId, bot.getCache())
+      const stream = await bot.getHelixClient().getStreamByUserIdCached(channelId, bot.getCache())
       if (!stream) {
         res.status(400).send({ ok: false, error: 'stream not online at the moment' })
         return

@@ -1,9 +1,12 @@
+import { asQueryArgs } from '../../common/fn'
 import config from '../../config'
-import { Socket } from '../../net/WebSocketServer'
-import xhr, { asQueryArgs } from '../../net/xhr'
-import { User } from '../../repo/Users'
-import { Bot, ChatMessageContext, Module, MODULE_NAME, WIDGET_TYPE } from '../../types'
-import { default_settings, SpeechToTextModuleData, SpeechToTextModuleSettings, SpeechToTextWsData } from './SpeechToTextModuleCommon'
+import type { Socket } from '../../net/WebSocketServer'
+import xhr from '../../net/xhr'
+import type { User } from '../../repo/Users'
+import type { Bot, ChatMessageContext, Module} from '../../types'
+import { MODULE_NAME, WIDGET_TYPE } from '../../types'
+import type { SpeechToTextModuleData, SpeechToTextModuleSettings, SpeechToTextWsData } from './SpeechToTextModuleCommon'
+import { default_settings } from './SpeechToTextModuleCommon'
 
 class SpeechToTextModule implements Module {
   public name = MODULE_NAME.SPEECH_TO_TEXT

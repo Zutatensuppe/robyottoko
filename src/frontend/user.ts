@@ -1,5 +1,5 @@
 import mitt from 'mitt'
-import { FullApiUserData } from '../types'
+import type { FullApiUserData } from '../types'
 import api from './_api'
 
 let me: FullApiUserData | null = null

@@ -1,5 +1,5 @@
-import { TwitchEventContext } from '../services/twitch'
-import { Command, FunctionCommand } from '../types'
+import type { TwitchEventContext } from '../services/twitch'
+import type { Command, FunctionCommand } from '../types'
 import { arrayIncludesIgnoreCase } from './fn'
 
 export enum CommandRestrictEnum {

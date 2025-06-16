@@ -1,6 +1,6 @@
 import { logger } from '../common/fn'
 import { joinIntoChunks } from '../fn'
-import { ChattersEffectData } from '../types'
+import type { ChattersEffectData } from '../types'
 import { Effect } from './Effect'
 
 const log = logger('ChattersEffect.ts')

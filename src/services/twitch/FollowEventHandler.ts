@@ -2,13 +2,13 @@
 
 import { newFollowTrigger } from '../../common/commands'
 import { logger } from '../../common/fn'
-import { Bot, RawCommand } from '../../types'
+import type { Bot, RawCommand } from '../../types'
 import { CommandExecutor } from '../CommandExecutor'
-import { User } from '../../repo/Users'
+import type { User } from '../../repo/Users'
 import { EventSubEventHandler } from './EventSubEventHandler'
 import { getUserTypeInfo } from '../../fn'
-import { Subscription } from './EventSub'
-import { TwitchEventContext } from '../twitch'
+import type { Subscription } from './EventSub'
+import type { TwitchEventContext } from '../twitch'
 
 const log = logger('FollowEventHandler.ts')
 

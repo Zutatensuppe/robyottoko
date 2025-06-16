@@ -30,6 +30,7 @@ module.exports = {
       allowTemplateLiterals: true,
     }],
     'comma-dangle': ['error', 'always-multiline'],
+    '@typescript-eslint/consistent-type-imports': 'error',
     '@typescript-eslint/no-inferrable-types': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
     // for now, explicit any is fine!

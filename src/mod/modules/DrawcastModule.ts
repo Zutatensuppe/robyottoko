@@ -1,9 +1,11 @@
 import fn from '../../fn'
 import { arrayIncludesIgnoreCase, nonce, logger } from '../../common/fn'
-import { Socket } from '../../net/WebSocketServer'
-import { Bot, ChatMessageContext, DrawcastSettings, Module, MODULE_NAME, WIDGET_TYPE } from '../../types'
-import { User } from '../../repo/Users'
-import { default_settings, default_images, DrawcastModuleData, DrawcastImage, DrawcastModuleWsData } from './DrawcastModuleCommon'
+import type { Socket } from '../../net/WebSocketServer'
+import type { Bot, ChatMessageContext, DrawcastSettings, Module} from '../../types'
+import { MODULE_NAME, WIDGET_TYPE } from '../../types'
+import type { User } from '../../repo/Users'
+import type { DrawcastModuleData, DrawcastImage, DrawcastModuleWsData } from './DrawcastModuleCommon'
+import { default_settings, default_images } from './DrawcastModuleCommon'
 import FileSystem from '../../services/FileSystem'
 
 const log = logger('DrawcastModule.ts')

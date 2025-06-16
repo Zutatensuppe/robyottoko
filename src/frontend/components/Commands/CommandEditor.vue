@@ -78,6 +78,7 @@
                   :global-variables="globalVariables"
                   :base-volume="baseVolume"
                   :media-widget-url="mediaWidgetUrl"
+                  :media-v2-widget-url="mediaV2WidgetUrl"
                   :roulette-widget-url="rouletteWidgetUrl"
                 />
               </td>
@@ -304,12 +305,13 @@ import PermissionsEdit from '../PermissionsEdit.vue'
 
 const props = defineProps<{
   modelValue: Command,
-  mode: 'create' | 'edit',
-  globalVariables: GlobalVariable[],
-  channelPointsCustomRewards: Record<string, string[]>,
-  baseVolume: any, // number | undefined ???
-  mediaWidgetUrl: string,
-  rouletteWidgetUrl: string,
+  mode: 'create' | 'edit'
+  globalVariables: GlobalVariable[]
+  channelPointsCustomRewards: Record<string, string[]>
+  baseVolume: any // number | undefined ???
+  mediaWidgetUrl: string
+  mediaV2WidgetUrl: string
+  rouletteWidgetUrl: string
 }>()
 
 const emit = defineEmits<{

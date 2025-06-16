@@ -1,12 +1,13 @@
 import TwitchHelixClient from './TwitchHelixClient'
-import { logger, Logger } from '../common/fn'
-import { User } from '../repo/Users'
-import { Bot, EventSubTransport, TwitchBotIdentity, TwitchConfig } from '../types'
+import type { Logger } from '../common/fn'
+import { logger } from '../common/fn'
+import type { User } from '../repo/Users'
+import type { Bot, EventSubTransport, TwitchBotIdentity, TwitchConfig } from '../types'
 import { ALL_SUBSCRIPTIONS_TYPES, SubscriptionType } from './twitch/EventSub'
 import { ChatEventHandler } from './twitch/ChatEventHandler'
 import { Timer } from '../Timer'
 import { normalizeChatMessage } from '../fn'
-import { TwitchClient, TwitchEventContext } from './twitch'
+import type { TwitchClient, TwitchEventContext } from './twitch'
 
 const log = logger('TwitchClientManager.ts')
 
@@ -91,13 +92,15 @@ class TwitchClientManager {
 
     const identity = determineIdentity(user, cfg)
 
+    this.helixClient = new TwitchHelixClient(
+      identity.client_id,
+      identity.client_secret,
+    )
+
     void this.bot.getEmoteParser().loadAssetsForChannel(
       user.twitch_login,
       user.twitch_id,
-      new TwitchHelixClient(
-        identity.client_id,
-        identity.client_secret,
-      ),
+      this.helixClient,
     )
 
     if (user.twitch_id && user.twitch_login && user.bot_enabled) {
@@ -173,11 +176,6 @@ class TwitchClientManager {
 
     // register EventSub
     // @see https://dev.twitch.tv/docs/eventsub
-    this.helixClient = new TwitchHelixClient(
-      identity.client_id,
-      identity.client_secret,
-    )
-
     if (this.bot.getConfig().twitch.eventSub.enabled) {
       // do NOT await, OTHERWISE
       // connecting will add ~2sec per user on server startup

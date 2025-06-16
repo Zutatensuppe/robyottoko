@@ -1,7 +1,7 @@
 'use strict'
 
 import { getProp } from '../../common/fn'
-import { SoundMediaFile } from '../../types'
+import type { SoundMediaFile } from '../../types'
 
 export interface PomoEffect {
   chatMessage: string

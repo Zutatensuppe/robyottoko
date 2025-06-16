@@ -1,5 +1,5 @@
 import { logger } from '../common/fn'
-import { GlobalVariable, VariableChangeEffectData } from '../types'
+import type { GlobalVariable, VariableChangeEffectData } from '../types'
 import { Effect } from './Effect'
 
 const log = logger('VariableChangeEffect.ts')
