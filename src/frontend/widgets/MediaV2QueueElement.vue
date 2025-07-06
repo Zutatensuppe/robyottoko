@@ -3,7 +3,7 @@
     <div
       v-for="(item, idx) in val.mediaItems" :key="idx"
       :class="['media-item', `media-item-${item.type}`]"
-      :style="itemStyle(item)"
+      :style="itemStyle(item, val.mediaItems.length - idx)"
     >
       <div
         v-if="item.type === 'image' && (item.image?.urlpath || item.imageUrl)"
@@ -45,11 +45,11 @@ import { MediaV2CommandData, MediaV2CommandDataItem } from '../../types'
 
 const log = logger('MediaV2QueueElement.vue')
 
-const itemStyle = (item: MediaV2CommandDataItem): StyleValue => {
+const itemStyle = (item: MediaV2CommandDataItem, zIndex: number): StyleValue => {
   if (item.type === 'sound') {
     return { display: 'none' }
   }
-  return {
+  const style: StyleValue = {
     position: 'absolute',
     left: `${item.rectangle.x * 100}%`,
     top: `${item.rectangle.y * 100}%`,
@@ -57,7 +57,18 @@ const itemStyle = (item: MediaV2CommandDataItem): StyleValue => {
     height: `${item.rectangle.height * 100}%`,
     transform: `rotate(${item.rotation || 0}deg)`,
     transformOrigin: 'center center',
+    zIndex,
   }
+  if (item.type === 'image') {
+    const maskImage = item.maskImage?.urlpath || item.maskImageUrl ? `url(${item.maskImage?.urlpath || item.maskImageUrl})` : ''
+    if (maskImage) {
+      style.maskImage = maskImage
+      style.maskSize = 'contain'
+      style.maskRepeat = 'no-repeat'
+      style.maskPosition = 'center'
+    }
+  }
+  return style
 }
 
 const itemInnerStyle = (item: MediaV2CommandDataItem): StyleValue => {

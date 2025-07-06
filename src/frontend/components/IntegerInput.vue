@@ -3,7 +3,7 @@
     v-model="val"
     class="input is-small"
     :placeholder="placeholder"
-    type="text"
+    type="number"
   >
 </template>
 <script setup lang="ts">

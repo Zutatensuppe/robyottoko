@@ -67,6 +67,8 @@ export const newMediaV2Image = (obj: any = null): MediaV2CommandDataImageItem =>
   imageUrl: getProp(obj, ['imageUrl'], ''),
   rectangle: getProp(obj, ['rectangle'], { x: 0, y: 0, width: 1, height: 1 }),
   rotation: getProp(obj, ['rotation'], 0),
+  maskImage: getProp(obj, ['maskImage'], null),
+  maskImageUrl: getProp(obj, ['maskImageUrl'], ''),
   css: getProp(obj, ['css'], ''),
 })
 
@@ -536,8 +538,7 @@ export const commands: Record<CommandAction, CommandDef> = {
 export const possibleEffectActions = () => ([
   { type: CommandEffectType.CHAT, label: 'Add chat', title: CommandEffectType.CHAT },
   { type: CommandEffectType.MEDIA, label: 'Add media', title: CommandEffectType.MEDIA },
-  // MEDIA_V2 DISABLED FOR PRODUCTION
-  // { type: CommandEffectType.MEDIA_V2, label: 'Add media v2', title: CommandEffectType.MEDIA_V2 },
+  { type: CommandEffectType.MEDIA_V2, label: 'Add media v2', title: CommandEffectType.MEDIA_V2 },
   { type: CommandEffectType.MEDIA_VOLUME, label: 'Add media volume', title: CommandEffectType.MEDIA_VOLUME },
   { type: CommandEffectType.EMOTES, label: 'Add emotes', title: CommandEffectType.EMOTES },
   { type: CommandEffectType.ROULETTE, label: 'Add roulette', title: CommandEffectType.ROULETTE },

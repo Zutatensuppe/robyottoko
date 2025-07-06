@@ -1,11 +1,11 @@
 <template>
   <div>
-    <label class="is-clickable"><CheckboxInput v-model="hideBoxes" /> Hide Boxes</label>
     <div class="media-v2-edit-area bg-transparent-light" :class="{ 'hide-boxes': hideBoxes }" ref="editAreaRef">
       <div
         v-for="(item, idx) in val" :key="idx"
-        :class="['media-item', `media-item-${item.type}`]"
-        :style="itemStyle(item)"
+        class="media-item"
+        :class="{ 'is-selected': idx === selectedItemIdx, [`media-item-${item.type}`]: true }"
+        :style="itemStyle(item, val.length - idx)"
         @mousedown="startDrag($event, idx)"
       >
         <div
@@ -31,10 +31,18 @@
           <span class="text-span">{{ item.text }}</span>
         </div>
 
-        <div class="resize-handle" @mousedown.stop="startResize($event, idx)"></div>
-        <div class="rotate-handle" @mousedown.stop="startRotate($event, idx)"></div>
+        <div
+          class="resize-handle"
+          @mousedown.stop="startResize($event, idx)"
+        ></div>
+        <div
+          class="rotate-handle"
+          @dblclick.stop="resetRotation(idx)"
+          @mousedown.stop="startRotate($event, idx)"
+        ></div>
       </div>
     </div>
+    <label class="is-clickable"><CheckboxInput v-model="hideBoxes" /> Hide Boxes in Preview</label>
   </div>
 </template>
 <script setup lang="ts">
@@ -45,6 +53,7 @@ import { asQueryArgs } from '../../../../common/fn'
 
 const props = defineProps<{
   modelValue: MediaV2CommandDataItem[]
+  selectedItemIdx: number
 }>()
 
 const hideBoxes = ref<boolean>(false)
@@ -61,6 +70,11 @@ const setTextRef = (el: HTMLElement | null, idx: number) => {
 const fitTextToContainer = (el: HTMLElement) => {
   const span = el.querySelector('.text-span') as HTMLElement
   if (!span) return
+
+  // Initially, set a very large font to make the
+  // container as large as possible. if this is not done there are some
+  // cases where the text will just stay small.
+  span.style.fontSize = '1000px'
 
   const containerWidth = el.clientWidth
   const containerHeight = el.clientHeight
@@ -92,6 +106,7 @@ const fitTextToContainer = (el: HTMLElement) => {
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: MediaV2CommandDataItem[]): void
+  (e: 'update:selectedItemIdx', val: number): void
 }>()
 
 const draggingIndex = ref<number | null>(null)
@@ -105,6 +120,7 @@ const videoUrl = (url: string): string => {
 }
 
 const startResize = (e: MouseEvent, index: number) => {
+  emit('update:selectedItemIdx', index)
   e.preventDefault()
   e.stopPropagation()
 
@@ -157,7 +173,16 @@ const rotationStart = ref({
   centerY: 0,
 })
 
+const resetRotation = (index: number) => {
+  const item = val.value[index]
+  if (item.type === 'sound') return
+
+  // Reset rotation to 0
+  item.rotation = 0
+}
+
 const startRotate = (e: MouseEvent, index: number) => {
+  emit('update:selectedItemIdx', index)
   const item = val.value[index]
   if (item.type === 'sound') return
 
@@ -204,7 +229,7 @@ const stopRotate = () => {
   rotatingIndex.value = null
 }
 
-const itemStyle = (item: MediaV2CommandDataItem): StyleValue => {
+const itemStyle = (item: MediaV2CommandDataItem, zIndex: number): StyleValue => {
   if (item.type === 'sound') {
     return { display: 'none' }
   }
@@ -216,6 +241,7 @@ const itemStyle = (item: MediaV2CommandDataItem): StyleValue => {
     height: `${item.rectangle.height * 100}%`,
     transform: `rotate(${item.rotation || 0}deg)`,
     transformOrigin: 'center center',
+    zIndex,
   }
 }
 const itemInnerStyle = (item: MediaV2CommandDataItem): StyleValue => {
@@ -254,10 +280,22 @@ const itemInnerStyle = (item: MediaV2CommandDataItem): StyleValue => {
     }
   }
 
+  if (item.type === 'image') {
+    const maskImage = item.maskImage?.urlpath || item.maskImageUrl ? `url(${item.maskImage?.urlpath || item.maskImageUrl})` : ''
+    if (maskImage) {
+      style.maskImage = maskImage
+      style.maskSize = 'contain'
+      style.maskRepeat = 'no-repeat'
+      style.maskPosition = 'center'
+    }
+  }
+
   return style
 }
 
 const startDrag = (e: MouseEvent, index: number) => {
+  emit('update:selectedItemIdx', index)
+
   const item = val.value[index]
   if (item.type === 'sound') return
 
@@ -343,10 +381,13 @@ watch(
     --name: 'Media';
 
     border: solid 2px rgba(var(--background-color), .5);
-    background: rgba(var(--background-color), .2);
     color: rgb(var(--color));
     cursor: move;
     user-select: none;
+
+    &.is-selected {
+      background: rgba(var(--background-color), .2);
+    }
 
     &::before {
       background: rgb(var(--background-color));
@@ -370,7 +411,6 @@ watch(
       --background-color: 0, 255, 0;
       --color: 0, 0, 0;
       --name: 'Image';
-      z-index: 10;
     }
   }
 
@@ -443,7 +483,7 @@ watch(
 }
 
 .text-container {
-  position: absolute;
+  position: relative;
   top: 0;
   left: 0;
   right: 0;
