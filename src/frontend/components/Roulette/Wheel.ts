@@ -31,6 +31,15 @@ export function randomFloat (min: number, max: number): number {
   return Math.random() * (max - min) + min
 }
 
+const hexIsLight = (color: string) => {
+  const hex = color.replace('#', '')
+  const c_r = parseInt(hex.substr(0, 2), 16)
+  const c_g = parseInt(hex.substr(2, 2), 16)
+  const c_b = parseInt(hex.substr(4, 2), 16)
+  const brightness = (c_r * 299 + c_g * 587 + c_b * 114) / 1000
+  return brightness > 69
+}
+
 export class RouletteWheel {
   private canvas: HTMLCanvasElement
   private ctx: CanvasRenderingContext2D
@@ -118,7 +127,8 @@ export class RouletteWheel {
 
       // draw rotated text
       this.ctx.save()
-      this.ctx.fillStyle = 'black'
+      // if the color is light, font is black, otherwise white
+      this.ctx.fillStyle = hexIsLight(item.color) ? 'black' : 'white'
       this.ctx.font = 'bold 30px Arial'
       this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2)
       this.ctx.rotate(currentAngle + portionAngle - Math.PI / 2 - ((p.probability / 2) * 2 * Math.PI))

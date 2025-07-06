@@ -1,15 +1,18 @@
 <template>
-  <RouletteWheel
-    v-if="rouletteData"
-    :data="rouletteData"
-    @started="onWheelStarted"
-    @ended="onWheelEnded"
-    @close="onWheelClose"
-  />
+  <div class="roulette-layer">
+    <RouletteWheel
+      v-if="rouletteData"
+      :data="rouletteData"
+      @started="onWheelStarted"
+      @ended="onWheelEnded"
+      @close="onWheelClose"
+      :autostart="true"
+    />
+    </div>
 </template>
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, ref } from 'vue'
-import RouletteWheel from './components/RouletteWheel.vue'
+import RouletteWheel from '../../components/Roulette/RouletteWheel.vue'
 import util, { WidgetApiData } from '../util'
 import WsClient from '../../WsClient'
 import { GeneralModuleSettings, GeneralModuleWsEventData, default_settings } from '../../../mod/modules/GeneralModuleCommon'
@@ -82,3 +85,22 @@ onUnmounted(() => {
   }
 })
 </script>
+<style lang="scss">
+.roulette-layer {
+  overflow: hidden;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+
+  .wheel {
+    position: relative;
+    width: 800px;
+    height: 800px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+}
+</style>

@@ -11,7 +11,7 @@ import centerRingImage from './wheel-middle-ring.png'
 // @ts-ignore
 import outerImage from './wheel-outer.png'
 
-import type { WheelTheme } from '../../components/Wheel'
+import type { WheelTheme } from '../../Wheel'
 
 const theme: WheelTheme = {
   markerImage,
