@@ -30,7 +30,7 @@
         v-if="item.type === 'text' && item.text"
         :style="itemInnerStyle(item)"
         class="text-container"
-        :ref="el => setTextRef(el as HTMLElement, idx)"
+        :ref="el => setTextRef((el as HTMLElement)?.parentElement, idx)"
       >
         <span class="text-span">{{ item.text }}</span>
       </div>

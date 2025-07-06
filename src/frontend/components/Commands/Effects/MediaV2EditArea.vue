@@ -26,7 +26,7 @@
           v-if="item.type === 'text'"
           :style="itemInnerStyle(item)"
           class="text-container"
-          :ref="el => setTextRef(el as HTMLElement, idx)"
+          :ref="el => setTextRef((el as HTMLElement)?.parentElement, idx)"
         >
           <span class="text-span">{{ item.text }}</span>
         </div>
@@ -70,11 +70,6 @@ const setTextRef = (el: HTMLElement | null, idx: number) => {
 const fitTextToContainer = (el: HTMLElement) => {
   const span = el.querySelector('.text-span') as HTMLElement
   if (!span) return
-
-  // Initially, set a very large font to make the
-  // container as large as possible. if this is not done there are some
-  // cases where the text will just stay small.
-  span.style.fontSize = '1000px'
 
   const containerWidth = el.clientWidth
   const containerHeight = el.clientHeight
