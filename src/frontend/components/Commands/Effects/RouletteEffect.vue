@@ -110,6 +110,18 @@
         >
           <i class="fa fa-remove" />
         </button>
+        <button
+          class="button is-small"
+          @click="splitEntry(idx)"
+        >
+          Split
+        </button>
+        <button
+          class="button is-small"
+          @click="duplicateEntry(idx)"
+        >
+          Duplicate
+        </button>
       </div>
       <div class="field">
         <div class="is-flex g-1">
@@ -196,22 +208,55 @@ const val = ref<RouletteEffectData>(props.modelValue)
 
 // color palette for random colors
 const colorPalette: string[] = [
-  // Blues
-  "#0466c8", "#0353a4", "#023e7d", "#002855", "#001845", "#001233", "#33415c", "#5c677d",
-  // Teals and Cyans
-  "#7ae7c7", "#5ddeb1", "#41d49c", "#30c487", "#26a96c", "#1e8f5e", "#187b4d", "#14693f",
-  // Greens
-  "#2dc653", "#57cc99", "#80ed99", "#c7f9cc", "#38b000", "#70e000", "#9ef01a", "#ccff33",
-  // Yellows and Golds
-  "#ffea00", "#ffdd00", "#ffd000", "#ffc300", "#ffb700", "#ffaa00", "#ff9e00", "#ff9100",
-  // Oranges and Peaches
-  "#ff8500", "#ff7900", "#ff6d00", "#ff6000", "#ff5400", "#ff4800", "#ff3c00", "#ff3000",
-  // Reds and Pinks
-  "#ef476f", "#f7567c", "#ff6b8b", "#ff8fa3", "#ffb3c1", "#ffccd5", "#fff0f3", "#ff8fab",
-  // Purples and Lavenders
-  "#7b2cbf", "#9d4edd", "#c77dff", "#e0aaff", "#6247aa", "#7251b5", "#8566c5", "#9a80d5",
-  // Neutrals and Earth Tones
-  "#dad7cd", "#a3b18a", "#588157", "#3a5a40", "#344e41", "#6c584c", "#a98467", "#f0ead2"
+  // Blues (32 shades)
+  "#001219", "#001524", "#00182e", "#001b39", "#001e44", "#00214f", "#00245a", "#002866",
+  "#002b71", "#002e7c", "#003187", "#003493", "#00379e", "#003aa9", "#003db4", "#0040c0",
+  "#0052cc", "#0065d9", "#0077e6", "#008af2", "#009cff", "#19a5ff", "#33adff", "#4db6ff",
+  "#66bfff", "#80c8ff", "#99d1ff", "#b3daff", "#cce3ff", "#e6f0ff", "#f0f7ff", "#f5faff",
+
+  // Teals and Cyans (24 shades)
+  "#006466", "#065a60", "#0b525b", "#144552", "#1b3a4b", "#212f45", "#272640", "#312244",
+  "#3e1f47", "#4d194d", "#00b4d8", "#0096c7", "#0077b6", "#023e8a", "#03045e", "#0fa3b1",
+  "#12b5c3", "#15c7d4", "#18d9e6", "#1becf8", "#4df0fa", "#7ff4fb", "#b2f7fd", "#e5fbfe",
+
+  // Greens (32 shades)
+  "#002800", "#003700", "#004600", "#005500", "#006400", "#007300", "#008200", "#009100",
+  "#00a000", "#00af00", "#00be00", "#00cd00", "#00dc00", "#00eb00", "#00fa00", "#1aff1a",
+  "#33ff33", "#4dff4d", "#66ff66", "#80ff80", "#99ff99", "#b3ffb3", "#ccffcc", "#e6ffe6",
+  "#d8f3dc", "#b7e4c7", "#95d5b2", "#74c69d", "#52b788", "#40916c", "#2d6a4f", "#1b4332",
+
+  // Yellows and Golds (24 shades)
+  "#553900", "#664400", "#775000", "#885c00", "#996800", "#aa7400", "#bb8000", "#cc8c00",
+  "#dd9800", "#eea400", "#ffb000", "#ffbb1a", "#ffc533", "#ffd04d", "#ffda66", "#ffe480",
+  "#ffee99", "#fff8b3", "#fffccc", "#ffffe6", "#ffffd1", "#ffffbd", "#ffffa8", "#ffff94",
+
+  // Oranges and Peaches (24 shades)
+  "#4d1500", "#5c1900", "#6b1e00", "#7a2300", "#892800", "#982c00", "#a73100", "#b63600",
+  "#c53b00", "#d44000", "#e34400", "#f24900", "#ff4e00", "#ff6219", "#ff7733", "#ff8b4d",
+  "#ff9f66", "#ffb380", "#ffc799", "#ffdbb3", "#ffefcc", "#fff5e6", "#ffe8d6", "#ffdcc5",
+
+  // Reds and Pinks (32 shades)
+  "#3a0000", "#490000", "#580000", "#670000", "#760000", "#850000", "#940000", "#a30000",
+  "#b20000", "#c10000", "#d00000", "#df0000", "#ee0000", "#fd0000", "#ff1a1a", "#ff3333",
+  "#ff4d4d", "#ff6666", "#ff8080", "#ff9999", "#ffb3b3", "#ffcccc", "#ffe6e6", "#fff0f0",
+  "#ffccd5", "#ffb3c1", "#ff99ac", "#ff8096", "#ff6681", "#ff4d6b", "#ff3356", "#ff1a40",
+
+  // Purples and Lavenders (32 shades)
+  "#240046", "#2b0057", "#320068", "#3a0078", "#420089", "#4b009a", "#5300ab", "#5c00bc",
+  "#6400cc", "#6e00dd", "#7700ee", "#8000ff", "#8f1aff", "#9e33ff", "#ad4dff", "#bc66ff",
+  "#cb80ff", "#da99ff", "#e9b3ff", "#f8ccff", "#f5e6ff", "#e0cfff", "#ccb9ff", "#b8a2ff",
+  "#a48cff", "#9175ff", "#7d5fff", "#6a48ff", "#5632ff", "#431bf9", "#2f0bd3", "#1c00ad",
+
+  // Browns and Earth Tones (24 shades)
+  "#582f0e", "#6f4518", "#7f5539", "#936639", "#a68a64", "#b6ad90", "#c2c5aa", "#656d4a",
+  "#414833", "#333d29", "#432818", "#543a21", "#6b4f2a", "#826034", "#9a723d", "#b18446",
+  "#c89550", "#dea659", "#f4b762", "#f9c97c", "#ffd695", "#ffe2af", "#ffedc8", "#fff8e2",
+
+  // Grays and Neutrals (32 shades)
+  "#000000", "#0d0d0d", "#1a1a1a", "#262626", "#333333", "#404040", "#4d4d4d", "#595959",
+  "#666666", "#737373", "#808080", "#8c8c8c", "#999999", "#a6a6a6", "#b3b3b3", "#bfbfbf",
+  "#cccccc", "#d9d9d9", "#e6e6e6", "#f2f2f2", "#f5f5f5", "#f8f8f8", "#fafafa", "#fcfcfc",
+  "#edede9", "#d6ccc2", "#e3d5ca", "#f5ebe0", "#f8edeb", "#fcd5ce", "#f9dcc4", "#fec89a"
 ];
 
 const randomColors = (): void => {
@@ -385,6 +430,34 @@ const moveEntryUp = (idx: number): void => {
 
 const moveEntryDown = (idx: number): void => {
   moveEntry(idx, 1)
+}
+
+const splitEntry = (idx: number): void => {
+  if (idx < 0 || idx >= val.value.data.entries.length) {
+    return
+  }
+  const entry = val.value.data.entries[idx]
+  if (entry.weight <= 1) {
+    return
+  }
+  const weight1 = Math.floor(entry.weight / 2)
+  const weight2 = entry.weight - weight1
+
+  // create two new entries with the same text and color, but different weights
+  const newEntry1 = { text: entry.text, weight: weight1, color: entry.color }
+  const newEntry2 = { text: entry.text, weight: weight2, color: entry.color }
+
+  // replace the original entry with the two new entries
+  val.value.data.entries.splice(idx, 1, newEntry1, newEntry2)
+}
+
+const duplicateEntry = (idx: number): void => {
+  if (idx < 0 || idx >= val.value.data.entries.length) {
+    return
+  }
+  const entry = val.value.data.entries[idx]
+  const newEntry = { ...entry }
+  val.value.data.entries.splice(idx + 1, 0, newEntry)
 }
 
 const moveEntry = (idx: number, direction: -1 | 1): void => {
