@@ -232,6 +232,14 @@ export function arrayMove(arr: any[], oldIndex: number, newIndex: number) {
   return arr // return, but array is also modified in place
 }
 
+export const arrayReverse = <T>(arr: T[]): T[] => {
+  const reversed = []
+  for (let i = arr.length - 1; i >= 0; i--) {
+    reversed.push(arr[i])
+  }
+  return reversed
+}
+
 /**
  * Swaps two items in array by index.
  *
@@ -466,6 +474,7 @@ export function asQueryArgs(data: QueryArgsData) {
 
 export default {
   arrayMove,
+  arrayReverse,
   arraySwap,
   asQueryArgs,
   clamp,

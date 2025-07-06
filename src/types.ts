@@ -621,7 +621,9 @@ export interface MediaV2Visualization {
 export type MediaV2CommandDataImageItem = {
   type: 'image'
   image: MediaFile | null // one of both must be set to something
-  imageUrl: string | null // one of both must be set to something
+  imageUrl: string // one of both must be set to something
+  maskImage: MediaFile | null // optional, used as mask
+  maskImageUrl: string // optional, used as mask if `maskImage` is not set
 } & MediaV2Visualization
 
 export type MediaV2CommandDataSoundItem = {

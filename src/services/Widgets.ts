@@ -158,10 +158,6 @@ class Widgets {
   async getWidgetInfos(userId: number): Promise<WidgetInfo[]> {
     const widgetInfos = []
     for (const w of widgets) {
-      if (w.type === WIDGET_TYPE.MEDIA_V2) {
-        // MEDIA_V2 DISABLED FOR PRODUCTION
-        continue
-      }
       const url = await this.widgetUrlByTypeAndUserId(w.type, userId)
       widgetInfos.push({
         type: w.type,
