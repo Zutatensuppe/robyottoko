@@ -67,7 +67,7 @@ interface TwitchHelixOauthTokenResponseData {
   token_type: string
 }
 
-interface TwitchHelixChannelEmotesResponseData {
+export interface TwitchHelixChannelEmotesResponseData {
   data: {
     id: string
     name: string

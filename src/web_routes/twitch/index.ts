@@ -17,7 +17,6 @@ import { StreamOfflineEventHandler } from '../../services/twitch/StreamOfflineEv
 import { RaidEventHandler } from '../../services/twitch/RaidEventHandler'
 import type { EventSubEventHandler } from '../../services/twitch/EventSubEventHandler'
 import { SubscriptionGiftEventHandler } from '../../services/twitch/SubscriptionGiftEventHandler'
-import TwitchHelixClient from '../../services/TwitchHelixClient'
 
 const log = logger('twitch/index.ts')
 
