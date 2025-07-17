@@ -389,6 +389,7 @@ export interface RouletteEntry {
   text: string
   weight: number
   color: string
+  disabled?: boolean
 }
 
 export interface RouletteCommandData {

@@ -80,11 +80,13 @@ const theme = computed<WheelTheme>(() => {
 
 let wheel: RouletteWheel
 const init = () => {
-  const items = props.data.entries.map(e => ({
-    bias: e.weight,
-    color: e.color,
-    title: e.text,
-  }))
+  const items = props.data.entries
+    .filter(e => !e.disabled)
+    .map(e => ({
+      bias: e.weight,
+      color: e.color,
+      title: e.text,
+    }))
   wheel = new RouletteWheel(canvas.value, items)
 }
 
