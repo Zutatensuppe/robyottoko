@@ -6,7 +6,7 @@
   >
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 const props = withDefaults(defineProps<{
   modelValue: any,
@@ -16,11 +16,19 @@ const props = withDefaults(defineProps<{
   onValue: true,
   offValue: false,
 })
+
+const val = ref<any>(props.modelValue)
+
 const emit = defineEmits<{
   (e: 'update:modelValue', val: any): void
 }>()
 
-const value = ref<boolean>(props.modelValue === props.onValue)
+const value = ref<boolean>(val.value === props.onValue)
+
+watch(() => props.modelValue, (newVal: any) => {
+  val.value = newVal
+  value.value = newVal === props.onValue
+})
 
 const emitUpdate = () => {
   emit(

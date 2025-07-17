@@ -100,6 +100,7 @@ export const newRouletteEntry = (): RouletteEntry => ({
   color: '#ffffff',
   text: '',
   weight: 1,
+  disabled: false,
 })
 
 export const newCountdownDelay = (): CountdownAction => ({ type: CountdownActionType.DELAY, value: '1s' })
