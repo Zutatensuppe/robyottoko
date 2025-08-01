@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import type { PlaylistItem } from '../../types'
+import type { PlaylistItem, PlaylistItemId } from '../../types'
 import { findInsertIndex, moveTagUp } from './SongrequestModule'
 
 describe('src/mod/modules/SongrequestModule.ts', () => {
   describe('findInsertIndex', () => {
-    const playlistItem = (plays: number) => ({
-      id: 0,
+    const playlistItem = (plays: number): PlaylistItem => ({
+      id: 0 as PlaylistItemId,
       tags: [],
       yt: 'bla',
       title: 'bla',

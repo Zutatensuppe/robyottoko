@@ -169,7 +169,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import type { MediaEffectData, MediaFile, SoundMediaFile } from '../../../../types'
+import type { MediaEffectData, MediaFile, SoundMediaFile, WidgetId } from '../../../../types'
 import { nextTick, onBeforeMount, Ref, ref, watch } from 'vue'
 import StringInput from '../../StringInput.vue'
 import VolumeSlider from '../../VolumeSlider.vue'
@@ -200,11 +200,11 @@ const mediaImgChanged = (file: MediaFile): void => {
 }
 
 const addWidgetId = (): void => {
-  val.value.data.widgetIds.push('')
+  val.value.data.widgetIds.push('' as WidgetId)
 }
 
 const rmWidgetId = (idx: number): void => {
-  val.value.data.widgetIds = val.value.data.widgetIds.filter((_val: string, index: number) => index !== idx)
+  val.value.data.widgetIds = val.value.data.widgetIds.filter((_val: WidgetId, index: number) => index !== idx)
 }
 
 const el = ref<HTMLElement>() as Ref<HTMLElement>

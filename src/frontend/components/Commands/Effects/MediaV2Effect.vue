@@ -236,7 +236,7 @@
 </template>
 <script setup lang="ts">
 import { newMediaV2Image, newMediaV2Sound, newMediaV2Text, newMediaV2Video } from '../../../../common/commands'
-import type { MediaV2EffectData } from '../../../../types'
+import type { MediaV2EffectData, WidgetId } from '../../../../types'
 import { Ref, ref, watch } from 'vue'
 import MediaV2EditArea from './MediaV2EditArea.vue'
 import ImageUpload from '../../ImageUpload.vue'
@@ -321,11 +321,11 @@ const removeItem = (idx: number) => {
 }
 
 const addWidgetId = (): void => {
-  val.value.data.widgetIds.push('')
+  val.value.data.widgetIds.push('' as WidgetId)
 }
 
 const rmWidgetId = (idx: number): void => {
-  val.value.data.widgetIds = val.value.data.widgetIds.filter((_val: string, index: number) => index !== idx)
+  val.value.data.widgetIds = val.value.data.widgetIds.filter((_val: WidgetId, index: number) => index !== idx)
 }
 
 watch(val, (newValue: MediaV2EffectData) => {

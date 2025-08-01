@@ -1,7 +1,9 @@
 'use strict'
 
+import { newJSONDateString } from '../common/fn'
 import type { WhereRaw } from '../DbPostgres'
 import type { TwitchEventContext } from '../services/twitch'
+import type { JSONDateString } from '../types'
 import { Repo } from './Repo'
 
 const TABLE = 'robyottoko.chat_log'
@@ -11,20 +13,13 @@ interface Row {
   user_name: string
   display_name: string
   message: string
-}
-
-interface RowIn extends Row {
-  created_at: Date
-}
-
-interface RowOut extends Row {
-  created_at: string
+  created_at: JSONDateString
 }
 
 export class ChatLogRepo extends Repo {
   async insert(context: TwitchEventContext, msg: string) {
-    await this.db.insert<RowIn>(TABLE, {
-      created_at: new Date(),
+    await this.db.insert<Row>(TABLE, {
+      created_at: newJSONDateString(),
       broadcaster_user_id: context['room-id'] || '',
       user_name: context.username || '',
       display_name: context['display-name'] || '',
@@ -59,7 +54,7 @@ export class ChatLogRepo extends Repo {
   // HACK: we have no other way of getting a user name by user display name atm
   // TODO: replace this functionality
   async getUsernameByUserDisplayName(displayName: string): Promise<string | null> {
-    const row = await this.db.get<RowOut>(TABLE, {
+    const row = await this.db.get<Row>(TABLE, {
       display_name: displayName,
     })
     return row ? row.user_name : null

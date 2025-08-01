@@ -1,4 +1,4 @@
-import type { MediaFile, SoundMediaFile, UploadedFile } from '../types'
+import type { JSONDateString, MediaFile, SoundMediaFile, UploadedFile } from '../types'
 
 export const MS = 1
 export const SECOND = 1000 * MS
@@ -470,6 +470,14 @@ export function asQueryArgs(data: QueryArgsData) {
     return ''
   }
   return `?${q.join('&')}`
+}
+
+export const toJSONDateString = (date: Date): JSONDateString => {
+  return JSON.stringify(date) as JSONDateString
+}
+
+export const newJSONDateString = (): JSONDateString => {
+  return toJSONDateString(new Date())
 }
 
 export default {

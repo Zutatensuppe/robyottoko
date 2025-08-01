@@ -1,11 +1,18 @@
-import fn, { determineNewVolume, findIdxFuzzy, getChannelPointsCustomRewards } from '../../fn'
+import fn, { determineNewVolume, findIdxFuzzy, getChannelPointsCustomRewards, newPlaylistItemId } from '../../fn'
 import { shuffle, arrayMove, logger, humanDuration, parseHumanDuration, SECOND } from '../../common/fn'
 import type { Socket } from '../../net/WebSocketServer'
 import type { User } from '../../repo/Users'
 import type {
-  ChatMessageContext, PlaylistItem,
-  FunctionCommand, Command,
-  Bot, CommandFunction, Module, CommandExecutionContext} from '../../types'
+  ChatMessageContext,
+  PlaylistItem,
+  FunctionCommand,
+  Command,
+  Bot,
+  CommandFunction,
+  Module,
+  CommandExecutionContext,
+  PlaylistItemId,
+} from '../../types'
 import {
   MODULE_NAME, WIDGET_TYPE,
 } from '../../enums'
@@ -424,7 +431,7 @@ class SongrequestModule implements Module {
         this.channelPointsCustomRewards = await getChannelPointsCustomRewards(this.bot, this.user)
         await this.updateClient('init', ws)
       },
-      'play': async (ws: Socket, { id }: { id: number }) => {
+      'play': async (ws: Socket, { id }: { id: PlaylistItemId }) => {
         const eventInfo = { id, timestamp: new Date().getTime(), wsId: ws.id || '' }
         if (!this.checkLastEvents('play', eventInfo)) {
           return
@@ -444,7 +451,7 @@ class SongrequestModule implements Module {
         await this.save()
         await this.updateClients('playIdx')
       },
-      'ended': async (ws: Socket, { id }: { id: number }) => {
+      'ended': async (ws: Socket, { id }: { id: PlaylistItemId }) => {
         const eventInfo = { id, timestamp: new Date().getTime(), wsId: ws.id || '' }
         if (!this.checkLastEvents('ended', eventInfo)) {
           return
@@ -1419,7 +1426,7 @@ class SongrequestModule implements Module {
     userName: string,
   ): PlaylistItem {
     return {
-      id: Math.random(),
+      id: newPlaylistItemId(),
       yt: youtubeData.id,
       title: youtubeData.title,
       timestamp: new Date().getTime(),

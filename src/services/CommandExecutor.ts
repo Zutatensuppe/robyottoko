@@ -1,7 +1,7 @@
 'use strict'
 
 import { getUniqueCommandsByTriggers } from '../common/commands'
-import { humanDuration, logger, parseHumanDuration } from '../common/fn'
+import { humanDuration, logger, parseHumanDuration, toJSONDateString } from '../common/fn'
 import { mayExecute } from '../common/permissions'
 import { doReplacements } from '../fn'
 import type { Bot, CommandExecutionContext, CommandTrigger, FunctionCommand, Module, RawCommand } from '../types'
@@ -160,7 +160,7 @@ export class CommandExecutor {
 
       await repo.insert({
         command_id: cmdDef.id,
-        executed_at: ctx.date,
+        executed_at: toJSONDateString(ctx.date),
         trigger_user_name: ctx.context.username || null,
       })
     }

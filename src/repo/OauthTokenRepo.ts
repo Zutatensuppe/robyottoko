@@ -1,5 +1,6 @@
 'use strict'
 
+import type { JSONDateString } from '../types'
 import { Repo } from './Repo'
 import type { User } from './Users'
 
@@ -12,14 +13,7 @@ interface Row {
   token_type: string
   user_id: number
   channel_id: string
-}
-
-interface RowIn extends Row {
-  expires_at: Date
-}
-
-interface RowOut extends Row {
-  expires_at: string // json date
+  expires_at: JSONDateString
 }
 
 export class OauthTokenRepo extends Repo {
@@ -28,18 +22,18 @@ export class OauthTokenRepo extends Repo {
   async getMatchingAccessToken (
     user: User,
   ): Promise<string | null> {
-    const row = await this.db.get<RowOut>(TABLE, {
+    const row = await this.db.get<Row>(TABLE, {
       user_id: user.id,
       channel_id: user.twitch_id,
     }, [{ expires_at: -1 }])
     return row ? row.access_token : null
   }
 
-  async getByAccessToken(accessToken: string): Promise<RowOut | null> {
-    return await this.db.get<RowOut>(TABLE, { access_token: accessToken })
+  async getByAccessToken(accessToken: string): Promise<Row | null> {
+    return await this.db.get<Row>(TABLE, { access_token: accessToken })
   }
 
-  async insert(row: RowIn): Promise<void> {
+  async insert(row: Row): Promise<void> {
     await this.db.insert(TABLE, row)
   }
 }

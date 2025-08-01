@@ -29,8 +29,19 @@ import type { CommandAction, CommandEffectType, CommandTriggerType, CountdownAct
 
 type int = number
 
+declare const __brand: unique symbol
+type Brand<B> = { [__brand]: B }
+type Branded<T, B> = T & Brand<B>
+
+export type JSONDateString = Branded<string, 'JSONDateString'> // e.g. "2023-10-01T12:34:56.789Z"
+
+export type CommandId = Branded<string, 'CommandId'>
+export type UserId = Branded<number, 'UserId'>
+export type PlaylistItemId = Branded<number, 'PlaylistItemId'>
+export type WidgetId = Branded<string, 'WidgetId'>
+
 export interface ApiUser {
-  id: number
+  id: UserId
   name: string
   email: string
   groups: string[]
@@ -169,7 +180,7 @@ export interface UploadedFile {
 }
 
 export interface PlaylistItem {
-  id: number
+  id: PlaylistItemId
   tags: string[]
   yt: string
   title: string
@@ -365,7 +376,7 @@ export interface RouletteEntry {
 }
 
 export interface RouletteCommandData {
-  widgetIds: string[]
+  widgetIds: WidgetId[]
   theme: string
   entries: RouletteEntry[]
   spinDurationMs: string | number
@@ -429,9 +440,14 @@ export type Command =
   SrQueueCommand |
   SrMoveTagUpCommand
 
+export type CommandGroup = {
+  title: string
+  commandIds: CommandId[]
+}
+
 export interface AbstractCommand {
-  id: string
-  createdAt: string // json date string
+  id: CommandId
+  createdAt: JSONDateString
   triggers: CommandTrigger[]
   effects: CommandEffectData[]
   variables: CommandVariable[]
@@ -594,14 +610,14 @@ export type MediaV2CommandDataItem =
   MediaV2CommandDataVideoItem
 
 export interface MediaV2CommandData {
-  widgetIds: string[]
+  widgetIds: WidgetId[]
   mediaItems: MediaV2CommandDataItem[]
   minDurationMs: string | number
 }
 
 // @deprecated (use `MediaV2CommandData` instead)
 export interface MediaCommandData {
-  widgetIds: string[]
+  widgetIds: WidgetId[]
   sound: SoundMediaFile
   image: MediaFile
   video: MediaVideo
@@ -640,7 +656,7 @@ export interface CountdownCommandData {
 }
 
 export interface FunctionCommand {
-  id: string
+  id: CommandId
   triggers: CommandTrigger[]
   action?: CommandAction
   variables?: CommandVariable[]

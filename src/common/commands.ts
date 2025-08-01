@@ -1,4 +1,4 @@
-import { getProp, mustParseHumanDuration, nonce } from '../common/fn'
+import { getProp, mustParseHumanDuration, newJSONDateString, nonce } from '../common/fn'
 import type {
   AbstractCommand,
   Command, CommandEffectData, CommandTrigger,
@@ -8,6 +8,7 @@ import type {
   MediaV2CommandDataVideoItem,
   MediaV2CommandDataImageItem,
   MediaV2CommandDataTextItem,
+  CommandId,
 } from '../types'
 import {
   CommandAction,
@@ -142,8 +143,7 @@ export const newRewardRedemptionTrigger = (command: string = ''): CommandTrigger
   return trigger
 }
 
-export const newJsonDate = () => new Date().toJSON()
-const newCommandId = () => nonce(10)
+const newCommandId = (): CommandId => nonce(10) as CommandId
 
 export const newCommandTrigger = (command: string = '', commandExact: boolean = false): CommandTrigger => {
   const trigger = newTrigger(CommandTriggerType.COMMAND)
@@ -263,7 +263,7 @@ const createCommand = (cmd: Partial<AbstractCommand>): AbstractCommand => {
   }
   return {
     id: typeof cmd.id !== 'undefined' ? cmd.id : newCommandId(),
-    createdAt: typeof cmd.createdAt !== 'undefined' ? cmd.createdAt : newJsonDate(),
+    createdAt: typeof cmd.createdAt !== 'undefined' ? cmd.createdAt : newJSONDateString(),
     action: cmd.action,
     triggers: typeof cmd.triggers !== 'undefined' ? cmd.triggers : [],
     effects: typeof cmd.effects !== 'undefined' ? cmd.effects : [],

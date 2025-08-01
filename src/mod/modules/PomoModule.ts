@@ -1,6 +1,6 @@
 import { logger, humanDuration, parseHumanDuration, SECOND } from '../../common/fn'
 import type { Socket } from '../../net/WebSocketServer'
-import type { Bot, ChatMessageContext, CommandExecutionContext, FunctionCommand, Module, RawCommand} from '../../types'
+import type { Bot, ChatMessageContext, CommandExecutionContext, CommandId, FunctionCommand, Module, RawCommand} from '../../types'
 import { MODULE_NAME, WIDGET_TYPE } from '../../enums'
 import type { User } from '../../repo/Users'
 import type { PomoEffect, PomoModuleData, PomoModuleWsData, PomoModuleWsEffectData, PomoModuleWsSaveData } from './PomoModuleCommon'
@@ -33,7 +33,7 @@ class PomoModule implements Module {
 
       this.commands = [
         {
-          id: 'pomo',
+          id: 'pomo' as CommandId,
           triggers: [newCommandTrigger('!pomo')],
           restrict: {
             active: true,
@@ -43,7 +43,7 @@ class PomoModule implements Module {
           cooldown: { global: '0', globalMessage: '', perUser: '0', perUserMessage: '' },
         },
         {
-          id: 'pomo_exit',
+          id: 'pomo_exit' as CommandId,
           triggers: [newCommandTrigger('!pomo exit', true)],
           restrict: {
             active: true,

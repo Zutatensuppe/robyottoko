@@ -1,10 +1,11 @@
 import type { WhereRaw } from '../DbPostgres'
+import type { UserId } from '../types'
 import { Repo } from './Repo'
 
 const TABLE = 'robyottoko.user'
 
 export interface User {
-  id: number
+  id: UserId
   twitch_id: string
   twitch_login: string
   name: string
@@ -19,7 +20,7 @@ export interface User {
 }
 
 export interface UpdateUser {
-  id: number
+  id: UserId
   twitch_id?: string
   twitch_login?: string
   name?: string

@@ -1,5 +1,5 @@
 import type { User } from '../../repo/Users'
-import type { Bot, ChatMessageContext, CommandExecutionContext, Module} from '../../types'
+import type { Bot, ChatMessageContext, CommandExecutionContext, CommandId, Module} from '../../types'
 import { MODULE_NAME } from '../../enums'
 import { newCommandTrigger } from '../../common/commands'
 import { isBroadcaster, isMod } from '../../common/permissions'
@@ -175,7 +175,7 @@ class VoteModule implements Module {
     return [
       // TODO: make configurable
       {
-        id: 'vote',
+        id: 'vote' as CommandId,
         triggers: [newCommandTrigger('!vote')],
         fn: this.voteCmd.bind(this),
         cooldown: {
@@ -190,7 +190,7 @@ class VoteModule implements Module {
         },
       },
       {
-        id: 'play',
+        id: 'play' as CommandId,
         triggers: [newCommandTrigger('!play')],
         fn: this.playCmd.bind(this),
         cooldown: {
