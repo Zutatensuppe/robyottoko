@@ -79,7 +79,7 @@ import {
   GeneralModuleWsEventData,
   GeneralSaveEventData,
 } from '../../mod/modules/GeneralModuleCommon'
-import type { Command, CommandGroup, GlobalVariable } from '../../types'
+import type { Command, GlobalVariable } from '../../types'
 import util from '../util'
 import CommandsEditor from '../components/Commands/CommandsEditor.vue'
 import NavbarElement from '../components/NavbarElement.vue'
@@ -93,7 +93,6 @@ interface TabDefinition {
 }
 
 const commands = ref<Command[]>([])
-const commandGroups = ref<CommandGroup[]>([])
 const settings = ref<GeneralModuleSettings>(default_settings())
 const adminSettings = ref<GeneralModuleAdminSettings>(default_admin_settings())
 const globalVariables = ref<GlobalVariable[]>([])
@@ -140,7 +139,6 @@ const sendSave = () => {
   sendMsg({
     event: 'save',
     commands: commands.value,
-    commandGroups: commandGroups.value,
     settings: settings.value,
     adminSettings: adminSettings.value,
   })
@@ -157,7 +155,6 @@ onMounted(() => {
   ws = util.wsClient('general')
   ws.onMessage('init', (data: GeneralModuleWsEventData) => {
     commands.value = data.commands
-    commandGroups.value = data.commandGroups
     settings.value = data.settings
     mediaWidgetUrl.value = data.mediaWidgetUrl
     mediaV2WidgetUrl.value = data.mediaV2WidgetUrl
