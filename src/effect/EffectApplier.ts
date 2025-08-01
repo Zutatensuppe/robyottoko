@@ -1,7 +1,7 @@
 import { logger } from '../common/fn'
 import type { TwitchEventContext } from '../services/twitch'
 import type { FunctionCommand, Module, RawCommand } from '../types'
-import { CommandEffectType } from '../types'
+import { CommandEffectType } from '../enums'
 import { AddStreamTagEffect } from './AddStreamTagsEffect'
 import { ChatEffect } from './ChatEffect'
 import { ChattersEffect } from './ChattersEffect'

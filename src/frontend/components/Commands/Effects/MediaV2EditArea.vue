@@ -47,7 +47,7 @@
 </template>
 <script setup lang="ts">
 import { nextTick, onMounted, Ref, ref, StyleValue, watch } from 'vue'
-import { MediaV2CommandDataItem, MediaV2Visualization } from '../../../../types'
+import type { MediaV2CommandDataItem, MediaV2Visualization } from '../../../../types'
 import CheckboxInput from '../../CheckboxInput.vue'
 import { asQueryArgs } from '../../../../common/fn'
 

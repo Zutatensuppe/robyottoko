@@ -287,9 +287,8 @@ import {
   newEffect,
   possibleEffectActions,
 } from '../../../common/commands'
-import {
+import type {
   Command,
-  CommandAction,
   CommandTrigger,
   CommandVariable,
   GlobalVariable,
@@ -302,6 +301,7 @@ import StringInput from '../StringInput.vue'
 import TriggerEditor from './TriggerEditor.vue'
 import CheckboxInput from '../CheckboxInput.vue'
 import PermissionsEdit from '../PermissionsEdit.vue'
+import { CommandAction } from '../../../enums'
 
 const props = defineProps<{
   modelValue: Command,

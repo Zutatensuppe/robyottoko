@@ -34,7 +34,7 @@
 <script setup lang="ts">
 import { Ref, ref } from 'vue'
 import { mediaFileFromUploadedFile } from '../../common/fn'
-import { MediaFile, UploadedFile } from '../../types'
+import type { MediaFile, UploadedFile } from '../../types'
 import { getFileFromDropEvent } from '../util'
 import UploadInput from './UploadInput.vue'
 import ResponsiveImage from './ResponsiveImage.vue'

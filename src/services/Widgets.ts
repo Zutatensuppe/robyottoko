@@ -1,6 +1,6 @@
 import { nonce } from '../common/fn'
 import type { WidgetDefinition, WidgetInfo} from '../types'
-import { MODULE_NAME, WIDGET_TYPE } from '../types'
+import { MODULE_NAME, WIDGET_TYPE } from '../enums'
 import type { Repos } from '../repo/Repos'
 
 const widgets: WidgetDefinition[] = [

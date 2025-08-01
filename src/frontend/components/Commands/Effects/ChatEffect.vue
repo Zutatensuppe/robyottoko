@@ -44,7 +44,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChatEffectData } from '../../../../types'
+import type { ChatEffectData } from '../../../../types'
 import { ref, watch } from 'vue'
 import { newText } from '../../../../common/commands'
 import MacroSelect from '../../MacroSelect.vue'

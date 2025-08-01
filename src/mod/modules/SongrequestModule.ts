@@ -8,7 +8,7 @@ import type {
   Bot, CommandFunction, Module, CommandExecutionContext} from '../../types'
 import {
   MODULE_NAME, WIDGET_TYPE,
-} from '../../types'
+} from '../../enums'
 import type {
   SongerquestModuleInitData,
   SongrequestModuleData,

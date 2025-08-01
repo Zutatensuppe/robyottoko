@@ -1,5 +1,5 @@
 import type { ModuleDefinition} from '../types'
-import { MODULE_NAME } from '../types'
+import { MODULE_NAME } from '../enums'
 
 export const moduleDefinitions: ModuleDefinition[] = [
   {

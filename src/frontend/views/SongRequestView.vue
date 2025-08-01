@@ -181,9 +181,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import WsClient from '../WsClient'
-import {
+import type {
   Command,
-  CommandAction,
   GlobalVariable,
   PlaylistItem,
 } from '../../types'
@@ -203,6 +202,7 @@ import Settings from '../components/SongRequest/Settings.vue'
 import TagsEditor from '../components/SongRequest/TagsEditor.vue'
 import util from '../util'
 import YoutubePlayer from '../components/YoutubePlayer.vue'
+import { CommandAction } from '../../enums'
 
 interface ControlDefinition {
   title: string;

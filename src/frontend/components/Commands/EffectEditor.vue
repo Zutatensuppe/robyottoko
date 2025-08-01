@@ -62,7 +62,7 @@
 </template>
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { CommandEffectData, CommandEffectType, CommandVariable, GlobalVariable } from '../../../types'
+import type { CommandEffectData, CommandVariable, GlobalVariable } from '../../../types'
 import VariableChangeEffect from './Effects/VariableChangeEffect.vue'
 import ChatEffect from './Effects/ChatEffect.vue'
 import DictLookupEffect from './Effects/DictLookupEffect.vue'
@@ -76,6 +76,7 @@ import RemoveStreamTagsEffect from './Effects/RemoveStreamTagsEffect.vue'
 import ChattersEffect from './Effects/ChattersEffect.vue'
 import CountdownEffect from './Effects/CountdownEffect.vue'
 import RouletteEffect from './Effects/RouletteEffect.vue'
+import { CommandEffectType } from '../../../enums'
 
 export interface AutocompletableVariable {
   var: CommandVariable | GlobalVariable;

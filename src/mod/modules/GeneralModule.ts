@@ -16,7 +16,7 @@ import {
   WIDGET_TYPE,
   CommandEffectType,
   CommandAction,
-} from '../../types'
+} from '../../enums'
 import type {
   GeneralModuleAdminSettings,
   GeneralModuleEmotesEventData,

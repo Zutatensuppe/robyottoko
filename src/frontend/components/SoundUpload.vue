@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import { getFileFromDropEvent } from '../util'
 import { Ref, ref } from 'vue'
-import { SoundMediaFile, UploadedFile } from '../../types'
+import type { SoundMediaFile, UploadedFile } from '../../types'
 import { soundMediaFileFromUploadedFile } from '../../common/fn'
 import AudioPlayer from './AudioPlayer.vue'
 import UploadInput from './UploadInput.vue'

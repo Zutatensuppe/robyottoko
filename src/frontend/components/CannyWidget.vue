@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { FullApiUserData } from '../../types'
+import type { FullApiUserData } from '../../types'
 import user from '../user'
 
 const me = ref<FullApiUserData|null>(null)

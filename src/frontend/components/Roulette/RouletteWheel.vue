@@ -47,7 +47,7 @@
 </template>
 <script setup lang="ts">
 import { computed, onMounted, ref, Ref, watch } from 'vue'
-import { RouletteCommandData } from '../../../types'
+import type { RouletteCommandData } from '../../../types'
 import { RouletteWheel, WheelTheme } from './Wheel'
 import gsap, { Power4 } from 'gsap'
 import themes from './themes'

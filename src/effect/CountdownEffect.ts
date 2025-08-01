@@ -1,7 +1,7 @@
 import { logger, mustParseHumanDuration } from '../common/fn'
 import { sleep } from '../fn'
 import type { CountdownAction, CountdownEffectData } from '../types'
-import { CountdownActionType } from '../types'
+import { CountdownActionType } from '../enums'
 import { Effect } from './Effect'
 
 const log = logger('CountdownEffect.ts')

@@ -245,12 +245,12 @@
   </div>
 </template>
 <script setup lang="ts">
-import { CommandTrigger, CommandTriggerType } from '../../../types'
+import { CommandTrigger } from '../../../types'
 import { computed, ref, watch } from 'vue'
-import CheckboxInput from '../CheckboxInput.vue'
 import DropdownInput from '../DropdownInput.vue'
 import DurationInput from '../DurationInput.vue'
 import IntegerInput from '../IntegerInput.vue'
+import { CommandTriggerType } from '../../../enums'
 
 const props = defineProps<{
   modelValue: CommandTrigger,

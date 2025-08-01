@@ -4,7 +4,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { MediaVolumeEffectData } from '../../../../types'
+import type { MediaVolumeEffectData } from '../../../../types'
 import { ref, watch } from 'vue'
 
 const props = defineProps<{

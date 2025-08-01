@@ -24,7 +24,7 @@
 import { nextTick, ref } from 'vue'
 
 import fn, { logger } from '../../common/fn'
-import { MediaCommandData } from '../../types'
+import type { MediaCommandData } from '../../types'
 
 const log = logger('MediaQueueElement.vue')
 

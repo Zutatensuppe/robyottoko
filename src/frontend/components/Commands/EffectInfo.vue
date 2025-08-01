@@ -160,11 +160,12 @@
   </div>
 </template>
 <script setup lang="ts">
-import { CommandEffectData, CommandEffectType } from '../../../types'
+import type { CommandEffectData } from '../../../types'
 import ResponsiveImage from '../ResponsiveImage.vue'
 import AudioPlayer from '../AudioPlayer.vue'
 import DurationDisplay from '../DurationDisplay.vue'
 import { EmoteDisplayFn } from '../../../mod/modules/GeneralModuleCommon'
+import { CommandEffectType } from '../../../enums'
 
 defineProps<{
   effect: CommandEffectData,
