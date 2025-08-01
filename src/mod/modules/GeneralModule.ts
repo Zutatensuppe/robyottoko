@@ -10,7 +10,6 @@ import type {
   Bot,
   Module,
   GeneralCommand,
-  CommandGroup,
 } from '../../types'
 import {
   CommandTriggerType,
@@ -35,7 +34,6 @@ const log = logger('GeneralModule.ts')
 
 interface GeneralModuleData {
   commands: Command[]
-  commandGroups: CommandGroup[]
   settings: GeneralModuleSettings
   adminSettings: GeneralModuleAdminSettings
 }
@@ -232,8 +230,6 @@ class GeneralModule implements Module {
       }
     })
 
-    data.commandsGroups = data.commandGroups || []
-
     return { data, commands, timers, shouldSave, enabled } as GeneralModuleInitData
   }
 
@@ -288,7 +284,6 @@ class GeneralModule implements Module {
       data: {
         enabled: this.enabled,
         commands: this.data.commands,
-        commandGroups: this.data.commandGroups,
         settings: this.data.settings,
         adminSettings: this.data.adminSettings,
         globalVariables: await this.bot.getRepos().variables.all(this.user.id),
@@ -344,7 +339,6 @@ class GeneralModule implements Module {
       },
       save: async (_ws: Socket, data: GeneralSaveEventData) => {
         this.data.commands = data.commands
-        this.data.commandGroups = data.commandGroups
         this.data.settings = data.settings
         this.data.adminSettings = data.adminSettings
         await this.save()

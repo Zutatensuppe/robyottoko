@@ -440,11 +440,6 @@ export type Command =
   SrQueueCommand |
   SrMoveTagUpCommand
 
-export type CommandGroup = {
-  title: string
-  commandIds: CommandId[]
-}
-
 export interface AbstractCommand {
   id: CommandId
   createdAt: JSONDateString
