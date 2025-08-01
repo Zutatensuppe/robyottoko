@@ -8,6 +8,7 @@ import type {
   CommandTrigger,
   Bot,
   CommandMatch,
+  JSONDateString,
 } from './types'
 import type { User } from './repo/Users'
 import type { TwitchHelixUserSearchResponseDataEntry } from './services/TwitchHelixClient'
@@ -689,6 +690,14 @@ export const getUserTypeInfo = async (
 
 export const uniqId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substring(2)
+}
+
+export const toJSONDateString = (date: Date): JSONDateString => {
+  return JSON.stringify(date) as JSONDateString
+}
+
+export const newJSONDateString = (): JSONDateString => {
+  return toJSONDateString(new Date())
 }
 
 export default {

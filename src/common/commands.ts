@@ -1,4 +1,5 @@
 import { getProp, mustParseHumanDuration, nonce } from '../common/fn'
+import { newJSONDateString } from '../fn'
 import type {
   AbstractCommand,
   Command, CommandEffectData, CommandTrigger,
@@ -137,7 +138,6 @@ export const newRewardRedemptionTrigger = (command: string = ''): CommandTrigger
   return trigger
 }
 
-export const newJsonDate = () => new Date().toJSON()
 const newCommandId = () => nonce(10)
 
 export const newCommandTrigger = (command: string = '', commandExact: boolean = false): CommandTrigger => {
@@ -258,7 +258,7 @@ const createCommand = (cmd: Partial<AbstractCommand>): AbstractCommand => {
   }
   return {
     id: typeof cmd.id !== 'undefined' ? cmd.id : newCommandId(),
-    createdAt: typeof cmd.createdAt !== 'undefined' ? cmd.createdAt : newJsonDate(),
+    createdAt: typeof cmd.createdAt !== 'undefined' ? cmd.createdAt : newJSONDateString(),
     action: cmd.action,
     triggers: typeof cmd.triggers !== 'undefined' ? cmd.triggers : [],
     effects: typeof cmd.effects !== 'undefined' ? cmd.effects : [],

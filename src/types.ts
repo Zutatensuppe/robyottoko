@@ -28,6 +28,12 @@ import type TwitchHelixClient from './services/TwitchHelixClient'
 
 type int = number
 
+declare const __brand: unique symbol
+type Brand<B> = { [__brand]: B }
+type Branded<T, B> = T & Brand<B>
+
+export type JSONDateString = Branded<string, 'JSONDateString'> // e.g. "2023-10-01T12:34:56.789Z"
+
 export interface ApiUser {
   id: number
   name: string
@@ -492,7 +498,7 @@ export type Command =
 
 export interface AbstractCommand {
   id: string
-  createdAt: string // json date string
+  createdAt: JSONDateString
   triggers: CommandTrigger[]
   effects: CommandEffectData[]
   variables: CommandVariable[]

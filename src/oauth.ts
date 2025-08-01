@@ -1,4 +1,5 @@
 import { logger } from './common/fn'
+import { toJSONDateString } from './fn'
 import type { User } from './repo/Users'
 import type { Bot } from './types'
 
@@ -48,7 +49,7 @@ export const tryRefreshAccessToken = async (
     refresh_token: refreshResp.refresh_token,
     scope: refreshResp.scope.join(','),
     token_type: refreshResp.token_type,
-    expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
+    expires_at: toJSONDateString(new Date(new Date().getTime() + refreshResp.expires_in * 1000)),
   })
 
   log.info('tryRefreshAccessToken - refreshed an access token')
@@ -106,7 +107,7 @@ export const refreshExpiredTwitchChannelAccessToken = async (
     refresh_token: refreshResp.refresh_token,
     scope: refreshResp.scope.join(','),
     token_type: refreshResp.token_type,
-    expires_at: new Date(new Date().getTime() + refreshResp.expires_in * 1000),
+    expires_at: toJSONDateString(new Date(new Date().getTime() + refreshResp.expires_in * 1000)),
   })
 
   log.info('refreshExpiredTwitchChannelAccessToken - refreshed an access token')
@@ -191,7 +192,7 @@ export const handleOAuthCodeCallback = async (
     refresh_token: resp.refresh_token,
     scope: resp.scope.join(','),
     token_type: resp.token_type,
-    expires_at: new Date(new Date().getTime() + resp.expires_in * 1000),
+    expires_at: toJSONDateString(new Date(new Date().getTime() + resp.expires_in * 1000)),
   })
 
   return { updated, created, user }

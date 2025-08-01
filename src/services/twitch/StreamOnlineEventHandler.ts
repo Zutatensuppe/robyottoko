@@ -1,6 +1,7 @@
 'use strict'
 
 import { logger } from '../../common/fn'
+import { toJSONDateString } from '../../fn'
 import type { User } from '../../repo/Users'
 import type { Bot } from '../../types'
 import type { Subscription } from './EventSub'
@@ -27,7 +28,7 @@ export class StreamOnlineEventHandler extends EventSubEventHandler<StreamOnlineE
 
     await bot.getRepos().streams.insert({
       broadcaster_user_id: data.event.broadcaster_user_id,
-      started_at: new Date(data.event.started_at),
+      started_at: toJSONDateString(new Date(data.event.started_at)),
     })
   }
 }
