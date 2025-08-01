@@ -403,7 +403,7 @@ import {
   default_settings,
   DrawcastImage,
 } from '../../mod/modules/DrawcastModuleCommon'
-import {
+import type {
   FullApiUserData,
   DrawcastData,
   DrawcastFavoriteList,

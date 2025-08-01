@@ -5,7 +5,6 @@ import express from 'express'
 import cors from 'cors'
 import { TokenType } from '../../../../repo/Tokens'
 import type { Bot } from '../../../../types'
-import TwitchHelixClient from '../../../../services/TwitchHelixClient'
 import type DrawcastModule from '../../../../mod/modules/DrawcastModule'
 
 export const createRouter = (

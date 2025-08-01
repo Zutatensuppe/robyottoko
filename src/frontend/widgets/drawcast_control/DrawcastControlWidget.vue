@@ -37,7 +37,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { FullApiUserData, DrawcastData } from '../../../types'
+import type { FullApiUserData, DrawcastData } from '../../../types'
 import { DrawcastImage } from '../../../mod/modules/DrawcastModuleCommon'
 import { onMounted, onUnmounted, ref } from 'vue'
 import util, { WidgetApiData } from '../util'

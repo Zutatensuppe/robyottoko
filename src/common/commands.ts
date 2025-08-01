@@ -7,9 +7,14 @@ import type {
   MediaCommandData, MediaV2CommandDataSoundItem, MediaFile, MediaV2CommandData, MediaVideo, RouletteCommandData, RouletteEntry, SoundMediaFile, SrAddtagCommand, SrBadCommand, SrClearCommand, SrCurrentCommand, SrFilterCommand, SrGoodCommand, SrHidevideoCommand, SrJumptonewCommand, SrLoopCommand, SrMoveTagUpCommand, SrNextCommand, SrNoloopCommand, SrPauseCommand, SrPresetCommand, SrPrevCommand, SrQueueCommand, SrReRequestCommand, SrRequestCommand, SrResetStatsCommand, SrRmCommand, SrRmtagCommand, SrShowvideoCommand, SrShuffleCommand, SrStatsCommand, SrUndoCommand, SrUnpauseCommand, SrVolumeCommand,
   MediaV2CommandDataVideoItem,
   MediaV2CommandDataImageItem,
-  MediaV2CommandDataTextItem} from '../types'
-import { CommandAction, CommandEffectType, CommandTriggerType, CountdownActionType,
+  MediaV2CommandDataTextItem,
 } from '../types'
+import {
+  CommandAction,
+  CommandEffectType,
+  CommandTriggerType,
+  CountdownActionType,
+} from '../enums'
 import { MOD_OR_ABOVE } from './permissions'
 
 export const newText = () => ''

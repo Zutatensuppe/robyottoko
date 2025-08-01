@@ -59,7 +59,7 @@ import {
   AvatarModuleAnimationFrameDefinition,
 } from '../../../mod/modules/AvatarModuleCommon'
 import { getFileFromDropEvent } from '../../util'
-import { UploadedFile } from '../../../types'
+import type { UploadedFile } from '../../../types'
 import AvatarAnimation from './AvatarAnimation.vue'
 import AvatarFrameUpload from './AvatarFrameUpload.vue'
 import UploadInput from '../UploadInput.vue'

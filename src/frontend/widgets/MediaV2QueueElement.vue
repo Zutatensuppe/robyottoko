@@ -41,7 +41,7 @@
 import { nextTick, ref, StyleValue } from 'vue'
 
 import fn, { logger } from '../../common/fn'
-import { MediaV2CommandData, MediaV2CommandDataItem } from '../../types'
+import type { MediaV2CommandData, MediaV2CommandDataItem } from '../../types'
 
 const log = logger('MediaV2QueueElement.vue')
 

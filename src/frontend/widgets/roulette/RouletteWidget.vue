@@ -16,7 +16,7 @@ import RouletteWheel from '../../components/Roulette/RouletteWheel.vue'
 import util, { WidgetApiData } from '../util'
 import WsClient from '../../WsClient'
 import { GeneralModuleSettings, GeneralModuleWsEventData, default_settings } from '../../../mod/modules/GeneralModuleCommon'
-import { RouletteCommandData } from '../../../types'
+import type { RouletteCommandData } from '../../../types'
 
 const props = defineProps<{
   wdata: WidgetApiData,

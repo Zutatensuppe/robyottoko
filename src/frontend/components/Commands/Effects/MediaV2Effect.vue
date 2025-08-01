@@ -236,7 +236,7 @@
 </template>
 <script setup lang="ts">
 import { newMediaV2Image, newMediaV2Sound, newMediaV2Text, newMediaV2Video } from '../../../../common/commands'
-import { MediaV2EffectData } from '../../../../types'
+import type { MediaV2EffectData } from '../../../../types'
 import { Ref, ref, watch } from 'vue'
 import MediaV2EditArea from './MediaV2EditArea.vue'
 import ImageUpload from '../../ImageUpload.vue'

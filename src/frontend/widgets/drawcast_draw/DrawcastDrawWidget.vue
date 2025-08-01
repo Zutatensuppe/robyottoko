@@ -442,7 +442,7 @@
 import { computed, onBeforeUnmount, onMounted, Ref, ref, watch } from 'vue'
 import { nonce, logger, pad } from '../../../common/fn'
 import WsClient from '../../WsClient'
-import { DrawcastFavoriteList, FullApiUserData } from '../../../types'
+import type { DrawcastFavoriteList, FullApiUserData } from '../../../types'
 import util, { WidgetApiData } from '../util'
 import { DrawcastModuleWsDataData } from '../../../mod/modules/DrawcastModuleCommon'
 import IconPen from './components/IconPen.vue'

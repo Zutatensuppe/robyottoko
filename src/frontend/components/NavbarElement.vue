@@ -105,7 +105,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import user from '../user'
 import { eventBus } from '../wsstatus'
-import { FullApiUserData } from '../../types'
+import type { FullApiUserData } from '../../types'
 import CheckboxInput from './CheckboxInput.vue'
 import ProblemsDialog from './ProblemsDialog.vue'
 import { RouteLocationNamedRaw, useRoute, useRouter } from 'vue-router'

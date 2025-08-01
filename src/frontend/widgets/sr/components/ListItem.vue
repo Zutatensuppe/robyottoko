@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { dateformat } from '../../../../common/fn'
-import { PlaylistItem } from '../../../../types'
+import type { PlaylistItem } from '../../../../types'
 
 const props = withDefaults(defineProps<{
   item: PlaylistItem

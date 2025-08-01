@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { newMedia } from '../../../common/commands'
 import { onMounted, onUnmounted, Ref, ref } from 'vue'
-import { MediaCommandData, SoundMediaFile } from '../../../types'
+import type { SoundMediaFile } from '../../../types'
 import MediaQueueElement from '../MediaQueueElement.vue'
 import util, { WidgetApiData } from '../util'
 import WsClient from '../../WsClient'

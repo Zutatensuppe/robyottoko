@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import { computed, Ref, ref, watch } from 'vue'
 import { AvatarModuleAnimationFrameDefinition } from '../../../mod/modules/AvatarModuleCommon'
-import { UploadedFile } from '../../../types'
+import type { UploadedFile } from '../../../types'
 import { getFileFromDropEvent } from '../../util'
 import UploadInput from '../UploadInput.vue'
 import IntegerInput from '../IntegerInput.vue'

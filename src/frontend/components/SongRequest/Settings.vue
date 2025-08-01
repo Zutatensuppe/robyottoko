@@ -180,7 +180,7 @@
 </template>
 <script setup lang="ts">
 import { ref } from 'vue'
-import { MediaFile } from '../../../types'
+import type { MediaFile } from '../../../types'
 import {
   default_custom_css_preset,
   SongrequestModuleCustomCssPreset,

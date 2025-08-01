@@ -157,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-import { CountdownAction, CountdownCommandData, DragEndEvent, MediaFile, SoundMediaFile } from '../../../types'
+import type { CountdownAction, CountdownCommandData, DragEndEvent, MediaFile, SoundMediaFile } from '../../../types'
 import { newCountdownDelay, newCountdownText, newCountdownMedia } from '../../../common/commands'
 import { ref, watch } from 'vue'
 import DurationInput from '../DurationInput.vue'

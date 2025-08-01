@@ -42,7 +42,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { VariableChangeEffectData, CommandVariable, GlobalVariable } from '../../../../types'
+import type { VariableChangeEffectData, CommandVariable, GlobalVariable } from '../../../../types'
 import { AutocompletableVariable } from '../EffectsEditor.vue'
 import StringInput from '../../StringInput.vue'
 import DropdownInput from '../../DropdownInput.vue'

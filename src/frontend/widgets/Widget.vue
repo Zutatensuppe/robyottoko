@@ -78,7 +78,7 @@ import PomoWidget from './pomo/PomoWidget.vue'
 import SpeechToTextWidget from './speech-to-text/SpeechToTextWidget.vue'
 import SrWidget from './sr/SrWidget.vue'
 import RouletteWidget from './roulette/RouletteWidget.vue'
-import { WIDGET_TYPE } from '../../types'
+import { WIDGET_TYPE } from '../../enums'
 
 const data = ref<WidgetApiData | null>(null)
 const error = ref<string>('')

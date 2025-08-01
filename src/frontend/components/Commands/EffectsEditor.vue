@@ -33,7 +33,7 @@
 </template>
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { CommandEffectData, CommandVariable, GlobalVariable } from '../../../types'
+import type { CommandEffectData, CommandVariable, GlobalVariable } from '../../../types'
 import DoubleclickButton from '../DoubleclickButton.vue'
 import EffectEditor from './EffectEditor.vue'
 

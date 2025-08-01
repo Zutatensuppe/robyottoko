@@ -1,6 +1,6 @@
 import type { User } from '../../repo/Users'
 import type { Bot, ChatMessageContext, CommandExecutionContext, Module} from '../../types'
-import { MODULE_NAME } from '../../types'
+import { MODULE_NAME } from '../../enums'
 import { newCommandTrigger } from '../../common/commands'
 import { isBroadcaster, isMod } from '../../common/permissions'
 import { logger } from '../../common/fn'

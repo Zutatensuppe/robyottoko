@@ -79,11 +79,12 @@ import {
   GeneralModuleWsEventData,
   GeneralSaveEventData,
 } from '../../mod/modules/GeneralModuleCommon'
-import { Command, CommandAction, CommandEffectType, GlobalVariable } from '../../types'
+import type { Command, GlobalVariable } from '../../types'
 import util from '../util'
 import CommandsEditor from '../components/Commands/CommandsEditor.vue'
 import NavbarElement from '../components/NavbarElement.vue'
 import Settings from '../components/Commands/Settings.vue'
+import { CommandAction, CommandEffectType } from '../../enums'
 
 type TabType = 'commands' | 'settings'
 interface TabDefinition {
