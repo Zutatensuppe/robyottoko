@@ -693,14 +693,6 @@ export const uniqId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substring(2)
 }
 
-export const toJSONDateString = (date: Date): JSONDateString => {
-  return JSON.stringify(date) as JSONDateString
-}
-
-export const newJSONDateString = (): JSONDateString => {
-  return toJSONDateString(new Date())
-}
-
 export const newPlaylistItemId = (): PlaylistItemId => {
   return Math.random() as PlaylistItemId
 }
