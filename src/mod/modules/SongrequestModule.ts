@@ -15,7 +15,7 @@ import type {
 } from '../../types'
 import {
   MODULE_NAME, WIDGET_TYPE,
-} from '../../types'
+} from '../../enums'
 import type {
   SongerquestModuleInitData,
   SongrequestModuleData,

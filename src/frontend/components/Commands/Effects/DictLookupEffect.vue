@@ -66,7 +66,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { DictLookupEffectData } from '../../../../types'
+import type { DictLookupEffectData } from '../../../../types'
 import { ref, watch } from 'vue'
 import MacroSelect from '../../MacroSelect.vue'
 

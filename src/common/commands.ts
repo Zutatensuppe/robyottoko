@@ -1,5 +1,4 @@
-import { getProp, mustParseHumanDuration, nonce } from '../common/fn'
-import { newJSONDateString } from '../fn'
+import { getProp, mustParseHumanDuration, newJSONDateString, nonce } from '../common/fn'
 import type {
   AbstractCommand,
   Command, CommandEffectData, CommandTrigger,
@@ -11,8 +10,12 @@ import type {
   MediaV2CommandDataTextItem,
   CommandId,
 } from '../types'
-import { CommandAction, CommandEffectType, CommandTriggerType, CountdownActionType,
-} from '../types'
+import {
+  CommandAction,
+  CommandEffectType,
+  CommandTriggerType,
+  CountdownActionType,
+} from '../enums'
 import { MOD_OR_ABOVE } from './permissions'
 
 export const newText = () => ''

@@ -15,7 +15,7 @@ import {
 } from '../../../mod/modules/GeneralModuleCommon'
 import { newMedia } from '../../../common/commands'
 import MediaQueueElement from '../MediaQueueElement.vue'
-import { MediaCommandData, WidgetId } from '../../../types'
+import type { MediaCommandData, WidgetId } from '../../../types'
 
 const props = defineProps<{
   wdata: WidgetApiData,

@@ -1,4 +1,4 @@
-import { CommandTriggerType } from '../types'
+import { CommandTriggerType } from '../enums'
 
 export const possibleTriggerActions = () => ([
   { type: CommandTriggerType.COMMAND, label: 'Add Command', title: 'Command' },

@@ -1,6 +1,6 @@
 'use strict'
 
-import { toJSONDateString } from '../fn'
+import { toJSONDateString } from '../common/fn'
 import type { JSONDateString } from '../types'
 import { Repo } from './Repo'
 

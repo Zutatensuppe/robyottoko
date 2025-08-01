@@ -2,7 +2,7 @@ import * as WebSocket from 'ws'
 import type { IncomingMessage } from 'http'
 import { logger, withoutLeading } from '../common/fn'
 import type { Bot} from '../types'
-import { MODULE_NAME } from '../types'
+import { MODULE_NAME } from '../enums'
 import { moduleByWidgetType } from '../services/Widgets'
 import { uniqId } from '../fn'
 

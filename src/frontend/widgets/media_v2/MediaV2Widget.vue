@@ -14,7 +14,7 @@ import {
   GeneralModuleWsEventData,
 } from '../../../mod/modules/GeneralModuleCommon'
 import MediaV2QueueElement from '../MediaV2QueueElement.vue'
-import { MediaV2CommandData, WidgetId } from '../../../types'
+import type { MediaV2CommandData, WidgetId } from '../../../types'
 import { newMediaV2 } from '../../../common/commands'
 
 const props = defineProps<{

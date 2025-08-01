@@ -1,7 +1,7 @@
 'use strict'
 
+import { newJSONDateString } from '../common/fn'
 import type { WhereRaw } from '../DbPostgres'
-import { newJSONDateString } from '../fn'
 import type { TwitchEventContext } from '../services/twitch'
 import type { JSONDateString } from '../types'
 import { Repo } from './Repo'

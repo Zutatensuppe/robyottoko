@@ -1,7 +1,7 @@
 import { logger, humanDuration, parseHumanDuration, SECOND } from '../../common/fn'
 import type { Socket } from '../../net/WebSocketServer'
 import type { Bot, ChatMessageContext, CommandExecutionContext, CommandId, FunctionCommand, Module, RawCommand} from '../../types'
-import { MODULE_NAME, WIDGET_TYPE } from '../../types'
+import { MODULE_NAME, WIDGET_TYPE } from '../../enums'
 import type { User } from '../../repo/Users'
 import type { PomoEffect, PomoModuleData, PomoModuleWsData, PomoModuleWsEffectData, PomoModuleWsSaveData } from './PomoModuleCommon'
 import { default_settings, default_state } from './PomoModuleCommon'

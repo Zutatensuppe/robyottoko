@@ -208,7 +208,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChatEffectData, Command, CommandAction, CommandEffectType, CommandTriggerType, GlobalVariable } from '../../../types'
+import type { ChatEffectData, Command, GlobalVariable } from '../../../types'
+import { CommandAction, CommandEffectType, CommandTriggerType } from '../../../enums'
 import { commands } from '../../../common/commands'
 import { computed, ref } from 'vue'
 import { permissionsStr } from '../../../common/permissions'

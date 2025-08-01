@@ -209,7 +209,7 @@
 </template>
 <script setup lang="ts">
 import { ref } from 'vue'
-import { RouletteEffectData, RouletteEntry, WidgetId } from '../../../../types'
+import type { RouletteEffectData, RouletteEntry, WidgetId } from '../../../../types'
 import { newRouletteEntry } from '../../../../common/commands'
 import StringInput from '../../StringInput.vue'
 import IntegerInput from '../../IntegerInput.vue'

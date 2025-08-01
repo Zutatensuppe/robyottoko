@@ -41,7 +41,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { CommandTrigger } from '../../../types'
+import type { CommandTrigger } from '../../../types'
 import DurationDisplay from '../DurationDisplay.vue'
 
 defineProps<{

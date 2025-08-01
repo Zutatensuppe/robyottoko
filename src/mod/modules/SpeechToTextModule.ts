@@ -4,7 +4,7 @@ import type { Socket } from '../../net/WebSocketServer'
 import xhr from '../../net/xhr'
 import type { User } from '../../repo/Users'
 import type { Bot, ChatMessageContext, Module} from '../../types'
-import { MODULE_NAME, WIDGET_TYPE } from '../../types'
+import { MODULE_NAME, WIDGET_TYPE } from '../../enums'
 import type { SpeechToTextModuleData, SpeechToTextModuleSettings, SpeechToTextWsData } from './SpeechToTextModuleCommon'
 import { default_settings } from './SpeechToTextModuleCommon'
 

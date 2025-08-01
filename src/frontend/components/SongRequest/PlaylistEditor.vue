@@ -322,7 +322,7 @@
 <script setup lang="ts">
 import { dateformat, humanDuration } from '../../../common/fn'
 import { computed, nextTick, Ref, ref, watch } from 'vue'
-import { DragEndEvent, PlaylistItem } from '../../../types'
+import type { DragEndEvent, PlaylistItem } from '../../../types'
 import { isItemShown, SongRequestModuleFilter, SortBy, SortDirection } from '../../../mod/modules/SongrequestModuleCommon'
 import DoubleclickButton from '../DoubleclickButton.vue'
 import CheckboxInput from '../CheckboxInput.vue'

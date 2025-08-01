@@ -169,7 +169,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { MediaEffectData, MediaFile, SoundMediaFile, WidgetId } from '../../../../types'
+import type { MediaEffectData, MediaFile, SoundMediaFile, WidgetId } from '../../../../types'
 import { nextTick, onBeforeMount, Ref, ref, watch } from 'vue'
 import StringInput from '../../StringInput.vue'
 import VolumeSlider from '../../VolumeSlider.vue'

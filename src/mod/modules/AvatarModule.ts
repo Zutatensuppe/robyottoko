@@ -1,7 +1,7 @@
 import { logger } from '../../common/fn'
 import type { Socket } from '../../net/WebSocketServer'
 import type { Bot, ChatMessageContext, Module} from '../../types'
-import { MODULE_NAME, WIDGET_TYPE } from '../../types'
+import { MODULE_NAME, WIDGET_TYPE } from '../../enums'
 import type { User } from '../../repo/Users'
 import type { AvatarModuleSettings, AvatarModuleState, AvatarModuleWsSaveData} from './AvatarModuleCommon'
 import { default_settings, default_state } from './AvatarModuleCommon'

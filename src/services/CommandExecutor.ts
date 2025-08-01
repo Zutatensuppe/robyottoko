@@ -1,9 +1,9 @@
 'use strict'
 
 import { getUniqueCommandsByTriggers } from '../common/commands'
-import { humanDuration, logger, parseHumanDuration } from '../common/fn'
+import { humanDuration, logger, parseHumanDuration, toJSONDateString } from '../common/fn'
 import { mayExecute } from '../common/permissions'
-import { doReplacements, toJSONDateString } from '../fn'
+import { doReplacements } from '../fn'
 import type { Bot, CommandExecutionContext, CommandTrigger, FunctionCommand, Module, RawCommand } from '../types'
 import type { User } from '../repo/Users'
 import type { CommandExecutionRepo, Row } from '../repo/CommandExecutionRepo'

@@ -46,7 +46,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, Ref, ref } from 'vue'
 import { logger } from '../../../common/fn'
-import { PlaylistItem } from '../../../types'
+import type { PlaylistItem } from '../../../types'
 import ListItem from './components/ListItem.vue'
 import ResponsiveImage from './../../components/ResponsiveImage.vue'
 import util, { WidgetApiData } from '../util'
