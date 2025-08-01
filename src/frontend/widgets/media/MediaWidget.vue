@@ -15,7 +15,7 @@ import {
 } from '../../../mod/modules/GeneralModuleCommon'
 import { newMedia } from '../../../common/commands'
 import MediaQueueElement from '../MediaQueueElement.vue'
-import { MediaCommandData } from '../../../types'
+import { MediaCommandData, WidgetId } from '../../../types'
 
 const props = defineProps<{
   wdata: WidgetApiData,
@@ -23,7 +23,7 @@ const props = defineProps<{
 
 let ws: WsClient | null = null
 const settings = ref<GeneralModuleSettings>(default_settings())
-const widgetId = ref<string>(util.getParam('id'))
+const widgetId = ref<WidgetId>(util.getParam('id') as WidgetId)
 const q = ref<InstanceType<typeof MediaQueueElement>>() as Ref<InstanceType<typeof MediaQueueElement>>
 
 // @ts-ignore
@@ -35,7 +35,7 @@ onMounted(() => {
     settings.value = data.settings
   })
   ws.onMessage('playmedia', (data: MediaCommandData) => {
-    if (!widgetId.value && data.widgetIds.length > 0 && !data.widgetIds.includes('')) {
+    if (!widgetId.value && data.widgetIds.length > 0 && !data.widgetIds.includes('' as WidgetId)) {
       // skipping this because it should not be displayed in global widget
     } else if (widgetId.value && !data.widgetIds.includes(widgetId.value)) {
       // skipping this, as it isn't coming from right command

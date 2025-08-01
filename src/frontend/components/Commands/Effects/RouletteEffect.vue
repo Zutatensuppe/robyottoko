@@ -209,7 +209,7 @@
 </template>
 <script setup lang="ts">
 import { ref } from 'vue'
-import { RouletteEffectData, RouletteEntry } from '../../../../types'
+import { RouletteEffectData, RouletteEntry, WidgetId } from '../../../../types'
 import { newRouletteEntry } from '../../../../common/commands'
 import StringInput from '../../StringInput.vue'
 import IntegerInput from '../../IntegerInput.vue'
@@ -456,11 +456,11 @@ const moveEntry = (idx: number, direction: -1 | 1): void => {
 }
 
 const addWidgetId = (): void => {
-  val.value.data.widgetIds.push('')
+  val.value.data.widgetIds.push('' as WidgetId)
 }
 
 const rmWidgetId = (idx: number): void => {
-  val.value.data.widgetIds = val.value.data.widgetIds.filter((_val: string, index: number) => index !== idx)
+  val.value.data.widgetIds = val.value.data.widgetIds.filter((_val: WidgetId, index: number) => index !== idx)
 }
 
 const addEntry = (): void => {

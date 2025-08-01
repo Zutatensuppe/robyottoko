@@ -9,6 +9,7 @@ import type {
   Bot,
   CommandMatch,
   JSONDateString,
+  PlaylistItemId,
 } from './types'
 import type { User } from './repo/Users'
 import type { TwitchHelixUserSearchResponseDataEntry } from './services/TwitchHelixClient'
@@ -698,6 +699,10 @@ export const toJSONDateString = (date: Date): JSONDateString => {
 
 export const newJSONDateString = (): JSONDateString => {
   return toJSONDateString(new Date())
+}
+
+export const newPlaylistItemId = (): PlaylistItemId => {
+  return Math.random() as PlaylistItemId
 }
 
 export default {

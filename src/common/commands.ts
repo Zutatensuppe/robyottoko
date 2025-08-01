@@ -8,7 +8,9 @@ import type {
   MediaCommandData, MediaV2CommandDataSoundItem, MediaFile, MediaV2CommandData, MediaVideo, RouletteCommandData, RouletteEntry, SoundMediaFile, SrAddtagCommand, SrBadCommand, SrClearCommand, SrCurrentCommand, SrFilterCommand, SrGoodCommand, SrHidevideoCommand, SrJumptonewCommand, SrLoopCommand, SrMoveTagUpCommand, SrNextCommand, SrNoloopCommand, SrPauseCommand, SrPresetCommand, SrPrevCommand, SrQueueCommand, SrReRequestCommand, SrRequestCommand, SrResetStatsCommand, SrRmCommand, SrRmtagCommand, SrShowvideoCommand, SrShuffleCommand, SrStatsCommand, SrUndoCommand, SrUnpauseCommand, SrVolumeCommand,
   MediaV2CommandDataVideoItem,
   MediaV2CommandDataImageItem,
-  MediaV2CommandDataTextItem} from '../types'
+  MediaV2CommandDataTextItem,
+  CommandId,
+} from '../types'
 import { CommandAction, CommandEffectType, CommandTriggerType, CountdownActionType,
 } from '../types'
 import { MOD_OR_ABOVE } from './permissions'
@@ -138,7 +140,7 @@ export const newRewardRedemptionTrigger = (command: string = ''): CommandTrigger
   return trigger
 }
 
-const newCommandId = () => nonce(10)
+const newCommandId = (): CommandId => nonce(10) as CommandId
 
 export const newCommandTrigger = (command: string = '', commandExact: boolean = false): CommandTrigger => {
   const trigger = newTrigger(CommandTriggerType.COMMAND)
