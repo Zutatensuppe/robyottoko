@@ -13,7 +13,8 @@ import {
   safeFileName,
   normalizeChatMessage,
 } from './fn'
-import type { Command, CommandTrigger } from './types'
+import type { Command, CommandTrigger, FunctionCommand, RawCommand } from './types'
+import type { TwitchEventContext } from './services/twitch'
 
 describe('src/fn.ts', () => {
   describe('accentFolded', () => {
@@ -366,7 +367,13 @@ describe('src/fn.ts', () => {
   })
 
   describe('doReplacements', () => {
-    const testCases = [
+    const testCases: {
+      text: string
+      command: RawCommand | null,
+      context: TwitchEventContext | null,
+      originalCmd: Command | FunctionCommand | null,
+      expected: string
+    }[] = [
       {
         text: 'lalala',
         command: null,
@@ -437,6 +444,36 @@ describe('src/fn.ts', () => {
         context: null,
         originalCmd: {} as Command,
         expected: 'arg1 arg2',
+      },
+      {
+        text: 'bla $user($args).name',
+        command: { name: 'cmd', args: ['@exampleuser'] },
+        context: {
+          'room-id': '',
+          'user-id': '',
+          'display-name': 'exampleuser',
+          username: 'exampleuser',
+          mod: false,
+          subscriber: false,
+          badges: {},
+        },
+        originalCmd: {} as Command,
+        expected: 'bla exampleuser',
+      },
+      {
+        text: 'bla $user($args).name',
+        command: { name: 'cmd', args: ['exampleuser'] },
+        context: {
+          'room-id': '',
+          'user-id': '',
+          'display-name': 'exampleuser',
+          username: 'exampleuser',
+          mod: false,
+          subscriber: false,
+          badges: {},
+        },
+        originalCmd: {} as Command,
+        expected: 'bla exampleuser',
       },
     ]
 
