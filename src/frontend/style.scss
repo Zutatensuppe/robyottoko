@@ -260,3 +260,19 @@ ul.list {
 .widget-actions {
    display: flex;
 }
+
+.repaired-navbar {
+  .navbar-menu {
+    overflow: hidden;
+    flex-shrink: 1;
+  }
+
+  .navbar-start {
+    overflow-x: auto;
+  }
+
+  .navbar-end {
+    flex: 0 0 auto;
+    display: flex;
+  }
+}
