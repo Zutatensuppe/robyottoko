@@ -8,7 +8,6 @@ import type {
   CommandTrigger,
   Bot,
   CommandMatch,
-  JSONDateString,
   PlaylistItemId,
 } from './types'
 import type { User } from './repo/Users'
@@ -17,6 +16,10 @@ import type TwitchHelixClient from './services/TwitchHelixClient'
 import type { TwitchClient, TwitchEventContext } from './services/twitch'
 
 const log = logger('fn.ts')
+
+function cleanUsername(username: string): string {
+  return username.replace(/^@+/, '')
+}
 
 function mimeToExt(mime: string) {
   if (/image\//.test(mime)) {
@@ -294,7 +297,7 @@ export const doReplacements = async (
           return ''
         }
 
-        const username = m1 || m2 || context.username || ''
+        const username = cleanUsername(m1 || m2 || context.username || '')
         if (username === context.username && m3 === 'name') {
           return String(context['display-name'])
         }
