@@ -1,6 +1,6 @@
 <template>
   <nav
-    class="navbar"
+    class="navbar repaired-navbar"
     role="navigation"
     aria-label="main navigation"
   >
@@ -85,7 +85,7 @@
             class="mr-1"
             @update:model-value="onDarkmodeSwitch"
           />
-          <label for="darkmode-switch">Switch dark/light mode</label>
+          <label for="darkmode-switch"><i class="fa fa-moon-o" />/<i class="fa fa-sun-o" /></label>
         </span>
         <a
           class="navbar-item"
