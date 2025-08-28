@@ -24,7 +24,7 @@ import type { EmoteParser } from './services/EmoteParser'
 import type { TimeApi } from './services/TimeApi'
 import type { EffectApplier } from './effect/EffectApplier'
 import type { TwitchClient, TwitchEventContext } from './services/twitch'
-import type TwitchHelixClient from './services/TwitchHelixClient'
+import type { TwitchHelixClient } from './services/TwitchHelixClient'
 import type { CommandAction, CommandEffectType, CommandTriggerType, CountdownActionType, MODULE_NAME, WIDGET_TYPE } from './enums'
 
 type int = number

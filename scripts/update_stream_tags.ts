@@ -5,7 +5,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 import config from '../src/config'
-import TwitchHelixClient from '../src/services/TwitchHelixClient'
+import { TwitchHelixClient } from '../src/services/TwitchHelixClient'
 
 const c = new TwitchHelixClient(
   config.twitch.tmi.identity.client_id,

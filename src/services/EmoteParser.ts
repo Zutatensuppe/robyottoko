@@ -1,6 +1,6 @@
 import { loadAssetsForChannel, getTwitchEmotes } from './lib/emote-parse'
 import emojiDetect from '@zutatensuppe/emoji-detect'
-import type TwitchHelixClient from './TwitchHelixClient'
+import type { TwitchHelixClient } from './TwitchHelixClient'
 import type { TwitchContext } from './twitch'
 
 export class EmoteParser {

@@ -12,7 +12,7 @@ import type {
 } from './types'
 import type { User } from './repo/Users'
 import type { TwitchHelixUserSearchResponseDataEntry } from './services/TwitchHelixClient'
-import type TwitchHelixClient from './services/TwitchHelixClient'
+import type { TwitchHelixClient } from './services/TwitchHelixClient'
 import type { TwitchClient, TwitchEventContext } from './services/twitch'
 
 const log = logger('fn.ts')
