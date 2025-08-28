@@ -1,9 +1,8 @@
 import type { RequestInit, Response } from 'node-fetch'
-import { asQueryArgs, getRandom, logger, SECOND } from '../common/fn'
+import { asQueryArgs, getRandom, logger, SECOND, toJSONDateString } from '../common/fn'
 import { findIdxFuzzy } from '../fn'
 import xhr, { asJson, withHeaders } from '../net/xhr'
-import { tryRefreshAccessToken } from '../oauth'
-import type { Bot } from '../types'
+import type { Bot, UserId } from '../types'
 import type Cache from './Cache'
 import type { SubscriptionType } from './twitch/EventSub'
 import type { User } from '../repo/Users'
@@ -59,7 +58,7 @@ interface TwitchHelixSubscriptionConflictResponseData {
   message: string
 }
 
-interface TwitchHelixOauthTokenResponseData {
+export interface TwitchHelixOauthTokenResponseData {
   access_token: string
   refresh_token: string
   expires_in: number
@@ -268,44 +267,26 @@ export function getBestEntryFromCategorySearchItems(
   return idx === -1 ? null : resp.data[idx]
 }
 
-async function executeRequestWithRetry(
-  accessToken: string,
-  req: (accessToken: string) => Promise<Response>,
-  bot: Bot,
-  user: User,
-): Promise<Response> {
-  const resp = await req(accessToken)
-  if (resp.status !== 401) {
-    return resp
+export class TwitchHelixClient {
+  constructor(
+    private readonly clientId: string,
+    private readonly clientSecret: string,
+  ) {
   }
 
-  // try to refresh the token and try again
-  const newAccessToken = await tryRefreshAccessToken(accessToken, bot, user)
-  if (!newAccessToken) {
-    return resp
-  }
-
-  log.warn('retrying with refreshed token')
-  return await req(newAccessToken)
-}
-
-class TwitchHelixClient {
-  constructor(private readonly clientId: string, private readonly clientSecret: string) {
-  }
-
-  _authHeaders(accessToken: string) {
+  private _authHeaders(accessToken: string) {
     return {
       'Client-ID': this.clientId,
       'Authorization': `Bearer ${accessToken}`,
     }
   }
 
-  async withAuthHeaders(opts = {}): Promise<RequestInit> {
+  private async withAuthHeaders(opts = {}): Promise<RequestInit> {
     const accessToken = await this.getAccessToken()
     return withHeaders(this._authHeaders(accessToken), opts)
   }
 
-  async getAccessTokenByCode(
+  public async getAccessTokenByCode(
     code: string,
     redirectUri: string,
   ): Promise<TwitchHelixOauthTokenResponseData | null> {
@@ -331,7 +312,7 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/authentication/refresh-tokens
-  async refreshAccessToken(
+  private async refreshAccessToken(
     refreshToken: string,
   ): Promise<TwitchHelixOauthTokenResponseData | null> {
     const url = TOKEN_ENDPOINT + asQueryArgs({
@@ -340,13 +321,9 @@ class TwitchHelixClient {
       grant_type: 'refresh_token',
       refresh_token: refreshToken,
     })
+
     try {
       const resp = await xhr.post(url)
-      if (resp.status === 401) {
-        const txt = await resp.text()
-        log.warn({ txt, status: resp.status, twitchClientId: this.clientId }, 'tried to refresh access_token with an invalid refresh token')
-        return null
-      }
       if (!resp.ok) {
         const txt = await resp.text()
         log.warn({ txt, status: resp.status, twitchClientId: this.clientId }, 'unable to refresh access_token')
@@ -360,7 +337,7 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/
-  async getAccessToken(): Promise<string> {
+  private async getAccessToken(): Promise<string> {
     const url = TOKEN_ENDPOINT + asQueryArgs({
       client_id: this.clientId,
       client_secret: this.clientSecret,
@@ -383,7 +360,7 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/irc/emotes
-  async getChannelEmotes(
+  public async getChannelEmotes(
     broadcasterId: string,
   ): Promise<TwitchHelixChannelEmotesResponseData | null> {
     // eg. /chat/emotes?broadcaster_id=141981764
@@ -400,7 +377,7 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/irc/emotes
-  async getGlobalEmotes(): Promise<TwitchHelixGlobalEmotesResponseData | null> {
+  public async getGlobalEmotes(): Promise<TwitchHelixGlobalEmotesResponseData | null> {
     const url = apiUrl('/chat/emotes/global')
     let json
     try {
@@ -413,7 +390,7 @@ class TwitchHelixClient {
     }
   }
 
-  async getUser(accessToken: string): Promise<TwitchHelixUserSearchResponseDataEntry | null> {
+  public async getUser(accessToken: string): Promise<TwitchHelixUserSearchResponseDataEntry | null> {
     const url = apiUrl('/users')
     let json
     try {
@@ -427,7 +404,7 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/api/reference#get-users
-  async _getUserBy(query: any): Promise<TwitchHelixUserSearchResponseDataEntry | null> {
+  private async _getUserBy(query: any): Promise<TwitchHelixUserSearchResponseDataEntry | null> {
     const url = apiUrl('/users') + asQueryArgs(query)
     let json
     try {
@@ -440,11 +417,11 @@ class TwitchHelixClient {
     }
   }
 
-  async getUserByName(userName: string): Promise<TwitchHelixUserSearchResponseDataEntry | null> {
+  public async getUserByName(userName: string): Promise<TwitchHelixUserSearchResponseDataEntry | null> {
     return await this._getUserBy({ login: userName })
   }
 
-  async getUserIdByNameCached(userName: string, cache: Cache): Promise<string> {
+  public async getUserIdByNameCached(userName: string, cache: Cache): Promise<string> {
     const cacheKey = `TwitchHelixClient::getUserIdByNameCached(${userName})`
     let userId = await cache.get(cacheKey)
     if (userId === undefined) {
@@ -454,13 +431,13 @@ class TwitchHelixClient {
     return `${userId}`
   }
 
-  async _getUserIdByNameUncached(userName: string): Promise<string> {
+  private async _getUserIdByNameUncached(userName: string): Promise<string> {
     const user = await this.getUserByName(userName)
     return user ? String(user.id) : ''
   }
 
   // https://dev.twitch.tv/docs/api/reference#get-clips
-  async getClipByUserId(
+  public async getClipByUserId(
     userId: string,
     startedAtRfc3339: string,
     endedAtRfc3339: string,
@@ -483,7 +460,7 @@ class TwitchHelixClient {
     }
   }
 
-  async getStreamByUserIdCached(
+  public async getStreamByUserIdCached(
     userId: string,
     cache: Cache,
   ): Promise<TwitchHelixStreamSearchResponseDataEntry | null> {
@@ -497,7 +474,7 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/api/reference#get-streams
-  async getStreamByUserId(
+  public async getStreamByUserId(
     userId: string,
   ): Promise<TwitchHelixStreamSearchResponseDataEntry | null> {
     const url = apiUrl('/streams') + asQueryArgs({ user_id: userId })
@@ -512,7 +489,7 @@ class TwitchHelixClient {
     }
   }
 
-  async getSubscriptions() {
+  public async getSubscriptions() {
     const url = apiUrl('/eventsub/subscriptions')
     try {
       const resp = await xhr.get(url, await this.withAuthHeaders())
@@ -523,7 +500,7 @@ class TwitchHelixClient {
     }
   }
 
-  async deleteSubscription(id: string) {
+  public async deleteSubscription(id: string) {
     const url = apiUrl('/eventsub/subscriptions') + asQueryArgs({ id: id })
     try {
       const resp = await xhr.delete(url, await this.withAuthHeaders())
@@ -535,7 +512,7 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/eventsub/manage-subscriptions#subscribing-to-events
-  async createSubscription(
+  public async createSubscription(
     subscription: TwitchHelixSubscription,
   ): Promise<TwitchHelixSubscriptionResponseData | TwitchHelixSubscriptionConflictResponseData | null> {
     const url = apiUrl('/eventsub/subscriptions')
@@ -550,7 +527,7 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/api/reference#search-categories
-  async searchCategory(
+  public async searchCategory(
     searchString: string,
   ): Promise<TwitchHelixCategorySearchResponseDataEntry | null> {
     const url = apiUrl('/search/categories') + asQueryArgs({ query: searchString })
@@ -566,7 +543,7 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/api/reference#get-channel-information
-  async getChannelInformation(
+  public async getChannelInformation(
     broadcasterId: string,
   ): Promise<TwitchHelixGetChannelInformationResponseDataEntry | null> {
     const url = apiUrl('/channels') + asQueryArgs({ broadcaster_id: broadcasterId })
@@ -582,7 +559,7 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/api/reference#modify-channel-information
-  async modifyChannelInformation(
+  public async modifyChannelInformation(
     accessToken: string,
     data: ModifyChannelInformationData,
     bot: Bot,
@@ -592,15 +569,10 @@ class TwitchHelixClient {
     const req = async (token: string): Promise<Response> => {
       return await xhr.patch(url, withHeaders(this._authHeaders(token), asJson(data)))
     }
-    try {
-      return await executeRequestWithRetry(accessToken, req, bot, user)
-    } catch (e) {
-      log.error({ url, e })
-      return null
-    }
+    return await this.executeRequestWithRetry(accessToken, req, bot, user, url)
   }
 
-  async getAllTags(): Promise<TwitchHelixGetStreamTagsResponseDataEntry[]> {
+  public async getAllTags(): Promise<TwitchHelixGetStreamTagsResponseDataEntry[]> {
     const allTags: TwitchHelixGetStreamTagsResponseDataEntry[] = []
     let cursor: any = null
     const first = 100
@@ -618,7 +590,7 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/api/reference#get-stream-tags
-  async getStreamTags(
+  public async getStreamTags(
     broadcasterId: string,
   ): Promise<TwitchHelixGetStreamTagsResponseData | null> {
     const url = apiUrl('/streams/tags') + asQueryArgs({ broadcaster_id: broadcasterId })
@@ -632,30 +604,20 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/api/reference#get-custom-reward
-  async getChannelPointsCustomRewards(
+  private async getChannelPointsCustomRewards(
     accessToken: string,
     broadcasterId: string,
     bot: Bot,
     user: User,
-  ): Promise<TwitchHelixGetChannelPointsCustomRewardsResponseData | null> {
+  ): Promise<Response | null> {
     const url = apiUrl('/channel_points/custom_rewards') + asQueryArgs({ broadcaster_id: broadcasterId })
     const req = async (token: string): Promise<Response> => {
       return await xhr.get(url, withHeaders(this._authHeaders(token)))
     }
-    try {
-      const resp = await executeRequestWithRetry(accessToken, req, bot, user)
-      const json = await resp.json() as any
-      if (json.error) {
-        return null
-      }
-      return json as TwitchHelixGetChannelPointsCustomRewardsResponseData
-    } catch (e) {
-      log.error({ url, e })
-      return null
-    }
+    return await this.executeRequestWithRetry(accessToken, req, bot, user, url)
   }
 
-  async getAllChannelPointsCustomRewards(
+  public async getAllChannelPointsCustomRewards(
     bot: Bot,
     user: User,
   ): Promise<Record<string, string[]>> {
@@ -670,20 +632,23 @@ class TwitchHelixClient {
       return rewards
     }
 
-    const res = await this.getChannelPointsCustomRewards(
+    const resp = await this.getChannelPointsCustomRewards(
       accessToken,
       user.twitch_id,
       bot,
       user,
     )
-    if (res) {
-      rewards[user.twitch_login] = res.data.map(entry => entry.title)
+    if (resp) {
+      const json = await resp.json() as any
+      if (!json.error) {
+        rewards[user.twitch_login] = (json as TwitchHelixGetChannelPointsCustomRewardsResponseData).data.map(entry => entry.title)
+      }
     }
     return rewards
   }
 
   // https://dev.twitch.tv/docs/api/reference#replace-stream-tags
-  async replaceStreamTags(
+  public async replaceStreamTags(
     accessToken: string,
     tagIds: string[],
     bot: Bot,
@@ -693,15 +658,10 @@ class TwitchHelixClient {
     const req = async (token: string): Promise<Response> => {
       return await xhr.put(url, withHeaders(this._authHeaders(token), asJson({ tag_ids: tagIds })))
     }
-    try {
-      return await executeRequestWithRetry(accessToken, req, bot, user)
-    } catch (e) {
-      log.error({ url, e })
-      return null
-    }
+    return await this.executeRequestWithRetry(accessToken, req, bot, user, url)
   }
 
-  async validateOAuthToken(
+  public async validateOAuthToken(
     broadcasterId: string,
     accessToken: string,
   ): Promise<ValidateOAuthTokenResponse> {
@@ -718,7 +678,7 @@ class TwitchHelixClient {
 
 
   // https://dev.twitch.tv/docs/api/reference#get-broadcaster-subscriptions
-  async isUserSubscriber(
+  public async isUserSubscriber(
     accessToken: string,
     broadcasterId: string,
     userId: string,
@@ -735,7 +695,7 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/api/reference#get-vips
-  async isUserVip(
+  public async isUserVip(
     accessToken: string,
     broadcasterId: string,
     userId: string,
@@ -752,7 +712,7 @@ class TwitchHelixClient {
   }
 
   // https://dev.twitch.tv/docs/api/reference#get-moderators
-  async isUserModerator(
+  public async isUserModerator(
     accessToken: string,
     broadcasterId: string,
     userId: string,
@@ -767,6 +727,68 @@ class TwitchHelixClient {
       return false
     }
   }
-}
 
-export default TwitchHelixClient
+  private async executeRequestWithRetry(
+    accessToken: string,
+    req: (accessToken: string) => Promise<Response>,
+    bot: Bot,
+    user: User,
+    url: string,
+  ): Promise<Response | null> {
+    if (!user.twitch_id) {
+      return null
+    }
+
+    try {
+      const resp = await req(accessToken)
+      if (resp.status !== 401) {
+        return resp
+      }
+
+      // try to refresh the token, if possible
+      const result = await this.tryRefreshAccessToken(accessToken, bot, user.id, user.twitch_id)
+      if ('error' in result) {
+        log.error(`unable to refresh token: ${result.error}`)
+        return null
+      }
+
+      log.warn('retrying with refreshed token')
+      return await req(result.token)
+    } catch (e) {
+      log.error({ url, e })
+      return null
+    }
+  }
+
+  public async tryRefreshAccessToken(
+    accessToken: string,
+    bot: Bot,
+    userId: UserId,
+    channelId: string,
+  ): Promise<{ token: string } | { error: string }> {
+    // try to refresh the token, if possible
+    const row = await bot.getRepos().oauthToken.getByAccessToken(accessToken)
+    if (!row || !row.refresh_token) {
+      // we have no information about that token
+      // or at least no way to refresh it
+      return { error: 'no_refresh_token_found' }
+    }
+
+    const refreshResp = await this.refreshAccessToken(row.refresh_token)
+    if (!refreshResp) {
+      return { error: 'refresh_oauth_token_failed' }
+    }
+
+    await bot.getRepos().oauthToken.insert({
+      user_id: userId,
+      channel_id: channelId,
+      access_token: refreshResp.access_token,
+      refresh_token: refreshResp.refresh_token,
+      scope: refreshResp.scope.join(','),
+      token_type: refreshResp.token_type,
+      expires_at: toJSONDateString(new Date(Date.now() + refreshResp.expires_in * 1000)),
+    })
+    log.info('__tryRefreshAccessToken - refreshed an access token')
+    return { token: refreshResp.access_token }
+  }
+}

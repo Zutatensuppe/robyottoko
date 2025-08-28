@@ -6,7 +6,7 @@ import fn from '../../fn'
 import type { Bot, CommandTrigger, Module, RawCommand } from '../../types'
 import { CommandTriggerType } from '../../enums'
 import { CommandExecutor } from '../CommandExecutor'
-import type TwitchHelixClient from '../TwitchHelixClient'
+import type { TwitchHelixClient } from '../TwitchHelixClient'
 import type { User } from '../../repo/Users'
 import type { TwitchEventContext } from '../twitch'
 

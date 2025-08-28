@@ -34,7 +34,7 @@ import { Discord } from './services/Discord'
 import { EmoteParser } from './services/EmoteParser'
 import { TimeApi } from './services/TimeApi'
 import { EffectApplier } from './effect/EffectApplier'
-import TwitchHelixClient from './services/TwitchHelixClient'
+import { TwitchHelixClient } from './services/TwitchHelixClient'
 
 setLogLevel(config.log.level)
 const log = logger('bot.ts')

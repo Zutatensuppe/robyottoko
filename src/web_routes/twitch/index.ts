@@ -3,10 +3,8 @@
 import type { NextFunction, Response, Router } from 'express'
 import express from 'express'
 import crypto from 'crypto'
-import { logger, YEAR } from '../../common/fn'
-import type { Bot } from '../../types'
-import type { HandleCodeCallbackResult} from '../../oauth'
-import { handleOAuthCodeCallback } from '../../oauth'
+import { logger, toJSONDateString, YEAR } from '../../common/fn'
+import type { Bot, UserId } from '../../types'
 import { SubscribeEventHandler } from '../../services/twitch/SubscribeEventHandler'
 import { FollowEventHandler } from '../../services/twitch/FollowEventHandler'
 import { CheerEventHandler } from '../../services/twitch/CheerEventHandler'
@@ -17,8 +15,95 @@ import { StreamOfflineEventHandler } from '../../services/twitch/StreamOfflineEv
 import { RaidEventHandler } from '../../services/twitch/RaidEventHandler'
 import type { EventSubEventHandler } from '../../services/twitch/EventSubEventHandler'
 import { SubscriptionGiftEventHandler } from '../../services/twitch/SubscriptionGiftEventHandler'
+import type { User } from '../../repo/Users'
 
 const log = logger('twitch/index.ts')
+
+export interface HandleCodeCallbackResult {
+  updated: boolean
+  created: boolean
+  user: User
+}
+
+// TODO: check if anything has to be put in a try catch block
+const handleOAuthCodeCallback = async (
+  code: string,
+  redirectUri: string,
+  bot: Bot,
+  loggedInUserId: UserId | null,
+): Promise<HandleCodeCallbackResult | null> => {
+  const client = bot.getHelixClient()
+
+  const resp = await client.getAccessTokenByCode(code, redirectUri)
+  if (!resp) {
+    return null
+  }
+
+  // get the user that corresponds to the token
+  const twitchUserResp = await client.getUser(resp.access_token)
+  if (!twitchUserResp) {
+    return null
+  }
+
+  let created = false
+  let updated = false
+
+  // update currently logged in user if they dont have a twitch id set yet
+  if (loggedInUserId) {
+    await bot.getRepos().user.save({
+      id: loggedInUserId,
+      twitch_id: twitchUserResp.id,
+      twitch_login: twitchUserResp.login,
+    })
+    updated = true
+  }
+
+  let user = await bot.getRepos().user.getByTwitchId(twitchUserResp.id)
+  if (!user) {
+    user = await bot.getRepos().user.getByName(twitchUserResp.login)
+    if (user) {
+      user.twitch_id = twitchUserResp.id
+      user.twitch_login = twitchUserResp.login
+      await bot.getRepos().user.save(user)
+      updated = true
+    }
+  }
+
+  if (!user) {
+    // create user
+    const userId = await bot.getRepos().user.createUser({
+      twitch_id: twitchUserResp.id,
+      twitch_login: twitchUserResp.login,
+      name: twitchUserResp.login,
+      email: twitchUserResp.email,
+      tmi_identity_username: '',
+      tmi_identity_password: '',
+      tmi_identity_client_id: '',
+      tmi_identity_client_secret: '',
+      bot_enabled: true,
+      bot_status_messages: false,
+      is_streaming: false,
+    })
+    user = await bot.getRepos().user.getById(userId)
+    created = true
+  }
+
+  if (!user) {
+    return null
+  }
+
+  await bot.getRepos().oauthToken.insert({
+    user_id: user.id,
+    channel_id: twitchUserResp.id,
+    access_token: resp.access_token,
+    refresh_token: resp.refresh_token,
+    scope: resp.scope.join(','),
+    token_type: resp.token_type,
+    expires_at: toJSONDateString(new Date(Date.now() + resp.expires_in * 1000)),
+  })
+
+  return { updated, created, user }
+}
 
 export const createRouter = (
   bot: Bot,
@@ -63,7 +148,7 @@ export const createRouter = (
         `${req.query.code}`,
         redirectUri,
         bot,
-        user,
+        user ? user.id : null,
       )
       if (tmpResult) {
         return tmpResult

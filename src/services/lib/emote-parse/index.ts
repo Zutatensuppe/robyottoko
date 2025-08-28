@@ -1,5 +1,5 @@
 import { logger, MINUTE } from './../../../common/fn'
-import type TwitchHelixClient from '../../TwitchHelixClient'
+import type { TwitchHelixClient } from '../../TwitchHelixClient'
 import type { TwitchContext } from '../../twitch'
 import { Provider } from './types'
 import type { Emote, LoadedChannelAssets, RepEmote } from './types'

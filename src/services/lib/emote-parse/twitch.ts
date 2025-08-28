@@ -1,5 +1,5 @@
 import type { Logger } from '../../../common/fn'
-import type TwitchHelixClient from '../../TwitchHelixClient'
+import type { TwitchHelixClient } from '../../TwitchHelixClient'
 import type { TwitchHelixChannelEmotesResponseData, TwitchHelixGlobalEmotesResponseData } from '../../TwitchHelixClient'
 import { Service } from './Service'
 import type { Emote, LoadedChannelAssets } from './types'

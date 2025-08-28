@@ -1,4 +1,4 @@
-import TwitchHelixClient from './TwitchHelixClient'
+import { TwitchHelixClient } from './TwitchHelixClient'
 import type { Logger } from '../common/fn'
 import { logger } from '../common/fn'
 import type { User } from '../repo/Users'
@@ -8,8 +8,6 @@ import { ChatEventHandler } from './twitch/ChatEventHandler'
 import { Timer } from '../Timer'
 import { normalizeChatMessage } from '../fn'
 import type { TwitchClient, TwitchEventContext } from './twitch'
-
-const log = logger('TwitchClientManager.ts')
 
 const isDevTunnel = (url: string) => url.match(/^https:\/\/[a-z0-9-]+\.(?:loca\.lt|ngrok\.io)\//)
 
