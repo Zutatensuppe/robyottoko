@@ -22,11 +22,18 @@ export class OauthTokenRepo extends Repo {
   async getMatchingAccessToken (
     user: User,
   ): Promise<string | null> {
-    const row = await this.db.get<Row>(TABLE, {
+    const row = await this.getMatchingRow(user)
+    return row ? row.access_token : null
+  }
+
+  // get the newest row (even if it is already expired)
+  async getMatchingRow (
+    user: User,
+  ): Promise<Row | null> {
+    return await this.db.get<Row>(TABLE, {
       user_id: user.id,
       channel_id: user.twitch_id,
     }, [{ expires_at: -1 }])
-    return row ? row.access_token : null
   }
 
   async getByAccessToken(accessToken: string): Promise<Row | null> {

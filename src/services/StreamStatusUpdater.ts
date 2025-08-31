@@ -1,4 +1,4 @@
-import { logger, MINUTE } from '../common/fn'
+import { logger } from '../common/fn'
 import type { Bot } from '../types'
 import type { User } from '../repo/Users'
 
@@ -36,20 +36,13 @@ export class StreamStatusUpdater {
     })
   }
 
-  async _doUpdate (): Promise<void> {
-    log.info('doing update')
+  async doUpdateForAllUsers (): Promise<void> {
+    log.info(`doing update for ${this.users.length} users`)
     const updatePromises: Promise<void>[] = []
     for (const user of this.users) {
       updatePromises.push(this._doUpdateForUser(user))
     }
     await Promise.all(updatePromises)
-    setTimeout(() => {
-      void this._doUpdate()
-    }, 5 * MINUTE)
-    log.info('done update')
-  }
-
-  start () {
-    void this._doUpdate()
+    log.info(`done update for ${this.users.length} users`)
   }
 }
