@@ -1,14 +1,13 @@
 <template>
   <div>
     <div class="field">
-      <input
-        id="restrictUsage"
-        v-model="val.active"
-        type="checkbox"
-        name="restrictUsage"
-        class="switch is-rounded is-small"
-      >
-      <label for="restrictUsage">Restrict usage</label>
+      <label>
+        <input
+          type="checkbox"
+          v-model="val.active"
+        />
+        Restrict usage
+      </label>
     </div>
     <div v-if="val.active">
       <label
@@ -29,6 +28,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { CommandRestrict, permissions } from '../../common/permissions'
+import CheckboxInput from './CheckboxInput.vue'
 
 const props = defineProps<{
   modelValue: CommandRestrict,

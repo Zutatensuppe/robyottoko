@@ -105,7 +105,7 @@ a {
 
 body {
   color: $main_color;
-  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
 }
 
 #top {
@@ -235,6 +235,7 @@ html.darkmode {
 
 ul.list {
   padding-left: 2em;
+
   li {
     list-style: disc;
   }
@@ -251,14 +252,21 @@ ul.list {
     td:nth-child(1) {
       width: 150px;
     }
+
     td:nth-child(2) {
       width: 150px;
     }
   }
+
+  .title label {
+    font-weight: normal;
+    margin-left: 1em;
+    font-size: 0.7em;
+  }
 }
 
 .widget-actions {
-   display: flex;
+  display: flex;
 }
 
 .repaired-navbar {
