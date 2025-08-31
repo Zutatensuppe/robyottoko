@@ -35,6 +35,8 @@ import { EmoteParser } from './services/EmoteParser'
 import { TimeApi } from './services/TimeApi'
 import { EffectApplier } from './effect/EffectApplier'
 import { TwitchHelixClient } from './services/TwitchHelixClient'
+import { Workers } from './workers/Workers'
+import { AccessTokenUpdater } from './services/AccessTokenUpdater'
 
 setLogLevel(config.log.level)
 const log = logger('bot.ts')
@@ -74,8 +76,11 @@ const createBot = async (): Promise<Bot> => {
   )
   const emoteParser = new EmoteParser()
 
+  const workers = new Workers()
+
   class BotImpl implements Bot {
     private userTwitchClientManagerInstances: Record<number, TwitchClientManager> = {}
+    private accessTokenUpdater: AccessTokenUpdater | null = null
     private streamStatusUpdater: StreamStatusUpdater | null = null
     private frontendStatusUpdater: FrontendStatusUpdater | null = null
     private helixClient: TwitchHelixClient | null = null
@@ -96,6 +101,12 @@ const createBot = async (): Promise<Bot> => {
     getTimeApi() { return timeApi }
     getEventHub() { return eventHub }
     getEffectsApplier() { return effectsApplier }
+    getAccessTokenUpdater(): AccessTokenUpdater {
+      if (!this.accessTokenUpdater) {
+        this.accessTokenUpdater = new AccessTokenUpdater(this)
+      }
+      return this.accessTokenUpdater
+    }
     getStreamStatusUpdater(): StreamStatusUpdater {
       if (!this.streamStatusUpdater) {
         this.streamStatusUpdater = new StreamStatusUpdater(this)
@@ -143,6 +154,10 @@ const createBot = async (): Promise<Bot> => {
 
     getEmoteParser() {
       return emoteParser
+    }
+
+    getWorkers() {
+      return workers
     }
   }
   return new BotImpl()
@@ -233,8 +248,8 @@ export const run = async () => {
   await bot.getWebServer().listen(bot)
 
   // start 'workers'
-  bot.getFrontendStatusUpdater().start()
-  bot.getStreamStatusUpdater().start()
+  bot.getWorkers().init(bot)
+  bot.getWorkers().runAll()
 
   timer.split()
   log.debug(`starting server (websocket+web) took ${timer.lastSplitMs()}ms`)

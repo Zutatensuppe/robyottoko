@@ -26,6 +26,8 @@ import type { EffectApplier } from './effect/EffectApplier'
 import type { TwitchClient, TwitchEventContext } from './services/twitch'
 import type { TwitchHelixClient } from './services/TwitchHelixClient'
 import type { CommandAction, CommandEffectType, CommandTriggerType, CountdownActionType, MODULE_NAME, WIDGET_TYPE } from './enums'
+import type { Workers } from './workers/Workers'
+import type { AccessTokenUpdater } from './services/AccessTokenUpdater'
 
 type int = number
 
@@ -720,12 +722,14 @@ export interface Bot {
   getAuth: () => Auth
   getWebServer: () => WebServer
   getWebSocketServer: () => WebSocketServer
+  getWorkers: () => Workers
   getYoutube: () => Youtube
   getWidgets: () => Widgets
   getTimeApi: () => TimeApi
   getEventHub: () => Emitter<Record<EventType, unknown>>
   getRepos: () => Repos
   getEffectsApplier: () => EffectApplier
+  getAccessTokenUpdater(): AccessTokenUpdater
   getStreamStatusUpdater: () => StreamStatusUpdater
   getFrontendStatusUpdater: () => FrontendStatusUpdater
   getHelixClient: () => TwitchHelixClient
