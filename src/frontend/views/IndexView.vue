@@ -21,15 +21,14 @@
         <h4 class="title is-4 mb-0">
           <div class="field">
             Module: {{ m.title }}
-            <input
-              :id="`enabled_${idx}`"
-              v-model="modules[idx].enabled"
-              type="checkbox"
-              name="restrictUsage"
-              class="switch is-rounded is-small"
-              @change="updateEnabled(m)"
-            >
-            <label :for="`enabled_${idx}`">{{ m.enabled ? 'Is enabled' : 'Is disabled' }}</label>
+            <label>
+              <input
+                v-model="modules[idx].enabled"
+                type="checkbox"
+                @change="updateEnabled(m)"
+              />
+              {{ m.enabled ? 'Is enabled' : 'Is disabled' }}
+            </label>
           </div>
         </h4>
         <table
