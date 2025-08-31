@@ -25,8 +25,6 @@ export type SpinResult = {
   winner: WheelItem;
 }
 
-const MIN_ITEMS_ON_WHEEL = 1
-
 export function randomFloat (min: number, max: number): number {
   return Math.random() * (max - min) + min
 }
@@ -53,21 +51,9 @@ export class RouletteWheel {
     if (!ctx) throw new Error('no rendering context found')
     this.ctx = ctx
 
-    this.items = this.fillWithItems(items)
+    this.items = items
     this.itemProbabilities = this.calculateItemProbabilities()
     this.draw()
-  }
-
-  private fillWithItems (items: WheelItem[]): WheelItem[] {
-    if (items.length >= MIN_ITEMS_ON_WHEEL) return items
-    const multiplier = Math.ceil(MIN_ITEMS_ON_WHEEL / items.length)
-    const result = [...items]
-
-    for (let i = 1; i < multiplier; i++) {
-      result.push(...items)
-    }
-
-    return result
   }
 
   private calculateItemProbabilities (): WheelItemProbability[] {
