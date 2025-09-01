@@ -75,7 +75,7 @@ export class ChatEventHandler {
       msgNormalized,
     })
 
-    void bot.getRepos().chatLog.insert(context, msgOriginal)
+    await bot.getRepos().chatLog.insert(context, msgOriginal)
 
     let _isFirstChatAlltime: null | boolean = null
     const isFirstChatAlltime = async (): Promise<boolean> => {
