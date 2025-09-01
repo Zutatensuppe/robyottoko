@@ -1,6 +1,6 @@
 'use strict'
 
-import { newJSONDateString } from '../common/fn'
+import { newJSONDateString, toJSONDateString } from '../common/fn'
 import type { WhereRaw } from '../DbPostgres'
 import type { TwitchEventContext } from '../services/twitch'
 import type { JSONDateString } from '../types'
@@ -43,11 +43,11 @@ export class ChatLogRepo extends Repo {
     }) === 1
   }
 
-  async isFirstChatSince(context: TwitchEventContext, date: Date): Promise<boolean> {
+  async isFirstChatSince(context: TwitchEventContext, since: Date): Promise<boolean> {
     return await this.count({
       broadcaster_user_id: context['room-id'],
       user_name: context.username,
-      created_at: { '$gte': date },
+      created_at: { '$gte': toJSONDateString(since) },
     }) === 1
   }
 
@@ -63,7 +63,7 @@ export class ChatLogRepo extends Repo {
   async getChatters(channelId: string, since: Date): Promise<string[]> {
     const whereObject = this.db._buildWhere({
       broadcaster_user_id: channelId,
-      created_at: { '$gte': since },
+      created_at: { '$gte': toJSONDateString(since) },
     })
     return (await this.db._getMany(
       `select display_name from robyottoko.chat_log ${whereObject.sql} group by display_name`,
