@@ -1,7 +1,8 @@
 import { defineConfig } from 'rolldown'
 import fs from 'fs'
+import process from 'process'
 
-const version = fs.readFileSync('build/version.txt', 'utf-8')
+const version = process.env.RELEASE_VERSION || fs.readFileSync('build/version.txt', 'utf-8')
 
 export default defineConfig({
   input: 'src/index.ts',
