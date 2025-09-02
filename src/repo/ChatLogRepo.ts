@@ -20,9 +20,9 @@ export class ChatLogRepo extends Repo {
   async insert(context: TwitchEventContext, msg: string) {
     await this.db.insert<Row>(TABLE, {
       created_at: newJSONDateString(),
-      broadcaster_user_id: context['room-id'] || '',
-      user_name: context.username || '',
-      display_name: context['display-name'] || '',
+      broadcaster_user_id: context.channelId || '',
+      user_name: context.userLoginName || '',
+      display_name: context.userDisplayName || '',
       message: msg,
     })
   }
@@ -38,15 +38,15 @@ export class ChatLogRepo extends Repo {
 
   async isFirstChatAllTime(context: TwitchEventContext): Promise<boolean> {
     return await this.count({
-      broadcaster_user_id: context['room-id'],
-      user_name: context.username,
+      broadcaster_user_id: context.channelId,
+      user_name: context.userLoginName,
     }) === 1
   }
 
   async isFirstChatSince(context: TwitchEventContext, since: Date): Promise<boolean> {
     return await this.count({
-      broadcaster_user_id: context['room-id'],
-      user_name: context.username,
+      broadcaster_user_id: context.channelId,
+      user_name: context.userLoginName,
       created_at: { '$gte': toJSONDateString(since) },
     }) === 1
   }

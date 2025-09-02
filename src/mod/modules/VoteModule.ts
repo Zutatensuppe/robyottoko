@@ -77,14 +77,14 @@ class VoteModule implements Module {
     thing: string,
     context: TwitchEventContext,
   ): Promise<void> {
-    if (!context['display-name']) {
+    if (!context.userDisplayName) {
       log.error('context has no display name set')
       return
     }
     const say = this.bot.sayFn(this.user)
     this.data.data.votes[type] = this.data.data.votes[type] || {}
-    this.data.data.votes[type][context['display-name']] = thing
-    say(`Thanks ${context['display-name']}, registered your "${type}" vote: ${thing}`)
+    this.data.data.votes[type][context.userDisplayName] = thing
+    say(`Thanks ${context.userDisplayName}, registered your "${type}" vote: ${thing}`)
     await this.save()
   }
 

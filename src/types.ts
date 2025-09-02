@@ -14,7 +14,7 @@ import type { StreamStatusUpdater } from './services/StreamStatusUpdater'
 import type { User } from './repo/Users'
 import type Widgets from './services/Widgets'
 import type WebServer from './net/WebServer'
-import type { TwitchTmiClientManager } from './services/TwitchTmiClientManager'
+import type { TwitchChatClientManager } from './services/TwitchChatClientManager'
 import type { Repos } from './repo/Repos'
 import type { Youtube } from './services/Youtube'
 import type { Canny } from './services/Canny'
@@ -23,7 +23,7 @@ import type { Discord } from './services/Discord'
 import type { EmoteParser } from './services/EmoteParser'
 import type { TimeApi } from './services/TimeApi'
 import type { EffectApplier } from './effect/EffectApplier'
-import type { TwitchClient, TwitchEventContext } from './services/twitch'
+import type { TwitchChatClient, TwitchEventContext } from './services/twitch'
 import type { TwitchHelixClient } from './services/TwitchHelixClient'
 import type { CommandAction, CommandEffectType, CommandTriggerType, CountdownActionType, MODULE_NAME, WIDGET_TYPE } from './enums'
 import type { Workers } from './workers/Workers'
@@ -668,7 +668,7 @@ export interface FunctionCommand {
 }
 
 export interface ChatMessageContext {
-  client: TwitchClient | null
+  client: TwitchChatClient | null
   context: TwitchEventContext
   msgOriginal: string
   msgNormalized: string
@@ -733,7 +733,7 @@ export interface Bot {
   getStreamStatusUpdater: () => StreamStatusUpdater
   getFrontendStatusUpdater: () => FrontendStatusUpdater
   getHelixClient: () => TwitchHelixClient
-  getTwitchTmiClientManager: () => TwitchTmiClientManager
+  getTwitchTmiClientManager: () => TwitchChatClientManager
   getCanny: () => Canny
   getDiscord: () => Discord
   getEmoteParser: () => EmoteParser

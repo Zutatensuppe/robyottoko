@@ -37,13 +37,13 @@ export class RaidEventHandler extends EventSubEventHandler<RaidEvent> {
 
     const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.from_broadcaster_user_id)
     const context: TwitchEventContext = {
-      'room-id': data.event.to_broadcaster_user_id,
-      'user-id': data.event.from_broadcaster_user_id,
-      'display-name': data.event.from_broadcaster_user_name,
-      username: data.event.from_broadcaster_user_login,
-      mod,
-      subscriber,
-      badges: { vip: vip ? '1' : undefined }, // not sure what to put in there
+      channelId: data.event.to_broadcaster_user_id,
+      userId: data.event.from_broadcaster_user_id,
+      userDisplayName: data.event.from_broadcaster_user_name,
+      userLoginName: data.event.from_broadcaster_user_login,
+      isMod: mod,
+      isSubscriber: subscriber,
+      isVip: vip,
       extra: {
         raiders: {
           amount: data.event.viewers,

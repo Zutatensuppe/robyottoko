@@ -84,12 +84,13 @@ function detectTwitchEmotes(message: string, userstate: TwitchContext | null): E
 
   const repEmotes: RepEmote[] = []
   const userstateEmotes = userstate.emotes
-  Object.keys(userstateEmotes).forEach((el, ind) => {
-    userstateEmotes[el].forEach((ele: any) => {
+  userstateEmotes.forEach((ranges, emoteId) => {
+    ranges.forEach((range) => {
+      const [start, end] = range.split('-').map(Number)
       repEmotes.push({
-        start: parseInt(ele.split('-')[0]),
-        end: parseInt(ele.split('-')[1]),
-        rep: Object.keys(userstateEmotes)[ind],
+        start,
+        end,
+        rep: emoteId,
       })
     })
   })

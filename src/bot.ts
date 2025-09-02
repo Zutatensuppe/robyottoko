@@ -24,7 +24,7 @@ import fn from './fn'
 import { Timer } from './Timer'
 import { StreamStatusUpdater } from './services/StreamStatusUpdater'
 import { FrontendStatusUpdater } from './services/FrontendStatusUpdater'
-import { TwitchTmiClientManager } from './services/TwitchTmiClientManager'
+import { TwitchChatClientManager } from './services/TwitchChatClientManager'
 import { Repos } from './repo/Repos'
 import { Youtube } from './services/Youtube'
 import { YoutubeApi } from './services/youtube/YoutubeApi'
@@ -67,7 +67,7 @@ const createBot = async (): Promise<Bot> => {
   const moduleManager = new ModuleManager()
   const webSocketServer = new WebSocketServer()
   const webServer = new WebServer()
-  const twitchTmiClientManager = new TwitchTmiClientManager()
+  const twitchTmiClientManager = new TwitchChatClientManager()
   const effectsApplier = new EffectApplier()
   const youtube = new Youtube(
     new YoutubeApi(config.youtube),
@@ -119,7 +119,7 @@ const createBot = async (): Promise<Bot> => {
       }
       return this.frontendStatusUpdater
     }
-    getTwitchTmiClientManager(): TwitchTmiClientManager { return twitchTmiClientManager }
+    getTwitchTmiClientManager(): TwitchChatClientManager { return twitchTmiClientManager }
     getCanny(): Canny { return canny }
 
     // user specific
