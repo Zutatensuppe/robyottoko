@@ -30,7 +30,7 @@ const determineStreamStartDate = async (
   context: TwitchEventContext,
   helixClient: TwitchHelixClient,
 ): Promise<Date> => {
-  const broadcasterId = context['room-id'] || ''
+  const broadcasterId = context.channelId || ''
   if (broadcasterId) {
     const stream = await helixClient.getStreamByUserId(broadcasterId)
     if (stream) {
@@ -40,7 +40,7 @@ const determineStreamStartDate = async (
 
   const date = new Date(new Date().getTime() - (5 * MINUTE))
   log.info({
-    roomId: context['room-id'],
+    roomId: context.channelId,
     date: date,
   }, 'No stream is running atm, using fake start date.')
   return date
@@ -69,7 +69,7 @@ export class ChatEventHandler {
   ): Promise<void> {
     const roles = rolesLettersFromTwitchChatContext(context)
     log.debug({
-      username: context.username,
+      username: context.userLoginName,
       roles,
       msgOriginal,
       msgNormalized,

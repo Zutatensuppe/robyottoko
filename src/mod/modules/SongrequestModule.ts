@@ -1097,11 +1097,11 @@ class SongrequestModule implements Module {
 
   cmdSrUndo(_originalCommand: Command) {
     return async (ctx: CommandExecutionContext) => {
-      if (!ctx.rawCmd || !ctx.context || !ctx.context['display-name']) {
+      if (!ctx.rawCmd || !ctx.context || !ctx.context.userDisplayName) {
         return
       }
       const say = this.bot.sayFn(this.user)
-      const undid = await this.undo(ctx.context['display-name'])
+      const undid = await this.undo(ctx.context.userDisplayName)
       if (!undid) {
         say('Could not undo anything')
       } else {
@@ -1144,13 +1144,13 @@ class SongrequestModule implements Module {
 
   cmdSrStats(_originalCommand: Command) {
     return async (ctx: CommandExecutionContext) => {
-      if (!ctx.rawCmd || !ctx.context || !ctx.context['display-name']) {
+      if (!ctx.rawCmd || !ctx.context || !ctx.context.userDisplayName) {
         return
       }
 
       const say = this.bot.sayFn(this.user)
 
-      const stats = await this.stats(ctx.context['display-name'])
+      const stats = await this.stats(ctx.context.userDisplayName)
       let number = `${stats.count.byUser}`
       const verb = stats.count.byUser === 1 ? 'was' : 'were'
       if (stats.count.byUser === 1) {
@@ -1159,7 +1159,7 @@ class SongrequestModule implements Module {
         number = 'none'
       }
       const countStr = `There are ${stats.count.total} songs in the playlist, `
-        + `${number} of which ${verb} requested by ${ctx.context['display-name']}.`
+        + `${number} of which ${verb} requested by ${ctx.context.userDisplayName}.`
       const durationStr = `The total duration of the playlist is ${stats.duration.human}.`
       say([countStr, durationStr].join(' '))
     }
@@ -1402,7 +1402,7 @@ class SongrequestModule implements Module {
 
   cmdSr(_originalCommand: Command) {
     return async (ctx: CommandExecutionContext) => {
-      if (!ctx.rawCmd || !ctx.context || !ctx.context['display-name']) {
+      if (!ctx.rawCmd || !ctx.context || !ctx.context.userDisplayName) {
         return
       }
 
@@ -1416,7 +1416,7 @@ class SongrequestModule implements Module {
       const str = ctx.rawCmd.args.join(' ')
 
       const limits = determineLimits(ctx.context, this.data.settings)
-      const addResponseData = await this.add(str, ctx.context['display-name'], limits)
+      const addResponseData = await this.add(str, ctx.context.userDisplayName, limits)
       say(await this.answerAddRequest(addResponseData, limits))
     }
   }

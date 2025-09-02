@@ -79,7 +79,7 @@ export class CommandExecutor {
     ctx: CommandExecutionContext,
     user: User,
   ): Promise<boolean> {
-    if (!ctx.context || !ctx.context.username) {
+    if (!ctx.context || !ctx.context.userLoginName) {
       return false
     }
     const durationMs = cmdDef.cooldown.perUser ? parseHumanDuration(cmdDef.cooldown.perUser) : 0
@@ -88,7 +88,7 @@ export class CommandExecutor {
     }
     const last = await repo.getLastExecuted({
       command_id: cmdDef.id,
-      trigger_user_name: ctx.context.username,
+      trigger_user_name: ctx.context.userLoginName,
     })
     return this.isInTimeout(durationMs, last, ctx, user)
   }
@@ -161,7 +161,7 @@ export class CommandExecutor {
       await repo.insert({
         command_id: cmdDef.id,
         executed_at: toJSONDateString(ctx.date),
-        trigger_user_name: ctx.context.username || null,
+        trigger_user_name: ctx.context.userLoginName || null,
       })
     }
     await Promise.all(promises)

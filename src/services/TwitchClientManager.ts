@@ -7,7 +7,8 @@ import { ALL_SUBSCRIPTIONS_TYPES, SubscriptionType } from './twitch/EventSub'
 import { ChatEventHandler } from './twitch/ChatEventHandler'
 import { Timer } from '../Timer'
 import { normalizeChatMessage } from '../fn'
-import type { TwitchClient, TwitchEventContext } from './twitch'
+import { contextFromChatMessage, type TwitchChatClient } from './twitch'
+import type { ChatMessage } from '@twurple/chat'
 
 const isDevTunnel = (url: string) => url.match(/^https:\/\/[a-z0-9-]+\.(?:loca\.lt|ngrok\.io)\//)
 
@@ -51,7 +52,7 @@ const determineIdentity = (user: User, cfg: TwitchConfig): TwitchBotIdentity => 
 const chatEventHandler = new ChatEventHandler()
 
 class TwitchClientManager {
-  private chatClient: TwitchClient | null = null
+  private chatClient: TwitchChatClient | null = null
   private helixClient: TwitchHelixClient | null = null
 
   private log: Logger
@@ -105,7 +106,7 @@ class TwitchClientManager {
       this.log.info('* twitch bot enabled')
 
       // connect to chat via tmi (to all channels configured)
-      this.chatClient = this.bot.getTwitchTmiClientManager().get(identity, [user.twitch_login])
+      this.chatClient = this.bot.getTwitchTmiClientManager().get(identity, user.twitch_login)
 
       const reportStatusToChannel = (user: User, reason: string) => {
         if (!user.bot_status_messages) {
@@ -124,12 +125,14 @@ class TwitchClientManager {
       }
 
       if (this.chatClient) {
-        this.chatClient.on('message', async (
-          target: string,
-          context: TwitchEventContext,
+        this.chatClient.onMessage(async (
+          _target: string,
+          _user: string,
           msg: string,
-          self: boolean,
+          chatMessage: ChatMessage,
         ) => {
+          const context = contextFromChatMessage(chatMessage)
+          const self = context.userLoginName.toLowerCase() === identity.username.toLowerCase()
           if (self) { return } // Ignore messages from the bot
 
           // sometimes chat contains imprintable characters
@@ -146,8 +149,8 @@ class TwitchClientManager {
         })
 
         // Called every time the bot connects to Twitch chat
-        this.chatClient.on('connected', async (addr: string, port: number) => {
-          this.log.info({ addr, port }, 'Connected')
+        this.chatClient.onConnect(async () => {
+          this.log.info('Connected')
 
           // if status reporting is disabled, dont print messages
           if (this.bot.getConfig().bot.reportStatus) {
@@ -159,13 +162,7 @@ class TwitchClientManager {
           connectReason = ''
         })
 
-        // do NOT await
-        // awaiting the connect will add ~1sec per user on server startup
-        this.chatClient.connect().catch((e: unknown) => {
-          // this can happen when calling close before the connection
-          // could be established
-          this.log.error({ e }, 'error when connecting')
-        })
+        this.chatClient.connect()
       }
 
       timer.split()
@@ -320,24 +317,18 @@ class TwitchClientManager {
     }
   }
 
-  async _disconnectChatClient() {
+  private async _disconnectChatClient() {
     if (this.chatClient) {
-      this.chatClient.removeAllListeners('message')
-      try {
-        await this.chatClient.disconnect()
-      } catch (e) {
-        this.log.info({ e })
-      } finally {
-        this.chatClient = null
-      }
+      this.chatClient.quit()
+      this.chatClient = null
     }
   }
 
-  getChatClient() {
+  public getChatClient() {
     return this.chatClient
   }
 
-  getHelixClient() {
+  public getHelixClient() {
     return this.helixClient
   }
 }

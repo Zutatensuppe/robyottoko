@@ -39,13 +39,13 @@ export class SubscriptionGiftEventHandler extends EventSubEventHandler<Subscript
 
     const { mod, subscriber, vip } = await getUserTypeInfo(bot, user, data.event.user_id)
     const context: TwitchEventContext = {
-      'room-id': data.event.broadcaster_user_id,
-      'user-id': data.event.user_id,
-      'display-name': data.event.user_name,
-      username: data.event.user_login,
-      mod,
-      subscriber,
-      badges: { vip: vip ? '1' : undefined }, // not sure what to put in there
+      channelId: data.event.broadcaster_user_id,
+      userId: data.event.user_id,
+      userDisplayName: data.event.user_name,
+      userLoginName: data.event.user_login,
+      isMod: mod,
+      isSubscriber: subscriber,
+      isVip: vip,
       extra: {
         giftsubs: {
           amount: data.event.total,

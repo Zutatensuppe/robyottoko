@@ -11,19 +11,19 @@ export class Timer {
     this.splits.push(performance.now())
   }
 
-  public lastSplitMs(): number {
+  public lastSplitMs(): string {
     const len = this.splits.length
     if (len < 2) {
-      return NaN
+      return 'NaN'
     }
-    return this.splits[len - 1] - this.splits[len - 2]
+    return (this.splits[len - 1] - this.splits[len - 2]).toFixed(2)
   }
 
-  public totalMs(): number {
+  public totalMs(): string {
     const len = this.splits.length
     if (len < 2) {
-      return NaN
+      return 'NaN'
     }
-    return this.splits[len - 1] - this.splits[0]
+    return (this.splits[len - 1] - this.splits[0]).toFixed(2)
   }
 }

@@ -13,7 +13,7 @@ import type {
 import type { User } from './repo/Users'
 import type { TwitchHelixUserSearchResponseDataEntry } from './services/TwitchHelixClient'
 import type { TwitchHelixClient } from './services/TwitchHelixClient'
-import type { TwitchClient, TwitchEventContext } from './services/twitch'
+import type { TwitchChatClient, TwitchEventContext } from './services/twitch'
 
 const log = logger('fn.ts')
 
@@ -52,7 +52,7 @@ export const sleep = (ms: number) => {
 }
 
 const sayFn = (
-  client: TwitchClient,
+  client: TwitchChatClient,
   target: string | null,
 ) => (
   msg: string,
@@ -60,7 +60,7 @@ const sayFn = (
     // in case no target is given we use the configured channels
     // we should be able to use client.channels or client.getChannels()
     // but they are always empty :/
-    const targets = target ? [target] : (client.getOptions().channels || [])
+    const targets = target ? [target] : client.currentChannels
     targets.forEach(t => {
       // TODO: fix this somewhere else?
       // client can only say things in lowercase channels
@@ -297,17 +297,17 @@ export const doReplacements = async (
           return ''
         }
 
-        const username = cleanUsername(m1 || m2 || context.username || '')
-        if (username === context.username && m3 === 'name') {
-          return String(context['display-name'])
+        const username = cleanUsername(m1 || m2 || context.userLoginName || '')
+        if (username === context.userLoginName && m3 === 'name') {
+          return String(context.userDisplayName)
         }
 
-        if (username === context.username && m3 === 'username') {
-          return String(context.username)
+        if (username === context.userLoginName && m3 === 'username') {
+          return String(context.userLoginName)
         }
 
-        if (username === context.username && m3 === 'twitch_url') {
-          return String(`twitch.tv/${context.username}`)
+        if (username === context.userLoginName && m3 === 'twitch_url') {
+          return String(`twitch.tv/${context.userLoginName}`)
         }
 
         if (!bot || !user) {
