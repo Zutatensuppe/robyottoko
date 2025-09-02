@@ -7,7 +7,6 @@
   "author": "",
   "license": "ISC",
   "scripts": {
-    "setup": "npm ci",
     "build:frontend": "vite build --config vite.config.js",
     "build:server:assets": "copyfiles -u 1 src/config_data/* build/server/",
     "build:server:app": "rolldown -c",
