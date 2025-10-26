@@ -241,8 +241,14 @@ ul.list {
   }
 }
 
-.navbar-item.is-active {
-  font-weight: bold;
+.navbar-item {
+  img {
+    max-height: none;
+  }
+
+  &.is-active {
+    font-weight: bold;
+  }
 }
 
 .module-box {

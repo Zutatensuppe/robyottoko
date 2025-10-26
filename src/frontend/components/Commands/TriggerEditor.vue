@@ -150,9 +150,9 @@
           </span>
         </div>
       </div>
-      <p class="help">
+      <p>
         Command will be triggered when at least <code>Messages</code> chat
-        messages arrived AND <code>Interval</code> have passed.
+        messages arrived AND <code>Interval</code> time has passed.
       </p>
     </div>
     <div

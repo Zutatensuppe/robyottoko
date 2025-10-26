@@ -10,10 +10,7 @@
           >
         </td>
         <td>
-          <MacroSelect
-            class="help"
-            @selected="val.data.tag += $event.value"
-          />
+          <MacroSelect @selected="val.data.tag += $event.value" />
         </td>
       </tr>
     </table>

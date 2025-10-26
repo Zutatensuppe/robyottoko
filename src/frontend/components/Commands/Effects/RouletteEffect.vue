@@ -11,6 +11,8 @@
           :href="`${widgetUrl}`"
           target="_blank"
         >default widget</a>.
+
+        To display this roulette in a different widget, click "Add widget" below and specify an identifier.
       </div>
       <div
         v-for="(id, idx) in val.data.widgetIds"
@@ -18,7 +20,7 @@
         class="field has-addons"
       >
         <div class="control mr-1">
-          <StringInput v-model="val.data.widgetIds[idx]" />
+          <StringInput v-model="val.data.widgetIds[idx]" placeholder="Identifier" />
         </div>
         <a
           class="button is-small mr-1"
@@ -39,12 +41,6 @@
         >
           <i class="fa fa-plus mr-1" /> Add widget
         </button>
-      </div>
-      <div>
-        <p class="help">
-          Define in which widgets this roulette should show up in.
-          Leave the list empty to only show in the default widget.
-        </p>
       </div>
     </div>
     <div>

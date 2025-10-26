@@ -5,21 +5,6 @@
       ref="top"
     >
       <NavbarElement />
-      <div
-        id="actionbar"
-        class="p-1"
-      >
-        <a
-          class="button is-small mr-1"
-          :href="controlWidgetUrl"
-          target="_blank"
-        >Open control widget</a>
-        <a
-          class="button is-small mr-1"
-          :href="displayWidgetUrl"
-          target="_blank"
-        >Open display widget</a>
-      </div>
     </div>
     <div
       v-if="inited"
@@ -35,6 +20,32 @@
             @click="tab = def.tab"
           >
             <a>{{ def.title }}</a>
+          </li>
+          <li>
+            <button
+              class="button is-small mr-1"
+              @click="addAvatar"
+            >Add new avatar</button>
+          </li>
+          <li>
+            <button
+              class="button is-small mr-1"
+              @click="addExampleAvatar"
+            >Add example avatar (Hyottoko-Chan)</button>
+          </li>
+          <li>
+            <a
+              class="button is-small mr-1"
+              :href="controlWidgetUrl"
+              target="_blank"
+            >Open control widget</a>
+          </li>
+          <li>
+            <a
+              class="button is-small mr-1"
+              :href="displayWidgetUrl"
+              target="_blank"
+            >Open display widget</a>
           </li>
         </ul>
       </div>
@@ -84,7 +95,7 @@
         </tbody>
       </table>
       <div v-if="tab === 'avatars'">
-        <table class="table is-striped">
+        <table class="table is-striped" v-if="settings.avatarDefinitions.length">
           <thead>
             <tr>
               <th />
@@ -152,6 +163,7 @@
             </template>
           </vue-draggable>
         </table>
+        <p v-else>No avatars created yet</p>
 
         <AvatarEditor
           v-if="editEntity"
@@ -159,15 +171,6 @@
           @update:model-value="updatedAvatar"
           @cancel="editEntity = null"
         />
-
-        <span
-          class="button is-small mr-1"
-          @click="addAvatar"
-        >Add new avatar</span>
-        <span
-          class="button is-small"
-          @click="addExampleAvatar"
-        >Add example avatar (Hyottoko-Chan)</span>
       </div>
     </div>
   </div>

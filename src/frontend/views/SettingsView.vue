@@ -28,18 +28,22 @@
             <tr>
               <td>Name:</td>
               <td>{{ user.name }}</td>
+              <td></td>
             </tr>
             <tr>
               <td>Email:</td>
               <td>{{ user.email }}</td>
+              <td></td>
             </tr>
             <tr>
               <td>Twitch Id:</td>
               <td>{{ user.twitch_id }}</td>
+              <td></td>
             </tr>
             <tr>
               <td>Twitch Login:</td>
               <td>{{ user.twitch_login }}</td>
+              <td></td>
             </tr>
             <tr>
               <td>Bot enabled:</td>
@@ -49,6 +53,7 @@
                   type="checkbox"
                 >
               </td>
+              <td></td>
             </tr>
             <tr>
               <td>Bot status messages:</td>
@@ -57,6 +62,15 @@
                   v-model="user.bot_status_messages"
                   type="checkbox"
                 >
+              </td>
+              <td>
+                If enabled, the bot will notify in chat on the following events:
+                <br>
+                <ul class="list">
+                  <li>Bot restart</li>
+                  <li>Twitch chat re-/connect</li>
+                  <li>User settings change</li>
+                </ul>
               </td>
             </tr>
           </tbody>

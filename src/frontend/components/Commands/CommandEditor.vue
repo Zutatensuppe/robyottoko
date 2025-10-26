@@ -11,10 +11,7 @@
       <header class="modal-card-head">
         <div class="modal-card-title">
           {{ title }}
-          <div
-            v-if="actionDescription"
-            class="help"
-          >
+          <div v-if="actionDescription">
             <div v-html="actionDescription" />
           </div>
         </div>
@@ -121,7 +118,7 @@
                     </tr>
                   </tbody>
                 </table>
-                <div class="help">
+                <div>
                   Variables can be used from the command with
                   <code>$var(variable_name)</code>. If the referenced variable
                   is not defined here,
@@ -163,7 +160,7 @@
                     <i class="fa fa-remove" />
                   </button>
                 </div>
-                <div class="help">
+                <div>
                   Users added here will not be able to execute the command.
                 </div>
               </td>
@@ -192,7 +189,7 @@
                     <i class="fa fa-remove" />
                   </button>
                 </div>
-                <div class="help">
+                <div>
                   Users added here will be able to execute the command,
                   regardless of if they are disallowed as well and regardless
                   of their status (eg. mod, sub).
@@ -215,7 +212,7 @@
                       />
                     </td>
                     <td rowspan="2">
-                      <div class="help">
+                      <div>
                         If a cooldown is set, the command will not be executed unless
                         the set amount of time has passed since the command was
                         executed the last time.<br>

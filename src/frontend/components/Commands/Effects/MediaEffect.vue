@@ -41,7 +41,7 @@
         </button>
       </div>
       <div>
-        <p class="help">
+        <p>
           Define in which widgets this media should show up in.
           Leave the list empty to only show in the default widget.
         </p>
@@ -83,7 +83,7 @@
           <i class="fa fa-hourglass" />
         </span>
       </div>
-      <div class="help">
+      <div>
         The minimum duration that images will be displayed.
         Sound will always play for their full length
         regardless of this setting.
@@ -145,7 +145,7 @@
           </td>
         </tr>
       </table>
-      <div class="help">
+      <div>
         The video url has to be a twitch clip url
         (<code>https://clips.twitch.tv/...</code>) or a URL to a
         video file (a URL usually ending in <code>.mp4</code> or

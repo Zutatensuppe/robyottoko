@@ -177,7 +177,8 @@
                     </td>
                     <td>
                       Offset to the end of pomo. Negative offset means time
-                      before end of pomo.
+                      before end of pomo.<br>
+                      Example values: <code>5m</code>, <code>3000</code>, <code>-1m</code>
                     </td>
                   </tr>
                   <tr>
@@ -195,11 +196,12 @@
                         :base-volume="100"
                       />
                     </td>
-                    <td>Sound played at the set offset.</td>
+                    <td>Sound played at the set offset. The sound will play in the pomo widget.</td>
                   </tr>
                 </table>
               </div>
             </td>
+            <td>Notification in chat</td>
           </tr>
         </tbody>
       </table>
