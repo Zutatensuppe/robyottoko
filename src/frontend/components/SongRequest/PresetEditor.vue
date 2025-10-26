@@ -327,7 +327,8 @@ body { font-family: 'Shadows into Light'; font-size: 30px; }`,
       desc: 'Show the progress bar only, and no video (progress bar above list)',
       code: `
 .player { height: 5px; padding-bottom: 0; }
-.progress { height: 5px; }`,
+.progress { height: 5px; }
+.video-16-9 { aspect-ratio: unset; height: 5px; }`,
     },
     {
       desc: 'Show the progress bar only, and no video (progress bar below list)',
@@ -335,7 +336,8 @@ body { font-family: 'Shadows into Light'; font-size: 30px; }`,
 .wrapper { display: grid; grid-template-areas: "list" "player"; }
 .player { height: 5px; padding-bottom: 0; grid-area: player }
 .list { grid-area: list }
-.progress { height: 5px; }`,
+.progress { height: 5px; }
+.video-16-9 { aspect-ratio: unset; height: 5px; }`,
     },
   ],
 }
