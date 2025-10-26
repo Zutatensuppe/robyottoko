@@ -54,6 +54,7 @@ const handleOAuthCodeCallback = async (
       id: loggedInUserId,
       twitch_id: twitchUserResp.id,
       twitch_login: twitchUserResp.login,
+      email: twitchUserResp.email,
     })
     updated = true
   }
@@ -61,9 +62,23 @@ const handleOAuthCodeCallback = async (
   let user = await bot.getRepos().user.getByTwitchId(twitchUserResp.id)
   if (!user) {
     user = await bot.getRepos().user.getByName(twitchUserResp.login)
-    if (user) {
+  }
+
+  if (user) {
+    let shouldUpdate = false
+    if (user.twitch_id !== twitchUserResp.id) {
       user.twitch_id = twitchUserResp.id
+      shouldUpdate = true
+    }
+    if (user.twitch_login !== twitchUserResp.login) {
       user.twitch_login = twitchUserResp.login
+      shouldUpdate = true
+    }
+    if (user.email !== twitchUserResp.email) {
+      user.email = twitchUserResp.email
+      shouldUpdate = true
+    }
+    if (shouldUpdate) {
       await bot.getRepos().user.save(user)
       updated = true
     }
