@@ -14,10 +14,7 @@
         }"
       />
       <div>
-        <MacroSelect
-          class="help"
-          @selected="val.data.text[idx] += $event.value"
-        />
+        <MacroSelect @selected="val.data.text[idx] += $event.value" />
       </div>
       <button
         class="button is-small"
@@ -36,7 +33,7 @@
       </button>
     </div>
     <div>
-      <p class="help">
+      <p>
         If multiple responses exist, a random one will be used when
         the command is triggered.
       </p>

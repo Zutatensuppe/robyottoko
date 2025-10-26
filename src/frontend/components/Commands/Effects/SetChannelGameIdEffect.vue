@@ -10,10 +10,7 @@
           >
         </td>
         <td>
-          <MacroSelect
-            class="help"
-            @selected="val.data.game_id += $event.value"
-          />
+          <MacroSelect @selected="val.data.game_id += $event.value" />
         </td>
       </tr>
     </table>

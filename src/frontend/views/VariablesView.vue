@@ -10,13 +10,13 @@
         class="p-1"
       >
         <button
-          class="button is-small"
+          class="button is-small mr-1"
           @click="onAdd"
         >
           Add
         </button>
         <button
-          class="button is-small is-primary"
+          class="button is-small mr-1 is-primary"
           :disabled="!changed"
           @click="sendSave"
         >
@@ -29,13 +29,13 @@
         <h1 class="title mb-2">
           Global Variables
         </h1>
-        <div class="help">
+        <div>
           Variables can be used from commands with
           <code>$var(variable_name)</code>. In addition to the global variables
           defined here, commands can define their own local variables which have
           precedence over the global ones.
         </div>
-        <table class="table is-striped">
+        <table class="table is-striped" v-if="variables.length">
           <thead>
             <tr>
               <th>Name</th>
@@ -67,6 +67,7 @@
             </tr>
           </tbody>
         </table>
+        <p v-else>No variables created yet</p>
       </div>
     </div>
   </div>

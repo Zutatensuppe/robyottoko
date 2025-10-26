@@ -12,10 +12,7 @@
           >
         </td>
         <td>
-          <MacroSelect
-            class="help"
-            @selected="val.data.lang += $event.value"
-          />
+          <MacroSelect @selected="val.data.lang += $event.value" />
         </td>
       </tr>
       <tr>
@@ -40,10 +37,7 @@
           >
         </td>
         <td>
-          <MacroSelect
-            class="help"
-            @selected="val.data.phrase += $event.value"
-          />
+          <MacroSelect @selected="val.data.phrase += $event.value" />
         </td>
       </tr>
       <tr>
@@ -51,7 +45,7 @@
           Response:
         </td>
         <td colspan="2">
-          <div class="help">
+          <div>
             Outputs the translation for the input phrase. The
             translation is always from/to english. <br>
             To let the user decide on the language use
