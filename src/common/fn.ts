@@ -89,6 +89,9 @@ export const pad = (
   return pad.substr(0, pad.length - str.length) + str
 }
 
+// NOTE: Not for security-sensitive use (tokens, secrets). This runs in both
+// browser and Node and uses Math.random() which is fine for its callers
+// (file names, message IDs, widget IDs, command IDs).
 export function nonce(length: number) {
   let text = ''
   const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
