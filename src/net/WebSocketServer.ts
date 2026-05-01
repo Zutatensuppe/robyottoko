@@ -7,6 +7,7 @@ import { moduleByWidgetType } from '../services/Widgets'
 import { uniqId } from '../fn'
 
 const log = logger('WebSocketServer.ts')
+const CODE_WS_AUTH_FAILED = 4001
 
 type WebSocketNotifyData = any
 
@@ -87,7 +88,7 @@ class WebSocketServer {
           requestUrl,
           socket: { protocol: socket.protocol },
         }, 'not found token')
-        socket.close()
+        socket.close(CODE_WS_AUTH_FAILED, 'invalid ws token')
         return
       }
 
