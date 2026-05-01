@@ -10,7 +10,7 @@ import { normalizeChatMessage } from '../fn'
 import { contextFromChatMessage, type TwitchChatClient } from './twitch'
 import type { ChatMessage } from '@twurple/chat'
 
-const isDevTunnel = (url: string) => url.match(/^https:\/\/[a-z0-9-]+\.(?:loca\.lt|ngrok\.io)\//)
+const isDevTunnel = (url: string) => url.match(/^https:\/\/[a-z0-9-]+\.(?:run\.pinggy-free\.link)\//)
 
 const isRelevantSubscription = (
   configuredTransport: EventSubTransport,
@@ -218,7 +218,7 @@ class TwitchClientManager {
         }
 
         // on dev, we still want to delete all subscriptions because
-        // new ngrok urls will be created
+        // new dev-tunnel (pinggy) urls will be created
         deletePromises.push(this.deleteSubscription(subscription))
       }
     } else {

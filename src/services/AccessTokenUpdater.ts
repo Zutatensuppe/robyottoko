@@ -5,6 +5,8 @@ import type { TwitchHelixClient } from './TwitchHelixClient'
 
 const log = logger('AccessTokenUpdater.ts')
 
+const MAX_REFRESH_FAILURES = 3
+
 interface TokenRefreshResult {
   error: false | string
   refreshed: boolean
@@ -15,32 +17,57 @@ export class AccessTokenUpdater {
     // pass
   }
 
+  public async resetFailures(userId: number): Promise<void> {
+    const user = await this.bot.getRepos().user.getById(userId)
+    if (user) {
+      await this.bot.getRepos().oauthToken.resetRefreshFailuresForUser(user)
+      log.info(`reset refresh failure counter for user id: ${userId}`)
+    }
+  }
+
   public async doUpdateForUser(
     user: User,
   ): Promise<{ message: string, details: { channel_name: string } }[]> {
     if (!this.bot.getConfig().bot.supportTwitchAccessTokens) {
       return []
     }
+
     const client = this.bot.getUserTwitchClientManager(user).getHelixClient()
     if (!client) {
       return []
     }
 
-    const accessToken = await this.bot.getRepos().oauthToken.getMatchingAccessToken(user)
-    if (!accessToken) {
+    const row = await this.bot.getRepos().oauthToken.getMatchingRow(user)
+    if (!row) {
       return []
+    }
+
+    const failures = row.refresh_failures ?? 0
+    if (failures >= MAX_REFRESH_FAILURES) {
+      // user needs to re-authenticate manually, stop spamming the API
+      return [{
+        message: 'access_token_invalid',
+        details: {
+          channel_name: user.twitch_login,
+        },
+      }]
     }
 
     const result = await this.refreshExpiredTwitchChannelAccessToken(
       this.bot,
       client,
       user,
-      accessToken,
+      row.access_token,
     )
 
     if (result.error) {
+      const newFailures = failures + 1
+      await this.bot.getRepos().oauthToken.setRefreshFailures(row.access_token, newFailures)
       log.error('Unable to validate or refresh OAuth token.')
-      log.error(`user: ${user.name}, channel: ${user.twitch_login}, error: ${result.error}`)
+      log.error(`user: ${user.name}, channel: ${user.twitch_login}, error: ${result.error} (attempt ${newFailures}/${MAX_REFRESH_FAILURES})`)
+      if (newFailures >= MAX_REFRESH_FAILURES) {
+        log.error(`user: ${user.name}, channel: ${user.twitch_login} - giving up after ${MAX_REFRESH_FAILURES} consecutive failures. User must re-authenticate.`)
+      }
 
       return [{
         message: 'access_token_invalid',
@@ -51,6 +78,7 @@ export class AccessTokenUpdater {
     }
 
     if (result.refreshed) {
+      // new token inserted by tryRefreshAccessToken already has refresh_failures=0
       const changedUser = await this.bot.getRepos().user.getById(user.id)
       if (changedUser) {
         this.bot.getEventHub().emit('access_token_refreshed', changedUser)
@@ -90,10 +118,6 @@ export class AccessTokenUpdater {
   }
 
   public async doUpdateForAllUsers(): Promise<void> {
-    // get all users that dont have a valid token
-    // from those users get all that have a refresh token
-    // (later we might add a counter of how many times the
-    // refresh failed and give up after a while)
     const users = await this.bot.getRepos().user.all()
 
     // we check if the token will expire in the next X,
