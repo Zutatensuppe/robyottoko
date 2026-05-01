@@ -11,6 +11,43 @@ import { contextFromChatMessage, type TwitchChatClient } from './twitch'
 import type { ChatMessage } from '@twurple/chat'
 
 const isDevTunnel = (url: string) => url.match(/^https:\/\/[a-z0-9-]+\.(?:run\.pinggy-free\.link)\//)
+const queueLog = logger('TwitchClientManager.ts', 'queue|')
+const BACKGROUND_TASK_CONCURRENCY = 3
+const CHAT_CONNECT_TASK_CONCURRENCY = 4
+
+type AsyncTask = () => Promise<void>
+
+const createTaskQueue = (concurrency: number, queueName: string) => {
+  const tasks: AsyncTask[] = []
+  let running = 0
+
+  const runNext = () => {
+    if (running >= concurrency) {
+      return
+    }
+    const task = tasks.shift()
+    if (!task) {
+      return
+    }
+    running++
+    void task()
+      .catch((e: any) => {
+        queueLog.error({ queueName, e }, 'queued task failed')
+      })
+      .finally(() => {
+        running--
+        runNext()
+      })
+  }
+
+  return (task: AsyncTask) => {
+    tasks.push(task)
+    runNext()
+  }
+}
+
+const enqueueBackgroundTask = createTaskQueue(BACKGROUND_TASK_CONCURRENCY, 'background')
+const enqueueChatConnectTask = createTaskQueue(CHAT_CONNECT_TASK_CONCURRENCY, 'chat_connect')
 
 const isRelevantSubscription = (
   configuredTransport: EventSubTransport,
@@ -95,12 +132,17 @@ class TwitchClientManager {
       identity.client_id,
       identity.client_secret,
     )
-
-    void this.bot.getEmoteParser().loadAssetsForChannel(
-      user.twitch_login,
-      user.twitch_id,
-      this.helixClient,
-    )
+    const helixClient = this.helixClient
+    enqueueBackgroundTask(async () => {
+      if (this.helixClient !== helixClient) {
+        return
+      }
+      await this.bot.getEmoteParser().loadAssetsForChannel(
+        user.twitch_login,
+        user.twitch_id,
+        helixClient,
+      )
+    })
 
     if (user.twitch_id && user.twitch_login && user.bot_enabled) {
       this.log.info('* twitch bot enabled')
@@ -125,7 +167,8 @@ class TwitchClientManager {
       }
 
       if (this.chatClient) {
-        this.chatClient.onMessage(async (
+        const chatClient = this.chatClient
+        chatClient.onMessage(async (
           _target: string,
           _user: string,
           msg: string,
@@ -149,7 +192,7 @@ class TwitchClientManager {
         })
 
         // Called every time the bot connects to Twitch chat
-        this.chatClient.onConnect(async () => {
+        chatClient.onConnect(async () => {
           this.log.info('Connected')
 
           // if status reporting is disabled, dont print messages
@@ -162,7 +205,12 @@ class TwitchClientManager {
           connectReason = ''
         })
 
-        this.chatClient.connect()
+        enqueueChatConnectTask(async () => {
+          if (this.chatClient !== chatClient) {
+            return
+          }
+          await chatClient.connect()
+        })
       }
 
       timer.split()
@@ -172,9 +220,15 @@ class TwitchClientManager {
     // register EventSub
     // @see https://dev.twitch.tv/docs/eventsub
     if (this.bot.getConfig().twitch.eventSub.enabled) {
-      // do NOT await, OTHERWISE
-      // connecting will add ~2sec per user on server startup
-      void this.registerSubscriptions(this.user)
+      // do NOT await, OTHERWISE connecting will add ~2sec per user on server startup.
+      // queue in background with limited concurrency to prevent API bursts on startup.
+      const helixClientForSubscriptions = this.helixClient
+      enqueueBackgroundTask(async () => {
+        if (this.helixClient !== helixClientForSubscriptions) {
+          return
+        }
+        await this.registerSubscriptions(this.user)
+      })
     }
 
     timer.split()

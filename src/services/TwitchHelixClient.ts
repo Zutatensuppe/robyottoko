@@ -11,6 +11,17 @@ const log = logger('TwitchHelixClient.ts')
 
 const API_BASE = 'https://api.twitch.tv/helix'
 const TOKEN_ENDPOINT = 'https://id.twitch.tv/oauth2/token'
+const APP_ACCESS_TOKEN_EXPIRY_SAFETY_MS = 30 * SECOND
+const APP_ACCESS_TOKEN_FAILURE_COOLDOWN_MS = 5 * SECOND
+
+interface AppAccessTokenCacheEntry {
+  token: string
+  expiresAtMs: number
+}
+
+const APP_ACCESS_TOKEN_CACHE = new Map<string, AppAccessTokenCacheEntry>()
+const APP_ACCESS_TOKEN_FETCHES = new Map<string, Promise<string>>()
+const APP_ACCESS_TOKEN_FAILURE_UNTIL = new Map<string, number>()
 
 const apiUrl = (path: string): string => `${API_BASE}${path}`
 
@@ -338,6 +349,31 @@ export class TwitchHelixClient {
 
   // https://dev.twitch.tv/docs/authentication/getting-tokens-oauth/
   private async getAccessToken(): Promise<string> {
+    const cacheKey = this.clientId
+    const cached = APP_ACCESS_TOKEN_CACHE.get(cacheKey)
+    if (cached && cached.expiresAtMs > Date.now()) {
+      return cached.token
+    }
+    const blockedUntil = APP_ACCESS_TOKEN_FAILURE_UNTIL.get(cacheKey) ?? 0
+    if (blockedUntil > Date.now()) {
+      return ''
+    }
+
+    const inFlight = APP_ACCESS_TOKEN_FETCHES.get(cacheKey)
+    if (inFlight) {
+      return await inFlight
+    }
+
+    const fetchPromise = this.fetchAppAccessToken(cacheKey)
+    APP_ACCESS_TOKEN_FETCHES.set(cacheKey, fetchPromise)
+    try {
+      return await fetchPromise
+    } finally {
+      APP_ACCESS_TOKEN_FETCHES.delete(cacheKey)
+    }
+  }
+
+  private async fetchAppAccessToken(cacheKey: string): Promise<string> {
     const url = TOKEN_ENDPOINT + asQueryArgs({
       client_id: this.clientId,
       client_secret: this.clientSecret,
@@ -349,12 +385,19 @@ export class TwitchHelixClient {
       if (!resp.ok) {
         const txt = await resp.text()
         log.warn({ txt, status: resp.status, twitchClientId: this.clientId }, 'unable to get access_token')
+        APP_ACCESS_TOKEN_FAILURE_UNTIL.set(cacheKey, Date.now() + APP_ACCESS_TOKEN_FAILURE_COOLDOWN_MS)
         return ''
       }
       json = (await resp.json()) as TwitchHelixOauthTokenResponseData
+      APP_ACCESS_TOKEN_CACHE.set(cacheKey, {
+        token: json.access_token,
+        expiresAtMs: Date.now() + Math.max(0, json.expires_in * 1000 - APP_ACCESS_TOKEN_EXPIRY_SAFETY_MS),
+      })
+      APP_ACCESS_TOKEN_FAILURE_UNTIL.delete(cacheKey)
       return json.access_token
     } catch (e) {
       log.error({ url, json, e })
+      APP_ACCESS_TOKEN_FAILURE_UNTIL.set(cacheKey, Date.now() + APP_ACCESS_TOKEN_FAILURE_COOLDOWN_MS)
       return ''
     }
   }
