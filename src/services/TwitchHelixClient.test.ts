@@ -1,5 +1,22 @@
-import { describe, expect, it } from 'vitest'
-import { getBestEntryFromCategorySearchItems } from './TwitchHelixClient'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import xhr from '../net/xhr'
+import { getBestEntryFromCategorySearchItems, TwitchHelixClient } from './TwitchHelixClient'
+
+const createTokenResponse = (token: string) => ({
+  ok: true,
+  json: vi.fn().mockResolvedValue({
+    access_token: token,
+    refresh_token: '',
+    expires_in: 3600,
+    scope: [],
+    token_type: 'bearer',
+  }),
+  text: vi.fn().mockResolvedValue(''),
+}) as any
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
 
 describe('src/services/TwitchHelixClient.ts', () => {
   describe('getBestEntryFromCategorySearchItems', () => {
@@ -172,5 +189,81 @@ describe('src/services/TwitchHelixClient.ts', () => {
       const actual = getBestEntryFromCategorySearchItems(searchString, resp)
       expect(actual).toStrictEqual(expected)
     }))
+  })
+
+  describe('app access token caching', () => {
+    it('reuses cached app access token for repeated calls of same client id', async () => {
+      const clientId = `client-cache-${Date.now()}`
+      const postSpy = vi.spyOn(xhr, 'post').mockResolvedValue(createTokenResponse('token-1'))
+      const client = new TwitchHelixClient(clientId, 'secret')
+
+      const token1 = await (client as any).getAccessToken()
+      const token2 = await (client as any).getAccessToken()
+
+      expect(token1).toBe('token-1')
+      expect(token2).toBe('token-1')
+      expect(postSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('shares in-flight token fetch across client instances with same client id', async () => {
+      const clientId = `client-shared-${Date.now()}`
+      let resolveFetch: ((value: any) => void) | undefined
+      const fetchPromise = new Promise<any>((resolve) => {
+        resolveFetch = resolve
+      })
+      const postSpy = vi.spyOn(xhr, 'post').mockImplementation(async () => await fetchPromise)
+
+      const clientA = new TwitchHelixClient(clientId, 'secret')
+      const clientB = new TwitchHelixClient(clientId, 'secret')
+
+      const tokenPromiseA = (clientA as any).getAccessToken()
+      const tokenPromiseB = (clientB as any).getAccessToken()
+
+      await Promise.resolve()
+      expect(postSpy).toHaveBeenCalledTimes(1)
+
+      if (resolveFetch) {
+        resolveFetch(createTokenResponse('token-shared'))
+      }
+      const [tokenA, tokenB] = await Promise.all([tokenPromiseA, tokenPromiseB])
+
+      expect(tokenA).toBe('token-shared')
+      expect(tokenB).toBe('token-shared')
+      expect(postSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not share app access tokens between different client ids', async () => {
+      const postSpy = vi.spyOn(xhr, 'post')
+        .mockResolvedValueOnce(createTokenResponse('token-a'))
+        .mockResolvedValueOnce(createTokenResponse('token-b'))
+
+      const clientA = new TwitchHelixClient(`client-a-${Date.now()}`, 'secret')
+      const clientB = new TwitchHelixClient(`client-b-${Date.now()}`, 'secret')
+
+      const tokenA = await (clientA as any).getAccessToken()
+      const tokenB = await (clientB as any).getAccessToken()
+
+      expect(tokenA).toBe('token-a')
+      expect(tokenB).toBe('token-b')
+      expect(postSpy).toHaveBeenCalledTimes(2)
+    })
+
+    it('briefly backs off after token endpoint failure', async () => {
+      const clientId = `client-failure-${Date.now()}`
+      const failedResponse = {
+        ok: false,
+        text: vi.fn().mockResolvedValue('rate limited'),
+        json: vi.fn(),
+      } as any
+      const postSpy = vi.spyOn(xhr, 'post').mockResolvedValue(failedResponse)
+      const client = new TwitchHelixClient(clientId, 'secret')
+
+      const token1 = await (client as any).getAccessToken()
+      const token2 = await (client as any).getAccessToken()
+
+      expect(token1).toBe('')
+      expect(token2).toBe('')
+      expect(postSpy).toHaveBeenCalledTimes(1)
+    })
   })
 })
