@@ -2,6 +2,7 @@ import { logger, nonce } from '../common/fn'
 
 const CODE_GOING_AWAY = 1001
 const CODE_CUSTOM_DISCONNECT = 4000
+const CODE_AUTH_FAILED = 4001
 
 const log = logger('WsWrapper.ts')
 
@@ -138,6 +139,8 @@ export default class WsWrapper {
         log.info({ id }, 'custom disconnect, will not reconnect')
       } else if (e.code === CODE_GOING_AWAY) {
         log.info({ id }, 'going away, will not reconnect')
+      } else if (e.code === CODE_AUTH_FAILED) {
+        log.info({ id }, 'auth failed, will not reconnect')
       } else {
         log.info({ id, code: e.code }, 'connection closed, trying to reconnect.')
         reconnect()
