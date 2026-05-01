@@ -117,6 +117,9 @@ const handleOAuthCodeCallback = async (
     expires_at: toJSONDateString(new Date(Date.now() + resp.expires_in * 1000)),
   })
 
+  // user re-authenticated successfully, allow refresh attempts again
+  await bot.getAccessTokenUpdater().resetFailures(user.id)
+
   return { updated, created, user }
 }
 

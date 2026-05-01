@@ -1,13 +1,16 @@
-import ngrok from 'ngrok'
+import { pinggy } from '@pinggy/pinggy'
 import { run } from './bot'
 import config, { setPublicUrl } from './config'
 
 void (async () => {
   try {
-    const url = await ngrok.connect({
-      addr: `${config.http.hostname}:${config.http.port}`,
+    const tunnel = await pinggy.createTunnel({
+      forwarding: `${config.http.hostname}:${config.http.port}`,
     })
-    setPublicUrl(url)
+    await tunnel.start()
+    const urls = await tunnel.urls()
+    console.log(`Tunnel started at ${urls.join(', ')}`)
+    setPublicUrl(urls[0])
     void run()
   } catch (e) {
     console.error(e)

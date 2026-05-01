@@ -14,6 +14,7 @@ interface Row {
   user_id: number
   channel_id: string
   expires_at: JSONDateString
+  refresh_failures: number
 }
 
 export class OauthTokenRepo extends Repo {
@@ -40,7 +41,19 @@ export class OauthTokenRepo extends Repo {
     return await this.db.get<Row>(TABLE, { access_token: accessToken })
   }
 
-  async insert(row: Row): Promise<void> {
-    await this.db.insert(TABLE, row)
+  async insert(row: Omit<Row, 'refresh_failures'>): Promise<void> {
+    await this.db.upsert(TABLE, row, { user_id: row.user_id })
   }
+
+  async setRefreshFailures(accessToken: string, failures: number): Promise<void> {
+    await this.db.update(TABLE, { refresh_failures: failures }, { access_token: accessToken })
+  }
+
+  async resetRefreshFailuresForUser(user: User): Promise<void> {
+    const row = await this.getMatchingRow(user)
+    if (row) {
+      await this.setRefreshFailures(row.access_token, 0)
+    }
+  }
+
 }
