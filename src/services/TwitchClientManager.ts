@@ -112,19 +112,17 @@ class TwitchClientManager {
   }
 
   async init(reason: string) {
-    const timer = new Timer()
-    timer.reset()
-
     let connectReason = reason
     const cfg = this.bot.getConfig().twitch
     const user = this.user
 
     this.log = logger('TwitchClientManager.ts', `${user.name}|`)
 
-    await this._disconnectChatClient()
-
-    timer.split()
-    this.log.debug(`disconnecting chat client took ${timer.lastSplitMs()}ms`)
+    const disconnectTimer = new Timer()
+    disconnectTimer.reset()
+    this._disconnectChatClient()
+    disconnectTimer.split()
+    this.log.debug(`disconnecting chat client took ${disconnectTimer.lastSplitMs()}ms`)
 
     const identity = determineIdentity(user, cfg)
 
@@ -206,15 +204,19 @@ class TwitchClientManager {
         })
 
         enqueueChatConnectTask(async () => {
+          const connectTimer = new Timer()
+          connectTimer.reset()
+
           if (this.chatClient !== chatClient) {
+            this.log.debug('skipping stale queued chat connect task')
             return
           }
+
           await chatClient.connect()
+          connectTimer.split()
+          this.log.debug(`connecting chat client took ${connectTimer.lastSplitMs()}ms`)
         })
       }
-
-      timer.split()
-      this.log.debug(`connecting chat client took ${timer.lastSplitMs()}ms`)
     }
 
     // register EventSub
@@ -224,15 +226,18 @@ class TwitchClientManager {
       // queue in background with limited concurrency to prevent API bursts on startup.
       const helixClientForSubscriptions = this.helixClient
       enqueueBackgroundTask(async () => {
+        const subscriptionsTimer = new Timer()
+        subscriptionsTimer.reset()
+
         if (this.helixClient !== helixClientForSubscriptions) {
+          this.log.debug('skipping stale queued subscription registration task')
           return
         }
         await this.registerSubscriptions(this.user)
+        subscriptionsTimer.split()
+        this.log.debug(`registering subscriptions took ${subscriptionsTimer.lastSplitMs()}ms`)
       })
     }
-
-    timer.split()
-    this.log.debug(`registering subscriptions took ${timer.lastSplitMs()}ms`)
   }
 
   async registerSubscriptions(user: User) {
@@ -371,7 +376,7 @@ class TwitchClientManager {
     }
   }
 
-  private async _disconnectChatClient() {
+  private _disconnectChatClient() {
     if (this.chatClient) {
       this.chatClient.quit()
       this.chatClient = null
