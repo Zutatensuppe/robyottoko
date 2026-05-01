@@ -692,6 +692,7 @@ export const getUserTypeInfo = async (
   return info
 }
 
+// NOTE: Not for security-sensitive use. Used only for WebSocket socket IDs.
 export const uniqId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substring(2)
 }

@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto'
 import { Repo } from './Repo'
 
 const TABLE = 'robyottoko.token'
@@ -20,15 +21,14 @@ interface UpdateToken {
   token?: string
 }
 
-function generateToken(length: number): string {
-  // edit the token allowed characters
-  const a = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'.split('')
-  const b = []
+const TOKEN_ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
+
+export function generateToken(length: number): string {
+  const chars: string[] = []
   for (let i = 0; i < length; i++) {
-    const j = parseInt((Math.random() * (a.length - 1)).toFixed(0), 10)
-    b[i] = a[j]
+    chars[i] = TOKEN_ALPHABET[randomInt(TOKEN_ALPHABET.length)]
   }
-  return b.join('')
+  return chars.join('')
 }
 
 class Tokens extends Repo {
