@@ -119,6 +119,7 @@ const handleOAuthCodeCallback = async (
 
   // user re-authenticated successfully, allow refresh attempts again
   await bot.getAccessTokenUpdater().resetFailures(user.id)
+  await bot.getRepos().eventSub.clearSubscriptionStatesForUser(user.id)
 
   return { updated, created, user }
 }

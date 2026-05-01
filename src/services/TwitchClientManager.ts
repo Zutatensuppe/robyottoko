@@ -1,6 +1,7 @@
 import { TwitchHelixClient } from './TwitchHelixClient'
 import type { Logger } from '../common/fn'
 import { logger } from '../common/fn'
+import { EventSubSubscriptionState } from '../repo/EventSubRepo'
 import type { User } from '../repo/Users'
 import type { Bot, EventSubTransport, TwitchBotIdentity, TwitchConfig } from '../types'
 import { ALL_SUBSCRIPTIONS_TYPES, SubscriptionType } from './twitch/EventSub'
@@ -16,6 +17,12 @@ const BACKGROUND_TASK_CONCURRENCY = 3
 const CHAT_CONNECT_TASK_CONCURRENCY = 4
 
 type AsyncTask = () => Promise<void>
+type RegisterSubscriptionResult =
+  | 'registered'
+  | 'already_exists'
+  | EventSubSubscriptionState
+  | 'unauthorized'
+  | 'failed'
 
 const createTaskQueue = (concurrency: number, queueName: string) => {
   const tasks: AsyncTask[] = []
@@ -305,15 +312,50 @@ class TwitchClientManager {
     await Promise.all(deletePromises)
     this.log.debug(`deleted ${deletePromises.length} subscriptions`)
 
-    const createPromises: Promise<void>[] = []
+    const blockedAuthorizationSubscriptionTypes = new Set(
+      await this.bot.getRepos().eventSub.getSubscriptionTypesByState(
+        {
+          user_id: user.id,
+          state: EventSubSubscriptionState.BlockedAuthorization,
+        },
+      ),
+    )
+    let skippedBlockedAuthorization = 0
+    const createPromises: Promise<RegisterSubscriptionResult>[] = []
     // create all subscriptions
     for (const subscriptionType of ALL_SUBSCRIPTIONS_TYPES) {
       if (!existsMap[subscriptionType][user.twitch_id]) {
+        if (blockedAuthorizationSubscriptionTypes.has(subscriptionType)) {
+          skippedBlockedAuthorization++
+          continue
+        }
         createPromises.push(this.registerSubscription(subscriptionType, user))
       }
     }
-    await Promise.all(createPromises)
-    this.log.debug(`registered ${createPromises.length} subscriptions`)
+    const createResults = await Promise.all(createPromises)
+    const summary = {
+      attempted: createPromises.length + skippedBlockedAuthorization,
+      registered: 0,
+      already_exists: 0,
+      [EventSubSubscriptionState.BlockedAuthorization]: 0,
+      unauthorized: 0,
+      failed: 0,
+      skipped_blocked_authorization: skippedBlockedAuthorization,
+    }
+    for (const result of createResults) {
+      if (result === 'registered') {
+        summary.registered++
+      } else if (result === 'already_exists') {
+        summary.already_exists++
+      } else if (result === EventSubSubscriptionState.BlockedAuthorization) {
+        summary[EventSubSubscriptionState.BlockedAuthorization]++
+      } else if (result === 'unauthorized') {
+        summary.unauthorized++
+      } else {
+        summary.failed++
+      }
+    }
+    this.log.info(summary, 'subscription registration summary')
   }
 
   async deleteSubscription(
@@ -333,12 +375,12 @@ class TwitchClientManager {
   async registerSubscription(
     subscriptionType: SubscriptionType,
     user: User,
-  ): Promise<void> {
+  ): Promise<RegisterSubscriptionResult> {
     if (!this.helixClient) {
-      return
+      return 'failed'
     }
     if (!user.twitch_id) {
-      return
+      return 'failed'
     }
 
     const condition = subscriptionType === SubscriptionType.ChannelFollow
@@ -364,15 +406,28 @@ class TwitchClientManager {
         subscription_id: resp.data[0].id,
         subscription_type: subscriptionType,
       })
+      await this.bot.getRepos().eventSub.clearSubscriptionState(this.user.id, subscriptionType)
       this.log.info(`subscription registered: ${subscriptionType}`)
+      return 'registered'
     } else if (resp && 'error' in resp && resp.error && resp.status === 409) {
+      await this.bot.getRepos().eventSub.clearSubscriptionState(this.user.id, subscriptionType)
       this.log.info(`subscription already exists: ${subscriptionType}`)
+      return 'already_exists'
     } else if (resp && 'error' in resp && resp.error && resp.status === 403) {
+      await this.bot.getRepos().eventSub.upsertSubscriptionState(
+        this.user.id,
+        subscriptionType,
+        EventSubSubscriptionState.BlockedAuthorization,
+        resp.message || 'subscription missing proper authorization',
+      )
       this.log.info({ type: subscriptionType, msg: resp.message, status: resp.status })
+      return EventSubSubscriptionState.BlockedAuthorization
     } else if (resp && 'error' in resp && resp.error && resp.status === 401) {
       this.log.info({ type: subscriptionType, msg: resp.message, status: resp.status })
+      return 'unauthorized'
     } else {
       this.log.debug({ resp, subscription })
+      return 'failed'
     }
   }
 
