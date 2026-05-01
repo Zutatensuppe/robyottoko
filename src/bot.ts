@@ -167,6 +167,7 @@ const createBot = async (): Promise<Bot> => {
 // changes to user will be handled by user_changed event
 const initForUser = async (bot: Bot, user: User) => {
   const clientManager = bot.getUserTwitchClientManager(user)
+  const userLog = logger('bot.ts', `${user.name}(${user.id})|`)
   const timer = new Timer()
   timer.reset()
 
@@ -178,14 +179,14 @@ const initForUser = async (bot: Bot, user: User) => {
   //       startup will take forever
 
   timer.split()
-  log.debug(`initiating client manager took ${timer.lastSplitMs()}ms`)
+  userLog.debug(`initiating client manager took ${timer.lastSplitMs()}ms`)
 
   for (const moduleClass of modules) {
     bot.getModuleManager().add(user.id, await new moduleClass(bot, user))
   }
 
   timer.split()
-  log.debug(`initiating all modules took ${timer.lastSplitMs()}ms`)
+  userLog.debug(`initiating all modules took ${timer.lastSplitMs()}ms`)
 
   bot.getFrontendStatusUpdater().addUser(user)
   bot.getStreamStatusUpdater().addUser(user)
@@ -214,7 +215,8 @@ const initForUser = async (bot: Bot, user: User) => {
   })
 
   timer.split()
-  log.debug(`init for user took ${timer.totalMs()}ms`)
+  userLog.debug(`registering user event handlers took ${timer.lastSplitMs()}ms`)
+  userLog.debug(`init for user took ${timer.totalMs()}ms`)
 }
 
 export const run = async () => {
