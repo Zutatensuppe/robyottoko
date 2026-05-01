@@ -48,7 +48,7 @@ class Db {
     await this.run('CREATE TABLE IF NOT EXISTS public.db_patches ( id TEXT PRIMARY KEY);', [])
 
     const files = await FileSystem.readDir(this.patchesDir)
-    const patches = (await this.getMany('public.db_patches')).map(row => row.id)
+    const patches = (await this.getMany<{ id: string }>('public.db_patches')).map(row => row.id)
 
     for (const f of files) {
       if (patches.includes(f)) {
@@ -197,7 +197,7 @@ class Db {
     }
   }
 
-  async _getMany(query: string, params: Params = []): Promise<any[]> {
+  async _getMany<T>(query: string, params: Params = []): Promise<T[]> {
     try {
       return (await this.dbh.query(query, params)).rows || []
     } catch (e) {
@@ -218,15 +218,15 @@ class Db {
     return await this._get(sql, where.values)
   }
 
-  async getMany(
+  async getMany<T>(
     table: string,
     whereRaw: WhereRaw = {},
     orderBy: OrderBy = [],
-  ): Promise<any[]> {
+  ): Promise<T[]> {
     const where = this._buildWhere(whereRaw)
     const orderBySql = this._buildOrderBy(orderBy)
     const sql = 'SELECT * FROM ' + table + where.sql + orderBySql
-    return await this._getMany(sql, where.values)
+    return await this._getMany<T>(sql, where.values)
   }
 
   async delete(table: string, whereRaw: WhereRaw = {}): Promise<pg.QueryResult> {

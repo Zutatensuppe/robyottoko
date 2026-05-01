@@ -29,7 +29,7 @@ export class VariablesRepo extends Repo {
   }
 
   async all(userId: number): Promise<GlobalVariable[]> {
-    const rows = await this.db.getMany(TABLE, { user_id: userId })
+    const rows = await this.db.getMany<Row>(TABLE, { user_id: userId })
     return rows.map(row => ({
       name: row.name,
       value: JSON.parse(row.value),

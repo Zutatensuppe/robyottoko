@@ -65,7 +65,7 @@ export class ChatLogRepo extends Repo {
       broadcaster_user_id: channelId,
       created_at: { '$gte': toJSONDateString(since) },
     })
-    return (await this.db._getMany(
+    return (await this.db._getMany<Row>(
       `select display_name from robyottoko.chat_log ${whereObject.sql} group by display_name`,
       whereObject.values,
     )).map(r => r.display_name)
