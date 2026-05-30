@@ -77,6 +77,10 @@ export enum MODULE_NAME {
   VOTE = 'vote',
 }
 
+export const tryParseModuleName = (name: string): MODULE_NAME | null => {
+  return Object.values(MODULE_NAME).includes(name as MODULE_NAME) ? (name as MODULE_NAME) : null
+}
+
 export enum WIDGET_TYPE {
   SR = 'sr',
   MEDIA = 'media',
@@ -92,3 +96,9 @@ export enum WIDGET_TYPE {
   POMO = 'pomo',
   ROULETTE = 'roulette',
 }
+
+export const WIDGET_WS_PATH_PREFIX = '/widget_'
+
+export const WIDGET_PATH_PREFIX = '/widget'
+
+export const WIDGET_TOKEN_PREFIX = 'widget_'

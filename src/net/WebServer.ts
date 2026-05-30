@@ -11,6 +11,7 @@ import { createRouter as createTwitchRouter } from '../web_routes/twitch'
 import { createRouter as createApiRouter } from '../web_routes/api'
 import { createRouter as createAdminApiRouter } from '../web_routes/admin/api'
 import { RequireLoginMiddleware } from './middleware/RequireLoginMiddleware'
+import { WIDGET_PATH_PREFIX } from '../enums'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -44,7 +45,7 @@ class WebServer {
       res.sendFile(indexFile)
     })
 
-    app.all('/widget/*', async (_req, res: Response, _next: NextFunction) => {
+    app.all(`${WIDGET_PATH_PREFIX}/*`, async (_req, res: Response, _next: NextFunction) => {
       res.sendFile(indexFile)
     })
 

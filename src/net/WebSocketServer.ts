@@ -1,9 +1,8 @@
 import * as WebSocket from 'ws'
 import type { IncomingMessage } from 'http'
-import { logger, withoutLeading } from '../common/fn'
+import { logger } from '../common/fn'
 import type { Bot} from '../types'
-import { MODULE_NAME } from '../enums'
-import { moduleByWidgetType } from '../services/Widgets'
+import { tryParseModuleName } from '../enums'
 import { uniqId } from '../fn'
 
 const log = logger('WebSocketServer.ts')
@@ -18,25 +17,21 @@ export interface Socket extends WebSocket.WebSocket {
 }
 
 const determineUserIdAndModuleName = async (
-  basePath: string,
-  requestUrl: string,
+  wsBasePath: string,
+  wsRequestUrl: string,
   socket: Socket,
   bot: Bot,
 ): Promise<{ userId: number | null, moduleName: string | null}> => {
-  const relativePath = requestUrl.substring(basePath.length) || ''
-  const relpath = withoutLeading(relativePath, '/')
-
-  if (requestUrl.indexOf(basePath) !== 0) {
+  if (wsRequestUrl.indexOf(wsBasePath) !== 0) {
     return { userId: null, moduleName: null }
   }
 
-  const widgetPrefix = 'widget_'
-  const widgetModule = moduleByWidgetType(relpath.startsWith(widgetPrefix) ? relpath.substring(widgetPrefix.length) : '')
-  const tokenType = widgetModule ? relpath : null
-  const tmpModuleName = widgetModule || relpath
-  const moduleName = Object.values(MODULE_NAME).includes(tmpModuleName as any) ? tmpModuleName : null
-  const token = socket.protocol
+  const path = wsRequestUrl.substring(wsBasePath.length) || ''
+  const widgetModule = bot.getWidgets().getModuleTypeByWsPath(path)
+  const moduleName = tryParseModuleName(widgetModule || path)
 
+  const token = socket.protocol
+  const tokenType = widgetModule ? path : null
   const tokenInfo = await bot.getAuth().wsTokenFromProtocol(token, tokenType)
   const userId = tokenInfo ? tokenInfo.user_id : null
 
@@ -52,12 +47,12 @@ class WebSocketServer {
       // note: here the socket is already set in _websocketserver.clients !
       // but it has no user_id or module set yet!
 
-      const basePath = new URL(bot.getConfig().ws.connectstring).pathname
-      const requestUrl = request.url || ''
+      const wsBasePath = new URL(bot.getConfig().ws.connectstring).pathname
+      const wsRequestUrl = request.url || ''
 
       // userId is the id of the OWNER of the widget
       // it is NOT the id of the user actually visiting that page right now
-      const { userId, moduleName } = await determineUserIdAndModuleName(basePath, requestUrl, socket, bot)
+      const { userId, moduleName } = await determineUserIdAndModuleName(wsBasePath, wsRequestUrl, socket, bot)
 
       socket.user_id = userId
       socket.module = moduleName
@@ -85,7 +80,7 @@ class WebSocketServer {
 
       if (!socket.user_id) {
         log.info({
-          requestUrl,
+          wsRequestUrl,
           socket: { protocol: socket.protocol },
         }, 'not found token')
         socket.close(CODE_WS_AUTH_FAILED, 'invalid ws token')
@@ -93,7 +88,7 @@ class WebSocketServer {
       }
 
       if (!socket.module) {
-        log.info({ requestUrl }, 'bad request url')
+        log.info({ wsRequestUrl }, 'bad request url')
         socket.close()
         return
       }

@@ -11,6 +11,7 @@ import { createRouter as createUserRouter } from './user'
 import { RequireLoginApiMiddleware } from '../../net/middleware/RequireLoginApiMiddleware'
 import { moduleDefinitions } from '../../mod/Modules'
 import { VideoService } from '../../services/VideoService'
+import { WIDGET_PATH_PREFIX } from '../../enums'
 
 const log = logger('api/index.ts')
 
@@ -75,10 +76,8 @@ export const createRouter = (
   router.post('/widget/create_url', RequireLoginApiMiddleware, express.json(), async (req: any, res: Response) => {
     const type = req.body.type
     const pub = req.body.pub
-    const url = await bot.getWidgets().createWidgetUrl(type, req.user.id)
-    res.send({
-      url: pub ? (await bot.getWidgets().pubUrl(url)) : url,
-    })
+    const url = await bot.getWidgets().createWidgetUrl(type, req.user.id, pub)
+    res.send({ url })
   })
 
   router.get('/page/index', RequireLoginApiMiddleware, async (req: any, res: Response) => {
@@ -156,7 +155,7 @@ export const createRouter = (
     res.status(404).send()
   })
 
-  router.get('/widget/:widget_type/:widget_token/', async (req, res: Response, _next: NextFunction) => {
+  router.get(`${WIDGET_PATH_PREFIX}/:widget_type/:widget_token/`, async (req, res: Response, _next: NextFunction) => {
     const type = req.params.widget_type
     const token = req.params.widget_token
     const user = (await bot.getAuth().userFromWidgetToken(token, type))
@@ -165,7 +164,7 @@ export const createRouter = (
       res.status(404).send()
       return
     }
-    log.debug({ route: '/widget/:widget_type/:widget_token/', type, token })
+    log.debug({ route: `${WIDGET_PATH_PREFIX}/:widget_type/:widget_token/`, type, token })
     const w = bot.getWidgets().getWidgetDefinitionByType(type)
     if (w) {
       res.send({

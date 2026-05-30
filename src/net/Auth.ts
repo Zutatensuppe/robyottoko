@@ -4,6 +4,7 @@ import type { Token} from '../repo/Tokens'
 import { TokenType } from '../repo/Tokens'
 import type { User } from '../repo/Users'
 import type { BaseUserData } from '../types'
+import { WIDGET_TOKEN_PREFIX } from '../enums'
 
 class Auth {
   constructor(private readonly repos: Repos) {
@@ -62,7 +63,7 @@ class Auth {
   }
 
   async userFromWidgetToken(token: string, type: string): Promise<User | null> {
-    const tokenInfo = await this.getTokenInfoByTokenAndType(token, `widget_${type}`)
+    const tokenInfo = await this.getTokenInfoByTokenAndType(token, `${WIDGET_TOKEN_PREFIX}${type}`)
     if (tokenInfo) {
       return await this._getUserById(tokenInfo.user_id)
     }

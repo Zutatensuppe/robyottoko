@@ -1,6 +1,6 @@
 import { nonce } from '../common/fn'
 import type { WidgetDefinition, WidgetInfo} from '../types'
-import { MODULE_NAME, WIDGET_TYPE } from '../enums'
+import { MODULE_NAME, WIDGET_PATH_PREFIX, WIDGET_TOKEN_PREFIX, WIDGET_TYPE, WIDGET_WS_PATH_PREFIX } from '../enums'
 import type { Repos } from '../repo/Repos'
 
 const widgets: WidgetDefinition[] = [
@@ -97,81 +97,107 @@ const widgets: WidgetDefinition[] = [
   },
 ]
 
-export const moduleByWidgetType = (widgetType: string): string | null => {
-  const found = widgets.find((w) => w.type === widgetType)
-  return found ? found.module : null
-}
-
-
 class Widgets {
-  constructor(private readonly repos: Repos) {
+  constructor(
+    private readonly repos: Repos,
+    private readonly baseUrl: string,
+  ) {
     // pass
   }
 
-  _widgetUrl = (type: string, token: string): string => {
-    return `/widget/${type}/${token}/`
+  private _widgetPath(type: string, token: string): string {
+    return `${WIDGET_PATH_PREFIX}/${type}/${token}/`
   }
 
-  async createWidgetUrl(type: string, userId: number): Promise<string> {
-    let t = await this.repos.token.getByUserIdAndType(userId, `widget_${type}`)
-    if (t) {
-      await this.repos.token.delete(t.token)
+  private _absoluteUrl(path: string): string {
+    return `${this.baseUrl}${path}`
+  }
+
+  private _getTokenType(type: string): string {
+    return `${WIDGET_TOKEN_PREFIX}${type}`
+  }
+
+  public getModuleTypeByWsPath(wsPath: string): string | null {
+    const widgetPrefix = WIDGET_WS_PATH_PREFIX
+    const widgetType = wsPath.startsWith(widgetPrefix) ? wsPath.substring(widgetPrefix.length) : ''
+    const found = widgets.find((w) => w.type === widgetType)
+    return found ? found.module : null
+  }
+
+  private async _getWidgetToken(type: string, userId: number): Promise<string | null> {
+    const tokenRow = await this.repos.token.getByUserIdAndType(userId, this._getTokenType(type))
+    return tokenRow ? tokenRow.token : null
+  }
+
+  private async _createWidgetToken(type: string, userId: number): Promise<string> {
+    const tokenRow = await this.repos.token.createToken(userId, this._getTokenType(type))
+    return tokenRow.token
+  }
+
+  private async _ensureWidgetPath(type: string, userId: number): Promise<string> {
+    const token = await this._getWidgetToken(type, userId)
+    if (token) {
+      return this._widgetPath(type, token)
     }
-    t = await this.repos.token.createToken(userId, `widget_${type}`)
-    return this._widgetUrl(type, t.token)
+    const newToken = await this._createWidgetToken(type, userId)
+    return this._widgetPath(type, newToken)
   }
 
-  async widgetUrlByTypeAndUserId(
-    type: WIDGET_TYPE,
-    userId: number,
-  ): Promise<string> {
-    const t = await this.repos.token.getByUserIdAndType(userId, `widget_${type}`)
-    if (t) {
-      return this._widgetUrl(type, t.token)
+  private async _resetWidgetPath(type: string, userId: number): Promise<string> {
+    const token = await this._getWidgetToken(type, userId)
+    if (token) {
+      await this.repos.token.delete(token)
     }
-    return await this.createWidgetUrl(type, userId)
+    const newToken = await this._createWidgetToken(type, userId)
+    return this._widgetPath(type, newToken)
   }
 
-  async pubUrl(target: string): Promise<string> {
-    const row = await this.repos.pub.getByTarget(target)
+  private async _pubPath(widgetPath: string): Promise<string> {
+    const row = await this.repos.pub.getByTarget(widgetPath)
     let id
     if (!row) {
       do {
         id = nonce(6)
       } while (await this.repos.pub.getById(id))
-      await this.repos.pub.insert({ id, target })
+      await this.repos.pub.insert({ id, target: widgetPath })
     } else {
       id = row.id
     }
     return `/pub/${id}`
   }
 
-  async getWidgetUrl(widgetType: WIDGET_TYPE, userId: number): Promise<string> {
-    return await this.widgetUrlByTypeAndUserId(widgetType, userId)
+  public async createWidgetUrl(type: string, userId: number, pub: boolean): Promise<string> {
+    const path = await this._resetWidgetPath(type, userId)
+    return this._absoluteUrl(pub ? await this._pubPath(path) : path)
   }
 
-  async getPublicWidgetUrl(widgetType: WIDGET_TYPE, userId: number): Promise<string> {
-    const url = await this.widgetUrlByTypeAndUserId(widgetType, userId)
-    return await this.pubUrl(url)
+  public async getWidgetUrl(widgetType: WIDGET_TYPE, userId: number): Promise<string> {
+    const path = await this._ensureWidgetPath(widgetType, userId)
+    return this._absoluteUrl(path)
   }
 
-  async getWidgetInfos(userId: number): Promise<WidgetInfo[]> {
+  public async getPublicWidgetUrl(widgetType: WIDGET_TYPE, userId: number): Promise<string> {
+    const path = await this._ensureWidgetPath(widgetType, userId)
+    return this._absoluteUrl(await this._pubPath(path))
+  }
+
+  public async getWidgetInfos(userId: number): Promise<WidgetInfo[]> {
     const widgetInfos = []
     for (const w of widgets) {
-      const url = await this.widgetUrlByTypeAndUserId(w.type, userId)
+      const path = await this._ensureWidgetPath(w.type, userId)
       widgetInfos.push({
         type: w.type,
         module: w.module,
         pub: w.pub,
         title: w.title,
         hint: w.hint,
-        url: w.pub ? (await this.pubUrl(url)) : url,
+        url: this._absoluteUrl(w.pub ? await this._pubPath(path) : path),
       })
     }
     return widgetInfos
   }
 
-  getWidgetDefinitionByType(type: string): WidgetDefinition | null {
+  public getWidgetDefinitionByType(type: string): WidgetDefinition | null {
     return widgets.find(w => w.type === type) || null
   }
 }
