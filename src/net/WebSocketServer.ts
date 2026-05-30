@@ -27,11 +27,12 @@ const determineUserIdAndModuleName = async (
   }
 
   const path = wsRequestUrl.substring(wsBasePath.length) || ''
+  const relpath = path.startsWith('/') ? path.substring(1) : path
   const widgetModule = bot.getWidgets().getModuleTypeByWsPath(path)
-  const moduleName = tryParseModuleName(widgetModule || path)
+  const moduleName = tryParseModuleName(widgetModule || relpath)
 
   const token = socket.protocol
-  const tokenType = widgetModule ? path : null
+  const tokenType = widgetModule ? relpath : null
   const tokenInfo = await bot.getAuth().wsTokenFromProtocol(token, tokenType)
   const userId = tokenInfo ? tokenInfo.user_id : null
 
