@@ -61,7 +61,7 @@ const createBot = async (): Promise<Bot> => {
   const canny = new Canny(config.canny)
   const discord = new Discord(config.discord)
   const auth = new Auth(repos)
-  const widgets = new Widgets(repos)
+  const widgets = new Widgets(repos, config.http.url)
   const timeApi = new TimeApi()
   const eventHub = mitt()
   const moduleManager = new ModuleManager()

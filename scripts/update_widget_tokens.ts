@@ -1,19 +1,20 @@
 import config from '../src/config'
 import Db from '../src/DbPostgres'
-import { WIDGET_TYPE } from '../src/types';
+import { WIDGET_TYPE } from '../src/types'
+import { WIDGET_TOKEN_PREFIX } from '../src/enums'
 
 
 const widgets = [
-  { type: WIDGET_TYPE.SR, pub: false, },
-  { type: WIDGET_TYPE.MEDIA, pub: false, },
-  { type: WIDGET_TYPE.SPEECH_TO_TEXT_CONTROL, pub: false, },
-  { type: WIDGET_TYPE.SPEECH_TO_TEXT_RECEIVE, pub: false, },
-  { type: WIDGET_TYPE.AVATAR_CONTROL, pub: false, },
-  { type: WIDGET_TYPE.AVATAR_RECEIVE, pub: false, },
-  { type: WIDGET_TYPE.DRAWCAST_RECEIVE, pub: false, },
-  { type: WIDGET_TYPE.DRAWCAST_DRAW, pub: true, },
-  { type: WIDGET_TYPE.DRAWCAST_CONTROL, pub: false, },
-  { type: WIDGET_TYPE.POMO, pub: false, },
+  { type: WIDGET_TYPE.SR, pub: false },
+  { type: WIDGET_TYPE.MEDIA, pub: false },
+  { type: WIDGET_TYPE.SPEECH_TO_TEXT_CONTROL, pub: false },
+  { type: WIDGET_TYPE.SPEECH_TO_TEXT_RECEIVE, pub: false },
+  { type: WIDGET_TYPE.AVATAR_CONTROL, pub: false },
+  { type: WIDGET_TYPE.AVATAR_RECEIVE, pub: false },
+  { type: WIDGET_TYPE.DRAWCAST_RECEIVE, pub: false },
+  { type: WIDGET_TYPE.DRAWCAST_DRAW, pub: true },
+  { type: WIDGET_TYPE.DRAWCAST_CONTROL, pub: false },
+  { type: WIDGET_TYPE.POMO, pub: false },
 ]
 
   ; (async () => {
@@ -29,11 +30,11 @@ const widgets = [
     for (const token of tokens) {
       // check if there exists each of the widget tokens
       for (const w of widgets) {
-        const t = await db.get('token', { user_id: token.user_id, type: `widget_${w.type}` })
+        const t = await db.get('token', { user_id: token.user_id, type: `${WIDGET_TOKEN_PREFIX}${w.type}` })
         if (!t) {
           await db.insert('token', {
             user_id: token.user_id,
-            type: `widget_${w.type}`,
+            type: `${WIDGET_TOKEN_PREFIX}${w.type}`,
             token: token.token,
           })
         }
@@ -42,4 +43,4 @@ const widgets = [
       console.log('deleting token')
       await db.delete('token', { user_id: token.user_id, type: token.type, token: token.token })
     }
-  })();
+  })()

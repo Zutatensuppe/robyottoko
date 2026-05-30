@@ -28,6 +28,7 @@ import global from './global'
 import conf from './conf'
 import user from './user'
 import wsstatus from './wsstatus'
+import { WIDGET_PATH_PREFIX } from '../enums'
 
 const run = async () => {
   const router = VueRouter.createRouter({
@@ -94,7 +95,7 @@ const run = async () => {
         },
       },
       {
-        name: 'widget', path: '/widget/:widget_type/:widget_token/', component: Widget, meta: {
+        name: 'widget', path: `${WIDGET_PATH_PREFIX}/:widget_type/:widget_token/`, component: Widget, meta: {
           title: 'Widget',
           protected: false,
         },
