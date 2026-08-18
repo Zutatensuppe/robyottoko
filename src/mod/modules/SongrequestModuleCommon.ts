@@ -1,6 +1,6 @@
 'use strict'
 
-import type { Command, FunctionCommand, GlobalVariable, MediaFile, PlaylistItem } from '../../types'
+import type { Command, FunctionCommand, GlobalVariable, MediaFile, PlaylistItem, PlaylistItemId } from '../../types'
 import { commands } from '../../common/commands'
 import { getProp } from '../../common/fn'
 import { presets } from './SongrequestPresets'
@@ -17,6 +17,42 @@ export enum SortBy {
   PLAYS = 'plays',
   USER = 'user',
   DURATION = 'duration',
+}
+
+export enum SongrequestCtrl {
+  ADD_FILTER_HIDE_TAG = 'addFilterHideTag',
+  ADD_FILTER_SHOW_TAG = 'addFilterShowTag',
+  ADD_TAG = 'addtag',
+  BAD = 'bad',
+  BAD_IDX = 'badIdx',
+  CLEAR = 'clear',
+  CTRL = 'ctrl',
+  GOOD = 'good',
+  GOOD_IDX = 'goodIdx',
+  LOOP = 'loop',
+  MOVE = 'move',
+  NOLOOP = 'noloop',
+  PAUSE = 'pause',
+  PLAY = 'play',
+  PLAY_IDX = 'playIdx',
+  PREV = 'prev',
+  REMOVE_FILTER_HIDE_TAG = 'removeFilterHideTag',
+  REMOVE_FILTER_SHOW_TAG = 'removeFilterShowTag',
+  RESET_STAT_IDX = 'resetStatIdx',
+  RESET_STATS = 'resetStats',
+  RESR = 'resr',
+  RM = 'rm',
+  RM_IDX = 'rmIdx',
+  RM_TAG = 'rmtag',
+  SET_ALL_TO_PLAYED = 'setAllToPlayed',
+  SHUFFLE = 'shuffle',
+  SKIP = 'skip',
+  SORT = 'sort',
+  SR = 'sr',
+  UNPAUSE = 'unpause',
+  UPDATE_TAG = 'updatetag',
+  VIDEO_VISIBILITY = 'videoVisibility',
+  VOLUME = 'volume',
 }
 
 export interface SongrequestModuleCustomCssPreset {
@@ -45,6 +81,7 @@ export interface SongerquestModuleInitData {
 
 export interface SongrequestModuleSettings {
   volume: number
+  loop: boolean
   initAutoplay: boolean
   hideVideoImage: MediaFile
   maxSongLength: {
@@ -85,6 +122,44 @@ export interface SongrequestModuleWsEventData {
   settings: SongrequestModuleSettings
   widgetUrl: string
 }
+
+export interface SongrequestClientWsPlayData {
+  event: 'play'
+  id: PlaylistItemId
+}
+
+export interface SongrequestClientWsEndedData {
+  event: 'ended'
+  id: PlaylistItemId
+}
+
+export interface SongrequestClientWsSaveData {
+  event: 'save'
+  commands: Command[]
+  settings: SongrequestModuleSettings
+}
+
+export interface SongrequestClientWsCtrlData {
+  event: 'ctrl'
+  ctrl: SongrequestCtrl
+  args: any[]
+}
+
+export interface SongrequestClientWsUnpauseData {
+  event: 'unpause'
+  id: PlaylistItemId
+}
+
+export interface SongrequestClientWsPauseData {
+  event: 'pause'
+}
+
+export type SongrequestClientWsData = SongrequestClientWsPlayData
+  | SongrequestClientWsEndedData
+  | SongrequestClientWsSaveData
+  | SongrequestClientWsCtrlData
+  | SongrequestClientWsUnpauseData
+  | SongrequestClientWsPauseData
 
 export const default_custom_css_preset = (obj: any = null): SongrequestModuleCustomCssPreset => ({
   name: getProp(obj, ['name'], ''),
@@ -134,6 +209,7 @@ export const default_commands = (list: any = null) => {
 }
 
 export const default_settings = (obj: any = null): SongrequestModuleSettings => ({
+  loop: getProp(obj, ['loop'], false),
   volume: getProp(obj, ['volume'], 100),
   initAutoplay: getProp(obj, ['initAutoplay'], true),
   hideVideoImage: {

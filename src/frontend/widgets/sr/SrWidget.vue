@@ -205,6 +205,7 @@ const applySettings = (newSettings: SongrequestModuleSettings): void => {
   }
   settings.value = newSettings
   adjustVolume()
+  player.value.setLoop(settings.value.loop ?? false)
 }
 
 onMounted(() => {
@@ -261,11 +262,11 @@ onMounted(() => {
       }
     }
   })
-  ws.onMessage(['loop'], (_data) => {
-    player.value.setLoop(true)
+  ws.onMessage(['loop'], (data) => {
+    applySettings(data.settings)
   })
-  ws.onMessage(['noloop'], (_data) => {
-    player.value.setLoop(false)
+  ws.onMessage(['noloop'], (data) => {
+    applySettings(data.settings)
   })
   ws.onMessage(['stats', 'video', 'playIdx', 'shuffle'], (data) => {
     applySettings(data.settings)

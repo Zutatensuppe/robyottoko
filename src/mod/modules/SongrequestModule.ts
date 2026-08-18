@@ -11,13 +11,16 @@ import type {
   CommandFunction,
   Module,
   CommandExecutionContext,
-  PlaylistItemId,
 } from '../../types'
 import {
   MODULE_NAME, WIDGET_TYPE,
 } from '../../enums'
 import type {
   SongerquestModuleInitData,
+  SongrequestClientWsCtrlData,
+  SongrequestClientWsEndedData,
+  SongrequestClientWsPlayData,
+  SongrequestClientWsSaveData,
   SongrequestModuleData,
   SongRequestModuleFilter,
   SongrequestModuleLimits,
@@ -28,6 +31,7 @@ import {
   default_commands,
   default_settings,
   isItemShown,
+  SongrequestCtrl,
   SortBy,
 } from './SongrequestModuleCommon'
 import type { NextFunction, Response } from 'express'
@@ -431,7 +435,8 @@ class SongrequestModule implements Module {
         this.channelPointsCustomRewards = await getChannelPointsCustomRewards(this.bot, this.user)
         await this.updateClient('init', ws)
       },
-      'play': async (ws: Socket, { id }: { id: PlaylistItemId }) => {
+      'play': async (ws: Socket, data: SongrequestClientWsPlayData) => {
+        const { id } = data
         const eventInfo = { id, timestamp: new Date().getTime(), wsId: ws.id || '' }
         if (!this.checkLastEvents('play', eventInfo)) {
           return
@@ -451,7 +456,8 @@ class SongrequestModule implements Module {
         await this.save()
         await this.updateClients('playIdx')
       },
-      'ended': async (ws: Socket, { id }: { id: PlaylistItemId }) => {
+      'ended': async (ws: Socket, data: SongrequestClientWsEndedData) => {
+        const { id } = data
         const eventInfo = { id, timestamp: new Date().getTime(), wsId: ws.id || '' }
         if (!this.checkLastEvents('ended', eventInfo)) {
           return
@@ -464,7 +470,7 @@ class SongrequestModule implements Module {
         await this.save()
         await this.updateClients('onEnded')
       },
-      'save': async (_ws: Socket, data: { commands: Command[], settings: SongrequestModuleSettings }) => {
+      'save': async (_ws: Socket, data: SongrequestClientWsSaveData) => {
         this.data.commands = data.commands
         this.data.settings = data.settings
         await this.save()
@@ -474,39 +480,40 @@ class SongrequestModule implements Module {
         this.commands = initData.commands
         await this.updateClients('save')
       },
-      'ctrl': async (_ws: Socket, { ctrl, args }: { ctrl: string, args: any[] }) => {
+      'ctrl': async (_ws: Socket, data: SongrequestClientWsCtrlData) => {
+        const { ctrl, args } = data
         switch (ctrl) {
-          case 'volume': await this.volume(...args as [number]); break
-          case 'pause': await this.pause(); break
-          case 'unpause': await this.unpause(); break
-          case 'loop': await this.loop(); break
-          case 'noloop': await this.noloop(); break
-          case 'good': await this.like(); break
-          case 'bad': await this.dislike(); break
-          case 'prev': await this.prev(); break
-          case 'skip': await this.next(); break
-          case 'resetStats': await this.resetStats(); break
-          case 'resetStatIdx': await this.resetStatIdx(...args as [string, number]); break
-          case 'clear': await this.clear(); break
-          case 'rm': await this.remove(); break
-          case 'shuffle': await this.shuffle(); break
-          case 'playIdx': await this.playIdx(...args as [number]); break
-          case 'rmIdx': await this.rmIdx(...args as [number]); break
-          case 'goodIdx': await this.goodIdx(...args as [number]); break
-          case 'badIdx': await this.badIdx(...args as [number]); break
-          case 'sr': await this.request(...args as [string]); break
-          case 'resr': await this.resr(...args as [string]); break
-          case 'move': await this.move(...args as [number, number]); break
-          case 'rmtag': await this.rmTag(...args as [string, number]); break
-          case 'addtag': await this.addTag(...args as [string, number]); break
-          case 'updatetag': await this.updateTag(...args as [string, string]); break
-          case 'addFilterShowTag': await this.addFilterShowTag(...args as [string]); break
-          case 'addFilterHideTag': await this.addFilterHideTag(...args as [string]); break
-          case 'removeFilterShowTag': await this.removeFilterShowTag(...args as [string]); break
-          case 'removeFilterHideTag': await this.removeFilterHideTag(...args as [string]); break
-          case 'videoVisibility': await this.videoVisibility(...args as [boolean, number]); break
-          case 'setAllToPlayed': await this.setAllToPlayed(); break
-          case 'sort': await this.sort(...args as [SortBy, SortDirection]); break
+          case SongrequestCtrl.VOLUME: await this.volume(...args as [number]); break
+          case SongrequestCtrl.PAUSE: await this.pause(); break
+          case SongrequestCtrl.UNPAUSE: await this.unpause(); break
+          case SongrequestCtrl.LOOP: await this.loop(); break
+          case SongrequestCtrl.NOLOOP: await this.noloop(); break
+          case SongrequestCtrl.GOOD: await this.like(); break
+          case SongrequestCtrl.BAD: await this.dislike(); break
+          case SongrequestCtrl.PREV: await this.prev(); break
+          case SongrequestCtrl.SKIP: await this.next(); break
+          case SongrequestCtrl.RESET_STATS: await this.resetStats(); break
+          case SongrequestCtrl.RESET_STAT_IDX: await this.resetStatIdx(...args as [string, number]); break
+          case SongrequestCtrl.CLEAR: await this.clear(); break
+          case SongrequestCtrl.RM: await this.remove(); break
+          case SongrequestCtrl.SHUFFLE: await this.shuffle(); break
+          case SongrequestCtrl.PLAY_IDX: await this.playIdx(...args as [number]); break
+          case SongrequestCtrl.RM_IDX: await this.rmIdx(...args as [number]); break
+          case SongrequestCtrl.GOOD_IDX: await this.goodIdx(...args as [number]); break
+          case SongrequestCtrl.BAD_IDX: await this.badIdx(...args as [number]); break
+          case SongrequestCtrl.SR: await this.request(...args as [string]); break
+          case SongrequestCtrl.RESR: await this.resr(...args as [string]); break
+          case SongrequestCtrl.MOVE: await this.move(...args as [number, number]); break
+          case SongrequestCtrl.RM_TAG: await this.rmTag(...args as [string, number]); break
+          case SongrequestCtrl.ADD_TAG: await this.addTag(...args as [string, number]); break
+          case SongrequestCtrl.UPDATE_TAG: await this.updateTag(...args as [string, string]); break
+          case SongrequestCtrl.ADD_FILTER_SHOW_TAG: await this.addFilterShowTag(...args as [string]); break
+          case SongrequestCtrl.ADD_FILTER_HIDE_TAG: await this.addFilterHideTag(...args as [string]); break
+          case SongrequestCtrl.REMOVE_FILTER_SHOW_TAG: await this.removeFilterShowTag(...args as [string]); break
+          case SongrequestCtrl.REMOVE_FILTER_HIDE_TAG: await this.removeFilterHideTag(...args as [string]); break
+          case SongrequestCtrl.VIDEO_VISIBILITY: await this.videoVisibility(...args as [boolean, number]); break
+          case SongrequestCtrl.SET_ALL_TO_PLAYED: await this.setAllToPlayed(); break
+          case SongrequestCtrl.SORT: await this.sort(...args as [SortBy, SortDirection]); break
         }
       },
     }
@@ -572,6 +579,10 @@ class SongrequestModule implements Module {
 
   determineFirstIndex() {
     return this.data.playlist.findIndex(item => isItemShown(item, this.data.filter))
+  }
+
+  setLoop(loop: boolean) {
+    this.data.settings.loop = loop
   }
 
   incStat(stat: 'goods' | 'bads' | 'plays', idx: number = -1) {
@@ -891,10 +902,14 @@ class SongrequestModule implements Module {
   }
 
   async loop() {
+    this.setLoop(true)
+    await this.save()
     await this.updateClients('loop')
   }
 
   async noloop() {
+    this.setLoop(false)
+    await this.save()
     await this.updateClients('noloop')
   }
 
