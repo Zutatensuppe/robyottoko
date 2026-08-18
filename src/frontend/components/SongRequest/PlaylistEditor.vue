@@ -166,7 +166,7 @@
                   class="button is-small"
                   :disabled="element.filteredOut ? true : undefined"
                   title="Play"
-                  @click="sendCtrl('playIdx', [index])"
+                  @click="sendCtrl(SongrequestCtrl.PLAY_IDX, [index])"
                 >
                   <i class="fa fa-play" />
                 </button>
@@ -184,7 +184,7 @@
                     v-for="(tag, idx2) in element.tags"
                     :key="idx2"
                     class="tag"
-                    @click="sendCtrl('rmtag', [tag, index])"
+                    @click="sendCtrl(SongrequestCtrl.RM_TAG, [tag, index])"
                   >
                     {{ tag }} <i class="fa fa-remove ml-1" />
                   </span>
@@ -203,7 +203,7 @@
                       class="input is-small filter-tag-input"
                       type="text"
                       @keyup.enter="
-                        sendCtrl('addtag', [tagInput, index]);
+                        sendCtrl(SongrequestCtrl.ADD_TAG, [tagInput, index]);
                         tagInput = '';
                       "
                     >
@@ -213,7 +213,7 @@
                       class="button is-small"
                       :disabled="tagInput ? undefined : true"
                       @click="
-                        sendCtrl('addtag', [tagInput, index]);
+                        sendCtrl(SongrequestCtrl.ADD_TAG, [tagInput, index]);
                         tagInput = '';
                       "
                     >Add tag</span>
@@ -234,7 +234,7 @@
                 <button
                   class="button is-small ml-1"
                   title="Reset plays"
-                  @click="sendCtrl('resetStatIdx', ['plays', index])"
+                  @click="sendCtrl(SongrequestCtrl.RESET_STAT_IDX, ['plays', index])"
                 >
                   <i class="fa fa-eraser" />
                 </button>
@@ -257,14 +257,14 @@
               <td>
                 <button
                   class="button is-small"
-                  @click="sendCtrl('goodIdx', [index])"
+                  @click="sendCtrl(SongrequestCtrl.GOOD_IDX, [index])"
                 >
                   <i class="fa fa-thumbs-up mr-1" /> {{ element.goods }}
                 </button>
                 <button
                   class="button is-small ml-1"
                   title="Reset upvotes"
-                  @click="sendCtrl('resetStatIdx', ['goods', index])"
+                  @click="sendCtrl(SongrequestCtrl.RESET_STAT_IDX, ['goods', index])"
                 >
                   <i class="fa fa-eraser" />
                 </button>
@@ -272,14 +272,14 @@
               <td>
                 <button
                   class="button is-small"
-                  @click="sendCtrl('badIdx', [index])"
+                  @click="sendCtrl(SongrequestCtrl.BAD_IDX, [index])"
                 >
                   <i class="fa fa-thumbs-down mr-1" /> {{ element.bads }}
                 </button>
                 <button
                   class="button is-small ml-1"
                   title="Reset downvotes"
-                  @click="sendCtrl('resetStatIdx', ['bads', index])"
+                  @click="sendCtrl(SongrequestCtrl.RESET_STAT_IDX, ['bads', index])"
                 >
                   <i class="fa fa-eraser" />
                 </button>
@@ -290,7 +290,7 @@
                   message="Are you sure?"
                   :timeout="1000"
                   title="Remove"
-                  @doubleclick="sendCtrl('rmIdx', [index])"
+                  @doubleclick="sendCtrl(SongrequestCtrl.RM_IDX, [index])"
                 >
                   <i class="fa fa-trash" />
                 </DoubleclickButton>
@@ -323,7 +323,7 @@
 import { dateformat, humanDuration } from '../../../common/fn'
 import { computed, nextTick, Ref, ref, watch } from 'vue'
 import type { DragEndEvent, PlaylistItem } from '../../../types'
-import { isItemShown, SongRequestModuleFilter, SortBy, SortDirection } from '../../../mod/modules/SongrequestModuleCommon'
+import { isItemShown, SongrequestCtrl, SongRequestModuleFilter, SortBy, SortDirection } from '../../../mod/modules/SongrequestModuleCommon'
 import DoubleclickButton from '../DoubleclickButton.vue'
 import CheckboxInput from '../CheckboxInput.vue'
 
@@ -338,7 +338,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'stopPlayer'): void
-  (e: 'ctrl', val: [string, any[]]): void
+  (e: 'ctrl', val: [SongrequestCtrl, any[]]): void
 }>()
 
 
@@ -376,31 +376,31 @@ const firstIndex = computed((): number => {
 })
 
 const sort = (by: SortBy, direction: SortDirection) => {
-  sendCtrl('sort', [by, direction])
+  sendCtrl(SongrequestCtrl.SORT, [by, direction])
 }
 const formatTimestamp = (ms: number) => {
   return dateformat('YYYY-MM-DD hh:mm:ss', new Date(ms))
 }
 const toggleVisibility = (item: PlaylistItem, idx: number) => {
   const visible = !!item.hidevideo
-  sendCtrl('videoVisibility', [visible, idx])
+  sendCtrl(SongrequestCtrl.VIDEO_VISIBILITY, [visible, idx])
 }
 const dragEnd = (evt: DragEndEvent) => {
-  sendCtrl('move', [evt.oldIndex, evt.newIndex])
+  sendCtrl(SongrequestCtrl.MOVE, [evt.oldIndex, evt.newIndex])
 }
 const removeFilterShowTag = (tag: string): void => {
-  sendCtrl('removeFilterShowTag', [tag])
+  sendCtrl(SongrequestCtrl.REMOVE_FILTER_SHOW_TAG, [tag])
 }
 const removeFilterHideTag = (tag: string): void => {
-  sendCtrl('removeFilterHideTag', [tag])
+  sendCtrl(SongrequestCtrl.REMOVE_FILTER_HIDE_TAG, [tag])
 }
 const addFilterShowTag = (tag: string): void => {
-  sendCtrl('addFilterShowTag', [tag])
+  sendCtrl(SongrequestCtrl.ADD_FILTER_SHOW_TAG, [tag])
 }
 const addFilterHideTag = (tag: string): void => {
-  sendCtrl('addFilterHideTag', [tag])
+  sendCtrl(SongrequestCtrl.ADD_FILTER_HIDE_TAG, [tag])
 }
-const sendCtrl = (ctrl: string, args: any[]) => {
+const sendCtrl = (ctrl: SongrequestCtrl, args: any[]) => {
   emit('ctrl', [ctrl, args])
 }
 const startAddTag = (idx: number) => {

@@ -26,9 +26,18 @@
           class="button is-small mr-1"
           :disabled="inited ? undefined : true"
           title="Sets all songs to at least 1x played"
-          @click="sendCtrl('setAllToPlayed', [])"
+          @click="sendCtrl(SongrequestCtrl.SET_ALL_TO_PLAYED, [])"
         >
           <span class="txt">Set all to played</span>
+        </button>
+        <button
+          class="button is-small mr-1"
+          :class="{ active: isLooping }"
+          :disabled="inited ? undefined : true"
+          :title="toggleLoopButtonHelpText"
+          @click="toggleLoop"
+        >
+          <i class="fa fa-recycle mr-1 " /><span class="txt">{{ toggleLoopButtonText }}</span>
         </button>
         <button
           class="button is-small mr-1"
@@ -36,8 +45,7 @@
           :title="togglePlayerButtonText"
           @click="togglePlayer"
         >
-          <i class="fa fa-tv mr-1" /><span class="txt">
-            {{ togglePlayerButtonText }}</span>
+          <i class="fa fa-tv mr-1" /><span class="txt">{{ togglePlayerButtonText }}</span>
         </button>
 
         <div class="field has-addons mr-1">
@@ -189,6 +197,8 @@ import type {
 import {
   default_settings,
   isItemShown,
+  SongrequestClientWsData,
+  SongrequestCtrl,
   SongrequestModuleSettings,
   SongrequestModuleWsEventData,
   TagInfo,
@@ -206,7 +216,7 @@ import { CommandAction } from '../../enums'
 
 interface ControlDefinition {
   title: string;
-  ctrl: string;
+  ctrl: SongrequestCtrl;
   icon: string;
 }
 
@@ -240,37 +250,37 @@ const toast = useToast()
 const controlDefinitions: ControlDefinition[] = [
   {
     title: 'Reset stats',
-    ctrl: 'resetStats',
+    ctrl: SongrequestCtrl.RESET_STATS,
     icon: 'fa-eraser',
   },
   {
     title: 'Clear playlist',
-    ctrl: 'clear',
+    ctrl: SongrequestCtrl.CLEAR,
     icon: 'fa-eject',
   },
   {
     title: 'Shuffle',
-    ctrl: 'shuffle',
+    ctrl: SongrequestCtrl.SHUFFLE,
     icon: 'fa-random',
   },
   {
     title: 'Play',
-    ctrl: 'unpause',
+    ctrl: SongrequestCtrl.UNPAUSE,
     icon: 'fa-play',
   },
   {
     title: 'Pause',
-    ctrl: 'pause',
+    ctrl: SongrequestCtrl.PAUSE,
     icon: 'fa-pause',
   },
   {
     title: 'Prev',
-    ctrl: 'prev',
+    ctrl: SongrequestCtrl.PREV,
     icon: 'fa-step-backward',
   },
   {
     title: 'Next',
-    ctrl: 'skip',
+    ctrl: SongrequestCtrl.SKIP,
     icon: 'fa-step-forward',
   },
 ]
@@ -385,7 +395,7 @@ const onTagUpdated = (evt: [
 }
 
 const onPlaylistCtrl = (evt: [
-  string,
+  SongrequestCtrl,
   any[]
 ]) => {
   sendCtrl(evt[0], evt[1])
@@ -412,25 +422,41 @@ const togglePlayer = () => {
     player.value.stop()
   }
 }
+
+const isLooping = computed((): boolean => settings.value.loop ?? false)
+
+const toggleLoop = () => {
+  const ctrl = isLooping.value ? SongrequestCtrl.NOLOOP : SongrequestCtrl.LOOP
+  sendCtrl(ctrl, [])
+}
+
+const toggleLoopButtonText = computed((): string => {
+  return isLooping.value ? 'Looping current song' : 'Loop Song'
+})
+
+const toggleLoopButtonHelpText = computed((): string => {
+  return isLooping.value ? 'Click to stop looping' : 'Click to loop the current song'
+})
+
 const resr = () => {
   if (resrinput.value !== '') {
-    sendCtrl('resr', [resrinput.value])
+    sendCtrl(SongrequestCtrl.RESR, [resrinput.value])
     resrinput.value = ''
   }
 }
 const sr = () => {
   if (srinput.value !== '') {
-    sendCtrl('sr', [srinput.value])
+    sendCtrl(SongrequestCtrl.SR, [srinput.value])
     srinput.value = ''
   }
 }
-const sendCtrl = (ctrl: string, args: any[]) => {
+const sendCtrl = (ctrl: SongrequestCtrl, args: any[]) => {
   sendMsg({ event: 'ctrl', ctrl, args })
 }
 const ended = () => {
   sendMsg({ event: 'ended', id: item.value.id })
 }
-const sendMsg = (data: Record<string, any>) => {
+const sendMsg = (data: SongrequestClientWsData) => {
   if (ws) {
     ws.send(JSON.stringify(data))
   }
@@ -464,7 +490,7 @@ const updateTag = (oldTag: string, newTag: string) => {
   if (oldTag === newTag) {
     return
   }
-  sendCtrl('updatetag', [oldTag, newTag])
+  sendCtrl(SongrequestCtrl.UPDATE_TAG, [oldTag, newTag])
 }
 
 onMounted(async () => {
@@ -487,10 +513,12 @@ onMounted(async () => {
         unpause()
       }
     })
-    ws.onMessage(['loop'], (_data: SongrequestModuleWsEventData) => {
+    ws.onMessage(['loop'], (data: SongrequestModuleWsEventData) => {
+      settings.value = data.settings
       player.value.setLoop(true)
     })
-    ws.onMessage(['noloop'], (_data: SongrequestModuleWsEventData) => {
+    ws.onMessage(['noloop'], (data: SongrequestModuleWsEventData) => {
+      settings.value = data.settings
       player.value.setLoop(false)
     })
     ws.onMessage(['onEnded', 'prev', 'skip', 'remove', 'move', 'tags'], (data: SongrequestModuleWsEventData) => {
@@ -559,5 +587,8 @@ onUnmounted(() => {
 <style scoped>
 .table .tag {
   cursor: pointer;
+}
+.button.active .fa {
+  color: #00b1fd;
 }
 </style>
